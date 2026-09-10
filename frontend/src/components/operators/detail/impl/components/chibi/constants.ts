@@ -16,7 +16,7 @@ export const EXPORT_PADDING = 8;
 export const MAX_EXPORT_DIM = 2048;
 export const EXPORT_BG_COLOR = 0x111014;
 
-export type ViewType = "front" | "back" | "dorm" | "dynamic";
+export type ViewType = "front" | "back" | "down" | "dorm" | "dynamic";
 
 export interface IExportSettings {
     scale: number; // 0.5, 1, 1.5, 2

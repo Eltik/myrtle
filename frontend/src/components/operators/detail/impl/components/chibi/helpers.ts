@@ -103,14 +103,20 @@ export function maskTextureOf(img: DecodedImage, options?: PIXI.IBaseTextureOpti
 }
 
 /**
- * Build a BaseTexture from an image. If the actual PNG is smaller than the
- * atlas-declared size, the image is upscaled onto a canvas so atlas UV
- * coordinates remain valid (the game ships downscaled textures but the atlas
- * still references full-resolution coordinates).
+ * Build a BaseTexture from an image, resized to the atlas-declared page size whenever it
+ * differs. Region coordinates live in the declared space but pixi normalizes UVs by the real
+ * `baseTexture.width`, so any disagreement misplaces every attachment.
+ *
+ * Both directions occur. Smaller is the common one: the game packs base chibi textures at two
+ * thirds scale and leaves the atlas at authored coordinates, which is 939 of 4880 CN pages.
+ * Larger is rare but real: `build_char_4214_cairn` declares 572x572 and ships a 696x696 PNG,
+ * a uniform 1.2168x upscale of the same atlas (its regions reach 570x570, inside the declared
+ * box). That page used to take the early return and render every UV at 572/696 of where it
+ * belongs, because this only ever corrected the undersized case.
  */
 function buildPageTexture(img: DecodedImage, declaredW: number, declaredH: number): PIXI.BaseTexture {
     const [w, h] = decodedSize(img);
-    if (w >= declaredW && h >= declaredH) {
+    if (w === declaredW && h === declaredH) {
         return baseTextureOf(img, { mipmap: ATLAS_MIPMAP });
     }
 
@@ -442,5 +448,9 @@ export function getAvailableViewTypes(chibi: IChibiCharacter | null, skinName: s
     if (isCompleteSpineFiles(types.front)) result.push("front");
     if (isCompleteSpineFiles(types.back)) result.push("back");
     if (isCompleteSpineFiles(types.dorm)) result.push("dorm");
+    // "down" is the third battle facing, and only three summon tokens have one, so it is
+    // listed when present rather than assumed. It stays out of VIEW_FALLBACK_ORDER: a token
+    // that has it always has a front too, and falling back to a downed pose would be wrong.
+    if (isCompleteSpineFiles(types.down)) result.push("down");
     return result;
 }

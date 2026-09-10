@@ -235,18 +235,45 @@ fn cmd_extract(args: &cli::ExtractArgs) {
     if duplicates > 0 {
         println!("{duplicates} skeleton path(s) written twice with identical bytes");
     }
-    let collisions = spine::collision_count();
-    if collisions > 0 {
-        // Two assets resolved to one skeleton path with different bytes. The first was kept
-        // and the second skipped (see the COLLISION lines), so the export is incomplete and
-        // must not be installed as if it were whole.
-        eprintln!("{collisions} skeleton path collision(s): the export is incomplete");
-        std::process::exit(1);
-    }
     if extract_spine {
         // Regenerate the derived card placement fields into the fresh scene JSONs so an
         // install of this export cannot silently revert fielded cards to square.
+        //
+        // BEFORE the collision check, not after. This ran after the `exit(1)` until
+        // 2026-09-10, so every collision-bearing export left all 72 scene JSONs with no
+        // `backdropScale`/`backdropOffsetPx` at all: the abort skipped the merge. Keeping it
+        // first means the fatal arm changes only the exit code, never the tree.
         export::cardfields::merge(&args.output);
+    }
+    let deduped = spine::deduped_count();
+    if deduped > 0 {
+        // Two assets in ONE bundle resolved to one output path and the collector kept the
+        // larger. Reported, never fatal: it is upstream repeating a name, and the CN corpus
+        // does it on seven enemies, five of which are the same rig exported twice.
+        println!("{deduped} duplicate spine asset(s) dropped within a bundle");
+        for line in spine::dedup_report() {
+            println!("  {line}");
+        }
+    }
+    let collisions = spine::collision_count();
+    if collisions > 0 {
+        // Two assets resolved to one skeleton path with different bytes. The winner is the
+        // lexicographically smaller source bundle, so the tree is reproducible, and the
+        // loser is named here rather than only at the moment it happened: `run.mjs` reports
+        // just the last 10 lines of output, so a line printed thousands of lines earlier
+        // never reaches the operator.
+        //
+        // This is reported, NOT fatal. Every case in the CN corpus is upstream shipping one
+        // asset name twice (an enemy repeated inside one `enm_art` pack, a skin's battle
+        // skeleton under the base operator's name), and a duplicated upstream name must not
+        // abort a whole region update. `SPINE_COLLISIONS_FATAL=1` restores the exit(1).
+        eprintln!("{collisions} skeleton path collision(s): a second asset lost its path");
+        for line in spine::collision_report() {
+            eprintln!("  {line}");
+        }
+        if std::env::var("SPINE_COLLISIONS_FATAL").is_ok() {
+            std::process::exit(1);
+        }
     }
 }
 
@@ -801,6 +828,7 @@ fn process_bundle(
                 output_dir,
                 char_name.as_deref(),
                 &resources,
+                &bundle_subdir.to_string_lossy(),
             );
             exported += count;
         }

@@ -6,6 +6,13 @@ use crate::core::gamedata::types::enemy::EnemyHandbook;
 const ANIM_DIRS: &[(&str, &str)] = &[
     ("BattleFront", "front"),
     ("BattleBack", "back"),
+    // The third battle facing, exported since 2026-09-09. Three tokens carry one
+    // (`token_10027_ironmn_pile3`, `token_10052_radian_tower2`, `token_10053_radian_tower3`,
+    // four skeletons), and each already has a `BattleFront` counterpart, so this is an extra
+    // facing on entries the site already lists rather than three new ones. `animation_types`
+    // is a `HashMap<String, SpineFiles>` and the generated TS is an open index signature, so
+    // a fifth key is additive: nothing that reads front/back/dorm/dynamic is affected.
+    ("BattleDown", "down"),
     ("Building", "dorm"),
     ("DynIllust", "dynamic"),
 ];

@@ -20,6 +20,26 @@ pub enum SpineCategory {
     /// atlas heuristic, landed in `BattleFront` and raced the real Front for one path.
     BattleDown,
     Building,
+    /// Animated player avatars from `arts/dynavatars_*`. Not a battle facing: they carry no
+    /// `f_`/`b_` atlas regions, so the step-4 heuristic filed all four under `BattleFront`.
+    DynAvatar,
+    /// `sp_dyn_illust_*`: the SPECIAL dynamic illustration, an alternate skeleton a premium
+    /// skin ships alongside its ordinary `dyn_illust_*` one, which the game offers as a
+    /// toggle in the skin preview screen.
+    ///
+    /// `sp_` is not a guess. `skin_table.json` carries a dedicated `SpDynSkins` table whose
+    /// four entries name exactly these assets (`SpDynIllustId`
+    /// "sp_dyn_illust_char_124_kroos_sale#14" and its three siblings, each with `SpAvatarId`,
+    /// `SpIllustId`, `SpPortraitId` and a `SpDynIllustSkinTag` such as
+    /// "char_124_kroos@sale#14^sp_dyn"), plus `SpDynIllustSkinTagsMap` mapping each tag back
+    /// to its skin. The IL2CPP dump has `ResourceUrls.DynIllustSpResPath()` as a sibling of
+    /// `DynIllustResPath()`, `CharSkinData.GetSpDynIllustId()` beside `GetDynIllustId()`, and
+    /// the UI toggle `SkinSelectState.EventOnBtnSwitchSpDynIllust`.
+    ///
+    /// Held apart from `DynIllust` deliberately: `resolve_dyn_illust_skins` takes the folder
+    /// name as the one canonical skin identifier, and all four of these skins also ship a
+    /// real `dyn_illust_`, so a second skeleton in that folder would contend with it.
+    DynIllustSp,
     DynIllust,
     Enemy,
 }
@@ -31,6 +51,8 @@ impl fmt::Display for SpineCategory {
             Self::BattleBack => write!(f, "BattleBack"),
             Self::BattleDown => write!(f, "BattleDown"),
             Self::Building => write!(f, "Building"),
+            Self::DynAvatar => write!(f, "DynAvatar"),
+            Self::DynIllustSp => write!(f, "DynIllustSp"),
             Self::DynIllust => write!(f, "DynIllust"),
             Self::Enemy => write!(f, "Enemy"),
         }
@@ -1254,6 +1276,117 @@ fn atlas_page_sizes(atlas_text: &str) -> HashMap<String, (u32, u32)> {
     out
 }
 
+/// Largest `(x + width, y + height)` any region reaches on each page, rotation applied.
+///
+/// Region coordinates live in the page's DECLARED space, so this says whether an atlas is
+/// internally consistent independently of what the PNG on disk measures.
+///
+/// `rotate:` is not a boolean. libgdx writes `true`/`false`, but the Spine exporter also
+/// writes DEGREES, and CN atlases mix all four spellings in one file
+/// (`enemy_10085_hllevi` has `false`, `true`, `180` and `270`). Only a quarter turn swaps
+/// the packed width and height: reading `180` as "rotated" or `270` as "not rotated" both
+/// mismeasure the region. Getting this wrong reported 275 CN pages as overflowing when 273
+/// of them fit.
+#[allow(clippy::case_sensitive_file_extension_comparisons)]
+fn atlas_page_region_extents(atlas_text: &str) -> HashMap<String, (u32, u32)> {
+    let mut out: HashMap<String, (u32, u32)> = HashMap::new();
+    let mut pending_page: Option<String> = None;
+    let mut current: Option<String> = None;
+    let mut rotated = false;
+    let mut xy: Option<(u32, u32)> = None;
+    for line in atlas_text.lines() {
+        let t = line.trim();
+        if let Some(rest) = t.strip_prefix("size:") {
+            let dims = rest.split_once(',').and_then(|(w, h)| {
+                Some((w.trim().parse::<u32>().ok()?, h.trim().parse::<u32>().ok()?))
+            });
+            // The first `size:` after a page filename is the page's own; every later one
+            // belongs to a region.
+            if pending_page.take().is_none()
+                && let (Some(name), Some((x, y)), Some((mut w, mut h))) =
+                    (current.as_ref(), xy.take(), dims)
+            {
+                if rotated {
+                    std::mem::swap(&mut w, &mut h);
+                }
+                let e = out.entry(name.clone()).or_insert((0, 0));
+                e.0 = e.0.max(x + w);
+                e.1 = e.1.max(y + h);
+            }
+        } else if let Some(rest) = t.strip_prefix("rotate:") {
+            rotated = matches!(rest.trim(), "true" | "90" | "270");
+        } else if let Some(rest) = t.strip_prefix("xy:") {
+            xy = rest.split_once(',').and_then(|(x, y)| {
+                Some((x.trim().parse::<u32>().ok()?, y.trim().parse::<u32>().ok()?))
+            });
+        } else if t.ends_with(".png") {
+            pending_page = Some(t.trim_end_matches(".png").to_string());
+            current.clone_from(&pending_page);
+        }
+    }
+    out
+}
+
+/// Slack, in pixels, allowed between a page's declared size and what a clean scale predicts.
+/// Written PNGs are rounded UP to a multiple of 4 for block compression, so a page is a few
+/// blocks off at most; four blocks is generous and still an order of magnitude below the gap a
+/// real downscale opens (CN Building pages sit at ratio 1.5, e.g. 732 declared against 488).
+const ATLAS_BLOCK_SLACK: u32 = 16;
+
+/// What cannot be reconciled about one atlas page.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+struct AtlasPageVerdict {
+    /// Regions reach past the declared page, so the atlas disagrees with itself.
+    regions_overflow: bool,
+    /// The texture is not a plausible uniform downscale of the declared page, so the UVs
+    /// pixi derives from `baseTexture.width` cannot be made to match the region coordinates.
+    texture_unreconcilable: bool,
+}
+
+impl AtlasPageVerdict {
+    const fn is_clean(self) -> bool {
+        !self.regions_overflow && !self.texture_unreconcilable
+    }
+}
+
+/// Judge one atlas page against its texture and its own regions.
+///
+/// A size DISAGREEMENT is not by itself a defect: the game packs base chibi textures at two
+/// thirds scale and leaves the atlas at authored coordinates, which is 939 of 4880 CN pages,
+/// and a uniform downscale leaves normalized UVs untouched. Three shapes cannot be reconciled:
+/// a texture larger than the space its regions are addressed in; a texture only a few pixels
+/// off the declared size, which is a DIFFERENT packing rather than a downscale (Kal'tsit
+/// `boc#6` ships a 2336 twin of a 2348 page under one name, and picking it shatters the skin);
+/// and axes that do not carry the same scale, which skews every UV.
+fn atlas_page_verdict(
+    declared: (u32, u32),
+    actual: (u32, u32),
+    extent: (u32, u32),
+) -> AtlasPageVerdict {
+    let (dw, dh) = declared;
+    let (tw, th) = actual;
+    let mut verdict = AtlasPageVerdict {
+        regions_overflow: extent.0 > dw || extent.1 > dh,
+        texture_unreconcilable: false,
+    };
+    if tw == 0 || th == 0 || dw == 0 || dh == 0 || (tw, th) == (dw, dh) {
+        return verdict;
+    }
+    if tw > dw || th > dh {
+        verdict.texture_unreconcilable = true;
+        return verdict;
+    }
+    if dw - tw <= ATLAS_BLOCK_SLACK && dh - th <= ATLAS_BLOCK_SLACK {
+        verdict.texture_unreconcilable = true;
+        return verdict;
+    }
+    let ideal_h = f64::from(dh) * f64::from(tw) / f64::from(dw);
+    if (f64::from(th) - ideal_h).abs() > f64::from(ATLAS_BLOCK_SLACK) {
+        verdict.texture_unreconcilable = true;
+    }
+    verdict
+}
+
 /// Largest page dimension declared in an atlas text (`size: W,H` lines).
 fn atlas_max_dim(atlas_text: &str) -> u64 {
     atlas_text
@@ -1271,27 +1404,82 @@ fn atlas_max_dim(atlas_text: &str) -> u64 {
         .unwrap_or(0)
 }
 
-/// Drop duplicate spine assets that share a `(category, name)` — hence an output
-/// path — keeping the one whose atlas has the largest page (highest resolution
-/// and, for co-packed resolution variants, the complete region set).
+/// Drop duplicate spine assets that share a `(category, name)`, hence an output path, keeping
+/// the one whose atlas has the largest page (highest resolution and, for co-packed resolution
+/// variants, the complete region set).
+///
+/// A tie on atlas size falls to the LARGER SKELETON. Enemy packs need that: `enm_art_23`
+/// ships `enemy_10105_mjcdol` twice against one atlas, and the 98350 byte copy carries an
+/// `OnAttack` animation the 72973 byte copy does not, so atlas size alone cannot tell them
+/// apart and iteration order would decide which animation set the site gets. Same doctrine as
+/// the claim map: prefer the complete one rather than the lucky one.
 fn dedup_keep_highest_res(assets: &mut Vec<SpineAsset>) {
     let mut best: HashMap<(String, String), usize> = HashMap::new();
     for (i, a) in assets.iter().enumerate() {
         let key = (a.category.to_string(), a.name.clone());
-        match best.get(&key) {
-            Some(&j) if atlas_max_dim(&assets[j].atlas_text) >= atlas_max_dim(&a.atlas_text) => {}
-            _ => {
-                best.insert(key, i);
+        let better = match best.get(&key) {
+            None => true,
+            Some(&j) => {
+                let (kept, new) = (
+                    atlas_max_dim(&assets[j].atlas_text),
+                    atlas_max_dim(&a.atlas_text),
+                );
+                match new.cmp(&kept) {
+                    std::cmp::Ordering::Greater => true,
+                    std::cmp::Ordering::Less => false,
+                    std::cmp::Ordering::Equal => a.skel_data.len() > assets[j].skel_data.len(),
+                }
             }
+        };
+        if better {
+            best.insert(key, i);
         }
     }
     let keep: HashSet<usize> = best.into_values().collect();
+    // Say what was dropped. This silently discarded assets for as long as it has existed, and
+    // a bundle shipping one name twice is the same defect the claim map reports at write time;
+    // it just belongs to whichever layer sees it first.
+    for (i, a) in assets.iter().enumerate() {
+        if !keep.contains(&i) {
+            DEDUPED.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            DEDUP_REPORT
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .push(format!(
+                    "{}/{} ships this name twice in one bundle; dropped the {} byte copy",
+                    a.category,
+                    a.name,
+                    a.skel_data.len()
+                ));
+        }
+    }
     let mut i = 0;
     assets.retain(|_| {
         let k = keep.contains(&i);
         i += 1;
         k
     });
+}
+
+static DEDUPED: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+static DEDUP_REPORT: std::sync::LazyLock<std::sync::Mutex<Vec<String>>> =
+    std::sync::LazyLock::new(|| std::sync::Mutex::new(Vec::new()));
+
+/// Spine assets dropped this run because one bundle carried the name more than once.
+#[must_use]
+pub fn deduped_count() -> usize {
+    DEDUPED.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+/// One line per dropped duplicate, naming the asset and the size of the copy dropped.
+#[must_use]
+pub fn dedup_report() -> Vec<String> {
+    let mut lines = DEDUP_REPORT
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .clone();
+    lines.sort_unstable();
+    lines
 }
 
 /// Check whether a bundle path is a dynamic-character bundle (`arts/dynchars`).
@@ -5167,6 +5355,14 @@ pub fn collect_enemy_spine_assets(
         });
     }
 
+    // Enemy packs repeat a name too, and until 2026-09-10 nothing deduped them: seven CN
+    // pairs reached the write path and were reported as collisions, when they are two
+    // `SkeletonData` objects inside ONE bundle and belong to the collector, not to the claim
+    // map. Five are the same rig exported twice (identical byte counts, differing only in the
+    // Spine export hash and about 170 renumbered indices); `enm_art_23` mjcdol is a real
+    // superset, which is what the skeleton-size tie-break is for.
+    dedup_keep_highest_res(&mut assets);
+
     (assets, claimed)
 }
 
@@ -5315,32 +5511,32 @@ fn follow_skeleton_data(
 }
 
 /// Classify a spine asset into a category.
-///   1. skel name starts with "dyn_" → `DynIllust`
+///   1. skel name starts with "sp_dyn_" → `DynIllustSp`; "dyn_" → `DynIllust`
 ///   2. _animationName == "Relax" OR skel name starts with "build_" → Building
 ///   3. owning `GameObject` named "Front"/"Back"/"Down" → `BattleFront`/`BattleBack`/`BattleDown`
-///   4. fallback: atlas front count (f_, c_) >= back count (b_) → `BattleFront`, else `BattleBack`
+///   4. skel name starts with "assets_avatar_dyn" → `DynAvatar`
+///   5. fallback: atlas front count (f_, c_) >= back count (b_) → `BattleFront`, else `BattleBack`
 ///
 /// Step 3 is required for correctness: front and back battle skeletons often
 /// share a single atlas (e.g. `char_1048_orchd2`), so the atlas heuristic
 /// classifies both the same way and one overwrites the other on export. `Down` is the
-/// same failure with a third name: the EN census of owning `GameObject` names (2026-09-09,
-/// 917 bundles, 2947 behaviours) reads Front, Back, Down, `Spine` (building, caught by
-/// step 2) and `res_holder` plus the dynchar roots (caught by step 1), nothing else, so
-/// step 3 now names the whole battle set. A name step 3 does not know still falls to
-/// step 4, and `export_spine_assets` refuses to overwrite a path written earlier in the
-/// run, so the next unknown name is reported rather than silently winning.
-fn classify_spine(
-    skel_name: &str,
-    anim_name: &str,
-    game_object_name: &str,
-    atlas_text: &str,
-) -> SpineCategory {
-    classify_spine_with_rule(skel_name, anim_name, game_object_name, atlas_text).0
-}
-
-/// [`classify_spine`], plus a tag naming the rule that decided. The tag exists so the
-/// `SPINE_GO_CENSUS` diagnostic reports which rule fired without a second copy of these
-/// conditions that could drift from them.
+/// same failure with a third name.
+///
+/// The CN census of owning `GameObject` names (2026-09-10, 15095 bundles, 3150 behaviours,
+/// `SPINE_GO_CENSUS=1`) reads the whole set: Front 1015, Back 970, Down 4, `Spine` 974,
+/// `res_holder` 68, the dynchar roots 115, and `spine_assets_avatar_dyn_01..04`. Nothing
+/// else, so step 3 names the whole battle set and needs no further name.
+///
+/// CORRECTION to the EN reading that preceded it: `Spine` is NOT always caught by step 2.
+/// 939 of the 974 `Spine` rows carry `_animationName` "Relax" and are Building, but 35 carry
+/// "Default"/"Default_01" and reached step 5. All 35 landed `BattleFront` and none landed
+/// `BattleBack`, so they are single battle skeletons with no facing to race, not a repeat of
+/// the `Down` defect. The remaining fallback rows were two real misclassifications, now rules
+/// 1 and 4: four `sp_dyn_illust_*` illustrations and the four `assets_avatar_dyn_0N` avatars.
+/// Neither group is a battle skeleton and neither now lands in a directory the site reads.
+/// Returns the category plus a tag naming the rule that decided, so the `SPINE_GO_CENSUS`
+/// diagnostic can report which rule fired without a second copy of these conditions that
+/// could drift from them.
 fn classify_spine_with_rule(
     skel_name: &str,
     anim_name: &str,
@@ -5349,7 +5545,11 @@ fn classify_spine_with_rule(
 ) -> (SpineCategory, &'static str) {
     let name_lower = skel_name.to_lowercase();
 
-    // 1. Dynamic illustration
+    // 1. Dynamic illustration. `sp_dyn_` is a second dynamic for a skin that already has
+    // one, so it gets its own category rather than contending inside `DynIllust`.
+    if name_lower.starts_with("sp_dyn_") {
+        return (SpineCategory::DynIllustSp, "1-dyn-sp");
+    }
     if name_lower.starts_with("dyn_") {
         return (SpineCategory::DynIllust, "1-dyn");
     }
@@ -5370,7 +5570,13 @@ fn classify_spine_with_rule(
         return (SpineCategory::BattleDown, "3-down");
     }
 
-    // 4. Fallback: front vs back based on atlas region prefixes
+    // 4. Animated player avatars. They hang off `spine_assets_avatar_dyn_0N` GameObjects
+    // and have no battle facing at all.
+    if name_lower.starts_with("assets_avatar_dyn") {
+        return (SpineCategory::DynAvatar, "3b-avatar");
+    }
+
+    // 5. Fallback: front vs back based on atlas region prefixes
     let atlas_lower = atlas_text.to_lowercase();
     let front_count = atlas_lower.matches("\nf_").count() + atlas_lower.matches("\nc_").count();
     let back_count = atlas_lower.matches("\nb_").count();
@@ -5391,9 +5597,17 @@ fn classify_spine_with_rule(
 /// Every skeleton path this process has written, with a hash of its bytes, so a second
 /// asset resolving to the same path is detected instead of silently overwriting the first
 /// (in one bundle through iteration order, or across two bundles through the parallel walk).
+/// Content hash, byte count, and the source bundle that won the path.
+type ClaimedSkel = (u64, usize, String);
 static WRITTEN_SKELS: std::sync::LazyLock<
-    std::sync::Mutex<HashMap<std::path::PathBuf, (u64, usize)>>,
+    std::sync::Mutex<HashMap<std::path::PathBuf, ClaimedSkel>>,
 > = std::sync::LazyLock::new(|| std::sync::Mutex::new(HashMap::new()));
+/// One line per collision, held so `main` can reprint them in the run's final summary.
+/// The per-bundle line is emitted the moment it happens and is thousands of lines from the
+/// end by then; the pipeline runner (`run.mjs`) reports only the last 10 lines of output,
+/// so without this the one line naming the offending path never reaches the operator.
+static COLLISION_REPORT: std::sync::LazyLock<std::sync::Mutex<Vec<String>>> =
+    std::sync::LazyLock::new(|| std::sync::Mutex::new(Vec::new()));
 static COLLISIONS: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 static DUPLICATES: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
 
@@ -5402,23 +5616,96 @@ enum OutputClaim {
     New,
     /// The path was written with these exact bytes already.
     Duplicate,
-    /// The path was written with different bytes; carries the kept file's byte count.
-    Conflict(usize),
+    /// The path holds different bytes from a source that outranks this one; skip the write.
+    Lost,
+    /// The path holds different bytes from a source this one outranks; overwrite it.
+    Won,
 }
 
-fn claim_output_path(path: &Path, bytes: &[u8]) -> OutputClaim {
+/// Claim a skeleton output path for `source` (the bundle's path relative to the input dir).
+///
+/// Two assets resolving to one path is a defect, but it is UPSTREAM's defect and it must not
+/// decide the tree by thread scheduling. Bundles are walked with rayon, so which of two
+/// bundles arrives first is a race; the winner is therefore the lexicographically smaller
+/// source, which is stable across runs and across machines. Within one bundle the sources are
+/// equal and the incumbent wins, which is already deterministic because both
+/// `collect_spine_assets` and `collect_enemy_spine_assets` sort their behaviours by path id.
+///
+/// LARGER WINS, which is the doctrine `dedup_keep_highest_res` already applies to co-packed
+/// variants, and the CN corpus supports it on the two pairs whose sizes differ meaningfully:
+/// `enemy_10105_mjcdol` at 98350 bytes carries an `OnAttack` animation the 72973 copy does
+/// not, and `chararts/char_101_sora` at 192912 beats the 191330 copy in `skinpack`, which is
+/// a skin's skeleton shipped under the base operator's name. A bigger skeleton is a superset
+/// in every pair that could be checked, so this prefers the complete one rather than the
+/// lucky one.
+///
+/// Size ties fall to the source path, which is a TRADE and not a derivation: nothing says the
+/// smaller path is the better asset, only that it is the same choice on every machine. Within
+/// one bundle the sources are equal too and the incumbent wins, which is deterministic
+/// because both collectors sort their behaviours by path id. Five of the seven CN enemy pairs
+/// land here, and they are one rig exported twice (identical byte counts, differing only in
+/// the Spine export hash and about 170 renumbered indices), so the choice does not matter.
+fn claim_output_path(path: &Path, bytes: &[u8], source: &str) -> OutputClaim {
     let hash = fnv1a64(bytes);
     let mut written = WRITTEN_SKELS
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
     match written.get(path) {
-        Some((h, len)) if *h == hash && *len == bytes.len() => OutputClaim::Duplicate,
-        Some((_, len)) => OutputClaim::Conflict(*len),
+        Some((h, len, _)) if *h == hash && *len == bytes.len() => OutputClaim::Duplicate,
+        Some((_, kept_len, kept_source)) => {
+            let (kept_len, kept_source) = (*kept_len, kept_source.clone());
+            let we_win = match bytes.len().cmp(&kept_len) {
+                std::cmp::Ordering::Greater => true,
+                std::cmp::Ordering::Less => false,
+                std::cmp::Ordering::Equal => source < kept_source.as_str(),
+            };
+            let (winner, winner_len, loser, loser_len) = if we_win {
+                (source, bytes.len(), kept_source.as_str(), kept_len)
+            } else {
+                (kept_source.as_str(), kept_len, source, bytes.len())
+            };
+            COLLISIONS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            let line = if winner == loser {
+                // Both came from one bundle, so there is no source to choose between: the
+                // bundle ships the name twice. The incumbent wins, which is deterministic
+                // because behaviours are walked in path-id order.
+                format!(
+                    "{}: {winner} ships this name twice; kept {winner_len} bytes, dropped {loser_len} bytes",
+                    path.display()
+                )
+            } else {
+                format!(
+                    "{}: kept {winner} ({winner_len} bytes), dropped {loser} ({loser_len} bytes)",
+                    path.display()
+                )
+            };
+            COLLISION_REPORT
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .push(line);
+            if we_win {
+                written.insert(path.to_path_buf(), (hash, bytes.len(), source.to_string()));
+                OutputClaim::Won
+            } else {
+                OutputClaim::Lost
+            }
+        }
         None => {
-            written.insert(path.to_path_buf(), (hash, bytes.len()));
+            written.insert(path.to_path_buf(), (hash, bytes.len(), source.to_string()));
             OutputClaim::New
         }
     }
+}
+
+/// One line per collision, naming the path, the source kept and the source dropped.
+#[must_use]
+pub fn collision_report() -> Vec<String> {
+    let mut lines = COLLISION_REPORT
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .clone();
+    lines.sort_unstable();
+    lines
 }
 
 /// Skeleton paths a second asset tried to overwrite with different bytes this run.
@@ -5438,6 +5725,7 @@ pub fn export_spine_assets(
     output_dir: &Path,
     char_name: Option<&str>,
     resources: &HashMap<String, Vec<u8>>,
+    source: &str,
 ) -> usize {
     let mut count = 0;
 
@@ -5455,27 +5743,53 @@ pub fn export_spine_assets(
             continue;
         }
 
-        // Write skel. A path already written in this run is never overwritten: a second
-        // skeleton resolving to it means the category rules did not tell two assets apart,
-        // and letting iteration order pick the survivor is how three token skins shipped a
-        // random facing (the `Down` race, 2026-09-09). Identical bytes are a harmless
-        // duplicate and are counted; different bytes are a collision, reported, skipped, and
-        // fatal to the run's exit status (main.rs reads `collision_count`).
+        // Write skel. Two assets resolving to one path is a defect, but the CN census
+        // (2026-09-10) showed it is not a classification failure: all eight cases are one
+        // asset NAME shipped twice with different bytes, seven of them two `SkeletonData`
+        // objects inside a single `enm_art` pack and one a skin's battle skeleton carrying
+        // the base operator's name. No category rule can tell those apart, so the path is
+        // awarded by source order (see `claim_output_path`) and the loser is reported rather
+        // than deciding the tree by which rayon thread arrived first.
         let skel_path = spine_dir.join(format!("{}.skel", asset.name));
-        match claim_output_path(&skel_path, &asset.skel_data) {
-            OutputClaim::Conflict(kept) => {
-                COLLISIONS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                eprintln!(
-                    "COLLISION {}: a second skeleton ({} bytes) resolves to a path already written this run ({kept} bytes, kept); not written. classify_spine must name what tells them apart.",
-                    skel_path.display(),
-                    asset.skel_data.len()
-                );
-                continue;
+        let claim = claim_output_path(&skel_path, &asset.skel_data, source);
+        // A `Won` claim replaces files a losing asset already wrote and already counted.
+        // Counting them again makes the run's "Exported N" wobble by the size of the file
+        // set (4 for `char_101_sora`) depending on which bundle rayon reached first, even
+        // though the tree is byte-identical either way; the count is restored at the end of
+        // the iteration so the reported total is reproducible too.
+        let is_rewrite = matches!(claim, OutputClaim::Won);
+        let count_before_asset = count;
+        // DIAGNOSTIC (`SPINE_KEEP_COLLIDED`, presence-checked, inert by default): keep the
+        // copy that loses the path, named by its own content hash, so a collision can be
+        // READ instead of reasoned about. Five of the seven CN enemy pairs have identical
+        // byte counts and different hashes, which is exactly the shape that deserves a diff
+        // rather than a guess. Not counted toward the run's export total.
+        if std::env::var("SPINE_KEEP_COLLIDED").is_ok() && !matches!(claim, OutputClaim::New) {
+            let (bytes, tag): (std::borrow::Cow<'_, [u8]>, u64) = if is_rewrite {
+                match std::fs::read(&skel_path) {
+                    Ok(prev) => {
+                        let h = fnv1a64(&prev);
+                        (std::borrow::Cow::Owned(prev), h)
+                    }
+                    Err(_) => (std::borrow::Cow::Borrowed(&[]), 0),
+                }
+            } else {
+                (
+                    std::borrow::Cow::Borrowed(&asset.skel_data),
+                    fnv1a64(&asset.skel_data),
+                )
+            };
+            if !bytes.is_empty() {
+                let side = spine_dir.join(format!("{}.collided-{tag:016x}.skel", asset.name));
+                let _ = std::fs::write(side, &bytes);
             }
+        }
+        match claim {
+            OutputClaim::Lost => continue,
             OutputClaim::Duplicate => {
                 DUPLICATES.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
             }
-            OutputClaim::New => {}
+            OutputClaim::New | OutputClaim::Won => {}
         }
         if std::fs::write(&skel_path, &asset.skel_data).is_ok() {
             count += 1;
@@ -5575,15 +5889,42 @@ pub fn export_spine_assets(
                 decoded.insert(to_alpha, tex);
             }
         }
-        // ASSERT the invariant the frontend depends on: every page the atlas declares must be
-        // written at exactly the declared size. Cheap, and it catches this whole class at export
-        // instead of as a shattered skin in a corpus render.
+        // Report pages whose texture cannot be reconciled with the atlas. A bare size
+        // DISAGREEMENT is not that: 939 of 4880 CN pages declare a size their PNG does not
+        // match, every one under `Building`, ratios 1.486 to 1.529 with the mode exactly
+        // 1.500, because the game packs base chibi textures at two thirds scale and leaves
+        // the atlas text at authored coordinates. 937 of the 939 keep every region inside
+        // the declared box, which makes the downscale uniform, leaves normalized UVs
+        // unchanged, and is already reconciled by `buildPageTexture` on the frontend.
+        // Warning on those buried the real thing: the line naming an actual defect competed
+        // with 937 benign ones for the 10 lines `run.mjs` reports.
+        //
+        // What is NOT reconcilable, and still warns:
+        //   - a texture LARGER than the declared page, or an axis that does not scale with
+        //     the other, which skews every UV. This is the Kal'tsit `boc#6` class the size
+        //     check was written for (2348 declared, a 2336 twin sharing the name).
+        //   - regions reaching past the declared box, so the atlas disagrees with itself.
+        //     Two CN pages do: `build_char_4134_cetsyr_epoque#50` (920x920, regions reach
+        //     918x961) and `build_char_1019_siege2_epoque#50` (800x800, 820x800).
+        let region_extents = atlas_page_region_extents(&atlas_text);
         for (page, (w, h)) in &page_sizes {
-            if let Some(tex) = decoded.get(page)
-                && (tex.width, tex.height) != (*w, *h)
-            {
+            let Some(tex) = decoded.get(page) else {
+                continue;
+            };
+            let (mx, my) = region_extents.get(page).copied().unwrap_or((0, 0));
+            let verdict = atlas_page_verdict((*w, *h), (tex.width, tex.height), (mx, my));
+            if verdict.is_clean() {
+                continue;
+            }
+            if verdict.regions_overflow {
                 eprintln!(
-                    "  ATLAS SIZE MISMATCH {}/{page}: atlas declares {w}x{h} but the texture is {}x{} — every region UV will be wrong",
+                    "  ATLAS REGIONS OVERFLOW {}/{page}: atlas declares {w}x{h} but regions reach {mx}x{my}",
+                    asset.name
+                );
+            }
+            if verdict.texture_unreconcilable {
+                eprintln!(
+                    "  ATLAS SIZE MISMATCH {}/{page}: atlas declares {w}x{h} but the texture is {}x{}, which is not a uniform downscale, so every region UV will be wrong",
                     asset.name, tex.width, tex.height
                 );
             }
@@ -5608,6 +5949,10 @@ pub fn export_spine_assets(
                 &asset.separator_part_sorts,
                 resources,
             );
+        }
+
+        if is_rewrite {
+            count = count_before_asset;
         }
     }
 
@@ -7185,4 +7530,99 @@ pub fn char_name_from_bundle(bundle_subdir: &Path) -> String {
         || "unknown".to_string(),
         |n| n.to_string_lossy().to_string(),
     )
+}
+
+#[cfg(test)]
+mod atlas_page_tests {
+    use super::{AtlasPageVerdict, atlas_page_region_extents, atlas_page_verdict};
+
+    /// `rotate:` is not a boolean. libgdx writes `true`/`false`, the Spine exporter also writes
+    /// degrees, and one CN file mixes all four spellings; only a quarter turn swaps the packed
+    /// width and height. Reading `270` as "not rotated" reported 275 CN pages as overflowing
+    /// when 273 of them fit, so this is the regression that test exists for.
+    fn atlas_with(rotate: &str, xy: (u32, u32), size: (u32, u32)) -> String {
+        format!(
+            "\npage.png\nsize: 300,300\nformat: RGBA8888\nfilter: Linear,Linear\nrepeat: none\nR\n  rotate: {rotate}\n  xy: {}, {}\n  size: {}, {}\n  orig: {}, {}\n  offset: 0, 0\n  index: -1\n",
+            xy.0, xy.1, size.0, size.1, size.0, size.1
+        )
+    }
+
+    #[test]
+    fn quarter_turns_swap_the_packed_rect_and_half_turns_do_not() {
+        // A 100x40 region at x=180: unrotated it reaches 280, rotated a quarter turn it is
+        // 40x100 and reaches 220. `180` and `0` must behave like `false`.
+        let ext = |r: &str| {
+            atlas_page_region_extents(&atlas_with(r, (180, 10), (100, 40)))
+                .get("page")
+                .copied()
+                .unwrap()
+        };
+        assert_eq!(ext("false"), (280, 50));
+        assert_eq!(ext("0"), (280, 50));
+        assert_eq!(ext("180"), (280, 50));
+        assert_eq!(ext("true"), (220, 110));
+        assert_eq!(ext("90"), (220, 110));
+        assert_eq!(ext("270"), (220, 110));
+    }
+
+    #[test]
+    fn the_page_size_line_is_not_read_as_a_region() {
+        // The first `size:` after a page filename is the page's own. Counting it as a region
+        // would put a phantom region at the origin and mask a real overflow.
+        let extents = atlas_page_region_extents(&atlas_with("false", (10, 10), (20, 20)));
+        assert_eq!(extents.get("page").copied(), Some((30, 30)));
+    }
+
+    #[test]
+    fn a_uniform_downscale_with_regions_inside_the_page_is_clean() {
+        // 939 of 4880 CN pages are this: the game packs base chibi textures at two thirds
+        // scale and leaves the atlas at authored coordinates. Warning on them buried the one
+        // page that was actually broken.
+        assert!(atlas_page_verdict((732, 732), (488, 488), (729, 729)).is_clean());
+        assert!(atlas_page_verdict((656, 656), (440, 440), (654, 654)).is_clean());
+        // Rounded up to a multiple of 4 for block compression, so not an exact 1.5.
+        assert!(atlas_page_verdict((688, 688), (460, 460), (686, 686)).is_clean());
+        // An exact match is clean whatever the scale arithmetic would say.
+        assert!(atlas_page_verdict((512, 512), (512, 512), (510, 510)).is_clean());
+    }
+
+    #[test]
+    fn a_texture_larger_than_its_page_is_unreconcilable() {
+        // `build_char_4214_cairn` declares 572x572 and ships a 696x696 PNG. pixi normalizes by
+        // the real texture width, so every UV lands at 572/696 of where it belongs.
+        let v = atlas_page_verdict((572, 572), (696, 696), (570, 570));
+        assert!(v.texture_unreconcilable);
+        assert!(!v.regions_overflow);
+    }
+
+    #[test]
+    fn a_near_miss_is_a_different_packing_not_a_downscale() {
+        // Kal'tsit `boc#6` carries two textures under one name, 2348 and 2336, and the atlas
+        // declares 2348. Twelve pixels apart is not a downscale; picking the twin shatters the
+        // skin into disconnected fragments.
+        assert!(
+            atlas_page_verdict((2348, 2348), (2336, 2336), (2346, 2346)).texture_unreconcilable
+        );
+    }
+
+    #[test]
+    fn axes_that_do_not_share_one_scale_are_unreconcilable() {
+        // Width scaled by 1.5 and height by 1.0 skews every UV even though each axis alone
+        // looks plausible.
+        assert!(atlas_page_verdict((900, 300), (600, 300), (890, 290)).texture_unreconcilable);
+        // The same page scaled uniformly is clean.
+        assert!(atlas_page_verdict((900, 300), (600, 200), (890, 290)).is_clean());
+    }
+
+    #[test]
+    fn regions_past_the_declared_page_are_reported_even_when_the_texture_matches() {
+        let v = atlas_page_verdict((800, 800), (800, 800), (820, 800));
+        assert_eq!(
+            v,
+            AtlasPageVerdict {
+                regions_overflow: true,
+                texture_unreconcilable: false,
+            }
+        );
+    }
 }

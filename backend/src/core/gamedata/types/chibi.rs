@@ -15,6 +15,9 @@ use ts_rs::TS;
 pub enum AnimationType {
     Front,
     Back,
+    /// The third battle facing. Kept in step with `ANIM_DIRS`, which is what actually keys
+    /// `ChibiSkin::animation_types`; this enum is exported to TS for documentation.
+    Down,
     Dorm,
     Dynamic,
 }
@@ -24,6 +27,7 @@ impl AnimationType {
         match self {
             Self::Front => "front",
             Self::Back => "back",
+            Self::Down => "down",
             Self::Dorm => "dorm",
             Self::Dynamic => "dynamic",
         }

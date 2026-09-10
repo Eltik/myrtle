@@ -3,4 +3,4 @@
 /**
  * Animation types for different views/poses
  */
-export type AnimationType = "front" | "back" | "dorm" | "dynamic";
+export type AnimationType = "front" | "back" | "down" | "dorm" | "dynamic";

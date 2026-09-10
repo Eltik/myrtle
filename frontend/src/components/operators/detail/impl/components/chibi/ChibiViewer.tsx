@@ -220,6 +220,7 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
                         {availableViewTypes.includes("front") && <SelectItem value="front">Front</SelectItem>}
                         {availableViewTypes.includes("back") && <SelectItem value="back">Back</SelectItem>}
                         {availableViewTypes.includes("dorm") && <SelectItem value="dorm">Dorm</SelectItem>}
+                        {availableViewTypes.includes("down") && <SelectItem value="down">Down</SelectItem>}
                     </SelectContent>
                 </Select>
 
