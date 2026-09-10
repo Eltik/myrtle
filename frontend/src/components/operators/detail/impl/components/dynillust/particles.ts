@@ -4519,8 +4519,8 @@ function unskipSet(): Set<number> {
     );
 }
 
-function loadTexture(url: string): Promise<ILoadedTex> {
-    return loadDecoded(url, "particle texture").then(processGlowTexture);
+function loadTexture(url: string, signal?: AbortSignal): Promise<ILoadedTex> {
+    return loadDecoded(url, "particle texture", signal).then(processGlowTexture);
 }
 
 /** Max value a MinMaxScalar can take (for "is it ~stationary?" / life-span tests). */
@@ -4642,13 +4642,16 @@ export function particleCensus(): { emitters: number; systems: { sys: number; ev
     return PARTICLE_CENSUS.map((c) => ({ emitters: c.emitters, systems: c.snapshot() }));
 }
 
-export async function loadParticles(url: string, textureBaseURL: string, bust = "", characterBounds: IAnimationBounds | null = null, hasDarkBackdrop = false): Promise<ILoadedParticles | null> {
+/** `signal` aborts the particles JSON and every texture fetch when the caller's run is
+ *  superseded; the abort propagates (an aborted run must not read as "no particles"). */
+export async function loadParticles(url: string, textureBaseURL: string, bust = "", characterBounds: IAnimationBounds | null = null, hasDarkBackdrop = false, signal?: AbortSignal): Promise<ILoadedParticles | null> {
     let data: IParticlesData;
     try {
-        const res = await fetch(url);
+        const res = await fetch(url, { signal });
         if (!res.ok) return null;
         data = (await res.json()) as IParticlesData;
-    } catch {
+    } catch (e) {
+        if (signal?.aborted) throw e;
         return null;
     }
     if (!data.systems?.length) return null;
@@ -4656,11 +4659,13 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
     const unskip = unskipSet();
     const bases = await Promise.all(
         Array.from({ length: data.textureCount }, (_, i) =>
-            loadTexture(`${pooledTextureURL(textureBaseURL, data.textures, i)}${bust}`)
+            loadTexture(`${pooledTextureURL(textureBaseURL, data.textures, i)}${bust}`, signal)
                 .then((t) => (unskip.has(i) ? { ...t, skip: false, desatPanel: false, hazePanel: false } : t))
                 .catch(() => null),
         ),
     );
+    // A texture that failed to load is drawn without; a run that was aborted is not drawn.
+    if (signal?.aborted) throw new DOMException("particles load aborted", "AbortError");
 
     const background = new PIXI.Container();
     const foreground = new PIXI.Container();

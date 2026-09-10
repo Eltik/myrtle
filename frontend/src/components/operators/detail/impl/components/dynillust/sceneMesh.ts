@@ -583,8 +583,8 @@ function annulusInner(img: DecodedImage): number | null {
     }
 }
 
-function loadTexture(url: string): Promise<ISceneTex> {
-    return loadDecoded(url, "scene texture").then((src) => {
+function loadTexture(url: string, signal?: AbortSignal): Promise<ISceneTex> {
+    return loadDecoded(url, "scene texture", signal).then((src) => {
         const raw = baseTextureOf(src);
         // Scene layers bake the material's `_MainTex` Scale/Offset into their UVs
         // (see the exporter's collect_dynchar_bg_quads). Many layers tile or mirror
@@ -1981,13 +1981,15 @@ export function sceneFrameOf(data: ISceneData): ISceneFrame | null {
 
 /** Fetch just the authored camera frame from a scene JSON (no textures). Returns
  *  null when there's no scene JSON or it lacks the frame fields. */
-export async function loadSceneFrame(sceneURL: string): Promise<ISceneFrame | null> {
+export async function loadSceneFrame(sceneURL: string, signal?: AbortSignal): Promise<ISceneFrame | null> {
     try {
-        const res = await fetch(sceneURL);
+        const res = await fetch(sceneURL, { signal });
         if (!res.ok) return null;
         const data = (await res.json()) as ISceneData;
         return sceneFrameOf(data);
-    } catch {
+    } catch (e) {
+        // A missing frame is "no frame"; an aborted run is not, and must not read as one.
+        if (signal?.aborted) throw e;
         return null;
     }
 }
@@ -2067,13 +2069,16 @@ export function pooledTextureURL(textureBaseURL: string, textures: string[] | un
     return skinBase + rel.split("/").map(encodeURIComponent).join("/");
 }
 
-export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, bust = ""): Promise<ILoadedScene | null> {
+/** `signal` aborts the scene JSON and every texture fetch when the caller's run is superseded;
+ *  the abort propagates (an aborted run must not read as "no scene"). */
+export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, bust = "", signal?: AbortSignal): Promise<ILoadedScene | null> {
     let data: ISceneData;
     try {
-        const res = await fetch(sceneURL);
+        const res = await fetch(sceneURL, { signal });
         if (!res.ok) return null;
         data = (await res.json()) as ISceneData;
-    } catch {
+    } catch (e) {
+        if (signal?.aborted) throw e;
         return null;
     }
     if (!data.layers?.length || !data.cameraSizePx) {
@@ -2085,7 +2090,7 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
         return null;
     }
 
-    const bases = await Promise.all(Array.from({ length: data.textureCount }, (_, i) => loadTexture(`${pooledTextureURL(textureBaseURL, data.textures, i)}${bust}`)));
+    const bases = await Promise.all(Array.from({ length: data.textureCount }, (_, i) => loadTexture(`${pooledTextureURL(textureBaseURL, data.textures, i)}${bust}`, signal)));
 
     // Ram mask lookup (see {@link IRamSceneTex}). Null unless the layer carries a mask that
     // actually loaded, which is what switches it onto the Ram compositor at all.

@@ -149,7 +149,9 @@ function parseAtlasPages(atlasText: string): Map<string, { declaredW: number; de
     return pages;
 }
 
-export async function loadSpineWithEncodedURLs(skelPath: string, atlasPath: string, server?: "en" | "cn", root?: string): Promise<Spine> {
+/** `signal` aborts every fetch of the set (skeleton, atlas, pages) when the caller's run is
+ *  superseded, so the bytes stop rather than landing for nobody. */
+export async function loadSpineWithEncodedURLs(skelPath: string, atlasPath: string, server?: "en" | "cn", root?: string, signal?: AbortSignal): Promise<Spine> {
     const skelURL = chibiAssetURL(skelPath, server, root);
     const atlasURL = chibiAssetURL(atlasPath, server, root);
 
@@ -160,7 +162,7 @@ export async function loadSpineWithEncodedURLs(skelPath: string, atlasPath: stri
     // to the wrong pixels (garbage). No-op in prod.
     const bust = import.meta.env.DEV ? `?v=${Date.now()}` : "";
 
-    const [{ Spine, TextureAtlas, AtlasAttachmentLoader, SkeletonBinary, SkeletonJson }, skelResponse, atlasResponse] = await Promise.all([loadSpineModules(), fetch(skelURL + bust), fetch(atlasURL + bust)]);
+    const [{ Spine, TextureAtlas, AtlasAttachmentLoader, SkeletonBinary, SkeletonJson }, skelResponse, atlasResponse] = await Promise.all([loadSpineModules(), fetch(skelURL + bust, { signal }), fetch(atlasURL + bust, { signal })]);
 
     if (!skelResponse.ok) throw new Error(`Failed to load skeleton: ${skelResponse.status}`);
     if (!atlasResponse.ok) throw new Error(`Failed to load atlas: ${atlasResponse.status}`);
@@ -174,7 +176,7 @@ export async function loadSpineWithEncodedURLs(skelPath: string, atlasPath: stri
     const textureCache = new Map<string, PIXI.BaseTexture>();
     await Promise.all(
         Array.from(pageInfo, async ([pageName, { declaredW, declaredH }]) => {
-            const img = await loadDecoded(`${atlasBaseDir}${encodeURIComponent(pageName)}${bust}`, "image");
+            const img = await loadDecoded(`${atlasBaseDir}${encodeURIComponent(pageName)}${bust}`, "image", signal);
             textureCache.set(pageName, buildPageTexture(img, declaredW, declaredH));
         }),
     );

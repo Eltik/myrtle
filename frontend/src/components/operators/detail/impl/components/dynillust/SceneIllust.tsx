@@ -558,6 +558,14 @@ function entranceFirstOn(): boolean {
     return new URLSearchParams(window.location.search).get("entrancefirst") !== "0";
 }
 
+/** Whether a superseded load run's fetches are ABORTED (the default) rather than left to land
+ *  for a composite that is destroyed on arrival. `?abortfetch=0` restores the old behaviour,
+ *  the harness's control arm; nothing drawn depends on it, only what a cancelled run costs. */
+function fetchAbortOn(): boolean {
+    if (typeof window === "undefined") return true;
+    return new URLSearchParams(window.location.search).get("abortfetch") !== "0";
+}
+
 /** DIAGNOSTIC (`?statbox=<zoom>[,<dx>,<dy>]`): scale the {@link staticCamOn} framing box about its
  *  own centre by `zoom` and shift it by `dx,dy` box-space px. Inert unless `?statcam=1`.
  *
@@ -1033,8 +1041,8 @@ interface IComposite {
  *  it can be registered centroid-to-centroid against the spine (both depict the
  *  same art, so their mass centres correspond - robust to composition, unlike a
  *  bounding-box centre which the arch/railing skew). */
-function loadImageTexture(url: string): Promise<ILoadedBackdrop> {
-    return loadDecoded(url, "backdrop").then((src) => {
+function loadImageTexture(url: string, signal?: AbortSignal): Promise<ILoadedBackdrop> {
+    return loadDecoded(url, "backdrop", signal).then((src) => {
         const texture = new PIXI.Texture(baseTextureOf(src));
         let centroid = { nx: 0.5, ny: 0.5 };
         try {
@@ -1962,6 +1970,11 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
 
         mountedRef.current = true;
         const currentLoadId = ++loadIdRef.current;
+        // Every fetch of this run carries this signal, and the cleanup aborts it: a superseded
+        // run (a re-key, or StrictMode's simulated unmount in development) stops costing bytes
+        // instead of downloading a whole set for a composite that is destroyed on arrival. The
+        // load id still decides what is DRAWN; the signal decides what is FETCHED.
+        const loadAbort = new AbortController();
         let animationFrameId: number | null = null;
         /** Counts ticks, so the batch renderer's flush pool can be reset once per frame instead
          *  of once per render call (see the prerender hook below). */
@@ -2826,7 +2839,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
         const buildComposite = async (cSkel: string, cAtlas: string, opts: { mode: "main" | "entrance"; framingOverride?: IAnimationBounds | null; onEntranceEnd?: () => void }): Promise<IComposite | "unsupported" | null> => {
             let spine: import("pixi-spine").Spine;
             try {
-                spine = await loadSpineWithEncodedURLs(cSkel, cAtlas, server, assetRoot());
+                spine = await loadSpineWithEncodedURLs(cSkel, cAtlas, server, assetRoot(), loadAbort.signal);
             } catch (e) {
                 // An entrance set is OPTIONAL - a missing/failed "_Start" just means the
                 // skin has no cinematic entrance. A main-set failure propagates.
@@ -2970,7 +2983,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
             // nest the spine among them and frame the whole scene to the authored camera.
             const sceneURL = chibiAssetURL(cSkel.replace(/\.skel$/, "[scene].json"), server, assetRoot());
             const textureBaseURL = chibiAssetURL(cSkel.replace(/\.skel$/, "[scene]/"), server, assetRoot());
-            const scene = await loadSceneMeshes(sceneURL + bust, textureBaseURL, bust);
+            const scene = await loadSceneMeshes(sceneURL + bust, textureBaseURL, bust, loadAbort.signal);
             // The idle render target's size as the skin authored it (see `rtSizeAuthored`).
             if (opts.mode === "main") authoredRtSize = scene?.data.maxSize?.[1] ?? null;
             // DEV log: which build loaded a scene and whether it survived. Nian nian#4 loaded her
@@ -3021,10 +3034,10 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
             // GAP FILL (?gapfill=1): also load it for the ENTRANCE, where a scene that does
             // not span the camera view leaves bare canvas the game fills with vista.
             if (backdrop && (opts.mode === "main" || gapFillOn())) {
-                backdropFrame = (scene && sceneFrameOf(scene.data)) || (await loadSceneFrame(sceneURL + bust));
+                backdropFrame = (scene && sceneFrameOf(scene.data)) || (await loadSceneFrame(sceneURL + bust, loadAbort.signal));
                 if (backdropFrame) {
                     try {
-                        backdropData = await loadImageTexture(backdrop);
+                        backdropData = await loadImageTexture(backdrop, loadAbort.signal);
                         if (aborted()) {
                             spine.destroy();
                             return null;
@@ -3055,7 +3068,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     // because the character's OWN pose/position moves substantially during the
                     // "Start" reform - a single frame would miss most of the overlap.
                     const characterBounds = measureAnimationBounds(spine, opts.mode === "entrance" ? entranceAnim : idle);
-                    particles = await loadParticles(particlesURL + bust, particlesTexBase, bust, characterBounds, scene?.hasDarkBackdrop ?? false);
+                    particles = await loadParticles(particlesURL + bust, particlesTexBase, bust, characterBounds, scene?.hasDarkBackdrop ?? false, loadAbort.signal);
                     if (aborted()) {
                         spine.destroy();
                         particles?.destroy();
@@ -6076,6 +6089,8 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 setIsLoading(false);
                 onReadyRef.current?.();
             } catch (err) {
+                // A superseded run's fetches reject with the abort; that is the cleanup working.
+                if (loadAbort.signal.aborted) return;
                 console.error("Failed to load dynamic illustration:", err);
                 if (currentLoadId === loadIdRef.current && mountedRef.current) {
                     setError("Failed to load animation");
@@ -6109,6 +6124,10 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
 
         return () => {
             mountedRef.current = false;
+            // This run is superseded (a re-key, or StrictMode's simulated unmount in
+            // development): stop its fetches. Only here, never in `cleanup()`, which the effect
+            // also calls on itself before creating the app.
+            if (fetchAbortOn()) loadAbort.abort();
             onHandleRef.current?.(null);
             resizeObserver.disconnect();
             cleanup();

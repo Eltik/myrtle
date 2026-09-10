@@ -497,7 +497,7 @@ export type DecodedImage = HTMLImageElement | ImageBitmap;
  *  reads and the GPU upload without another decode. Any failure on that path falls back to
  *  the element loader, whose error is the one callers report. `?syncdecode=1` takes the
  *  element path directly for A/B measurement. */
-export function loadDecoded(url: string, what: string): Promise<DecodedImage> {
+export function loadDecoded(url: string, what: string, signal?: AbortSignal): Promise<DecodedImage> {
     const element = () =>
         new Promise<HTMLImageElement>((resolve, reject) => {
             const img = new Image();
@@ -508,7 +508,7 @@ export function loadDecoded(url: string, what: string): Promise<DecodedImage> {
         });
     if (typeof createImageBitmap !== "function" || typeof fetch !== "function" || syncDecodeOn()) return element();
     return (
-        fetch(url, { mode: "cors" })
+        fetch(url, { mode: "cors", signal })
             .then((r) => {
                 if (!r.ok) throw new Error(`${r.status}`);
                 return r.blob();
@@ -526,7 +526,12 @@ export function loadDecoded(url: string, what: string): Promise<DecodedImage> {
                     return raw;
                 }),
             )
-            .catch(element)
+            // An aborted fetch is the caller giving up, not a decode failure: the element
+            // loader would put the same bytes back on the wire.
+            .catch((e: unknown) => {
+                if (signal?.aborted) throw e;
+                return element();
+            })
     );
 }
 
