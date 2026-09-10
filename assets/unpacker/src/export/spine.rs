@@ -29,9 +29,9 @@ pub enum SpineCategory {
     ///
     /// `sp_` is not a guess. `skin_table.json` carries a dedicated `SpDynSkins` table whose
     /// four entries name exactly these assets (`SpDynIllustId`
-    /// "sp_dyn_illust_char_124_kroos_sale#14" and its three siblings, each with `SpAvatarId`,
+    /// "`sp_dyn_illust_char_124_kroos_sale#14`" and its three siblings, each with `SpAvatarId`,
     /// `SpIllustId`, `SpPortraitId` and a `SpDynIllustSkinTag` such as
-    /// "char_124_kroos@sale#14^sp_dyn"), plus `SpDynIllustSkinTagsMap` mapping each tag back
+    /// "`char_124_kroos@sale#14^sp_dyn`"), plus `SpDynIllustSkinTagsMap` mapping each tag back
     /// to its skin. The IL2CPP dump has `ResourceUrls.DynIllustSpResPath()` as a sibling of
     /// `DynIllustResPath()`, `CharSkinData.GetSpDynIllustId()` beside `GetDynIllustId()`, and
     /// the UI toggle `SkinSelectState.EventOnBtnSwitchSpDynIllust`.
@@ -5511,10 +5511,10 @@ fn follow_skeleton_data(
 }
 
 /// Classify a spine asset into a category.
-///   1. skel name starts with "sp_dyn_" → `DynIllustSp`; "dyn_" → `DynIllust`
+///   1. skel name starts with "`sp_dyn`_" → `DynIllustSp`; "dyn_" → `DynIllust`
 ///   2. _animationName == "Relax" OR skel name starts with "build_" → Building
 ///   3. owning `GameObject` named "Front"/"Back"/"Down" → `BattleFront`/`BattleBack`/`BattleDown`
-///   4. skel name starts with "assets_avatar_dyn" → `DynAvatar`
+///   4. skel name starts with "`assets_avatar_dyn`" → `DynAvatar`
 ///   5. fallback: atlas front count (f_, c_) >= back count (b_) → `BattleFront`, else `BattleBack`
 ///
 /// Step 3 is required for correctness: front and back battle skeletons often
@@ -5529,7 +5529,7 @@ fn follow_skeleton_data(
 ///
 /// CORRECTION to the EN reading that preceded it: `Spine` is NOT always caught by step 2.
 /// 939 of the 974 `Spine` rows carry `_animationName` "Relax" and are Building, but 35 carry
-/// "Default"/"Default_01" and reached step 5. All 35 landed `BattleFront` and none landed
+/// "`Default"/"Default_01`" and reached step 5. All 35 landed `BattleFront` and none landed
 /// `BattleBack`, so they are single battle skeletons with no facing to race, not a repeat of
 /// the `Down` defect. The remaining fallback rows were two real misclassifications, now rules
 /// 1 and 4: four `sp_dyn_illust_*` illustrations and the four `assets_avatar_dyn_0N` avatars.
