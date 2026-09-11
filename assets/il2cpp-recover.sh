@@ -163,6 +163,7 @@ stage_check() {
 # Stage: setup
 # =========================================================================================
 stage_setup() {
+  SETUP_MISSING=0
   info "Installing the toolchain (idempotent; each step is skipped if already present)."
   has brew  || die "Homebrew is required — install it from https://brew.sh first"
   has cargo || die "Rust/cargo is required — install it from https://rustup.rs first"
@@ -193,16 +194,23 @@ stage_setup() {
     export ANDROID_SDK_ROOT="${sdkroot}"; mkdir -p "${sdkroot}"
     if [[ -z "$(find_android_tool emulator)" ]]; then
       info "sdkmanager 'emulator' 'platform-tools' → ${sdkroot}"
-      yes 2>/dev/null | "${sdkmanager}" --sdk_root="${sdkroot}" "emulator" "platform-tools" || warn "sdkmanager emulator install returned nonzero — verify manually"
-      ok "requested emulator + platform-tools"
-    else
-      ok "emulator already installed — skipped"
+      yes 2>/dev/null | "${sdkmanager}" --sdk_root="${sdkroot}" "emulator" "platform-tools" || warn "sdkmanager emulator install returned nonzero"
     fi
     info "sdkmanager '${SYS_IMAGE}' (accepting licenses) → ${sdkroot}"
-    yes 2>/dev/null | "${sdkmanager}" --sdk_root="${sdkroot}" "${SYS_IMAGE}" || warn "system-image install returned nonzero — check the image name: ${SYS_IMAGE}"
-    ok "requested system image ${SYS_IMAGE}"
+    yes 2>/dev/null | "${sdkmanager}" --sdk_root="${sdkroot}" "${SYS_IMAGE}" || warn "system-image install returned nonzero"
+    # A tick means the ARTIFACT IS ON DISK, never that a request was made: sdkmanager's status
+    # is neither necessary (a stray emulator.old36 made it nonzero over a good tree) nor
+    # sufficient (a zero exit is not an image on disk), and printing success after a failed
+    # install once hid the wedge until 'avd' two stages later. The image's directory is the
+    # package path with ';' as '/'; the emulator is its binary.
+    local image_dir; image_dir="${sdkroot}/$(printf '%s' "${SYS_IMAGE}" | tr ';' '/')"
+    if [[ -n "$(find_android_tool emulator)" ]]; then ok "emulator binary present: $(find_android_tool emulator)"
+    else err "emulator binary MISSING under ${sdkroot}/emulator (sdkmanager 'emulator' did not land)"; SETUP_MISSING=1; fi
+    if [[ -f "${image_dir}/system.img" ]]; then ok "system image on disk: ${image_dir}"
+    else err "system image MISSING: ${image_dir}/system.img (the install above did not land; check the package name ${SYS_IMAGE} against 'sdkmanager --list')"; SETUP_MISSING=1; fi
   else
     warn "sdkmanager not found — install the Android command-line tools, then re-run setup"
+    SETUP_MISSING=1
   fi
 
   # dotnet — runs the desktop Il2CppDumper (.NET) on Apple Silicon. Only needed by 'analyze'.
@@ -220,6 +228,7 @@ stage_setup() {
     else warn "frida install failed — run 'pipx install frida-tools' manually (only needed by 'dump')"; fi
   fi
 
+  if [[ "${SETUP_MISSING:-0}" == "1" ]]; then die "setup INCOMPLETE: an artifact named above is missing; 'avd' would wedge on it"; fi
   info "setup complete — run: $0 check  to verify."
 }
 
