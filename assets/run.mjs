@@ -20,6 +20,7 @@ import chalk from "chalk";
 import inquirer from "inquirer";
 import ora from "ora";
 import { WebSocketServer } from "ws";
+import { sweepOrphans } from "./orphans.mjs";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -712,18 +713,36 @@ function runUnpackOnce({
  * @returns {Promise<{exported: number}>}
  */
 async function runUnpack(opts) {
+	const startedAt = Date.now();
+	let stats;
 	try {
-		return await runUnpackOnce(opts);
+		stats = await runUnpackOnce(opts);
 	} catch (err) {
 		const jobs = opts.jobs ?? DEFAULT_THREADS;
 		if (err?.signal === "SIGKILL" && jobs > 1) {
 			const msg = `Unpacker ran out of memory at -j ${jobs}; retrying single-threaded (-j 1)…`;
 			console.log(chalk.yellow(`[${new Date().toLocaleTimeString()}] ${msg}`));
 			opts.onNotice?.(msg);
-			return await runUnpackOnce({ ...opts, jobs: 1 });
+			stats = await runUnpackOnce({ ...opts, jobs: 1 });
+		} else {
+			throw err;
 		}
-		throw err;
 	}
+	// REPLACE, not overlay: the exporter rewrites every file it produces, so a file in a
+	// subtree this run wrote into that predates the run is one the exporter no longer
+	// produces, still served and referenced by nothing. Remove it and log it, as the local
+	// install does (see orphans.mjs). `--keep-orphans` (WS_KEEP_ORPHANS=1) skips the sweep,
+	// `--dry-orphans` (WS_DRY_ORPHANS=1) logs what it would remove and removes nothing.
+	const keep = !!(cliArgs["keep-orphans"] ?? process.env.WS_KEEP_ORPHANS);
+	const dry = !!(cliArgs["dry-orphans"] ?? process.env.WS_DRY_ORPHANS);
+	if (!keep) {
+		const swept = sweepOrphans(opts.outputDir, startedAt, { dry });
+		const verb = dry ? "would remove" : "removed";
+		const msg = `Orphan sweep ${verb} ${swept.files} file(s), ${formatBytes(swept.bytes)}${swept.log ? `, logged at ${swept.log}` : ""}${swept.skipped.length ? ` (untouched subtrees left alone: ${swept.skipped.join(", ")})` : ""}`;
+		console.log(chalk.dim(`[${new Date().toLocaleTimeString()}] ${msg}`));
+		opts.onNotice?.(msg);
+	}
+	return stats;
 }
 
 // ─── Option 1: Setup ───────────────────────────────────────────────────────
@@ -1600,6 +1619,7 @@ process.on("SIGINT", () => {
 
 // ─── CLI argv parsing (non-interactive entry) ──────────────────────────────
 // Usage: node run.mjs ws [--server en] [--savedir ./ArkAssets] [--output ./output]
+//        [--keep-orphans] [--dry-orphans]   (the post-extract sweep, see runUnpack)
 //                        [--threads N] [--port 9160] [--interval 30]
 const argv = process.argv.slice(2);
 const cliAction = argv[0] && !argv[0].startsWith("--") ? argv[0] : null;
