@@ -355,7 +355,7 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
         const f = fit;
         const z = baseScale * transform.zoom;
         handle.setCamera(f ? { zoom: f.zoom * z, panX: f.panX * z + transform.pan.x, panY: f.panY * z + transform.pan.y } : { zoom: z, panX: transform.pan.x, panY: transform.pan.y });
-    }, [handle, transform, fit]);
+    }, [handle, transform, fit, baseScale]);
     useEffect(() => {
         if (!handle) {
             setFit(null);
