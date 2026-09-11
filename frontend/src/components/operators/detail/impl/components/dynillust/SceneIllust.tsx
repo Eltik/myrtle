@@ -42,6 +42,13 @@ export interface ISceneIllustHandle {
     /** Play the tap response on the settled main composite: the one-shot "Interact" clip, or
      *  the next "Special" when the rig has no Interact. False when nothing can play yet. */
     interact: () => boolean;
+    /** The viewer's CAMERA: a zoom about the canvas centre and a pan in CSS px, applied as the
+     *  render transform of the scene pass on every frame, so the canvas keeps its size and its
+     *  resolution at every zoom, zooming in draws the scene at full resolution, and zooming out
+     *  draws MORE scene (the painted layers and the static backdrop beyond the settle frame).
+     *  The environment fill and the settled ground stay full-canvas beneath it. `null` or
+     *  `{ zoom: 1, panX: 0, panY: 0 }` is the plain view. */
+    setCamera: (view: { zoom: number; panX: number; panY: number } | null) => void;
 }
 
 interface ISceneIllustProps {
@@ -1937,6 +1944,8 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
     onReadyRef.current = onReady;
     const onHandleRef = useRef(onHandle);
     onHandleRef.current = onHandle;
+    /** The host's camera (see `ISceneIllustHandle.setCamera`); read by the tick, never by the layout. */
+    const cameraRef = useRef<{ zoom: number; panX: number; panY: number } | null>(null);
     // "authored" (the in-game viewer) scales the crop to the container HEIGHT - the character
     // fills a constant fraction of the frame height on ANY container aspect (tall mobile card,
     // wide desktop card, fullscreen dialog), and the excess/short width shows more/less scene.
@@ -2112,6 +2121,9 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
         onHandleRef.current?.({
             canvas: app.view as HTMLCanvasElement,
             interact: () => compositesRef.current.find((x) => x.spine === spineRef.current)?.interact() ?? false,
+            setCamera: (view) => {
+                cameraRef.current = view && (view.zoom !== 1 || view.panX !== 0 || view.panY !== 0) ? view : null;
+            },
         });
 
         let lastTick = performance.now();
@@ -2778,6 +2790,18 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 // HDR path: draw the scene into the half-float target (additive stacks
                 // accumulate past 1 without clipping), then let the stage's tonemap quad
                 // blit it to screen. Otherwise render the stage straight (8-bit).
+                // The host's camera as a render transform (see `ISceneIllustHandle.setCamera`): the
+                // scene pass is drawn through it, the fills and the tonemap quad are not, so what
+                // changes is what the camera sees and never the canvas or its resolution. Built in
+                // CSS px, which is what the stage's world space is; the renderer's own projection
+                // carries the resolution.
+                const cam = cameraRef.current;
+                const camMatrix = cam
+                    ? new PIXI.Matrix()
+                          .translate(-currentApp.screen.width / 2, -currentApp.screen.height / 2)
+                          .scale(cam.zoom, cam.zoom)
+                          .translate(currentApp.screen.width / 2 + cam.panX, currentApp.screen.height / 2 + cam.panY)
+                    : undefined;
                 if (hdrRef.current && hdrSceneRef.current) {
                     // FILL THROUGH THE PASS (`?fillpass=0` reverts). The environment fill and the
                     // settled ground are stage sprites under the tonemap quad, so they reached the
@@ -2795,12 +2819,33 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                             clear = false;
                         }
                     }
-                    currentApp.renderer.render(hdrSceneRef.current, { renderTexture: hdrRef.current.target, clear });
+                    currentApp.renderer.render(hdrSceneRef.current, { renderTexture: hdrRef.current.target, clear, transform: camMatrix });
                     // Update the bloom texture from the freshly-drawn target before the
                     // stage's tonemap quad (which samples both) blits to screen.
                     hdrRef.current.prepare(currentApp.renderer);
                 }
-                currentApp.renderer.render(currentApp.stage);
+                if (camMatrix && !(hdrRef.current && hdrSceneRef.current)) {
+                    // Plain (8-bit) path with a camera: the composite roots are stage children beside
+                    // the fills and the entrance fade, so draw the full-canvas sprites untransformed
+                    // and the rest of the stage through the camera.
+                    const flat = [envBgRef.current, settledBgRef.current, entranceFadeRef.current?.sprite ?? null].filter((x): x is PIXI.Sprite => !!x);
+                    const under = flat.filter((x) => x !== entranceFadeRef.current?.sprite && x.renderable);
+                    let clear = true;
+                    for (const sp of under) {
+                        currentApp.renderer.render(sp, { clear });
+                        clear = false;
+                    }
+                    const was = flat.map((x) => x.renderable);
+                    for (const x of flat) x.renderable = false;
+                    currentApp.renderer.render(currentApp.stage, { clear, transform: camMatrix });
+                    flat.forEach((x, i) => {
+                        x.renderable = was[i];
+                    });
+                    const fade = entranceFadeRef.current?.sprite;
+                    if (fade?.renderable) currentApp.renderer.render(fade, { clear: false });
+                } else {
+                    currentApp.renderer.render(currentApp.stage);
+                }
             }
             if (inView || alwaysTickOn()) {
                 animationFrameId = requestAnimationFrame(tick);

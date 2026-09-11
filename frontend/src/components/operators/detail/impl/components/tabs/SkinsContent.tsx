@@ -13,6 +13,7 @@ import { cn, downloadBlob } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { buildOperatorSkinList, chibiSkinKey, type IUISkin } from "../../skins";
 import { DynamicChibiViewer } from "../chibi/ChibiViewer.lazy";
+import { DEFAULT_SPINE_FIT, type ISpineFit } from "../chibi/helpers";
 import type { ISceneIllustHandle } from "../dynillust/SceneIllust";
 import { SceneIllustPlayer } from "../dynillust/SceneIllust.lazy";
 
@@ -259,7 +260,8 @@ interface ISkinViewerDialogProps {
 
 /** Keep the view inside the zoomed content: the pan may travel only as far as the scaled box
  *  overflows the container, so the box's edge (and the black beneath it) never comes into
- *  view. At 100 percent there is nothing outside the container and the pan is zero. */
+ *  view. At 100 percent and below there is nothing outside the container and the pan is zero
+ *  (the L2D's camera shows more scene below 100 percent, centred). */
 function clampPan(pan: { x: number; y: number }, scale: number, width: number, height: number): { x: number; y: number } {
     const lx = Math.max(0, ((scale - 1) * width) / 2);
     const ly = Math.max(0, ((scale - 1) * height) / 2);
@@ -268,6 +270,15 @@ function clampPan(pan: { x: number; y: number }, scale: number, width: number, h
 
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 5;
+
+/** The fit the fullscreen L2D opens on. `contain` shows the whole authored composition;
+ *  the renderer's own default under authored framing is `height`, which keeps the subject
+ *  a constant fraction of the frame height across card shapes and CROPS the sides of a wide
+ *  dialog, which read as "starts way too zoomed-in". `?dialogfit=height` restores that. */
+function dialogFit(): ISpineFit {
+    if (typeof window === "undefined") return DEFAULT_SPINE_FIT;
+    return new URLSearchParams(window.location.search).get("dialogfit") === "height" ? { mode: "height", align: "center" } : DEFAULT_SPINE_FIT;
+}
 const ZOOM_STEP = 0.25;
 const ZOOM_WHEEL_SENSITIVITY = 0.0015;
 const BASE_SCALE = 1.15;
@@ -285,7 +296,7 @@ const TAP_SLOP_PX = 4;
 /** Containers the browser can record; the first supported one names the file's extension. */
 const RECORD_MIME_TYPES = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9", "video/webm"];
 
-const clampZoom = (z: number) => Math.min(Math.max(z, MIN_ZOOM), MAX_ZOOM);
+const clampZoom = (z: number, min = MIN_ZOOM) => Math.min(Math.max(z, min), MAX_ZOOM);
 
 export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinName, dynamic, onOpenChange: onOpenChangeProp, children }: ISkinViewerDialogProps) {
     const [transform, setTransform] = useState<ITransform>(INITIAL_TRANSFORM);
@@ -309,6 +320,13 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
      *  reach the L2D's tap handler. */
     const movedRef = useRef(false);
     const [handle, setHandle] = useState<ISceneIllustHandle | null>(null);
+    // The L2D is zoomed and panned by the renderer's CAMERA, not by scaling its box: the
+    // canvas keeps the dialog's size and resolution, zooming in stays sharp, and zooming out
+    // shows more of the scene instead of a smaller picture with black around it.
+    useEffect(() => {
+        if (!handle) return;
+        handle.setCamera({ zoom: transform.zoom, panX: transform.pan.x, panY: transform.pan.y });
+    }, [handle, transform]);
     const [recordingLeft, setRecordingLeft] = useState<number | null>(null);
     const recorderRef = useRef<MediaRecorder | null>(null);
 
@@ -502,10 +520,11 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
                     )}
                 </div>
 
-                {/* One pan-and-zoom surface for both the static art and the L2D. The L2D keeps its
-                    own canvas size (a CSS transform does not change the host's client box) and its
-                    tap handler: a click that ends a pan is swallowed by `onClickCapture`. The static
-                    art alone carries BASE_SCALE, which makes the contained image fill the dialog. */}
+                {/* One pan-and-zoom surface for both the static art and the L2D. The static art is
+                    a CSS transform on its box; the L2D takes the same zoom and pan as a camera inside
+                    the renderer (see the effect above), so its box is never transformed. A click that
+                    ends a pan is swallowed by `onClickCapture`. The static art alone carries
+                    BASE_SCALE, which makes the contained image fill the dialog. */}
                 <div
                     ref={setContainerRef}
                     role="application"
@@ -518,16 +537,14 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
                     onClickCapture={onClickCapture}
                 >
                     <div
-                        className={cn("absolute inset-0", !isPanning && "transition-transform duration-150 ease-out")}
-                        style={{
-                            transform: `scale(${baseScale * transform.zoom}) translate(${transform.pan.x / (baseScale * transform.zoom)}px, ${transform.pan.y / (baseScale * transform.zoom)}px)`,
-                        }}
+                        className={cn("absolute inset-0", !dynamic && !isPanning && "transition-transform duration-150 ease-out")}
+                        style={dynamic ? undefined : { transform: `scale(${baseScale * transform.zoom}) translate(${transform.pan.x / (baseScale * transform.zoom)}px, ${transform.pan.y / (baseScale * transform.zoom)}px)` }}
                     >
                         {dynamic ? (
                             // Fullscreen L2D with the game's authored (`_adjustes`) framing -
                             // the large, roughly-square viewport where the full-scene
                             // composition looks right (unlike the narrow card).
-                            <SceneIllustPlayer files={dynamic.files} server={dynamic.server} framing="authored" backdrop={imageSrc} onHandle={setHandle} />
+                            <SceneIllustPlayer files={dynamic.files} server={dynamic.server} framing="authored" fit={dialogFit()} backdrop={imageSrc} onHandle={setHandle} />
                         ) : (
                             <img alt={skinName} className="h-full w-full object-contain" decoding="async" draggable={false} src={imageSrc} />
                         )}
