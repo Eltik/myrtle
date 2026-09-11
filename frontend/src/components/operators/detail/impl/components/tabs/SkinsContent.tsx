@@ -269,7 +269,13 @@ function clampPan(pan: { x: number; y: number }, scale: number, width: number, h
 }
 
 const MIN_ZOOM = 0.5;
+/** The L2D's 100 percent is the computed fit of the whole painting (see `fitView`), so
+ *  below it there is only dead margin; the static art keeps its own floor. */
+const MIN_ZOOM_DYNAMIC = 1;
 const MAX_ZOOM = 5;
+/** How often the dialog re-reads the renderer's fit while open, in ms (the fit follows the
+ *  entrance hand-off and a resize; the read is a few multiplications). */
+const FIT_POLL_MS = 500;
 
 /** The fit the fullscreen L2D opens on. `contain` shows the whole authored composition;
  *  the renderer's own default under authored framing is `height`, which keeps the subject
@@ -301,15 +307,33 @@ const clampZoom = (z: number, min = MIN_ZOOM) => Math.min(Math.max(z, min), MAX_
 export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinName, dynamic, onOpenChange: onOpenChangeProp, children }: ISkinViewerDialogProps) {
     const [transform, setTransform] = useState<ITransform>(INITIAL_TRANSFORM);
     const containerElRef = useRef<HTMLDivElement | null>(null);
-    /** The static art alone carries BASE_SCALE, which makes the contained image fill the dialog. */
+    /** The static art carries BASE_SCALE over the contained image; the L2D's 100 percent is
+     *  exactly the renderer's fit of the composition (see `fitView`), so at 100 percent the
+     *  whole composition is on screen and a drag moves nothing. */
     const baseScale = dynamic ? 1 : BASE_SCALE;
     const baseScaleRef = useRef(baseScale);
     baseScaleRef.current = baseScale;
+    const minZoom = dynamic ? MIN_ZOOM_DYNAMIC : MIN_ZOOM;
+    const minZoomRef = useRef(minZoom);
+    minZoomRef.current = minZoom;
+    /** The renderer's fit for the whole painting: the L2D's 100 percent (see `fitView`). */
+    const [fit, setFit] = useState<{ zoom: number; panX: number; panY: number; width: number; height: number } | null>(null);
+    const fitRef = useRef(fit);
+    fitRef.current = fit;
     /** The transform with its pan clamped to the container the content is shown in. */
     const clamped = useCallback((t: ITransform): ITransform => {
         const el = containerElRef.current;
         if (!el) return t;
-        const pan = clampPan(t.pan, baseScaleRef.current * t.zoom, el.clientWidth, el.clientHeight);
+        const f = fitRef.current;
+        // The L2D's content is the painting at its fitted size, scaled by the displayed zoom;
+        // the static art's content is the scaled box. Either way the pan may travel only as far
+        // as the content overflows the container.
+        const pan = f
+            ? {
+                  x: Math.min(Math.max(t.pan.x, -Math.max(0, (f.width * baseScaleRef.current * t.zoom - el.clientWidth) / 2)), Math.max(0, (f.width * baseScaleRef.current * t.zoom - el.clientWidth) / 2)),
+                  y: Math.min(Math.max(t.pan.y, -Math.max(0, (f.height * baseScaleRef.current * t.zoom - el.clientHeight) / 2)), Math.max(0, (f.height * baseScaleRef.current * t.zoom - el.clientHeight) / 2)),
+              }
+            : clampPan(t.pan, baseScaleRef.current * t.zoom, el.clientWidth, el.clientHeight);
         return pan.x === t.pan.x && pan.y === t.pan.y ? t : { ...t, pan };
     }, []);
     const [isPanning, setIsPanning] = useState(false);
@@ -323,10 +347,28 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
     // The L2D is zoomed and panned by the renderer's CAMERA, not by scaling its box: the
     // canvas keeps the dialog's size and resolution, zooming in stays sharp, and zooming out
     // shows more of the scene instead of a smaller picture with black around it.
+    // The displayed zoom is RELATIVE TO THE FIT: 100 percent is the camera at which the whole
+    // painting fits the container (computed by the renderer from the painted bounds and the
+    // live layout), and the user's pan rides on top of the pan that centres it.
     useEffect(() => {
         if (!handle) return;
-        handle.setCamera({ zoom: transform.zoom, panX: transform.pan.x, panY: transform.pan.y });
-    }, [handle, transform]);
+        const f = fit;
+        const z = baseScale * transform.zoom;
+        handle.setCamera(f ? { zoom: f.zoom * z, panX: f.panX * z + transform.pan.x, panY: f.panY * z + transform.pan.y } : { zoom: z, panX: transform.pan.x, panY: transform.pan.y });
+    }, [handle, transform, fit]);
+    useEffect(() => {
+        if (!handle) {
+            setFit(null);
+            return;
+        }
+        const read = () => {
+            const next = handle.fitView();
+            setFit((prev) => (!next || !prev ? next : Math.abs(next.zoom - prev.zoom) < 1e-4 && Math.abs(next.panX - prev.panX) < 0.5 && Math.abs(next.panY - prev.panY) < 0.5 ? prev : next));
+        };
+        read();
+        const t = setInterval(read, FIT_POLL_MS);
+        return () => clearInterval(t);
+    }, [handle]);
     const [recordingLeft, setRecordingLeft] = useState<number | null>(null);
     const recorderRef = useRef<MediaRecorder | null>(null);
 
@@ -335,7 +377,7 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
     const zoomBy = useCallback(
         (delta: number) => {
             setTransform((prev) => {
-                const next = clampZoom(prev.zoom + delta);
+                const next = clampZoom(prev.zoom + delta, minZoomRef.current);
                 return next === prev.zoom ? prev : clamped({ ...prev, zoom: next });
             });
         },
@@ -355,7 +397,7 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
                 const fy = e.clientY - rect.top - rect.height / 2;
                 const factor = Math.exp(-e.deltaY * ZOOM_WHEEL_SENSITIVITY);
                 setTransform((prev) => {
-                    const nextZoom = clampZoom(prev.zoom * factor);
+                    const nextZoom = clampZoom(prev.zoom * factor, minZoomRef.current);
                     if (nextZoom === prev.zoom) return prev;
                     const ratio = nextZoom / prev.zoom;
                     return clamped({
@@ -485,10 +527,16 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
                 <DialogTitle className="sr-only">{skinName}</DialogTitle>
 
                 <div className="absolute top-3 left-3 z-10 flex items-center gap-1 rounded-lg border border-border/50 bg-background/80 p-1 shadow-sm backdrop-blur-sm">
-                    <ToolButton onClick={() => zoomBy(-ZOOM_STEP)} disabled={transform.zoom <= MIN_ZOOM} label="Zoom out">
+                    <ToolButton onClick={() => zoomBy(-ZOOM_STEP)} disabled={transform.zoom <= minZoom} label="Zoom out">
                         <ZoomOut className="h-4 w-4" />
                     </ToolButton>
-                    <span className="min-w-12 select-none text-center font-mono text-muted-foreground text-xs">{Math.round(transform.zoom * 100)}%</span>
+                    <span
+                        className="min-w-12 select-none text-center font-mono text-muted-foreground text-xs"
+                        title={fit ? `100% frames the composition: camera ${(fit.zoom * baseScale).toFixed(3)}, ${Math.round(fit.width * baseScale)} by ${Math.round(fit.height * baseScale)} px` : undefined}
+                        data-camera={dynamic ? `${transform.zoom},${Math.round(transform.pan.x)},${Math.round(transform.pan.y)}` : undefined}
+                    >
+                        {Math.round(transform.zoom * 100)}%
+                    </span>
                     <ToolButton onClick={() => zoomBy(ZOOM_STEP)} disabled={transform.zoom >= MAX_ZOOM} label="Zoom in">
                         <ZoomIn className="h-4 w-4" />
                     </ToolButton>

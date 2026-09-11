@@ -49,6 +49,12 @@ export interface ISceneIllustHandle {
      *  The environment fill and the settled ground stay full-canvas beneath it. `null` or
      *  `{ zoom: 1, panX: 0, panY: 0 }` is the plain view. */
     setCamera: (view: { zoom: number; panX: number; panY: number } | null) => void;
+    /** The camera at which the live composite's WHOLE painting (its painted content bounds,
+     *  backdrop included, measured by the renderer) fits the canvas, centred: the zoom, the pan
+     *  that centres it, and the painting's size in CSS px at that zoom. Computed from the live
+     *  root transform and the canvas size at the time of the call, so it follows the hand-off
+     *  and a resize. Null until a composite with measured bounds is live. */
+    fitView: () => { zoom: number; panX: number; panY: number; width: number; height: number } | null;
 }
 
 interface ISceneIllustProps {
@@ -1087,6 +1093,52 @@ function loadImageTexture(url: string, signal?: AbortSignal): Promise<ILoadedBac
     });
 }
 
+/** The opaque extent of a sprite's texture as fractions of it, `[u0, v0, u1, v1]`, measured
+ *  once by drawing the source at 256 px and scanning alpha above 2 of 255 (the margins are
+ *  exactly transparent; the threshold skips dither), cached on the sprite. The whole texture
+ *  when the source cannot be read. Assumes an unrotated sprite, which the backdrop is. */
+function artExtentOf(sprite: PIXI.Sprite): [number, number, number, number] {
+    const cached = (sprite as unknown as { __artFrac?: [number, number, number, number] }).__artFrac;
+    if (cached) return cached;
+    let frac: [number, number, number, number] = [0, 0, 1, 1];
+    try {
+        const src = (sprite.texture.baseTexture.resource as unknown as { source?: CanvasImageSource & { width: number; height: number } }).source;
+        if (src && typeof document !== "undefined") {
+            const N = 256;
+            const canvas = document.createElement("canvas");
+            canvas.width = N;
+            canvas.height = N;
+            const ctx = canvas.getContext("2d", { willReadFrequently: true });
+            if (ctx) {
+                ctx.drawImage(src, 0, 0, N, N);
+                const a = ctx.getImageData(0, 0, N, N).data;
+                let x0 = N;
+                let y0 = N;
+                let x1 = -1;
+                let y1 = -1;
+                for (let y = 0; y < N; y++) {
+                    for (let x = 0; x < N; x++) {
+                        if (a[(y * N + x) * 4 + 3] > 2) {
+                            if (x < x0) x0 = x;
+                            if (x > x1) x1 = x;
+                            if (y < y0) y0 = y;
+                            if (y > y1) y1 = y;
+                        }
+                    }
+                }
+                if (x1 >= x0 && y1 >= y0) frac = [x0 / N, y0 / N, (x1 + 1) / N, (y1 + 1) / N];
+            }
+        }
+    } catch {
+        // A cross-origin or lost source reads as the whole texture.
+    }
+    // The sprite's anchor and scale place the texture; a horizontal flip mirrors the fractions.
+    if (sprite.scale.x < 0) frac = [1 - frac[2], frac[1], 1 - frac[0], frac[3]];
+    if (sprite.scale.y < 0) frac = [frac[0], 1 - frac[3], frac[2], 1 - frac[1]];
+    (sprite as unknown as { __artFrac?: [number, number, number, number] }).__artFrac = frac;
+    return frac;
+}
+
 /** Build the static-illustration backdrop sprite. The static art is the camera's
  *  view of the scene - it spans `2 × cameraSizePx` of scene height - so we scale
  *  it to that and centre it on the animated character's visible bounds (the focal
@@ -2123,6 +2175,84 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
             interact: () => compositesRef.current.find((x) => x.spine === spineRef.current)?.interact() ?? false,
             setCamera: (view) => {
                 cameraRef.current = view && (view.zoom !== 1 || view.panX !== 0 || view.panY !== 0) ? view : null;
+            },
+            fitView: () => {
+                const c = compositesRef.current.find((x) => x.spine === spineRef.current);
+                const live = appRef.current;
+                if (!c || !live) return null;
+                // THE PAINTING is the static illustration's own rectangle: the backdrop sprite
+                // the composite places (its texture rect, the whole skin image with its margins),
+                // which is exactly what the card and the static fullscreen path frame. Not the
+                // painted content bounds: those are measured through the defocus and the haze
+                // and run far past the visible art (Texas read a 0.328 fit from them, opening
+                // small with dead margin around her), the trap `fitWholeArt`'s note records.
+                // A skin with no backdrop falls back to the painted bounds.
+                let w: number;
+                let h: number;
+                let cx: number;
+                let cy: number;
+                const bd = c.root.children.find((ch) => (ch as unknown as { __backdrop?: boolean }).__backdrop === true && ch.renderable) as PIXI.Sprite | undefined;
+                // THE COMPOSITION is the crisp painted scene: the union of the scene's mesh layer
+                // planes (their geometry, not an alpha scan: particles and haze inflated a scan of
+                // Texas to a 0.010 camera). Outside those planes only the defocused backdrop gap
+                // fill shows, which is the visual edge Ian's 50 percent read as "empty scene
+                // around it". Falls back to the backdrop's opaque extent, then the bounds.
+                // The rig's own bounds join the union (a skin whose scene is a few small planes,
+                // Kal'tsit sale#14, would otherwise fit a corner of itself at 2.4x), and the union
+                // never exceeds the painting's opaque extent when there is a backdrop.
+                const layerConts = c.root.children.filter((ch) => (ch as unknown as { __sceneLayers?: boolean }).__sceneLayers === true && ch.renderable && (ch as PIXI.Container).children.length > 0) as PIXI.Container[];
+                let union: PIXI.Rectangle | null = null;
+                for (const cont of layerConts) {
+                    const r = cont.getBounds();
+                    if (!(r.width > 0 && r.height > 0)) continue;
+                    union = union ? union.enlarge(r) : r.clone();
+                }
+                const rig = c.bounds;
+                if (rig && rig.width > 0 && rig.height > 0) {
+                    const s = c.root.scale.x;
+                    const r = new PIXI.Rectangle(c.root.x + rig.x * s, c.root.y + rig.y * s, rig.width * s, rig.height * s);
+                    union = union ? union.enlarge(r) : r;
+                }
+                if (union && bd) {
+                    const frac = artExtentOf(bd);
+                    const b = bd.getBounds();
+                    const png = new PIXI.Rectangle(b.x + b.width * frac[0], b.y + b.height * frac[1], b.width * (frac[2] - frac[0]), b.height * (frac[3] - frac[1]));
+                    // biome-ignore lint/suspicious/noFocusedTests: PIXI.Rectangle.fit is the intersection, not a test
+                    const clipped = union.clone().fit(png);
+                    if (clipped.width > 0 && clipped.height > 0) union = clipped;
+                }
+                if (union) {
+                    w = union.width;
+                    h = union.height;
+                    cx = union.x + union.width / 2;
+                    cy = union.y + union.height / 2;
+                } else if (bd) {
+                    // The skin image carries transparent margins around the painting (a square
+                    // canvas around a portrait composition on Texas: fitting the whole image
+                    // read 0.329 and opened her small), so the fit is the OPAQUE extent of the
+                    // texture, measured once per sprite at 256 px and cached as fractions of it.
+                    const frac = artExtentOf(bd);
+                    const r = bd.getBounds();
+                    w = r.width * (frac[2] - frac[0]);
+                    h = r.height * (frac[3] - frac[1]);
+                    cx = r.x + (r.width * (frac[0] + frac[2])) / 2;
+                    cy = r.y + (r.height * (frac[1] + frac[3])) / 2;
+                } else {
+                    const b = c.contentBounds ?? c.bounds;
+                    if (!b || !(b.width > 0) || !(b.height > 0)) return null;
+                    // Local to the root, which is placed by scale and position only, never rotated.
+                    const s = c.root.scale.x;
+                    w = b.width * s;
+                    h = b.height * s;
+                    cx = c.root.x + (b.x + b.width / 2) * s;
+                    cy = c.root.y + (b.y + b.height / 2) * s;
+                }
+                if (!(w > 0) || !(h > 0)) return null;
+                const W = live.screen.width;
+                const H = live.screen.height;
+                const zoom = Math.min(W / w, H / h);
+                if (!(zoom > 0) || !Number.isFinite(zoom)) return null;
+                return { zoom, panX: (W / 2 - cx) * zoom, panY: (H / 2 - cy) * zoom, width: w * zoom, height: h * zoom };
             },
         });
 
@@ -3169,7 +3299,10 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 // game toggles them.
                 // Haze the game draws behind the scene's own background (see `hazeBehind`).
                 if (particles) sceneContainer.addChild(particles.hazeBehind);
-                if (scene && !useStatic) sceneContainer.addChild(scene.background);
+                if (scene && !useStatic) {
+                    (scene.background as unknown as { __sceneLayers?: boolean }).__sceneLayers = true;
+                    sceneContainer.addChild(scene.background);
+                }
                 // Fallback position when the skin has no separator (or the seat is off): the
                 // gap containers are empty then, so this is a no-op.
                 if (scene && !useStatic) for (const g of scene.gaps) sceneContainer.addChild(g);
@@ -3216,7 +3349,10 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                         separatorWash = seats;
                     }
                 }
-                if (scene) sceneContainer.addChild(scene.foreground);
+                if (scene) {
+                    (scene.foreground as unknown as { __sceneLayers?: boolean }).__sceneLayers = true;
+                    sceneContainer.addChild(scene.foreground);
+                }
                 if (particles) sceneContainer.addChild(particles.foreground);
                 // The container split draws ALL front-particles above ALL foreground scene
                 // layers, but Unity orders both by the same `m_SortingOrder` scale: a scene
@@ -4005,6 +4141,8 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     const bdd = scene?.data;
                     const bdDerived = panelArt && bdxfOn() && typeof bdd?.backdropScale === "number" && bdd.backdropOffsetPx ? { scale: bdd.backdropScale, offset: bdd.backdropOffsetPx } : null;
                     const bd = makeBackdropSprite(backdropData, backdropFrame, spineCentroid, bdDerived);
+                    // Marked so `fitView` can find the painting's own rectangle (see the handle).
+                    (bd as unknown as { __backdrop?: boolean }).__backdrop = true;
                     const bdAblated = typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("abl") || "").split(",").includes("backdrop");
                     // The card's idle draws no painting and frames on the animation (see
                     // `panelArtAtRestOn`): non-renderable here, before `contentBounds` is measured,
