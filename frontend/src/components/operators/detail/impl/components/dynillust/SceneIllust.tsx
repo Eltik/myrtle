@@ -8,6 +8,7 @@ import { baseTextureOf, chibiAssetURL, DEFAULT_SPINE_FIT, type IAnimationBounds,
 import { createHDRScene, type IHDRScene, sceneCompositeGamma } from "./hdrTonemap";
 import { ensureAdditiveSpriteBoost, type FindBone, type ILoadedParticles, loadParticles, particleCensus } from "./particles";
 import {
+    applySceneLayerAmount,
     applySceneLayerColor,
     applySceneLayerFollow,
     applySceneLayerRamScroll,
@@ -24,6 +25,7 @@ import {
     orthoZoomRatio,
     sampleColorCurve,
     sampleCurveXY,
+    sampleScalarCurve,
     sceneFrameOf,
 } from "./sceneMesh";
 
@@ -584,6 +586,15 @@ function fetchAbortOn(): boolean {
  *  exported under `DYNCHAR_IDLE_COLOR`), at the scene clock modulo the idle loop. The entrance
  *  composite carries no such curve, so the cinematic is untouched either way. Missing or any
  *  other value keeps the static tint, which is the previous behaviour exactly. */
+/** ENTRANCE `_Amount` REPLAY (`?amountcurve=1`, off unless the parameter is exactly "1"): set a
+ *  Ram layer's dissolve threshold each frame from its `amountCurve` (exported under
+ *  `DYNCHAR_AMOUNT_CURVE`) at the entrance track time, beside the colour curve. Missing or any
+ *  other value keeps the static `amount`, the previous behaviour exactly. */
+function amountCurveOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("amountcurve") === "1";
+}
+
 function idleColorOn(): boolean {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("idlecolor") === "1";
@@ -2732,6 +2743,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                         // curves are genuinely on the camera's clock, their error should
                         // minimise away from 0 - and if it minimises AT 0, that is a clean kill.
                         if (mm.__colorCurve) applySceneLayerColor(m, sampleColorCurve(mm.__colorCurve, tt + matLead()));
+                        if (mm.__amountCurve && amountCurveOn()) applySceneLayerAmount(m, sampleScalarCurve(mm.__amountCurve, tt));
                         if (mm.__stCurve) applySceneLayerSt(m, tt, sceneClock);
                     }
                 }

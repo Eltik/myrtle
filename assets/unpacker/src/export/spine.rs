@@ -262,6 +262,12 @@ pub struct SceneRam {
     pub edge_pow: f32,
     /// `_Amount` — the dissolve threshold; `_BorderWidth` — its edge softness.
     pub amount: f32,
+    /// ENTRANCE `_Amount` animation `(t_seconds, value)`: the `_Start` clip's scalar FLOAT
+    /// binding (kind nibble 8) on the layer's threshold property, raw keyed values clamped to
+    /// the shader's declared lower `Range` bound the way the particle path clamps its stream
+    /// curve. Only under `DYNCHAR_AMOUNT_CURVE` (the export is byte-identical without it).
+    /// `None` = the threshold is not animated (the static `amount` stands).
+    pub amount_curve: Option<Vec<(f32, f32)>>,
     pub border_width: f32,
     /// `_IntensityU`/`_IntensityV` — how far the disturb sample displaces the lookup.
     pub intensity_u: f32,
@@ -1618,6 +1624,14 @@ fn collect_dynchar_bg_quads(
     let idle_color_on = !is_entrance && std::env::var("DYNCHAR_IDLE_COLOR").is_ok();
     let idle_color_channels = if idle_color_on {
         super::anim::idle_material_color_channels(all_objects)
+    } else {
+        HashMap::new()
+    };
+    // ENTRANCE material channels of EVERY kind (`DYNCHAR_AMOUNT_CURVE` present enables): the
+    // scalar `_Amount` bindings the ram threshold curve reads. Kept apart from `color_channels`
+    // so the presence tests on that map never see a float-only or vector-only GameObject.
+    let float_channels = if is_entrance && std::env::var("DYNCHAR_AMOUNT_CURVE").is_ok() {
+        super::anim::entrance_material_channels_all(all_objects)
     } else {
         HashMap::new()
     };
@@ -3057,6 +3071,26 @@ fn collect_dynchar_bg_quads(
                             } else {
                                 blend(threshold_prop, 0.5)
                             } as f32,
+                            amount_curve: if std::env::var("DYNCHAR_AMOUNT_CURVE").is_ok() {
+                                let prop = if two_map {
+                                    "_Amount_01"
+                                } else {
+                                    threshold_prop
+                                };
+                                float_channels
+                                    .get(&go_pid)
+                                    .and_then(|chs| super::anim::prop_float(chs, prop))
+                                    .map(|ch| {
+                                        let lo = super::shader_map::shader_range(shader, prop)
+                                            .map(|(lo, _)| lo);
+                                        ch.curve
+                                            .iter()
+                                            .map(|&(t, v)| (t, lo.map_or(v, |l| v.max(l))))
+                                            .collect()
+                                    })
+                            } else {
+                                None
+                            },
                             border_width: if two_map {
                                 blend("_BorderWidth_01", 0.1)
                             } else {
@@ -7297,6 +7331,12 @@ fn export_scene(
                     "dissolveSpeed": r.dissolve_speed,
                     "disturbSpeed": r.disturb_speed,
                 });
+                // ENTRANCE `_Amount` animation (`DYNCHAR_AMOUNT_CURVE`), `[t, value]`; the key is
+                // omitted, never null, so the default export stays byte-identical.
+                if let Some(c) = &r.amount_curve {
+                    layer["ram"]["amountCurve"] =
+                        serde_json::json!(c.iter().map(|&(t, v)| [t, v]).collect::<Vec<_>>());
+                }
                 // Disturb2's second noise, present only on that family so every other ram block
                 // serialises exactly as before.
                 if let Some(d2) = r.disturb2 {

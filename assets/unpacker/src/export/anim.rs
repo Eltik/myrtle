@@ -2577,6 +2577,23 @@ pub fn decode_curve_any(clip: &Value, idx: usize) -> Option<Vec<(f32, f32)>> {
 /// Unity's `customType` for a renderer MATERIAL-property binding.
 const MATERIAL_CUSTOM_TYPE: i64 = 22;
 
+/// The KIND of a material binding, from the attribute's top nibble (`attribute >> 28`): 0..3 a
+/// vector component (x, y, z, w; for `_MainTex_ST` scale x, scale y, offset x, offset y), 4..7
+/// a colour channel (r, g, b, a), 8 a scalar float. The low 28 bits are `crc32(propName)` in
+/// every case. Recovered 2026-09-12 (`probe_matbindings`): the unresolved family 0x803e92f7 is
+/// `_Amount` with kind 8, which is why every float binding was invisible to a reader that
+/// admitted colour channels only.
+pub const BINDING_KIND_VECTOR_MAX: u32 = 3;
+pub const BINDING_KIND_COLOR_MIN: u32 = 4;
+pub const BINDING_KIND_COLOR_MAX: u32 = 7;
+pub const BINDING_KIND_FLOAT: u32 = 8;
+
+/// The kind nibble of a material binding attribute.
+#[must_use]
+pub const fn binding_kind(attr: i64) -> u32 {
+    ((attr as u64) >> 28) as u32 & 0xF
+}
+
 /// One animated material-colour channel on a renderer's `GameObject`, from the `_Start`
 /// clip(s). A colour-channel binding (`customType` 22) encodes its target as
 /// `attribute = (crc32(propName) & 0x0FFF_FFFF) | ((4 + channel) << 28)`, channel 0..3 =
@@ -2587,7 +2604,11 @@ pub struct MaterialColorChannel {
     /// `crc32(property_name) & 0x0FFF_FFFF` — matched against the layer material's own
     /// saved colour-property names, so the capture stays data-derived.
     pub prop_crc28: u32,
-    /// RGBA channel index 0..3.
+    /// The binding's kind nibble (see [`binding_kind`]): 4..7 colour, 0..3 vector, 8 float.
+    /// Every colour consumer filters on 4..=7, so a float or vector channel on the same
+    /// GameObject never masquerades as a colour.
+    pub kind: u32,
+    /// RGBA channel index 0..3 for a colour, the component for a vector, 0 for a float.
     pub channel: usize,
     /// Decoded `(t_seconds, value)` samples (dense-resampled cubic easing).
     pub curve: Vec<(f32, f32)>,
@@ -2612,13 +2633,33 @@ pub fn prop_channel<'a>(
     let crc28 = crc32(prop.as_bytes()) & 0x0FFF_FFFF;
     channels
         .iter()
-        .find(|c| c.prop_crc28 == crc28 && c.channel == channel)
+        .find(|c| is_color_kind(c.kind) && c.prop_crc28 == crc28 && c.channel == channel)
+}
+
+/// Whether a channel kind is a colour channel (r, g, b, a).
+#[must_use]
+pub const fn is_color_kind(kind: u32) -> bool {
+    kind >= BINDING_KIND_COLOR_MIN && kind <= BINDING_KIND_COLOR_MAX
+}
+
+/// The animated scalar FLOAT curve of `prop` on this renderer (kind 8), raw keyed values.
+#[must_use]
+pub fn prop_float<'a>(
+    channels: &'a [MaterialColorChannel],
+    prop: &str,
+) -> Option<&'a MaterialColorChannel> {
+    let crc28 = crc32(prop.as_bytes()) & 0x0FFF_FFFF;
+    channels
+        .iter()
+        .find(|c| c.kind == BINDING_KIND_FLOAT && c.prop_crc28 == crc28)
 }
 
 #[must_use]
 pub fn animates_prop(channels: &[MaterialColorChannel], prop: &str) -> bool {
     let crc28 = crc32(prop.as_bytes()) & 0x0FFF_FFFF;
-    channels.iter().any(|c| c.prop_crc28 == crc28)
+    channels
+        .iter()
+        .any(|c| is_color_kind(c.kind) && c.prop_crc28 == crc28)
 }
 
 /// Every ANIMATED material-colour channel in the `_Start` entrance clip(s), keyed by the
@@ -2631,7 +2672,22 @@ pub fn entrance_material_color_channels(
     all_objects: &HashMap<i64, (i32, Value)>,
 ) -> HashMap<i64, Vec<MaterialColorChannel>> {
     let start_only = start_only_effect_clips(all_objects);
-    material_color_channels_for(all_objects, |pid, v| {
+    material_color_channels_for(all_objects, true, |pid, v| {
+        is_entrance_clip(v) || start_only.contains(&pid)
+    })
+}
+
+/// Every animated material channel of ANY kind (vector components, colour channels, scalar
+/// floats) in the entrance clips, keyed by GameObject. Separate from the colour map so the
+/// consumers that test a GameObject's PRESENCE in that map (`animated_color`, the colour-reveal
+/// admission) keep seeing colour-only entries and the default export stays byte-identical;
+/// read only where a float is wanted (`DYNCHAR_AMOUNT_CURVE`).
+#[must_use]
+pub fn entrance_material_channels_all(
+    all_objects: &HashMap<i64, (i32, Value)>,
+) -> HashMap<i64, Vec<MaterialColorChannel>> {
+    let start_only = start_only_effect_clips(all_objects);
+    material_color_channels_for(all_objects, false, |pid, v| {
         is_entrance_clip(v) || start_only.contains(&pid)
     })
 }
@@ -2646,7 +2702,7 @@ pub fn entrance_material_color_channels(
 pub fn idle_material_color_channels(
     all_objects: &HashMap<i64, (i32, Value)>,
 ) -> HashMap<i64, Vec<MaterialColorChannel>> {
-    material_color_channels_for(all_objects, |_, v| is_idle_clip(v))
+    material_color_channels_for(all_objects, true, |_, v| is_idle_clip(v))
 }
 
 /// The loop an idle colour curve repeats on: the longest `clip_stop` among the channels of ONE
@@ -2663,8 +2719,11 @@ pub fn channels_loop(channels: &[MaterialColorChannel]) -> Option<f32> {
 
 /// Every ANIMATED material-colour channel in the clips `admit` accepts, keyed by the
 /// renderer's `GameObject` `path_id`. The shared body of the entrance and idle readers.
+/// `colors_only` keeps the map to colour channels (kind 4..7), the shape every colour consumer
+/// was written against; `false` admits vector components and scalar floats too.
 fn material_color_channels_for(
     all_objects: &HashMap<i64, (i32, Value)>,
+    colors_only: bool,
     admit: impl Fn(i64, &Value) -> bool,
 ) -> HashMap<i64, Vec<MaterialColorChannel>> {
     let hash_to_gos = build_hash_to_gos(all_objects);
@@ -2713,9 +2772,14 @@ fn material_color_channels_for(
                     );
                 }
             }
+            let kind_admitted = if colors_only {
+                (4..=7).contains(&nibble)
+            } else {
+                nibble <= u64::from(BINDING_KIND_FLOAT)
+            };
             if custom == MATERIAL_CUSTOM_TYPE
                 && !is_pptr
-                && (4..=7).contains(&nibble)
+                && kind_admitted
                 && let Some(gos) = hash_to_gos.get(&path)
                 && let Some(curve) = decode_curve_any(v, gidx)
                 && curve.len() > 1
@@ -2727,7 +2791,15 @@ fn material_color_channels_for(
                     });
                 if mx - mn > 1e-4 {
                     let prop_crc28 = (attr as u32) & 0x0FFF_FFFF;
-                    let channel = (nibble - 4) as usize;
+                    let kind = binding_kind(attr);
+                    let channel =
+                        if (BINDING_KIND_COLOR_MIN..=BINDING_KIND_COLOR_MAX).contains(&kind) {
+                            (kind - BINDING_KIND_COLOR_MIN) as usize
+                        } else if kind <= BINDING_KIND_VECTOR_MAX {
+                            kind as usize
+                        } else {
+                            0
+                        };
                     // A subpath hash matching several same-named GOs (twin rigs across
                     // the entrance/idle prefabs, e.g. Mlynar's `bg01_Idle`) applies to
                     // ALL of them WITHIN the playing Animator's subtree — the consumer
@@ -2740,16 +2812,16 @@ fn material_color_channels_for(
                     for &go in scope_to_animator(gos, animator_gos, &is_ancestor).iter() {
                         let entry = out.entry(go).or_default();
                         // Same channel keyed in several entrance clips: keep the richer curve.
-                        if let Some(existing) = entry
-                            .iter_mut()
-                            .find(|c| c.prop_crc28 == prop_crc28 && c.channel == channel)
-                        {
+                        if let Some(existing) = entry.iter_mut().find(|c| {
+                            c.prop_crc28 == prop_crc28 && c.kind == kind && c.channel == channel
+                        }) {
                             if curve.len() > existing.curve.len() {
                                 existing.curve.clone_from(&curve);
                             }
                         } else {
                             entry.push(MaterialColorChannel {
                                 prop_crc28,
+                                kind,
                                 channel,
                                 curve: curve.clone(),
                                 clip_stop: clip_stop_time(v),
@@ -2949,7 +3021,7 @@ pub fn layer_color_curve(
     // tie-break keeps the choice deterministic.
     let mut by_prop: HashMap<u32, usize> = HashMap::new();
     for c in channels {
-        if prop_of(c.prop_crc28).is_some() {
+        if is_color_kind(c.kind) && prop_of(c.prop_crc28).is_some() {
             *by_prop.entry(c.prop_crc28).or_insert(0) += c.curve.len();
         }
     }
@@ -2977,7 +3049,7 @@ pub fn layer_color_curve(
     let fold_static = additive && !same_prop;
     let mut chans: [Option<&Vec<(f32, f32)>>; 4] = [None; 4];
     for c in channels {
-        if c.prop_crc28 == best && c.channel < 4 {
+        if is_color_kind(c.kind) && c.prop_crc28 == best && c.channel < 4 {
             chans[c.channel] = Some(&c.curve);
         }
     }

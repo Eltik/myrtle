@@ -14,8 +14,10 @@
 //! Material in the bundle saves (`m_SavedProperties`), plus the names the register's terms use,
 //! so an unresolved hash is printed as a hash and counted, never guessed.
 //!
-//! A vector property's components use the same low-28 hash with top nibble 0..3 (x, y, z, w;
-//! for `_MainTex_ST` scale x, scale y, offset x, offset y). Shader bundles among the arguments
+//! The attribute's top nibble is the KIND: 0..3 a vector component (x, y, z, w; for
+//! `_MainTex_ST` scale x, scale y, offset x, offset y), 4..7 a colour channel, 8 a scalar
+//! float; the low 28 bits are the bare property crc32 in every case (the float rule was found
+//! on 2026-09-12 when `?0x803e92f7` resolved to `_Amount`). Shader bundles among the arguments
 //! (`[uc]shaders.ab`, `[uc]uishaders.ab`) contribute every DECLARED property name through
 //! `build_shader_props`, so a property no material saves still resolves.
 //!
@@ -254,19 +256,21 @@ fn main() {
                     total += 1;
                     let p = b.get("path").and_then(Value::as_u64).unwrap_or(0) as u32;
                     let a = a64 as u32;
+                    // The kind nibble: 0..3 vector component, 4..7 colour channel, 8 scalar
+                    // float; the low 28 bits are the bare property crc32 in every case.
                     let nibble = a >> 28;
+                    let crc28 = color_map.get(&(a & 0x0FFF_FFFF)).cloned();
                     let (kind, prop) = if (4..=7).contains(&nibble) {
                         (
                             ["r", "g", "b", "a"][(nibble - 4) as usize].to_string(),
-                            color_map.get(&(a & 0x0FFF_FFFF)).cloned(),
+                            crc28,
                         )
-                    } else if nibble <= 3 && color_map.contains_key(&(a & 0x0FFF_FFFF)) {
-                        (
-                            ["x", "y", "z", "w"][nibble as usize].to_string(),
-                            color_map.get(&(a & 0x0FFF_FFFF)).cloned(),
-                        )
+                    } else if nibble <= 3 {
+                        (["x", "y", "z", "w"][nibble as usize].to_string(), crc28)
+                    } else if nibble == 8 {
+                        ("float".to_string(), crc28)
                     } else {
-                        ("float".to_string(), float_map.get(&a).cloned())
+                        (format!("kind{nibble}"), float_map.get(&a).cloned())
                     };
                     let varying = match decode_curve_any(v, my_idx) {
                         Some(c) if c.len() > 1 => {
@@ -286,6 +290,18 @@ fn main() {
                         .cloned()
                         .unwrap_or_else(|| format!("<unresolved {p:#x}>"));
                     println!("{skin}\t{clip}\t{pname}\t{ty}\t{kind}\t{prop}\t{varying}");
+                    // `MATBIND_DUMP=<property>` prints that property's decoded keys to stderr.
+                    if std::env::var("MATBIND_DUMP").as_deref() == Ok(prop.as_str())
+                        && let Some(c) = decode_curve_any(v, my_idx)
+                    {
+                        eprintln!(
+                            "[dump] {skin} {clip} {pname} {kind}: {}",
+                            c.iter()
+                                .map(|(t, x)| format!("{t:.3}:{x:.4}"))
+                                .collect::<Vec<_>>()
+                                .join(" ")
+                        );
+                    }
                     let e = summary.entry(format!("{prop}.{kind}")).or_insert((
                         0,
                         0,

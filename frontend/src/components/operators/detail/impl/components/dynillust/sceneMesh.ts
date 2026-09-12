@@ -53,6 +53,10 @@ export interface ISceneRam {
     /** Dissolve threshold and the softness of its edge. */
     amount: number;
     borderWidth: number;
+    /** ENTRANCE `_Amount` animation `[t, value]`: the `_Start` clip's scalar binding on the
+     *  threshold, exported only under `DYNCHAR_AMOUNT_CURVE`; replayed at the entrance track
+     *  time under `?amountcurve=1` (see `amountCurveOn` in `SceneIllust.tsx`). */
+    amountCurve?: [number, number][] | null;
     /** How far a disturb sample displaces the lookups, and which lookups it reaches. */
     /** `_AnchorU`/`_AnchorV` - the zero point the disturb sample is measured against.
      *  The `Disturb Anchor` family displaces by `(sample - anchor) * intensity`; absent/0
@@ -1053,6 +1057,8 @@ export interface ISceneLayerRuntime {
     __stBaseUnity?: Float32Array | null;
     /** Ram masking: each mask's UV/second scroll, re-applied to the shader every frame
      *  by {@link applySceneLayerRamScroll}. Absent unless the layer carries {@link ISceneRam}. */
+    /** Entrance `_Amount` replay (`?amountcurve=1`): the curve, absent for layers without one. */
+    __amountCurve?: [number, number][] | null;
     __ramSpeed?: { dissolve: [number, number]; disturb: [number, number]; disturb2?: [number, number] | null } | null;
     /** Bone attachment (see {@link ISceneLayer.followBone}): the followed bone name, its
      *  `followBoneRotation` flag, and the follower's BAKED world pose (origin + rotation
@@ -1090,6 +1096,29 @@ export function applySceneLayerFollow(mesh: PIXI.DisplayObject, findBone: (name:
     const [c, s] = [Math.cos(d), Math.sin(d)];
     // Rotate about the follower's baked origin, then translate it onto the bone.
     mesh.transform.setFromMatrix(new PIXI.Matrix(c, s, -s, c, now.tx - (c * f.x - s * f.y), now.ty - (s * f.x + c * f.y)));
+}
+
+/** Linear-sample a `[t, value]` scalar curve at time `t`, clamped to its endpoints. */
+export function sampleScalarCurve(curve: [number, number][], t: number): number {
+    const first = curve[0];
+    if (t <= first[0]) return first[1];
+    for (let i = 1; i < curve.length; i++) {
+        if (t <= curve[i][0]) {
+            const [t0, v0] = curve[i - 1];
+            const [t1, v1] = curve[i];
+            const f = t1 > t0 ? (t - t0) / (t1 - t0) : 0;
+            return v0 + (v1 - v0) * f;
+        }
+    }
+    return curve[curve.length - 1][1];
+}
+
+/** Set a Ram layer's dissolve threshold uniform from a sampled entrance `_Amount`. No-op for
+ *  meshes without the Ram shader. */
+export function applySceneLayerAmount(mesh: PIXI.DisplayObject, amount: number): void {
+    const rt = mesh as unknown as ISceneLayerRuntime & { shader?: PIXI.Shader };
+    if (!rt.shader?.uniforms) return;
+    rt.shader.uniforms.uAmount = amount;
 }
 
 /** Linear-sample a `[t, r, g, b, a]` colour curve at time `t`, clamped to its endpoints. */
@@ -1814,6 +1843,7 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
         // Bone attachment: reduce the follower's baked world frame to a Y-DOWN origin and
         // rotation angle. `followBasis` is row-major Y-up `[m00, m01, m10, m11]`, so its
         // first column is `(m00, m10)` and the Y flip negates both the angle and origin Y.
+        if (ramTex && layer.ram?.amountCurve?.length) rt.__amountCurve = layer.ram.amountCurve;
         if (ramTex && layer.ram) rt.__ramSpeed = { dissolve: layer.ram.dissolveSpeed, disturb: layer.ram.disturbSpeed, disturb2: layer.ram.disturb2 ? [layer.ram.disturb2[1], 0] : null };
         if (layer.followBone && layer.followOrigin && layer.followBasis) {
             const [m00, , m10] = layer.followBasis;
