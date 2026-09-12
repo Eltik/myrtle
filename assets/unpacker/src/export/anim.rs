@@ -2591,6 +2591,11 @@ pub struct MaterialColorChannel {
     pub channel: usize,
     /// Decoded `(t_seconds, value)` samples (dense-resampled cubic easing).
     pub curve: Vec<(f32, f32)>,
+    /// The owning clip's `m_StopTime`: the period this channel repeats on when its clip loops.
+    /// A scene can carry several idle clips of different lengths (Fugue: `_Idle` 1.2333 s binds
+    /// `glow`, `_Idle_02` 2.5 s binds nothing on it), so the loop is the CHANNEL's clip, never
+    /// the scene's longest idle. `None` when the clip carries no stop time.
+    pub clip_stop: Option<f32>,
 }
 
 /// Whether the entrance clip animates the named colour property on this layer — i.e.
@@ -2644,13 +2649,13 @@ pub fn idle_material_color_channels(
     material_color_channels_for(all_objects, |_, v| is_idle_clip(v))
 }
 
-/// The idle loop length in seconds: the longest `m_StopTime` among the idle clips, the period
-/// an idle colour curve repeats on. `None` when no idle clip exists.
+/// The loop an idle colour curve repeats on: the longest `clip_stop` among the channels of ONE
+/// layer, i.e. the owning idle clip's length. `None` when no channel carries a stop time.
 #[must_use]
-pub fn idle_clip_loop(all_objects: &HashMap<i64, (i32, Value)>) -> Option<f32> {
-    find_idle_clips(all_objects)
-        .into_iter()
-        .filter_map(clip_stop_time)
+pub fn channels_loop(channels: &[MaterialColorChannel]) -> Option<f32> {
+    channels
+        .iter()
+        .filter_map(|c| c.clip_stop)
         .fold(None, |acc: Option<f32>, s| {
             Some(acc.map_or(s, |a| a.max(s)))
         })
@@ -2747,6 +2752,7 @@ fn material_color_channels_for(
                                 prop_crc28,
                                 channel,
                                 curve: curve.clone(),
+                                clip_stop: clip_stop_time(v),
                             });
                         }
                     }

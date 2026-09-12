@@ -1621,11 +1621,6 @@ fn collect_dynchar_bg_quads(
     } else {
         HashMap::new()
     };
-    let idle_color_loop = if idle_color_on {
-        super::anim::idle_clip_loop(all_objects)
-    } else {
-        None
-    };
     // ENTRANCE per-layer animated `_MainTex_ST` curves (Capability B): GO → the four ST
     // component curves from the `_Start` clip(s) (Skadi2's entrance seam sweep). Empty for
     // the main scene (its clips don't animate ST).
@@ -3228,7 +3223,11 @@ fn collect_dynchar_bg_quads(
                 additive,
             )
         });
-        // The idle twin, resolved onto the same static tint with the same rules.
+        // The idle twin, resolved onto the same static tint with the same rules; its loop is
+        // the owning idle clip's length (per layer, see `channels_loop`).
+        let idle_color_loop = idle_color_channels
+            .get(&go_pid)
+            .and_then(|chs| super::anim::channels_loop(chs));
         let idle_color_curve = idle_color_channels.get(&go_pid).and_then(|chs| {
             super::anim::layer_color_curve(
                 chs,
