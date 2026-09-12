@@ -147,6 +147,12 @@ export interface ISceneLayer {
      *  Replayed each frame at the entrance track time, REPLACING `tint`. Absent = the
      *  material colour is static. Only `_Start` scenes carry it. */
     colorCurve?: [number, number, number, number, number][] | null;
+    /** IDLE material-colour animation: `[t, r, g, b, a]` samples of the idle clip's animated
+     *  material colour, resolved onto the static tint the same way `colorCurve` is, repeating
+     *  on `idleColorLoop` seconds. Exported only under `DYNCHAR_IDLE_COLOR`; replayed only under
+     *  `?idlecolor=1` (see `idleColorOn` in `SceneIllust.tsx`). Only main scenes carry it. */
+    idleColorCurve?: [number, number, number, number, number][] | null;
+    idleColorLoop?: number | null;
     /** ENTRANCE uniform-scale MULTIPLIER keyframes `[t, mult]` over the baked prefab pose
      *  (1.0 = unchanged), from the `_Start` clips. Present only where the clip animates this
      *  layer's transform (or an ancestor's) - 3 layers across 2 composites corpus-wide. */
@@ -1023,6 +1029,9 @@ export interface ISceneLayerRuntime {
     __scalePivot?: [number, number] | null;
     __posCurve?: [number, number, number][] | null;
     __colorCurve?: [number, number, number, number, number][] | null;
+    /** Idle colour replay (`?idlecolor=1`): the curve and its loop, absent for layers without one. */
+    __idleColorCurve?: [number, number, number, number, number][] | null;
+    __idleColorLoop?: number | null;
     /** The layer's STATIC authored tint - how the IDLE scene paints this same artwork, since
      *  the idle copies of the windowed layers carry neither a window nor a colour curve.
      *  Read only by the `?statictail=1` diagnostic. */
@@ -1785,6 +1794,11 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
         rt.__staticTint = layer.tint;
         if (layer.colorCurve?.length) {
             rt.__colorCurve = layer.colorCurve;
+            rt.__colorMode = { additive, gain };
+        }
+        if (layer.idleColorCurve?.length) {
+            rt.__idleColorCurve = layer.idleColorCurve;
+            rt.__idleColorLoop = layer.idleColorLoop ?? null;
             rt.__colorMode = { additive, gain };
         }
         if (layer.uvScroll && (layer.uvScroll[0] !== 0 || layer.uvScroll[1] !== 0) && !layer.stCurve?.length) {

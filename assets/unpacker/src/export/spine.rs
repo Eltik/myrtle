@@ -398,6 +398,13 @@ pub struct BgQuad {
     /// [`super::anim::layer_color_curve`]), e.g. Mlynar's white flash fading 0→0.671.
     /// `None` = the material colour isn't animated (the static `tint` stands).
     pub color_curve: Option<Vec<(f32, [f32; 4])>>,
+    /// IDLE material-colour animation `(t_seconds, rgba)`, the idle clip's animated material
+    /// colour resolved against the static tint exactly as `color_curve` is for the entrance,
+    /// repeating on `idle_color_loop`. Only under `DYNCHAR_IDLE_COLOR` (opt-in, the export is
+    /// byte-identical without it); only on the main scene, never the `_Start` cinematic.
+    pub idle_color_curve: Option<Vec<(f32, [f32; 4])>>,
+    /// The idle loop length the curve repeats on (the longest idle clip's `m_StopTime`).
+    pub idle_color_loop: Option<f32>,
     /// SHADER UV-SCROLL (Capability A): the Ram flowing-light shader family
     /// (`Torappu/Particles-L2D/Ram/{Disturb,VertexDisturb}`, `_shaderName` contains
     /// `"Ram/"`) scrolls `_MainTex` continuously against Unity `_Time` via the STATIC
@@ -1602,6 +1609,22 @@ fn collect_dynchar_bg_quads(
         super::anim::entrance_material_color_channels(all_objects)
     } else {
         HashMap::new()
+    };
+    // IDLE per-layer material-colour animation (`DYNCHAR_IDLE_COLOR` present enables; the
+    // default export is byte-identical). The idle clips animate `_MainColor` on 57 skins and
+    // `_TintColor` on 50 (`probe_matbindings`, 2026-09-12); read from the idle clips only, by
+    // the same name rule `find_idle_clips` uses, so the `_Start` clip's curves can never leak
+    // into the main scene the way `active_windows` did (see the warning above `reveal_map`).
+    let idle_color_on = !is_entrance && std::env::var("DYNCHAR_IDLE_COLOR").is_ok();
+    let idle_color_channels = if idle_color_on {
+        super::anim::idle_material_color_channels(all_objects)
+    } else {
+        HashMap::new()
+    };
+    let idle_color_loop = if idle_color_on {
+        super::anim::idle_clip_loop(all_objects)
+    } else {
+        None
     };
     // ENTRANCE per-layer animated `_MainTex_ST` curves (Capability B): GO → the four ST
     // component curves from the `_Start` clip(s) (Skadi2's entrance seam sweep). Empty for
@@ -3205,6 +3228,18 @@ fn collect_dynchar_bg_quads(
                 additive,
             )
         });
+        // The idle twin, resolved onto the same static tint with the same rules.
+        let idle_color_curve = idle_color_channels.get(&go_pid).and_then(|chs| {
+            super::anim::layer_color_curve(
+                chs,
+                &color_props,
+                tint_prop.as_deref(),
+                tint,
+                tint_scale,
+                hdr_color,
+                additive,
+            )
+        });
         // The Anchor `k` (`DYNCHAR_ANCHOR_K=1`, see `anchor_ctrl`): all four channels scaled by
         // `ctrl * (a - 1) + 1`, on the static tint and on every curve key. `a` is the RAW
         // `_MainColor.a`: the material's value, or the clip's own alpha track sampled at the
@@ -3621,6 +3656,8 @@ fn collect_dynchar_bg_quads(
             },
             root_reveal_from: cross_from,
             color_curve,
+            idle_color_curve,
+            idle_color_loop,
             uv_scroll,
             st_curve,
             ram,
@@ -7156,6 +7193,18 @@ fn export_scene(
                     .map(|&(t, c)| [t, c[0], c[1], c[2], c[3]])
                     .collect::<Vec<_>>()
             );
+        }
+        // IDLE material-colour animation (`DYNCHAR_IDLE_COLOR`): the idle clip's colour curve
+        // and the loop it repeats on. Omitted unless the arm is on and the colour is animated.
+        if let Some(cc) = &quad.idle_color_curve {
+            layer["idleColorCurve"] = serde_json::json!(
+                cc.iter()
+                    .map(|&(t, c)| [t, c[0], c[1], c[2], c[3]])
+                    .collect::<Vec<_>>()
+            );
+            if let Some(lp) = quad.idle_color_loop {
+                layer["idleColorLoop"] = serde_json::json!(lp);
+            }
         }
         // SHADER UV-SCROLL (Capability A): per-second UV velocity `[u, v]` (Unity UV space)
         // for Ram-family scene layers; the frontend offsets the layer's UVs by `t · [u,v]`

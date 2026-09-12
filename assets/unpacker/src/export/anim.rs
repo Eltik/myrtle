@@ -2625,13 +2625,49 @@ pub fn animates_prop(channels: &[MaterialColorChannel], prop: &str) -> bool {
 pub fn entrance_material_color_channels(
     all_objects: &HashMap<i64, (i32, Value)>,
 ) -> HashMap<i64, Vec<MaterialColorChannel>> {
+    let start_only = start_only_effect_clips(all_objects);
+    material_color_channels_for(all_objects, |pid, v| {
+        is_entrance_clip(v) || start_only.contains(&pid)
+    })
+}
+
+/// The IDLE twin of [`entrance_material_color_channels`]: the same colour-channel bindings,
+/// read from the clips [`is_idle_clip`] admits. The exporter read these bindings on the
+/// entrance clips only since the feature shipped (698ce838, "the idle prefab's copies hold
+/// their serialized colour"); the 2026-09-12 census (`probe_matbindings`) found `_MainColor`
+/// varying on the idle clips of 57 skins and `_TintColor` on 50, so the idle scene was drawing
+/// every such layer at its static colour. Opt-in through `DYNCHAR_IDLE_COLOR` in `spine.rs`.
+#[must_use]
+pub fn idle_material_color_channels(
+    all_objects: &HashMap<i64, (i32, Value)>,
+) -> HashMap<i64, Vec<MaterialColorChannel>> {
+    material_color_channels_for(all_objects, |_, v| is_idle_clip(v))
+}
+
+/// The idle loop length in seconds: the longest `m_StopTime` among the idle clips, the period
+/// an idle colour curve repeats on. `None` when no idle clip exists.
+#[must_use]
+pub fn idle_clip_loop(all_objects: &HashMap<i64, (i32, Value)>) -> Option<f32> {
+    find_idle_clips(all_objects)
+        .into_iter()
+        .filter_map(clip_stop_time)
+        .fold(None, |acc: Option<f32>, s| {
+            Some(acc.map_or(s, |a| a.max(s)))
+        })
+}
+
+/// Every ANIMATED material-colour channel in the clips `admit` accepts, keyed by the
+/// renderer's `GameObject` `path_id`. The shared body of the entrance and idle readers.
+fn material_color_channels_for(
+    all_objects: &HashMap<i64, (i32, Value)>,
+    admit: impl Fn(i64, &Value) -> bool,
+) -> HashMap<i64, Vec<MaterialColorChannel>> {
     let hash_to_gos = build_hash_to_gos(all_objects);
     let is_ancestor = build_ancestor_check(all_objects);
     let clip_animators = build_clip_animator_gos(all_objects);
-    let start_only = start_only_effect_clips(all_objects);
     let mut out: HashMap<i64, Vec<MaterialColorChannel>> = HashMap::new();
     for (clip_pid, (cid, v)) in all_objects {
-        if *cid != 74 || !(is_entrance_clip(v) || start_only.contains(clip_pid)) {
+        if *cid != 74 || !admit(*clip_pid, v) {
             continue;
         }
         let Some(bindings) = generic_bindings(v) else {
@@ -3285,19 +3321,23 @@ fn build_hash_to_gos(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<u32, V
 /// a `bg` idle and a `web` idle), so **all** matching clips are returned and
 /// their transform overrides merged. Markers are chosen not to collide with
 /// operator names (`ines`, `skadi`, …), so no fragile `in`/`out` fragments.
-fn find_idle_clips(all_objects: &HashMap<i64, (i32, Value)>) -> Vec<&Value> {
+/// Whether a clip is an IDLE loop by the game's own naming: "idle" in the name and none of the
+/// non-idle state markers. The one rule `find_idle_clips` and the idle colour reader share.
+fn is_idle_clip(clip: &Value) -> bool {
     const EXCLUDED: &[&str] = &["interact", "special", "skill", "start", "attack", "die"];
+    let name = clip
+        .get("m_Name")
+        .and_then(Value::as_str)
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    name.contains("idle") && !EXCLUDED.iter().any(|e| name.contains(e))
+}
+
+fn find_idle_clips(all_objects: &HashMap<i64, (i32, Value)>) -> Vec<&Value> {
     let mut idle: Vec<&Value> = all_objects
         .values()
         .filter(|(cid, _)| *cid == 74)
-        .filter(|(_, v)| {
-            let name = v
-                .get("m_Name")
-                .and_then(Value::as_str)
-                .unwrap_or("")
-                .to_ascii_lowercase();
-            name.contains("idle") && !EXCLUDED.iter().any(|e| name.contains(e))
-        })
+        .filter(|(_, v)| is_idle_clip(v))
         .map(|(_, v)| v)
         .collect();
     // Deterministic order.

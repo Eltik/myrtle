@@ -579,6 +579,16 @@ function fetchAbortOn(): boolean {
     return new URLSearchParams(window.location.search).get("abortfetch") !== "0";
 }
 
+/** IDLE COLOUR REPLAY (`?idlecolor=1`, off unless the parameter is exactly "1"): re-tint the
+ *  main scene's layers each frame from their idle clip's colour curve (`idleColorCurve`,
+ *  exported under `DYNCHAR_IDLE_COLOR`), at the scene clock modulo the idle loop. The entrance
+ *  composite carries no such curve, so the cinematic is untouched either way. Missing or any
+ *  other value keeps the static tint, which is the previous behaviour exactly. */
+function idleColorOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("idlecolor") === "1";
+}
+
 /** DIAGNOSTIC (`?statbox=<zoom>[,<dx>,<dy>]`): scale the {@link staticCamOn} framing box about its
  *  own centre by `zoom` and shift it by `dx,dy` box-space px. Inert unless `?statcam=1`.
  *
@@ -1018,6 +1028,11 @@ interface IComposite {
      *  UVs each frame with the continuous scene clock (idle AND entrance). Empty for scenes
      *  with no scroll layers. */
     scrollLayers: PIXI.Mesh[];
+    /** IDLE colour replay (`?idlecolor=1`): the main scene's layer meshes that carry an
+     *  `idleColorCurve`. The always-running tick re-tints them each frame at the scene clock
+     *  modulo their loop. Empty for the entrance composite and for scenes exported without
+     *  `DYNCHAR_IDLE_COLOR`. */
+    idleColorLayers: PIXI.Mesh[];
     /** The scene's RAM-MASKED layer meshes (a `_DissolveTex`/`_DisturbTex` silhouette). The
      *  always-running tick drifts their mask lookups with the same scene clock. Empty for
      *  scenes with no masked layers. */
@@ -2270,6 +2285,16 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
             for (const comp of compositesRef.current) {
                 for (const m of comp.scrollLayers) applySceneLayerUvScroll(m, sceneClock);
                 for (const m of comp.ramLayers) applySceneLayerRamScroll(m, sceneClock);
+                // Idle colour replay: the layer's idle curve at the scene clock, wrapped on the
+                // idle loop so the curve repeats with the idle animation.
+                for (const m of comp.idleColorLayers) {
+                    const rt = m as unknown as ISceneLayerRuntime;
+                    const curve = rt.__idleColorCurve;
+                    if (!curve?.length) continue;
+                    const loop = rt.__idleColorLoop;
+                    const t = loop && loop > 0 ? sceneClock % loop : sceneClock;
+                    applySceneLayerColor(m, sampleColorCurve(curve, t));
+                }
             }
             if (spineRef.current) {
                 releaseStaleClipGraphics(spineRef.current);
@@ -5039,6 +5064,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     else sceneContainer.addChild(bars);
                 }
                 const scrollLayers: PIXI.Mesh[] = [];
+                const idleColorLayers: PIXI.Mesh[] = [];
                 const ramLayers: PIXI.Mesh[] = [];
                 const followLayers: PIXI.Mesh[] = [];
                 if (scene) {
@@ -5047,6 +5073,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                         for (const m of cont.children) {
                             const rt = m as unknown as ISceneLayerRuntime;
                             if (rt.__uvScroll && !rt.__stCurve) scrollLayers.push(m as PIXI.Mesh);
+                            if (rt.__idleColorCurve?.length && idleColorOn()) idleColorLayers.push(m as PIXI.Mesh);
                             if (rt.__ramSpeed) ramLayers.push(m as PIXI.Mesh);
                             if (rt.__follow) followLayers.push(m as PIXI.Mesh);
                         }
@@ -5096,6 +5123,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     aperture,
                     apertureMask,
                     scrollLayers,
+                    idleColorLayers,
                     ramLayers,
                     followLayers,
                     entranceSceneEnd: deferEndUntil,
@@ -5146,6 +5174,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 apertureMask: null,
                 sceneLayers: null,
                 scrollLayers: [],
+                idleColorLayers: [],
                 ramLayers: [],
                 followLayers: [],
                 entranceSceneEnd: null,
