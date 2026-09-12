@@ -2523,7 +2523,8 @@ pub fn decode_scalar_curve(
 /// (streamed / dense / constant) — the per-index core of {@link `decode_scalar_curve`},
 /// for bindings located by path (per-renderer material-colour channels) rather than by
 /// `(type, attribute)`.
-fn decode_curve_any(clip: &Value, idx: usize) -> Option<Vec<(f32, f32)>> {
+#[must_use]
+pub fn decode_curve_any(clip: &Value, idx: usize) -> Option<Vec<(f32, f32)>> {
     let bindings = generic_bindings(clip)?;
     let data = clip_data(clip)?;
     let streamed_raw = u32_array(data.get("m_StreamedClip").and_then(|s| s.get("data")));

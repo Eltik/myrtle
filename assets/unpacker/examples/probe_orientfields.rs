@@ -17,6 +17,12 @@
 //! bundle serializes them (`-` when absent), with `startRotationX` / `Y` / `startRotation` as
 //! `minMaxState:scalar:constantMin`.
 //!
+//! The last column, `cosAfter`, composes the particle's own constant start rotation (minMaxState
+//! 0 on X, Y and Z, Unity's ZXY Euler order) onto the emitter's world rotation and prints the
+//! resulting cos(tilt) of the mesh normal, so an emitter turned edge-on whose particles are
+//! turned back by startRotationX pi/2 reads as face-on; `rand` when any axis is a range or curve
+//! (the tilt then differs per particle), `-` when rotation3D is 0.
+//!
 //! Usage: cargo run --release --example `probe_orientfields` -- <bundle.ab>...
 #![allow(clippy::too_many_lines)]
 use serde_json::Value;
@@ -107,7 +113,7 @@ fn mmcurve(v: &Value, path: &[&str]) -> String {
 
 fn main() {
     println!(
-        "skin\tname\talign\ttilt\tcos\tflat\trotation3D\tstartRotationX\tstartRotationY\tstartRotation\trot.enabled\trot.separateAxes\tshape.enabled\tshape.alignToDirection"
+        "skin\tname\talign\ttilt\tcos\tflat\trotation3D\tstartRotationX\tstartRotationY\tstartRotation\trot.enabled\trot.separateAxes\tshape.enabled\tshape.alignToDirection\tcosAfter"
     );
     let mut printed_keys = false;
     for path in std::env::args().skip(1) {
@@ -201,8 +207,50 @@ fn main() {
                 let flat = a[0][1].atan2(a[0][0]).to_degrees();
                 let cz = a[2][2].clamp(-1.0, 1.0);
                 let tilt = cz.acos().to_degrees();
+                // The mesh normal after the particle's own constant rotation, ZXY order.
+                let mm = |path: &[&str]| -> Option<(i64, f64)> {
+                    let mut cur = &ps;
+                    for p in path {
+                        cur = cur.get(p)?;
+                    }
+                    Some((
+                        cur.get("minMaxState").and_then(Value::as_i64)?,
+                        cur.get("scalar").and_then(Value::as_f64)?,
+                    ))
+                };
+                let r3d = ps
+                    .get("InitialModule")
+                    .and_then(|i| i.get("rotation3D"))
+                    .and_then(Value::as_bool)
+                    .unwrap_or(false);
+                let cos_after = if !r3d {
+                    "-".to_string()
+                } else {
+                    match (
+                        mm(&["InitialModule", "startRotationX"]),
+                        mm(&["InitialModule", "startRotationY"]),
+                        mm(&["InitialModule", "startRotation"]),
+                    ) {
+                        (Some((0, rx)), Some((0, ry)), Some((0, rz))) => {
+                            // v = Rz * Rx * Ry * (0, 0, 1), then the emitter rotation.
+                            let (sy, cy) = ry.sin_cos();
+                            let (sx, cx) = rx.sin_cos();
+                            let (sz, cz2) = rz.sin_cos();
+                            let v = [sy, 0.0, cy];
+                            let v = [v[0], cx * v[1] - sx * v[2], sx * v[1] + cx * v[2]];
+                            let v = [cz2 * v[0] - sz * v[1], sz * v[0] + cz2 * v[1], v[2]];
+                            let w = [
+                                a[0][0] * v[0] + a[1][0] * v[1] + a[2][0] * v[2],
+                                a[0][1] * v[0] + a[1][1] * v[1] + a[2][1] * v[2],
+                                a[0][2] * v[0] + a[1][2] * v[1] + a[2][2] * v[2],
+                            ];
+                            format!("{:+.4}", w[2])
+                        }
+                        _ => "rand".to_string(),
+                    }
+                };
                 println!(
-                    "{skin}\t{name}\t{align}\t{tilt:.2}\t{cz:+.4}\t{flat:+.2}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
+                    "{skin}\t{name}\t{align}\t{tilt:.2}\t{cz:+.4}\t{flat:+.2}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{cos_after}",
                     field(&ps, &["InitialModule", "rotation3D"]),
                     mmcurve(&ps, &["InitialModule", "startRotationX"]),
                     mmcurve(&ps, &["InitialModule", "startRotationY"]),
