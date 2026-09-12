@@ -3634,7 +3634,9 @@ fn collect_dynchar_bg_quads(
         // `DYNCHAR_SCENE_DELAY=2`: WINDOWS ONLY on the root's clock, curves left clip-local.
         // Measured WORSE (whitw2 43.523, fugue 30.305 with her sort-100 sheet's curve left
         // clip-local), so the curves belong on the clock too. Kept as the diagnostic.
-        let (window, scale_curve, pos_curve, color_curve) = {
+        // The ram threshold curve (`amount_curve`, `DYNCHAR_AMOUNT_CURVE`) rides the same clock:
+        // kalts `wenli`'s pulse is keyed at clip-local 2.9667 s inside `Start_05`, delayed 6.20 s.
+        let (window, scale_curve, pos_curve, color_curve, ram) = {
             let mode = std::env::var("DYNCHAR_SCENE_DELAY").unwrap_or_else(|_| "1".to_string());
             let dly = if is_entrance && (mode == "1" || mode == "2") {
                 host.delay_of_go(all_objects, go_pid)
@@ -3658,9 +3660,17 @@ fn collect_dynchar_bg_quads(
                     scale_curve.map(|c| c.into_iter().map(|(t, x, y)| (sh(t), x, y)).collect()),
                     pos_curve.map(|c| c.into_iter().map(|(t, x, y)| (sh(t), x, y)).collect()),
                     color_curve.map(|c| c.into_iter().map(|(t, v)| (sh(t), v)).collect()),
+                    ram.map(|mut r| {
+                        if let Some(c) = r.amount_curve.as_mut() {
+                            for k in c.iter_mut() {
+                                k.0 = sh(k.0);
+                            }
+                        }
+                        r
+                    }),
                 )
             } else {
-                (window, scale_curve, pos_curve, color_curve)
+                (window, scale_curve, pos_curve, color_curve, ram)
             }
         };
         quads.push(BgQuad {
