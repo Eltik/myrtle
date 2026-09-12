@@ -590,6 +590,15 @@ function fetchAbortOn(): boolean {
  *  Ram layer's dissolve threshold each frame from its `amountCurve` (exported under
  *  `DYNCHAR_AMOUNT_CURVE`) at the entrance track time, beside the colour curve. Missing or any
  *  other value keeps the static `amount`, the previous behaviour exactly. */
+/** DIAGNOSTIC (`?amountlead=<s>`): sample the entrance `amountCurve` at `tt + s` instead of `tt`,
+ *  the offset sweep for a curve that scores mixed inside its own window. 0 (missing or unparsable)
+ *  is the previous behaviour exactly. */
+function amountLead(): number {
+    if (typeof window === "undefined") return 0;
+    const v = Number(new URLSearchParams(window.location.search).get("amountlead"));
+    return Number.isFinite(v) ? v : 0;
+}
+
 function amountCurveOn(): boolean {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("amountcurve") === "1";
@@ -2346,7 +2355,8 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                         stop: comp.tap.stop,
                         layers: comp.interactLayers.length,
                     };
-                    const snaps = (w.__dynTapSnaps ??= []);
+                    w.__dynTapSnaps ??= [];
+                    const snaps = w.__dynTapSnaps;
                     const ix = compositesRef.current.indexOf(comp);
                     snaps[ix] = snap;
                     w.__dynTap = () => snaps;
@@ -2362,13 +2372,23 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                         const it = rt.__interact;
                         if (!it) continue;
                         if (done) {
-                            m.renderable = true;
-                            if (it.colorCurve?.length && rt.__staticTint) applySceneLayerColor(m, rt.__staticTint);
-                            if (it.amountCurve?.length && rt.__staticAmount != null) applySceneLayerAmount(m, rt.__staticAmount);
+                            // Byte-exact restore: the state captured when the mesh was built.
+                            const rest = rt.__rest;
+                            const sh = (m as unknown as { shader?: PIXI.Shader }).shader;
+                            if (rest) {
+                                m.renderable = rest.renderable;
+                                (m as unknown as { alpha: number }).alpha = rest.alpha;
+                                if (sh instanceof PIXI.MeshMaterial && rest.tint != null) sh.tint = rest.tint;
+                                if (sh?.uniforms && rest.uColor) sh.uniforms.uColor = [...rest.uColor];
+                                if (sh?.uniforms && rest.uAmount != null) sh.uniforms.uAmount = rest.uAmount;
+                            } else {
+                                m.renderable = !it.restHidden;
+                            }
                             continue;
                         }
                         const windows: [number | null, number | null][] = it.activeWindows?.length ? it.activeWindows : it.activeFrom != null || it.activeUntil != null ? [[it.activeFrom ?? null, it.activeUntil ?? null]] : [];
                         if (windows.length) m.renderable = windows.some(([f, u]) => (f == null || t >= f) && (u == null || t < u));
+                        else if (it.restHidden) m.renderable = true;
                         if (it.colorCurve?.length) applySceneLayerColor(m, sampleColorCurve(it.colorCurve, t));
                         if (it.amountCurve?.length) applySceneLayerAmount(m, sampleScalarCurve(it.amountCurve, t));
                     }
@@ -2811,7 +2831,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                         // curves are genuinely on the camera's clock, their error should
                         // minimise away from 0 - and if it minimises AT 0, that is a clean kill.
                         if (mm.__colorCurve) applySceneLayerColor(m, sampleColorCurve(mm.__colorCurve, tt + matLead()));
-                        if (mm.__amountCurve && amountCurveOn()) applySceneLayerAmount(m, sampleScalarCurve(mm.__amountCurve, tt));
+                        if (mm.__amountCurve && amountCurveOn()) applySceneLayerAmount(m, sampleScalarCurve(mm.__amountCurve, tt + amountLead()));
                         if (mm.__stCurve) applySceneLayerSt(m, tt, sceneClock);
                     }
                 }

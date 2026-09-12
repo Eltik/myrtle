@@ -168,6 +168,9 @@ export interface ISceneLayer {
         colorCurve?: [number, number, number, number, number][] | null;
         amountCurve?: [number, number][] | null;
         stop?: number | null;
+        /** The layer is INACTIVE at rest (the prefab keeps it off) and exists only for the press:
+         *  admitted by its interact window. Never drawn outside a replay, switch or no switch. */
+        restHidden?: boolean;
     } | null;
     /** ENTRANCE uniform-scale MULTIPLIER keyframes `[t, mult]` over the baked prefab pose
      *  (1.0 = unchanged), from the `_Start` clips. Present only where the clip animates this
@@ -1047,6 +1050,9 @@ export interface ISceneLayerRuntime {
     __colorCurve?: [number, number, number, number, number][] | null;
     /** Tap replay (`?interact=1`): the exported track and the static threshold it returns to. */
     __interact?: ISceneLayer["interact"];
+    /** The mesh's exact rest state, captured after it is built, so a tap replay restores it
+     *  byte-for-byte instead of recomputing the tint fold (which was not exact). */
+    __rest?: { tint?: number; alpha: number; uColor?: number[]; uAmount?: number; renderable: boolean };
     __staticAmount?: number;
     /** Idle colour replay (`?idlecolor=1`): the curve and its loop, absent for layers without one. */
     __idleColorCurve?: [number, number, number, number, number][] | null;
@@ -1863,6 +1869,20 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
             rt.__interact = layer.interact;
             rt.__colorMode = rt.__colorMode ?? { additive, gain };
             if (ramTex && layer.ram) rt.__staticAmount = layer.ram.amount;
+            // A press-only layer is hidden at rest whatever the switches say: that is its
+            // authored state, and the replay is what shows it.
+            if (layer.interact.restHidden) m.renderable = false;
+            const sh = (m as unknown as { shader?: PIXI.Shader }).shader;
+            const u = sh?.uniforms as Record<string, unknown> | undefined;
+            const uc = u?.uColor;
+            const ua = u?.uAmount;
+            rt.__rest = {
+                tint: sh instanceof PIXI.MeshMaterial ? (sh.tint as number) : undefined,
+                alpha: (m as unknown as { alpha: number }).alpha,
+                uColor: Array.isArray(uc) ? [...(uc as number[])] : undefined,
+                uAmount: typeof ua === "number" ? ua : undefined,
+                renderable: m.renderable,
+            };
         }
         if (ramTex && layer.ram) rt.__ramSpeed = { dissolve: layer.ram.dissolveSpeed, disturb: layer.ram.disturbSpeed, disturb2: layer.ram.disturb2 ? [layer.ram.disturb2[1], 0] : null };
         if (layer.followBone && layer.followOrigin && layer.followBasis) {
@@ -2183,7 +2203,12 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
     // bound: a large (non-effect), near-opaque, desaturated backdrop layer whose whiteness is
     // below the studio-gradient brightness. Returned so the caller can drop the studio
     // gradient behind it (see {@link ILoadedScene.hasDarkBackdrop}).
-    const hasDarkBackdrop = data.layers.some((l) => {
+    // Layers a press reveals (`interact.restHidden`) are not drawn at rest, so no rest-time rule
+    // may read them: not the dark-backdrop test, not the gap occlusion, not the aperture.
+    // MEASURED (2026-09-12, sixteenth pass): counted, they moved ska's settled row 72.724 ->
+    // 72.831 with the viewer flag off (her admitted `1012_bg_05` spans 2036 x 1501 px).
+    const restLayers = data.layers.filter((l) => !l.interact?.restHidden);
+    const hasDarkBackdrop = restLayers.some((l) => {
         const b = bases[l.tex];
         if (!b || l.additive) return false;
         const isRevealOverlay = l.activeFrom != null || l.activeUntil != null;
@@ -2268,7 +2293,7 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
     const centre = data.cameraOffsetPx ?? null;
     const gapOccludes = (gj: number): boolean => {
         if (!occRuleOn || !centre) return false;
-        return data.layers.some((l) => {
+        return restLayers.some((l) => {
             if (l.additive || gapOf(l.sort) !== gj) return false;
             const b = boundsOf(l.pos);
             return b[0] <= centre[0] && centre[0] <= b[2] && b[1] <= centre[1] && centre[1] <= b[3];
@@ -2601,5 +2626,5 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
             gapChildren: gaps.reduce((n, g) => n + g.children.length, 0),
         };
     }
-    return { data, aperture: sceneAperture(data, bases), background, foreground, gaps, hasDarkBackdrop };
+    return { data, aperture: sceneAperture({ ...data, layers: restLayers }, bases), background, foreground, gaps, hasDarkBackdrop };
 }

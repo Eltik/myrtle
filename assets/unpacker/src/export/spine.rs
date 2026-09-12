@@ -342,6 +342,9 @@ pub struct InteractTrack {
     pub color_curve: Option<Vec<(f32, [f32; 4])>>,
     /// The longest action clip's stop: when the replay ends and the static state returns.
     pub stop: Option<f32>,
+    /// The prefab keeps this layer OFF: it exists for the press alone and is admitted by its
+    /// interact window. The viewer never draws it outside a replay.
+    pub rest_hidden: bool,
 }
 
 pub struct BgQuad {
@@ -625,6 +628,25 @@ pub(crate) fn state_only_blocked(
     go_to_transform: &HashMap<i64, i64>,
     start_state_active: bool,
 ) -> bool {
+    state_only_blocked_admitting(
+        all_objects,
+        go_pid,
+        go_to_transform,
+        start_state_active,
+        &[],
+    )
+}
+
+/// `state_only_blocked` with the groups of the named states let through: the tap replay
+/// (`DYNCHAR_INTERACT`) asks it with `ACTION_STATES`, since a press is exactly the game
+/// switching those groups on. Empty `admit` is the plain gate.
+pub(crate) fn state_only_blocked_admitting(
+    all_objects: &HashMap<i64, (i32, Value)>,
+    go_pid: i64,
+    go_to_transform: &HashMap<i64, i64>,
+    start_state_active: bool,
+    admit: &[&str],
+) -> bool {
     let mut cur_tr = match go_to_transform.get(&go_pid) {
         Some(&t) => t,
         None => return false,
@@ -652,6 +674,7 @@ pub(crate) fn state_only_blocked(
                         // names, never skin names — so the same run answers the question for
                         // every skin in the corpus.
                         && !state_admitted(s)
+                        && !admit.contains(s)
                 })
             {
                 return true;
@@ -2285,7 +2308,36 @@ fn collect_dynchar_bg_quads(
         // A colour-reveal admission must not override the state gate: a group the game
         // reserves for another state stays out no matter what its curves do.
         let state_blocked = state_only_blocked(all_objects, go_pid, &go_to_transform, is_entrance);
-        if !eff_active && window.is_empty() && (!has_color_reveal || state_blocked) {
+        // TAP-REVEALED admission (`DYNCHAR_INTERACT`): a main-scene layer the prefab keeps off
+        // and an action clip switches on has a window in `interact_reveal`; keep it, the same
+        // rule the entrance applies to its reveal-only overlays, and mark it hidden at rest so
+        // the viewer draws it only inside a press. The state gate still applies.
+        // A layer whose only gate is an `<Interact|Special> Only Effects` group (Fugue's press
+        // shards) is switched on by the press itself: shown for the whole replay, no clip window.
+        let action_gated = interact_on
+            && !eff_active
+            && state_blocked
+            && !state_only_blocked_admitting(
+                all_objects,
+                go_pid,
+                &go_to_transform,
+                is_entrance,
+                super::anim::ACTION_STATES,
+            );
+        let interact_reveal_window =
+            if interact_on && !eff_active && (!state_blocked || action_gated) {
+                let w = reveal_of_go(go_pid, &interact_reveal, &go_to_transform, all_objects);
+                if w.len() == 1 && w[0] == (None, None) {
+                    Vec::new()
+                } else {
+                    w
+                }
+            } else {
+                Vec::new()
+            };
+        let rest_hidden = !eff_active && (!interact_reveal_window.is_empty() || action_gated);
+        if !eff_active && window.is_empty() && !rest_hidden && (!has_color_reveal || state_blocked)
+        {
             skipped_inactive += 1;
             if attrib_dbg {
                 let (by, why) = blocking_ancestor(
@@ -3775,13 +3827,14 @@ fn collect_dynchar_bg_quads(
             let has_amount = ram
                 .as_ref()
                 .is_some_and(|r| r.interact_amount_curve.is_some());
-            let track = if iw.is_empty() && ic.is_none() && !has_amount {
+            let track = if iw.is_empty() && ic.is_none() && !has_amount && !rest_hidden {
                 None
             } else {
                 Some(InteractTrack {
                     windows: iw,
                     color_curve: ic,
                     stop: interact_stop,
+                    rest_hidden,
                 })
             };
             (track, ram)
@@ -7402,6 +7455,9 @@ fn export_scene(
             }
             if let Some(st) = it.stop {
                 o["stop"] = serde_json::json!(st);
+            }
+            if it.rest_hidden {
+                o["restHidden"] = serde_json::json!(true);
             }
             layer["interact"] = o;
         }

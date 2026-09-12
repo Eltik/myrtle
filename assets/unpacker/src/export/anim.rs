@@ -3455,13 +3455,18 @@ fn is_idle_clip(clip: &Value) -> bool {
 /// "special" in the name and neither "idle" (the idle-to-action transitions) nor "start" (the
 /// cinematic). The state the `interact()` button plays on the spine; its rig counterpart.
 #[must_use]
+/// The states a press plays: the clips `is_action_clip` admits and the `<State> Only Effects`
+/// groups the tap replay may show. Read from the game's naming, never from a skin.
+pub const ACTION_STATES: &[&str] = &["interact", "special"];
+
 pub fn is_action_clip(clip: &Value) -> bool {
     let name = clip
         .get("m_Name")
         .and_then(Value::as_str)
         .unwrap_or("")
         .to_ascii_lowercase();
-    (name.contains("interact") || name.contains("special") || name.contains("specail"))
+    // `specail` is the authored misspelling some clips carry; the group names do not.
+    (ACTION_STATES.iter().any(|s| name.contains(s)) || name.contains("specail"))
         && !name.contains("idle")
         && !name.contains("start")
 }
