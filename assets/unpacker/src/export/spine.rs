@@ -268,6 +268,10 @@ pub struct SceneRam {
     /// curve. Only under `DYNCHAR_AMOUNT_CURVE` (the export is byte-identical without it).
     /// `None` = the threshold is not animated (the static `amount` stands).
     pub amount_curve: Option<Vec<(f32, f32)>>,
+    /// The ACTION twin of `amount_curve`: the interact/special state clips' `_Amount` binding
+    /// on this layer, in seconds from the press plus the layer's `_delayTime`. Only under
+    /// `DYNCHAR_INTERACT`.
+    pub interact_amount_curve: Option<Vec<(f32, f32)>>,
     pub border_width: f32,
     /// `_IntensityU`/`_IntensityV` — how far the disturb sample displaces the lookup.
     pub intensity_u: f32,
@@ -327,6 +331,19 @@ pub struct SceneRam {
 
 /// One textured mesh quad of the background scene, resolved to world geometry
 /// (in the spine root's frame) plus its draw state, ready to rasterize.
+/// A main-scene layer's TAP replay (`DYNCHAR_INTERACT`): what the interact/special state clips
+/// do to it, in seconds from the press plus the layer's `_delayTime` (the delay rule's third
+/// consumer: enable time plus clip-local time, with the press as the enable). The viewer plays
+/// it under `?interact=1` when the "Play the interact animation" control fires.
+pub struct InteractTrack {
+    /// `m_IsActive` schedule from the action clips, empty when the clips never toggle it.
+    pub windows: super::anim::ActiveWindowList,
+    /// The action clips' material colour, resolved onto the static tint like `color_curve`.
+    pub color_curve: Option<Vec<(f32, [f32; 4])>>,
+    /// The longest action clip's stop: when the replay ends and the static state returns.
+    pub stop: Option<f32>,
+}
+
 pub struct BgQuad {
     /// Triangle geometry, mesh-local space.
     pub mesh: super::mesh::MeshData,
@@ -411,6 +428,9 @@ pub struct BgQuad {
     pub idle_color_curve: Option<Vec<(f32, [f32; 4])>>,
     /// The idle loop length the curve repeats on (the longest idle clip's `m_StopTime`).
     pub idle_color_loop: Option<f32>,
+    /// TAP replay (`DYNCHAR_INTERACT`), see [`InteractTrack`]. `None` unless the arm is on and
+    /// an action clip touches this layer.
+    pub interact: Option<InteractTrack>,
     /// SHADER UV-SCROLL (Capability A): the Ram flowing-light shader family
     /// (`Torappu/Particles-L2D/Ram/{Disturb,VertexDisturb}`, `_shaderName` contains
     /// `"Ram/"`) scrolls `_MainTex` continuously against Unity `_Time` via the STATIC
@@ -1634,6 +1654,32 @@ fn collect_dynchar_bg_quads(
         super::anim::entrance_material_channels_all(all_objects)
     } else {
         HashMap::new()
+    };
+    // TAP REPLAY (`DYNCHAR_INTERACT` present enables, main scene only): the interact and
+    // special STATE clips' windows, colour channels and floats, read through the same readers
+    // as the entrance with `is_action_clip` as the admission. The transitions into those
+    // states (`Idle_IdleToInteract`, `idle_toSpecial`) are not admitted: which of them a press
+    // plays is the Animator controller's graph, unread. Byte-identical without the variable.
+    let interact_on = !is_entrance && std::env::var("DYNCHAR_INTERACT").is_ok();
+    let interact_reveal = if interact_on {
+        super::anim::action_windows(all_objects)
+    } else {
+        HashMap::new()
+    };
+    let interact_colors = if interact_on {
+        super::anim::action_material_color_channels(all_objects)
+    } else {
+        HashMap::new()
+    };
+    let interact_floats = if interact_on {
+        super::anim::action_material_channels_all(all_objects)
+    } else {
+        HashMap::new()
+    };
+    let interact_stop = if interact_on {
+        super::anim::action_clip_stop(all_objects)
+    } else {
+        None
     };
     // ENTRANCE per-layer animated `_MainTex_ST` curves (Capability B): GO → the four ST
     // component curves from the `_Start` clip(s) (Skadi2's entrance seam sweep). Empty for
@@ -3071,6 +3117,26 @@ fn collect_dynchar_bg_quads(
                             } else {
                                 blend(threshold_prop, 0.5)
                             } as f32,
+                            interact_amount_curve: if std::env::var("DYNCHAR_INTERACT").is_ok() {
+                                let prop = if two_map {
+                                    "_Amount_01"
+                                } else {
+                                    threshold_prop
+                                };
+                                interact_floats
+                                    .get(&go_pid)
+                                    .and_then(|chs| super::anim::prop_float(chs, prop))
+                                    .map(|ch| {
+                                        let lo = super::shader_map::shader_range(shader, prop)
+                                            .map(|(lo, _)| lo);
+                                        ch.curve
+                                            .iter()
+                                            .map(|&(t, v)| (t, lo.map_or(v, |l| v.max(l))))
+                                            .collect()
+                                    })
+                            } else {
+                                None
+                            },
                             amount_curve: if std::env::var("DYNCHAR_AMOUNT_CURVE").is_ok() {
                                 let prop = if two_map {
                                     "_Amount_01"
@@ -3673,6 +3739,55 @@ fn collect_dynchar_bg_quads(
                 (window, scale_curve, pos_curve, color_curve, ram)
             }
         };
+        // TAP replay track: the action clips' window and colour on this layer, on the press
+        // clock plus the layer's `_delayTime`, exactly as the entrance shift above.
+        let (interact, ram) = if interact_on {
+            let d = host.delay_of_go(all_objects, go_pid) as f32;
+            let sh = |t: f32| t + d;
+            let iw = reveal_of_go(go_pid, &interact_reveal, &go_to_transform, all_objects);
+            let iw: super::anim::ActiveWindowList = if iw.len() == 1 && iw[0] == (None, None) {
+                Vec::new()
+            } else {
+                iw.iter().map(|&(a, b)| (a.map(sh), b.map(sh))).collect()
+            };
+            let ic = interact_colors
+                .get(&go_pid)
+                .and_then(|chs| {
+                    super::anim::layer_color_curve(
+                        chs,
+                        &color_props,
+                        tint_prop.as_deref(),
+                        tint,
+                        tint_scale,
+                        hdr_color,
+                        additive,
+                    )
+                })
+                .map(|c| c.into_iter().map(|(t, v)| (sh(t), v)).collect::<Vec<_>>());
+            let ram = ram.map(|mut r| {
+                if let Some(c) = r.interact_amount_curve.as_mut() {
+                    for k in c.iter_mut() {
+                        k.0 = sh(k.0);
+                    }
+                }
+                r
+            });
+            let has_amount = ram
+                .as_ref()
+                .is_some_and(|r| r.interact_amount_curve.is_some());
+            let track = if iw.is_empty() && ic.is_none() && !has_amount {
+                None
+            } else {
+                Some(InteractTrack {
+                    windows: iw,
+                    color_curve: ic,
+                    stop: interact_stop,
+                })
+            };
+            (track, ram)
+        } else {
+            (None, ram)
+        };
         quads.push(BgQuad {
             mesh,
             tex_val,
@@ -3701,6 +3816,7 @@ fn collect_dynchar_bg_quads(
             color_curve,
             idle_color_curve,
             idle_color_loop,
+            interact,
             uv_scroll,
             st_curve,
             ram,
@@ -7248,6 +7364,46 @@ fn export_scene(
             if let Some(lp) = quad.idle_color_loop {
                 layer["idleColorLoop"] = serde_json::json!(lp);
             }
+        }
+        // TAP replay (`DYNCHAR_INTERACT`): the action clips' effect on this layer, keyed from
+        // the press. Omitted unless the arm is on and a clip touches the layer.
+        if let Some(it) = &quad.interact {
+            let mut o = serde_json::json!({});
+            if let Some(&(a, b)) = it.windows.first() {
+                if let Some(t) = a {
+                    o["activeFrom"] = serde_json::json!(t);
+                }
+                if let Some(t) = b {
+                    o["activeUntil"] = serde_json::json!(t);
+                }
+            }
+            if it.windows.len() > 1 {
+                o["activeWindows"] = serde_json::json!(
+                    it.windows
+                        .iter()
+                        .map(|&(a, b)| serde_json::json!([a, b]))
+                        .collect::<Vec<_>>()
+                );
+            }
+            if let Some(c) = &it.color_curve {
+                o["colorCurve"] = serde_json::json!(
+                    c.iter()
+                        .map(|&(t, v)| [t, v[0], v[1], v[2], v[3]])
+                        .collect::<Vec<_>>()
+                );
+            }
+            if let Some(c) = quad
+                .ram
+                .as_ref()
+                .and_then(|r| r.interact_amount_curve.as_ref())
+            {
+                o["amountCurve"] =
+                    serde_json::json!(c.iter().map(|&(t, v)| [t, v]).collect::<Vec<_>>());
+            }
+            if let Some(st) = it.stop {
+                o["stop"] = serde_json::json!(st);
+            }
+            layer["interact"] = o;
         }
         // SHADER UV-SCROLL (Capability A): per-second UV velocity `[u, v]` (Unity UV space)
         // for Ram-family scene layers; the frontend offsets the layer's UVs by `t · [u,v]`

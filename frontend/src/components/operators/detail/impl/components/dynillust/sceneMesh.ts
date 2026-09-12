@@ -157,6 +157,18 @@ export interface ISceneLayer {
      *  `?idlecolor=1` (see `idleColorOn` in `SceneIllust.tsx`). Only main scenes carry it. */
     idleColorCurve?: [number, number, number, number, number][] | null;
     idleColorLoop?: number | null;
+    /** TAP replay (`DYNCHAR_INTERACT`): what the interact/special state clips do to this layer,
+     *  in seconds from the press (the layer's `_delayTime` already added by the exporter).
+     *  Replayed under `?interact=1` when the "Play the interact animation" control fires; the
+     *  static tint, threshold and visibility return at `stop`. */
+    interact?: {
+        activeFrom?: number | null;
+        activeUntil?: number | null;
+        activeWindows?: [number | null, number | null][];
+        colorCurve?: [number, number, number, number, number][] | null;
+        amountCurve?: [number, number][] | null;
+        stop?: number | null;
+    } | null;
     /** ENTRANCE uniform-scale MULTIPLIER keyframes `[t, mult]` over the baked prefab pose
      *  (1.0 = unchanged), from the `_Start` clips. Present only where the clip animates this
      *  layer's transform (or an ancestor's) - 3 layers across 2 composites corpus-wide. */
@@ -1033,6 +1045,9 @@ export interface ISceneLayerRuntime {
     __scalePivot?: [number, number] | null;
     __posCurve?: [number, number, number][] | null;
     __colorCurve?: [number, number, number, number, number][] | null;
+    /** Tap replay (`?interact=1`): the exported track and the static threshold it returns to. */
+    __interact?: ISceneLayer["interact"];
+    __staticAmount?: number;
     /** Idle colour replay (`?idlecolor=1`): the curve and its loop, absent for layers without one. */
     __idleColorCurve?: [number, number, number, number, number][] | null;
     __idleColorLoop?: number | null;
@@ -1844,6 +1859,11 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
         // rotation angle. `followBasis` is row-major Y-up `[m00, m01, m10, m11]`, so its
         // first column is `(m00, m10)` and the Y flip negates both the angle and origin Y.
         if (ramTex && layer.ram?.amountCurve?.length) rt.__amountCurve = layer.ram.amountCurve;
+        if (layer.interact) {
+            rt.__interact = layer.interact;
+            rt.__colorMode = rt.__colorMode ?? { additive, gain };
+            if (ramTex && layer.ram) rt.__staticAmount = layer.ram.amount;
+        }
         if (ramTex && layer.ram) rt.__ramSpeed = { dissolve: layer.ram.dissolveSpeed, disturb: layer.ram.disturbSpeed, disturb2: layer.ram.disturb2 ? [layer.ram.disturb2[1], 0] : null };
         if (layer.followBone && layer.followOrigin && layer.followBasis) {
             const [m00, , m10] = layer.followBasis;

@@ -595,6 +595,25 @@ function amountCurveOn(): boolean {
     return new URLSearchParams(window.location.search).get("amountcurve") === "1";
 }
 
+/** TAP REPLAY (`?interact=1`, off unless the parameter is exactly "1"): when the interact control
+ *  fires, replay each main-scene layer's exported `interact` track (visibility, colour, dissolve
+ *  threshold) on a clock that starts at the press and ends at the track's stop, then restore the
+ *  static state. The spine's own Interact animation plays either way; missing or any other value
+ *  leaves the scene layers static during a tap, the previous behaviour exactly. */
+/** DIAGNOSTIC (`?tapat=<seconds>`): fire the interact control once when the scene clock passes
+ *  the given time, so a headless harness can record a tap without a button. `NaN` (missing or
+ *  unparsable) never fires, the previous behaviour exactly. */
+function tapAt(): number {
+    if (typeof window === "undefined") return Number.NaN;
+    const v = new URLSearchParams(window.location.search).get("tapat");
+    return v == null ? Number.NaN : Number(v);
+}
+
+function interactOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("interact") === "1";
+}
+
 function idleColorOn(): boolean {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("idlecolor") === "1";
@@ -1044,6 +1063,10 @@ interface IComposite {
      *  modulo their loop. Empty for the entrance composite and for scenes exported without
      *  `DYNCHAR_IDLE_COLOR`. */
     idleColorLayers: PIXI.Mesh[];
+    /** TAP replay (`?interact=1`): the main scene's layer meshes carrying an `interact` track,
+     *  and the shared press clock (`null` when no tap is playing). */
+    interactLayers: PIXI.Mesh[];
+    tap: { clock: number | null; stop: number; fired: boolean };
     /** The scene's RAM-MASKED layer meshes (a `_DissolveTex`/`_DisturbTex` silhouette). The
      *  always-running tick drifts their mask lookups with the same scene clock. Empty for
      *  scenes with no masked layers. */
@@ -2306,6 +2329,34 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     const t = loop && loop > 0 ? sceneClock % loop : sceneClock;
                     applySceneLayerColor(m, sampleColorCurve(curve, t));
                 }
+                // DIAGNOSTIC `?tapat=`: one scheduled press on the main composite.
+                if (comp.tap.clock == null && !comp.tap.fired && Number.isFinite(tapAt()) && sceneClock >= tapAt()) {
+                    comp.tap.fired = true;
+                    comp.interact();
+                }
+                // Tap replay: the press clock drives each track's visibility, colour and
+                // threshold; past the stop everything returns to its static state.
+                if (comp.tap.clock != null) {
+                    comp.tap.clock += dt;
+                    const t = comp.tap.clock;
+                    const done = t > comp.tap.stop;
+                    for (const m of comp.interactLayers) {
+                        const rt = m as unknown as ISceneLayerRuntime;
+                        const it = rt.__interact;
+                        if (!it) continue;
+                        if (done) {
+                            m.renderable = true;
+                            if (it.colorCurve?.length && rt.__staticTint) applySceneLayerColor(m, rt.__staticTint);
+                            if (it.amountCurve?.length && rt.__staticAmount != null) applySceneLayerAmount(m, rt.__staticAmount);
+                            continue;
+                        }
+                        const windows: [number | null, number | null][] = it.activeWindows?.length ? it.activeWindows : it.activeFrom != null || it.activeUntil != null ? [[it.activeFrom ?? null, it.activeUntil ?? null]] : [];
+                        if (windows.length) m.renderable = windows.some(([f, u]) => (f == null || t >= f) && (u == null || t < u));
+                        if (it.colorCurve?.length) applySceneLayerColor(m, sampleColorCurve(it.colorCurve, t));
+                        if (it.amountCurve?.length) applySceneLayerAmount(m, sampleScalarCurve(it.amountCurve, t));
+                    }
+                    if (done) comp.tap.clock = null;
+                }
             }
             if (spineRef.current) {
                 releaseStaleClipGraphics(spineRef.current);
@@ -3177,6 +3228,9 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
             // A rig with no "Interact" answers a tap with its next "Special" instead (the clips the
             // idle interleaves on its own schedule), so every dynamic skin has a tap response.
             let tapSpecial = 0;
+            // The tap clock the scene layers' `interact` tracks replay on (`?interact=1`): set to 0
+            // by the press, advanced by the tick, cleared past the tracks' stop.
+            const tapState: { clock: number | null; stop: number; fired: boolean } = { clock: null, stop: 0, fired: false };
             const interact = (): boolean => {
                 if (opts.mode === "entrance") return false;
                 const clip = animations.includes("Interact") ? "Interact" : specials[tapSpecial % Math.max(1, specials.length)];
@@ -3187,6 +3241,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 if (clip !== "Interact") tapSpecial++;
                 state.setAnimation(0, clip, false);
                 state.addAnimation(0, settleClip, true, 0);
+                if (interactOn()) tapState.clock = 0;
                 return true;
             };
 
@@ -5077,6 +5132,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 }
                 const scrollLayers: PIXI.Mesh[] = [];
                 const idleColorLayers: PIXI.Mesh[] = [];
+                const interactLayers: PIXI.Mesh[] = [];
                 const ramLayers: PIXI.Mesh[] = [];
                 const followLayers: PIXI.Mesh[] = [];
                 if (scene) {
@@ -5086,6 +5142,10 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                             const rt = m as unknown as ISceneLayerRuntime;
                             if (rt.__uvScroll && !rt.__stCurve) scrollLayers.push(m as PIXI.Mesh);
                             if (rt.__idleColorCurve?.length && idleColorOn()) idleColorLayers.push(m as PIXI.Mesh);
+                            if (rt.__interact && interactOn()) {
+                                interactLayers.push(m as PIXI.Mesh);
+                                tapState.stop = Math.max(tapState.stop, rt.__interact.stop ?? 0);
+                            }
                             if (rt.__ramSpeed) ramLayers.push(m as PIXI.Mesh);
                             if (rt.__follow) followLayers.push(m as PIXI.Mesh);
                         }
@@ -5136,6 +5196,8 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     apertureMask,
                     scrollLayers,
                     idleColorLayers,
+                    interactLayers,
+                    tap: tapState,
                     ramLayers,
                     followLayers,
                     entranceSceneEnd: deferEndUntil,
@@ -5187,6 +5249,8 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 sceneLayers: null,
                 scrollLayers: [],
                 idleColorLayers: [],
+                interactLayers: [],
+                tap: tapState,
                 ramLayers: [],
                 followLayers: [],
                 entranceSceneEnd: null,

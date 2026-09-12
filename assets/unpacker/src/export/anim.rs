@@ -435,6 +435,32 @@ pub fn entrance_clip_stop(all_objects: &HashMap<i64, (i32, Value)>) -> Option<f3
 
 #[must_use]
 pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, ActiveWindowList> {
+    let cam_clips = if std::env::var("DYNCHAR_WINCAMCLIP").as_deref() == Ok("0") {
+        HashSet::new()
+    } else {
+        camera_motion_clips(all_objects)
+    };
+    active_windows_for(all_objects, true, |pid, v| {
+        is_entrance_clip(v) || cam_clips.contains(&pid)
+    })
+}
+
+/// The ACTION twin of [`active_windows`]: `m_IsActive` schedules from the interact and special
+/// state clips (`is_action_clip`), in clip-local seconds from the press, bounded by each clip's
+/// own stop (no director runs a tap). Opt-in through `DYNCHAR_INTERACT` in `spine.rs`.
+#[must_use]
+pub fn action_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, ActiveWindowList> {
+    active_windows_for(all_objects, false, |_, v| is_action_clip(v))
+}
+
+/// The shared body of [`active_windows`] and [`action_windows`]: `admit` selects the clips,
+/// `director_bound` extends an un-hidden reveal to the director's duration (the entrance's
+/// rule) rather than the clip's stop.
+fn active_windows_for(
+    all_objects: &HashMap<i64, (i32, Value)>,
+    director_bound: bool,
+    admit: impl Fn(i64, &Value) -> bool,
+) -> HashMap<i64, ActiveWindowList> {
     let hash_to_gos = build_hash_to_gos(all_objects);
     let is_ancestor = build_ancestor_check(all_objects);
     let clip_animators = build_clip_animator_gos(all_objects);
@@ -480,20 +506,16 @@ pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, 
     // UNION, so every skin the name gate already handled is untouched by construction: where a
     // camera-motion clip is already name-admitted, `camera_motion_clips` returns exactly that
     // clip, and the union adds nothing. `DYNCHAR_WINCAMCLIP=0` reverts to the name gate alone.
-    let cam_clips = if std::env::var("DYNCHAR_WINCAMCLIP").as_deref() == Ok("0") {
-        HashSet::new()
-    } else {
-        camera_motion_clips(all_objects)
-    };
     let mut out: HashMap<i64, ActiveWindowList> = HashMap::new();
     for (clip_pid, (cid, v)) in all_objects {
         if *cid != 74 {
             continue;
         }
-        // Only the ENTRANCE clip drives the reveal timeline. The `_Start` bundle also
-        // ships the full idle/interact state machine, whose `m_IsActive` toggles are
-        // NOT the cinematic sequence — merging them corrupts the windows.
-        if !is_entrance_clip(v) && !cam_clips.contains(clip_pid) {
+        // Only the admitted clips drive this timeline. For the entrance that is the `_Start`
+        // clip (plus the camera-motion clip): the bundle also ships the full idle/interact
+        // state machine, whose `m_IsActive` toggles are NOT the cinematic sequence, and
+        // merging them corrupts the windows.
+        if !admit(*clip_pid, v) {
             // DIAGNOSTIC (`DYNCHAR_CLIPS`): what the NON-entrance clips (Idle, Interact,
             // Special) toggle, with their stop times, so a one-shot effect that the game
             // re-fires on every idle loop can be told from one it fires once at the open.
@@ -549,7 +571,7 @@ pub fn active_windows(all_objects: &HashMap<i64, (i32, Value)>) -> HashMap<i64, 
                 // (luminance 248 -> 97 where the game stays 248). Falls back to the clip stop
                 // when no director duration is authored, and never SHORTENS a window.
                 let bound = match (stop, director_duration) {
-                    (Some(s), Some(d)) if d > s => Some(d),
+                    (Some(s), Some(d)) if director_bound && d > s => Some(d),
                     (s, _) => s,
                 };
                 if let Some(last) = ivs.last_mut() {
@@ -2705,6 +2727,24 @@ pub fn idle_material_color_channels(
     material_color_channels_for(all_objects, true, |_, v| is_idle_clip(v))
 }
 
+/// The ACTION twin: colour channels on the interact and special state clips
+/// (`is_action_clip`), the rig counterpart of the spine animation `interact()` plays. Opt-in
+/// through `DYNCHAR_INTERACT` in `spine.rs`.
+#[must_use]
+pub fn action_material_color_channels(
+    all_objects: &HashMap<i64, (i32, Value)>,
+) -> HashMap<i64, Vec<MaterialColorChannel>> {
+    material_color_channels_for(all_objects, true, |_, v| is_action_clip(v))
+}
+
+/// Every kind of material channel on the action clips (the scalar `_Amount` floats included).
+#[must_use]
+pub fn action_material_channels_all(
+    all_objects: &HashMap<i64, (i32, Value)>,
+) -> HashMap<i64, Vec<MaterialColorChannel>> {
+    material_color_channels_for(all_objects, false, |_, v| is_action_clip(v))
+}
+
 /// The loop an idle colour curve repeats on: the longest `clip_stop` among the channels of ONE
 /// layer, i.e. the owning idle clip's length. `None` when no channel carries a stop time.
 #[must_use]
@@ -3409,6 +3449,33 @@ fn is_idle_clip(clip: &Value) -> bool {
         .unwrap_or("")
         .to_ascii_lowercase();
     name.contains("idle") && !EXCLUDED.iter().any(|e| name.contains(e))
+}
+
+/// Whether a clip is a tap-triggered ACTION state by the game's own naming: "interact" or
+/// "special" in the name and neither "idle" (the idle-to-action transitions) nor "start" (the
+/// cinematic). The state the `interact()` button plays on the spine; its rig counterpart.
+#[must_use]
+pub fn is_action_clip(clip: &Value) -> bool {
+    let name = clip
+        .get("m_Name")
+        .and_then(Value::as_str)
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    (name.contains("interact") || name.contains("special") || name.contains("specail"))
+        && !name.contains("idle")
+        && !name.contains("start")
+}
+
+/// The action clips' longest `m_StopTime`: how long a tap replay runs.
+#[must_use]
+pub fn action_clip_stop(all_objects: &HashMap<i64, (i32, Value)>) -> Option<f32> {
+    all_objects
+        .values()
+        .filter(|(cid, v)| *cid == 74 && is_action_clip(v))
+        .filter_map(|(_, v)| clip_stop_time(v))
+        .fold(None, |acc: Option<f32>, s| {
+            Some(acc.map_or(s, |a| a.max(s)))
+        })
 }
 
 fn find_idle_clips(all_objects: &HashMap<i64, (i32, Value)>) -> Vec<&Value> {
