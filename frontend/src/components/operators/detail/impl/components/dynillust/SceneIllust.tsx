@@ -1066,7 +1066,7 @@ interface IComposite {
     /** TAP replay (`?interact=1`): the main scene's layer meshes carrying an `interact` track,
      *  and the shared press clock (`null` when no tap is playing). */
     interactLayers: PIXI.Mesh[];
-    tap: { clock: number | null; stop: number; fired: boolean };
+    tap: { clock: number | null; stop: number; fired: boolean; fireResult?: boolean };
     /** The scene's RAM-MASKED layer meshes (a `_DissolveTex`/`_DisturbTex` silhouette). The
      *  always-running tick drifts their mask lookups with the same scene clock. Empty for
      *  scenes with no masked layers. */
@@ -2329,10 +2329,27 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     const t = loop && loop > 0 ? sceneClock % loop : sceneClock;
                     applySceneLayerColor(m, sampleColorCurve(curve, t));
                 }
+                // DEV diagnostic for a headless harness: the tap state on `window.__dynTap`.
                 // DIAGNOSTIC `?tapat=`: one scheduled press on the main composite.
                 if (comp.tap.clock == null && !comp.tap.fired && Number.isFinite(tapAt()) && sceneClock >= tapAt()) {
                     comp.tap.fired = true;
-                    comp.interact();
+                    comp.tap.fireResult = comp.interact();
+                }
+                if (import.meta.env.DEV && typeof window !== "undefined" && interactOn()) {
+                    const w = window as unknown as { __dynTapSnaps?: unknown[]; __dynTap?: () => unknown };
+                    const snap = {
+                        entrance: comp.requestEntranceEnd != null,
+                        sceneClock,
+                        fired: comp.tap.fired,
+                        fireResult: comp.tap.fireResult ?? null,
+                        clock: comp.tap.clock,
+                        stop: comp.tap.stop,
+                        layers: comp.interactLayers.length,
+                    };
+                    const snaps = (w.__dynTapSnaps ??= []);
+                    const ix = compositesRef.current.indexOf(comp);
+                    snaps[ix] = snap;
+                    w.__dynTap = () => snaps;
                 }
                 // Tap replay: the press clock drives each track's visibility, colour and
                 // threshold; past the stop everything returns to its static state.
@@ -3230,7 +3247,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
             let tapSpecial = 0;
             // The tap clock the scene layers' `interact` tracks replay on (`?interact=1`): set to 0
             // by the press, advanced by the tick, cleared past the tracks' stop.
-            const tapState: { clock: number | null; stop: number; fired: boolean } = { clock: null, stop: 0, fired: false };
+            const tapState: { clock: number | null; stop: number; fired: boolean; fireResult?: boolean } = { clock: null, stop: 0, fired: false };
             const interact = (): boolean => {
                 if (opts.mode === "entrance") return false;
                 const clip = animations.includes("Interact") ? "Interact" : specials[tapSpecial % Math.max(1, specials.length)];
