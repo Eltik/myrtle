@@ -1,4 +1,4 @@
-import { StatsStatsTab } from "frontend";
+import { ProfileStatsTab } from "frontend";
 
 // StatsTab is data-coupled: it reads the skins index, the user's owned skins
 // and the check-in record through TanStack Query, and renders StatsTabSkeleton
@@ -43,4 +43,4 @@ const OPERATORS = [op("char_4064_mlynar", "Mlynar", "WARRIOR", "sword"), op("cha
 
 const ROSTER = [entry("char_4064_mlynar", 2, 90, 3, 3), entry("char_293_thorns", 2, 90, 3, 2), entry("char_350_surtr", 2, 88, 2, 3), entry("char_4087_ines", 2, 84, 1, 1), entry("char_003_kalts", 1, 70, 0, 0), entry("char_2015_dusk", 2, 90, 3, 3)];
 
-export const LoadingSkinsIndex = () => <StatsStatsTab nonDefaultSkinCount={63} operatorsStatic={OPERATORS} roster={ROSTER} server="en" uid="1000123456" />;
+export const LoadingSkinsIndex = () => <ProfileStatsTab nonDefaultSkinCount={63} operatorsStatic={OPERATORS} roster={ROSTER} server="en" uid="1000123456" />;

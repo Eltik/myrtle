@@ -39,7 +39,7 @@ exist:
 | `bg-` | `background card popover muted accent primary secondary destructive sidebar foreground` |
 | `text-` | `foreground muted-foreground card-foreground popover-foreground primary primary-foreground secondary-foreground accent-foreground destructive success warning info` |
 | `border-` | `border input primary destructive transparent` |
-| `font-` | `sans heading mono display` + `normal medium semibold bold` |
+| `font-` | `sans heading mono display techno` + `normal medium semibold bold` |
 | `rounded-` | `sm md lg xl 2xl 3xl full none` |
 
 Opacity modifiers work on the colour families (`bg-primary/10`), as do `sm:`/`md:`/
@@ -69,10 +69,11 @@ Base UI, not Radix: `SelectPopup`, `DialogPopup`, `CardPanel` — never
 `Select.Content`. A subpart only renders inside its family root (`MenuGroupLabel`
 throws outside `MenuGroup`).
 
-**39 feature components are renamed to break collisions with the primitives**, and
+**43 feature components are renamed to break collisions with the primitives**, and
 the renamed name is the API: `HomeHero`, `TierListsHero`, `LeaderboardHero`,
 `ProfileHero`, `AdminKicker`, `StatsKicker`, `DetailKicker`, `ListPagination`,
-`AdminStatTile`, `ItemsCompactCard`, `RosterCompactCard`, `MapTile`, `StatsTile`…
+`AdminStatTile`, `ItemsCompactCard`, `RosterCompactCard`, `MapTile`, `MapBoard`,
+`BaseBoard`, `OptimizerBasePanel`, `UserLeaderboard`, `ProfileStatsTab`…
 `ui/` always keeps the bare name (`Kicker`, `Pagination`, `Toolbar` are the
 primitives). Check the component's own folder name when in doubt.
 

@@ -23,6 +23,8 @@
             "#/env": [".design-sync/stubs/env.ts"],
             "#/hooks/use-auth": [".design-sync/stubs/use-auth.ts"],
 
+            "#/routes/enemies": [".design-sync/stubs/route.ts"],
+            "#/routes/operators": [".design-sync/stubs/route.ts"],
             "#/routes/tools.recruitment": [".design-sync/stubs/route.ts"],
             "#/routes/user.leaderboard": [".design-sync/stubs/route.ts"],
             "#/routes/user.search": [".design-sync/stubs/route.ts"],

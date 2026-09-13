@@ -666,7 +666,7 @@ pub(crate) fn state_only_blocked_admitting(
                 .to_ascii_lowercase();
             if name.contains("only")
                 && STATE_ONLY.iter().any(|s| {
-                    !(start_state_active && *s == "start")
+                    (!start_state_active || *s != "start")
                         && name.contains(s)
                         // DIAGNOSTIC (`DYNCHAR_STATE_ADMIT=interact,special`, default empty):
                         // stop blocking the named `<State> Only Effects` groups, to measure
@@ -7457,7 +7457,7 @@ fn export_scene(
                 .and_then(|r| r.interact_amount_curve.as_ref())
             {
                 o["amountCurve"] =
-                    serde_json::json!(c.iter().map(|&(t, v)| [t, v]).collect::<Vec<_>>());
+                    serde_json::json!(c.iter().copied().map(<[_; 2]>::from).collect::<Vec<_>>());
             }
             if let Some(st) = it.stop {
                 o["stop"] = serde_json::json!(st);
@@ -7562,8 +7562,9 @@ fn export_scene(
                 // ENTRANCE `_Amount` animation (`DYNCHAR_AMOUNT_CURVE`), `[t, value]`; the key is
                 // omitted, never null, so the default export stays byte-identical.
                 if let Some(c) = &r.amount_curve {
-                    layer["ram"]["amountCurve"] =
-                        serde_json::json!(c.iter().map(|&(t, v)| [t, v]).collect::<Vec<_>>());
+                    layer["ram"]["amountCurve"] = serde_json::json!(
+                        c.iter().copied().map(<[_; 2]>::from).collect::<Vec<_>>()
+                    );
                 }
                 // Disturb2's second noise, present only on that family so every other ram block
                 // serialises exactly as before.

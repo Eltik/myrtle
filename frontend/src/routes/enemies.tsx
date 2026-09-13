@@ -1,12 +1,26 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { EnemiesList } from "#/components/enemies/list/Enemies";
 import { enemiesQueryOptions, enemyStagesQueryOptions } from "#/lib/api/enemies";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
+const SEARCH_DEFAULTS = { page: 1 } as const;
+
 export const Route = createFileRoute("/enemies")({
     component: RouteComponent,
     errorComponent: RootErrorComponent,
+    // The page number lives in the URL so returning from an enemy page lands
+    // back on the page you left, with the scroll position the router restores.
+    // Left optional so `<Link to="/enemies">` still means "page one" and the
+    // param only ever appears once you have paged somewhere else.
+    validateSearch: (search: Record<string, unknown>): { page?: number } => {
+        const raw = typeof search.page === "number" ? search.page : typeof search.page === "string" ? Number(search.page) : 1;
+        const page = Number.isFinite(raw) && raw >= 1 ? Math.floor(raw) : 1;
+        return page === 1 ? {} : { page };
+    },
+    // `validateSearch` only runs on the way in, so page one still needs stripping
+    // on the way out to keep a bare `/enemies` in the address bar.
+    search: { middlewares: [stripSearchParams(SEARCH_DEFAULTS)] },
     loader: async ({ context }) => {
         await Promise.all([
             context.queryClient.ensureQueryData(enemiesQueryOptions()),

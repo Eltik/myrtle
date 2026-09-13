@@ -1,4 +1,4 @@
-import { Board } from "frontend";
+import { MapBoard } from "frontend";
 
 /** Raw tile records exactly as `GET /level/{stageId}` ships them. */
 const T = {
@@ -59,34 +59,34 @@ const Surface = ({ children }: { children?: React.ReactNode }) => (
 /** The default 3D view: `hovered` tilts the grid 30° and extrudes high ground. */
 export const ThreeDBoard = () => (
     <Surface>
-        <Board level={LEVEL} operators={NO_OPERATORS} hovered coordOverride={null} />
+        <MapBoard level={LEVEL} operators={NO_OPERATORS} hovered coordOverride={null} />
     </Surface>
 );
 
 /** Toggling 3D off flattens the board to a top-down plan. */
 export const FlatBoard = () => (
     <Surface>
-        <Board level={LEVEL} operators={NO_OPERATORS} hovered={false} coordOverride={null} />
+        <MapBoard level={LEVEL} operators={NO_OPERATORS} hovered={false} coordOverride={null} />
     </Surface>
 );
 
 /** `predefines.tokenInsts` paint deployed operators onto their tiles. */
 export const WithPredefinedSquad = () => (
     <Surface>
-        <Board level={LEVEL} operators={SQUAD} hovered coordOverride={null} />
+        <MapBoard level={LEVEL} operators={SQUAD} hovered coordOverride={null} />
     </Surface>
 );
 
 /** `tilesDisallowToLocate` strips the deployable outline from otherwise buildable tiles. */
 export const RestrictedDeployment = () => (
     <Surface>
-        <Board level={{ ...LEVEL, tilesDisallowToLocate: [3 * WIDTH + 3, 3 * WIDTH + 4, 3 * WIDTH + 5, 1 * WIDTH + 3, 1 * WIDTH + 7, 5 * WIDTH + 3, 5 * WIDTH + 7] }} operators={NO_OPERATORS} hovered coordOverride={null} />
+        <MapBoard level={{ ...LEVEL, tilesDisallowToLocate: [3 * WIDTH + 3, 3 * WIDTH + 4, 3 * WIDTH + 5, 1 * WIDTH + 3, 1 * WIDTH + 7, 5 * WIDTH + 3, 5 * WIDTH + 7] }} operators={NO_OPERATORS} hovered coordOverride={null} />
     </Surface>
 );
 
 /** `coordOverride="maa"` swaps the A1-style labels for MAA's zero-indexed `col,row`. */
 export const MaaCoordinates = () => (
     <Surface>
-        <Board level={LEVEL} operators={NO_OPERATORS} hovered coordOverride="maa" />
+        <MapBoard level={LEVEL} operators={NO_OPERATORS} hovered coordOverride="maa" />
     </Surface>
 );

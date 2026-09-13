@@ -14,6 +14,34 @@ Repo-specific gotchas for future syncs. Read this before touching `.design-sync/
   primitives, presentational feature components, router-coupled components, and
   data-coupled containers. 329 files → 697 exports → 692 component cards.
 
+## The exact driver command (not derivable from config)
+
+```
+node .design-sync/build-css.mjs
+node .ds-sync/resync.mjs --config .design-sync/config.json --node-modules ./node_modules \
+  --entry ./src/components/ui/button.tsx --out ./ds-bundle \
+  --remote .design-sync/.cache/remote-sync.json
+node .design-sync/copy-assets.mjs
+```
+
+A full `package-build.mjs` takes **75-77 min** on this machine (measured four times on
+2026-09-13: the esbuild service compiles 704 previews serially against the 9.9 MB bundle
+at ~130% CPU and 1.6 GB; the DTS walk is the rest); the driver adds ~8 min of validate and
+whatever it captures (664 sheets took ~35 min). Plan a re-sync as build count x 77 min:
+every config edit that is not `cardMode`/`primaryStory`/`viewport` needs one.
+
+`--entry` is load-bearing and its VALUE is irrelevant: `package-build.mjs` resolves
+`PKG_DIR` as `join(NODE_MODULES, cfg.pkg)` = `node_modules/frontend` (does not exist)
+unless an entry is given, in which case it walks up from the entry to the nearest
+`package.json` with a `name`, i.e. `frontend/`. The `source-kit.mjs` fork ignores the
+entry and synthesizes its own barrel. Without the flag the build dies in the `dts.mjs`
+fork with `ENOENT .../node_modules/frontend/package.json` (2026-09-12, one wasted run).
+
+`build-css.mjs` carries a hardcoded `FONT_PKGS` table mapping `@font-face` filename
+prefixes to `@fontsource-variable/*` packages. A font added to `src/styles.css` needs a
+row there or the CSS build prints `! unresolved font files:` and the family ships
+without its woff2 (Orbitron / `--font-techno` was added between the first two syncs).
+
 ## Why `overrides/source-kit.mjs` is forked
 
 Declared in `cfg.libOverrides`. Two reasons, both structural to this repo:
@@ -190,6 +218,78 @@ The server-fn stub's rejection message is deliberately **product-shaped**
 `error.message` straight into their error branch — a harness-flavoured string leaks
 into the cards.
 
+## Wave 2026-09-13 learnings (folded from six authoring agents)
+
+### `useBaseOptimizer()` consumers need the provider ON the bundle
+
+`BaseOptimizerProvider` / `useBaseOptimizer` live in `Optimizer/base/base-context.ts`, a
+`.ts` file, so the source-kit fork (which walks `.tsx|.jsx` only) never exported them and
+seven components blanked with `Element type is invalid ... got: undefined` (`AccountFacts`,
+`PromotionToggle`, `ShiftStrip`, `RoomPopover`, `OptimizerBasePanel`, `DeepDive`,
+`StatsForNerds`). Fix: `cfg.extraEntries` carries `base-context.ts` (same mechanism as
+`DesignPreviewProvider`/`cn`); esbuild dedupes the module so the exported Provider shares
+the context identity the bundled components read. A provider created INSIDE a preview
+never works (the preview bundles its own copy). Any future context head in a `.ts` file
+needs the same treatment. NOTE `extraEntries` is in the GLOBAL key slice: adding one
+re-keys every component (see the fork section above for the carry proof).
+
+### Harness traps found this wave
+
+- **Store-backed prop-less components** (`WhatsNewButton`, `ReleaseNoteDialog`): the
+  `@tanstack/store` singleton is unreachable from a preview (own module copy). Drive them
+  the way the product does: click the bell on mount, and set/remove
+  `localStorage["myrtle-changelog-seen"]` DURING the wrapper's render (an effect is too
+  late). `localStorage` persists across `?story=` captures (one page, one origin), so each
+  story must reset any key it depends on; never rely on capture order.
+- **Base UI `Dialog` initial focus lands after the open transition**: the two-rAF blur
+  is enough for popovers, not dialogs. `setTimeout` blurs at 60/180/400 ms cleared the
+  ring on `ReleaseNoteDialog`.
+- **Opening a Base UI `Tooltip` on mount**: synthetic mouse events alone lose to the
+  600 ms `restMs` timer once images are cached and `networkidle` fires first. Wrap the
+  story in `<TooltipProvider delay={0}>` (bundle export) and dispatch a non-bubbling
+  `mouseenter` after two rAFs. `el.focus()` also opens it but paints the red ring.
+- **Container-query parents need a definite width**: `BaseBoard`'s `.riic-board-fit` is
+  `container-type: inline-size`; as a flex item or under `width: fit-content` it
+  collapses to 0 and the board clips. Block child, `width: 100%`, `zoom` for the sweep.
+- **CSS-module classes ship prefixed** (`Board_riic-board-scroll`, `Tile_riic-tile-op-chip`),
+  so previews and designs cannot reference them; inline the stage as a style object.
+- **A fixture referenced before its `const`** (TDZ) throws at preview module load and the
+  rebuild does not catch it. Order fixtures by dependency.
+- **The review sheet downsamples 900x700 to ~760 px**; 64 px tiles are unreadable there.
+  Grade tile-sized components from `_screenshots/review/raw/*.png`.
+- Compiled-in content can post-date the frozen clock: `ReleaseNotesList` renders
+  "September 10, 2026" from `src/content/changelog/entries.ts`. Not a fixture.
+- `[&>svg]:shrink-0` / `[&>svg]:text-muted-foreground` compile only because
+  `Operators.tsx` uses those exact strings; a design must copy them verbatim.
+- **Tall open panels need a `viewport` override**, not a smaller composition: `DeepDive`
+  (900x1300), `StatsForNerds` (900x1200), `RoomPopover` (900x1100, a three-operator popover
+  is ~900 px and Base UI shifts it past the top edge at 700), `OptimizerBasePanel`
+  (1000x1500). `ov.viewport` is honoured in grid mode and every `?story=` capture uses it.
+  `viewport` IS in the component key slice (unlike `cardMode`), so it re-grades that one card.
+- **Any `useBaseOptimizer()` consumer**: wrap in `<BaseOptimizerProvider value={api}>` with a
+  full `IOptimizerAPI` (type-only import from `src/lib/base/use-optimizer`); the
+  `optimizerApi(overrides)` factory in `previews/ShiftStrip.tsx` is the copyable baseline.
+  `RoomPopover`'s "Optimized a% -> b%" footer only renders when a room diff's before/after
+  crews differ; tile crews' `skills` must be pre-filtered to the tile's `roomType`.
+- The base fixture arithmetic that reads coherent (reuse it): a 2-4-3 L3 base, trading
+  posts at eff 100/88 = 20,000 + 18,800 LMD/day (headline 38,800), EXP factories 92/78 =
+  29,600, power 810 generated / 790 drawn, `total_production_efficiency` = SUM of room
+  efficiencies (588). Operator ids resolved against `/api/operators/index`
+  (Vulcan `char_163_hpsts`, Gitano `char_109_fmout`, Swire `char_308_swire`).
+
+### Source observations from this wave (not sync issues)
+
+7. `ControlCenterTile` wraps its `TileHint` around `riic-tile-room-clip`, which is
+   `pointer-events: none`, so the Control Center hint never opens on hover; `RoomTile`'s
+   inner wrapper is dead the same way (unbuilt/empty tiles never show a hint).
+8. `BasePanel.tsx`'s fullscreen `.riic-board-pan-canvas` is `display: flex` around the
+   inline-size container `.riic-board-fit`; the collapse seen in previews may apply
+   in-app (unverified).
+9. `LevelBreakdown`'s `.d.ts` says `ownLevel?: number` but the source accepts `null`
+   (the extractor drops `| null`).
+10. The `IUserScore` fixtures in the older OverallGradeCard/ScoreTab/SubscoreCard
+    previews lack the newer `base_utilization`/`base_infrastructure` fields.
+
 ## Seven components are un-previewable by construction
 
 `EnemyDetail`, `OperatorDetail`, `StageDetail`, `StageList`, `TierListDetail`,
@@ -217,13 +317,20 @@ investigate a warn **not** on this list.
   component. Their content portals to `document.body`, so the measured story root
   is near-identical across stories even though the screenshots differ. Sheets were
   read individually and graded `good`.
-- `[RENDER_THIN] rendered height is 0px` on `TierDetailsDialog` — same cause
-  (portalled popup, zero-height root).
+- `[RENDER_THIN] rendered height is 0px` on `TierDetailsDialog`, `ExportDialog`,
+  `DeletePlansDialog` and the whole `AlertDialog*` family — same cause (portalled popup,
+  zero-height root). With `cardMode: single` the check reports height instead of
+  "variants identical"; the solo captures are unaffected.
 - `[RENDER_THIN]` on `ExportDialog`, `DetailOperatorNotes`, `OperatorFormSwitcher`.
 - `[DTS_STYLE_SYSTEM] filtering @types/react props` — expected; the extractor is
   filtering React's own CSS-shorthand prop bag, not real component API.
 - `[FONT_REMOTE]` — Fraunces (`--font-display`) loads from Google Fonts by
   `@import`. Expected; the other two families are self-hosted.
+- `[TOKENS_MISSING] 26 CSS custom properties referenced but not defined` —
+  `--toast-index`, `--accordion-panel-height`, `--collapsible-panel-height`,
+  `--active-tab-{height,width,left,bottom}`, `--nested-dialogs`, … are Base UI runtime
+  variables set by the components via inline style. Expected; no tokensPkg exists.
+- `[RENDER_SKIPPED]` on a no-change re-sync — the driver scopes the render check.
 
 ## Preview-authoring gotchas worth keeping
 
@@ -287,6 +394,83 @@ Worth fixing in `src/`; previews work around them.
    indeterminate progress renders an empty track.
 6. `ProgressValue`/`MeterValue` ignore `max` and append `%` by default, so
    `value={3164} max={4812}` renders "3,164%".
+
+## 2026-09-13 re-sync: what it cost and why
+
+Scope: 186 commits since the first sync, 45 new / 12 deleted component files ->
+719 exports, 713 cards (692 before); 42 new components authored, 21 removed.
+
+### A fork edit re-keys EVERY component (the global slice)
+
+`configSlicesFor()` hashes the bytes of every `.design-sync/overrides/*.mjs` into the
+global slice of every component's `sourceKey`. The stutter-guard edit to
+`source-kit.mjs` (five names: `BaseBasePanel`->`OptimizerBasePanel`,
+`BoardBoard`->`BaseBoard`, `ImprovementsBaseBasePanel`->`ImprovementsBasePanel`,
+`LeaderboardLeaderboard`->`UserLeaderboard`, `StatsStatsTab`->`ProfileStatsTab`) turned
+"670 verified-by-upload, 3 changed" into "0 verified, 671 changed" and re-captured 664
+sheets. The `cardMode`/`primaryStory` overrides are deliberately EXCLUDED from the keys,
+so the 228 card-mode overrides cost nothing; the fork did.
+
+The proof used instead of re-reading 664 sheets (repeat it for any name-only fork edit):
+
+1. Build once with the ANCHORED fork bytes into a second out dir:
+   `git show HEAD:frontend/.design-sync/overrides/source-kit.mjs > overrides/source-kit.mjs`,
+   `package-build.mjs ... --out ./ds-bundle-ref`, then restore the fork. The driver-level
+   check (`sourceKey == anchor`) on that build reproduces the tool's own verified set (665).
+2. Byte-compare `_preview/<Name>.js|css` between `ds-bundle-ref` and `ds-bundle`.
+   Compiled previews do not depend on the fork (it only decides the barrel), so
+   identical bytes + identical preview `.tsx` = identical solo captures (663 of 664).
+3. Diff the build logs' `disambiguated N:` lines: 43 both runs, exactly 5 differ =
+   the edit is name-only.
+4. Write `good` grades for the intersection (656) with the proof in the note. Read the
+   sheets for everything outside it (here: 5 preview edits + GithubIcon + the 2 renamed).
+5. The proof is BLIND to a renamed export's CONSUMERS: `TileLegend.tsx` imported `Board`,
+   compiled byte-identically in both builds (the import is resolved at runtime through
+   the shim) and rendered an error cell under a carried `good`. After any rename, check
+   every preview's `import { ... } from "frontend"` names against the bundle header's
+   component list (a 10-line node script; see the 2026-09-13 session) and re-grade the
+   hits from fresh sheets. Validate's `[RENDER_ERRORS]` is the backstop, not the gate.
+
+`ds-bundle-ref/` is NOT covered by the `ds-bundle/` gitignore rule; delete it at close-out.
+
+### Grades are LOCAL state; the anchor is the only cross-machine carry
+
+`.design-sync/.cache/review/*.grade.json` did not survive from the first campaign (the
+cache had been cleared). Carry-forward across syncs comes ONLY from the uploaded
+`_ds_sync.json` via the sourceKey partition, so anything that perturbs a sourceKey
+(fork bytes, provider/extraEntries config, the preview file) is a full re-grade of that
+component with no local verdict to fall back on.
+
+### GRID_OVERFLOW (new validator check since the first sync)
+
+`package-validate.mjs` now flags a card whose stories render wider than a grid cell
+(-> `cardMode: column`) or position content outside it, fixed/portal (-> `cardMode:
+single` + `primaryStory`). 228 cards flagged on first run: 56 column, 172 single. All
+applied mechanically from `.render-check.json`'s `suggestedOverride`; `primaryStory` for
+single cards = the first escaping cell when the check names one, else the first export
+matching /Open|Expanded|Visible|Shown|Active|Hover/, else the first export (117 of 172
+fell to first-export: dialogs whose stories all escape, so any story is the open one).
+These are presentation-only: the solo story captures and grades are unaffected. The
+check is silent once every flagged card carries its override (0 on the next run).
+
+### Renames that changed shipped API this run
+
+`Board`->`MapBoard` (a second and third `Board` arrived with the base optimizer; matches
+the existing `MapTile`), `BasePanel`->`ImprovementsBasePanel` (a second BasePanel
+arrived), plus the two stutter fixes `LeaderboardLeaderboard`->`UserLeaderboard` and
+`StatsStatsTab`->`ProfileStatsTab`. Preview files are keyed by component name, so a
+rename means `git mv` the preview AND fix its `import { X } from "frontend"`. Three
+graded-good previews (`ChibiLayer`, `DynamicChibiLayer`, `RoutesLayer`) imported `Board`
+and rendered `root empty` ("Element type is invalid ... got: undefined") until updated:
+a reshuffled bare name breaks every preview that composes it, silently.
+
+### The route stub map must track new `#/routes/*` imports
+
+`Enemies.tsx` and `Operators.tsx` grew `import { Route } from "#/routes/enemies|operators"`
+for URL-backed paging. Unmapped, the real route module loads and `Route.useSearch()`
+throws `Invariant failed: Could not find a nearest match!` -> `root empty` on
+`EnemiesList`/`OperatorsList`. Grep `from "#/routes/` under `src/components` on every
+re-sync and add each new one to `tsconfig.ds.json` above the `#/*` wildcard.
 
 ## Re-sync risks
 

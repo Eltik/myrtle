@@ -16,7 +16,19 @@ const initialState: IFilterState = {
 
 const EMPTY_LOCATIONS: IEnemyLocationIndex = { zonesByEnemy: new Map(), stagesByEnemy: new Map() };
 
-export function useEnemyFilters(data: IEnemyView[], locations: IEnemyLocationIndex = EMPTY_LOCATIONS): IUseEnemyFiltersReturn {
+/**
+ * The keys that narrow the result set, as opposed to reordering it. Changing one
+ * invalidates whatever page you were on, so it fires `onNarrow`; changing a sort
+ * key leaves the row count alone and does not.
+ */
+const NARROWING_KEYS: ReadonlySet<keyof IFilterState> = new Set(["q", "levels", "damageTypes", "attackTypes", "races", "appearsIn"]);
+
+/**
+ * `onNarrow` fires only from these setters, never from the hydration that loads
+ * the stored filters on mount - which is why the page counter can be rewound
+ * here without discarding a page restored from the URL a moment earlier.
+ */
+export function useEnemyFilters(data: IEnemyView[], locations: IEnemyLocationIndex = EMPTY_LOCATIONS, onNarrow?: () => void): IUseEnemyFiltersReturn {
     const [filters, setFilters] = useLocalStorageState<IFilterState>(FILTERS_KEY, initialState, {
         parse: (raw) => {
             try {
@@ -28,7 +40,13 @@ export function useEnemyFilters(data: IEnemyView[], locations: IEnemyLocationInd
         },
     });
 
-    const set = useCallback(<K extends keyof IFilterState>(key: K, value: IFilterState[K]) => setFilters((prev) => ({ ...prev, [key]: value })), [setFilters]);
+    const set = useCallback(
+        <K extends keyof IFilterState>(key: K, value: IFilterState[K]) => {
+            setFilters((prev) => ({ ...prev, [key]: value }));
+            if (NARROWING_KEYS.has(key)) onNarrow?.();
+        },
+        [setFilters, onNarrow],
+    );
 
     const filtered = useMemo(() => {
         const query = filters.q.trim().toLowerCase();
@@ -92,7 +110,10 @@ export function useEnemyFilters(data: IEnemyView[], locations: IEnemyLocationInd
         return [...filtered].sort((a, b) => cmp(a, b) * dir);
     }, [filtered, sortBy, sortOrder]);
 
-    const clearFilters = useCallback(() => setFilters((prev) => ({ ...prev, levels: [], damageTypes: [], attackTypes: [], races: [], appearsIn: [], q: "" })), [setFilters]);
+    const clearFilters = useCallback(() => {
+        setFilters((prev) => ({ ...prev, levels: [], damageTypes: [], attackTypes: [], races: [], appearsIn: [], q: "" }));
+        onNarrow?.();
+    }, [setFilters, onNarrow]);
 
     const activeFilterCount = filters.levels.length + filters.damageTypes.length + filters.attackTypes.length + filters.races.length + filters.appearsIn.length + (filters.q ? 1 : 0);
 

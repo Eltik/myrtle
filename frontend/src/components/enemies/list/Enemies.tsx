@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, ChevronRight, Download, LayoutGrid, LayoutList, Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ExportDialog } from "#/components/export/ExportDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
@@ -9,12 +10,13 @@ import { enemiesQueryOptions, enemyStagesQueryOptions } from "#/lib/api/enemies"
 import { enemiesExportSchema } from "#/lib/export";
 import { values } from "#/lib/records";
 import type { StageGroupKey } from "#/lib/registry/stage-groups";
-import { Pagination } from "../../operators/list/impl/components/Pagination";
+import { Route } from "#/routes/enemies";
+import { Pagination, PaginationCompact } from "../../operators/list/impl/components/Pagination";
 import { EnemyCardGrid } from "./impl/components/EnemyCardGrid";
 import { EnemyCardList } from "./impl/components/EnemyCardList";
 import { EnemyFilterChips } from "./impl/components/EnemyFilterChips";
 import { buildLocationTree, EnemyLocationFilter, type IRawStage, type IRawZone } from "./impl/components/EnemyLocationFilter";
-import { ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, SORT_OPTIONS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
+import { ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, PAGE_KEY, SORT_OPTIONS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
 import { computeStatMaxByLevel, enrichEnemies } from "./impl/enrich";
 import type { IEnemyLocationIndex, IEnemyView, SortOption, SortOrder, ViewMode } from "./impl/types";
 import { useEnemyFilters } from "./impl/useEnemyFilters";
@@ -70,7 +72,44 @@ export function EnemiesList() {
         return { locationIndex: { zonesByEnemy, stagesByEnemy } satisfies IEnemyLocationIndex, locationTree: buildLocationTree(rawZones) };
     }, [stageIndex]);
 
-    const { filters, filteredEnemies, setSearchQuery, setLevels, setDamageTypes, setAttackTypes, setRaces, setAppearsIn, setSortBy, setSortOrder, clearFilters, activeFilterCount } = useEnemyFilters(enriched, locationIndex);
+    // The page number round-trips through the URL, so browser back from an enemy
+    // lands on the page you left rather than restarting at one.
+    const { page: pageFromUrl } = Route.useSearch();
+    const navigate = useNavigate({ from: "/enemies" });
+    const [currentPage, setCurrentPage] = useState(pageFromUrl ?? 1);
+
+    const goToPage = useCallback(
+        (next: number, scrollToTop: boolean) => {
+            setCurrentPage(next);
+            navigate({ search: (prev) => ({ ...prev, page: next }), replace: true, resetScroll: false });
+            if (typeof window === "undefined") return;
+            window.localStorage.setItem(PAGE_KEY, String(next));
+            if (scrollToTop) {
+                window.scrollTo({ top: 0 });
+            }
+        },
+        [navigate],
+    );
+
+    // Arriving with no page in the URL - the breadcrumb out of an enemy, the nav
+    // link - resumes the page you were last on, the way the filters and the view
+    // mode already resume. A page in the URL is explicit and always wins, which
+    // is what keeps browser back landing exactly where it left.
+    const pageRestoredRef = useRef(false);
+    useEffect(() => {
+        if (pageRestoredRef.current) return;
+        pageRestoredRef.current = true;
+        if (pageFromUrl != null || typeof window === "undefined") return;
+        const stored = Number(window.localStorage.getItem(PAGE_KEY));
+        if (Number.isFinite(stored) && stored > 1) goToPage(stored, false);
+    }, [pageFromUrl, goToPage]);
+
+    // Paging is a deliberate jump, so it puts the top of the new page in view;
+    // a filter change only rewinds the counter and leaves the scroll alone.
+    const handlePageChange = useCallback((next: number) => goToPage(next, true), [goToPage]);
+    const resetPage = useCallback(() => goToPage(1, false), [goToPage]);
+
+    const { filters, filteredEnemies, setSearchQuery, setLevels, setDamageTypes, setAttackTypes, setRaces, setAppearsIn, setSortBy, setSortOrder, clearFilters, activeFilterCount } = useEnemyFilters(enriched, locationIndex, resetPage);
 
     const [viewMode, setViewMode] = useLocalStorageState<ViewMode>(VIEW_MODE_KEY, "grid", {
         parse: (raw) => (VIEW_MODES.has(raw as ViewMode) ? (raw as ViewMode) : undefined),
@@ -79,34 +118,27 @@ export function EnemiesList() {
 
     const [itemsPerPage, setItemsPerPage] = useLocalStorageState<ItemsPerPage>(ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE, {
         parse: (raw) => {
+            if (raw === "all") return "all";
             const num = Number(raw);
-            return (ITEMS_PER_PAGE_OPTIONS as readonly number[]).includes(num) ? (num as ItemsPerPage) : undefined;
+            return (ITEMS_PER_PAGE_OPTIONS as readonly ItemsPerPage[]).includes(num as ItemsPerPage) ? (num as ItemsPerPage) : undefined;
         },
         serialize: (v) => String(v),
     });
 
-    const [currentPage, setCurrentPage] = useState(1);
-    useEffect(() => {
-        setCurrentPage(1);
-    }, []);
-
-    const filtersKey = `${filters.q}|${filters.levels.join(",")}|${filters.damageTypes.join(",")}|${filters.attackTypes.join(",")}|${filters.races.join(",")}`;
-    // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally watch the joined key as a stable signal
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [filtersKey]);
-
-    const totalPages = Math.max(1, Math.ceil(filteredEnemies.length / itemsPerPage));
+    const pageSize = itemsPerPage === "all" ? Math.max(filteredEnemies.length, 1) : itemsPerPage;
+    const totalPages = Math.max(1, Math.ceil(filteredEnemies.length / pageSize));
+    // A narrowed filter can leave the counter past the end of the shorter list;
+    // every read below uses the clamped value so the pager and the grid agree.
     const page = Math.min(currentPage, totalPages);
     const { paginated, fromIndex, toIndex } = useMemo(() => {
-        const start = (page - 1) * itemsPerPage;
-        const end = page * itemsPerPage;
+        const start = (page - 1) * pageSize;
+        const end = page * pageSize;
         return {
             paginated: filteredEnemies.slice(start, end),
             fromIndex: filteredEnemies.length === 0 ? 0 : start + 1,
             toIndex: Math.min(end, filteredEnemies.length),
         };
-    }, [filteredEnemies, page, itemsPerPage]);
+    }, [filteredEnemies, page, pageSize]);
 
     const [exportOpen, setExportOpen] = useState(false);
 
@@ -204,19 +236,19 @@ export function EnemiesList() {
                             <Select
                                 value={String(itemsPerPage)}
                                 onValueChange={(v) => {
-                                    setItemsPerPage(Number(v) as ItemsPerPage);
-                                    setCurrentPage(1);
+                                    setItemsPerPage(v === "all" ? "all" : (Number(v) as ItemsPerPage));
+                                    resetPage();
                                 }}
                                 aria-label="Items per page"
                             >
                                 <SelectTrigger size="sm" className="h-7.5 min-h-7.5 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-medium font-sans text-[12.5px] text-foreground shadow-none before:shadow-none hover:bg-[color-mix(in_oklch,var(--secondary)_80%,transparent)]">
                                     <span className="mr-1 border-border border-r pr-1 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">Show</span>
-                                    <SelectValue />
+                                    <SelectValue>{(value) => (value === "all" ? "All" : value)}</SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                     {ITEMS_PER_PAGE_OPTIONS.map((opt) => (
                                         <SelectItem key={opt} value={String(opt)}>
-                                            {opt}
+                                            {opt === "all" ? "All" : opt}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -256,7 +288,10 @@ export function EnemiesList() {
                             </>
                         )}
                     </span>
-                    <span className="hidden font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.12em] sm:inline">Click a card for details</span>
+                    <div className="ml-auto flex items-center gap-3">
+                        <span className="hidden font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.12em] sm:inline">Click a card for details</span>
+                        <PaginationCompact currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
+                    </div>
                 </div>
 
                 {filteredEnemies.length === 0 ? (
@@ -282,7 +317,7 @@ export function EnemiesList() {
                     </div>
                 )}
 
-                <Pagination currentPage={page} totalPages={totalPages} onPageChange={setCurrentPage} />
+                <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
             </main>
 
             <ExportDialog open={exportOpen} onOpenChange={setExportOpen} schema={enemiesExportSchema} allRows={enriched} filteredRows={filteredEnemies} pageRows={paginated} title="Enemies" />

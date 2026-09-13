@@ -1,4 +1,4 @@
-import { Board, RoutesLayer } from "frontend";
+import { MapBoard, RoutesLayer } from "frontend";
 
 const T = {
     ".": { tileKey: "tile_forbidden", heightType: "HIGHLAND", buildableType: "NONE", passableMask: "FLY_ONLY", playerSideMask: "ALL" },
@@ -284,7 +284,7 @@ const NO_OPERATORS = new Map();
 /** Focused on spawn 1: FrostNova's patrol, its wait timers and its per-checkpoint dots. */
 export const FocusedBossPatrol = () => (
     <Surface>
-        <Board level={LEVEL} operators={NO_OPERATORS} hovered coordOverride={null} />
+        <MapBoard level={LEVEL} operators={NO_OPERATORS} hovered coordOverride={null} />
         <RoutesLayer routes={ROUTES} focus={0} hovered settings={SETTINGS} speedFor={speedFor} />
     </Surface>
 );
@@ -292,7 +292,7 @@ export const FocusedBossPatrol = () => (
 /** With walking chibis off, `showEnemyIcons` badges the spawn point with the enemy's portrait. */
 export const WithEnemyIcons = () => (
     <Surface>
-        <Board level={LEVEL} operators={NO_OPERATORS} hovered coordOverride={null} />
+        <MapBoard level={LEVEL} operators={NO_OPERATORS} hovered coordOverride={null} />
         <RoutesLayer routes={ROUTES} focus={0} hovered settings={{ ...SETTINGS, showEnemyIcons: true, walkingChibis: false }} speedFor={speedFor} />
     </Surface>
 );
@@ -300,7 +300,7 @@ export const WithEnemyIcons = () => (
 /** Timers off, board flattened: just the path and its waypoints. */
 export const FlatWithoutTimers = () => (
     <Surface>
-        <Board level={LEVEL} operators={NO_OPERATORS} hovered={false} coordOverride={null} />
+        <MapBoard level={LEVEL} operators={NO_OPERATORS} hovered={false} coordOverride={null} />
         <RoutesLayer routes={ROUTES} focus={0} hovered={false} settings={{ ...SETTINGS, showTimers: false }} speedFor={speedFor} />
     </Surface>
 );
@@ -308,7 +308,7 @@ export const FlatWithoutTimers = () => (
 /** A later spawn group — the counter tracks which of the stage's 43 enemies is shown. */
 export const LaterSpawnGroup = () => (
     <Surface>
-        <Board level={LEVEL} operators={NO_OPERATORS} hovered coordOverride={null} />
+        <MapBoard level={LEVEL} operators={NO_OPERATORS} hovered coordOverride={null} />
         <RoutesLayer routes={ROUTES} focus={11} hovered settings={SETTINGS} speedFor={speedFor} />
     </Surface>
 );

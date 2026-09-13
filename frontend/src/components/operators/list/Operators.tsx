@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, ChevronRight, Download, LayoutGrid, LayoutList, Rows3, Search } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ExportDialog } from "#/components/export/ExportDialog";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { noteHasContent, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
@@ -9,6 +10,7 @@ import { upcomingQueryOptions } from "#/lib/api/upcoming";
 import { voicesQueryOptions } from "#/lib/api/voices";
 import { operatorsExportSchema } from "#/lib/export";
 import { compactForSearch } from "#/lib/search/fuzzy";
+import { Route } from "#/routes/operators";
 import type { IOperatorListItem, OperatorRarityTier } from "#/types/operators";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { Skeleton } from "../../ui/skeleton";
@@ -20,8 +22,8 @@ import { OperatorCardGrid } from "./impl/components/OperatorCardGrid";
 import { OperatorCardList } from "./impl/components/OperatorCardList";
 import { OperatorCardUpcoming } from "./impl/components/OperatorCardUpcoming";
 import { OperatorFilters } from "./impl/components/OperatorFilters";
-import { Pagination } from "./impl/components/Pagination";
-import { FILTERS_VISIBLE_KEY, HAS_NOTES_LABELS, ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, MIN_RARITY_FOR_E2, SORT_OPTIONS, STAT_METRIC_KEY, STAT_METRICS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
+import { Pagination, PaginationCompact } from "./impl/components/Pagination";
+import { FILTERS_VISIBLE_KEY, HAS_NOTES_LABELS, ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, MIN_RARITY_FOR_E2, PAGE_KEY, SORT_OPTIONS, STAT_METRIC_KEY, STAT_METRICS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
 import { enrichOperators } from "./impl/enrich";
 import { buildSharedChips } from "./impl/shared-filters";
 import type { IOperatorExportRow, IOperatorOwnershipInfo, IOperatorView, SortOption, SortOrder, StatMetric, ViewMode } from "./impl/types";
@@ -131,13 +133,49 @@ export function OperatorsList() {
 
     const [itemsPerPage, setItemsPerPage] = useLocalStorageState<ItemsPerPage>(ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE, {
         parse: (raw) => {
+            if (raw === "all") return "all";
             const num = Number(raw);
-            return ITEMS_PER_PAGE_OPTIONS.includes(num as ItemsPerPage) ? (num as ItemsPerPage) : undefined;
+            return (ITEMS_PER_PAGE_OPTIONS as readonly ItemsPerPage[]).includes(num as ItemsPerPage) ? (num as ItemsPerPage) : undefined;
         },
         serialize: (v) => String(v),
     });
 
-    const [currentPage, setCurrentPage] = useState(1);
+    // The page number round-trips through the URL, so browser back from an
+    // operator lands on the page you left rather than restarting at one.
+    const { page: pageFromUrl } = Route.useSearch();
+    const navigate = useNavigate({ from: "/operators" });
+    const [currentPage, setCurrentPage] = useState(pageFromUrl ?? 1);
+
+    const goToPage = useCallback(
+        (next: number, scrollToTop: boolean) => {
+            setCurrentPage(next);
+            navigate({ search: (prev) => ({ ...prev, page: next }), replace: true, resetScroll: false });
+            if (typeof window === "undefined") return;
+            window.localStorage.setItem(PAGE_KEY, String(next));
+            if (scrollToTop) {
+                window.scrollTo({ top: 0 });
+            }
+        },
+        [navigate],
+    );
+
+    // Arriving with no page in the URL - the breadcrumb out of an operator, the
+    // nav link - resumes the page you were last on, the way the filters and the
+    // view mode already resume. A page in the URL is explicit and always wins,
+    // which is what keeps browser back landing exactly where it left.
+    const pageRestoredRef = useRef(false);
+    useEffect(() => {
+        if (pageRestoredRef.current) return;
+        pageRestoredRef.current = true;
+        if (pageFromUrl != null || typeof window === "undefined") return;
+        const stored = Number(window.localStorage.getItem(PAGE_KEY));
+        if (Number.isFinite(stored) && stored > 1) goToPage(stored, false);
+    }, [pageFromUrl, goToPage]);
+
+    // Paging is a deliberate jump, so it puts the top of the new page in view;
+    // a filter change only rewinds the counter and leaves the scroll alone.
+    const handlePageChange = useCallback((next: number) => goToPage(next, true), [goToPage]);
+    const resetPage = useCallback(() => goToPage(1, false), [goToPage]);
     const [exportOpen, setExportOpen] = useState(false);
 
     // The export dialog offers full-table-only fields (descriptions, item usage,
@@ -169,19 +207,22 @@ export function OperatorsList() {
     );
 
     const totalCount = isUpcoming ? upcomingFiltered.length : filteredOperators.length;
-    const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
+    const pageSize = itemsPerPage === "all" ? Math.max(totalCount, 1) : itemsPerPage;
+    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+    // A narrowed filter can leave the counter past the end of the shorter list;
+    // every read below uses the clamped value so the pager and the grid agree.
     const page = Math.min(currentPage, totalPages);
 
     const { paginated, upcomingPaginated, fromIndex, toIndex } = useMemo(() => {
-        const start = (page - 1) * itemsPerPage;
-        const end = page * itemsPerPage;
+        const start = (page - 1) * pageSize;
+        const end = page * pageSize;
         return {
             paginated: filteredOperators.slice(start, end),
             upcomingPaginated: upcomingFiltered.slice(start, end),
             fromIndex: totalCount === 0 ? 0 : start + 1,
             toIndex: Math.min(end, totalCount),
         };
-    }, [filteredOperators, upcomingFiltered, page, itemsPerPage, totalCount]);
+    }, [filteredOperators, upcomingFiltered, page, pageSize, totalCount]);
 
     const activeChips = useMemo(() => {
         const chips = buildSharedChips(filters, removeFrom);
@@ -242,7 +283,7 @@ export function OperatorsList() {
                     onHasNotesChange={setHasNotes}
                     onAvailabilityChange={(v) => {
                         setAvailability(v);
-                        setCurrentPage(1);
+                        resetPage();
                     }}
                     onClearAll={clearFilters}
                     hasActiveFilters={hasActiveFilters}
@@ -372,19 +413,19 @@ export function OperatorsList() {
                             <Select
                                 value={String(itemsPerPage)}
                                 onValueChange={(v) => {
-                                    setItemsPerPage(Number(v) as ItemsPerPage);
-                                    setCurrentPage(1);
+                                    setItemsPerPage(v === "all" ? "all" : (Number(v) as ItemsPerPage));
+                                    resetPage();
                                 }}
                                 aria-label="Items per page"
                             >
                                 <SelectTrigger size="sm" className="h-8 min-h-8 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-medium font-sans text-[13px] text-foreground shadow-none before:shadow-none hover:bg-[color-mix(in_oklch,var(--secondary)_80%,transparent)]">
                                     <span className="mr-1 border-border border-r pr-1 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">Show</span>
-                                    <SelectValue />
+                                    <SelectValue>{(value) => (value === "all" ? "All" : value)}</SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                     {ITEMS_PER_PAGE_OPTIONS.map((opt) => (
                                         <SelectItem key={opt} value={String(opt)}>
-                                            {opt}
+                                            {opt === "all" ? "All" : opt}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -417,7 +458,10 @@ export function OperatorsList() {
                         <span>
                             Showing <strong className="text-foreground">{fromIndex}</strong> to <strong className="text-foreground">{toIndex}</strong> of <strong className="text-foreground">{totalCount}</strong> operators
                         </span>
-                        <span className="hidden font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.08em] md:inline">Hover for preview · Click to open</span>
+                        <div className="ml-auto flex items-center gap-3">
+                            <span className="hidden font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.08em] md:inline">Hover for preview · Click to open</span>
+                            <PaginationCompact currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
+                        </div>
                     </div>
 
                     {isUpcoming && upcomingLoading ? (
@@ -470,7 +514,7 @@ export function OperatorsList() {
                         </div>
                     )}
 
-                    <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+                    <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
                 </main>
             </div>
             <ExportDialog open={exportOpen} onOpenChange={setExportOpen} schema={operatorsExportSchema} allRows={exportAllRows} filteredRows={exportFilteredRows} pageRows={exportPageRows} title="Operators" />

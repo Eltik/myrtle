@@ -8,71 +8,1156 @@
   "buildCmd": "node .design-sync/build-css.mjs",
   "cssEntry": ".design-sync/.cache/tailwind.css",
   "readmeHeader": ".design-sync/conventions.md",
-  "extraEntries": ["./.design-sync/preview-provider.tsx", "./src/lib/utils.ts"],
-  "provider": { "component": "DesignPreviewProvider" },
+  "extraEntries": [
+    "./.design-sync/preview-provider.tsx",
+    "./src/lib/utils.ts",
+    "./src/components/user/profile/impl/components/tabs/Optimizer/base/base-context.ts"
+  ],
+  "provider": {
+    "component": "DesignPreviewProvider"
+  },
   "libOverrides": {
     "source-kit.mjs": "app repo, no dist entry: `export *` over 330 component files drops 22 colliding names, and `ui/` groups as generic",
     "dts.mjs": "no .d.ts tree and shadcn-style inline props: resolve each component's props from its .tsx source instead"
   },
   "overrides": {
-    "Combobox": { "cardMode": "single", "primaryStory": "OpenWithResults" },
-    "ComboboxPopup": { "cardMode": "single", "primaryStory": "GroupedResults" },
-    "ComboboxItem": { "cardMode": "single", "primaryStory": "OperatorRows" },
-    "ComboboxList": { "cardMode": "single", "primaryStory": "FlatList" },
-    "ComboboxGroup": { "cardMode": "single", "primaryStory": "WithSeparators" },
-    "ComboboxGroupLabel": { "cardMode": "single", "primaryStory": "RarityHeaders" },
-    "ComboboxCollection": { "cardMode": "single", "primaryStory": "TieredMaterials" },
-    "ComboboxSeparator": { "cardMode": "single", "primaryStory": "BetweenGroups" },
-    "ComboboxEmpty": { "cardMode": "single", "primaryStory": "WithHint" },
-    "ComboboxRow": { "cardMode": "single", "primaryStory": "RecruitmentTags" },
-    "ComboboxStatus": { "cardMode": "single", "primaryStory": "ResultCount" },
-    "ComboboxTrigger": { "cardMode": "single", "primaryStory": "OpenState" },
-    "CommandDialog": { "cardMode": "single", "primaryStory": "Open" },
-    "CommandDialogPopup": { "cardMode": "single", "primaryStory": "Open" },
-    "CommandDialogPortal": { "cardMode": "single", "primaryStory": "AbovePageContent" },
-    "CommandDialogBackdrop": { "cardMode": "single", "primaryStory": "OverOperatorGrid" },
-    "CommandDialogViewport": { "cardMode": "single", "primaryStory": "TopAligned" },
-    "CommandDialogTrigger": { "cardMode": "single", "primaryStory": "Opened" },
-    "CommandCreateHandle": { "cardMode": "single", "primaryStory": "OpenedByHandle" },
-    "SearchCommand": { "cardMode": "single", "primaryStory": "OpenWithOperatorsUnavailable" },
-    "PreviewCard": { "cardMode": "single", "primaryStory": "OperatorHover" },
-    "PreviewCardTrigger": { "cardMode": "single", "primaryStory": "TileTrigger" },
-    "PreviewCardPopup": { "cardMode": "single", "primaryStory": "Summary" },
-    "HoverCard": { "cardMode": "single", "primaryStory": "RecruitmentTags" },
-    "HoverCardTrigger": { "cardMode": "single", "primaryStory": "AsOperatorLink" },
-    "HoverCardContent": { "cardMode": "single", "primaryStory": "StatBlock" },
-    "SelectPopup": { "cardMode": "single", "primaryStory": "Open" },
-    "SelectContent": { "cardMode": "single", "primaryStory": "MetricPicker" },
-    "SelectItem": { "cardMode": "single", "primaryStory": "SelectedIndicator" },
-    "SelectGroup": { "cardMode": "single", "primaryStory": "WithSeparators" },
-    "SelectGroupLabel": { "cardMode": "single", "primaryStory": "MaterialTiers" },
-    "SelectSeparator": { "cardMode": "single", "primaryStory": "BetweenGroups" },
-    "Sidebar": { "cardMode": "single", "viewport": "900x700", "primaryStory": "AppShell" },
-    "SidebarProvider": { "cardMode": "single", "viewport": "900x700", "primaryStory": "AppShell" },
-    "SidebarInset": { "cardMode": "single", "viewport": "900x700", "primaryStory": "WorkspaceHeader" },
-    "SidebarTrigger": { "cardMode": "single", "viewport": "900x700", "primaryStory": "InPageHeader" },
-    "SidebarRail": { "cardMode": "single", "viewport": "900x700", "primaryStory": "EdgeHandle" },
-    "StatsSkinViewerDialog": { "cardMode": "single", "primaryStory": "MissingSkins" },
-    "AdminShell": { "cardMode": "single", "viewport": "1280x900" },
-    "Dashboard": { "cardMode": "single", "viewport": "1280x900" },
-    "Health": { "cardMode": "single", "viewport": "1280x900" },
-    "AdminSettings": { "cardMode": "single", "viewport": "1280x900" },
-    "Audit": { "cardMode": "single" },
-    "OfficialTierLists": { "cardMode": "single", "primaryStory": "NewListDialogOpen" },
-    "AdminOperatorNotes": { "cardMode": "single" },
-    "ExportDialog": { "cardMode": "single", "viewport": "1280x900" },
-    "DetailSkinViewerDialog": { "cardMode": "single", "primaryStory": "Opened" },
-    "OperatorsList": { "cardMode": "column" },
-    "UserGridSkeleton": { "cardMode": "single", "viewport": "900x1400" },
-    "TierDetailsDialog": { "cardMode": "single", "primaryStory": "TopTier" },
-    "OperatorPool": { "cardMode": "single", "primaryStory": "Default" },
-    "TierSettingsDialog": { "cardMode": "single", "viewport": "900x820" },
-    "StageDetail": { "cardMode": "single", "viewport": "1200x2000" },
-    "AuthDialog": { "cardMode": "single", "primaryStory": "Open" },
-    "Header": { "cardMode": "single", "viewport": "1280x900" },
-    "AdminSidebar": { "cardMode": "single", "viewport": "1280x900", "primaryStory": "OverOverviewPage" },
-    "Permissions": { "cardMode": "single", "viewport": "1280x900" },
-    "RecruitmentCalculator": { "cardMode": "single", "viewport": "1280x900" },
-    "AxisControls": { "viewport": "600x700" }
+    "Combobox": {
+      "cardMode": "single",
+      "primaryStory": "OpenWithResults"
+    },
+    "ComboboxPopup": {
+      "cardMode": "single",
+      "primaryStory": "GroupedResults"
+    },
+    "ComboboxItem": {
+      "cardMode": "single",
+      "primaryStory": "OperatorRows"
+    },
+    "ComboboxList": {
+      "cardMode": "single",
+      "primaryStory": "FlatList"
+    },
+    "ComboboxGroup": {
+      "cardMode": "single",
+      "primaryStory": "WithSeparators"
+    },
+    "ComboboxGroupLabel": {
+      "cardMode": "single",
+      "primaryStory": "RarityHeaders"
+    },
+    "ComboboxCollection": {
+      "cardMode": "single",
+      "primaryStory": "TieredMaterials"
+    },
+    "ComboboxSeparator": {
+      "cardMode": "single",
+      "primaryStory": "BetweenGroups"
+    },
+    "ComboboxEmpty": {
+      "cardMode": "single",
+      "primaryStory": "WithHint"
+    },
+    "ComboboxRow": {
+      "cardMode": "single",
+      "primaryStory": "RecruitmentTags"
+    },
+    "ComboboxStatus": {
+      "cardMode": "single",
+      "primaryStory": "ResultCount"
+    },
+    "ComboboxTrigger": {
+      "cardMode": "single",
+      "primaryStory": "OpenState"
+    },
+    "CommandDialog": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "CommandDialogPopup": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "CommandDialogPortal": {
+      "cardMode": "single",
+      "primaryStory": "AbovePageContent"
+    },
+    "CommandDialogBackdrop": {
+      "cardMode": "single",
+      "primaryStory": "OverOperatorGrid"
+    },
+    "CommandDialogViewport": {
+      "cardMode": "single",
+      "primaryStory": "TopAligned"
+    },
+    "CommandDialogTrigger": {
+      "cardMode": "single",
+      "primaryStory": "Opened"
+    },
+    "CommandCreateHandle": {
+      "cardMode": "single",
+      "primaryStory": "OpenedByHandle"
+    },
+    "SearchCommand": {
+      "cardMode": "single",
+      "primaryStory": "OpenWithOperatorsUnavailable"
+    },
+    "PreviewCard": {
+      "cardMode": "single",
+      "primaryStory": "OperatorHover"
+    },
+    "PreviewCardTrigger": {
+      "cardMode": "single",
+      "primaryStory": "TileTrigger"
+    },
+    "PreviewCardPopup": {
+      "cardMode": "single",
+      "primaryStory": "Summary"
+    },
+    "HoverCard": {
+      "cardMode": "single",
+      "primaryStory": "RecruitmentTags"
+    },
+    "HoverCardTrigger": {
+      "cardMode": "single",
+      "primaryStory": "AsOperatorLink"
+    },
+    "HoverCardContent": {
+      "cardMode": "single",
+      "primaryStory": "StatBlock"
+    },
+    "SelectPopup": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "SelectContent": {
+      "cardMode": "single",
+      "primaryStory": "MetricPicker"
+    },
+    "SelectItem": {
+      "cardMode": "single",
+      "primaryStory": "SelectedIndicator"
+    },
+    "SelectGroup": {
+      "cardMode": "single",
+      "primaryStory": "WithSeparators"
+    },
+    "SelectGroupLabel": {
+      "cardMode": "single",
+      "primaryStory": "MaterialTiers"
+    },
+    "SelectSeparator": {
+      "cardMode": "single",
+      "primaryStory": "BetweenGroups"
+    },
+    "Sidebar": {
+      "cardMode": "single",
+      "viewport": "900x700",
+      "primaryStory": "AppShell"
+    },
+    "SidebarProvider": {
+      "cardMode": "single",
+      "viewport": "900x700",
+      "primaryStory": "AppShell"
+    },
+    "SidebarInset": {
+      "cardMode": "single",
+      "viewport": "900x700",
+      "primaryStory": "WorkspaceHeader"
+    },
+    "SidebarTrigger": {
+      "cardMode": "single",
+      "viewport": "900x700",
+      "primaryStory": "InPageHeader"
+    },
+    "SidebarRail": {
+      "cardMode": "single",
+      "viewport": "900x700",
+      "primaryStory": "EdgeHandle"
+    },
+    "StatsSkinViewerDialog": {
+      "cardMode": "single",
+      "primaryStory": "MissingSkins"
+    },
+    "AdminShell": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "Dashboard": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "Health": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "AdminSettings": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "Audit": {
+      "cardMode": "single"
+    },
+    "OfficialTierLists": {
+      "cardMode": "single",
+      "primaryStory": "NewListDialogOpen"
+    },
+    "AdminOperatorNotes": {
+      "cardMode": "single"
+    },
+    "ExportDialog": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "DetailSkinViewerDialog": {
+      "cardMode": "single",
+      "primaryStory": "Opened"
+    },
+    "OperatorsList": {
+      "cardMode": "column"
+    },
+    "UserGridSkeleton": {
+      "cardMode": "single",
+      "viewport": "900x1400"
+    },
+    "TierDetailsDialog": {
+      "cardMode": "single",
+      "primaryStory": "TopTier"
+    },
+    "OperatorPool": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "TierSettingsDialog": {
+      "cardMode": "single",
+      "viewport": "900x820"
+    },
+    "StageDetail": {
+      "cardMode": "single",
+      "viewport": "1200x2000"
+    },
+    "AuthDialog": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "Header": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "AdminSidebar": {
+      "cardMode": "single",
+      "viewport": "1280x900",
+      "primaryStory": "OverOverviewPage"
+    },
+    "Permissions": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "RecruitmentCalculator": {
+      "cardMode": "single",
+      "viewport": "1280x900"
+    },
+    "AxisControls": {
+      "viewport": "600x700"
+    },
+    "AdminStatTile": {
+      "cardMode": "column"
+    },
+    "AdminTopBar": {
+      "cardMode": "column"
+    },
+    "ChangelogError": {
+      "cardMode": "single",
+      "primaryStory": "NetworkFailure"
+    },
+    "ChangelogPage": {
+      "cardMode": "single",
+      "primaryStory": "CommitsUnavailable"
+    },
+    "EnemyCardList": {
+      "cardMode": "column"
+    },
+    "EnemyHero": {
+      "cardMode": "column"
+    },
+    "EnemyLocationFilter": {
+      "cardMode": "single",
+      "primaryStory": "OpenTree"
+    },
+    "EnemyPlaceholder": {
+      "cardMode": "column"
+    },
+    "CommunityPage": {
+      "cardMode": "single",
+      "primaryStory": "CommunityStatsUnavailable"
+    },
+    "HistoryPage": {
+      "cardMode": "single",
+      "primaryStory": "SignedOut"
+    },
+    "PityPanel": {
+      "cardMode": "column"
+    },
+    "TimingPanel": {
+      "cardMode": "column"
+    },
+    "NotFound": {
+      "cardMode": "column"
+    },
+    "RouterProgress": {
+      "cardMode": "single",
+      "primaryStory": "AtRest"
+    },
+    "MainNav": {
+      "cardMode": "single",
+      "primaryStory": "ToolsMenuOpen"
+    },
+    "MobileNav": {
+      "cardMode": "single",
+      "primaryStory": "NavigationDrawer"
+    },
+    "ThemeToggle": {
+      "cardMode": "single",
+      "primaryStory": "AppearanceMenu"
+    },
+    "UserMenu": {
+      "cardMode": "single",
+      "primaryStory": "AccountMenuOpen"
+    },
+    "Home": {
+      "cardMode": "single",
+      "primaryStory": "LandingPage"
+    },
+    "HomeHero": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "LegalContainer": {
+      "cardMode": "single",
+      "primaryStory": "Plain"
+    },
+    "LegalDivider": {
+      "cardMode": "single",
+      "primaryStory": "InDocumentFlow"
+    },
+    "PrivacyPage": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "RelatedLinksFooter": {
+      "cardMode": "single",
+      "primaryStory": "ClosingADocument"
+    },
+    "SectionHeading": {
+      "cardMode": "single",
+      "primaryStory": "InDocument"
+    },
+    "TermsPage": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "DownloadButton": {
+      "cardMode": "single",
+      "primaryStory": "Recording"
+    },
+    "FilterDropdown": {
+      "cardMode": "single",
+      "primaryStory": "GroupedArchetypes"
+    },
+    "ListPagination": {
+      "cardMode": "column"
+    },
+    "OperatorCardList": {
+      "cardMode": "column"
+    },
+    "SkillComparisonRow": {
+      "cardMode": "column"
+    },
+    "AccordionPanel": {
+      "cardMode": "single",
+      "primaryStory": "RichPanel"
+    },
+    "AlertDialog": {
+      "cardMode": "single",
+      "primaryStory": "DeleteAccount"
+    },
+    "AlertDialogBackdrop": {
+      "cardMode": "single",
+      "primaryStory": "OverPageContent"
+    },
+    "AlertDialogClose": {
+      "cardMode": "single",
+      "primaryStory": "OutlineClose"
+    },
+    "AlertDialogContent": {
+      "cardMode": "single",
+      "primaryStory": "ResetDepot"
+    },
+    "AlertDialogCreateHandle": {
+      "cardMode": "single",
+      "primaryStory": "OpenedByHandle"
+    },
+    "AlertDialogDescription": {
+      "cardMode": "single",
+      "primaryStory": "PlainDescription"
+    },
+    "AlertDialogFooter": {
+      "cardMode": "single",
+      "primaryStory": "DefaultFooter"
+    },
+    "AlertDialogHeader": {
+      "cardMode": "single",
+      "primaryStory": "PlainHeader"
+    },
+    "AlertDialogOverlay": {
+      "cardMode": "single",
+      "primaryStory": "OverlayOverPlanner"
+    },
+    "AlertDialogPopup": {
+      "cardMode": "single",
+      "primaryStory": "DestructiveConfirm"
+    },
+    "AlertDialogPortal": {
+      "cardMode": "single",
+      "primaryStory": "PortaledOverPage"
+    },
+    "AlertDialogTitle": {
+      "cardMode": "single",
+      "primaryStory": "ShortTitle"
+    },
+    "AlertDialogTrigger": {
+      "cardMode": "single",
+      "primaryStory": "OpenedFromTrigger"
+    },
+    "AlertDialogViewport": {
+      "cardMode": "single",
+      "primaryStory": "DefaultPlacement"
+    },
+    "AnchoredToastProvider": {
+      "cardMode": "single",
+      "primaryStory": "TooltipStyle"
+    },
+    "Autocomplete": {
+      "cardMode": "column"
+    },
+    "AutocompleteClear": {
+      "cardMode": "column"
+    },
+    "AutocompleteItem": {
+      "cardMode": "column"
+    },
+    "AutocompleteList": {
+      "cardMode": "single",
+      "primaryStory": "Scrollable"
+    },
+    "AutocompletePopup": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "AutocompleteRow": {
+      "cardMode": "column"
+    },
+    "AutocompleteTrigger": {
+      "cardMode": "column"
+    },
+    "AutocompleteValue": {
+      "cardMode": "column"
+    },
+    "ButtonGroupSeparator": {
+      "cardMode": "column"
+    },
+    "CardPanel": {
+      "cardMode": "single",
+      "primaryStory": "PanelBetweenHeaderAndFooter"
+    },
+    "ComboboxChip": {
+      "cardMode": "column"
+    },
+    "ComboboxChipRemove": {
+      "cardMode": "column"
+    },
+    "ComboboxChipsInput": {
+      "cardMode": "column"
+    },
+    "ComboboxValue": {
+      "cardMode": "column"
+    },
+    "Dialog": {
+      "cardMode": "single",
+      "primaryStory": "NewTierList"
+    },
+    "DialogBackdrop": {
+      "cardMode": "single",
+      "primaryStory": "OverPageContent"
+    },
+    "DialogClose": {
+      "cardMode": "single",
+      "primaryStory": "FooterCancel"
+    },
+    "DialogContent": {
+      "cardMode": "single",
+      "primaryStory": "ExportOptions"
+    },
+    "DialogCreateHandle": {
+      "cardMode": "single",
+      "primaryStory": "OpenFromHandle"
+    },
+    "DialogDescription": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "DialogFooter": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "DialogHeader": {
+      "cardMode": "single",
+      "primaryStory": "TitleAndDescription"
+    },
+    "DialogOverlay": {
+      "cardMode": "single",
+      "primaryStory": "OverDepot"
+    },
+    "DialogPanel": {
+      "cardMode": "single",
+      "primaryStory": "Stats"
+    },
+    "DialogPopup": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "DialogPortal": {
+      "cardMode": "single",
+      "primaryStory": "AboveClippedContent"
+    },
+    "DialogTitle": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "DialogTrigger": {
+      "cardMode": "single",
+      "primaryStory": "Opened"
+    },
+    "DialogViewport": {
+      "cardMode": "single",
+      "primaryStory": "ShortDialog"
+    },
+    "Drawer": {
+      "cardMode": "single",
+      "primaryStory": "BottomSheet"
+    },
+    "DrawerBackdrop": {
+      "cardMode": "single",
+      "primaryStory": "OverPageContent"
+    },
+    "DrawerBar": {
+      "cardMode": "single",
+      "primaryStory": "BottomSheetBar"
+    },
+    "DrawerClose": {
+      "cardMode": "single",
+      "primaryStory": "FooterCancel"
+    },
+    "DrawerContent": {
+      "cardMode": "single",
+      "primaryStory": "SelectableBody"
+    },
+    "DrawerCreateHandle": {
+      "cardMode": "single",
+      "primaryStory": "DetachedRowTriggers"
+    },
+    "DrawerDescription": {
+      "cardMode": "single",
+      "primaryStory": "SupportingCopy"
+    },
+    "DrawerFooter": {
+      "cardMode": "single",
+      "primaryStory": "DefaultFooter"
+    },
+    "DrawerHeader": {
+      "cardMode": "single",
+      "primaryStory": "TitleAndDescription"
+    },
+    "DrawerMenu": {
+      "cardMode": "single",
+      "primaryStory": "SiteNavigation"
+    },
+    "DrawerMenuCheckboxItem": {
+      "cardMode": "single",
+      "primaryStory": "CheckmarkFilters"
+    },
+    "DrawerMenuGroup": {
+      "cardMode": "single",
+      "primaryStory": "ThreeGroups"
+    },
+    "DrawerMenuGroupLabel": {
+      "cardMode": "single",
+      "primaryStory": "RarityHeaders"
+    },
+    "DrawerMenuItem": {
+      "cardMode": "single",
+      "primaryStory": "NavigationItems"
+    },
+    "DrawerMenuRadioGroup": {
+      "cardMode": "single",
+      "primaryStory": "SortOrder"
+    },
+    "DrawerMenuRadioItem": {
+      "cardMode": "single",
+      "primaryStory": "TargetPromotion"
+    },
+    "DrawerMenuSeparator": {
+      "cardMode": "single",
+      "primaryStory": "BetweenActionGroups"
+    },
+    "DrawerMenuTrigger": {
+      "cardMode": "single",
+      "primaryStory": "SubmenuTriggers"
+    },
+    "DrawerPanel": {
+      "cardMode": "single",
+      "primaryStory": "ScrollingList"
+    },
+    "DrawerPopup": {
+      "cardMode": "single",
+      "primaryStory": "BottomSheet"
+    },
+    "DrawerPortal": {
+      "cardMode": "single",
+      "primaryStory": "EscapesClippingCard"
+    },
+    "DrawerSwipeArea": {
+      "cardMode": "single",
+      "primaryStory": "BottomEdgeSwipeArea"
+    },
+    "DrawerTitle": {
+      "cardMode": "single",
+      "primaryStory": "ShortTitle"
+    },
+    "DrawerTrigger": {
+      "cardMode": "single",
+      "primaryStory": "OpenedFromTrigger"
+    },
+    "DrawerViewport": {
+      "cardMode": "single",
+      "primaryStory": "BottomStage"
+    },
+    "DropdownMenu": {
+      "cardMode": "single",
+      "primaryStory": "UserAccount"
+    },
+    "DropdownMenuCheckboxItem": {
+      "cardMode": "single",
+      "primaryStory": "ClassFilters"
+    },
+    "DropdownMenuContent": {
+      "cardMode": "single",
+      "primaryStory": "AccountPanel"
+    },
+    "DropdownMenuCreateHandle": {
+      "cardMode": "single",
+      "primaryStory": "SharedRowMenu"
+    },
+    "DropdownMenuGroup": {
+      "cardMode": "single",
+      "primaryStory": "FilterSections"
+    },
+    "DropdownMenuItem": {
+      "cardMode": "single",
+      "primaryStory": "AccountLinks"
+    },
+    "DropdownMenuLabel": {
+      "cardMode": "single",
+      "primaryStory": "SectionHeaders"
+    },
+    "DropdownMenuPortal": {
+      "cardMode": "single",
+      "primaryStory": "OverPageContent"
+    },
+    "DropdownMenuRadioGroup": {
+      "cardMode": "single",
+      "primaryStory": "RowDensity"
+    },
+    "DropdownMenuRadioItem": {
+      "cardMode": "single",
+      "primaryStory": "SelectedChoice"
+    },
+    "DropdownMenuSeparator": {
+      "cardMode": "single",
+      "primaryStory": "BeforeLogout"
+    },
+    "DropdownMenuShortcut": {
+      "cardMode": "single",
+      "primaryStory": "PlannerShortcuts"
+    },
+    "DropdownMenuSub": {
+      "cardMode": "single",
+      "primaryStory": "AddToPlan"
+    },
+    "DropdownMenuSubContent": {
+      "cardMode": "single",
+      "primaryStory": "PlanTargets"
+    },
+    "DropdownMenuSubTrigger": {
+      "cardMode": "single",
+      "primaryStory": "OpenWithChevron"
+    },
+    "DropdownMenuTrigger": {
+      "cardMode": "single",
+      "primaryStory": "AvatarSplitButton"
+    },
+    "GithubIcon": {
+      "cardMode": "column"
+    },
+    "Group": {
+      "cardMode": "column"
+    },
+    "GroupText": {
+      "cardMode": "column"
+    },
+    "Menu": {
+      "cardMode": "single",
+      "primaryStory": "RowActions"
+    },
+    "MenuCheckboxItem": {
+      "cardMode": "single",
+      "primaryStory": "Checkmarks"
+    },
+    "MenuCreateHandle": {
+      "cardMode": "single",
+      "primaryStory": "SharedByEveryRow"
+    },
+    "MenuGroup": {
+      "cardMode": "single",
+      "primaryStory": "ColumnsAndSort"
+    },
+    "MenuGroupLabel": {
+      "cardMode": "single",
+      "primaryStory": "SectionHeaders"
+    },
+    "MenuItem": {
+      "cardMode": "single",
+      "primaryStory": "WithIconsAndDestructive"
+    },
+    "MenuPopup": {
+      "cardMode": "single",
+      "primaryStory": "AlignedToRowActions"
+    },
+    "MenuPortal": {
+      "cardMode": "single",
+      "primaryStory": "EscapesTheRowClip"
+    },
+    "MenuRadioGroup": {
+      "cardMode": "single",
+      "primaryStory": "SortOrder"
+    },
+    "MenuRadioItem": {
+      "cardMode": "single",
+      "primaryStory": "SelectedAndUnselected"
+    },
+    "MenuSeparator": {
+      "cardMode": "single",
+      "primaryStory": "BetweenAccountSections"
+    },
+    "MenuShortcut": {
+      "cardMode": "single",
+      "primaryStory": "EditorActions"
+    },
+    "MenuSub": {
+      "cardMode": "single",
+      "primaryStory": "MoveToTier"
+    },
+    "MenuSubPopup": {
+      "cardMode": "single",
+      "primaryStory": "TierChoices"
+    },
+    "MenuSubTrigger": {
+      "cardMode": "single",
+      "primaryStory": "OpenSubmenu"
+    },
+    "MenuTrigger": {
+      "cardMode": "single",
+      "primaryStory": "IconButton"
+    },
+    "Meter": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "MeterIndicator": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "MeterLabel": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "MeterTrack": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "MeterValue": {
+      "cardMode": "single",
+      "primaryStory": "Basic"
+    },
+    "OTPFieldSeparator": {
+      "cardMode": "column"
+    },
+    "Pagination": {
+      "cardMode": "column"
+    },
+    "PaginationContent": {
+      "cardMode": "column"
+    },
+    "PaginationEllipsis": {
+      "cardMode": "column"
+    },
+    "PaginationItem": {
+      "cardMode": "column"
+    },
+    "PaginationNext": {
+      "cardMode": "column"
+    },
+    "PaginationPrevious": {
+      "cardMode": "column"
+    },
+    "Popover": {
+      "cardMode": "single",
+      "primaryStory": "JumpToPage"
+    },
+    "PopoverClose": {
+      "cardMode": "single",
+      "primaryStory": "FooterActions"
+    },
+    "PopoverContent": {
+      "cardMode": "single",
+      "primaryStory": "ChibiDownload"
+    },
+    "PopoverCreateHandle": {
+      "cardMode": "single",
+      "primaryStory": "DetachedTriggers"
+    },
+    "PopoverDescription": {
+      "cardMode": "single",
+      "primaryStory": "MethodologyNote"
+    },
+    "PopoverPopup": {
+      "cardMode": "single",
+      "primaryStory": "StageRewards"
+    },
+    "PopoverTitle": {
+      "cardMode": "single",
+      "primaryStory": "ResetFilters"
+    },
+    "PopoverTrigger": {
+      "cardMode": "single",
+      "primaryStory": "FilterChipTrigger"
+    },
+    "Progress": {
+      "cardMode": "single",
+      "primaryStory": "Bare"
+    },
+    "ProgressIndicator": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "ProgressLabel": {
+      "cardMode": "single",
+      "primaryStory": "StackedLabels"
+    },
+    "ProgressTrack": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "ProgressValue": {
+      "cardMode": "single",
+      "primaryStory": "AsFraction"
+    },
+    "Separator": {
+      "cardMode": "column"
+    },
+    "Sheet": {
+      "cardMode": "single",
+      "primaryStory": "BirthdayFilters"
+    },
+    "SheetBackdrop": {
+      "cardMode": "single",
+      "primaryStory": "BehindInsetSheet"
+    },
+    "SheetClose": {
+      "cardMode": "single",
+      "primaryStory": "InFooter"
+    },
+    "SheetContent": {
+      "cardMode": "single",
+      "primaryStory": "BirthdayFilters"
+    },
+    "SheetDescription": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "SheetFooter": {
+      "cardMode": "single",
+      "primaryStory": "Bordered"
+    },
+    "SheetHeader": {
+      "cardMode": "single",
+      "primaryStory": "TitleAndDescription"
+    },
+    "SheetOverlay": {
+      "cardMode": "single",
+      "primaryStory": "OverDepot"
+    },
+    "SheetPanel": {
+      "cardMode": "single",
+      "primaryStory": "ScrollingList"
+    },
+    "SheetPopup": {
+      "cardMode": "single",
+      "primaryStory": "SideRight"
+    },
+    "SheetPortal": {
+      "cardMode": "single",
+      "primaryStory": "AboveClippedContent"
+    },
+    "SheetTitle": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "SheetTrigger": {
+      "cardMode": "single",
+      "primaryStory": "Opened"
+    },
+    "SheetViewport": {
+      "cardMode": "single",
+      "primaryStory": "EndAligned"
+    },
+    "SidebarGroupContent": {
+      "cardMode": "single",
+      "primaryStory": "StatusSection"
+    },
+    "Skeleton": {
+      "cardMode": "column"
+    },
+    "TabsTab": {
+      "cardMode": "column"
+    },
+    "ToastProvider": {
+      "cardMode": "single",
+      "primaryStory": "BottomRight"
+    },
+    "Toolbar": {
+      "cardMode": "column"
+    },
+    "ToolbarInput": {
+      "cardMode": "column"
+    },
+    "ToolbarLink": {
+      "cardMode": "column"
+    },
+    "ToolbarSeparator": {
+      "cardMode": "column"
+    },
+    "Tooltip": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "TooltipContent": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "TooltipCreateHandle": {
+      "cardMode": "single",
+      "primaryStory": "OpenedByHandle"
+    },
+    "TooltipPopup": {
+      "cardMode": "single",
+      "primaryStory": "Open"
+    },
+    "TooltipProvider": {
+      "cardMode": "single",
+      "primaryStory": "SharedDelay"
+    },
+    "TooltipTrigger": {
+      "cardMode": "single",
+      "primaryStory": "IconButton"
+    },
+    "AppearancePanel": {
+      "cardMode": "column"
+    },
+    "DangerPanel": {
+      "cardMode": "column"
+    },
+    "SettingsPage": {
+      "cardMode": "column"
+    },
+    "SettingsShell": {
+      "cardMode": "column"
+    },
+    "DetailStatCard": {
+      "cardMode": "column"
+    },
+    "EventDetailDialog": {
+      "cardMode": "single",
+      "primaryStory": "ChapterOverview"
+    },
+    "GameIcon": {
+      "cardMode": "column"
+    },
+    "OverviewSection": {
+      "cardMode": "column"
+    },
+    "StatsPage": {
+      "cardMode": "single",
+      "primaryStory": "StatsUnavailable"
+    },
+    "Browse": {
+      "cardMode": "column"
+    },
+    "CreateListDialog": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "DeleteListDialog": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "DragControllerProvider": {
+      "cardMode": "column"
+    },
+    "EditHero": {
+      "cardMode": "column"
+    },
+    "EditListDialog": {
+      "cardMode": "single",
+      "primaryStory": "Default"
+    },
+    "FilterToolbar": {
+      "cardMode": "column"
+    },
+    "MyListRow": {
+      "cardMode": "column"
+    },
+    "MyTierLists": {
+      "cardMode": "single",
+      "primaryStory": "CreateDialogOpen"
+    },
+    "MyToolbar": {
+      "cardMode": "single",
+      "primaryStory": "SortMenuOpen"
+    },
+    "PickTierDialog": {
+      "cardMode": "single",
+      "primaryStory": "PlacedWithNote"
+    },
+    "PublishVersionDialog": {
+      "cardMode": "single",
+      "primaryStory": "FirstVersion"
+    },
+    "PublishingPanel": {
+      "cardMode": "single",
+      "primaryStory": "FlairMenuOpen"
+    },
+    "TierListActions": {
+      "cardMode": "column"
+    },
+    "TierListHero": {
+      "cardMode": "column"
+    },
+    "VersionsBar": {
+      "cardMode": "single",
+      "primaryStory": "VersionPickerOpen"
+    },
+    "Birthdays": {
+      "cardMode": "column"
+    },
+    "CalcChart": {
+      "cardMode": "column"
+    },
+    "DayDialog": {
+      "cardMode": "single",
+      "primaryStory": "DayRoster"
+    },
+    "DeletePlansDialog": {
+      "cardMode": "single",
+      "primaryStory": "SinglePlan"
+    },
+    "FilterSheet": {
+      "cardMode": "single",
+      "primaryStory": "OpenNoFilters"
+    },
+    "OperatorPlannerDialog": {
+      "cardMode": "single",
+      "primaryStory": "OpenOperatorListUnavailable"
+    },
+    "SettingsSheet": {
+      "cardMode": "single",
+      "primaryStory": "OpenOnOperators"
+    },
+    "ItemDialog": {
+      "cardMode": "single",
+      "primaryStory": "MaterialDetails"
+    },
+    "OperatorDialog": {
+      "cardMode": "single",
+      "primaryStory": "FullyBuilt"
+    },
+    "RosterDetailedCard": {
+      "cardMode": "single",
+      "primaryStory": "CatalogPending"
+    },
+    "RosterTab": {
+      "cardMode": "single",
+      "primaryStory": "OwnedRoster"
+    },
+    "UnownedCard": {
+      "cardMode": "single",
+      "primaryStory": "DetailedUnowned"
+    },
+    "UserCard": {
+      "cardMode": "column"
+    },
+    "ReleaseNoteDialog": {
+      "cardMode": "single",
+      "primaryStory": "OpenFromBell"
+    },
+    "DeepDive": {
+      "viewport": "900x1300"
+    },
+    "StatsForNerds": {
+      "viewport": "900x1200"
+    },
+    "RoomPopover": {
+      "viewport": "900x1100",
+      "cardMode": "single",
+      "primaryStory": "TradingPostScored"
+    },
+    "OptimizerBasePanel": {
+      "viewport": "1000x1500",
+      "cardMode": "column"
+    },
+    "FilterPanel": {
+      "cardMode": "column"
+    },
+    "AccountFacts": {
+      "cardMode": "column"
+    },
+    "ControlCenterTile": {
+      "cardMode": "column"
+    },
+    "RiicTile": {
+      "cardMode": "column"
+    },
+    "RoomTile": {
+      "cardMode": "column"
+    },
+    "RosterFilters": {
+      "cardMode": "column"
+    },
+    "ShiftStrip": {
+      "cardMode": "column"
+    },
+    "TileTooltip": {
+      "cardMode": "single",
+      "primaryStory": "OverTile"
+    }
   }
 }

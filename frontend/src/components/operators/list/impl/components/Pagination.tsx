@@ -1,4 +1,4 @@
-import { ChevronsLeft, ChevronsRight, CornerDownLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, CornerDownLeft } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
@@ -185,6 +185,33 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
                 </PaginationItem>
             </PaginationContent>
         </PaginationRoot>
+    );
+}
+
+/**
+ * A prev/next pair with a page readout, sized to sit inside a toolbar row. The
+ * full numbered strip only lives at the foot of a listing, so this is what a
+ * page offers above the results - reachable without scrolling past them.
+ */
+export function PaginationCompact({ currentPage, totalPages, onPageChange, className }: IPaginationProps) {
+    if (totalPages <= 1) {
+        return null;
+    }
+
+    // Touch-sized on phones and trimmed on pointer widths, matching the sizing
+    // the full pager below the results already switches between.
+    return (
+        <div className={cn("flex items-center gap-1", className)}>
+            <Button variant="outline" size="icon" disabled={currentPage <= 1} onClick={() => onPageChange(currentPage - 1)} aria-label="Go to previous page" className="size-9 sm:size-7">
+                <ChevronLeft className="size-4 sm:size-3.5" />
+            </Button>
+            <span className="whitespace-nowrap px-1 font-medium font-sans text-[12.5px] text-muted-foreground tabular-nums leading-none">
+                Page <strong className="text-foreground">{currentPage}</strong> of <strong className="text-foreground">{totalPages}</strong>
+            </span>
+            <Button variant="outline" size="icon" disabled={currentPage >= totalPages} onClick={() => onPageChange(currentPage + 1)} aria-label="Go to next page" className="size-9 sm:size-7">
+                <ChevronRight className="size-4 sm:size-3.5" />
+            </Button>
+        </div>
     );
 }
 

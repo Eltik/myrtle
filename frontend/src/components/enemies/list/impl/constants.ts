@@ -3,10 +3,12 @@ import type { ApplyWay, SortOption, ViewMode } from "./types";
 
 export const VIEW_MODE_KEY = "enemies:view-mode";
 export const ITEMS_PER_PAGE_KEY = "enemies:items-per-page";
+export const PAGE_KEY = "enemies:page";
 export const FILTERS_KEY = "enemies:filters";
 
 export const ITEMS_PER_PAGE = 48;
-export const ITEMS_PER_PAGE_OPTIONS = [24, 48, 96, 144] as const;
+/** `"all"` collapses the list to a single page; it resolves to the filtered row count at render time. */
+export const ITEMS_PER_PAGE_OPTIONS = [24, 48, 96, 144, "all"] as const;
 export type ItemsPerPage = (typeof ITEMS_PER_PAGE_OPTIONS)[number];
 
 export const VIEW_MODES: ReadonlySet<ViewMode> = new Set(["grid", "list"]);

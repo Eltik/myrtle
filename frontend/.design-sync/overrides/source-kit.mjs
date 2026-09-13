@@ -114,7 +114,10 @@ export async function resolvePackage(ctx) {
     for (const r of raw) {
         let final = r.name;
         if (counts.get(r.name) > 1 && r.segs[0] !== 'ui') {
-            const parts = r.segs.filter((s) => !FILLER_DIR.has(s.toLowerCase()));
+            // A dir named after its component would stutter (base/BasePanel ->
+            // BaseBasePanel, board/Board -> BoardBoard): a segment whose PascalCase
+            // form already leads the name contributes nothing, so skip it.
+            const parts = r.segs.filter((s) => !FILLER_DIR.has(s.toLowerCase()) && !r.name.startsWith(pascal(s)));
             final = null;
             for (let depth = 1; depth <= parts.length; depth++) {
                 // Widen from the most specific segment outward: profile -> user/profile.

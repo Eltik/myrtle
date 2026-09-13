@@ -1,4 +1,4 @@
-import { Board, ChibiLayer, RoutesLayer } from "frontend";
+import { MapBoard, ChibiLayer, RoutesLayer } from "frontend";
 
 const T = {
     ".": { tileKey: "tile_forbidden", heightType: "HIGHLAND", buildableType: "NONE", passableMask: "FLY_ONLY", playerSideMask: "ALL" },
@@ -299,7 +299,7 @@ const Stage = ({ focus, walkers }: { focus: number; walkers: unknown[] }) => (
     <div className="relative overflow-hidden rounded-[14px] border border-border bg-[#181818] bg-[linear-gradient(90deg,#0a0a0a_1.5px,transparent_1%),linear-gradient(#0a0a0a_1.5px,transparent_1%)] bg-position-[50%] bg-size-[2.5px_2.5px]">
         <div className="relative mx-auto" style={{ width: BOARD_W, height: BOARD_H }}>
             <div className="perspective-[900px] perspective-origin-[50%] transform-3d absolute top-0 left-0" style={{ width: BOARD_W, height: BOARD_H }}>
-                <Board level={LEVEL} operators={new Map()} hovered coordOverride={null} />
+                <MapBoard level={LEVEL} operators={new Map()} hovered coordOverride={null} />
                 <RoutesLayer routes={ROUTES} focus={focus} hovered settings={SETTINGS} speedFor={speedFor} />
                 <div className="transform-3d pointer-events-none absolute top-0 left-0 rotate-x-30 transition-transform duration-400 ease-[ease]" style={{ width: BOARD_W, height: BOARD_H }}>
                     <ChibiLayer walkers={walkers} width={BOARD_W} height={BOARD_H} padY={PAD_Y} />

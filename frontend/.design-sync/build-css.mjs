@@ -32,6 +32,7 @@ const TW_VERSION = '4.2.2';
 const FONT_PKGS = [
     { prefix: 'inter-', pkg: '@fontsource-variable/inter' },
     { prefix: 'geist-mono-', pkg: '@fontsource-variable/geist-mono' },
+    { prefix: 'orbitron-', pkg: '@fontsource-variable/orbitron' },
 ];
 
 // ── Safelist ──────────────────────────────────────────────────────────────
@@ -61,7 +62,7 @@ const safelist = [
     cross(['max-w'], ['xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl', '6xl', 'full', 'none', 'prose']),
     'relative absolute fixed sticky inset-0 overflow-hidden overflow-x-auto overflow-y-auto'.split(' '),
     cross(['text'], ['xs', 'sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl', '5xl', 'left', 'center', 'right', ...TEXT_TOKENS]),
-    cross(['font'], ['normal', 'medium', 'semibold', 'bold', 'sans', 'mono', 'heading', 'display']),
+    cross(['font'], ['normal', 'medium', 'semibold', 'bold', 'sans', 'mono', 'heading', 'display', 'techno']),
     'truncate text-balance text-pretty tabular-nums uppercase lowercase capitalize italic underline leading-none leading-tight leading-relaxed tracking-tight tracking-wide whitespace-nowrap'.split(' '),
     cross(['bg'], BG_TOKENS),
     ['primary', 'muted', 'accent', 'destructive', 'foreground'].flatMap((t) => ALPHA.map((a) => `bg-${t}/${a}`)),

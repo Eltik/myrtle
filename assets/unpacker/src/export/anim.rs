@@ -2628,7 +2628,7 @@ pub struct MaterialColorChannel {
     pub prop_crc28: u32,
     /// The binding's kind nibble (see [`binding_kind`]): 4..7 colour, 0..3 vector, 8 float.
     /// Every colour consumer filters on 4..=7, so a float or vector channel on the same
-    /// GameObject never masquerades as a colour.
+    /// `GameObject` never masquerades as a colour.
     pub kind: u32,
     /// RGBA channel index 0..3 for a colour, the component for a vector, 0 for a float.
     pub channel: usize,
@@ -2700,8 +2700,8 @@ pub fn entrance_material_color_channels(
 }
 
 /// Every animated material channel of ANY kind (vector components, colour channels, scalar
-/// floats) in the entrance clips, keyed by GameObject. Separate from the colour map so the
-/// consumers that test a GameObject's PRESENCE in that map (`animated_color`, the colour-reveal
+/// floats) in the entrance clips, keyed by `GameObject`. Separate from the colour map so the
+/// consumers that test a `GameObject`'s PRESENCE in that map (`animated_color`, the colour-reveal
 /// admission) keep seeing colour-only entries and the default export stays byte-identical;
 /// read only where a float is wanted (`DYNCHAR_AMOUNT_CURVE`).
 #[must_use]
@@ -3454,7 +3454,6 @@ fn is_idle_clip(clip: &Value) -> bool {
 /// Whether a clip is a tap-triggered ACTION state by the game's own naming: "interact" or
 /// "special" in the name and neither "idle" (the idle-to-action transitions) nor "start" (the
 /// cinematic). The state the `interact()` button plays on the spine; its rig counterpart.
-#[must_use]
 /// The states a press plays: the clips `is_action_clip` admits and the `<State> Only Effects`
 /// groups the tap replay may show. Read from the game's naming, never from a skin.
 pub const ACTION_STATES: &[&str] = &["interact", "special"];
