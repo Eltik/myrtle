@@ -2428,8 +2428,14 @@ fn collect_dynchar_bg_quads(
             // to this rule; 370 quads across the corpus do. Off by default until gated.
             let meshext_keep_idle =
                 !is_entrance && std::env::var("DYNCHAR_MESHEXT_IDLE").as_deref() == Ok("1");
+            // TAP REPLAY (`DYNCHAR_INTERACT`): a press-revealed layer is hidden at rest and shown
+            // only inside the replay, so it can never be the always-on frozen fx quad this rule
+            // exists for; its `rest_hidden` stands in for the window (Fugue's `xuewen4..6`,
+            // `wuxiao` and the mesh `wu`, register "FUGUE'S FIVE"). Absent the variable,
+            // `rest_hidden` is always false and the rule is unchanged.
             if mat.get("_meshExtResolved").is_some()
                 && window.is_empty()
+                && !rest_hidden
                 && !has_color_reveal
                 && !meshext_keep_entrance
                 && !meshext_keep_idle
