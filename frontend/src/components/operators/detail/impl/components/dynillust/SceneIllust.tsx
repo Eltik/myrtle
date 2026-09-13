@@ -1102,6 +1102,12 @@ interface IComposite {
     particles: ILoadedParticles | null;
     /** Setup-pose bone matrices for bone-following particle emitters (scene only). */
     boneRest: Map<string, PIXI.Matrix> | null;
+    /** Setup-pose attachment centres, keyed by attachment name, for `BoneFollower` rigs that
+     *  continue a spine prop (see `driftWithBone`). Per composite, like `boneRest`: every build
+     *  used to write one shared ref, so whichever of the main and the entrance finished
+     *  building last handed its skeleton's map to the other's emitters (the `entrancefirst`
+     *  prefetch race; register "TWENTY-SIXTH PASS", Block 1). */
+    attachRest: Map<string, { x: number; y: number }> | null;
     /** Whether the spine's redundant dark shadow slots are being hidden each frame. */
     hasShadow: boolean;
     /** Start this composite's playback: the idle+specials cycle for the main L2D, or
@@ -4933,7 +4939,6 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     }
                     if (Number.isFinite(mnx)) attachRest.set(att.name, { x: (mnx + mxx) / 2, y: (mny + mxy) / 2 });
                 }
-                attachRestRef.current = attachRest;
                 const hasShadow = useStatic && hasShadowSlots(spine);
                 // ENTRANCE frame extent (authored px): the `_Start` camera's view at its ANIMATED
                 // t=0 ortho size (`2·ortho₀/skeletonScale`). The exporter's `entranceViewPx` is
@@ -5254,6 +5259,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     requestEntranceEnd: opts.mode === "entrance" ? fireEntranceEnd : null,
                     particles,
                     boneRest,
+                    attachRest,
                     hasShadow,
                     play,
                     interact,
@@ -5307,6 +5313,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 requestEntranceEnd: opts.mode === "entrance" ? fireEntranceEnd : null,
                 particles: null,
                 boneRest: null,
+                attachRest: null,
                 hasShadow: false,
                 play,
                 interact,
@@ -5766,6 +5773,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     particlesRef.current = c.particles;
                     separatorWashRef.current = c.separatorWash ?? [];
                     boneRestRef.current = c.boneRest;
+                    attachRestRef.current = c.attachRest;
                     sceneContainerRef.current = c.isScene ? c.root : null;
                     boundsRef.current = c.bounds;
                     hideShadowsRef.current = c.hasShadow;
