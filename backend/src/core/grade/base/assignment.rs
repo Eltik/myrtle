@@ -1074,13 +1074,13 @@ pub(crate) fn support_room_figure(
                     .is_some_and(|buff| buff.room_type == room_type)
             })
             .filter_map(|b| match registry.get(b) {
-                Some(BuffResolutionStrategy::NonProduction { value })
-                | Some(BuffResolutionStrategy::DirectEfficiency { value }) => Some(*value),
+                Some(BuffResolutionStrategy::NonProduction { value } |
+BuffResolutionStrategy::DirectEfficiency { value }) => Some(*value),
                 _ => None,
             })
             .collect()
     };
-    match room_type {
+    let figure = match room_type {
         "MEETING" => {
             let alone = working.len() == 1;
             let skills: f64 = working
@@ -1111,7 +1111,9 @@ pub(crate) fn support_room_figure(
                 .sum::<f64>()
                 + from_cc
         }
-    }
+    };
+    // An empty working crew sums to a negative zero; show a plain 0.
+    if figure == 0.0 { 0.0 } else { figure }
 }
 
 fn append_support_rooms(
