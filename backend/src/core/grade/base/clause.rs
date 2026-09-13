@@ -126,6 +126,10 @@ pub enum Subject {
     /// Occupants whose own total of `metric` exceeds `threshold` (Bubble's
     /// high-capacity tier).
     PeerMetricAbove { metric: Metric, threshold: f64 },
+    /// The summed capacity POINTS of occupants on one side of `threshold`
+    /// (Bubble's Bigger is Better!: 1% per point at or below 16, 3% per
+    /// point above - Bena's +17 alone is 51%, user-verified 2026-09-10).
+    CapacityPoints { threshold: f64, above: bool },
 }
 
 /// Where a presence requirement looks.
@@ -600,15 +604,17 @@ pub fn clauses_from_strategy(
             low_pct,
             high_pct,
         } => {
-            // Decompose "low below the threshold, high above" into
-            // all x low + above-threshold x (high - low), keeping both halves
-            // inside the ScalingCount shape.
+            // Per capacity POINT, tiered by each occupant's own bonus: low
+            // per point at or below the threshold, high per point above it.
             out.push(Clause::base(
                 buff_id,
                 buff,
                 speed(),
                 ClauseKind::ScalingCount {
-                    subject: Subject::AnyOtherOccupant,
+                    subject: Subject::CapacityPoints {
+                        threshold: f64::from(*threshold),
+                        above: false,
+                    },
                     include_self: true,
                 },
                 *low_pct,
@@ -618,13 +624,13 @@ pub fn clauses_from_strategy(
                 buff,
                 speed(),
                 ClauseKind::ScalingCount {
-                    subject: Subject::PeerMetricAbove {
-                        metric: Metric::CapacityLimit,
+                    subject: Subject::CapacityPoints {
                         threshold: f64::from(*threshold),
+                        above: true,
                     },
                     include_self: true,
                 },
-                *high_pct - *low_pct,
+                *high_pct,
             ));
         }
 
@@ -1084,6 +1090,51 @@ pub fn clauses_from_strategy(
         // An own-room-level generator (Senshi's Monster Meals): points depend
         // on WHERE the owner sits, so the assignment-scope settlement resolves
         // it; the room-local slice skips it.
+        // Snegurochka: the automation-style wipe, plus per-occupant room
+        // grants (speed and capacity) that carry the facility provenance.
+        S::RoomPerOperatorGrant {
+            speed_pct,
+            capacity,
+        } => {
+            out.push(Clause::base(
+                buff_id,
+                buff,
+                speed(),
+                ClauseKind::SuppressesOthers {
+                    metrics: vec![speed()],
+                    exempt: SuppressExempt::RoomCountScaledSources,
+                },
+                0.0,
+            ));
+            if *speed_pct > 0.0 {
+                out.push(Clause::base(
+                    buff_id,
+                    buff,
+                    speed(),
+                    ClauseKind::ScalingCount {
+                        subject: Subject::AnyOtherOccupant,
+                        include_self: true,
+                    },
+                    *speed_pct,
+                ));
+            }
+            if *capacity > 0.0 {
+                out.push(Clause::base(
+                    buff_id,
+                    buff,
+                    Metric::CapacityLimit,
+                    ClauseKind::ScalingCount {
+                        subject: Subject::AnyOtherOccupant,
+                        include_self: true,
+                    },
+                    *capacity,
+                ));
+            }
+        }
+
+        // Account facts carry no clause of their own.
+        S::AccountFacts { .. } => {}
+
         S::PoolGenerateOwnRoomLevel {
             resource,
             per_level,
@@ -1494,15 +1545,22 @@ mod tests {
             },
         );
         assert_eq!(set.len(), 2);
-        assert!((set[0].value - 1.0).abs() < 1e-9, "all occupants x low");
         assert!(
-            (set[1].value - 2.0).abs() < 1e-9,
-            "above-threshold x (high-low)"
+            (set[0].value - 1.0).abs() < 1e-9,
+            "low per point at or below"
         );
+        assert!((set[1].value - 3.0).abs() < 1e-9, "high per point above");
+        assert!(matches!(
+            &set[0].kind,
+            ClauseKind::ScalingCount {
+                subject: Subject::CapacityPoints { above: false, .. },
+                include_self: true
+            }
+        ));
         assert!(matches!(
             &set[1].kind,
             ClauseKind::ScalingCount {
-                subject: Subject::PeerMetricAbove { .. },
+                subject: Subject::CapacityPoints { above: true, .. },
                 include_self: true
             }
         ));

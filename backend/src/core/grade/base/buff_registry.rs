@@ -41,6 +41,18 @@ pub fn faction_tags_of(op: &Operator) -> Vec<String> {
     if op.tag_list.iter().any(|s| s == "Robot") {
         push("robot");
     }
+    // Race, from the handbook profile ("[Race] Durin"): the base's
+    // "<$cc.tag.durin>Durin Operator" counts (Pozëmka's production lines)
+    // key on it. Serialized enum name, lowercased - the same token the
+    // buff markup carries.
+    if let Some(race) = op
+        .profile
+        .as_ref()
+        .and_then(|p| serde_json::to_value(&p.basic_info.race).ok())
+        .and_then(|v| v.as_str().map(str::to_lowercase))
+    {
+        push(&race);
+    }
     // The multi-power system: RIIC faction tags count a SECONDARY NATION
     // (Texas: nation lungmen, SubPower siracusa - the game's "all Siracusa
     // Operators" buffs reach her, community-verified). A secondary GROUP does
@@ -250,6 +262,10 @@ static RE_TARGET_ROOM_BOOST: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
+/// The first tag token a buff names (`<$cc.tag.durin>` -> "durin").
+static RE_TAG_MARKUP: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"<\$cc\.tag\.([a-z0-9_]+)>").unwrap());
+
 /// "caps at <N>" on a base-wide count.
 static RE_CAPS_AT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"caps at <@cc\.kw>(\d+)</>").unwrap());
@@ -396,13 +412,43 @@ static RE_SPEED_CAPACITY_TRADE: LazyLock<Regex> = LazyLock::new(|| {
 /// A standalone converter: "every F <From> is converted to 1 <To>".
 static RE_POOL_CONVERT: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
-        r"every <@cc\.vup>([\d.]+)</>\s*<\$cc\.([A-Za-z0-9_]+)>.{0,50}?is converted to <@cc\.vup>1</>\s*<\$cc\.([A-Za-z0-9_]+)>",
+        r"every <@cc\.vup>([\d.]+)</>\s*<\$cc\.([A-Za-z0-9_]+)>.{0,50}?is converted (?:in)?to <@cc\.vup>1</>\s*<\$cc\.([A-Za-z0-9_]+)>",
     )
     .unwrap()
 });
 
-static RE_PER_HOUR_PCT: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)%?</>\s*per hour").unwrap());
+/// The per-hour ramp rate, in either word order: "+1% per hour" (Ceobe) or
+/// "productivity per hour +2%" (Aroma - whose rate the leading form missed,
+/// halving her ramp).
+static RE_PER_HOUR_PCT: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"(?:<@cc\.vup>\+?([\d.]+)%?</>\s*per hour|per hour <@cc\.vup>\+?([\d.]+)%?</>)")
+        .unwrap()
+});
+
+/// A nullifier whose grant lands on the ROOM per occupant (Snegurochka:
+/// "every Operator in that Factory increases that Factory's Productivity by
+/// +10% and Capacity limit by +5"; her lower tier has the capacity half only).
+static RE_NULLIFY_ROOM_PER_OP: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"every Operator in that Factory increases that Factory's (?:Productivity by <@cc\.vup>\+([\d.]+)%</> and )?Capacity limit by <@cc\.vup>\+([\d.]+)</>",
+    )
+    .unwrap()
+});
+
+/// A per-recruit-slot pool grant (Whisperain: "for every Recruit slot
+/// (Default slots do not count), Memory Fragments +10"). The slot count is
+/// account state the sync cannot read: the settlement takes it from the
+/// player-declared fact carried under [`ACCOUNT_FACTS_KEY`].
+pub(crate) static RE_SLOT_GRANT: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"for every Recruit slot \(Default slots do not count\),\s*<*<\$cc\.(bd_[A-Za-z0-9_]+)>[^+]{0,40}?<@cc\.vup>\+([\d.]+)</>",
+    )
+    .unwrap()
+});
+
+/// Registry key of the synthetic [`BuffResolutionStrategy::AccountFacts`]
+/// entry: never a buff id, read by the pool settlement for slot counts.
+pub const ACCOUNT_FACTS_KEY: &str = "ACCOUNT_FACTS";
 
 // Factories phrase the queue cap as "capacity limit", trading posts as "order limit" - the
 // same mechanic, so accept either so a factory capacity skill (Vermeil's "+8") is counted.
@@ -898,6 +944,17 @@ pub enum BuffResolutionStrategy {
     /// (Senshi: "provide 1 Monster Meal for every level of the current
     /// Dormitory"). Settled at assignment scope, where the seat is known.
     PoolGenerateOwnRoomLevel { resource: String, per_level: f64 },
+
+    /// A nullifier whose grant belongs to the ROOM, per occupant
+    /// (Snegurochka's Workflow Optimization). Its speed half survives an
+    /// automation wipe like facility-count grants: the game phrases both as
+    /// "that Factory's productivity" (user-verified 2026-09-10 beside
+    /// Eunectes and Passenger).
+    RoomPerOperatorGrant { speed_pct: f64, capacity: f64 },
+
+    /// Player-declared account facts, carried under [`ACCOUNT_FACTS_KEY`]
+    /// (never a buff): recruit slots bought beyond the initial one.
+    AccountFacts { open_recruit_slots: u32 },
 
     /// A one-buff dorm economy (Mr. Nothing): every dorm occupant grants
     /// `per_occupant` points, and the SAME buff consumes them at `pct` per
@@ -1617,13 +1674,27 @@ pub fn build_registry(
                     && plain_text(&buff.description)
                         .to_lowercase()
                         .contains("in the base")
+                    // Facility counts ("for every facility in the Base with an
+                    // Elite Operator assigned", Mantra) need seats by slot,
+                    // which the deployment map does not carry: they keep their
+                    // flat base below, never a guessed count.
+                    && !plain_text(&buff.description)
+                        .to_lowercase()
+                        .contains("every facility")
                 {
-                    // Base-wide count ("for each Rhine Lab Operator in the Base
-                    // (caps at 5)"): resolved against the deployment, the
-                    // holder included.
+                    // Base-wide OPERATOR count ("for each Rhine Lab Operator in
+                    // the Base (caps at 5)"): resolved against the deployment,
+                    // the holder included. The rate is the percentage stated
+                    // after the count phrase, never the buff's leading flat %.
+                    let count_at = buff
+                        .description
+                        .find("for each")
+                        .or_else(|| buff.description.find("for every"))
+                        .unwrap_or(0);
                     BuffResolutionStrategy::BaseWideMatchCountScaling {
                         token,
-                        per_match_pct: parse_first_pct(&buff.description).unwrap_or(0.0),
+                        per_match_pct: parse_first_pct_from(&buff.description, count_at)
+                            .unwrap_or(0.0),
                         cap_count: RE_CAPS_AT
                             .captures(&buff.description)
                             .and_then(|c| c[1].parse::<usize>().ok()),
@@ -1667,7 +1738,53 @@ pub fn build_registry(
                 // fires on every order a low post can draw). Same-kind effects
                 // take the strongest; different kinds compose on the disjoint
                 // orders they target (Proviso below 4, Tequila above 3).
+                // Pozëmka's production lines: "+5% per Pure Gold Production
+                // Line" scales on the gold factories, and "for every Durin
+                // Operator in the base (caps at 4), another Line" is a base-
+                // wide count worth that same per-line rate (read from the
+                // sibling skill's text, never assumed).
                 else if buff.room_type == "TRADING"
+                    && plain_text(&buff.description).contains("Pure Gold Production Line")
+                {
+                    let per_line = buffs
+                        .values()
+                        .filter(|b| b.room_type == "TRADING")
+                        .filter(|b| {
+                            let t = plain_text(&b.description);
+                            t.contains("Pure Gold Production Line") && t.contains('%')
+                        })
+                        .filter_map(|b| parse_first_pct(&b.description))
+                        .fold(0.0, f64::max);
+                    // The counted kin is a TAG ("<$cc.tag.durin>Durin") whose
+                    // "for every 1" leads with a number the keyword parser
+                    // rejects, so read the tag markup first.
+                    let counted = RE_TAG_MARKUP
+                        .captures(&buff.description)
+                        .map(|c| c[1].to_string())
+                        .or_else(|| parse_count_keyword(&buff.description));
+                    if plain_text(&buff.description)
+                        .to_lowercase()
+                        .contains("in the base")
+                        && let Some(token) = counted
+                    {
+                        BuffResolutionStrategy::BaseWideMatchCountScaling {
+                            token,
+                            per_match_pct: per_line,
+                            cap_count: RE_CAPS_AT
+                                .captures(&buff.description)
+                                .and_then(|c| c[1].parse::<usize>().ok()),
+                        }
+                    } else {
+                        BuffResolutionStrategy::FacilityCountScaling {
+                            target_room: super::assignment::GOLD_LINES.to_string(),
+                            per_unit_pct: per_line,
+                            per_level: false,
+                            nullifies_others: false,
+                            base_pct: 0.0,
+                            cap_pct: None,
+                        }
+                    }
+                } else if buff.room_type == "TRADING"
                     && let Some((effect, pure_gold)) =
                         order_value_shape(&buff.description, defaulted_below)
                 {
@@ -1837,6 +1954,24 @@ pub fn build_registry(
                         cap_pct: None,
                     }
                 }
+                // Reception-level scaling (Vigil's New City Trade: "+25%,
+                // +5% per Reception Room level, up to a maximum of 40%"):
+                // base + per-level on the base's Reception Room level, the
+                // ceiling stated on the TOTAL, so the scaled part's cap is
+                // the ceiling less the base.
+                else if prefix.contains("&meet")
+                    && buff.description.contains("per Reception Room level")
+                {
+                    let base = f64::from(buff.efficiency);
+                    BuffResolutionStrategy::FacilityCountScaling {
+                        target_room: super::assignment::MEETING_LEVEL.to_string(),
+                        per_unit_pct: parse_nth_pct(&buff.description, 1).unwrap_or(0.0),
+                        per_level: false,
+                        nullifies_others: false,
+                        base_pct: base,
+                        cap_pct: parse_last_pct(&buff.description).map(|c| (c - base).max(0.0)),
+                    }
+                }
                 // Direct efficiency
                 else if buff.efficiency > 0 {
                     BuffResolutionStrategy::DirectEfficiency {
@@ -1855,9 +1990,19 @@ pub fn build_registry(
                         cap_pct: None,
                     }
                 }
-                // Snegurochka-type: nullifies teammates but only grants Capacity
-                // (no speed), so it contributes 0 productivity. Modeled as a
-                // zero-value automation op so it's never picked for output.
+                // Snegurochka: nullifies teammates, and every occupant grants
+                // the ROOM +N% productivity (top tier) and +M capacity.
+                else if let Some(c) = RE_NULLIFY_ROOM_PER_OP.captures(&buff.description) {
+                    BuffResolutionStrategy::RoomPerOperatorGrant {
+                        speed_pct: c
+                            .get(1)
+                            .and_then(|m| m.as_str().parse().ok())
+                            .unwrap_or(0.0),
+                        capacity: c[2].parse().unwrap_or(0.0),
+                    }
+                }
+                // Other &manu nullifiers with no priced payload: a zero-value
+                // automation op so it's never picked for output.
                 else if prefix.contains("&manu") {
                     BuffResolutionStrategy::FacilityCountScaling {
                         target_room: "MANUFACTURE".to_string(),
@@ -2449,9 +2594,11 @@ fn parse_first_vdown_pct(desc: &str) -> Option<f64> {
 
 /// Parse "per hour" percentage: "+2% per hour" or "+1% per hour"
 fn parse_per_hour_pct(desc: &str) -> Option<f64> {
-    RE_PER_HOUR_PCT
-        .captures(desc)
-        .and_then(|c| c[1].parse().ok())
+    RE_PER_HOUR_PCT.captures(desc).and_then(|c| {
+        c.get(1)
+            .or_else(|| c.get(2))
+            .and_then(|m| m.as_str().parse().ok())
+    })
 }
 
 /// Parse order limit from description.
@@ -2633,6 +2780,10 @@ pub fn resolve_account_facts(
     open_recruit_slots: u32,
 ) -> HashMap<String, BuffResolutionStrategy> {
     let mut out = registry.clone();
+    out.insert(
+        ACCOUNT_FACTS_KEY.to_string(),
+        BuffResolutionStrategy::AccountFacts { open_recruit_slots },
+    );
     for (buff_id, strategy) in registry {
         let Some(buff) = buffs.get(buff_id) else {
             continue;

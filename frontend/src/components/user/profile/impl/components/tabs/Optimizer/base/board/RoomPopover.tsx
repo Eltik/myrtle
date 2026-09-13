@@ -13,7 +13,11 @@ import { TileTooltip } from "./tile/components/TileTooltip";
 function LedgerChip({ line }: { line: ISkillLine }) {
     if (line.disposition === "contributes") {
         const parts = [Math.abs(line.speed_pct) > 1e-9 ? `${line.speed_pct > 0 ? "+" : ""}${trim(line.speed_pct)}%` : null, line.value_pct && Math.abs(line.value_pct) > 1e-9 ? `${line.value_pct > 0 ? "+" : ""}${trim(line.value_pct)}% value` : null].filter(Boolean);
-        return <span className="shrink-0 font-mono font-semibold text-[10px] text-foreground tabular-nums">{parts.join(" · ")}</span>;
+        const chip = <span className={cn("shrink-0 font-mono font-semibold text-[10px] text-foreground tabular-nums", line.note && "underline decoration-dotted underline-offset-2")}>{parts.join(" · ")}</span>;
+        // A count skill's marginal is spread over the skills it counts (its
+        // own included), so the chip explains itself rather than reading as a
+        // separate flat bonus.
+        return line.note ? <TileTooltip label={<span className="block max-w-56">{line.note}</span>}>{chip}</TileTooltip> : chip;
     }
     const label = {
         inactive: "inactive",
@@ -80,6 +84,10 @@ export function RoomPopover({ tile }: { tile: ITile }) {
     const efficiency = api.viewShift == null ? scored?.total_efficiency : shiftRoom?.efficiency;
 
     const producesOwnOutput = scored !== undefined;
+    // Non-producing rooms report their own figure in their own units: a plant
+    // its drone recovery, the Reception Room its clue search, the Office its
+    // HR contact speed.
+    const efficiencyLabel = ({ POWER: "Drone recovery", MEETING: "Clue search", HIRE: "HR contact" } as Record<string, string>)[room?.room_type ?? ""] ?? "Efficiency";
     const unstaffed = tile.seats > 0 && tile.operators.length === 0;
 
     const formula = room?.formula_type ? api.formulas.find((f) => f.formula_type === room.formula_type) : undefined;
@@ -100,7 +108,7 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                 {tile.seats > 0 && <Stat label="Staffed" value={`${tile.operators.length}/${tile.seats}`} />}
                 {power !== 0 && <Stat label={power > 0 ? "Generates" : "Draws"} value={`${Math.abs(power)} kW`} />}
                 {formula && <Stat label="Producing" value={formula.label} />}
-                {efficiency != null && <Stat label="Efficiency" value={`${Math.round(efficiency)}%`} />}
+                {efficiency != null && <Stat label={efficiencyLabel} value={`${efficiencyLabel === "Efficiency" ? "" : "+"}${Math.round(efficiency)}%`} />}
                 {scored && isProduction(tile.facility ?? "") && scored.yield_lmd_per_day > 0 && <Stat label="LMD / day" value={Math.round(scored.yield_lmd_per_day).toLocaleString()} />}
             </dl>
 

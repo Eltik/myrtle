@@ -71,6 +71,10 @@ pub struct LedgerLine {
     /// owner sits in the CC, not this room.
     pub from_control_center: bool,
     pub disposition: LineDisposition,
+    /// How to read a marginal that is spread over other lines: a count skill
+    /// ("+5% per Metalwork-type skill") whose value already sits inside the
+    /// skills it counts, its own included.
+    pub note: Option<String>,
 }
 
 const EPS: f64 = 1e-6;
@@ -237,6 +241,21 @@ pub(crate) fn production_room_ledger(
             } else {
                 zero_disposition(ctx.registry.get(buff_id), ops)
             };
+            let note = match ctx.registry.get(buff_id) {
+                Some(BuffResolutionStrategy::MatchCountScaling {
+                    per_match_pct,
+                    count_skills: true,
+                    capacity: false,
+                    ..
+                }) if d_speed > EPS && *per_match_pct > 0.0 => {
+                    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
+                    let n = (d_speed / per_match_pct).round() as usize;
+                    Some(format!(
+                        "+{per_match_pct:.0}% per counted skill, {n} in this room (this operator's own included); the counted skills' figures already carry it"
+                    ))
+                }
+                _ => None,
+            };
             out.push(LedgerLine {
                 operator_id: (*id).clone(),
                 buff_id: buff_id.clone(),
@@ -244,6 +263,7 @@ pub(crate) fn production_room_ledger(
                 value_pct: d_value,
                 from_control_center: false,
                 disposition,
+                note,
             });
         }
     }
@@ -273,6 +293,7 @@ pub(crate) fn production_room_ledger(
                 value_pct: 0.0,
                 from_control_center: true,
                 disposition,
+                note: None,
             });
             continue;
         }
@@ -306,6 +327,7 @@ pub(crate) fn production_room_ledger(
             value_pct: d_value,
             from_control_center: true,
             disposition,
+            note: None,
         });
     }
     out
@@ -396,6 +418,7 @@ pub(crate) fn control_room_ledger(
                 value_pct: 0.0,
                 from_control_center: false,
                 disposition: zero_disposition(ctx.registry.get(buff_id), cc_ops),
+                note: None,
             });
         }
     }
@@ -431,6 +454,7 @@ pub(crate) fn control_room_ledger(
             value_pct: 0.0,
             from_control_center: false,
             disposition,
+            note: None,
         });
     }
     out

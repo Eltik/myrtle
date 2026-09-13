@@ -199,6 +199,25 @@ pub fn optimistic_value_pct(effect: &OrderEffect, rarity: usize) -> f64 {
     solo.max(with - without)
 }
 
+/// [`optimistic_value_pct`] against the shapes the ROSTER actually fields:
+/// the larger of the solo worth and the best marginal beside any one
+/// companion shape. Bibeak's Tailoring is a sliver alone but the piece that
+/// makes Tequila's rider pay (+17 beside him), and the ranker must not cut
+/// her before the scorer can try the trio.
+pub fn optimistic_value_pct_among(
+    effect: &OrderEffect,
+    rarity: usize,
+    companions: &[OrderEffect],
+) -> f64 {
+    let mut best = optimistic_value_pct(effect, rarity);
+    for other in companions.iter().filter(|o| *o != effect) {
+        let with = value_pct(&[effect.clone(), other.clone()], rarity);
+        let without = value_pct(std::slice::from_ref(other), rarity);
+        best = best.max(with - without);
+    }
+    best
+}
+
 /// Average Pure Gold per order a bare post of `rarity` draws - the fill
 /// model's orders-per-day basis (a level-1 post fills its buffer with more,
 /// smaller orders than a level-3 post).

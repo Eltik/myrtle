@@ -102,6 +102,10 @@ pub struct RoomEval<'a> {
     pub deployed_work_area: Option<&'a HashSet<String>>,
 }
 
+/// Capacity points a seat is assumed to bring when ranking a capacity-point
+/// scaler (Bubble) before the team is known.
+const ASSUMED_CAPACITY_POINTS: f64 = 20.0;
+
 pub struct RoomTotals {
     pub speed_pct: f64,
     /// Order VALUE: LMD per hour over a bare post's, minus one (percent).
@@ -140,6 +144,7 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                     let facility = matches!(
                         strategy,
                         BuffResolutionStrategy::FacilityCountScaling { .. }
+                            | BuffResolutionStrategy::RoomPerOperatorGrant { .. }
                     );
                     clauses_from_strategy(b, buff, strategy)
                         .into_iter()
@@ -334,11 +339,14 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                     );
                     let scaled = clause.value * count;
                     let amount = clause.cap.map_or(scaled, |cap| scaled.min(cap));
+                    // Facility-provenance counts (Snegurochka's "that
+                    // Factory's productivity" per occupant) survive the
+                    // automation wipe like plant-count grants.
                     entries.push(Entry {
                         entity: i,
                         metric: clause.metric.clone(),
                         amount: amount * factor,
-                        source: Source::Direct,
+                        source: direct_source,
                     });
                 }
                 ClauseKind::ScalingLevelSum { .. } => {
@@ -728,6 +736,7 @@ pub fn op_optimistic_bound(
     facility_counts: &HashMap<String, usize>,
     total_dorm_levels: i32,
     max_slots: usize,
+    companions: &[OrderEffect],
 ) -> f64 {
     let teammates_assumed = max_slots.saturating_sub(1) as f64;
     let speed_metric = Metric::speed_for_room(room_type);
@@ -806,7 +815,8 @@ pub fn op_optimistic_bound(
             // An order shape's optimistic worth: solo, or its marginal beside
             // the mix-shifting partner that makes it pay (Tequila + Tailoring).
             ClauseKind::OrderMix(effect) => {
-                super::order_mix::optimistic_value_pct(effect, order_rarity) * factor
+                super::order_mix::optimistic_value_pct_among(effect, order_rarity, companions)
+                    * factor
             }
             // A solved pool payoff counts at face value - the consumer must
             // rank high enough to be SEATED for the pool to pay out at all.
@@ -823,6 +833,12 @@ pub fn op_optimistic_bound(
                 include_self,
             } => {
                 let assumed = match subject {
+                    // Capacity points: assume every seat brings a full
+                    // capacity skill's worth of points.
+                    Subject::CapacityPoints { .. } => {
+                        (teammates_assumed + f64::from(u8::from(*include_self)))
+                            * ASSUMED_CAPACITY_POINTS
+                    }
                     // Peer-capacity tiers: assume everyone clears the threshold.
                     Subject::PeerMetricAbove { .. }
                     | Subject::AnyOtherOccupant
@@ -956,19 +972,53 @@ pub fn op_surviving_order_value(
     formula_type: Option<&str>,
     registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
+    companions: &[OrderEffect],
 ) -> f64 {
     // Ranking helper without a room level: price each surviving shape at the
-    // top order rarity (the level a value operator is normally seated at).
+    // top order rarity (the level a value operator is normally seated at),
+    // at its best marginal beside the roster's other shapes.
     let top = super::order_mix::rarity_for_level(building_data, i32::MAX);
     applicable_clauses(op, room_type, formula_type, registry, building_data)
         .filter(|(c, _)| c.metric == (Metric::OrderValue { pure_gold: false }))
         .filter_map(|(c, factor)| match &c.kind {
             ClauseKind::OrderMix(effect) => {
-                Some(super::order_mix::value_pct(std::slice::from_ref(effect), top) * factor)
+                Some(super::order_mix::optimistic_value_pct_among(effect, top, companions) * factor)
             }
             _ => None,
         })
         .sum()
+}
+
+/// Every order shape the given operators can field in `room_type` (deduped):
+/// the companions a ranking bound prices a shape's marginal against.
+pub fn roster_order_effects(
+    operators: &[&OperatorBaseProfile],
+    room_type: &str,
+    formula_type: Option<&str>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+) -> Vec<OrderEffect> {
+    // A registry lookup per buff, never a clause build: this runs inside
+    // every team search.
+    let _ = formula_type;
+    let mut out: Vec<OrderEffect> = Vec::new();
+    if room_type != "TRADING" {
+        return out;
+    }
+    for op in operators {
+        for buff_id in &op.available_buffs {
+            if let Some(BuffResolutionStrategy::OrderValue { effect, .. }) = registry.get(buff_id)
+                && building_data
+                    .buffs
+                    .get(buff_id)
+                    .is_some_and(|b| b.room_type == room_type)
+                && !out.contains(effect)
+            {
+                out.push(effect.clone());
+            }
+        }
+    }
+    out
 }
 
 /// Ranking value of an operator's strongest POWER-room buff: solo clause value
@@ -1090,11 +1140,21 @@ fn count_matches(
             if *metric == Metric::CapacityLimit {
                 (0..members.len())
                     .filter(|&j| j != owner || include_self)
-                    .filter(|&j| own_capacity[j] > *threshold)
+                    .filter(|&j| own_capacity.get(j).copied().unwrap_or(0.0) > *threshold)
                     .count()
             } else {
                 0
             }
+        }
+        // Summed capacity points on one side of the threshold (positive
+        // headroom only - a slashed limit earns nothing).
+        Subject::CapacityPoints { threshold, above } => {
+            return (0..members.len())
+                .filter(|&j| j != owner || include_self)
+                .map(|j| own_capacity.get(j).copied().unwrap_or(0.0))
+                .filter(|cap| (*cap > *threshold) == *above)
+                .map(|cap| cap.max(0.0))
+                .sum();
         }
     };
     n as f64

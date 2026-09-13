@@ -4031,6 +4031,367 @@ fn justice_knight_in_a_plant_boosts_wild_manes_factory() {
     );
 }
 
+/// Bubble's Bigger is Better! pays per capacity POINT, tiered by each
+/// occupant's own bonus (user-verified 2026-09-10: Bubble 10, Ceobe 8, Bena
+/// 17 read +0.76 in-game = 10 + 8 + 51 + Ceobe's ramp - Bena's 20 + Wang 2).
+#[test]
+fn bubble_pays_per_capacity_point_by_tier() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const BUBBLE: &str = "char_381_bubble";
+    const CEOBE: &str = "char_2013_cerber";
+    const BENA: &str = "char_369_bena";
+    let mut rooms = vec![room("mf", "MANUFACTURE", 3)];
+    rooms[0].current_operators = vec![BUBBLE.into(), CEOBE.into(), BENA.into()];
+    rooms[0].current_formula = Some("F_EXP".into());
+    let building = UserBuilding { rooms };
+    let roster: Vec<_> = [BUBBLE, CEOBE, BENA]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+    let asn =
+        compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+    let eff = asn.rooms[0].total_efficiency;
+    // 69 from Bubble + Ceobe's 24h-averaged ramp (24.5) - Bena's 20.
+    assert!((73.0..=74.0).contains(&eff), "per-point tiers: {eff}");
+}
+
+/// Vigil's New City Trade reads the base's Reception Room level: +25 base,
+/// +5 per level, capped at 40 - so a level-3 room gives 40, none gives 25.
+#[test]
+fn vigil_reads_the_reception_room_level() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const VIGIL: &str = "char_427_vigil";
+    let roster: Vec<_> = [VIGIL].iter().map(|id| profile(gd, id)).collect();
+    let eff = |reception: Option<i32>| {
+        let mut rooms = vec![room("tp", "TRADING", 3)];
+        rooms[0].current_operators = vec![VIGIL.into()];
+        if let Some(lv) = reception {
+            rooms.push(room("rr", "MEETING", lv));
+        }
+        let building = UserBuilding { rooms };
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == "tp")
+            .map_or(0.0, |r| r.total_efficiency)
+    };
+    assert!(
+        (eff(Some(3)) - 40.0).abs() < 1e-9,
+        "level 3: {}",
+        eff(Some(3))
+    );
+    assert!(
+        (eff(Some(1)) - 30.0).abs() < 1e-9,
+        "level 1: {}",
+        eff(Some(1))
+    );
+    assert!((eff(None) - 25.0).abs() < 1e-9, "no room: {}", eff(None));
+}
+
+/// Aroma's "productivity per hour +2%, up to +20%" states its rate AFTER the
+/// words "per hour": the ramp is 2 per hour (cap at 10 h), averaged over
+/// the 24 h block = 15.8, not the half-rate 11.7.
+#[test]
+fn aroma_ramp_rate_parses_in_the_trailing_form() {
+    let gd = load_game_data();
+    let (registry, _) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    match registry.get("manu_prod_spd_addition[100]") {
+        Some(BuffResolutionStrategy::MoraleDecayEfficiency {
+            time_averaged_value,
+        }) => {
+            assert!(
+                (time_averaged_value - (100.0 + 280.0) / 24.0).abs() < 1e-6,
+                "24h mean: {time_averaged_value}"
+            );
+        }
+        other => panic!("Aroma's ramp: {other:?}"),
+    }
+}
+
+/// Snegurochka's Workflow Optimization grants the ROOM +10% per occupant
+/// (and +5 capacity), which survives an automation wipe like the plant
+/// grants - beside Eunectes on three plants the room reads 30 + 20.
+#[test]
+fn snegurochka_room_grant_survives_the_automation_wipe() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const SNEG: &str = "char_4208_wintim";
+    const EUNECTES: &str = "char_416_zumama";
+    let roster: Vec<_> = [SNEG, EUNECTES].iter().map(|id| profile(gd, id)).collect();
+    let eff = |crew: &[&str]| {
+        let mut rooms = vec![room("mf", "MANUFACTURE", 3)];
+        rooms.extend((0..3).map(|i| room(&format!("pp{i}"), "POWER", 3)));
+        rooms[0].current_operators = crew.iter().map(|s| (*s).to_string()).collect();
+        rooms[0].current_formula = Some("F_EXP".into());
+        let building = UserBuilding { rooms };
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == "mf")
+            .map_or(0.0, |r| r.total_efficiency)
+    };
+    assert!(
+        (eff(&[SNEG]) - 10.0).abs() < 1e-9,
+        "alone: {}",
+        eff(&[SNEG])
+    );
+    assert!(
+        (eff(&[SNEG, EUNECTES]) - 50.0).abs() < 1e-9,
+        "beside Eunectes: {}",
+        eff(&[SNEG, EUNECTES])
+    );
+}
+
+/// Whisperain's Memory Fragments: +10 per declared extra recruit slot, converted
+/// 1:1 into Perception Information ("converted INTO"), which Rosmontis reads.
+#[test]
+fn whisperain_feeds_rosmontis_from_declared_recruit_slots() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    use backend::core::grade::base::buff_registry::resolve_account_facts;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    assert!(
+        matches!(
+            registry.get("hire_spd_bd_n1[000]"),
+            Some(BuffResolutionStrategy::PoolConvert { .. })
+        ),
+        "her conversion parses: {:?}",
+        registry.get("hire_spd_bd_n1[000]")
+    );
+    const ROSMONTIS: &str = "char_391_rosmon";
+    const WHISPERAIN: &str = "char_436_whispr";
+    let mut rooms = vec![room("mf", "MANUFACTURE", 3), room("hr", "HIRE", 3)];
+    rooms[0].current_operators = vec![ROSMONTIS.into()];
+    rooms[0].current_formula = Some("F_EXP".into());
+    rooms[1].current_operators = vec![WHISPERAIN.into()];
+    let building = UserBuilding { rooms };
+    let roster: Vec<_> = [ROSMONTIS, WHISPERAIN]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+    let eff = |reg: &std::collections::HashMap<String, BuffResolutionStrategy>| {
+        compute_current_assignment(&roster, &building, &gd.building, reg, &drains, None)
+            .rooms
+            .iter()
+            .find(|r| r.slot_id == "mf")
+            .map_or(0.0, |r| r.total_efficiency)
+    };
+    let undeclared = eff(&registry);
+    let two_slots = eff(&resolve_account_facts(&registry, &gd.building.buffs, 2));
+    assert!(
+        (two_slots - undeclared - 20.0).abs() < 1e-9,
+        "20 fragments -> 20 Perception -> +20: {undeclared} vs {two_slots}"
+    );
+}
+
+/// A zero-morale Lancet-2 in a plant still satisfies Eunectes' named gate but
+/// no longer counts as an Operation Platform for Greyy's exclusion: three real
+/// plants + Greyy 1 + Eunectes 2 = 6 (Weedy 90). At full morale he blocks
+/// Greyy (5 plants, Weedy 75).
+#[test]
+fn dead_lancet_unlocks_both_plant_counts() {
+    use backend::core::grade::base::assignment::compute_live_assignment;
+    use std::collections::HashMap;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const WEEDY: &str = "char_400_weedy";
+    const EUNECTES: &str = "char_416_zumama";
+    const LANCET: &str = "char_285_medic2";
+    const GREYY: &str = "char_1027_greyy2";
+    let roster: Vec<_> = [WEEDY, EUNECTES, LANCET, GREYY]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+    let mut rooms = vec![room("cc", "CONTROL", 5), room("mf", "MANUFACTURE", 3)];
+    rooms.extend((0..3).map(|i| room(&format!("pp{i}"), "POWER", 3)));
+    rooms[0].current_operators = vec![EUNECTES.into()];
+    rooms[1].current_operators = vec![WEEDY.into()];
+    rooms[1].current_formula = Some("F_EXP".into());
+    rooms[2].current_operators = vec![GREYY.into()];
+    rooms[3].current_operators = vec![LANCET.into()];
+    let building = UserBuilding { rooms };
+    let weedy = |lancet_morale: f64| {
+        let live = HashMap::from([(LANCET.to_string(), lancet_morale)]);
+        compute_live_assignment(
+            &roster,
+            &building,
+            &gd.building,
+            &registry,
+            &drains,
+            None,
+            &live,
+        )
+        .rooms
+        .iter()
+        .find(|r| r.slot_id == "mf")
+        .map_or(0.0, |r| r.total_efficiency)
+    };
+    assert!(
+        (weedy(0.0) - 90.0).abs() < 1e-9,
+        "dead Lancet: six plants: {}",
+        weedy(0.0)
+    );
+    assert!(
+        (weedy(24.0) - 75.0).abs() < 1e-9,
+        "live Lancet blocks Greyy: {}",
+        weedy(24.0)
+    );
+}
+
+/// The Shamare / Bibeak / Tequila post beats the speed teams once the ranker
+/// prices Bibeak's Tailoring beside Tequila: a sliver alone, +17 next to his
+/// rider, so she survives the candidate cut and the trio forms (user report
+/// 2026-09-13: Texas / Lappland / Kichisei and Exusiai / Exusiai / Lemuen
+/// were recommended instead).
+#[test]
+fn shamare_bibeak_tequila_form_the_post_on_a_deep_roster() {
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const SHAMARE: &str = "char_254_vodfox";
+    const BIBEAK: &str = "char_252_bibeak";
+    const TEQUILA: &str = "char_486_takila";
+    let ids = [
+        SHAMARE,
+        BIBEAK,
+        TEQUILA,
+        "char_102_texas",
+        "char_1028_texas2",
+        "char_4203_kichi",
+        "char_1029_yato2",
+        EXUSIAI,
+        "char_1041_angel2",
+        "char_4193_lemuen",
+        "char_214_kafka",
+        "char_427_vigil",
+        "char_308_swire",
+        "char_1033_swire2",
+        "char_172_svrash",
+    ];
+    let roster: Vec<_> = ids.iter().map(|id| profile(gd, id)).collect();
+    let mut rooms = vec![room("tp", "TRADING", 3), room("mf", "MANUFACTURE", 3)];
+    rooms.extend((0..2).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
+    let building = UserBuilding { rooms };
+    let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+    let tp = asn
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "TRADING")
+        .expect("the post");
+    for id in [SHAMARE, BIBEAK, TEQUILA] {
+        assert!(
+            tp.operators.iter().any(|o| o == id),
+            "{id} in the post: {:?}",
+            tp.operators
+        );
+    }
+}
+
+/// Pozëmka's production lines: +5% per Pure Gold factory, plus one line per
+/// Durin operator in the base (dormitories included, capped at 4). Two gold
+/// factories and three Durins resting = 5 lines = +25; without the Durins +10.
+#[test]
+fn pozemka_counts_gold_lines_and_resting_durins() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const POZEMKA: &str = "char_4055_bgsnow";
+    let durins = ["char_4164_tecno", "char_4054_malist", "char_501_durin"];
+    let mut ids = vec![POZEMKA];
+    ids.extend(durins);
+    let roster: Vec<_> = ids.iter().map(|id| profile(gd, id)).collect();
+    let eff = |park: bool| {
+        let mut rooms = vec![
+            room("tp", "TRADING", 3),
+            room("g0", "MANUFACTURE", 3),
+            room("g1", "MANUFACTURE", 3),
+            room("d0", "DORMITORY", 5),
+        ];
+        rooms[0].current_operators = vec![POZEMKA.into()];
+        rooms[1].current_formula = Some("F_GOLD".into());
+        rooms[2].current_formula = Some("F_GOLD".into());
+        if park {
+            rooms[3].current_operators = durins.iter().map(|s| (*s).to_string()).collect();
+        }
+        let building = UserBuilding { rooms };
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == "tp")
+            .map_or(0.0, |r| r.total_efficiency)
+    };
+    assert!(
+        (eff(false) - 10.0).abs() < 1e-9,
+        "two gold lines: {}",
+        eff(false)
+    );
+    assert!(
+        (eff(true) - 25.0).abs() < 1e-9,
+        "plus three resting Durins: {}",
+        eff(true)
+    );
+}
+
+/// The base-count bundle offers the oracle the seats a player locks by hand:
+/// Pozëmka's Durins pinned into the dormitories.
+#[test]
+fn base_count_bundle_pins_durins_into_the_dormitories() {
+    use backend::core::grade::base::pools::candidate_bundles;
+    let gd = load_game_data();
+    let (registry, _) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let ids = [
+        "char_4055_bgsnow",
+        "char_4164_tecno",
+        "char_4054_malist",
+        "char_501_durin",
+    ];
+    let roster: Vec<_> = ids.iter().map(|id| profile(gd, id)).collect();
+    let building = UserBuilding {
+        rooms: vec![room("tp", "TRADING", 3), room("d0", "DORMITORY", 5)],
+    };
+    let bundles = candidate_bundles(&roster, &building, &gd.building, &registry);
+    let durin_bundle = bundles.iter().find(|b| {
+        b.pins
+            .iter()
+            .any(|(id, r)| id == "char_4164_tecno" && r == "DORMITORY")
+    });
+    let pins = durin_bundle.map(|b| b.pins.len()).unwrap_or(0);
+    assert_eq!(
+        pins,
+        3,
+        "three Durins parked for the count: {:?}",
+        bundles.iter().map(|b| &b.pins).collect::<Vec<_>>()
+    );
+}
+
+/// Mantra's "+25%; for every facility in the Base with an Elite Operator
+/// assigned, +2% (max 10 facilities)" counts FACILITIES, which the deployment
+/// map cannot see: she reads her flat 25, never 25 per counted operator
+/// (a live plan briefly showed a 202% post built on that mis-parse).
+#[test]
+fn mantra_keeps_her_flat_base_not_a_per_operator_count() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const MANTRA: &str = "char_4204_mantra";
+    let mut rooms = vec![room("tp", "TRADING", 3), room("mf", "MANUFACTURE", 3)];
+    rooms[0].current_operators = vec![MANTRA.into()];
+    rooms[1].current_operators = vec![EXUSIAI.into()];
+    rooms[1].current_formula = Some("F_EXP".into());
+    let building = UserBuilding { rooms };
+    let roster: Vec<_> = [MANTRA, EXUSIAI].iter().map(|id| profile(gd, id)).collect();
+    let asn = compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+    let eff = asn.rooms.iter().find(|r| r.slot_id == "tp").map_or(0.0, |r| r.total_efficiency);
+    assert!((eff - 25.0).abs() < 1e-9, "flat base only: {eff}");
+}
+
 #[test]
 fn viviana_synergy_flips_the_cc_to_a_block_aligned_with_her_knights() {
     // Viviana's CC buff ("all Knight Operators in Factories +7%") links her to the factory
@@ -8212,6 +8573,7 @@ fn rosmontis_ranks_on_full_dormitories() {
         &counts,
         20,
         3,
+        &[],
     );
     // Four top-level dorms = 20 seats -> 20 Perception -> 20 Chain -> +20%.
     assert!(

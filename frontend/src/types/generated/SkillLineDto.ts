@@ -37,4 +37,8 @@ export type SkillLineDto = {
      * is now a union instead of `string`.
      */
     disposition: LineDisposition;
+    /**
+     * A reading aid for marginals spread over other lines (count skills).
+     */
+    note?: string | null;
 };

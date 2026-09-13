@@ -530,6 +530,10 @@ pub struct SkillLineDto {
     /// strings the hand-written match produced, but the generated TS binding
     /// is now a union instead of `string`.
     pub disposition: crate::core::grade::base::skill_ledger::LineDisposition,
+    /// A reading aid for marginals spread over other lines (count skills).
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub note: Option<String>,
 }
 
 #[allow(clippy::trivially_copy_pass_by_ref)]
@@ -557,6 +561,7 @@ fn skill_line_dto(
         value_pct: l.value_pct,
         from_control_center: l.from_control_center,
         disposition: l.disposition,
+        note: l.note.clone(),
     }
 }
 
@@ -1527,6 +1532,15 @@ async fn build_base_improvements(
     // the pinned CC seats would otherwise carry) show up in the yield, so no
     // hand-modeled tradeoff is needed.
     for bundle in candidate_bundles(&profiles, &user_building, &game_data.building, &registry) {
+        // A seat bundle for a counter nobody fields is not worth a trial.
+        if let Some(who) = &bundle.beneficiary
+            && !optimal
+                .rooms
+                .iter()
+                .any(|r| r.operators.iter().any(|o| o == who))
+        {
+            continue;
+        }
         let mut trial_registry = optimal_registry.clone();
         for (buff_id, pct) in &bundle.overrides {
             // Never downgrade: a consumer already priced higher by another

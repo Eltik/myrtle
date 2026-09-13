@@ -73,8 +73,19 @@ static RE_FLAT_GRANT: LazyLock<Regex> = LazyLock::new(|| {
 /// whose ONLY other clause is Unresolved is then fully priced without a
 /// strategy (Dolris' "Idol's Aura" is purely a dorm-occupancy Passion grant),
 /// so its Unresolved marker would be label pessimism.
+/// Recruit slots the player declared (account fact), 0 when undeclared.
+fn declared_recruit_slots(registry: &HashMap<String, BuffResolutionStrategy>) -> f64 {
+    match registry.get(super::buff_registry::ACCOUNT_FACTS_KEY) {
+        Some(BuffResolutionStrategy::AccountFacts { open_recruit_slots }) => {
+            f64::from(*open_recruit_slots)
+        }
+        _ => 0.0,
+    }
+}
+
 pub(crate) fn has_side_channel_grant(desc: &str) -> bool {
-    RE_MORALE_COND_GRANT.is_match(desc)
+    super::buff_registry::RE_SLOT_GRANT.is_match(desc)
+        || RE_MORALE_COND_GRANT.is_match(desc)
         || RE_FACTION_GRANT.is_match(desc)
         || RE_TAG_GRANT.is_match(desc)
         || RE_DORM_OCC_GRANT.is_match(desc)
@@ -151,6 +162,13 @@ fn text_grants(
     current_morale: Option<f64>,
 ) -> Vec<(String, f64)> {
     let mut grants: Vec<(String, f64)> = Vec::new();
+    // Per-recruit-slot grants (Whisperain's Memory Fragments) read the
+    // player-declared slot count; unknown = 0 (never guess).
+    let recruit_slots = declared_recruit_slots(registry);
+    for c in super::buff_registry::RE_SLOT_GRANT.captures_iter(&buff.description) {
+        let per: f64 = c[2].parse().unwrap_or(0.0);
+        grants.push((c[1].to_string(), per * recruit_slots));
+    }
     for c in RE_MORALE_COND_GRANT.captures_iter(&buff.description) {
         let above = &c[1] == "above";
         let threshold: f64 = c[2].parse().unwrap_or(0.0);
@@ -451,6 +469,11 @@ pub struct EconomyPlan {
     /// globals (Sakiko's trading global), to fold as
     /// [`BuffResolutionStrategy::GlobalEffect`].
     pub globals: Vec<(String, String, f64)>,
+    /// The operator the bundle's seats exist for (Pozëmka behind her Durins):
+    /// the oracle skips the trial while that operator is not seated in the
+    /// plan it would improve - a count nobody reads is not worth an
+    /// optimizer run.
+    pub beneficiary: Option<String>,
 }
 
 /// Projected dorm occupancy at steady state: dorms hold whoever isn't
@@ -761,6 +784,7 @@ fn shared_pool_bundles(
                     globals: Vec::new(),
                     overrides,
                     pins,
+                    beneficiary: None,
                 });
             }
         }
@@ -813,7 +837,68 @@ fn facility_count_bundles(
                 overrides: Vec::new(),
                 pins,
                 globals: Vec::new(),
+                beneficiary: None,
             });
+        }
+    }
+    bundles
+}
+
+/// Base-wide counts as seat bundles (Pozëmka's Durins, Nasti's Rhine Lab):
+/// the operators a player parks in the dormitories purely to be counted.
+/// For each base-wide counter the roster fields, pin the spare tag-matching
+/// operators (fewest other-room skills first, up to the cap) into
+/// dormitory seats; the oracle keeps the seats if the count pays for them.
+fn base_count_bundles(
+    profiles: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+) -> Vec<EconomyPlan> {
+    use super::assignment::other_room_skill_count;
+    if !building.rooms.iter().any(|r| r.room_type == "DORMITORY") {
+        return Vec::new();
+    }
+    let mut bundles = Vec::new();
+    let mut seen: HashSet<String> = HashSet::new();
+    for op in profiles {
+        for buff_id in &op.available_buffs {
+            let Some(BuffResolutionStrategy::BaseWideMatchCountScaling {
+                token, cap_count, ..
+            }) = registry.get(buff_id)
+            else {
+                continue;
+            };
+            if !seen.insert(token.clone()) {
+                continue;
+            }
+            let holder_counts = op.match_tags.iter().any(|t| t == token);
+            let budget = cap_count
+                .unwrap_or(usize::MAX)
+                .saturating_sub(usize::from(holder_counts));
+            let mut kin: Vec<&OperatorBaseProfile> = profiles
+                .iter()
+                .filter(|p| p.char_id != op.char_id && p.match_tags.iter().any(|t| t == token))
+                .collect();
+            kin.sort_by_key(|p| {
+                (
+                    other_room_skill_count(p, "DORMITORY", building_data),
+                    p.char_id.clone(),
+                )
+            });
+            let pins: Vec<(String, String)> = kin
+                .into_iter()
+                .take(budget)
+                .map(|p| (p.char_id.clone(), "DORMITORY".to_string()))
+                .collect();
+            if !pins.is_empty() {
+                bundles.push(EconomyPlan {
+                    overrides: Vec::new(),
+                    pins,
+                    globals: Vec::new(),
+                    beneficiary: Some(op.char_id.clone()),
+                });
+            }
         }
     }
     bundles
@@ -870,6 +955,12 @@ pub fn candidate_bundles(
 ) -> Vec<EconomyPlan> {
     let mut bundles = shared_pool_bundles(profiles, building, building_data, registry);
     bundles.extend(facility_count_bundles(profiles, registry));
+    bundles.extend(base_count_bundles(
+        profiles,
+        building,
+        registry,
+        building_data,
+    ));
 
     // Robot displacement (Alanna's Operation Platforms): a consumer whose buff
     // scales with Robot-tagged operators seated in Power Plants. Pin the
@@ -934,6 +1025,7 @@ pub fn candidate_bundles(
                         .iter()
                         .map(|r| (r.char_id.clone(), "POWER".to_string()))
                         .collect(),
+                    beneficiary: None,
                 });
             }
         }
@@ -1172,6 +1264,7 @@ pub fn candidate_bundles(
                 overrides,
                 pins: pin_seats,
                 globals,
+                beneficiary: None,
             });
         }
     }

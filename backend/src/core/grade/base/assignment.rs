@@ -288,14 +288,25 @@ pub fn resolve_room_presence(
                     per_match_pct,
                     cap_count,
                 } => {
-                    let n = deployed_rooms
-                        .keys()
-                        .filter(|id| {
-                            match_tags
-                                .get(id.as_str())
-                                .is_some_and(|tags| tags.iter().any(|t| t == token))
-                        })
-                        .count();
+                    // Pass 1 (no deployment yet) counts the roster's kin - a
+                    // capped counter then reads the same in both passes and
+                    // the second pass is skipped; pass 2 and the live view
+                    // count the actual seats.
+                    let n = if deployed_rooms.is_empty() {
+                        operators
+                            .iter()
+                            .filter(|o| o.match_tags.iter().any(|t| t == token))
+                            .count()
+                    } else {
+                        deployed_rooms
+                            .keys()
+                            .filter(|id| {
+                                match_tags
+                                    .get(id.as_str())
+                                    .is_some_and(|tags| tags.iter().any(|t| t == token))
+                            })
+                            .count()
+                    };
                     #[allow(clippy::cast_precision_loss)]
                     let n = cap_count.map_or(n, |cap| n.min(cap)) as f64;
                     BuffResolutionStrategy::DirectEfficiency {
@@ -1895,12 +1906,22 @@ pub fn compute_live_assignment(
     shift: Option<usize>,
     live_morale: &HashMap<String, f64>,
 ) -> BaseAssignment {
-    let mut facility_counts = effective_facility_counts(
+    // Depleted as the game shows it: the sync stores raw ap (a "dead" Lancet-2
+    // sat at 35 ap, a ten-thousandth of a point), so the bar counts as zero
+    // below a minute of work at the 1/h baseline.
+    const INERT_MORALE: f64 = 1.0 / 60.0;
+    let inert: HashSet<String> = live_morale
+        .iter()
+        .filter(|(_, m)| **m < INERT_MORALE)
+        .map(|(id, _)| id.clone())
+        .collect();
+    let mut facility_counts = effective_facility_counts_with_inert(
         building,
         operators,
         registry,
         building_data,
         &stationed_seats(building, shift),
+        &inert,
     );
     // The live base has REAL seats, so assignment-fed pools (Senshi's Monster
     // Meals) settle exactly and ride the synthetic channel into the scorer.
@@ -2101,6 +2122,84 @@ pub fn compute_live_assignment(
         });
     }
 
+    // Non-producing crews the popover should still describe: a plant reports
+    // its drone recovery (the ledger's POWER speed metric); the Reception Room
+    // and Office the strongest of their crew's clue / HR skills (the game's
+    // "only the strongest effect of this type" rule) plus whatever the
+    // Control Center casts on that room. Their figures never enter the
+    // production total or the yield.
+    let cc_nonprod = cc_non_production_effects(&cc_ops, operators, registry, &rooms);
+    for room in building
+        .rooms
+        .iter()
+        .filter(|r| matches!(r.room_type.as_str(), "POWER" | "MEETING" | "HIRE"))
+    {
+        let ops: Vec<String> = room_ops_for_shift(room, shift)
+            .into_iter()
+            .filter(|id| op_index.contains_key(id.as_str()))
+            .collect();
+        if ops.is_empty() {
+            continue;
+        }
+        let from_cc = cc_nonprod
+            .iter()
+            .find(|(rt, _)| rt == &room.room_type)
+            .map_or(0.0, |(_, v)| *v);
+        let crew_best = |value_of: &dyn Fn(&OperatorBaseProfile) -> f64| {
+            ops.iter()
+                .filter_map(|id| op_index.get(id.as_str()).copied())
+                .map(value_of)
+                .fold(0.0, f64::max)
+        };
+        let eff = match room.room_type.as_str() {
+            "POWER" => {
+                compute_team_totals(
+                    &ops,
+                    "POWER",
+                    None,
+                    &op_index,
+                    registry,
+                    building_data,
+                    &facility_counts,
+                    total_dorm_levels,
+                    morale_drains,
+                    &cc_conditions,
+                )
+                .speed_pct
+            }
+            "MEETING" => {
+                let alone = ops.len() == 1;
+                crew_best(&|op| reception_skill(op, registry, building_data, alone)) + from_cc
+            }
+            _ => {
+                crew_best(&|op| {
+                    op.available_buffs
+                        .iter()
+                        .filter(|b| {
+                            building_data
+                                .buffs
+                                .get(*b)
+                                .is_some_and(|buff| buff.room_type == room.room_type)
+                        })
+                        .filter_map(|b| match registry.get(b) {
+                            Some(BuffResolutionStrategy::NonProduction { value }) => Some(*value),
+                            _ => None,
+                        })
+                        .fold(0.0, f64::max)
+                }) + from_cc
+            }
+        };
+        rooms.push(RoomAssignment {
+            slot_id: room.slot_id.clone(),
+            room_type: room.room_type.clone(),
+            level: room.level,
+            formula_type: None,
+            operators: ops,
+            total_efficiency: eff,
+            ..Default::default()
+        });
+    }
+
     // Show the current Control Center (with the bonuses it currently provides).
     // Built AFTER the production rooms so its ledger can say whether each
     // conditional skill actually fires in one of them.
@@ -2151,6 +2250,30 @@ pub(crate) fn effective_facility_counts(
     building_data: &BuildingDataFile,
     seats: &HashMap<String, String>,
 ) -> HashMap<String, usize> {
+    effective_facility_counts_with_inert(
+        building,
+        operators,
+        registry,
+        building_data,
+        seats,
+        &HashSet::new(),
+    )
+}
+
+/// [`effective_facility_counts`] with `inert`: operators whose morale is at
+/// zero. A zero-morale robot still counts as ASSIGNED for a named gate
+/// (Eunectes' "if Lancet-2 is assigned to a Power Plant") but no longer
+/// counts as an Operation Platform for Greyy's "no Operation Platforms in
+/// other Power Plants" - the community's "dead Lancet", worth both counts
+/// at once (user-verified 2026-09-10).
+pub(crate) fn effective_facility_counts_with_inert(
+    building: &UserBuilding,
+    operators: &[OperatorBaseProfile],
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+    seats: &HashMap<String, String>,
+    inert: &HashSet<String>,
+) -> HashMap<String, usize> {
     use super::buff_registry::FacilityGate;
     let mut counts = count_facilities(building);
     let mut seen_families: HashSet<&str> = HashSet::new();
@@ -2162,6 +2285,7 @@ pub(crate) fn effective_facility_counts(
     let robot_in = |room: &str| {
         seats.iter().any(|(id, rt)| {
             rt == room
+                && !inert.contains(id)
                 && operators
                     .iter()
                     .find(|o| &o.char_id == id)
@@ -2211,6 +2335,13 @@ pub(crate) fn effective_facility_counts(
         distinct_formulas.len()
     };
     counts.insert(MANUFACTURE_RECIPE_TYPES.to_string(), recipe_types);
+    // Factories set to Pure Gold - Pozëmka's "Pure Gold Production Lines".
+    let gold_lines = building
+        .rooms
+        .iter()
+        .filter(|r| r.room_type == "MANUFACTURE" && r.current_formula.as_deref() == Some("F_GOLD"))
+        .count();
+    counts.insert(GOLD_LINES.to_string(), gold_lines);
     // The base's max Drone capacity, which capacity-scaled drone skills (Greyy the
     // Lightningbearer: "+1% per 10 max Drone capacity") read: 100 base plus each
     // Power Plant's per-level grant. These are client-side game constants not present
@@ -2228,6 +2359,16 @@ pub(crate) fn effective_facility_counts(
             .sum::<usize>();
     counts.insert(DRONE_CAPACITY.to_string(), drone_capacity);
     // Lowest trading-post level, for the level-scaled base order limit (6/8/10).
+    // The base's Reception Room level (Vigil's "+5% per Reception Room level").
+    if let Some(lv) = building
+        .rooms
+        .iter()
+        .filter(|r| r.room_type == "MEETING")
+        .map(|r| r.level.max(0) as usize)
+        .max()
+    {
+        counts.insert(MEETING_LEVEL.to_string(), lv);
+    }
     let trading_min_level = building
         .rooms
         .iter()
@@ -2265,6 +2406,12 @@ const MANUFACTURE_RECIPE_TYPES: &str = "MANUFACTURE_RECIPE_TYPES";
 /// `TradingData`. One shared value keeps search and display scoring consistent; a
 /// mixed-level pair of posts scores conservatively at the lower cap.
 pub(crate) const TRADING_MIN_LEVEL: &str = "TRADING_MIN_LEVEL";
+/// Synthetic facility-count key: the base's Reception Room level (max), for
+/// "+X% per Reception Room level" trading skills (Vigil).
+pub const MEETING_LEVEL: &str = "MEETING_LEVEL";
+/// Synthetic facility-count key: factories producing Pure Gold (Pozëmka's
+/// "+5% per Pure Gold Production Line").
+pub const GOLD_LINES: &str = "GOLD_LINES";
 
 /// Synthetic `facility_counts` key holding the summed LEVEL of the base's
 /// functional facilities - the "per level per building" basis of layout-derived
@@ -3880,7 +4027,33 @@ fn op_surviving_order_value(
     registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
 ) -> f64 {
-    super::ledger::op_surviving_order_value(op, room_type, formula_type, registry, building_data)
+    super::ledger::op_surviving_order_value(
+        op,
+        room_type,
+        formula_type,
+        registry,
+        building_data,
+        &[],
+    )
+}
+
+/// [`op_surviving_order_value`] priced beside the roster's other order shapes.
+fn op_surviving_order_value_among(
+    op: &OperatorBaseProfile,
+    room_type: &str,
+    formula_type: Option<&str>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+    companions: &[super::buff_registry::OrderEffect],
+) -> f64 {
+    super::ledger::op_surviving_order_value(
+        op,
+        room_type,
+        formula_type,
+        registry,
+        building_data,
+        companions,
+    )
 }
 
 /// One scored team combination for a room type/formula - the unit the balanced
@@ -4033,6 +4206,14 @@ pub(crate) fn enumerate_candidate_teams(
         .iter()
         .any(|op| op_is_nullifier(op, room_type, formula_type, registry, building_data));
 
+    // The order shapes this candidate pool can field, for the ranking bounds.
+    let companions = super::ledger::roster_order_effects(
+        &candidates,
+        room_type,
+        formula_type,
+        registry,
+        building_data,
+    );
     let pools: Vec<(Vec<&OperatorBaseProfile>, bool)> = if has_nullifier {
         let restricted: Vec<&OperatorBaseProfile> = candidates
             .iter()
@@ -4065,10 +4246,18 @@ pub(crate) fn enumerate_candidate_teams(
             .iter()
             .map(|op| {
                 // Fold surviving order value into the ranking so value partners (which
-                // score ~0 on speed) survive the top-K cut alongside the nullifier.
+                // score ~0 on speed) survive the top-K cut alongside the nullifier -
+                // priced beside the roster's other shapes (Bibeak's Tailoring is worth
+                // +17 next to Tequila, a sliver alone).
                 let value_boost = if nullifier_pool {
-                    op_surviving_order_value(op, room_type, formula_type, registry, building_data)
-                        * 5.0
+                    op_surviving_order_value_among(
+                        op,
+                        room_type,
+                        formula_type,
+                        registry,
+                        building_data,
+                        &companions,
+                    ) * 5.0
                 } else {
                     0.0
                 };
@@ -4081,6 +4270,7 @@ pub(crate) fn enumerate_candidate_teams(
                     facility_counts,
                     total_dorm_levels,
                     max_slots,
+                    &companions,
                 ) + enabler_boost.get(&op.char_id).copied().unwrap_or(0.0)
                     + value_boost;
                 let specialist =
@@ -4275,6 +4465,7 @@ fn optimistic_bound(
     facility_counts: &HashMap<String, usize>,
     total_dorm_levels: i32,
     max_slots: usize,
+    companions: &[super::buff_registry::OrderEffect],
 ) -> f64 {
     super::ledger::op_optimistic_bound(
         op,
@@ -4285,6 +4476,7 @@ fn optimistic_bound(
         facility_counts,
         total_dorm_levels,
         max_slots,
+        companions,
     )
 }
 
