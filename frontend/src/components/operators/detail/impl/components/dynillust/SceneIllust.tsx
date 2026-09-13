@@ -618,6 +618,12 @@ function tapAt(): number {
     return v == null ? Number.NaN : Number(v);
 }
 
+/** Harness switch `?keepbuffer=1`: see the renderer options. Absent = off. */
+function keepBufferOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("keepbuffer") === "1";
+}
+
 function interactOn(): boolean {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("interact") === "1";
@@ -2193,6 +2199,13 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
             // time per frame against 0.39 for the plain blit (register, "PERFORMANCE, THIRD
             // RUN"). `?msaa=1` restores the multisampled canvas.
             antialias: new URLSearchParams(window.location.search).get("msaa") === "1",
+            // HARNESS (`?keepbuffer=1`, exactly "1"; absent = PixiJS's default, false, byte-identical):
+            // keep the WebGL drawing buffer after the compositor consumes it. A headless
+            // screenshot that lands with no fresh draw otherwise reads a CLEARED buffer and the
+            // page shows through (register, "THE FLAT FRAME'S MECHANISM": black on the black
+            // page, the fill colour on the painted page, white where the fill is white; the
+            // render-glitch family of 21 members). Production never sets it.
+            preserveDrawingBuffer: keepBufferOn(),
             // Opens at the ENTRANCE target (the client's screen surface). `raiseToIdleResolution`
             // steps up to the square-2048 RT target when the idle path takes over - which is
             // exactly where the client itself switches between the two.
