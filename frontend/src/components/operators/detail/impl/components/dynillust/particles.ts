@@ -100,6 +100,11 @@ export interface IParticleSystemData {
      *  0.5 × 2.0 units, a 1:4 bar that a single scalar renders 4× too short. */
     startSizeY?: MMScalar | null;
     startRotation?: MMScalar;
+    /** Unity `rotation3D` start rotations about X and Y (degrees), emitted only under the
+     *  exporter's `DYNCHAR_TUMBLE`: a per-particle random tumble the flat quad cannot show.
+     *  The viewer's `?tumble=1` arm foreshortens the quad by |cos| of each (see `tumbleOf`). */
+    startRotationX?: MMScalar;
+    startRotationY?: MMScalar;
     startColor?: MMColor;
     /** The material's `_TintColor`, ALREADY doubled by the exporter - Torappu's ports of
      *  Unity's legacy particle shaders sample `2 × _TintColor × vertexColor × tex`, which
@@ -385,6 +390,27 @@ function globalMaxParticles(): number {
  *  case in the corpus: **31.186 with the flip vs 30.848 without**. The mesh path's non-negated Y
  *  is therefore CORRECT as it stands, and this closes "the mesh geometry is inverted" as an
  *  explanation for the unmechanised `?ramflip=uv` gain. */
+/** TUMBLE ARM (`?tumble=1`, exactly "1"; absent = off, byte-identical). A `rotation3D` system
+ *  whose X or Y start rotation is a RANGE tumbles every particle at a random attitude in the
+ *  game; drawn flat here, each quad covers its full area. The projected extent of a quad turned
+ *  by `ay` about Y shrinks its width by |cos ay| and by `ax` about X its height by |cos ax| (a
+ *  rectangle stands in for the true parallelogram). Both angles derive from the particle's
+ *  existing `rand` (the second through the shader hash `fract(sin(r * 12.9898) * 43758.5453)`),
+ *  so the arm draws no extra `Math.random()` and never re-phases the seeded simulation.
+ *  Predicted on whitw2 sale#15 (seven `lizi_yb*` systems, X and Y ranges 0..2pi): less coverage,
+ *  the direction of her over-draw row; expected mean area 0.405 of flat. */
+function tumbleOn(): boolean {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("tumble") === "1";
+}
+function tumbleOf(d: IParticleSystemData, rand: number, nt: number): [number, number] {
+    if (!tumbleOn() || (!d.startRotationX && !d.startRotationY)) return [1, 1];
+    const r2 = Math.abs(Math.sin(rand * 12.9898) * 43758.5453) % 1;
+    const ax = d.startRotationX ? sampleScalar(d.startRotationX, rand, nt) * DEG : 0;
+    const ay = d.startRotationY ? sampleScalar(d.startRotationY, r2, nt) * DEG : 0;
+    return [Math.abs(Math.cos(ay)), Math.abs(Math.cos(ax))];
+}
+
 function meshYFlip(): boolean {
     if (typeof window === "undefined") return false;
     return new URLSearchParams(window.location.search).get("meshyflip") === "1";
@@ -1014,6 +1040,9 @@ interface IParticle {
     rot: number;
     rotVel: number;
     rand: number;
+    /** Foreshortening of the quad's x and y extents from the tumble arm; 1 when off. */
+    tumX: number;
+    tumY: number;
     startCol: IRGBA;
     /** Per-particle display object: a billboard Sprite, or a Mesh instance for
      *  mesh-render systems (see {@link MeshEmitter}). */
@@ -1791,7 +1820,7 @@ class Emitter {
         const s = disp as PIXI.Sprite;
         if (this.frames.length) s.texture = this.frameAt(lf);
         s.position.set(p.x, -p.y);
-        const base = sz / this.spriteW;
+        const base = (sz * p.tumX) / this.spriteW;
         // A STRETCHED billboard already derives its length from `lengthScale · size`
         // along the screen velocity (below), so Unity's per-axis `size3D` height is not
         // a second Y scale there - only a plain billboard uses it as the quad's height.
@@ -1801,7 +1830,7 @@ class Emitter {
         // `startSizeY` switches to the per-axis divisor; every other system keeps the
         // single `base` scale (which preserves the sprite's own aspect) untouched.
         const sized3D = !!this.data.startSizeY && this.data.renderMode !== "stretch";
-        const baseY = sized3D ? (sz * p.aspectY) / this.spriteH : base;
+        const baseY = sized3D ? (sz * p.aspectY * p.tumY) / this.spriteH : (sz * p.tumY) / this.spriteW;
         if (this.data.renderMode === "stretch") {
             // Unity "Stretched Billboard" (rain streaks, spark trails): elongate the sprite ALONG
             // its screen velocity to the AUTHORED length `|lengthScale|·size + velocityScale·speed`
@@ -1980,7 +2009,7 @@ class Emitter {
         if (!p) {
             const disp = this.createParticleDisp();
             this.container.addChild(disp);
-            p = { x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 0, size: 0, aspectY: 1, rot: 0, rotVel: 0, rand: 0, startCol, sprite: disp };
+            p = { x: 0, y: 0, vx: 0, vy: 0, age: 0, life: 0, size: 0, aspectY: 1, rot: 0, rotVel: 0, rand: 0, tumX: 1, tumY: 1, startCol, sprite: disp };
             this.pool.push(p);
         }
         p.x = wx;
@@ -1996,6 +2025,7 @@ class Emitter {
         p.rot = rot; // degrees
         p.rotVel = typeof d.rotOverLifeDegPerSec === "number" ? d.rotOverLifeDegPerSec : 0; // legacy const
         p.rand = Math.random();
+        [p.tumX, p.tumY] = tumbleOf(d, p.rand, nt);
         p.startCol = startCol;
         p.sprite.visible = true;
 
@@ -3221,6 +3251,9 @@ interface IRamParticle {
     rot: number;
     rotVel: number;
     rand: number;
+    /** Tumble-arm foreshortening of the x and y extents; 1 when off. */
+    tumX: number;
+    tumY: number;
     col: IRGBA;
 }
 
@@ -3569,8 +3602,12 @@ class RamEmitter {
             rot: sampleScalar(d.startRotation ?? { mode: "const", v: 0 }, Math.random(), nt),
             rotVel: typeof d.rotOverLifeDegPerSec === "number" ? d.rotOverLifeDegPerSec : 0, // legacy const
             rand: Math.random(),
+            tumX: 1,
+            tumY: 1,
             col: sampleColor(d.startColor, nt),
         });
+        const np = this.particles[this.particles.length - 1];
+        [np.tumX, np.tumY] = tumbleOf(d, np.rand, nt);
     }
 
     update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null, restAtt?: RestAttachment): void {
@@ -3754,8 +3791,8 @@ class RamEmitter {
             const cg = p.col.g * lifeCol.g;
             const cb = p.col.b * lifeCol.b;
             const ca = Math.max(0, Math.min(1, p.col.a * lifeCol.a));
-            const hx = (p.size * grow) / 2;
-            const hy = (p.sizeY * grow) / 2;
+            const hx = (p.size * grow * p.tumX) / 2;
+            const hy = (p.sizeY * grow * p.tumY) / 2;
             const th = -p.rot * DEG;
             const c = Math.cos(th);
             const s = Math.sin(th);
@@ -3798,8 +3835,8 @@ class RamEmitter {
                 // planes came out 919x919 instead of 919x459, which stretched a 0.23-wide band of
                 // their landscape sheet over the whole frame and smeared away all of its detail.
                 // The billboard branch immediately above already used `p.sizeY`; this one did not.
-                const szm = p.size * grow;
-                const szy = p.sizeY * grow;
+                const szm = p.size * grow * p.tumX;
+                const szy = p.sizeY * grow * p.tumY;
                 const mp = mg.pos;
                 // Unity mesh space is Y-UP; this buffer is Y-DOWN. The billboard branch below
                 // bakes that flip into its corner ORDER (vertex 0 is (-hx,-hy) - screen top -

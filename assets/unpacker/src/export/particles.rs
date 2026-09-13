@@ -906,6 +906,7 @@ pub(crate) fn collect_dynchar_particles(
         }
 
         let initial = ps.get("InitialModule").cloned().unwrap_or(Value::Null);
+        let tumble_on = std::env::var("DYNCHAR_TUMBLE").is_ok();
         if !b(&initial, "enabled", false) {
             skipped.initial_disabled += 1;
             continue;
@@ -1621,6 +1622,17 @@ pub(crate) fn collect_dynchar_particles(
         // startRotation is authored in radians → degrees.
         if let Some(r) = initial.get("startRotation") {
             sys["startRotation"] = mmscalar(r, RAD_TO_DEG);
+        }
+        // TUMBLE (`DYNCHAR_TUMBLE` present enables, else byte-identical): a `rotation3D` system's
+        // X and Y start rotations (radians -> degrees), the per-particle random attitude the
+        // viewer's `?tumble=1` arm foreshortens the flat quad by. Read from the module, no skin.
+        if tumble_on && b(&initial, "rotation3D", false) {
+            if let Some(r) = initial.get("startRotationX") {
+                sys["startRotationX"] = mmscalar(r, RAD_TO_DEG);
+            }
+            if let Some(r) = initial.get("startRotationY") {
+                sys["startRotationY"] = mmscalar(r, RAD_TO_DEG);
+            }
         }
         if let Some(c) = initial.get("startColor") {
             sys["startColor"] = mmgradient(c);
