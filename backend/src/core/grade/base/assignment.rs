@@ -679,7 +679,15 @@ fn optimal_inner_core(
     // dormitories) so the plan shows the full staffing the economy needs, not just the
     // production rooms its pool boosts. These rooms carry no production efficiency (their value
     // is already credited to the consumers they power), so they don't change the yield math.
-    append_support_rooms(&mut rooms, pins, &pinned_ids, building, building_data);
+    append_support_rooms(
+        &mut rooms,
+        pins,
+        &pinned_ids,
+        building,
+        building_data,
+        &op_index,
+        registry,
+    );
 
     // Staff the auxiliary facilities (HR Office, Reception Room) with the best leftover
     // operators, so they aren't left empty in the plan. A single-snapshot
@@ -1041,12 +1049,79 @@ pub(crate) fn assign_auxiliary_rooms(
 
 /// Append a room per non-production, non-Control-Center pin group (Office, dormitories),
 /// distributing the pinned operators across that type's actual rooms up to each room's capacity.
+/// The figure a support room reports for its crew, in the room's own units:
+/// the Reception Room's full model (working operators' summed skills, rarity
+/// and promotion ambience for everyone seated, the innate 5%), the Office's
+/// strongest HR skill, a plant's per-operator drone values. `from_cc` is the
+/// Control Center's cast on that room type. Shared by the live view and the
+/// plan's pinned support seats so both read the same number.
+pub(crate) fn support_room_figure(
+    room_type: &str,
+    seated: &[String],
+    working: &[String],
+    op_index: &HashMap<&str, &OperatorBaseProfile>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+    from_cc: f64,
+) -> f64 {
+    let own_values = |op: &OperatorBaseProfile| -> Vec<f64> {
+        op.available_buffs
+            .iter()
+            .filter(|b| {
+                building_data
+                    .buffs
+                    .get(*b)
+                    .is_some_and(|buff| buff.room_type == room_type)
+            })
+            .filter_map(|b| match registry.get(b) {
+                Some(BuffResolutionStrategy::NonProduction { value })
+                | Some(BuffResolutionStrategy::DirectEfficiency { value }) => Some(*value),
+                _ => None,
+            })
+            .collect()
+    };
+    match room_type {
+        "MEETING" => {
+            let alone = working.len() == 1;
+            let skills: f64 = working
+                .iter()
+                .filter_map(|id| op_index.get(id.as_str()).copied())
+                .map(|op| reception_skill(op, registry, building_data, alone))
+                .sum();
+            let ambience: f64 = seated
+                .iter()
+                .filter_map(|id| op_index.get(id.as_str()).copied())
+                .map(|op| rarity_bonus(op.rarity) + elite_bonus(op.elite))
+                .sum();
+            skills + ambience + RECEPTION_INNATE_PCT + from_cc
+        }
+        "HIRE" => {
+            working
+                .iter()
+                .filter_map(|id| op_index.get(id.as_str()).copied())
+                .map(|op| own_values(op).into_iter().fold(0.0, f64::max))
+                .fold(0.0, f64::max)
+                + from_cc
+        }
+        _ => {
+            working
+                .iter()
+                .filter_map(|id| op_index.get(id.as_str()).copied())
+                .map(|op| own_values(op).into_iter().sum::<f64>())
+                .sum::<f64>()
+                + from_cc
+        }
+    }
+}
+
 fn append_support_rooms(
     rooms: &mut Vec<RoomAssignment>,
     pins: &[(String, String)],
     pinned_ids: &HashSet<String>,
     building: &UserBuilding,
     building_data: &BuildingDataFile,
+    op_index: &HashMap<&str, &OperatorBaseProfile>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
 ) {
     let mut by_type: Vec<(&str, Vec<String>)> = Vec::new();
     for (id, rt) in pins {
@@ -1066,13 +1141,24 @@ fn append_support_rooms(
             if members.is_empty() {
                 continue;
             }
+            // The seat is pinned for its pool grant, but the crew's own room
+            // figure (Whisperain's HR +20) still shows.
+            let figure = support_room_figure(
+                room_type,
+                &members,
+                &members,
+                op_index,
+                registry,
+                building_data,
+                0.0,
+            );
             rooms.push(RoomAssignment {
                 slot_id: room.slot_id.clone(),
                 room_type: room_type.to_string(),
                 level: room.level,
                 formula_type: None,
                 operators: members,
-                total_efficiency: 0.0,
+                total_efficiency: figure,
                 order_value: 0.0,
                 order_gold: 0.0,
                 locked: false,
@@ -2168,12 +2254,6 @@ pub fn compute_live_assignment(
             .iter()
             .find(|(rt, _)| rt == &room.room_type)
             .map_or(0.0, |(_, v)| *v);
-        let crew_best = |value_of: &dyn Fn(&OperatorBaseProfile) -> f64| {
-            ops.iter()
-                .filter_map(|id| op_index.get(id.as_str()).copied())
-                .map(value_of)
-                .fold(0.0, f64::max)
-        };
         let eff = match room.room_type.as_str() {
             "POWER" => {
                 compute_team_totals(
@@ -2190,42 +2270,15 @@ pub fn compute_live_assignment(
                 )
                 .speed_pct
             }
-            "MEETING" => {
-                // The reception model: the working crew's skills (an
-                // operator's own stack; solo gates read the WORKING crew, so a
-                // depleted roommate does not break them), rarity and promotion
-                // ambience for everyone seated (a depleted operator keeps it),
-                // the room's innate 5% and the Control Center's cast.
-                let alone = ops.len() == 1;
-                let skills: f64 = ops
-                    .iter()
-                    .filter_map(|id| op_index.get(id.as_str()).copied())
-                    .map(|op| reception_skill(op, registry, building_data, alone))
-                    .sum();
-                let ambience: f64 = seated
-                    .iter()
-                    .filter_map(|id| op_index.get(id.as_str()).copied())
-                    .map(|op| rarity_bonus(op.rarity) + elite_bonus(op.elite))
-                    .sum();
-                skills + ambience + RECEPTION_INNATE_PCT + from_cc
-            }
-            _ => {
-                crew_best(&|op| {
-                    op.available_buffs
-                        .iter()
-                        .filter(|b| {
-                            building_data
-                                .buffs
-                                .get(*b)
-                                .is_some_and(|buff| buff.room_type == room.room_type)
-                        })
-                        .filter_map(|b| match registry.get(b) {
-                            Some(BuffResolutionStrategy::NonProduction { value }) => Some(*value),
-                            _ => None,
-                        })
-                        .fold(0.0, f64::max)
-                }) + from_cc
-            }
+            _ => support_room_figure(
+                &room.room_type,
+                &seated,
+                &ops,
+                &op_index,
+                registry,
+                building_data,
+                from_cc,
+            ),
         };
         rooms.push(RoomAssignment {
             slot_id: room.slot_id.clone(),

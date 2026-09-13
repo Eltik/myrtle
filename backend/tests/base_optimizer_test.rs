@@ -4608,6 +4608,25 @@ fn reception_row_carries_ambience_innate_and_dead_seat_rules() {
 }
 
 #[test]
+fn pinned_support_seats_report_their_own_figure() {
+    // A support seat pinned for its pool grant still reports the crew's own
+    // room figure: Whisperain pinned into the Office shows her +20 HR speed,
+    // not 0 (live report 2026-09-14).
+    use backend::core::grade::base::assignment::compute_optimal_assignment_with_pins;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const WHISPERAIN: &str = "char_436_whispr";
+    const ROSMONTIS: &str = "char_391_rosmon";
+    let roster: Vec<_> = [ROSMONTIS, WHISPERAIN, EXUSIAI].iter().map(|id| profile(gd, id)).collect();
+    let building = UserBuilding { rooms: vec![room("mf", "MANUFACTURE", 3), room("hr", "HIRE", 3)] };
+    let pins = vec![(WHISPERAIN.to_string(), "HIRE".to_string())];
+    let asn = compute_optimal_assignment_with_pins(&roster, &building, &gd.building, &registry, &drains, &pins);
+    let hr = asn.rooms.iter().find(|r| r.room_type == "HIRE").expect("the pinned Office row");
+    assert!(hr.operators.iter().any(|o| o == WHISPERAIN), "Whisperain seated: {:?}", hr.operators);
+    assert!((hr.total_efficiency - 20.0).abs() < 1e-9, "her HR speed shows: {}", hr.total_efficiency);
+}
+
+#[test]
 fn viviana_synergy_flips_the_cc_to_a_block_aligned_with_her_knights() {
     // Viviana's CC buff ("all Knight Operators in Factories +7%") links her to the factory
     // team fielding her Knights: the CC flips to a 24h block (Squad 1 on shifts 1+2) and the
