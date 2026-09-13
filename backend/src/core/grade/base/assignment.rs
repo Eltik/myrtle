@@ -785,6 +785,10 @@ fn aux_room_value(
 // per-operator (rarity bonus + elite bonus + own clue-search skill). See the player's RR table.
 
 /// Rarity ambience bonus: 6★ +5, 5★ +4, 4★ +2, ≤3★ +0.
+/// The Reception Room's innate clue-search bonus for being staffed at all
+/// (the feedback sheet's in-game check: Kazemaru alone = 50 + 5 + 4 + 16).
+const RECEPTION_INNATE_PCT: f64 = 5.0;
+
 const fn rarity_bonus(stars: i16) -> f64 {
     match stars {
         6 => 5.0,
@@ -812,9 +816,12 @@ const fn rr_level_bonus(level: i32) -> f64 {
     }
 }
 
-/// An operator's best Reception Room clue-search skill %. Exchange skills ("if in Clue Exchange")
-/// are counted under a permanent-exchange assumption (Caper is the best operator during exchange);
-/// SOLO skills ("if no other Operators are working") are counted only when staffed `alone`.
+/// An operator's Reception Room clue-search skill %: the SUM of their own
+/// skills (Kazemaru's +15% and her +35% solo skill stack, the game's
+/// "strongest effect" rule is between operators). Exchange skills ("if in
+/// Clue Exchange") are counted under a permanent-exchange assumption (Caper
+/// is the best operator during exchange); SOLO skills ("if no other Operators
+/// are working") are counted only when staffed `alone`.
 fn reception_skill(
     op: &OperatorBaseProfile,
     registry: &HashMap<String, BuffResolutionStrategy>,
@@ -847,7 +854,7 @@ fn reception_skill(
             }
             Some(value)
         })
-        .fold(0.0, f64::max)
+        .sum()
 }
 
 /// Hours in one ~12h shift, for prorating a Reception Room operator that can't last the whole shift.
@@ -1827,6 +1834,12 @@ pub fn compute_sustained_assignment(
 
 /// Which operators occupy a room for a given live view: the static stationed
 /// crew (`shift = None`) or one of the player's planned preset rotation shifts.
+/// Depleted as the game shows it: the sync stores raw ap (a "dead" Lancet-2
+/// sat at 35 ap, a ten-thousandth of a point), so a bar counts as zero
+/// below a minute of work at the 1/h baseline. A depleted operator holds the
+/// seat (named gates, dormitory counts) but works nothing.
+pub(crate) const INERT_MORALE: f64 = 1.0 / 60.0;
+
 /// Every stationed operator's room type this shift, dormitories included.
 pub(crate) fn stationed_seats(
     building: &UserBuilding,
@@ -1906,10 +1919,6 @@ pub fn compute_live_assignment(
     shift: Option<usize>,
     live_morale: &HashMap<String, f64>,
 ) -> BaseAssignment {
-    // Depleted as the game shows it: the sync stores raw ap (a "dead" Lancet-2
-    // sat at 35 ap, a ten-thousandth of a point), so the bar counts as zero
-    // below a minute of work at the 1/h baseline.
-    const INERT_MORALE: f64 = 1.0 / 60.0;
     let inert: HashSet<String> = live_morale
         .iter()
         .filter(|(_, m)| **m < INERT_MORALE)
@@ -2021,9 +2030,18 @@ pub fn compute_live_assignment(
         .filter(|r| is_production_room(&r.room_type))
     {
         // Keep only operators that actually have base profiles (drop tokens etc.).
-        let ops: Vec<String> = room_ops_for_shift(room, shift)
+        let seated: Vec<String> = room_ops_for_shift(room, shift)
             .into_iter()
             .filter(|id| op_index.contains_key(id.as_str()))
+            .collect();
+        // A depleted operator holds the seat but works nothing: the crew the
+        // scorer sees is the working one (Kazemaru's "no other Operators
+        // working" solo gate fires beside a dead body; a dead teammate's own
+        // skills add nothing).
+        let ops: Vec<String> = seated
+            .iter()
+            .filter(|id| !inert.contains(*id))
+            .cloned()
             .collect();
         // NEVER GUESS a formula: an unconfigured factory scores with the
         // three-tier discount (formula-specific clauses at partial value)
@@ -2112,7 +2130,7 @@ pub fn compute_live_assignment(
             room_type: room.room_type.clone(),
             level: room.level,
             formula_type: formula,
-            operators: ops,
+            operators: seated,
             total_efficiency: eff,
             order_value: value,
             order_gold: gold,
@@ -2134,13 +2152,18 @@ pub fn compute_live_assignment(
         .iter()
         .filter(|r| matches!(r.room_type.as_str(), "POWER" | "MEETING" | "HIRE"))
     {
-        let ops: Vec<String> = room_ops_for_shift(room, shift)
+        let seated: Vec<String> = room_ops_for_shift(room, shift)
             .into_iter()
             .filter(|id| op_index.contains_key(id.as_str()))
             .collect();
-        if ops.is_empty() {
+        if seated.is_empty() {
             continue;
         }
+        let ops: Vec<String> = seated
+            .iter()
+            .filter(|id| !inert.contains(*id))
+            .cloned()
+            .collect();
         let from_cc = cc_nonprod
             .iter()
             .find(|(rt, _)| rt == &room.room_type)
@@ -2168,8 +2191,23 @@ pub fn compute_live_assignment(
                 .speed_pct
             }
             "MEETING" => {
+                // The reception model: the working crew's skills (an
+                // operator's own stack; solo gates read the WORKING crew, so a
+                // depleted roommate does not break them), rarity and promotion
+                // ambience for everyone seated (a depleted operator keeps it),
+                // the room's innate 5% and the Control Center's cast.
                 let alone = ops.len() == 1;
-                crew_best(&|op| reception_skill(op, registry, building_data, alone)) + from_cc
+                let skills: f64 = ops
+                    .iter()
+                    .filter_map(|id| op_index.get(id.as_str()).copied())
+                    .map(|op| reception_skill(op, registry, building_data, alone))
+                    .sum();
+                let ambience: f64 = seated
+                    .iter()
+                    .filter_map(|id| op_index.get(id.as_str()).copied())
+                    .map(|op| rarity_bonus(op.rarity) + elite_bonus(op.elite))
+                    .sum();
+                skills + ambience + RECEPTION_INNATE_PCT + from_cc
             }
             _ => {
                 crew_best(&|op| {
@@ -2194,7 +2232,7 @@ pub fn compute_live_assignment(
             room_type: room.room_type.clone(),
             level: room.level,
             formula_type: None,
-            operators: ops,
+            operators: seated,
             total_efficiency: eff,
             ..Default::default()
         });
@@ -4777,6 +4815,7 @@ pub fn assignment_value(rooms: &[RoomAssignment]) -> f64 {
             speed,
             r.order_gold,
             r.order_value,
+            r.operators.len(),
         );
     }
     flows.total_value()

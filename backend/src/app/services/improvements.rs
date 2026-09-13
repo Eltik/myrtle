@@ -2350,6 +2350,7 @@ pub(crate) fn base_assignment_to_dto(
             r.total_efficiency,
             r.order_gold,
             r.order_value,
+            r.operators.len(),
         );
     }
 
@@ -2449,6 +2450,7 @@ fn room_assignment_to_dto(
         room.level,
         room.total_efficiency,
         room.order_value,
+        room.operators.len(),
     );
     let non_production = if room.room_type == "CONTROL" {
         cc_non_production_effects(&room.operators, profiles, registry, sibling_rooms)

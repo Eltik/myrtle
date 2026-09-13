@@ -73,18 +73,9 @@ static RE_FLAT_GRANT: LazyLock<Regex> = LazyLock::new(|| {
 /// whose ONLY other clause is Unresolved is then fully priced without a
 /// strategy (Dolris' "Idol's Aura" is purely a dorm-occupancy Passion grant),
 /// so its Unresolved marker would be label pessimism.
-/// Recruit slots the player declared (account fact), 0 when undeclared.
-fn declared_recruit_slots(registry: &HashMap<String, BuffResolutionStrategy>) -> f64 {
-    match registry.get(super::buff_registry::ACCOUNT_FACTS_KEY) {
-        Some(BuffResolutionStrategy::AccountFacts { open_recruit_slots }) => {
-            f64::from(*open_recruit_slots)
-        }
-        _ => 0.0,
-    }
-}
-
 pub(crate) fn has_side_channel_grant(desc: &str) -> bool {
     super::buff_registry::RE_SLOT_GRANT.is_match(desc)
+        || RE_OWN_LEVEL_GRANT.is_match(desc)
         || RE_MORALE_COND_GRANT.is_match(desc)
         || RE_FACTION_GRANT.is_match(desc)
         || RE_TAG_GRANT.is_match(desc)
@@ -154,20 +145,55 @@ fn flat_grant_unconditional(desc: &str, start: usize) -> bool {
 /// settlement, from the sync's last write): a morale-conditional grant
 /// then reads as the game shows it - all or nothing by the condition -
 /// instead of its steady-state time-share.
+/// The riders that grant per LEVEL of the owner's own room, on buffs whose
+/// primary effect is something else (Iris' aura: "for every level of the
+/// current Dormitory, 1 level of Dreamland"; Czerny's aura: "each Dormitory
+/// level gives 1 Measure").
+static RE_OWN_LEVEL_GRANT: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"(?:for every level of the current [A-Za-z ]+?,\s*<@cc\.vup>([\d.]+) levels?</>\s*<\$cc\.(bd_[A-Za-z0-9_]+)>|each [A-Za-z ]+? level gives <@cc\.vup>([\d.]+)</>\s*<\$cc\.(bd_[A-Za-z0-9_]+)>)",
+    )
+    .unwrap()
+});
+
+/// Recruit slots beyond the default ones, from the Office level (the
+/// feedback sheet's in-game check: 0 at HR1, 10 fragments at HR2, 20 at HR3
+/// for Whisperain's +10 per slot).
+fn recruit_slots_of(building: &UserBuilding) -> f64 {
+    building
+        .rooms
+        .iter()
+        .filter(|r| r.room_type == "HIRE")
+        .map(|r| f64::from((r.level - 1).max(0)))
+        .fold(0.0, f64::max)
+}
+
 fn text_grants(
     buff_id: &str,
     buff: &Buff,
     registry: &HashMap<String, BuffResolutionStrategy>,
     dorm_occupants: f64,
     current_morale: Option<f64>,
+    own_room_level: f64,
+    recruit_slots: f64,
 ) -> Vec<(String, f64)> {
     let mut grants: Vec<(String, f64)> = Vec::new();
     // Per-recruit-slot grants (Whisperain's Memory Fragments) read the
-    // player-declared slot count; unknown = 0 (never guess).
-    let recruit_slots = declared_recruit_slots(registry);
+    // Office level's slots.
     for c in super::buff_registry::RE_SLOT_GRANT.captures_iter(&buff.description) {
         let per: f64 = c[2].parse().unwrap_or(0.0);
         grants.push((c[1].to_string(), per * recruit_slots));
+    }
+    // Per-own-room-level riders (Iris' Dreamland, Czerny's Measure).
+    for c in RE_OWN_LEVEL_GRANT.captures_iter(&buff.description) {
+        let (per, resource) = match (c.get(1), c.get(2), c.get(3), c.get(4)) {
+            (Some(p), Some(r), _, _) | (_, _, Some(p), Some(r)) => (p.as_str(), r.as_str()),
+            _ => continue,
+        };
+        grants.push((
+            resource.to_string(),
+            per.parse::<f64>().unwrap_or(0.0) * own_room_level,
+        ));
     }
     for c in RE_MORALE_COND_GRANT.captures_iter(&buff.description) {
         let above = &c[1] == "above";
@@ -282,6 +308,7 @@ pub(crate) fn settle_current_pools(
             .count() as f64
     };
 
+    let recruit_slots = recruit_slots_of(building);
     let mut points: HashMap<String, f64> = HashMap::new();
     // Conversion clauses live wherever their owner is actually seated.
     let mut converts: Vec<(String, String, f64)> = Vec::new();
@@ -306,6 +333,14 @@ pub(crate) fn settle_current_pools(
             let Some(op) = by_id.get(id.as_str()) else {
                 continue;
             };
+            // A depleted operator holds the seat but works nothing: no
+            // generator, no converter, no text grant.
+            if live_morale
+                .get(id.as_str())
+                .is_some_and(|m| *m < super::assignment::INERT_MORALE)
+            {
+                continue;
+            }
             for buff_id in &op.available_buffs {
                 let (Some(buff), Some(strategy)) =
                     (building_data.buffs.get(buff_id), registry.get(buff_id))
@@ -321,6 +356,10 @@ pub(crate) fn settle_current_pools(
                             let generated = match basis {
                                 PoolBasis::OwnRoomLevel => {
                                     clause.value * f64::from(room.level.max(0))
+                                }
+                                #[allow(clippy::cast_precision_loss)]
+                                PoolBasis::OwnRoomOccupants => {
+                                    clause.value * room.current_operators.len() as f64
                                 }
                                 PoolBasis::DormOccupants => clause.value * dorm_occupants,
                                 // Layout-derived pools settle room-locally in
@@ -352,9 +391,15 @@ pub(crate) fn settle_current_pools(
                     continue;
                 }
                 let current_morale = live_morale.get(id.as_str()).copied();
-                for (resource, amount) in
-                    text_grants(buff_id, buff, registry, dorm_occupants, current_morale)
-                {
+                for (resource, amount) in text_grants(
+                    buff_id,
+                    buff,
+                    registry,
+                    dorm_occupants,
+                    current_morale,
+                    f64::from(room.level.max(0)),
+                    recruit_slots,
+                ) {
                     *points.entry(resource).or_insert(0.0) += amount;
                 }
                 if let Some(c) = RE_FACTION_GRANT.captures(&buff.description) {
@@ -382,20 +427,26 @@ pub(crate) fn settle_current_pools(
     // the whole of it - Jieyun's Witchcraft Crystals do not take Worldly
     // Plight away from Shu or Mr. Nothing), each converter once, so a chain
     // still settles over the rounds.
-    let mut done: HashSet<usize> = HashSet::new();
+    // Each converter's output is a LEVEL recomputed every round from the
+    // current pool (never an increment), so a chain settles whatever the
+    // order its links appear in: Dreamland -> Perception -> Chain of Thought
+    // takes two rounds and Rosmontis reads Iris' points too (the feedback's
+    // conversion-order report, 2026-09-13).
+    let mut contrib: Vec<f64> = vec![0.0; converts.len()];
     for _ in 0..MAX_POOL_ROUNDS {
         let snapshot = points.clone();
         let mut moved = 0.0f64;
         for (ci, (from, to, ratio)) in converts.iter().enumerate() {
-            if done.contains(&ci) || *ratio <= 0.0 {
+            if *ratio <= 0.0 {
                 continue;
             }
             let available = snapshot.get(from).copied().unwrap_or(0.0);
-            let converted = (available / ratio).floor();
-            if converted > 0.0 {
-                done.insert(ci);
-                *points.entry(to.clone()).or_insert(0.0) += converted;
-                moved += converted;
+            let level = (available / ratio).floor();
+            let delta = level - contrib[ci];
+            if delta.abs() > POOL_EPS {
+                *points.entry(to.clone()).or_insert(0.0) += delta;
+                contrib[ci] = level;
+                moved += delta.abs();
             }
         }
         if moved < POOL_EPS {
@@ -542,6 +593,7 @@ fn collect_dorm_economy(
                 .unwrap_or(0),
         )
     };
+    let recruit_slots = recruit_slots_of(building);
     let mut econ = DormEconomy {
         gens: Vec::new(),
         converts: Vec::new(),
@@ -559,9 +611,15 @@ fn collect_dorm_economy(
             // their own resources. They are origins the shared-pool bundles
             // may pin (into the room the grant's buff requires), never a
             // pin the native plan forces.
-            for (resource, points) in
-                text_grants(buff_id, buff, registry, projected_occupancy, None)
-            {
+            for (resource, points) in text_grants(
+                buff_id,
+                buff,
+                registry,
+                projected_occupancy,
+                None,
+                best_room_level(&buff.room_type),
+                recruit_slots,
+            ) {
                 econ.gens.push(Gen {
                     owner: op.char_id.clone(),
                     owner_room: buff.room_type.clone(),
@@ -581,6 +639,28 @@ fn collect_dorm_economy(
                             PoolBasis::OwnRoomLevel => {
                                 let lvl = best_room_level(&clause.owner_room_type);
                                 (clause.value * lvl, Some(clause.owner_room_type.clone()))
+                            }
+                            // The generator's own room at full occupancy (a
+                            // pinned Virtuosa fills her dormitory's beds).
+                            PoolBasis::OwnRoomOccupants => {
+                                let seats = building
+                                    .rooms
+                                    .iter()
+                                    .filter(|r| r.room_type == clause.owner_room_type)
+                                    .map(|r| {
+                                        super::util::max_stationed_at_level(
+                                            building_data,
+                                            &r.room_type,
+                                            r.level,
+                                        )
+                                        .max(0)
+                                    })
+                                    .max()
+                                    .unwrap_or(0);
+                                (
+                                    clause.value * f64::from(seats),
+                                    Some(clause.owner_room_type.clone()),
+                                )
                             }
                             PoolBasis::DormOccupants => (clause.value * projected_occupancy, None),
                             // Layout pools settle inside the scorer already;
@@ -632,7 +712,9 @@ fn settle_by_origin(econ: &DormEconomy) -> HashMap<String, HashMap<String, f64>>
             .entry(g.owner.clone())
             .or_insert(0.0) += g.points;
     }
-    let mut done: HashSet<(usize, String)> = HashSet::new();
+    // Levels, not increments, per (converter, origin): chains settle in
+    // any order (see `settle_current_pools`).
+    let mut contrib: HashMap<(usize, String), f64> = HashMap::new();
     for _ in 0..MAX_POOL_ROUNDS {
         let snapshot = pools.clone();
         let mut moved = 0.0f64;
@@ -644,17 +726,17 @@ fn settle_by_origin(econ: &DormEconomy) -> HashMap<String, HashMap<String, f64>>
                 continue;
             };
             for (origin, available) in origins {
-                if !done.insert((ci, origin.clone())) {
-                    continue;
-                }
-                let converted = (available / ratio).floor();
-                if converted > 0.0 {
+                let level = (available / ratio).floor();
+                let key = (ci, origin.clone());
+                let delta = level - contrib.get(&key).copied().unwrap_or(0.0);
+                if delta.abs() > POOL_EPS {
                     *pools
                         .entry(to.clone())
                         .or_default()
                         .entry(origin.clone())
-                        .or_insert(0.0) += converted;
-                    moved += converted;
+                        .or_insert(0.0) += delta;
+                    contrib.insert(key, level);
+                    moved += delta.abs();
                 }
             }
         }
@@ -1052,8 +1134,15 @@ pub fn candidate_bundles(
             let Some(buff) = building_data.buffs.get(buff_id) else {
                 continue;
             };
-            let flat: Vec<(String, f64)> =
-                text_grants(buff_id, buff, registry, projected_occupancy, None);
+            let flat: Vec<(String, f64)> = text_grants(
+                buff_id,
+                buff,
+                registry,
+                projected_occupancy,
+                None,
+                0.0,
+                recruit_slots_of(building),
+            );
             let mut faction = None;
             if let Some(c) = RE_FACTION_GRANT.captures(&buff.description) {
                 faction = Some((

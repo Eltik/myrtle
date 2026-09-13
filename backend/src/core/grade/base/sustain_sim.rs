@@ -614,6 +614,7 @@ pub fn simulate_rotation_from(
                 level,
                 room.efficiency.unwrap_or(0.0),
                 0.0,
+                room.recommended.len(),
             );
             let day_frac = SHIFT_HOURS / 24.0 * crew_frac;
             acc.lmd += y.lmd_per_day * day_frac;

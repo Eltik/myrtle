@@ -218,6 +218,24 @@ pub fn optimistic_value_pct_among(
     best
 }
 
+/// Pure Gold bars a bare post of `rarity` sells per day at 100%: the mix's
+/// gold per order over its minutes per order (a level-3 post: 2.9 gold per
+/// 203.4 min = 20.53 bars, a level-1 post exactly 20).
+pub fn bars_per_day(rarity: usize) -> f64 {
+    let mix = MIX_BY_RARITY[rarity.clamp(1, MAX_RARITY) - 1];
+    let (gold, minutes) = ORDER_SIZES
+        .iter()
+        .zip(mix)
+        .fold((0.0, 0.0), |(g, m), (size, w)| {
+            (g + w * f64::from(size.gold), m + w * size.minutes)
+        });
+    if minutes <= 0.0 {
+        0.0
+    } else {
+        gold / minutes * 1440.0
+    }
+}
+
 /// Average Pure Gold per order a bare post of `rarity` draws - the fill
 /// model's orders-per-day basis (a level-1 post fills its buffer with more,
 /// smaller orders than a level-3 post).

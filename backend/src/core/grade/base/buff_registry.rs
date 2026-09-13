@@ -131,6 +131,15 @@ static RE_POOL_CONSUME_REV: LazyLock<Regex> = LazyLock::new(|| {
 
 /// Own-room-level pool generator: "provide N <Resource> for every level of the
 /// current Dormitory" (Senshi).
+/// Own-room occupant generator: "for every 1 Operators in that Dormitory,
+/// <Resource> +N" (Virtuosa).
+static RE_POOL_GEN_OWN_OCC: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(
+        r"for every <@cc\.vup>1</>\s*Operators? in that (?:Dormitory|Factory|Trading Post|Power Plant|Reception Room|Office|Workshop|Training Room),\s*<\$cc\.([A-Za-z0-9_]+)>[^+]{0,40}?<@cc\.vup>\+([\d.]+)</>",
+    )
+    .unwrap()
+});
+
 static RE_POOL_GEN_OWN_ROOM: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
         r"provide <@cc\.vup>([\d.]+)</>\s*<\$cc\.([A-Za-z0-9_]+)>.{0,60}for every level of the current",
@@ -412,7 +421,7 @@ static RE_SPEED_CAPACITY_TRADE: LazyLock<Regex> = LazyLock::new(|| {
 /// A standalone converter: "every F <From> is converted to 1 <To>".
 static RE_POOL_CONVERT: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
-        r"every <@cc\.vup>([\d.]+)</>\s*<\$cc\.([A-Za-z0-9_]+)>.{0,50}?is converted (?:in)?to <@cc\.vup>1</>\s*<\$cc\.([A-Za-z0-9_]+)>",
+        r"(?:convert )?every <@cc\.vup>([\d.]+)</>\s*(?:levels? of |points? of )?<\$cc\.([A-Za-z0-9_]+)>.{0,50}?(?:is converted (?:in)?to|to) <@cc\.vup>1</>\s*(?:levels? of |points? of )?<\$cc\.([A-Za-z0-9_]+)>",
     )
     .unwrap()
 });
@@ -945,6 +954,11 @@ pub enum BuffResolutionStrategy {
     /// Dormitory"). Settled at assignment scope, where the seat is known.
     PoolGenerateOwnRoomLevel { resource: String, per_level: f64 },
 
+    /// Generates pool points per operator seated in the OWNER's own room
+    /// (Virtuosa: "for every 1 Operators in that Dormitory, Soundless
+    /// Resonance +1"). Settled at assignment scope.
+    PoolGenerateOwnRoomOccupants { resource: String, per: f64 },
+
     /// A nullifier whose grant belongs to the ROOM, per occupant
     /// (Snegurochka's Workflow Optimization). Its speed half survives an
     /// automation wipe like facility-count grants: the game phrases both as
@@ -1170,6 +1184,16 @@ pub fn build_registry(
                 BuffResolutionStrategy::PoolGenerateOwnRoomLevel {
                     resource: c[2].to_string(),
                     per_level: c[1].parse().unwrap_or(0.0),
+                },
+            );
+            continue;
+        }
+        if let Some(c) = RE_POOL_GEN_OWN_OCC.captures(&buff.description) {
+            registry.insert(
+                buff_id.clone(),
+                BuffResolutionStrategy::PoolGenerateOwnRoomOccupants {
+                    resource: c[1].to_string(),
+                    per: c[2].parse().unwrap_or(0.0),
                 },
             );
             continue;

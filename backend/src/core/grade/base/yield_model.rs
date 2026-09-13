@@ -50,6 +50,25 @@ fn productivity_mult(efficiency_pct: f64) -> f64 {
     1.0 + efficiency_pct / 100.0
 }
 
+/// The game's innate productivity per slotted operator: every operator in a
+/// factory or trading post adds +1% on top of the displayed skill total
+/// (the community's "3% from having operators slotted" in a full room). It
+/// is not part of the efficiency the game displays, so it lives in the
+/// yield only.
+const INNATE_PCT_PER_OPERATOR: f64 = 1.0;
+
+#[allow(clippy::cast_precision_loss)]
+fn innate_pct(crew: usize) -> f64 {
+    crew as f64 * INNATE_PCT_PER_OPERATOR
+}
+
+/// A trading post's base sell rate at its level (order rarity = level in
+/// gamedata `TradingData`): the exact order-mix figure, not a round 20.
+fn trading_bars_per_day(level: i32) -> f64 {
+    #[allow(clippy::cast_sign_loss)]
+    super::order_mix::bars_per_day(level.clamp(1, 3) as usize)
+}
+
 /// The base resource flows produced by a set of rooms (before the gold→LMD
 /// coupling is applied).
 #[derive(Debug, Clone, Default)]
@@ -80,6 +99,7 @@ impl BaseFlows {
     /// `speed_pct` is order/production speed; `value_pct` is order VALUE (LMD
     /// per hour over a bare post's) and `gold_pct` its gold-throughput part
     /// (Pure Gold per hour over a bare post's) - see `order_mix`.
+    #[allow(clippy::too_many_arguments)]
     pub fn add_room(
         &mut self,
         room_type: &str,
@@ -88,8 +108,9 @@ impl BaseFlows {
         speed_pct: f64,
         gold_pct: f64,
         value_pct: f64,
+        crew: usize,
     ) {
-        let mult = productivity_mult(speed_pct);
+        let mult = productivity_mult(speed_pct + innate_pct(crew));
         match (room_type, formula) {
             ("TRADING", _) => {
                 // More speed -> more orders. Order value splits: the gold
@@ -98,7 +119,7 @@ impl BaseFlows {
                 // it widens the sell capacity and is bounded by the gold the
                 // factories make; the rest is more LMD per bar (Tequila's
                 // rider) and pays even when the base is gold-starved.
-                let bars = TRADING_GOLD_SOLD_PER_DAY_BASE * mult * productivity_mult(gold_pct);
+                let bars = trading_bars_per_day(level) * mult * productivity_mult(gold_pct);
                 self.gold_sell_capacity += bars;
                 self.gold_sell_lmd_weight +=
                     bars * productivity_mult(value_pct) / productivity_mult(gold_pct);
@@ -249,11 +270,12 @@ pub fn room_yield(
     level: i32,
     speed_pct: f64,
     value_pct: f64,
+    crew: usize,
 ) -> RoomYield {
-    let mult = productivity_mult(speed_pct);
+    let mult = productivity_mult(speed_pct + innate_pct(crew));
     match (room_type, formula) {
         ("TRADING", _) => RoomYield {
-            lmd_per_day: TRADING_GOLD_SOLD_PER_DAY_BASE
+            lmd_per_day: trading_bars_per_day(level)
                 * mult
                 * productivity_mult(value_pct)
                 * GOLD_BAR_LMD,
@@ -280,11 +302,11 @@ mod tests {
         // No gold factory at all: the coupling can't bind, the post sells at
         // capacity. One gold factory making nothing: the post sells nothing.
         let mut stock = BaseFlows::default();
-        stock.add_room("TRADING", None, 3, 100.0, 0.0, 0.0);
+        stock.add_room("TRADING", None, 1, 100.0, 0.0, 0.0, 0);
         assert!((stock.realized_lmd() - 40.0 * GOLD_BAR_LMD).abs() < 1e-6);
         let mut idle = BaseFlows::default();
-        idle.add_room("TRADING", None, 3, 100.0, 0.0, 0.0);
-        idle.add_room("MANUFACTURE", Some("F_GOLD"), 3, -100.0, 0.0, 0.0);
+        idle.add_room("TRADING", None, 1, 100.0, 0.0, 0.0, 0);
+        idle.add_room("MANUFACTURE", Some("F_GOLD"), 3, -100.0, 0.0, 0.0, 0);
         assert!(idle.realized_lmd().abs() < 1e-6);
     }
 
@@ -295,19 +317,19 @@ mod tests {
         // each - her bonus bars come from stock (base expert, 2026-09-08).
         // One gold factory at +120% makes 44 bars/day.
         let mut starved = BaseFlows::default();
-        starved.add_room("MANUFACTURE", Some("F_GOLD"), 3, 120.0, 0.0, 0.0);
-        starved.add_room("TRADING", None, 3, 200.0, 55.0, 55.0);
+        starved.add_room("MANUFACTURE", Some("F_GOLD"), 3, 120.0, 0.0, 0.0, 0);
+        starved.add_room("TRADING", None, 1, 200.0, 55.0, 55.0, 0);
         assert!((starved.realized_lmd() - 44.0 * GOLD_BAR_LMD).abs() < 1e-6);
         let mut rich = BaseFlows::default();
-        rich.add_room("MANUFACTURE", Some("F_GOLD"), 3, 4900.0, 0.0, 0.0);
-        rich.add_room("TRADING", None, 3, 200.0, 55.0, 55.0);
+        rich.add_room("MANUFACTURE", Some("F_GOLD"), 3, 4900.0, 0.0, 0.0, 0);
+        rich.add_room("TRADING", None, 1, 200.0, 55.0, 55.0, 0);
         assert!((rich.realized_lmd() - 60.0 * 1.55 * GOLD_BAR_LMD).abs() < 1e-6);
 
         // Tequila-class value (+24% LMD, +0% gold): the same 44 bars pay 24%
         // more - the rider is LMD, not gold, so starvation doesn't touch it.
         let mut tequila = BaseFlows::default();
-        tequila.add_room("MANUFACTURE", Some("F_GOLD"), 3, 120.0, 0.0, 0.0);
-        tequila.add_room("TRADING", None, 3, 200.0, 0.0, 24.0);
+        tequila.add_room("MANUFACTURE", Some("F_GOLD"), 3, 120.0, 0.0, 0.0, 0);
+        tequila.add_room("TRADING", None, 1, 200.0, 0.0, 24.0, 0);
         assert!((tequila.realized_lmd() - 44.0 * 1.24 * GOLD_BAR_LMD).abs() < 1e-6);
     }
 }

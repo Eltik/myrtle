@@ -184,6 +184,9 @@ pub enum PoolBasis {
     /// The number of operators seated in the base's dormitories (Rosmontis'
     /// Perception Information, Mr. Nothing's Worldly Plight).
     DormOccupants,
+    /// The number of operators seated in the GENERATOR's own room (Virtuosa's
+    /// "for every 1 Operators in that Dormitory, Soundless Resonance +1").
+    OwnRoomOccupants,
     /// Operators outside the dormitories carrying a faction tag, counted up
     /// to `unit_cap` (Chongyue: "+5 per Sui Operator ... (max 5)").
     DeployedTag { tag: String, unit_cap: f64 },
@@ -1134,6 +1137,19 @@ pub fn clauses_from_strategy(
 
         // Account facts carry no clause of their own.
         S::AccountFacts { .. } => {}
+
+        S::PoolGenerateOwnRoomOccupants { resource, per } => {
+            out.push(Clause::base(
+                buff_id,
+                buff,
+                speed(),
+                ClauseKind::ResourceConvert(ResourceOp::Generate {
+                    resource: resource.clone(),
+                    basis: PoolBasis::OwnRoomOccupants,
+                }),
+                *per,
+            ));
+        }
 
         S::PoolGenerateOwnRoomLevel {
             resource,

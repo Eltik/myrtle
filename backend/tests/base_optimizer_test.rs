@@ -159,6 +159,7 @@ fn trading_lmd(gd: &GameData, roster: &[OperatorBaseProfile]) -> f64 {
                 r.level,
                 r.total_efficiency,
                 r.order_value,
+                r.operators.len(),
             )
             .lmd_per_day
         })
@@ -1567,6 +1568,7 @@ fn current_assignment_reflects_live_base() {
                 r.total_efficiency,
                 r.order_gold,
                 r.order_value,
+                r.operators.len(),
             );
         }
         flows.total_value()
@@ -4149,52 +4151,6 @@ fn snegurochka_room_grant_survives_the_automation_wipe() {
     );
 }
 
-/// Whisperain's Memory Fragments: +10 per declared extra recruit slot, converted
-/// 1:1 into Perception Information ("converted INTO"), which Rosmontis reads.
-#[test]
-fn whisperain_feeds_rosmontis_from_declared_recruit_slots() {
-    use backend::core::grade::base::assignment::compute_current_assignment;
-    use backend::core::grade::base::buff_registry::resolve_account_facts;
-    let gd = load_game_data();
-    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
-    assert!(
-        matches!(
-            registry.get("hire_spd_bd_n1[000]"),
-            Some(BuffResolutionStrategy::PoolConvert { .. })
-        ),
-        "her conversion parses: {:?}",
-        registry.get("hire_spd_bd_n1[000]")
-    );
-    const ROSMONTIS: &str = "char_391_rosmon";
-    const WHISPERAIN: &str = "char_436_whispr";
-    let mut rooms = vec![room("mf", "MANUFACTURE", 3), room("hr", "HIRE", 3)];
-    rooms[0].current_operators = vec![ROSMONTIS.into()];
-    rooms[0].current_formula = Some("F_EXP".into());
-    rooms[1].current_operators = vec![WHISPERAIN.into()];
-    let building = UserBuilding { rooms };
-    let roster: Vec<_> = [ROSMONTIS, WHISPERAIN]
-        .iter()
-        .map(|id| profile(gd, id))
-        .collect();
-    let eff = |reg: &std::collections::HashMap<String, BuffResolutionStrategy>| {
-        compute_current_assignment(&roster, &building, &gd.building, reg, &drains, None)
-            .rooms
-            .iter()
-            .find(|r| r.slot_id == "mf")
-            .map_or(0.0, |r| r.total_efficiency)
-    };
-    let undeclared = eff(&registry);
-    let two_slots = eff(&resolve_account_facts(&registry, &gd.building.buffs, 2));
-    assert!(
-        (two_slots - undeclared - 20.0).abs() < 1e-9,
-        "20 fragments -> 20 Perception -> +20: {undeclared} vs {two_slots}"
-    );
-}
-
-/// A zero-morale Lancet-2 in a plant still satisfies Eunectes' named gate but
-/// no longer counts as an Operation Platform for Greyy's exclusion: three real
-/// plants + Greyy 1 + Eunectes 2 = 6 (Weedy 90). At full morale he blocks
-/// Greyy (5 plants, Weedy 75).
 #[test]
 fn dead_lancet_unlocks_both_plant_counts() {
     use backend::core::grade::base::assignment::compute_live_assignment;
@@ -4387,9 +4343,268 @@ fn mantra_keeps_her_flat_base_not_a_per_operator_count() {
     rooms[1].current_formula = Some("F_EXP".into());
     let building = UserBuilding { rooms };
     let roster: Vec<_> = [MANTRA, EXUSIAI].iter().map(|id| profile(gd, id)).collect();
-    let asn = compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
-    let eff = asn.rooms.iter().find(|r| r.slot_id == "tp").map_or(0.0, |r| r.total_efficiency);
+    let asn =
+        compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+    let eff = asn
+        .rooms
+        .iter()
+        .find(|r| r.slot_id == "tp")
+        .map_or(0.0, |r| r.total_efficiency);
     assert!((eff - 25.0).abs() < 1e-9, "flat base only: {eff}");
+}
+
+/// Virtuosa's "for every 1 Operators in that Dormitory, Soundless Resonance
+/// +1" feeds Ebenholz: five in her dormitory = 5 Soundless Resonance on top
+/// of his own dorm-fed conversion (user feedback 2026-09-13: her skill was
+/// not counted).
+#[test]
+fn virtuosa_feeds_ebenholz_from_her_own_dormitory() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const EBENHOLZ: &str = "char_4046_ebnhlz";
+    const VIRTUOSA: &str = "char_245_cello";
+    assert!(
+        matches!(
+            registry.get("dorm_bd_num[000]"),
+            Some(BuffResolutionStrategy::PoolGenerateOwnRoomOccupants { .. })
+        ),
+        "{:?}",
+        registry.get("dorm_bd_num[000]")
+    );
+    let fillers = [
+        "char_124_kroos",
+        "char_278_orchid",
+        "char_328_cammou",
+        "char_282_catap",
+    ];
+    let mut ids = vec![EBENHOLZ, VIRTUOSA];
+    ids.extend(fillers);
+    let roster: Vec<_> = ids.iter().map(|id| profile(gd, id)).collect();
+    let eff = |with_virtuosa: bool| {
+        let mut rooms = vec![room("tp", "TRADING", 3), room("d0", "DORMITORY", 5)];
+        rooms[0].current_operators = vec![EBENHOLZ.into()];
+        rooms[1].current_operators = fillers.iter().map(|s| (*s).to_string()).collect();
+        if with_virtuosa {
+            rooms[1].current_operators.push(VIRTUOSA.into());
+        }
+        let building = UserBuilding { rooms };
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == "tp")
+            .map_or(0.0, |r| r.total_efficiency)
+    };
+    // Ebenholz β: +1% per 2 Soundless Resonance. Four sleepers: 4 PI -> 4 SR
+    // = +2. With Virtuosa: 5 sleepers -> 5 SR from him + 5 from her = 10 = +5.
+    assert!(
+        (eff(false) - 2.0).abs() < 1e-9,
+        "without her: {}",
+        eff(false)
+    );
+    assert!((eff(true) - 5.0).abs() < 1e-9, "with her: {}", eff(true));
+}
+
+/// A depleted roommate holds the seat but does not work: Kazemaru's "if no
+/// other Operators are working in the Reception Room, +35%" fires beside a
+/// zero-morale body (the community's dead-operator seat), not beside a live one.
+#[test]
+fn kazemaru_solo_gate_fires_beside_a_dead_roommate() {
+    use backend::core::grade::base::assignment::compute_live_assignment;
+    use std::collections::HashMap;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const KAZEMARU: &str = "char_4016_kazema";
+    const BODY: &str = "char_124_kroos";
+    let roster: Vec<_> = [KAZEMARU, BODY].iter().map(|id| profile(gd, id)).collect();
+    let mut rooms = vec![room("rr", "MEETING", 3)];
+    rooms[0].current_operators = vec![KAZEMARU.into(), BODY.into()];
+    let building = UserBuilding { rooms };
+    let clue = |body_morale: f64| {
+        let live = HashMap::from([(BODY.to_string(), body_morale)]);
+        compute_live_assignment(
+            &roster,
+            &building,
+            &gd.building,
+            &registry,
+            &drains,
+            None,
+            &live,
+        )
+        .rooms
+        .iter()
+        .find(|r| r.slot_id == "rr")
+        .map_or(0.0, |r| r.total_efficiency)
+    };
+    // Kazemaru 15 (+35 solo) + innate 5 + her 5-star 4 + E2 16; Kroos E2 adds 16 either way.
+    assert!(
+        (clue(24.0) - 56.0).abs() < 1e-9,
+        "a live roommate: {}",
+        clue(24.0)
+    );
+    assert!(
+        (clue(0.0) - 91.0).abs() < 1e-9,
+        "a dead roommate: {}",
+        clue(0.0)
+    );
+}
+
+/// Iris and Czerny each feed 1 Perception point per level of their OWN
+/// dormitory (the feedback sheet's in-game check: 1 to 5, never a flat 5),
+/// and their converter skills are converters, not +1.0 morale auras.
+#[test]
+fn iris_and_czerny_feed_perception_per_own_dormitory_level() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    assert!(
+        matches!(
+            registry.get("dorm_rec_bd_n1[000]"),
+            Some(BuffResolutionStrategy::PoolConvert { .. })
+        ),
+        "Iris converts: {:?}",
+        registry.get("dorm_rec_bd_n1[000]")
+    );
+    assert!(
+        matches!(
+            registry.get("dorm_rec_bd_n1[100]"),
+            Some(BuffResolutionStrategy::PoolConvert { .. })
+        ),
+        "Czerny converts: {:?}",
+        registry.get("dorm_rec_bd_n1[100]")
+    );
+    const ROSMONTIS: &str = "char_391_rosmon";
+    const IRIS: &str = "char_338_iris";
+    const CZERNY: &str = "char_4047_pianst";
+    let roster: Vec<_> = [ROSMONTIS, IRIS, CZERNY]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+    let eff = |dorm_level: i32| {
+        let mut rooms = vec![
+            room("mf", "MANUFACTURE", 3),
+            room("d0", "DORMITORY", dorm_level),
+        ];
+        rooms[0].current_operators = vec![ROSMONTIS.into()];
+        rooms[0].current_formula = Some("F_EXP".into());
+        rooms[1].current_operators = vec![IRIS.into(), CZERNY.into()];
+        let building = UserBuilding { rooms };
+        compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None)
+            .rooms
+            .iter()
+            .find(|r| r.slot_id == "mf")
+            .map_or(0.0, |r| r.total_efficiency)
+    };
+    // Rosmontis β 1:1: two sleepers (2) + Iris L + Czerny L.
+    assert!((eff(1) - 4.0).abs() < 1e-9, "level-1 dorm: {}", eff(1));
+    assert!((eff(5) - 12.0).abs() < 1e-9, "level-5 dorm: {}", eff(5));
+}
+
+/// Whisperain's fragments follow the Office level (0 at HR1, 10 at HR2, 20
+/// at HR3), converted 1:1 into Perception Information for Rosmontis.
+#[test]
+fn whisperain_fragments_follow_the_office_level() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const ROSMONTIS: &str = "char_391_rosmon";
+    const WHISPERAIN: &str = "char_436_whispr";
+    let roster: Vec<_> = [ROSMONTIS, WHISPERAIN]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+    let eff = |office_level: i32| {
+        let mut rooms = vec![
+            room("mf", "MANUFACTURE", 3),
+            room("hr", "HIRE", office_level),
+        ];
+        rooms[0].current_operators = vec![ROSMONTIS.into()];
+        rooms[0].current_formula = Some("F_EXP".into());
+        rooms[1].current_operators = vec![WHISPERAIN.into()];
+        let building = UserBuilding { rooms };
+        compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None)
+            .rooms
+            .iter()
+            .find(|r| r.slot_id == "mf")
+            .map_or(0.0, |r| r.total_efficiency)
+    };
+    assert!((eff(1) - 0.0).abs() < 1e-9, "HR1: {}", eff(1));
+    assert!((eff(2) - 10.0).abs() < 1e-9, "HR2: {}", eff(2));
+    assert!((eff(3) - 20.0).abs() < 1e-9, "HR3: {}", eff(3));
+}
+
+/// The feedback sheet's daily-LMD cases (Annex 3): a level-3 post's base
+/// rate is its order mix (2.9 gold per 203.4 min), every slotted operator
+/// adds an innate +1%, and the Control Center's +7% rides on top.
+/// Shamare E2 / Bibeak E2 / Tequila E2 + Amiya = 25,479; Proviso E2 /
+/// Archetto / Vigil = 30,265.
+#[test]
+fn daily_lmd_matches_the_feedback_sheets_squads() {
+    use backend::core::grade::base::yield_model::room_yield;
+    // Shamare 90 + innate 3 + CC 7 = 100 displayed; value 24.1 (Tailoring β + Tequila β).
+    let y = room_yield("TRADING", None, 3, 97.0, 24.1025, 3);
+    assert!(
+        (y.lmd_per_day - 25479.0).abs() < 60.0,
+        "Shamare squad: {}",
+        y.lmd_per_day
+    );
+    // Proviso 55.2 value; Archetto 40 + Vigil 40 + CC 7 = 87 displayed.
+    let y = room_yield("TRADING", None, 3, 87.0, 55.2, 3);
+    assert!(
+        (y.lmd_per_day - 30265.0).abs() < 300.0,
+        "Proviso squad: {}",
+        y.lmd_per_day
+    );
+}
+
+/// The reception row carries the full model (the feedback sheet's RR tab):
+/// Kazemaru E2 alone = 50 skill + 5 innate + 4 (5-star) + 16 (E2) = 75;
+/// beside a live Vigil E2 the solo gate drops and Vigil adds 25 + 5 + 16 = 86;
+/// beside a DEAD Vigil the solo gate holds and Vigil keeps her ambience = 96.
+#[test]
+fn reception_row_carries_ambience_innate_and_dead_seat_rules() {
+    use backend::core::grade::base::assignment::compute_live_assignment;
+    use std::collections::HashMap;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const KAZEMARU: &str = "char_4016_kazema";
+    const VIGIL: &str = "char_427_vigil";
+    let roster: Vec<_> = [KAZEMARU, VIGIL].iter().map(|id| profile(gd, id)).collect();
+    let clue = |crew: &[&str], live: HashMap<String, f64>| {
+        let mut rooms = vec![room("rr", "MEETING", 3)];
+        rooms[0].current_operators = crew.iter().map(|s| (*s).to_string()).collect();
+        let building = UserBuilding { rooms };
+        compute_live_assignment(
+            &roster,
+            &building,
+            &gd.building,
+            &registry,
+            &drains,
+            None,
+            &live,
+        )
+        .rooms
+        .iter()
+        .find(|r| r.slot_id == "rr")
+        .map_or(0.0, |r| r.total_efficiency)
+    };
+    assert!(
+        (clue(&[KAZEMARU], HashMap::new()) - 75.0).abs() < 1e-9,
+        "alone: {}",
+        clue(&[KAZEMARU], HashMap::new())
+    );
+    assert!(
+        (clue(&[KAZEMARU, VIGIL], HashMap::new()) - 86.0).abs() < 1e-9,
+        "live Vigil: {}",
+        clue(&[KAZEMARU, VIGIL], HashMap::new())
+    );
+    let dead = HashMap::from([(VIGIL.to_string(), 0.0)]);
+    assert!(
+        (clue(&[KAZEMARU, VIGIL], dead.clone()) - 96.0).abs() < 1e-9,
+        "dead Vigil: {}",
+        clue(&[KAZEMARU, VIGIL], dead)
+    );
 }
 
 #[test]
