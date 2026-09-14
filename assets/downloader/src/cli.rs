@@ -37,10 +37,16 @@ pub enum Commands {
         /// Content profile(s), comma-separated & OR-combined: "operators"
         /// (operator assets), "stages" (stage-viewer level scenes + preview &
         /// banner art), "gamedata" (the anon/ bundles + .idx manifests, i.e.
-        /// exactly what `unpacker extract --gamedata` reads), or "full"
-        /// (everything). Omit for full.
+        /// exactly what `unpacker extract --gamedata` reads), "release"
+        /// (event / banner / skin-brand art for the Release Planner), or
+        /// "full" (everything). Omit for full.
         #[arg(long)]
         profile: Option<String>,
+        /// Keep only bundles whose name starts with one of these comma-separated
+        /// prefixes (applied after `--profile`). `.idx` manifests are always kept.
+        /// Example: `--include "spritepack/ui_home_act_banner_,arts/ui/stage/[uc]homeentry"`.
+        #[arg(long)]
+        include: Option<String>,
     },
     /// Check if server has updates
     CheckUpdate,

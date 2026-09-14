@@ -56,6 +56,7 @@ async fn main() -> anyhow::Result<()> {
             all,
             packages,
             profile,
+            include,
         } => {
             run_download(
                 &client,
@@ -65,6 +66,7 @@ async fn main() -> anyhow::Result<()> {
                 *all,
                 packages.as_deref(),
                 profile.as_deref(),
+                include.as_deref(),
             )
             .await?;
         }
@@ -76,6 +78,7 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn run_download(
     client: &reqwest::Client,
     server: Server,
@@ -84,6 +87,7 @@ async fn run_download(
     all: bool,
     packages: Option<&str>,
     profile: Option<&str>,
+    include: Option<&str>,
 ) -> anyhow::Result<()> {
     let groups =
         hot_update::fetch_hot_update_list(client, server.cdn_base_url(), &ver.res_version).await?;
@@ -115,14 +119,39 @@ async fn run_download(
                     "operators" => downloader::profile::keep_for_operators,
                     "stages" => downloader::profile::keep_for_stages,
                     "gamedata" => downloader::profile::keep_for_gamedata,
+                    "release" => downloader::profile::keep_for_release,
                     _ => anyhow::bail!(
-                        "unknown profile: {p} (expected: operators, stages, gamedata, full)"
+                        "unknown profile: {p} (expected: operators, stages, gamedata, release, full)"
                     ),
                 });
             }
             let kept: Vec<_> = all_files
                 .iter()
                 .filter(|f| keep_fns.iter().any(|keep| keep(&f.name)))
+                .cloned()
+                .collect();
+            expand_with_dependencies(&cli.savedir, all_files, kept)
+        }
+    };
+
+    // `--include`: a prefix allowlist on top of the profile, for a targeted
+    // pull (one art pack, one event kit) without a profile of its own.
+    let all_files: Vec<_> = match include {
+        None => all_files,
+        Some(spec) => {
+            let prefixes: Vec<&str> = spec
+                .split(',')
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .collect();
+            let kept: Vec<_> = all_files
+                .iter()
+                .filter(|f| {
+                    std::path::Path::new(&f.name)
+                        .extension()
+                        .is_some_and(|e| e.eq_ignore_ascii_case("idx"))
+                        || prefixes.iter().any(|p| f.name.starts_with(p))
+                })
                 .cloned()
                 .collect();
             expand_with_dependencies(&cli.savedir, all_files, kept)

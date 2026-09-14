@@ -9,6 +9,8 @@ mod dispatch;
 mod dispatch_hps;
 mod generated;
 mod generated_hps;
+mod init;
 
 pub use dispatch::dispatch;
 pub use dispatch_hps::dispatch as dispatch_hps;
+pub use init::apply as apply_init;

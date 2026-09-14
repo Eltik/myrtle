@@ -135,6 +135,9 @@ jobs:
         env:
           GAME_DATA_DIR: ../assets/output/en/gamedata/excel
           ASSETS_DIR: ../assets/output/en
+          # The artifact is tables only (no images, spine, or pool details), so
+          # api_shape_test compares against its gamedata-only snapshot.
+          API_SHAPE_PROFILE: gamedata-only
           RUST_BACKTRACE: 1
         run: cargo test -- --nocapture
 

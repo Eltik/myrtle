@@ -23,10 +23,34 @@
 //! Rust fields. Endpoints WITHOUT that normalization — voices, materials — are
 //! the ones where this snapshot and the TS types must agree key-for-key.
 //!
-//! Refresh after an intentional change:
+//! The shape is a function of the Rust types AND of which assets are on disk:
+//! `Option` fields serialize as `null` when their image is absent, the chibi
+//! index is empty without spine files, and the banner rate tables come from a
+//! file the live `gacha/getPoolDetail` job writes. So there is one snapshot per
+//! asset profile, chosen by `API_SHAPE_PROFILE`:
+//!
+//! ```text
+//!   (unset)         tests/snapshots/api_shape.txt
+//!                   a full local install (images, spine, pool details)
+//!   gamedata-only   tests/snapshots/api_shape.gamedata-only.txt
+//!                   the `game-data` artifact assets-ci.yml uploads (tables
+//!                   only), which is what backend-ci.yml runs against
+//! ```
+//!
+//! The diff between the two files is exactly the set of asset-derived wire
+//! fields. Refresh after an intentional change:
+//!
+//! ```text
 //!   UPDATE_API_SHAPE=1 cargo test --test api_shape_test
-//! and review the diff as part of the PR — a line disappearing from it is a
-//! breaking change for every consumer of that field.
+//!   UPDATE_API_SHAPE=1 API_SHAPE_PROFILE=gamedata-only \
+//!     GAME_DATA_DIR=<artifact>/gamedata/excel ASSETS_DIR=<artifact> \
+//!     cargo test --test api_shape_test
+//! ```
+//!
+//! (`gh run download <assets-ci run id> -n game-data -D <artifact>/gamedata`
+//! fetches the artifact) and review both diffs as part of the PR — a line
+//! disappearing from either is a breaking change for every consumer of that
+//! field.
 
 mod common;
 
@@ -164,24 +188,42 @@ fn static_payload_shapes_are_unchanged() {
         }
     }
 
-    let snapshot_path = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/snapshots/api_shape.txt");
+    let profile = std::env::var("API_SHAPE_PROFILE")
+        .ok()
+        .filter(|p| !p.trim().is_empty());
+    let snapshot_path = profile.as_deref().map_or_else(
+        || concat!(env!("CARGO_MANIFEST_DIR"), "/tests/snapshots/api_shape.txt").to_string(),
+        |p| {
+            format!(
+                "{}/tests/snapshots/api_shape.{p}.txt",
+                env!("CARGO_MANIFEST_DIR")
+            )
+        },
+    );
+    eprintln!(
+        "api shape profile: {} -> {snapshot_path}",
+        profile.as_deref().unwrap_or("(full install)")
+    );
 
     if std::env::var("UPDATE_API_SHAPE").is_ok() {
         std::fs::create_dir_all(
-            std::path::Path::new(snapshot_path)
+            std::path::Path::new(&snapshot_path)
                 .parent()
                 .expect("snapshot dir"),
         )
         .expect("create snapshot dir");
-        std::fs::write(snapshot_path, &rendered).expect("write snapshot");
+        std::fs::write(&snapshot_path, &rendered).expect("write snapshot");
         eprintln!("updated {snapshot_path}");
         return;
     }
 
-    let Ok(expected) = std::fs::read_to_string(snapshot_path) else {
+    let Ok(expected) = std::fs::read_to_string(&snapshot_path) else {
         panic!(
             "no API shape snapshot at {snapshot_path}\n\
-             create it with: UPDATE_API_SHAPE=1 cargo test --test api_shape_test"
+             create it with: UPDATE_API_SHAPE=1{} cargo test --test api_shape_test",
+            profile
+                .as_deref()
+                .map_or_else(String::new, |p| format!(" API_SHAPE_PROFILE={p}"))
         );
     };
 
@@ -198,7 +240,8 @@ fn static_payload_shapes_are_unchanged() {
         "API payload shape changed.\n\n\
          REMOVED (breaking for any consumer reading these):\n  {}\n\n\
          ADDED:\n  {}\n\n\
-         If intended: UPDATE_API_SHAPE=1 cargo test --test api_shape_test",
+         If intended: UPDATE_API_SHAPE=1{} cargo test --test api_shape_test\n\
+         (snapshot: {snapshot_path})",
         removed
             .iter()
             .map(|s| (**s).to_string())
@@ -209,5 +252,8 @@ fn static_payload_shapes_are_unchanged() {
             .map(|s| (**s).to_string())
             .collect::<Vec<_>>()
             .join("\n  "),
+        profile
+            .as_deref()
+            .map_or_else(String::new, |p| format!(" API_SHAPE_PROFILE={p}")),
     );
 }

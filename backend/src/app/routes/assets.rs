@@ -335,6 +335,57 @@ pub async fn skin_portrait_srv(
     skin_portrait_impl(&state, server, &skin_id, &headers).await
 }
 
+macro_rules! indexed_asset_routes {
+    ($impl_name:ident, $plain:ident, $srv:ident, $resolver:ident) => {
+        async fn $impl_name(
+            state: &AppState,
+            server: Server,
+            id: &str,
+            headers: &HeaderMap,
+        ) -> Result<Response, ApiError> {
+            serve_resolved(state, server, headers, |idx| {
+                idx.$resolver(id).map(std::borrow::ToOwned::to_owned)
+            })
+            .await
+        }
+
+        pub async fn $plain(
+            State(state): State<AppState>,
+            headers: HeaderMap,
+            AxumPath(id): AxumPath<String>,
+        ) -> Result<Response, ApiError> {
+            $impl_name(&state, state.default_server, &id, &headers).await
+        }
+
+        pub async fn $srv(
+            State(state): State<AppState>,
+            headers: HeaderMap,
+            AxumPath((server, id)): AxumPath<(Server, String)>,
+        ) -> Result<Response, ApiError> {
+            $impl_name(&state, server, &id, &headers).await
+        }
+    };
+}
+
+// `/banner-image/{pool_id}`: gacha banner art by pool id.
+indexed_asset_routes!(
+    banner_image_impl,
+    banner_image,
+    banner_image_srv,
+    gacha_banner_path
+);
+// `/event-image/{act_id}`: event art by activity id.
+indexed_asset_routes!(
+    event_image_impl,
+    event_image,
+    event_image_srv,
+    event_banner_path
+);
+// `/brand-kv/{kv_id}`: skin brand key visual.
+indexed_asset_routes!(brand_kv_impl, brand_kv, brand_kv_srv, brand_kv_path);
+// `/brand-logo/{brand_id}`: skin brand logo.
+indexed_asset_routes!(brand_logo_impl, brand_logo, brand_logo_srv, brand_logo_path);
+
 async fn charart_impl(
     state: &AppState,
     server: Server,

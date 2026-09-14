@@ -231,7 +231,7 @@ pub async fn refresh(state: &AppState, server: Server) -> anyhow::Result<usize> 
     // visible on the static endpoints. Deliberately not done per checkpoint:
     // a reload rebuilds every table for the server and is far too heavy to
     // repeat mid-walk.
-    asset_watcher::perform_reload(state, server).await;
+    asset_watcher::perform_reload(state, server, None).await;
 
     Ok(fetched)
 }

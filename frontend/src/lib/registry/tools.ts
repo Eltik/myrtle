@@ -1,4 +1,4 @@
-export type ToolIconName = "chart" | "calc" | "star" | "dice" | "cake" | "pack" | "search" | "trophy" | "users" | "user" | "history" | "tiers" | "heart" | "list-todo" | "shield" | "crosshair" | "map";
+export type ToolIconName = "chart" | "calc" | "star" | "dice" | "cake" | "pack" | "search" | "trophy" | "users" | "user" | "history" | "tiers" | "heart" | "list-todo" | "shield" | "crosshair" | "map" | "calendar-clock";
 
 export type ToolCategory = "calculator" | "fun";
 
@@ -80,6 +80,15 @@ export const TOOLS: ITool[] = [
         icon: "cake",
         category: "fun",
         keywords: ["birthday", "operator", "track"],
+    },
+    {
+        id: "release",
+        href: "/tools/release",
+        label: "Release Planner",
+        desc: "When CN events, skins, and banners land on EN",
+        icon: "calendar-clock",
+        category: "calculator",
+        keywords: ["release", "upcoming", "events", "banners", "skins", "cn", "en", "schedule", "planner", "lag"],
     },
 ];
 

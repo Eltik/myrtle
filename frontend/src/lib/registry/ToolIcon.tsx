@@ -140,6 +140,14 @@ export function ToolIcon({ name, className }: { name: ToolIconName; className?: 
                     <path d="M9 4v14M15 6v14" />
                 </svg>
             );
+        case "calendar-clock":
+            return (
+                <svg aria-hidden="true" viewBox="0 0 24 24" className={className} {...p}>
+                    <path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5" />
+                    <path d="M16 2v4M8 2v4M3 10h5M17.5 17.5 16 16.3V14" />
+                    <circle cx="16" cy="16" r="6" />
+                </svg>
+            );
         default:
             return null;
     }

@@ -89,6 +89,11 @@ export const DEFAULT_OG_PRESETS = {
         subtitle: "View and track Arknights operator birthdays.",
         activeTag: "Tools",
     },
+    "tools-release": {
+        title: "Release Planner",
+        subtitle: "When CN events, skins, and banners land on EN.",
+        activeTag: "Tools",
+    },
     "tier-lists": {
         title: "Tier Lists",
         subtitle: "Browse official and community tier lists.",

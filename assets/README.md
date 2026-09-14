@@ -139,7 +139,7 @@ npm start
 ```
 
 **Workflow:**
-1. Prompt for server region, asset directory, output directory, content profile (`full`, `operators`, `stages`, `gamedata`)
+1. Prompt for server region, asset directory, output directory, content profile (`full`, `operators`, `stages`, `gamedata`, `release`)
 2. Fetch server version info (client + resource version)
 3. Compare with local `.version` file in asset directory
 4. If newer: download + extract + save new version
@@ -168,7 +168,7 @@ npm start
 - Server region
 - Asset download directory (nested per region - see Mode 2)
 - Extraction output directory (nested per region - see Mode 2)
-- Content profile (`full`, `operators`, `stages`, `gamedata`) - also via `--profile` / `WS_PROFILE`
+- Content profile (`full`, `operators`, `stages`, `gamedata`, `release`) - also via `--profile` / `WS_PROFILE`
 - WebSocket port (default 9160)
 - Check interval in minutes (default 30)
 
@@ -237,7 +237,7 @@ Download asset packs.
 |--------|------|---|
 | `--all` | bool | Download all packs (required unless `--packages` used) |
 | `--packages <list>` | string | Comma-separated pack names (e.g., `pack/chararts,pack/ui`) |
-| `--profile <name>` | string | Content profile(s) applied on top of `--all`: `full`, `operators`, `stages`, or `gamedata`. Comma-separate to combine (e.g. `operators,stages`). Omit for `full`. |
+| `--profile <name>` | string | Content profile(s) applied on top of `--all`: `full`, `operators`, `stages`, `gamedata`, or `release`. Comma-separate to combine (e.g. `operators,stages`). Omit for `full`. |
 
 **Examples:**
 
@@ -265,7 +265,7 @@ downloader --server cn download --all --profile operators,stages
 ### Content Profiles
 
 A profile filters the hot-update file list (by `abInfo` name) down to a subset, keeping
-the download small when full-region storage is impractical. Four profiles exist, defined
+the download small when full-region storage is impractical. Five profiles exist, defined
 in `downloader/src/profile.rs`, and they can be OR-combined with a comma-separated list.
 Every profile retains `.idx` files unconditionally, so the gamedata manifest is never lost.
 
@@ -275,6 +275,7 @@ Every profile retains `.idx` files unconditionally, so the gamedata manifest is 
 | `operators` | Gamedata plus operator-facing art: `chararts/`, `skinpack/`, portraits, avatars, skill and equip icons, elite/potential hubs, camp logos, and player/battle/voice audio | ~2.5 GB |
 | `stages` | Stage-viewer level scenes, map-preview thumbnails, and zone/event/IS banner art. Deliberately disjoint from `operators` | - |
 | `gamedata` | Only `anon/` bundles plus the `.idx` manifest. Exactly what `unpacker extract --gamedata` consumes | ~330 MB, ~150 files |
+| `release` | Release Planner art: gacha banner strips (`ui_home_act_banner_*`), event home-entry key art (`[uc]homeentry`, `ui_zone_home_theme_*`), per-event UI kits (`activity/`), skin shop portraits, brand key visuals and logos. The CN watcher runs `operators,release` | - |
 
 Sizes are order-of-magnitude guidance from `profile.rs`, not guarantees; they grow with
 every game update. For reference, a current full extract runs roughly 18-20 GB of
@@ -931,7 +932,7 @@ Request current directory listing.
 - `progress.rs`: indicatif progress bars
 - `types.rs`: Common types (VersionResponse, HotFile, PipelineStats)
 - `error.rs`: Error types
-- `profile.rs`: Content profiles (`full`, `operators`, `stages`, `gamedata`) and their filters
+- `profile.rs`: Content profiles (`full`, `operators`, `stages`, `gamedata`, `release`) and their filters
 - `resource_manifest.rs`: `.idx` resource-manifest handling
 - `client_extract.rs`: Offline APK/XAPK/OBB/IPA triage for IL2CPP recovery. Contacts no server
 

@@ -1,7 +1,7 @@
 import { EraserIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
-import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPopup, DialogTitle } from "#/components/ui/dialog";
+import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Field, FieldDescription, FieldLabel } from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
 import { MarkdownEditor } from "#/components/ui/markdown-editor";
@@ -52,22 +52,36 @@ export function TierSettingsDialog({ tier, canDelete, onClose, onSave, onDelete,
     const validColor = HEX_RE.test(color);
     const canSave = trimmedName.length > 0 && trimmedName.length <= NAME_MAX && validColor;
 
-    const handleSave = (e: React.FormEvent) => {
-        e.preventDefault();
+    const submit = () => {
         if (!canSave) return;
         onSave({ name: trimmedName, color: color.toLowerCase(), description: description.trim() });
+    };
+
+    const handleSave = (e: React.FormEvent) => {
+        e.preventDefault();
+        submit();
+    };
+
+    // Enter in the label input already submits (implicit submission); this makes
+    // Ctrl/Cmd+Enter save from the description textarea too, where a bare Enter
+    // has to stay a newline.
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            submit();
+        }
     };
 
     return (
         <Dialog open={tier !== null} onOpenChange={(o) => !o && onClose()}>
             <DialogPopup className="sm:max-w-md">
-                <form onSubmit={handleSave}>
+                <form onSubmit={handleSave} onKeyDown={handleKeyDown} className="flex min-h-0 flex-col">
                     <DialogHeader>
                         <DialogTitle>Tier settings</DialogTitle>
                         <DialogDescription>Customize the label, color, and description for this tier. Changes take effect when you save the list.</DialogDescription>
                     </DialogHeader>
 
-                    <div className="flex flex-col gap-5 px-6 pb-2">
+                    <DialogPanel className="flex flex-col gap-5">
                         <Field>
                             <FieldLabel htmlFor={nameId}>
                                 Label
@@ -91,34 +105,34 @@ export function TierSettingsDialog({ tier, canDelete, onClose, onSave, onDelete,
                                     {description.length} / {DESC_MAX}
                                 </span>
                             </FieldLabel>
-                            <MarkdownEditor id={descId} value={description} onChange={setDescription} placeholder="When should an operator land here?" rows={5} maxLength={DESC_MAX} showHint={false} />
+                            <MarkdownEditor id={descId} value={description} onChange={setDescription} placeholder="When should an operator land here?" rows={3} maxLength={DESC_MAX} showHint={false} textareaClassName="min-h-20 sm:min-h-24" />
                             <FieldDescription>Optional. Shown to viewers in the tier hover/detail.</FieldDescription>
                         </Field>
-                    </div>
 
-                    {operatorCount > 0 && (
-                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-border border-t px-6 py-3">
-                            <p className="m-0 font-sans text-[12.5px] text-muted-foreground">
-                                <span className="font-medium text-foreground tabular-nums">{operatorCount}</span> operator{operatorCount === 1 ? "" : "s"} in this tier
-                            </p>
-                            {confirmingClear ? (
-                                <div className="flex items-center gap-2">
-                                    <span className="font-sans text-[12.5px] text-muted-foreground">Remove all?</span>
-                                    <Button type="button" size="sm" variant="destructive" onClick={onClear}>
-                                        Confirm
+                        {operatorCount > 0 && (
+                            <div className="-mx-6 -mb-6 flex flex-wrap items-center justify-between gap-2 border-border border-t px-6 py-3">
+                                <p className="m-0 font-sans text-[12.5px] text-muted-foreground">
+                                    <span className="font-medium text-foreground tabular-nums">{operatorCount}</span> operator{operatorCount === 1 ? "" : "s"} in this tier
+                                </p>
+                                {confirmingClear ? (
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-sans text-[12.5px] text-muted-foreground">Remove all?</span>
+                                        <Button type="button" size="sm" variant="destructive" onClick={onClear}>
+                                            Confirm
+                                        </Button>
+                                        <Button type="button" size="sm" variant="ghost" onClick={() => setConfirmingClear(false)}>
+                                            Cancel
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <Button type="button" size="sm" variant="destructive-outline" onClick={() => setConfirmingClear(true)}>
+                                        <EraserIcon />
+                                        Clear operators
                                     </Button>
-                                    <Button type="button" size="sm" variant="ghost" onClick={() => setConfirmingClear(false)}>
-                                        Cancel
-                                    </Button>
-                                </div>
-                            ) : (
-                                <Button type="button" size="sm" variant="destructive-outline" onClick={() => setConfirmingClear(true)}>
-                                    <EraserIcon />
-                                    Clear operators
-                                </Button>
-                            )}
-                        </div>
-                    )}
+                                )}
+                            </div>
+                        )}
+                    </DialogPanel>
 
                     <DialogFooter className="justify-between sm:justify-between">
                         {canDelete ? (

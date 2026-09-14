@@ -35,7 +35,10 @@ module.exports = {
             env: {
                 WS_SERVER: "cn",
                 WS_PORT: "9161",
-                WS_PROFILE: "operators",
+                // `release` adds the event / banner / skin-brand art the
+                // Release Planner serves for CN-only content; without it the
+                // CN preview has names and dates but no pictures.
+                WS_PROFILE: "operators,release",
                 WS_THREADS: "2",
             },
         },

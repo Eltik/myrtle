@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 pub mod activity;
 pub mod audio;
@@ -22,6 +22,7 @@ pub mod retro;
 pub mod roguelike;
 pub mod sandbox_universe;
 pub mod serde_helpers;
+pub mod shop;
 pub mod skill;
 pub mod skin;
 pub mod stage;
@@ -48,6 +49,7 @@ use range::Ranges;
 use retro::RetroAct;
 use roguelike::RoguelikeGameData;
 use sandbox_universe::SandboxUniverse;
+use shop::{SkinListing, SkinWindow};
 use skill::Skill;
 use skin::SkinData;
 use stage::Stage;
@@ -74,7 +76,17 @@ pub struct GameData {
     pub zones: HashMap<String, Zone>,
     pub stages: HashMap<String, Stage>,
     pub activities: HashMap<String, ActivityBasicInfo>,
+    /// Skin ids referenced by `activity_table` (event-reward skins), see
+    /// [`activity::scan_skin_refs`].
+    pub activity_skin_refs: HashSet<String>,
+    /// Activity id -> the loading illustration its stages use most, see
+    /// [`activity::loading_pics_by_activity`].
+    pub activity_loading_pics: HashMap<String, String>,
     pub retro_acts: HashMap<String, RetroAct>,
+    /// Skin shop carousel windows (the promo layer), see [`shop`].
+    pub skin_windows: Vec<SkinWindow>,
+    /// Skin store listings from the recommend panel (the rerun record).
+    pub skin_listings: Vec<SkinListing>,
     pub medals: MedalData,
     pub roguelike: RoguelikeGameData,
     pub enemies: EnemyHandbook,

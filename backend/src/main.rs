@@ -4,7 +4,7 @@ use backend::core::service_account::ServiceAccounts;
 use backend::core::startup;
 use backend::core::{
     asset_watcher, dps_watcher, gacha_detail_job, leaderboard_snapshot_job, medal_ownership_job,
-    operator_ownership_job, regrade_job, trending_job,
+    operator_ownership_job, regrade_job, release, trending_job,
 };
 use backend::{
     app::{
@@ -171,6 +171,24 @@ async fn main() {
     }
 
     drop(jobs_phase);
+
+    // Boot pass of the release ledger: record what every loaded server carries
+    // right now. No version is known at boot, so this pass never creates debut
+    // links; the watcher's reloads do. Outside the jobs gate because it is a
+    // one-shot write; RELEASE_LEDGER=0 is its own switch.
+    {
+        let mut seen: std::collections::HashSet<*const ()> = std::collections::HashSet::new();
+        for (&server, sd) in &state.servers {
+            // Bilibili aliases CN's cell; record each cell once.
+            if !seen.insert(std::sync::Arc::as_ptr(sd).cast::<()>()) {
+                continue;
+            }
+            if !sd.loaded.load(std::sync::atomic::Ordering::Acquire) {
+                continue;
+            }
+            release::ledger::spawn_record(state.clone(), server, None);
+        }
+    }
 
     // Finish before `server::run`, so the listener's log line lands after the
     // bars are gone.

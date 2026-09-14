@@ -14,6 +14,31 @@ pub enum AssetKind {
     EnemyIcon,    // textures/spritepack/icon_enemies_N/
     ItemIcon,     // textures/arts/ui_item_icons_N/ + arts/items/*_hub/
     MedalIcon,    // textures/spritepack/ui_medal_icons_N/
+    /// `textures/spritepack/ui_home_act_banner_gacha`_{h2,en}_`N/{picLimited_76_0_1}.png`
+    /// Keyed by the NORMALISED stem (lowercase, alphanumerics only): the packs
+    /// spell the same pool `picClassicAttain_68_0_2` and `picClassic_Attain_57_0_2`.
+    GachaBanner,
+    /// textures/arts/ui/stage/[uc]`homeentry/{act_id}.png`: the home-screen
+    /// entry card, the event's official key visual. Only that directory: the
+    /// `ui_zone_home_theme_{act_id}` spritepacks unpack to the whole atlas
+    /// page (1000 or 1024 px square, 33 on CN / 45 on EN), not the card, and
+    /// walking them after `homeentry` used to overwrite the card with the
+    /// sheet.
+    EventBanner,
+    /// `textures/spritepack/story_review_chapter_bg_h1_N/storyEntryPic_{id}.png`
+    /// and `story_review_mini_activity_bg_h1_storyentrypic_N/`: the Archives
+    /// entry art, kept for every story event (70 of 75 story reviews on CN,
+    /// 67 on EN). Keyed by the story review id, which is the activity id.
+    StoryEntryPic,
+    /// `textures/arts/loadingillusts_N/{loading_pic_id}.png`: the loading
+    /// illustrations, one official piece per event, named by event code and
+    /// reached from an activity through its stages' `LoadingPicId`. Kept by
+    /// the client for every event (184 on EN, 201 on CN).
+    LoadingIllust,
+    /// `textures/spritepack/ui_kv_img_N/{kv_id}.png` (skin brand key visuals)
+    BrandKv,
+    /// `textures/spritepack/ui_brand_image_hub_N/brand`_{`brand_id}.png`
+    BrandLogo,
 }
 
 const ALL_KINDS: &[AssetKind] = &[
@@ -26,6 +51,12 @@ const ALL_KINDS: &[AssetKind] = &[
     AssetKind::EnemyIcon,
     AssetKind::ItemIcon,
     AssetKind::MedalIcon,
+    AssetKind::GachaBanner,
+    AssetKind::EventBanner,
+    AssetKind::StoryEntryPic,
+    AssetKind::LoadingIllust,
+    AssetKind::BrandKv,
+    AssetKind::BrandLogo,
 ];
 
 #[derive(Debug, Clone, Default)]
@@ -89,10 +120,18 @@ impl AssetIndex {
 
             // Classify into AssetKind by parent directory name
             if let Some(kind) = classify_dir(parent) {
+                let key = match kind {
+                    AssetKind::GachaBanner => normalize_stem(stem),
+                    AssetKind::StoryEntryPic => stem
+                        .strip_prefix("storyEntryPic_")
+                        .unwrap_or(stem)
+                        .to_owned(),
+                    _ => stem.to_owned(),
+                };
                 idx.map
                     .get_mut(&kind)
                     .unwrap()
-                    .insert(stem.to_owned(), rel_path.clone());
+                    .insert(key, rel_path.clone());
             }
 
             // chararts/{char_id}/{char_id}_{suffix}.png
@@ -115,6 +154,30 @@ impl AssetIndex {
                     .entry(parent.to_owned())
                     .or_default()
                     .push(rel_path);
+            }
+        }
+
+        // Release-art archive (see `core::release::art`): images kept after the
+        // client pack dropped them. Read AFTER textures so a live file wins.
+        for (sub, kind) in [
+            ("gacha", AssetKind::GachaBanner),
+            ("event", AssetKind::EventBanner),
+        ] {
+            let dir = assets_dir.join("derived/release-art").join(sub);
+            let Ok(entries) = std::fs::read_dir(&dir) else {
+                continue;
+            };
+            let map = idx.map.get_mut(&kind).unwrap();
+            for entry in entries.flatten() {
+                if let Some(stem) = png_stem(&entry) {
+                    let key = if kind == AssetKind::GachaBanner {
+                        normalize_stem(&format!("pic{stem}"))
+                    } else {
+                        stem.clone()
+                    };
+                    map.entry(key)
+                        .or_insert_with(|| format!("/derived/release-art/{sub}/{stem}.png"));
+                }
             }
         }
 
@@ -215,6 +278,35 @@ impl AssetIndex {
             .map(std::string::String::as_str)
     }
 
+    /// Banner art for a gacha pool id (`LIMITED_76_0_1`, `DOUBLE_EN_41_0_2`):
+    /// the pack names the file `pic` + the pool id with its own spelling, so
+    /// both sides are normalised before the lookup.
+    pub fn gacha_banner_path(&self, pool_id: &str) -> Option<&str> {
+        let key = normalize_stem(&format!("pic{pool_id}"));
+        self.path(AssetKind::GachaBanner, &key)
+    }
+
+    /// Event art by activity id: the home entry (the official key visual)
+    /// while the client or the archive has it, else the Archives entry
+    /// picture. The loading illustration is indexed but not used here: it is
+    /// a scene, not the event's poster.
+    pub fn event_banner_path(&self, act_id: &str) -> Option<&str> {
+        self.path(AssetKind::EventBanner, act_id)
+            .or_else(|| self.path(AssetKind::StoryEntryPic, act_id))
+    }
+
+    pub fn loading_illust_path(&self, pic: &str) -> Option<&str> {
+        self.path(AssetKind::LoadingIllust, pic)
+    }
+
+    pub fn brand_kv_path(&self, kv_id: &str) -> Option<&str> {
+        self.path(AssetKind::BrandKv, kv_id)
+    }
+
+    pub fn brand_logo_path(&self, brand_id: &str) -> Option<&str> {
+        self.path(AssetKind::BrandLogo, &format!("brand_{brand_id}"))
+    }
+
     pub fn portrait_path(&self, char_id: &str) -> Option<&str> {
         let mut buf = String::with_capacity(char_id.len() + 2);
         buf.push_str(char_id);
@@ -302,9 +394,34 @@ fn classify_dir(dir_name: &str) -> Option<AssetKind> {
         Some(AssetKind::ItemIcon)
     } else if dir_name.starts_with("ui_medal_icons_") {
         Some(AssetKind::MedalIcon)
+    } else if dir_name.starts_with("ui_home_act_banner_gacha_")
+        || dir_name == "home_banner_gacha_hub"
+    {
+        Some(AssetKind::GachaBanner)
+    } else if dir_name == "[uc]homeentry" {
+        Some(AssetKind::EventBanner)
+    } else if dir_name.starts_with("loadingillusts_") {
+        Some(AssetKind::LoadingIllust)
+    } else if dir_name.starts_with("story_review_chapter_bg_")
+        || dir_name.starts_with("story_review_mini_activity_bg_")
+    {
+        Some(AssetKind::StoryEntryPic)
+    } else if dir_name.starts_with("ui_kv_img_") {
+        Some(AssetKind::BrandKv)
+    } else if dir_name.starts_with("ui_brand_image_hub_") {
+        Some(AssetKind::BrandLogo)
     } else {
         None
     }
+}
+
+/// Lowercase alphanumerics only: `picClassic_Attain_57_0_2` and
+/// `picClassicAttain_57_0_2` both become `picclassicattain5702`.
+pub fn normalize_stem(stem: &str) -> String {
+    stem.chars()
+        .filter(char::is_ascii_alphanumeric)
+        .map(|c| c.to_ascii_lowercase())
+        .collect()
 }
 
 /// Returns the stem with a trailing `_<digits>` removed, if present

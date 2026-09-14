@@ -36,6 +36,7 @@ use crate::core::gamedata::{
         retro::RetroTableFile,
         roguelike::{RoguelikeGameData, RoguelikeTopicTableFile},
         sandbox_universe::SandboxUniverse,
+        shop::ShopTableFile,
         skill::SkillTableFile,
         skin::SkinTableFile,
         stage::StageTableFile,
@@ -222,7 +223,15 @@ pub fn init_game_data(
         load_table_or_warn(data_dir, "roguelike_topic_table", &mut warnings);
     let activity_file: ActivityTableFile =
         load_table_or_warn(data_dir, "activity_table", &mut warnings);
+    let activity_loading_pics = crate::core::gamedata::types::activity::loading_pics_by_activity(
+        &stage_file.stages,
+        &activity_file.basic_info,
+    );
+    let activity_skin_refs = std::fs::read_to_string(data_dir.join("activity_table.json"))
+        .map(|raw| crate::core::gamedata::types::activity::scan_skin_refs(&raw))
+        .unwrap_or_default();
     let retro_file: RetroTableFile = load_table_or_warn(data_dir, "retro_table", &mut warnings);
+    let shop_file: ShopTableFile = load_table_or_warn(data_dir, "shop_client_table", &mut warnings);
     let consts: GameDataConst = load_table_or_warn(data_dir, "gamedata_const", &mut warnings);
     // Layout-counted base resources (Wang's Influence/Territory) are defined
     // only in the term glossary; the base scorer reads them off building data.
@@ -386,6 +395,10 @@ pub fn init_game_data(
             stages,
             activities: activity_file.basic_info,
             retro_acts: retro_file.retro_act_list,
+            activity_loading_pics,
+            activity_skin_refs,
+            skin_listings: shop_file.into_skin_listings(),
+            skin_windows: shop_file.into_skin_windows(),
             medals,
             roguelike,
             enemies,

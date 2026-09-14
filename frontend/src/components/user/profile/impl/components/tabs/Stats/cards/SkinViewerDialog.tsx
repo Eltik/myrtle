@@ -2,14 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Check, Search, X } from "lucide-react";
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { skinTexture } from "#/components/operators/detail/impl/assets";
-import { Dialog, DialogClose, DialogContent, DialogTitle } from "#/components/ui/dialog";
-import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { DetailRow, type ISkinPrice, SkinDetailContent } from "#/components/skins/SkinDetailDialog";
+import { Dialog, DialogContent, DialogTitle } from "#/components/ui/dialog";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { type ISkinIndexEntry, skinPopularityQueryOptions } from "#/lib/api/skins";
 import { cn, formatSharePct, getAvatarById } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
-import { DynamicArtOverlay } from "../../../../DynamicArtOverlay";
 
 type OwnershipFilter = "all" | "missing" | "owned";
 type SortMode = "brand" | "date" | "popularity";
@@ -537,91 +535,28 @@ interface ISkinDetailDialogProps {
 }
 
 function SkinDetailDialog({ card, owned, color, popularity }: ISkinDetailDialogProps) {
-    const { skin, op, skinName, price, avatarURL } = card;
+    const { skin, skinName, price, avatarURL } = card;
     const opName = card.opName || skin.charId;
-    const ds = skin.displaySkin;
-    const groupName = ds?.skinGroupName;
-    const description = ds?.description ?? ds?.content ?? null;
-    const dialog = ds?.dialog ?? null;
-    const usage = ds?.usage ?? null;
-    const obtain = ds?.obtainApproach ?? null;
-    const designers = ds?.designerList ?? null;
-    const drawers = ds?.drawerList ?? null;
-    const releaseTs = ds?.getTime ? ds.getTime * 1000 : null;
-    const heroURL = skinTexture(skin.charId, skin.skinId);
-    const [dynActive, setDynActive] = useState(false);
-
     return (
-        <DialogContent bottomStickOnMobile={false} className="flex h-[92vh] max-h-[92vh] w-[min(960px,95vw)] max-w-[min(960px,95vw)] flex-col overflow-hidden p-0 sm:max-w-[min(960px,95vw)]" showCloseButton>
-            <DialogTitle className="sr-only">{`${opName} - ${skinName}`}</DialogTitle>
-            <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[5fr_4fr]">
-                <div className="relative flex items-center justify-center overflow-hidden bg-linear-to-b from-muted/20 to-muted/60 md:border-border/60 md:border-r">
-                    <img alt={`${opName} ${skinName}`} className={cn("h-full w-full object-contain object-bottom transition-opacity duration-500", dynActive && "opacity-0")} decoding="async" loading="lazy" onError={(e) => ((e.target as HTMLImageElement).src = avatarURL)} src={heroURL} />
-                    <DynamicArtOverlay operatorCode={skin.charId} skinId={skin.skinId} fit={{ mode: "contain", align: "bottom" }} onActiveChange={setDynActive} />
-                    <span className="absolute top-3 left-3">
-                        <OwnershipBadge color={color} owned={owned} />
-                    </span>
-                </div>
-                <ScrollArea className="min-h-0">
-                    <div className="flex flex-col gap-4 p-5 sm:p-6">
-                        <div className="flex items-start gap-3">
-                            <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted/40 font-semibold">
-                                <OperatorAvatar charId={op?.id ?? skin.charId} name={opName} />
-                            </span>
-                            <div className="min-w-0 flex-1">
-                                <p className="truncate font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{opName}</p>
-                                <h3 className="wrap-break-word font-heading font-semibold text-lg leading-tight">{skinName}</h3>
-                                {groupName && groupName !== skinName && <p className="truncate text-muted-foreground text-xs">{groupName}</p>}
-                            </div>
-                        </div>
-
-                        <dl className="flex flex-col gap-3 text-sm">
-                            {price.label && (
-                                <DetailRow label="Price">
-                                    <span className={cn("font-semibold", price.kind === "free" && "text-emerald-600 dark:text-emerald-400")}>{price.label}</span>
-                                    {price.tooltip && <span className="ml-2 text-muted-foreground text-xs">- {price.tooltip}</span>}
-                                </DetailRow>
-                            )}
-                            {obtain && <DetailRow label="Obtain">{obtain}</DetailRow>}
-                            {usage && <DetailRow label="Usage">{usage}</DetailRow>}
-                            {description && <DetailRow label="Description">{description}</DetailRow>}
-                            {dialog && (
-                                <DetailRow label="Dialog">
-                                    <q className="italic">{dialog}</q>
-                                </DetailRow>
-                            )}
-                            {Boolean(drawers?.length || designers?.length) && (
-                                <DetailRow label="Credits">
-                                    {drawers?.length ? <span>Art: {drawers.join(", ")}</span> : null}
-                                    {drawers?.length && designers?.length ? " · " : null}
-                                    {designers?.length ? <span>Design: {designers.join(", ")}</span> : null}
-                                </DetailRow>
-                            )}
-                            {releaseTs && <DetailRow label="Released">{new Date(releaseTs).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</DetailRow>}
-                            {popularity && popularity.pct !== null && (
-                                <DetailRow label="Popularity">
-                                    <span className="font-semibold" style={{ color }}>
-                                        {formatSharePct(popularity.pct)}
-                                    </span>
-                                    <span className="ml-2 text-muted-foreground text-xs">of users own this · {popularity.owners.toLocaleString()} owners</span>
-                                </DetailRow>
-                            )}
-                        </dl>
-
-                        <DialogClose className="mt-auto cursor-pointer rounded-md border border-border bg-muted/40 px-3 py-2 font-medium text-xs transition-colors hover:bg-muted md:hidden">Back to collection</DialogClose>
-                    </div>
-                </ScrollArea>
-            </div>
-        </DialogContent>
-    );
-}
-
-function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
-    return (
-        <div className="space-y-1">
-            <dt className="font-mono font-semibold text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{label}</dt>
-            <dd className="text-foreground/85 text-sm leading-relaxed">{children}</dd>
-        </div>
+        <SkinDetailContent
+            skin={skin}
+            opName={opName}
+            skinName={skinName}
+            avatarURL={avatarURL}
+            price={price}
+            corner={<OwnershipBadge color={color} owned={owned} />}
+            closeLabel="Back to collection"
+            extraRows={
+                popularity && popularity.pct !== null ? (
+                    <DetailRow label="Popularity">
+                        <span className="font-semibold" style={{ color }}>
+                            {formatSharePct(popularity.pct)}
+                        </span>
+                        <span className="ml-2 text-muted-foreground text-xs">of users own this · {popularity.owners.toLocaleString()} owners</span>
+                    </DetailRow>
+                ) : null
+            }
+        />
     );
 }
 
@@ -744,14 +679,6 @@ function buildSections(filtered: ICardData[], mode: SortMode, popularity: Map<st
 }
 
 // ─── Pricing model ─────────────────────────────────────────────────────────
-
-interface ISkinPrice {
-    kind: "paid" | "free" | "bundle" | "store";
-    /** Short display label for chips, e.g. "18 OP" or "Free". `null` = don't render a chip. */
-    label: string | null;
-    /** Longer hover / secondary text - e.g. acquisition method. */
-    tooltip: string | null;
-}
 
 /** Per-skin Originite Prime cost overrides. Keyed by **skinId** (most specific -
  *  e.g. `char_002_amiya@witch#1`) or **skinGroupId** (e.g. `2024#witch` - applies

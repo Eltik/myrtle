@@ -16,6 +16,7 @@ import { Route as StagesRouteImport } from './routes/stages'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OperatorsRouteImport } from './routes/operators'
+import { Route as HelpMeRouteImport } from './routes/help-me'
 import { Route as EnemiesRouteImport } from './routes/enemies'
 import { Route as DyntestRouteImport } from './routes/dyntest'
 import { Route as DonateRouteImport } from './routes/donate'
@@ -26,6 +27,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as UserSearchRouteImport } from './routes/user.search'
 import { Route as UserLeaderboardRouteImport } from './routes/user.leaderboard'
 import { Route as UserIdRouteImport } from './routes/user.$id'
+import { Route as ToolsReleaseRouteImport } from './routes/tools.release'
 import { Route as ToolsRecruitmentRouteImport } from './routes/tools.recruitment'
 import { Route as ToolsRandomizerRouteImport } from './routes/tools.randomizer'
 import { Route as ToolsPlannerRouteImport } from './routes/tools.planner'
@@ -88,6 +90,11 @@ const OperatorsRoute = OperatorsRouteImport.update({
   path: '/operators',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HelpMeRoute = HelpMeRouteImport.update({
+  id: '/help-me',
+  path: '/help-me',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EnemiesRoute = EnemiesRouteImport.update({
   id: '/enemies',
   path: '/enemies',
@@ -135,6 +142,11 @@ const UserLeaderboardRoute = UserLeaderboardRouteImport.update({
 const UserIdRoute = UserIdRouteImport.update({
   id: '/user/$id',
   path: '/user/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ToolsReleaseRoute = ToolsReleaseRouteImport.update({
+  id: '/tools/release',
+  path: '/tools/release',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ToolsRecruitmentRoute = ToolsRecruitmentRouteImport.update({
@@ -277,6 +289,7 @@ export interface FileRoutesByFullPath {
   '/donate': typeof DonateRoute
   '/dyntest': typeof DyntestRoute
   '/enemies': typeof EnemiesRoute
+  '/help-me': typeof HelpMeRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
@@ -297,6 +310,7 @@ export interface FileRoutesByFullPath {
   '/tools/planner': typeof ToolsPlannerRoute
   '/tools/randomizer': typeof ToolsRandomizerRoute
   '/tools/recruitment': typeof ToolsRecruitmentRoute
+  '/tools/release': typeof ToolsReleaseRoute
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
@@ -321,6 +335,7 @@ export interface FileRoutesByTo {
   '/donate': typeof DonateRoute
   '/dyntest': typeof DyntestRoute
   '/enemies': typeof EnemiesRoute
+  '/help-me': typeof HelpMeRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
@@ -340,6 +355,7 @@ export interface FileRoutesByTo {
   '/tools/planner': typeof ToolsPlannerRoute
   '/tools/randomizer': typeof ToolsRandomizerRoute
   '/tools/recruitment': typeof ToolsRecruitmentRoute
+  '/tools/release': typeof ToolsReleaseRoute
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
@@ -366,6 +382,7 @@ export interface FileRoutesById {
   '/donate': typeof DonateRoute
   '/dyntest': typeof DyntestRoute
   '/enemies': typeof EnemiesRoute
+  '/help-me': typeof HelpMeRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
@@ -386,6 +403,7 @@ export interface FileRoutesById {
   '/tools/planner': typeof ToolsPlannerRoute
   '/tools/randomizer': typeof ToolsRandomizerRoute
   '/tools/recruitment': typeof ToolsRecruitmentRoute
+  '/tools/release': typeof ToolsReleaseRoute
   '/user/$id': typeof UserIdRoute
   '/user/leaderboard': typeof UserLeaderboardRoute
   '/user/search': typeof UserSearchRoute
@@ -412,6 +430,7 @@ export interface FileRouteTypes {
     | '/donate'
     | '/dyntest'
     | '/enemies'
+    | '/help-me'
     | '/operators'
     | '/privacy'
     | '/settings'
@@ -432,6 +451,7 @@ export interface FileRouteTypes {
     | '/tools/planner'
     | '/tools/randomizer'
     | '/tools/recruitment'
+    | '/tools/release'
     | '/user/$id'
     | '/user/leaderboard'
     | '/user/search'
@@ -456,6 +476,7 @@ export interface FileRouteTypes {
     | '/donate'
     | '/dyntest'
     | '/enemies'
+    | '/help-me'
     | '/operators'
     | '/privacy'
     | '/settings'
@@ -475,6 +496,7 @@ export interface FileRouteTypes {
     | '/tools/planner'
     | '/tools/randomizer'
     | '/tools/recruitment'
+    | '/tools/release'
     | '/user/$id'
     | '/user/leaderboard'
     | '/user/search'
@@ -500,6 +522,7 @@ export interface FileRouteTypes {
     | '/donate'
     | '/dyntest'
     | '/enemies'
+    | '/help-me'
     | '/operators'
     | '/privacy'
     | '/settings'
@@ -520,6 +543,7 @@ export interface FileRouteTypes {
     | '/tools/planner'
     | '/tools/randomizer'
     | '/tools/recruitment'
+    | '/tools/release'
     | '/user/$id'
     | '/user/leaderboard'
     | '/user/search'
@@ -546,6 +570,7 @@ export interface RootRouteChildren {
   DonateRoute: typeof DonateRoute
   DyntestRoute: typeof DyntestRoute
   EnemiesRoute: typeof EnemiesRoute
+  HelpMeRoute: typeof HelpMeRoute
   OperatorsRoute: typeof OperatorsRoute
   PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRoute
@@ -565,6 +590,7 @@ export interface RootRouteChildren {
   ToolsPlannerRoute: typeof ToolsPlannerRoute
   ToolsRandomizerRoute: typeof ToolsRandomizerRoute
   ToolsRecruitmentRoute: typeof ToolsRecruitmentRoute
+  ToolsReleaseRoute: typeof ToolsReleaseRoute
   UserIdRoute: typeof UserIdRoute
   UserLeaderboardRoute: typeof UserLeaderboardRoute
   UserSearchRoute: typeof UserSearchRoute
@@ -622,6 +648,13 @@ declare module '@tanstack/react-router' {
       path: '/operators'
       fullPath: '/operators'
       preLoaderRoute: typeof OperatorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/help-me': {
+      id: '/help-me'
+      path: '/help-me'
+      fullPath: '/help-me'
+      preLoaderRoute: typeof HelpMeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/enemies': {
@@ -692,6 +725,13 @@ declare module '@tanstack/react-router' {
       path: '/user/$id'
       fullPath: '/user/$id'
       preLoaderRoute: typeof UserIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tools/release': {
+      id: '/tools/release'
+      path: '/tools/release'
+      fullPath: '/tools/release'
+      preLoaderRoute: typeof ToolsReleaseRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tools/recruitment': {
@@ -928,6 +968,7 @@ const rootRouteChildren: RootRouteChildren = {
   DonateRoute: DonateRoute,
   DyntestRoute: DyntestRoute,
   EnemiesRoute: EnemiesRoute,
+  HelpMeRoute: HelpMeRoute,
   OperatorsRoute: OperatorsRoute,
   PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRoute,
@@ -947,6 +988,7 @@ const rootRouteChildren: RootRouteChildren = {
   ToolsPlannerRoute: ToolsPlannerRoute,
   ToolsRandomizerRoute: ToolsRandomizerRoute,
   ToolsRecruitmentRoute: ToolsRecruitmentRoute,
+  ToolsReleaseRoute: ToolsReleaseRoute,
   UserIdRoute: UserIdRoute,
   UserLeaderboardRoute: UserLeaderboardRoute,
   UserSearchRoute: UserSearchRoute,

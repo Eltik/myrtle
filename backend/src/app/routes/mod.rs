@@ -1,6 +1,6 @@
 use axum::{
     Json, Router,
-    routing::{get, post, put},
+    routing::{delete, get, post, put},
 };
 use uuid::Uuid;
 
@@ -98,6 +98,7 @@ pub mod level;
 pub mod operator_notes;
 pub mod operators;
 pub mod planner;
+pub mod release;
 pub mod roster;
 pub mod search;
 pub mod skins;
@@ -132,6 +133,10 @@ pub fn router() -> Router<AppState> {
         .route("/medal-icon/{id}", get(assets::medal_icon))
         .route("/charart/{id}", get(assets::charart))
         .route("/skin-portrait/{id}", get(assets::skin_portrait))
+        .route("/banner-image/{id}", get(assets::banner_image))
+        .route("/event-image/{id}", get(assets::event_image))
+        .route("/brand-kv/{id}", get(assets::brand_kv))
+        .route("/brand-logo/{id}", get(assets::brand_logo))
         .route("/assets/{*path}", get(assets::generic))
         .route("/login/send-code", post(auth::send_code))
         .route("/login", post(auth::login))
@@ -143,6 +148,18 @@ pub fn router() -> Router<AppState> {
         .route("/auth/verify", get(auth::verify))
         .route("/auth/update-settings", post(auth::update_settings))
         .route("/auth/disconnect", post(auth::disconnect))
+        .route("/release/events", get(release::events))
+        .route("/release/banners", get(release::banners))
+        .route("/release/skins", get(release::skins))
+        .route("/release/lag", get(release::lag))
+        .route(
+            "/release/overrides",
+            get(release::list_overrides).put(release::put_override),
+        )
+        .route(
+            "/release/overrides/{kind}/{cn_id}",
+            delete(release::delete_override),
+        )
         .route("/gacha/history", get(gacha::history))
         .route("/gacha/history/{char_id}", get(gacha::history_by_char))
         .route("/gacha/stored-records", get(gacha::stored_records))
@@ -268,6 +285,10 @@ pub fn router() -> Router<AppState> {
             "/{server}/skin-portrait/{id}",
             get(assets::skin_portrait_srv),
         )
+        .route("/{server}/banner-image/{id}", get(assets::banner_image_srv))
+        .route("/{server}/event-image/{id}", get(assets::event_image_srv))
+        .route("/{server}/brand-kv/{id}", get(assets::brand_kv_srv))
+        .route("/{server}/brand-logo/{id}", get(assets::brand_logo_srv))
         .route("/{server}/assets/{*path}", get(assets::generic_srv))
         .merge(tier_lists::router())
 }

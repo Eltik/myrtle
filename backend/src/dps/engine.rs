@@ -6,6 +6,7 @@ use crate::core::gamedata::types::operator::Operator;
 use crate::dps::operator_data::OperatorData;
 use crate::dps::operator_unit::OperatorParams;
 
+use super::custom::apply_init;
 use super::custom::dispatch;
 use super::custom::dispatch_hps;
 use super::formulas::apply_shreds;
@@ -145,7 +146,7 @@ pub fn calculate_dps(
     let data = OperatorData::new(operator.clone());
 
     // Create OperatorUnit with resolved stats
-    let unit = OperatorUnit::new(
+    let mut unit = OperatorUnit::new(
         data,
         params,
         formula.default_skill,
@@ -159,6 +160,9 @@ pub fn calculate_dps(
         return None;
     }
 
+    // Per-operator __init__ state the generator cannot hoist (custom/init.rs).
+    apply_init(&mut unit);
+
     let shredded = apply_shreds(enemy, &unit.shreds);
 
     // Get the skill formula for current skill index
@@ -170,7 +174,7 @@ pub fn calculate_dps(
     // see external fragile (matches Python behavior where buff_fragile=0 during skill_dps).
     // Fragile is applied externally after the call.
     let external_fragile = unit.buff_fragile;
-    let mut unit = unit;
+
     unit.buff_fragile = 0.0;
     let skill_dps = calculate_skill_dps(&unit, skill_formula, &shredded);
 

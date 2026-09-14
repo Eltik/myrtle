@@ -8,6 +8,7 @@ pub mod medals;
 pub mod operator_notes;
 pub mod operator_ownership;
 pub mod planner;
+pub mod release;
 pub mod roguelike;
 pub mod roster;
 pub mod sandbox;

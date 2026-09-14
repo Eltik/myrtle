@@ -119,7 +119,7 @@ async fn handle_connection(
                     version,
                     "asset update complete, reloading game data"
                 );
-                perform_reload(state, server).await;
+                perform_reload(state, server, Some(version)).await;
                 last_reload = Instant::now();
             }
             "error" => {
@@ -148,7 +148,11 @@ async fn handle_connection(
     }
 }
 
-pub(crate) async fn perform_reload(state: &AppState, server: Server) {
+/// `res_version` is the asset pipeline's version string when the reload was
+/// triggered by an `update_complete` message, and `None` for reloads with no
+/// version to record (the pool-detail job). The release ledger keys the
+/// forward-only operator/banner debut link on it.
+pub(crate) async fn perform_reload(state: &AppState, server: Server, res_version: Option<&str>) {
     let sd = state.server_data(server);
     let data_dir = sd.game_data_dir.clone();
     let assets_dir = sd.assets_dir.clone();
@@ -181,6 +185,12 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server) {
             .await;
 
             let was_loaded = sd.loaded.swap(true, Ordering::Release);
+
+            crate::core::release::ledger::spawn_record(
+                state.clone(),
+                server,
+                res_version.map(str::to_owned),
+            );
 
             let prefix = if is_default {
                 "static:".to_string()

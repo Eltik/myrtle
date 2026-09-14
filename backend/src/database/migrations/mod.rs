@@ -49,6 +49,18 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v015_investment_levels",
         include_str!("v015_investment_levels.sql"),
     ),
+    (
+        "v016_release_ledger",
+        include_str!("v016_release_ledger.sql"),
+    ),
+    (
+        "v017_release_override_names",
+        include_str!("v017_release_override_names.sql"),
+    ),
+    (
+        "v018_release_override_rosters",
+        include_str!("v018_release_override_rosters.sql"),
+    ),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

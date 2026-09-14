@@ -58,6 +58,89 @@ fn make_test_key(
 const TOLERANCE_PERCENT: f64 = 0.15;
 const TOLERANCE_ABSOLUTE: f64 = 1.0;
 
+/// A case set where the Python reference is wrong and the fixture, generated
+/// from it, is wrong with it. Regenerating `expected_dps.json` reproduces the
+/// bug, so instead the reference value is CORRECTED here by a factor derived
+/// from the game data, and the Rust is held to that. Every entry must match at
+/// least one case, so an entry outlives its bug only until the next regen.
+struct ReferenceBug {
+    class_name: &'static str,
+    skill: i32,
+    /// What the reference computes, what the data says, and where.
+    note: &'static str,
+    /// Multiplier that turns the reference's number into the right one.
+    correction: fn(&gamedata::types::operator::Operator) -> f64,
+}
+
+const REFERENCE_BUGS: &[ReferenceBug] = &[ReferenceBug {
+    class_name: "Vulcan",
+    skill: 2,
+    // damage_formulas.py `Vulcan.skill_dps` assigns a local
+    // `atk_interval = 2 if self.skill == 2` and then divides by
+    // `self.atk_interval`, the 1.6 s base, so the local is dead. The game data
+    // gives skchr_hpsts_2 `base_attack_time: +0.4` on the 1.6 s base: the skill
+    // attacks every 2.0 s, which is what the transpiled Rust divides by (it
+    // folds the attribute and the local into one variable). Surfaced by the
+    // first CI run of this suite, 2026-09-14: 156 cases, Rust = 0.80 x Python.
+    note: "reference divides by the 1.6 s base interval; S2 adds base_attack_time +0.4",
+    correction: |op| {
+        let base = op
+            .phases
+            .last()
+            .and_then(|p| p.attributes_key_frames.last())
+            .map(|kf| kf.data.base_attack_time)
+            .expect("Vulcan has phase keyframes");
+        let delta = op
+            .skills
+            .get(1)
+            .and_then(|s| s.static_data.as_ref())
+            .and_then(|s| s.levels.last())
+            .and_then(|l| {
+                l.blackboard
+                    .iter()
+                    .find(|b| b.key == "base_attack_time")
+                    .map(|b| b.value)
+            })
+            .expect("Vulcan S2 carries base_attack_time");
+        base / (base + delta)
+    },
+}];
+
+/// A case set the ENGINE is known to get wrong: the reference is right and the
+/// Rust is not. Cases here are still computed and compared, but a mismatch is
+/// counted as a known defect rather than a failure, so CI stays green on
+/// plumbing while the defect is visible in every run's output. Each entry must
+/// match at least one MISMATCH, so fixing the engine forces its deletion. An
+/// entry is never added without the finding that names the missing term.
+struct KnownEngineDefect {
+    class_name: &'static str,
+    /// `None` covers every skill.
+    skill: Option<i32>,
+    note: &'static str,
+}
+
+// Empty since the Wiš'adel shadow fix (custom/init.rs). The 2026-09-14 entry
+// read: "Walter, all skills, shadow damage missing: OperatorUnit::shadows is
+// never populated" — 92 of 192 cases diverged by exactly n*drone_atk/4.25.
+const KNOWN_ENGINE_DEFECTS: &[KnownEngineDefect] = &[];
+
+fn known_engine_defect(class_name: &str, skill: i32) -> Option<usize> {
+    KNOWN_ENGINE_DEFECTS
+        .iter()
+        .position(|d| d.class_name == class_name && d.skill.is_none_or(|s| s == skill))
+}
+
+fn reference_correction(
+    operator: &gamedata::types::operator::Operator,
+    class_name: &str,
+    skill: i32,
+) -> Option<(usize, f64)> {
+    REFERENCE_BUGS
+        .iter()
+        .position(|b| b.class_name == class_name && b.skill == skill)
+        .map(|i| (i, (REFERENCE_BUGS[i].correction)(operator)))
+}
+
 fn compare_dps(rust_dps: f64, python_dps: f64) -> bool {
     let diff = (rust_dps - python_dps).abs();
     if python_dps.abs() < 0.01 {
@@ -98,6 +181,8 @@ fn test_engine_vs_python_expected() {
     let mut failed = 0u64;
     let mut skipped = 0u64;
     let mut failures: Vec<String> = Vec::new();
+    let mut corrected = vec![0u64; REFERENCE_BUGS.len()];
+    let mut known_defects = vec![0u64; KNOWN_ENGINE_DEFECTS.len()];
 
     // Per-formula-type tracking
     let mut type_tested: HashMap<String, u64> = HashMap::new();
@@ -164,6 +249,14 @@ fn test_engine_vs_python_expected() {
                             let Some(&expected_dps) = expected.get(&key) else {
                                 continue;
                             };
+                            let expected_dps =
+                                match reference_correction(operator, &formula.class_name, skill) {
+                                    Some((i, factor)) => {
+                                        corrected[i] += 1;
+                                        expected_dps * factor
+                                    }
+                                    None => expected_dps,
+                                };
 
                             // Build params with debuffs
                             let shred = if def_mult != 1.0
@@ -212,6 +305,10 @@ fn test_engine_vs_python_expected() {
                                 if compare_dps(result.skill_dps, expected_dps) {
                                     passed += 1;
                                     *type_passed.entry(formula_type.to_owned()).or_default() += 1;
+                                } else if let Some(i) =
+                                    known_engine_defect(&formula.class_name, skill)
+                                {
+                                    known_defects[i] += 1;
                                 } else {
                                     failed += 1;
                                     if failures.len() < 30 {
@@ -247,6 +344,22 @@ fn test_engine_vs_python_expected() {
     println!("  Passed:  {passed}");
     println!("  Failed:  {failed}");
     println!("  Skipped: {skipped}");
+    for (bug, n) in REFERENCE_BUGS.iter().zip(&corrected) {
+        println!(
+            "  Reference corrected: {} S{}: {n} cases ({})",
+            bug.class_name, bug.skill, bug.note
+        );
+    }
+    for (defect, n) in KNOWN_ENGINE_DEFECTS.iter().zip(&known_defects) {
+        println!(
+            "  KNOWN ENGINE DEFECT: {} {}: {n} cases diverge ({})",
+            defect.class_name,
+            defect
+                .skill
+                .map_or_else(|| "all skills".to_owned(), |s| format!("S{s}")),
+            defect.note
+        );
+    }
 
     let pass_rate = if tested > 0 {
         passed as f64 / tested as f64 * 100.0
@@ -278,6 +391,23 @@ fn test_engine_vs_python_expected() {
     }
 
     assert!(tested > 0, "No test cases were executed");
+    for (defect, n) in KNOWN_ENGINE_DEFECTS.iter().zip(&known_defects) {
+        assert!(
+            *n > 0,
+            "KNOWN_ENGINE_DEFECTS entry {} no longer diverges: the engine is fixed, delete \
+             the entry",
+            defect.class_name
+        );
+    }
+    for (bug, n) in REFERENCE_BUGS.iter().zip(&corrected) {
+        assert!(
+            *n > 0,
+            "REFERENCE_BUGS entry {} S{} matched no case: the fixture no longer carries \
+             it, delete the entry",
+            bug.class_name,
+            bug.skill
+        );
+    }
 
     // The point of the suite: the transpiled formulas must not drift from the
     // Python reference. A failure means `generated.rs` and `expected_dps.json`

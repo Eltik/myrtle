@@ -48,6 +48,42 @@ pub fn keep_for_gamedata(name: &str) -> bool {
     is_idx(name) || name.starts_with("anon/")
 }
 
+/// Bundles the Release Planner (`/tools/release`, `docs/release/`) serves as
+/// art: gacha banner strips, event home-entry key art and per-event UI kits,
+/// skin shop portraits, and skin brand key visuals and logos. The client keeps
+/// only the CURRENT set of banners and home entries in these packs, so what a
+/// pull yields is "running plus recently retro-listed", never the archive;
+/// the pull still has to happen for it to be served at all. Sized 2026-09-14
+/// on the local EN raw dir: 6 `act_banner` bundles, 1 `[uc]homeentry`, 45
+/// `ui_zone_home_theme_*`, 39 `activity/[uc]*` kits.
+#[must_use]
+pub fn keep_for_release(name: &str) -> bool {
+    const PREFIXES: &[&str] = &[
+        // Gacha banner strips (`picLimited_76_0_1`), shop and zone banners.
+        "spritepack/ui_home_act_banner_",
+        // Event home-entry key art keyed by activity id.
+        "arts/ui/stage/[uc]homeentry",
+        "spritepack/ui_zone_home_theme_",
+        // Per-event UI kits (backgrounds, entry art, mission icons).
+        "activity/",
+        // Archives entry art per story event (`storyEntryPic_{act_id}`), kept
+        // by the client for every story event, unlike the home entry.
+        "spritepack/story_review_chapter_bg_",
+        "spritepack/story_review_mini_activity_bg_",
+        // Loading illustrations: one official piece per event, reached from an
+        // activity through its stages' `LoadingPicId`.
+        "arts/loadingillusts_",
+        // Legacy localised gacha banner hub (early EN strips).
+        "[[en]]/arts/ui/homebanners/",
+        "arts/ui/homebanners/",
+        // Skin shop portraits, brand key visuals and brand logos.
+        "spritepack/arts_shop_skin_portrait_",
+        "spritepack/ui_kv_img_",
+        "spritepack/ui_brand_image_hub_",
+    ];
+    is_idx(name) || PREFIXES.iter().any(|p| name.starts_with(p))
+}
+
 #[must_use]
 pub fn keep_for_operators(name: &str) -> bool {
     const PREFIXES: &[&str] = &[
@@ -113,6 +149,33 @@ mod tests {
         assert!(!keep_for_operators("arts/ui/[uc]loadingbg.ab"));
         assert!(!keep_for_operators("audio/sound_beta_2/music_0.ab"));
         assert!(!keep_for_operators("audio/sound_beta_2/enmy_snd_atk_0.ab"));
+    }
+
+    #[test]
+    fn keeps_release_planner_art() {
+        use super::keep_for_release;
+        assert!(keep_for_release(
+            "spritepack/ui_home_act_banner_gacha_h2_0.ab"
+        ));
+        assert!(keep_for_release(
+            "spritepack/ui_home_act_banner_gacha_en_0.ab"
+        ));
+        assert!(keep_for_release("arts/ui/stage/[uc]homeentry.ab"));
+        assert!(keep_for_release(
+            "spritepack/ui_zone_home_theme_act41sre.ab"
+        ));
+        assert!(keep_for_release("activity/[uc]act54sign.ab"));
+        assert!(keep_for_release("spritepack/arts_shop_skin_portrait_14.ab"));
+        assert!(keep_for_release("spritepack/story_review_chapter_bg_h1_0.ab"));
+        assert!(keep_for_release("arts/loadingillusts_3.ab"));
+        assert!(keep_for_release("spritepack/ui_kv_img_8.ab"));
+        assert!(keep_for_release("spritepack/ui_brand_image_hub_0.ab"));
+        assert!(keep_for_release("hot_update_list.idx"));
+        assert!(!keep_for_release("chararts/char_002_amiya.ab"));
+        assert!(!keep_for_release("audio/sound_beta_2/music_0.ab"));
+        assert!(!keep_for_release(
+            "scenes/obt/main/level_main_01-07/level_main_01-07.ab"
+        ));
     }
 
     #[test]

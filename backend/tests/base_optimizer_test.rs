@@ -4665,15 +4665,31 @@ fn morgan_siege_proviso_with_delphine_read_ninety_five() {
     const SIEGE: &str = "char_112_siege";
     const PROVISO: &str = "char_4032_provs";
     const DELPHINE: &str = "char_4110_delphn";
-    let roster: Vec<_> = [MORGAN, SIEGE, PROVISO, DELPHINE].iter().map(|id| profile(gd, id)).collect();
+    let roster: Vec<_> = [MORGAN, SIEGE, PROVISO, DELPHINE]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
     let mut rooms = vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 2)];
     rooms[0].current_operators = vec![DELPHINE.into()];
     rooms[1].current_operators = vec![MORGAN.into(), SIEGE.into(), PROVISO.into()];
     let building = UserBuilding { rooms };
-    let asn = compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
-    let tp = asn.rooms.iter().find(|r| r.slot_id == "tp").expect("the post");
-    assert!((tp.total_efficiency - 95.0).abs() < 1e-9, "Morgan 75 + Delphine 20: {}", tp.total_efficiency);
-    assert!(tp.order_value > 80.0, "Proviso's value in a level-2 post: {}", tp.order_value);
+    let asn =
+        compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+    let tp = asn
+        .rooms
+        .iter()
+        .find(|r| r.slot_id == "tp")
+        .expect("the post");
+    assert!(
+        (tp.total_efficiency - 95.0).abs() < 1e-9,
+        "Morgan 75 + Delphine 20: {}",
+        tp.total_efficiency
+    );
+    assert!(
+        tp.order_value > 80.0,
+        "Proviso's value in a level-2 post: {}",
+        tp.order_value
+    );
 }
 
 #[test]
