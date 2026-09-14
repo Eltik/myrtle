@@ -2,12 +2,12 @@ name: Backend CI
 
 on:
   push:
-    branches: [main, v3]
+    branches: [main]
     paths:
       - "backend/**"
       - ".github/workflows/backend-ci.yml"
   pull_request:
-    branches: [main, v3]
+    branches: [main]
     paths:
       - "backend/**"
       - ".github/workflows/backend-ci.yml"
@@ -106,31 +106,35 @@ jobs:
           key: test
           cache-on-failure: true
 
+      # Produced by assets-ci.yml's Integration job on every non-PR run (see the
+      # "Game data for backend CI" block there). The artifact root is the contents
+      # of `output/en/gamedata/`, so it lands at the same path a local install uses.
       - name: Download game data from assets pipeline
         uses: dawidd6/action-download-artifact@v6
         with:
           workflow: assets-ci.yml
           name: game-data
-          path: assets/output
+          path: assets/output/en/gamedata
           branch: ${{ github.base_ref || github.ref_name }}
           search_artifacts: true
           if_no_artifact_found: fail
 
       - name: Verify game data exists
         run: |
-          if [ ! -d "assets/output/gamedata/excel" ]; then
+          if [ ! -s "assets/output/en/gamedata/excel/character_table.json" ]; then
             echo "::error::Game data not found — the DPS/HPS parity suites cannot run."
-            echo "::error::Re-run assets-ci.yml on this branch, then re-run this job."
+            echo "::error::Run assets-ci.yml (workflow_dispatch) on this branch, then re-run this job."
+            find assets/output -maxdepth 4 | head -20
             exit 1
           fi
           echo "Game data found"
-          ls assets/output/gamedata/excel/ | head -10
+          ls assets/output/en/gamedata/excel/ | head -10
 
       - name: Run tests
         working-directory: backend
         env:
-          GAME_DATA_DIR: ../assets/output/gamedata/excel
-          ASSETS_DIR: ../assets/output
+          GAME_DATA_DIR: ../assets/output/en/gamedata/excel
+          ASSETS_DIR: ../assets/output/en
           RUST_BACKTRACE: 1
         run: cargo test -- --nocapture
 

@@ -11,6 +11,10 @@ on:
     paths:
       - "assets/**"
       - ".github/workflows/assets-ci.yml"
+  # Backend CI consumes the `game-data` artifact this workflow uploads. It is
+  # retained 90 days and only refreshed by a push to assets/**, so this is the
+  # lever for refreshing it by hand when the game updates but assets/ does not.
+  workflow_dispatch:
 
 # Cancel in-progress runs for the same branch/PR
 concurrency:
@@ -391,15 +395,58 @@ jobs:
             exit 1
           fi
 
+      # ── Game data for backend CI ──────────────────────────────────────────
+      # backend-ci.yml's Tests job downloads the `game-data` artifact uploaded at
+      # the end of this block, and its DPS/HPS parity suites fail without it. The
+      # `gamedata` profile fetches only the anon/ bundles + .idx manifests (~170 MB;
+      # the full tree is tens of GB), and `--gamedata` extracts only the tables from
+      # them. Layout mirrors a local install (`output/en/gamedata/...`), which is
+      # also the path the backend tests default to.
+      - name: Download EN gamedata bundles
+        if: github.event_name != 'pull_request'
+        working-directory: assets
+        run: |
+          ./binaries/downloader --server en --savedir ./ArkAssets/en --threads 8 \
+            download --all --profile gamedata
+          echo "Manifests:"; ls -la ArkAssets/en/*.idx
+          echo "Bundles:";   du -sh ArkAssets/en/anon
+
+      # The unpacker prints `error:` and still exits 0 when the gamedata export
+      # fails, so the verify step below is what actually gates the upload.
+      - name: Extract gamedata
+        if: github.event_name != 'pull_request'
+        working-directory: assets
+        run: |
+          ./binaries/unpacker extract \
+            --input ./ArkAssets/en \
+            --output ./output/en \
+            --gamedata
+
+      - name: Verify gamedata extract
+        if: github.event_name != 'pull_request'
+        working-directory: assets
+        run: |
+          for f in excel/character_table.json excel/skill_table.json levels/enemydata/enemy_database.json; do
+            if [ ! -s "output/en/gamedata/$f" ]; then
+              echo "::error::gamedata extract is missing $f — not uploading a broken artifact"
+              exit 1
+            fi
+          done
+          echo "excel tables: $(find output/en/gamedata/excel -type f | wc -l)"
+          echo "gamedata files: $(find output/en/gamedata -type f | wc -l)"
+          du -sh output/en/gamedata
+
+      # Retained 90 days (the maximum) so backend CI keeps working through a quiet
+      # stretch on assets/**; `search_artifacts` on the consumer side finds the most
+      # recent run that carried it. Re-run via workflow_dispatch to refresh sooner.
       - name: Upload game data for backend CI
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/v3'
+        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v5
         with:
           name: game-data
-          path: |
-            assets/output/gamedata/
-          retention-days: 7
-          if-no-files-found: warn
+          path: assets/output/en/gamedata/
+          retention-days: 90
+          if-no-files-found: error
 
   # ──────────────────────────────────────────────────────────────────────────────
   # Final status
