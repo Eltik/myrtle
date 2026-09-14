@@ -4650,6 +4650,32 @@ fn pinned_support_seats_report_their_own_figure() {
     );
 }
 
+/// Morgan, Siege and Proviso in a level-2 post with Delphine in the Control
+/// Center (user's in-game check 2026-09-14: +102% beside a +3% innate line):
+/// Morgan counts herself and Siege (2 x 20) plus 35 beside Siege, Delphine
+/// adds 10 per Glasgow operator in the post (2 x 10) = 95; the game's
+/// remaining 7 is a flat trading global from another Control Center seat,
+/// and the +3% is the innate per-operator bonus we keep in the yield only.
+#[test]
+fn morgan_siege_proviso_with_delphine_read_ninety_five() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const MORGAN: &str = "char_154_morgan";
+    const SIEGE: &str = "char_112_siege";
+    const PROVISO: &str = "char_4032_provs";
+    const DELPHINE: &str = "char_4110_delphn";
+    let roster: Vec<_> = [MORGAN, SIEGE, PROVISO, DELPHINE].iter().map(|id| profile(gd, id)).collect();
+    let mut rooms = vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 2)];
+    rooms[0].current_operators = vec![DELPHINE.into()];
+    rooms[1].current_operators = vec![MORGAN.into(), SIEGE.into(), PROVISO.into()];
+    let building = UserBuilding { rooms };
+    let asn = compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+    let tp = asn.rooms.iter().find(|r| r.slot_id == "tp").expect("the post");
+    assert!((tp.total_efficiency - 95.0).abs() < 1e-9, "Morgan 75 + Delphine 20: {}", tp.total_efficiency);
+    assert!(tp.order_value > 80.0, "Proviso's value in a level-2 post: {}", tp.order_value);
+}
+
 #[test]
 fn viviana_synergy_flips_the_cc_to_a_block_aligned_with_her_knights() {
     // Viviana's CC buff ("all Knight Operators in Factories +7%") links her to the factory
