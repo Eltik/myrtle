@@ -35,7 +35,13 @@ impl FromRequestParts<AppState> for AuthUser {
     ) -> Result<Self, Self::Rejection> {
         // Try service key first (for internal SSR calls).
         // Constant-time compare to avoid leaking the key via timing.
+        // Both sides are checked for emptiness before the compare: `ct_eq` on
+        // two empty slices is equal, so an empty configured key and an empty
+        // header would authenticate each other. `AppConfig::require_secret`
+        // refuses an empty key at boot; this is the second lock on that door.
         if let Some(key) = parts.headers.get("x-service-key")
+            && !key.is_empty()
+            && !state.config.service_key.is_empty()
             && key
                 .as_bytes()
                 .ct_eq(state.config.service_key.as_bytes())

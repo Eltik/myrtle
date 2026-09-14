@@ -641,6 +641,26 @@ fn validate(layout: &[DraftRoom], game_data: &GameData) -> Result<(), ApiError> 
         }
     }
 
+    // A room type cannot appear more often than the game allows one. This is
+    // a cost bound as much as a correctness one: the rotation planner sizes its
+    // candidate pool from the per-type room count, so a layout weighted onto a
+    // single type inflates the search well past what any roster can fill.
+    // `MAX_ROOMS` bounds the total; this bounds the mix.
+    let mut per_type: HashMap<&str, i32> = HashMap::new();
+    for room in layout {
+        let count = per_type.entry(room.room_type.as_str()).or_default();
+        *count += 1;
+        if let Some(def) = game_data.building.rooms.get(&room.room_type)
+            && def.max_count > 0
+            && *count > def.max_count
+        {
+            return Err(ApiError::BadRequest(format!(
+                "layout has {count} '{}' rooms, more than the {} a base can hold",
+                room.room_type, def.max_count
+            )));
+        }
+    }
+
     // One operator, one seat - the engine assumes it, so catch a violation here
     // instead of letting a duplicated operator inflate the score.
     let mut placed: HashSet<&str> = HashSet::new();

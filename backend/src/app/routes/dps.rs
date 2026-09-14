@@ -3,6 +3,7 @@ use axum::extract::State;
 use axum::http::HeaderMap;
 use axum::response::Response;
 
+use crate::app::cpu;
 use crate::app::error::ApiError;
 use crate::app::routes::static_data::json_response;
 use crate::app::services;
@@ -17,11 +18,18 @@ pub async fn operators(
     Ok(json_response(cached, &headers))
 }
 
+/// The simulation is pure CPU on an unauthenticated route, so the body is
+/// bounds-checked first and the work then runs on the blocking pool under
+/// admission control: over the limit is a 503 rather than an occupied worker.
 pub async fn calculate(
     State(state): State<AppState>,
     Json(body): Json<services::dps::CalculateRequest>,
 ) -> Result<Json<DpsResult>, ApiError> {
-    let result = services::dps::calculate(&state, body)?;
+    body.validate()?;
+    let result = cpu::run("dps_calculate", move || {
+        services::dps::calculate(&state, body)
+    })
+    .await??;
     Ok(Json(result))
 }
 
@@ -37,6 +45,10 @@ pub async fn calculate_hps(
     State(state): State<AppState>,
     Json(body): Json<services::dps::CalculateRequest>,
 ) -> Result<Json<HpsResult>, ApiError> {
-    let result = services::dps::calculate_hps(&state, body)?;
+    body.validate()?;
+    let result = cpu::run("hps_calculate", move || {
+        services::dps::calculate_hps(&state, body)
+    })
+    .await??;
     Ok(Json(result))
 }

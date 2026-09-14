@@ -2,8 +2,10 @@ use axum::Json;
 use axum::extract::{Query, State};
 use serde::Deserialize;
 
+use crate::app::cpu;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
+use crate::app::routes::resolve_uid;
 use crate::app::services::base_planner::{
     AccountFactsReq, CatalogResponse, EvaluateRequest, EvaluateResponse, LayoutResponse,
     OptimizeRequest, OptimizeResponse, RotationRequest, catalog, evaluate, layout, optimize,
@@ -30,23 +32,10 @@ async fn viewer_id(state: &AppState, auth: &MaybeAuthUser) -> Option<uuid::Uuid>
         .map(|u| u.id)
 }
 
-/// Resolve which roster to plan against: the requested uid, or the caller's own
-/// when none is given (which then requires being signed in).
-async fn resolve_uid(
-    state: &AppState,
-    auth: &MaybeAuthUser,
-    uid_param: Option<&str>,
-) -> Result<String, ApiError> {
-    if let Some(uid) = uid_param {
-        return Ok(uid.to_string());
-    }
-    let auth = auth.0.as_ref().ok_or(ApiError::Unauthorized)?;
-    let user_uuid: uuid::Uuid = auth.user_uuid()?;
-    let profile = find_by_id(&state.db, user_uuid)
-        .await?
-        .ok_or(ApiError::Unauthorized)?;
-    Ok(profile.uid)
-}
+// Which roster to plan against comes from the shared `resolve_uid` gate in
+// `routes::mod`, which must run here in the handler rather than inside the
+// service: `rotation_plan` can answer from cache without entering the service
+// at all, so a gate further in would not see that request.
 
 /// The player's real stationed base, as the planner's starting draft.
 pub async fn get_layout(
@@ -67,6 +56,7 @@ pub async fn evaluate_layout(
 ) -> Result<Json<EvaluateResponse>, ApiError> {
     let uid = resolve_uid(&state, &auth, params.uid.as_deref()).await?;
     let viewer = viewer_id(&state, &auth).await;
+    let _admission = cpu::admit("base_evaluate")?;
     Ok(Json(evaluate(&state, &uid, viewer, body).await?))
 }
 
@@ -78,6 +68,11 @@ pub async fn optimize_layout(
 ) -> Result<Json<OptimizeResponse>, ApiError> {
     let uid = resolve_uid(&state, &auth, params.uid.as_deref()).await?;
     let viewer = viewer_id(&state, &auth).await;
+    // Bounded rather than moved to the blocking pool: `optimize` interleaves
+    // its search with awaited database reads, so it cannot be handed over as an
+    // owned closure until it is split into load-then-compute. This caps how
+    // many async workers the search can occupy at once.
+    let _admission = cpu::admit("base_optimize")?;
     Ok(Json(optimize(&state, &uid, viewer, body).await?))
 }
 
@@ -113,6 +108,9 @@ pub async fn rotation_plan(
         )
             .into_response());
     }
+    // After the cache read, so a hit does not consume a permit. Only the miss,
+    // which runs the search, is admission-controlled.
+    let _admission = cpu::admit("base_rotation")?;
     let resp = rotation(&state, &uid, viewer, body).await?;
     let json = serde_json::to_string(&resp)
         .map_err(|e| ApiError::Internal(anyhow::anyhow!("serialize rotation: {e}")))?;

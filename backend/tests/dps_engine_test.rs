@@ -278,6 +278,16 @@ fn test_engine_vs_python_expected() {
     }
 
     assert!(tested > 0, "No test cases were executed");
+
+    // The point of the suite: the transpiled formulas must not drift from the
+    // Python reference. A failure means `generated.rs` and `expected_dps.json`
+    // disagree - read the sample failures above, then regenerate with
+    // `cargo run --bin generate-dps -- --formulas --transpile --expected`
+    // before concluding the fixture is merely stale.
+    assert_eq!(
+        failed, 0,
+        "{failed} of {tested} DPS cases diverge from the Python reference"
+    );
 }
 
 /// When a specific module is requested that the current game data can't resolve,

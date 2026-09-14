@@ -1,13 +1,24 @@
 use anyhow::Result;
 use axum::Router;
+use axum::extract::State;
 use axum::http::HeaderName;
+use axum::routing::get;
 use tower_http::compression::predicate::{DefaultPredicate, NotForContentType, Predicate};
 use tower_http::compression::{CompressionLayer, CompressionLevel};
 use tower_http::cors::CorsLayer;
-use tower_http::trace::TraceLayer;
 
+use crate::app::metrics::METRICS;
 use crate::app::routes::router;
 use crate::app::state::AppState;
+use crate::app::{cpu, middleware};
+
+/// Prometheus scrape endpoint.
+///
+/// Deliberately outside `/api`: it serves the monitoring system, not the
+/// public API.
+async fn metrics_handler(State(state): State<AppState>) -> String {
+    METRICS.render(Some(&state.db))
+}
 
 pub async fn run(state: AppState) -> Result<()> {
     let compression_predicate = DefaultPredicate::new()
@@ -29,22 +40,43 @@ pub async fn run(state: AppState) -> Result<()> {
     // three, which splits the edge cache key per requesting origin (the same skeleton read
     // HIT from one page and MISS from another). An empty `Vary` is the truthful one.
     let cors = CorsLayer::permissive().vary::<[HeaderName; 0]>([]);
+
+    // Layer order, outermost first. `.layer` wraps what came before it, so this
+    // list reads bottom-up against the builder below:
+    //
+    //   observe  -> outermost, so it sees every request including preflights,
+    //               and the latency it records covers compression.
+    //   cors     -> answers preflights.
+    //   compress -> encodes the body.
+    //   limit    -> innermost of the four, where the matched route is known.
     let app = Router::new()
         .nest("/api", router())
-        .with_state(state)
-        .layer(TraceLayer::new_for_http())
+        .route("/metrics", get(metrics_handler))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            middleware::rate_limit,
+        ))
         .layer(compression)
-        .layer(cors);
+        .layer(cors)
+        .layer(axum::middleware::from_fn(middleware::observe))
+        .with_state(state);
 
     let port = std::env::var("PORT")
         .ok()
         .and_then(|p| p.parse::<u16>().ok())
         .unwrap_or(3060);
     let listener = tokio::net::TcpListener::bind(("0.0.0.0", port)).await?;
-    tracing::info!("listening on :{port}");
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
-        .await?;
+    tracing::info!(
+        port,
+        cpu_permits = cpu::permits(),
+        "listening; metrics on /metrics"
+    );
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
+    .with_graceful_shutdown(shutdown_signal())
+    .await?;
     Ok(())
 }
 

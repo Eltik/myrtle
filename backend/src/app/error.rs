@@ -88,6 +88,13 @@ impl From<sqlx::Error> for ApiError {
     fn from(e: sqlx::Error) -> Self {
         match &e {
             sqlx::Error::RowNotFound => Self::NotFound,
+            // The pool is full and `acquire_timeout` elapsed. That is
+            // backpressure, not an internal fault, so it is a 503: the code a
+            // client, a proxy and a dashboard all know how to act on.
+            sqlx::Error::PoolTimedOut => {
+                tracing::warn!("database pool exhausted; shedding request");
+                Self::ServiceUnavailable
+            }
             sqlx::Error::Database(db) => match db.code().as_deref() {
                 Some("23505") => Self::Conflict("resource already exists".into()),
                 Some("22001") => Self::BadRequest("value too long".into()),

@@ -219,6 +219,77 @@ pub struct RequestShred {
     pub res_flat: Option<i32>,
 }
 
+/// Bounds on a `CalculateRequest`.
+///
+/// The endpoint is unauthenticated and every field feeds the simulator
+/// directly, so two classes of input have to be refused here. Fields that
+/// multiply the simulated tick count - `buffs.aspd` above all - decide how much
+/// work one request costs, and need a ceiling. Non-finite floats propagate
+/// through the arithmetic into a NaN result, which serialises as JSON `null`
+/// under a 200: a wrong answer presented as a correct one.
+///
+/// The ranges are deliberately wider than the game allows. This is a ceiling on
+/// cost, not a model of what is reachable in play, and a speculative query
+/// should not be refused.
+impl CalculateRequest {
+    pub fn validate(&self) -> Result<(), ApiError> {
+        int_range("promotion", self.promotion, 0, 2)?;
+        int_range("level", self.level, 1, 90)?;
+        int_range("potential", self.potential, 1, 6)?;
+        int_range("trust", self.trust, 0, 200)?;
+        int_range("skillIndex", self.skill_index, 0, 3)?;
+        int_range("masteryLevel", self.mastery_level, 0, 3)?;
+        int_range("skillLevel", self.skill_level, 1, 7)?;
+        int_range("moduleIndex", self.module_index, -1, 5)?;
+        int_range("moduleLevel", self.module_level, 0, 3)?;
+        int_range("targets", self.targets, 1, 50)?;
+
+        float_range("defense", self.defense, 0.0, 100_000.0)?;
+        float_range("res", self.res, 0.0, 1_000.0)?;
+        float_range("spBoost", self.sp_boost.map(f64::from), -10.0, 100.0)?;
+
+        if let Some(buffs) = &self.buffs {
+            // The one that matters: it multiplies the simulated tick count.
+            int_range("buffs.aspd", buffs.aspd, -500, 1_000)?;
+            int_range("buffs.flatAtk", buffs.flat_atk, -100_000, 100_000)?;
+            float_range("buffs.atk", buffs.atk.map(f64::from), -10.0, 100.0)?;
+            float_range("buffs.fragile", buffs.fragile.map(f64::from), -10.0, 100.0)?;
+        }
+
+        if let Some(shred) = &self.shred {
+            int_range("shred.def", shred.def, -100, 100)?;
+            int_range("shred.res", shred.res, -100, 100)?;
+            int_range("shred.defFlat", shred.def_flat, -100_000, 100_000)?;
+            int_range("shred.resFlat", shred.res_flat, -10_000, 10_000)?;
+        }
+
+        Ok(())
+    }
+}
+
+fn int_range(field: &str, value: Option<i32>, min: i32, max: i32) -> Result<(), ApiError> {
+    match value {
+        Some(v) if v < min || v > max => Err(ApiError::BadRequest(format!(
+            "{field} must be between {min} and {max} (got {v})"
+        ))),
+        _ => Ok(()),
+    }
+}
+
+/// Rejects NaN and both infinities as well as out-of-range values: nothing
+/// non-finite may reach the arithmetic.
+fn float_range(field: &str, value: Option<f64>, min: f64, max: f64) -> Result<(), ApiError> {
+    match value {
+        Some(v) if !v.is_finite() => Err(ApiError::BadRequest(format!(
+            "{field} must be a finite number"
+        ))),
+        Some(v) if v < min || v > max => Err(ApiError::BadRequest(format!(
+            "{field} must be between {min} and {max} (got {v})"
+        ))),
+        _ => Ok(()),
+    }
+}
+
 fn build_params(req: CalculateRequest) -> OperatorParams {
     OperatorParams {
         promotion: req.promotion,

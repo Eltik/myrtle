@@ -9,6 +9,7 @@ use crate::database::queries::game_credentials;
 use crate::database::queries::users;
 use crate::database::queries::users::create_user;
 use crate::database::queries::users::find_raw_by_uid;
+use crate::utils::redact::mask_identifier;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -140,7 +141,7 @@ pub async fn login_bilibili(
     let auth_session = match session::login_bilibili(&state.http_client, username, password).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::warn!(username = %username, error = ?e, "bilibili login failed");
+            tracing::warn!(username = %mask_identifier(username), error = ?e, "bilibili login failed");
             return Err(e.into());
         }
     };
@@ -179,7 +180,7 @@ pub async fn login_bilibili(
 
 pub async fn send_bilibili_sms(state: &AppState, phone: &str) -> Result<(), ApiError> {
     if let Err(e) = session::send_bilibili_sms(&state.http_client, phone).await {
-        tracing::warn!(phone = %phone, error = ?e, "bilibili send_sms_code failed");
+        tracing::warn!(phone = %mask_identifier(phone), error = ?e, "bilibili send_sms_code failed");
         return Err(e.into());
     }
     Ok(())
@@ -196,7 +197,7 @@ pub async fn login_bilibili_sms(
     {
         Ok(s) => s,
         Err(e) => {
-            tracing::warn!(phone = %phone, error = ?e, "bilibili sms login failed");
+            tracing::warn!(phone = %mask_identifier(phone), error = ?e, "bilibili sms login failed");
             return Err(e.into());
         }
     };
@@ -237,7 +238,7 @@ pub async fn send_code_cn(state: &AppState, phone: &str) -> Result<(), ApiError>
     use crate::core::hypergryph::passport;
 
     if let Err(e) = passport::send_phone_code(&state.http_client, phone).await {
-        tracing::warn!(phone = %phone, error = ?e, "hypergryph passport send_phone_code failed");
+        tracing::warn!(phone = %mask_identifier(phone), error = ?e, "hypergryph passport send_phone_code failed");
         return Err(e.into());
     }
     Ok(())
@@ -270,7 +271,7 @@ pub async fn login_cn(
     let auth_session = match session::login_cn(&state.http_client, credential).await {
         Ok(s) => s,
         Err(e) => {
-            tracing::warn!(phone = %phone, error = ?e, "hypergryph CN login failed");
+            tracing::warn!(phone = %mask_identifier(phone), error = ?e, "hypergryph CN login failed");
             return Err(e.into());
         }
     };

@@ -7,11 +7,44 @@ use uuid::Uuid;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
 use crate::app::state::AppState;
-use crate::database::queries::users::find_by_uid;
+use crate::database::models::user::UserProfile;
+use crate::database::queries::users::{find_by_id, find_by_uid};
 
 /// The standard `{"status":"ok"}` success body for endpoints that return no payload.
 pub fn ok_status() -> Json<serde_json::Value> {
     Json(serde_json::json!({ "status": "ok" }))
+}
+
+/// The privacy gate for a `uid` naming someone other than the caller.
+///
+/// This is the single place that decides whether one player may see another's
+/// data: a named profile is readable when it is the caller's own or it is
+/// marked public, and 403 otherwise. Any handler that accepts a `uid` must
+/// reach it through [`resolve_user_id`] or [`resolve_uid`] rather than reading
+/// the parameter directly.
+///
+/// The gate belongs in the handler, ahead of any cache read. Gating inside a
+/// service instead leaves a cache hit able to answer before the check runs.
+async fn resolve_public_profile(
+    state: &AppState,
+    auth: &MaybeAuthUser,
+    uid: &str,
+) -> Result<UserProfile, ApiError> {
+    let profile = find_by_uid(&state.db, uid)
+        .await?
+        .ok_or(ApiError::NotFound)?;
+
+    let is_own = auth
+        .0
+        .as_ref()
+        .and_then(|a| a.user_id.parse::<Uuid>().ok())
+        .is_some_and(|id| id == profile.id);
+
+    if !is_own && profile.public_profile != Some(true) {
+        return Err(ApiError::Forbidden);
+    }
+
+    Ok(profile)
 }
 
 /// Resolve the target `user_id` from either a `uid` query param (public access)
@@ -22,26 +55,32 @@ pub(crate) async fn resolve_user_id(
     auth: &MaybeAuthUser,
     uid_param: Option<&str>,
 ) -> Result<Uuid, ApiError> {
-    if let Some(uid) = uid_param {
-        let profile = find_by_uid(&state.db, uid)
-            .await?
-            .ok_or(ApiError::NotFound)?;
-
-        let is_own = auth
-            .0
-            .as_ref()
-            .and_then(|a| a.user_id.parse::<Uuid>().ok())
-            .is_some_and(|id| id == profile.id);
-
-        if !is_own && profile.public_profile != Some(true) {
-            return Err(ApiError::Forbidden);
-        }
-
-        Ok(profile.id)
-    } else {
-        let auth = auth.0.as_ref().ok_or(ApiError::Unauthorized)?;
-        auth.user_uuid()
+    match uid_param {
+        Some(uid) => Ok(resolve_public_profile(state, auth, uid).await?.id),
+        // The token already carries the id, so the self case costs no query.
+        None => auth.0.as_ref().ok_or(ApiError::Unauthorized)?.user_uuid(),
     }
+}
+
+/// As [`resolve_user_id`], for the endpoints keyed on the game-account `uid`
+/// string rather than the internal row id.
+pub(crate) async fn resolve_uid(
+    state: &AppState,
+    auth: &MaybeAuthUser,
+    uid_param: Option<&str>,
+) -> Result<String, ApiError> {
+    if let Some(uid) = uid_param {
+        return Ok(resolve_public_profile(state, auth, uid).await?.uid);
+    }
+
+    // No uid given: the caller's own, which needs a lookup because the token
+    // carries the row id rather than the game-account uid.
+    let auth = auth.0.as_ref().ok_or(ApiError::Unauthorized)?;
+    let user_uuid: Uuid = auth.user_uuid()?;
+    Ok(find_by_id(&state.db, user_uuid)
+        .await?
+        .ok_or(ApiError::Unauthorized)?
+        .uid)
 }
 
 pub mod assets;

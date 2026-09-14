@@ -114,23 +114,19 @@ jobs:
           path: assets/output
           branch: ${{ github.base_ref || github.ref_name }}
           search_artifacts: true
-          if_no_artifact_found: warn
+          if_no_artifact_found: fail
 
       - name: Verify game data exists
-        id: gamedata
         run: |
-          if [ -d "assets/output/gamedata/excel" ]; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-            echo "Game data found"
-            ls assets/output/gamedata/excel/ | head -10
-          else
-            echo "found=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Game data not found — assets pipeline may not have run recently"
-            echo "::warning::DPS engine tests will be skipped"
+          if [ ! -d "assets/output/gamedata/excel" ]; then
+            echo "::error::Game data not found — the DPS/HPS parity suites cannot run."
+            echo "::error::Re-run assets-ci.yml on this branch, then re-run this job."
+            exit 1
           fi
+          echo "Game data found"
+          ls assets/output/gamedata/excel/ | head -10
 
       - name: Run tests
-        if: steps.gamedata.outputs.found == 'true'
         working-directory: backend
         env:
           GAME_DATA_DIR: ../assets/output/gamedata/excel

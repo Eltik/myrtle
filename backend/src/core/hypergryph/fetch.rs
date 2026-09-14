@@ -8,6 +8,7 @@ use crate::core::hypergryph::{
     constants::{AuthSession, DEFAULT_HEADERS, Domain, Server},
     crypto::generate_auth_header,
 };
+use crate::utils::redact::redacted_body;
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
 
@@ -149,7 +150,7 @@ pub async fn read_body(response: Response, context: &str) -> Result<String, Fetc
         return Err(FetchError::Upstream(err));
     }
 
-    tracing::warn!(context, %status, body = %text, "non-success without error envelope");
+    tracing::warn!(context, %status, body = %redacted_body(&text), "non-success without error envelope");
     Err(FetchError::ParseError(format!(
         "{context}: upstream non-success (status={status})"
     )))
@@ -163,7 +164,7 @@ pub async fn parse_json<T: serde::de::DeserializeOwned>(
     serde_json::from_str::<T>(&text).map_err(|e| {
         // Body and serde detail stay in logs; the surfaced error is intentionally generic
         // so we don't leak the upstream schema to API clients.
-        tracing::warn!(context, body = %text, error = %e, "failed to parse response body");
+        tracing::warn!(context, body = %redacted_body(&text), error = %e, "failed to parse response body");
         FetchError::ParseError(format!("{context}: invalid upstream response"))
     })
 }

@@ -67,6 +67,7 @@ async fn run_loop(state: AppState) {
 
 pub fn spawn(state: AppState) {
     tokio::spawn(async move {
+        crate::core::jobs::stagger("medal_ownership").await;
         run_loop(state).await;
     });
 }

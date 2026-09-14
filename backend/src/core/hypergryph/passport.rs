@@ -32,6 +32,7 @@ use reqwest::Client;
 use serde::{Deserialize, de::DeserializeOwned};
 
 use crate::core::hypergryph::fetch::FetchError;
+use crate::utils::redact::redacted_body;
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
 const BASE_URL: &str = "https://as.hypergryph.com";
@@ -93,7 +94,7 @@ async fn post_status_only(
     let text = post(client, path, body).await?;
 
     let parsed: StatusOnly = serde_json::from_str(&text).map_err(|e| {
-        tracing::warn!(path, body = %text, error = %e, "passport: failed to parse status envelope");
+        tracing::warn!(path, body = %redacted_body(&text), error = %e, "passport: failed to parse status envelope");
         FetchError::ParseError(format!("passport::{path}: invalid upstream response"))
     })?;
 
@@ -115,7 +116,7 @@ async fn post_json<T: DeserializeOwned>(
     let text = post(client, path, body).await?;
 
     let envelope: Envelope<T> = serde_json::from_str(&text).map_err(|e| {
-        tracing::warn!(path, body = %text, error = %e, "passport: failed to parse envelope");
+        tracing::warn!(path, body = %redacted_body(&text), error = %e, "passport: failed to parse envelope");
         FetchError::ParseError(format!("passport::{path}: invalid upstream response"))
     })?;
 

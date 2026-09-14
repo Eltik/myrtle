@@ -152,4 +152,10 @@ fn test_hps_engine_vs_python_expected() {
     }
 
     assert!(tested > 0, "No test cases were executed");
+
+    // Same contract as the DPS suite: a diverging formula fails the build.
+    assert_eq!(
+        failed, 0,
+        "{failed} of {tested} HPS cases diverge from the Python reference"
+    );
 }

@@ -71,6 +71,7 @@ pub fn spawn(state: AppState) {
 
     let interval_secs: u64 = env_or("GACHA_DETAIL_REFRESH_SECS", DEFAULT_INTERVAL_SECS);
     tokio::spawn(async move {
+        crate::core::jobs::stagger("gacha_detail").await;
         run_loop(state, interval_secs).await;
     });
 }

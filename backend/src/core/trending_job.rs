@@ -44,6 +44,7 @@ pub fn spawn(state: AppState) {
         .unwrap_or(10);
 
     tokio::spawn(async move {
+        crate::core::jobs::stagger("trending").await;
         run_loop(state, interval_secs, top_n).await;
     });
 }

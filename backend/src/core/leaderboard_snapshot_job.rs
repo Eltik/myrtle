@@ -45,6 +45,7 @@ async fn run_loop(state: AppState) {
 
 pub fn spawn(state: AppState) {
     tokio::spawn(async move {
+        crate::core::jobs::stagger("leaderboard_snapshot").await;
         run_loop(state).await;
     });
 }

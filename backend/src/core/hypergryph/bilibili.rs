@@ -36,6 +36,7 @@ use serde::Deserialize;
 
 use crate::core::hypergryph::crypto::generate_bilibili_sign;
 use crate::core::hypergryph::fetch::FetchError;
+use crate::utils::redact::redacted_body;
 
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
 const BASE_URL: &str = "https://line1-sdk-center-login-sh.biligame.net/api/external";
@@ -105,7 +106,7 @@ async fn load_cipher(client: &Client) -> Result<CipherResponse, FetchError> {
     }
 
     serde_json::from_str(&text).map_err(|e| {
-        tracing::warn!(body = %text, error = %e, "bilibili::load_cipher: failed to parse response");
+        tracing::warn!(body = %redacted_body(&text), error = %e, "bilibili::load_cipher: failed to parse response");
         FetchError::ParseError("bilibili::load_cipher: invalid upstream response".into())
     })
 }
@@ -202,7 +203,7 @@ pub async fn login(
     }
 
     let data: BilibiliLoginResult = serde_json::from_str(&text).map_err(|e| {
-        tracing::warn!(body = %text, error = %e, "bilibili::login: failed to parse response");
+        tracing::warn!(body = %redacted_body(&text), error = %e, "bilibili::login: failed to parse response");
         FetchError::ParseError(
             "bilibili::login: invalid upstream response, check credentials".into(),
         )
@@ -293,7 +294,7 @@ pub async fn login_sms(
     }
 
     let data: BilibiliLoginResult = serde_json::from_str(&text).map_err(|e| {
-        tracing::warn!(body = %text, error = %e, "bilibili::login_sms: failed to parse response");
+        tracing::warn!(body = %redacted_body(&text), error = %e, "bilibili::login_sms: failed to parse response");
         FetchError::ParseError(
             "bilibili::login_sms: invalid upstream response, check the code or that this guessed endpoint is even right".into(),
         )

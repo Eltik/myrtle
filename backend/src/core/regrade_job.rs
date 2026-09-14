@@ -271,7 +271,16 @@ async fn run_loop(state: AppState) {
             tokio::time::sleep(wait).await;
         }
 
-        let (_s, _f) = run_pass(&state, &cfg).await;
+        let pass_started = std::time::Instant::now();
+        let (succeeded, failed) = run_pass(&state, &cfg).await;
+        let elapsed = pass_started.elapsed();
+        crate::app::metrics::METRICS.regrade_pass_finished(elapsed.as_secs());
+        tracing::info!(
+            succeeded,
+            failed,
+            duration_secs = elapsed.as_secs(),
+            "regrade pass finished"
+        );
 
         persisted.last_run_at = Some(Utc::now());
         if let Err(e) = write_state(&cfg.state_path, &persisted) {
@@ -287,6 +296,7 @@ async fn run_loop(state: AppState) {
 
 pub fn spawn(state: AppState) {
     tokio::spawn(async move {
+        crate::core::jobs::stagger("regrade").await;
         run_loop(state).await;
     });
 }

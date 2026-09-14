@@ -219,27 +219,45 @@ pub async fn create_tier(
     .await
 }
 
+/// Rename/restyle a tier, scoped to the list that owns it.
+///
+/// `tier_list_id` is the list the caller was authorized against and `id` comes
+/// from the request, so the predicate is what ties the write to the permission
+/// that was checked. Every mutating query here carries it for that reason.
+/// `None` means the tier is not on this list, which the caller answers 404.
 pub async fn update_tier(
     pool: &PgPool,
+    tier_list_id: Uuid,
     id: Uuid,
     name: &str,
     display_order: i16,
     color: Option<&str>,
     description: Option<&str>,
-) -> Result<Tier, sqlx::Error> {
+) -> Result<Option<Tier>, sqlx::Error> {
     sqlx::query_as::<_, Tier>(
-        "UPDATE tiers SET name = $2, display_order = $3, color = $4, description = $5 WHERE id = $1 RETURNING *"
+        "UPDATE tiers SET name = $3, display_order = $4, color = $5, description = $6
+          WHERE id = $2 AND tier_list_id = $1
+          RETURNING *",
     )
-    .bind(id).bind(name).bind(display_order).bind(color).bind(description)
-    .fetch_one(pool).await
+    .bind(tier_list_id)
+    .bind(id)
+    .bind(name)
+    .bind(display_order)
+    .bind(color)
+    .bind(description)
+    .fetch_optional(pool)
+    .await
 }
 
-pub async fn delete_tier(pool: &PgPool, id: Uuid) -> Result<(), sqlx::Error> {
-    sqlx::query("DELETE FROM tiers WHERE id = $1")
+/// Delete a tier, scoped to the list that owns it. `false` means the tier is
+/// not on this list, and nothing was deleted.
+pub async fn delete_tier(pool: &PgPool, tier_list_id: Uuid, id: Uuid) -> Result<bool, sqlx::Error> {
+    let result = sqlx::query("DELETE FROM tiers WHERE id = $2 AND tier_list_id = $1")
+        .bind(tier_list_id)
         .bind(id)
         .execute(pool)
         .await?;
-    Ok(())
+    Ok(result.rows_affected() > 0)
 }
 
 pub async fn delete_list(pool: &PgPool, id: Uuid) -> Result<(), sqlx::Error> {
@@ -251,27 +269,35 @@ pub async fn delete_list(pool: &PgPool, id: Uuid) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
+/// Place an operator in a tier, scoped to the list that owns it.
+///
+/// The `INSERT ... SELECT` enforces the scope: the row only materialises when
+/// `tier_id` belongs to `tier_list_id`, so a tier from another list selects
+/// nothing and nothing is inserted. `None` is that case.
 pub async fn add_placement(
     pool: &PgPool,
+    tier_list_id: Uuid,
     tier_id: Uuid,
     operator_id: &str,
     sub_order: i16,
     description: Option<&str>,
-) -> Result<TierPlacement, sqlx::Error> {
+) -> Result<Option<TierPlacement>, sqlx::Error> {
     sqlx::query_as::<_, TierPlacement>(
         "INSERT INTO tier_placements (tier_id, operator_id, sub_order, description)
-          VALUES ($1,$2,$3,$4)
+          SELECT t.id, $3, $4, $5 FROM tiers t
+           WHERE t.id = $2 AND t.tier_list_id = $1
           ON CONFLICT (tier_id, operator_id)
           DO UPDATE SET sub_order = EXCLUDED.sub_order,
                         description = EXCLUDED.description,
                         updated_at = NOW()
           RETURNING *",
     )
+    .bind(tier_list_id)
     .bind(tier_id)
     .bind(operator_id)
     .bind(sub_order)
     .bind(description)
-    .fetch_one(pool)
+    .fetch_optional(pool)
     .await
 }
 
@@ -301,45 +327,107 @@ pub async fn set_placement_description(
     .await
 }
 
+/// Remove a placement, scoped to the list that owns its tier.
+///
+/// The caller derives `tier_id` from this list's own tiers, so the join keeps
+/// the invariant in the query rather than resting on that caller.
 pub async fn remove_placement(
     pool: &PgPool,
+    tier_list_id: Uuid,
     tier_id: Uuid,
     operator_id: &str,
 ) -> Result<(), sqlx::Error> {
-    sqlx::query("DELETE FROM tier_placements WHERE tier_id = $1 AND operator_id = $2")
-        .bind(tier_id)
-        .bind(operator_id)
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "DELETE FROM tier_placements tp
+          USING tiers t
+          WHERE tp.tier_id = t.id
+            AND tp.tier_id = $2
+            AND tp.operator_id = $3
+            AND t.tier_list_id = $1",
+    )
+    .bind(tier_list_id)
+    .bind(tier_id)
+    .bind(operator_id)
+    .execute(pool)
+    .await?;
     Ok(())
 }
 
+/// Move a placement between two tiers of the same list, atomically.
+///
+/// Both ends are scoped to `tier_list_id`, and the destination is verified
+/// before anything is deleted, so a destination that cannot accept the row
+/// cannot leave the placement deleted. The three statements share one
+/// transaction for the same reason. `None` means the destination tier is not
+/// on this list, and nothing was changed.
 pub async fn move_placement(
     pool: &PgPool,
+    tier_list_id: Uuid,
     old_tier_id: Uuid,
     new_tier_id: Uuid,
     operator_id: &str,
     sub_order: i16,
-) -> Result<TierPlacement, sqlx::Error> {
-    // Re-insert via add_placement rather than UPDATE the PK so the upsert's
-    // conflict handling applies when the operator already exists in the target
-    // tier; the existing description is carried across the move.
+) -> Result<Option<TierPlacement>, sqlx::Error> {
+    let mut tx = pool.begin().await?;
+
+    let target: Option<Uuid> =
+        sqlx::query_scalar("SELECT id FROM tiers WHERE id = $1 AND tier_list_id = $2")
+            .bind(new_tier_id)
+            .bind(tier_list_id)
+            .fetch_optional(&mut *tx)
+            .await?;
+    if target.is_none() {
+        tx.rollback().await?;
+        return Ok(None);
+    }
+
+    // Re-insert rather than UPDATE the primary key, so the upsert's conflict
+    // handling applies when the operator is already in the target tier; the
+    // existing description is carried across the move.
     let existing = sqlx::query_as::<_, TierPlacement>(
-        "SELECT * FROM tier_placements WHERE tier_id = $1 AND operator_id = $2",
+        "SELECT tp.* FROM tier_placements tp
+           JOIN tiers t ON t.id = tp.tier_id
+          WHERE tp.tier_id = $2 AND tp.operator_id = $3 AND t.tier_list_id = $1",
     )
+    .bind(tier_list_id)
     .bind(old_tier_id)
     .bind(operator_id)
-    .fetch_optional(pool)
+    .fetch_optional(&mut *tx)
     .await?;
 
-    sqlx::query("DELETE FROM tier_placements WHERE tier_id = $1 AND operator_id = $2")
-        .bind(old_tier_id)
-        .bind(operator_id)
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "DELETE FROM tier_placements tp
+          USING tiers t
+          WHERE tp.tier_id = t.id
+            AND tp.tier_id = $2
+            AND tp.operator_id = $3
+            AND t.tier_list_id = $1",
+    )
+    .bind(tier_list_id)
+    .bind(old_tier_id)
+    .bind(operator_id)
+    .execute(&mut *tx)
+    .await?;
 
     let description = existing.as_ref().and_then(|p| p.description.as_deref());
-    add_placement(pool, new_tier_id, operator_id, sub_order, description).await
+    let moved = sqlx::query_as::<_, TierPlacement>(
+        "INSERT INTO tier_placements (tier_id, operator_id, sub_order, description)
+          VALUES ($1,$2,$3,$4)
+          ON CONFLICT (tier_id, operator_id)
+          DO UPDATE SET sub_order = EXCLUDED.sub_order,
+                        description = EXCLUDED.description,
+                        updated_at = NOW()
+          RETURNING *",
+    )
+    .bind(new_tier_id)
+    .bind(operator_id)
+    .bind(sub_order)
+    .bind(description)
+    .fetch_one(&mut *tx)
+    .await?;
+
+    tx.commit().await?;
+    Ok(Some(moved))
 }
 
 pub async fn get_permissions(

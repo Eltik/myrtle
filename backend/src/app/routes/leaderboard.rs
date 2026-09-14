@@ -4,6 +4,8 @@ use axum::{
 };
 use serde::Deserialize;
 
+use crate::app::extractors::auth::MaybeAuthUser;
+use crate::app::routes::resolve_uid;
 use crate::app::services::leaderboard::get_distribution;
 use crate::app::services::leaderboard::get_leaderboard;
 use crate::app::services::leaderboard::get_standing;
@@ -118,6 +120,7 @@ pub struct StandingParams {
 
 pub async fn standing(
     State(state): State<AppState>,
+    auth: MaybeAuthUser,
     Query(params): Query<StandingParams>,
 ) -> Result<Json<PlayerStanding>, ApiError> {
     let window = params.window.unwrap_or(5).min(50);
@@ -127,7 +130,8 @@ pub async fn standing(
             "interval must be '1 day', '7 days', or '30 days'".into(),
         ));
     }
-    let standing = get_standing(&state, &params.uid, &params.server, window, interval).await?;
+    let uid = resolve_uid(&state, &auth, Some(&params.uid)).await?;
+    let standing = get_standing(&state, &uid, &params.server, window, interval).await?;
     Ok(Json(standing))
 }
 
@@ -137,11 +141,17 @@ pub struct HistoryParams {
 }
 
 /// A user's score/rank across every leaderboard snapshot, oldest first - the
-/// Score tab's history chart. Public data (the leaderboard already shows it).
+/// Score tab's history chart.
+///
+/// Takes the same privacy gate as every other by-uid endpoint: a public
+/// profile's history is public, a private one's is not, and a player always
+/// sees their own.
 pub async fn score_history(
     State(state): State<AppState>,
+    auth: MaybeAuthUser,
     Query(params): Query<HistoryParams>,
 ) -> Result<Json<Vec<ScoreHistoryPoint>>, ApiError> {
-    let points = crate::database::queries::score::get_score_history(&state.db, &params.uid).await?;
+    let uid = resolve_uid(&state, &auth, Some(&params.uid)).await?;
+    let points = crate::database::queries::score::get_score_history(&state.db, &uid).await?;
     Ok(Json(points))
 }

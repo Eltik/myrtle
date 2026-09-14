@@ -7,6 +7,7 @@ use redis::aio::ConnectionManager;
 use serde::{Serialize, de::DeserializeOwned};
 
 use super::keys::CacheKey;
+use crate::app::metrics::{CacheOutcome, METRICS};
 
 #[derive(Clone)]
 pub enum CacheStore {
@@ -37,25 +38,45 @@ impl CacheStore {
     }
 
     pub async fn get_raw(&self, key: &CacheKey<'_>) -> Option<String> {
-        match self {
-            Self::Redis(conn) => conn
-                .clone()
-                .get::<_, Option<String>>(key.to_key_string())
-                .await
-                .ok()
-                .flatten(),
-            Self::Memory { entries } => {
-                let key_str = key.to_key_string();
-                let entry = entries.get(&key_str)?;
-                let (json, expires_at) = entry.value();
-                if Instant::now() >= *expires_at {
-                    drop(entry);
-                    entries.remove(&key_str);
+        let key_str = key.to_key_string();
+        let class = key_str.split(':').next().unwrap_or("unknown");
+
+        let result = match self {
+            Self::Redis(conn) => match conn.clone().get::<_, Option<String>>(&key_str).await {
+                Ok(found) => found,
+                Err(e) => {
+                    tracing::warn!(key = %key_str, error = %e, "cache read failed");
+                    METRICS.record_cache(class, CacheOutcome::Error);
                     return None;
                 }
-                Some(json.clone())
+            },
+            Self::Memory { entries } => {
+                let mut expired = false;
+                let found = entries.get(&key_str).and_then(|entry| {
+                    let (json, expires_at) = entry.value();
+                    if Instant::now() >= *expires_at {
+                        expired = true;
+                        None
+                    } else {
+                        Some(json.clone())
+                    }
+                });
+                if expired {
+                    entries.remove(&key_str);
+                }
+                found
             }
-        }
+        };
+
+        METRICS.record_cache(
+            class,
+            if result.is_some() {
+                CacheOutcome::Hit
+            } else {
+                CacheOutcome::Miss
+            },
+        );
+        result
     }
 
     pub async fn set<T: Serialize>(&self, key: &CacheKey<'_>, value: &T) {

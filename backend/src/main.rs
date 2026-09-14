@@ -15,6 +15,7 @@ use backend::{
 };
 use dotenv::dotenv;
 use std::path::Path;
+use std::time::Duration;
 use tracing::{info, warn};
 
 #[cfg(not(target_env = "msvc"))]
@@ -93,8 +94,13 @@ async fn main() {
     cache.spawn_cleanup();
     drop(cache_phase);
 
-    // reqwest client
-    let http_client = reqwest::Client::new();
+    let http_client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(15))
+        .connect_timeout(Duration::from_secs(5))
+        .pool_idle_timeout(Duration::from_secs(90))
+        .pool_max_idle_per_host(16)
+        .build()
+        .expect("failed to build HTTP client");
 
     // Initialize configs
     {

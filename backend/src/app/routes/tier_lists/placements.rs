@@ -39,16 +39,21 @@ pub async fn add(
         PLACEMENT_DESCRIPTION_MAX,
     )?;
     let user_id: Uuid = auth.user_uuid()?;
-    find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit).await?;
+    let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit).await?;
 
+    // `body.tier_id` comes from the request and the permission was checked
+    // against `slug`, so the insert is scoped to `list.id`: a tier on another
+    // list is not found.
     let placement = add_placement(
         &state.db,
+        list.id,
         body.tier_id,
         &body.operator_id,
         body.sub_order.unwrap_or(0),
         body.description.as_deref(),
     )
-    .await?;
+    .await?
+    .ok_or(ApiError::NotFound)?;
     invalidate_detail(&state, &slug).await;
     Ok(Json(placement))
 }
@@ -99,7 +104,7 @@ pub async fn remove(
     for tier in &tiers {
         let placements = get_placements(&state.db, tier.id).await?;
         if placements.iter().any(|p| p.operator_id == operator_id) {
-            remove_placement(&state.db, tier.id, &operator_id).await?;
+            remove_placement(&state.db, list.id, tier.id, &operator_id).await?;
             invalidate_detail(&state, &slug).await;
             break;
         }
@@ -126,14 +131,21 @@ pub async fn move_to(
     for tier in &tiers {
         let placements = get_placements(&state.db, tier.id).await?;
         if placements.iter().any(|p| p.operator_id == operator_id) {
+            // `body.new_tier_id` comes from the request, so the move is
+            // scoped to `list.id` and cannot place the operator on another
+            // list. `None` is that case, with nothing deleted.
             let result = move_placement(
                 &state.db,
+                list.id,
                 tier.id,
                 body.new_tier_id,
                 &operator_id,
                 body.sub_order.unwrap_or(0),
             )
-            .await?;
+            .await?
+            .ok_or_else(|| {
+                ApiError::BadRequest("destination tier is not on this tier list".into())
+            })?;
             invalidate_detail(&state, &slug).await;
             return Ok(Json(result));
         }

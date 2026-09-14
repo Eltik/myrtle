@@ -62,7 +62,6 @@ services:
             ASSET_WS_URLS: ${ASSET_WS_URLS}
             RATE_LIMIT_RPM: ${RATE_LIMIT_RPM:-100}
             DPS_POLL_INTERVAL: ${DPS_POLL_INTERVAL:-1800}
-            DPS_AUTO_RESTART: ${DPS_AUTO_RESTART:-true}
             GITHUB_TOKEN: ${GITHUB_TOKEN}
             RUST_LOG: ${RUST_LOG:-info}
         volumes:

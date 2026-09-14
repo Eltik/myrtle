@@ -70,17 +70,22 @@ pub async fn update(
     validate_tier_body(&body)?;
 
     let user_id: Uuid = auth.user_uuid()?;
-    find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit).await?;
+    let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit).await?;
 
+    // `tier_id` comes from the request and the permission was checked against
+    // `slug`, so the write is scoped to `list.id`: a tier on another list is
+    // not found.
     let tier = update_tier(
         &state.db,
+        list.id,
         tier_id,
         &body.name,
         body.display_order,
         body.color.as_deref(),
         body.description.as_deref(),
     )
-    .await?;
+    .await?
+    .ok_or(ApiError::NotFound)?;
     invalidate_detail(&state, &slug).await;
     Ok(Json(tier))
 }
@@ -91,9 +96,11 @@ pub async fn delete(
     Path((slug, tier_id)): Path<(String, Uuid)>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
-    find_and_authorize(&state, &slug, user_id, auth.role, Permission::Admin).await?;
+    let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Admin).await?;
 
-    delete_tier(&state.db, tier_id).await?;
+    if !delete_tier(&state.db, list.id, tier_id).await? {
+        return Err(ApiError::NotFound);
+    }
     invalidate_detail(&state, &slug).await;
     Ok(ok_status())
 }

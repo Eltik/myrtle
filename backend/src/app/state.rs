@@ -14,6 +14,7 @@ use crate::core::auth::credentials::CredentialKey;
 use crate::core::gamedata::{assets::AssetIndex, types::GameData};
 use crate::core::hypergryph::constants::Server;
 use crate::core::service_account::ServiceAccounts;
+use tracing::warn;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -183,7 +184,7 @@ impl AppConfig {
         let default_server = servers.first().copied().unwrap_or(Server::EN);
 
         Self {
-            jwt_secret: std::env::var("JWT_SECRET").expect("JWT_SECRET must be set"),
+            jwt_secret: require_secret("JWT_SECRET", 32),
             // Fails the boot rather than degrading: without this key the
             // durable credential store silently stops persisting, and resync
             // goes back to breaking an hour after login with nothing in the
@@ -196,7 +197,7 @@ impl AppConfig {
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(100),
-            service_key: std::env::var("SERVICE_KEY").expect("SERVICE_KEY must be set"),
+            service_key: require_secret("SERVICE_KEY", 16),
             assets_base_dir: std::env::var("ASSETS_DIR")
                 .unwrap_or_else(|_| "../assets/output".into()),
             servers,
@@ -204,6 +205,43 @@ impl AppConfig {
             asset_ws_urls: parse_asset_ws_urls(default_server),
         }
     }
+}
+
+/// Read a secret from the environment, refusing one that is present but empty.
+///
+/// Presence alone is not enough: `SERVICE_KEY=` sets the variable to the empty
+/// string, and an empty secret compares equal to an empty header, which would
+/// make the credential free to present.
+///
+/// A short-but-present secret is a weakness rather than a hole, so it warns
+/// rather than panicking - a deploy should not start failing on a value that
+/// worked yesterday.
+fn require_secret(name: &str, recommended_len: usize) -> String {
+    let value = std::env::var(name).unwrap_or_else(|_| panic!("{name} must be set"));
+
+    assert!(
+        !value.trim().is_empty(),
+        "{name} is set but empty; refusing to start"
+    );
+
+    if value.trim().len() != value.len() {
+        warn!(
+            secret = name,
+            "value has leading or trailing whitespace; it is used verbatim, which is \
+             usually not what a stray newline in .env intended"
+        );
+    }
+
+    if value.len() < recommended_len {
+        warn!(
+            secret = name,
+            length = value.len(),
+            recommended = recommended_len,
+            "secret is shorter than recommended"
+        );
+    }
+
+    value
 }
 
 /// Parse the per-server hot-reload WebSocket spec, for example
