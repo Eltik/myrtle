@@ -119,6 +119,13 @@ pub fn admit(kind: &'static str) -> Result<Admission, ApiError> {
 mod tests {
     use super::{admit, permits, run};
 
+    /// The pool is one process-wide semaphore and the test harness runs tests
+    /// on parallel threads, so two tests that take permits at once see each
+    /// other's holdings: on a 4-core runner (2 permits) the saturation test
+    /// failed its FIRST acquire while the round-trip test was mid-loop. Every
+    /// test that touches the pool holds this for its duration.
+    static POOL: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
     #[test]
     fn permits_are_at_least_one() {
         assert!(permits() >= 1, "a zero-permit pool would refuse everything");
@@ -126,6 +133,7 @@ mod tests {
 
     #[tokio::test]
     async fn work_runs_and_the_permit_comes_back() {
+        let _pool = POOL.lock().await;
         // More passes than there are permits, so a leaked permit shows up as a
         // refusal before the loop ends.
         for i in 0..(permits() * 4) {
@@ -136,6 +144,7 @@ mod tests {
 
     #[tokio::test]
     async fn saturation_sheds_instead_of_queueing() {
+        let _pool = POOL.lock().await;
         let held: Vec<_> = (0..permits())
             .map(|_| admit("test").expect("under the limit"))
             .collect();
