@@ -1074,8 +1074,10 @@ pub(crate) fn support_room_figure(
                     .is_some_and(|buff| buff.room_type == room_type)
             })
             .filter_map(|b| match registry.get(b) {
-                Some(BuffResolutionStrategy::NonProduction { value } |
-BuffResolutionStrategy::DirectEfficiency { value }) => Some(*value),
+                Some(
+                    BuffResolutionStrategy::NonProduction { value }
+                    | BuffResolutionStrategy::DirectEfficiency { value },
+                ) => Some(*value),
                 _ => None,
             })
             .collect()

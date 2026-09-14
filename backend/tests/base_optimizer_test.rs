@@ -4617,13 +4617,37 @@ fn pinned_support_seats_report_their_own_figure() {
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
     const WHISPERAIN: &str = "char_436_whispr";
     const ROSMONTIS: &str = "char_391_rosmon";
-    let roster: Vec<_> = [ROSMONTIS, WHISPERAIN, EXUSIAI].iter().map(|id| profile(gd, id)).collect();
-    let building = UserBuilding { rooms: vec![room("mf", "MANUFACTURE", 3), room("hr", "HIRE", 3)] };
+    let roster: Vec<_> = [ROSMONTIS, WHISPERAIN, EXUSIAI]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+    let building = UserBuilding {
+        rooms: vec![room("mf", "MANUFACTURE", 3), room("hr", "HIRE", 3)],
+    };
     let pins = vec![(WHISPERAIN.to_string(), "HIRE".to_string())];
-    let asn = compute_optimal_assignment_with_pins(&roster, &building, &gd.building, &registry, &drains, &pins);
-    let hr = asn.rooms.iter().find(|r| r.room_type == "HIRE").expect("the pinned Office row");
-    assert!(hr.operators.iter().any(|o| o == WHISPERAIN), "Whisperain seated: {:?}", hr.operators);
-    assert!((hr.total_efficiency - 20.0).abs() < 1e-9, "her HR speed shows: {}", hr.total_efficiency);
+    let asn = compute_optimal_assignment_with_pins(
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+        &pins,
+    );
+    let hr = asn
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "HIRE")
+        .expect("the pinned Office row");
+    assert!(
+        hr.operators.iter().any(|o| o == WHISPERAIN),
+        "Whisperain seated: {:?}",
+        hr.operators
+    );
+    assert!(
+        (hr.total_efficiency - 20.0).abs() < 1e-9,
+        "her HR speed shows: {}",
+        hr.total_efficiency
+    );
 }
 
 #[test]
