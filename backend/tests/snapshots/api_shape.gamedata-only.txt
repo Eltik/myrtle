@@ -1365,6 +1365,8 @@ skins.charSkins.*.illustId: string
 skins.charSkins.*.isBuySkin: bool
 skins.charSkins.*.portraitId: string
 skins.charSkins.*.skinId: string
+skins.charSkins.*.spDynIllustId: null
+skins.charSkins.*.spDynIllustId: string
 skins.charSkins.*.tmplId: null
 skins.charSkins.*.tmplId: string
 skins.charSkins.*.tokenSkinMap: array
@@ -4021,6 +4023,7 @@ stages.*.dangerLevel: string
 stages.*.dangerPoint: number
 stages.*.description: null
 stages.*.description: string
+stages.*.diamondOnceDrop: number
 stages.*.difficulty: string
 stages.*.expGain: number
 stages.*.goldGain: number
@@ -4061,6 +4064,7 @@ stages.act2vmulti-01.code: string
 stages.act2vmulti-01.dangerLevel: string
 stages.act2vmulti-01.dangerPoint: number
 stages.act2vmulti-01.description: string
+stages.act2vmulti-01.diamondOnceDrop: number
 stages.act2vmulti-01.difficulty: string
 stages.act2vmulti-01.expGain: number
 stages.act2vmulti-01.goldGain: number
@@ -4093,6 +4097,7 @@ stages.act2vmulti-02.code: string
 stages.act2vmulti-02.dangerLevel: string
 stages.act2vmulti-02.dangerPoint: number
 stages.act2vmulti-02.description: string
+stages.act2vmulti-02.diamondOnceDrop: number
 stages.act2vmulti-02.difficulty: string
 stages.act2vmulti-02.expGain: number
 stages.act2vmulti-02.goldGain: number
@@ -4125,6 +4130,7 @@ stages.act2vmulti-03.code: string
 stages.act2vmulti-03.dangerLevel: string
 stages.act2vmulti-03.dangerPoint: number
 stages.act2vmulti-03.description: string
+stages.act2vmulti-03.diamondOnceDrop: number
 stages.act2vmulti-03.difficulty: string
 stages.act2vmulti-03.expGain: number
 stages.act2vmulti-03.goldGain: number
@@ -4157,6 +4163,7 @@ stages.act2vmulti-04.code: string
 stages.act2vmulti-04.dangerLevel: string
 stages.act2vmulti-04.dangerPoint: number
 stages.act2vmulti-04.description: string
+stages.act2vmulti-04.diamondOnceDrop: number
 stages.act2vmulti-04.difficulty: string
 stages.act2vmulti-04.expGain: number
 stages.act2vmulti-04.goldGain: number
@@ -4189,6 +4196,7 @@ stages.act2vmulti-05.code: string
 stages.act2vmulti-05.dangerLevel: string
 stages.act2vmulti-05.dangerPoint: number
 stages.act2vmulti-05.description: string
+stages.act2vmulti-05.diamondOnceDrop: number
 stages.act2vmulti-05.difficulty: string
 stages.act2vmulti-05.expGain: number
 stages.act2vmulti-05.goldGain: number
@@ -4221,6 +4229,7 @@ stages.act2vmulti-06.code: string
 stages.act2vmulti-06.dangerLevel: string
 stages.act2vmulti-06.dangerPoint: number
 stages.act2vmulti-06.description: string
+stages.act2vmulti-06.diamondOnceDrop: number
 stages.act2vmulti-06.difficulty: string
 stages.act2vmulti-06.expGain: number
 stages.act2vmulti-06.goldGain: number
@@ -4253,6 +4262,7 @@ stages.act2vmulti-07.code: string
 stages.act2vmulti-07.dangerLevel: string
 stages.act2vmulti-07.dangerPoint: number
 stages.act2vmulti-07.description: string
+stages.act2vmulti-07.diamondOnceDrop: number
 stages.act2vmulti-07.difficulty: string
 stages.act2vmulti-07.expGain: number
 stages.act2vmulti-07.goldGain: number
@@ -4285,6 +4295,7 @@ stages.act2vmulti-de01.code: string
 stages.act2vmulti-de01.dangerLevel: string
 stages.act2vmulti-de01.dangerPoint: number
 stages.act2vmulti-de01.description: string
+stages.act2vmulti-de01.diamondOnceDrop: number
 stages.act2vmulti-de01.difficulty: string
 stages.act2vmulti-de01.expGain: number
 stages.act2vmulti-de01.goldGain: number
@@ -4317,6 +4328,7 @@ stages.act2vmulti-de02.code: string
 stages.act2vmulti-de02.dangerLevel: string
 stages.act2vmulti-de02.dangerPoint: number
 stages.act2vmulti-de02.description: string
+stages.act2vmulti-de02.diamondOnceDrop: number
 stages.act2vmulti-de02.difficulty: string
 stages.act2vmulti-de02.expGain: number
 stages.act2vmulti-de02.goldGain: number
@@ -4349,6 +4361,7 @@ stages.act2vmulti-ex01.code: string
 stages.act2vmulti-ex01.dangerLevel: string
 stages.act2vmulti-ex01.dangerPoint: number
 stages.act2vmulti-ex01.description: string
+stages.act2vmulti-ex01.diamondOnceDrop: number
 stages.act2vmulti-ex01.difficulty: string
 stages.act2vmulti-ex01.expGain: number
 stages.act2vmulti-ex01.goldGain: number
@@ -4381,6 +4394,7 @@ stages.act2vmulti-ex02.code: string
 stages.act2vmulti-ex02.dangerLevel: string
 stages.act2vmulti-ex02.dangerPoint: number
 stages.act2vmulti-ex02.description: string
+stages.act2vmulti-ex02.diamondOnceDrop: number
 stages.act2vmulti-ex02.difficulty: string
 stages.act2vmulti-ex02.expGain: number
 stages.act2vmulti-ex02.goldGain: number
@@ -4413,6 +4427,7 @@ stages.act2vmulti-ex03.code: string
 stages.act2vmulti-ex03.dangerLevel: string
 stages.act2vmulti-ex03.dangerPoint: number
 stages.act2vmulti-ex03.description: string
+stages.act2vmulti-ex03.diamondOnceDrop: number
 stages.act2vmulti-ex03.difficulty: string
 stages.act2vmulti-ex03.expGain: number
 stages.act2vmulti-ex03.goldGain: number
@@ -4445,6 +4460,7 @@ stages.act2vmulti-ex04.code: string
 stages.act2vmulti-ex04.dangerLevel: string
 stages.act2vmulti-ex04.dangerPoint: number
 stages.act2vmulti-ex04.description: string
+stages.act2vmulti-ex04.diamondOnceDrop: number
 stages.act2vmulti-ex04.difficulty: string
 stages.act2vmulti-ex04.expGain: number
 stages.act2vmulti-ex04.goldGain: number
@@ -4477,6 +4493,7 @@ stages.act2vmulti-ex05.code: string
 stages.act2vmulti-ex05.dangerLevel: string
 stages.act2vmulti-ex05.dangerPoint: number
 stages.act2vmulti-ex05.description: string
+stages.act2vmulti-ex05.diamondOnceDrop: number
 stages.act2vmulti-ex05.difficulty: string
 stages.act2vmulti-ex05.expGain: number
 stages.act2vmulti-ex05.goldGain: number
@@ -4509,6 +4526,7 @@ stages.act2vmulti-ex06.code: string
 stages.act2vmulti-ex06.dangerLevel: string
 stages.act2vmulti-ex06.dangerPoint: number
 stages.act2vmulti-ex06.description: string
+stages.act2vmulti-ex06.diamondOnceDrop: number
 stages.act2vmulti-ex06.difficulty: string
 stages.act2vmulti-ex06.expGain: number
 stages.act2vmulti-ex06.goldGain: number
@@ -4541,6 +4559,7 @@ stages.act2vmulti-ex07.code: string
 stages.act2vmulti-ex07.dangerLevel: string
 stages.act2vmulti-ex07.dangerPoint: number
 stages.act2vmulti-ex07.description: string
+stages.act2vmulti-ex07.diamondOnceDrop: number
 stages.act2vmulti-ex07.difficulty: string
 stages.act2vmulti-ex07.expGain: number
 stages.act2vmulti-ex07.goldGain: number
@@ -4573,6 +4592,7 @@ stages.act2vmulti-ft01.code: string
 stages.act2vmulti-ft01.dangerLevel: string
 stages.act2vmulti-ft01.dangerPoint: number
 stages.act2vmulti-ft01.description: string
+stages.act2vmulti-ft01.diamondOnceDrop: number
 stages.act2vmulti-ft01.difficulty: string
 stages.act2vmulti-ft01.expGain: number
 stages.act2vmulti-ft01.goldGain: number
@@ -4605,6 +4625,7 @@ stages.act2vmulti-ft02.code: string
 stages.act2vmulti-ft02.dangerLevel: string
 stages.act2vmulti-ft02.dangerPoint: number
 stages.act2vmulti-ft02.description: string
+stages.act2vmulti-ft02.diamondOnceDrop: number
 stages.act2vmulti-ft02.difficulty: string
 stages.act2vmulti-ft02.expGain: number
 stages.act2vmulti-ft02.goldGain: number
@@ -4637,6 +4658,7 @@ stages.act2vmulti-tr01.code: string
 stages.act2vmulti-tr01.dangerLevel: string
 stages.act2vmulti-tr01.dangerPoint: number
 stages.act2vmulti-tr01.description: string
+stages.act2vmulti-tr01.diamondOnceDrop: number
 stages.act2vmulti-tr01.difficulty: string
 stages.act2vmulti-tr01.expGain: number
 stages.act2vmulti-tr01.goldGain: number
@@ -4669,6 +4691,7 @@ stages.act2vmulti-tr02.code: string
 stages.act2vmulti-tr02.dangerLevel: null
 stages.act2vmulti-tr02.dangerPoint: number
 stages.act2vmulti-tr02.description: string
+stages.act2vmulti-tr02.diamondOnceDrop: number
 stages.act2vmulti-tr02.difficulty: string
 stages.act2vmulti-tr02.expGain: number
 stages.act2vmulti-tr02.goldGain: number
@@ -4701,6 +4724,7 @@ stages.act2vmulti-tr03.code: string
 stages.act2vmulti-tr03.dangerLevel: null
 stages.act2vmulti-tr03.dangerPoint: number
 stages.act2vmulti-tr03.description: string
+stages.act2vmulti-tr03.diamondOnceDrop: number
 stages.act2vmulti-tr03.difficulty: string
 stages.act2vmulti-tr03.expGain: number
 stages.act2vmulti-tr03.goldGain: number

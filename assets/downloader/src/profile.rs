@@ -35,7 +35,7 @@ pub fn keep_for_stages(name: &str) -> bool {
 }
 
 /// Everything `unpacker extract --gamedata` reads and nothing else: the `anon/`
-/// bundles, which hold every gamedata `TextAsset` (the FlatBuffer tables and the
+/// bundles, which hold every gamedata `TextAsset` (the `FlatBuffer` tables and the
 /// level data), plus the `.idx` manifests.
 ///
 /// `anon/` is opaque — the bundle names are hashes — so the resource manifest
@@ -48,8 +48,9 @@ pub fn keep_for_gamedata(name: &str) -> bool {
     is_idx(name) || name.starts_with("anon/")
 }
 
-/// Bundles the Release Planner (`/tools/release`, `docs/release/`) serves as
-/// art: gacha banner strips, event home-entry key art and per-event UI kits,
+/// Bundles the Release Planner (`/tools/release`, `docs/release/`) serves as art.
+///
+/// Gacha banner strips, event home-entry key art and per-event UI kits,
 /// skin shop portraits, and skin brand key visuals and logos. The client keeps
 /// only the CURRENT set of banners and home entries in these packs, so what a
 /// pull yields is "running plus recently retro-listed", never the archive;
@@ -166,7 +167,9 @@ mod tests {
         ));
         assert!(keep_for_release("activity/[uc]act54sign.ab"));
         assert!(keep_for_release("spritepack/arts_shop_skin_portrait_14.ab"));
-        assert!(keep_for_release("spritepack/story_review_chapter_bg_h1_0.ab"));
+        assert!(keep_for_release(
+            "spritepack/story_review_chapter_bg_h1_0.ab"
+        ));
         assert!(keep_for_release("arts/loadingillusts_3.ab"));
         assert!(keep_for_release("spritepack/ui_kv_img_8.ab"));
         assert!(keep_for_release("spritepack/ui_brand_image_hub_0.ab"));

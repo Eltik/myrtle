@@ -72,7 +72,7 @@ impl MetadataStatus {
 
 /// Classify a `global-metadata.dat` from its raw bytes (reads only the first 8).
 #[must_use]
-pub fn classify_metadata(bytes: &[u8]) -> MetadataStatus {
+pub const fn classify_metadata(bytes: &[u8]) -> MetadataStatus {
     if bytes.len() < 8 {
         return MetadataStatus::TooShort;
     }
@@ -472,7 +472,7 @@ fn ios_app_root(entries: &[(String, Vec<u8>)]) -> Option<String> {
     None
 }
 
-fn looks_like_macho(bytes: &[u8]) -> bool {
+const fn looks_like_macho(bytes: &[u8]) -> bool {
     if bytes.len() < 4 {
         return false;
     }
