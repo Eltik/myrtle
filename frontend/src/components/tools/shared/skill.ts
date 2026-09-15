@@ -9,6 +9,20 @@
  *   - E2 → ranks 1-10 (masteries unlocked)
  */
 
+import { DEFAULT_LOCALE, formatMessage, sourceMessage } from "#/lib/i18n";
+import { fullMessageKey, type TypedT } from "#/lib/i18n/messages";
+import type { messages as skillMessages } from "./skill.messages";
+
+/** The `t` these label helpers need, narrowed to the keys they can render. */
+export type SkillT = TypedT<typeof skillMessages>;
+
+/**
+ * Default `t` for a caller outside an `I18nProvider`. It resolves against the
+ * bundled source catalog, so the English is the same one the components
+ * render and this file carries no second copy of the text.
+ */
+const sourceT: SkillT = (key, values) => formatMessage(sourceMessage(fullMessageKey("tools", key)) ?? key, DEFAULT_LOCALE, values);
+
 export const MAX_SKILL_RANK = 10;
 /** Ranks 8/9/10 represent masteries M1/M2/M3. */
 export const FIRST_MASTERY_RANK = 8;
@@ -25,13 +39,13 @@ export function isMasteryRank(rank: number): boolean {
 }
 
 /** Full label, e.g. "Lv 5" or "M2". */
-export function skillRankLabel(rank: number): string {
-    return isMasteryRank(rank) ? `M${rank - 7}` : `Lv ${rank}`;
+export function skillRankLabel(rank: number, t: SkillT = sourceT): string {
+    return isMasteryRank(rank) ? t("calc.skillRank.mastery", { mastery: rank - 7 }) : t("calc.skillRank.level", { rank });
 }
 
 /** Compact label for summaries, e.g. "L5" or "M2". */
-export function skillRankShort(rank: number): string {
-    return isMasteryRank(rank) ? `M${rank - 7}` : `L${rank}`;
+export function skillRankShort(rank: number, t: SkillT = sourceT): string {
+    return isMasteryRank(rank) ? t("calc.skillRank.masteryShort", { mastery: rank - 7 }) : t("calc.skillRank.levelShort", { rank });
 }
 
 /** Clamp a rank into the range a given elite allows. */
@@ -40,10 +54,10 @@ export function clampRankToElite(rank: number, elite: number): number {
 }
 
 /** Why a rank is unavailable at the current elite, or null if it's allowed. */
-export function rankLockReason(rank: number, elite: number): string | null {
+export function rankLockReason(rank: number, elite: number, t: SkillT = sourceT): string | null {
     if (rank <= maxSkillRankForElite(elite)) return null;
-    if (isMasteryRank(rank)) return "Masteries require E2";
-    return rank > 4 ? "Skill levels above 4 require E1" : null;
+    if (isMasteryRank(rank)) return t("calc.skillRank.lock.mastery");
+    return rank > 4 ? t("calc.skillRank.lock.level") : null;
 }
 
 /**

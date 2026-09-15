@@ -13,6 +13,8 @@ import { Switch } from "#/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "#/components/ui/tooltip";
 import type { ITierOperator } from "#/lib/api/tier-lists";
+import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import { cn, formatProfession } from "#/lib/utils";
 import type { IOperatorIndexEntry, OperatorProfession } from "#/types/operators";
@@ -21,6 +23,7 @@ import { hasOperatorDrag, readOperatorDrag } from "./dnd";
 import { useAnyDragLifted, usePoolIsOver } from "./drag-controller";
 import { EditableOpTile } from "./EditableOpTile";
 import styles from "./Editor.module.css";
+import type { messages } from "./OperatorPool.messages";
 
 const RARITY_OPTIONS = [6, 5, 4, 3, 2, 1] as const;
 const CLASS_OPTIONS: OperatorProfession[] = ["PIONEER", "WARRIOR", "TANK", "SNIPER", "CASTER", "MEDIC", "SUPPORT", "SPECIAL"];
@@ -35,6 +38,8 @@ interface IOperatorPoolProps {
 }
 
 export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate, rootClassName }: IOperatorPoolProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
+    const rt: TypedRichT<typeof messages> = useRichT("tierLists");
     const [query, setQuery] = useState("");
     const [rarities, setRarities] = useState<number[]>([]);
     const [classes, setClasses] = useState<OperatorProfession[]>([]);
@@ -102,7 +107,7 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
             <div className={cn("flex h-full min-h-0 flex-col gap-3 rounded-xl border border-border bg-card p-3 shadow-[0_1px_2px_oklch(0_0_0/0.04)]", rootClassName)}>
                 <header className="flex items-baseline justify-between gap-2">
                     <div className="min-w-0">
-                        <Kicker className="mb-0.5">Operator pool</Kicker>
+                        <Kicker className="mb-0.5">{t("edit.pool.kicker")}</Kicker>
                         <p className="m-0 font-mono text-[10.5px] text-muted-foreground tabular-nums">
                             <span className="font-bold text-foreground">{filtered.length}</span>
                             <span className="opacity-70"> / {totalAvailable}</span>
@@ -110,9 +115,9 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
                     </div>
                     <div className="flex shrink-0 items-center gap-0.5">
                         {hasFilters && (
-                            <Button type="button" variant="ghost" size="xs" onClick={handleClearFilters} aria-label="Clear pool filters">
+                            <Button type="button" variant="ghost" size="xs" onClick={handleClearFilters} aria-label={t("edit.pool.clearFilters.label")}>
                                 <FilterXIcon />
-                                Clear
+                                {t("edit.pool.clear")}
                             </Button>
                         )}
                         <Tooltip>
@@ -120,22 +125,22 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
                                 render={
                                     <Button type="button" variant="outline" size="xs" onClick={() => setExpandedOpen(true)} aria-haspopup="dialog" aria-expanded={expandedOpen}>
                                         <Maximize2Icon />
-                                        Expand
+                                        {t("edit.pool.expand")}
                                     </Button>
                                 }
                             />
-                            <TooltipContent>Open a larger pool view with all filters</TooltipContent>
+                            <TooltipContent>{t("edit.pool.expandHint")}</TooltipContent>
                         </Tooltip>
                     </div>
                 </header>
 
                 <Field>
-                    <FieldLabel className="sr-only">Search operators</FieldLabel>
+                    <FieldLabel className="sr-only">{t("edit.pool.search.label")}</FieldLabel>
                     <InputGroup>
                         <InputGroupAddon>
                             <SearchIcon aria-hidden="true" />
                         </InputGroupAddon>
-                        <InputGroupInput value={query} onChange={(e) => setQuery((e.target as HTMLInputElement).value)} placeholder="Search by name…" type="search" aria-label="Search operators" />
+                        <InputGroupInput value={query} onChange={(e) => setQuery((e.target as HTMLInputElement).value)} placeholder={t("edit.pool.search.placeholder")} type="search" aria-label={t("edit.pool.search.label")} />
                     </InputGroup>
                 </Field>
 
@@ -148,13 +153,13 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
                     onDragOver={handleOver}
                     onDragLeave={handleLeave}
                     onDrop={handleDrop}
-                    aria-label="Drag operators here to unplace them"
+                    aria-label={t("edit.pool.dropArea")}
                 >
                     {isDragOver && (
                         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
                             <Badge variant="destructive" size="lg" className="gap-1.5 shadow-md">
                                 <CircleSlash2Icon className="size-3.5" />
-                                Drop to unplace
+                                {t("edit.pool.dropToUnplace")}
                             </Badge>
                         </div>
                     )}
@@ -165,13 +170,13 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
                                 <EmptyMedia variant="icon">
                                     <SearchIcon />
                                 </EmptyMedia>
-                                <EmptyTitle className="text-base">No matches</EmptyTitle>
-                                <EmptyDescription>Try a different name or relax the filters.</EmptyDescription>
+                                <EmptyTitle className="text-base">{t("edit.pool.emptyTitle")}</EmptyTitle>
+                                <EmptyDescription>{t("edit.pool.emptyBody")}</EmptyDescription>
                             </EmptyHeader>
                         </Empty>
                     ) : (
                         <ScrollArea scrollFade scrollbarGutter viewportClassName="p-2">
-                            <ul className={styles.poolGrid} aria-label="Available operators">
+                            <ul className={styles.poolGrid} aria-label={t("edit.pool.gridLabel")}>
                                 {filtered.map((entry) => {
                                     const placed = placedIds.has(entry.id);
                                     return (
@@ -185,36 +190,39 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
                     )}
                 </section>
 
-                <p className="m-0 font-sans text-muted-foreground text-xs leading-snug">{anyDragLifted ? <span className="font-medium text-foreground">Drop on a tier to place, or release here to unplace.</span> : <>Drag a tile onto a tier, or tap to pick one.</>}</p>
+                <p className="m-0 font-sans text-muted-foreground text-xs leading-snug">{anyDragLifted ? <span className="font-medium text-foreground">{t("edit.pool.hintDragging")}</span> : t("edit.pool.hintIdle")}</p>
             </div>
 
             <Dialog open={expandedOpen} onOpenChange={setExpandedOpen}>
                 <DialogPopup className="flex max-h-[min(820px,calc(100dvh-3rem))] w-[min(960px,calc(100vw-2rem))] flex-col gap-0 p-0 sm:max-w-none">
                     <DialogHeader className="px-6 pt-5 pb-3">
-                        <DialogTitle>Operator pool</DialogTitle>
+                        <DialogTitle>{t("edit.pool.dialogTitle")}</DialogTitle>
                         <DialogDescription>
-                            <span className="font-mono text-foreground tabular-nums">{filtered.length}</span> of <span className="font-mono tabular-nums">{totalAvailable}</span> available. Tap a tile to place it on a tier.
+                            {rt("edit.pool.dialogSub", {
+                                matched: <span className="font-mono text-foreground tabular-nums">{filtered.length}</span>,
+                                total: <span className="font-mono tabular-nums">{totalAvailable}</span>,
+                            })}
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="flex flex-col gap-3 border-border border-y bg-muted/30 px-6 py-3">
                         <Field>
-                            <FieldLabel className="sr-only">Search operators</FieldLabel>
+                            <FieldLabel className="sr-only">{t("edit.pool.search.label")}</FieldLabel>
                             <InputGroup>
                                 <InputGroupAddon>
                                     <SearchIcon aria-hidden="true" />
                                 </InputGroupAddon>
-                                <InputGroupInput value={query} onChange={(e) => setQuery((e.target as HTMLInputElement).value)} placeholder="Search by name…" type="search" aria-label="Search operators" autoFocus />
+                                <InputGroupInput value={query} onChange={(e) => setQuery((e.target as HTMLInputElement).value)} placeholder={t("edit.pool.search.placeholder")} type="search" aria-label={t("edit.pool.search.label")} autoFocus />
                             </InputGroup>
                         </Field>
 
                         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
                             <Field className="gap-1.5 sm:flex-row sm:items-center sm:gap-2">
-                                <FieldLabel className="whitespace-nowrap font-bold font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.16em]">Rarity</FieldLabel>
+                                <FieldLabel className="whitespace-nowrap font-bold font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.16em]">{t("edit.pool.rarity")}</FieldLabel>
                                 <div className="-mx-1 flex overflow-x-auto px-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                                    <ToggleGroup value={rarities.map(String)} onValueChange={(v) => setRarities((v as string[]).map(Number))} aria-label="Filter by rarity" multiple variant="outline" size="sm" className="flex-nowrap">
+                                    <ToggleGroup value={rarities.map(String)} onValueChange={(v) => setRarities((v as string[]).map(Number))} aria-label={t("edit.pool.rarity.group")} multiple variant="outline" size="sm" className="flex-nowrap">
                                         {RARITY_OPTIONS.map((r) => (
-                                            <ToggleGroupItem key={r} value={String(r)} aria-label={`${r} star`} className="shrink-0 font-mono tabular-nums [&:not([data-pressed])]:opacity-55">
+                                            <ToggleGroupItem key={r} value={String(r)} aria-label={t("edit.pool.rarity.option", { rarity: r })} className="shrink-0 font-mono tabular-nums [&:not([data-pressed])]:opacity-55">
                                                 {r}★
                                             </ToggleGroupItem>
                                         ))}
@@ -223,9 +231,9 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
                             </Field>
 
                             <Field className="gap-1.5 sm:flex-row sm:items-center sm:gap-2">
-                                <FieldLabel className="whitespace-nowrap font-bold font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.16em]">Class</FieldLabel>
+                                <FieldLabel className="whitespace-nowrap font-bold font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.16em]">{t("edit.pool.class")}</FieldLabel>
                                 <div className="-mx-1 flex overflow-x-auto px-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                                    <ToggleGroup value={classes} onValueChange={(v) => setClasses(v as OperatorProfession[])} aria-label="Filter by class" multiple variant="outline" size="sm" className="flex-nowrap">
+                                    <ToggleGroup value={classes} onValueChange={(v) => setClasses(v as OperatorProfession[])} aria-label={t("edit.pool.class.group")} multiple variant="outline" size="sm" className="flex-nowrap">
                                         {CLASS_OPTIONS.map((c) => (
                                             <Tooltip key={c}>
                                                 <TooltipTrigger
@@ -244,8 +252,8 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
 
                             <label className="inline-flex cursor-pointer items-center justify-between gap-2 rounded-md px-1.5 py-1 text-foreground transition-colors hover:bg-accent/40 sm:ml-auto sm:justify-start" htmlFor="pool-hide-used-dialog">
                                 <span className="flex flex-col">
-                                    <span className="whitespace-nowrap font-medium font-sans text-[12.5px] leading-none">Hide already placed</span>
-                                    <span className="mt-1 whitespace-nowrap text-[11px] text-muted-foreground leading-none">{placedIds.size > 0 ? `${placedIds.size} placed so far` : "Nothing placed yet"}</span>
+                                    <span className="whitespace-nowrap font-medium font-sans text-[12.5px] leading-none">{t("edit.pool.hideUsed")}</span>
+                                    <span className="mt-1 whitespace-nowrap text-[11px] text-muted-foreground leading-none">{placedIds.size > 0 ? t("edit.pool.placedSoFar", { count: placedIds.size }) : t("edit.pool.nothingPlaced")}</span>
                                 </span>
                                 <Switch id="pool-hide-used-dialog" checked={hideUsed} onCheckedChange={setHideUsed} />
                             </label>
@@ -259,13 +267,13 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
                                     <EmptyMedia variant="icon">
                                         <SearchIcon />
                                     </EmptyMedia>
-                                    <EmptyTitle className="text-base">No matches</EmptyTitle>
-                                    <EmptyDescription>Try a different name or relax the filters.</EmptyDescription>
+                                    <EmptyTitle className="text-base">{t("edit.pool.emptyTitle")}</EmptyTitle>
+                                    <EmptyDescription>{t("edit.pool.emptyBody")}</EmptyDescription>
                                 </EmptyHeader>
                             </Empty>
                         ) : (
                             <ScrollArea scrollFade={!anyDragLifted} scrollbarGutter viewportClassName="pr-2">
-                                <ul className={styles.poolGrid} aria-label="Available operators">
+                                <ul className={styles.poolGrid} aria-label={t("edit.pool.gridLabel")}>
                                     {filtered.map((entry) => {
                                         const placed = placedIds.has(entry.id);
                                         return (
@@ -285,7 +293,7 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
                                                     />
                                                     <TooltipContent>
                                                         <span className="font-sans font-semibold text-xs">{entry.name}</span>
-                                                        {placed ? <span className="ms-1.5 font-mono text-[10px] uppercase tracking-wider opacity-70">Placed</span> : null}
+                                                        {placed ? <span className="ms-1.5 font-mono text-[10px] uppercase tracking-wider opacity-70">{t("edit.pool.placed")}</span> : null}
                                                     </TooltipContent>
                                                 </Tooltip>
                                             </li>
@@ -299,9 +307,9 @@ export function OperatorPool({ operators, placedIds, onUnplace, onPickerActivate
                     <DialogFooter className="justify-between border-border border-t px-6 py-3 sm:justify-between">
                         <Button type="button" variant="ghost" size="sm" onClick={handleClearFilters} disabled={!hasFilters}>
                             <FilterXIcon />
-                            Clear filters
+                            {t("edit.pool.clearFilters")}
                         </Button>
-                        <DialogClose render={<Button type="button" />}>Done</DialogClose>
+                        <DialogClose render={<Button type="button" />}>{t("edit.pool.done")}</DialogClose>
                     </DialogFooter>
                 </DialogPopup>
             </Dialog>

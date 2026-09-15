@@ -1,16 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PrivacyPage } from "#/components/legal/PrivacyPage";
+import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/privacy")({
     component: PrivacyPage,
-    head: () => {
+    head: ({ match }) => {
+        const t = metaT(match.context.i18n);
         const { meta, links } = seo({
-            title: "Privacy Policy",
-            description: "Your privacy matters. Here's how Myrtle protects and handles your personal information.",
+            title: t("privacy.title"),
+            description: t("privacy.description"),
             path: "/privacy",
-            image: defaultOgURL("privacy"),
+            image: defaultOgURL("privacy", match.context.i18n),
+            locale: match.context.i18n?.locale,
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],

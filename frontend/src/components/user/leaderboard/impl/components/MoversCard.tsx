@@ -2,21 +2,27 @@ import { Link } from "@tanstack/react-router";
 import { ChevronDown, ChevronUp, Minus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import type { ILeaderboardMover } from "#/lib/api/user";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, getAvatarById } from "#/lib/utils";
-import { DEFAULT_AVATAR_ID } from "../constants";
+import { DEFAULT_AVATAR_ID, type LeaderboardMessageKey } from "../constants";
+import type { messages as constantsMessages } from "../constants.messages";
+import type { messages } from "./MoversCard.messages";
 
-export function MoversCard({ movers, isLoading, intervalLabel = "today" }: { movers: ILeaderboardMover[]; isLoading?: boolean; intervalLabel?: string }) {
+export function MoversCard({ movers, isLoading, intervalKey = "leaderboard.interval.day.subtitle" }: { movers: ILeaderboardMover[]; isLoading?: boolean; intervalKey?: LeaderboardMessageKey }) {
+    const t: TypedT<typeof messages & typeof constantsMessages> = useT("user");
+
     return (
         <aside className="rounded-xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
             <div className="mb-2.5 flex items-center justify-between">
-                <span className="font-sans font-semibold text-[13.5px] text-foreground leading-tight tracking-tight">Top movers · {intervalLabel}</span>
-                <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.14em]">Δ Rank</span>
+                <span className="font-sans font-semibold text-[13.5px] text-foreground leading-tight tracking-tight">{t("leaderboard.movers.title", { interval: t(intervalKey) })}</span>
+                <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{t("leaderboard.deltaRank")}</span>
             </div>
             <div className="flex flex-col gap-2.5">
                 {isLoading && movers.length === 0 ? (
                     ["a", "b", "c"].map((slot) => <MoverSkeleton key={`mover-skeleton-${slot}`} />)
                 ) : movers.length === 0 ? (
-                    <span className="font-mono text-[11px] text-muted-foreground">No movements yet.</span>
+                    <span className="font-mono text-[11px] text-muted-foreground">{t("leaderboard.movers.empty")}</span>
                 ) : (
                     movers.slice(0, 3).map((mover) => <MoverRow key={mover.uid} mover={mover} />)
                 )}

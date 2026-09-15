@@ -1,7 +1,10 @@
 import { memo } from "react";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
+import { type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { LevelBucket } from "#/types/generated/LevelBucket";
+import type { messages } from "./LevelBreakdown.messages";
 
 interface ILevelBreakdownProps {
     /** Always four buckets, levels 0 through 3, zero-filled by the backend. */
@@ -37,6 +40,10 @@ interface ILevelBreakdownProps {
  * read as though everyone had invested.
  */
 export const LevelBreakdown = memo(function LevelBreakdown({ buckets, total, title, labels, summary, cohort, ownLevel, className }: ILevelBreakdownProps) {
+    const t: TypedT<typeof messages> = useT("operators");
+    const rt: TypedRichT<typeof messages> = useRichT("operators");
+    const f = useFormatters();
+
     if (total <= 0 || buckets.length === 0) return null;
 
     // Anything past level 0 counts as invested. This is the number the strip is
@@ -51,14 +58,10 @@ export const LevelBreakdown = memo(function LevelBreakdown({ buckets, total, tit
         <div className={cn("rounded-lg border border-border bg-secondary/20 p-3", className)}>
             <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
                 <span className="font-medium text-foreground text-xs">{title}</span>
-                <span className="font-mono text-[10px] text-muted-foreground tabular-nums">
-                    {total.toLocaleString()} {cohort}
-                </span>
+                <span className="font-mono text-[10px] text-muted-foreground tabular-nums">{t("breakdown.cohortCount", { total: f.number(total), cohort })}</span>
             </div>
 
-            <p className="mb-2.5 text-muted-foreground text-xs">
-                <span className="font-semibold text-foreground tabular-nums">{fmtPct(investedPct)}%</span> have {summary}
-            </p>
+            <p className="mb-2.5 text-muted-foreground text-xs">{rt("breakdown.headline", { pct: <span className="font-semibold text-foreground tabular-nums">{fmtPct(investedPct)}%</span>, summary })}</p>
 
             <div className="grid grid-cols-[minmax(64px,auto)_1fr_auto] items-center gap-x-2.5 gap-y-1.5">
                 {buckets.map((bucket) => {
@@ -71,8 +74,8 @@ export const LevelBreakdown = memo(function LevelBreakdown({ buckets, total, tit
                                 render={
                                     <div className="col-span-3 grid grid-cols-subgrid items-center rounded-sm">
                                         <span className={cn("truncate text-[11px]", isNone ? "text-muted-foreground" : "text-foreground", isOwn && "font-semibold")}>
-                                            {labels[bucket.level] ?? `L${bucket.level}`}
-                                            {isOwn && <span className="ml-1 font-normal text-[9px] text-primary uppercase tracking-wider">you</span>}
+                                            {labels[bucket.level] ?? t("breakdown.levelFallback", { level: bucket.level })}
+                                            {isOwn && <span className="ml-1 font-normal text-[9px] text-primary uppercase tracking-wider">{t("breakdown.you")}</span>}
                                         </span>
 
                                         <span className="h-1.5 w-full overflow-hidden rounded-full bg-border/70">
@@ -98,14 +101,13 @@ export const LevelBreakdown = memo(function LevelBreakdown({ buckets, total, tit
 
                                         <span className="flex items-baseline gap-1.5 font-mono text-[10px] tabular-nums">
                                             <span className={cn("w-9 text-right", isNone ? "text-muted-foreground" : "text-foreground")}>{fmtPct(pct)}%</span>
-                                            <span className="w-11 text-right text-muted-foreground">{bucket.users.toLocaleString()}</span>
+                                            <span className="w-11 text-right text-muted-foreground">{f.number(bucket.users)}</span>
                                         </span>
                                     </div>
                                 }
                             />
                             <TooltipPopup side="top" sideOffset={6}>
-                                {bucket.users.toLocaleString()} of {total.toLocaleString()} {cohort} ({fmtPct(pct)}%)
-                                {isOwn ? " - where you are" : ""}
+                                {t("breakdown.rowTooltip", { users: f.number(bucket.users), total: f.number(total), cohort, pct: fmtPct(pct), own: isOwn ? "yes" : "no" })}
                             </TooltipPopup>
                         </Tooltip>
                     );

@@ -4,8 +4,11 @@ import { eliteIcon, moduleIconURL, skillIconURL } from "#/components/operators/d
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { publicPlansQueryOptions } from "#/lib/api/planner";
 import type { IRosterEntry } from "#/lib/api/user";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, formatSubProfession, rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
+import type { messages } from "./PlansTab.messages";
 
 function getSkillLevelLabel(level: number): string {
     if (level <= 7) return String(level);
@@ -23,6 +26,7 @@ interface IPlansTabProps {
 }
 
 export function PlansTab({ uid, roster }: IPlansTabProps) {
+    const t: TypedT<typeof messages> = useT("user");
     const { data: plans = [], isLoading } = useQuery(publicPlansQueryOptions(uid));
 
     if (isLoading) {
@@ -38,15 +42,15 @@ export function PlansTab({ uid, roster }: IPlansTabProps) {
     if (plans.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-card px-8 py-16 text-center">
-                <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">Plans</span>
-                <h3 className="font-semibold text-lg tracking-tight">No public plans</h3>
-                <p className="max-w-sm text-muted-foreground text-sm">This Doctor hasn't pinned any plans to their profile yet.</p>
+                <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">{t("profile.plans.kicker")}</span>
+                <h3 className="font-semibold text-lg tracking-tight">{t("profile.plans.empty.title")}</h3>
+                <p className="max-w-sm text-muted-foreground text-sm">{t("profile.plans.empty.desc")}</p>
             </div>
         );
     }
 
     return (
-        <section aria-label="Operator plans" className="flex flex-col gap-4">
+        <section aria-label={t("profile.plans.aria")} className="flex flex-col gap-4">
             <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,320px),1fr))] gap-4">
                 {plans.map((p) => {
                     const op = p.operator;
@@ -76,23 +80,23 @@ export function PlansTab({ uid, roster }: IPlansTabProps) {
 
                             <div className="flex flex-col gap-3 border-border/40 border-t pt-3 text-xs">
                                 <div className="flex items-center justify-between">
-                                    <span className="font-medium text-muted-foreground">Level</span>
+                                    <span className="font-medium text-muted-foreground">{t("profile.plans.level")}</span>
                                     <div className="flex items-center gap-2">
                                         <div className="flex items-center gap-1 font-medium">
-                                            <img src={eliteIcon(currElite)} alt={`Elite ${currElite}`} className="icon-theme-aware size-5 object-contain" />
-                                            <span>Lv.{currLevel}</span>
+                                            <img src={eliteIcon(currElite)} alt={t("profile.plans.eliteAlt", { elite: currElite })} className="icon-theme-aware size-5 object-contain" />
+                                            <span>{t("profile.plans.skillLevel", { level: currLevel })}</span>
                                         </div>
                                         <span className="text-muted-foreground/50">➔</span>
                                         <div className={cn("flex items-center gap-1 font-bold", isLevelUpgraded ? "text-primary" : "text-muted-foreground")}>
-                                            <img src={eliteIcon(targetElite)} alt={`Elite ${targetElite}`} className={cn("icon-theme-aware size-5 object-contain", !isLevelUpgraded && "opacity-50")} />
-                                            <span>Lv.{targetLevel}</span>
+                                            <img src={eliteIcon(targetElite)} alt={t("profile.plans.eliteAlt", { elite: targetElite })} className={cn("icon-theme-aware size-5 object-contain", !isLevelUpgraded && "opacity-50")} />
+                                            <span>{t("profile.plans.skillLevel", { level: targetLevel })}</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 {op.skills.length > 0 && (
                                     <div className="flex flex-col gap-2">
-                                        <span className="font-medium text-muted-foreground">Skills</span>
+                                        <span className="font-medium text-muted-foreground">{t("profile.plans.skills")}</span>
                                         <div className="flex flex-col gap-1.5 pl-1">
                                             {op.skills.map((skill, idx) => {
                                                 let currSkillVal = 1;
@@ -119,7 +123,7 @@ export function PlansTab({ uid, roster }: IPlansTabProps) {
                                                     <div key={skill.skillId} className="flex items-center justify-between">
                                                         <div className="flex min-w-0 flex-1 items-center gap-1.5">
                                                             <img src={skillIconURL(skill, op.server)} alt={skill.static?.levels?.[0]?.name} className="size-5 rounded border border-border/40 object-contain" />
-                                                            <span className="truncate font-medium text-foreground">{skill.static?.levels?.[0]?.name ?? `Skill ${idx + 1}`}</span>
+                                                            <span className="truncate font-medium text-foreground">{skill.static?.levels?.[0]?.name ?? t("profile.plans.skillFallback", { n: idx + 1 })}</span>
                                                         </div>
                                                         <div className="ml-2 flex shrink-0 items-center gap-2">
                                                             <span className="font-medium">{getSkillLevelLabel(currSkillVal)}</span>
@@ -135,7 +139,7 @@ export function PlansTab({ uid, roster }: IPlansTabProps) {
 
                                 {op.modules.filter((m) => m.typeName1 !== "ORIGINAL").length > 0 && (
                                     <div className="flex flex-col gap-2">
-                                        <span className="font-medium text-muted-foreground">Modules</span>
+                                        <span className="font-medium text-muted-foreground">{t("profile.plans.modules")}</span>
                                         <div className="flex flex-col gap-1.5 pl-1">
                                             {op.modules
                                                 .filter((m) => m.typeName1 !== "ORIGINAL")

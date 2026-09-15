@@ -1,8 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
+import { DEFAULT_LOCALE, formatMessage, sourceMessage, useGamedataServer, useT } from "#/lib/i18n";
+import { fullMessageKey, type TypedT } from "#/lib/i18n/messages";
 import type { IEnrichedSkill, IOperatorListItem, IOperatorModule } from "#/types/operators";
 import type { IOperatorListEntry } from "./types";
+import type { messages as detailMessages } from "./useOperatorDetail.messages";
+
+/** The `t` these label helpers need, narrowed to the keys they can render. */
+export type DetailT = TypedT<typeof detailMessages>;
+
+/**
+ * Default `t` for a caller outside an `I18nProvider` - the chart exporter runs
+ * from a callback that already holds the labels it needs. It resolves against
+ * the bundled source catalog, so this file carries no second copy of the text.
+ */
+const sourceT: DetailT = (key, values) => formatMessage(sourceMessage(fullMessageKey("tools", key)) ?? key, DEFAULT_LOCALE, values);
 
 export interface IOperatorDetail {
     raw: IOperatorListItem | undefined;
@@ -28,42 +41,44 @@ export interface IOperatorDetail {
  * operator list query so all instances share a single fetch.
  */
 export function useOperatorDetail(entry: IOperatorListEntry | undefined): IOperatorDetail {
-    const { data: operators } = useQuery(operatorsListQueryOptions());
+    const { data: operators } = useQuery(operatorsListQueryOptions(useGamedataServer()));
+    const t: DetailT = useT("tools");
     return useMemo(
         () =>
             buildDetail(
                 operators?.find((op) => op.id === entry?.id),
                 entry,
+                t,
             ),
-        [operators, entry],
+        [operators, entry, t],
     );
 }
 
-function buildDetail(op: IOperatorListItem | undefined, entry: IOperatorListEntry | undefined): IOperatorDetail {
+function buildDetail(op: IOperatorListItem | undefined, entry: IOperatorListEntry | undefined, t: DetailT): IOperatorDetail {
     return {
         raw: op,
         skillName(skillIndex) {
-            if (skillIndex <= 0) return "Basic attack";
+            if (skillIndex <= 0) return t("calc.detail.basicAttack");
             const fallback = `S${skillIndex}`;
             const skill = op?.skills?.[skillIndex - 1];
             const name = skill?.static?.levels?.[0]?.name?.trim();
-            return name && name.length > 0 ? `${fallback} · ${name}` : fallback;
+            return name && name.length > 0 ? t("calc.detail.designatorWithName", { label: fallback, name }) : fallback;
         },
         moduleName(moduleIndex) {
-            if (moduleIndex <= 0) return "No module";
+            if (moduleIndex <= 0) return t("calc.detail.noModule");
             const pick = resolveModule(op, moduleIndex, entry);
             // Prefer the in-game designator. `Mod N` is the engine's own index
             // and means nothing to a reader, so it is only a last resort.
-            const label = moduleDesignator(pick) ?? `Mod ${moduleIndex}`;
+            const label = moduleDesignator(pick) ?? t("calc.detail.moduleFallback", { index: moduleIndex });
             const name = pick?.uniEquipName?.trim();
-            return name && name.length > 0 ? `${label} · ${name}` : label;
+            return name && name.length > 0 ? t("calc.detail.designatorWithName", { label, name }) : label;
         },
         potentialLabel(potential) {
             const fallback = `P${potential}`;
-            if (potential <= 1) return `${fallback} · Base`;
+            if (potential <= 1) return t("calc.detail.designatorWithName", { label: fallback, name: t("calc.detail.potentialBase") });
             const rank = op?.potentialRanks?.[potential - 2];
             const desc = rank?.description?.trim();
-            return desc && desc.length > 0 ? `${fallback} · ${desc}` : fallback;
+            return desc && desc.length > 0 ? t("calc.detail.designatorWithName", { label: fallback, name: desc }) : fallback;
         },
         skillAt(skillIndex) {
             if (skillIndex <= 0) return undefined;
@@ -114,7 +129,7 @@ export function resolveModule(op: IOperatorListItem | undefined, moduleIndex: nu
  * Compact module label for chart exports: the in-game designator when it can be
  * resolved, the engine's own index only when it cannot.
  */
-export function moduleShortLabel(op: IOperatorListItem | undefined, entry: IOperatorListEntry | undefined, moduleIndex: number): string {
-    if (moduleIndex <= 0) return "no module";
-    return moduleDesignator(resolveModule(op, moduleIndex, entry)) ?? `Mod${moduleIndex}`;
+export function moduleShortLabel(op: IOperatorListItem | undefined, entry: IOperatorListEntry | undefined, moduleIndex: number, t: DetailT = sourceT): string {
+    if (moduleIndex <= 0) return t("calc.detail.noModuleLower");
+    return moduleDesignator(resolveModule(op, moduleIndex, entry)) ?? t("calc.detail.moduleFallbackShort", { index: moduleIndex });
 }

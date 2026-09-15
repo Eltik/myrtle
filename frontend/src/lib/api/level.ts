@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
+import { DEFAULT_GAMEDATA_SERVER, gamedataKey, gamedataPath, resolveGamedataServer } from "./gamedata";
 
 /** A grid coordinate in game space (`row`/`col`). */
 export interface IPosition {
@@ -115,18 +116,18 @@ export interface ILevel {
 }
 
 export const getLevelFn = createServerFn({ method: "GET" })
-    .inputValidator((data: { stageId: string }) => data)
-    .handler(async ({ data: { stageId } }) => {
-        const res = await backendFetch(`/level/${encodeURIComponent(stageId)}`);
+    .inputValidator((data: { stageId: string; server?: string }) => data)
+    .handler(async ({ data: { stageId, server } }) => {
+        const res = await backendFetch(gamedataPath(server, `/level/${encodeURIComponent(stageId)}`));
         if (res.status === 404) return null;
         if (!res.ok) throw new Error(`Failed to load level ${stageId}: ${res.status}`);
         return (await res.json()) as ILevel;
     });
 
-export function levelQueryOptions(stageId: string | null) {
+export function levelQueryOptions(stageId: string | null, server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["level", stageId],
-        queryFn: () => (stageId ? getLevelFn({ data: { stageId } }) : Promise.resolve(null)),
+        queryKey: ["level", stageId, ...gamedataKey(server)],
+        queryFn: () => (stageId ? getLevelFn({ data: { stageId, server: resolveGamedataServer(server) } }) : Promise.resolve(null)),
         enabled: !!stageId,
         staleTime: 60 * 60 * 1000,
         gcTime: 6 * 60 * 60 * 1000,

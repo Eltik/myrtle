@@ -6,6 +6,8 @@ import { getChibiSkinData } from "#/components/operators/detail/impl/components/
 import { Button } from "#/components/ui/button";
 import { enemyChibisQueryOptions, type IChibiCharacter } from "#/lib/api/chibis";
 import type { IEnemy } from "#/lib/api/enemies";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { EnemyStatsCard } from "../impl/EnemyStatsCard";
 import { DEFAULT_MAP_SETTINGS, type IMapSettings } from "../impl/MapSettings";
 import type { IStageEnemyStats } from "../impl/types";
@@ -17,6 +19,7 @@ import "./impl/effects.css";
 import "./impl/tiles.css";
 import "./impl/routes.css";
 import { entries, type SparseRecord } from "#/lib/records";
+import type { messages } from "./index.messages";
 import { Board } from "./view/Board";
 import type { IChibiWalker } from "./view/ChibiLayer";
 import { DynamicChibiLayer } from "./view/ChibiLayer.lazy";
@@ -43,17 +46,18 @@ const HOVER_OPEN_DELAY = 180;
 const MAX_VIEWPORT_HEIGHT_FRACTION = 0.82;
 
 function MapControls({ onPrev, onNext, atStart, atEnd, hasRoutes, is3D, onToggle3D }: { onPrev: () => void; onNext: () => void; atStart: boolean; atEnd: boolean; hasRoutes: boolean; is3D: boolean; onToggle3D: () => void }) {
+    const t: TypedT<typeof messages> = useT("stages");
     return (
         <div className="absolute top-3 right-3 z-50 flex items-center gap-2 sm:top-4 sm:right-4 sm:gap-1.5">
-            <Button aria-label="Toggle 3D view" aria-pressed={is3D} onClick={onToggle3D} size="icon" variant={is3D ? "secondary" : "outline"}>
+            <Button aria-label={t("map.toggle3d")} aria-pressed={is3D} onClick={onToggle3D} size="icon" variant={is3D ? "secondary" : "outline"}>
                 <Box />
             </Button>
             {hasRoutes && (
                 <>
-                    <Button aria-label="Previous enemy" disabled={atStart} onClick={onPrev} size="icon" variant="outline">
+                    <Button aria-label={t("map.prevEnemy")} disabled={atStart} onClick={onPrev} size="icon" variant="outline">
                         <ChevronLeft />
                     </Button>
-                    <Button aria-label="Next enemy" disabled={atEnd} onClick={onNext} size="icon" variant="outline">
+                    <Button aria-label={t("map.nextEnemy")} disabled={atEnd} onClick={onNext} size="icon" variant="outline">
                         <ChevronRight />
                     </Button>
                 </>
@@ -80,6 +84,7 @@ export const MapView = forwardRef<IMapViewHandle, { level: ILevel | null; code?:
 });
 
 const MapBoard = forwardRef<IMapViewHandle, { level: ILevel; code?: string; settings: IMapSettings; onSettingsChange?: (next: IMapSettings) => void; enemyData?: SparseRecord<IEnemy>; statsFor?: StatsForFn }>(function MapBoard({ level, code, settings, onSettingsChange, enemyData, statsFor }, ref) {
+    const t: TypedT<typeof messages> = useT("stages");
     const width = level.mapData.map[0].length;
     const height = level.mapData.map.length;
 
@@ -338,7 +343,7 @@ const MapBoard = forwardRef<IMapViewHandle, { level: ILevel; code?: string; sett
                         )}
                     </div>
                 </div>
-                <Watermark text={code ?? "Map"} />
+                <Watermark text={code ?? t("map.watermark")} />
             </div>
             {hoverKey &&
                 hoverableKeys.has(hoverKey) &&

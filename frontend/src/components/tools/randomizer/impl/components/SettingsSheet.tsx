@@ -2,11 +2,14 @@ import { Filter, MapPinned, Users } from "lucide-react";
 import type React from "react";
 import { Sheet, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import type { IStage, IZone, StageClearsMap } from "#/types/stages";
 import type { IActivityLookup } from "../activity-lookup";
 import type { IRandomizerOperator, IRandomizerSettings, IRosterIndex } from "../types";
 import { OperatorFiltersPanel } from "./OperatorFiltersPanel";
 import { RosterPicker } from "./RosterPicker";
+import type { messages } from "./SettingsSheet.messages";
 import { StageFiltersPanel } from "./StageFiltersPanel";
 
 interface ISettingsSheetProps {
@@ -32,30 +35,31 @@ interface ISettingsSheetProps {
 }
 
 export function SettingsSheet(props: ISettingsSheetProps): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("tools");
     return (
         <Sheet open={props.open} onOpenChange={props.onOpenChange}>
             <SheetPopup side="right" variant="inset" className="w-[min(520px,100vw)] sm:max-w-130">
                 <SheetHeader>
                     <SheetTitle className="flex items-center gap-2">
                         <Filter aria-hidden="true" className="size-4 text-muted-foreground" />
-                        Settings
+                        {t("randomizer.settings.title")}
                     </SheetTitle>
-                    <p className="text-muted-foreground text-sm">Constrain the randomizer - by class, rarity, owned operators, or stage availability.</p>
+                    <p className="text-muted-foreground text-sm">{t("randomizer.settings.desc")}</p>
                 </SheetHeader>
                 <SheetPanel className="px-5 pb-6">
                     <Tabs defaultValue="operators" className="gap-4">
                         <TabsList className="w-full">
                             <TabsTrigger value="operators" className="flex-1">
                                 <Filter aria-hidden="true" />
-                                Operators
+                                {t("randomizer.settings.tab.operators")}
                             </TabsTrigger>
                             <TabsTrigger value="stages" className="flex-1">
                                 <MapPinned aria-hidden="true" />
-                                Stages
+                                {t("randomizer.settings.tab.stages")}
                             </TabsTrigger>
                             <TabsTrigger value="roster" className="flex-1">
                                 <Users aria-hidden="true" />
-                                Roster
+                                {t("randomizer.settings.tab.roster")}
                             </TabsTrigger>
                         </TabsList>
 

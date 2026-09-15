@@ -9,12 +9,15 @@ import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { hasMod, isEditableTarget } from "#/lib/hotkeys";
+import { type TFunction, useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { professionClass, professionLabel } from "#/lib/registry/operator-display";
 import { type IPage, PAGES } from "#/lib/registry/pages";
 import { ToolIcon } from "#/lib/registry/ToolIcon";
 import { type ITool, TOOLS } from "#/lib/registry/tools";
 import { searchAndRank } from "#/lib/search/fuzzy";
 import type { IOperatorIndexEntry } from "#/types/operators";
+import type { messages } from "./search-command.messages";
 
 interface ISearchCommandProps {
     open: boolean;
@@ -28,6 +31,10 @@ const MAX_OPERATORS = 8;
 export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): React.ReactElement {
     const [query, setQuery] = React.useState("");
     const navigate = useNavigate();
+    const t: TypedT<typeof messages> = useT("common");
+    // The page and tool registries are plain modules, so they carry message
+    // keys in the `nav` namespace rather than text; this resolves them.
+    const tNav: TFunction = useT("nav");
 
     React.useEffect(() => {
         const down = (e: KeyboardEvent) => {
@@ -54,7 +61,7 @@ export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): Reac
     }, [open]);
 
     const operatorsQuery = useQuery({
-        ...operatorsIndexQueryOptions(),
+        ...operatorsIndexQueryOptions(useGamedataServer()),
         enabled: open,
     });
     const operators = operatorsQuery.data;
@@ -65,12 +72,12 @@ export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): Reac
                 query,
                 PAGES,
                 (p) => ({
-                    name: p.label,
-                    extra: `${p.desc} ${p.keywords.join(" ")} ${p.id}`,
+                    name: tNav(p.labelKey),
+                    extra: `${tNav(p.descKey)} ${p.keywords.join(" ")} ${p.id}`,
                 }),
                 MAX_PAGES,
             ),
-        [query],
+        [query, tNav],
     );
 
     const toolResults = React.useMemo(
@@ -78,13 +85,13 @@ export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): Reac
             searchAndRank(
                 query,
                 TOOLS,
-                (t) => ({
-                    name: t.label,
-                    extra: `${t.desc} ${t.keywords.join(" ")} ${t.id}`,
+                (tool) => ({
+                    name: tNav(tool.labelKey),
+                    extra: `${tNav(tool.descKey)} ${tool.keywords.join(" ")} ${tool.id}`,
                 }),
                 MAX_TOOLS,
             ),
-        [query],
+        [query, tNav],
     );
 
     const operatorResults = React.useMemo(() => {
@@ -112,20 +119,20 @@ export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): Reac
         <CommandDialog open={open} onOpenChange={onOpenChange}>
             <CommandDialogPopup>
                 <Command value={query} onValueChange={setQuery} mode="none">
-                    <CommandInput placeholder="Search operators, pages, tools…" />
+                    <CommandInput placeholder={t("searchCommand.placeholder")} />
                     <CommandPanel>
                         <CommandList>
-                            {!hasResults && !anyLoading && <CommandEmpty>No results found.</CommandEmpty>}
+                            {!hasResults && !anyLoading && <CommandEmpty>{t("searchCommand.noResults")}</CommandEmpty>}
 
                             <CommandGroup>
-                                <CommandGroupLabel>Operators</CommandGroupLabel>
+                                <CommandGroupLabel>{t("searchCommand.operators")}</CommandGroupLabel>
                                 {operatorsQuery.isLoading ? (
                                     <OperatorSkeletons />
                                 ) : operatorsQuery.isError ? (
-                                    <div className="px-2 py-3 text-muted-foreground text-xs">Failed to load operators. Try reopening the palette.</div>
+                                    <div className="px-2 py-3 text-muted-foreground text-xs">{t("searchCommand.operatorsFailed")}</div>
                                 ) : operatorResults.length === 0 ? (
                                     query.trim().length > 0 ? (
-                                        <div className="px-2 py-3 text-muted-foreground text-xs">No operators match "{query}".</div>
+                                        <div className="px-2 py-3 text-muted-foreground text-xs">{t("searchCommand.noOperatorMatch", { query })}</div>
                                     ) : null
                                 ) : (
                                     operatorResults.map(({ item: op }) => <OperatorRow key={op.id} op={op} onClick={() => closeAndGo(`/operators/${op.id}`)} />)
@@ -136,7 +143,7 @@ export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): Reac
 
                             {pageResults.length > 0 && (
                                 <CommandGroup>
-                                    <CommandGroupLabel>Pages</CommandGroupLabel>
+                                    <CommandGroupLabel>{t("searchCommand.pages")}</CommandGroupLabel>
                                     {pageResults.map(({ item: page }) => (
                                         <PageRow key={page.id} page={page} onClick={() => closeAndGo(page.href)} />
                                     ))}
@@ -147,7 +154,7 @@ export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): Reac
 
                             {toolResults.length > 0 && (
                                 <CommandGroup>
-                                    <CommandGroupLabel>Tools</CommandGroupLabel>
+                                    <CommandGroupLabel>{t("searchCommand.tools")}</CommandGroupLabel>
                                     {toolResults.map(({ item: tool }) => (
                                         <ToolRow key={tool.id} tool={tool} onClick={() => closeAndGo(tool.href)} />
                                     ))}
@@ -159,12 +166,12 @@ export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): Reac
                         <span className="flex pointer-coarse:hidden items-center gap-1">
                             <Kbd>↑</Kbd>
                             <Kbd>↓</Kbd>
-                            to navigate
+                            {t("searchCommand.toNavigate")}
                         </span>
                         <span className="flex pointer-coarse:hidden items-center gap-1">
-                            <Kbd>↵</Kbd> to select
+                            <Kbd>↵</Kbd> {t("searchCommand.toSelect")}
                         </span>
-                        <span className="ml-auto font-mono text-[10.5px] text-muted-foreground/60 tracking-[0.04em]">powered by COSS UI</span>
+                        <span className="ml-auto font-mono text-[10.5px] text-muted-foreground/60 tracking-[0.04em]">{t("searchCommand.poweredBy")}</span>
                     </CommandFooter>
                 </Command>
             </CommandDialogPopup>
@@ -173,21 +180,25 @@ export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): Reac
 }
 
 function PageRow({ page, onClick }: { page: IPage; onClick: () => void }): React.ReactElement {
+    const tNav: TFunction = useT("nav");
+
     return (
         <CommandItem value={`page:${page.id}`} onClick={onClick} className="flex cursor-pointer flex-row gap-2">
             <ToolIcon name={page.icon} className="size-4 text-muted-foreground" />
-            <span className="flex-1">{page.label}</span>
-            <span className="hidden text-muted-foreground text-xs sm:inline">{page.desc}</span>
+            <span className="flex-1">{tNav(page.labelKey)}</span>
+            <span className="hidden text-muted-foreground text-xs sm:inline">{tNav(page.descKey)}</span>
         </CommandItem>
     );
 }
 
 function ToolRow({ tool, onClick }: { tool: ITool; onClick: () => void }): React.ReactElement {
+    const tNav: TFunction = useT("nav");
+
     return (
         <CommandItem value={`tool:${tool.id}`} onClick={onClick} className="flex cursor-pointer flex-row gap-2">
             <ToolIcon name={tool.icon} className="size-4 text-muted-foreground" />
-            <span className="flex-1">{tool.label}</span>
-            <span className="hidden text-muted-foreground text-xs sm:inline">{tool.desc}</span>
+            <span className="flex-1">{tNav(tool.labelKey)}</span>
+            <span className="hidden text-muted-foreground text-xs sm:inline">{tNav(tool.descKey)}</span>
         </CommandItem>
     );
 }

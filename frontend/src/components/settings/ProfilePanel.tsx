@@ -5,8 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/com
 import { Input } from "#/components/ui/input";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { formatServerWithPublisher } from "#/lib/auth/login";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { formatRelativeShort } from "#/lib/utils";
 import type { IUserProfile } from "#/types/user";
+import type { messages } from "./ProfilePanel.messages";
 import { SettingRow } from "./SettingsShell";
 
 interface IProfilePanelProps {
@@ -16,6 +19,7 @@ interface IProfilePanelProps {
 }
 
 export function ProfilePanel({ user, onResync, syncing }: IProfilePanelProps) {
+    const t: TypedT<typeof messages> = useT("settings");
     const display = user.nickname ?? "Doctor";
     const nickNum = user.nick_number ? `#${user.nick_number}` : "";
 
@@ -36,37 +40,37 @@ export function ProfilePanel({ user, onResync, syncing }: IProfilePanelProps) {
                             </div>
                             <div className="flex flex-wrap items-center gap-1.5">
                                 <Badge variant="outline" size="sm">
-                                    UID {user.uid}
+                                    {t("profile.uid", { uid: user.uid })}
                                 </Badge>
                                 <Badge variant="outline" size="sm">
                                     {formatServerWithPublisher(user.server)}
                                 </Badge>
                                 <Badge variant="success" size="sm">
                                     <CheckIcon className="size-3" />
-                                    Synced {formatRelativeShort(user.updated_at)}
+                                    {t("profile.synced", { when: formatRelativeShort(user.updated_at) })}
                                 </Badge>
                             </div>
                         </div>
                     </div>
                     <Button variant="outline" size="sm" onClick={onResync} disabled={syncing} loading={syncing} className="w-full sm:w-auto">
                         <RefreshCwIcon className="size-3.5" />
-                        {syncing ? "Re-syncing…" : "Re-sync now"}
+                        {syncing ? t("resync.pending") : t("resync.now")}
                     </Button>
                 </div>
             </Card>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Game-synced info</CardTitle>
-                    <CardDescription>Read-only. Pulled from Yostar when you sync - change it in-game.</CardDescription>
+                    <CardTitle>{t("profile.gameSynced.title")}</CardTitle>
+                    <CardDescription>{t("profile.gameSynced.desc")}</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
-                    <SettingRow title="Arknights nickname" description="Shown on your profile, leaderboard, and tier lists you publish." control={<Input value={`${display}${nickNum}`} readOnly className="w-full sm:w-65" />} />
-                    <SettingRow title="Account level" description="Doctor level from the in-game profile." control={<Input value={user.level != null ? `Lv. ${user.level}` : "-"} readOnly className="w-full sm:w-30" />} />
-                    <SettingRow title="Game server" description="Which Arknights server you're synced from. Re-link your account to change this." control={<Input value={formatServerWithPublisher(user.server)} readOnly className="w-full sm:w-55" />} />
+                    <SettingRow title={t("profile.nickname.title")} description={t("profile.nickname.desc")} control={<Input value={`${display}${nickNum}`} readOnly className="w-full sm:w-65" />} />
+                    <SettingRow title={t("profile.level.title")} description={t("profile.level.desc")} control={<Input value={user.level != null ? t("profile.level.value", { level: user.level }) : "-"} readOnly className="w-full sm:w-30" />} />
+                    <SettingRow title={t("profile.server.title")} description={t("profile.server.desc")} control={<Input value={formatServerWithPublisher(user.server)} readOnly className="w-full sm:w-55" />} />
                     <SettingRow
-                        title="Assistant operator"
-                        description="The operator displayed on your in-game and Myrtle profile."
+                        title={t("profile.assistant.title")}
+                        description={t("profile.assistant.desc")}
                         control={
                             <div className="flex items-center gap-2.5">
                                 <div className="inline-flex size-9 items-center justify-center overflow-hidden rounded-lg border border-border bg-[color-mix(in_srgb,var(--primary)_14%,var(--card))] text-muted-foreground">

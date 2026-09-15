@@ -9,6 +9,8 @@ import { useAuth } from "#/hooks/use-auth";
 import { useDebounce } from "#/hooks/use-debounce";
 import { APIError } from "#/lib/api/_shared";
 import { createTierListFn, deleteTierListFn, type ITierListBrowseItem, myTierListsDetailedQueryOptions, updateTierListFn } from "#/lib/api/tier-lists";
+import { useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { matchesBrowseQuery, sortBrowseItems } from "../shared";
 import { CreateListDialog } from "./CreateListDialog";
 import { DeleteListDialog, type IDeleteListTarget } from "./DeleteListDialog";
@@ -16,6 +18,7 @@ import { EditListDialog, type IEditListInitial } from "./EditListDialog";
 import { MyHero } from "./MyHero";
 import { MyListCard } from "./MyListCard";
 import { MyListRow } from "./MyListRow";
+import type { messages } from "./MyTierLists.messages";
 import { type MyListSort, type MyListTypeFilter, MyToolbar, type MyViewMode } from "./MyToolbar";
 
 const COMMUNITY_QUOTA = 10;
@@ -34,12 +37,14 @@ interface IMyTierListsProps {
 }
 
 export function MyTierLists({ initialSort, initialType, initialView, initialQuery, onPersistSearch }: IMyTierListsProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const { user } = useAuth();
     const authed = Boolean(user);
 
-    const { data, isError, refetch, isFetching } = useQuery(myTierListsDetailedQueryOptions(authed));
+    const gamedataServer = useGamedataServer();
+    const { data, isError, refetch, isFetching } = useQuery(myTierListsDetailedQueryOptions(authed, gamedataServer));
     const allLists = useMemo<ITierListBrowseItem[]>(() => data ?? [], [data]);
 
     const [sort, setSort] = useState<MyListSort>(initialSort);
@@ -87,14 +92,14 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
             invalidateQueries();
             toastManager.add({
                 id: `tl-create-${Date.now()}`,
-                title: "List created",
-                description: `"${created.name}" is ready to edit.`,
+                title: t("my.toast.createdTitle"),
+                description: t("my.toast.createdBody", { name: created.name }),
                 type: "success",
             });
             navigate({ to: "/tier-lists/$id", params: { id: created.slug } });
         },
         onError: (err: unknown) => {
-            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : "Couldn't create list.";
+            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : t("my.toast.createFailed");
             setMutationError(message);
         },
     });
@@ -107,13 +112,13 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
             invalidateQueries();
             toastManager.add({
                 id: `tl-update-${Date.now()}`,
-                title: "List updated",
-                description: "Your changes are live.",
+                title: t("my.toast.updatedTitle"),
+                description: t("my.toast.updatedBody"),
                 type: "success",
             });
         },
         onError: (err: unknown) => {
-            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : "Couldn't save changes.";
+            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : t("my.toast.updateFailed");
             setMutationError(message);
         },
     });
@@ -121,20 +126,20 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
     const deleteMutation = useMutation({
         mutationFn: (slug: string) => deleteTierListFn({ data: slug }),
         onSuccess: (_data, slug) => {
-            const removedName = deleting?.name ?? "List";
+            const removedName = deleting?.name ?? t("my.toast.deletedFallbackName");
             setDeleting(null);
             setMutationError(null);
-            queryClient.setQueryData<ITierListBrowseItem[] | undefined>(myTierListsDetailedQueryOptions(authed).queryKey, (prev) => (prev ? prev.filter((l) => l.slug !== slug) : prev));
+            queryClient.setQueryData<ITierListBrowseItem[] | undefined>(myTierListsDetailedQueryOptions(authed, gamedataServer).queryKey, (prev) => (prev ? prev.filter((l) => l.slug !== slug) : prev));
             invalidateQueries();
             toastManager.add({
                 id: `tl-delete-${Date.now()}`,
-                title: "List deleted",
-                description: `"${removedName}" has been removed.`,
+                title: t("my.toast.deletedTitle"),
+                description: t("my.toast.deletedBody", { name: removedName }),
                 type: "success",
             });
         },
         onError: (err: unknown) => {
-            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : "Couldn't delete list.";
+            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : t("my.toast.deleteFailed");
             setMutationError(message);
         },
     });
@@ -159,25 +164,28 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
         [allLists],
     );
 
-    const handleCopyLink = useCallback(async (slug: string) => {
-        const url = buildShareURL(slug);
-        try {
-            await navigator.clipboard.writeText(url);
-            toastManager.add({
-                id: `tl-copy-${Date.now()}`,
-                title: "Link copied",
-                description: "The share link is on your clipboard.",
-                type: "success",
-            });
-        } catch {
-            toastManager.add({
-                id: `tl-copy-err-${Date.now()}`,
-                title: "Couldn't copy",
-                description: "Clipboard access was denied.",
-                type: "error",
-            });
-        }
-    }, []);
+    const handleCopyLink = useCallback(
+        async (slug: string) => {
+            const url = buildShareURL(slug);
+            try {
+                await navigator.clipboard.writeText(url);
+                toastManager.add({
+                    id: `tl-copy-${Date.now()}`,
+                    title: t("my.toast.copiedTitle"),
+                    description: t("my.toast.copiedBody"),
+                    type: "success",
+                });
+            } catch {
+                toastManager.add({
+                    id: `tl-copy-err-${Date.now()}`,
+                    title: t("my.toast.copyFailedTitle"),
+                    description: t("my.toast.copyFailedBody"),
+                    type: "error",
+                });
+            }
+        },
+        [t],
+    );
 
     const handleOpenCreate = useCallback(() => {
         setMutationError(null);
@@ -194,9 +202,9 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
                 <div className="mt-5">
                     {isError ? (
                         <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-10 text-center">
-                            <p className="m-0 font-sans text-muted-foreground text-sm">Couldn't load your tier lists.</p>
+                            <p className="m-0 font-sans text-muted-foreground text-sm">{t("my.error")}</p>
                             <Button variant="outline" size="sm" className="mt-3" loading={isFetching} onClick={() => refetch()}>
-                                Retry
+                                {t("my.retry")}
                             </Button>
                         </div>
                     ) : allLists.length === 0 ? (
@@ -205,20 +213,20 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
                                 <EmptyMedia variant="icon">
                                     <SparklesIcon />
                                 </EmptyMedia>
-                                <EmptyTitle>Your workshop is empty</EmptyTitle>
-                                <EmptyDescription>Create your first tier list to start ranking operators. You can publish it instantly and share it with anyone.</EmptyDescription>
+                                <EmptyTitle>{t("my.empty.title")}</EmptyTitle>
+                                <EmptyDescription>{t("my.empty.body")}</EmptyDescription>
                             </EmptyHeader>
                             <EmptyContent>
                                 <Button onClick={handleOpenCreate}>
                                     <PlusIcon />
-                                    Create your first list
+                                    {t("my.empty.action")}
                                 </Button>
                             </EmptyContent>
                         </Empty>
                     ) : sorted.length === 0 ? (
                         <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-12 text-center">
-                            <p className="m-0 font-medium font-sans text-foreground text-sm">No lists match these filters.</p>
-                            <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">Try clearing the search or switching the type filter.</p>
+                            <p className="m-0 font-medium font-sans text-foreground text-sm">{t("my.filtered.emptyTitle")}</p>
+                            <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">{t("my.filtered.emptyBody")}</p>
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -228,7 +236,7 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
                                     setType("all");
                                 }}
                             >
-                                Clear filters
+                                {t("my.filtered.clear")}
                             </Button>
                         </div>
                     ) : view === "grid" ? (

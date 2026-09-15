@@ -1,6 +1,7 @@
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { EnemiesList } from "#/components/enemies/list/Enemies";
 import { enemiesQueryOptions, enemyStagesQueryOptions } from "#/lib/api/enemies";
+import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
@@ -22,18 +23,23 @@ export const Route = createFileRoute("/enemies")({
     // on the way out to keep a bare `/enemies` in the address bar.
     search: { middlewares: [stripSearchParams(SEARCH_DEFAULTS)] },
     loader: async ({ context }) => {
+        // The active locale's game-data server, so a locale pinned to `jp`
+        // warms the Japanese enemy tables rather than the English ones.
+        const server = context.i18n.gamedataServer;
         await Promise.all([
-            context.queryClient.ensureQueryData(enemiesQueryOptions()),
+            context.queryClient.ensureQueryData(enemiesQueryOptions(server)),
             // Powers the "Appears In" location filter.
-            context.queryClient.ensureQueryData(enemyStagesQueryOptions()),
+            context.queryClient.ensureQueryData(enemyStagesQueryOptions(server)),
         ]);
     },
-    head: () => {
+    head: ({ match }) => {
+        const t = metaT(match.context.i18n);
         const { meta, links } = seo({
-            title: "Enemies",
-            description: "View every enemy catalogued in Arknights.",
+            title: t("enemies.title"),
+            description: t("enemies.description"),
             path: "/enemies",
-            image: defaultOgURL("enemies"),
+            image: defaultOgURL("enemies", match.context.i18n),
+            locale: match.context.i18n?.locale,
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],

@@ -1,7 +1,10 @@
 import { CalendarDays, ChevronRight, Clock, ListIcon } from "lucide-react";
 import * as React from "react";
 import { Tabs, TabsList, TabsTrigger } from "#/components/ui/tabs";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import type { IOperatorListItem } from "#/types/operators";
+import type { messages } from "./Birthdays.messages";
 import { calculateBirthdays } from "./impl/calculate";
 import { CalendarView } from "./impl/components/CalendarView";
 import { DayDialog } from "./impl/components/DayDialog";
@@ -18,6 +21,7 @@ interface IBirthdaysProps {
 }
 
 export function Birthdays({ operators }: IBirthdaysProps): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("tools");
     const today = React.useMemo(() => new Date(), []);
 
     const allBirthdays = React.useMemo(() => calculateBirthdays(operators.filter(isCalendarOperator)), [operators]);
@@ -49,14 +53,14 @@ export function Birthdays({ operators }: IBirthdaysProps): React.ReactElement {
     return (
         <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-2rem))] py-5 pb-20">
             <nav aria-label="breadcrumb" className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none">
-                <span>Tools</span>
+                <span>{t("birthdays.breadcrumb.tools")}</span>
                 <ChevronRight className="size-2.5" />
-                <span className="text-foreground">Birthday Calendar</span>
+                <span className="text-foreground">{t("birthdays.title")}</span>
             </nav>
             <div className="flex flex-wrap items-end justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                    <h1 className="m-0 font-bold font-sans text-[24px] text-foreground leading-[1.1] tracking-tight sm:text-[30px]">Birthday Calendar</h1>
-                    <p className="mt-1.5 max-w-2xl font-sans text-[13.5px] text-muted-foreground leading-normal">Every operator's birthday on one screen. Filter by rarity, class, or nation; jump to any month; or browse what's coming up. Tap any day to see who's celebrating.</p>
+                    <h1 className="m-0 font-bold font-sans text-[24px] text-foreground leading-[1.1] tracking-tight sm:text-[30px]">{t("birthdays.title")}</h1>
+                    <p className="mt-1.5 max-w-2xl font-sans text-[13.5px] text-muted-foreground leading-normal">{t("birthdays.intro")}</p>
                 </div>
             </div>
 
@@ -67,16 +71,16 @@ export function Birthdays({ operators }: IBirthdaysProps): React.ReactElement {
                     <TabsList className="max-sm:w-full">
                         <TabsTrigger value="calendar" className="max-sm:flex-1">
                             <CalendarDays />
-                            Calendar
+                            {t("birthdays.tab.calendar")}
                         </TabsTrigger>
                         <TabsTrigger value="list" className="max-sm:flex-1">
                             <ListIcon />
-                            List
+                            {t("birthdays.tab.list")}
                             <span className="font-medium font-mono text-[11px] text-muted-foreground">{matchedCount}</span>
                         </TabsTrigger>
                         <TabsTrigger value="upcoming" className="max-sm:flex-1">
                             <Clock />
-                            Upcoming
+                            {t("birthdays.tab.upcoming")}
                         </TabsTrigger>
                     </TabsList>
                 </Tabs>

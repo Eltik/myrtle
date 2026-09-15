@@ -4,13 +4,17 @@ import { useState } from "react";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
 import { type ITierListDetail, myTierListFavoriteQueryOptions, toggleTierListFavoriteFn } from "#/lib/api/tier-lists";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, downloadBlob } from "#/lib/utils";
+import type { messages } from "./TierListActions.messages";
 
 interface ITierListActionsProps {
     detail: ITierListDetail;
 }
 
 export function TierListActions({ detail }: ITierListActionsProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
     const queryClient = useQueryClient();
     const { user } = useAuth();
     const authed = Boolean(user);
@@ -33,8 +37,8 @@ export function TierListActions({ detail }: ITierListActionsProps) {
             if (ctx) queryClient.setQueryData(favoriteKey, ctx.previous);
             toastManager.add({
                 id: `tl-fav-error-${Date.now()}`,
-                title: "Couldn't update favorite",
-                description: "Something went wrong. Try again in a moment.",
+                title: t("detail.actions.favorite.errTitle"),
+                description: t("detail.actions.favorite.errBody"),
                 type: "error",
             });
         },
@@ -51,8 +55,8 @@ export function TierListActions({ detail }: ITierListActionsProps) {
         if (!user) {
             toastManager.add({
                 id: `tl-fav-auth-${Date.now()}`,
-                title: "Sign in to favorite",
-                description: "Connect your account to save lists for later.",
+                title: t("detail.actions.favorite.authTitle"),
+                description: t("detail.actions.favorite.authBody"),
                 type: "error",
             });
             return;
@@ -73,8 +77,8 @@ export function TierListActions({ detail }: ITierListActionsProps) {
         } catch {
             toastManager.add({
                 id: `tl-download-error-${Date.now()}`,
-                title: "Couldn't download image",
-                description: "Something went wrong while preparing the image. Try again in a moment.",
+                title: t("detail.actions.download.errTitle"),
+                description: t("detail.actions.download.errBody"),
                 type: "error",
             });
         } finally {
@@ -85,7 +89,7 @@ export function TierListActions({ detail }: ITierListActionsProps) {
     const handleShare = async () => {
         if (typeof window === "undefined") return;
         const url = `${window.location.origin}/tier-lists/${detail.slug}`;
-        const shareData = { title: detail.title, text: detail.description || `${detail.title} - tier list on myrtle.moe`, url };
+        const shareData = { title: detail.title, text: detail.description || t("detail.actions.share.text", { title: detail.title }), url };
 
         if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
             try {
@@ -100,15 +104,15 @@ export function TierListActions({ detail }: ITierListActionsProps) {
             await navigator.clipboard.writeText(url);
             toastManager.add({
                 id: `tl-share-${Date.now()}`,
-                title: "Link copied",
-                description: "Share it anywhere.",
+                title: t("detail.actions.share.okTitle"),
+                description: t("detail.actions.share.okBody"),
                 type: "success",
             });
         } catch {
             toastManager.add({
                 id: `tl-share-error-${Date.now()}`,
-                title: "Couldn't copy link",
-                description: "Clipboard access was denied.",
+                title: t("detail.actions.share.errTitle"),
+                description: t("detail.actions.share.errBody"),
                 type: "error",
             });
         }
@@ -121,35 +125,35 @@ export function TierListActions({ detail }: ITierListActionsProps) {
                 onClick={handleFavorite}
                 disabled={favoriteMut.isPending}
                 aria-pressed={favorited}
-                aria-label={favorited ? "Remove from favorites" : "Add to favorites"}
+                aria-label={favorited ? t("detail.actions.favorite.remove") : t("detail.actions.favorite.add")}
                 className={cn(
                     "inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border px-3 font-medium font-sans text-sm leading-none transition-colors disabled:opacity-60 sm:h-9 sm:min-w-0",
                     favorited ? "border-[color-mix(in_srgb,var(--primary)_50%,transparent)] bg-[color-mix(in_srgb,var(--primary)_12%,transparent)] text-primary hover:bg-[color-mix(in_srgb,var(--primary)_18%,transparent)]" : "border-border bg-popover text-foreground hover:bg-accent",
                 )}
             >
                 <Heart className={cn("h-4 w-4", favorited ? "fill-current" : "fill-none")} aria-hidden="true" />
-                <span className="hidden sm:inline">{favorited ? "Favorited" : "Favorite"}</span>
+                <span className="hidden sm:inline">{favorited ? t("detail.actions.favorited") : t("detail.actions.favorite")}</span>
             </button>
 
             <button
                 type="button"
                 onClick={handleDownload}
                 disabled={downloading}
-                aria-label="Download tier list as image"
+                aria-label={t("detail.actions.download.label")}
                 className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-sm leading-none transition-colors hover:bg-accent disabled:cursor-wait disabled:opacity-60 sm:h-9 sm:min-w-0"
             >
                 <Download className={cn("h-4 w-4", downloading && "animate-pulse")} aria-hidden="true" />
-                <span className="hidden sm:inline">{downloading ? "Preparing…" : "Download"}</span>
+                <span className="hidden sm:inline">{downloading ? t("detail.actions.downloading") : t("detail.actions.download")}</span>
             </button>
 
             <button
                 type="button"
                 onClick={handleShare}
-                aria-label="Share this tier list"
+                aria-label={t("detail.actions.share.label")}
                 className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-sm leading-none transition-colors hover:bg-accent sm:h-9 sm:min-w-0"
             >
                 <Share2 className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden sm:inline">Share</span>
+                <span className="hidden sm:inline">{t("detail.actions.share")}</span>
             </button>
         </div>
     );

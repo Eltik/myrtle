@@ -7,7 +7,8 @@ import { useAuth } from "#/hooks/use-auth";
 import { useDebounce } from "#/hooks/use-debounce";
 import { leaderboardMoversQueryOptions, leaderboardQueryOptions, playerStandingQueryOptions } from "#/lib/api/user";
 // import { leaderboardDistributionQueryOptions } from "#/lib/api/user"; // hidden: server share
-import { formatNumber } from "#/lib/utils";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { Route } from "#/routes/user.leaderboard";
 import { Hero } from "./impl/components/Hero";
 import { LeaderboardTable, LeaderboardTableSkeleton } from "./impl/components/LeaderboardTable";
@@ -17,8 +18,10 @@ import { Toolbar } from "./impl/components/Toolbar";
 import { YouCard } from "./impl/components/YouCard";
 import { INTERVALS, type LeaderboardInterval, type LeaderboardScope, type LeaderboardSort, PAGE_SIZE, SERVERS, type ServerCode } from "./impl/constants";
 import type { LeaderboardEntry } from "./impl/types";
+import type { messages } from "./Leaderboard.messages";
 
 export function Leaderboard() {
+    const t: TypedT<typeof messages> = useT("user");
     const search = Route.useSearch();
     const navigate = useNavigate({ from: "/user/leaderboard" });
     const { user } = useAuth();
@@ -111,10 +114,10 @@ export function Leaderboard() {
     return (
         <div className="relative z-1 mx-auto w-[min(1280px,calc(100%-2rem))] pb-20">
             <div className="pt-7 pb-2.5">
-                <nav aria-label="Breadcrumb" className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none">
-                    <span>Doctors</span>
+                <nav aria-label={t("leaderboard.breadcrumb.label")} className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none">
+                    <span>{t("leaderboard.breadcrumb.doctors")}</span>
                     <ChevronRight className="h-2.5 w-2.5" aria-hidden />
-                    <span className="text-foreground">Leaderboard</span>
+                    <span className="text-foreground">{t("leaderboard.breadcrumb.current")}</span>
                 </nav>
             </div>
 
@@ -125,11 +128,9 @@ export function Leaderboard() {
                     <Toolbar scope={scope} onScope={handleScope} server={server} onServer={handleServer} interval={interval} onInterval={handleInterval} movementOnly={movementOnly} onMovementOnly={handleMovementOnly} query={inputValue} onQuery={setInputValue} />
 
                     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
-                        {isLoading && visibleEntries.length === 0 ? <LeaderboardTableSkeleton /> : <LeaderboardTable entries={visibleEntries} sort={sort} onSort={handleSort} isLoading={isLoading} intervalLabel={intervalMeta.since} />}
+                        {isLoading && visibleEntries.length === 0 ? <LeaderboardTableSkeleton /> : <LeaderboardTable entries={visibleEntries} sort={sort} onSort={handleSort} isLoading={isLoading} intervalKey={intervalMeta.sinceKey} />}
                         <div className="flex flex-wrap items-center justify-between gap-3 border-border border-t bg-[color-mix(in_srgb,var(--muted)_30%,transparent)] px-4 py-3.5">
-                            <span className="font-mono text-muted-foreground text-xs tabular-nums leading-none">
-                                Showing {start}-{end} of {formatNumber(totalEntries)} {totalEntries === 1 ? "Doctor" : "Doctors"}
-                            </span>
+                            <span className="font-mono text-muted-foreground text-xs tabular-nums leading-none">{t("leaderboard.showing", { start, end, count: totalEntries })}</span>
                             <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} className="mt-0" />
                         </div>
                     </div>
@@ -137,7 +138,7 @@ export function Leaderboard() {
 
                 <div className="flex flex-col gap-4 lg:gap-5">
                     {user ? <YouCard standing={standingQuery.data ?? null} rankedDoctors={totalRankedDoctors} /> : null}
-                    <MoversCard movers={moversQuery.data ?? []} isLoading={moversQuery.isLoading} intervalLabel={intervalMeta.subtitle} />
+                    <MoversCard movers={moversQuery.data ?? []} isLoading={moversQuery.isLoading} intervalKey={intervalMeta.subtitleKey} />
                     {/* {distributionQuery.data ? <ServerSplitCard shares={distributionQuery.data} /> : null} */}
                 </div>
             </div>

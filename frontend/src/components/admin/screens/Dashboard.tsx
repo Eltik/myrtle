@@ -9,10 +9,18 @@ import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { adminStatsQueryOptions, formatResponseTimeMs, healthQueryOptions } from "#/lib/api/admin";
 import { userQueryOptions } from "#/lib/api/user";
-import { formatRelativeShort, getSecretaryAvatarURL } from "#/lib/utils";
+import { type IFormatters, type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import { getSecretaryAvatarURL } from "#/lib/utils";
 import type { IUserProfile } from "#/types/user";
 import { HCode, PageHead } from "../AdminShell";
 import { StatTile, StatusDot, Timeline } from "../Primitives";
+import type { messages as primitivesMessages } from "../Primitives.messages";
+import type { messages } from "./Dashboard.messages";
+
+/** The role labels in the breakdown chart are the ones `RoleBadge` declares. */
+type DashT = TypedT<typeof messages & typeof primitivesMessages>;
+type DashRichT = TypedRichT<typeof messages & typeof primitivesMessages>;
 
 function SignedInAvatar({ user }: { user: IUserProfile | null }): React.ReactElement {
     const [failed, setFailed] = useState(false);
@@ -29,6 +37,7 @@ function SignedInAvatar({ user }: { user: IUserProfile | null }): React.ReactEle
 }
 
 function DashUserCell({ uid, fallbackName }: { uid: string; fallbackName: string }): React.ReactElement {
+    const t: DashT = useT("admin");
     const profile = useQuery({ ...userQueryOptions(uid), retry: 0 });
     const u = profile.data;
     return (
@@ -40,19 +49,22 @@ function DashUserCell({ uid, fallbackName }: { uid: string; fallbackName: string
                 <Link to="/user/$id" params={{ id: uid }} className="truncate font-medium hover:underline">
                     {u?.nickname ?? fallbackName}
                 </Link>
-                <span className="truncate font-mono text-[11px] text-muted-foreground">UID {uid}</span>
+                <span className="truncate font-mono text-[11px] text-muted-foreground">{t("dash.user.uid", { uid })}</span>
             </span>
         </span>
     );
 }
 
-function compactNumber(n: number): string {
+function compactNumber(n: number, f: IFormatters): string {
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
     if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
-    return n.toLocaleString();
+    return f.number(n);
 }
 
 export function Dashboard(): React.ReactElement {
+    const t: DashT = useT("admin");
+    const rt: DashRichT = useRichT("admin");
+    const f = useFormatters();
     const { user, isAuthenticated } = useAuth();
     const statsQuery = useQuery(adminStatsQueryOptions(isAuthenticated));
     const healthQuery = useQuery(healthQueryOptions());
@@ -69,13 +81,9 @@ export function Dashboard(): React.ReactElement {
     return (
         <>
             <PageHead
-                kicker="Overview"
-                title="Dashboard"
-                sub={
-                    <>
-                        Service-level signals from the Rust backend - surfaced verbatim from <HCode>GET /admin/stats</HCode> and <HCode>/health</HCode>.
-                    </>
-                }
+                kicker={t("dash.kicker")}
+                title={t("dash.title")}
+                sub={rt("dash.sub", { stats: <HCode>GET /admin/stats</HCode>, health: <HCode>/health</HCode> })}
                 action={
                     <>
                         <Button
@@ -89,7 +97,7 @@ export function Dashboard(): React.ReactElement {
                             loading={statsQuery.isFetching || healthQuery.isFetching}
                         >
                             <RefreshCwIcon />
-                            Refresh
+                            {t("dash.refresh")}
                         </Button>
                         <Button
                             variant="outline"
@@ -100,7 +108,7 @@ export function Dashboard(): React.ReactElement {
                             }
                         >
                             <ExternalLinkIcon />
-                            View public stats
+                            {t("dash.viewPublicStats")}
                         </Button>
                     </>
                 }
@@ -108,7 +116,7 @@ export function Dashboard(): React.ReactElement {
 
             {statsQuery.isError ? (
                 <div className="mb-4 rounded-2xl border border-destructive/32 bg-destructive/8 p-4 text-[13px] text-destructive-foreground">
-                    <strong>Failed to load /admin/stats.</strong> Your account may not have <span className="font-mono">tier_list_admin</span> or above.
+                    <strong>{t("dash.statsError.title")}</strong> {rt("dash.statsError.body", { role: <span className="font-mono">tier_list_admin</span> })}
                 </div>
             ) : null}
 
@@ -122,10 +130,10 @@ export function Dashboard(): React.ReactElement {
                     </>
                 ) : (
                     <>
-                        <StatTile label="Total users" value={compactNumber((stats?.usersByRole.user ?? 0) + (stats?.usersByRole.tierListEditor ?? 0) + (stats?.usersByRole.tierListAdmin ?? 0) + (stats?.usersByRole.superAdmin ?? 0))} color="var(--chart-1)" />
-                        <StatTile label="Rosters synced" value={compactNumber(totalRosters)} color="var(--chart-2)" />
-                        <StatTile label="Tier lists · active" value={`${activeTierLists}`} unit={`of ${totalTierLists}`} color="var(--chart-2)" />
-                        <StatTile label="Tier-list placements" value={compactNumber(totalPlacements)} color="var(--chart-4)" />
+                        <StatTile label={t("dash.tile.totalUsers")} value={compactNumber((stats?.usersByRole.user ?? 0) + (stats?.usersByRole.tierListEditor ?? 0) + (stats?.usersByRole.tierListAdmin ?? 0) + (stats?.usersByRole.translator ?? 0) + (stats?.usersByRole.superAdmin ?? 0), f)} color="var(--chart-1)" />
+                        <StatTile label={t("dash.tile.rostersSynced")} value={compactNumber(totalRosters, f)} color="var(--chart-2)" />
+                        <StatTile label={t("dash.tile.tierListsActive")} value={`${activeTierLists}`} unit={t("dash.tile.of", { count: totalTierLists })} color="var(--chart-2)" />
+                        <StatTile label={t("dash.tile.placements")} value={compactNumber(totalPlacements, f)} color="var(--chart-4)" />
                     </>
                 )}
             </section>
@@ -134,13 +142,11 @@ export function Dashboard(): React.ReactElement {
                 <div className="grid min-w-0 gap-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">Roles breakdown</CardTitle>
-                            <CardDescription className="text-xs">
-                                From the <span className="font-mono">users.role</span> column - global access rungs.
-                            </CardDescription>
+                            <CardTitle className="text-sm">{t("dash.roles.title")}</CardTitle>
+                            <CardDescription className="text-xs">{rt("dash.roles.desc", { column: <span className="font-mono">users.role</span> })}</CardDescription>
                             <CardAction>
                                 <Button variant="ghost" size="sm" render={<Link to="/admin/users" />}>
-                                    Manage users <ArrowRightIcon />
+                                    {t("dash.roles.manageUsers")} <ArrowRightIcon />
                                 </Button>
                             </CardAction>
                         </CardHeader>
@@ -150,10 +156,11 @@ export function Dashboard(): React.ReactElement {
                             ) : (
                                 <RoleBreakdownBars
                                     rows={[
-                                        { label: "super_admin", count: stats?.usersByRole.superAdmin ?? 0, color: "var(--primary)" },
-                                        { label: "tier_list_admin", count: stats?.usersByRole.tierListAdmin ?? 0, color: "oklch(0.7 0.16 84.4)" },
-                                        { label: "tier_list_editor", count: stats?.usersByRole.tierListEditor ?? 0, color: "oklch(0.55 0.15 184.7)" },
-                                        { label: "user", count: stats?.usersByRole.user ?? 0, color: "oklch(0.7 0.005 285)" },
+                                        { label: t("role.superAdmin"), count: stats?.usersByRole.superAdmin ?? 0, color: "var(--primary)" },
+                                        { label: t("role.tierListAdmin"), count: stats?.usersByRole.tierListAdmin ?? 0, color: "oklch(0.7 0.16 84.4)" },
+                                        { label: t("role.tierListEditor"), count: stats?.usersByRole.tierListEditor ?? 0, color: "oklch(0.55 0.15 184.7)" },
+                                        { label: t("role.translator"), count: stats?.usersByRole.translator ?? 0, color: "oklch(0.62 0.17 305)" },
+                                        { label: t("role.user"), count: stats?.usersByRole.user ?? 0, color: "oklch(0.7 0.005 285)" },
                                     ]}
                                 />
                             )}
@@ -162,10 +169,8 @@ export function Dashboard(): React.ReactElement {
 
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">Recently signed-up users</CardTitle>
-                            <CardDescription className="text-xs">
-                                Last {stats?.recentUsers.length ?? 0} Doctors to authenticate. From <HCode>GET /admin/stats</HCode>.
-                            </CardDescription>
+                            <CardTitle className="text-sm">{t("dash.recent.title")}</CardTitle>
+                            <CardDescription className="text-xs">{rt("dash.recent.desc", { count: stats?.recentUsers.length ?? 0, endpoint: <HCode>GET /admin/stats</HCode> })}</CardDescription>
                         </CardHeader>
                         <CardContent className="pt-0">
                             {statsQuery.isPending ? (
@@ -175,10 +180,10 @@ export function Dashboard(): React.ReactElement {
                                     <table className="w-full border-collapse text-[13px]">
                                         <thead>
                                             <tr className="border-border border-b">
-                                                <th className="px-2 py-2 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">Doctor</th>
-                                                <th className="px-2 py-2 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">Server</th>
-                                                <th className="hidden px-2 py-2 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em] sm:table-cell">Level</th>
-                                                <th className="px-2 py-2 text-right font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">Joined</th>
+                                                <th className="px-2 py-2 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">{t("dash.th.doctor")}</th>
+                                                <th className="px-2 py-2 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">{t("dash.th.server")}</th>
+                                                <th className="hidden px-2 py-2 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em] sm:table-cell">{t("dash.th.level")}</th>
+                                                <th className="px-2 py-2 text-right font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">{t("dash.th.joined")}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -189,14 +194,14 @@ export function Dashboard(): React.ReactElement {
                                                     </td>
                                                     <td className="px-2 py-2 font-mono text-muted-foreground">{serverIdToCode(u.serverId)}</td>
                                                     <td className="hidden px-2 py-2 tabular-nums sm:table-cell">{u.level ?? "-"}</td>
-                                                    <td className="whitespace-nowrap px-2 py-2 text-right text-muted-foreground tabular-nums">{formatRelativeShort(u.createdAt)}</td>
+                                                    <td className="whitespace-nowrap px-2 py-2 text-right text-muted-foreground tabular-nums">{f.relativeShort(u.createdAt)}</td>
                                                 </tr>
                                             ))}
                                         </tbody>
                                     </table>
                                 </div>
                             ) : (
-                                <div className="px-1 py-6 text-center text-[13px] text-muted-foreground">No recent signups.</div>
+                                <div className="px-1 py-6 text-center text-[13px] text-muted-foreground">{t("dash.recent.empty")}</div>
                             )}
                         </CardContent>
                     </Card>
@@ -205,9 +210,9 @@ export function Dashboard(): React.ReactElement {
                 <div className="grid gap-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">Service health</CardTitle>
+                            <CardTitle className="text-sm">{t("dash.health.title")}</CardTitle>
                             <CardDescription className="text-xs">GET /health</CardDescription>
-                            <CardAction>{health ? health.status === "ok" ? <Badge variant="success">healthy</Badge> : <Badge variant="warning">degraded</Badge> : null}</CardAction>
+                            <CardAction>{health ? health.status === "ok" ? <Badge variant="success">{t("dash.health.healthy")}</Badge> : <Badge variant="warning">{t("dash.health.degraded")}</Badge> : null}</CardAction>
                         </CardHeader>
                         <CardContent className="pt-0">
                             {healthQuery.isPending ? (
@@ -215,46 +220,46 @@ export function Dashboard(): React.ReactElement {
                             ) : health ? (
                                 <>
                                     <div className="flex items-center justify-between gap-3 pb-2 text-[12.5px]">
-                                        <span className="truncate text-muted-foreground">Postgres</span>
+                                        <span className="truncate text-muted-foreground">{t("dash.health.postgres")}</span>
                                         <StatusDot state={health.database.status === "connected" ? "green" : "red"}>
-                                            <span className="font-mono tabular-nums">{formatResponseTimeMs(health.database.responseTimeMs)} ms</span>
+                                            <span className="font-mono tabular-nums">{t("dash.health.ms", { ms: formatResponseTimeMs(health.database.responseTimeMs) })}</span>
                                         </StatusDot>
                                     </div>
                                     <div className="border-border border-t" />
                                     <div className="flex items-center justify-between gap-3 py-2 text-[12.5px]">
                                         <span className="min-w-0 truncate text-muted-foreground">
-                                            Cache · <span className="text-foreground/70">{health.cache.backend}</span>
+                                            {t("dash.health.cache")} <span className="text-foreground/70">{health.cache.backend}</span>
                                         </span>
                                         <StatusDot state={health.cache.status === "connected" ? "green" : "red"}>
-                                            <span className="font-mono tabular-nums">{formatResponseTimeMs(health.cache.responseTimeMs)} ms</span>
+                                            <span className="font-mono tabular-nums">{t("dash.health.ms", { ms: formatResponseTimeMs(health.cache.responseTimeMs) })}</span>
                                         </StatusDot>
                                     </div>
                                     <div className="border-border border-t" />
                                     <div className="flex items-center justify-between gap-3 py-2 text-[12.5px]">
-                                        <span className="truncate text-muted-foreground">Game data</span>
+                                        <span className="truncate text-muted-foreground">{t("dash.health.gameData")}</span>
                                         <StatusDot state="green">
-                                            <span className="font-mono tabular-nums">{totalOperators.toLocaleString()} ops</span>
+                                            <span className="font-mono tabular-nums">{t("dash.health.ops", { count: f.number(totalOperators) })}</span>
                                         </StatusDot>
                                     </div>
                                     <div className="border-border border-t" />
                                     <div className="flex items-center justify-between gap-3 pt-2 text-[12.5px]">
-                                        <span className="truncate text-muted-foreground">Round-trip</span>
-                                        <span className="font-mono text-[12px] tabular-nums">{formatResponseTimeMs(health.responseTimeMs)} ms</span>
+                                        <span className="truncate text-muted-foreground">{t("dash.health.roundTrip")}</span>
+                                        <span className="font-mono text-[12px] tabular-nums">{t("dash.health.ms", { ms: formatResponseTimeMs(health.responseTimeMs) })}</span>
                                     </div>
                                 </>
                             ) : (
-                                <div className="text-[12px] text-muted-foreground">Health probe unavailable.</div>
+                                <div className="text-[12px] text-muted-foreground">{t("dash.health.unavailable")}</div>
                             )}
                         </CardContent>
                     </Card>
 
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">Signed in as</CardTitle>
+                            <CardTitle className="text-sm">{t("dash.signedIn.title")}</CardTitle>
                             {user?.uid ? (
                                 <CardAction>
                                     <Button variant="ghost" size="sm" render={<Link to="/user/$id" params={{ id: user.uid }} target="_blank" />}>
-                                        Profile <ExternalLinkIcon />
+                                        {t("dash.signedIn.profile")} <ExternalLinkIcon />
                                     </Button>
                                 </CardAction>
                             ) : null}
@@ -264,7 +269,7 @@ export function Dashboard(): React.ReactElement {
                                 <SignedInAvatar user={user} />
                                 <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                                     <span className="truncate font-medium text-[13px]">{user?.nickname ?? "-"}</span>
-                                    <span className="truncate font-mono text-[11.5px] text-muted-foreground">UID {user?.uid ?? "-"}</span>
+                                    <span className="truncate font-mono text-[11.5px] text-muted-foreground">{t("dash.user.uid", { uid: user?.uid ?? "-" })}</span>
                                     <span className="truncate font-mono text-[11px] text-muted-foreground/80">{user?.role ?? "-"}</span>
                                 </div>
                             </div>
@@ -273,55 +278,55 @@ export function Dashboard(): React.ReactElement {
 
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm">Quick links</CardTitle>
+                            <CardTitle className="text-sm">{t("dash.quick.title")}</CardTitle>
                         </CardHeader>
                         <CardContent className="pt-0">
                             <Timeline
                                 items={[
                                     {
-                                        when: "manage",
+                                        when: t("dash.quick.when.manage"),
                                         what: (
                                             <Link to="/admin/permissions" className="hover:underline">
-                                                Tier list permissions
+                                                {t("dash.quick.permissions")}
                                             </Link>
                                         ),
-                                        who: "View / Edit / Publish / Admin",
+                                        who: t("dash.quick.permissions.who"),
                                     },
                                     {
-                                        when: "manage",
+                                        when: t("dash.quick.when.manage"),
                                         what: (
                                             <Link to="/admin/official-tier-lists" className="hover:underline">
-                                                Official tier lists
+                                                {t("dash.quick.official")}
                                             </Link>
                                         ),
-                                        who: "Flair-tagged lists in the Official rail",
+                                        who: t("dash.quick.official.who"),
                                     },
                                     {
-                                        when: "manage",
+                                        when: t("dash.quick.when.manage"),
                                         what: (
                                             <Link to="/admin/operator-notes" className="hover:underline">
-                                                Operator notes
+                                                {t("dash.quick.notes")}
                                             </Link>
                                         ),
-                                        who: "Community guidance per operator",
+                                        who: t("dash.quick.notes.who"),
                                     },
                                     {
-                                        when: "operate",
+                                        when: t("dash.quick.when.operate"),
                                         what: (
                                             <Link to="/admin/health" className="hover:underline">
-                                                Health & cache
+                                                {t("dash.quick.health")}
                                             </Link>
                                         ),
-                                        who: "Redis + Postgres probes",
+                                        who: t("dash.quick.health.who"),
                                     },
                                     {
-                                        when: "operate",
+                                        when: t("dash.quick.when.operate"),
                                         what: (
                                             <Link to="/admin/audit" className="hover:underline">
-                                                Audit log
+                                                {t("dash.quick.audit")}
                                             </Link>
                                         ),
-                                        who: "Permission grants + note edits",
+                                        who: t("dash.quick.audit.who"),
                                     },
                                 ]}
                             />
@@ -342,6 +347,7 @@ function serverIdToCode(id: number): string {
 }
 
 function RoleBreakdownBars({ rows }: { rows: { label: string; count: number; color: string }[] }): React.ReactElement {
+    const f = useFormatters();
     const max = Math.max(...rows.map((r) => r.count), 1);
     return (
         <div className="grid gap-3">
@@ -349,7 +355,7 @@ function RoleBreakdownBars({ rows }: { rows: { label: string; count: number; col
                 <div key={r.label}>
                     <div className="mb-1 flex items-center justify-between">
                         <span className="font-mono text-[12px]">{r.label}</span>
-                        <span className="font-mono text-[11.5px] text-muted-foreground tabular-nums">{r.count.toLocaleString()}</span>
+                        <span className="font-mono text-[11.5px] text-muted-foreground tabular-nums">{f.number(r.count)}</span>
                     </div>
                     <div className="h-1.5 overflow-hidden rounded-[3px] bg-muted">
                         <div className="h-full" style={{ width: `${Math.max(2, (r.count / max) * 100)}%`, background: r.color }} />

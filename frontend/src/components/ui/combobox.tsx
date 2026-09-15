@@ -5,7 +5,10 @@ import { ChevronsUpDownIcon, XIcon } from "lucide-react";
 import * as React from "react";
 import { Input } from "#/components/ui/input";
 import { ScrollArea } from "#/components/ui/scroll-area";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./combobox.messages";
 
 export const ComboboxContext: React.Context<{
     chipsRef: React.RefObject<Element | null> | null;
@@ -282,8 +285,10 @@ export function ComboboxChip({
 }
 
 export function ComboboxChipRemove(props: ComboboxPrimitive.ChipRemove.Props): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("common");
+
     return (
-        <ComboboxPrimitive.ChipRemove aria-label="Remove" className="h-full shrink-0 cursor-pointer px-1.5 opacity-80 hover:opacity-100 [&_svg:not([class*='size-'])]:size-4 sm:[&_svg:not([class*='size-'])]:size-3.5" data-slot="combobox-chip-remove" {...props}>
+        <ComboboxPrimitive.ChipRemove aria-label={t("combobox.removeChip")} className="h-full shrink-0 cursor-pointer px-1.5 opacity-80 hover:opacity-100 [&_svg:not([class*='size-'])]:size-4 sm:[&_svg:not([class*='size-'])]:size-3.5" data-slot="combobox-chip-remove" {...props}>
             <XIcon />
         </ComboboxPrimitive.ChipRemove>
     );

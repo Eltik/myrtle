@@ -6,10 +6,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/com
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { adminStatsQueryOptions, formatResponseTimeMs, healthQueryOptions } from "#/lib/api/admin";
+import { type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { HCode, PageHead } from "../AdminShell";
 import { StatusDot } from "../Primitives";
+import type { messages } from "./Health.messages";
 
 export function Health(): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("admin");
+    const rt: TypedRichT<typeof messages> = useRichT("admin");
+    const f = useFormatters();
     const { isAuthenticated } = useAuth();
     const healthQuery = useQuery(healthQueryOptions());
     const statsQuery = useQuery(adminStatsQueryOptions(isAuthenticated));
@@ -20,13 +26,9 @@ export function Health(): React.ReactElement {
     return (
         <>
             <PageHead
-                kicker="Operate"
-                title="Health & cache"
-                sub={
-                    <>
-                        Live probe of the Rust backend - <HCode>GET /health</HCode> and the public <HCode>/stats</HCode> snapshot.
-                    </>
-                }
+                kicker={t("health.kicker")}
+                title={t("health.title")}
+                sub={rt("health.sub", { health: <HCode>GET /health</HCode>, stats: <HCode>/stats</HCode> })}
                 action={
                     <Button
                         variant="outline"
@@ -39,7 +41,7 @@ export function Health(): React.ReactElement {
                         }}
                     >
                         <RefreshCwIcon />
-                        Re-probe
+                        {t("health.reprobe")}
                     </Button>
                 }
             />
@@ -50,40 +52,40 @@ export function Health(): React.ReactElement {
                 <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-3.5">
                     <Card>
                         <CardContent className="p-4.5">
-                            <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-widest">Postgres</div>
+                            <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-widest">{t("health.tile.postgres")}</div>
                             <div className="mt-2.5 font-bold text-[26px] tabular-nums leading-none tracking-[-0.02em]">
                                 {formatResponseTimeMs(h?.database.responseTimeMs)}
-                                <span className="ml-1 font-medium font-mono text-[12px] text-muted-foreground">ms</span>
+                                <span className="ml-1 font-medium font-mono text-[12px] text-muted-foreground">{t("health.ms")}</span>
                             </div>
                             <div className="mt-2 flex items-center gap-2">
                                 <StatusDot state={h?.database.status === "connected" ? "green" : "red"} pulse>
-                                    <span className="font-mono">{h?.database.status ?? "unknown"}</span>
+                                    <span className="font-mono">{h?.database.status ?? t("health.status.unknown")}</span>
                                 </StatusDot>
                             </div>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardContent className="p-4.5">
-                            <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-widest">Cache · {h?.cache.backend ?? "-"}</div>
+                            <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-widest">{t("health.tile.cache", { backend: h?.cache.backend ?? "-" })}</div>
                             <div className="mt-2.5 font-bold text-[26px] tabular-nums leading-none tracking-[-0.02em]">
                                 {formatResponseTimeMs(h?.cache.responseTimeMs)}
-                                <span className="ml-1 font-medium font-mono text-[12px] text-muted-foreground">ms</span>
+                                <span className="ml-1 font-medium font-mono text-[12px] text-muted-foreground">{t("health.ms")}</span>
                             </div>
                             <div className="mt-2 flex items-center gap-2">
                                 <StatusDot state={h?.cache.status === "connected" ? "green" : "red"} pulse>
-                                    <span className="font-mono">{h?.cache.status ?? "unknown"}</span>
+                                    <span className="font-mono">{h?.cache.status ?? t("health.status.unknown")}</span>
                                 </StatusDot>
                             </div>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardContent className="p-4.5">
-                            <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-widest">Round-trip</div>
+                            <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-widest">{t("health.tile.roundTrip")}</div>
                             <div className="mt-2.5 font-bold text-[26px] tabular-nums leading-none tracking-[-0.02em]">
                                 {formatResponseTimeMs(h?.responseTimeMs)}
-                                <span className="ml-1 font-medium font-mono text-[12px] text-muted-foreground">ms</span>
+                                <span className="ml-1 font-medium font-mono text-[12px] text-muted-foreground">{t("health.ms")}</span>
                             </div>
-                            <div className="mt-2 flex items-center gap-2">{h?.status === "ok" ? <Badge variant="success">healthy</Badge> : h ? <Badge variant="warning">degraded</Badge> : null}</div>
+                            <div className="mt-2 flex items-center gap-2">{h?.status === "ok" ? <Badge variant="success">{t("health.badge.healthy")}</Badge> : h ? <Badge variant="warning">{t("health.badge.degraded")}</Badge> : null}</div>
                         </CardContent>
                     </Card>
                 </div>
@@ -92,48 +94,46 @@ export function Health(): React.ReactElement {
             <div className="grid grid-cols-1 gap-4.5 lg:grid-cols-2">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-sm">Game data</CardTitle>
-                        <CardDescription className="text-xs">
-                            Backed by the in-memory <HCode>Arc&lt;GameData&gt;</HCode>. Counts from <HCode>GET /stats</HCode>.
-                        </CardDescription>
+                        <CardTitle className="text-sm">{t("health.gameData.title")}</CardTitle>
+                        <CardDescription className="text-xs">{rt("health.gameData.desc", { type: <HCode>Arc&lt;GameData&gt;</HCode>, endpoint: <HCode>GET /stats</HCode> })}</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-0">
                         {statsQuery.isPending ? (
                             <Skeleton className="h-40 w-full" />
                         ) : s ? (
                             <>
-                                <KV k="Operators" v={s.gameData.operators.toLocaleString()} />
-                                <KV k="Skills" v={s.gameData.skills.toLocaleString()} />
-                                <KV k="Modules" v={s.gameData.modules.toLocaleString()} />
-                                <KV k="Skins" v={s.gameData.skins.toLocaleString()} />
-                                <KV k="Stages" v={s.gameData.stages.toLocaleString()} />
-                                <KV k="Zones" v={s.gameData.zones.toLocaleString()} />
-                                <KV k="Enemies" v={s.gameData.enemies.toLocaleString()} last />
+                                <KV k={t("health.kv.operators")} v={f.number(s.gameData.operators)} />
+                                <KV k={t("health.kv.skills")} v={f.number(s.gameData.skills)} />
+                                <KV k={t("health.kv.modules")} v={f.number(s.gameData.modules)} />
+                                <KV k={t("health.kv.skins")} v={f.number(s.gameData.skins)} />
+                                <KV k={t("health.kv.stages")} v={f.number(s.gameData.stages)} />
+                                <KV k={t("health.kv.zones")} v={f.number(s.gameData.zones)} />
+                                <KV k={t("health.kv.enemies")} v={f.number(s.gameData.enemies)} last />
                             </>
                         ) : (
-                            <div className="text-[12.5px] text-muted-foreground">/stats endpoint unavailable.</div>
+                            <div className="text-[12.5px] text-muted-foreground">{t("health.statsUnavailable")}</div>
                         )}
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-sm">Stats snapshot</CardTitle>
-                        <CardDescription className="text-xs">Computed at {s ? new Date(s.computedAt).toLocaleString() : "-"}.</CardDescription>
+                        <CardTitle className="text-sm">{t("health.snapshot.title")}</CardTitle>
+                        <CardDescription className="text-xs">{t("health.snapshot.desc", { at: s ? f.date(s.computedAt, { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric" }) : "-" })}</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-0">
                         {statsQuery.isPending ? (
                             <Skeleton className="h-40 w-full" />
                         ) : s ? (
                             <>
-                                <KV k="Tier lists · total" v={s.tierLists.total.toLocaleString()} />
-                                <KV k="Tier lists · active" v={s.tierLists.active.toLocaleString()} />
-                                <KV k="Tier list versions" v={s.tierLists.totalVersions.toLocaleString()} />
-                                <KV k="Tier list placements" v={s.tierLists.totalPlacements.toLocaleString()} />
-                                <KV k="Rosters synced" v={s.rosters.total.toLocaleString()} last />
+                                <KV k={t("health.kv.tierListsTotal")} v={f.number(s.tierLists.total)} />
+                                <KV k={t("health.kv.tierListsActive")} v={f.number(s.tierLists.active)} />
+                                <KV k={t("health.kv.tierListVersions")} v={f.number(s.tierLists.totalVersions)} />
+                                <KV k={t("health.kv.tierListPlacements")} v={f.number(s.tierLists.totalPlacements)} />
+                                <KV k={t("health.kv.rostersSynced")} v={f.number(s.rosters.total)} last />
                             </>
                         ) : (
-                            <div className="text-[12.5px] text-muted-foreground">/stats endpoint unavailable.</div>
+                            <div className="text-[12.5px] text-muted-foreground">{t("health.statsUnavailable")}</div>
                         )}
                     </CardContent>
                 </Card>
@@ -143,8 +143,8 @@ export function Health(): React.ReactElement {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-sm">Probe timestamp</CardTitle>
-                    <CardDescription className="text-xs">Auto-refreshes every 30s.</CardDescription>
+                    <CardTitle className="text-sm">{t("health.probe.title")}</CardTitle>
+                    <CardDescription className="text-xs">{t("health.probe.desc")}</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
                     <div className="font-mono text-[12.5px] text-muted-foreground">{h?.timestamp ?? "-"}</div>

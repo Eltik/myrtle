@@ -7,6 +7,7 @@ import { deepCamelize } from "#/lib/api/operators";
 import { backendFetch } from "#/lib/fetch";
 import { rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem, IOperatorsStaticMap } from "#/types/operators";
+import { DEFAULT_GAMEDATA_SERVER, gamedataKey, gamedataPath, resolveGamedataServer } from "./gamedata";
 
 interface IGachaDataResponse {
     gachaTags: IGachaTag[];
@@ -60,40 +61,42 @@ function buildOperatorTagList(op: IOperatorListItem, rarity: number): string[] {
     return tags;
 }
 
-export const getRecruitmentDataFn = createServerFn({ method: "GET" }).handler(async (): Promise<IRecruitmentData> => {
-    const [gachaRes, opsRes] = await Promise.all([backendFetch("/static/gacha"), backendFetch("/static/operators")]);
-    if (!gachaRes.ok) throw new Error(`Failed to load gacha data: ${gachaRes.status}`);
-    if (!opsRes.ok) throw new Error(`Failed to load operators: ${opsRes.status}`);
+export const getRecruitmentDataFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string | undefined) => server)
+    .handler(async ({ data: server }): Promise<IRecruitmentData> => {
+        const [gachaRes, opsRes] = await Promise.all([backendFetch(gamedataPath(server, "/static/gacha")), backendFetch(gamedataPath(server, "/static/operators"))]);
+        if (!gachaRes.ok) throw new Error(`Failed to load gacha data: ${gachaRes.status}`);
+        if (!opsRes.ok) throw new Error(`Failed to load operators: ${opsRes.status}`);
 
-    const gacha = (await gachaRes.json()) as IGachaDataResponse;
-    const opsRaw = (await opsRes.json()) as IOperatorsStaticMap;
-    const operatorsMap = deepCamelize(opsRaw);
-    const allOperators = Object.values(operatorsMap) as IOperatorListItem[];
+        const gacha = (await gachaRes.json()) as IGachaDataResponse;
+        const opsRaw = (await opsRes.json()) as IOperatorsStaticMap;
+        const operatorsMap = deepCamelize(opsRaw);
+        const allOperators = Object.values(operatorsMap) as IOperatorListItem[];
 
-    const tags = gacha.gachaTags ?? [];
-    const recruitableNames = parseRecruitableNames(gacha.recruitDetail ?? "");
+        const tags = gacha.gachaTags ?? [];
+        const recruitableNames = parseRecruitableNames(gacha.recruitDetail ?? "");
 
-    const operators: IRecruitableOperatorWithTags[] = [];
-    for (const op of allOperators) {
-        if (!op.id || !recruitableNames.has(op.name)) continue;
-        const rarity = rarityToNumber(op.rarity);
-        operators.push({
-            id: op.id,
-            name: op.name,
-            rarity: `TIER_${rarity}`,
-            profession: op.profession,
-            position: op.position,
-            tagList: buildOperatorTagList(op, rarity),
-        });
-    }
+        const operators: IRecruitableOperatorWithTags[] = [];
+        for (const op of allOperators) {
+            if (!op.id || !recruitableNames.has(op.name)) continue;
+            const rarity = rarityToNumber(op.rarity);
+            operators.push({
+                id: op.id,
+                name: op.name,
+                rarity: `TIER_${rarity}`,
+                profession: op.profession,
+                position: op.position,
+                tagList: buildOperatorTagList(op, rarity),
+            });
+        }
 
-    return { tags, operators };
-});
+        return { tags, operators };
+    });
 
-export function recruitmentDataQueryOptions() {
+export function recruitmentDataQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["recruitment", "data"],
-        queryFn: () => getRecruitmentDataFn(),
+        queryKey: ["recruitment", "data", ...gamedataKey(server)],
+        queryFn: () => getRecruitmentDataFn({ data: resolveGamedataServer(server) }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });

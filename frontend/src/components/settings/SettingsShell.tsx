@@ -1,7 +1,10 @@
 import { type ReactNode, useEffect, useRef } from "react";
 import { Kicker } from "#/components/ui/kicker";
 import { Separator } from "#/components/ui/separator";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./SettingsShell.messages";
 
 export type SettingsSectionId = "profile" | "appearance" | "privacy" | "data" | "danger";
 
@@ -19,12 +22,14 @@ interface ISettingsShellProps {
 }
 
 export function SettingsShell({ nav, active, onChange, children }: ISettingsShellProps) {
+    const t: TypedT<typeof messages> = useT("settings");
+
     return (
         <main className="relative mx-auto w-[min(1100px,calc(100%-2rem))] py-8 sm:py-14">
             <div className="mb-6 sm:mb-8">
-                <Kicker className="mb-2">Account</Kicker>
-                <h1 className="m-0 font-(--font-heading) font-bold text-[26px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[36px]">Settings</h1>
-                <p className="m-0 mt-1.5 max-w-[60ch] font-sans text-[14px] text-muted-foreground leading-[1.55] sm:text-[15px]">Manage your account, profile visibility, and app appearance. Changes save automatically.</p>
+                <Kicker className="mb-2">{t("shell.kicker")}</Kicker>
+                <h1 className="m-0 font-(--font-heading) font-bold text-[26px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[36px]">{t("shell.title")}</h1>
+                <p className="m-0 mt-1.5 max-w-[60ch] font-sans text-[14px] text-muted-foreground leading-[1.55] sm:text-[15px]">{t("shell.subtitle")}</p>
             </div>
 
             <div className="grid grid-cols-1 items-start gap-5 sm:grid-cols-[232px_1fr] sm:gap-8">
@@ -36,6 +41,7 @@ export function SettingsShell({ nav, active, onChange, children }: ISettingsShel
 }
 
 function SettingsNav({ nav, active, onChange }: { nav: ISettingsNavItem[]; active: SettingsSectionId; onChange: (id: SettingsSectionId) => void }) {
+    const t: TypedT<typeof messages> = useT("settings");
     const scrollerRef = useRef<HTMLDivElement>(null);
     const activeRef = useRef<HTMLButtonElement>(null);
 
@@ -57,7 +63,7 @@ function SettingsNav({ nav, active, onChange }: { nav: ISettingsNavItem[]; activ
 
     return (
         <nav
-            aria-label="Settings sections"
+            aria-label={t("shell.sectionsNav")}
             className={cn(
                 "-mx-4 sm:mx-0",
                 "sticky top-14 z-20 border-border border-b bg-background/85 backdrop-blur-md backdrop-saturate-150 supports-[backdrop-filter]:bg-background/65",

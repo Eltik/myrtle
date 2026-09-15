@@ -285,6 +285,8 @@ pub struct RoleBreakdown {
     #[ts(type = "number")]
     pub tier_list_admin: i64,
     #[ts(type = "number")]
+    pub translator: i64,
+    #[ts(type = "number")]
     pub super_admin: i64,
 }
 
@@ -322,6 +324,7 @@ async fn fetch_role_breakdown(db: &PgPool) -> Result<RoleBreakdown, sqlx::Error>
             COUNT(*) FILTER (WHERE role = 'user') AS user_count,
             COUNT(*) FILTER (WHERE role = 'tier_list_editor') AS editor_count,
             COUNT(*) FILTER (WHERE role = 'tier_list_admin') AS admin_count,
+            COUNT(*) FILTER (WHERE role = 'translator') AS translator_count,
             COUNT(*) FILTER (WHERE role = 'super_admin') AS super_count
         FROM users
         ",
@@ -333,6 +336,7 @@ async fn fetch_role_breakdown(db: &PgPool) -> Result<RoleBreakdown, sqlx::Error>
         user: row.user_count,
         tier_list_editor: row.editor_count,
         tier_list_admin: row.admin_count,
+        translator: row.translator_count,
         super_admin: row.super_count,
     })
 }
@@ -342,6 +346,7 @@ struct RoleBreakdownRow {
     user_count: i64,
     editor_count: i64,
     admin_count: i64,
+    translator_count: i64,
     super_count: i64,
 }
 

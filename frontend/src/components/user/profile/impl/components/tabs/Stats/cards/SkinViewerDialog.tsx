@@ -6,8 +6,16 @@ import { DetailRow, type ISkinPrice, SkinDetailContent } from "#/components/skin
 import { Dialog, DialogContent, DialogTitle } from "#/components/ui/dialog";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { type ISkinIndexEntry, skinPopularityQueryOptions } from "#/lib/api/skins";
-import { cn, formatSharePct, getAvatarById } from "#/lib/utils";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import { cn, getAvatarById } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
+import type { messages } from "./SkinViewerDialog.messages";
+
+type ViewerT = TypedT<typeof messages>;
+
+/** A key in `SkinViewerDialog.messages.ts`; resolved by whichever part renders it. */
+type MessageKey = keyof typeof messages & string;
 
 type OwnershipFilter = "all" | "missing" | "owned";
 type SortMode = "brand" | "date" | "popularity";
@@ -28,16 +36,16 @@ interface ISkinViewerDialogProps {
     color: string;
 }
 
-const FILTER_TABS: { id: OwnershipFilter; label: string }[] = [
-    { id: "all", label: "All" },
-    { id: "owned", label: "Owned" },
-    { id: "missing", label: "Missing" },
+const FILTER_TABS: { id: OwnershipFilter; labelKey: MessageKey }[] = [
+    { id: "all", labelKey: "profile.skins.filter.all" },
+    { id: "owned", labelKey: "profile.skins.filter.owned" },
+    { id: "missing", labelKey: "profile.skins.filter.missing" },
 ];
 
-const SORT_TABS: { id: SortMode; label: string }[] = [
-    { id: "brand", label: "Brand" },
-    { id: "date", label: "Date" },
-    { id: "popularity", label: "Popularity" },
+const SORT_TABS: { id: SortMode; labelKey: MessageKey }[] = [
+    { id: "brand", labelKey: "profile.skins.sort.brand" },
+    { id: "date", labelKey: "profile.skins.sort.date" },
+    { id: "popularity", labelKey: "profile.skins.sort.popularity" },
 ];
 
 const SECTION_STYLE: React.CSSProperties = {
@@ -74,13 +82,14 @@ interface ICardData {
 }
 
 export function SkinViewerDialog(props: ISkinViewerDialogProps) {
+    const t: ViewerT = useT("user");
     const [query, setQuery] = useState("");
     const [filter, setFilter] = useState<OwnershipFilter>("missing");
     const [sort, setSort] = useState<SortMode>("brand");
 
     return (
         <DialogContent bottomStickOnMobile={false} className="flex h-[95vh] max-h-[95vh] w-[95vw] max-w-[95vw] flex-col overflow-hidden p-0 sm:max-w-[95vw]" showCloseButton>
-            <DialogTitle className="sr-only">Skin Collection</DialogTitle>
+            <DialogTitle className="sr-only">{t("profile.skins.title")}</DialogTitle>
             <SkinViewerBody {...props} filter={filter} query={query} setFilter={setFilter} setQuery={setQuery} setSort={setSort} sort={sort} />
         </DialogContent>
     );
@@ -96,6 +105,8 @@ interface ISkinViewerBodyProps extends ISkinViewerDialogProps {
 }
 
 function SkinViewerBody({ skins, ownedIds, profileOwnedCount, operatorsMap, color, query, setQuery, filter, setFilter, sort, setSort }: ISkinViewerBodyProps) {
+    const t: ViewerT = useT("user");
+    const f = useFormatters();
     const deferredQuery = useDeferredValue(query);
     const deferredFilter = useDeferredValue(filter);
     const deferredSort = useDeferredValue(sort);
@@ -121,7 +132,7 @@ function SkinViewerBody({ skins, ownedIds, profileOwnedCount, operatorsMap, colo
             if (!s.skinId?.includes("@")) continue;
             const op = operatorsMap.get(s.charId);
             const opName = op?.name ?? "";
-            const rawSkinName = s.displaySkin?.skinName ?? s.displaySkin?.skinGroupName ?? "Skin";
+            const rawSkinName = s.displaySkin?.skinName ?? s.displaySkin?.skinGroupName ?? t("profile.skins.card.fallbackName");
             const groupName = s.displaySkin?.skinGroupName ?? "";
             const skinNameForSearch = (s.displaySkin?.skinName ?? "").toLowerCase();
             out.push({
@@ -131,11 +142,11 @@ function SkinViewerBody({ skins, ownedIds, profileOwnedCount, operatorsMap, colo
                 skinName: rawSkinName,
                 searchable: `${opName.toLowerCase()} ${skinNameForSearch} ${groupName.toLowerCase()}`,
                 avatarURL: getAvatarById(s.skinId),
-                price: getSkinPrice(s),
+                price: getSkinPrice(s, t),
             });
         }
         return out;
-    }, [skins, operatorsMap]);
+    }, [skins, operatorsMap, t]);
 
     const enumeratedOwnedCount = useMemo(() => {
         if (profileOwnedCount > 0) return 0;
@@ -159,7 +170,7 @@ function SkinViewerBody({ skins, ownedIds, profileOwnedCount, operatorsMap, colo
         });
     }, [cards, deferredQuery, deferredFilter, ownedIds]);
 
-    const sections = useMemo(() => buildSections(filteredCards, deferredSort, popularityMap), [filteredCards, deferredSort, popularityMap]);
+    const sections = useMemo(() => buildSections(filteredCards, deferredSort, popularityMap, t), [filteredCards, deferredSort, popularityMap, t]);
     const totalFiltered = filteredCards.length;
 
     useEffect(() => {
@@ -207,12 +218,12 @@ function SkinViewerBody({ skins, ownedIds, profileOwnedCount, operatorsMap, colo
         <>
             <header className="flex shrink-0 flex-col gap-3 border-border/60 border-b bg-card/60 p-4 backdrop-blur sm:p-5">
                 <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                    <h2 className="font-heading font-semibold text-lg leading-none sm:text-xl">Skin Collection</h2>
+                    <h2 className="font-heading font-semibold text-lg leading-none sm:text-xl">{t("profile.skins.title")}</h2>
                     <p className="font-mono text-[11px] text-muted-foreground tabular-nums">
                         <span className="font-semibold" style={{ color }}>
-                            {missingCount.toLocaleString()}
+                            {f.number(missingCount)}
                         </span>{" "}
-                        missing · <span className="font-semibold text-foreground">{ownedCount.toLocaleString()}</span> owned · {totalCount.toLocaleString()} total
+                        {t("profile.skins.header.missing")} · <span className="font-semibold text-foreground">{f.number(ownedCount)}</span> {t("profile.skins.header.owned")} · {f.number(totalCount)} {t("profile.skins.header.total")}
                     </p>
                 </div>
 
@@ -222,15 +233,15 @@ function SkinViewerBody({ skins, ownedIds, profileOwnedCount, operatorsMap, colo
                     <div className="relative flex items-center sm:ml-auto">
                         <Search aria-hidden className="absolute left-2.5 h-3.5 w-3.5 text-muted-foreground/60" />
                         <input
-                            aria-label="Search skins"
+                            aria-label={t("profile.skins.search.aria")}
                             className="w-full rounded-md border border-border bg-background py-1.5 pr-8 pl-8 text-sm outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-foreground/30 sm:w-64"
                             onChange={handleQueryChange}
-                            placeholder="Search by operator or skin…"
+                            placeholder={t("profile.skins.search.placeholder")}
                             type="search"
                             value={query}
                         />
                         {query && (
-                            <button aria-label="Clear search" className="absolute right-1.5 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground" onClick={clearSearch} type="button">
+                            <button aria-label={t("profile.skins.search.clear")} className="absolute right-1.5 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground" onClick={clearSearch} type="button">
                                 <X className="h-3 w-3" />
                             </button>
                         )}
@@ -240,8 +251,8 @@ function SkinViewerBody({ skins, ownedIds, profileOwnedCount, operatorsMap, colo
 
             {totalFiltered === 0 ? (
                 <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
-                    <p className="font-medium text-sm">No skins match your filters</p>
-                    <p className="text-muted-foreground text-xs">{deferredQuery ? <>Try a different search or switch the ownership filter.</> : <>Try switching the ownership filter.</>}</p>
+                    <p className="font-medium text-sm">{t("profile.skins.empty.title")}</p>
+                    <p className="text-muted-foreground text-xs">{deferredQuery ? t("profile.skins.empty.withQuery") : t("profile.skins.empty.noQuery")}</p>
                 </div>
             ) : (
                 <ScrollArea className="min-h-0 flex-1">
@@ -281,6 +292,8 @@ interface IFilterTabsProps {
 }
 
 function FilterTabs({ value, onChange, counts, color }: IFilterTabsProps) {
+    const t: ViewerT = useT("user");
+    const f = useFormatters();
     return (
         <div className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-border bg-muted/40 p-0.5">
             {FILTER_TABS.map((tab) => {
@@ -294,8 +307,8 @@ function FilterTabs({ value, onChange, counts, color }: IFilterTabsProps) {
                         style={active && tab.id === "missing" ? { color } : undefined}
                         type="button"
                     >
-                        {tab.label}
-                        <span className="font-semibold tabular-nums">{counts[tab.id].toLocaleString()}</span>
+                        {t(tab.labelKey)}
+                        <span className="font-semibold tabular-nums">{f.number(counts[tab.id])}</span>
                     </button>
                 );
             })}
@@ -309,9 +322,10 @@ interface ISortTabsProps {
 }
 
 function SortTabs({ value, onChange }: ISortTabsProps) {
+    const t: ViewerT = useT("user");
     return (
         <div className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-border bg-muted/40 p-0.5">
-            <span className="px-1.5 font-mono text-[10px] text-muted-foreground uppercase tracking-wider">Sort</span>
+            <span className="px-1.5 font-mono text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.skins.sort.label")}</span>
             {SORT_TABS.map((tab) => {
                 const active = value === tab.id;
                 return (
@@ -322,7 +336,7 @@ function SortTabs({ value, onChange }: ISortTabsProps) {
                         onClick={() => onChange(tab.id)}
                         type="button"
                     >
-                        {tab.label}
+                        {t(tab.labelKey)}
                     </button>
                 );
             })}
@@ -339,13 +353,14 @@ interface ISkinCardProps {
 }
 
 const SkinCard = memo(function SkinCard({ card, owned, color, popularity, onSelect }: ISkinCardProps) {
+    const t: ViewerT = useT("user");
     const { skin, opName, skinName, price, avatarURL } = card;
     const displayOpName = opName || skin.charId;
     const handleClick = () => onSelect(skin.skinId);
 
     return (
         <button
-            aria-label={`View ${displayOpName} · ${skinName}`}
+            aria-label={t("profile.skins.card.aria", { operator: displayOpName, skin: skinName })}
             className={cn("group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-card text-left transition-all", "hover:-translate-y-0.5 hover:border-foreground/30 hover:shadow-md", owned ? "border-border/60" : "border-border")}
             onClick={handleClick}
             style={CARD_STYLE}
@@ -377,10 +392,12 @@ const SkinCard = memo(function SkinCard({ card, owned, color, popularity, onSele
 });
 
 const PopularityChip = memo(function PopularityChip({ info, color }: { info: ISkinPopularityInfo; color: string }) {
+    const t: ViewerT = useT("user");
+    const f = useFormatters();
     const pct = info.pct ?? 0;
-    const label = formatSharePct(pct);
+    const label = f.percent(pct);
     return (
-        <span className="flex items-center gap-0.5 rounded-full bg-background/85 px-1.5 py-px font-mono font-semibold text-[9px] uppercase tabular-nums tracking-wider shadow-sm" style={{ color }} title={`${info.owners.toLocaleString()} owners (${(pct * 100).toFixed(2)}% of imported users)`}>
+        <span className="flex items-center gap-0.5 rounded-full bg-background/85 px-1.5 py-px font-mono font-semibold text-[9px] uppercase tabular-nums tracking-wider shadow-sm" style={{ color }} title={t("profile.skins.popularity.tooltip", { owners: f.number(info.owners), pct: (pct * 100).toFixed(2) })}>
             {label}
         </span>
     );
@@ -396,14 +413,15 @@ const PriceChip = memo(function PriceChip({ price }: { price: ISkinPrice }) {
 });
 
 const OwnershipBadge = memo(function OwnershipBadge({ owned, color }: { owned: boolean; color: string }) {
+    const t: ViewerT = useT("user");
     if (owned) {
         return (
-            <span aria-label="Owned" className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/95 text-white shadow-sm" role="img">
+            <span aria-label={t("profile.skins.badge.owned")} className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/95 text-white shadow-sm" role="img">
                 <Check aria-hidden className="h-3 w-3" strokeWidth={3} />
             </span>
         );
     }
-    return <span aria-label="Missing" className="block h-5 w-5 rounded-full border bg-background/85" role="img" style={{ borderColor: `color-mix(in oklch, ${color} 50%, transparent)` }} />;
+    return <span aria-label={t("profile.skins.badge.missing")} className="block h-5 w-5 rounded-full border bg-background/85" role="img" style={{ borderColor: `color-mix(in oklch, ${color} 50%, transparent)` }} />;
 });
 
 function getColumnCount(): number {
@@ -535,6 +553,8 @@ interface ISkinDetailDialogProps {
 }
 
 function SkinDetailDialog({ card, owned, color, popularity }: ISkinDetailDialogProps) {
+    const t: ViewerT = useT("user");
+    const f = useFormatters();
     const { skin, skinName, price, avatarURL } = card;
     const opName = card.opName || skin.charId;
     return (
@@ -545,14 +565,16 @@ function SkinDetailDialog({ card, owned, color, popularity }: ISkinDetailDialogP
             avatarURL={avatarURL}
             price={price}
             corner={<OwnershipBadge color={color} owned={owned} />}
-            closeLabel="Back to collection"
+            closeLabel={t("profile.skins.detail.close")}
             extraRows={
                 popularity && popularity.pct !== null ? (
-                    <DetailRow label="Popularity">
+                    <DetailRow label={t("profile.skins.detail.popularity")}>
                         <span className="font-semibold" style={{ color }}>
-                            {formatSharePct(popularity.pct)}
+                            {f.percent(popularity.pct)}
                         </span>
-                        <span className="ml-2 text-muted-foreground text-xs">of users own this · {popularity.owners.toLocaleString()} owners</span>
+                        <span className="ml-2 text-muted-foreground text-xs">
+                            {t("profile.skins.detail.ofUsers")} · {t("profile.skins.detail.ownerCount", { n: f.number(popularity.owners) })}
+                        </span>
                     </DetailRow>
                 ) : null
             }
@@ -586,15 +608,21 @@ const CHANNEL_PRIORITY: Record<SectionChannel, number> = {
     "code-exchange": 6,
 };
 
-const CHANNEL_LABEL: Record<SectionChannel, string | null> = {
-    collab: "Collab",
+const CHANNEL_LABEL: Record<SectionChannel, MessageKey | null> = {
+    collab: "profile.skins.channel.collab",
     store: null, // implicit - main paid brands are the baseline, no chip needed
-    seasonal: "Seasonal",
-    "special-pack": "Special Pack",
-    is: "IS Reward",
-    event: "Event Reward",
-    "code-exchange": "Code Exchange",
+    seasonal: "profile.skins.channel.seasonal",
+    "special-pack": "profile.skins.channel.specialPack",
+    is: "profile.skins.channel.is",
+    event: "profile.skins.channel.event",
+    "code-exchange": "profile.skins.channel.codeExchange",
 };
+
+/** The channel chip for a section, or null where no chip is drawn. */
+function channelLabel(channel: SectionChannel, t: ViewerT): string | null {
+    const key = CHANNEL_LABEL[channel];
+    return key ? t(key) : null;
+}
 
 function classifyChannel(tagId: string | null | undefined): SectionChannel {
     if (!tagId) return "store";
@@ -613,7 +641,7 @@ function classifyChannel(tagId: string | null | undefined): SectionChannel {
 // characters" is left untouched (it has no iteration roman numeral).
 const ITERATION_SUFFIX_RE = /\/[IVXLCDM]+$/i;
 
-function buildSections(filtered: ICardData[], mode: SortMode, popularity: Map<string, ISkinPopularityInfo> | null): ISkinSection[] {
+function buildSections(filtered: ICardData[], mode: SortMode, popularity: Map<string, ISkinPopularityInfo> | null, t: ViewerT): ISkinSection[] {
     const sortByDate = (a: ICardData, b: ICardData) => {
         const aTime = a.skin.displaySkin?.getTime ?? 0;
         const bTime = b.skin.displaySkin?.getTime ?? 0;
@@ -627,7 +655,7 @@ function buildSections(filtered: ICardData[], mode: SortMode, popularity: Map<st
     if (mode === "date") {
         const all = [...filtered].sort(sortByDate);
         if (all.length === 0) return [];
-        return [{ key: "all-by-date", title: "All Skins", channel: "store", tag: null, sortIndex: 0, cards: all }];
+        return [{ key: "all-by-date", title: t("profile.skins.section.all"), channel: "store", tag: null, sortIndex: 0, cards: all }];
     }
 
     if (mode === "popularity") {
@@ -638,14 +666,14 @@ function buildSections(filtered: ICardData[], mode: SortMode, popularity: Map<st
             return sortByDate(a, b);
         });
         if (all.length === 0) return [];
-        return [{ key: "all-by-popularity", title: "All Skins", channel: "store", tag: null, sortIndex: 0, cards: all }];
+        return [{ key: "all-by-popularity", title: t("profile.skins.section.all"), channel: "store", tag: null, sortIndex: 0, cards: all }];
     }
 
     // mode === "brand"
     const map = new Map<string, ISkinSection>();
     for (const c of filtered) {
         const ds = c.skin.displaySkin;
-        const rawName = ds?.skinGroupName ?? "Other";
+        const rawName = ds?.skinGroupName ?? t("profile.skins.section.other");
         const baseName = rawName.replace(ITERATION_SUFFIX_RE, "").trim() || rawName;
         const channel = classifyChannel(ds?.displayTagId);
         const key = `${channel}:${baseName}`;
@@ -656,7 +684,7 @@ function buildSections(filtered: ICardData[], mode: SortMode, popularity: Map<st
                 key,
                 title: baseName,
                 channel,
-                tag: CHANNEL_LABEL[channel],
+                tag: channelLabel(channel, t),
                 sortIndex: ds?.skinGroupSortIndex ?? 0,
                 cards: [],
             };
@@ -700,19 +728,19 @@ const SKIN_PRICE_OVERRIDES: Record<string, number> = {
     // "2024#witch": 21,
 };
 
-function getSkinPrice(skin: ISkinIndexEntry): ISkinPrice {
+function getSkinPrice(skin: ISkinIndexEntry, t: ViewerT): ISkinPrice {
     const channel = classifyChannel(skin.displaySkin?.displayTagId);
     if (channel === "event" || channel === "is" || channel === "seasonal" || channel === "code-exchange") {
-        const label = channel === "is" ? "IS" : "Free";
-        return { kind: "free", label, tooltip: CHANNEL_LABEL[channel] ?? null };
+        const label = channel === "is" ? t("profile.skins.price.is") : t("profile.skins.price.free");
+        return { kind: "free", label, tooltip: channelLabel(channel, t) };
     }
     if (channel === "special-pack") {
-        return { kind: "bundle", label: "Bundle", tooltip: "Obtain from Special Pack" };
+        return { kind: "bundle", label: t("profile.skins.price.bundle"), tooltip: t("profile.skins.price.bundle.tooltip") };
     }
     // Try per-skin then per-group override.
     const op = SKIN_PRICE_OVERRIDES[skin.skinId] ?? (skin.displaySkin?.skinGroupId ? SKIN_PRICE_OVERRIDES[skin.displaySkin.skinGroupId] : undefined);
     if (op != null) {
-        return { kind: "paid", label: `${op} OP`, tooltip: "Outfit Store" };
+        return { kind: "paid", label: t("profile.skins.price.op", { op }), tooltip: t("profile.skins.price.store.tooltip") };
     }
     // Unknown store price - render no chip (label: null) rather than a noisy "Store" tag.
     return { kind: "store", label: null, tooltip: null };
@@ -726,6 +754,7 @@ interface ISectionHeaderProps {
 }
 
 function SectionHeader({ title, tag, count, color }: ISectionHeaderProps) {
+    const f = useFormatters();
     return (
         <div className="sticky top-0 z-10 -mx-3 flex items-center gap-2 border-border/40 border-b bg-background/95 px-3 py-1.5 backdrop-blur sm:-mx-4 sm:px-4">
             <h3 className="truncate font-heading font-semibold text-sm">{title}</h3>
@@ -734,7 +763,7 @@ function SectionHeader({ title, tag, count, color }: ISectionHeaderProps) {
                     {tag}
                 </span>
             )}
-            <span className="ml-auto font-mono text-[10.5px] text-muted-foreground tabular-nums">{count.toLocaleString()}</span>
+            <span className="ml-auto font-mono text-[10.5px] text-muted-foreground tabular-nums">{f.number(count)}</span>
         </div>
     );
 }

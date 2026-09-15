@@ -1,10 +1,14 @@
 import { Link } from "@tanstack/react-router";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { getAvatarById, getPortraitById, parseOperatorName } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { RARITY_BLUR_COLORS, RARITY_COLORS } from "../constants";
 import { ClassIcon } from "./Icons";
+import type { messages } from "./OperatorCardUpcoming.messages";
 
 export function OperatorCardUpcoming({ operator }: { operator: IOperatorIndexEntry }) {
+    const t: TypedT<typeof messages> = useT("operators");
     const { displayName } = parseOperatorName(operator.name);
     const portrait = getPortraitById(operator.id, "cn");
     const fallback = getAvatarById(operator.id, "cn");
@@ -13,7 +17,7 @@ export function OperatorCardUpcoming({ operator }: { operator: IOperatorIndexEnt
         <Link to="/operators/$id" params={{ id: operator.id }} className="group relative flex aspect-2/3 overflow-clip rounded-md border border-muted/50 bg-card contain-content hover:rounded-lg">
             <div className="absolute inset-0 origin-center transition-transform group-hover:scale-105">
                 <img
-                    alt={`${operator.name} portrait`}
+                    alt={t("card.upcoming.portraitAlt", { name: operator.name })}
                     className="h-full w-full rounded-lg object-contain"
                     decoding="async"
                     loading="lazy"

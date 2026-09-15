@@ -1,6 +1,9 @@
 import { TriangleAlertIcon } from "lucide-react";
 import { AlertDialog, AlertDialogClose, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogPopup, AlertDialogTitle } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
+import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "./DeleteListDialog.messages";
 
 export interface IDeleteListTarget {
     slug: string;
@@ -16,6 +19,8 @@ interface IDeleteListDialogProps {
 }
 
 export function DeleteListDialog({ target, onOpenChange, onConfirm, isSubmitting, errorMessage }: IDeleteListDialogProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
+    const rt: TypedRichT<typeof messages> = useRichT("tierLists");
     const open = target !== null;
 
     const handleConfirm = () => {
@@ -31,10 +36,8 @@ export function DeleteListDialog({ target, onOpenChange, onConfirm, isSubmitting
                             <TriangleAlertIcon className="h-4.5 w-4.5" aria-hidden="true" />
                         </span>
                         <div className="flex min-w-0 flex-col gap-1">
-                            <AlertDialogTitle>Delete tier list?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                <span className="font-medium text-foreground">{target?.name ?? "This list"}</span> and all of its tiers, placements, and stats will be permanently removed. Anyone with the link will see a 404 page. This cannot be undone.
-                            </AlertDialogDescription>
+                            <AlertDialogTitle>{t("my.delete.title")}</AlertDialogTitle>
+                            <AlertDialogDescription>{rt("my.delete.body", { name: <span className="font-medium text-foreground">{target?.name ?? t("my.delete.fallbackName")}</span> })}</AlertDialogDescription>
                         </div>
                     </div>
                 </AlertDialogHeader>
@@ -46,9 +49,9 @@ export function DeleteListDialog({ target, onOpenChange, onConfirm, isSubmitting
                 )}
 
                 <AlertDialogFooter>
-                    <AlertDialogClose render={<Button type="button" variant="outline" disabled={isSubmitting} />}>Cancel</AlertDialogClose>
+                    <AlertDialogClose render={<Button type="button" variant="outline" disabled={isSubmitting} />}>{t("my.delete.cancel")}</AlertDialogClose>
                     <Button type="button" variant="destructive" loading={isSubmitting} onClick={handleConfirm}>
-                        Delete list
+                        {t("my.delete.submit")}
                     </Button>
                 </AlertDialogFooter>
             </AlertDialogPopup>

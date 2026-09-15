@@ -2,7 +2,10 @@ import { Link } from "@tanstack/react-router";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
 import type { ITierOperator } from "#/lib/api/tier-lists";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { RARITY_HEX_MUTED } from "#/lib/utils";
+import type { messages } from "./OperatorTile.messages";
 import styles from "./TierListDetail.module.css";
 import { TierOperatorPreview } from "./TierOperatorPreview";
 
@@ -11,13 +14,14 @@ interface IOperatorTileProps {
 }
 
 export function OperatorTile({ operator }: IOperatorTileProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
     const color = RARITY_HEX_MUTED[operator.rarity] ?? RARITY_HEX_MUTED[1];
 
     return (
         <HoverCard>
             <HoverCardTrigger
                 render={
-                    <Link to="/operators/$id" params={{ id: operator.id }} className={styles.opTile} style={{ ["--rarity-color" as string]: color }} aria-label={`${operator.name} (${operator.rarity}★)`}>
+                    <Link to="/operators/$id" params={{ id: operator.id }} className={styles.opTile} style={{ ["--rarity-color" as string]: color }} aria-label={t("detail.operatorTile.label", { name: operator.name, rarity: operator.rarity })}>
                         <OperatorAvatar charId={operator.id} name={operator.name} />
                         <span className={styles.opRarity} aria-hidden="true" />
                     </Link>

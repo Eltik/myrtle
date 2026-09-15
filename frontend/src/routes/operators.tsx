@@ -3,6 +3,7 @@ import { OperatorsList } from "#/components/operators/list/Operators";
 import { operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { operatorOwnershipQueryOptions, operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { upcomingQueryOptions } from "#/lib/api/upcoming";
+import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
@@ -23,13 +24,21 @@ export const Route = createFileRoute("/operators")({
     // `validateSearch` only runs on the way in, so page one still needs stripping
     // on the way out to keep a bare `/operators` in the address bar.
     search: { middlewares: [stripSearchParams(SEARCH_DEFAULTS)] },
-    loader: ({ context }) => Promise.all([context.queryClient.ensureQueryData(operatorsIndexQueryOptions()), context.queryClient.prefetchQuery(upcomingQueryOptions()), context.queryClient.prefetchQuery(operatorNotesListQueryOptions()), context.queryClient.prefetchQuery(operatorOwnershipQueryOptions())]),
-    head: () => {
+    loader: ({ context }) =>
+        Promise.all([
+            context.queryClient.ensureQueryData(operatorsIndexQueryOptions(context.i18n.gamedataServer)),
+            context.queryClient.prefetchQuery(upcomingQueryOptions(context.i18n.gamedataServer)),
+            context.queryClient.prefetchQuery(operatorNotesListQueryOptions()),
+            context.queryClient.prefetchQuery(operatorOwnershipQueryOptions(context.i18n.gamedataServer)),
+        ]),
+    head: ({ match }) => {
+        const t = metaT(match.context.i18n);
         const { meta, links } = seo({
-            title: "Operators",
-            description: "View all operators released in Arknights.",
+            title: t("operators.title"),
+            description: t("operators.description"),
             path: "/operators",
-            image: defaultOgURL("operators"),
+            image: defaultOgURL("operators", match.context.i18n),
+            locale: match.context.i18n?.locale,
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],

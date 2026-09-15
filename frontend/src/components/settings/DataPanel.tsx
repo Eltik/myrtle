@@ -3,7 +3,11 @@ import { CheckIcon, KeyRoundIcon, Link2OffIcon, LogOutIcon, MailIcon, RefreshCwI
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import type { IUserProfile } from "#/types/user";
+import type { messages } from "./DataPanel.messages";
+import type { messages as profileMessages } from "./ProfilePanel.messages";
 import { SettingRow } from "./SettingsShell";
 
 interface IDataPanelProps {
@@ -17,21 +21,24 @@ interface IDataPanelProps {
 }
 
 export function DataPanel({ user, onResync, syncing, onSignOut, signingOut, onDisconnect, disconnecting }: IDataPanelProps) {
+    // The re-sync button is shared with ProfilePanel, which declares its two labels.
+    const t: TypedT<typeof messages & typeof profileMessages> = useT("settings");
+
     return (
         <div className="flex flex-col gap-4">
             <Card>
                 <CardHeader>
-                    <CardTitle>Sync &amp; refresh</CardTitle>
-                    <CardDescription>Pull the latest from Yostar. Re-sync any time - we replace your stored snapshot.</CardDescription>
+                    <CardTitle>{t("data.sync.title")}</CardTitle>
+                    <CardDescription>{t("data.sync.desc")}</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
                     <SettingRow
-                        title="Re-sync game data"
-                        description="Operators, stage progress, IS/Sandbox, base, medals, inventory."
+                        title={t("data.sync.rowTitle")}
+                        description={t("data.sync.rowDesc")}
                         control={
                             <Button size="sm" onClick={onResync} disabled={syncing} loading={syncing} className="w-full sm:w-auto">
                                 <RefreshCwIcon className="size-3.5" />
-                                {syncing ? "Re-syncing…" : "Re-sync now"}
+                                {syncing ? t("resync.pending") : t("resync.now")}
                             </Button>
                         }
                     />
@@ -40,27 +47,27 @@ export function DataPanel({ user, onResync, syncing, onSignOut, signingOut, onDi
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Your data on Myrtle</CardTitle>
-                    <CardDescription>Everything we store is visible on your profile page. For a portable copy or a GDPR request, email privacy directly.</CardDescription>
+                    <CardTitle>{t("data.yourData.title")}</CardTitle>
+                    <CardDescription>{t("data.yourData.desc")}</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
                     <SettingRow
-                        title="View on your profile"
-                        description="Roster, scores, stage progress, gacha history (if stored), and medals - the data we have on you is what shows up here."
+                        title={t("data.viewProfile.title")}
+                        description={t("data.viewProfile.desc")}
                         control={
                             <Button variant="outline" size="sm" render={<Link to="/user/$id" params={{ id: user.uid }} />}>
-                                Open my profile
+                                {t("data.viewProfile.action")}
                             </Button>
                         }
                     />
                     <SettingRow
-                        title="Request data export"
-                        description="Email privacy@myrtle.moe to receive a portable copy of your data."
+                        title={t("data.export.title")}
+                        description={t("data.export.desc")}
                         control={
                             // biome-ignore lint/a11y/useAnchorContent: anchor children are slotted in by Button via render prop
                             <Button variant="outline" size="sm" render={<a href="mailto:privacy@myrtle.moe?subject=Data%20export%20request" />}>
                                 <MailIcon className="size-3.5" />
-                                Email privacy@myrtle.moe
+                                {t("data.export.action")}
                             </Button>
                         }
                     />
@@ -69,41 +76,41 @@ export function DataPanel({ user, onResync, syncing, onSignOut, signingOut, onDi
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Linked Yostar account</CardTitle>
-                    <CardDescription>We never see your password. We do keep the token that lets us re-sync on your behalf - disconnect below to delete it.</CardDescription>
+                    <CardTitle>{t("data.linked.title")}</CardTitle>
+                    <CardDescription>{t("data.linked.desc")}</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
                     <SettingRow
                         layout="inline"
                         title={
                             <span className="inline-flex items-center gap-1.5">
-                                <KeyRoundIcon className="size-3.5 text-muted-foreground" /> Yostar OAuth
+                                <KeyRoundIcon className="size-3.5 text-muted-foreground" /> {t("data.oauth.title")}
                             </span>
                         }
-                        description="Authenticated via your in-game email verification code."
+                        description={t("data.oauth.desc")}
                         control={
                             <Badge variant="success">
-                                <CheckIcon className="size-3" /> Active
+                                <CheckIcon className="size-3" /> {t("data.oauth.active")}
                             </Badge>
                         }
                     />
                     <SettingRow
-                        title="Sign out of this browser"
-                        description="Ends the current session. Your data stays - just sign back in to re-access it."
+                        title={t("data.signOut.title")}
+                        description={t("data.signOut.desc")}
                         control={
                             <Button variant="outline" size="sm" onClick={onSignOut} disabled={signingOut} loading={signingOut}>
                                 <LogOutIcon className="size-3.5" />
-                                Sign out
+                                {t("data.signOut.action")}
                             </Button>
                         }
                     />
                     <SettingRow
-                        title="Disconnect game account"
-                        description="Deletes the stored Yostar token, so we can no longer reach your account. Your synced data stays on your profile; the next re-sync will ask for a new email code."
+                        title={t("data.disconnect.title")}
+                        description={t("data.disconnect.desc")}
                         control={
                             <Button variant="destructive-outline" size="sm" onClick={onDisconnect} disabled={disconnecting} loading={disconnecting}>
                                 <Link2OffIcon className="size-3.5" />
-                                Disconnect
+                                {t("data.disconnect.action")}
                             </Button>
                         }
                     />

@@ -2,34 +2,42 @@ import { Search } from "lucide-react";
 import type * as React from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, parseOperatorName, rarityToNumber } from "#/lib/utils";
 import type { SkinPrice } from "#/types/generated/SkinPrice";
 import { useAutoTranslate } from "../autoTranslate";
 import type { IPlanSkin } from "../plan";
+import type { messages } from "./SkinCard.messages";
 import styles from "./SkinCard.module.css";
 import { useSkinPopup } from "./SkinPopup";
 import { type OperatorLookup, resolveName, useArt } from "./shared";
+
+type CardT = TypedT<typeof messages>;
 
 const CARD_SHEET = asset("/textures/arts/ui/[uc]classicgachapool/classic_gacha%230.png");
 const CARD_CROP = { x: 19, y: 389, w: 276, h: 608, sheet: 1024 };
 const CARD_WIDTH = 177;
 export const FALLBACK_COLOR = "#4b5563";
 
-const OBTAIN_SHORT: Record<string, string> = {
-    "Event Reward": "Event",
-    "Event Gift": "Gift",
-    "Integrated Strategies": "IS",
-    "Reclamation Algorithm": "RA",
-    "Quest Reward": "Quest",
-    "Obtain from Special Pack": "Pack",
+/** The obtain methods the game data spells out, mapped to a badge-sized label. */
+const OBTAIN_SHORT_KEYS: Record<string, keyof typeof messages & string> = {
+    "Event Reward": "release.card.obtain.eventReward",
+    "Event Gift": "release.card.obtain.eventGift",
+    "Integrated Strategies": "release.card.obtain.is",
+    "Reclamation Algorithm": "release.card.obtain.ra",
+    "Quest Reward": "release.card.obtain.quest",
+    "Obtain from Special Pack": "release.card.obtain.pack",
 };
 
-function obtainShort(obtain: string): string {
-    return OBTAIN_SHORT[obtain] ?? (/code/i.test(obtain) ? "Code" : obtain.split(/[\s,、]/)[0].slice(0, 6));
+function obtainShort(obtain: string, t: CardT): string {
+    const key = OBTAIN_SHORT_KEYS[obtain];
+    if (key) return t(key);
+    return /code/i.test(obtain) ? t("release.card.obtain.code") : obtain.split(/[\s,、]/)[0].slice(0, 6);
 }
 
-function priceTitle(price: SkinPrice): string {
-    return price.store ? `${price.price} Originite Prime in the Outfit Store` : `${price.obtain || "Not sold"}: no Originite Prime`;
+function priceTitle(price: SkinPrice, t: CardT): string {
+    return price.store ? t("release.card.price.store", { price: price.price }) : t("release.card.price.none", { obtain: price.obtain || t("release.card.price.notSold") });
 }
 
 export function stopsOf(colors: string[]): string {
@@ -49,6 +57,7 @@ export function cardVars(colors: string[], width = CARD_WIDTH): React.CSSPropert
 }
 
 export function SkinCard({ skin, on, lookup, onPick }: { skin: IPlanSkin; on: boolean; lookup: OperatorLookup; onPick: (skin: IPlanSkin, on: boolean) => void }): React.ReactElement {
+    const t: CardT = useT("tools");
     const autoOn = useAutoTranslate();
     const art = useArt(skin.portraitPath);
     const openPopup = useSkinPopup();
@@ -58,11 +67,18 @@ export function SkinCard({ skin, on, lookup, onPick }: { skin: IPlanSkin; on: bo
     const skinName = resolveName(skin.skinName, skin.skinNameEn, skin.skinNameAuto, autoOn).text;
     return (
         <div className={cn(styles.card, on && styles.selected)} style={cardVars(skin.colors)}>
-            <button type="button" aria-pressed={on} aria-label={`${on ? "Remove" : "Add"} ${opName}: ${skinName}`} title={`${opName}: ${skinName}`} onClick={() => onPick(skin, !on)} className="absolute inset-0 z-2 cursor-pointer bg-transparent" />
+            <button
+                type="button"
+                aria-pressed={on}
+                aria-label={on ? t("release.card.remove", { operator: opName, skin: skinName }) : t("release.card.add", { operator: opName, skin: skinName })}
+                title={t("release.card.title", { operator: opName, skin: skinName })}
+                onClick={() => onPick(skin, !on)}
+                className="absolute inset-0 z-2 cursor-pointer bg-transparent"
+            />
             {art.src ? <img src={art.src} alt="" loading="lazy" onError={art.onError} className={styles.portrait} /> : <span className={cn(styles.portrait, "flex items-center justify-center font-bold text-[40px] text-white/30")}>{opName.charAt(0)}</span>}
             <span className={styles.shine} />
-            <span className={styles.price} title={priceTitle(skin.price)}>
-                <span className={cn(styles.priceNumber, !skin.price.store && styles.priceLabel)}>{skin.price.store ? skin.price.price : obtainShort(skin.price.obtain)}</span>
+            <span className={styles.price} title={priceTitle(skin.price, t)}>
+                <span className={cn(styles.priceNumber, !skin.price.store && styles.priceLabel)}>{skin.price.store ? skin.price.price : obtainShort(skin.price.obtain, t)}</span>
                 {entry && (
                     <span className={styles.priceClass}>
                         <ClassIcon profession={entry.profession} size={28} />
@@ -72,7 +88,7 @@ export function SkinCard({ skin, on, lookup, onPick }: { skin: IPlanSkin; on: bo
             {rarity > 0 && <span className={styles.stars}>{"★".repeat(rarity)}</span>}
             <button
                 type="button"
-                aria-label={`Inspect ${skinName}`}
+                aria-label={t("release.card.inspect", { skin: skinName })}
                 className={styles.inspect}
                 onClick={(e) => {
                     e.stopPropagation();
@@ -81,7 +97,7 @@ export function SkinCard({ skin, on, lookup, onPick }: { skin: IPlanSkin; on: bo
             >
                 <Search className="size-5" />
             </button>
-            <span className={styles.overlay}>Selected</span>
+            <span className={styles.overlay}>{t("release.card.selected")}</span>
             <span className={styles.strip} style={{ fontSize: opName.length > 14 ? 11 : opName.length > 10 ? 13 : 16 }}>
                 {opName}
             </span>

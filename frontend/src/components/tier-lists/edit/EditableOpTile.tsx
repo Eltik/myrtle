@@ -2,9 +2,12 @@ import type { ComponentPropsWithoutRef, Ref } from "react";
 import { useRef, useState } from "react";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ITierOperator } from "#/lib/api/tier-lists";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, RARITY_HEX_MUTED } from "#/lib/utils";
 import { setOperatorDrag } from "./dnd";
 import { useIsDragSource, useStartOperatorDrag } from "./drag-controller";
+import type { messages } from "./EditableOpTile.messages";
 import styles from "./Editor.module.css";
 
 type ButtonExtras = Omit<ComponentPropsWithoutRef<"button">, "title" | "onDragStart" | "onDragEnd" | "onClick" | "onPointerDown" | "onPointerMove" | "onDragOver" | "ref" | "className" | "style">;
@@ -24,6 +27,7 @@ interface IEditableOpTileProps extends ButtonExtras {
 }
 
 export function EditableOpTile({ operator, disabled, placed, hasNote, onActivate, onDragStart, onDragEnd, onDragOverChip, title, ref, className, ...rest }: IEditableOpTileProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
     const color = RARITY_HEX_MUTED[operator.rarity] ?? RARITY_HEX_MUTED[1];
     const isTouchDragging = useIsDragSource(operator.id);
     const startPress = useStartOperatorDrag();
@@ -49,8 +53,8 @@ export function EditableOpTile({ operator, disabled, placed, hasNote, onActivate
             data-dragging={isDragging || undefined}
             data-disabled={disabled || undefined}
             aria-disabled={disabled || undefined}
-            aria-label={`${operator.name} (${operator.rarity}★)${placed ? " - already placed" : ""}${hasNote ? " - has a description" : ""}`}
-            title={title ?? `${operator.name} (${operator.rarity}★)${hasNote ? " · has a description" : ""}`}
+            aria-label={t("edit.tile.label", { name: operator.name, rarity: operator.rarity, placed: Boolean(placed), noted: Boolean(hasNote) })}
+            title={title ?? t("edit.tile.title", { name: operator.name, rarity: operator.rarity, noted: Boolean(hasNote) })}
             onClick={() => {
                 if (dragStartedRef.current) {
                     dragStartedRef.current = false;

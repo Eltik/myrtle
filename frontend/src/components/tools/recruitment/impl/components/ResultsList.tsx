@@ -1,8 +1,11 @@
 import { Search, SearchX } from "lucide-react";
 import type * as React from "react";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import type { ITagCombinationResult } from "../types";
 import { ResultCard } from "./ResultCard";
+import type { messages } from "./ResultsList.messages";
 
 interface IResultsListProps {
     results: ITagCombinationResult[];
@@ -10,6 +13,7 @@ interface IResultsListProps {
 }
 
 export function ResultsList({ results, hasSelection }: IResultsListProps): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("tools");
     if (!hasSelection) {
         return (
             <Empty>
@@ -17,8 +21,8 @@ export function ResultsList({ results, hasSelection }: IResultsListProps): React
                     <EmptyMedia variant="icon">
                         <Search />
                     </EmptyMedia>
-                    <EmptyTitle>Pick tags to see combinations</EmptyTitle>
-                    <EmptyDescription>Select the tags shown in your in-game recruitment screen. Combinations are ranked by guaranteed minimum rarity.</EmptyDescription>
+                    <EmptyTitle>{t("recruit.empty.noSelection.title")}</EmptyTitle>
+                    <EmptyDescription>{t("recruit.empty.noSelection.desc")}</EmptyDescription>
                 </EmptyHeader>
             </Empty>
         );
@@ -31,8 +35,8 @@ export function ResultsList({ results, hasSelection }: IResultsListProps): React
                     <EmptyMedia variant="icon">
                         <SearchX />
                     </EmptyMedia>
-                    <EmptyTitle>No matching operators</EmptyTitle>
-                    <EmptyDescription>No recruitable operators match the current tags and options. Try removing a tag or enabling more options.</EmptyDescription>
+                    <EmptyTitle>{t("recruit.empty.noResults.title")}</EmptyTitle>
+                    <EmptyDescription>{t("recruit.empty.noResults.desc")}</EmptyDescription>
                 </EmptyHeader>
             </Empty>
         );

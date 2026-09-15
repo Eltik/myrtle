@@ -525,6 +525,7 @@ const fn describe_role(r: GlobalRole) -> &'static str {
         GlobalRole::User => "Default, no special permissions",
         GlobalRole::TierListEditor => "Can edit tier lists they have permission for",
         GlobalRole::TierListAdmin => "Can manage all tier lists",
+        GlobalRole::Translator => "Can edit UI translations for granted locales",
         GlobalRole::SuperAdmin => "Full access to everything",
     }
 }

@@ -2,7 +2,10 @@ import { Filter, X } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import { Sheet, SheetHeader, SheetPanel, SheetPopup, SheetTitle } from "#/components/ui/sheet";
 import { useMediaQuery } from "#/hooks/use-media-query";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./FilterPanel.messages";
 import styles from "./OperatorFilters.module.css";
 
 interface IFilterPanelProps {
@@ -27,6 +30,7 @@ interface IFilterPanelProps {
  * re-deriving the breakpoint, inert handling, and header.
  */
 export function FilterPanel(props: IFilterPanelProps) {
+    const t: TypedT<typeof messages> = useT("operators");
     const isMobile = useMediaQuery("max-md");
     const isOpen = !props.collapsed;
 
@@ -38,13 +42,13 @@ export function FilterPanel(props: IFilterPanelProps) {
                         <div className="flex items-center justify-between">
                             <SheetTitle className="flex items-center gap-2 text-base">
                                 <Filter className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-                                Filters
+                                {t("filters.panel.title")}
                                 {props.activeFilterCount && props.activeFilterCount > 0 ? <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 font-mono font-semibold text-[10px] text-primary-foreground">{props.activeFilterCount}</span> : null}
                             </SheetTitle>
                             {props.hasActiveFilters && (
                                 <button type="button" className="inline-flex items-center gap-1 font-medium text-[11.5px] text-muted-foreground hover:text-foreground" onClick={props.onClearAll}>
                                     <X className="h-2.5 w-2.5" aria-hidden="true" />
-                                    Clear all
+                                    {t("filters.panel.clearAll")}
                                 </button>
                             )}
                         </div>
@@ -63,12 +67,12 @@ export function FilterPanel(props: IFilterPanelProps) {
                 <div className={styles.fpHead}>
                     <h3>
                         <Filter className="h-3.5 w-3.5" aria-hidden="true" />
-                        Filters
+                        {t("filters.panel.title")}
                     </h3>
                     {props.hasActiveFilters && (
                         <button type="button" className={styles.clear} onClick={props.onClearAll}>
                             <X className="h-2.5 w-2.5" aria-hidden="true" />
-                            Clear all
+                            {t("filters.panel.clearAll")}
                         </button>
                     )}
                 </div>

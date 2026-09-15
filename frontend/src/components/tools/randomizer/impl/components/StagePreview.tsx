@@ -5,8 +5,13 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { stagePreviewURLs } from "#/lib/api/stages";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { IStage } from "#/types/stages";
+import type { messages } from "./StagePreview.messages";
+
+type PreviewT = TypedT<typeof messages>;
 
 interface IStagePreviewProps {
     stage: IStage;
@@ -17,6 +22,7 @@ const RESOLVED_PREVIEW = new Map<string, string>();
 const FAILED_PREVIEW = new Set<string>();
 
 export function StagePreview({ stage, className }: IStagePreviewProps): React.ReactElement {
+    const t: PreviewT = useT("tools");
     const urls = React.useMemo(() => stagePreviewURLs(stage), [stage]);
     const cached = RESOLVED_PREVIEW.get(stage.stageId) ?? null;
     const [resolved, setResolved] = useState<string | null>(cached);
@@ -65,13 +71,13 @@ export function StagePreview({ stage, className }: IStagePreviewProps): React.Re
 
     const failed = !resolving && resolved === null;
     const canExpand = resolved !== null;
-    const labelName = stage.name ? `${stage.code} - ${stage.name}` : stage.code;
+    const labelName = stage.name ? t("randomizer.preview.stageLabel", { code: stage.code, name: stage.name }) : stage.code;
 
     const thumbnail = (
         <button
             type="button"
             disabled={!canExpand}
-            aria-label={canExpand ? `Expand ${labelName} map preview` : `No preview available for ${stage.code}`}
+            aria-label={canExpand ? t("randomizer.preview.expand", { stage: labelName }) : t("randomizer.preview.none", { code: stage.code })}
             className={cn(
                 "group relative block aspect-video w-full overflow-hidden rounded-lg border border-border/60 bg-muted/40 outline-none transition-shadow",
                 canExpand && "cursor-zoom-in focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -79,8 +85,8 @@ export function StagePreview({ stage, className }: IStagePreviewProps): React.Re
                 className,
             )}
         >
-            {resolved && <img src={resolved} alt={`${labelName} map preview`} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]" />}
-            {failed && <PreviewFallback code={stage.code} />}
+            {resolved && <img src={resolved} alt={t("randomizer.preview.alt", { stage: labelName })} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]" />}
+            {failed && <PreviewFallback code={stage.code} t={t} />}
             <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-linear-to-t from-black/40 to-transparent dark:from-black/60" />
             {canExpand && (
                 <span aria-hidden="true" className="pointer-events-none absolute top-2 right-2 inline-flex size-7 items-center justify-center rounded-md bg-black/55 text-white opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
@@ -95,13 +101,13 @@ export function StagePreview({ stage, className }: IStagePreviewProps): React.Re
     }
 
     return (
-        <StageViewerDialog imageSrc={resolved} stageName={labelName}>
+        <StageViewerDialog imageSrc={resolved} stageName={labelName} t={t}>
             {thumbnail}
         </StageViewerDialog>
     );
 }
 
-function PreviewFallback({ code }: { code: string }): React.ReactElement {
+function PreviewFallback({ code, t }: { code: string; t: PreviewT }): React.ReactElement {
     return (
         <div className="absolute inset-0 flex items-center justify-center bg-[radial-gradient(circle_at_30%_20%,var(--lagoon,#4fb8b2)/20,transparent_60%),radial-gradient(circle_at_70%_80%,var(--palm,#2f6a4a)/15,transparent_60%)] text-foreground/40">
             <svg aria-hidden="true" viewBox="0 0 64 64" className="h-10 w-10" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -109,7 +115,7 @@ function PreviewFallback({ code }: { code: string }): React.ReactElement {
                 <path d="M6 36 L20 28 L32 38 L46 26 L58 34" />
                 <circle cx="22" cy="22" r="3" />
             </svg>
-            <span className="sr-only">No preview available for {code}</span>
+            <span className="sr-only">{t("randomizer.preview.none", { code })}</span>
         </div>
     );
 }
@@ -118,6 +124,7 @@ interface IStageViewerDialogProps {
     imageSrc: string;
     stageName: string;
     children: React.ReactNode;
+    t: PreviewT;
 }
 
 const MIN_ZOOM = 0.5;
@@ -135,7 +142,7 @@ const INITIAL_TRANSFORM: ITransform = { zoom: 1, pan: { x: 0, y: 0 } };
 
 const clampZoom = (z: number) => Math.min(Math.max(z, MIN_ZOOM), MAX_ZOOM);
 
-const StageViewerDialog = memo(function StageViewerDialog({ imageSrc, stageName, children }: IStageViewerDialogProps) {
+const StageViewerDialog = memo(function StageViewerDialog({ imageSrc, stageName, children, t }: IStageViewerDialogProps) {
     const [transform, setTransform] = useState<ITransform>(INITIAL_TRANSFORM);
     const [isPanning, setIsPanning] = useState(false);
     const panStartRef = useRef({ x: 0, y: 0 });
@@ -238,18 +245,18 @@ const StageViewerDialog = memo(function StageViewerDialog({ imageSrc, stageName,
                 <DialogTitle className="sr-only">{stageName}</DialogTitle>
 
                 <div className="absolute top-3 left-3 z-10 flex items-center gap-1 rounded-lg border border-border/50 bg-background/80 p-1 shadow-sm backdrop-blur-sm">
-                    <ToolButton onClick={() => zoomBy(-ZOOM_STEP)} disabled={transform.zoom <= MIN_ZOOM} label="Zoom out">
+                    <ToolButton onClick={() => zoomBy(-ZOOM_STEP)} disabled={transform.zoom <= MIN_ZOOM} label={t("randomizer.preview.zoomOut")}>
                         <ZoomOut className="h-4 w-4" />
                     </ToolButton>
                     <span className="min-w-12 select-none text-center font-mono text-muted-foreground text-xs">{Math.round(transform.zoom * 100)}%</span>
-                    <ToolButton onClick={() => zoomBy(ZOOM_STEP)} disabled={transform.zoom >= MAX_ZOOM} label="Zoom in">
+                    <ToolButton onClick={() => zoomBy(ZOOM_STEP)} disabled={transform.zoom >= MAX_ZOOM} label={t("randomizer.preview.zoomIn")}>
                         <ZoomIn className="h-4 w-4" />
                     </ToolButton>
                     <div className="mx-1 h-4 w-px bg-border" />
-                    <ToolButton onClick={reset} label="Reset view">
+                    <ToolButton onClick={reset} label={t("randomizer.preview.resetView")}>
                         <RotateCcw className="h-3.5 w-3.5" />
                     </ToolButton>
-                    <ToolButton onClick={onDownload} label="Download">
+                    <ToolButton onClick={onDownload} label={t("randomizer.preview.download")}>
                         <Download className="h-3.5 w-3.5" />
                     </ToolButton>
                 </div>

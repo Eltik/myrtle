@@ -2,11 +2,17 @@ import { Check, ChevronDown, FilterX, Info, RotateCcw, Search, X } from "lucide-
 import * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
+import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import { cn, getAvatarById, RARITY_LABELS } from "#/lib/utils";
 import type { OperatorRarity } from "#/types/operators";
 import { ALL_CLASSES, ALL_RARITIES, CLASS_LABEL } from "../constants";
 import type { IRandomizerOperator, IRandomizerSettings, IRosterIndex } from "../types";
+import type { messages } from "./RosterPicker.messages";
+
+type RosterT = TypedT<typeof messages>;
+type RosterRichT = TypedRichT<typeof messages>;
 
 interface IRosterPickerProps {
     /** Complete operator list - needed so "select all visible" doesn't drop hidden operators from the explicit set. */
@@ -26,6 +32,7 @@ interface IRosterPickerProps {
 const RARITY_SORT: Record<OperatorRarity, number> = { 6: 0, 5: 1, 4: 2, 3: 3, 2: 4, 1: 5 };
 
 export function RosterPicker({ allOperators, visibleOperators, selected, isExplicit, onChange, onReset, rosterIndex, hasProfile, settings }: IRosterPickerProps): React.ReactElement {
+    const t: RosterT = useT("tools");
     const [query, setQuery] = React.useState("");
 
     const trimmedQuery = compactForSearch(query);
@@ -114,9 +121,9 @@ export function RosterPicker({ allOperators, visibleOperators, selected, isExpli
             <div className="flex items-center gap-2">
                 <div className="relative min-w-0 flex-1">
                     <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                    <Input value={query} onChange={(e) => setQuery(e.currentTarget.value)} placeholder="Search operators…" size="sm" className="rounded-md border-input pl-7" />
+                    <Input value={query} onChange={(e) => setQuery(e.currentTarget.value)} placeholder={t("randomizer.roster.search")} size="sm" className="rounded-md border-input pl-7" />
                     {query && (
-                        <button type="button" onClick={() => setQuery("")} className="absolute top-1/2 right-1.5 inline-flex size-5 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Clear search">
+                        <button type="button" onClick={() => setQuery("")} className="absolute top-1/2 right-1.5 inline-flex size-5 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={t("randomizer.roster.clearSearch")}>
                             <X className="size-3" />
                         </button>
                     )}
@@ -126,26 +133,26 @@ export function RosterPicker({ allOperators, visibleOperators, selected, isExpli
             <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] text-muted-foreground uppercase tracking-[0.16em]">
                 <div className="flex flex-col gap-0.5">
                     <span>
-                        <span className="text-foreground">{visibleSelectedCount}</span> / {visibleOperators.length} {hasActiveFilters ? "in view" : "selected"}
+                        <span className="text-foreground">{visibleSelectedCount}</span> / {visibleOperators.length} {hasActiveFilters ? t("randomizer.roster.inView") : t("randomizer.roster.selected")}
                     </span>
-                    {hasActiveFilters && <span className="text-[10.5px] text-muted-foreground/70 normal-case tracking-normal">{selected.size} total in roster</span>}
+                    {hasActiveFilters && <span className="text-[10.5px] text-muted-foreground/70 normal-case tracking-normal">{t("randomizer.roster.totalInRoster", { count: selected.size })}</span>}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                     <Button onClick={onSelectAllVisible} size="xs" variant="ghost" disabled={allVisibleSelected || visibleOperators.length === 0}>
-                        All
+                        {t("randomizer.roster.all")}
                     </Button>
                     <Button onClick={onDeselectAllVisible} size="xs" variant="ghost" disabled={noVisibleSelected}>
-                        None
+                        {t("randomizer.roster.none")}
                     </Button>
                     {isExplicit && (
-                        <Button onClick={onReset} size="xs" variant="ghost" title="Restore the default state (every operator selected).">
+                        <Button onClick={onReset} size="xs" variant="ghost" title={t("randomizer.roster.reset.title")}>
                             <RotateCcw aria-hidden="true" className="size-3" />
-                            Reset
+                            {t("randomizer.roster.reset")}
                         </Button>
                     )}
                     {hasProfile && rosterIndex.owned.size > 0 && (
                         <Button onClick={onSyncProfile} size="xs" variant="outline">
-                            Sync profile ({rosterIndex.owned.size})
+                            {t("randomizer.roster.syncProfile", { count: rosterIndex.owned.size })}
                         </Button>
                     )}
                 </div>
@@ -181,12 +188,17 @@ export function RosterPicker({ allOperators, visibleOperators, selected, isExpli
                                         <span className="font-mono text-[11px] uppercase tracking-[0.18em]" style={{ color: `var(--rarity-${rarity})` }}>
                                             {RARITY_LABELS[rarity]}
                                         </span>
-                                        <span className="font-mono text-[10.5px] text-muted-foreground/70 uppercase tracking-[0.16em]">
-                                            {groupSelected} / {ops.length}
-                                        </span>
+                                        <span className="font-mono text-[10.5px] text-muted-foreground/70 uppercase tracking-[0.16em]">{t("randomizer.roster.groupCount", { selected: groupSelected, total: ops.length })}</span>
                                     </button>
-                                    <Button type="button" onClick={onToggleGroup} size="xs" variant="outline" className="shrink-0 px-2.5 font-mono text-[10.5px] uppercase tracking-[0.16em]" aria-label={allGroupSelected ? `Clear all ${RARITY_LABELS[rarity]} operators` : `Select all ${RARITY_LABELS[rarity]} operators`}>
-                                        {allGroupSelected ? "Clear" : "All"}
+                                    <Button
+                                        type="button"
+                                        onClick={onToggleGroup}
+                                        size="xs"
+                                        variant="outline"
+                                        className="shrink-0 px-2.5 font-mono text-[10.5px] uppercase tracking-[0.16em]"
+                                        aria-label={allGroupSelected ? t("randomizer.roster.groupClear.aria", { rarity: RARITY_LABELS[rarity] }) : t("randomizer.roster.groupAll.aria", { rarity: RARITY_LABELS[rarity] })}
+                                    >
+                                        {allGroupSelected ? t("randomizer.roster.groupClear") : t("randomizer.roster.groupAll")}
                                     </Button>
                                 </div>
                                 {!isCollapsed && (
@@ -206,35 +218,41 @@ export function RosterPicker({ allOperators, visibleOperators, selected, isExpli
 }
 
 function ActiveFiltersHint({ settings, hiddenCount }: { settings: IRandomizerSettings; hiddenCount: number }) {
+    const t: RosterT = useT("tools");
+    const rt: RosterRichT = useRichT("tools");
     const excludedClasses = ALL_CLASSES.filter((c) => !settings.allowedClasses.includes(c));
     const excludedRarities = ALL_RARITIES.filter((r) => !settings.allowedRarities.includes(r));
 
     const parts: string[] = [];
-    if (excludedRarities.length > 0) parts.push(excludedRarities.map((r) => `${r}★`).join(", "));
+    if (excludedRarities.length > 0) parts.push(excludedRarities.map((r) => t("randomizer.roster.rarityChip", { rarity: r })).join(", "));
     if (excludedClasses.length > 0) parts.push(excludedClasses.map((c) => CLASS_LABEL[c]).join(", "));
-    if (settings.onlyE2Operators) parts.push("E2 only");
-    else if (settings.onlyOwnedOperators) parts.push("Owned only");
+    if (settings.onlyE2Operators) parts.push(t("randomizer.roster.filter.e2"));
+    else if (settings.onlyOwnedOperators) parts.push(t("randomizer.roster.filter.owned"));
 
     return (
         <div className="flex items-start gap-2 rounded-md border border-border/60 bg-accent/30 px-3 py-2 text-[11.5px] text-muted-foreground leading-snug">
             <Info aria-hidden="true" className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/80" />
             <p className="min-w-0">
-                Showing operators that match your Operators filters. <span className="text-foreground">{hiddenCount}</span> hidden by {parts.length > 0 ? <span className="text-foreground">{parts.join(" · ")}</span> : <span>active filters</span>}.
+                {rt("randomizer.roster.hint", {
+                    count: <span className="text-foreground">{hiddenCount}</span>,
+                    filters: parts.length > 0 ? <span className="text-foreground">{parts.join(" · ")}</span> : <span>{t("randomizer.roster.hintFilters")}</span>,
+                })}
             </p>
         </div>
     );
 }
 
 function EmptyRoster({ query, hasActiveFilters, onReset, isExplicit }: { query: string; hasActiveFilters: boolean; onReset: () => void; isExplicit: boolean }) {
+    const t: RosterT = useT("tools");
     return (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 py-10 text-center">
             <FilterX aria-hidden="true" className="size-6 text-muted-foreground/70" />
-            <p className="text-foreground text-sm">No operators to show</p>
-            <p className="max-w-xs text-[12px] text-muted-foreground">{query ? "No operators match your search." : hasActiveFilters ? "All operators are filtered out by your Operators tab settings." : "There are no operators available."}</p>
+            <p className="text-foreground text-sm">{t("randomizer.roster.empty.title")}</p>
+            <p className="max-w-xs text-[12px] text-muted-foreground">{query ? t("randomizer.roster.empty.search") : hasActiveFilters ? t("randomizer.roster.empty.filters") : t("randomizer.roster.empty.none")}</p>
             {!query && hasActiveFilters && isExplicit && (
                 <Button onClick={onReset} size="xs" variant="outline" className="mt-1">
                     <RotateCcw aria-hidden="true" className="size-3" />
-                    Reset roster
+                    {t("randomizer.roster.empty.reset")}
                 </Button>
             )}
         </div>

@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { releaseEventsQueryOptions, releaseSkinsQueryOptions } from "#/lib/api/release";
+import { useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import type { AutoName } from "#/types/generated/AutoName";
 import type { EventAnchor } from "#/types/generated/EventAnchor";
 import type { EventShop } from "#/types/generated/EventShop";
@@ -17,8 +19,16 @@ import type { StageClearsMap } from "#/types/stages";
 import { groupNewSkins } from "./components/SkinsTab";
 import { buildOperatorLookup, type OperatorLookup } from "./components/shared";
 import { isPast, resolvedEnStart, sortKey } from "./helpers";
+import type { messages as planMessages } from "./plan.messages";
 import { REVIEW_NAME_CN, REVIEW_NAME_EN, reviewOutfits, reviewYearGroup } from "./reviews";
+import type { messages as reviewMessages } from "./reviews.messages";
 import { cnDay } from "./schedule";
+
+/** A key in `plan.messages.ts`; resolved by whichever component renders it. */
+export type PlanMessageKey = keyof typeof planMessages & string;
+
+/** This module derives the store-sale name and the review year headings. */
+type PlanT = TypedT<typeof planMessages & typeof reviewMessages>;
 
 export interface IPlanSkin {
     skinId: string;
@@ -110,9 +120,10 @@ export interface IPlanData {
 }
 
 export function usePlanData(today: Date, showPast: boolean): IPlanData {
+    const t: PlanT = useT("tools");
     const events = useQuery(releaseEventsQueryOptions());
     const skins = useQuery(releaseSkinsQueryOptions());
-    const index = useQuery(operatorsIndexQueryOptions());
+    const index = useQuery(operatorsIndexQueryOptions(useGamedataServer()));
     const lookup = React.useMemo(() => buildOperatorLookup(index.data), [index.data]);
 
     const rows = React.useMemo(() => {
@@ -149,7 +160,7 @@ export function usePlanData(today: Date, showPast: boolean): IPlanData {
             const key = `sale:${cnDay(cnStart)}`;
             const existing = listings.find((l) => l.key === key);
             if (existing) return existing;
-            const row: IPlanRow = { key, kind: "listing", cnId: null, nameCn: "商店上架", nameEn: "Store sale", nameAuto: null, imagePath: null, enStart: resolvedEnStart(resolution) ?? 0, resolution, opStages: [], farmStages: [], missionTokens: 0, shop: null, rerun: false, skins: [] };
+            const row: IPlanRow = { key, kind: "listing", cnId: null, nameCn: "商店上架", nameEn: t("release.plan.storeSale"), nameAuto: null, imagePath: null, enStart: resolvedEnStart(resolution) ?? 0, resolution, opStages: [], farmStages: [], missionTokens: 0, shop: null, rerun: false, skins: [] };
             listings.push(row);
             return row;
         };
@@ -187,14 +198,14 @@ export function usePlanData(today: Date, showPast: boolean): IPlanData {
                     missionTokens: 0,
                     shop: null,
                     rerun: true,
-                    skins: outfits.map((o) => planSkin(o, reviewYearGroup(o), true, { skinNameEn: o.skinName })).reverse(),
+                    skins: outfits.map((o) => planSkin(o, reviewYearGroup(o, t), true, { skinNameEn: o.skinName })).reverse(),
                 },
             ];
         });
         const all = [...byEvent.values(), ...listings, ...reviews].filter((row) => showPast || !isPast(sortKey(row.resolution, row.enStart, model), today));
         all.sort((a, b) => a.enStart - b.enStart || a.key.localeCompare(b.key));
         return all;
-    }, [events.data, skins.data, showPast, today]);
+    }, [events.data, skins.data, showPast, today, t]);
 
     return {
         rows,
@@ -296,7 +307,15 @@ export function shopBuyout(row: IPlanRow): IShopBuyout | null {
     return { total: row.shop.maxPrice, missions: row.missionTokens, remaining, sanity: remaining * SANITY_PER_TOKEN, limitedGoods: row.shop.goods.filter((g) => g.availCount > 0).length };
 }
 
-export const SHOP_KIND_LABEL: Record<ShopGoodKind, string> = { outfit: "Outfits", furniture: "Furniture", material: "Materials", currency: "LMD and supplies", exp: "EXP cards", ticket: "Tickets", other: "Other" };
+export const SHOP_KIND_LABEL_KEYS: Record<ShopGoodKind, PlanMessageKey> = {
+    outfit: "release.shopKind.outfit",
+    furniture: "release.shopKind.furniture",
+    material: "release.shopKind.material",
+    currency: "release.shopKind.currency",
+    exp: "release.shopKind.exp",
+    ticket: "release.shopKind.ticket",
+    other: "release.shopKind.other",
+};
 const SHOP_KIND_ORDER: ShopGoodKind[] = ["outfit", "ticket", "material", "exp", "currency", "furniture", "other"];
 
 export interface IShopGroup {

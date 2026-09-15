@@ -2,7 +2,10 @@ import type { ReactNode } from "react";
 import { baseSkillIcon } from "#/components/operators/detail/impl/assets";
 import type { IRosterSkill } from "#/lib/base/roster";
 import { colorForTag, tagTokenRegex } from "#/lib/gamedata/richtext";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./BaseSkill.messages";
 
 const TOKEN = tagTokenRegex();
 
@@ -45,6 +48,7 @@ function renderMarkup(text: string): ReactNode[] {
 }
 
 export function BaseSkill({ skill, server }: { skill: IRosterSkill; server?: "en" | "cn" }) {
+    const t: TypedT<typeof messages> = useT("user");
     const icon = skill.skillIcon ? baseSkillIcon(skill.skillIcon, server) : "";
     const locked = !skill.unlocked;
 
@@ -54,11 +58,7 @@ export function BaseSkill({ skill, server }: { skill: IRosterSkill; server?: "en
             <div className="flex min-w-0 flex-col gap-0.5">
                 <span className="flex items-baseline gap-1.5 font-semibold text-[11px] text-foreground">
                     {skill.buffName}
-                    {locked && (
-                        <span className="font-normal text-[9.5px] text-muted-foreground uppercase tracking-wide">
-                            E{skill.unlockElite} Lv{skill.unlockLevel}
-                        </span>
-                    )}
+                    {locked && <span className="font-normal text-[9.5px] text-muted-foreground uppercase tracking-wide">{t("profile.base.skill.locked", { elite: skill.unlockElite, level: skill.unlockLevel })}</span>}
                 </span>
                 <p className="text-[11px] text-muted-foreground leading-snug">{renderMarkup(skill.description)}</p>
             </div>

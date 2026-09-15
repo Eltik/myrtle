@@ -1,4 +1,8 @@
+import type { messages as recruitConstantsMessages } from "./constants.messages";
 import type { TagType } from "./types";
+
+/** A key in `constants.messages.ts`; resolved by whichever component renders it. */
+export type RecruitMessageKey = keyof typeof recruitConstantsMessages & string;
 
 export const MAX_SELECTED_TAGS = 5;
 
@@ -23,11 +27,11 @@ export const TAG_ID_TO_TYPE_MAP: Record<number, TagType> = {
 };
 
 export const TAG_GROUP_ORDER: TagType[] = ["qualification", "position", "class", "affix"];
-export const TAG_GROUP_LABELS: Record<TagType, string> = {
-    qualification: "Qualification",
-    position: "Position",
-    class: "Class",
-    affix: "Affix",
+export const TAG_GROUP_LABEL_KEYS: Record<TagType, RecruitMessageKey> = {
+    qualification: "recruit.group.qualification",
+    position: "recruit.group.position",
+    class: "recruit.group.class",
+    affix: "recruit.group.affix",
 };
 
 export const TOP_OPERATOR_TAG_ID = 11;
@@ -47,6 +51,10 @@ export const RARITY_COLORS: Record<number, { bg: string; text: string; border: s
     1: { bg: "bg-zinc-500/15", text: "text-zinc-600 dark:text-zinc-400", border: "border-zinc-500/30", hoverBg: "hover:bg-zinc-500/25", hoverBorder: "hover:border-zinc-500/50" },
 };
 
+/**
+ * Profession labels are game vocabulary - the game data ships its own
+ * translation per region - so they are not in the message catalog.
+ */
 export const PROFESSION_LABELS: Record<string, string> = {
     WARRIOR: "Guard",
     SNIPER: "Sniper",

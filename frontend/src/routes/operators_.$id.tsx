@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { OperatorDetail } from "#/components/operators/detail/Operators";
 import { operatorBuildStatsQueryOptions, operatorQueryOptions, operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { metaT } from "#/lib/meta";
 import { ogURL, warmOg } from "#/lib/og/impl/url";
 import { seo } from "#/lib/seo";
 import { formatProfession, formatSubProfession } from "#/lib/utils";
@@ -24,33 +25,39 @@ export const Route = createFileRoute("/operators_/$id")({
     component: RouteComponent,
     errorComponent: RootErrorComponent,
     loader: async ({ context, params }) => {
-        const operator = await context.queryClient.ensureQueryData(operatorQueryOptions(params.id));
+        const server = context.i18n.gamedataServer;
+        const operator = await context.queryClient.ensureQueryData(operatorQueryOptions(params.id, server));
         if (operator) {
             // Community build stats decide which skill and module the tabs open
             // on, so they are prefetched rather than fetched from the tab: a
             // late arrival would visibly re-select in front of the reader.
             // Fire-and-forget, because a missing aggregate is a fallback, not
             // an error, and must never block the page.
-            void context.queryClient.prefetchQuery(operatorBuildStatsQueryOptions(params.id));
+            void context.queryClient.prefetchQuery(operatorBuildStatsQueryOptions(params.id, server));
             warmOg("operator", params.id, buildOgData(operator));
             // For operators with alternate forms (Amiya), preload the index so
             // the form switcher renders in SSR without a hydration flash.
             if ((operator.tmplIds?.length ?? 0) >= 2) {
-                await context.queryClient.ensureQueryData(operatorsIndexQueryOptions());
+                await context.queryClient.ensureQueryData(operatorsIndexQueryOptions(server));
             }
         }
         return operator;
     },
-    head: ({ loaderData, params }) => {
-        if (!loaderData) return seo({ title: "Operator", path: `/operators/${params.id}` });
+    head: ({ loaderData, match, params }) => {
+        const locale = match.context.i18n?.locale;
+        if (!loaderData) return seo({ title: metaT(match.context.i18n)("operator.fallbackTitle"), path: `/operators/${params.id}`, locale });
         const ogData = buildOgData(loaderData);
         return seo({
             title: loaderData.name,
+            // Every word here is Arknights vocabulary - the operator's name,
+            // profession and archetype - which the game data layer translates
+            // per region. Nothing in it belongs to this catalog.
             description: `${ogData.rarity}★ ${formatProfession(loaderData.profession)} • ${formatSubProfession(loaderData.subProfessionId ?? "")}`.trim(),
             image: ogURL("operator", params.id, ogData),
             path: `/operators/${params.id}`,
             type: "profile",
             preloadImage: true,
+            locale,
         });
     },
 });

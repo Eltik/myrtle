@@ -22,6 +22,7 @@ import type { TierPlacement } from "#/types/generated/TierPlacement";
 import type { IOperatorIndexEntry, OperatorPosition, OperatorProfession, OperatorRarity } from "#/types/operators";
 import { type IBackendStatus, parseError } from "./_shared";
 import { requireSiteToken } from "./_shared.server";
+import { DEFAULT_GAMEDATA_SERVER, gamedataKey, gamedataPath, resolveGamedataServer } from "./gamedata";
 
 const VIEW_SESSION_COOKIE = "mtl_sid";
 
@@ -158,8 +159,10 @@ export const recordTierListViewFn = createServerFn({ method: "POST" })
         return (await res.json()) as { unique: boolean };
     });
 
-async function fetchTierListDetails(limit: number): Promise<{ details: IBackendTierListDetail[]; opById: Record<string, IOperator> }> {
-    const [detailsRes, opsRes] = await Promise.all([backendFetch(`/tier-lists/details?limit=${limit}`), backendFetch("/operators/index")]);
+async function fetchTierListDetails(limit: number, server?: string): Promise<{ details: IBackendTierListDetail[]; opById: Record<string, IOperator> }> {
+    // The tier list itself is ours; the operator names on its cards are game
+    // data, so they follow the locale's server.
+    const [detailsRes, opsRes] = await Promise.all([backendFetch(`/tier-lists/details?limit=${limit}`), backendFetch(gamedataPath(server, "/operators/index"))]);
     if (!detailsRes.ok) throw new Error(`Failed to load tier lists: ${detailsRes.status}`);
     if (!opsRes.ok) throw new Error(`Failed to load operators index: ${opsRes.status}`);
 
@@ -169,15 +172,17 @@ async function fetchTierListDetails(limit: number): Promise<{ details: IBackendT
     return { details, opById };
 }
 
-export const getHomeTierListsFn = createServerFn({ method: "GET" }).handler(async (): Promise<ITierList[]> => {
-    const { details, opById } = await fetchTierListDetails(HOME_TIER_LIST_LIMIT);
-    return details.map((detail, i) => mapDetail(detail, i, opById));
-});
+export const getHomeTierListsFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string | undefined) => server)
+    .handler(async ({ data: server }): Promise<ITierList[]> => {
+        const { details, opById } = await fetchTierListDetails(HOME_TIER_LIST_LIMIT, server);
+        return details.map((detail, i) => mapDetail(detail, i, opById));
+    });
 
-export function homeTierListsQueryOptions() {
+export function homeTierListsQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["tier-lists", "home"],
-        queryFn: () => getHomeTierListsFn(),
+        queryKey: ["tier-lists", "home", ...gamedataKey(server)],
+        queryFn: () => getHomeTierListsFn({ data: resolveGamedataServer(server) }),
         staleTime: 5 * 60 * 1000,
         gcTime: 60 * 60 * 1000,
     });
@@ -222,15 +227,17 @@ function mapBrowseItem(detail: IBackendTierListDetail, index: number, opById: Re
     };
 }
 
-export const getBrowseTierListsFn = createServerFn({ method: "GET" }).handler(async (): Promise<ITierListBrowseItem[]> => {
-    const { details, opById } = await fetchTierListDetails(BROWSE_TIER_LIST_LIMIT);
-    return details.map((detail, i) => mapBrowseItem(detail, i, opById));
-});
+export const getBrowseTierListsFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string | undefined) => server)
+    .handler(async ({ data: server }): Promise<ITierListBrowseItem[]> => {
+        const { details, opById } = await fetchTierListDetails(BROWSE_TIER_LIST_LIMIT, server);
+        return details.map((detail, i) => mapBrowseItem(detail, i, opById));
+    });
 
-export function browseTierListsQueryOptions() {
+export function browseTierListsQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["tier-lists", "browse"],
-        queryFn: () => getBrowseTierListsFn(),
+        queryKey: ["tier-lists", "browse", ...gamedataKey(server)],
+        queryFn: () => getBrowseTierListsFn({ data: resolveGamedataServer(server) }),
         staleTime: 5 * 60 * 1000,
         gcTime: 60 * 60 * 1000,
     });
@@ -387,9 +394,9 @@ function mapTierDetail(detail: IBackendTierListDetail, opIndex: Record<string, I
 }
 
 export const getTierListDetailFn = createServerFn({ method: "GET" })
-    .inputValidator((slug: string) => slug)
-    .handler(async ({ data: slug }): Promise<ITierListDetail | null> => {
-        const [listRes, opsRes] = await Promise.all([backendFetch(`/tier-lists/${encodeURIComponent(slug)}`), backendFetch("/operators/index")]);
+    .inputValidator((data: { slug: string; server?: string }) => data)
+    .handler(async ({ data: { slug, server } }): Promise<ITierListDetail | null> => {
+        const [listRes, opsRes] = await Promise.all([backendFetch(`/tier-lists/${encodeURIComponent(slug)}`), backendFetch(gamedataPath(server, "/operators/index"))]);
         if (listRes.status === 404) return null;
         if (!listRes.ok) throw new Error(`Failed to load tier list: ${listRes.status}`);
         if (!opsRes.ok) throw new Error(`Failed to load operators index: ${opsRes.status}`);
@@ -400,10 +407,10 @@ export const getTierListDetailFn = createServerFn({ method: "GET" })
         return mapTierDetail(detail, opIndex);
     });
 
-export function tierListDetailQueryOptions(slug: string) {
+export function tierListDetailQueryOptions(slug: string, server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["tier-lists", "detail", slug],
-        queryFn: () => getTierListDetailFn({ data: slug }),
+        queryKey: ["tier-lists", "detail", slug, ...gamedataKey(server)],
+        queryFn: () => getTierListDetailFn({ data: { slug, server: resolveGamedataServer(server) } }),
         staleTime: 5 * 60 * 1000,
         gcTime: 60 * 60 * 1000,
     });
@@ -704,80 +711,84 @@ export function myTierListsQueryOptions(authed: boolean) {
     });
 }
 
-export const getFavoritedTierListsFn = createServerFn({ method: "GET" }).handler(async (): Promise<ITierListBrowseItem[]> => {
-    const token = getCookie("site_token");
-    if (!token) return [];
+export const getFavoritedTierListsFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string | undefined) => server)
+    .handler(async ({ data: server }): Promise<ITierListBrowseItem[]> => {
+        const token = getCookie("site_token");
+        if (!token) return [];
 
-    const favRes = await backendFetch("/tier-lists/favorites", { bearerToken: token });
-    if (favRes.status === 401) return [];
-    if (!favRes.ok) throw await parseError(favRes);
-    const favorites = (await favRes.json()) as IBackendTierList[];
-    if (favorites.length === 0) return [];
+        const favRes = await backendFetch("/tier-lists/favorites", { bearerToken: token });
+        if (favRes.status === 401) return [];
+        if (!favRes.ok) throw await parseError(favRes);
+        const favorites = (await favRes.json()) as IBackendTierList[];
+        if (favorites.length === 0) return [];
 
-    const opsRes = await backendFetch("/operators/index");
-    if (!opsRes.ok) throw new Error(`Failed to load operators index: ${opsRes.status}`);
-    const operators = (await opsRes.json()) as IOperatorIndexEntry[];
-    const opById: Record<string, IOperator> = Object.fromEntries(operators.map((op) => [op.id, toCardOperator(op)]));
+        const opsRes = await backendFetch(gamedataPath(server, "/operators/index"));
+        if (!opsRes.ok) throw new Error(`Failed to load operators index: ${opsRes.status}`);
+        const operators = (await opsRes.json()) as IOperatorIndexEntry[];
+        const opById: Record<string, IOperator> = Object.fromEntries(operators.map((op) => [op.id, toCardOperator(op)]));
 
-    const settled = await Promise.allSettled(
-        favorites.map(async (tl) => {
-            const res = await backendFetch(`/tier-lists/${tl.slug}`, { bearerToken: token });
-            if (!res.ok) throw new Error(`Failed to load tier list ${tl.slug}: ${res.status}`);
-            return (await res.json()) as IBackendTierListDetail;
-        }),
-    );
+        const settled = await Promise.allSettled(
+            favorites.map(async (tl) => {
+                const res = await backendFetch(`/tier-lists/${tl.slug}`, { bearerToken: token });
+                if (!res.ok) throw new Error(`Failed to load tier list ${tl.slug}: ${res.status}`);
+                return (await res.json()) as IBackendTierListDetail;
+            }),
+        );
 
-    const details: IBackendTierListDetail[] = [];
-    for (const r of settled) {
-        if (r.status === "fulfilled") details.push(r.value);
-    }
-    return details.map((detail, i) => mapBrowseItem(detail, i, opById));
-});
+        const details: IBackendTierListDetail[] = [];
+        for (const r of settled) {
+            if (r.status === "fulfilled") details.push(r.value);
+        }
+        return details.map((detail, i) => mapBrowseItem(detail, i, opById));
+    });
 
-export function favoritedTierListsQueryOptions(authed: boolean) {
+export function favoritedTierListsQueryOptions(authed: boolean, server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["tier-lists", "favorites", authed ? "auth" : "anon"],
-        queryFn: () => (authed ? getFavoritedTierListsFn() : Promise.resolve([] as ITierListBrowseItem[])),
+        queryKey: ["tier-lists", "favorites", authed ? "auth" : "anon", ...gamedataKey(server)],
+        queryFn: () => (authed ? getFavoritedTierListsFn({ data: resolveGamedataServer(server) }) : Promise.resolve([] as ITierListBrowseItem[])),
         enabled: authed,
         staleTime: 30 * 1000,
         gcTime: 5 * 60 * 1000,
     });
 }
 
-export const getMyTierListsDetailedFn = createServerFn({ method: "GET" }).handler(async (): Promise<ITierListBrowseItem[]> => {
-    const token = getCookie("site_token");
-    if (!token) return [];
+export const getMyTierListsDetailedFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string | undefined) => server)
+    .handler(async ({ data: server }): Promise<ITierListBrowseItem[]> => {
+        const token = getCookie("site_token");
+        if (!token) return [];
 
-    const mineRes = await backendFetch("/tier-lists/mine", { bearerToken: token });
-    if (mineRes.status === 401) return [];
-    if (!mineRes.ok) throw await parseError(mineRes);
-    const mine = (await mineRes.json()) as IBackendTierList[];
-    if (mine.length === 0) return [];
+        const mineRes = await backendFetch("/tier-lists/mine", { bearerToken: token });
+        if (mineRes.status === 401) return [];
+        if (!mineRes.ok) throw await parseError(mineRes);
+        const mine = (await mineRes.json()) as IBackendTierList[];
+        if (mine.length === 0) return [];
 
-    const opsRes = await backendFetch("/operators/index");
-    if (!opsRes.ok) throw new Error(`Failed to load operators index: ${opsRes.status}`);
-    const operators = (await opsRes.json()) as IOperatorIndexEntry[];
-    const opById: Record<string, IOperator> = Object.fromEntries(operators.map((op) => [op.id, toCardOperator(op)]));
+        const opsRes = await backendFetch(gamedataPath(server, "/operators/index"));
+        if (!opsRes.ok) throw new Error(`Failed to load operators index: ${opsRes.status}`);
+        const operators = (await opsRes.json()) as IOperatorIndexEntry[];
+        const opById: Record<string, IOperator> = Object.fromEntries(operators.map((op) => [op.id, toCardOperator(op)]));
 
-    const settled = await Promise.allSettled(
-        mine.map(async (tl) => {
-            const res = await backendFetch(`/tier-lists/${tl.slug}`, { bearerToken: token });
-            if (!res.ok) throw new Error(`Failed to load tier list ${tl.slug}: ${res.status}`);
-            return (await res.json()) as IBackendTierListDetail;
-        }),
-    );
+        const settled = await Promise.allSettled(
+            mine.map(async (tl) => {
+                const res = await backendFetch(`/tier-lists/${tl.slug}`, { bearerToken: token });
+                if (!res.ok) throw new Error(`Failed to load tier list ${tl.slug}: ${res.status}`);
+                return (await res.json()) as IBackendTierListDetail;
+            }),
+        );
 
-    const details: IBackendTierListDetail[] = [];
-    for (const r of settled) {
-        if (r.status === "fulfilled") details.push(r.value);
-    }
-    return details.map((detail, i) => mapBrowseItem(detail, i, opById));
-});
+        const details: IBackendTierListDetail[] = [];
+        for (const r of settled) {
+            if (r.status === "fulfilled") details.push(r.value);
+        }
+        return details.map((detail, i) => mapBrowseItem(detail, i, opById));
+    });
 
-export function myTierListsDetailedQueryOptions(authed: boolean) {
+export function myTierListsDetailedQueryOptions(authed: boolean, server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["tier-lists", "mine", "detailed", authed ? "auth" : "anon"],
-        queryFn: () => (authed ? getMyTierListsDetailedFn() : Promise.resolve([] as ITierListBrowseItem[])),
+        queryKey: ["tier-lists", "mine", "detailed", authed ? "auth" : "anon", ...gamedataKey(server)],
+        queryFn: () => (authed ? getMyTierListsDetailedFn({ data: resolveGamedataServer(server) }) : Promise.resolve([] as ITierListBrowseItem[])),
         enabled: authed,
         staleTime: 30 * 1000,
         gcTime: 5 * 60 * 1000,

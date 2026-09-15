@@ -1,10 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { type IImprovementsResponse, type IUserScore, playerStandingQueryOptions, scoreHistoryQueryOptions } from "#/lib/api/user";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { ContributionCard } from "./cards/ContributionCard";
 import { OverallGradeCard } from "./cards/OverallGradeCard";
 import { ScoreHistoryCard } from "./cards/ScoreHistoryCard";
 import { SubscoreCard } from "./cards/SubscoreCard";
 import { SUBSCORES } from "./helpers";
+import type { messages } from "./ScoreTab.messages";
 import { ScoreTabEmpty } from "./ScoreTabEmpty";
 import { ScoreTabSkeleton } from "./ScoreTabSkeleton";
 
@@ -18,6 +21,8 @@ interface IScoreTabProps {
 }
 
 export function ScoreTab({ score, isLoading, improvements, isImprovementsLoading, uid, server }: IScoreTabProps) {
+    const t: TypedT<typeof messages> = useT("user");
+
     // Rank/percentile context and the snapshot history load alongside the
     // score row; both are public leaderboard data, so a private-profile 404
     // simply leaves their sections off.
@@ -30,8 +35,8 @@ export function ScoreTab({ score, isLoading, improvements, isImprovementsLoading
     return (
         <div className="flex flex-col gap-3 pb-8">
             <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2">
-                <span className="rounded-md border border-border/60 bg-background px-1.5 py-0.5 font-mono font-semibold text-[9.5px] text-muted-foreground uppercase tracking-wider">Beta</span>
-                <span className="text-[12px] text-muted-foreground">Scoring is subject to change and in the very early stages of development. Score is based off of potential completion, NOT how "meta" your account is.</span>
+                <span className="rounded-md border border-border/60 bg-background px-1.5 py-0.5 font-mono font-semibold text-[9.5px] text-muted-foreground uppercase tracking-wider">{t("score.beta.tag")}</span>
+                <span className="text-[12px] text-muted-foreground">{t("score.beta.note")}</span>
             </div>
             <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-2">
                 <OverallGradeCard score={score} standing={standing} />

@@ -5,11 +5,16 @@ import { Badge } from "#/components/ui/badge";
 import { Card, CardHeader, CardPanel } from "#/components/ui/card";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import { guaranteedFloorRarity } from "../calculator";
 import { PROFESSION_LABELS, RARITY_COLORS } from "../constants";
 import { getStarsDisplay } from "../helpers";
 import type { IRecruitableOperator, ITagCombinationResult } from "../types";
+import type { messages } from "./ResultCard.messages";
+
+type ResultT = TypedT<typeof messages>;
 
 interface IResultCardProps {
     result: ITagCombinationResult;
@@ -40,8 +45,8 @@ export function ResultCard({ result }: IResultCardProps): React.ReactElement {
 }
 
 /** Rarity 1 is the robot tier, and "★" alone would read as an ordinary 1★. */
-function floorLabel(rarity: number): string {
-    return rarity === 1 ? "Robot" : `${rarity}★`;
+function floorLabel(rarity: number, t: ResultT): string {
+    return rarity === 1 ? t("recruit.result.robotFloor") : t("recruit.result.starFloor", { rarity });
 }
 
 /**
@@ -55,24 +60,26 @@ function floorLabel(rarity: number): string {
  * at a glance without competing with the lock.
  */
 function GuaranteedBadge({ result }: { result: ITagCombinationResult }): React.ReactElement {
+    const t: ResultT = useT("tools");
     const floor = guaranteedFloorRarity(result);
     const colors = RARITY_COLORS[floor];
 
     if (floor >= 5) {
-        return <span className={cn("inline-flex h-5.5 shrink-0 items-center whitespace-nowrap rounded-sm border px-1.5 font-medium text-sm sm:h-4.5 sm:text-xs", colors?.border, colors?.bg, colors?.text)}>Guaranteed {floor}★</span>;
+        return <span className={cn("inline-flex h-5.5 shrink-0 items-center whitespace-nowrap rounded-sm border px-1.5 font-medium text-sm sm:h-4.5 sm:text-xs", colors?.border, colors?.bg, colors?.text)}>{t("recruit.result.guaranteed", { rarity: floor })}</span>;
     }
 
     return (
-        <span className="ml-auto inline-flex h-5.5 shrink-0 items-center gap-1 whitespace-nowrap px-0.5 font-medium text-xs sm:h-4.5 sm:text-[11px]" title={`Guaranteed minimum: ${floorLabel(floor)}`}>
-            <span className="text-muted-foreground">Min</span>
-            <span className={cn("font-mono", colors?.text)}>{floorLabel(floor)}</span>
+        <span className="ml-auto inline-flex h-5.5 shrink-0 items-center gap-1 whitespace-nowrap px-0.5 font-medium text-xs sm:h-4.5 sm:text-[11px]" title={t("recruit.result.minTitle", { floor: floorLabel(floor, t) })}>
+            <span className="text-muted-foreground">{t("recruit.result.min")}</span>
+            <span className={cn("font-mono", colors?.text)}>{floorLabel(floor, t)}</span>
         </span>
     );
 }
 
 function OperatorTagList({ tags }: { tags: string[] }): React.ReactElement {
+    const t: ResultT = useT("tools");
     if (tags.length === 0) {
-        return <div className="text-[12px] text-muted-foreground italic">No tags</div>;
+        return <div className="text-[12px] text-muted-foreground italic">{t("recruit.result.noTags")}</div>;
     }
     return (
         <div className="flex flex-wrap items-center gap-1.5">
@@ -86,6 +93,7 @@ function OperatorTagList({ tags }: { tags: string[] }): React.ReactElement {
 }
 
 function OperatorRow({ operator }: { operator: IRecruitableOperator }): React.ReactElement {
+    const t: ResultT = useT("tools");
     const colors = RARITY_COLORS[operator.rarity];
     const profession = PROFESSION_LABELS[operator.profession] ?? operator.profession;
     const [mobileExpanded, setMobileExpanded] = useState(false);
@@ -113,14 +121,14 @@ function OperatorRow({ operator }: { operator: IRecruitableOperator }): React.Re
                 />
                 <HoverCardContent className="hidden w-max max-w-72 p-3 sm:flex">
                     <div className="flex flex-col gap-2">
-                        <div className="font-medium text-[12px] text-muted-foreground">Tags</div>
+                        <div className="font-medium text-[12px] text-muted-foreground">{t("recruit.result.tags")}</div>
                         <OperatorTagList tags={operator.tagList} />
                     </div>
                 </HoverCardContent>
             </HoverCard>
             {mobileExpanded && (
                 <div id={`op-tags-${operator.id}`} className="flex flex-col gap-1.5 border-border/40 border-t px-2 py-2 sm:hidden">
-                    <div className="font-medium text-[10.5px] text-muted-foreground uppercase tracking-wider">Tags</div>
+                    <div className="font-medium text-[10.5px] text-muted-foreground uppercase tracking-wider">{t("recruit.result.tags")}</div>
                     <OperatorTagList tags={operator.tagList} />
                 </div>
             )}

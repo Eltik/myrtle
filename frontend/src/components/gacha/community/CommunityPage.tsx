@@ -3,7 +3,10 @@ import { useMemo } from "react";
 import { useAuth } from "#/hooks/use-auth";
 import { bannersQueryOptions, gachaEnhancedStatsQueryOptions, type IBanner, type IBannerPullStat, myGachaStatsQueryOptions, perBannerStatsQueryOptions } from "#/lib/api/gacha";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import type { IOperatorIndexEntry } from "#/types/operators";
+import type { messages } from "./CommunityPage.messages";
 import { BannerRunsPanel } from "./impl/BannerRunsPanel";
 import styles from "./impl/CommunityPage.module.css";
 import { KpiStrip } from "./impl/KpiStrip";
@@ -13,9 +16,11 @@ import { type IPersonalRarityRates, RarityPanel } from "./impl/RarityPanel";
 import { TimingPanel } from "./impl/TimingPanel";
 
 export function CommunityPage() {
+    const t: TypedT<typeof messages> = useT("gacha");
     const enhanced = useQuery(gachaEnhancedStatsQueryOptions({ topN: 20, includeTiming: true }));
-    const operators = useQuery(operatorsIndexQueryOptions());
-    const banners = useQuery(bannersQueryOptions());
+    const server = useGamedataServer();
+    const operators = useQuery(operatorsIndexQueryOptions(server));
+    const banners = useQuery(bannersQueryOptions(server));
     const perBannerStats = useQuery(perBannerStatsQueryOptions());
     const { isAuthenticated } = useAuth();
     const myStats = useQuery(myGachaStatsQueryOptions(isAuthenticated));
@@ -70,7 +75,7 @@ export function CommunityPage() {
 
                 {enhanced.isError ? (
                     <div className="rounded-[14px] border border-destructive/30 bg-destructive/8 px-5 py-4 font-sans text-foreground/90 text-sm">
-                        <strong className="font-semibold text-foreground">Couldn&rsquo;t load community stats.</strong> {(enhanced.error as Error)?.message ?? "Unknown error."}
+                        <strong className="font-semibold text-foreground">{t("community.error.load")}</strong> {(enhanced.error as Error)?.message ?? t("community.error.unknown")}
                     </div>
                 ) : null}
 

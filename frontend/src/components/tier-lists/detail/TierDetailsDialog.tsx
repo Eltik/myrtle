@@ -3,12 +3,15 @@ import { ArrowUpRight } from "lucide-react";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ITierEntryFull } from "#/lib/api/tier-lists";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { Markdown } from "#/lib/markdown";
-import { formatArchetype, formatProfession, formatRelative, RARITY_LABELS } from "#/lib/utils";
+import { formatArchetype, formatProfession, RARITY_LABELS } from "#/lib/utils";
 import type { OperatorRarity } from "#/types/operators";
 import { ExpandableDescription } from "../ExpandableDescription";
 import { operatorPlacementNote } from "../shared";
 import { type ReadableTextColor, readableTextColor } from "./contrast";
+import type { messages } from "./TierDetailsDialog.messages";
 import { computeTierStats } from "./tierStats";
 
 interface ITierDetailsDialogProps {
@@ -30,6 +33,8 @@ function rarityShadow(textColor: ReadableTextColor) {
 }
 
 export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
+    const f = useFormatters();
     const textColor = readableTextColor(color);
     const stats = computeTierStats(tier);
     const ops = tier.operators;
@@ -52,14 +57,14 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                     {tier.name.length <= 2 ? tier.name : tier.name.charAt(0)}
                 </span>
                 <div className="min-w-0 flex-1 pt-0.5 pr-10 sm:pr-0">
-                    <p className="m-0 font-bold font-mono text-[10px] text-muted-foreground/80 uppercase leading-none tracking-[0.2em] sm:text-[10.5px]">Tier</p>
+                    <p className="m-0 font-bold font-mono text-[10px] text-muted-foreground/80 uppercase leading-none tracking-[0.2em] sm:text-[10.5px]">{t("detail.tierDialog.kicker")}</p>
                     <h2 className="wrap-break-word m-0 mt-1.5 font-bold font-features-['ss01','cv11'] font-sans text-[22px] text-foreground leading-[1.1] tracking-[-0.015em] sm:mt-2 sm:text-[28px]">{tier.name}</h2>
                     <p className="m-0 mt-1.5 font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tabular-nums leading-none tracking-[0.14em] sm:mt-2 sm:text-[11px]">
-                        <span className="text-foreground/90">{total}</span> op{total === 1 ? "" : "s"}
+                        <span className="text-foreground/90">{total}</span> {t("detail.tierDialog.opCount", { count: total })}
                         {stats.lastUpdatedAt && (
                             <>
                                 <span className="mx-1.5 opacity-50 sm:mx-2">·</span>
-                                <span>Updated {formatRelative(stats.lastUpdatedAt)}</span>
+                                <span>{t("detail.tierDialog.updated", { when: f.relative(stats.lastUpdatedAt) })}</span>
                             </>
                         )}
                     </p>
@@ -70,20 +75,20 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                 {tier.description ? (
                     <Markdown text={tier.description} className="wrap-break-word max-w-prose font-sans text-[14.5px] text-foreground leading-[1.65] tracking-[-0.005em]" flush />
                 ) : (
-                    <p className="m-0 font-sans text-[13px] text-muted-foreground italic leading-relaxed">The author hasn't written a description for this tier.</p>
+                    <p className="m-0 font-sans text-[13px] text-muted-foreground italic leading-relaxed">{t("detail.tierDialog.noDescription")}</p>
                 )}
 
                 {total > 0 && (
-                    <section aria-label="Tier overview" className="grid grid-cols-3 gap-2">
-                        <Stat label="Operators" value={String(total)} />
-                        <Stat label="Avg ★" value={stats.averageRarity ? stats.averageRarity.toFixed(1) : "-"} />
-                        <Stat label="Melee / Ranged" value={`${stats.position.melee} / ${stats.position.ranged}`} />
+                    <section aria-label={t("detail.tierDialog.overviewLabel")} className="grid grid-cols-3 gap-2">
+                        <Stat label={t("detail.tierDialog.stat.operators")} value={String(total)} />
+                        <Stat label={t("detail.tierDialog.stat.avgRarity")} value={stats.averageRarity ? stats.averageRarity.toFixed(1) : "-"} />
+                        <Stat label={t("detail.tierDialog.stat.meleeRanged")} value={`${stats.position.melee} / ${stats.position.ranged}`} />
                     </section>
                 )}
 
                 {stats.rarity.length > 0 && (
-                    <section aria-label="Rarity breakdown" className="space-y-2">
-                        <SectionHeading>Rarity</SectionHeading>
+                    <section aria-label={t("detail.tierDialog.rarityLabel")} className="space-y-2">
+                        <SectionHeading>{t("detail.tierDialog.rarityHeading")}</SectionHeading>
                         <div className="flex flex-wrap gap-1.5">
                             {stats.rarity.map(({ rarity, count }) => (
                                 <span key={rarity} className="inline-flex items-center gap-1.5 rounded-md border bg-card px-2.5 py-1.5 font-sans font-semibold text-[12.5px] text-foreground leading-none" style={{ borderColor: `color-mix(in srgb, ${RARITY_VAR[rarity]} 38%, var(--border))` }}>
@@ -99,8 +104,8 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                 )}
 
                 {stats.profession.length > 0 && (
-                    <section aria-label="Class breakdown" className="space-y-2">
-                        <SectionHeading>Classes</SectionHeading>
+                    <section aria-label={t("detail.tierDialog.classLabel")} className="space-y-2">
+                        <SectionHeading>{t("detail.tierDialog.classHeading")}</SectionHeading>
                         <div className="flex flex-wrap gap-1.5">
                             {stats.profession.map(({ profession, count }) => (
                                 <span key={profession} className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 font-sans font-semibold text-[12.5px] text-foreground leading-none">
@@ -113,13 +118,13 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                     </section>
                 )}
 
-                <section aria-label="Operators in this tier" className="space-y-2.5">
+                <section aria-label={t("detail.tierDialog.operatorsLabel")} className="space-y-2.5">
                     <div className="flex items-baseline justify-between gap-3">
-                        <SectionHeading>Operators</SectionHeading>
+                        <SectionHeading>{t("detail.tierDialog.operatorsHeading")}</SectionHeading>
                         <span className="font-mono text-[10.5px] text-muted-foreground uppercase tabular-nums tracking-[0.12em]">{total}</span>
                     </div>
                     {ops.length === 0 ? (
-                        <p className="rounded-lg border border-border border-dashed bg-muted/20 px-4 py-6 text-center font-sans text-[12.5px] text-muted-foreground italic">No operators have been placed in this tier yet.</p>
+                        <p className="rounded-lg border border-border border-dashed bg-muted/20 px-4 py-6 text-center font-sans text-[12.5px] text-muted-foreground italic">{t("detail.tierDialog.operatorsEmpty")}</p>
                     ) : (
                         <ul className="m-0 grid grid-cols-1 gap-1 p-0 sm:grid-cols-2">
                             {ops.map((op) => {

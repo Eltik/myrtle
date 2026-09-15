@@ -1,5 +1,8 @@
 import { Dialog, DialogTrigger } from "#/components/ui/dialog";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { RARITY_COLORS } from "./helpers";
+import type { messages as helperMessages } from "./helpers.messages";
 import { ItemDialog } from "./ItemDialog";
 import { ItemIcon } from "./ItemIcon";
 import type { IItemEntry } from "./types";
@@ -26,6 +29,8 @@ function formatCompactQty(n: number): string {
  * measured here, so the badge moves instead.
  */
 export function CompactCard({ item }: ICompactCardProps) {
+    /** The card's only string is the shared one declared in `helpers.messages.ts`. */
+    const t: TypedT<typeof helperMessages> = useT("user");
     const color = RARITY_COLORS[item.rarityNum] ?? "#b5b5b5";
     const nameIsLong = item.name.length > 14;
 
@@ -35,7 +40,7 @@ export function CompactCard({ item }: ICompactCardProps) {
                 render={
                     <button
                         type="button"
-                        aria-label={`Open details for ${item.name}`}
+                        aria-label={t("profile.items.openAria", { name: item.name })}
                         title={item.name}
                         className="fade-in slide-in-from-bottom-2 group relative flex animate-in cursor-pointer flex-col rounded bg-card text-left transition-transform hover:scale-[1.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         style={{ padding: "4px 6px", boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)" }}

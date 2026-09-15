@@ -1,15 +1,19 @@
 import { Info } from "lucide-react";
 import type React from "react";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./primitives.messages";
 
 /** Small hover/focus info affordance that reveals an explanatory tooltip. */
 export function InfoHint({ children, label }: { children: React.ReactNode; label?: string }) {
+    const t: TypedT<typeof messages> = useT("stages");
     return (
         <Tooltip>
             <TooltipTrigger
                 render={(triggerProps) => (
-                    <button {...triggerProps} type="button" aria-label={label ?? "More information"} className="inline-flex cursor-help items-center text-muted-foreground/70 transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none">
+                    <button {...triggerProps} type="button" aria-label={label ?? t("primitives.moreInfo")} className="inline-flex cursor-help items-center text-muted-foreground/70 transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none">
                         <Info className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
                 )}
@@ -73,6 +77,7 @@ export function Pill({ children, tone = "muted" }: { children: React.ReactNode; 
 }
 
 export function FlagRow({ label, on, hint }: { label: string; on: boolean; hint?: React.ReactNode }) {
+    const t: TypedT<typeof messages> = useT("stages");
     return (
         <div className="flex items-center justify-between gap-2 border-border/40 border-b py-2 last:border-b-0">
             <span className="flex items-center gap-1.5 font-sans text-[12.5px] text-foreground">
@@ -80,7 +85,7 @@ export function FlagRow({ label, on, hint }: { label: string; on: boolean; hint?
                 {hint && <InfoHint label={label}>{hint}</InfoHint>}
             </span>
             <span className={cn("inline-flex h-5 items-center rounded-full px-2 font-medium font-mono text-[10px] uppercase tracking-widest", on ? "bg-[color-mix(in_oklch,var(--success)_16%,transparent)] text-success-foreground" : "bg-[color-mix(in_oklch,var(--muted)_50%,transparent)] text-muted-foreground")}>
-                {on ? "Yes" : "No"}
+                {on ? t("primitives.flag.yes") : t("primitives.flag.no")}
             </span>
         </div>
     );
@@ -96,26 +101,27 @@ export function Meta({ label, value }: { label: string; value: string }) {
 }
 
 interface ILegendSwatch {
-    label: string;
+    labelKey: keyof typeof messages & string;
     style: React.CSSProperties;
 }
 
 const LEGEND_SWATCHES: ILegendSwatch[] = [
-    { label: "Start", style: { background: "rgba(231,45,80,0.18)", borderColor: "#e72d50" } },
-    { label: "End", style: { background: "rgba(53,157,222,0.18)", borderColor: "#359dde" } },
-    { label: "Ground", style: { background: "hsla(0,0%,71%,0.6)", borderColor: "hsla(0,0%,87%,0.9)" } },
-    { label: "High Ground", style: { background: "hsla(0,0%,51%,0.95)", borderColor: "hsla(0,0%,78%,0.93)" } },
-    { label: "Forbidden", style: { background: "hsla(0,0%,10%,0.6)", borderColor: "hsla(0,0%,87%,0.28)" } },
+    { labelKey: "legend.start", style: { background: "rgba(231,45,80,0.18)", borderColor: "#e72d50" } },
+    { labelKey: "legend.end", style: { background: "rgba(53,157,222,0.18)", borderColor: "#359dde" } },
+    { labelKey: "legend.ground", style: { background: "hsla(0,0%,71%,0.6)", borderColor: "hsla(0,0%,87%,0.9)" } },
+    { labelKey: "legend.highGround", style: { background: "hsla(0,0%,51%,0.95)", borderColor: "hsla(0,0%,78%,0.93)" } },
+    { labelKey: "legend.forbidden", style: { background: "hsla(0,0%,10%,0.6)", borderColor: "hsla(0,0%,87%,0.28)" } },
 ];
 
 export function TileLegend() {
+    const t: TypedT<typeof messages> = useT("stages");
     return (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[10px] border border-border bg-card px-3.5 py-2.5">
-            <Kicker>Legend</Kicker>
+            <Kicker>{t("legend.title")}</Kicker>
             {LEGEND_SWATCHES.map((s) => (
-                <span key={s.label} className="inline-flex items-center gap-1.5">
+                <span key={s.labelKey} className="inline-flex items-center gap-1.5">
                     <span aria-hidden="true" className="h-3.5 w-3.5 rounded-xs border" style={s.style} />
-                    <span className="font-medium font-sans text-[11.5px] text-muted-foreground leading-none">{s.label}</span>
+                    <span className="font-medium font-sans text-[11.5px] text-muted-foreground leading-none">{t(s.labelKey)}</span>
                 </span>
             ))}
         </div>

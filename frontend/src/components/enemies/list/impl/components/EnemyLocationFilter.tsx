@@ -2,9 +2,12 @@ import { Check, ChevronDown, MapPin, Minus, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { STAGE_GROUPS, type StageGroupKey } from "#/lib/registry/stage-groups";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import { cn } from "#/lib/utils";
+import type { messages } from "./EnemyLocationFilter.messages";
 
 // ── Tree types ──────────────────────────────────────────────────────────────
 
@@ -77,6 +80,7 @@ interface IProps {
 }
 
 export function EnemyLocationFilter({ tree, selected, onChange }: IProps) {
+    const t: TypedT<typeof messages> = useT("enemies");
     const [query, setQuery] = useState("");
     const [openOverride, setOpenOverride] = useState<Partial<Record<StageGroupKey, boolean>>>({});
     const [zoneOpen, setZoneOpen] = useState<Record<string, boolean>>({});
@@ -157,10 +161,10 @@ export function EnemyLocationFilter({ tree, selected, onChange }: IProps) {
             <Popover>
                 <PopoverTrigger
                     className="inline-flex h-9.5 w-fit cursor-pointer items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_50%,transparent)] px-3.5 font-medium font-sans text-[12.5px] text-foreground transition-colors hover:border-[color-mix(in_oklch,var(--primary)_55%,var(--border))] hover:bg-card data-popup-open:border-primary"
-                    aria-label="Filter by where enemies appear"
+                    aria-label={t("location.trigger.aria")}
                 >
                     <MapPin className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
-                    <span>Appears In</span>
+                    <span>{t("location.trigger")}</span>
                     {selected.length > 0 && <span className="inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-primary px-1 font-mono text-[10px] text-primary-foreground tabular-nums leading-none">{selected.length}</span>}
                     <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
                 </PopoverTrigger>
@@ -172,12 +176,12 @@ export function EnemyLocationFilter({ tree, selected, onChange }: IProps) {
                                 type="text"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
-                                placeholder="Search events, modes, or stages…"
-                                aria-label="Search locations"
+                                placeholder={t("location.search.placeholder")}
+                                aria-label={t("location.search.aria")}
                                 className="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 font-sans text-[13px] text-foreground leading-none outline-none placeholder:text-muted-foreground"
                             />
                             {query && (
-                                <button type="button" onClick={() => setQuery("")} aria-label="Clear search" className="-mr-1 inline-flex size-5 cursor-pointer items-center justify-center rounded text-muted-foreground hover:text-foreground">
+                                <button type="button" onClick={() => setQuery("")} aria-label={t("location.search.clear")} className="-mr-1 inline-flex size-5 cursor-pointer items-center justify-center rounded text-muted-foreground hover:text-foreground">
                                     <X className="h-3.5 w-3.5" aria-hidden="true" />
                                 </button>
                             )}
@@ -185,7 +189,7 @@ export function EnemyLocationFilter({ tree, selected, onChange }: IProps) {
 
                         <div className="-mx-1 mt-2 min-h-0 flex-1 overflow-y-auto px-1">
                             {visible.length === 0 ? (
-                                <p className="py-6 text-center font-sans text-[13px] text-muted-foreground">No matching locations.</p>
+                                <p className="py-6 text-center font-sans text-[13px] text-muted-foreground">{t("location.empty")}</p>
                             ) : (
                                 <div className="flex flex-col gap-0.5">
                                     {visible.map((g) => {
@@ -195,7 +199,7 @@ export function EnemyLocationFilter({ tree, selected, onChange }: IProps) {
                                         return (
                                             <Collapsible key={g.key} open={open} onOpenChange={(o) => setOpenOverride((p) => ({ ...p, [g.key]: o }))}>
                                                 <div className="flex items-center gap-1 rounded-md hover:bg-[color-mix(in_oklch,var(--muted)_30%,transparent)]">
-                                                    <CheckButton checked={gSel} indeterminate={gSel && !gFull} onClick={() => toggleGroup(g)} label={`${gFull ? "Deselect" : "Select"} all ${g.label}`} />
+                                                    <CheckButton checked={gSel} indeterminate={gSel && !gFull} onClick={() => toggleGroup(g)} label={gFull ? t("location.deselectAll", { name: g.label }) : t("location.selectAll", { name: g.label })} />
                                                     <CollapsibleTrigger className="flex flex-1 cursor-pointer items-center gap-1.5 py-1.5 pr-2 text-left">
                                                         <ChevronDown className={cn("h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-150 motion-reduce:transition-none", open && "rotate-180")} aria-hidden="true" />
                                                         <span className="flex-1 truncate font-sans font-semibold text-[12.5px] text-foreground">{g.label}</span>
@@ -209,7 +213,7 @@ export function EnemyLocationFilter({ tree, selected, onChange }: IProps) {
                                                             return (
                                                                 <Collapsible key={z.token} open={zOpen} onOpenChange={(o) => setZoneOpen((p) => ({ ...p, [z.token]: o }))}>
                                                                     <div className="flex items-center gap-1 rounded-md hover:bg-[color-mix(in_oklch,var(--muted)_30%,transparent)]">
-                                                                        <CheckButton checked={zoneSelCount(z) > 0} indeterminate={zoneSelCount(z) > 0 && !zoneFull(z)} onClick={() => toggleZone(z)} label={`${zoneFull(z) ? "Deselect" : "Select"} all ${z.label}`} />
+                                                                        <CheckButton checked={zoneSelCount(z) > 0} indeterminate={zoneSelCount(z) > 0 && !zoneFull(z)} onClick={() => toggleZone(z)} label={zoneFull(z) ? t("location.deselectAll", { name: z.label }) : t("location.selectAll", { name: z.label })} />
                                                                         <CollapsibleTrigger className="flex flex-1 cursor-pointer items-center gap-1.5 py-1 pr-2 text-left">
                                                                             <ChevronDown className={cn("h-3 w-3 shrink-0 text-muted-foreground transition-transform duration-150 motion-reduce:transition-none", zOpen && "rotate-180")} aria-hidden="true" />
                                                                             <span className="min-w-0 flex-1 truncate font-medium font-sans text-[12px] text-foreground">{z.label}</span>
@@ -243,9 +247,9 @@ export function EnemyLocationFilter({ tree, selected, onChange }: IProps) {
 
                         {selected.length > 0 && (
                             <div className="mt-2 flex shrink-0 items-center justify-between border-border/60 border-t pt-2">
-                                <span className="font-sans text-[12px] text-muted-foreground">{selected.length} selected</span>
+                                <span className="font-sans text-[12px] text-muted-foreground">{t("location.selected", { count: selected.length })}</span>
                                 <button type="button" onClick={() => onChange([])} className="cursor-pointer font-medium font-sans text-[12px] text-primary hover:underline">
-                                    Clear all
+                                    {t("location.clearAll")}
                                 </button>
                             </div>
                         )}
@@ -258,7 +262,7 @@ export function EnemyLocationFilter({ tree, selected, onChange }: IProps) {
                     {selected.map((v) => (
                         <span key={v} className="inline-flex items-center gap-1 rounded-md border border-border bg-card py-0.75 ps-2 pe-0.5 font-medium font-sans text-[11.5px] text-foreground leading-none">
                             <span className="max-w-44 truncate">{labelByToken.get(v) ?? v}</span>
-                            <button type="button" onClick={() => onChange(selected.filter((t) => t !== v))} aria-label={`Remove ${labelByToken.get(v) ?? v}`} className="inline-flex size-4.5 cursor-pointer items-center justify-center rounded text-muted-foreground hover:text-foreground">
+                            <button type="button" onClick={() => onChange(selected.filter((t) => t !== v))} aria-label={t("location.remove", { name: labelByToken.get(v) ?? v })} className="inline-flex size-4.5 cursor-pointer items-center justify-center rounded text-muted-foreground hover:text-foreground">
                                 <X className="h-3 w-3" aria-hidden="true" />
                             </button>
                         </span>

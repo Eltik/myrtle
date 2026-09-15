@@ -1,15 +1,22 @@
+import { DEFAULT_OG_TAGS } from "../presets";
 import { AccentStrip, BrandRow, FG, FG_06, FG_08, FG_55, FootRow } from "./Frame";
 
 export interface IDefaultOgData {
     title: string;
     subtitle?: string;
+    /** A chip id from `DEFAULT_OG_TAGS`, not a label - see `tagLabels`. */
     activeTag?: string;
+    /**
+     * Chip id -> the label to draw, for the active locale. Satori renders this
+     * on the server with no React tree, so there is no context to read a
+     * catalog from: the handler resolves the five labels and passes them in.
+     * Absent, the ids double as their own English labels.
+     */
+    tagLabels?: Record<string, string>;
 }
 
-const DEFAULT_TAGS = ["Home", "Collection", "Players", "Gacha", "Tools"] as const;
-
 export function DefaultTemplate(data: IDefaultOgData) {
-    const { title, subtitle, activeTag = "Home" } = data;
+    const { title, subtitle, activeTag = "Home", tagLabels } = data;
 
     return (
         <div
@@ -44,7 +51,7 @@ export function DefaultTemplate(data: IDefaultOgData) {
                 {subtitle ? <div style={{ display: "flex", fontSize: 28, color: FG_55, marginTop: 24, maxWidth: 880, lineHeight: 1.4 }}>{subtitle}</div> : null}
 
                 <div style={{ display: "flex", gap: 10, marginTop: 36 }}>
-                    {DEFAULT_TAGS.map((t) => {
+                    {DEFAULT_OG_TAGS.map((t) => {
                         const active = t === activeTag;
                         return (
                             <div
@@ -62,7 +69,7 @@ export function DefaultTemplate(data: IDefaultOgData) {
                                     borderRadius: 8,
                                 }}
                             >
-                                {t}
+                                {tagLabels?.[t] ?? t}
                             </div>
                         );
                     })}

@@ -11,7 +11,10 @@ import type React from "react";
 import { createContext, useContext } from "react";
 import { Button } from "#/components/ui/button";
 import { ScrollArea } from "#/components/ui/scroll-area";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./drawer.messages";
 
 type DrawerPosition = "right" | "left" | "top" | "bottom";
 
@@ -131,6 +134,7 @@ export function DrawerPopup({
 }): React.ReactElement {
     const { position: contextPosition } = useContext(DrawerContext);
     const position = positionProp ?? contextPosition;
+    const t: TypedT<typeof messages> = useT("common");
 
     return (
         <DrawerPortal {...portalProps}>
@@ -176,7 +180,7 @@ export function DrawerPopup({
                 >
                     {children}
                     {showCloseButton && (
-                        <DrawerPrimitive.Close aria-label="Close" className="absolute end-2 top-2" render={<Button size="icon" variant="ghost" />}>
+                        <DrawerPrimitive.Close aria-label={t("drawer.close")} className="absolute end-2 top-2" render={<Button size="icon" variant="ghost" />}>
                             <XIcon />
                         </DrawerPrimitive.Close>
                     )}
@@ -420,6 +424,8 @@ export function DrawerMenuCheckboxItem({
     variant?: "default" | "switch";
     render?: React.ReactElement;
 }): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("common");
+
     return (
         <CheckboxPrimitive.Root
             checked={checked}
@@ -449,7 +455,7 @@ export function DrawerMenuCheckboxItem({
                 <>
                     <CheckboxPrimitive.Indicator className="col-start-1">
                         <svg fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
-                            <title>Checked</title>
+                            <title>{t("drawer.checked")}</title>
                             <path d="M5.252 12.7 10.2 18.63 18.748 5.37" />
                         </svg>
                     </CheckboxPrimitive.Indicator>
@@ -475,6 +481,8 @@ export function DrawerMenuRadioItem({
     value: string;
     render?: React.ReactElement;
 }): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("common");
+
     return (
         <RadioPrimitive.Root
             className={cn(
@@ -490,7 +498,7 @@ export function DrawerMenuRadioItem({
         >
             <RadioPrimitive.Indicator className="col-start-1">
                 <svg fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
-                    <title>Selected</title>
+                    <title>{t("drawer.selected")}</title>
                     <path d="M5.252 12.7 10.2 18.63 18.748 5.37" />
                 </svg>
             </RadioPrimitive.Indicator>

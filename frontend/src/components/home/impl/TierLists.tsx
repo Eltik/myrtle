@@ -4,12 +4,19 @@ import { useCallback, useMemo, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
 import { Skeleton } from "#/components/ui/skeleton";
 import { homeTierListsQueryOptions, recordTierListViewFn } from "#/lib/api/tier-lists";
+import { useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import TierListCard from "./TierListCard";
+import type { messages } from "./TierLists.messages";
+
+/** Sentinel tag value for "no filter". Compared against a list's own tag, so it is not a message. */
+const ALL_TAGS = "All";
 
 export default function TierLists() {
+    const t: TypedT<typeof messages> = useT("home");
     const queryClient = useQueryClient();
-    const { data, isLoading, isError } = useQuery(homeTierListsQueryOptions());
+    const { data, isLoading, isError } = useQuery(homeTierListsQueryOptions(useGamedataServer()));
     const tierLists = data ?? [];
 
     const recordView = useMutation({
@@ -27,20 +34,20 @@ export default function TierLists() {
     const filters = useMemo(() => {
         const tags = new Set<string>();
         for (const tl of tierLists) tags.add(tl.tag);
-        return ["All", ...Array.from(tags)];
+        return [ALL_TAGS, ...Array.from(tags)];
     }, [tierLists]);
 
-    const [filter, setFilter] = useState("All");
-    const list = tierLists.filter((t) => filter === "All" || t.tag === filter);
+    const [filter, setFilter] = useState(ALL_TAGS);
+    const list = tierLists.filter((tl) => filter === ALL_TAGS || tl.tag === filter);
 
     return (
         <section className="mx-auto my-20 w-[min(1080px,calc(100%-2rem))]">
             <div className="mb-5.5">
                 <div className="flex flex-wrap items-end justify-between gap-4">
                     <div>
-                        <Kicker>Community</Kicker>
-                        <h2 className="m-0 mb-1.5 font-bold font-sans text-4xl text-foreground leading-tight tracking-tight">Tier lists, at a glance.</h2>
-                        <p className="mt-1.5 max-w-130 font-sans text-muted-foreground text-sm leading-normal">Previews from the most-watched community lists. Click any card to open the full ranking.</p>
+                        <Kicker>{t("tierLists.kicker")}</Kicker>
+                        <h2 className="m-0 mb-1.5 font-bold font-sans text-4xl text-foreground leading-tight tracking-tight">{t("tierLists.title")}</h2>
+                        <p className="mt-1.5 max-w-130 font-sans text-muted-foreground text-sm leading-normal">{t("tierLists.blurb")}</p>
                     </div>
                     {filters.length > 1 && (
                         <div role="tablist" className="inline-flex gap-0.5 rounded-[10px] border border-border bg-muted p-0.75">
@@ -57,7 +64,7 @@ export default function TierLists() {
                                             active ? "bg-primary text-primary-foreground shadow-[0_2px_6px_color-mix(in_srgb,var(--primary)_30%,transparent)]" : "bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground",
                                         )}
                                     >
-                                        {f}
+                                        {f === ALL_TAGS ? t("tierLists.filter.all") : f}
                                     </button>
                                 );
                             })}
@@ -73,9 +80,9 @@ export default function TierLists() {
                     ))}
                 </div>
             ) : isError ? (
-                <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-8 text-center font-sans text-muted-foreground text-sm">Failed to load tier lists. Try refreshing the page.</div>
+                <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-8 text-center font-sans text-muted-foreground text-sm">{t("tierLists.error")}</div>
             ) : list.length === 0 ? (
-                <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-8 text-center font-sans text-muted-foreground text-sm">No tier lists yet. Be the first to publish one.</div>
+                <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-8 text-center font-sans text-muted-foreground text-sm">{t("tierLists.empty")}</div>
             ) : (
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
                     {list.map((tl) => (
@@ -90,8 +97,8 @@ export default function TierLists() {
                 className="mt-4.5 inline-flex w-max cursor-pointer items-center gap-2 rounded-lg border border-border border-dashed bg-transparent px-3.5 py-2.5 font-medium font-sans text-[12.5px] text-muted-foreground leading-none no-underline transition-colors hover:border-primary hover:bg-[color-mix(in_srgb,var(--primary)_5%,transparent)] hover:text-foreground"
             >
                 <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_color-mix(in_srgb,var(--primary)_50%,transparent)]" aria-hidden="true" />
-                <span>Browse all tier lists</span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" role="image" aria-label="Right arrow">
+                <span>{t("tierLists.browseAll")}</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" role="image" aria-label={t("tierLists.arrowIcon")}>
                     <path d="M5 12h14" />
                     <path d="m12 5 7 7-7 7" />
                 </svg>

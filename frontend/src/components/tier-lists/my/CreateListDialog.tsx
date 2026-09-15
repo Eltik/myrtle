@@ -4,7 +4,10 @@ import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, Dia
 import { Field, FieldDescription, FieldLabel } from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
 import { Textarea } from "#/components/ui/textarea";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { LIST_DESCRIPTION_MAX as DESC_MAX, LIST_NAME_MAX as NAME_MAX } from "../shared";
+import type { messages } from "./CreateListDialog.messages";
 
 interface ICreateListDialogProps {
     open: boolean;
@@ -15,6 +18,7 @@ interface ICreateListDialogProps {
 }
 
 export function CreateListDialog({ open, onOpenChange, onSubmit, isSubmitting, errorMessage }: ICreateListDialogProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const nameId = useId();
@@ -41,31 +45,31 @@ export function CreateListDialog({ open, onOpenChange, onSubmit, isSubmitting, e
             <DialogPopup>
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>New tier list</DialogTitle>
-                        <DialogDescription>Give your list a name and a short description. You can change these later, and your edits will be visible to everyone who has the share link.</DialogDescription>
+                        <DialogTitle>{t("my.create.title")}</DialogTitle>
+                        <DialogDescription>{t("my.create.description")}</DialogDescription>
                     </DialogHeader>
 
                     <div className="flex flex-col gap-5 px-6 pb-2">
                         <Field>
                             <FieldLabel htmlFor={nameId}>
-                                Name
+                                {t("my.create.name")}
                                 <span className="ml-auto font-mono text-[10.5px] text-muted-foreground tabular-nums">
                                     {name.length} / {NAME_MAX}
                                 </span>
                             </FieldLabel>
-                            <Input id={nameId} value={name} onChange={(e) => setName((e.target as HTMLInputElement).value.slice(0, NAME_MAX))} placeholder="e.g. Endgame DPS rankings" autoFocus required aria-invalid={trimmedName.length === 0 && name.length > 0 ? true : undefined} />
-                            <FieldDescription>Shown on browse cards and on the public detail page.</FieldDescription>
+                            <Input id={nameId} value={name} onChange={(e) => setName((e.target as HTMLInputElement).value.slice(0, NAME_MAX))} placeholder={t("my.create.namePlaceholder")} autoFocus required aria-invalid={trimmedName.length === 0 && name.length > 0 ? true : undefined} />
+                            <FieldDescription>{t("my.create.nameHint")}</FieldDescription>
                         </Field>
 
                         <Field>
                             <FieldLabel htmlFor={descId}>
-                                Description
+                                {t("my.create.descriptionLabel")}
                                 <span className="ml-auto font-mono text-[10.5px] text-muted-foreground tabular-nums">
                                     {description.length} / {DESC_MAX}
                                 </span>
                             </FieldLabel>
-                            <Textarea id={descId} value={description} onChange={(e) => setDescription(e.target.value.slice(0, DESC_MAX))} placeholder="What's this list about? Who is it for?" rows={3} />
-                            <FieldDescription>Optional. A sentence or two helps readers know what to expect.</FieldDescription>
+                            <Textarea id={descId} value={description} onChange={(e) => setDescription(e.target.value.slice(0, DESC_MAX))} placeholder={t("my.create.descriptionPlaceholder")} rows={3} />
+                            <FieldDescription>{t("my.create.descriptionHint")}</FieldDescription>
                         </Field>
 
                         {errorMessage && (
@@ -76,9 +80,9 @@ export function CreateListDialog({ open, onOpenChange, onSubmit, isSubmitting, e
                     </div>
 
                     <DialogFooter>
-                        <DialogClose render={<Button type="button" variant="outline" />}>Cancel</DialogClose>
+                        <DialogClose render={<Button type="button" variant="outline" />}>{t("my.create.cancel")}</DialogClose>
                         <Button type="submit" disabled={!canSubmit} loading={isSubmitting}>
-                            Create list
+                            {t("my.create.submit")}
                         </Button>
                     </DialogFooter>
                 </form>

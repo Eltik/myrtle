@@ -3,36 +3,49 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { eliteIcon, potentialIcon } from "#/components/operators/detail/impl/assets";
 import { DialogContent, DialogTitle } from "#/components/ui/dialog";
 import { Separator } from "#/components/ui/separator";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { capitalize, formatProfession } from "#/lib/utils";
 
 import { DynamicArtOverlay } from "../../../DynamicArtOverlay";
 import { getAttributeStats, getTrustPercent, moduleIconURL, moduleTypeLabel, ownedHeroURL, rarityIcon, skillIconURL, specializedIcon } from "./helpers.card";
+import type { messages as cardMessages } from "./helpers.card.messages";
+import type { messages } from "./OperatorDialog.messages";
 import type { IOwnedEntry } from "./types";
 
-function voiceLabel(v: string | null): string {
+/** The shared card vocabulary is declared in `helpers.card.messages.ts`. */
+type DialogT = TypedT<typeof messages & typeof cardMessages>;
+
+/** `v` is the API's voice-language code; an unknown one is shown as-is. */
+function voiceLabel(v: string | null, t: DialogT): string {
     switch (v) {
         case "JP":
-            return "Japanese";
+            return t("profile.roster.voice.jp");
         case "CN_MANDARIN":
-            return "Chinese";
+            return t("profile.roster.voice.cn");
         case "EN":
-            return "English";
+            return t("profile.roster.voice.en");
         case "KR":
-            return "Korean";
+            return t("profile.roster.voice.kr");
         case "CN_TOPOLECT":
-            return "CN Regional";
+            return t("profile.roster.voice.cnTopolect");
         case "LINKAGE":
-            return "Collab";
+            return t("profile.roster.voice.linkage");
         case "ITA":
-            return "Italian";
+            return t("profile.roster.voice.ita");
         case "RUS":
-            return "Russian";
+            return t("profile.roster.voice.rus");
         default:
-            return capitalize(v?.toLowerCase().replace(/_/g, " ") ?? "Japanese");
+            return v ? capitalize(v.toLowerCase().replace(/_/g, " ")) : t("profile.roster.voice.jp");
     }
 }
 
+/** Options matching what this row rendered before it took the page's locale. */
+const RECRUITED_AT: Intl.DateTimeFormatOptions = { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" };
+
 export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
+    const t: DialogT = useT("user");
+    const f = useFormatters();
     const op = entry.static;
     const star = entry.rarity;
     const stats = useMemo(() => (op ? getAttributeStats(entry, op) : null), [entry, op]);
@@ -140,7 +153,7 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                     <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-linear-to-r from-background to-transparent" />
                     <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-linear-to-l from-background to-transparent" />
                     <div ref={titleRef} className="absolute inset-x-0 bottom-0 px-6 pb-6" style={{ transform: "translate3d(0, 0, 0)", opacity: 1 }}>
-                        <img alt={`${star} Star`} className="mb-2 h-5 w-auto object-contain drop-shadow" decoding="async" src={rarityIcon(star)} />
+                        <img alt={t("profile.roster.card.rarityAlt", { star })} className="mb-2 h-5 w-auto object-contain drop-shadow" decoding="async" src={rarityIcon(star)} />
                         <h2 className="font-bold text-3xl text-foreground tracking-tight">{entry.name}</h2>
                         {op && <p className="mt-1 text-muted-foreground text-sm">{formatProfession(op.profession)}</p>}
                     </div>
@@ -148,20 +161,20 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                 <div ref={pillsRef} className="relative z-5 -mt-6 truncate px-6" style={{ transform: "translate3d(0, 0, 0)" }}>
                     <div className="grid grid-cols-4 gap-2 rounded-xl border border-border/60 bg-card/80 p-2 shadow-lg backdrop-blur">
                         <div className="flex flex-col items-center justify-center gap-1 rounded-lg bg-muted/40 px-2 py-2">
-                            <img alt={`Elite ${entry.elite}`} className="icon-theme-aware h-6 w-6 object-contain" decoding="async" src={eliteIcon(entry.elite)} />
-                            <span className="text-[0.625rem] text-muted-foreground uppercase tracking-wide">Elite</span>
+                            <img alt={t("profile.roster.card.eliteAlt", { elite: entry.elite })} className="icon-theme-aware h-6 w-6 object-contain" decoding="async" src={eliteIcon(entry.elite)} />
+                            <span className="text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("profile.roster.dialog.elite")}</span>
                         </div>
                         <div className="flex flex-col items-center justify-center gap-1 rounded-lg bg-muted/40 px-2 py-2">
                             <span className="font-semibold text-base text-foreground tabular-nums">{entry.level}</span>
-                            <span className="text-[0.625rem] text-muted-foreground uppercase tracking-wide">Level</span>
+                            <span className="text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("profile.roster.card.level")}</span>
                         </div>
                         <div className="flex flex-col items-center justify-center gap-1 rounded-lg bg-muted/40 px-2 py-2">
-                            <img alt={`Potential ${entry.potential + 1}`} className="h-6 w-6 object-contain" decoding="async" src={potentialIcon(entry.potential)} />
-                            <span className="text-[0.625rem] text-muted-foreground uppercase tracking-wide">Potential</span>
+                            <img alt={t("profile.roster.card.potentialAlt", { rank: entry.potential + 1 })} className="h-6 w-6 object-contain" decoding="async" src={potentialIcon(entry.potential)} />
+                            <span className="text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("profile.roster.card.potential")}</span>
                         </div>
                         <div className="flex flex-col items-center justify-center gap-1 rounded-lg bg-muted/40 px-2 py-2">
                             <span className="font-semibold text-base text-foreground tabular-nums">{`${trustPct}%`}</span>
-                            <span className="text-[0.625rem] text-muted-foreground uppercase tracking-wide">Trust</span>
+                            <span className="text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("profile.roster.card.trust")}</span>
                         </div>
                     </div>
                 </div>
@@ -171,22 +184,22 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                         <section>
                             <header className="mb-3 flex items-center gap-3">
                                 <span className="h-4 w-1 rounded-full bg-primary" />
-                                <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider">Combat Stats</h3>
+                                <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider">{t("profile.roster.dialog.combatStats")}</h3>
                                 <Separator className="flex-1" />
                             </header>
                             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
                                 {(
                                     [
-                                        ["HP", stats.maxHp],
-                                        ["ATK", stats.atk],
-                                        ["DEF", stats.def],
-                                        ["RES", stats.magicResistance],
-                                        ["DP", stats.cost],
-                                        ["Block", stats.blockCnt],
+                                        ["profile.roster.card.stat.hp", stats.maxHp],
+                                        ["profile.roster.card.stat.atk", stats.atk],
+                                        ["profile.roster.card.stat.def", stats.def],
+                                        ["profile.roster.card.stat.res", stats.magicResistance],
+                                        ["profile.roster.card.stat.dp", stats.cost],
+                                        ["profile.roster.card.stat.block", stats.blockCnt],
                                     ] as const
-                                ).map(([label, value]) => (
-                                    <div key={label} className="flex items-center justify-between rounded-md bg-muted/30 px-2.5 py-1.5">
-                                        <span className="text-muted-foreground text-xs">{label}</span>
+                                ).map(([labelKey, value]) => (
+                                    <div key={labelKey} className="flex items-center justify-between rounded-md bg-muted/30 px-2.5 py-1.5">
+                                        <span className="text-muted-foreground text-xs">{t(labelKey)}</span>
                                         <span className="font-semibold text-sm tabular-nums">{value}</span>
                                     </div>
                                 ))}
@@ -196,86 +209,75 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                     <section>
                         <header className="mb-3 flex items-center gap-3">
                             <span className="h-4 w-1 rounded-full bg-primary" />
-                            <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider">Skills</h3>
-                            <span className="rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[0.625rem] text-muted-foreground uppercase tracking-wide">Lv. {entry.skill_level}</span>
+                            <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider">{t("profile.roster.card.skills")}</h3>
+                            <span className="rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("profile.roster.dialog.skillLevelBadge", { level: entry.skill_level })}</span>
                             <Separator className="flex-1" />
                         </header>
                         {skills.length > 0 ? (
                             <div className="space-y-1.5">
                                 {skills.map(({ skill, index, mastery }) => {
                                     const isDefault = entry.default_skill === index;
-                                    const name = skill.static?.levels?.[0]?.name ?? `Skill ${index + 1}`;
+                                    const name = skill.static?.levels?.[0]?.name ?? t("profile.roster.card.skillFallback", { n: index + 1 });
                                     return (
                                         <div key={skill.skillId} className={`grid items-center gap-2.5 rounded-md px-2.5 py-1.5 transition-colors ${isDefault ? "border border-primary/40 bg-primary/10" : "bg-muted/30 hover:bg-muted/50"}`} style={{ gridTemplateColumns: "32px minmax(0, 1fr) auto" }}>
-                                            <img alt="Skill" className="h-8 w-8 rounded-sm" decoding="async" src={skillIconURL(skill)} />
+                                            <img alt={t("profile.roster.card.skillAlt")} className="h-8 w-8 rounded-sm" decoding="async" src={skillIconURL(skill)} />
                                             <div className="min-w-0">
                                                 <p className="truncate font-medium text-sm" title={name}>
                                                     {name}
                                                 </p>
-                                                {isDefault && <span className="text-[0.625rem] text-primary uppercase tracking-wide">Default</span>}
+                                                {isDefault && <span className="text-[0.625rem] text-primary uppercase tracking-wide">{t("profile.roster.dialog.default")}</span>}
                                             </div>
                                             <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
-                                                <span className="tabular-nums">Lv.{entry.skill_level}</span>
-                                                {mastery > 0 && <img alt={`M${mastery}`} className="h-4 w-4" decoding="async" src={specializedIcon(mastery)} />}
+                                                <span className="tabular-nums">{t("profile.roster.card.skillLevel", { level: entry.skill_level })}</span>
+                                                {mastery > 0 && <img alt={t("profile.roster.card.masteryAlt", { mastery })} className="h-4 w-4" decoding="async" src={specializedIcon(mastery)} />}
                                             </div>
                                         </div>
                                     );
                                 })}
                             </div>
                         ) : (
-                            <p className="rounded-md bg-muted/30 px-3 py-2 text-muted-foreground text-xs">{op ? "No skills found." : "Loading…"}</p>
+                            <p className="rounded-md bg-muted/30 px-3 py-2 text-muted-foreground text-xs">{op ? t("profile.roster.card.noSkills") : t("profile.roster.dialog.loading")}</p>
                         )}
                     </section>
                     <section>
                         <header className="mb-3 flex items-center gap-3">
                             <span className="h-4 w-1 rounded-full bg-primary" />
-                            <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider">Modules</h3>
+                            <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider">{t("profile.roster.card.modules")}</h3>
                             <Separator className="flex-1" />
                         </header>
                         {modules.length > 0 ? (
                             <div className="space-y-1.5">
                                 {modules.map(({ module, level, isEquipped }) => (
                                     <div key={module.uniEquipId} className={`flex items-center gap-2.5 rounded-md px-2.5 py-1.5 transition-colors ${isEquipped ? "border border-primary/40 bg-primary/10" : "bg-muted/30 hover:bg-muted/50"}`}>
-                                        <img alt="Module" className="h-8 w-8 shrink-0 object-contain" decoding="async" src={moduleIconURL(module)} />
+                                        <img alt={t("profile.roster.card.moduleAlt")} className="h-8 w-8 shrink-0 object-contain" decoding="async" src={moduleIconURL(module)} />
                                         <div className="min-w-0 flex-1">
                                             <p className="truncate font-medium text-sm" title={module.uniEquipName}>
                                                 {module.uniEquipName}
                                             </p>
-                                            {isEquipped && <span className="text-[0.625rem] text-primary uppercase tracking-wide">Equipped</span>}
+                                            {isEquipped && <span className="text-[0.625rem] text-primary uppercase tracking-wide">{t("profile.roster.dialog.equipped")}</span>}
                                         </div>
                                         <div className="flex shrink-0 items-center gap-1.5 text-muted-foreground text-xs">
                                             <span className="rounded bg-background/60 px-1.5 py-0.5">{moduleTypeLabel(module)}</span>
-                                            <span className="tabular-nums">Lv.{level}</span>
+                                            <span className="tabular-nums">{t("profile.roster.card.moduleLevel", { level })}</span>
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <p className="rounded-md bg-muted/30 px-3 py-2 text-muted-foreground text-xs">{op ? "No modules unlocked." : "Loading…"}</p>
+                            <p className="rounded-md bg-muted/30 px-3 py-2 text-muted-foreground text-xs">{op ? t("profile.roster.card.noModules") : t("profile.roster.dialog.loading")}</p>
                         )}
                     </section>
                     <section>
                         <header className="mb-3 flex items-center gap-3">
                             <span className="h-4 w-1 rounded-full bg-primary" />
-                            <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider">Info</h3>
+                            <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider">{t("profile.roster.dialog.info")}</h3>
                             <Separator className="flex-1" />
                         </header>
                         <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                             {(
                                 [
-                                    [
-                                        "Recruited",
-                                        entry.obtained_at
-                                            ? new Date(entry.obtained_at * 1000).toLocaleString(undefined, {
-                                                  year: "numeric",
-                                                  month: "short",
-                                                  day: "numeric",
-                                                  hour: "numeric",
-                                                  minute: "2-digit",
-                                              })
-                                            : "Unknown",
-                                    ],
-                                    ["Voice", voiceLabel(entry.voice_lan)],
+                                    [t("profile.roster.dialog.recruited"), entry.obtained_at ? f.date(new Date(entry.obtained_at * 1000), RECRUITED_AT) : t("profile.roster.dialog.recruited.unknown")],
+                                    [t("profile.roster.dialog.voice"), voiceLabel(entry.voice_lan, t)],
                                 ] as const
                             ).map(([label, value]) => (
                                 <div key={label} className="flex items-center justify-between gap-2 rounded-md bg-muted/30 px-2.5 py-1.5">

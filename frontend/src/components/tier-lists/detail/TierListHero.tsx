@@ -3,20 +3,25 @@ import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "#/components/ui/breadcrumb";
 import { Kicker } from "#/components/ui/kicker";
 import type { ITierListDetail } from "#/lib/api/tier-lists";
-import { formatNumber, formatNumberCompact, formatRelative, getAvatarById } from "#/lib/utils";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import { getAvatarById } from "#/lib/utils";
 import { ExpandableDescription } from "../ExpandableDescription";
 import { TierListActions } from "./TierListActions";
+import type { messages } from "./TierListHero.messages";
 
 interface ITierListHeroProps {
     detail: ITierListDetail;
 }
 
 export function TierListHero({ detail }: ITierListHeroProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
+    const f = useFormatters();
     const isOfficial = detail.listType === "official";
     const flair = detail.flair;
     const stats = detail.stats;
     const author = detail.author;
-    const updatedRel = formatRelative(detail.updatedAt);
+    const updatedRel = f.relative(detail.updatedAt);
 
     return (
         <header className="border-border/60 border-b bg-linear-to-b from-card/40 to-transparent">
@@ -24,7 +29,7 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                 <Breadcrumb className="mb-3">
                     <BreadcrumbList className="text-xs">
                         <BreadcrumbItem>
-                            <BreadcrumbLink render={<Link to="/tier-lists" search={{ type: "all", sort: "recent", q: "", flair: [] }} />}>Tier Lists</BreadcrumbLink>
+                            <BreadcrumbLink render={<Link to="/tier-lists" search={{ type: "all", sort: "recent", q: "", flair: [] }} />}>{t("detail.hero.breadcrumb")}</BreadcrumbLink>
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
@@ -41,10 +46,10 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                                     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="h-2.5 w-2.5">
                                         <path d="M12 2 9.6 4.4 6.3 4l-.6 3.3L2.5 9 4 12l-1.5 3 3.2 1.7.6 3.3 3.3-.4L12 22l2.4-2.4 3.3.4.6-3.3L21.5 15 20 12l1.5-3-3.2-1.7-.6-3.3L14.4 4.4Zm-1.2 13.4-3.4-3.4 1.4-1.4 2 2 4.4-4.4 1.4 1.4Z" />
                                     </svg>
-                                    Official
+                                    {t("detail.hero.official")}
                                 </span>
                             ) : (
-                                <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-wider">Community</span>
+                                <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-wider">{t("detail.hero.community")}</span>
                             )}
 
                             {flair && (
@@ -74,12 +79,12 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                                     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="h-2.5 w-2.5">
                                         <path d="M12 2c.6 4 4.7 5.4 4.7 9.5 0 2.6-2 4.5-4.7 4.5s-4.7-1.9-4.7-4.5C7.3 9.4 9.6 8 9 4c2.4 1.4 3 4 3 4Z" />
                                     </svg>
-                                    Trending
+                                    {t("detail.hero.trending")}
                                 </span>
                             )}
                         </div>
 
-                        <Kicker>Tier List</Kicker>
+                        <Kicker>{t("detail.hero.kicker")}</Kicker>
                         <h1 className="m-0 font-bold font-sans text-2xl text-foreground leading-tight tracking-tight sm:text-3xl md:text-4xl">{detail.title}</h1>
 
                         {detail.description && <ExpandableDescription text={detail.description} markdown className="mt-3 max-w-160 font-sans text-muted-foreground text-sm leading-relaxed sm:text-[15px]" />}
@@ -91,12 +96,12 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                                         {author.avatarId && <AvatarImage src={getAvatarById(author.avatarId)} alt="" />}
                                         <AvatarFallback>{(author.nickname?.charAt(0) || "?").toUpperCase()}</AvatarFallback>
                                     </Avatar>
-                                    <span className="min-w-0 truncate font-medium transition-colors group-hover:text-primary">{author.nickname?.trim() || "Doctor"}</span>
+                                    <span className="min-w-0 truncate font-medium transition-colors group-hover:text-primary">{author.nickname?.trim() || t("detail.hero.authorFallback")}</span>
                                 </Link>
                             ) : (
                                 <span className="inline-flex items-center gap-2">
                                     <span className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-border bg-muted font-sans font-semibold text-[10px] text-muted-foreground">?</span>
-                                    <span className="font-medium text-foreground">Unknown author</span>
+                                    <span className="font-medium text-foreground">{t("detail.hero.authorUnknown")}</span>
                                 </span>
                             )}
 
@@ -109,7 +114,7 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                                     <circle cx="12" cy="12" r="10" />
                                     <path d="M12 6v6l4 2" />
                                 </svg>
-                                <span>Updated {updatedRel}</span>
+                                <span>{t("detail.hero.updated", { when: updatedRel })}</span>
                             </span>
 
                             {stats && (
@@ -117,20 +122,20 @@ export function TierListHero({ detail }: ITierListHeroProps) {
                                     <span className="opacity-50" aria-hidden="true">
                                         ·
                                     </span>
-                                    <span className="inline-flex items-center gap-1.5" title={`${formatNumber(stats.viewCount)} views`}>
+                                    <span className="inline-flex items-center gap-1.5" title={t("detail.hero.views.title", { count: f.number(stats.viewCount) })}>
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 opacity-70" aria-hidden="true">
                                             <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                                             <circle cx="12" cy="12" r="3" />
                                         </svg>
-                                        <span className="font-mono font-semibold text-foreground tabular-nums">{formatNumberCompact(stats.viewCount)}</span>
-                                        <span>views</span>
+                                        <span className="font-mono font-semibold text-foreground tabular-nums">{f.compact(stats.viewCount)}</span>
+                                        <span>{t("detail.hero.views")}</span>
                                     </span>
-                                    <span className="inline-flex items-center gap-1.5" title={`${formatNumber(stats.favoriteCount)} favorites`}>
+                                    <span className="inline-flex items-center gap-1.5" title={t("detail.hero.favorites.title", { count: f.number(stats.favoriteCount) })}>
                                         <svg viewBox="0 0 24 24" fill="currentColor" className="h-3 w-3 opacity-70" aria-hidden="true">
                                             <path d="M12 21s-7-4.5-9.5-9C.7 8.7 2.5 5 6 5c2 0 3.5 1 4 2.5C10.5 6 12 5 14 5c3.5 0 5.3 3.7 3.5 7-2.5 4.5-9.5 9-9.5 9Z" />
                                         </svg>
-                                        <span className="font-mono font-semibold text-foreground tabular-nums">{formatNumberCompact(stats.favoriteCount)}</span>
-                                        <span>favorites</span>
+                                        <span className="font-mono font-semibold text-foreground tabular-nums">{f.compact(stats.favoriteCount)}</span>
+                                        <span>{t("detail.hero.favorites")}</span>
                                     </span>
                                 </>
                             )}

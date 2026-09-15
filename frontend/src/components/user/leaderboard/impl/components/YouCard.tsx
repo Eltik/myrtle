@@ -4,9 +4,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
 import { toastManager } from "#/components/ui/toast";
 import type { ILeaderboardEntry, IPlayerStanding } from "#/lib/api/user";
-import { formatNumber, getAvatarById } from "#/lib/utils";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import { getAvatarById } from "#/lib/utils";
 import { DEFAULT_AVATAR_ID } from "../constants";
 import { GradeBadge } from "./GradeBadge";
+import type { messages as moversMessages } from "./MoversCard.messages";
+import type { messages } from "./YouCard.messages";
 
 interface IYouCardProps {
     standing: IPlayerStanding | null;
@@ -14,6 +18,10 @@ interface IYouCardProps {
 }
 
 export function YouCard({ standing, rankedDoctors }: IYouCardProps) {
+    /** 'Δ Rank' is declared once, on the sibling movers card. */
+    const t: TypedT<typeof messages & typeof moversMessages> = useT("user");
+    const f = useFormatters();
+
     if (!standing) return null;
     const player: ILeaderboardEntry = standing.player;
     const nickname = player.nickname ?? `Doctor ${player.uid}`;
@@ -33,15 +41,15 @@ export function YouCard({ standing, rankedDoctors }: IYouCardProps) {
             await navigator.clipboard.writeText(`${window.location.origin}/user/${player.uid}`);
             toastManager.add({
                 id: `lb-you-share-${Date.now()}`,
-                title: "Profile link copied",
-                description: "Your profile link is on the clipboard.",
+                title: t("leaderboard.you.share.copied.title"),
+                description: t("leaderboard.you.share.copied.desc"),
                 type: "success",
             });
         } catch {
             toastManager.add({
                 id: `lb-you-share-error-${Date.now()}`,
-                title: "Couldn't copy",
-                description: "Clipboard access was denied.",
+                title: t("leaderboard.you.share.failed.title"),
+                description: t("leaderboard.you.share.failed.desc"),
                 type: "error",
             });
         }
@@ -51,7 +59,7 @@ export function YouCard({ standing, rankedDoctors }: IYouCardProps) {
         <aside className="relative overflow-hidden rounded-xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
             <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse 80% 60% at 50% 0%, color-mix(in srgb, var(--primary) 8%, transparent), transparent 60%)" }} />
             <div className="relative mb-3 flex items-center justify-between font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.16em]">
-                <span>Your standing</span>
+                <span>{t("leaderboard.you.title")}</span>
                 <span className="rounded-full border border-border bg-card px-2 py-0.5 text-foreground tabular-nums">#{rank ?? "-"}</span>
             </div>
             <div className="relative flex items-center gap-3">
@@ -62,10 +70,10 @@ export function YouCard({ standing, rankedDoctors }: IYouCardProps) {
                 <div className="min-w-0">
                     <div className="truncate font-bold font-sans text-base text-foreground leading-tight tracking-tight">{nickname}</div>
                     <div className="mt-1 font-mono text-[11px] text-muted-foreground leading-none">
-                        Rank <b className="font-bold text-foreground">#{rank ?? "-"}</b>
+                        {t("leaderboard.you.rank")} <b className="font-bold text-foreground">#{rank ?? "-"}</b>
                         {percentile != null && (
                             <>
-                                {" · Top "}
+                                {t("leaderboard.you.topPercentile")}
                                 <b className="font-bold text-foreground">{percentile.toFixed(1)}%</b>
                             </>
                         )}
@@ -73,13 +81,13 @@ export function YouCard({ standing, rankedDoctors }: IYouCardProps) {
                 </div>
             </div>
             <div className="relative mt-3.5 grid grid-cols-3 gap-2">
-                <Metric k="Grade">
+                <Metric k={t("leaderboard.you.metric.grade")}>
                     <GradeBadge grade={grade} className="size-7" />
                 </Metric>
-                <Metric k="Score">
-                    <span className="font-bold font-sans text-base tabular-nums leading-none tracking-tight">{player.total_score == null ? "-" : formatNumber(player.total_score)}</span>
+                <Metric k={t("leaderboard.you.metric.score")}>
+                    <span className="font-bold font-sans text-base tabular-nums leading-none tracking-tight">{player.total_score == null ? "-" : f.number(player.total_score)}</span>
                 </Metric>
-                <Metric k="Δ Rank">
+                <Metric k={t("leaderboard.deltaRank")}>
                     <span className={`font-bold font-sans text-base tabular-nums leading-none tracking-tight ${deltaColor}`}>{deltaText}</span>
                 </Metric>
             </div>
@@ -90,11 +98,11 @@ export function YouCard({ standing, rankedDoctors }: IYouCardProps) {
                     className="flex-1"
                     render={
                         <Link to="/user/$id" params={{ id: player.uid }}>
-                            View profile
+                            {t("leaderboard.you.viewProfile")}
                         </Link>
                     }
                 />
-                <Button variant="outline" size="icon-sm" aria-label="Share profile" onClick={handleShare}>
+                <Button variant="outline" size="icon-sm" aria-label={t("leaderboard.you.share")} onClick={handleShare}>
                     <Share2 />
                 </Button>
             </div>

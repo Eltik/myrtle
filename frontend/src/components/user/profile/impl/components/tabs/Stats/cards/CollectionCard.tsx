@@ -1,7 +1,10 @@
 import { Users } from "lucide-react";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import { PALETTE } from "../palette";
 import { CARD_PADDING, KICKER_TEXT, Kicker, MetricRow, StatCard } from "../primitives";
+import type { messages } from "./CollectionCard.messages";
 
 interface ICollectionCardProps {
     totalOwned: number;
@@ -10,12 +13,13 @@ interface ICollectionCardProps {
 }
 
 export function CollectionCard({ totalOwned, totalAvailable, collectionPercentage }: ICollectionCardProps) {
+    const t: TypedT<typeof messages> = useT("user");
     const pctLabel = `${(Math.round(collectionPercentage * 100) / 100).toFixed(2)}%`;
 
     return (
         <StatCard color={PALETTE.collection}>
             <div className={cn("flex h-full flex-col gap-5", CARD_PADDING)}>
-                <Kicker icon={Users} label="Operator Collection" />
+                <Kicker icon={Users} label={t("profile.stats.collection.title")} />
                 <div className="flex flex-1 flex-col justify-between gap-5">
                     <div className="flex flex-col items-center gap-1.5 py-1">
                         <div className="flex items-baseline gap-1.5">
@@ -31,9 +35,9 @@ export function CollectionCard({ totalOwned, totalAvailable, collectionPercentag
                             </span>
                             <span className="font-medium font-mono text-lg text-muted-foreground/50 tabular-nums">/ {totalAvailable}</span>
                         </div>
-                        <span className={KICKER_TEXT}>operators collected</span>
+                        <span className={KICKER_TEXT}>{t("profile.stats.collection.caption")}</span>
                     </div>
-                    <MetricRow color={PALETTE.collection} label="Completion" pct={collectionPercentage} value={pctLabel} />
+                    <MetricRow color={PALETTE.collection} label={t("profile.stats.collection.completion")} pct={collectionPercentage} value={pctLabel} />
                 </div>
             </div>
         </StatCard>

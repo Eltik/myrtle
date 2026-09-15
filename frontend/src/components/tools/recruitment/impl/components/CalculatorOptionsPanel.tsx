@@ -2,8 +2,11 @@ import { ChevronDownIcon } from "lucide-react";
 import type * as React from "react";
 import { Select, SelectContent, SelectItem, SelectPrimitive, SelectValue, selectTriggerIconClassName, selectTriggerVariants } from "#/components/ui/select";
 import { Switch } from "#/components/ui/switch";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { ICalculatorOptions, OperatorSortMode } from "../types";
+import type { messages } from "./CalculatorOptionsPanel.messages";
 
 interface ICalculatorOptionsPanelProps {
     options: Required<ICalculatorOptions>;
@@ -13,32 +16,40 @@ interface ICalculatorOptionsPanelProps {
     onChangeSortMode: (value: OperatorSortMode) => void;
 }
 
-const SORT_LABELS: Record<OperatorSortMode, string> = {
-    "rarity-desc": "Highest rarity first",
-    "common-first": "Most common first",
-};
+type OptionsT = TypedT<typeof messages>;
+
+/** Sort order, with the message key each mode's label lives under. */
+const SORT_MODES: readonly { value: OperatorSortMode; labelKey: keyof typeof messages & string }[] = [
+    { value: "rarity-desc", labelKey: "recruit.options.sort.rarityDesc" },
+    { value: "common-first", labelKey: "recruit.options.sort.commonFirst" },
+];
 
 export function CalculatorOptionsPanel({ options, onChangeIncludeRobots, onChangeIncludeTwoStars, onChangeIncludeThreeStars, onChangeSortMode }: ICalculatorOptionsPanelProps): React.ReactElement {
+    const t: OptionsT = useT("tools");
+    const sortLabel = (mode: OperatorSortMode) => {
+        const entry = SORT_MODES.find((m) => m.value === mode);
+        return entry ? t(entry.labelKey) : mode;
+    };
     return (
         <div className="flex flex-col gap-3">
-            <ToggleRow id="recruit-include-robots" label="Include robots" checked={options.includeRobots} onCheckedChange={onChangeIncludeRobots} />
-            <ToggleRow id="recruit-include-two-stars" label="Include 2★ operators" checked={options.includeTwoStars} onCheckedChange={onChangeIncludeTwoStars} />
-            <ToggleRow id="recruit-include-three-stars" label="Include 3★ operators" checked={options.includeThreeStars} onCheckedChange={onChangeIncludeThreeStars} />
+            <ToggleRow id="recruit-include-robots" label={t("recruit.options.includeRobots")} checked={options.includeRobots} onCheckedChange={onChangeIncludeRobots} />
+            <ToggleRow id="recruit-include-two-stars" label={t("recruit.options.includeTwoStars")} checked={options.includeTwoStars} onCheckedChange={onChangeIncludeTwoStars} />
+            <ToggleRow id="recruit-include-three-stars" label={t("recruit.options.includeThreeStars")} checked={options.includeThreeStars} onCheckedChange={onChangeIncludeThreeStars} />
             <div className="flex flex-col gap-1.5 border-border/60 border-t pt-3">
                 <label htmlFor="recruit-sort" className="font-medium text-foreground text-sm">
-                    Sort operators
+                    {t("recruit.options.sort")}
                 </label>
                 <Select value={options.operatorSortMode} onValueChange={(v) => onChangeSortMode(v as OperatorSortMode)}>
                     <SelectPrimitive.Trigger id="recruit-sort" data-slot="select-trigger" className={cn(selectTriggerVariants({ size: "sm" }), "w-fit min-w-0")}>
-                        <SelectValue placeholder="Sort">{(v: string) => SORT_LABELS[v as OperatorSortMode]}</SelectValue>
+                        <SelectValue placeholder={t("recruit.options.sort.placeholder")}>{(v: string) => sortLabel(v as OperatorSortMode)}</SelectValue>
                         <SelectPrimitive.Icon data-slot="select-icon">
                             <ChevronDownIcon className={selectTriggerIconClassName} />
                         </SelectPrimitive.Icon>
                     </SelectPrimitive.Trigger>
                     <SelectContent>
-                        {(Object.keys(SORT_LABELS) as OperatorSortMode[]).map((mode) => (
-                            <SelectItem key={mode} value={mode}>
-                                {SORT_LABELS[mode]}
+                        {SORT_MODES.map((mode) => (
+                            <SelectItem key={mode.value} value={mode.value}>
+                                {t(mode.labelKey)}
                             </SelectItem>
                         ))}
                     </SelectContent>

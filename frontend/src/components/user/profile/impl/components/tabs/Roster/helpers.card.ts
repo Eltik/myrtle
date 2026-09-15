@@ -1,8 +1,21 @@
 import { asset } from "#/components/operators/detail/impl/assets";
 import type { IRosterEntry } from "#/lib/api/user";
+import { DEFAULT_LOCALE, formatMessage, sourceMessage } from "#/lib/i18n";
+import { fullMessageKey, type TypedT } from "#/lib/i18n/messages";
 import { getAvatarById, lerpByLevel } from "#/lib/utils";
 import type { IAttributeKeyFrame, IModule, IOperatorListItem, IPotentialRank } from "#/types/operators";
+import type { messages as cardMessages } from "./helpers.card.messages";
 import type { IOwnedEntry } from "./types";
+
+/** The `t` these labels need, narrowed to the keys they can render. */
+export type CardT = TypedT<typeof cardMessages>;
+
+/**
+ * Default `t` for a caller outside an `I18nProvider`. It resolves against the
+ * bundled source catalog, so the English is the same one the components render
+ * and this file carries no second copy of the text.
+ */
+const sourceT: CardT = (key, values) => formatMessage(sourceMessage(fullMessageKey("user", key)) ?? key, DEFAULT_LOCALE, values);
 
 export { moduleIconURL, skillIconURL, specializedIcon } from "#/components/operators/detail/impl/assets";
 export { parseOperatorName } from "#/lib/utils";
@@ -285,7 +298,7 @@ export interface IOperatorGap {
  * the *next* step), this reports every remaining sub-goal: e.g. how many skills
  * still need M3, not just "M3" once one skill is mastered.
  */
-export function operatorMissing(entry: IRosterEntry, op: IOperatorListItem): IOperatorGap[] {
+export function operatorMissing(entry: IRosterEntry, op: IOperatorListItem, t: CardT = sourceT): IOperatorGap[] {
     const phases = op.phases ?? [];
     const maxElite = Math.max(0, phases.length - 1);
     const maxLevelAtCurrentElite = phases[entry.elite]?.maxLevel ?? 0;
@@ -301,19 +314,18 @@ export function operatorMissing(entry: IRosterEntry, op: IOperatorListItem): IOp
     const modulesToL3 = advanced.length - moduleLevels.filter((l) => l >= 3).length;
 
     const maxPot = maxPotential(op);
-    const plural = (n: number, noun: string) => `${n} ${noun}${n === 1 ? "" : "s"}`;
 
     const missing: IOperatorGap[] = [];
-    if (entry.elite < maxElite) missing.push({ tag: "ELITE", label: `Promote to E${maxElite}` });
-    if (maxLevelAtCurrentElite > 0 && entry.level < maxLevelAtCurrentElite) missing.push({ tag: "MAX_LEVEL", label: `Level to ${maxLevelAtCurrentElite}` });
+    if (entry.elite < maxElite) missing.push({ tag: "ELITE", label: t("profile.roster.gap.elite", { elite: maxElite }) });
+    if (maxLevelAtCurrentElite > 0 && entry.level < maxLevelAtCurrentElite) missing.push({ tag: "MAX_LEVEL", label: t("profile.roster.gap.level", { level: maxLevelAtCurrentElite }) });
     if (canMaster) {
-        if (skillsToM3 > 0) missing.push({ tag: "M3", label: `${plural(skillsToM3, "skill")} to M3` });
+        if (skillsToM3 > 0) missing.push({ tag: "M3", label: t("profile.roster.gap.mastery", { count: skillsToM3 }) });
     } else if (numSkills > 0 && entry.skill_level < 7) {
-        missing.push({ tag: "SL7", label: "Skill rank to 7" });
+        missing.push({ tag: "SL7", label: t("profile.roster.gap.skillLevel") });
     }
-    if (modulesToL3 > 0) missing.push({ tag: "MOD3", label: `${plural(modulesToL3, "module")} to Lv 3` });
-    if (maxPot > 0 && entry.potential < maxPot) missing.push({ tag: "POT6", label: "Max potential (P6)" });
-    if (getTrustPercent(entry.favor_point) < TRUST_MILESTONE_PCT) missing.push({ tag: "TRUST", label: "Reach 100% trust" });
+    if (modulesToL3 > 0) missing.push({ tag: "MOD3", label: t("profile.roster.gap.module", { count: modulesToL3 }) });
+    if (maxPot > 0 && entry.potential < maxPot) missing.push({ tag: "POT6", label: t("profile.roster.gap.potential") });
+    if (getTrustPercent(entry.favor_point) < TRUST_MILESTONE_PCT) missing.push({ tag: "TRUST", label: t("profile.roster.gap.trust") });
 
     return missing;
 }

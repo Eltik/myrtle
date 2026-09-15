@@ -1,9 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { ROLE_CHIP_GRADIENT, ROLE_SOLID, type Role, tlAccentVars } from "#/lib/role-styles";
-import { formatNumberCompact, getAvatarById } from "#/lib/utils";
+import { getAvatarById } from "#/lib/utils";
 import type { ITierList } from "./data";
+import type { messages } from "./TierListCard.messages";
 import styles from "./TierListCard.module.css";
 
 const MAX_TOP_OPS = 4;
@@ -11,6 +14,8 @@ const MAX_GHOST_OPS = 6;
 const MAX_GHOST_TIER_NAMES = 3;
 
 export default function TierListCard({ tl, onOpen }: { tl: ITierList; onOpen?: (slug: string) => void }) {
+    const t: TypedT<typeof messages> = useT("home");
+    const f = useFormatters();
     const [topTier, ...restTiers] = tl.tiers;
     const topOps = (topTier?.operators ?? []).slice(0, MAX_TOP_OPS);
     const ghostOps = restTiers.flatMap((t) => t.operators).slice(0, MAX_GHOST_OPS);
@@ -19,7 +24,7 @@ export default function TierListCard({ tl, onOpen }: { tl: ITierList; onOpen?: (
 
     const ghostNames = restTiers.slice(0, MAX_GHOST_TIER_NAMES).map((t) => t.name);
     const extraGhost = Math.max(0, restTiers.length - MAX_GHOST_TIER_NAMES);
-    const ghostLabel = ghostNames.length > 0 ? `+ ${ghostNames.join(", ")}${extraGhost > 0 ? ` +${extraGhost}` : ""} ${restTiers.length > 1 ? "tiers" : "tier"}` : null;
+    const ghostLabel = ghostNames.length > 0 ? t("card.ghost", { names: ghostNames.join(", "), extra: extraGhost > 0 ? ` +${extraGhost}` : "", count: restTiers.length }) : null;
 
     return (
         <Link to="/tier-lists/$id" params={{ id: tl.slug }} aria-labelledby={`home-tl-${tl.id}-title`} className={`${styles.tlCard} group`} style={tlAccentVars(tl.accent)} onClick={() => onOpen?.(tl.slug)}>
@@ -27,7 +32,7 @@ export default function TierListCard({ tl, onOpen }: { tl: ITierList; onOpen?: (
                 <div className="inline-flex w-max max-w-full items-center gap-1.5 rounded-full border border-border bg-muted px-2 py-0.75 pl-2 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-wider">
                     <span className="h-1.5 w-1.5 rounded-full bg-(--tl-a,var(--primary)) shadow-[0_0_6px_var(--tl-a,var(--primary))]" aria-hidden="true" />
                     <span>{tl.tag}</span>
-                    {tl.hot && <span className="ml-0.5 font-semibold text-primary normal-case tracking-tight">· trending</span>}
+                    {tl.hot && <span className="ml-0.5 font-semibold text-primary normal-case tracking-tight">{t("card.trending")}</span>}
                 </div>
                 <h3 id={`home-tl-${tl.id}-title`} className="m-0 line-clamp-2 font-sans font-semibold text-base text-foreground leading-snug tracking-tight">
                     {tl.title}
@@ -39,13 +44,11 @@ export default function TierListCard({ tl, onOpen }: { tl: ITierList; onOpen?: (
                     <>
                         <div className="flex items-center justify-between gap-2">
                             <span className="inline-flex items-center rounded-[5px] bg-(--tl-a,var(--primary)) px-2 py-0.75 font-bold font-sans text-[10.5px] text-primary-foreground leading-none tracking-tight">{topTier.name}</span>
-                            <span className="font-medium font-mono text-[11px] text-muted-foreground leading-none tracking-wide">
-                                {topTier.operators.length} {topTier.operators.length === 1 ? "pick" : "picks"}
-                            </span>
+                            <span className="font-medium font-mono text-[11px] text-muted-foreground leading-none tracking-wide">{t("card.picks", { count: topTier.operators.length })}</span>
                         </div>
                         <div className="flex min-w-0 flex-wrap gap-1.5">
                             {topOps.map((op) => (
-                                <span key={op.id} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted py-0.75 pr-2.5 pl-0.75 font-medium font-sans text-[11.5px] text-foreground leading-none" title={`${op.name} · ${op.role}`}>
+                                <span key={op.id} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted py-0.75 pr-2.5 pl-0.75 font-medium font-sans text-[11.5px] text-foreground leading-none" title={t("card.opTitle", { name: op.name, role: op.role })}>
                                     <span className="inline-flex h-5 w-5 items-center justify-center rounded-full font-bold font-sans text-[9.5px] text-white leading-none tracking-tight" style={{ background: ROLE_CHIP_GRADIENT[op.role as Role] }}>
                                         <OperatorAvatar charId={op.id} name={op.name} />
                                     </span>
@@ -84,22 +87,22 @@ export default function TierListCard({ tl, onOpen }: { tl: ITierList; onOpen?: (
                     </span>
                 </div>
                 <div className="inline-flex shrink-0 items-center gap-2.5">
-                    <span className="inline-flex items-center gap-1 font-medium font-mono text-[11.5px] text-muted-foreground leading-none tracking-tight [&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-80" title={`${tl.views} views`}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Views">
+                    <span className="inline-flex items-center gap-1 font-medium font-mono text-[11.5px] text-muted-foreground leading-none tracking-tight [&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-80" title={t("card.views", { count: tl.views })}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label={t("card.viewsIcon")}>
                             <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                             <circle cx="12" cy="12" r="3" />
                         </svg>
-                        {formatNumberCompact(tl.views)}
+                        {f.compact(tl.views)}
                     </span>
-                    <span className="inline-flex items-center gap-1 font-medium font-mono text-[11.5px] text-muted-foreground leading-none tracking-tight [&>svg]:h-2.75 [&>svg]:w-2.75 [&>svg]:opacity-80" title={`${tl.votes} favorites`}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Votes">
+                    <span className="inline-flex items-center gap-1 font-medium font-mono text-[11.5px] text-muted-foreground leading-none tracking-tight [&>svg]:h-2.75 [&>svg]:w-2.75 [&>svg]:opacity-80" title={t("card.favorites", { count: tl.votes })}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label={t("card.votesIcon")}>
                             <path d="m5 15 7-7 7 7" />
                         </svg>
-                        {formatNumberCompact(tl.votes)}
+                        {f.compact(tl.votes)}
                     </span>
                     <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap font-medium font-sans text-foreground text-xs leading-none tracking-tight transition-[color,gap] group-hover:text-primary [&>svg]:h-3.25 [&>svg]:w-3.25 [&>svg]:transition-transform group-hover:[&>svg]:translate-x-0.75">
-                        Open
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Right arrow">
+                        {t("card.open")}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label={t("card.arrowIcon")}>
                             <path d="M5 12h14" />
                             <path d="m12 5 7 7-7 7" />
                         </svg>

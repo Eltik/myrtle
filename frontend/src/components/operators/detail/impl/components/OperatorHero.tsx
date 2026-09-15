@@ -1,11 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { Badge } from "#/components/ui/badge";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "#/components/ui/breadcrumb";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, formatNationId, formatProfession, formatSubProfession, rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { campLogo, operatorHero } from "../assets";
 import { RARITY_COLORS, RARITY_GLOW } from "../constants";
 import { useParallaxProgress } from "../useParallaxProgress";
+import type { messages } from "./OperatorHero.messages";
 import styles from "./OperatorHero.module.css";
 
 interface IOperatorHeroProps {
@@ -13,6 +16,7 @@ interface IOperatorHeroProps {
 }
 
 export function OperatorHero({ operator }: IOperatorHeroProps) {
+    const t: TypedT<typeof messages> = useT("operators");
     const ref = useParallaxProgress<HTMLDivElement>();
 
     const rarityNum = rarityToNumber(operator.rarity);
@@ -39,7 +43,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                         <Breadcrumb className="mb-2">
                             <BreadcrumbList className="text-xs">
                                 <BreadcrumbItem>
-                                    <BreadcrumbLink render={<Link to="/operators" />}>Operators</BreadcrumbLink>
+                                    <BreadcrumbLink render={<Link to="/operators" />}>{t("hero.breadcrumb.operators")}</BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator />
                                 <BreadcrumbItem>
@@ -62,7 +66,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                                 {formatProfession(operator.profession)}
                             </Badge>
                             <Badge variant="outline" className="border-transparent bg-accent text-foreground">
-                                {operator.position === "RANGED" ? "Ranged" : operator.position === "MELEE" ? "Melee" : operator.position}
+                                {operator.position === "RANGED" ? t("hero.position.ranged") : operator.position === "MELEE" ? t("hero.position.melee") : operator.position}
                             </Badge>
                             {operator.nationId && (
                                 <Badge variant="outline" className="border-transparent bg-accent text-foreground">
@@ -88,7 +92,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                         <Breadcrumb className="mb-3">
                             <BreadcrumbList>
                                 <BreadcrumbItem>
-                                    <BreadcrumbLink render={<Link to="/operators" />}>Operators</BreadcrumbLink>
+                                    <BreadcrumbLink render={<Link to="/operators" />}>{t("hero.breadcrumb.operators")}</BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator />
                                 <BreadcrumbItem>
@@ -113,7 +117,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                                         {formatProfession(operator.profession)}
                                     </Badge>
                                     <Badge variant="outline" className="border-transparent bg-accent text-foreground">
-                                        {operator.position === "RANGED" ? "Ranged" : operator.position === "MELEE" ? "Melee" : operator.position}
+                                        {operator.position === "RANGED" ? t("hero.position.ranged") : operator.position === "MELEE" ? t("hero.position.melee") : operator.position}
                                     </Badge>
                                     {operator.nationId && (
                                         <Badge variant="outline" className="border-transparent bg-accent text-foreground">

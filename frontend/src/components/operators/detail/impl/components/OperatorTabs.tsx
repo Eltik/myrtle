@@ -2,9 +2,13 @@ import { Card, CardPanel } from "#/components/ui/card";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTab } from "#/components/ui/tabs";
 import { Tooltip, TooltipPopup, TooltipProvider, TooltipTrigger } from "#/components/ui/tooltip";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { TABS, type TabType } from "../constants";
+import type { messages as detailConstantsMessages } from "../constants.messages";
+import type { messages } from "./OperatorTabs.messages";
 import { AudioContent } from "./tabs/AudioContent";
 import { InfoContent } from "./tabs/InfoContent";
 import { LevelUpContent } from "./tabs/LevelUpContent";
@@ -28,6 +32,7 @@ const CONTENT_MAP = {
 } as const;
 
 export function OperatorTabs({ operator, activeTab, onTabChange }: IOperatorTabsProps) {
+    const t: TypedT<typeof messages & typeof detailConstantsMessages> = useT("operators");
     const ActiveContent = CONTENT_MAP[activeTab];
     const handleValueChange = (value: unknown) => {
         if (typeof value === "string") onTabChange(value as TabType);
@@ -38,7 +43,7 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: IOperatorTabs
     return (
         <TooltipProvider>
             <div className="flex min-w-0 flex-col lg:flex-row lg:gap-8">
-                <nav aria-label="Operator sections" className="min-w-0 shrink-0 lg:w-56">
+                <nav aria-label={t("tabs.aria")} className="min-w-0 shrink-0 lg:w-56">
                     <Tabs className="sticky top-14 z-30 -mx-3 mb-4 border-border/50 border-b bg-background/80 backdrop-blur-xl sm:top-16 sm:-mx-4 lg:hidden" onValueChange={handleValueChange} value={activeTab}>
                         <ScrollArea className="w-full" scrollFade>
                             <TabsList className={cn("w-max gap-1 rounded-none bg-transparent px-3 py-2.5 sm:px-4", "**:data-[slot=tab-indicator]:rounded-full **:data-[slot=tab-indicator]:bg-primary! **:data-[slot=tab-indicator]:shadow-sm")}>
@@ -47,7 +52,7 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: IOperatorTabs
                                     return (
                                         <TabsTab className="h-auto grow-0 rounded-full px-4 py-1.5 font-medium text-muted-foreground text-sm hover:bg-accent hover:text-foreground data-active:text-primary-foreground! data-active:hover:bg-transparent" key={tab.type} value={tab.type}>
                                             <Icon className="h-4 w-4" />
-                                            <span>{tab.label}</span>
+                                            <span>{t(tab.labelKey)}</span>
                                         </TabsTab>
                                     );
                                 })}
@@ -68,16 +73,16 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: IOperatorTabs
                                     <Tooltip key={tab.type}>
                                         <TooltipTrigger render={<TabsTab className="group h-11 justify-start gap-3 rounded-lg px-3 text-left font-medium text-muted-foreground text-sm hover:text-foreground data-active:text-foreground!" value={tab.type} />}>
                                             <Icon className="h-4 w-4 shrink-0 text-muted-foreground/70 transition-colors group-hover:text-foreground group-data-active:text-primary" />
-                                            <span className="truncate">{tab.label}</span>
+                                            <span className="truncate">{t(tab.labelKey)}</span>
                                         </TooltipTrigger>
-                                        <TooltipPopup side="right">{tab.label}</TooltipPopup>
+                                        <TooltipPopup side="right">{t(tab.labelKey)}</TooltipPopup>
                                     </Tooltip>
                                 );
                             })}
                         </TabsList>
 
                         <div className="mt-3 px-3">
-                            <p className="truncate font-mono text-muted-foreground/60 text-xs uppercase tracking-wider">{operator.name ?? "Operator"}</p>
+                            <p className="truncate font-mono text-muted-foreground/60 text-xs uppercase tracking-wider">{operator.name ?? t("tabs.fallbackName")}</p>
                         </div>
                     </Tabs>
                 </nav>

@@ -1,9 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { Kbd } from "#/components/ui/kbd";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { ToolIcon } from "#/lib/registry/ToolIcon";
 import { TOOLS } from "#/lib/registry/tools";
 import { ROLE_GRADIENT, type Role } from "#/lib/role-styles";
+import type { messages } from "./CommandPreview.messages";
 import styles from "./Hero.module.css";
 
 interface IPreviewOperator {
@@ -26,6 +29,9 @@ interface ICommandPreviewProps {
 }
 
 export default function CommandPreview({ onOpenCommand }: ICommandPreviewProps) {
+    const t: TypedT<typeof messages> = useT("home");
+    // Tool labels live in the `nav` namespace with the rest of the registry copy.
+    const tNav = useT("nav");
     const toolsById = new Map(TOOLS.map((t) => [t.id, t]));
     const tools = PREVIEW_TOOL_IDS.map((id) => toolsById.get(id)).filter((t): t is NonNullable<typeof t> => Boolean(t));
 
@@ -33,8 +39,8 @@ export default function CommandPreview({ onOpenCommand }: ICommandPreviewProps) 
 
     return (
         <div className={styles.cmdPopup}>
-            <button type="button" className={styles.cmdHead} onClick={onOpenCommand} aria-label="Open command palette">
-                <svg className={styles.cmdSearchIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label="Search">
+            <button type="button" className={styles.cmdHead} onClick={onOpenCommand} aria-label={t("cmd.open")}>
+                <svg className={styles.cmdSearchIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" role="image" aria-label={t("cmd.searchIcon")}>
                     <circle cx="11" cy="11" r="8" />
                     <path d="m21 21-4.35-4.35" />
                 </svg>
@@ -47,7 +53,7 @@ export default function CommandPreview({ onOpenCommand }: ICommandPreviewProps) 
             {/* biome-ignore lint/a11y/noStaticElementInteractions: same */}
             <div className={styles.cmdPanel} onClick={onOpenCommand}>
                 <div className={styles.cmdGroup} role="menu">
-                    <div className={styles.cmdGroupLabel}>Operators</div>
+                    <div className={styles.cmdGroupLabel}>{t("cmd.group.operators")}</div>
                     {PREVIEW_OPERATORS.map((op) => (
                         <Link key={op.id} to="/operators/$id" params={{ id: op.id }} className={styles.cmdItem} role="menuitem" onClick={stop}>
                             <span className="op-chip" aria-hidden="true" style={{ background: ROLE_GRADIENT[op.role] }}>
@@ -60,11 +66,11 @@ export default function CommandPreview({ onOpenCommand }: ICommandPreviewProps) 
                 </div>
                 <div className={styles.cmdSep} />
                 <div className={styles.cmdGroup} role="menu">
-                    <div className={styles.cmdGroupLabel}>Tools</div>
+                    <div className={styles.cmdGroupLabel}>{t("cmd.group.tools")}</div>
                     {tools.map((tool) => (
                         <Link key={tool.id} to={tool.href} className={styles.cmdItem} role="menuitem" onClick={stop}>
                             <ToolIcon name={tool.icon} />
-                            <span className={styles.cmdPrimary}>{tool.label}</span>
+                            <span className={styles.cmdPrimary}>{tNav(tool.labelKey)}</span>
                         </Link>
                     ))}
                 </div>
@@ -72,12 +78,12 @@ export default function CommandPreview({ onOpenCommand }: ICommandPreviewProps) 
             <div className={styles.cmdFooter}>
                 <span>
                     <Kbd>↑</Kbd>
-                    <Kbd>↓</Kbd> to navigate
+                    <Kbd>↓</Kbd> {t("cmd.toNavigate")}
                 </span>
                 <span>
-                    <Kbd>↵</Kbd> to select
+                    <Kbd>↵</Kbd> {t("cmd.toSelect")}
                 </span>
-                <span className={styles.right}>powered by COSS UI</span>
+                <span className={styles.right}>{t("cmd.poweredBy")}</span>
             </div>
         </div>
     );

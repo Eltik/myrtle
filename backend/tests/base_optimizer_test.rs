@@ -4707,12 +4707,25 @@ fn bench_seat_prefers_a_valued_operator_over_a_blank() {
     const LEE: &str = "char_322_lmlee";
     let mut lee = profile(gd, LEE);
     // E0 level 1: only his pair skill with Aak is unlocked.
-    lee.available_buffs.retain(|b| b.starts_with("control_allCost_condChar"));
+    lee.available_buffs
+        .retain(|b| b.starts_with("control_allCost_condChar"));
     let roster = vec![lee, profile(gd, BLAZE2)];
     let mut slots: Vec<String> = Vec::new();
     let mut assigned: HashSet<String> = HashSet::new();
-    let added = fill_remaining_slots(&mut slots, 1, "CONTROL", &roster, &gd.building, &registry, &mut assigned);
-    assert_eq!(added, vec![BLAZE2.to_string()], "the valued operator takes the seat: {added:?}");
+    let added = fill_remaining_slots(
+        &mut slots,
+        1,
+        "CONTROL",
+        &roster,
+        &gd.building,
+        &registry,
+        &mut assigned,
+    );
+    assert_eq!(
+        added,
+        vec![BLAZE2.to_string()],
+        "the valued operator takes the seat: {added:?}"
+    );
 }
 
 #[test]

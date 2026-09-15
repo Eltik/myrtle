@@ -2,6 +2,7 @@ import { createFileRoute, notFound, stripSearchParams } from "@tanstack/react-ro
 import { TierListDetail } from "#/components/tier-lists/detail/TierListDetail";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { type ITierListDetail, myTierListFavoriteQueryOptions, tierListDetailQueryOptions, tierListVersionsQueryOptions } from "#/lib/api/tier-lists";
+import { metaT } from "#/lib/meta";
 import type { ITierListOgData } from "#/lib/og/impl/templates/TierList";
 import { ogURL, warmOg } from "#/lib/og/impl/url";
 import { seo } from "#/lib/seo";
@@ -77,21 +78,26 @@ export const Route = createFileRoute("/tier-lists_/$id")({
     },
     search: { middlewares: [stripSearchParams(DETAIL_SEARCH_DEFAULTS)] },
     loader: async ({ context, params }) => {
-        const detail = await context.queryClient.ensureQueryData(tierListDetailQueryOptions(params.id));
+        const detail = await context.queryClient.ensureQueryData(tierListDetailQueryOptions(params.id, context.i18n.gamedataServer));
         if (!detail) throw notFound();
         if (context.user) {
             void context.queryClient.prefetchQuery(myTierListFavoriteQueryOptions(params.id, true));
         }
         void context.queryClient.prefetchQuery(tierListVersionsQueryOptions(params.id));
-        void context.queryClient.prefetchQuery(operatorsIndexQueryOptions());
+        void context.queryClient.prefetchQuery(operatorsIndexQueryOptions(context.i18n.gamedataServer));
         warmOg("tier-list", detail.slug, buildOgData(detail));
         return detail;
     },
-    head: ({ loaderData, params }) => {
+    head: ({ loaderData, match, params }) => {
+        const t = metaT(match.context.i18n);
+        const locale = match.context.i18n?.locale;
         if (!loaderData) {
-            return seo({ title: "Tier List", path: `/tier-lists/${params.id}` });
+            return seo({ title: t("tierList.fallbackTitle"), path: `/tier-lists/${params.id}`, locale });
         }
-        const description = loaderData.description || `${loaderData.listType === "official" ? "Official" : "Community"} tier list with ${loaderData.tiers.length} tiers on myrtle.moe.`;
+        // One message with a `select`, not two halves joined: which of
+        // "Official"/"Community" opens the sentence is a word choice inside it,
+        // and in most languages it moves.
+        const description = loaderData.description || t("tierList.descriptionFallback", { type: loaderData.listType, count: loaderData.tiers.length });
         return seo({
             title: loaderData.title,
             description,
@@ -99,6 +105,7 @@ export const Route = createFileRoute("/tier-lists_/$id")({
             image: ogURL("tier-list", loaderData.slug, buildOgData(loaderData)),
             type: "article",
             preloadImage: true,
+            locale,
         });
     },
 });

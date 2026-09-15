@@ -7,6 +7,7 @@ use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::core::auth::jwt::verify_token;
 use crate::core::auth::permissions::GlobalRole;
+use std::str::FromStr;
 
 #[derive(Debug, Clone)]
 pub struct AuthUser {
@@ -94,11 +95,10 @@ fn extract_bearer(headers: &HeaderMap) -> Result<&str, ApiError> {
         .ok_or(ApiError::Unauthorized)
 }
 
+/// An unknown or absent role in a token degrades to `User` rather than
+/// failing the request: a token minted before a role existed must still
+/// authenticate, just without the privilege. `GlobalRole::from_str` owns the
+/// spelling of every role so this cannot drift from `Display`.
 fn parse_role(role: &str) -> GlobalRole {
-    match role {
-        "super_admin" => GlobalRole::SuperAdmin,
-        "tier_list_admin" => GlobalRole::TierListAdmin,
-        "tier_list_editor" => GlobalRole::TierListEditor,
-        _ => GlobalRole::User,
-    }
+    GlobalRole::from_str(role).unwrap_or_default()
 }

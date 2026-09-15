@@ -14,6 +14,7 @@ import type { SkinPopularityResponse } from "#/types/generated/SkinPopularityRes
 import type { SpecialSkinInfo } from "#/types/generated/SpecialSkinInfo";
 import type { TokenSkinMapEntry } from "#/types/generated/TokenSkinMapEntry";
 import { optionalSiteToken } from "./_shared.server";
+import { DEFAULT_GAMEDATA_SERVER, gamedataPath, resolveGamedataServer } from "./gamedata";
 
 export type IDisplaySkin = DisplaySkin;
 export type ISkin = Skin;
@@ -53,17 +54,17 @@ export interface ISkinIndexEntry {
 export type ISkinIndex = Record<string, ISkinIndexEntry>;
 
 export const getSkinsIndexFn = createServerFn({ method: "GET" })
-    .inputValidator((server: "en" | "cn") => server)
+    .inputValidator((server: string) => server)
     .handler(async ({ data: server }) => {
-        const res = await backendFetch(server === "cn" ? "/cn/skins/index" : "/skins/index");
+        const res = await backendFetch(gamedataPath(server, "/skins/index"));
         if (!res.ok) throw new Error(`Failed to load skins index: ${res.status}`);
         return (await res.json()) as ISkinIndex;
     });
 
-export function skinsIndexQueryOptions(server: "en" | "cn" = "en") {
+export function skinsIndexQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["skins", "index", server],
-        queryFn: () => getSkinsIndexFn({ data: server }),
+        queryKey: ["skins", "index", resolveGamedataServer(server)],
+        queryFn: () => getSkinsIndexFn({ data: resolveGamedataServer(server) }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });
@@ -71,18 +72,17 @@ export function skinsIndexQueryOptions(server: "en" | "cn" = "en") {
 
 /** One operator's skins (a few KB) instead of the entire skins table. */
 export const getOperatorSkinsFn = createServerFn({ method: "GET" })
-    .inputValidator((data: { id: string; server: "en" | "cn" }) => data)
+    .inputValidator((data: { id: string; server: string }) => data)
     .handler(async ({ data: { id, server } }) => {
-        const prefix = server === "cn" ? "/cn" : "";
-        const res = await backendFetch(`${prefix}/skins/${encodeURIComponent(id)}`);
+        const res = await backendFetch(gamedataPath(server, `/skins/${encodeURIComponent(id)}`));
         if (!res.ok) throw new Error(`Failed to load operator skins: ${res.status}`);
         return (await res.json()) as ISkinDataResponse;
     });
 
-export function operatorSkinsQueryOptions(id: string, server: "en" | "cn" = "en") {
+export function operatorSkinsQueryOptions(id: string, server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["skins", "operator", server, id],
-        queryFn: () => getOperatorSkinsFn({ data: { id, server } }),
+        queryKey: ["skins", "operator", resolveGamedataServer(server), id],
+        queryFn: () => getOperatorSkinsFn({ data: { id, server: resolveGamedataServer(server) } }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });

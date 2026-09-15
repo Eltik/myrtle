@@ -7,7 +7,10 @@ import { Field, FieldLabel } from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
 import { Kicker } from "#/components/ui/kicker";
 import { MarkdownEditor } from "#/components/ui/markdown-editor";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { LIST_DESCRIPTION_MAX as DESC_MAX, LIST_NAME_MAX as TITLE_MAX } from "../shared";
+import type { messages } from "./EditHero.messages";
 import type { IPendingChange } from "./state";
 
 interface IEditHeroProps {
@@ -26,6 +29,7 @@ interface IEditHeroProps {
 }
 
 export function EditHero({ slug, title, description, onTitleChange, onDescriptionChange, onSave, onReset, onAddTier, pendingChanges, saving, saveError, saveProgress }: IEditHeroProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
     const titleId = useId();
     const descId = useId();
     const isDirty = pendingChanges.length > 0;
@@ -38,33 +42,33 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                 <Breadcrumb className="mb-3">
                     <BreadcrumbList className="text-xs">
                         <BreadcrumbItem>
-                            <BreadcrumbLink render={<Link to="/tier-lists/my" search={{ sort: "recent", type: "all", view: "grid", q: "" }} />}>My Lists</BreadcrumbLink>
+                            <BreadcrumbLink render={<Link to="/tier-lists/my" search={{ sort: "recent", type: "all", view: "grid", q: "" }} />}>{t("edit.hero.breadcrumbMine")}</BreadcrumbLink>
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                            <BreadcrumbLink render={<Link to="/tier-lists/$id" params={{ id: slug }} />}>{title || "Untitled"}</BreadcrumbLink>
+                            <BreadcrumbLink render={<Link to="/tier-lists/$id" params={{ id: slug }} />}>{title || t("edit.hero.breadcrumbUntitled")}</BreadcrumbLink>
                         </BreadcrumbItem>
                         <BreadcrumbSeparator />
                         <BreadcrumbItem>
-                            <BreadcrumbPage className="font-medium">Edit</BreadcrumbPage>
+                            <BreadcrumbPage className="font-medium">{t("edit.hero.breadcrumbEdit")}</BreadcrumbPage>
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
 
                 <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0 flex-1">
-                        <Kicker>Editing</Kicker>
+                        <Kicker>{t("edit.hero.kicker")}</Kicker>
 
                         <div className="mt-1 flex flex-col gap-3">
                             <Field>
                                 <FieldLabel htmlFor={titleId} className="sr-only">
-                                    List title
+                                    {t("edit.hero.titleLabel")}
                                 </FieldLabel>
                                 <Input
                                     id={titleId}
                                     value={title}
                                     onChange={(e) => onTitleChange((e.target as HTMLInputElement).value.slice(0, TITLE_MAX))}
-                                    placeholder="Untitled tier list"
+                                    placeholder={t("edit.hero.titlePlaceholder")}
                                     size="lg"
                                     aria-invalid={!titleValid || undefined}
                                     className="font-bold text-2xl sm:text-3xl [&_input]:font-sans [&_input]:tracking-tight"
@@ -73,18 +77,18 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
 
                             <Field>
                                 <FieldLabel htmlFor={descId} className="sr-only">
-                                    Description
+                                    {t("edit.hero.descriptionLabel")}
                                 </FieldLabel>
-                                <MarkdownEditor id={descId} value={description} onChange={onDescriptionChange} placeholder="Add a short description so viewers know what this list is about." rows={4} maxLength={DESC_MAX} showHint={false} />
+                                <MarkdownEditor id={descId} value={description} onChange={onDescriptionChange} placeholder={t("edit.hero.descriptionPlaceholder")} rows={4} maxLength={DESC_MAX} showHint={false} />
                             </Field>
 
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">
                                 <span className="tabular-nums">
-                                    <span className="text-foreground">{title.length}</span> / {TITLE_MAX} title
+                                    <span className="text-foreground">{title.length}</span> {t("edit.hero.titleCounter", { max: TITLE_MAX })}
                                 </span>
                                 <span aria-hidden="true">·</span>
                                 <span className="tabular-nums">
-                                    <span className="text-foreground">{description.length}</span> / {DESC_MAX} description
+                                    <span className="text-foreground">{description.length}</span> {t("edit.hero.descriptionCounter", { max: DESC_MAX })}
                                 </span>
                             </div>
                         </div>
@@ -93,7 +97,7 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                     <div className="flex w-full shrink-0 flex-col gap-3 lg:w-72">
                         <div className="rounded-xl border border-border bg-card p-3 shadow-[0_1px_2px_oklch(0_0_0/0.04)]">
                             <div className="flex items-center justify-between gap-2">
-                                <span className="font-bold font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{isDirty ? "Unsaved changes" : "All saved"}</span>
+                                <span className="font-bold font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{isDirty ? t("edit.hero.unsaved") : t("edit.hero.allSaved")}</span>
                                 {!isDirty && <CheckIcon className="h-3.5 w-3.5 text-primary" aria-hidden="true" />}
                             </div>
                             {isDirty ? (
@@ -104,10 +108,10 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                                             <span className="truncate">{c.label}</span>
                                         </li>
                                     ))}
-                                    {pendingChanges.length > 6 && <li className="mt-1 font-mono text-[10.5px] text-muted-foreground">+{pendingChanges.length - 6} more</li>}
+                                    {pendingChanges.length > 6 && <li className="mt-1 font-mono text-[10.5px] text-muted-foreground">{t("edit.hero.moreChanges", { count: pendingChanges.length - 6 })}</li>}
                                 </ul>
                             ) : (
-                                <p className="mt-1 font-sans text-[12px] text-muted-foreground">Your list is up to date with the server.</p>
+                                <p className="mt-1 font-sans text-[12px] text-muted-foreground">{t("edit.hero.upToDate")}</p>
                             )}
 
                             {saveProgress && (
@@ -134,9 +138,9 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                         <div className="flex flex-wrap items-center gap-1.5">
                             <Button type="button" onClick={onSave} disabled={!isDirty || saving || !titleValid} loading={saving} className="flex-1">
                                 <CheckIcon />
-                                Save changes
+                                {t("edit.hero.save")}
                             </Button>
-                            <Button type="button" variant="outline" onClick={onReset} disabled={!isDirty || saving} size="icon" aria-label="Discard unsaved changes">
+                            <Button type="button" variant="outline" onClick={onReset} disabled={!isDirty || saving} size="icon" aria-label={t("edit.hero.discard")}>
                                 <RotateCcwIcon />
                             </Button>
                         </div>
@@ -144,9 +148,9 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
                         <div className="flex flex-wrap items-center gap-1.5">
                             <Button type="button" variant="outline" onClick={onAddTier} className="flex-1">
                                 <PlusIcon />
-                                Add tier
+                                {t("edit.hero.addTier")}
                             </Button>
-                            <Button type="button" variant="ghost" render={<Link to="/tier-lists/$id" params={{ id: slug }} target="_blank" rel="noreferrer" />} size="icon" aria-label="Open public view in new tab">
+                            <Button type="button" variant="ghost" render={<Link to="/tier-lists/$id" params={{ id: slug }} target="_blank" rel="noreferrer" />} size="icon" aria-label={t("edit.hero.openPublic")}>
                                 <ExternalLinkIcon />
                             </Button>
                         </div>

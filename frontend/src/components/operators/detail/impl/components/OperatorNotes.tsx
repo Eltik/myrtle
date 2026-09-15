@@ -4,8 +4,11 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { operatorNoteQueryOptions } from "#/lib/api/operator-notes";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { Markdown } from "#/lib/markdown";
 import { cn } from "#/lib/utils";
+import type { messages } from "./OperatorNotes.messages";
 
 interface IOperatorNotesProps {
     operatorId: string | null;
@@ -14,6 +17,7 @@ interface IOperatorNotesProps {
 const COLLAPSED_MAX_HEIGHT = 120;
 
 function ExpandableText({ text, markdown = false }: { text: string; markdown?: boolean }) {
+    const t: TypedT<typeof messages> = useT("operators");
     const ref = useRef<HTMLDivElement>(null);
     const [overflows, setOverflows] = useState(false);
     const [expanded, setExpanded] = useState(false);
@@ -38,7 +42,7 @@ function ExpandableText({ text, markdown = false }: { text: string; markdown?: b
             </div>
             {overflows && (
                 <button className="mt-2 inline-flex items-center gap-1 font-medium text-primary text-xs hover:underline" onClick={() => setExpanded((v) => !v)} type="button">
-                    {expanded ? "Show less" : "Show more"}
+                    {expanded ? t("notes.showLess") : t("notes.showMore")}
                     <ChevronDown className={cn("h-3 w-3 transition-transform", expanded && "rotate-180")} />
                 </button>
             )}
@@ -47,6 +51,7 @@ function ExpandableText({ text, markdown = false }: { text: string; markdown?: b
 }
 
 export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
+    const t: TypedT<typeof messages> = useT("operators");
     const { data: note, isLoading } = useQuery({
         ...operatorNoteQueryOptions(operatorId ?? ""),
         enabled: !!operatorId,
@@ -84,7 +89,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
             <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
                 <span className="flex items-center gap-2">
                     <MessageSquareText className="h-4 w-4 text-primary" />
-                    <span className="font-medium text-sm">Operator Notes</span>
+                    <span className="font-medium text-sm">{t("notes.title")}</span>
                 </span>
             </CollapsibleTrigger>
             <CollapsibleContent>
@@ -101,7 +106,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
                                 <div className="rounded-lg border border-border bg-secondary/20 p-4">
                                     <div className="mb-2 flex items-center gap-2">
                                         <ThumbsUp className="h-4 w-4 text-green-500" />
-                                        <span className="font-medium text-sm">Pros</span>
+                                        <span className="font-medium text-sm">{t("notes.pros")}</span>
                                     </div>
                                     <ExpandableText text={pros} markdown />
                                 </div>
@@ -110,7 +115,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
                                 <div className="rounded-lg border border-border bg-secondary/20 p-4">
                                     <div className="mb-2 flex items-center gap-2">
                                         <ThumbsDown className="h-4 w-4 text-red-500" />
-                                        <span className="font-medium text-sm">Cons</span>
+                                        <span className="font-medium text-sm">{t("notes.cons")}</span>
                                     </div>
                                     <ExpandableText text={cons} markdown />
                                 </div>
@@ -122,7 +127,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
                         <div className="rounded-lg border border-border bg-secondary/20 p-4">
                             <div className="mb-2 flex items-center gap-2">
                                 <StickyNote className="h-4 w-4 text-yellow-500" />
-                                <span className="font-medium text-sm">Notes</span>
+                                <span className="font-medium text-sm">{t("notes.notes")}</span>
                             </div>
                             <ExpandableText text={notesText} markdown />
                         </div>
@@ -132,7 +137,7 @@ export function OperatorNotes({ operatorId }: IOperatorNotesProps) {
                         <div className="rounded-lg border border-border bg-secondary/20 p-4">
                             <div className="mb-2 flex items-center gap-2">
                                 <Lightbulb className="h-4 w-4 text-amber-500" />
-                                <span className="font-medium text-sm">Trivia</span>
+                                <span className="font-medium text-sm">{t("notes.trivia")}</span>
                             </div>
                             <ExpandableText text={trivia} markdown />
                         </div>

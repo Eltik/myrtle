@@ -4,11 +4,16 @@ import { FilterDropdown } from "#/components/operators/list/impl/components/Filt
 import { ClassIcon, TeamIcon } from "#/components/operators/list/impl/components/Icons";
 import { Input } from "#/components/ui/input";
 import { InputGroup, InputGroupAddon } from "#/components/ui/input-group";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, formatNationId, formatProfession } from "#/lib/utils";
 import type { OperatorProfession } from "#/types/operators";
 import { PROFESSIONS, RARITIES } from "../constants";
 import { rarityVar } from "../helpers";
 import type { IBirthdayFilters } from "../types";
+import type { messages } from "./FilterControls.messages";
+
+type FilterT = TypedT<typeof messages>;
 
 interface IFilterControlsProps {
     filters: IBirthdayFilters;
@@ -18,6 +23,7 @@ interface IFilterControlsProps {
 
 /** The filter form: search · class · rarity · nation. */
 export function FilterControls({ filters, onChange, nations }: IFilterControlsProps): React.ReactElement {
+    const t: FilterT = useT("tools");
     const toggleRarity = (r: number) => {
         const rarities = new Set(filters.rarities);
         rarities.has(r) ? rarities.delete(r) : rarities.add(r);
@@ -31,16 +37,16 @@ export function FilterControls({ filters, onChange, nations }: IFilterControlsPr
 
     return (
         <div className="flex flex-col">
-            <Section label="Search">
+            <Section label={t("birthdays.filters.search")} t={t}>
                 <InputGroup>
                     <InputGroupAddon>
                         <SearchIcon />
                     </InputGroupAddon>
-                    <Input placeholder="Operator name…" value={filters.query} onChange={(e) => onChange({ ...filters, query: e.target.value })} />
+                    <Input placeholder={t("birthdays.filters.search.placeholder")} value={filters.query} onChange={(e) => onChange({ ...filters, query: e.target.value })} />
                 </InputGroup>
             </Section>
 
-            <Section label="Class" onClear={filters.professions.size > 0 ? () => onChange({ ...filters, professions: new Set() }) : undefined}>
+            <Section label={t("birthdays.filters.class")} t={t} onClear={filters.professions.size > 0 ? () => onChange({ ...filters, professions: new Set() }) : undefined}>
                 <div className="grid grid-cols-4 gap-1.5">
                     {PROFESSIONS.map((p) => {
                         const on = filters.professions.has(p);
@@ -63,7 +69,7 @@ export function FilterControls({ filters, onChange, nations }: IFilterControlsPr
                 </div>
             </Section>
 
-            <Section label="Rarity" onClear={filters.rarities.size > 0 ? () => onChange({ ...filters, rarities: new Set() }) : undefined}>
+            <Section label={t("birthdays.filters.rarity")} t={t} onClear={filters.rarities.size > 0 ? () => onChange({ ...filters, rarities: new Set() }) : undefined}>
                 <div className="grid grid-cols-6 gap-1.5">
                     {RARITIES.map((r) => {
                         const on = filters.rarities.has(r);
@@ -80,15 +86,22 @@ export function FilterControls({ filters, onChange, nations }: IFilterControlsPr
                                     on ? "border-[var(--rc)] bg-[color-mix(in_oklch,var(--rc)_18%,transparent)] text-[var(--rc)]" : "border-border bg-[color-mix(in_oklch,var(--secondary)_50%,transparent)] text-muted-foreground hover:border-[color-mix(in_oklch,var(--rc)_55%,var(--border))] hover:text-foreground",
                                 )}
                             >
-                                {r}★
+                                {t("birthdays.filters.rarityChip", { rarity: r })}
                             </button>
                         );
                     })}
                 </div>
             </Section>
 
-            <Section label="Nation" onClear={filters.nations.size > 0 ? () => onChange({ ...filters, nations: new Set() }) : undefined}>
-                <FilterDropdown placeholder="All nations" options={nations.map(([id]) => id)} selected={[...filters.nations]} onChange={(values) => onChange({ ...filters, nations: new Set(values) })} formatOption={(n) => formatNationId(n) ?? n} renderOptionIcon={(v) => <TeamIcon teamId={v} size={18} />} />
+            <Section label={t("birthdays.filters.nation")} t={t} onClear={filters.nations.size > 0 ? () => onChange({ ...filters, nations: new Set() }) : undefined}>
+                <FilterDropdown
+                    placeholder={t("birthdays.filters.nation.placeholder")}
+                    options={nations.map(([id]) => id)}
+                    selected={[...filters.nations]}
+                    onChange={(values) => onChange({ ...filters, nations: new Set(values) })}
+                    formatOption={(n) => formatNationId(n) ?? n}
+                    renderOptionIcon={(v) => <TeamIcon teamId={v} size={18} />}
+                />
             </Section>
         </div>
     );
@@ -98,16 +111,17 @@ interface ISectionProps {
     label: string;
     onClear?: () => void;
     children: React.ReactNode;
+    t: FilterT;
 }
 
-function Section({ label, onClear, children }: ISectionProps): React.ReactElement {
+function Section({ label, onClear, children, t }: ISectionProps): React.ReactElement {
     return (
         <div className="border-border border-t py-3.5 first:border-t-0 first:pt-0">
             <div className="mb-2.5 flex items-center justify-between font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.08em]">
                 <span>{label}</span>
                 {onClear && (
                     <button type="button" className="-my-1 cursor-pointer px-1 py-1 font-sans text-[11px] text-primary normal-case tracking-normal transition-colors hover:text-primary/80" onClick={onClear}>
-                        clear
+                        {t("birthdays.filters.clear")}
                     </button>
                 )}
             </div>

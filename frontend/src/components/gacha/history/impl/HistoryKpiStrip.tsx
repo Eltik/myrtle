@@ -1,5 +1,7 @@
 import type { IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
-import { formatNumber } from "#/lib/utils";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "./HistoryKpiStrip.messages";
 
 interface IHistoryKpiStripProps {
     records: IClientGachaRecords | null;
@@ -41,6 +43,9 @@ function allItems(records: IClientGachaRecords): IGachaItem[] {
 const ORUNDUM_PER_PULL = 600;
 
 export function HistoryKpiStrip({ records, isLoading }: IHistoryKpiStripProps) {
+    const t: TypedT<typeof messages> = useT("gacha");
+    const f = useFormatters();
+
     if (isLoading) {
         return (
             <div className="grid grid-cols-2 overflow-hidden rounded-[14px] border border-border bg-card lg:grid-cols-4">
@@ -69,38 +74,36 @@ export function HistoryKpiStrip({ records, isLoading }: IHistoryKpiStripProps) {
         <div className="grid grid-cols-2 overflow-hidden rounded-[14px] border border-border bg-card lg:grid-cols-4">
             <Kpi
                 featured
-                label="Total pulls"
-                value={formatNumber(total)}
+                label={t("history.kpi.totalPulls")}
+                value={f.number(total)}
                 meta={
                     <>
-                        <span>
-                            across {bannerTypeCount} banner type{bannerTypeCount !== 1 ? "s" : ""}
-                        </span>
-                        {total > 0 ? <span title={`${formatNumber(total)} pulls x ${ORUNDUM_PER_PULL} Orundum; free and discounted pulls make this an upper estimate`}>≈ {formatNumber(total * ORUNDUM_PER_PULL)} Orundum</span> : null}
+                        <span>{t("history.kpi.bannerTypes", { count: bannerTypeCount })}</span>
+                        {total > 0 ? <span title={t("history.kpi.orundum.title", { pulls: f.number(total), rate: ORUNDUM_PER_PULL })}>{t("history.kpi.orundum", { count: f.number(total * ORUNDUM_PER_PULL) })}</span> : null}
                     </>
                 }
             />
             <Kpi
-                label="6★ operators"
+                label={t("history.kpi.sixStars")}
                 value={
                     <>
-                        {formatNumber(sixStars)}
-                        <span className="ml-1 self-end pb-1 font-medium font-mono text-[13px] text-muted-foreground">pulls</span>
+                        {f.number(sixStars)}
+                        <span className="ml-1 self-end pb-1 font-medium font-mono text-[13px] text-muted-foreground">{t("history.kpi.pullsUnit")}</span>
                     </>
                 }
-                meta={<span>{sixRate.toFixed(2)}% rate</span>}
+                meta={<span>{t("history.kpi.rate", { value: sixRate.toFixed(2) })}</span>}
             />
             <Kpi
-                label="5★ operators"
+                label={t("history.kpi.fiveStars")}
                 value={
                     <>
-                        {formatNumber(fiveStars)}
-                        <span className="ml-1 self-end pb-1 font-medium font-mono text-[13px] text-muted-foreground">pulls</span>
+                        {f.number(fiveStars)}
+                        <span className="ml-1 self-end pb-1 font-medium font-mono text-[13px] text-muted-foreground">{t("history.kpi.pullsUnit")}</span>
                     </>
                 }
-                meta={<span>{fiveRate.toFixed(2)}% rate</span>}
+                meta={<span>{t("history.kpi.rate", { value: fiveRate.toFixed(2) })}</span>}
             />
-            <Kpi label="Other (4★ / 3★)" value={formatNumber(total - sixStars - fiveStars)} meta={total > 0 ? <span>{(((total - sixStars - fiveStars) / total) * 100).toFixed(1)}% of pulls</span> : undefined} />
+            <Kpi label={t("history.kpi.other")} value={f.number(total - sixStars - fiveStars)} meta={total > 0 ? <span>{t("history.kpi.shareOfPulls", { value: (((total - sixStars - fiveStars) / total) * 100).toFixed(1) })}</span> : undefined} />
         </div>
     );
 }

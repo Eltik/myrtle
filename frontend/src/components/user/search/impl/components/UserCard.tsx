@@ -3,11 +3,16 @@ import { ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Badge } from "#/components/ui/badge";
 import { Card } from "#/components/ui/card";
-import { formatNumber, getAvatarById } from "#/lib/utils";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import { getAvatarById } from "#/lib/utils";
 import { DEFAULT_AVATAR_ID } from "../constants";
 import type { DisplayUser } from "../types";
+import type { messages } from "./UserCard.messages";
 
 export function UserCard({ user }: { user: DisplayUser }) {
+    const t: TypedT<typeof messages> = useT("user");
+    const f = useFormatters();
     const nickname = user.nickname ?? `Doctor ${user.uid}`;
     const initials = (user.nickname ?? user.uid).slice(0, 2).toUpperCase();
     const avatarSrc = getAvatarById(user.avatar_id ?? DEFAULT_AVATAR_ID);
@@ -40,22 +45,22 @@ export function UserCard({ user }: { user: DisplayUser }) {
                     <div className="mt-1.5 flex items-center gap-2.5 font-sans text-[11.5px] text-muted-foreground leading-none">
                         {user.level != null && (
                             <span>
-                                <span className="font-medium text-foreground">Lv {user.level}</span>
+                                <span className="font-medium text-foreground">{t("search.card.level", { level: user.level })}</span>
                             </span>
                         )}
                         {user.total_score != null && (
                             <span>
-                                <span className="font-medium text-foreground">{formatNumber(user.total_score)}</span> pts
+                                <span className="font-medium text-foreground">{f.number(user.total_score)}</span> {t("search.card.points")}
                             </span>
                         )}
                         {user.operator_count != null && (
                             <span>
-                                <span className="font-medium text-foreground">{formatNumber(user.operator_count)}</span> ops
+                                <span className="font-medium text-foreground">{f.number(user.operator_count)}</span> {t("search.card.operators")}
                             </span>
                         )}
                         {user.skin_count != null && (
                             <span>
-                                <span className="font-medium text-foreground">{formatNumber(user.skin_count)}</span> skins
+                                <span className="font-medium text-foreground">{f.number(user.skin_count)}</span> {t("search.card.skins")}
                             </span>
                         )}
                     </div>

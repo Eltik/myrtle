@@ -11,9 +11,11 @@ import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { type IOperatorPlanResponse, type IPlanRequirementItem, plansQueryOptions } from "#/lib/api/planner";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import { cn } from "#/lib/utils";
-
+import type { messages } from "./RequirementsPanel.messages";
 import {
     type CategoryFilter,
     DEFAULT_REQUIREMENTS_VIEW,
@@ -28,11 +30,15 @@ import {
     type RequirementStatus,
     requirementCategory,
     requirementStatus,
-    STATUS_FILTER_LABELS,
+    STATUS_FILTER_LABEL_KEYS,
     STATUS_FILTER_ORDER,
     type StatusFilter,
     subtotal,
 } from "./requirements";
+import type { messages as requirementMessages } from "./requirements.messages";
+
+/** This panel renders its own chrome plus the labels `requirements.ts` carries. */
+type ReqT = TypedT<typeof messages & typeof requirementMessages>;
 
 interface PlannerRequirementRowProps {
     item: IPlanRequirementItem;
@@ -43,6 +49,8 @@ interface PlannerRequirementRowProps {
 }
 
 function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpand }: PlannerRequirementRowProps) {
+    const t: ReqT = useT("tools");
+    const f = useFormatters();
     const hasRecipe = !!(item.recipe && item.recipe.costs.length > 0);
     const isExpanded = expandedPaths[path];
     const isMissingRequirements = !item.canCraft && item.craftReason.startsWith("Requirements not met");
@@ -72,11 +80,11 @@ function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpan
                         <span className="font-medium text-foreground text-xs leading-tight">{item.name}</span>
                     </div>
                 </td>
-                <td className="py-2.5 pr-2 text-right text-foreground text-xs tabular-nums">{item.requiredCount.toLocaleString()}</td>
-                <td className={cn("px-2 py-2.5 text-right text-xs tabular-nums", status === "complete" ? "text-emerald-400" : needsCrafting ? "text-amber-400" : "text-muted-foreground")}>{item.inventoryCount.toLocaleString()}</td>
+                <td className="py-2.5 pr-2 text-right text-foreground text-xs tabular-nums">{f.number(item.requiredCount)}</td>
+                <td className={cn("px-2 py-2.5 text-right text-xs tabular-nums", status === "complete" ? "text-emerald-400" : needsCrafting ? "text-amber-400" : "text-muted-foreground")}>{f.number(item.inventoryCount)}</td>
                 <td className="px-2 py-2.5 text-right text-xs tabular-nums">
                     {item.canCraft ? (
-                        <span className="text-sky-400">{item.craftableCount.toLocaleString()}</span>
+                        <span className="text-sky-400">{f.number(item.craftableCount)}</span>
                     ) : isMissingRequirements ? (
                         <div className="flex justify-end">
                             <Tooltip>
@@ -98,10 +106,10 @@ function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpan
                 </td>
                 <td className="py-2.5 pl-2 text-right text-xs tabular-nums">
                     {status === "missing" ? (
-                        <span className="font-semibold text-red-400 text-xs">{item.missingCount.toLocaleString()}</span>
+                        <span className="font-semibold text-red-400 text-xs">{f.number(item.missingCount)}</span>
                     ) : needsCrafting ? (
-                        <span className="font-semibold text-amber-400 text-xs" title={`You have ${item.inventoryCount.toLocaleString()} of ${item.requiredCount.toLocaleString()} - the remaining ${shortfall.toLocaleString()} must be crafted`}>
-                            craft {shortfall.toLocaleString()}
+                        <span className="font-semibold text-amber-400 text-xs" title={t("planner.req.craftTitle", { have: f.number(item.inventoryCount), required: f.number(item.requiredCount), shortfall: f.number(shortfall) })}>
+                            {t("planner.req.craft", { count: f.number(shortfall) })}
                         </span>
                     ) : (
                         <span className="font-semibold text-emerald-400">✓</span>
@@ -128,17 +136,19 @@ function FilterOption({ label, count }: { label: string; count: number }) {
     );
 }
 
-const TABLE_HEAD = (
-    <thead>
-        <tr className="border-border/40 border-b">
-            <th className="pb-2 text-left font-medium text-muted-foreground text-xs">Item</th>
-            <th className="pr-2 pb-2 text-right font-medium text-muted-foreground text-xs">Required</th>
-            <th className="px-2 pb-2 text-right font-medium text-muted-foreground text-xs">Have</th>
-            <th className="px-2 pb-2 text-right font-medium text-muted-foreground text-xs">Craftable</th>
-            <th className="pb-2 pl-2 text-right font-medium text-muted-foreground text-xs">Missing</th>
-        </tr>
-    </thead>
-);
+function TableHead({ t }: { t: ReqT }) {
+    return (
+        <thead>
+            <tr className="border-border/40 border-b">
+                <th className="pb-2 text-left font-medium text-muted-foreground text-xs">{t("planner.req.col.item")}</th>
+                <th className="pr-2 pb-2 text-right font-medium text-muted-foreground text-xs">{t("planner.req.col.required")}</th>
+                <th className="px-2 pb-2 text-right font-medium text-muted-foreground text-xs">{t("planner.req.col.have")}</th>
+                <th className="px-2 pb-2 text-right font-medium text-muted-foreground text-xs">{t("planner.req.col.craftable")}</th>
+                <th className="pb-2 pl-2 text-right font-medium text-muted-foreground text-xs">{t("planner.req.col.missing")}</th>
+            </tr>
+        </thead>
+    );
+}
 
 interface RequirementsTableProps {
     items: IPlanRequirementItem[];
@@ -152,12 +162,13 @@ interface RequirementsTableProps {
 }
 
 function RequirementsTable({ items, grouped, pathPrefix = "", expandedPaths, onToggleExpand, collapsedGroups, onToggleGroup }: RequirementsTableProps) {
+    const t: ReqT = useT("tools");
     const rowFor = (item: IPlanRequirementItem) => <PlannerRequirementRow key={`${pathPrefix}${item.id}`} item={item} depth={0} path={`${pathPrefix}${item.id}`} expandedPaths={expandedPaths} onToggleExpand={onToggleExpand} />;
 
     if (!grouped) {
         return (
             <table className="w-full text-sm">
-                {TABLE_HEAD}
+                <TableHead t={t} />
                 <tbody className="divide-y divide-border/30">{items.map(rowFor)}</tbody>
             </table>
         );
@@ -167,7 +178,7 @@ function RequirementsTable({ items, grouped, pathPrefix = "", expandedPaths, onT
 
     return (
         <table className="w-full text-sm">
-            {TABLE_HEAD}
+            <TableHead t={t} />
             {groups.map((g) => {
                 const collapsed = collapsedGroups?.[g.def.key] ?? false;
                 return (
@@ -176,8 +187,8 @@ function RequirementsTable({ items, grouped, pathPrefix = "", expandedPaths, onT
                             <td colSpan={5} className="p-0">
                                 <button type="button" onClick={() => onToggleGroup?.(g.def.key)} className="flex w-full items-center gap-2 px-1 py-2 text-left transition-colors hover:bg-muted/30">
                                     {collapsed ? <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" /> : <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />}
-                                    <span className="font-semibold text-foreground text-xs">{g.def.label}</span>
-                                    <span className="text-muted-foreground text-xs">{formatSubtotal(subtotal(g.rows))}</span>
+                                    <span className="font-semibold text-foreground text-xs">{t(g.def.labelKey)}</span>
+                                    <span className="text-muted-foreground text-xs">{formatSubtotal(subtotal(g.rows), t)}</span>
                                 </button>
                             </td>
                         </tr>
@@ -201,6 +212,7 @@ interface ByOperatorSectionProps {
 }
 
 function ByOperatorSection({ plan, predicate, isLoading, requirements, collapsed, onToggle, expandedPaths, onToggleExpand }: ByOperatorSectionProps) {
+    const t: ReqT = useT("tools");
     const op = plan.operator;
     const filtered = requirements.filter(predicate);
 
@@ -213,9 +225,9 @@ function ByOperatorSection({ plan, predicate, isLoading, requirements, collapsed
                 </span>
                 <div className="min-w-0 flex-1">
                     <span className="block truncate font-semibold text-foreground text-xs leading-tight">{op.name}</span>
-                    <span className="block truncate text-[11px] text-muted-foreground leading-normal">{formatPlanTarget(plan)}</span>
+                    <span className="block truncate text-[11px] text-muted-foreground leading-normal">{formatPlanTarget(plan, t)}</span>
                 </div>
-                {!isLoading && <span className="shrink-0 text-[11px] text-muted-foreground">{formatSubtotal(subtotal(filtered))}</span>}
+                {!isLoading && <span className="shrink-0 text-[11px] text-muted-foreground">{formatSubtotal(subtotal(filtered), t)}</span>}
             </button>
             {!collapsed && (
                 <div className="border-border/40 border-t px-3 py-3">
@@ -230,7 +242,7 @@ function ByOperatorSection({ plan, predicate, isLoading, requirements, collapsed
                             ))}
                         </div>
                     ) : filtered.length === 0 ? (
-                        <p className="py-3 text-center text-muted-foreground text-xs">No matching requirements.</p>
+                        <p className="py-3 text-center text-muted-foreground text-xs">{t("planner.req.noneMatchingOperator")}</p>
                     ) : (
                         <div className="overflow-x-auto">
                             <RequirementsTable items={filtered} grouped={false} pathPrefix={`${plan.operator_id}::`} expandedPaths={expandedPaths} onToggleExpand={onToggleExpand} />
@@ -252,12 +264,13 @@ interface ByOperatorViewProps {
 }
 
 function ByOperatorView({ plans, predicate, collapsedSections, onToggleSection, expandedPaths, onToggleExpand }: ByOperatorViewProps) {
+    const t: ReqT = useT("tools");
     const results = useQueries({
         queries: plans.map((p) => plansQueryOptions([p.operator_id])),
     });
 
     if (plans.length === 0) {
-        return <p className="mt-6 text-center text-muted-foreground text-sm">No active plans selected.</p>;
+        return <p className="mt-6 text-center text-muted-foreground text-sm">{t("planner.req.noActivePlans")}</p>;
     }
 
     return (
@@ -289,6 +302,7 @@ interface RequirementsPanelProps {
 }
 
 export function RequirementsPanel({ aggregatedRequirements, isLoading, activePlans }: RequirementsPanelProps): React.ReactElement {
+    const t: ReqT = useT("tools");
     const [settings, setSettings] = useLocalStorageState<IRequirementsViewSettings>(REQUIREMENTS_VIEW_STORAGE_KEY, DEFAULT_REQUIREMENTS_VIEW);
     const [reqSearchQuery, setReqSearchQuery] = React.useState("");
     const [expandedPaths, setExpandedPaths] = React.useState<Record<string, boolean>>({});
@@ -331,12 +345,12 @@ export function RequirementsPanel({ aggregatedRequirements, isLoading, activePla
     return (
         <div className="rounded-xl border border-border bg-card p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="font-semibold text-foreground text-sm">Requirements</h2>
+                <h2 className="font-semibold text-foreground text-sm">{t("planner.req.title")}</h2>
                 {hasRequirements && (
                     <div className="flex flex-wrap items-center gap-2">
-                        <Input type="search" placeholder="Search requirements..." value={reqSearchQuery} onChange={(e) => setReqSearchQuery(e.target.value)} className="h-7 max-w-48 text-xs sm:h-7 sm:text-xs" />
+                        <Input type="search" placeholder={t("planner.req.search")} value={reqSearchQuery} onChange={(e) => setReqSearchQuery(e.target.value)} className="h-7 max-w-48 text-xs sm:h-7 sm:text-xs" />
                         <ToggleGroup
-                            aria-label="Requirements view"
+                            aria-label={t("planner.req.view")}
                             variant="outline"
                             value={[settings.view]}
                             onValueChange={(value) => {
@@ -344,13 +358,13 @@ export function RequirementsPanel({ aggregatedRequirements, isLoading, activePla
                                 if (next) setSettings((prev) => ({ ...prev, view: next }));
                             }}
                         >
-                            <ToggleGroupItem value="grouped" aria-label="Grouped view" title="Grouped">
+                            <ToggleGroupItem value="grouped" aria-label={t("planner.req.view.grouped.aria")} title={t("planner.req.view.grouped")}>
                                 <LayoutList />
                             </ToggleGroupItem>
-                            <ToggleGroupItem value="flat" aria-label="Flat view" title="Flat">
+                            <ToggleGroupItem value="flat" aria-label={t("planner.req.view.flat.aria")} title={t("planner.req.view.flat")}>
                                 <List />
                             </ToggleGroupItem>
-                            <ToggleGroupItem value="by-operator" aria-label="By operator view" title="By operator">
+                            <ToggleGroupItem value="by-operator" aria-label={t("planner.req.view.byOperator.aria")} title={t("planner.req.view.byOperator")}>
                                 <Users />
                             </ToggleGroupItem>
                         </ToggleGroup>
@@ -362,30 +376,36 @@ export function RequirementsPanel({ aggregatedRequirements, isLoading, activePla
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                     <Select value={settings.category} onValueChange={(v) => v != null && setCategory(v as CategoryFilter)}>
                         <SelectTrigger size="sm" className={cn("h-7 text-xs", settings.category !== "all" && "border-primary/50")}>
-                            <SelectValue placeholder="Type">{() => `Type: ${settings.category === "all" ? "All" : (REQUIREMENT_CATEGORIES.find((d) => d.key === settings.category)?.label ?? "All")}`}</SelectValue>
+                            <SelectValue placeholder={t("planner.req.filter.type")}>
+                                {() => {
+                                    const def = REQUIREMENT_CATEGORIES.find((d) => d.key === settings.category);
+                                    const value = settings.category === "all" || !def ? t("planner.req.filter.all") : t(def.labelKey);
+                                    return t("planner.req.filter.typeValue", { value });
+                                }}
+                            </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">
-                                <FilterOption label="All" count={searchFiltered.length} />
+                                <FilterOption label={t("planner.req.filter.all")} count={searchFiltered.length} />
                             </SelectItem>
                             {REQUIREMENT_CATEGORIES.map((def) => (
                                 <SelectItem key={def.key} value={def.key} disabled={categoryCounts[def.key] === 0}>
-                                    <FilterOption label={def.label} count={categoryCounts[def.key]} />
+                                    <FilterOption label={t(def.labelKey)} count={categoryCounts[def.key]} />
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
                     <Select value={settings.status} onValueChange={(v) => v != null && setStatus(v as StatusFilter)}>
                         <SelectTrigger size="sm" className={cn("h-7 text-xs", settings.status !== "all" && "border-primary/50")}>
-                            <SelectValue placeholder="Status">{() => `Status: ${settings.status === "all" ? "All" : STATUS_FILTER_LABELS[settings.status]}`}</SelectValue>
+                            <SelectValue placeholder={t("planner.req.filter.status")}>{() => t("planner.req.filter.statusValue", { value: settings.status === "all" ? t("planner.req.filter.all") : t(STATUS_FILTER_LABEL_KEYS[settings.status]) })}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">
-                                <FilterOption label="All" count={categoryFiltered.length} />
+                                <FilterOption label={t("planner.req.filter.all")} count={categoryFiltered.length} />
                             </SelectItem>
                             {STATUS_FILTER_ORDER.map((s) => (
                                 <SelectItem key={s} value={s} disabled={statusCounts[s] === 0}>
-                                    <FilterOption label={STATUS_FILTER_LABELS[s]} count={statusCounts[s]} />
+                                    <FilterOption label={t(STATUS_FILTER_LABEL_KEYS[s])} count={statusCounts[s]} />
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -409,11 +429,11 @@ export function RequirementsPanel({ aggregatedRequirements, isLoading, activePla
                     ))}
                 </div>
             ) : aggregatedRequirements.length === 0 ? (
-                <p className="mt-6 text-center text-muted-foreground text-sm">No requirements for the selected plans.</p>
+                <p className="mt-6 text-center text-muted-foreground text-sm">{t("planner.req.noneForPlans")}</p>
             ) : settings.view === "by-operator" ? (
                 <ByOperatorView plans={activePlans} predicate={predicate} collapsedSections={collapsedSections} onToggleSection={handleToggleSection} expandedPaths={expandedPaths} onToggleExpand={handleToggleExpand} />
             ) : aggregateFiltered.length === 0 ? (
-                <p className="py-6 text-center text-muted-foreground text-sm">No matching requirements found.</p>
+                <p className="py-6 text-center text-muted-foreground text-sm">{t("planner.req.noneMatching")}</p>
             ) : (
                 <div className="mt-3 overflow-x-auto">
                     <RequirementsTable items={aggregateFiltered} grouped={settings.view === "grouped"} expandedPaths={expandedPaths} onToggleExpand={handleToggleExpand} collapsedGroups={collapsedGroups} onToggleGroup={handleToggleGroup} />

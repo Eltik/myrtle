@@ -3,15 +3,38 @@ import type * as React from "react";
 import { itemIcon } from "#/components/operators/detail/impl/assets";
 import { Card } from "#/components/ui/card";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { type TypedRichT, useLocale, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { EventAnchor } from "#/types/generated/EventAnchor";
 import type { FarmStage } from "#/types/generated/FarmStage";
 import { useAutoTranslate } from "../autoTranslate";
 import { formatDateRange, humanizeTag } from "../helpers";
-import { type IScheduleItem, KIND_LABEL, type ScheduleKind } from "../schedule";
+import type { messages as helperMessages } from "../helpers.messages";
+import { type IScheduleItem, KIND_LABEL_KEYS, type ScheduleKind } from "../schedule";
+import type { messages as scheduleMessages } from "../schedule.messages";
 import { ResolutionBadge } from "./ResolutionBadge";
+import type { messages } from "./ScheduleShared.messages";
 import { SkinTileView } from "./SkinPopup";
 import { CnName, type OperatorLookup, resolveName, Tag, ToggleField, useArt } from "./shared";
+
+/** These parts render their own chrome plus the kind labels `schedule.ts` carries. */
+type ScheduleSharedT = TypedT<typeof messages & typeof scheduleMessages & typeof helperMessages>;
+type ScheduleSharedRichT = TypedRichT<typeof messages>;
+
+const OCC_LABEL_KEYS: Record<string, keyof typeof messages & string> = {
+    ALWAYS: "release.occ.always",
+    ALMOST: "release.occ.almost",
+    USUAL: "release.occ.usual",
+    OFTEN: "release.occ.often",
+    SOMETIMES: "release.occ.sometimes",
+    RARELY: "release.occ.rarely",
+};
+
+function occLabel(occ: string, t: ScheduleSharedT): string {
+    const key = OCC_LABEL_KEYS[occ];
+    return key ? t(key) : occ.toLowerCase();
+}
 
 export const KIND_STYLE: Record<ScheduleKind, { pill: string; dot: string; text: string }> = {
     event: { pill: "bg-sky-500/12 text-sky-950 hover:bg-sky-500/20 dark:bg-sky-400/15 dark:text-sky-100 dark:hover:bg-sky-400/25", dot: "bg-sky-500", text: "text-sky-600 dark:text-sky-400" },
@@ -41,6 +64,7 @@ interface IScheduleControlsProps {
 }
 
 export function ScheduleControls({ kinds, onKindsChange, stageOnly, onStageOnlyChange, counts }: IScheduleControlsProps): React.ReactElement {
+    const t: ScheduleSharedT = useT("tools");
     const toggle = (k: ScheduleKind) => {
         const next = new Set(kinds);
         if (next.has(k)) next.delete(k);
@@ -54,26 +78,31 @@ export function ScheduleControls({ kinds, onKindsChange, stageOnly, onStageOnlyC
                 return (
                     <button key={k} type="button" aria-pressed={on} onClick={() => toggle(k)} className={cn("inline-flex cursor-pointer items-center gap-1.5 font-sans text-[12.5px] transition-colors", on ? "text-foreground" : "text-muted-foreground")}>
                         <span className={cn("size-3.5 rounded-sm border-2 transition-colors", on ? cn("border-transparent", KIND_STYLE[k].dot) : "border-muted-foreground/50")} />
-                        {KIND_LABEL[k]}
+                        {t(KIND_LABEL_KEYS[k])}
                         <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{counts[k]}</span>
                     </button>
                 );
             })}
-            <ToggleField id="schedule-stage-only" label="Stage events only" checked={stageOnly} onChange={onStageOnlyChange} />
-            <span className="font-sans text-[11px] text-muted-foreground">Filled dot: confirmed. Hollow dot: estimated.</span>
+            <ToggleField id="schedule-stage-only" label={t("release.controls.stageOnly")} checked={stageOnly} onChange={onStageOnlyChange} />
+            <span className="font-sans text-[11px] text-muted-foreground">{t("release.controls.dotLegend")}</span>
         </div>
     );
 }
 
 export function AnchorCaption({ anchor }: { anchor: EventAnchor }): React.ReactElement {
+    const t: ScheduleSharedT = useT("tools");
+    const rt: ScheduleSharedRichT = useRichT("tools");
     const autoOn = useAutoTranslate();
     const name = resolveName(anchor.nameCn, anchor.nameEn, anchor.nameEnAuto, autoOn);
     return (
-        <span title={`Released on CN the day ${anchor.cnId} started; 96% of such skins reach EN with their event`}>
-            with{" "}
-            <span className="text-foreground/80" lang={name.untranslated ? "zh-CN" : undefined} translate={name.untranslated ? "yes" : undefined}>
-                {name.text}
-            </span>
+        <span title={t("release.anchor.title", { event: anchor.cnId })}>
+            {rt("release.anchor.with", {
+                event: (
+                    <span className="text-foreground/80" lang={name.untranslated ? "zh-CN" : undefined} translate={name.untranslated ? "yes" : undefined}>
+                        {name.text}
+                    </span>
+                ),
+            })}
         </span>
     );
 }
@@ -86,29 +115,31 @@ interface IScheduleDetailProps {
 }
 
 export function ScheduleDetail({ item, lookup, today, onClose }: IScheduleDetailProps): React.ReactElement {
+    const t: ScheduleSharedT = useT("tools");
+    const locale = useLocale();
     const art = useArt(item.imagePath);
     const name = useItemName(item);
     const style = KIND_STYLE[item.kind];
     const isSkin = item.kind === "skin" || item.kind === "rerun" || item.kind === "review";
-    const cnLabel = item.kind === "rerun" ? "CN re-listed" : "CN";
+    const cnLabel = item.kind === "rerun" ? t("release.detail.cnRelisted") : t("release.detail.cn");
     const showArt = art.src !== null && !isSkin;
     return (
         <Card className="relative gap-0 overflow-hidden p-3 pl-4 sm:p-4 sm:pl-5">
             <span aria-hidden="true" className={cn("absolute inset-y-0 left-0 w-1", style.dot)} />
-            <button type="button" onClick={onClose} aria-label="Close" className="absolute top-2 right-2 flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
+            <button type="button" onClick={onClose} aria-label={t("release.detail.close")} className="absolute top-2 right-2 flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground">
                 <X className="size-4" />
             </button>
             <div className={cn("grid grid-cols-1 gap-x-4 gap-y-2 sm:items-start", showArt ? "sm:grid-cols-[200px_minmax(0,1fr)_minmax(240px,auto)]" : "sm:grid-cols-[minmax(0,1fr)_minmax(240px,auto)]")}>
                 {showArt && <img src={art.src ?? undefined} alt={name} onError={art.onError} className="aspect-[5/2] w-full rounded-md bg-muted object-cover sm:w-50" />}
                 <div className="flex min-w-0 flex-col gap-1.5 pr-8 sm:pr-0">
                     <CnName cn={item.nameCn} en={item.nameEn} auto={item.nameAuto} primaryClassName="font-sans font-semibold text-[14px] text-foreground">
-                        <Tag className={style.text}>{KIND_LABEL[item.kind]}</Tag>
+                        <Tag className={style.text}>{t(KIND_LABEL_KEYS[item.kind])}</Tag>
                         {!isSkin && <Tag>{humanizeTag(item.tag)}</Tag>}
                     </CnName>
                     {item.cnStart > 0 && (
                         <div className="font-mono text-[11.5px] text-muted-foreground tabular-nums">
                             <span className="mr-1 uppercase tracking-[0.06em]">{cnLabel}</span>
-                            {formatDateRange(item.cnStart, item.cnEnd)}
+                            {formatDateRange(item.cnStart, item.cnEnd, locale, t)}
                         </div>
                     )}
                     {!isSkin && item.charIds.length > 0 && (
@@ -141,27 +172,26 @@ export function ScheduleDetail({ item, lookup, today, onClose }: IScheduleDetail
     );
 }
 
-const OCC_LABEL: Record<string, string> = { ALWAYS: "guaranteed", ALMOST: "almost always", USUAL: "usual", OFTEN: "often", SOMETIMES: "sometimes", RARELY: "rare" };
-
 export function FarmStages({ stages, compact = false }: { stages: FarmStage[]; compact?: boolean }): React.ReactElement | null {
+    const t: ScheduleSharedT = useT("tools");
     if (stages.length === 0) return null;
     return (
         <div className={cn("flex flex-wrap", compact ? "gap-1.5" : "gap-2")}>
             {stages.map((st) => (
-                <div key={st.stageId} className={cn("flex items-center gap-2 rounded-md border border-border/60 bg-muted/30", compact ? "px-1.5 py-1" : "px-2 py-1.5")} title={`${st.code}: ${st.apCost} sanity`}>
+                <div key={st.stageId} className={cn("flex items-center gap-2 rounded-md border border-border/60 bg-muted/30", compact ? "px-1.5 py-1" : "px-2 py-1.5")} title={t("release.farm.stageTitle", { code: st.code, ap: st.apCost })}>
                     <span className="flex flex-col leading-tight">
                         <span className="font-mono font-semibold text-[11.5px] text-foreground">{st.code}</span>
-                        <span className="font-mono text-[10px] text-muted-foreground tabular-nums">{st.apCost} AP</span>
+                        <span className="font-mono text-[10px] text-muted-foreground tabular-nums">{t("release.farm.ap", { ap: st.apCost })}</span>
                     </span>
                     {st.drops.map((d) => (
-                        <span key={d.itemId} className="flex items-center gap-1" title={`${d.nameEn ?? d.name}: ${OCC_LABEL[d.occ] ?? d.occ.toLowerCase()}`}>
+                        <span key={d.itemId} className="flex items-center gap-1" title={t("release.farm.dropTitle", { item: d.nameEn ?? d.name, rate: occLabel(d.occ, t) })}>
                             <img src={itemIcon(d.itemId, d.iconId, null, d.nameEn ? undefined : "cn")} alt="" loading="lazy" className={cn("rounded-full bg-black/40 object-contain", compact ? "size-7" : "size-9")} />
                             {!compact && (
                                 <span className="flex flex-col leading-tight">
                                     <span className="max-w-36 truncate font-sans text-[11.5px] text-foreground" lang={d.nameEn ? undefined : "zh-CN"} translate={d.nameEn ? undefined : "yes"}>
                                         {d.nameEn ?? d.name}
                                     </span>
-                                    <span className="font-sans text-[10px] text-muted-foreground">{OCC_LABEL[d.occ] ?? d.occ.toLowerCase()}</span>
+                                    <span className="font-sans text-[10px] text-muted-foreground">{occLabel(d.occ, t)}</span>
                                 </span>
                             )}
                         </span>

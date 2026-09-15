@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useAuth } from "#/hooks/use-auth";
+import { operatorGamedataServer } from "#/lib/api/gamedata";
 import { operatorBuildStatsQueryOptions } from "#/lib/api/operators";
 import { userRosterOperatorQueryOptions } from "#/lib/api/user";
+import { useGamedataServer } from "#/lib/i18n";
 import type { BuildChoice } from "#/types/generated/BuildChoice";
 import type { ModuleLevelStats } from "#/types/generated/ModuleLevelStats";
 import type { SkillMasteryStats } from "#/types/generated/SkillMasteryStats";
@@ -113,9 +115,10 @@ export function useCommunityDefaults(operator: IOperatorListItem): ICommunityDef
     const enabled = communityDefaultsEnabled();
     const operatorId = operator.id ?? "";
     const { user } = useAuth();
+    const localeServer = useGamedataServer();
 
     const { data: stats } = useQuery({
-        ...operatorBuildStatsQueryOptions(operatorId),
+        ...operatorBuildStatsQueryOptions(operatorId, operatorGamedataServer(operator.server, localeServer)),
         enabled: enabled && operatorId.length > 0,
     });
     const { data: own } = useQuery({

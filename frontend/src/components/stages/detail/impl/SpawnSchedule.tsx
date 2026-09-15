@@ -1,17 +1,22 @@
 import { useMemo } from "react";
 import { enemyIconURL, type IEnemy } from "#/lib/api/enemies";
 import type { ILevel } from "#/lib/api/level";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import type { SparseRecord } from "#/lib/records";
 import { cn } from "#/lib/utils";
 import { ENEMY_LEVEL_ACCENT } from "./constants";
+import type { messages as enemiesSectionMessages } from "./EnemiesSection.messages";
 import { buildSpawnSchedule } from "./helpers";
 import { Kicker, Pill } from "./primitives";
+import type { messages } from "./SpawnSchedule.messages";
 import type { ISpawnRow } from "./types";
 
 function SpawnEnemyIdentity({ row, iconClass, onActivate }: { row: ISpawnRow; iconClass: string; onActivate: () => void }) {
+    const tEnemies: TypedT<typeof enemiesSectionMessages> = useT("stages");
     const accent = ENEMY_LEVEL_ACCENT[row.enemy?.enemyLevel ?? "NORMAL"];
     return (
-        <button type="button" aria-label={`Show ${row.enemy?.name ?? row.id} on map`} onClick={onActivate} className="group/enemy flex min-w-0 cursor-pointer items-center gap-2.5 text-left">
+        <button type="button" aria-label={tEnemies("enemies.showOnMap", { name: row.enemy?.name ?? row.id })} onClick={onActivate} className="group/enemy flex min-w-0 cursor-pointer items-center gap-2.5 text-left">
             <span className={cn("flex shrink-0 items-center justify-center overflow-hidden rounded border bg-[color-mix(in_oklch,var(--muted)_40%,transparent)]", iconClass)} style={{ borderColor: `color-mix(in oklch, ${accent} 40%, var(--border))` }}>
                 <img src={enemyIconURL(row.id)} alt="" loading="lazy" className="h-full w-full object-contain" />
             </span>
@@ -35,6 +40,7 @@ function SpawnStat({ label, value, strong }: { label: string; value: string; str
 }
 
 function SpawnCard({ row, onFocusEnemy }: { row: ISpawnRow; onFocusEnemy: (id: string, time: number) => void }) {
+    const t: TypedT<typeof messages> = useT("stages");
     return (
         <li className="flex flex-col gap-2.5 px-4 py-3">
             <div className="flex items-start justify-between gap-3">
@@ -42,28 +48,29 @@ function SpawnCard({ row, onFocusEnemy }: { row: ISpawnRow; onFocusEnemy: (id: s
                 <span className="shrink-0 font-mono text-[10px] text-muted-foreground tabular-nums">#{row.idx + 1}</span>
             </div>
             <dl className="grid grid-cols-3 gap-x-3 gap-y-2.5 rounded-md bg-[color-mix(in_oklch,var(--muted)_30%,transparent)] px-3 py-2.5">
-                <SpawnStat label="Wave" value={String(row.wave)} />
-                <SpawnStat label="Count" strong value={`×${row.count}`} />
-                <SpawnStat label="Start ~" strong value={`${row.time.toFixed(1)}s`} />
-                <SpawnStat label="Interval" value={`${row.interval.toFixed(1)}s`} />
-                <SpawnStat label="Pre-Delay" value={`${row.preDelay.toFixed(1)}s`} />
+                <SpawnStat label={t("spawns.col.wave")} value={String(row.wave)} />
+                <SpawnStat label={t("spawns.col.count")} strong value={`×${row.count}`} />
+                <SpawnStat label={t("spawns.col.start")} strong value={`${row.time.toFixed(1)}s`} />
+                <SpawnStat label={t("spawns.col.interval")} value={`${row.interval.toFixed(1)}s`} />
+                <SpawnStat label={t("spawns.col.preDelay")} value={`${row.preDelay.toFixed(1)}s`} />
             </dl>
         </li>
     );
 }
 
 export function SpawnSchedule({ level, enemyData, onFocusEnemy }: { level: ILevel | null; enemyData: SparseRecord<IEnemy>; onFocusEnemy: (id: string, time: number) => void }) {
+    const t: TypedT<typeof messages> = useT("stages");
     const { rows, hiddenGroups } = useMemo(() => buildSpawnSchedule(level, enemyData), [level, enemyData]);
     if (rows.length === 0) return null;
     return (
         <section className="overflow-hidden rounded-[14px] border border-border bg-card">
             <div className="flex flex-wrap items-center gap-2.5 border-border border-b px-4 py-3">
-                <Kicker>Spawn Schedule</Kicker>
-                <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{rows.length} groups</span>
+                <Kicker>{t("spawns.title")}</Kicker>
+                <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{t("spawns.groups", { count: rows.length })}</span>
                 <span className="h-px flex-1 bg-border" />
                 {hiddenGroups.length > 0 && (
                     <span className="flex flex-wrap items-center gap-1.5">
-                        <span className="font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.12em]">Hidden Routes</span>
+                        <span className="font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("spawns.hiddenRoutes")}</span>
                         {hiddenGroups.map((g) => (
                             <Pill key={g}>{g}</Pill>
                         ))}
@@ -80,12 +87,12 @@ export function SpawnSchedule({ level, enemyData, onFocusEnemy }: { level: ILeve
                     <thead className="sticky top-0 z-10 bg-card">
                         <tr className="border-border border-b [&>th]:px-3 [&>th]:py-2.5 [&>th]:font-medium [&>th]:font-mono [&>th]:text-[9.5px] [&>th]:text-muted-foreground [&>th]:uppercase [&>th]:tracking-widest">
                             <th className="w-10 text-right">#</th>
-                            <th>Enemy</th>
-                            <th className="text-center">Wave</th>
-                            <th className="text-right">Count</th>
-                            <th className="text-right">Interval</th>
-                            <th className="text-right">Pre-Delay</th>
-                            <th className="text-right">Start ~</th>
+                            <th>{t("spawns.col.enemy")}</th>
+                            <th className="text-center">{t("spawns.col.wave")}</th>
+                            <th className="text-right">{t("spawns.col.count")}</th>
+                            <th className="text-right">{t("spawns.col.interval")}</th>
+                            <th className="text-right">{t("spawns.col.preDelay")}</th>
+                            <th className="text-right">{t("spawns.col.start")}</th>
                         </tr>
                     </thead>
                     <tbody>

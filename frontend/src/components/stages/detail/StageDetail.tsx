@@ -4,6 +4,8 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import type { IEnemy } from "#/lib/api/enemies";
 import type { ILevel } from "#/lib/api/level";
 import type { IMaterialItem } from "#/lib/api/materials";
+import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import type { SparseRecord } from "#/lib/records";
 import type { IStage, IZone } from "#/types/stages";
 import { DropsSection } from "./impl/DropsSection";
@@ -18,9 +20,12 @@ import { StageHeader } from "./impl/StageHeader";
 import type { IStageEnemyStats } from "./impl/types";
 import { WavesSection } from "./impl/WavesSection";
 import { type IMapViewHandle, MapView } from "./map";
+import type { messages } from "./StageDetail.messages";
 
 export function StageDetail({ stage, zone, level, enemyData, materials }: { stage: IStage | null; zone: IZone | null; level: ILevel | null; enemyData: SparseRecord<IEnemy>; materials: Record<string, IMaterialItem | undefined> }) {
     const { stageId } = useParams({ from: "/stages_/$stageId" });
+    const t: TypedT<typeof messages> = useT("stages");
+    const rt: TypedRichT<typeof messages> = useRichT("stages");
 
     const tally = useMemo(() => tallyEnemies(level, enemyData), [level, enemyData]);
     const dropGroups = useMemo(() => (stage ? groupDrops(stage, materials) : []), [stage, materials]);
@@ -35,12 +40,10 @@ export function StageDetail({ stage, zone, level, enemyData, materials }: { stag
     if (!stage) {
         return (
             <div className="mx-auto w-[min(1100px,calc(100%-2rem))] py-20 text-center">
-                <h1 className="m-0 font-bold font-sans text-[22px] text-foreground">Stage not found</h1>
-                <p className="mt-2 font-sans text-[13.5px] text-muted-foreground">
-                    No stage with id <code className="font-mono text-foreground">{stageId}</code> exists.
-                </p>
+                <h1 className="m-0 font-bold font-sans text-[22px] text-foreground">{t("detail.notFound.title")}</h1>
+                <p className="mt-2 font-sans text-[13.5px] text-muted-foreground">{rt("detail.notFound.body", { id: <code className="font-mono text-foreground">{stageId}</code> })}</p>
                 <Link to="/stages" className="mt-4 inline-block font-medium font-sans text-[13.5px] text-primary hover:underline">
-                    Back to Stages
+                    {t("detail.notFound.back")}
                 </Link>
             </div>
         );
@@ -48,11 +51,11 @@ export function StageDetail({ stage, zone, level, enemyData, materials }: { stag
 
     return (
         <div className="relative z-1 mx-auto w-[min(1600px,calc(100%-2rem))] pb-16">
-            <nav className="pt-7 pb-3.5 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label="Breadcrumb">
+            <nav className="pt-7 pb-3.5 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label={t("detail.breadcrumb")}>
                 <ol className="flex items-center gap-1.5">
                     <li>
                         <Link to="/stages" className="transition-colors hover:text-foreground">
-                            Stages
+                            {t("detail.breadcrumb.stages")}
                         </Link>
                     </li>
                     <ChevronRight className="h-2.5 w-2.5" aria-hidden="true" />
@@ -76,7 +79,7 @@ export function StageDetail({ stage, zone, level, enemyData, materials }: { stag
                     </>
                 ) : (
                     <div className="flex min-h-70 items-center justify-center rounded-[14px] border border-border border-dashed p-10 text-center">
-                        <p className="m-0 font-sans text-[13px] text-muted-foreground">No map data available for this stage.</p>
+                        <p className="m-0 font-sans text-[13px] text-muted-foreground">{t("detail.noMap")}</p>
                     </div>
                 )}
             </div>

@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { Markdown, stripMarkdown } from "#/lib/markdown";
 import { cn } from "#/lib/utils";
+import type { messages } from "./ExpandableDescription.messages";
 import { DESCRIPTION_CLAMP_THRESHOLD } from "./shared";
 
 interface IExpandableDescriptionProps {
@@ -12,6 +15,7 @@ interface IExpandableDescriptionProps {
 }
 
 export function ExpandableDescription({ text, className, clampLines = 3, threshold = DESCRIPTION_CLAMP_THRESHOLD, markdown = false }: IExpandableDescriptionProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
     const [expanded, setExpanded] = useState(false);
     const measured = useMemo(() => (markdown ? stripMarkdown(text) : text), [markdown, text]);
     const isLong = measured.length > threshold;
@@ -40,7 +44,7 @@ export function ExpandableDescription({ text, className, clampLines = 3, thresho
             )}
             {showToggle && (
                 <button type="button" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} className="self-start font-mono text-[11px] text-primary uppercase tracking-[0.12em] hover:underline">
-                    {expanded ? "Show less" : "Show more"}
+                    {expanded ? t("description.showLess") : t("description.showMore")}
                 </button>
             )}
         </div>

@@ -1,5 +1,8 @@
 import { asset } from "#/components/operators/detail/impl/assets";
 import type { ILevel } from "#/lib/api/level";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "./OverviewSection.messages";
 import { GameIcon, SectionHead, StatCard } from "./primitives";
 
 const UI = (path: string) => asset(`/textures/ui/${path}`);
@@ -10,17 +13,16 @@ const ICON = {
 };
 
 export function OverviewSection({ level }: { level: ILevel | null }) {
+    const t: TypedT<typeof messages> = useT("stages");
     const opts = level?.options;
     return (
         <section>
-            <SectionHead>Overview</SectionHead>
+            <SectionHead>{t("overview.title")}</SectionHead>
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-                {opts?.initialCost != null && <StatCard icon={<GameIcon src={ICON.cost} alt="Initial DP" />} label="Initial DP" value={String(opts.initialCost)} accent="var(--info)" info="The amount of Deployment Points (DP) you start the battle with." />}
-                {opts?.costIncreaseTime != null && <StatCard icon={<GameIcon src={ICON.cost} alt="DP per tick" />} label="DP / Tick" value={`${opts.costIncreaseTime}s`} accent="var(--muted-foreground)" info="How often you passively gain 1 DP - a lower number means DP regenerates faster." />}
-                {opts?.characterLimit != null && <StatCard icon={<GameIcon src={ICON.team} alt="Unit Limit" />} label="Unit Limit" value={String(opts.characterLimit)} accent="var(--primary)" info="The maximum number of operators you can have deployed on the field at once." />}
-                {opts?.moveMultiplier != null && opts.moveMultiplier !== 1 && (
-                    <StatCard icon={<GameIcon src={ICON.speed} alt="Move Speed" />} label="Move Speed" value={`×${opts.moveMultiplier}`} accent="var(--warning)" info="A global multiplier applied to every enemy's movement speed on this stage. ×0.5 means enemies move at half their normal speed." />
-                )}
+                {opts?.initialCost != null && <StatCard icon={<GameIcon src={ICON.cost} alt={t("overview.initialCost")} />} label={t("overview.initialCost")} value={String(opts.initialCost)} accent="var(--info)" info={t("overview.initialCost.info")} />}
+                {opts?.costIncreaseTime != null && <StatCard icon={<GameIcon src={ICON.cost} alt={t("overview.dpTick.alt")} />} label={t("overview.dpTick")} value={`${opts.costIncreaseTime}s`} accent="var(--muted-foreground)" info={t("overview.dpTick.info")} />}
+                {opts?.characterLimit != null && <StatCard icon={<GameIcon src={ICON.team} alt={t("overview.unitLimit")} />} label={t("overview.unitLimit")} value={String(opts.characterLimit)} accent="var(--primary)" info={t("overview.unitLimit.info")} />}
+                {opts?.moveMultiplier != null && opts.moveMultiplier !== 1 && <StatCard icon={<GameIcon src={ICON.speed} alt={t("overview.moveSpeed")} />} label={t("overview.moveSpeed")} value={`×${opts.moveMultiplier}`} accent="var(--warning)" info={t("overview.moveSpeed.info")} />}
             </div>
         </section>
     );

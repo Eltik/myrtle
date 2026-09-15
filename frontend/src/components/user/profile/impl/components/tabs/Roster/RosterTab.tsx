@@ -8,12 +8,14 @@ import { Input } from "#/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import type { IRosterEntry } from "#/lib/api/user";
-import { capitalize } from "#/lib/utils";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
 import type { IVoices } from "#/types/voices";
 import { CompactCard } from "./CompactCard";
 import { DetailedCard } from "./DetailedCard";
 import { RosterFilters } from "./RosterFilters";
+import type { messages } from "./RosterTab.messages";
 import type { SortKey, ViewMode } from "./types";
 import { UnownedCard } from "./UnownedCard";
 import { useRoster } from "./useRoster";
@@ -25,22 +27,26 @@ interface IRosterTabProps {
     voices?: IVoices;
 }
 
-const SORT_LABELS: Record<SortKey, string> = {
-    level: "Sort by Level",
-    rarity: "Sort by Rarity",
-    obtained: "Sort by Obtained",
-    potential: "Sort by Potential",
-    trust: "Sort by Trust",
-    maxed: "Sort by Maxed",
+/** A key in `RosterTab.messages.ts`; resolved by the toolbar below. */
+type MessageKey = keyof typeof messages & string;
+
+const SORT_LABELS: Record<SortKey, MessageKey> = {
+    level: "profile.roster.sort.level",
+    rarity: "profile.roster.sort.rarity",
+    obtained: "profile.roster.sort.obtained",
+    potential: "profile.roster.sort.potential",
+    trust: "profile.roster.sort.trust",
+    maxed: "profile.roster.sort.maxed",
 };
 
 export function RosterTab({ roster, operatorsIndex, operatorsStatic, voices }: IRosterTabProps) {
+    const t: TypedT<typeof messages> = useT("user");
     const { filters, set, toggleSortOrder, visible, totalCount, displayCount, lastRef, filtersVisible, toggleFilters, filterOptions, removeFrom, setShared, clearFilters, activeFilterCount, hasActiveFilters } = useRoster(roster, operatorsIndex, operatorsStatic, voices);
     const { search, ownership, sortBy, sortOrder, viewMode } = filters;
     const activeChips = useMemo(() => buildSharedChips(filters, removeFrom), [filters, removeFrom]);
 
     return (
-        <section className="flex flex-col gap-4" aria-label="Operator roster">
+        <section className="flex flex-col gap-4" aria-label={t("profile.roster.aria")}>
             <div className="relative flex items-start">
                 <RosterFilters
                     filters={filters}
@@ -59,37 +65,37 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic, voices }: I
                         {/* Below sm the toolbar stacks; this row keeps the toggle beside the search box the way /operators does. At sm+ it dissolves so both stay direct toolbar children. */}
                         <div className="flex w-full items-center gap-3 sm:contents">
                             <FilterToggleButton visible={filtersVisible} onToggle={toggleFilters} activeCount={activeFilterCount} />
-                            <Input className="w-full sm:w-64 sm:min-w-48 sm:max-w-80 sm:flex-1" onChange={(e) => set("search", e.target.value)} placeholder="Search operators..." value={search} />
+                            <Input className="w-full sm:w-64 sm:min-w-48 sm:max-w-80 sm:flex-1" onChange={(e) => set("search", e.target.value)} placeholder={t("profile.roster.search.placeholder")} value={search} />
                         </div>
                         <Select onValueChange={(value) => value && set("sortBy", value as SortKey)} value={sortBy}>
                             <SelectTrigger className="w-full sm:w-40">
-                                <SelectValue placeholder="Sort by">{(value) => SORT_LABELS[value as SortKey] ?? value}</SelectValue>
+                                <SelectValue placeholder={t("profile.roster.sort.placeholder")}>{(value) => (SORT_LABELS[value as SortKey] ? t(SORT_LABELS[value as SortKey]) : value)}</SelectValue>
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem disabled={ownership === "unowned"} value="level">
-                                    Sort by Level
+                                    {t("profile.roster.sort.level")}
                                 </SelectItem>
-                                <SelectItem value="rarity">Sort by Rarity</SelectItem>
+                                <SelectItem value="rarity">{t("profile.roster.sort.rarity")}</SelectItem>
                                 <SelectItem disabled={ownership === "unowned"} value="obtained">
-                                    Sort by Obtained
+                                    {t("profile.roster.sort.obtained")}
                                 </SelectItem>
                                 <SelectItem disabled={ownership === "unowned"} value="potential">
-                                    Sort by Potential
+                                    {t("profile.roster.sort.potential")}
                                 </SelectItem>
                                 <SelectItem disabled={ownership === "unowned"} value="trust">
-                                    Sort by Trust
+                                    {t("profile.roster.sort.trust")}
                                 </SelectItem>
                                 <SelectItem disabled={ownership === "unowned"} value="maxed">
-                                    Sort by Maxed
+                                    {t("profile.roster.sort.maxed")}
                                 </SelectItem>
                             </SelectContent>
                         </Select>
                         <Button className="w-full sm:w-auto" onClick={toggleSortOrder} variant="outline">
-                            <span>{capitalize(sortOrder)}</span>
+                            <span>{sortOrder === "asc" ? t("profile.roster.sort.asc") : t("profile.roster.sort.desc")}</span>
                             {sortOrder === "asc" ? <ArrowUp /> : <ArrowDown />}
                         </Button>
                         <ToggleGroup
-                            aria-label="View mode"
+                            aria-label={t("profile.roster.viewMode.aria")}
                             className="sm:ml-auto md:bg-secondary/50"
                             onValueChange={(value) => {
                                 const next = value[0] as ViewMode | undefined;
@@ -98,10 +104,10 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic, voices }: I
                             value={[viewMode]}
                             variant="outline"
                         >
-                            <ToggleGroupItem aria-label="Detailed view" value="detailed">
+                            <ToggleGroupItem aria-label={t("profile.roster.viewMode.detailed")} value="detailed">
                                 <LayoutGrid />
                             </ToggleGroupItem>
-                            <ToggleGroupItem aria-label="Compact view" value="compact">
+                            <ToggleGroupItem aria-label={t("profile.roster.viewMode.compact")} value="compact">
                                 <Grid3x3 />
                             </ToggleGroupItem>
                         </ToggleGroup>
@@ -115,11 +121,7 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic, voices }: I
                             return viewMode === "detailed" ? <DetailedCard key={key} entry={entry} lastRef={ref} /> : <CompactCard key={key} entry={entry} lastRef={ref} />;
                         })}
                     </div>
-                    {displayCount < totalCount && (
-                        <p className="py-4 text-center text-muted-foreground text-sm">
-                            Showing {displayCount} of {totalCount} operators. Scroll to load more.
-                        </p>
-                    )}
+                    {displayCount < totalCount && <p className="py-4 text-center text-muted-foreground text-sm">{t("profile.roster.showing", { shown: displayCount, total: totalCount })}</p>}
                 </div>
             </div>
         </section>

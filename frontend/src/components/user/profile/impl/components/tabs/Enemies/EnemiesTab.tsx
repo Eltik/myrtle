@@ -12,8 +12,17 @@ import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { env } from "#/env";
 import { enemiesListQueryOptions, enemyCommunityAverageQueryOptions, type IEnemy, type IEnemyLevel } from "#/lib/api/enemies";
 import type { IEncounteredEnemies } from "#/lib/api/user";
+import { type TypedRichT, useFormatters, useGamedataServer, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import { cn } from "#/lib/utils";
+import type { messages } from "./EnemiesTab.messages";
+
+type EnemiesT = TypedT<typeof messages>;
+type EnemiesRichT = TypedRichT<typeof messages>;
+
+/** A key in `EnemiesTab.messages.ts`; resolved by the filter row below. */
+type MessageKey = keyof typeof messages & string;
 
 type StatusFilter = "all" | "encountered" | "missing";
 type LevelFilter = IEnemyLevel | "ALL";
@@ -23,17 +32,17 @@ interface IEnemyRow {
     seen: boolean;
 }
 
-const STATUS_LABELS: Record<StatusFilter, string> = {
-    all: "All",
-    encountered: "Encountered",
-    missing: "Missing",
+const STATUS_LABELS: Record<StatusFilter, MessageKey> = {
+    all: "profile.enemies.status.all",
+    encountered: "profile.enemies.status.encountered",
+    missing: "profile.enemies.status.missing",
 };
 
-const LEVEL_FILTERS: { value: LevelFilter; label: string }[] = [
-    { value: "ALL", label: "All Tiers" },
-    { value: "NORMAL", label: "Normal" },
-    { value: "ELITE", label: "Elite" },
-    { value: "BOSS", label: "Boss" },
+const LEVEL_FILTERS: { value: LevelFilter; labelKey: MessageKey }[] = [
+    { value: "ALL", labelKey: "profile.enemies.level.all" },
+    { value: "NORMAL", labelKey: "profile.enemies.level.normal" },
+    { value: "ELITE", labelKey: "profile.enemies.level.elite" },
+    { value: "BOSS", labelKey: "profile.enemies.level.boss" },
 ];
 
 const MIN_CARD_WIDTH_PX = 80; // ≈ old breakpoint density (4 cols mobile, 10 at lg), but reflows with zoom
@@ -50,7 +59,8 @@ interface IEnemiesTabProps {
 }
 
 export function EnemiesTab({ encountered, isLoading }: IEnemiesTabProps) {
-    const { data: handbook, isLoading: isHandbookLoading } = useQuery(enemiesListQueryOptions());
+    const t: EnemiesT = useT("user");
+    const { data: handbook, isLoading: isHandbookLoading } = useQuery(enemiesListQueryOptions(useGamedataServer()));
     const { data: community } = useQuery(enemyCommunityAverageQueryOptions());
     const [status, setStatus] = useState<StatusFilter>("all");
     const [level, setLevel] = useState<LevelFilter>("ALL");
@@ -82,7 +92,7 @@ export function EnemiesTab({ encountered, isLoading }: IEnemiesTabProps) {
 
     if (isLoading || isHandbookLoading) {
         return (
-            <section aria-busy="true" aria-label="Enemy handbook" className="flex flex-col gap-4">
+            <section aria-busy="true" aria-label={t("profile.enemies.aria")} className="flex flex-col gap-4">
                 <Skeleton className="h-20 w-full rounded-2xl" />
                 <div className="grid grid-cols-[repeat(auto-fill,minmax(5rem,1fr))] gap-2.5">
                     {SKELETON_GRID_IDS.map((id) => (
@@ -94,11 +104,11 @@ export function EnemiesTab({ encountered, isLoading }: IEnemiesTabProps) {
     }
 
     if (encountered === null) {
-        return <EnemiesEmpty body="This Doctor's enemy handbook is private, or their profile could not be found." title="Enemy data unavailable" />;
+        return <EnemiesEmpty body={t("profile.enemies.unavailable.body")} title={t("profile.enemies.unavailable.title")} />;
     }
 
     return (
-        <section aria-label="Enemy handbook" className="flex flex-col gap-5">
+        <section aria-label={t("profile.enemies.aria")} className="flex flex-col gap-5">
             <ProgressHeader avg={avg ?? null} avgPct={avgPct} pct={pct} seen={seenCount} total={total} />
 
             <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
@@ -106,25 +116,25 @@ export function EnemiesTab({ encountered, isLoading }: IEnemiesTabProps) {
                     <InputGroupAddon>
                         <Search />
                     </InputGroupAddon>
-                    <InputGroupInput onChange={(e) => setSearch(e.target.value)} placeholder="Search enemies..." value={search} />
+                    <InputGroupInput onChange={(e) => setSearch(e.target.value)} placeholder={t("profile.enemies.search.placeholder")} value={search} />
                 </InputGroup>
 
                 <div className="flex flex-wrap items-center gap-2">
-                    <FilterChip active={status === "all"} count={total} label={STATUS_LABELS.all} onSelect={() => setStatus("all")} />
-                    <FilterChip active={status === "encountered"} count={seenCount} label={STATUS_LABELS.encountered} onSelect={() => setStatus("encountered")} />
-                    <FilterChip active={status === "missing"} count={total - seenCount} label={STATUS_LABELS.missing} onSelect={() => setStatus("missing")} />
+                    <FilterChip active={status === "all"} count={total} label={t(STATUS_LABELS.all)} onSelect={() => setStatus("all")} />
+                    <FilterChip active={status === "encountered"} count={seenCount} label={t(STATUS_LABELS.encountered)} onSelect={() => setStatus("encountered")} />
+                    <FilterChip active={status === "missing"} count={total - seenCount} label={t(STATUS_LABELS.missing)} onSelect={() => setStatus("missing")} />
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
                     {LEVEL_FILTERS.map((l) => (
-                        <FilterChip active={level === l.value} key={l.value} label={l.label} onSelect={() => setLevel(l.value)} />
+                        <FilterChip active={level === l.value} key={l.value} label={t(l.labelKey)} onSelect={() => setLevel(l.value)} />
                     ))}
                 </div>
             </div>
 
-            {seenCount === 0 && total > 0 && <p className="rounded-xl border border-border/60 border-dashed bg-muted/30 px-4 py-3 text-muted-foreground text-sm">No enemies recorded yet. Encountered enemies populate on the next profile resync.</p>}
+            {seenCount === 0 && total > 0 && <p className="rounded-xl border border-border/60 border-dashed bg-muted/30 px-4 py-3 text-muted-foreground text-sm">{t("profile.enemies.noneYet")}</p>}
 
-            {filtered.length === 0 ? <EnemiesEmpty body="Try a different filter or clear your search." title="No enemies match" /> : <VirtualizedEnemyGrid rows={filtered} />}
+            {filtered.length === 0 ? <EnemiesEmpty body={t("profile.enemies.noMatch.body")} title={t("profile.enemies.noMatch.title")} /> : <VirtualizedEnemyGrid rows={filtered} />}
         </section>
     );
 }
@@ -227,19 +237,22 @@ function VirtualizedEnemyGrid({ rows }: { rows: IEnemyRow[] }) {
 }
 
 function ProgressHeader({ seen, total, pct, avg, avgPct }: { seen: number; total: number; pct: number; avg: number | null; avgPct: number | null }) {
-    const avgLabel = avg != null ? Math.round(avg).toLocaleString() : null;
+    const t: EnemiesT = useT("user");
+    const rt: EnemiesRichT = useRichT("user");
+    const f = useFormatters();
+    const avgLabel = avg != null ? f.number(Math.round(avg)) : null;
     const avgPctLabel = avgPct != null ? Math.round(avgPct) : null;
     return (
         <div className="flex flex-col gap-2.5 rounded-2xl border border-border/50 bg-card/40 p-5">
             <div className="flex items-end justify-between gap-4">
                 <div className="flex flex-col gap-1">
-                    <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">Enemy Handbook</span>
+                    <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("profile.enemies.kicker")}</span>
                     <div className="flex items-baseline gap-2">
                         <span className="font-bold text-2xl text-foreground tabular-nums leading-none">
                             {seen}
                             <span className="font-semibold text-lg text-muted-foreground"> / {total}</span>
                         </span>
-                        <span className="text-muted-foreground text-sm">encountered</span>
+                        <span className="text-muted-foreground text-sm">{t("profile.enemies.encountered")}</span>
                     </div>
                 </div>
                 <span className="font-mono font-semibold text-primary text-xl tabular-nums leading-none">{pct}%</span>
@@ -248,7 +261,7 @@ function ProgressHeader({ seen, total, pct, avg, avgPct }: { seen: number; total
                 <TooltipTrigger
                     render={(p) => (
                         // The whole bar is the hover/focus target; exact figures live in the tooltip.
-                        <button {...p} type="button" aria-label={`${seen} of ${total} enemies encountered, ${pct}%`} className="relative block w-full cursor-help rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card">
+                        <button {...p} type="button" aria-label={t("profile.enemies.progressAria", { seen, total, pct })} className="relative block w-full cursor-help rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card">
                             <div aria-hidden className="h-2 w-full overflow-hidden rounded-full bg-[color-mix(in_oklch,var(--muted-foreground)_14%,transparent)]">
                                 <div className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out motion-reduce:transition-none" style={{ width: `${pct}%` }} />
                             </div>
@@ -265,14 +278,12 @@ function ProgressHeader({ seen, total, pct, avg, avgPct }: { seen: number; total
                     <div className="flex flex-col gap-1">
                         <div className="flex items-baseline gap-1.5">
                             <span className="font-semibold text-foreground text-sm tabular-nums">{pct}%</span>
-                            <span className="text-muted-foreground text-xs tabular-nums">
-                                {seen.toLocaleString()} / {total.toLocaleString()} encountered
-                            </span>
+                            <span className="text-muted-foreground text-xs tabular-nums">{t("profile.enemies.progressTooltip", { seen: f.number(seen), total: f.number(total) })}</span>
                         </div>
                         {avgLabel != null && (
                             <span className="text-[11px] text-muted-foreground tabular-nums">
-                                Community average: {avgLabel}
-                                {avgPctLabel != null && ` (${avgPctLabel}%)`}
+                                {t("profile.enemies.average", { value: avgLabel })}
+                                {avgPctLabel != null && t("profile.enemies.averagePct", { pct: avgPctLabel })}
                             </span>
                         )}
                     </div>
@@ -282,8 +293,8 @@ function ProgressHeader({ seen, total, pct, avg, avgPct }: { seen: number; total
                 <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
                     <span aria-hidden className="inline-block h-3 w-0.5 rounded-full bg-foreground/70" />
                     <span>
-                        Community average: <span className="font-medium text-foreground tabular-nums">{avgLabel}</span> encountered
-                        {avgPctLabel != null && <span className="tabular-nums"> ({avgPctLabel}%)</span>}
+                        {rt("profile.enemies.averageEncountered", { value: <span className="font-medium text-foreground tabular-nums">{avgLabel}</span> })}
+                        {avgPctLabel != null && <span className="tabular-nums">{t("profile.enemies.averagePct", { pct: avgPctLabel })}</span>}
                     </span>
                 </div>
             )}
@@ -292,17 +303,22 @@ function ProgressHeader({ seen, total, pct, avg, avgPct }: { seen: number; total
 }
 
 const EnemyHandbookCard = memo(function EnemyHandbookCard({ enemy, seen }: IEnemyRow) {
+    const t: EnemiesT = useT("user");
     const [imgError, setImgError] = useState(false);
     const tok = LEVEL_TOKENS[enemy.enemyLevel];
     const hasPortrait = !!enemy.portrait && !imgError;
     const portraitSrc = hasPortrait ? `${env.VITE_BACKEND_URL ?? ""}/api/assets${enemy.portrait}` : undefined;
 
     return (
-        <div className="group relative flex flex-col overflow-hidden rounded-md border bg-card" style={{ borderColor: seen && enemy.enemyLevel !== "NORMAL" ? tok.accentSoft : "color-mix(in oklch, var(--border) 80%, transparent)" }} title={`${enemy.name} (${enemy.enemyIndex})${seen ? "" : " - not encountered"}`}>
+        <div
+            className="group relative flex flex-col overflow-hidden rounded-md border bg-card"
+            style={{ borderColor: seen && enemy.enemyLevel !== "NORMAL" ? tok.accentSoft : "color-mix(in oklch, var(--border) 80%, transparent)" }}
+            title={seen ? t("profile.enemies.card.title", { name: enemy.name, index: enemy.enemyIndex }) : t("profile.enemies.card.titleMissing", { name: enemy.name, index: enemy.enemyIndex })}
+        >
             <div className="relative aspect-square w-full bg-[color-mix(in_oklch,var(--muted)_50%,transparent)]">
                 {hasPortrait && portraitSrc ? (
                     // Not-yet-encountered enemies are desaturated/dimmed, but still visible.
-                    <img alt={`${enemy.name} portrait`} className="block h-full w-full object-contain" decoding="async" loading="lazy" onError={() => setImgError(true)} src={portraitSrc} style={seen ? undefined : { filter: "grayscale(1)", opacity: 0.5 }} />
+                    <img alt={t("profile.enemies.card.portraitAlt", { name: enemy.name })} className="block h-full w-full object-contain" decoding="async" loading="lazy" onError={() => setImgError(true)} src={portraitSrc} style={seen ? undefined : { filter: "grayscale(1)", opacity: 0.5 }} />
                 ) : (
                     <EnemyPlaceholder className="h-full w-full p-4" />
                 )}
@@ -314,7 +330,7 @@ const EnemyHandbookCard = memo(function EnemyHandbookCard({ enemy, seen }: IEnem
                         <LevelBadge level={enemy.enemyLevel} size="sm" />
                     </span>
                 ) : (
-                    <span className="absolute top-1.5 right-1.5 inline-flex rounded-sm bg-background/80 p-0.5" title="Not encountered">
+                    <span className="absolute top-1.5 right-1.5 inline-flex rounded-sm bg-background/80 p-0.5" title={t("profile.enemies.card.locked")}>
                         <Lock aria-hidden className="size-3 text-muted-foreground" />
                     </span>
                 )}
@@ -330,9 +346,10 @@ const EnemyHandbookCard = memo(function EnemyHandbookCard({ enemy, seen }: IEnem
 });
 
 function EnemiesEmpty({ title, body }: { title: string; body: string }) {
+    const t: EnemiesT = useT("user");
     return (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card px-8 py-16 text-center">
-            <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">Enemy Handbook</span>
+            <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("profile.enemies.kicker")}</span>
             <h3 className="font-semibold text-lg tracking-tight">{title}</h3>
             <p className="max-w-sm text-muted-foreground text-sm">{body}</p>
         </div>

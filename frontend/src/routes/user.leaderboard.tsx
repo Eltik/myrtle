@@ -1,6 +1,7 @@
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { INTERVALS, LEADERBOARD_SORTS, type LeaderboardInterval, type LeaderboardScope, type LeaderboardSort, SERVERS, type ServerCode } from "#/components/user/leaderboard/impl/constants";
 import { Leaderboard } from "#/components/user/leaderboard/Leaderboard";
+import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
@@ -38,12 +39,14 @@ export const Route = createFileRoute("/user/leaderboard")({
         return { scope, server, interval, sort, movement, q, page };
     },
     search: { middlewares: [stripSearchParams(LEADERBOARD_DEFAULTS)] },
-    head: () => {
+    head: ({ match }) => {
+        const t = metaT(match.context.i18n);
         const { meta, links } = seo({
-            title: "Leaderboard",
-            description: "Top Doctors ranked by score across servers.",
+            title: t("userLeaderboard.title"),
+            description: t("userLeaderboard.description"),
             path: "/user/leaderboard",
-            image: defaultOgURL("user-leaderboard"),
+            image: defaultOgURL("user-leaderboard", match.context.i18n),
+            locale: match.context.i18n?.locale,
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],

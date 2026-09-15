@@ -1,17 +1,22 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronDown, Cog, ExternalLinkIcon, Heart, LayoutList, LogOut, MenuIcon, UserIcon } from "lucide-react";
+import { useLocaleSwitch } from "#/components/LocaleSwitcher";
+import type { messages as localeSwitcherMessages } from "#/components/LocaleSwitcher.messages";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
 import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "#/components/ui/collapsible";
-import { Drawer, DrawerClose, DrawerHeader, DrawerMenu, DrawerMenuGroup, DrawerMenuGroupLabel, DrawerMenuItem, DrawerMenuSeparator, DrawerPanel, DrawerPopup, DrawerTitle, DrawerTrigger } from "#/components/ui/drawer";
+import { Drawer, DrawerClose, DrawerHeader, DrawerMenu, DrawerMenuGroup, DrawerMenuGroupLabel, DrawerMenuItem, DrawerMenuRadioGroup, DrawerMenuRadioItem, DrawerMenuSeparator, DrawerPanel, DrawerPopup, DrawerTitle, DrawerTrigger } from "#/components/ui/drawer";
 import { GithubIcon } from "#/components/ui/github-icon";
 import { Spinner } from "#/components/ui/spinner";
 import { useAuth } from "#/hooks/use-auth";
 import { REPO_URL } from "#/lib/constants";
+import { useI18n, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, getAvatarSkinId } from "#/lib/utils";
 import { ActiveIndicator } from "./ActiveIndicator";
 import { AuthDialog } from "./AuthDialog";
 import type { INavItem } from "./MainNav";
+import type { messages } from "./MobileNav.messages";
 
 interface IMobileNavProps {
     items: INavItem[];
@@ -21,6 +26,10 @@ export function MobileNav({ items }: IMobileNavProps) {
     const { user, loading, logout } = useAuth();
     const router = useRouterState();
     const pathname = router.location.pathname;
+    const t: TypedT<typeof messages> = useT("nav");
+    const tCommon: TypedT<typeof localeSwitcherMessages> = useT("common");
+    const { locale, available } = useI18n();
+    const switchLocale = useLocaleSwitch();
 
     const renderNavItem = (item: INavItem) => {
         const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
@@ -53,7 +62,7 @@ export function MobileNav({ items }: IMobileNavProps) {
 
     return (
         <Drawer position="left">
-            <DrawerTrigger render={<Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open navigation menu" />}>
+            <DrawerTrigger render={<Button variant="ghost" size="icon" className="lg:hidden" aria-label={t("mobileNav.openMenu")} />}>
                 <MenuIcon className="h-5 w-5" />
             </DrawerTrigger>
             <DrawerPopup showCloseButton className="w-70 max-w-[calc(100vw-3rem)]">
@@ -66,31 +75,54 @@ export function MobileNav({ items }: IMobileNavProps) {
                 <DrawerPanel scrollFade={false}>
                     <DrawerMenu>
                         <DrawerMenuGroup>
-                            <DrawerMenuGroupLabel>Navigation</DrawerMenuGroupLabel>
+                            <DrawerMenuGroupLabel>{t("mobileNav.navigation")}</DrawerMenuGroupLabel>
                             {items.map(renderNavItem)}
                         </DrawerMenuGroup>
                         <DrawerMenuSeparator />
                         <DrawerMenuGroup>
-                            <DrawerMenuGroupLabel>External</DrawerMenuGroupLabel>
+                            <DrawerMenuGroupLabel>{t("mobileNav.external")}</DrawerMenuGroupLabel>
                             <DrawerMenuItem
                                 render={
                                     <a href={REPO_URL} target="_blank" rel="noreferrer" className="cursor-pointer">
-                                        GitHub
+                                        {t("mobileNav.github")}
                                         <GithubIcon className="h-4 w-4" />
                                         <ExternalLinkIcon className="ml-auto h-3 w-3 opacity-50" />
                                     </a>
                                 }
                             />
                             <DrawerMenuItem render={<DrawerClose nativeButton={false} render={<Link to="/donate" target="_blank" />} />}>
-                                Donate
+                                {t("mobileNav.donate")}
                                 <Heart className="mr-2 h-4 w-4" />
                                 <ExternalLinkIcon className="ml-auto h-3 w-3 opacity-50" />
                             </DrawerMenuItem>
                         </DrawerMenuGroup>
 
+                        {/* The header's globe button is hidden below `sm`, so
+                            this is the language control on a phone. */}
+                        {available.length > 1 ? (
+                            <>
+                                <DrawerMenuSeparator />
+                                <DrawerMenuGroup>
+                                    <DrawerMenuGroupLabel>{tCommon("localeSwitcher.language")}</DrawerMenuGroupLabel>
+                                    <DrawerMenuRadioGroup
+                                        value={locale}
+                                        onValueChange={(next: string) => {
+                                            if (next !== locale) switchLocale(next);
+                                        }}
+                                    >
+                                        {available.map((entry) => (
+                                            <DrawerMenuRadioItem key={entry.code} value={entry.code} lang={entry.code}>
+                                                {entry.nativeName}
+                                            </DrawerMenuRadioItem>
+                                        ))}
+                                    </DrawerMenuRadioGroup>
+                                </DrawerMenuGroup>
+                            </>
+                        ) : null}
+
                         <DrawerMenuSeparator />
                         <DrawerMenuGroup>
-                            <DrawerMenuGroupLabel>Account</DrawerMenuGroupLabel>
+                            <DrawerMenuGroupLabel>{t("mobileNav.account")}</DrawerMenuGroupLabel>
                             {loading ? (
                                 <div className="flex h-12 items-center justify-center">
                                     <Spinner />
@@ -99,38 +131,38 @@ export function MobileNav({ items }: IMobileNavProps) {
                                 <>
                                     <div className="mb-2 flex items-center gap-3 px-2 py-2">
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage alt="User avatar" src={getAvatarSkinId(user)} />
+                                            <AvatarImage alt={t("mobileNav.userAvatar")} src={getAvatarSkinId(user)} />
                                             <AvatarFallback className="text-[0.625rem]">{(user.nickname ?? "Doctor").slice(0, 1)}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex flex-col">
                                             <span className="font-medium text-sm">{user.nickname ?? "Doctor"}</span>
-                                            <span className="text-muted-foreground text-xs">Level {user.level}</span>
+                                            <span className="text-muted-foreground text-xs">{t("mobileNav.level", { level: user.level })}</span>
                                         </div>
                                     </div>
                                     <DrawerMenuItem render={<DrawerClose nativeButton={false} render={<Link to="/tier-lists/my" search={{ sort: "recent", type: "all", view: "grid", q: "" }} />} />}>
                                         <LayoutList className="mr-2 h-4 w-4 text-muted-foreground" />
-                                        My Tier Lists
+                                        {t("mobileNav.myTierLists")}
                                     </DrawerMenuItem>
                                     <DrawerMenuItem render={<DrawerClose nativeButton={false} render={<Link to="/settings" />} />}>
                                         <Cog className="mr-2 h-4 w-4 text-muted-foreground" />
-                                        Settings
+                                        {t("mobileNav.settings")}
                                     </DrawerMenuItem>
                                     <DrawerMenuItem variant="destructive" onClick={logout}>
                                         <LogOut className="mr-2 h-4 w-4" />
-                                        Logout
+                                        {t("mobileNav.logout")}
                                     </DrawerMenuItem>
                                 </>
                             ) : (
                                 <>
                                     <DrawerMenuItem render={<DrawerClose nativeButton={false} render={<Link to="/settings" />} />}>
                                         <Cog className="mr-2 h-4 w-4 text-muted-foreground" />
-                                        Settings
+                                        {t("mobileNav.settings")}
                                     </DrawerMenuItem>
                                     <AuthDialog
                                         trigger={
                                             <DrawerMenuItem>
                                                 <UserIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                                                Login
+                                                {t("mobileNav.login")}
                                             </DrawerMenuItem>
                                         }
                                     />

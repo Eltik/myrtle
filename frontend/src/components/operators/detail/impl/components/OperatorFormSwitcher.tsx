@@ -1,17 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, formatProfession } from "#/lib/utils";
 import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
 import { ClassIcon } from "../../../list/impl/components/Icons";
+import type { messages } from "./OperatorFormSwitcher.messages";
 
 interface IOperatorFormSwitcherProps {
     operator: IOperatorListItem;
 }
 
 export function OperatorFormSwitcher({ operator }: IOperatorFormSwitcherProps) {
+    const t: TypedT<typeof messages> = useT("operators");
     const hasForms = (operator.tmplIds?.length ?? 0) >= 2;
-    const { data: index } = useQuery({ ...operatorsIndexQueryOptions(), enabled: hasForms });
+    const server = useGamedataServer();
+    const { data: index } = useQuery({ ...operatorsIndexQueryOptions(server), enabled: hasForms });
     if (!hasForms || !operator.tmplIds || !index) return null;
 
     const indexById = new Map<string, IOperatorIndexEntry>(index.map((e) => [e.id, e]));
@@ -20,7 +25,7 @@ export function OperatorFormSwitcher({ operator }: IOperatorFormSwitcherProps) {
 
     return (
         <div className="-mt-2 mb-4 sm:-mt-3 sm:mb-6">
-            <nav aria-label="Operator form" className="inline-flex max-w-full items-center gap-0.5 rounded-full border border-border/60 bg-card/30 p-1">
+            <nav aria-label={t("forms.aria")} className="inline-flex max-w-full items-center gap-0.5 rounded-full border border-border/60 bg-card/30 p-1">
                 {forms.map((form) => {
                     const isActive = form.id === operator.id;
                     return (

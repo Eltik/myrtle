@@ -3,7 +3,7 @@ import { ChevronDown, Pencil, Plus, Trash } from "lucide-react";
 import * as React from "react";
 
 import { eliteIcon, moduleIconURL, skillIconURL, specializedIcon } from "#/components/operators/detail/impl/assets";
-import { getSkillTypeLabel, getSpTypeLabel } from "#/components/operators/detail/impl/helpers";
+import { getSkillTypeLabel, getSpTypeLabel, type HelperT } from "#/components/operators/detail/impl/helpers";
 import { Button } from "#/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Combobox, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList, ComboboxPopup, ComboboxPrimitive } from "#/components/ui/combobox";
@@ -18,10 +18,13 @@ import { operatorQueryOptions, operatorsListQueryOptions } from "#/lib/api/opera
 import { deleteGroupFn, plansQueryOptions, upsertGroupFn, upsertPlanFn } from "#/lib/api/planner";
 import { upcomingQueryOptions } from "#/lib/api/upcoming";
 import { userRosterQueryOptions } from "#/lib/api/user";
+import { useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { professionLabel } from "#/lib/registry/operator-display";
 import { compactForSearch, searchAndRank } from "#/lib/search/fuzzy";
 import { cn, formatSubProfession, rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem, OperatorProfession } from "#/types/operators";
+import type { messages } from "./OperatorPlannerDialog.messages";
 
 function getMaxLevel(rarity: number, elite: number): number {
     if (rarity <= 2) return 30;
@@ -102,9 +105,14 @@ interface IOperatorSelectionItem {
 
 /** Modal dialog for customizing operator targets. */
 export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }: IOperatorPlannerDialogProps): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("tools");
+    // The skill recovery/trigger labels belong to the operator-detail feature,
+    // so they are resolved against that namespace rather than this one.
+    const operatorsT: HelperT = useT("operators");
     const [selectedOperatorId, setSelectedOperatorId] = React.useState<string | null>(null);
+    const server = useGamedataServer();
     const { data: selectedOperator = null, isLoading: isOperatorDetailLoading } = useQuery({
-        ...operatorQueryOptions(selectedOperatorId ?? ""),
+        ...operatorQueryOptions(selectedOperatorId ?? "", server),
         enabled: !!selectedOperatorId,
     });
     const [elite, setElite] = React.useState<number>(0);
@@ -121,8 +129,8 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
     const [isCreatingGroup, setIsCreatingGroup] = React.useState<boolean>(false);
     const [newGroupName, setNewGroupName] = React.useState<string>("");
 
-    const { data: operators = [], isLoading: isOperatorsLoading } = useQuery(operatorsListQueryOptions());
-    const { data: upcoming = [], isLoading: isUpcomingLoading } = useQuery(upcomingQueryOptions());
+    const { data: operators = [], isLoading: isOperatorsLoading } = useQuery(operatorsListQueryOptions(server));
+    const { data: upcoming = [], isLoading: isUpcomingLoading } = useQuery(upcomingQueryOptions(server));
 
     const isLoading = isOperatorsLoading || isUpcomingLoading;
 
@@ -427,7 +435,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
     };
 
     const handleRenameGroup = async (oldName: string) => {
-        const newName = window.prompt("Enter new group name:", oldName);
+        const newName = window.prompt(t("planner.dialog.groups.renamePrompt"), oldName);
         if (newName === null) return;
         const trimmed = newName.trim();
         if (!trimmed || trimmed === oldName) return;
@@ -441,7 +449,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
     };
 
     const handleDeleteGroup = async (name: string) => {
-        if (!window.confirm(`Are you sure you want to delete group "${name}"?`)) return;
+        if (!window.confirm(t("planner.dialog.groups.deleteConfirm", { name }))) return;
         try {
             await deleteGroupFn({ data: { name } });
             setSelectedGroups((prev) => prev.filter((g) => g !== name));
@@ -519,15 +527,15 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogPopup bottomStickOnMobile={false} className="flex h-[min(840px,calc(100vh-4rem))] w-full max-w-[min(1152px,calc(100vw-2rem))] flex-col overflow-hidden p-0">
                 <DialogHeader>
-                    <DialogTitle>{isEditMode ? "Edit plan" : "Create new plan"}</DialogTitle>
-                    <DialogDescription>{isEditMode ? `Customize and update your target goals for ${selectedOperator?.name ?? "this operator"}.` : "Add a new operator target plan to your planner list."}</DialogDescription>
+                    <DialogTitle>{isEditMode ? t("planner.dialog.editTitle") : t("planner.dialog.createTitle")}</DialogTitle>
+                    <DialogDescription>{isEditMode ? t("planner.dialog.editDesc", { operator: selectedOperator?.name ?? t("planner.dialog.editDesc.fallback") }) : t("planner.dialog.createDesc")}</DialogDescription>
                 </DialogHeader>
 
                 <DialogPanel className="min-h-0 flex-1">
                     <div className="space-y-6">
                         <div className="space-y-2">
                             <label className="block font-medium text-[13px] text-muted-foreground leading-none" htmlFor="operator-selector">
-                                Select Operator
+                                {t("planner.dialog.selectOperator")}
                             </label>
                             <Combobox<IOperatorSelectionItem, false>
                                 items={filteredAndSortedOperators}
@@ -538,9 +546,9 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                 itemToStringLabel={(op) => op?.name ?? ""}
                                 itemToStringValue={(op) => op?.id ?? ""}
                             >
-                                <ComboboxInput id="operator-selector" placeholder={isLoading ? "Loading operators..." : "Search operators by name, class, or tag..."} />
+                                <ComboboxInput id="operator-selector" placeholder={isLoading ? t("planner.dialog.loadingOperators") : t("planner.dialog.searchOperators")} />
                                 <ComboboxPopup className="max-w-100">
-                                    <ComboboxEmpty>No operators found.</ComboboxEmpty>
+                                    <ComboboxEmpty>{t("planner.dialog.noOperators")}</ComboboxEmpty>
                                     <ComboboxList>
                                         {(op: IOperatorSelectionItem) => {
                                             const rarity = op.rarity;
@@ -551,9 +559,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                             <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" server={op.isUpcoming ? "cn" : undefined} />
                                                         </span>
                                                         <span className="flex-1 font-medium text-foreground text-sm">{op.name}</span>
-                                                        <span className="font-normal text-muted-foreground text-xs">
-                                                            {rarity}★ · {professionLabel(op.profession)}
-                                                        </span>
+                                                        <span className="font-normal text-muted-foreground text-xs">{t("planner.dialog.rarityClass", { rarity, class: professionLabel(op.profession) })}</span>
                                                     </span>
                                                 </ComboboxItem>
                                             );
@@ -566,7 +572,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                         {selectedOperatorId && isOperatorDetailLoading && (
                             <div className="flex flex-col items-center justify-center gap-3 py-16">
                                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                                <p className="text-muted-foreground text-xs">Loading operator details...</p>
+                                <p className="text-muted-foreground text-xs">{t("planner.dialog.loadingDetails")}</p>
                             </div>
                         )}
 
@@ -579,20 +585,18 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                         </span>
                                         <div>
                                             <h3 className="font-bold text-foreground text-lg">{selectedOperator.name}</h3>
-                                            <p className="text-muted-foreground text-xs">
-                                                {rarityToNumber(selectedOperator.rarity)}★ · {formatSubProfession(selectedOperator.subProfessionId)}
-                                            </p>
+                                            <p className="text-muted-foreground text-xs">{t("planner.dialog.rarityArchetype", { rarity: rarityToNumber(selectedOperator.rarity), archetype: formatSubProfession(selectedOperator.subProfessionId) })}</p>
                                         </div>
                                     </div>
                                 </div>
 
                                 {selectedOperator.id === "char_4195_radian" ? (
-                                    <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-amber-600 text-sm leading-relaxed dark:text-amber-400">Raidian's upgrades are dependent on Integrated Strategies 6 - Sui's Garden of Grotesqueries progression and cannot be planned.</div>
+                                    <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-amber-600 text-sm leading-relaxed dark:text-amber-400">{t("planner.dialog.radian")}</div>
                                 ) : (
                                     <>
                                         <div className="grid grid-cols-1 items-center gap-6 rounded-xl border border-border bg-card/40 p-4 sm:grid-cols-[auto_1fr]">
                                             <div className="flex flex-col gap-2">
-                                                <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">Promotion</span>
+                                                <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">{t("planner.dialog.promotion")}</span>
                                                 <div className="mt-1 flex items-center gap-2">
                                                     {[0, 1, 2].map((e) => {
                                                         const isAvailable = e <= maxElite;
@@ -607,9 +611,9 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                                     "relative flex size-12 cursor-pointer items-center justify-center rounded-lg border transition-all",
                                                                     isActive ? "border-primary bg-primary/10 opacity-100 ring-2 ring-primary/20" : "border-border bg-muted/40 opacity-40 hover:bg-muted/80 hover:opacity-75",
                                                                 )}
-                                                                title={`Elite ${e}`}
+                                                                title={t("planner.dialog.elite", { elite: e })}
                                                             >
-                                                                <img src={eliteIcon(e)} alt={`Elite ${e}`} className="icon-theme-aware size-7 object-contain" />
+                                                                <img src={eliteIcon(e)} alt={t("planner.dialog.elite", { elite: e })} className="icon-theme-aware size-7 object-contain" />
                                                             </button>
                                                         );
                                                     })}
@@ -617,7 +621,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                             </div>
 
                                             <div className="flex w-full flex-col gap-2">
-                                                <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">Level (Max {maxL})</span>
+                                                <span className="font-semibold text-muted-foreground text-xs uppercase tracking-wider">{t("planner.dialog.level", { max: maxL })}</span>
                                                 <div className="mt-2 flex items-center gap-4">
                                                     <Slider value={[level]} onValueChange={(vals) => handleLevelChange(Array.isArray(vals) ? (vals[0] ?? 1) : vals)} min={1} max={maxL} className="flex-1" />
                                                     <Input type="number" min={1} max={maxL} value={level} onChange={(e) => handleLevelChange(parseInt(e.target.value, 10))} className="w-16 text-center font-mono" />
@@ -629,7 +633,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                             <Collapsible open={skillsOpen} onOpenChange={setSkillsOpen} className="space-y-3">
                                                 <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
                                                     <span className="flex items-center gap-2">
-                                                        <span className="font-semibold text-foreground text-sm">Skills</span>
+                                                        <span className="font-semibold text-foreground text-sm">{t("planner.dialog.skills")}</span>
                                                     </span>
                                                     <ChevronDown className={cn("h-4 w-4 transition-transform", skillsOpen && "rotate-180")} />
                                                 </CollapsibleTrigger>
@@ -638,9 +642,9 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                         {selectedOperator.skills.map((skill, idx) => {
                                                             const currentTarget = skillTargets[idx] ?? 1;
                                                             const skillLevelInfo = skill.static?.levels?.[currentTarget - 1] ?? skill.static?.levels?.[0];
-                                                            const name = skillLevelInfo?.name ?? `Skill ${idx + 1}`;
-                                                            const recoveryType = skillLevelInfo?.spData?.spType ? getSpTypeLabel(skillLevelInfo.spData.spType) : "";
-                                                            const triggerType = skillLevelInfo?.skillType ? getSkillTypeLabel(skillLevelInfo.skillType) : "";
+                                                            const name = skillLevelInfo?.name ?? t("planner.dialog.skillFallback", { index: idx + 1 });
+                                                            const recoveryType = skillLevelInfo?.spData?.spType ? getSpTypeLabel(skillLevelInfo.spData.spType, operatorsT) : "";
+                                                            const triggerType = skillLevelInfo?.skillType ? getSkillTypeLabel(skillLevelInfo.skillType, operatorsT) : "";
                                                             const initialSp = skillLevelInfo?.spData?.initSp ?? 0;
                                                             const totalSp = skillLevelInfo?.spData?.spCost ?? 0;
 
@@ -667,9 +671,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                                                 <span className="text-muted-foreground/30" aria-hidden="true">
                                                                                     •
                                                                                 </span>
-                                                                                <span>
-                                                                                    SP: {initialSp}/{totalSp}
-                                                                                </span>
+                                                                                <span>{t("planner.dialog.sp", { initial: initialSp, total: totalSp })}</span>
                                                                             </>
                                                                         )}
                                                                     </div>
@@ -690,7 +692,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                                                 const cond = isMastery ? skill.levelUpCostCond?.[val - 8]?.unlockCond : selectedOperator.allSkillLevelUp?.[val - 2]?.unlockCond;
                                                                                 if (cond) {
                                                                                     const phaseLabel = cond.phase === "PHASE_0" ? "0" : cond.phase === "PHASE_1" ? "1" : "2";
-                                                                                    tooltipText = isMastery ? `Skill Mastery ${val - 7} is available after Elite ${phaseLabel} Level ${cond.level}` : `Skill Level ${val} is available after Elite ${phaseLabel} Level ${cond.level}`;
+                                                                                    tooltipText = isMastery ? t("planner.dialog.masteryLocked", { mastery: val - 7, elite: phaseLabel, level: cond.level }) : t("planner.dialog.skillLevelLocked", { skillLevel: val, elite: phaseLabel, level: cond.level });
                                                                                 }
                                                                             }
 
@@ -704,9 +706,13 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                                                                         type="button"
                                                                                                         disabled
                                                                                                         className="flex h-full w-full cursor-help items-center justify-center rounded-md border border-border/40 bg-muted/20 opacity-20 transition-all"
-                                                                                                        title={isMastery ? `Mastery ${val - 7}` : `Level ${val}`}
+                                                                                                        title={isMastery ? t("planner.dialog.mastery", { mastery: val - 7 }) : t("planner.dialog.skillLevel", { level: val })}
                                                                                                     >
-                                                                                                        {isMastery ? <img src={specializedIcon(val - 7)} alt={`Mastery ${val - 7}`} className="size-5 object-contain sm:size-6" /> : <span className="font-semibold text-xs sm:text-[13px]">{val}</span>}
+                                                                                                        {isMastery ? (
+                                                                                                            <img src={specializedIcon(val - 7)} alt={t("planner.dialog.mastery", { mastery: val - 7 })} className="size-5 object-contain sm:size-6" />
+                                                                                                        ) : (
+                                                                                                            <span className="font-semibold text-xs sm:text-[13px]">{val}</span>
+                                                                                                        )}
                                                                                                     </button>
                                                                                                 </span>
                                                                                             )}
@@ -725,9 +731,9 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                                                         "flex aspect-square w-full shrink-0 cursor-pointer items-center justify-center rounded-md border transition-all sm:size-9",
                                                                                         isActive ? "border-primary bg-primary/10 opacity-100 ring-2 ring-primary/20" : "border-border bg-muted/40 opacity-40 hover:bg-muted/80 hover:opacity-75",
                                                                                     )}
-                                                                                    title={isMastery ? `Mastery ${val - 7}` : `Level ${val}`}
+                                                                                    title={isMastery ? t("planner.dialog.mastery", { mastery: val - 7 }) : t("planner.dialog.skillLevel", { level: val })}
                                                                                 >
-                                                                                    {isMastery ? <img src={specializedIcon(val - 7)} alt={`Mastery ${val - 7}`} className="size-5 object-contain sm:size-6" /> : <span className="font-semibold text-xs sm:text-[13px]">{val}</span>}
+                                                                                    {isMastery ? <img src={specializedIcon(val - 7)} alt={t("planner.dialog.mastery", { mastery: val - 7 })} className="size-5 object-contain sm:size-6" /> : <span className="font-semibold text-xs sm:text-[13px]">{val}</span>}
                                                                                 </button>
                                                                             );
                                                                         })}
@@ -744,7 +750,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                             <Collapsible open={modulesSectionOpen} onOpenChange={setModulesSectionOpen} className="space-y-3">
                                                 <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
                                                     <span className="flex items-center gap-2">
-                                                        <span className="font-semibold text-foreground text-sm">Modules</span>
+                                                        <span className="font-semibold text-foreground text-sm">{t("planner.dialog.modules")}</span>
                                                     </span>
                                                     <ChevronDown className={cn("h-4 w-4 transition-transform", modulesSectionOpen && "rotate-180")} />
                                                 </CollapsibleTrigger>
@@ -755,7 +761,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                             .map((mod) => {
                                                                 const currentTarget = moduleTargets[mod.uniEquipId] ?? 0;
                                                                 const name = mod.uniEquipName;
-                                                                const moduleTag = mod.typeName1 && mod.typeName2 ? `${mod.typeName1}-${mod.typeName2}` : (mod.typeName1 ?? "Module");
+                                                                const moduleTag = mod.typeName1 && mod.typeName2 ? `${mod.typeName1}-${mod.typeName2}` : (mod.typeName1 ?? t("planner.dialog.moduleFallback"));
 
                                                                 return (
                                                                     <div key={mod.uniEquipId} className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1.5 rounded-xl border border-border bg-card p-4 sm:grid-cols-[auto_1fr_auto]">
@@ -777,7 +783,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                                                 let tooltipText = "";
                                                                                 if (!isAllowed) {
                                                                                     const phaseLabel = mod.unlockEvolvePhase === "PHASE_0" ? "0" : mod.unlockEvolvePhase === "PHASE_1" ? "1" : "2";
-                                                                                    tooltipText = `Module unlocks at Elite ${phaseLabel} Level ${mod.unlockLevel}`;
+                                                                                    tooltipText = t("planner.dialog.moduleLocked", { elite: phaseLabel, level: mod.unlockLevel });
                                                                                 }
 
                                                                                 if (!isAllowed && tooltipText) {
@@ -786,7 +792,12 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                                                             <TooltipTrigger
                                                                                                 render={(props) => (
                                                                                                     <span {...props} className="flex size-9 shrink-0 cursor-help">
-                                                                                                        <button type="button" disabled className="flex h-full w-full cursor-help items-center justify-center rounded-md border border-border/40 bg-muted/20 opacity-20 transition-all" title={`Stage ${val}`}>
+                                                                                                        <button
+                                                                                                            type="button"
+                                                                                                            disabled
+                                                                                                            className="flex h-full w-full cursor-help items-center justify-center rounded-md border border-border/40 bg-muted/20 opacity-20 transition-all"
+                                                                                                            title={t("planner.dialog.stage", { stage: val })}
+                                                                                                        >
                                                                                                             <span className="font-semibold text-xs sm:text-[13px]">{val}</span>
                                                                                                         </button>
                                                                                                     </span>
@@ -811,7 +822,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                                                             "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md border transition-all",
                                                                                             isActive ? "border-primary bg-primary/10 opacity-100 ring-2 ring-primary/20" : "border-border bg-muted/40 opacity-40 hover:bg-muted/80 hover:opacity-75",
                                                                                         )}
-                                                                                        title={val === 0 ? "Not planned" : `Stage ${val}`}
+                                                                                        title={val === 0 ? t("planner.dialog.notPlanned") : t("planner.dialog.stage", { stage: val })}
                                                                                     >
                                                                                         <span className="font-semibold text-xs sm:text-[13px]">{val === 0 ? "\u2014" : val}</span>
                                                                                     </button>
@@ -828,7 +839,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
 
                                         <div className="space-y-2">
                                             <label className="block font-medium text-[13px] text-muted-foreground leading-none" htmlFor="group-selector">
-                                                Groups
+                                                {t("planner.dialog.groups")}
                                             </label>
                                             <Combobox<string, true>
                                                 multiple
@@ -854,14 +865,14 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                 itemToStringLabel={(g) => g ?? ""}
                                                 itemToStringValue={(g) => g ?? ""}
                                             >
-                                                <ComboboxInput id="group-selector" placeholder="Select plan groups..." className="truncate text-ellipsis" />
+                                                <ComboboxInput id="group-selector" placeholder={t("planner.dialog.groups.placeholder")} className="truncate text-ellipsis" />
                                                 <ComboboxPopup className="max-w-100">
                                                     {isCreatingGroup ? (
                                                         <div className="flex items-center gap-2 border-border border-b p-2">
                                                             <Input
                                                                 value={newGroupName}
                                                                 onChange={(e) => setNewGroupName(e.target.value)}
-                                                                placeholder="New group name..."
+                                                                placeholder={t("planner.dialog.groups.newName")}
                                                                 className="h-8 flex-1 text-xs"
                                                                 autoFocus
                                                                 onKeyDown={(e) => {
@@ -876,7 +887,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                                 }}
                                                             />
                                                             <Button size="sm" className="h-8 px-2 text-xs" onClick={handleCreateGroup}>
-                                                                Create
+                                                                {t("planner.dialog.groups.create")}
                                                             </Button>
                                                             <Button
                                                                 variant="outline"
@@ -887,18 +898,18 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                                     setNewGroupName("");
                                                                 }}
                                                             >
-                                                                Cancel
+                                                                {t("planner.dialog.groups.cancel")}
                                                             </Button>
                                                         </div>
                                                     ) : (
                                                         <div className="border-border border-b p-1">
                                                             <button type="button" onClick={() => setIsCreatingGroup(true)} className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left font-medium text-primary text-xs hover:bg-primary/10 hover:text-primary">
                                                                 <Plus className="h-3.5 w-3.5" />
-                                                                Create new group
+                                                                {t("planner.dialog.groups.createNew")}
                                                             </button>
                                                         </div>
                                                     )}
-                                                    <ComboboxEmpty>No groups found.</ComboboxEmpty>
+                                                    <ComboboxEmpty>{t("planner.dialog.groups.none")}</ComboboxEmpty>
                                                     <ComboboxList>
                                                         {(name: string) => (
                                                             <ComboboxPrimitive.Item
@@ -950,9 +961,9 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                         <div className="flex items-center justify-between rounded-xl border border-border bg-card/40 p-4">
                                             <div className="space-y-0.5">
                                                 <label htmlFor="display-on-profile" className="cursor-pointer font-semibold text-foreground text-sm">
-                                                    Display on profile
+                                                    {t("planner.dialog.displayOnProfile")}
                                                 </label>
-                                                <p className="text-muted-foreground text-xs">Show this target plan on your public user profile.</p>
+                                                <p className="text-muted-foreground text-xs">{t("planner.dialog.displayOnProfile.desc")}</p>
                                             </div>
                                             <Switch id="display-on-profile" checked={displayOnProfile} onCheckedChange={setDisplayOnProfile} />
                                         </div>
@@ -960,15 +971,15 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                 )}
                             </div>
                         ) : !selectedOperatorId ? (
-                            <p className="text-muted-foreground text-sm italic">Please select an operator to customize targets.</p>
+                            <p className="text-muted-foreground text-sm italic">{t("planner.dialog.pickOperator")}</p>
                         ) : null}
                     </div>
                 </DialogPanel>
 
                 <DialogFooter className="pb-8 sm:pb-8">
-                    <DialogClose render={<Button variant="outline" className="w-full sm:w-auto" />}>Cancel</DialogClose>
+                    <DialogClose render={<Button variant="outline" className="w-full sm:w-auto" />}>{t("planner.dialog.cancel")}</DialogClose>
                     <Button onClick={handleSave} disabled={isSaving || !selectedOperator || selectedOperator.id === "char_4195_radian"} className="w-full sm:w-auto">
-                        {isSaving ? "Saving..." : isEditMode ? "Save changes" : "Create plan"}
+                        {isSaving ? t("planner.dialog.saving") : isEditMode ? t("planner.dialog.save") : t("planner.dialog.create")}
                     </Button>
                 </DialogFooter>
             </DialogPopup>

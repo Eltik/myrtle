@@ -1,9 +1,12 @@
 import { BarChart3, ChevronDown } from "lucide-react";
 import { useCallback, useId, useMemo, useState } from "react";
 import { ClassIcon, SubProfessionIcon } from "#/components/operators/list/impl/components/Icons";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import { PALETTE } from "../palette";
 import { Bar, CARD_PADDING, Kicker, StatCard } from "../primitives";
+import type { messages } from "./ClassBreakdownCard.messages";
 
 interface ISubProfession {
     subProfessionId: string;
@@ -28,6 +31,7 @@ function shortSubName(name: string): string {
 }
 
 export function ClassBreakdownCard({ professions }: { professions: IProfession[] }) {
+    const t: TypedT<typeof messages> = useT("user");
     const colors = useMemo(() => professions.map((p) => PALETTE.classes[p.profession] ?? PALETTE.collection), [professions]);
 
     // Pre-compute the longest short name across all sub-professions so the
@@ -56,7 +60,7 @@ export function ClassBreakdownCard({ professions }: { professions: IProfession[]
     return (
         <StatCard className="sm:col-span-2" color={colors}>
             <div className={cn(CARD_PADDING, "pb-2")}>
-                <Kicker icon={BarChart3} label="Class Breakdown" />
+                <Kicker icon={BarChart3} label={t("profile.stats.classes.title")} />
             </div>
             <div className="flex flex-col px-4 pb-4 sm:px-5 sm:pb-5">
                 {professions.map((prof) => (

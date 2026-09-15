@@ -9,6 +9,8 @@ import { operatorOwnershipQueryOptions, operatorsIndexQueryOptions, operatorsLis
 import { upcomingQueryOptions } from "#/lib/api/upcoming";
 import { voicesQueryOptions } from "#/lib/api/voices";
 import { operatorsExportSchema } from "#/lib/export";
+import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import { Route } from "#/routes/operators";
 import type { IOperatorListItem, OperatorRarityTier } from "#/types/operators";
@@ -23,11 +25,13 @@ import { OperatorCardList } from "./impl/components/OperatorCardList";
 import { OperatorCardUpcoming } from "./impl/components/OperatorCardUpcoming";
 import { OperatorFilters } from "./impl/components/OperatorFilters";
 import { Pagination, PaginationCompact } from "./impl/components/Pagination";
-import { FILTERS_VISIBLE_KEY, HAS_NOTES_LABELS, ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, MIN_RARITY_FOR_E2, PAGE_KEY, SORT_OPTIONS, STAT_METRIC_KEY, STAT_METRICS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
+import { FILTERS_VISIBLE_KEY, HAS_NOTES_LABEL_KEY, ITEMS_PER_PAGE, ITEMS_PER_PAGE_KEY, ITEMS_PER_PAGE_OPTIONS, type ItemsPerPage, LIST_GRID_COLS, MIN_RARITY_FOR_E2, PAGE_KEY, SORT_OPTIONS, STAT_METRIC_KEY, STAT_METRICS, VIEW_MODE_KEY, VIEW_MODES } from "./impl/constants";
+import type { messages as listConstantsMessages } from "./impl/constants.messages";
 import { enrichOperators } from "./impl/enrich";
 import { buildSharedChips } from "./impl/shared-filters";
 import type { IOperatorExportRow, IOperatorOwnershipInfo, IOperatorView, SortOption, SortOrder, StatMetric, ViewMode } from "./impl/types";
 import { useOperatorFilters } from "./impl/useOperatorFilters";
+import type { messages } from "./Operators.messages";
 
 const UPCOMING_SKELETON_KEYS = Array.from({ length: 18 }, (_, i) => `upcoming-skeleton-${i}`);
 
@@ -36,10 +40,13 @@ const UPCOMING_SKELETON_KEYS = Array.from({ length: 18 }, (_, i) => `upcoming-sk
 const EMPTY_EXPORT_ROWS: IOperatorExportRow[] = [];
 
 export function OperatorsList() {
-    const { data: operators = [] } = useQuery(operatorsIndexQueryOptions());
-    const { data: voices } = useQuery(voicesQueryOptions());
+    const t: TypedT<typeof messages & typeof listConstantsMessages> = useT("operators");
+    const rt: TypedRichT<typeof messages> = useRichT("operators");
+    const server = useGamedataServer();
+    const { data: operators = [] } = useQuery(operatorsIndexQueryOptions(server));
+    const { data: voices } = useQuery(voicesQueryOptions(server));
     const { data: notes } = useQuery(operatorNotesListQueryOptions());
-    const { data: ownership } = useQuery(operatorOwnershipQueryOptions());
+    const { data: ownership } = useQuery(operatorOwnershipQueryOptions(server));
     const notedIds = useMemo(() => {
         if (!notes) return undefined;
         return new Set(notes.filter(noteHasContent).map((n) => n.operator_id));
@@ -93,7 +100,7 @@ export function OperatorsList() {
         activeFilterCount,
     } = useOperatorFilters(enriched);
 
-    const { data: upcoming = [], isLoading: upcomingLoading } = useQuery(upcomingQueryOptions());
+    const { data: upcoming = [], isLoading: upcomingLoading } = useQuery(upcomingQueryOptions(server));
     const isUpcoming = filters.availability === "upcoming";
 
     const upcomingFiltered = useMemo(() => {
@@ -182,7 +189,7 @@ export function OperatorsList() {
     // skin art, etc.) that the slim operators index doesn't carry. Fetch the full
     // operator table lazily - only once the dialog is opened - and merge those
     // fields onto the rows we hand the dialog.
-    const { data: fullOperators } = useQuery({ ...operatorsListQueryOptions(), enabled: exportOpen });
+    const { data: fullOperators } = useQuery({ ...operatorsListQueryOptions(server), enabled: exportOpen });
     const fullById = useMemo(() => {
         const map = new Map<string, IOperatorListItem>();
         for (const op of fullOperators ?? []) if (op.id) map.set(op.id, op);
@@ -229,12 +236,12 @@ export function OperatorsList() {
         if (filters.hasNotes !== "any") {
             chips.push({
                 key: `notes-${filters.hasNotes}`,
-                label: HAS_NOTES_LABELS[filters.hasNotes],
+                label: t(HAS_NOTES_LABEL_KEY[filters.hasNotes]),
                 onRemove: () => setHasNotes("any"),
             });
         }
         return chips;
-    }, [filters, removeFrom, setHasNotes]);
+    }, [filters, removeFrom, setHasNotes, t]);
 
     // Only the export dialog consumes these, and the full-table merge (toExportRow)
     // is empty until it opens - so skip the row rebuild entirely while it's closed.
@@ -245,15 +252,13 @@ export function OperatorsList() {
     return (
         <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-2rem))] pb-20">
             <div className="pt-7 pb-1.5">
-                <nav className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label="Breadcrumb">
-                    <span>Collection</span>
+                <nav className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label={t("list.breadcrumb.aria")}>
+                    <span>{t("list.breadcrumb.collection")}</span>
                     <ChevronRight className="h-2.5 w-2.5" aria-hidden="true" />
-                    <span className="text-foreground">Operators</span>
+                    <span className="text-foreground">{t("list.breadcrumb.operators")}</span>
                 </nav>
-                <h1 className="m-0 font-bold font-sans text-[30px] text-foreground leading-[1.1] tracking-tight">Operators</h1>
-                <p className="mt-1.5 font-sans text-[13.5px] text-muted-foreground leading-normal">
-                    View all <strong className="text-foreground">{operators.length}</strong> operators.
-                </p>
+                <h1 className="m-0 font-bold font-sans text-[30px] text-foreground leading-[1.1] tracking-tight">{t("list.title")}</h1>
+                <p className="mt-1.5 font-sans text-[13.5px] text-muted-foreground leading-normal">{rt("list.viewAll", { count: <strong className="text-foreground">{operators.length}</strong> })}</p>
             </div>
             <div className="relative flex items-start pt-5">
                 <OperatorFilters
@@ -292,7 +297,7 @@ export function OperatorsList() {
                     activeFilterCount={activeFilterCount}
                 />
 
-                <main className="flex min-w-0 flex-1 flex-col gap-3.5" aria-label="Operator results">
+                <main className="flex min-w-0 flex-1 flex-col gap-3.5" aria-label={t("list.results.aria")}>
                     <div className="flex flex-wrap items-center gap-2.5">
                         <FilterToggleButton visible={filtersVisible} onToggle={toggleFilters} activeCount={activeFilterCount} />
 
@@ -302,8 +307,8 @@ export function OperatorsList() {
                                 type="text"
                                 value={filters.searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search operators..."
-                                aria-label="Search operators"
+                                placeholder={t("list.search.placeholder")}
+                                aria-label={t("list.search.aria")}
                                 className="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 font-sans text-foreground text-sm leading-none outline-none placeholder:text-muted-foreground"
                             />
                         </div>
@@ -312,42 +317,42 @@ export function OperatorsList() {
                         <div
                             className="inline-flex h-10 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1 [&>button:not([data-on]):hover]:text-foreground [&>button[data-on]]:bg-primary [&>button[data-on]]:text-primary-foreground [&>button]:inline-flex [&>button]:h-8 [&>button]:w-8 [&>button]:cursor-pointer [&>button]:items-center [&>button]:justify-center [&>button]:rounded-md [&>button]:border-0 [&>button]:bg-transparent [&>button]:p-0 [&>button]:text-muted-foreground [&>button]:transition-[background-color,color] [&>button]:duration-150"
                             role="group"
-                            aria-label="View mode"
+                            aria-label={t("list.viewMode.aria")}
                         >
                             <Tooltip>
                                 <TooltipTrigger
                                     render={
-                                        <button type="button" title="Grid" data-on={viewMode === "grid" || undefined} onClick={() => setViewMode("grid")} aria-pressed={viewMode === "grid"}>
+                                        <button type="button" title={t("list.viewMode.grid")} data-on={viewMode === "grid" || undefined} onClick={() => setViewMode("grid")} aria-pressed={viewMode === "grid"}>
                                             <LayoutGrid className="h-4 w-4" aria-hidden="true" />
                                         </button>
                                     }
                                 />
                                 <TooltipPopup side="top" sideOffset={8}>
-                                    Grid
+                                    {t("list.viewMode.grid")}
                                 </TooltipPopup>
                             </Tooltip>
                             <Tooltip>
                                 <TooltipTrigger
                                     render={
-                                        <button type="button" title="Compact" data-on={viewMode === "compact" || undefined} onClick={() => setViewMode("compact")} aria-pressed={viewMode === "compact"}>
+                                        <button type="button" title={t("list.viewMode.compact")} data-on={viewMode === "compact" || undefined} onClick={() => setViewMode("compact")} aria-pressed={viewMode === "compact"}>
                                             <Rows3 className="h-4 w-4" aria-hidden="true" />
                                         </button>
                                     }
                                 />
                                 <TooltipPopup side="top" sideOffset={8}>
-                                    Compact
+                                    {t("list.viewMode.compact")}
                                 </TooltipPopup>
                             </Tooltip>
                             <Tooltip>
                                 <TooltipTrigger
                                     render={
-                                        <button type="button" title="List" data-on={viewMode === "list" || undefined} onClick={() => setViewMode("list")} aria-pressed={viewMode === "list"}>
+                                        <button type="button" title={t("list.viewMode.list")} data-on={viewMode === "list" || undefined} onClick={() => setViewMode("list")} aria-pressed={viewMode === "list"}>
                                             <LayoutList className="h-4 w-4" aria-hidden="true" />
                                         </button>
                                     }
                                 />
                                 <TooltipPopup side="top" sideOffset={8}>
-                                    List
+                                    {t("list.viewMode.list")}
                                 </TooltipPopup>
                             </Tooltip>
                         </div>
@@ -356,44 +361,49 @@ export function OperatorsList() {
                         <div
                             className="inline-flex h-10 items-center rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1 [&>button:not([data-on]):hover]:text-foreground [&>button[data-on]]:bg-primary [&>button[data-on]]:text-primary-foreground [&>button]:inline-flex [&>button]:h-8 [&>button]:cursor-pointer [&>button]:items-center [&>button]:justify-center [&>button]:rounded-md [&>button]:border-0 [&>button]:bg-transparent [&>button]:px-2 [&>button]:font-medium [&>button]:font-mono [&>button]:text-[10px] [&>button]:text-muted-foreground [&>button]:uppercase [&>button]:tracking-[0.12em] [&>button]:transition-[background-color,color] [&>button]:duration-150"
                             role="group"
-                            aria-label="Card statistic"
+                            aria-label={t("list.stat.aria")}
                         >
                             <Tooltip>
                                 <TooltipTrigger
                                     render={
                                         <button type="button" data-on={statMetric === "owned" || undefined} onClick={() => setStatMetric("owned")} aria-pressed={statMetric === "owned"}>
-                                            Owned
+                                            {t("list.stat.owned")}
                                         </button>
                                     }
                                 />
                                 <TooltipPopup side="top" sideOffset={8}>
-                                    Share of players who own each operator
+                                    {t("list.stat.owned.tip")}
                                 </TooltipPopup>
                             </Tooltip>
                             <Tooltip>
                                 <TooltipTrigger
                                     render={
                                         <button type="button" data-on={statMetric === "e2" || undefined} onClick={() => setStatMetric("e2")} aria-pressed={statMetric === "e2"}>
-                                            E2
+                                            {t("list.stat.e2")}
                                         </button>
                                     }
                                 />
                                 <TooltipPopup side="top" sideOffset={8}>
-                                    Share of owners who promoted each operator to E2
+                                    {t("list.stat.e2.tip")}
                                 </TooltipPopup>
                             </Tooltip>
                         </div>
 
                         <div className="inline-flex h-10 items-center gap-1 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] p-1">
-                            <Select value={filters.sortBy} onValueChange={(v) => setSortBy(v as SortOption)} aria-label="Sort operators">
+                            <Select value={filters.sortBy} onValueChange={(v) => setSortBy(v as SortOption)} aria-label={t("list.sort.aria")}>
                                 <SelectTrigger size="sm" className="h-8 min-h-8 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-medium font-sans text-[13px] text-foreground shadow-none before:shadow-none hover:bg-[color-mix(in_oklch,var(--secondary)_80%,transparent)]">
-                                    <span className="mr-1 border-border border-r pr-1 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">Sort</span>
-                                    <SelectValue>{(value) => SORT_OPTIONS.find((o) => o.value === value)?.label ?? value}</SelectValue>
+                                    <span className="mr-1 border-border border-r pr-1 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{t("list.sort.caption")}</span>
+                                    <SelectValue>
+                                        {(value) => {
+                                            const opt = SORT_OPTIONS.find((o) => o.value === value);
+                                            return opt ? t(opt.labelKey) : value;
+                                        }}
+                                    </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                     {SORT_OPTIONS.map((opt) => (
                                         <SelectItem key={opt.value} value={opt.value}>
-                                            {opt.label}
+                                            {t(opt.labelKey)}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -401,9 +411,9 @@ export function OperatorsList() {
                             <button
                                 type="button"
                                 className="inline-flex h-8 w-8 cursor-pointer appearance-none items-center justify-center rounded-md border-0 bg-transparent p-0 text-muted-foreground transition-[background-color,color] duration-150 hover:bg-secondary hover:text-foreground"
-                                title={filters.sortOrder === "asc" ? "Ascending" : "Descending"}
+                                title={filters.sortOrder === "asc" ? t("list.sort.asc") : t("list.sort.desc")}
                                 onClick={() => setSortOrder((filters.sortOrder === "asc" ? "desc" : "asc") as SortOrder)}
-                                aria-label="Toggle sort direction"
+                                aria-label={t("list.sort.toggleAria")}
                             >
                                 {filters.sortOrder === "asc" ? <ArrowUp className="h-3.5 w-3.5" aria-hidden="true" /> : <ArrowDown className="h-3.5 w-3.5" aria-hidden="true" />}
                             </button>
@@ -416,16 +426,16 @@ export function OperatorsList() {
                                     setItemsPerPage(v === "all" ? "all" : (Number(v) as ItemsPerPage));
                                     resetPage();
                                 }}
-                                aria-label="Items per page"
+                                aria-label={t("list.perPage.aria")}
                             >
                                 <SelectTrigger size="sm" className="h-8 min-h-8 min-w-0 gap-1.5 border-0 bg-transparent px-2 font-medium font-sans text-[13px] text-foreground shadow-none before:shadow-none hover:bg-[color-mix(in_oklch,var(--secondary)_80%,transparent)]">
-                                    <span className="mr-1 border-border border-r pr-1 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">Show</span>
-                                    <SelectValue>{(value) => (value === "all" ? "All" : value)}</SelectValue>
+                                    <span className="mr-1 border-border border-r pr-1 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{t("list.perPage.caption")}</span>
+                                    <SelectValue>{(value) => (value === "all" ? t("list.perPage.all") : value)}</SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                     {ITEMS_PER_PAGE_OPTIONS.map((opt) => (
                                         <SelectItem key={opt} value={String(opt)}>
-                                            {opt === "all" ? "All" : opt}
+                                            {opt === "all" ? t("list.perPage.all") : opt}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -439,15 +449,15 @@ export function OperatorsList() {
                                         type="button"
                                         className="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 font-medium font-sans text-[13px] text-foreground transition-colors hover:border-[color-mix(in_oklch,var(--primary)_55%,var(--border))] hover:bg-card"
                                         onClick={() => setExportOpen(true)}
-                                        aria-label="Export operators"
+                                        aria-label={t("list.export.tip")}
                                     >
                                         <Download className="h-3.5 w-3.5" aria-hidden="true" />
-                                        <span className="hidden sm:inline">Export</span>
+                                        <span className="hidden sm:inline">{t("list.export")}</span>
                                     </button>
                                 }
                             />
                             <TooltipPopup side="top" sideOffset={8}>
-                                Export operators
+                                {t("list.export.tip")}
                             </TooltipPopup>
                         </Tooltip>
                     </div>
@@ -456,10 +466,14 @@ export function OperatorsList() {
 
                     <div className="flex flex-wrap items-center justify-between gap-3 font-medium font-sans text-[12.5px] text-muted-foreground leading-none">
                         <span>
-                            Showing <strong className="text-foreground">{fromIndex}</strong> to <strong className="text-foreground">{toIndex}</strong> of <strong className="text-foreground">{totalCount}</strong> operators
+                            {rt("list.showing", {
+                                from: <strong className="text-foreground">{fromIndex}</strong>,
+                                to: <strong className="text-foreground">{toIndex}</strong>,
+                                total: <strong className="text-foreground">{totalCount}</strong>,
+                            })}
                         </span>
                         <div className="ml-auto flex items-center gap-3">
-                            <span className="hidden font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.08em] md:inline">Hover for preview · Click to open</span>
+                            <span className="hidden font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.08em] md:inline">{t("list.hint")}</span>
                             <PaginationCompact currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
                         </div>
                     </div>
@@ -472,9 +486,9 @@ export function OperatorsList() {
                         </div>
                     ) : totalCount === 0 ? (
                         <div className="rounded-xl border border-border border-dashed bg-card/50 py-16 text-center">
-                            <p className="font-sans text-muted-foreground text-sm">{isUpcoming ? "No upcoming operators match your filters." : "No operators match your filters."}</p>
+                            <p className="font-sans text-muted-foreground text-sm">{isUpcoming ? t("list.empty.upcoming") : t("list.empty")}</p>
                             <button type="button" onClick={clearFilters} className="mt-3 inline-flex items-center gap-1 font-medium text-[12px] text-primary hover:underline">
-                                Clear all filters
+                                {t("list.clearFilters")}
                             </button>
                         </div>
                     ) : isUpcoming ? (
@@ -499,11 +513,11 @@ export function OperatorsList() {
                         <div className="flex flex-col gap-1 pt-1">
                             <div className="grid items-center gap-3 rounded-lg border border-transparent border-b-border/60 px-3 pb-2 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.12em] max-[900px]:hidden" style={{ gridTemplateColumns: LIST_GRID_COLS }}>
                                 <span />
-                                <span>Name</span>
-                                <span className="text-center">Rarity</span>
-                                <span className="text-center">Class</span>
-                                <span className="text-center">Archetype</span>
-                                <span className="text-center">Owned</span>
+                                <span>{t("list.column.name")}</span>
+                                <span className="text-center">{t("list.column.rarity")}</span>
+                                <span className="text-center">{t("list.column.class")}</span>
+                                <span className="text-center">{t("list.column.archetype")}</span>
+                                <span className="text-center">{t("list.column.owned")}</span>
                                 <span />
                             </div>
                             <div className="flex flex-col gap-1">
@@ -517,7 +531,7 @@ export function OperatorsList() {
                     <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
                 </main>
             </div>
-            <ExportDialog open={exportOpen} onOpenChange={setExportOpen} schema={operatorsExportSchema} allRows={exportAllRows} filteredRows={exportFilteredRows} pageRows={exportPageRows} title="Operators" />
+            <ExportDialog open={exportOpen} onOpenChange={setExportOpen} schema={operatorsExportSchema} allRows={exportAllRows} filteredRows={exportFilteredRows} pageRows={exportPageRows} title={t("list.export.dialogTitle")} />
         </div>
     );
 }

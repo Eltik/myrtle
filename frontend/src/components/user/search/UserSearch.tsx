@@ -9,15 +9,21 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/in
 import { useDebounce } from "#/hooks/use-debounce";
 import { searchUsersQueryOptions } from "#/lib/api/user";
 import { isEditableTarget, isPlainKey } from "#/lib/hotkeys";
-import { formatNumber } from "#/lib/utils";
+import { type TypedRichT, useFormatters, useLocale, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { Route } from "#/routes/user.search";
 import { UserCard } from "./impl/components/UserCard";
 import { UserGridSkeleton } from "./impl/components/UserGridSkeleton";
 import { PAGE_SIZE } from "./impl/constants";
 import { sortBySubstringMatch } from "./impl/sortBySubstringMatch";
 import type { DisplayUser } from "./impl/types";
+import type { messages } from "./UserSearch.messages";
 
 export function UserSearch() {
+    const t: TypedT<typeof messages> = useT("user");
+    const rt: TypedRichT<typeof messages> = useRichT("user");
+    const f = useFormatters();
+    const locale = useLocale();
     const { q: initialQ, page: initialPage } = Route.useSearch();
     const navigate = useNavigate({ from: "/user/search" });
 
@@ -59,7 +65,7 @@ export function UserSearch() {
 
     const isLoading = searchQuery.isLoading || searchQuery.isFetching;
     const rawUsers: DisplayUser[] = searchQuery.data?.entries ?? [];
-    const users: DisplayUser[] = isSearching ? sortBySubstringMatch(rawUsers, debouncedQuery) : rawUsers;
+    const users: DisplayUser[] = isSearching ? sortBySubstringMatch(rawUsers, debouncedQuery, locale) : rawUsers;
     const totalCount = searchQuery.data?.total ?? null;
     const totalPages = Math.max(1, Math.ceil((totalCount ?? 0) / PAGE_SIZE));
     const showResults = !isLoading && users.length > 0;
@@ -80,13 +86,13 @@ export function UserSearch() {
     return (
         <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-2rem))] pb-20">
             <div className="pt-7 pb-1.5">
-                <nav className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label="Breadcrumb">
-                    <span>Doctors</span>
+                <nav className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label={t("search.breadcrumb.label")}>
+                    <span>{t("search.breadcrumb.doctors")}</span>
                     <ChevronRight className="h-2.5 w-2.5" aria-hidden="true" />
-                    <span className="text-foreground">Search</span>
+                    <span className="text-foreground">{t("search.breadcrumb.current")}</span>
                 </nav>
-                <h1 className="m-0 font-bold font-sans text-[30px] text-foreground leading-[1.1] tracking-tight">Search Doctors</h1>
-                <p className="mt-1.5 font-sans text-[13.5px] text-muted-foreground leading-normal">Find Doctor profiles by nickname or browse public profiles ranked by score.</p>
+                <h1 className="m-0 font-bold font-sans text-[30px] text-foreground leading-[1.1] tracking-tight">{t("search.title")}</h1>
+                <p className="mt-1.5 font-sans text-[13.5px] text-muted-foreground leading-normal">{t("search.subtitle")}</p>
             </div>
 
             <div className="flex flex-col gap-4 pt-5">
@@ -94,10 +100,10 @@ export function UserSearch() {
                     <InputGroupAddon>
                         <Search aria-hidden="true" />
                     </InputGroupAddon>
-                    <InputGroupInput ref={inputRef} value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder="Search by nickname…" aria-label="Search doctors" />
+                    <InputGroupInput ref={inputRef} value={inputValue} onChange={(e) => setInputValue(e.target.value)} placeholder={t("search.input.placeholder")} aria-label={t("search.input.label")} />
                     <InputGroupAddon align="inline-end">
                         {inputValue ? (
-                            <Button variant="ghost" size="icon-xs" onClick={handleClear} aria-label="Clear search">
+                            <Button variant="ghost" size="icon-xs" onClick={handleClear} aria-label={t("search.clearSearch")}>
                                 <X aria-hidden="true" />
                             </Button>
                         ) : null}
@@ -109,18 +115,18 @@ export function UserSearch() {
                         {isSearching ? (
                             <>
                                 <Search className="h-3 w-3" aria-hidden="true" />
-                                Results for <strong className="text-foreground">"{debouncedQuery}"</strong>
+                                {t("search.resultsFor")} <strong className="text-foreground">{t("search.quotedQuery", { query: debouncedQuery })}</strong>
                             </>
                         ) : (
                             <>
                                 <Trophy className="h-3 w-3" aria-hidden="true" />
-                                Browsing public profiles by total score
+                                {t("search.browsing")}
                             </>
                         )}
                     </span>
                     {totalCount !== null && (
                         <span className="hidden font-mono text-[11px] uppercase leading-none tracking-[0.08em] sm:inline">
-                            <strong className="text-foreground">{formatNumber(totalCount)}</strong> {totalCount === 1 ? "doctor" : "doctors"}
+                            <strong className="text-foreground">{f.number(totalCount)}</strong> {t("search.count.unit", { count: totalCount })}
                         </span>
                     )}
                 </div>
@@ -140,14 +146,12 @@ export function UserSearch() {
                                 <EmptyMedia variant="icon">
                                     <Search aria-hidden="true" />
                                 </EmptyMedia>
-                                <EmptyTitle>No doctors found</EmptyTitle>
-                                <EmptyDescription>
-                                    No public profiles match <span className="font-medium text-foreground">"{debouncedQuery}"</span>. Try a different nickname.
-                                </EmptyDescription>
+                                <EmptyTitle>{t("search.empty.noResults.title")}</EmptyTitle>
+                                <EmptyDescription>{rt("search.empty.noResults.desc", { query: <span className="font-medium text-foreground">{t("search.quotedQuery", { query: debouncedQuery })}</span> })}</EmptyDescription>
                             </EmptyHeader>
                             <EmptyContent>
                                 <Button variant="outline" size="sm" onClick={handleClear}>
-                                    Clear search
+                                    {t("search.clearSearch")}
                                 </Button>
                             </EmptyContent>
                         </Empty>
@@ -157,8 +161,8 @@ export function UserSearch() {
                                 <EmptyMedia variant="icon">
                                     <Users aria-hidden="true" />
                                 </EmptyMedia>
-                                <EmptyTitle>No public profiles yet</EmptyTitle>
-                                <EmptyDescription>Public Doctor profiles will appear here as players opt in.</EmptyDescription>
+                                <EmptyTitle>{t("search.empty.none.title")}</EmptyTitle>
+                                <EmptyDescription>{t("search.empty.none.desc")}</EmptyDescription>
                             </EmptyHeader>
                         </Empty>
                     )

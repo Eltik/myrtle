@@ -1,5 +1,6 @@
 import type { IEnemy } from "#/lib/api/enemies";
 import type { IDisplayDetailReward } from "#/types/stages";
+import type { StageDetailMessageKey } from "./constants";
 
 export interface IEnemyTally {
     enemy: IEnemy | null;
@@ -45,12 +46,13 @@ export interface IResolvedDrop {
     iconURL: string;
     rarity: number;
     isChar: boolean;
-    occ: { label: string; level: number; tone: string };
+    occ: { labelKey: StageDetailMessageKey; level: number; tone: string };
 }
 
 export interface IDropGroup {
     type: string;
-    label: string;
+    /** Message key for the group heading, or null when the game data ships a drop type this site does not name (the raw type is shown instead). */
+    labelKey: StageDetailMessageKey | null;
     order: number;
     drops: IResolvedDrop[];
 }

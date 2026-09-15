@@ -14,14 +14,31 @@ import { useAuth } from "#/hooks/use-auth";
 import { grantTierListPermissionFn, revokeTierListPermissionFn, type TierListPermissionLevel, tierListPermissionsQueryOptions } from "#/lib/api/admin";
 import { browseTierListsQueryOptions, deleteTierListFn, type ITierListBrowseItem, setTierListFlairFn, tierListFlairsQueryOptions } from "#/lib/api/tier-lists";
 import { type ISearchPage, searchUsersFn, searchUsersQueryOptions } from "#/lib/api/user";
+import { type TypedRichT, useFormatters, useGamedataServer, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, getSecretaryAvatarURL } from "#/lib/utils";
 import type { IUserProfile } from "#/types/user";
 import { PageHead } from "../AdminShell";
+import type { messages as primitivesMessages } from "../Primitives.messages";
+import type { messages } from "./TierLists.messages";
+
+/** The rung names are the ones `LevelBadge` declares, shared with the i18n grants. */
+type PermsT = TypedT<typeof messages & typeof primitivesMessages>;
+type PermsRichT = TypedRichT<typeof messages & typeof primitivesMessages>;
 
 const LEVELS = ["view", "edit", "publish", "admin"] as const;
 
-function levelLabel(level: TierListPermissionLevel): string {
-    return level.charAt(0).toUpperCase() + level.slice(1);
+function levelLabel(t: PermsT, level: TierListPermissionLevel): string {
+    switch (level) {
+        case "view":
+            return t("level.view");
+        case "edit":
+            return t("level.edit");
+        case "publish":
+            return t("level.publish");
+        case "admin":
+            return t("level.admin");
+    }
 }
 
 function allUsersByIdQueryOptions() {
@@ -45,6 +62,7 @@ function allUsersByIdQueryOptions() {
 }
 
 function LevelDots({ level, onChange }: { level: TierListPermissionLevel; onChange: (l: TierListPermissionLevel) => void }): React.ReactElement {
+    const t: PermsT = useT("admin");
     return (
         <div className="inline-flex gap-px rounded-lg border border-border bg-card p-0.5">
             {LEVELS.map((l) => (
@@ -59,7 +77,7 @@ function LevelDots({ level, onChange }: { level: TierListPermissionLevel; onChan
                         l !== level && "text-muted-foreground hover:text-foreground",
                     )}
                 >
-                    {levelLabel(l)}
+                    {levelLabel(t, l)}
                 </button>
             ))}
         </div>
@@ -83,8 +101,10 @@ function PermUserCell({ userId, lookup }: { userId: string; lookup: Map<string, 
 }
 
 export function Permissions(): React.ReactElement {
+    const t: PermsT = useT("admin");
+    const rt: PermsRichT = useRichT("admin");
     const { isAuthenticated } = useAuth();
-    const browseQuery = useQuery(browseTierListsQueryOptions());
+    const browseQuery = useQuery(browseTierListsQueryOptions(useGamedataServer()));
     const flairsQuery = useQuery(tierListFlairsQueryOptions());
     const lookupQuery = useQuery(allUsersByIdQueryOptions());
     const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
@@ -108,30 +128,20 @@ export function Permissions(): React.ReactElement {
 
     return (
         <>
-            <PageHead
-                kicker="Manage"
-                title="Tier Lists"
-                sub={
-                    <>
-                        Every tier list on the platform. Pick one to manage its <strong>View → Edit → Publish → Admin</strong> permission ladder, or use the row menu for direct edits.
-                    </>
-                }
-            />
+            <PageHead kicker={t("perms.kicker")} title={t("perms.title")} sub={rt("perms.sub", { ladder: <strong>{t("perms.sub.ladder")}</strong> })} />
 
             <div className="grid grid-cols-1 gap-4.5 xl:grid-cols-[420px_1fr]">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-sm">Tier lists</CardTitle>
-                        <CardDescription className="text-xs">
-                            {lists.length} total · {lists.filter((l) => l.listType === "official").length} official
-                        </CardDescription>
+                        <CardTitle className="text-sm">{t("perms.list.title")}</CardTitle>
+                        <CardDescription className="text-xs">{t("perms.list.counts", { total: lists.length, official: lists.filter((l) => l.listType === "official").length })}</CardDescription>
                     </CardHeader>
                     <div className="px-2 pb-2">
                         <InputGroup>
                             <InputGroupAddon>
                                 <SearchIcon />
                             </InputGroupAddon>
-                            <Input placeholder="Search slug or owner…" size="sm" value={search} onChange={(e) => setSearch(e.target.value)} />
+                            <Input placeholder={t("perms.searchPlaceholder")} size="sm" value={search} onChange={(e) => setSearch(e.target.value)} />
                         </InputGroup>
                     </div>
                     <div className="max-h-170 overflow-auto overflow-x-hidden border-border border-t">
@@ -142,7 +152,7 @@ export function Permissions(): React.ReactElement {
                                 <Skeleton className="h-14" />
                             </div>
                         ) : filtered.length === 0 ? (
-                            <div className="px-3.5 py-8 text-center text-[12.5px] text-muted-foreground">No tier lists match.</div>
+                            <div className="px-3.5 py-8 text-center text-[12.5px] text-muted-foreground">{t("perms.list.empty")}</div>
                         ) : (
                             filtered.map((tl) => <TierListRow key={tl.slug} tl={tl} active={selected?.slug === tl.slug} onSelect={() => setSelectedSlug(tl.slug)} onSetFlair={() => setShowFlair(tl)} onDelete={() => setShowDelete(tl)} />)
                         )}
@@ -153,7 +163,7 @@ export function Permissions(): React.ReactElement {
                     <PermissionDetail key={selected.slug} list={selected} onGrant={() => setShowGrant(true)} authed={isAuthenticated} lookup={lookupQuery.data} />
                 ) : (
                     <Card>
-                        <CardContent className="p-12 text-center text-[13px] text-muted-foreground">Pick a tier list on the left.</CardContent>
+                        <CardContent className="p-12 text-center text-[13px] text-muted-foreground">{t("perms.pickOne")}</CardContent>
                     </Card>
                 )}
             </div>
@@ -175,6 +185,7 @@ export function Permissions(): React.ReactElement {
 }
 
 function TierListRow({ tl, active, onSelect, onSetFlair, onDelete }: { tl: ITierListBrowseItem; active: boolean; onSelect: () => void; onSetFlair: () => void; onDelete: () => void }): React.ReactElement {
+    const t: PermsT = useT("admin");
     const navigate = useNavigate();
     return (
         <div className={cn("group flex w-full min-w-0 items-center gap-2 border-0 border-border border-b p-3.5 last:border-0", active && "bg-[color-mix(in_srgb,var(--primary)_6%,var(--card))]")}>
@@ -184,20 +195,18 @@ function TierListRow({ tl, active, onSelect, onSetFlair, onDelete }: { tl: ITier
                     <div className={cn("truncate font-mono font-semibold text-[13px]", active ? "text-primary" : "text-foreground")} title={`/${tl.slug}`}>
                         /{tl.slug}
                     </div>
-                    <div className="mt-1 truncate text-[11.5px] text-muted-foreground">
-                        {tl.author.name ?? "-"} · {tl.tiers.length} tier{tl.tiers.length === 1 ? "" : "s"}
-                    </div>
+                    <div className="mt-1 truncate text-[11.5px] text-muted-foreground">{t("perms.row.meta", { author: tl.author.name ?? "-", count: tl.tiers.length })}</div>
                 </div>
             </button>
             {tl.listType === "official" ? (
                 <Badge variant="success" className="shrink-0">
-                    official
+                    {t("perms.badge.official")}
                 </Badge>
             ) : null}
             <DropdownMenu>
                 <DropdownMenuTrigger
                     render={(triggerProps) => (
-                        <button {...triggerProps} type="button" aria-label="Row actions" className="inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-foreground hover:bg-accent">
+                        <button {...triggerProps} type="button" aria-label={t("perms.rowActions")} className="inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-foreground hover:bg-accent">
                             <MoreHorizontalIcon className="size-4 opacity-80" strokeWidth={1.9} />
                         </button>
                     )}
@@ -205,20 +214,20 @@ function TierListRow({ tl, active, onSelect, onSetFlair, onDelete }: { tl: ITier
                 <DropdownMenuContent align="end" className="w-44">
                     <DropdownMenuItem className="cursor-pointer" onClick={() => window.open(`/tier-lists/${tl.slug}`, "_blank")}>
                         <ExternalLinkIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                        View public page
+                        {t("perms.menu.viewPublic")}
                     </DropdownMenuItem>
                     <DropdownMenuItem className="cursor-pointer" onClick={() => navigate({ to: "/tier-lists/my/$id/edit", params: { id: tl.slug } })}>
                         <EditIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                        Open editor
+                        {t("perms.menu.openEditor")}
                     </DropdownMenuItem>
                     <DropdownMenuItem className="cursor-pointer" onClick={onSetFlair}>
                         <TagIcon className="mr-2 h-4 w-4 text-muted-foreground" />
-                        Change flair
+                        {t("perms.menu.changeFlair")}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="cursor-pointer text-destructive-foreground focus:text-destructive-foreground" onClick={onDelete}>
                         <Trash2Icon className="mr-2 h-4 w-4" />
-                        Delete tier list
+                        {t("perms.menu.delete")}
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -227,6 +236,9 @@ function TierListRow({ tl, active, onSelect, onSetFlair, onDelete }: { tl: ITier
 }
 
 function PermissionDetail({ list, onGrant, authed, lookup }: { list: ITierListBrowseItem; onGrant: () => void; authed: boolean; lookup: Map<string, IUserProfile> | undefined }): React.ReactElement {
+    const t: PermsT = useT("admin");
+    const rt: PermsRichT = useRichT("admin");
+    const fmt = useFormatters();
     const queryClient = useQueryClient();
     const permsQuery = useQuery(tierListPermissionsQueryOptions(list.slug, authed));
 
@@ -234,18 +246,18 @@ function PermissionDetail({ list, onGrant, authed, lookup }: { list: ITierListBr
         mutationFn: (input: { slug: string; userId: string; permission: TierListPermissionLevel }) => grantTierListPermissionFn({ data: input }),
         onSuccess: () => {
             void queryClient.invalidateQueries({ queryKey: ["admin", "tier-lists", "permissions", list.slug] });
-            toastManager.add({ id: `perm-grant-${Date.now()}`, title: "Permission updated", description: `Updated grant on /${list.slug}.`, type: "success" });
+            toastManager.add({ id: `perm-grant-${Date.now()}`, title: t("perms.toast.updated"), description: t("perms.toast.updated.desc", { slug: list.slug }), type: "success" });
         },
-        onError: (err: unknown) => toastManager.add({ id: `perm-grant-err-${Date.now()}`, title: "Failed to update permission", description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `perm-grant-err-${Date.now()}`, title: t("perms.toast.updateFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
     });
 
     const revoke = useMutation({
         mutationFn: (input: { slug: string; userId: string; permission: TierListPermissionLevel }) => revokeTierListPermissionFn({ data: input }),
         onSuccess: () => {
             void queryClient.invalidateQueries({ queryKey: ["admin", "tier-lists", "permissions", list.slug] });
-            toastManager.add({ id: `perm-revoke-${Date.now()}`, title: "Permission revoked", description: `Removed grant on /${list.slug}.`, type: "success" });
+            toastManager.add({ id: `perm-revoke-${Date.now()}`, title: t("perms.toast.revoked"), description: t("perms.toast.revoked.desc", { slug: list.slug }), type: "success" });
         },
-        onError: (err: unknown) => toastManager.add({ id: `perm-revoke-err-${Date.now()}`, title: "Failed to revoke", description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `perm-revoke-err-${Date.now()}`, title: t("perms.toast.revokeFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
     });
 
     const perms = permsQuery.data ?? [];
@@ -256,32 +268,28 @@ function PermissionDetail({ list, onGrant, authed, lookup }: { list: ITierListBr
                 <CardTitle className="text-sm">
                     <span className="font-mono">/{list.slug}</span>
                 </CardTitle>
-                <CardDescription className="text-xs">
-                    {list.title} · owner {list.author.name ?? "-"} · {perms.length} grant{perms.length === 1 ? "" : "s"}
-                </CardDescription>
+                <CardDescription className="text-xs">{t("perms.detail.meta", { title: list.title, owner: list.author.name ?? "-", count: perms.length })}</CardDescription>
                 <CardAction>
                     <Button size="sm" onClick={onGrant}>
                         <PlusIcon />
-                        Grant access
+                        {t("perms.grantAccess")}
                     </Button>
                 </CardAction>
             </CardHeader>
             {permsQuery.isError ? (
-                <CardContent className="border-border border-t text-[13px] text-muted-foreground">
-                    Couldn't load permissions for <span className="font-mono">/{list.slug}</span>.
-                </CardContent>
+                <CardContent className="border-border border-t text-[13px] text-muted-foreground">{rt("perms.loadError", { slug: <span className="font-mono">/{list.slug}</span> })}</CardContent>
             ) : permsQuery.isPending ? (
                 <CardContent className="border-border border-t">
                     <Skeleton className="h-32 w-full" />
                 </CardContent>
             ) : perms.length === 0 ? (
-                <CardContent className="border-border border-t py-12 text-center text-[13px] text-muted-foreground">No grants yet - only the owner has access.</CardContent>
+                <CardContent className="border-border border-t py-12 text-center text-[13px] text-muted-foreground">{t("perms.noGrants")}</CardContent>
             ) : (
                 <div className="overflow-x-auto border-border border-t">
                     <table className="w-full min-w-180 border-collapse text-[13px]">
                         <thead>
                             <tr>
-                                {["Doctor", "Level", "Granted", "Granted by", ""].map((h) => (
+                                {[t("perms.th.doctor"), t("perms.th.level"), t("perms.th.granted"), t("perms.th.grantedBy"), ""].map((h) => (
                                     <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">
                                         {h}
                                     </th>
@@ -297,12 +305,12 @@ function PermissionDetail({ list, onGrant, authed, lookup }: { list: ITierListBr
                                     <td className="px-3.5 py-2.5">
                                         <LevelDots level={p.permission} onChange={(level) => updatePermission.mutate({ slug: list.slug, userId: p.userId, permission: level })} />
                                     </td>
-                                    <td className="px-3.5 py-2.5 text-muted-foreground">{new Date(p.grantedAt).toLocaleDateString()}</td>
+                                    <td className="px-3.5 py-2.5 text-muted-foreground">{fmt.date(p.grantedAt, { year: "numeric", month: "numeric", day: "numeric" })}</td>
                                     <td className="px-3.5 py-2.5 text-muted-foreground">{p.grantedBy ? (lookup?.get(p.grantedBy)?.nickname ?? p.grantedBy.slice(0, 8)) : "-"}</td>
                                     <td className="px-3.5 py-2.5">
                                         <Button variant="destructive-outline" size="xs" onClick={() => revoke.mutate({ slug: list.slug, userId: p.userId, permission: p.permission })} disabled={revoke.isPending}>
                                             <Trash2Icon />
-                                            Revoke
+                                            {t("perms.revoke")}
                                         </Button>
                                     </td>
                                 </tr>
@@ -312,13 +320,14 @@ function PermissionDetail({ list, onGrant, authed, lookup }: { list: ITierListBr
                 </div>
             )}
             <div className="flex items-center justify-between border-border border-t px-3.5 py-3">
-                <span className="text-[12px] text-muted-foreground">Owner has implicit Admin and cannot be revoked.</span>
+                <span className="text-[12px] text-muted-foreground">{t("perms.ownerNote")}</span>
             </div>
         </Card>
     );
 }
 
 function GrantDialog({ slug, onClose }: { slug: string; onClose: () => void }): React.ReactElement {
+    const t: PermsT = useT("admin");
     const queryClient = useQueryClient();
     const [q, setQ] = useState("");
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -329,32 +338,32 @@ function GrantDialog({ slug, onClose }: { slug: string; onClose: () => void }): 
         mutationFn: (input: { slug: string; userId: string; permission: TierListPermissionLevel }) => grantTierListPermissionFn({ data: input }),
         onSuccess: () => {
             void queryClient.invalidateQueries({ queryKey: ["admin", "tier-lists", "permissions", slug] });
-            toastManager.add({ id: `perm-create-${Date.now()}`, title: "Grant created", description: `${levelLabel(permission)} access on /${slug}.`, type: "success" });
+            toastManager.add({ id: `perm-create-${Date.now()}`, title: t("perms.toast.grantCreated"), description: t("perms.toast.grantCreated.desc", { level: levelLabel(t, permission), slug }), type: "success" });
             onClose();
         },
-        onError: (err: unknown) => toastManager.add({ id: `perm-create-err-${Date.now()}`, title: "Failed to grant", description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `perm-create-err-${Date.now()}`, title: t("perms.toast.grantFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
     });
 
     const results = searchQuery.data?.entries ?? [];
 
     return (
         <>
-            <button type="button" className="fixed inset-0 z-55 cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
+            <button type="button" className="fixed inset-0 z-55 cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label={t("perms.close")} />
             <div className="pointer-events-none fixed inset-0 z-60 grid place-items-center p-3 max-sm:items-end max-sm:p-0">
                 <div className="pointer-events-auto flex max-h-[92dvh] w-120 max-w-[92vw] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35),0_8px_18px_oklch(0_0_0/0.2)] max-sm:w-full max-sm:max-w-none max-sm:rounded-b-none max-sm:border-x-0 max-sm:border-b-0">
                     <div className="shrink-0 border-border border-b px-5 pt-4 pb-3.5">
-                        <span className="font-bold text-[10px] text-primary uppercase tracking-[0.22em]">Manage · permissions</span>
-                        <div className="mt-1.5 font-semibold text-[18px] leading-tight tracking-[-0.01em]">Grant access on /{slug}</div>
+                        <span className="font-bold text-[10px] text-primary uppercase tracking-[0.22em]">{t("perms.grant.kicker")}</span>
+                        <div className="mt-1.5 font-semibold text-[18px] leading-tight tracking-[-0.01em]">{t("perms.grant.title", { slug })}</div>
                     </div>
                     <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5 [-webkit-overflow-scrolling:touch]">
                         <div className="flex flex-col gap-1.5">
-                            <span className="font-medium text-[12px]">Find a Doctor</span>
+                            <span className="font-medium text-[12px]">{t("perms.grant.findDoctor")}</span>
                             <InputGroup>
                                 <InputGroupAddon>
                                     <SearchIcon />
                                 </InputGroupAddon>
                                 <Input
-                                    placeholder="Search by nickname…"
+                                    placeholder={t("perms.grant.searchPlaceholder")}
                                     size="sm"
                                     value={q}
                                     onChange={(e) => {
@@ -367,7 +376,7 @@ function GrantDialog({ slug, onClose }: { slug: string; onClose: () => void }): 
                                 searchQuery.isPending ? (
                                     <Skeleton className="h-12 w-full" />
                                 ) : results.length === 0 ? (
-                                    <div className="text-[12.5px] text-muted-foreground">No matches.</div>
+                                    <div className="text-[12.5px] text-muted-foreground">{t("perms.grant.noMatches")}</div>
                                 ) : (
                                     <ul className="max-h-48 overflow-auto rounded-lg border border-border">
                                         {results.map((r) => (
@@ -395,16 +404,16 @@ function GrantDialog({ slug, onClose }: { slug: string; onClose: () => void }): 
                             ) : null}
                         </div>
                         <div className="flex flex-col gap-1.5">
-                            <span className="font-medium text-[12px]">Level</span>
+                            <span className="font-medium text-[12px]">{t("perms.grant.level")}</span>
                             <LevelDots level={permission} onChange={setPermission} />
                         </div>
                     </div>
                     <div className="flex shrink-0 justify-end gap-2 border-border border-t p-3.5">
                         <Button variant="outline" size="sm" onClick={onClose}>
-                            Cancel
+                            {t("perms.cancel")}
                         </Button>
                         <Button size="sm" disabled={!selectedUserId || grant.isPending} loading={grant.isPending} onClick={() => selectedUserId && grant.mutate({ slug, userId: selectedUserId, permission })}>
-                            Grant {levelLabel(permission)}
+                            {t("perms.grant.submit", { level: levelLabel(t, permission) })}
                         </Button>
                     </div>
                 </div>
@@ -414,6 +423,7 @@ function GrantDialog({ slug, onClose }: { slug: string; onClose: () => void }): 
 }
 
 function FlairDialog({ list, flairs, onClose }: { list: ITierListBrowseItem; flairs: { id: number; code: string; label: string; color: string | null }[]; onClose: () => void }): React.ReactElement {
+    const t: PermsT = useT("admin");
     const queryClient = useQueryClient();
     const [selected, setSelected] = useState<number | null>(null);
 
@@ -421,26 +431,26 @@ function FlairDialog({ list, flairs, onClose }: { list: ITierListBrowseItem; fla
         mutationFn: (input: { slug: string; flairId: number | null }) => setTierListFlairFn({ data: input }),
         onSuccess: () => {
             void queryClient.invalidateQueries({ queryKey: ["tier-lists"] });
-            toastManager.add({ id: `flair-${Date.now()}`, title: "Flair updated", description: `Flair updated on /${list.slug}.`, type: "success" });
+            toastManager.add({ id: `flair-${Date.now()}`, title: t("perms.toast.flair"), description: t("perms.toast.flair.desc", { slug: list.slug }), type: "success" });
             onClose();
         },
-        onError: (err: unknown) => toastManager.add({ id: `flair-err-${Date.now()}`, title: "Failed to set flair", description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `flair-err-${Date.now()}`, title: t("perms.toast.flairFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
     });
 
     return (
         <>
-            <button type="button" className="fixed inset-0 z-55 cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
+            <button type="button" className="fixed inset-0 z-55 cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label={t("perms.close")} />
             <div className="pointer-events-none fixed inset-0 z-60 grid place-items-center p-3 max-sm:items-end max-sm:p-0">
                 <div className="pointer-events-auto flex max-h-[92dvh] w-105 max-w-[92vw] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35)] max-sm:w-full max-sm:max-w-none max-sm:rounded-b-none max-sm:border-x-0 max-sm:border-b-0">
                     <div className="shrink-0 border-border border-b px-5 pt-4 pb-3.5">
-                        <span className="font-bold text-[10px] text-primary uppercase tracking-[0.22em]">Manage · flair</span>
-                        <div className="mt-1.5 font-semibold text-[18px] leading-tight tracking-[-0.01em]">Change flair on /{list.slug}</div>
+                        <span className="font-bold text-[10px] text-primary uppercase tracking-[0.22em]">{t("perms.flair.kicker")}</span>
+                        <div className="mt-1.5 font-semibold text-[18px] leading-tight tracking-[-0.01em]">{t("perms.flair.title", { slug: list.slug })}</div>
                     </div>
                     <div className="min-h-0 flex-1 overflow-y-auto p-5 [-webkit-overflow-scrolling:touch]">
                         <div className="flex flex-wrap items-center gap-2">
                             <button type="button" onClick={() => setSelected(null)} className={cn("inline-flex h-9 items-center rounded-md border border-border bg-card px-2.5 font-medium text-[13px] sm:h-7 sm:px-2 sm:text-[12px]", selected === null && "ring-2 ring-ring")}>
                                 <span className="mr-1.5 inline-block size-2.5 rounded-xs bg-muted-foreground/40" />
-                                None
+                                {t("perms.flair.none")}
                             </button>
                             {flairs.map((f) => (
                                 <button
@@ -458,10 +468,10 @@ function FlairDialog({ list, flairs, onClose }: { list: ITierListBrowseItem; fla
                     </div>
                     <div className="flex shrink-0 justify-end gap-2 border-border border-t p-3.5">
                         <Button variant="outline" size="sm" onClick={onClose}>
-                            Cancel
+                            {t("perms.cancel")}
                         </Button>
                         <Button size="sm" disabled={setFlair.isPending} loading={setFlair.isPending} onClick={() => setFlair.mutate({ slug: list.slug, flairId: selected })}>
-                            Save
+                            {t("perms.save")}
                         </Button>
                     </div>
                 </div>
@@ -471,34 +481,34 @@ function FlairDialog({ list, flairs, onClose }: { list: ITierListBrowseItem; fla
 }
 
 function DeleteDialog({ list, onClose, onDeleted }: { list: ITierListBrowseItem; onClose: () => void; onDeleted: () => void }): React.ReactElement {
+    const t: PermsT = useT("admin");
+    const rt: PermsRichT = useRichT("admin");
     const queryClient = useQueryClient();
     const del = useMutation({
         mutationFn: (slug: string) => deleteTierListFn({ data: slug }),
         onSuccess: () => {
             void queryClient.invalidateQueries({ queryKey: ["tier-lists"] });
-            toastManager.add({ id: `tl-del-${Date.now()}`, title: "Tier list deleted", description: `/${list.slug} is gone.`, type: "success" });
+            toastManager.add({ id: `tl-del-${Date.now()}`, title: t("perms.toast.deleted"), description: t("perms.toast.deleted.desc", { slug: list.slug }), type: "success" });
             onDeleted();
         },
-        onError: (err: unknown) => toastManager.add({ id: `tl-del-err-${Date.now()}`, title: "Failed to delete", description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `tl-del-err-${Date.now()}`, title: t("perms.toast.deleteFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
     });
     return (
         <>
-            <button type="button" className="fixed inset-0 z-55 cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label="Close" />
+            <button type="button" className="fixed inset-0 z-55 cursor-default bg-black/36 backdrop-blur-[2px]" onClick={onClose} aria-label={t("perms.close")} />
             <div className="pointer-events-none fixed inset-0 z-60 grid place-items-center p-3 max-sm:items-end max-sm:p-0">
                 <div className="pointer-events-auto flex max-h-[92dvh] w-105 max-w-[92vw] flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-[0_30px_60px_oklch(0_0_0/0.35)] max-sm:w-full max-sm:max-w-none max-sm:rounded-b-none max-sm:border-x-0 max-sm:border-b-0">
                     <div className="shrink-0 border-border border-b px-5 pt-4 pb-3.5">
-                        <span className="font-bold text-[10px] text-destructive-foreground uppercase tracking-[0.22em]">Manage · delete</span>
-                        <div className="mt-1.5 font-semibold text-[18px] leading-tight tracking-[-0.01em]">Delete /{list.slug}?</div>
-                        <div className="mt-1 text-[12.5px] text-muted-foreground">
-                            This is permanent. All tiers, placements, and version history for <strong>{list.title}</strong> are destroyed.
-                        </div>
+                        <span className="font-bold text-[10px] text-destructive-foreground uppercase tracking-[0.22em]">{t("perms.delete.kicker")}</span>
+                        <div className="mt-1.5 font-semibold text-[18px] leading-tight tracking-[-0.01em]">{t("perms.delete.title", { slug: list.slug })}</div>
+                        <div className="mt-1 text-[12.5px] text-muted-foreground">{rt("perms.delete.body", { title: <strong>{list.title}</strong> })}</div>
                     </div>
                     <div className="flex shrink-0 justify-end gap-2 p-3.5">
                         <Button variant="outline" size="sm" onClick={onClose}>
-                            Cancel
+                            {t("perms.cancel")}
                         </Button>
                         <Button variant="destructive" size="sm" disabled={del.isPending} loading={del.isPending} onClick={() => del.mutate(list.slug)}>
-                            Delete tier list
+                            {t("perms.delete.submit")}
                         </Button>
                     </div>
                 </div>

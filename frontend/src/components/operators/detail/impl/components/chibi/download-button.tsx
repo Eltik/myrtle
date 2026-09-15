@@ -7,7 +7,10 @@ import { Progress } from "#/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Separator } from "#/components/ui/separator";
 import { Switch } from "#/components/ui/switch";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { DEFAULT_EXPORT_SETTINGS, EXPORT_FPS_OPTIONS, EXPORT_LOOP_OPTIONS, EXPORT_SCALE_OPTIONS, type IExportSettings } from "./constants";
+import type { messages } from "./download-button.messages";
 import { computeExportLayout, effectiveGifFps, type IAnimationBounds } from "./helpers";
 import type { ExportFormat } from "./recorder";
 
@@ -21,6 +24,7 @@ interface IDownloadButtonProps {
 }
 
 export function DownloadButton({ isRecording, progress, disabled, animationBounds, onDownload, onCancel }: IDownloadButtonProps) {
+    const t: TypedT<typeof messages> = useT("operators");
     const [settings, setSettings] = useState<IExportSettings>(DEFAULT_EXPORT_SETTINGS);
     const [open, setOpen] = useState(false);
 
@@ -56,7 +60,7 @@ export function DownloadButton({ isRecording, progress, disabled, animationBound
                 render={
                     <Button className="h-8 gap-1.5 px-2 text-xs" disabled={disabled} size="sm" variant="outline">
                         <Download className="h-3.5 w-3.5" />
-                        Export
+                        {t("chibiExport.button")}
                     </Button>
                 }
             />
@@ -64,13 +68,13 @@ export function DownloadButton({ isRecording, progress, disabled, animationBound
                 <div className="grid gap-4">
                     <div className="flex items-center gap-2">
                         <Settings2 className="h-4 w-4" />
-                        <h4 className="font-medium text-sm">Export Settings</h4>
+                        <h4 className="font-medium text-sm">{t("chibiExport.title")}</h4>
                     </div>
 
                     <div className="grid gap-3">
                         <div className="grid gap-1.5">
                             <Label className="text-xs" htmlFor="resolution">
-                                Resolution
+                                {t("chibiExport.resolution")}
                             </Label>
                             <Select onValueChange={(v) => setSettings((s) => ({ ...s, scale: Number.parseFloat(v ?? "") }))} value={String(settings.scale)}>
                                 <SelectTrigger className="h-8 text-xs" id="resolution">
@@ -88,56 +92,50 @@ export function DownloadButton({ isRecording, progress, disabled, animationBound
 
                         <div className="grid gap-1.5">
                             <Label className="text-xs" htmlFor="fps">
-                                Frame Rate
+                                {t("chibiExport.frameRate")}
                             </Label>
                             <Select onValueChange={(v) => setSettings((s) => ({ ...s, fps: Number.parseInt(v ?? "", 10) }))} value={String(settings.fps)}>
                                 <SelectTrigger className="h-8 text-xs" id="fps">
-                                    <SelectValue>{settings.fps} FPS</SelectValue>
+                                    <SelectValue>{t("chibiExport.fps", { fps: settings.fps })}</SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                     {EXPORT_FPS_OPTIONS.map((fps) => (
                                         <SelectItem key={fps} value={String(fps)}>
-                                            {fps} FPS
+                                            {t("chibiExport.fps", { fps })}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
-                            {gifFps !== settings.fps && (
-                                <p className="text-[11px] text-muted-foreground leading-snug">
-                                    GIFs play at {gifFps} FPS (format limit); MP4 uses the full {settings.fps} FPS.
-                                </p>
-                            )}
+                            {gifFps !== settings.fps && <p className="text-[11px] text-muted-foreground leading-snug">{t("chibiExport.gifFpsNote", { gifFps, fps: settings.fps })}</p>}
                         </div>
 
                         <Separator />
 
-                        <div className="text-muted-foreground text-xs">GIF Options</div>
+                        <div className="text-muted-foreground text-xs">{t("chibiExport.gifOptions")}</div>
 
                         <div className="flex items-center justify-between">
                             <Label className="text-xs" htmlFor="transparent">
-                                Transparent Background
+                                {t("chibiExport.transparentBg")}
                             </Label>
                             <Switch checked={settings.transparentBg} id="transparent" onCheckedChange={(checked) => setSettings((s) => ({ ...s, transparentBg: checked }))} />
                         </div>
 
                         <Separator />
 
-                        <div className="text-muted-foreground text-xs">MP4 Options</div>
+                        <div className="text-muted-foreground text-xs">{t("chibiExport.mp4Options")}</div>
 
                         <div className="grid gap-1.5">
                             <Label className="text-xs" htmlFor="loops">
-                                Loop Count
+                                {t("chibiExport.loopCount")}
                             </Label>
                             <Select onValueChange={(v) => setSettings((s) => ({ ...s, loopCount: Number.parseInt(v ?? "", 10) }))} value={String(settings.loopCount)}>
                                 <SelectTrigger className="h-8 text-xs" id="loops">
-                                    <SelectValue>
-                                        {settings.loopCount} {settings.loopCount === 1 ? "loop" : "loops"}
-                                    </SelectValue>
+                                    <SelectValue>{t("chibiExport.loops", { count: settings.loopCount })}</SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                     {EXPORT_LOOP_OPTIONS.map((count) => (
                                         <SelectItem key={count} value={String(count)}>
-                                            {count} {count === 1 ? "loop" : "loops"}
+                                            {t("chibiExport.loops", { count })}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -149,10 +147,10 @@ export function DownloadButton({ isRecording, progress, disabled, animationBound
 
                     <div className="grid grid-cols-2 gap-2">
                         <Button className="h-8 text-xs" onClick={() => handleDownload("gif")} size="sm" variant="outline">
-                            Download GIF
+                            {t("chibiExport.downloadGif")}
                         </Button>
                         <Button className="h-8 text-xs" onClick={() => handleDownload("mp4")} size="sm">
-                            Download MP4
+                            {t("chibiExport.downloadMp4")}
                         </Button>
                     </div>
                 </div>

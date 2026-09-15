@@ -1,11 +1,13 @@
 import { SearchX } from "lucide-react";
 import * as React from "react";
 import { Card } from "#/components/ui/card";
+import { useFormatters, useLocale, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, formatProfession, parseOperatorName } from "#/lib/utils";
-import { MONTHS } from "../constants";
-import { isTodayMonthDay, operatorRarity } from "../helpers";
+import { isTodayMonthDay, monthNames, operatorRarity } from "../helpers";
 import type { IOperatorBirthday } from "../types";
 import { BirthdayEmpty } from "./BirthdayEmpty";
+import type { messages } from "./ListView.messages";
 import { OpChip } from "./OpChip";
 
 interface IListViewProps {
@@ -15,6 +17,10 @@ interface IListViewProps {
 
 /** Chronological list of every known birthday, months ordered starting from the current one. */
 export function ListView({ items, today }: IListViewProps): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("tools");
+    const locale = useLocale();
+    const f = useFormatters();
+    const monthLabels = React.useMemo(() => monthNames(locale), [locale]);
     const months = React.useMemo(() => {
         const byMonth = new Map<number, IOperatorBirthday[]>();
         for (const b of items) {
@@ -37,7 +43,7 @@ export function ListView({ items, today }: IListViewProps): React.ReactElement {
     if (months.length === 0) {
         return (
             <Card>
-                <BirthdayEmpty icon={<SearchX />} title="No results" description="No operators match your filters. Try clearing rarity or class chips, or reset everything." />
+                <BirthdayEmpty icon={<SearchX />} title={t("birthdays.list.empty.title")} description={t("birthdays.list.empty.desc")} />
             </Card>
         );
     }
@@ -57,20 +63,17 @@ export function ListView({ items, today }: IListViewProps): React.ReactElement {
                 return (
                     <section key={month} className="border-border border-t px-4 py-4 first:border-t-0 sm:px-5">
                         <h3 className="m-0 mb-2.5 flex items-baseline gap-2 font-sans font-semibold text-[16px] text-foreground">
-                            {MONTHS[month - 1]}
-                            <span className="font-medium font-mono text-[11px] text-muted-foreground">· {entries.length}</span>
+                            {monthLabels[month - 1]}
+                            <span className="font-medium font-mono text-[11px] text-muted-foreground">{t("birthdays.list.monthCount", { count: entries.length })}</span>
                         </h3>
                         {days.map(([day, ops]) => {
                             const dayIsToday = isTodayMonthDay(today, month, day);
-                            const weekday = new Date(today.getFullYear(), month - 1, day).toLocaleDateString("en-US", { weekday: "short" });
+                            const weekday = f.date(new Date(today.getFullYear(), month - 1, day), { weekday: "short" });
                             return (
                                 <div key={day} className="grid grid-cols-[64px_1fr] gap-4 border-border border-t py-2 first-of-type:border-t-0">
                                     <div className="flex flex-col items-start">
                                         <span className={cn("font-bold font-sans text-[20px] leading-none tracking-tight", dayIsToday ? "text-primary" : "text-foreground")}>{day}</span>
-                                        <span className="mt-1 font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.08em]">
-                                            {weekday}
-                                            {dayIsToday && " · today"}
-                                        </span>
+                                        <span className="mt-1 font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.08em]">{dayIsToday ? t("birthdays.list.weekdayToday", { weekday }) : weekday}</span>
                                     </div>
                                     <div className="flex flex-col gap-0.5">
                                         {ops.map((b) => {
@@ -79,9 +82,7 @@ export function ListView({ items, today }: IListViewProps): React.ReactElement {
                                                 <div key={b.operator.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-1">
                                                     <OpChip operator={b.operator} />
                                                     <span className="truncate font-medium font-sans text-[13.5px] text-foreground">{displayName}</span>
-                                                    <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.06em]">
-                                                        {operatorRarity(b.operator)}★ · {formatProfession(b.operator.profession)}
-                                                    </span>
+                                                    <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.06em]">{t("birthdays.list.rarityClass", { rarity: operatorRarity(b.operator), class: formatProfession(b.operator.profession) })}</span>
                                                 </div>
                                             );
                                         })}

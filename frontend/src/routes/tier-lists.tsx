@@ -2,6 +2,7 @@ import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
 import { Browse } from "#/components/tier-lists/Browse";
 import { SORT_OPTIONS, type TierListSort, type TierListType } from "#/components/tier-lists/FilterToolbar";
 import { browseTierListsQueryOptions, tierListFlairsQueryOptions } from "#/lib/api/tier-lists";
+import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
@@ -33,7 +34,7 @@ function parseFlair(input: unknown): string[] {
 export const Route = createFileRoute("/tier-lists")({
     component: RouteComponent,
     loader: async ({ context }) => {
-        await Promise.all([context.queryClient.ensureQueryData(browseTierListsQueryOptions()), context.queryClient.ensureQueryData(tierListFlairsQueryOptions())]);
+        await Promise.all([context.queryClient.ensureQueryData(browseTierListsQueryOptions(context.i18n.gamedataServer)), context.queryClient.ensureQueryData(tierListFlairsQueryOptions())]);
     },
     validateSearch: (search: Record<string, unknown>): ITierListsSearch => {
         const typeRaw = typeof search.type === "string" ? (search.type as TierListType) : "all";
@@ -45,12 +46,14 @@ export const Route = createFileRoute("/tier-lists")({
         return { type, sort, q, flair };
     },
     search: { middlewares: [stripSearchParams(DEFAULTS)] },
-    head: () => {
+    head: ({ match }) => {
+        const t = metaT(match.context.i18n);
         const { meta, links } = seo({
-            title: "Tier Lists",
-            description: "Browse official and community tier lists for Arknights operators.",
+            title: t("tierLists.title"),
+            description: t("tierLists.description"),
             path: "/tier-lists",
-            image: defaultOgURL("tier-lists"),
+            image: defaultOgURL("tier-lists", match.context.i18n),
+            locale: match.context.i18n?.locale,
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],

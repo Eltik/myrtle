@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { skinsIndexQueryOptions, userSkinsQueryOptions } from "#/lib/api/skins";
 import { type IRosterEntry, userCheckinQueryOptions } from "#/lib/api/user";
+import { useGamedataServer } from "#/lib/i18n";
 import type { IOperatorListItem } from "#/types/operators";
 import { ClassBreakdownCard } from "./cards/ClassBreakdownCard";
 import { CollectionCard } from "./cards/CollectionCard";
@@ -24,7 +25,7 @@ interface IStatsTabProps {
 const EMPTY_OWNED_SKINS = new Set<string>();
 
 export function StatsTab({ uid, server, roster, operatorsStatic, nonDefaultSkinCount }: IStatsTabProps) {
-    const { data: charSkins } = useQuery(skinsIndexQueryOptions());
+    const { data: charSkins } = useQuery(skinsIndexQueryOptions(useGamedataServer()));
     const { data: ownedSkins } = useQuery(userSkinsQueryOptions(uid));
     const { data: checkin } = useQuery(userCheckinQueryOptions(uid));
 

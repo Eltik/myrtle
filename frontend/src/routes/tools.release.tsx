@@ -4,6 +4,7 @@ import { ReleasePlanner } from "#/components/tools/release/ReleasePlanner";
 import { Button } from "#/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { releaseEventsQueryOptions } from "#/lib/api/release";
+import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
@@ -11,12 +12,14 @@ export const Route = createFileRoute("/tools/release")({
     component: RouteComponent,
     errorComponent: ReleaseErrorComponent,
     loader: ({ context: { queryClient } }) => queryClient.ensureQueryData(releaseEventsQueryOptions()),
-    head: () => {
+    head: ({ match }) => {
+        const t = metaT(match.context.i18n);
         const { meta, links } = seo({
-            title: "Release Planner",
-            description: "When CN events, skins, and banners land on EN: confirmed, announced, or estimated with a band.",
+            title: t("toolsRelease.title"),
+            description: t("toolsRelease.description"),
             path: "/tools/release",
-            image: defaultOgURL("tools-release"),
+            image: defaultOgURL("tools-release", match.context.i18n),
+            locale: match.context.i18n?.locale,
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],

@@ -5,6 +5,7 @@ import { RecruitmentCalculator } from "#/components/tools/recruitment/Recruitmen
 import { Button } from "#/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { recruitmentDataQueryOptions } from "#/lib/api/recruitment";
+import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
@@ -37,13 +38,15 @@ export const Route = createFileRoute("/tools/recruitment")({
         tags: parseTagsParam(search.tags),
     }),
     search: { middlewares: [stripSearchParams(RECRUITMENT_DEFAULTS)] },
-    loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(recruitmentDataQueryOptions()),
-    head: () => {
+    loader: ({ context: { queryClient, i18n } }) => queryClient.prefetchQuery(recruitmentDataQueryOptions(i18n.gamedataServer)),
+    head: ({ match }) => {
+        const t = metaT(match.context.i18n);
         const { meta, links } = seo({
-            title: "Recruitment Calculator",
-            description: "Calculate optimal tag combinations for Arknights recruitment. Find guaranteed 5-star and 6-star operators with the best tag combos.",
+            title: t("toolsRecruitment.title"),
+            description: t("toolsRecruitment.description"),
             path: "/tools/recruitment",
-            image: defaultOgURL("tools-recruitment"),
+            image: defaultOgURL("tools-recruitment", match.context.i18n),
+            locale: match.context.i18n?.locale,
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],

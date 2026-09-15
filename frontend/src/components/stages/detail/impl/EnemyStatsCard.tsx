@@ -1,5 +1,8 @@
 import { enemyIconURL, type IEnemy } from "#/lib/api/enemies";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { ENEMY_LEVEL_ACCENT } from "./constants";
+import type { messages } from "./EnemyStatsCard.messages";
 import type { IStageEnemyStats } from "./types";
 
 function StatCell({ label, value }: { label: string; value: string }) {
@@ -12,6 +15,8 @@ function StatCell({ label, value }: { label: string; value: string }) {
 }
 
 export function EnemyStatsCard({ id, enemy, stats }: { id: string; enemy: IEnemy | null; stats: IStageEnemyStats | null }) {
+    const t: TypedT<typeof messages> = useT("stages");
+    const f = useFormatters();
     const level = enemy?.enemyLevel ?? "NORMAL";
     const accent = ENEMY_LEVEL_ACCENT[level];
     return (
@@ -31,15 +36,15 @@ export function EnemyStatsCard({ id, enemy, stats }: { id: string; enemy: IEnemy
 
             {stats ? (
                 <div className="grid grid-cols-3 gap-1.5">
-                    <StatCell label="HP" value={stats.maxHp.toLocaleString()} />
-                    <StatCell label="ATK" value={stats.atk.toLocaleString()} />
-                    <StatCell label="DEF" value={stats.def.toLocaleString()} />
-                    <StatCell label="RES" value={`${stats.res}%`} />
-                    <StatCell label="Spd" value={stats.moveSpeed.toFixed(2)} />
-                    <StatCell label="ATK Time" value={`${stats.attackInterval.toFixed(2)}s`} />
+                    <StatCell label={t("enemyStats.hp")} value={f.number(stats.maxHp)} />
+                    <StatCell label={t("enemyStats.atk")} value={f.number(stats.atk)} />
+                    <StatCell label={t("enemyStats.def")} value={f.number(stats.def)} />
+                    <StatCell label={t("enemyStats.res")} value={`${stats.res}%`} />
+                    <StatCell label={t("enemyStats.spd")} value={stats.moveSpeed.toFixed(2)} />
+                    <StatCell label={t("enemyStats.atkTime")} value={`${stats.attackInterval.toFixed(2)}s`} />
                 </div>
             ) : (
-                <p className="m-0 font-sans text-[11px] text-muted-foreground leading-snug">No stat data available.</p>
+                <p className="m-0 font-sans text-[11px] text-muted-foreground leading-snug">{t("enemyStats.none")}</p>
             )}
         </div>
     );

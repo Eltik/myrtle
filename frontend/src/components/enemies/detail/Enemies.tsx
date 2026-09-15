@@ -4,26 +4,30 @@ import { ChevronRight } from "lucide-react";
 import { useMemo } from "react";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "#/components/ui/tabs";
 import { enemyDetailQueryOptions } from "#/lib/api/enemies";
+import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { EnemyChibiTab } from "../list/impl/components/EnemyChibi";
 import { enrichEnemy } from "../list/impl/enrich";
+import type { messages } from "./Enemies.messages";
 import { AppearsInTab } from "./impl/AppearsInTab";
 import { EnemyHero, OverviewTab, SkillsTab, StatsTab } from "./impl/sections";
 
 export function EnemyDetail() {
+    const t: TypedT<typeof messages> = useT("enemies");
+    const rt: TypedRichT<typeof messages> = useRichT("enemies");
     const { id } = useParams({ from: "/enemies_/$id" });
-    const { data: detail } = useSuspenseQuery(enemyDetailQueryOptions(id));
+    const server = useGamedataServer();
+    const { data: detail } = useSuspenseQuery(enemyDetailQueryOptions(id, server));
 
     const enemy = useMemo(() => (detail ? enrichEnemy(detail.enemy, detail.raceData) : null), [detail]);
 
     if (!enemy) {
         return (
             <div className="mx-auto w-[min(1400px,calc(100%-2rem))] py-20 text-center">
-                <h1 className="m-0 font-bold font-sans text-[22px] text-foreground">Enemy not found</h1>
-                <p className="mt-2 font-sans text-[13.5px] text-muted-foreground">
-                    No enemy with id <code className="font-mono text-foreground">{id}</code> exists in the handbook.
-                </p>
+                <h1 className="m-0 font-bold font-sans text-[22px] text-foreground">{t("detail.notFound.title")}</h1>
+                <p className="mt-2 font-sans text-[13.5px] text-muted-foreground">{rt("detail.notFound.body", { id: <code className="font-mono text-foreground">{id}</code> })}</p>
                 <Link to="/enemies" className="mt-4 inline-block font-medium font-sans text-[13.5px] text-primary hover:underline">
-                    Back to Enemy Database
+                    {t("detail.notFound.back")}
                 </Link>
             </div>
         );
@@ -31,13 +35,13 @@ export function EnemyDetail() {
 
     return (
         <div className="relative z-1 mx-auto w-[min(1100px,calc(100%-2rem))] pb-20">
-            <nav className="pt-7 pb-3.5 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label="Breadcrumb">
+            <nav className="pt-7 pb-3.5 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label={t("detail.breadcrumb")}>
                 <ol className="flex items-center gap-1.5">
-                    <li>Collection</li>
+                    <li>{t("detail.breadcrumb.collection")}</li>
                     <ChevronRight className="h-2.5 w-2.5" aria-hidden="true" />
                     <li>
                         <Link to="/enemies" className="transition-colors hover:text-foreground">
-                            Enemies
+                            {t("detail.breadcrumb.enemies")}
                         </Link>
                     </li>
                     <ChevronRight className="h-2.5 w-2.5" aria-hidden="true" />
@@ -51,19 +55,19 @@ export function EnemyDetail() {
                 <div className="border-border border-b">
                     <TabsList className="mb-3">
                         <TabsTab value="overview" className="h-8 text-[13px]">
-                            Overview
+                            {t("detail.tab.overview")}
                         </TabsTab>
                         <TabsTab value="stats" className="h-8 text-[13px]">
-                            Stats
+                            {t("detail.tab.stats")}
                         </TabsTab>
                         <TabsTab value="skills" className="h-8 text-[13px]">
-                            Skills
+                            {t("detail.tab.skills")}
                         </TabsTab>
                         <TabsTab value="appears" className="h-8 text-[13px]">
-                            Appears In
+                            {t("detail.tab.appears")}
                         </TabsTab>
                         <TabsTab value="chibi" className="h-8 text-[13px]">
-                            Chibi
+                            {t("detail.tab.chibi")}
                         </TabsTab>
                     </TabsList>
                 </div>

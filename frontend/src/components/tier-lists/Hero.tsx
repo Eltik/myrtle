@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { Kicker } from "#/components/ui/kicker";
 import { authActions } from "#/lib/auth/store";
-import { formatNumber } from "#/lib/utils";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "./Hero.messages";
 
 interface IHeroProps {
     total: number;
@@ -9,19 +11,22 @@ interface IHeroProps {
 }
 
 export function Hero({ total, canCreate }: IHeroProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
+    const f = useFormatters();
+
     return (
         <section className="mx-auto w-[min(1080px,calc(100%-2rem))] pt-10 pb-6 sm:pt-14 sm:pb-8">
             <div className="flex flex-wrap items-end justify-between gap-4">
                 <div className="min-w-0">
-                    <Kicker>Tier Lists</Kicker>
-                    <h1 className="m-0 font-bold font-sans text-3xl text-foreground leading-tight tracking-tight sm:text-4xl">Find the meta. Build your own.</h1>
+                    <Kicker>{t("browse.hero.kicker")}</Kicker>
+                    <h1 className="m-0 font-bold font-sans text-3xl text-foreground leading-tight tracking-tight sm:text-4xl">{t("browse.hero.title")}</h1>
                     <p className="mt-2 max-w-130 font-sans text-muted-foreground text-sm leading-relaxed">
                         {total > 0 ? (
                             <>
-                                <span className="font-mono text-foreground tabular-nums">{formatNumber(total)}</span> {total === 1 ? "list" : "lists"} from the team and the community. Sort, filter, or browse what's hot right now.
+                                <span className="font-mono text-foreground tabular-nums">{f.number(total)}</span> {t("browse.hero.blurb", { count: total })}
                             </>
                         ) : (
-                            <>Curated picks from the team alongside community-built rankings. Sort, filter, or browse what's hot right now.</>
+                            t("browse.hero.blurbEmpty")
                         )}
                     </p>
                 </div>
@@ -36,11 +41,11 @@ export function Hero({ total, canCreate }: IHeroProps) {
                             <path d="M12 5v14" />
                             <path d="M5 12h14" />
                         </svg>
-                        Create list
+                        {t("browse.hero.create")}
                     </Link>
                 ) : (
                     <button type="button" onClick={() => authActions.openLoginDialog()} className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-muted px-3.5 py-2 font-medium font-sans text-foreground text-sm leading-none transition-colors hover:bg-accent">
-                        Sign in to publish
+                        {t("browse.hero.signIn")}
                     </button>
                 )}
             </div>

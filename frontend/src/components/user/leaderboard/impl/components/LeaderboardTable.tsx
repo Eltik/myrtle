@@ -2,56 +2,65 @@ import { Link } from "@tanstack/react-router";
 import { ChevronDown, ChevronUp, Minus } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "#/components/ui/menu";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, getAvatarById } from "#/lib/utils";
-import { DEFAULT_AVATAR_ID, formatPct, LEADERBOARD_SORTS, type LeaderboardSort, toPct } from "../constants";
+import { DEFAULT_AVATAR_ID, formatPct, LEADERBOARD_SORTS, type LeaderboardMessageKey, type LeaderboardSort, toPct } from "../constants";
+import type { messages as constantsMessages } from "../constants.messages";
 import type { LeaderboardEntry } from "../types";
 import { GradeBadge } from "./GradeBadge";
+import type { messages } from "./LeaderboardTable.messages";
 import { ServerTag } from "./ServerTag";
+
+/** The option labels in `constants.messages.ts` are rendered here too. */
+type TableT = TypedT<typeof messages & typeof constantsMessages>;
 
 interface ILeaderboardTableProps {
     entries: LeaderboardEntry[];
     sort: LeaderboardSort;
     onSort: (next: LeaderboardSort) => void;
     isLoading?: boolean;
-    intervalLabel?: string;
+    intervalKey?: LeaderboardMessageKey;
 }
 
 const DESKTOP_GRID = "grid-cols-[80px_minmax(0,1fr)_100px_90px_180px_60px]";
 
-export function LeaderboardTable({ entries, sort, onSort, isLoading, intervalLabel = "since yesterday" }: ILeaderboardTableProps) {
+export function LeaderboardTable({ entries, sort, onSort, isLoading, intervalKey = "leaderboard.interval.day.since" }: ILeaderboardTableProps) {
+    const t: TableT = useT("user");
+
     if (!isLoading && entries.length === 0) {
-        return <div className="px-6 py-12 text-center font-sans text-muted-foreground text-sm">No Doctors match these filters.</div>;
+        return <div className="px-6 py-12 text-center font-sans text-muted-foreground text-sm">{t("leaderboard.table.empty")}</div>;
     }
 
     return (
         <>
             <div className="hidden md:block">
                 <div className={cn("grid items-center gap-4 border-border border-b bg-[color-mix(in_srgb,var(--muted)_35%,transparent)] px-4 py-3.5", DESKTOP_GRID)}>
-                    <Th>Rank</Th>
-                    <Th>Doctor</Th>
-                    <Th>Server</Th>
-                    <Th>Grade</Th>
+                    <Th>{t("leaderboard.table.th.rank")}</Th>
+                    <Th>{t("leaderboard.table.th.doctor")}</Th>
+                    <Th>{t("leaderboard.table.th.server")}</Th>
+                    <Th>{t("leaderboard.table.th.grade")}</Th>
                     <span className="flex justify-end">
                         <SortHeader sort={sort} onSort={onSort} />
                     </span>
-                    <Th align="right">Lv</Th>
+                    <Th align="right">{t("leaderboard.table.th.level")}</Th>
                 </div>
                 <ul className="contents">
                     {entries.map((entry) => (
                         <li key={entry.id} className="contents">
-                            <DesktopRow entry={entry} sort={sort} intervalLabel={intervalLabel} />
+                            <DesktopRow entry={entry} sort={sort} intervalKey={intervalKey} />
                         </li>
                     ))}
                 </ul>
             </div>
             <div className="block p-3 md:hidden">
                 <div className="flex items-center justify-between px-1 pb-2">
-                    <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.16em]">Sort</span>
+                    <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.16em]">{t("leaderboard.table.sortHeading")}</span>
                     <SortHeader sort={sort} onSort={onSort} />
                 </div>
                 <div className="flex flex-col gap-2">
                     {entries.map((entry) => (
-                        <MobileRow key={entry.id} entry={entry} sort={sort} intervalLabel={intervalLabel} />
+                        <MobileRow key={entry.id} entry={entry} sort={sort} intervalKey={intervalKey} />
                     ))}
                 </div>
             </div>
@@ -60,17 +69,18 @@ export function LeaderboardTable({ entries, sort, onSort, isLoading, intervalLab
 }
 
 function SortHeader({ sort, onSort }: { sort: LeaderboardSort; onSort: (next: LeaderboardSort) => void }) {
-    const activeLabel = LEADERBOARD_SORTS.find((s) => s.value === sort)?.label ?? "Total";
+    const t: TableT = useT("user");
+    const activeLabelKey = LEADERBOARD_SORTS.find((s) => s.value === sort)?.labelKey ?? "leaderboard.sort.total";
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger className="inline-flex cursor-pointer items-center gap-1 whitespace-nowrap font-medium font-mono text-[11px] text-foreground uppercase leading-none tracking-[0.16em] transition-colors hover:text-primary" aria-label="Change sort category">
-                {activeLabel}
+            <DropdownMenuTrigger className="inline-flex cursor-pointer items-center gap-1 whitespace-nowrap font-medium font-mono text-[11px] text-foreground uppercase leading-none tracking-[0.16em] transition-colors hover:text-primary" aria-label={t("leaderboard.table.sortLabel")}>
+                {t(activeLabelKey)}
                 <ChevronDown className="size-3 opacity-70" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-40">
                 {LEADERBOARD_SORTS.map((opt) => (
                     <DropdownMenuItem key={opt.value} onClick={() => onSort(opt.value)} className={cn("cursor-pointer", sort === opt.value && "font-semibold text-primary")}>
-                        {opt.label}
+                        {t(opt.labelKey)}
                     </DropdownMenuItem>
                 ))}
             </DropdownMenuContent>
@@ -78,11 +88,13 @@ function SortHeader({ sort, onSort }: { sort: LeaderboardSort; onSort: (next: Le
     );
 }
 
-function RankMovement({ delta, intervalLabel = "since yesterday" }: { delta: number | null; intervalLabel?: string }) {
+function RankMovement({ delta, intervalKey = "leaderboard.interval.day.since" }: { delta: number | null; intervalKey?: LeaderboardMessageKey }) {
+    const t: TableT = useT("user");
+
     if (delta == null) return null;
     if (delta === 0) {
         return (
-            <span className="inline-flex items-center gap-0.5 font-mono font-semibold text-[10px] text-muted-foreground tabular-nums leading-none" title={`No change in rank ${intervalLabel}`}>
+            <span className="inline-flex items-center gap-0.5 font-mono font-semibold text-[10px] text-muted-foreground tabular-nums leading-none" title={t("leaderboard.table.movement.none", { interval: t(intervalKey) })}>
                 <Minus className="size-2.5" aria-hidden /> 0
             </span>
         );
@@ -90,7 +102,7 @@ function RankMovement({ delta, intervalLabel = "since yesterday" }: { delta: num
     const isUp = delta > 0;
     const Icon = isUp ? ChevronUp : ChevronDown;
     const color = isUp ? "text-success-foreground" : "text-destructive-foreground";
-    const label = `${isUp ? "Climbed" : "Fell"} ${Math.abs(delta)} ${Math.abs(delta) === 1 ? "rank" : "ranks"} ${intervalLabel}`;
+    const label = t(isUp ? "leaderboard.table.movement.up" : "leaderboard.table.movement.down", { count: Math.abs(delta), interval: t(intervalKey) });
     return (
         <span className={cn("inline-flex items-center gap-0.5 font-mono font-semibold text-[10px] tabular-nums leading-none", color)} title={label}>
             <Icon className="size-2.5" aria-hidden /> {Math.abs(delta)}
@@ -102,7 +114,8 @@ function Th({ children, align, sorted }: { children: React.ReactNode; align?: "r
     return <span className={cn("whitespace-nowrap font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.16em]", align === "right" ? "text-right" : "text-left", sorted && "text-foreground")}>{children}</span>;
 }
 
-function DesktopRow({ entry, sort, intervalLabel }: { entry: LeaderboardEntry; sort: LeaderboardSort; intervalLabel?: string }) {
+function DesktopRow({ entry, sort, intervalKey }: { entry: LeaderboardEntry; sort: LeaderboardSort; intervalKey?: LeaderboardMessageKey }) {
+    const t: TableT = useT("user");
     const nickname = entry.nickname ?? `Doctor ${entry.uid}`;
     const initials = nickname.slice(0, 2).toUpperCase();
     const avatarSrc = getAvatarById(entry.avatar_id ?? DEFAULT_AVATAR_ID);
@@ -112,10 +125,15 @@ function DesktopRow({ entry, sort, intervalLabel }: { entry: LeaderboardEntry; s
     const rowBg = entry.isSelf ? "bg-[color-mix(in_srgb,var(--primary)_6%,transparent)] hover:bg-[color-mix(in_srgb,var(--primary)_10%,transparent)]" : "hover:bg-[color-mix(in_srgb,var(--accent)_50%,transparent)]";
 
     return (
-        <Link to="/user/$id" params={{ id: entry.uid }} aria-label={`View ${nickname} profile`} className={cn("group grid items-center gap-4 border-[color-mix(in_srgb,var(--border)_60%,transparent)] border-b px-4 py-3 font-sans text-[13px] text-foreground no-underline transition-colors", DESKTOP_GRID, rowBg)}>
+        <Link
+            to="/user/$id"
+            params={{ id: entry.uid }}
+            aria-label={t("leaderboard.table.viewProfile", { nickname })}
+            className={cn("group grid items-center gap-4 border-[color-mix(in_srgb,var(--border)_60%,transparent)] border-b px-4 py-3 font-sans text-[13px] text-foreground no-underline transition-colors", DESKTOP_GRID, rowBg)}
+        >
             <span className="inline-flex min-w-14 flex-col items-start gap-1 font-mono font-semibold text-foreground text-sm tabular-nums leading-none">
                 <span>#{entry.rank_global ?? "-"}</span>
-                <RankMovement delta={entry.rank_delta} intervalLabel={intervalLabel} />
+                <RankMovement delta={entry.rank_delta} intervalKey={intervalKey} />
             </span>
             <span className="inline-flex min-w-0 max-w-80 items-center gap-3">
                 <Avatar className="size-9 rounded-[10px]">
@@ -146,7 +164,8 @@ function DesktopRow({ entry, sort, intervalLabel }: { entry: LeaderboardEntry; s
     );
 }
 
-function MobileRow({ entry, sort, intervalLabel }: { entry: LeaderboardEntry; sort: LeaderboardSort; intervalLabel?: string }) {
+function MobileRow({ entry, sort, intervalKey }: { entry: LeaderboardEntry; sort: LeaderboardSort; intervalKey?: LeaderboardMessageKey }) {
+    const t: TableT = useT("user");
     const nickname = entry.nickname ?? `Doctor ${entry.uid}`;
     const initials = nickname.slice(0, 2).toUpperCase();
     const avatarSrc = getAvatarById(entry.avatar_id ?? DEFAULT_AVATAR_ID);
@@ -155,7 +174,7 @@ function MobileRow({ entry, sort, intervalLabel }: { entry: LeaderboardEntry; so
         <Link to="/user/$id" params={{ id: entry.uid }} className={cn("grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-xl border border-border bg-card px-3 py-3 no-underline transition-colors hover:border-foreground/15", entry.isSelf && "bg-[color-mix(in_srgb,var(--primary)_6%,transparent)]")}>
             <span className="inline-flex flex-col items-center gap-1">
                 <span className="inline-flex size-9 items-center justify-center rounded-[10px] bg-muted font-mono font-semibold text-[13px] text-foreground tabular-nums leading-none">#{entry.rank_global ?? "-"}</span>
-                <RankMovement delta={entry.rank_delta} intervalLabel={intervalLabel} />
+                <RankMovement delta={entry.rank_delta} intervalKey={intervalKey} />
             </span>
             <div className="flex min-w-0 flex-col gap-1">
                 <div className="flex min-w-0 items-center gap-2">
@@ -167,7 +186,7 @@ function MobileRow({ entry, sort, intervalLabel }: { entry: LeaderboardEntry; so
                 </div>
                 <div className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground leading-none">
                     <ServerTag server={entry.server} />
-                    {entry.level != null && <span>· Lv {entry.level}</span>}
+                    {entry.level != null && <span>{t("leaderboard.table.levelInline", { level: entry.level })}</span>}
                 </div>
             </div>
             <div className="flex flex-col items-end gap-1.5">

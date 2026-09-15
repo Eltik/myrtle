@@ -4,10 +4,19 @@ import * as React from "react";
 import { Combobox, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList, ComboboxPopup } from "#/components/ui/combobox";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { professionLabel } from "#/lib/registry/operator-display";
 import { scoreMatch } from "#/lib/search/fuzzy";
 import type { IOperatorIndexEntry } from "#/types/operators";
+import type { messages } from "./OperatorPicker.messages";
 import type { IOperatorListEntry } from "./types";
+
+/**
+ * Which word the calling calculator uses for the thing being picked. It
+ * selects a wording inside each message rather than being pasted into one.
+ */
+export type PickerNoun = "operator" | "healer";
 
 interface IOperatorPickerProps {
     operators: IOperatorListEntry[];
@@ -16,8 +25,8 @@ interface IOperatorPickerProps {
     error?: unknown;
     existingCount: number;
     onAdd: (op: IOperatorListEntry) => void;
-    /** Singular noun for labels/copy, e.g. "operator" or "healer". */
-    noun: string;
+    /** Which wording the copy uses: "operator" (DPS) or "healer" (HPS). */
+    noun: PickerNoun;
 }
 
 interface IPickerEntry {
@@ -26,7 +35,8 @@ interface IPickerEntry {
 }
 
 export function OperatorPicker({ operators, isLoading, isError, error, existingCount, onAdd, noun }: IOperatorPickerProps): React.ReactElement {
-    const { data: indexEntries } = useQuery(operatorsIndexQueryOptions());
+    const t: TypedT<typeof messages> = useT("tools");
+    const { data: indexEntries } = useQuery(operatorsIndexQueryOptions(useGamedataServer()));
 
     const indexById = React.useMemo(() => {
         const map = new Map<string, IOperatorIndexEntry>();
@@ -61,12 +71,12 @@ export function OperatorPicker({ operators, isLoading, isError, error, existingC
     return (
         <div className="space-y-2">
             <label className="block font-medium text-[12px] text-muted-foreground leading-none" htmlFor="operator-picker">
-                {existingCount === 0 ? `Add ${aOrAn(noun)}` : `Add another ${noun}`}
+                {existingCount === 0 ? t("calc.picker.addFirst", { noun }) : t("calc.picker.addAnother", { noun })}
             </label>
             <Combobox<IPickerEntry, false> items={items} value={null} onValueChange={handleChange} filter={filter} itemToStringLabel={(e) => e.op.name} itemToStringValue={(e) => e.op.id}>
-                <ComboboxInput id="operator-picker" placeholder={isLoading ? `Loading ${noun}s...` : `Search ${items.length} ${noun}${items.length === 1 ? "" : "s"}...`} startAddon={existingCount === 0 ? <Search /> : <Plus />} />
+                <ComboboxInput id="operator-picker" placeholder={isLoading ? t("calc.picker.loading", { noun }) : t("calc.picker.search", { noun, count: items.length })} startAddon={existingCount === 0 ? <Search /> : <Plus />} />
                 <ComboboxPopup>
-                    <ComboboxEmpty>No matching {noun}s.</ComboboxEmpty>
+                    <ComboboxEmpty>{t("calc.picker.empty", { noun })}</ComboboxEmpty>
                     <ComboboxList>
                         {(entry: IPickerEntry) => {
                             const op = entry.op;
@@ -82,7 +92,7 @@ export function OperatorPicker({ operators, isLoading, isError, error, existingC
                                             <span className="truncate font-medium text-[13px]">{op.name}</span>
                                             {idx && (
                                                 <span className="truncate text-[10.5px] text-muted-foreground">
-                                                    {rarity > 0 ? `${rarity}★ · ` : ""}
+                                                    {rarity > 0 ? t("calc.picker.rarityPrefix", { rarity }) : ""}
                                                     {professionLabel(idx.profession)}
                                                 </span>
                                             )}
@@ -96,17 +106,13 @@ export function OperatorPicker({ operators, isLoading, isError, error, existingC
             </Combobox>
             {isError ? (
                 <p className="rounded border border-destructive/30 bg-destructive/8 px-2 py-1.5 text-[11px] text-foreground/90 leading-snug">
-                    Couldn't load {noun} list. {(error as Error)?.message ?? ""}
+                    {t("calc.picker.loadFailed", { noun })} {(error as Error)?.message ?? ""}
                 </p>
             ) : existingCount === 0 ? (
-                <p className="text-[11px] text-muted-foreground leading-snug">Pick any {noun} to start. You can add the same one multiple times to compare different builds.</p>
+                <p className="text-[11px] text-muted-foreground leading-snug">{t("calc.picker.hint.first", { noun })}</p>
             ) : existingCount === 1 ? (
-                <p className="text-[11px] text-muted-foreground leading-snug">Tip: add the same {noun} again with the picker, then tweak skill/level/module to compare two setups.</p>
+                <p className="text-[11px] text-muted-foreground leading-snug">{t("calc.picker.hint.second", { noun })}</p>
             ) : null}
         </div>
     );
-}
-
-function aOrAn(noun: string): string {
-    return /^[aeiou]/i.test(noun) ? `an ${noun}` : `a ${noun}`;
 }

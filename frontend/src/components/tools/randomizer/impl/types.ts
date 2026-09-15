@@ -1,5 +1,6 @@
 import type { OperatorPosition, OperatorProfession, OperatorRarity } from "#/types/operators";
 import type { IStage } from "#/types/stages";
+import type { ChallengeMessageKey } from "./challenges";
 
 export interface IRandomizerOperator {
     id: string;
@@ -41,8 +42,10 @@ export interface IChallengeBase {
     /** Stable identifier for the challenge (used for keys / debugging). */
     id: string;
     kind: ChallengeKind;
-    title: string;
-    description: string;
+    /** Key in `challenges.messages.ts`; the rendering component resolves it. */
+    titleKey: ChallengeMessageKey;
+    /** Key in `challenges.messages.ts`; the rendering component resolves it. */
+    descKey: ChallengeMessageKey;
     /** Relative weight in the weighted pick (defaults to 1). Use 0 to disable temporarily. */
     weight?: number;
 }

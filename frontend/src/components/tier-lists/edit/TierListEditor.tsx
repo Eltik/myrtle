@@ -7,6 +7,8 @@ import { useAuth } from "#/hooks/use-auth";
 import { APIError } from "#/lib/api/_shared";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { type ITierListDetail, type ITierOperator, publishTierListVersionFn, setTierListFlairFn, setTierListVisibilityFn, tierListDetailQueryOptions, tierListFlairsQueryOptions, tierListVersionsQueryOptions } from "#/lib/api/tier-lists";
+import { useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { indexEntryToTierOperator } from "../shared";
 import { DragControllerProvider } from "./drag-controller";
 import { EditHero } from "./EditHero";
@@ -17,8 +19,14 @@ import { PickTierDialog } from "./PickTierDialog";
 import { PublishingPanel } from "./PublishingPanel";
 import { PublishVersionDialog } from "./PublishVersionDialog";
 import { type ISaveProgress, saveEdits } from "./save";
+import type { messages as saveMessages } from "./save.messages";
 import { detailToEditState, diffStates, editReducer, type IEditState, type IEditTier, type IPendingChange, nextFallbackTierColor, placedOperatorIds } from "./state";
+import type { messages as stateMessages } from "./state.messages";
+import type { messages } from "./TierListEditor.messages";
 import { TierSettingsDialog } from "./TierSettingsDialog";
+
+/** This screen renders its own chrome plus the labels `state.ts` and `save.ts` derive. */
+type EditorT = TypedT<typeof messages & typeof stateMessages & typeof saveMessages>;
 
 interface ITierListEditorProps {
     slug: string;
@@ -28,8 +36,9 @@ export function TierListEditor({ slug }: ITierListEditorProps) {
     const { user } = useAuth();
     const queryClient = useQueryClient();
 
-    const { data: detail } = useSuspenseQuery(tierListDetailQueryOptions(slug));
-    const { data: operators } = useSuspenseQuery(operatorsIndexQueryOptions());
+    const gamedataServer = useGamedataServer();
+    const { data: detail } = useSuspenseQuery(tierListDetailQueryOptions(slug, gamedataServer));
+    const { data: operators } = useSuspenseQuery(operatorsIndexQueryOptions(gamedataServer));
 
     if (!detail) return <EditorMissing />;
 
@@ -51,6 +60,10 @@ interface IEditorContentProps {
 }
 
 function EditorContent({ slug, detail, operators, queryClient }: IEditorContentProps) {
+    const t: EditorT = useT("tierLists");
+    // Same server the parent read the detail with, so the optimistic
+    // `setQueryData` below targets the entry the page is actually rendering.
+    const gamedataServer = useGamedataServer();
     const initial = useMemo(() => detailToEditState(detail), [detail]);
     const [originalState, setOriginalState] = useState<IEditState>(initial);
     const [state, dispatch] = useReducer(editReducer, initial);
@@ -84,7 +97,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
         }
         return set;
     }, [state.descriptionByOperatorId]);
-    const pendingChanges: IPendingChange[] = useMemo(() => diffStates(originalState, state), [originalState, state]);
+    const pendingChanges: IPendingChange[] = useMemo(() => diffStates(originalState, state, t), [originalState, state, t]);
     const findCurrentTierId = useCallback((operatorId: string): string | null => state.tiers.find((t) => t.operatorIds.includes(operatorId))?.id ?? null, [state.tiers]);
 
     const handlePlace = useCallback((operatorId: string, tierId: string, index: number) => {
@@ -118,13 +131,14 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
                 slug,
                 original: originalState,
                 current: state,
+                t,
                 onProgress: setSaveProgress,
             });
         },
         onSuccess: async () => {
             setSaveProgress(null);
             await queryClient.invalidateQueries({ queryKey: ["tier-lists"] });
-            const fresh = queryClient.getQueryData<ITierListDetail | null>(tierListDetailQueryOptions(slug).queryKey);
+            const fresh = queryClient.getQueryData<ITierListDetail | null>(tierListDetailQueryOptions(slug, gamedataServer).queryKey);
             if (fresh) {
                 const next = detailToEditState(fresh);
                 setOriginalState(next);
@@ -134,18 +148,18 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
             }
             toastManager.add({
                 id: `tl-edit-save-${Date.now()}`,
-                title: "Saved",
-                description: "Your changes are live.",
+                title: t("edit.toast.savedTitle"),
+                description: t("edit.toast.savedBody"),
                 type: "success",
             });
         },
         onError: (err: unknown) => {
             setSaveProgress(null);
-            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : "Couldn't save changes.";
+            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : t("edit.toast.saveFailedBody");
             setSaveError(message);
             toastManager.add({
                 id: `tl-edit-save-err-${Date.now()}`,
-                title: "Save failed",
+                title: t("edit.toast.saveFailedTitle"),
                 description: message,
                 type: "error",
             });
@@ -161,36 +175,36 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
         mutationFn: (flairId: number | null) => setTierListFlairFn({ data: { slug, flairId } }),
         onSuccess: async (_, flairId) => {
             const next = flairId === null ? null : ((flairCatalog ?? []).find((f) => f.id === flairId) ?? null);
-            queryClient.setQueryData<ITierListDetail | null>(tierListDetailQueryOptions(slug).queryKey, (prev) => (prev ? { ...prev, flair: next } : prev));
+            queryClient.setQueryData<ITierListDetail | null>(tierListDetailQueryOptions(slug, gamedataServer).queryKey, (prev) => (prev ? { ...prev, flair: next } : prev));
             await queryClient.invalidateQueries({ queryKey: ["tier-lists"] });
             toastManager.add({
                 id: `tl-flair-${Date.now()}`,
-                title: next ? "Flair updated" : "Flair cleared",
-                description: next ? `Tagged as "${next.label}".` : "No flair on this list.",
+                title: next ? t("edit.toast.flairSetTitle") : t("edit.toast.flairClearedTitle"),
+                description: next ? t("edit.toast.flairSetBody", { label: next.label }) : t("edit.toast.flairClearedBody"),
                 type: "success",
             });
         },
         onError: (err: unknown) => {
-            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : "Couldn't update flair.";
-            toastManager.add({ id: `tl-flair-err-${Date.now()}`, title: "Flair failed", description: message, type: "error" });
+            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : t("edit.toast.flairFailedBody");
+            toastManager.add({ id: `tl-flair-err-${Date.now()}`, title: t("edit.toast.flairFailedTitle"), description: message, type: "error" });
         },
     });
 
     const visibilityMutation = useMutation({
         mutationFn: (isListed: boolean) => setTierListVisibilityFn({ data: { slug, isListed } }),
         onSuccess: async (_, isListed) => {
-            queryClient.setQueryData<ITierListDetail | null>(tierListDetailQueryOptions(slug).queryKey, (prev) => (prev ? { ...prev, isListed } : prev));
+            queryClient.setQueryData<ITierListDetail | null>(tierListDetailQueryOptions(slug, gamedataServer).queryKey, (prev) => (prev ? { ...prev, isListed } : prev));
             await queryClient.invalidateQueries({ queryKey: ["tier-lists"] });
             toastManager.add({
                 id: `tl-visibility-${Date.now()}`,
-                title: isListed ? "Now public" : "Hidden from browse",
-                description: isListed ? "This list appears on /tier-lists." : "Only people with the direct link can find it.",
+                title: isListed ? t("edit.toast.publicTitle") : t("edit.toast.hiddenTitle"),
+                description: isListed ? t("edit.toast.publicBody") : t("edit.toast.hiddenBody"),
                 type: "success",
             });
         },
         onError: (err: unknown) => {
-            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : "Couldn't update visibility.";
-            toastManager.add({ id: `tl-visibility-err-${Date.now()}`, title: "Visibility failed", description: message, type: "error" });
+            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : t("edit.toast.visibilityFailedBody");
+            toastManager.add({ id: `tl-visibility-err-${Date.now()}`, title: t("edit.toast.visibilityFailedTitle"), description: message, type: "error" });
         },
     });
 
@@ -202,18 +216,18 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
             await queryClient.invalidateQueries({ queryKey: ["tier-lists", "versions", slug] });
             toastManager.add({
                 id: `tl-publish-${Date.now()}`,
-                title: `Published v${version.version}`,
-                description: version.changelog ? "Your changelog is now live." : "Snapshot saved.",
+                title: t("edit.toast.publishedTitle", { version: version.version }),
+                description: version.changelog ? t("edit.toast.publishedWithChangelog") : t("edit.toast.publishedNoChangelog"),
                 type: "success",
             });
         },
         onError: (err: unknown) => {
-            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : "Couldn't publish version.";
+            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : t("edit.publishFailed");
             setPublishError(message);
         },
     });
 
-    const publishingDisabledReason = pendingChanges.length > 0 ? "Save your changes before publishing a version." : null;
+    const publishingDisabledReason = pendingChanges.length > 0 ? t("edit.publishBlocked") : null;
     const canPublish = !publishMutation.isPending && publishingDisabledReason === null;
 
     const handleOpenPublishDialog = useCallback(() => {
@@ -290,7 +304,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
 
                 <div className="mx-auto mt-4 grid w-[min(1280px,calc(100%-1.5rem))] gap-4 sm:mt-6 sm:w-[min(1280px,calc(100%-2rem))] sm:gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
                     <div className="min-w-0">
-                        <section className={styles.board} aria-label={`Edit board for ${state.title}`}>
+                        <section className={styles.board} aria-label={t("edit.board.label", { title: state.title })}>
                             {state.tiers.map((tier, idx) => (
                                 <EditTierRow
                                     key={tier.id}
@@ -310,10 +324,10 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
                         </section>
                         {state.tiers.length === 0 && (
                             <div className="mt-3 rounded-xl border border-border border-dashed bg-muted/20 px-5 py-10 text-center">
-                                <p className="m-0 font-medium font-sans text-foreground text-sm">No tiers yet.</p>
-                                <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">Create your first tier to start ranking operators.</p>
+                                <p className="m-0 font-medium font-sans text-foreground text-sm">{t("edit.board.emptyTitle")}</p>
+                                <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">{t("edit.board.emptyBody")}</p>
                                 <Button onClick={handleAddTier} size="sm" className="mt-3">
-                                    Add tier
+                                    {t("edit.board.addTier")}
                                 </Button>
                             </div>
                         )}
@@ -352,24 +366,28 @@ function defaultTierName(existing: number): string {
 }
 
 function EditorMissing() {
+    const t: TypedT<typeof messages> = useT("tierLists");
+
     return (
         <main className="mx-auto w-[min(720px,calc(100%-2rem))] py-20 text-center">
-            <h1 className="m-0 font-bold font-sans text-2xl text-foreground tracking-tight">Tier list not found</h1>
-            <p className="mt-3 font-sans text-muted-foreground text-sm">It may have been removed, or the link could be wrong.</p>
+            <h1 className="m-0 font-bold font-sans text-2xl text-foreground tracking-tight">{t("edit.missing.title")}</h1>
+            <p className="mt-3 font-sans text-muted-foreground text-sm">{t("edit.missing.body")}</p>
             <Button render={<Link to="/tier-lists/my" search={{ sort: "recent", type: "all", view: "grid", q: "" }} />} variant="outline" className="mt-6">
-                Back to my lists
+                {t("edit.missing.action")}
             </Button>
         </main>
     );
 }
 
 function EditorForbidden({ slug }: { slug: string }) {
+    const t: TypedT<typeof messages> = useT("tierLists");
+
     return (
         <main className="mx-auto w-[min(720px,calc(100%-2rem))] py-20 text-center">
-            <h1 className="m-0 font-bold font-sans text-2xl text-foreground tracking-tight">You can't edit this list</h1>
-            <p className="mt-3 font-sans text-muted-foreground text-sm">You don't have permission to edit this tier list.</p>
+            <h1 className="m-0 font-bold font-sans text-2xl text-foreground tracking-tight">{t("edit.forbidden.title")}</h1>
+            <p className="mt-3 font-sans text-muted-foreground text-sm">{t("edit.forbidden.body")}</p>
             <Button render={<Link to="/tier-lists/$id" params={{ id: slug }} />} variant="outline" className="mt-6">
-                View public page
+                {t("edit.forbidden.action")}
             </Button>
         </main>
     );

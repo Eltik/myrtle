@@ -1,3 +1,4 @@
+import type { messages as listConstantsMessages } from "#/components/operators/list/impl/constants.messages";
 import { formatNationId, formatProfession, formatSubProfession, rarityToNumber } from "#/lib/utils";
 import type { OperatorRarityTier } from "#/types/operators";
 import type { ArrayFilterKey, HasNotesFilter, SortOption, StatMetric, ViewMode } from "./types";
@@ -9,30 +10,33 @@ export const CLASSES = ["WARRIOR", "SNIPER", "TANK", "MEDIC", "SUPPORT", "CASTER
 export const GENDERS = ["Male", "Female", "Conviction"] as const;
 export type Gender = (typeof GENDERS)[number];
 
-export const HAS_NOTES_OPTIONS: { value: HasNotesFilter; label: string }[] = [
-    { value: "any", label: "Any" },
-    { value: "yes", label: "Has notes" },
-    { value: "no", label: "No notes" },
+/** A key in `constants.messages.ts`; resolved by whichever component renders it. */
+export type ListMessageKey = keyof typeof listConstantsMessages & string;
+
+export const HAS_NOTES_OPTIONS: { value: HasNotesFilter; labelKey: ListMessageKey }[] = [
+    { value: "any", labelKey: "filters.notes.any" },
+    { value: "yes", labelKey: "filters.notes.yes" },
+    { value: "no", labelKey: "filters.notes.no" },
 ];
 
-export const HAS_NOTES_LABELS: Record<HasNotesFilter, string> = {
-    any: "Any",
-    yes: "Has notes",
-    no: "No notes",
+export const HAS_NOTES_LABEL_KEY: Record<HasNotesFilter, ListMessageKey> = {
+    any: "filters.notes.any",
+    yes: "filters.notes.yes",
+    no: "filters.notes.no",
 };
 
-export const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-    { value: "rarity", label: "Rarity" },
-    { value: "name", label: "Name" },
-    { value: "class", label: "Class" },
-    { value: "hp", label: "HP" },
-    { value: "atk", label: "ATK" },
-    { value: "def", label: "DEF" },
-    { value: "res", label: "RES" },
-    { value: "cost", label: "Cost" },
-    { value: "block", label: "Block" },
-    { value: "ownership", label: "Most owned" },
-    { value: "e2", label: "Most E2'd" },
+export const SORT_OPTIONS: { value: SortOption; labelKey: ListMessageKey }[] = [
+    { value: "rarity", labelKey: "sort.rarity" },
+    { value: "name", labelKey: "sort.name" },
+    { value: "class", labelKey: "sort.class" },
+    { value: "hp", labelKey: "sort.hp" },
+    { value: "atk", labelKey: "sort.atk" },
+    { value: "def", labelKey: "sort.def" },
+    { value: "res", labelKey: "sort.res" },
+    { value: "cost", labelKey: "sort.cost" },
+    { value: "block", labelKey: "sort.block" },
+    { value: "ownership", labelKey: "sort.ownership" },
+    { value: "e2", labelKey: "sort.e2" },
 ];
 
 /**

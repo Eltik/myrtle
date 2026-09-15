@@ -1,5 +1,8 @@
 import type { IImprovementsResponse, ISandboxCategory } from "#/lib/api/user";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./SandboxPanel.messages";
 import { EmptyHint, PANEL_PADDING, Pill, SectionHeader, TEXT_BADGE } from "./shared";
 
 interface IProps {
@@ -8,13 +11,15 @@ interface IProps {
 }
 
 export function SandboxPanel({ improvements, accent }: IProps) {
+    const t: TypedT<typeof messages> = useT("user");
     const s = improvements.sandbox;
     const hasAnyData = s.total > 0 || s.categories.some((c) => c.parts.some((p) => p.current > 0));
 
     return (
         <div className={`${PANEL_PADDING} flex flex-col gap-3`}>
+            {/* "Reclamation Algorithm" is the game mode's own name and stays as game vocabulary. */}
             <SectionHeader title="Reclamation Algorithm" accent={accent} />
-            {!hasAnyData && <EmptyHint>No RA progress detected. Start RA in Operation Originium Dust to begin tracking.</EmptyHint>}
+            {!hasAnyData && <EmptyHint>{t("score.improvements.sandbox.empty")}</EmptyHint>}
             <div className="grid gap-x-5 gap-y-3 sm:grid-cols-2">
                 {s.categories.map((category) => (
                     <CategoryRow key={category.key} category={category} accent={accent} />
@@ -25,6 +30,8 @@ export function SandboxPanel({ improvements, accent }: IProps) {
 }
 
 function CategoryRow({ category, accent }: { category: ISandboxCategory; accent: string }) {
+    const t: TypedT<typeof messages> = useT("user");
+    const f = useFormatters();
     const pct = Math.min(100, Math.max(0, category.score * 100));
     const weightPct = Math.round(category.weight * 100);
     return (
@@ -32,7 +39,7 @@ function CategoryRow({ category, accent }: { category: ISandboxCategory; accent:
             <div className="flex items-center justify-between gap-2">
                 <span className="flex items-center gap-1.5">
                     <span className="text-[11px] text-foreground/85">{category.label}</span>
-                    <Pill>{weightPct}% of RA</Pill>
+                    <Pill>{t("score.improvements.sandbox.weight", { pct: weightPct })}</Pill>
                 </span>
                 <span className={cn(TEXT_BADGE, "text-foreground/85")}>{pct.toFixed(0)}%</span>
             </div>
@@ -50,7 +57,7 @@ function CategoryRow({ category, accent }: { category: ISandboxCategory; accent:
                     <span key={p.label} className="text-[10px] text-muted-foreground">
                         {p.label}{" "}
                         <span className="text-foreground/70 tabular-nums">
-                            {p.current.toLocaleString()}/{p.max.toLocaleString()}
+                            {f.number(p.current)}/{f.number(p.max)}
                         </span>
                     </span>
                 ))}

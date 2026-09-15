@@ -4,6 +4,7 @@ import { TierListEditor } from "#/components/tier-lists/edit/TierListEditor";
 import { Spinner } from "#/components/ui/spinner";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { tierListDetailQueryOptions } from "#/lib/api/tier-lists";
+import { metaT } from "#/lib/meta";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/_authed/tier-lists_/my_/$id/edit")({
@@ -11,15 +12,17 @@ export const Route = createFileRoute("/_authed/tier-lists_/my_/$id/edit")({
         if (!context.user) throw redirect({ to: "/", search: { auth: "1", next: location.href } });
     },
     loader: ({ context, params }) => {
-        void context.queryClient.prefetchQuery(tierListDetailQueryOptions(params.id));
-        void context.queryClient.prefetchQuery(operatorsIndexQueryOptions());
+        void context.queryClient.prefetchQuery(tierListDetailQueryOptions(params.id, context.i18n.gamedataServer));
+        void context.queryClient.prefetchQuery(operatorsIndexQueryOptions(context.i18n.gamedataServer));
     },
     component: RouteComponent,
-    head: ({ params }) => {
+    head: ({ match, params }) => {
+        const t = metaT(match.context.i18n);
         const { meta, links } = seo({
-            title: "Edit Tier List",
-            description: "Edit your tier list.",
+            title: t("editTierList.title"),
+            description: t("editTierList.description"),
             path: `/tier-lists/my/${params.id}/edit`,
+            locale: match.context.i18n?.locale,
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, { name: "robots", content: "noindex,nofollow" }, ...meta],

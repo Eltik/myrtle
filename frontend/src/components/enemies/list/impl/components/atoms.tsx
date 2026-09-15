@@ -1,5 +1,8 @@
 import type { IEnemyDamageType, IEnemyLevel } from "#/lib/api/enemies";
-import { ENEMY_LEVEL_DISPLAY } from "../constants";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import { ENEMY_LEVEL_LABEL_KEY } from "../constants";
+import type { messages as listConstantsMessages } from "../constants.messages";
 import { DAMAGE_TOKENS, LEVEL_TOKENS } from "../tokens";
 
 interface ILevelBadgeProps {
@@ -8,6 +11,7 @@ interface ILevelBadgeProps {
 }
 
 export function LevelBadge({ level, size = "default" }: ILevelBadgeProps) {
+    const t: TypedT<typeof listConstantsMessages> = useT("enemies");
     const tok = LEVEL_TOKENS[level];
     if (!tok || level === "NORMAL") return null;
     const sizeClass = size === "sm" ? "px-1.25 py-0.5 text-[8.5px]" : "px-1.75 py-0.75 text-[9.5px]";
@@ -20,7 +24,7 @@ export function LevelBadge({ level, size = "default" }: ILevelBadgeProps) {
                 borderColor: tok.badgeBorder,
             }}
         >
-            {ENEMY_LEVEL_DISPLAY[level]}
+            {t(ENEMY_LEVEL_LABEL_KEY[level])}
         </span>
     );
 }
@@ -31,15 +35,16 @@ interface IDamageDotsProps {
 }
 
 export function DamageDots({ types, size = 6 }: IDamageDotsProps) {
+    const t: TypedT<typeof listConstantsMessages> = useT("enemies");
     if (!types || types.length === 0) return null;
     return (
         <span className="inline-flex items-center gap-0.75">
-            {types.map((t) => {
-                const tok = DAMAGE_TOKENS[t];
+            {types.map((dt) => {
+                const tok = DAMAGE_TOKENS[dt];
                 return (
                     <span
-                        key={t}
-                        title={tok?.label ?? t}
+                        key={dt}
+                        title={tok ? t(tok.labelKey) : dt}
                         className="rounded-[1.5px]"
                         style={{
                             width: size,

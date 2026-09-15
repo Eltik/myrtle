@@ -1,14 +1,23 @@
 import { Badge } from "#/components/ui/badge";
 import { DialogDescription, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { CATEGORY_ITEM_LABELS, formatItemType, formatVoucherId, RARITY_COLORS } from "./helpers";
+import type { messages as helperMessages } from "./helpers.messages";
+import type { messages } from "./ItemDialog.messages";
 import { ItemIcon } from "./ItemIcon";
 import type { IItemEntry } from "./types";
+
+/** The category names are declared in `helpers.messages.ts`. */
+type DialogT = TypedT<typeof messages & typeof helperMessages>;
 
 interface IItemDialogProps {
     item: IItemEntry;
 }
 
 export function ItemDialog({ item }: IItemDialogProps) {
+    const t: DialogT = useT("user");
+    const f = useFormatters();
     const color = RARITY_COLORS[item.rarityNum] ?? "#b5b5b5";
     const meta = item.meta;
     const obtain =
@@ -29,7 +38,7 @@ export function ItemDialog({ item }: IItemDialogProps) {
                 </div>
                 <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">
-                        <span>{CATEGORY_ITEM_LABELS[item.category]}</span>
+                        <span>{t(CATEGORY_ITEM_LABELS[item.category])}</span>
                         <span aria-hidden className="opacity-40">
                             ·
                         </span>
@@ -43,7 +52,7 @@ export function ItemDialog({ item }: IItemDialogProps) {
                     {meta?.description && <DialogDescription className="mt-2 text-[13.5px] leading-relaxed">{meta.description}</DialogDescription>}
                     {meta?.usage && (
                         <p className="mt-1 text-[13.5px] text-muted-foreground leading-relaxed">
-                            <span className="text-foreground">Usage. </span>
+                            <span className="text-foreground">{t("profile.items.dialog.usage")}</span>
                             {meta.usage}
                         </p>
                     )}
@@ -52,15 +61,15 @@ export function ItemDialog({ item }: IItemDialogProps) {
 
             <DialogPanel className="flex flex-col gap-5">
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <DialogStat kicker="On hand" value={item.quantity.toLocaleString()} />
-                    <DialogStat kicker="Rarity" value={`${item.rarityNum}★`} valueColor={color} />
-                    {item.expValue != null ? <DialogStat kicker="EXP value" value={item.expValue.toLocaleString()} valueColor="var(--success)" /> : <DialogStat kicker="Type" value={itemTypeLabel} subtle />}
-                    <DialogStat kicker="Category" value={CATEGORY_ITEM_LABELS[item.category]} subtle />
+                    <DialogStat kicker={t("profile.items.dialog.onHand")} value={f.number(item.quantity)} />
+                    <DialogStat kicker={t("profile.items.dialog.rarity")} value={`${item.rarityNum}★`} valueColor={color} />
+                    {item.expValue != null ? <DialogStat kicker={t("profile.items.dialog.expValue")} value={f.number(item.expValue)} valueColor="var(--success)" /> : <DialogStat kicker={t("profile.items.dialog.type")} value={itemTypeLabel} subtle />}
+                    <DialogStat kicker={t("profile.items.dialog.category")} value={t(CATEGORY_ITEM_LABELS[item.category])} subtle />
                 </div>
 
                 {recipes.length > 0 && (
                     <section className="flex flex-col gap-2.5">
-                        <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">Crafted in</span>
+                        <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("profile.items.dialog.craftedIn")}</span>
                         <div className="flex flex-wrap gap-1.5">
                             {recipes.map((r) => (
                                 <Badge key={`${r.roomType}-${r.formulaId}`} variant="outline" size="lg" className="gap-1.5 font-normal">
@@ -74,7 +83,7 @@ export function ItemDialog({ item }: IItemDialogProps) {
 
                 {vouchers.length > 0 && (
                     <section className="flex flex-col gap-2.5">
-                        <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">Voucher exchange</span>
+                        <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("profile.items.dialog.voucherExchange")}</span>
                         <div className="flex flex-wrap gap-1.5">
                             {vouchers.map((v) => (
                                 <Badge key={v.voucherId} variant="outline" className="font-normal">
@@ -87,7 +96,7 @@ export function ItemDialog({ item }: IItemDialogProps) {
 
                 {obtain.length > 0 && (
                     <section className="flex items-center justify-between gap-3">
-                        <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">Obtain channels</span>
+                        <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("profile.items.dialog.obtainChannels")}</span>
                         <div className="flex flex-wrap justify-end gap-1.5">
                             {obtain.map((s) => (
                                 <Badge key={s} variant="secondary" className="font-normal">

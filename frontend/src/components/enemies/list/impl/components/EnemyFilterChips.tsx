@@ -1,8 +1,12 @@
 import type React from "react";
 import type { IEnemyDamageType, IEnemyLevel } from "#/lib/api/enemies";
-import { APPLY_WAY_DISPLAY, APPLY_WAYS, DAMAGE_TYPES, ENEMY_LEVEL_DISPLAY, ENEMY_LEVELS } from "../constants";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import { APPLY_WAY_LABEL_KEY, APPLY_WAYS, DAMAGE_TYPES, ENEMY_LEVEL_LABEL_KEY, ENEMY_LEVELS } from "../constants";
+import type { messages as listConstantsMessages } from "../constants.messages";
 import { DAMAGE_TOKENS, LEVEL_TOKENS } from "../tokens";
 import type { ApplyWay, IFilterState } from "../types";
+import type { messages } from "./EnemyFilterChips.messages";
 
 interface IChipProps {
     on: boolean;
@@ -79,33 +83,35 @@ interface IEnemyFilterChipsProps {
 }
 
 export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttackTypes, setRaces, races }: IEnemyFilterChipsProps) {
+    const t: TypedT<typeof messages> = useT("enemies");
+    const tConst: TypedT<typeof listConstantsMessages> = useT("enemies");
     return (
         <div className="flex flex-wrap items-center gap-x-3.5 gap-y-2.5 rounded-xl border border-border bg-[color-mix(in_oklch,var(--card)_60%,transparent)] px-3.5 py-3">
-            <ChipGroup label="Threat">
+            <ChipGroup label={t("chips.threat")}>
                 {ENEMY_LEVELS.map((lv) => (
                     <Chip key={lv} on={filters.levels.includes(lv)} color={LEVEL_TOKENS[lv].accent} onClick={() => setLevels(toggleArray(filters.levels, lv))}>
-                        {ENEMY_LEVEL_DISPLAY[lv]}
+                        {tConst(ENEMY_LEVEL_LABEL_KEY[lv])}
                     </Chip>
                 ))}
             </ChipGroup>
 
             <ChipDivider />
 
-            <ChipGroup label="Damage">
+            <ChipGroup label={t("chips.damage")}>
                 {DAMAGE_TYPES.map((d) => (
                     <Chip key={d} on={filters.damageTypes.includes(d)} color={DAMAGE_TOKENS[d].color} onClick={() => setDamageTypes(toggleArray(filters.damageTypes, d))}>
                         <span className="inline-block h-1.5 w-1.5 rounded-[1.5px]" style={{ background: DAMAGE_TOKENS[d].color }} />
-                        {DAMAGE_TOKENS[d].label}
+                        {tConst(DAMAGE_TOKENS[d].labelKey)}
                     </Chip>
                 ))}
             </ChipGroup>
 
             <ChipDivider />
 
-            <ChipGroup label="Range">
+            <ChipGroup label={t("chips.range")}>
                 {APPLY_WAYS.map((a) => (
                     <Chip key={a} on={filters.attackTypes.includes(a)} onClick={() => setAttackTypes(toggleArray(filters.attackTypes, a))}>
-                        {APPLY_WAY_DISPLAY[a]}
+                        {tConst(APPLY_WAY_LABEL_KEY[a])}
                     </Chip>
                 ))}
             </ChipGroup>
@@ -113,7 +119,7 @@ export function EnemyFilterChips({ filters, setLevels, setDamageTypes, setAttack
             {races.length > 0 && (
                 <>
                     <ChipDivider />
-                    <ChipGroup label="Race">
+                    <ChipGroup label={t("chips.race")}>
                         {races.map((r) => (
                             <Chip key={r.id} on={filters.races.includes(r.id)} onClick={() => setRaces(toggleArray(filters.races, r.id))}>
                                 {r.label}

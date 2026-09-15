@@ -16,6 +16,9 @@ import { useAuth } from "#/hooks/use-auth";
 import { type AKServer, formatServerForPicker, SERVERS } from "#/lib/auth/login";
 import { sendBiliSmsFn, sendCodeCnFn, sendCodeFn } from "#/lib/auth/server";
 import { authActions, authStore } from "#/lib/auth/store";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "./AuthDialog.messages";
 
 export const SERVER_OPTIONS: { value: AKServer; label: string; disabled: boolean }[] = SERVERS.map((s) => ({
     value: s.code,
@@ -36,6 +39,7 @@ interface IAuthDialogProps {
 
 export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialogProps) {
     const { login, loginBilibili, loginBilibiliSms, loginCn } = useAuth();
+    const t: TypedT<typeof messages> = useT("nav");
     const [internalOpen, setInternalOpen] = useState(false);
     const isOpen = openProp !== undefined ? openProp : internalOpen;
     const setOpen = onOpenChange !== undefined ? onOpenChange : setInternalOpen;
@@ -107,16 +111,16 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
             authActions.markOTPSent(60);
             toastManager.add({
                 id: "otp-success",
-                title: "Sent code",
-                description: "Sent OTP code to your email.",
+                title: t("authDialog.toast.sentCode"),
+                description: t("authDialog.toast.sentOtpEmail"),
                 type: "success",
             });
         },
         onError: (err) =>
             toastManager.add({
                 id: "otp-error",
-                title: "Error",
-                description: `There was an error sending an OTP:\n${err.message}`,
+                title: t("authDialog.toast.error"),
+                description: t("authDialog.toast.otpError", { error: err.message }),
                 type: "error",
             }),
     });
@@ -127,16 +131,16 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
             authActions.markCnCodeSent(60);
             toastManager.add({
                 id: "cn-otp-success",
-                title: "Sent code",
-                description: "Sent SMS code to your phone.",
+                title: t("authDialog.toast.sentCode"),
+                description: t("authDialog.toast.sentSms"),
                 type: "success",
             });
         },
         onError: (err) =>
             toastManager.add({
                 id: "cn-otp-error",
-                title: "Error",
-                description: `There was an error sending a code:\n${err.message}`,
+                title: t("authDialog.toast.error"),
+                description: t("authDialog.toast.codeError", { error: err.message }),
                 type: "error",
             }),
     });
@@ -147,16 +151,16 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
             authActions.markBiliCodeSent(60);
             toastManager.add({
                 id: "bili-otp-success",
-                title: "Sent code",
-                description: "Sent SMS code to your phone.",
+                title: t("authDialog.toast.sentCode"),
+                description: t("authDialog.toast.sentSms"),
                 type: "success",
             });
         },
         onError: (err) =>
             toastManager.add({
                 id: "bili-otp-error",
-                title: "Error",
-                description: `There was an error sending a code:\n${err.message}`,
+                title: t("authDialog.toast.error"),
+                description: t("authDialog.toast.codeError", { error: err.message }),
                 type: "error",
             }),
     });
@@ -164,7 +168,7 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
     const onLoginSuccess = () => {
         toastManager.add({
             id: "login-success",
-            title: "Logged in successfully.",
+            title: t("authDialog.toast.loggedIn"),
             type: "success",
         });
         setOpen(false);
@@ -173,7 +177,7 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
     const onLoginError = (err: Error) =>
         toastManager.add({
             id: "login-error",
-            title: "Login failed",
+            title: t("authDialog.toast.loginFailed"),
             description: err.message,
             type: "error",
         });
@@ -209,42 +213,38 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
     if (isBili) {
         if (biliUseSms && !isBiliCodeSent) {
             submitPending = sendBiliSms.isPending;
-            submitLabel = submitPending ? "Sending..." : "Send Code";
+            submitLabel = submitPending ? t("authDialog.sending") : t("authDialog.sendCode");
             submitDisabled = submitPending || biliPhone.length === 0;
         } else if (biliUseSms) {
             submitPending = loginBiliSmsMut.isPending;
-            submitLabel = submitPending ? "Logging in..." : "Login";
+            submitLabel = submitPending ? t("authDialog.loggingIn") : t("authDialog.login");
             submitDisabled = submitPending || biliPhone.length === 0 || biliSmsCode.length === 0;
         } else {
             submitPending = loginBiliMut.isPending;
-            submitLabel = submitPending ? "Logging in..." : "Login";
+            submitLabel = submitPending ? t("authDialog.loggingIn") : t("authDialog.login");
             submitDisabled = submitPending || biliUsername.length === 0 || biliPassword.length === 0;
         }
     } else if (isCn) {
         if (cnUseSms && !isCnCodeSent) {
             submitPending = sendCnSms.isPending;
-            submitLabel = submitPending ? "Sending..." : "Send Code";
+            submitLabel = submitPending ? t("authDialog.sending") : t("authDialog.sendCode");
             submitDisabled = submitPending || cnPhone.length === 0;
         } else {
             submitPending = loginCnMut.isPending;
-            submitLabel = submitPending ? "Logging in..." : "Login";
+            submitLabel = submitPending ? t("authDialog.loggingIn") : t("authDialog.login");
             submitDisabled = submitPending || cnPhone.length === 0 || (cnUseSms ? cnSmsCode.length === 0 : cnPassword.length === 0);
         }
     } else if (isOTPSent) {
         submitPending = loginMut.isPending;
-        submitLabel = submitPending ? "Logging in..." : "Login";
+        submitLabel = submitPending ? t("authDialog.loggingIn") : t("authDialog.login");
         submitDisabled = submitPending || otp.length !== 6;
     } else {
         submitPending = sendOTP.isPending || loginMut.isPending;
-        submitLabel = submitPending ? "Sending..." : "Send Code";
+        submitLabel = submitPending ? t("authDialog.sending") : t("authDialog.sendCode");
         submitDisabled = submitPending || email.length === 0;
     }
 
-    const description = isBili
-        ? "Log in with your Bilibili account. No login information is stored on the server."
-        : isCn
-          ? "Experimental: logs in with your Hypergryph (CN) account through the same passport flow the Skland app uses. Untested against a real account, so it may fail even with correct credentials. No login information is stored on the server."
-          : "Use your YoStar email to send an OTP code. No login information is stored on the server.";
+    const description = isBili ? t("authDialog.description.bili") : isCn ? t("authDialog.description.cn") : t("authDialog.description.yostar");
 
     return (
         <Dialog open={isOpen} onOpenChange={setOpen}>
@@ -286,22 +286,22 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
                     }}
                 >
                     <DialogHeader>
-                        <DialogTitle>Login</DialogTitle>
+                        <DialogTitle>{t("authDialog.title")}</DialogTitle>
                         <DialogDescription>{description}</DialogDescription>
                     </DialogHeader>
                     <DialogPanel className="grid gap-4">
                         {isYostar ? (
                             <>
                                 <Field>
-                                    <FieldLabel>Email</FieldLabel>
+                                    <FieldLabel>{t("authDialog.email")}</FieldLabel>
                                     <Input placeholder="doctor@rhodes.island" type="email" value={email} onChange={(e) => authActions.setLoginEmail(e.target.value)} disabled={isOTPSent || sendOTP.isPending} />
                                 </Field>
                                 {isOTPSent ? (
                                     <Field>
-                                        <FieldLabel>Code</FieldLabel>
-                                        <OTPField aria-label="One-time password" length={OTP_LENGTH} value={otp} onValueChange={authActions.setLoginOTP} size="lg">
+                                        <FieldLabel>{t("authDialog.code")}</FieldLabel>
+                                        <OTPField aria-label={t("authDialog.oneTimePassword")} length={OTP_LENGTH} value={otp} onValueChange={authActions.setLoginOTP} size="lg">
                                             {OTP_SLOT_KEYS.map((slotKey, index) => (
-                                                <OTPFieldInput key={slotKey} aria-label={`Character ${index + 1} of ${OTP_LENGTH}`} />
+                                                <OTPFieldInput key={slotKey} aria-label={t("authDialog.otpCharacter", { index: index + 1, total: OTP_LENGTH })} />
                                             ))}
                                         </OTPField>
                                     </Field>
@@ -317,28 +317,28 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
                                 }}
                             >
                                 <TabsList>
-                                    <TabsTab value="password">Password</TabsTab>
-                                    <TabsTab value="sms">SMS code</TabsTab>
+                                    <TabsTab value="password">{t("authDialog.password")}</TabsTab>
+                                    <TabsTab value="sms">{t("authDialog.smsCode")}</TabsTab>
                                 </TabsList>
                                 <TabsPanel value="password">
                                     <Field>
-                                        <FieldLabel>Username</FieldLabel>
-                                        <Input placeholder="Bilibili username, phone, or email" value={biliUsername} onChange={(e) => authActions.setBiliUsername(e.target.value)} disabled={loginBiliMut.isPending} />
+                                        <FieldLabel>{t("authDialog.username")}</FieldLabel>
+                                        <Input placeholder={t("authDialog.usernamePlaceholder")} value={biliUsername} onChange={(e) => authActions.setBiliUsername(e.target.value)} disabled={loginBiliMut.isPending} />
                                     </Field>
                                     <Field>
-                                        <FieldLabel>Password</FieldLabel>
+                                        <FieldLabel>{t("authDialog.password")}</FieldLabel>
                                         <Input type="password" value={biliPassword} onChange={(e) => authActions.setBiliPassword(e.target.value)} disabled={loginBiliMut.isPending} />
                                     </Field>
                                 </TabsPanel>
                                 <TabsPanel value="sms">
-                                    <p className="text-muted-foreground text-xs">Experimental: this endpoint hasn't been confirmed against a real response, so it may fail even with a correct code.</p>
+                                    <p className="text-muted-foreground text-xs">{t("authDialog.biliSmsExperimental")}</p>
                                     <Field>
-                                        <FieldLabel>Phone</FieldLabel>
-                                        <Input placeholder="Bilibili account phone number" value={biliPhone} onChange={(e) => authActions.setBiliPhone(e.target.value)} disabled={loginBiliSmsMut.isPending || isBiliCodeSent} />
+                                        <FieldLabel>{t("authDialog.phone")}</FieldLabel>
+                                        <Input placeholder={t("authDialog.biliPhonePlaceholder")} value={biliPhone} onChange={(e) => authActions.setBiliPhone(e.target.value)} disabled={loginBiliSmsMut.isPending || isBiliCodeSent} />
                                     </Field>
                                     {isBiliCodeSent ? (
                                         <Field>
-                                            <FieldLabel>Code</FieldLabel>
+                                            <FieldLabel>{t("authDialog.code")}</FieldLabel>
                                             <Input value={biliSmsCode} onChange={(e) => authActions.setBiliSmsCode(e.target.value)} disabled={loginBiliSmsMut.isPending} />
                                         </Field>
                                     ) : null}
@@ -348,8 +348,8 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
                         {isCn ? (
                             <>
                                 <Field>
-                                    <FieldLabel>Phone</FieldLabel>
-                                    <Input placeholder="Hypergryph account phone number" value={cnPhone} onChange={(e) => authActions.setCnPhone(e.target.value)} disabled={loginCnMut.isPending || (cnUseSms && isCnCodeSent)} />
+                                    <FieldLabel>{t("authDialog.phone")}</FieldLabel>
+                                    <Input placeholder={t("authDialog.cnPhonePlaceholder")} value={cnPhone} onChange={(e) => authActions.setCnPhone(e.target.value)} disabled={loginCnMut.isPending || (cnUseSms && isCnCodeSent)} />
                                 </Field>
                                 <Tabs
                                     value={cnUseSms ? "sms" : "password"}
@@ -359,19 +359,19 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
                                     }}
                                 >
                                     <TabsList>
-                                        <TabsTab value="password">Password</TabsTab>
-                                        <TabsTab value="sms">SMS code</TabsTab>
+                                        <TabsTab value="password">{t("authDialog.password")}</TabsTab>
+                                        <TabsTab value="sms">{t("authDialog.smsCode")}</TabsTab>
                                     </TabsList>
                                     <TabsPanel value="password">
                                         <Field>
-                                            <FieldLabel>Password</FieldLabel>
+                                            <FieldLabel>{t("authDialog.password")}</FieldLabel>
                                             <Input type="password" value={cnPassword} onChange={(e) => authActions.setCnPassword(e.target.value)} disabled={loginCnMut.isPending} />
                                         </Field>
                                     </TabsPanel>
                                     <TabsPanel value="sms">
                                         {isCnCodeSent ? (
                                             <Field>
-                                                <FieldLabel>Code</FieldLabel>
+                                                <FieldLabel>{t("authDialog.code")}</FieldLabel>
                                                 <Input value={cnSmsCode} onChange={(e) => authActions.setCnSmsCode(e.target.value)} disabled={loginCnMut.isPending} />
                                             </Field>
                                         ) : null}
@@ -382,7 +382,7 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
                         <Field>
                             <Select
                                 items={SERVER_OPTIONS}
-                                aria-label="Select server"
+                                aria-label={t("authDialog.selectServer")}
                                 defaultValue="en"
                                 value={server}
                                 onValueChange={(v) => {
@@ -404,7 +404,7 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
                         </Field>
                     </DialogPanel>
                     <DialogFooter>
-                        <DialogClose render={<Button variant="ghost" />}>Cancel</DialogClose>
+                        <DialogClose render={<Button variant="ghost" />}>{t("authDialog.cancel")}</DialogClose>
                         <div className="flex flex-col gap-2">
                             <Button type="submit" variant="outline" disabled={submitDisabled}>
                                 {submitPending ? (
@@ -419,42 +419,42 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
                             {isYostar && isOTPSent ? (
                                 <div className="flex items-center gap-2">
                                     {cooldown > 0 ? (
-                                        <p className="text-muted-foreground text-xs">Resend available in {cooldown}s</p>
+                                        <p className="text-muted-foreground text-xs">{t("authDialog.resendIn", { seconds: cooldown })}</p>
                                     ) : (
                                         <Button type="button" variant="ghost" className="h-auto p-0 text-xs" disabled={sendOTP.isPending} onClick={() => sendOTP.mutate({ email, server })}>
-                                            Resend code
+                                            {t("authDialog.resendCode")}
                                         </Button>
                                     )}
                                     <Button type="button" variant="ghost" className="h-auto p-0 text-xs" onClick={authActions.resetLoginOTP}>
-                                        Change email
+                                        {t("authDialog.changeEmail")}
                                     </Button>
                                 </div>
                             ) : null}
                             {isCn && cnUseSms && isCnCodeSent ? (
                                 <div className="flex items-center gap-2">
                                     {cnCooldown > 0 ? (
-                                        <p className="text-muted-foreground text-xs">Resend available in {cnCooldown}s</p>
+                                        <p className="text-muted-foreground text-xs">{t("authDialog.resendIn", { seconds: cnCooldown })}</p>
                                     ) : (
                                         <Button type="button" variant="ghost" className="h-auto p-0 text-xs" disabled={sendCnSms.isPending} onClick={() => sendCnSms.mutate({ phone: cnPhone })}>
-                                            Resend code
+                                            {t("authDialog.resendCode")}
                                         </Button>
                                     )}
                                     <Button type="button" variant="ghost" className="h-auto p-0 text-xs" onClick={authActions.resetCnCode}>
-                                        Change phone
+                                        {t("authDialog.changePhone")}
                                     </Button>
                                 </div>
                             ) : null}
                             {isBili && biliUseSms && isBiliCodeSent ? (
                                 <div className="flex items-center gap-2">
                                     {biliCooldown > 0 ? (
-                                        <p className="text-muted-foreground text-xs">Resend available in {biliCooldown}s</p>
+                                        <p className="text-muted-foreground text-xs">{t("authDialog.resendIn", { seconds: biliCooldown })}</p>
                                     ) : (
                                         <Button type="button" variant="ghost" className="h-auto p-0 text-xs" disabled={sendBiliSms.isPending} onClick={() => sendBiliSms.mutate({ phone: biliPhone })}>
-                                            Resend code
+                                            {t("authDialog.resendCode")}
                                         </Button>
                                     )}
                                     <Button type="button" variant="ghost" className="h-auto p-0 text-xs" onClick={authActions.resetBiliCode}>
-                                        Change phone
+                                        {t("authDialog.changePhone")}
                                     </Button>
                                 </div>
                             ) : null}

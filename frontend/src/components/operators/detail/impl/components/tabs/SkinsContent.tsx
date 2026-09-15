@@ -7,22 +7,35 @@ import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useTheme } from "#/hooks/use-theme";
 import { chibiByOperatorQueryOptions, type IChibiSpineFiles, isCompleteSpineFiles } from "#/lib/api/chibis";
+import { operatorGamedataServer } from "#/lib/api/gamedata";
 import { type ISkin, operatorSkinsQueryOptions } from "#/lib/api/skins";
+import { useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { values } from "#/lib/records";
 import { cn, downloadBlob } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { buildOperatorSkinList, chibiSkinKey, type IUISkin } from "../../skins";
+import type { messages as skinMessages } from "../../skins.messages";
 import { DynamicChibiViewer } from "../chibi/ChibiViewer.lazy";
 import { DEFAULT_SPINE_FIT, type ISpineFit } from "../chibi/helpers";
 import type { ISceneIllustHandle } from "../dynillust/SceneIllust";
 import { SceneIllustPlayer } from "../dynillust/SceneIllust.lazy";
+import type { messages } from "./SkinsContent.messages";
 
 interface ISkinsContentProps {
     operator: IOperatorListItem;
 }
 
+/** This tab renders its own chrome plus the stand-ins `skins.ts` fills in. */
+type SkinsT = TypedT<typeof messages & typeof skinMessages>;
+
 export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsContentProps) {
-    const { data: skinsResponse, isLoading: skinsLoading } = useQuery(operatorSkinsQueryOptions(operator.id ?? "", operator.server));
+    const t: SkinsT = useT("operators");
+    const localeServer = useGamedataServer();
+    const server = operatorGamedataServer(operator.server, localeServer);
+    const { data: skinsResponse, isLoading: skinsLoading } = useQuery(operatorSkinsQueryOptions(operator.id ?? "", server));
+    // Chibi spine data is art, not text, so it stays on the operator's own
+    // art tree rather than following the locale.
     const { data: chibiCharacter } = useQuery(chibiByOperatorQueryOptions(operator.id ?? "", operator.server));
 
     const isBranchForm = !!operator.tmplDefault && operator.id !== operator.tmplDefault;
@@ -41,8 +54,9 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
             artistFallback: operator.artists?.[0],
             isBranchForm,
             server: operator.server,
+            t,
         });
-    }, [skinsResponse, operator.id, operator.skin, operator.portrait, operator.phases.length, operator.artists?.[0], isBranchForm, operator.server]);
+    }, [skinsResponse, operator.id, operator.skin, operator.portrait, operator.phases.length, operator.artists?.[0], isBranchForm, operator.server, t]);
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const selected = useMemo(() => skins.find((s) => s.id === selectedId) ?? skins[0] ?? null, [skins, selectedId]);
@@ -116,8 +130,8 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
     return (
         <div className="min-w-0 overflow-hidden p-4 md:p-6">
             <div className="mb-6">
-                <h2 className="font-semibold text-foreground text-xl">Outfits</h2>
-                <p className="text-muted-foreground text-sm">Alternate skins, E2 art variants, and collaboration outfits</p>
+                <h2 className="font-semibold text-foreground text-xl">{t("outfits.title")}</h2>
+                <p className="text-muted-foreground text-sm">{t("outfits.subtitle")}</p>
             </div>
             <div className="grid min-w-0 gap-5 lg:grid-cols-[1fr,280px]">
                 <div className="flex min-w-0 flex-col gap-4">
@@ -131,14 +145,14 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                             {showDynamic && dynamicFiles && !fullscreenOpen && <SceneIllustPlayer files={dynamicFiles} server={operator.server} framing="authored" surface="panel" backdrop={selected.image} onReady={() => setReadySkel(dynSkel)} />}
                             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/70 via-black/40 to-transparent" />
                             <SkinViewerDialog imageSrc={selected.image} skinName={selected.name} dynamic={showDynamic && dynamicFiles ? { files: dynamicFiles, server: operator.server } : null} onOpenChange={onFullscreenChange}>
-                                <button type="button" aria-label="Fullscreen" className="absolute top-3 right-3 inline-flex items-center justify-center rounded-md border border-white/20 bg-black/40 p-1.5 text-white backdrop-blur-md transition-colors hover:bg-black/60">
+                                <button type="button" aria-label={t("outfits.fullscreen")} className="absolute top-3 right-3 inline-flex items-center justify-center rounded-md border border-white/20 bg-black/40 p-1.5 text-white backdrop-blur-md transition-colors hover:bg-black/60">
                                     <Maximize2 className="h-4 w-4" />
                                 </button>
                             </SkinViewerDialog>
                             <div className="absolute inset-x-0 bottom-0 p-4 md:p-5">
                                 <div className="font-mono text-[10px] text-white/70 uppercase tracking-wider">{selected.kicker}</div>
                                 <div className="mt-0.5 font-semibold text-2xl text-white drop-shadow-md">{selected.name}</div>
-                                {selected.displaySkin?.drawerList?.join(", ") && <div className="mt-0.5 text-white/70 text-xs">Artist · {selected.displaySkin?.drawerList?.join(", ")}</div>}
+                                {selected.displaySkin?.drawerList?.join(", ") && <div className="mt-0.5 text-white/70 text-xs">{t("skins.artist", { artist: selected.displaySkin?.drawerList?.join(", ") })}</div>}
                             </div>
                         </div>
                     )}
@@ -175,8 +189,8 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
             </div>
             {selected &&
                 (() => {
-                    const description = selected.displaySkin?.description ?? (selected.isDefault ? "Standard operator outfit." : selected.kicker);
-                    const obtained = selected.displaySkin?.obtainApproach ?? (selected.isDefault || selected.id.endsWith("_e2") ? "Unlocked by default" : null);
+                    const description = selected.displaySkin?.description ?? (selected.isDefault ? t("skins.defaultDescription") : selected.kicker);
+                    const obtained = selected.displaySkin?.obtainApproach ?? (selected.isDefault || selected.id.endsWith("_e2") ? t("skins.unlockedByDefault") : null);
                     const dialog = selected.displaySkin?.dialog;
                     const usage = selected.displaySkin?.usage;
                     const colors = [...new Set((selected.displaySkin?.colorList ?? []).filter((c) => c?.startsWith("#")))];
@@ -187,7 +201,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                                 <div className="border-border/60 border-b bg-linear-to-br from-secondary/20 via-transparent to-transparent px-5 py-4 md:px-6 md:py-5">
                                     <div className="flex items-center gap-2">
                                         <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                                        <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-wider">Description</span>
+                                        <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-wider">{t("outfits.field.description")}</span>
                                     </div>
                                     <p className="mt-2 text-foreground/90 text-sm italic leading-relaxed">{description}</p>
                                 </div>
@@ -197,7 +211,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                                            <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-wider">Obtained</span>
+                                            <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-wider">{t("outfits.field.obtained")}</span>
                                         </div>
                                         <p className="mt-1.5 text-foreground text-sm leading-relaxed">{obtained}</p>
                                     </div>
@@ -206,7 +220,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
-                                            <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-wider">Usage</span>
+                                            <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-wider">{t("outfits.field.usage")}</span>
                                         </div>
                                         <p className="mt-1.5 text-foreground text-sm leading-relaxed">{usage}</p>
                                     </div>
@@ -215,7 +229,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <Palette className="h-3.5 w-3.5 text-muted-foreground" />
-                                            <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-wider">Colors</span>
+                                            <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-wider">{t("outfits.field.colors")}</span>
                                         </div>
                                         <div className="mt-2 flex flex-wrap gap-2">
                                             {colors.map((color) => (
@@ -233,7 +247,7 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <MessageCircle className="h-3.5 w-3.5 text-muted-foreground" />
-                                            <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-wider">Dialog</span>
+                                            <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-wider">{t("outfits.field.dialog")}</span>
                                         </div>
                                         <p className="mt-1.5 text-foreground text-sm leading-relaxed">{dialog}</p>
                                     </div>
@@ -305,6 +319,7 @@ const RECORD_MIME_TYPES = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;cod
 const clampZoom = (z: number, min = MIN_ZOOM) => Math.min(Math.max(z, min), MAX_ZOOM);
 
 export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinName, dynamic, onOpenChange: onOpenChangeProp, children }: ISkinViewerDialogProps) {
+    const t: TypedT<typeof messages> = useT("operators");
     const [transform, setTransform] = useState<ITransform>(INITIAL_TRANSFORM);
     const containerElRef = useRef<HTMLDivElement | null>(null);
     /** The static art carries BASE_SCALE over the contained image; the L2D's 100 percent is
@@ -527,30 +542,30 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
                 <DialogTitle className="sr-only">{skinName}</DialogTitle>
 
                 <div className="absolute top-3 left-3 z-10 flex items-center gap-1 rounded-lg border border-border/50 bg-background/80 p-1 shadow-sm backdrop-blur-sm">
-                    <ToolButton onClick={() => zoomBy(-ZOOM_STEP)} disabled={transform.zoom <= minZoom} label="Zoom out">
+                    <ToolButton onClick={() => zoomBy(-ZOOM_STEP)} disabled={transform.zoom <= minZoom} label={t("outfits.zoomOut")}>
                         <ZoomOut className="h-4 w-4" />
                     </ToolButton>
                     <span
                         className="min-w-12 select-none text-center font-mono text-muted-foreground text-xs"
-                        title={fit ? `100% frames the composition: camera ${(fit.zoom * baseScale).toFixed(3)}, ${Math.round(fit.width * baseScale)} by ${Math.round(fit.height * baseScale)} px` : undefined}
+                        title={fit ? t("outfits.zoomTitle", { camera: (fit.zoom * baseScale).toFixed(3), width: Math.round(fit.width * baseScale), height: Math.round(fit.height * baseScale) }) : undefined}
                         data-camera={dynamic ? `${transform.zoom},${Math.round(transform.pan.x)},${Math.round(transform.pan.y)}` : undefined}
                     >
                         {Math.round(transform.zoom * 100)}%
                     </span>
-                    <ToolButton onClick={() => zoomBy(ZOOM_STEP)} disabled={transform.zoom >= MAX_ZOOM} label="Zoom in">
+                    <ToolButton onClick={() => zoomBy(ZOOM_STEP)} disabled={transform.zoom >= MAX_ZOOM} label={t("outfits.zoomIn")}>
                         <ZoomIn className="h-4 w-4" />
                     </ToolButton>
                     <div className="mx-1 h-4 w-px bg-border" />
-                    <ToolButton onClick={reset} label="Reset view">
+                    <ToolButton onClick={reset} label={t("outfits.resetView")}>
                         <RotateCcw className="h-3.5 w-3.5" />
                     </ToolButton>
                     {dynamic ? (
                         <>
                             <div className="mx-1 h-4 w-px bg-border" />
-                            <ToolButton onClick={() => void handle?.interact()} disabled={!handle} label="Play the interact animation">
+                            <ToolButton onClick={() => void handle?.interact()} disabled={!handle} label={t("outfits.interact")}>
                                 <Sparkles className="h-3.5 w-3.5" />
                             </ToolButton>
-                            <ToolButton onClick={recordingLeft == null ? startRecording : stopRecording} disabled={!handle} label={recordingLeft == null ? `Record ${RECORD_SECONDS} s of the animation` : `Stop recording (${recordingLeft} s left)`}>
+                            <ToolButton onClick={recordingLeft == null ? startRecording : stopRecording} disabled={!handle} label={recordingLeft == null ? t("outfits.record", { seconds: RECORD_SECONDS }) : t("outfits.recordStop", { seconds: recordingLeft })}>
                                 {recordingLeft == null ? (
                                     <Video className="h-3.5 w-3.5" />
                                 ) : (
@@ -562,7 +577,7 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
                             </ToolButton>
                         </>
                     ) : (
-                        <ToolButton onClick={onDownload} label="Download">
+                        <ToolButton onClick={onDownload} label={t("outfits.download")}>
                             <Download className="h-3.5 w-3.5" />
                         </ToolButton>
                     )}

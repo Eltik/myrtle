@@ -3,19 +3,24 @@ import { Link, useParams } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef } from "react";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { type ITierListDetail, recordTierListViewFn, snapshotToTiers, tierListDetailQueryOptions, tierListVersionsQueryOptions } from "#/lib/api/tier-lists";
+import { useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { Route as DetailRoute } from "#/routes/tier-lists_.$id";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { TierListBoard } from "./TierListBoard";
+import type { messages } from "./TierListDetail.messages";
 import { TierListHero } from "./TierListHero";
 import { TierListStatsPanel } from "./TierListStatsPanel";
 import { VersionsBar } from "./VersionsBar";
 
 export function TierListDetail() {
+    const t: TypedT<typeof messages> = useT("tierLists");
     const { id } = useParams({ from: "/tier-lists_/$id" });
     const { v: requestedVersion } = DetailRoute.useSearch();
-    const { data: detail } = useSuspenseQuery(tierListDetailQueryOptions(id));
+    const gamedataServer = useGamedataServer();
+    const { data: detail } = useSuspenseQuery(tierListDetailQueryOptions(id, gamedataServer));
     const { data: versionsData } = useQuery(tierListVersionsQueryOptions(id));
-    const { data: operatorsIndex } = useQuery(operatorsIndexQueryOptions());
+    const { data: operatorsIndex } = useQuery(operatorsIndexQueryOptions(gamedataServer));
     const queryClient = useQueryClient();
 
     const versions = useMemo(() => versionsData ?? [], [versionsData]);
@@ -38,7 +43,7 @@ export function TierListDetail() {
         recordTierListViewFn({ data: slug })
             .then(({ unique }) => {
                 if (!unique) return;
-                queryClient.setQueryData<ITierListDetail>(tierListDetailQueryOptions(id).queryKey, (prev) => {
+                queryClient.setQueryData<ITierListDetail>(tierListDetailQueryOptions(id, gamedataServer).queryKey, (prev) => {
                     if (!prev?.stats) return prev;
                     return {
                         ...prev,
@@ -51,19 +56,19 @@ export function TierListDetail() {
                 });
             })
             .catch(() => {});
-    }, [slug, id, queryClient]);
+    }, [slug, id, queryClient, gamedataServer]);
 
     if (!detail) {
         return (
             <main className="mx-auto w-[min(720px,calc(100%-2rem))] py-20 text-center">
-                <h1 className="m-0 font-bold font-sans text-2xl text-foreground tracking-tight">Tier list not found</h1>
-                <p className="mt-3 font-sans text-muted-foreground text-sm">It may have been removed or the link could be wrong.</p>
+                <h1 className="m-0 font-bold font-sans text-2xl text-foreground tracking-tight">{t("detail.notFound.title")}</h1>
+                <p className="mt-3 font-sans text-muted-foreground text-sm">{t("detail.notFound.body")}</p>
                 <Link to="/tier-lists" search={{ type: "all", sort: "recent", q: "", flair: [] }} className="mt-6 inline-flex items-center gap-1.5 rounded-lg border border-border bg-popover px-3.5 py-2 font-medium font-sans text-foreground text-sm leading-none no-underline transition-colors hover:bg-accent">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
                         <path d="m12 19-7-7 7-7" />
                         <path d="M19 12H5" />
                     </svg>
-                    Browse all lists
+                    {t("detail.notFound.action")}
                 </Link>
             </main>
         );

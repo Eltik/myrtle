@@ -12,13 +12,19 @@ import { useAuth } from "#/hooks/use-auth";
 import { deleteGroupFn, deletePlanFn, type IOperatorPlanResponse, plansQueryOptions, upsertGroupFn } from "#/lib/api/planner";
 import { type IRosterEntry, userRosterQueryOptions } from "#/lib/api/user";
 import { authActions } from "#/lib/auth/store";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, formatSubProfession, rarityToNumber } from "#/lib/utils";
 
 import { DeletePlansDialog, type IDeletePlansTarget } from "./DeletePlansDialog";
+import type { messages } from "./OperatorPlanner.messages";
 import { OperatorPlannerDialog } from "./OperatorPlannerDialog";
 import { RequirementsPanel } from "./RequirementsPanel";
 
+type PlannerT = TypedT<typeof messages>;
+
 function UnauthenticatedState() {
+    const t: PlannerT = useT("tools");
     return (
         <div className="mt-8 flex flex-col items-center justify-center gap-6 rounded-[14px] border border-border bg-card px-8 py-16 text-center">
             <div className="flex flex-col items-center gap-3">
@@ -26,20 +32,20 @@ function UnauthenticatedState() {
                     <Lock />
                 </div>
                 <div>
-                    <h2 className="font-sans font-semibold text-[20px] text-foreground tracking-[-0.02em]">Sign in to use the planner</h2>
-                    <p className="mt-1.5 max-w-[42ch] font-sans text-muted-foreground text-sm">Your operator promotion, level, skill, and module goals are saved to your account so you can access them anywhere.</p>
+                    <h2 className="font-sans font-semibold text-[20px] text-foreground tracking-[-0.02em]">{t("planner.signIn.title")}</h2>
+                    <p className="mt-1.5 max-w-[42ch] font-sans text-muted-foreground text-sm">{t("planner.signIn.desc")}</p>
                 </div>
             </div>
             <button type="button" onClick={() => authActions.openLoginDialog()} className="inline-flex h-9 cursor-pointer items-center rounded-lg bg-primary px-5 font-medium font-sans text-primary-foreground text-sm transition-opacity hover:opacity-90">
-                Sign in
+                {t("planner.signIn.action")}
             </button>
         </div>
     );
 }
 
-function getSkillLevelLabel(level: number): string {
+function getSkillLevelLabel(level: number, t: PlannerT): string {
     if (level <= 7) return String(level);
-    return `M${level - 7}`;
+    return t("planner.card.mastery", { mastery: level - 7 });
 }
 
 /**
@@ -74,6 +80,7 @@ interface PlanCardHeaderProps {
 }
 
 function PlanCardHeader({ op, isActive, onToggleActive, isExpanded, onToggleExpanded }: PlanCardHeaderProps) {
+    const t: PlannerT = useT("tools");
     return (
         <div className="flex items-start gap-3">
             <Checkbox checked={isActive} onCheckedChange={onToggleActive} />
@@ -82,9 +89,7 @@ function PlanCardHeader({ op, isActive, onToggleActive, isExpanded, onToggleExpa
             </span>
             <div className="min-w-0 flex-1">
                 <h3 className="truncate font-bold text-foreground text-sm leading-tight">{op.name}</h3>
-                <p className="mt-0.5 truncate text-muted-foreground text-xs leading-normal">
-                    {rarityToNumber(op.rarity)}★ {formatSubProfession(op.subProfessionId)}
-                </p>
+                <p className="mt-0.5 truncate text-muted-foreground text-xs leading-normal">{t("planner.card.rarityClass", { rarity: rarityToNumber(op.rarity), archetype: formatSubProfession(op.subProfessionId) })}</p>
             </div>
             <button
                 type="button"
@@ -109,6 +114,7 @@ interface PlanDetailsProps {
 }
 
 function PlanDetails({ plan, op, rosterEntry, className }: PlanDetailsProps) {
+    const t: PlannerT = useT("tools");
     const currElite = rosterEntry?.elite ?? 0;
     const currLevel = rosterEntry?.level ?? 1;
     const isLevelUpgraded = plan.target_elite > currElite || (plan.target_elite === currElite && plan.target_level > currLevel);
@@ -117,23 +123,23 @@ function PlanDetails({ plan, op, rosterEntry, className }: PlanDetailsProps) {
     return (
         <div className={cn("fade-in slide-in-from-top-2 flex animate-in flex-col gap-3 text-xs duration-200", className)}>
             <div className="flex items-center justify-between">
-                <span className="font-medium text-muted-foreground">Level</span>
+                <span className="font-medium text-muted-foreground">{t("planner.card.level")}</span>
                 <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1 font-medium">
-                        <img src={eliteIcon(currElite)} alt={`Elite ${currElite}`} className="icon-theme-aware size-5 object-contain" />
-                        <span>Lv.{currLevel}</span>
+                        <img src={eliteIcon(currElite)} alt={t("planner.card.eliteAlt", { elite: currElite })} className="icon-theme-aware size-5 object-contain" />
+                        <span>{t("planner.card.levelValue", { level: currLevel })}</span>
                     </div>
                     <span className="text-muted-foreground/50">➔</span>
                     <div className={cn("flex items-center gap-1 font-bold", isLevelUpgraded ? "text-primary" : "text-muted-foreground")}>
-                        <img src={eliteIcon(plan.target_elite)} alt={`Elite ${plan.target_elite}`} className={cn("icon-theme-aware size-5 object-contain", !isLevelUpgraded && "opacity-50")} />
-                        <span>Lv.{plan.target_level}</span>
+                        <img src={eliteIcon(plan.target_elite)} alt={t("planner.card.eliteAlt", { elite: plan.target_elite })} className={cn("icon-theme-aware size-5 object-contain", !isLevelUpgraded && "opacity-50")} />
+                        <span>{t("planner.card.levelValue", { level: plan.target_level })}</span>
                     </div>
                 </div>
             </div>
 
             {op.skills.length > 0 && (
                 <div className="flex flex-col gap-2">
-                    <span className="font-medium text-muted-foreground">Skills</span>
+                    <span className="font-medium text-muted-foreground">{t("planner.card.skills")}</span>
                     <div className="flex flex-col gap-1.5 pl-1">
                         {op.skills.map((skill, idx) => {
                             const currSkillVal = currentSkillValue(rosterEntry, idx);
@@ -144,12 +150,12 @@ function PlanDetails({ plan, op, rosterEntry, className }: PlanDetailsProps) {
                                 <div key={skill.skillId} className="flex items-center justify-between">
                                     <div className="flex min-w-0 flex-1 items-center gap-1.5">
                                         <img src={skillIconURL(skill, op.server)} alt={skill.static?.levels?.[0]?.name} className="size-5 rounded border border-border/40 object-contain" />
-                                        <span className="truncate font-medium text-foreground">{skill.static?.levels?.[0]?.name ?? `Skill ${idx + 1}`}</span>
+                                        <span className="truncate font-medium text-foreground">{skill.static?.levels?.[0]?.name ?? t("planner.card.skillFallback", { index: idx + 1 })}</span>
                                     </div>
                                     <div className="ml-2 flex shrink-0 items-center gap-2">
-                                        <span className="font-medium">{getSkillLevelLabel(currSkillVal)}</span>
+                                        <span className="font-medium">{getSkillLevelLabel(currSkillVal, t)}</span>
                                         <span className="text-muted-foreground/50">➔</span>
-                                        <span className={cn("font-bold", isSkillUpgraded ? "text-primary" : "text-muted-foreground")}>{getSkillLevelLabel(targetSkillVal)}</span>
+                                        <span className={cn("font-bold", isSkillUpgraded ? "text-primary" : "text-muted-foreground")}>{getSkillLevelLabel(targetSkillVal, t)}</span>
                                     </div>
                                 </div>
                             );
@@ -160,7 +166,7 @@ function PlanDetails({ plan, op, rosterEntry, className }: PlanDetailsProps) {
 
             {modules.length > 0 && (
                 <div className="flex flex-col gap-2">
-                    <span className="font-medium text-muted-foreground">Modules</span>
+                    <span className="font-medium text-muted-foreground">{t("planner.card.modules")}</span>
                     <div className="flex flex-col gap-1.5 pl-1">
                         {modules.map((mod) => {
                             const modEntry = rosterEntry?.modules?.find((rm) => rm.id === mod.uniEquipId);
@@ -197,6 +203,7 @@ interface PlanActionsProps {
 }
 
 function PlanActions({ onEdit, onDelete, className, dense = false }: PlanActionsProps) {
+    const t: PlannerT = useT("tools");
     const buttonBase = cn("flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-lg border font-medium font-sans text-xs transition-all", dense ? "py-1" : "py-1.5");
     const handle = (action: () => void) => (e: React.MouseEvent) => {
         e.preventDefault();
@@ -208,11 +215,11 @@ function PlanActions({ onEdit, onDelete, className, dense = false }: PlanActions
         <div className={cn("flex items-center gap-2", className)}>
             <button type="button" onClick={handle(onEdit)} className={cn(buttonBase, "border-border bg-muted/40 text-foreground hover:border-border/80 hover:bg-muted")}>
                 <Pencil className="size-3.5" />
-                <span>Edit</span>
+                <span>{t("planner.card.edit")}</span>
             </button>
             <button type="button" onClick={handle(onDelete)} className={cn(buttonBase, "border-red-500/20 bg-red-500/5 text-red-600 hover:border-red-500/40 hover:bg-red-500/15 dark:text-red-400")}>
                 <Trash className="size-3.5" />
-                <span>Delete</span>
+                <span>{t("planner.card.delete")}</span>
             </button>
         </div>
     );
@@ -224,6 +231,7 @@ function isInteractiveGroupChild(target: HTMLElement): boolean {
 }
 
 export function OperatorPlanner(): React.ReactElement {
+    const t: PlannerT = useT("tools");
     const { isAuthenticated, user } = useAuth();
     const queryClient = useQueryClient();
     const [open, setOpen] = React.useState(false);
@@ -285,7 +293,7 @@ export function OperatorPlanner(): React.ReactElement {
 
     const requestDeletePlan = (plan: IOperatorPlanResponse) => {
         setDeleteError(null);
-        setDeleteTarget({ ids: [plan.operator_id], names: [plan.operator?.name ?? "Unknown operator"] });
+        setDeleteTarget({ ids: [plan.operator_id], names: [plan.operator?.name ?? t("planner.unknownOperator")] });
     };
 
     const requestDeleteSelected = () => {
@@ -293,7 +301,7 @@ export function OperatorPlanner(): React.ReactElement {
         setDeleteError(null);
         setDeleteTarget({
             ids: activePlansList.map((p) => p.operator_id),
-            names: activePlansList.map((p) => p.operator?.name ?? "Unknown operator"),
+            names: activePlansList.map((p) => p.operator?.name ?? t("planner.unknownOperator")),
         });
     };
 
@@ -313,7 +321,7 @@ export function OperatorPlanner(): React.ReactElement {
             setDeleteTarget(null);
         } catch (err) {
             console.error(err);
-            setDeleteError("Failed to delete. Please try again.");
+            setDeleteError(t("planner.deleteFailed"));
         } finally {
             setIsDeleting(false);
         }
@@ -337,7 +345,7 @@ export function OperatorPlanner(): React.ReactElement {
     };
 
     const handleRenameGroup = async (oldName: string) => {
-        const newName = window.prompt("Enter new group name:", oldName);
+        const newName = window.prompt(t("planner.group.renamePrompt"), oldName);
         if (newName === null) return;
         const trimmed = newName.trim();
         if (!trimmed || trimmed === oldName) return;
@@ -350,7 +358,7 @@ export function OperatorPlanner(): React.ReactElement {
     };
 
     const handleDeleteGroup = async (name: string) => {
-        if (!window.confirm(`Are you sure you want to delete group "${name}"?`)) return;
+        if (!window.confirm(t("planner.group.deleteConfirm", { name }))) return;
         try {
             await deleteGroupFn({ data: { name } });
             queryClient.invalidateQueries({ queryKey: ["user", "plans"] });
@@ -376,19 +384,19 @@ export function OperatorPlanner(): React.ReactElement {
     return (
         <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-1.5rem))] py-4 pb-24 sm:w-[min(1400px,calc(100%-2rem))] sm:py-5 sm:pb-20">
             <nav aria-label="breadcrumb" className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none">
-                <span>Tools</span>
+                <span>{t("planner.breadcrumb.tools")}</span>
                 <ChevronRight className="size-2.5" />
-                <span className="text-foreground">Operator Planner</span>
+                <span className="text-foreground">{t("planner.title")}</span>
             </nav>
             <div className="flex flex-wrap items-end justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                    <h1 className="m-0 font-bold font-sans text-[24px] text-foreground leading-[1.1] tracking-tight sm:text-[30px]">Operator Planner</h1>
-                    <p className="mt-1.5 max-w-2xl font-sans text-[13px] text-muted-foreground leading-normal sm:text-[13.5px]">Plan your operator promotion, level, skill, and module goals.</p>
+                    <h1 className="m-0 font-bold font-sans text-[24px] text-foreground leading-[1.1] tracking-tight sm:text-[30px]">{t("planner.title")}</h1>
+                    <p className="mt-1.5 max-w-2xl font-sans text-[13px] text-muted-foreground leading-normal sm:text-[13.5px]">{t("planner.intro")}</p>
                 </div>
                 {isAuthenticated && plans.length > 0 && (
                     <Button onClick={() => setOpen(true)} size="sm">
                         <Plus className="mr-1.5 size-4" />
-                        Create plan
+                        {t("planner.createPlan")}
                     </Button>
                 )}
             </div>
@@ -399,7 +407,7 @@ export function OperatorPlanner(): React.ReactElement {
                 <div className="mt-16 flex flex-col items-center justify-center gap-4 py-20 text-center sm:mt-24 sm:py-28">
                     <Button size="xl" className="shadow-lg" onClick={() => setOpen(true)}>
                         <Plus className="size-5" />
-                        Create new plan
+                        {t("planner.createFirstPlan")}
                     </Button>
                 </div>
             ) : (
@@ -409,10 +417,10 @@ export function OperatorPlanner(): React.ReactElement {
                             <Tabs defaultValue="plans">
                                 <TabsList className="w-full">
                                     <TabsTrigger value="plans" className="flex-1">
-                                        Plans
+                                        {t("planner.tab.plans")}
                                     </TabsTrigger>
                                     <TabsTrigger value="groups" className="flex-1">
-                                        Groups
+                                        {t("planner.tab.groups")}
                                     </TabsTrigger>
                                 </TabsList>
 
@@ -436,7 +444,7 @@ export function OperatorPlanner(): React.ReactElement {
                                                 {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox component internally renders the input control */}
                                                 <label className="flex cursor-pointer items-center gap-2 font-medium text-muted-foreground text-xs hover:text-foreground">
                                                     <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
-                                                    <span>{allSelected ? "Unselect all" : "Select all"}</span>
+                                                    <span>{allSelected ? t("planner.unselectAll") : t("planner.selectAll")}</span>
                                                 </label>
                                                 {selectedPlansCount > 0 && (
                                                     <Button
@@ -446,7 +454,7 @@ export function OperatorPlanner(): React.ReactElement {
                                                         onClick={requestDeleteSelected}
                                                     >
                                                         <Trash className="mr-1 size-3.5" />
-                                                        Delete selected ({selectedPlansCount})
+                                                        {t("planner.deleteSelected", { count: selectedPlansCount })}
                                                     </Button>
                                                 )}
                                             </div>
@@ -484,7 +492,7 @@ export function OperatorPlanner(): React.ReactElement {
                                             ))}
                                         </div>
                                     ) : !plannerData?.groups || plannerData.groups.length === 0 ? (
-                                        <p className="py-4 text-center text-muted-foreground text-xs">No groups created yet.</p>
+                                        <p className="py-4 text-center text-muted-foreground text-xs">{t("planner.group.none")}</p>
                                     ) : (
                                         <div className="flex flex-col gap-6">
                                             {plannerData.groups.map((g) => {
@@ -544,7 +552,7 @@ export function OperatorPlanner(): React.ReactElement {
                                                         {isExpanded && (
                                                             <div className="group-plans-list mt-3 divide-y divide-border/30">
                                                                 {plansInGroup.length === 0 ? (
-                                                                    <p className="py-4 text-center text-muted-foreground text-xs">No plans in this group.</p>
+                                                                    <p className="py-4 text-center text-muted-foreground text-xs">{t("planner.group.empty")}</p>
                                                                 ) : (
                                                                     plansInGroup.map((p) => {
                                                                         const op = p.operator;

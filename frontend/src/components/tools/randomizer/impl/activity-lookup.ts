@@ -116,9 +116,10 @@ export function isPermanentEvent(activityId: string, lookup: IActivityLookup): b
     return getPermanentEventInfo(activityId, lookup) !== null;
 }
 
-export function formatEventDate(timestamp: number): string {
+/** The locale is an optional argument rather than a hook so non-React callers can use it. */
+export function formatEventDate(timestamp: number, locale?: string): string {
     const date = new Date(timestamp * 1000);
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString(locale ?? "en-US", {
         month: "short",
         day: "numeric",
         year: "numeric",

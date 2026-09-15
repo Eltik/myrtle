@@ -1,4 +1,9 @@
+import type { messages as constantsMessages } from "./constants.messages";
+
 export { DEFAULT_AVATAR_ID } from "#/lib/utils";
+
+/** A key in `constants.messages.ts`; resolved by whichever component renders it. */
+export type LeaderboardMessageKey = keyof typeof constantsMessages & string;
 
 export const PAGE_SIZE = 25;
 
@@ -7,16 +12,17 @@ export type LeaderboardScope = "global" | "friends";
 export const SERVERS = ["EN", "JP", "CN", "KR", "TW"] as const;
 export type ServerCode = (typeof SERVERS)[number];
 
+/** `value` is the API's sort parameter and stays English; `labelKey` is the message. */
 export const LEADERBOARD_SORTS = [
-    { value: "total_score", label: "Total" },
-    { value: "operator_score", label: "Operators" },
-    { value: "stage_score", label: "Stages" },
-    { value: "roguelike_score", label: "Roguelike" },
-    { value: "sandbox_score", label: "Sandbox" },
-    { value: "medal_score", label: "Medals" },
-    { value: "base_score", label: "Base" },
-    { value: "skin_score", label: "Skins" },
-] as const;
+    { value: "total_score", labelKey: "leaderboard.sort.total" },
+    { value: "operator_score", labelKey: "leaderboard.sort.operators" },
+    { value: "stage_score", labelKey: "leaderboard.sort.stages" },
+    { value: "roguelike_score", labelKey: "leaderboard.sort.roguelike" },
+    { value: "sandbox_score", labelKey: "leaderboard.sort.sandbox" },
+    { value: "medal_score", labelKey: "leaderboard.sort.medals" },
+    { value: "base_score", labelKey: "leaderboard.sort.base" },
+    { value: "skin_score", labelKey: "leaderboard.sort.skins" },
+] as const satisfies ReadonlyArray<{ value: string; labelKey: LeaderboardMessageKey }>;
 export type LeaderboardSort = (typeof LEADERBOARD_SORTS)[number]["value"];
 
 export function toPct(score01: number | null | undefined): number {
@@ -28,11 +34,17 @@ export function formatPct(score01: number | null | undefined, digits = 1): strin
     return `${toPct(score01).toFixed(digits)}%`;
 }
 
+/**
+ * `value` is the API's interval parameter. The other three are message keys for
+ * the same window worded three ways: on the interval button (`shortKey`), in
+ * the movers-card heading (`subtitleKey`) and at the end of a sentence
+ * (`sinceKey`).
+ */
 export const INTERVALS = [
-    { value: "1 day", short: "1d", label: "Today", subtitle: "today", since: "since yesterday" },
-    { value: "7 days", short: "7d", label: "Past 7 days", subtitle: "7 days", since: "in the past 7 days" },
-    { value: "30 days", short: "30d", label: "Past 30 days", subtitle: "30 days", since: "in the past 30 days" },
-] as const;
+    { value: "1 day", shortKey: "leaderboard.interval.day.short", labelKey: "leaderboard.interval.day.label", subtitleKey: "leaderboard.interval.day.subtitle", sinceKey: "leaderboard.interval.day.since" },
+    { value: "7 days", shortKey: "leaderboard.interval.week.short", labelKey: "leaderboard.interval.week.label", subtitleKey: "leaderboard.interval.week.subtitle", sinceKey: "leaderboard.interval.week.since" },
+    { value: "30 days", shortKey: "leaderboard.interval.month.short", labelKey: "leaderboard.interval.month.label", subtitleKey: "leaderboard.interval.month.subtitle", sinceKey: "leaderboard.interval.month.since" },
+] as const satisfies ReadonlyArray<{ value: string; shortKey: LeaderboardMessageKey; labelKey: LeaderboardMessageKey; subtitleKey: LeaderboardMessageKey; sinceKey: LeaderboardMessageKey }>;
 export type LeaderboardInterval = (typeof INTERVALS)[number]["value"];
 
 export const SERVER_TINTS: Record<string, { fg: string; bg: string }> = {

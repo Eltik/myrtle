@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { UserProfile } from "#/components/user/profile/UserProfile";
 import { userQueryOptions, userRosterQueryOptions } from "#/lib/api/user";
+import { metaT } from "#/lib/meta";
 import { ogURL, warmOg } from "#/lib/og/impl/url";
 import { seo } from "#/lib/seo";
 import type { IUserProfile } from "#/types/user";
@@ -24,16 +25,30 @@ export const Route = createFileRoute("/user/$id")({
         if (user) warmOg("user", params.id, buildOgData(user));
         return user;
     },
-    head: ({ loaderData, params }) => {
-        if (!loaderData) return seo({ title: "Doctor", path: `/user/${params.id}` });
+    head: ({ loaderData, match, params }) => {
+        const t = metaT(match.context.i18n);
+        const locale = match.context.i18n?.locale;
+        if (!loaderData) return seo({ title: t("user.fallbackTitle"), path: `/user/${params.id}`, locale });
         const ogData = buildOgData(loaderData);
         return seo({
             title: ogData.nickname,
-            description: loaderData.resume ? loaderData.resume : `Doctor profile${loaderData.level != null ? ` • Lv ${loaderData.level}` : ""}${loaderData.grade ? ` • ${loaderData.grade}` : ""}`,
+            // The profile's own resume wins; the fallback is one message with
+            // both optional fragments selected inside it, so a translation can
+            // reorder or drop the separators rather than inherit three
+            // concatenated English pieces.
+            description:
+                loaderData.resume ||
+                t("user.description", {
+                    hasLevel: loaderData.level != null ? "yes" : "no",
+                    hasGrade: loaderData.grade ? "yes" : "no",
+                    level: loaderData.level,
+                    grade: loaderData.grade,
+                }),
             image: ogURL("user", params.id, ogData),
             path: `/user/${params.id}`,
             type: "profile",
             preloadImage: true,
+            locale,
         });
     },
 });

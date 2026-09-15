@@ -3,8 +3,16 @@ import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
 import type { ClientGachaGroup, IBanner, IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
-import { formatNumber, rarityStarColor } from "#/lib/utils";
+import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import { rarityStarColor } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
+import { BANNER_GROUP_LABEL_KEYS, BANNER_RULE_TYPE_LABEL_KEYS, BANNER_STATUS_LABEL_KEYS, type GachaMessageKey } from "../../constants";
+import type { messages as gachaConstantsMessages } from "../../constants.messages";
+import type { messages } from "./BannerBreakdown.messages";
+
+/** This panel renders its own chrome plus the shared banner bucket, status and rule-type labels. */
+type BreakdownT = TypedT<typeof messages & typeof gachaConstantsMessages>;
 
 interface IBannerBreakdownProps {
     records: IClientGachaRecords | null;
@@ -19,39 +27,18 @@ interface IBannerStat {
     poolId: string;
     poolName: string;
     gachaType: ClientGachaGroup;
-    typeLabel: string;
+    typeLabelKey: GachaMessageKey;
     total: number;
     sixStars: number;
     fiveStars: number;
     lastPullAt: number;
 }
 
-const TYPE_LABELS: Record<ClientGachaGroup, string> = {
-    limited: "Limited",
-    linkage: "Collab",
-    regular: "Standard",
-    special: "Kernel",
-};
-
 const TYPE_COLORS: Record<ClientGachaGroup, string> = {
     limited: "oklch(0.85 0.18 80)",
     linkage: "oklch(0.78 0.16 320)",
     regular: "#bcabdb",
     special: "#88c8e3",
-};
-
-const RULE_TYPE_LABELS: Record<string, string> = {
-    NORMAL: "Standard headhunting",
-    SINGLE: "Debut rate-up",
-    LIMITED: "Limited",
-    LINKAGE: "Collab / joint operation",
-    CLASSIC: "Kernel headhunting",
-    CLASSIC_ATTAIN: "Kernel · attain rate-up",
-    CLASSIC_DOUBLE: "Kernel · double rate-up",
-    FESCLASSIC: "Kernel · anniversary",
-    ATTAIN: "Attain rate-up",
-    DOUBLE: "Double rate-up",
-    SPECIAL: "Special",
 };
 
 function groupByPool(items: IGachaItem[], gachaType: ClientGachaGroup, bannersById: Map<string, IBanner>): IBannerStat[] {
@@ -75,7 +62,7 @@ function groupByPool(items: IGachaItem[], gachaType: ClientGachaGroup, bannersBy
                 poolId: item.poolId,
                 poolName: resolvedName,
                 gachaType,
-                typeLabel: TYPE_LABELS[gachaType],
+                typeLabelKey: BANNER_GROUP_LABEL_KEYS[gachaType],
                 total: 1,
                 sixStars: item.star === "6" ? 1 : 0,
                 fiveStars: item.star === "5" ? 1 : 0,
@@ -86,18 +73,19 @@ function groupByPool(items: IGachaItem[], gachaType: ClientGachaGroup, bannersBy
     return Array.from(map.values()).sort((a, b) => b.lastPullAt - a.lastPullAt);
 }
 
-function fmtDate(ts: number): string {
+function fmtDate(ts: number, f: IFormatters): string {
     if (!ts) return "-";
-    return new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return f.date(new Date(ts), { month: "short", day: "numeric", year: "numeric" });
 }
 
 /** Banner table uses unix-seconds (static data); pull records use ms. Convert. */
-function fmtDateFromSeconds(secs: number): string {
+function fmtDateFromSeconds(secs: number, f: IFormatters): string {
     if (!secs) return "-";
-    return new Date(secs * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    return f.date(new Date(secs * 1000), { month: "short", day: "numeric", year: "numeric" });
 }
 
 function FeaturedRow({ ids, star, operatorsById }: { ids: string[]; star: number; operatorsById: Map<string, IOperatorIndexEntry> }) {
+    const t: BreakdownT = useT("gacha");
     if (ids.length === 0) return null;
     const visible = ids.slice(0, FEATURED_AVATAR_CAP);
     const extra = ids.length - visible.length;
@@ -106,7 +94,7 @@ function FeaturedRow({ ids, star, operatorsById }: { ids: string[]; star: number
     return (
         <div className="flex flex-col gap-1.5">
             <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: ringColor }}>
-                Featured {star}★
+                {t("history.breakdown.featured", { rarity: star })}
             </span>
             <div className="flex flex-wrap gap-1.5">
                 {visible.map((charId) => {
@@ -122,7 +110,7 @@ function FeaturedRow({ ids, star, operatorsById }: { ids: string[]; star: number
                     );
                 })}
                 {extra > 0 ? (
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted font-mono text-[10px] text-muted-foreground tabular-nums" title={`${extra} more`}>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted font-mono text-[10px] text-muted-foreground tabular-nums" title={t("history.breakdown.moreOperators", { count: extra })}>
                         +{extra}
                     </span>
                 ) : null}
@@ -131,12 +119,14 @@ function FeaturedRow({ ids, star, operatorsById }: { ids: string[]; star: number
     );
 }
 
-function BannerNameCell({ banner, name, typeColor, typeLabel, sixStars, fiveStars, total, operatorsById }: { banner: IBanner | undefined; name: string; typeColor: string; typeLabel: string; sixStars: number; fiveStars: number; total: number; operatorsById: Map<string, IOperatorIndexEntry> }) {
+function BannerNameCell({ banner, name, typeColor, typeLabelKey, sixStars, fiveStars, total, operatorsById }: { banner: IBanner | undefined; name: string; typeColor: string; typeLabelKey: GachaMessageKey; sixStars: number; fiveStars: number; total: number; operatorsById: Map<string, IOperatorIndexEntry> }) {
+    const t: BreakdownT = useT("gacha");
+    const f = useFormatters();
     const trigger = (
         <button type="button" className="flex cursor-pointer flex-col items-start gap-0.5 rounded-sm text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
             <span className="font-medium font-sans text-[13px] text-foreground leading-snug">{name}</span>
             <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: typeColor }}>
-                {typeLabel}
+                {t(typeLabelKey)}
             </span>
         </button>
     );
@@ -147,7 +137,8 @@ function BannerNameCell({ banner, name, typeColor, typeLabel, sixStars, fiveStar
         return trigger;
     }
 
-    const ruleLabel = RULE_TYPE_LABELS[banner.gachaRuleType] ?? banner.gachaRuleType;
+    const ruleMessageKey = BANNER_RULE_TYPE_LABEL_KEYS[banner.gachaRuleType];
+    const ruleLabel = ruleMessageKey ? t(ruleMessageKey) : banner.gachaRuleType;
     const now = Date.now() / 1000;
     const isActive = banner.openTime <= now && now <= banner.endTime;
     const isUpcoming = now < banner.openTime;
@@ -159,46 +150,40 @@ function BannerNameCell({ banner, name, typeColor, typeLabel, sixStars, fiveStar
                 <div className="flex flex-col gap-3">
                     <div className="flex flex-col gap-1">
                         <span className="font-mono text-[9.5px] uppercase tracking-[0.14em]" style={{ color: typeColor }}>
-                            {typeLabel} · {ruleLabel}
+                            {t(typeLabelKey)} · {ruleLabel}
                         </span>
                         <span className="font-sans font-semibold text-[14px] text-foreground leading-snug">{banner.gachaPoolName}</span>
                         {banner.gachaPoolSummary && banner.gachaPoolSummary !== "-" ? <span className="font-sans text-[12px] text-muted-foreground leading-snug">{banner.gachaPoolSummary}</span> : null}
                     </div>
 
                     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                        <span className="font-sans text-[12px] text-foreground tabular-nums leading-none">
-                            {fmtDateFromSeconds(banner.openTime)} → {fmtDateFromSeconds(banner.endTime)}
-                        </span>
+                        <span className="font-sans text-[12px] text-foreground tabular-nums leading-none">{t("history.breakdown.dateRange", { open: fmtDateFromSeconds(banner.openTime, f), close: fmtDateFromSeconds(banner.endTime, f) })}</span>
                         <span className="inline-flex items-center gap-1.5 font-mono text-[9.5px] uppercase leading-none tracking-[0.14em]" style={{ color: isActive ? "oklch(0.78 0.18 145)" : isUpcoming ? "oklch(0.78 0.16 220)" : "var(--muted-foreground)" }}>
                             <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
-                            {isActive ? "Active" : isUpcoming ? "Upcoming" : "Ended"}
+                            {t(BANNER_STATUS_LABEL_KEYS[isActive ? "active" : isUpcoming ? "upcoming" : "ended"])}
                         </span>
                     </div>
 
                     <div className="grid grid-cols-3 gap-2">
                         <div className="flex flex-col gap-0.5">
-                            <span className="font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">Pulls</span>
-                            <span className="font-sans font-semibold text-[14px] text-foreground tabular-nums">{formatNumber(total)}</span>
+                            <span className="font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("history.breakdown.stat.pulls")}</span>
+                            <span className="font-sans font-semibold text-[14px] text-foreground tabular-nums">{f.number(total)}</span>
                         </div>
                         <div className="flex flex-col gap-0.5">
-                            <span className="font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">6★</span>
+                            <span className="font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("history.breakdown.stat.sixStars")}</span>
                             <span className="font-sans font-semibold text-[14px] tabular-nums" style={{ color: "#f7a452" }}>
-                                {formatNumber(sixStars)}
+                                {f.number(sixStars)}
                             </span>
                         </div>
                         <div className="flex flex-col gap-0.5">
-                            <span className="font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">5★</span>
+                            <span className="font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("history.breakdown.stat.fiveStars")}</span>
                             <span className="font-sans font-semibold text-[14px] tabular-nums" style={{ color: "#e9d28a" }}>
-                                {formatNumber(fiveStars)}
+                                {f.number(fiveStars)}
                             </span>
                         </div>
                     </div>
 
-                    {banner.guarantee5Avail ? (
-                        <div className="font-mono text-[10.5px] text-muted-foreground">
-                            {banner.guaranteeName ?? "Guaranteed 5★"} within {banner.guarantee5Count} pulls
-                        </div>
-                    ) : null}
+                    {banner.guarantee5Avail ? <div className="font-mono text-[10.5px] text-muted-foreground">{t("history.breakdown.guarantee", { name: banner.guaranteeName ?? t("history.breakdown.guaranteeDefault"), count: banner.guarantee5Count })}</div> : null}
 
                     {banner.featured6.length > 0 || banner.featured5.length > 0 ? (
                         <div className="flex flex-col gap-2.5 border-border/60 border-t pt-3">
@@ -215,6 +200,8 @@ function BannerNameCell({ banner, name, typeColor, typeLabel, sixStars, fiveStar
 }
 
 export function BannerBreakdown({ records, bannersById, operatorsById, isLoading }: IBannerBreakdownProps) {
+    const t: BreakdownT = useT("gacha");
+    const f = useFormatters();
     const banners = useMemo<IBannerStat[]>(() => {
         if (!records) return [];
         return [...groupByPool(records.limited.records, "limited", bannersById), ...groupByPool(records.linkage.records, "linkage", bannersById), ...groupByPool(records.regular.records, "regular", bannersById), ...groupByPool(records.special.records, "special", bannersById)].sort((a, b) => b.lastPullAt - a.lastPullAt);
@@ -243,8 +230,8 @@ export function BannerBreakdown({ records, bannersById, operatorsById, isLoading
     if (banners.length === 0) {
         return (
             <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
-                <Kicker>Banner breakdown</Kicker>
-                <div className="py-6 text-center font-sans text-muted-foreground text-sm">No banner data yet.</div>
+                <Kicker>{t("history.breakdown.kicker")}</Kicker>
+                <div className="py-6 text-center font-sans text-muted-foreground text-sm">{t("history.breakdown.empty")}</div>
             </section>
         );
     }
@@ -254,19 +241,19 @@ export function BannerBreakdown({ records, bannersById, operatorsById, isLoading
     return (
         <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
             <header>
-                <Kicker className="mb-1.5">Banner breakdown</Kicker>
-                <h2 className="m-0 font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">Where your pulls went.</h2>
+                <Kicker className="mb-1.5">{t("history.breakdown.kicker")}</Kicker>
+                <h2 className="m-0 font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{t("history.breakdown.title")}</h2>
             </header>
 
             <div className="-mx-1 max-h-120 overflow-y-auto px-1 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
                 <table className="w-full border-collapse">
                     <thead className="sticky top-0 z-10 bg-card">
                         <tr>
-                            <th className="whitespace-nowrapd border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foregroun uppercase tracking-[0.14em]">Banner</th>
-                            <th className="hidden whitespace-nowrap border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:table-cell">Last pull</th>
-                            <th className="whitespace-nowrap border-border border-b bg-card px-2 py-2 text-right font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">Pulls</th>
-                            <th className="hidden whitespace-nowrap border-border border-b bg-card px-2 py-2 text-right font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:table-cell">6★</th>
-                            <th className="hidden w-36 whitespace-nowrap border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] lg:table-cell">Distribution</th>
+                            <th className="whitespace-nowrapd border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foregroun uppercase tracking-[0.14em]">{t("history.breakdown.col.banner")}</th>
+                            <th className="hidden whitespace-nowrap border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:table-cell">{t("history.breakdown.col.lastPull")}</th>
+                            <th className="whitespace-nowrap border-border border-b bg-card px-2 py-2 text-right font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("history.breakdown.col.pulls")}</th>
+                            <th className="hidden whitespace-nowrap border-border border-b bg-card px-2 py-2 text-right font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:table-cell">{t("history.breakdown.col.sixStars")}</th>
+                            <th className="hidden w-36 whitespace-nowrap border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] lg:table-cell">{t("history.breakdown.col.distribution")}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -277,10 +264,10 @@ export function BannerBreakdown({ records, bannersById, operatorsById, isLoading
                             return (
                                 <tr key={`${banner.gachaType}-${banner.poolId}`} className="not-last:border-border/50 not-last:border-b">
                                     <td className="px-2 py-2.5 align-middle">
-                                        <BannerNameCell banner={meta} name={banner.poolName} typeColor={typeColor} typeLabel={banner.typeLabel} sixStars={banner.sixStars} fiveStars={banner.fiveStars} total={banner.total} operatorsById={operatorsById} />
+                                        <BannerNameCell banner={meta} name={banner.poolName} typeColor={typeColor} typeLabelKey={banner.typeLabelKey} sixStars={banner.sixStars} fiveStars={banner.fiveStars} total={banner.total} operatorsById={operatorsById} />
                                     </td>
-                                    <td className="hidden whitespace-nowrap px-2 py-2.5 align-middle font-mono text-[11px] text-muted-foreground tabular-nums sm:table-cell">{fmtDate(banner.lastPullAt)}</td>
-                                    <td className="whitespace-nowrap px-2 py-2.5 text-right align-middle font-mono font-semibold text-[12px] text-foreground tabular-nums">{formatNumber(banner.total)}</td>
+                                    <td className="hidden whitespace-nowrap px-2 py-2.5 align-middle font-mono text-[11px] text-muted-foreground tabular-nums sm:table-cell">{fmtDate(banner.lastPullAt, f)}</td>
+                                    <td className="whitespace-nowrap px-2 py-2.5 text-right align-middle font-mono font-semibold text-[12px] text-foreground tabular-nums">{f.number(banner.total)}</td>
                                     <td className="hidden px-2 py-2.5 text-right align-middle font-mono text-[11px] tabular-nums sm:table-cell">
                                         <span style={{ color: "#f7a452" }}>{banner.sixStars > 0 ? `${banner.sixStars}×6★` : "-"}</span>
                                     </td>

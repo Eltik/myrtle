@@ -3,12 +3,16 @@ import { useMemo } from "react";
 import { DynamicChibiViewer } from "#/components/operators/detail/impl/components/chibi/ChibiViewer.lazy";
 import { Skeleton } from "#/components/ui/skeleton";
 import { enemyChibisQueryOptions } from "#/lib/api/chibis";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "./EnemyChibi.messages";
 
 interface IEnemyChibiTabProps {
     enemyId: string;
 }
 
 export function EnemyChibiTab({ enemyId }: IEnemyChibiTabProps) {
+    const t: TypedT<typeof messages> = useT("enemies");
     const { data, isLoading, isError } = useQuery(enemyChibisQueryOptions());
 
     const character = useMemo(() => data?.characters.find((c) => c.operatorCode === enemyId) ?? null, [data, enemyId]);
@@ -25,7 +29,7 @@ export function EnemyChibiTab({ enemyId }: IEnemyChibiTabProps) {
     if (isError || !character || !skin) {
         return (
             <div className="p-10 text-center">
-                <p className="m-0 font-sans text-[13px] text-muted-foreground leading-normal">{isError ? "Failed to load chibi data." : "No chibi available for this enemy."}</p>
+                <p className="m-0 font-sans text-[13px] text-muted-foreground leading-normal">{isError ? t("chibi.error") : t("chibi.none")}</p>
             </div>
         );
     }

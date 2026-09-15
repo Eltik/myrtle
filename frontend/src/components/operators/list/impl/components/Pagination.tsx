@@ -4,7 +4,10 @@ import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, Pagination as PaginationRoot } from "#/components/ui/pagination";
 import { Popover, PopoverContent, PopoverTrigger } from "#/components/ui/popover";
+import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./Pagination.messages";
 
 interface IPaginationProps {
     currentPage: number;
@@ -65,6 +68,8 @@ function generatePaginationRange(currentPage: number, totalPages: number, siblin
 }
 
 export function Pagination({ currentPage, totalPages, onPageChange, className }: IPaginationProps) {
+    const t: TypedT<typeof messages> = useT("operators");
+    const rt: TypedRichT<typeof messages> = useRichT("operators");
     const contentRef = useRef<HTMLUListElement>(null);
     const [siblingCount, setSiblingCount] = useState(1);
 
@@ -138,12 +143,12 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
         <PaginationRoot className={cn("mt-6", className)}>
             <PaginationContent ref={contentRef} className="w-full flex-nowrap gap-1 sm:justify-center">
                 <PaginationItem className="flex sm:hidden">
-                    <Button variant="outline" size="default" disabled={currentPage <= 1} onClick={handleFirst} aria-label="Go to first page" className="aspect-square p-0">
+                    <Button variant="outline" size="default" disabled={currentPage <= 1} onClick={handleFirst} aria-label={t("pager.first")} className="aspect-square p-0">
                         <ChevronsLeft />
                     </Button>
                 </PaginationItem>
                 <PaginationItem>
-                    <PaginationPrevious render={<Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={handlePrevious} aria-label="Go to previous page" className="h-9 gap-1.5 px-3 sm:h-8" />} />
+                    <PaginationPrevious render={<Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={handlePrevious} aria-label={t("pager.previous")} className="h-9 gap-1.5 px-3 sm:h-8" />} />
                 </PaginationItem>
 
                 {paginationRange.map((item) => {
@@ -162,7 +167,7 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
                         <PaginationItem key={item} className="hidden sm:flex">
                             <PaginationLink
                                 isActive={isActive}
-                                render={<Button variant={isActive ? "default" : "outline"} size="icon" onClick={() => handlePageClick(item)} aria-label={`Go to page ${item}`} aria-current={isActive ? "page" : undefined} className={cn("size-9 sm:size-8", isActive && "pointer-events-none")} />}
+                                render={<Button variant={isActive ? "default" : "outline"} size="icon" onClick={() => handlePageClick(item)} aria-label={t("pager.page", { page: item })} aria-current={isActive ? "page" : undefined} className={cn("size-9 sm:size-8", isActive && "pointer-events-none")} />}
                             >
                                 {item}
                             </PaginationLink>
@@ -171,15 +176,13 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
                 })}
 
                 <PaginationItem className="flex flex-1 justify-center sm:hidden">
-                    <span className="inline-flex h-9 items-center justify-center px-3 font-medium font-sans text-muted-foreground text-sm">
-                        Page <strong className="mx-1 text-foreground">{currentPage}</strong> of <strong className="ml-1 text-foreground">{totalPages}</strong>
-                    </span>
+                    <span className="inline-flex h-9 items-center justify-center px-3 font-medium font-sans text-muted-foreground text-sm">{rt("pager.pageOf", { current: <strong className="mx-1 text-foreground">{currentPage}</strong>, total: <strong className="ml-1 text-foreground">{totalPages}</strong> })}</span>
                 </PaginationItem>
                 <PaginationItem>
-                    <PaginationNext render={<Button variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={handleNext} aria-label="Go to next page" className="h-9 gap-1.5 px-3 sm:h-8" />} />
+                    <PaginationNext render={<Button variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={handleNext} aria-label={t("pager.next")} className="h-9 gap-1.5 px-3 sm:h-8" />} />
                 </PaginationItem>
                 <PaginationItem className="flex sm:hidden">
-                    <Button variant="outline" size="default" disabled={currentPage >= totalPages} onClick={handleLast} aria-label="Go to last page" className="aspect-square p-0">
+                    <Button variant="outline" size="default" disabled={currentPage >= totalPages} onClick={handleLast} aria-label={t("pager.last")} className="aspect-square p-0">
                         <ChevronsRight />
                     </Button>
                 </PaginationItem>
@@ -194,6 +197,9 @@ export function Pagination({ currentPage, totalPages, onPageChange, className }:
  * page offers above the results - reachable without scrolling past them.
  */
 export function PaginationCompact({ currentPage, totalPages, onPageChange, className }: IPaginationProps) {
+    const t: TypedT<typeof messages> = useT("operators");
+    const rt: TypedRichT<typeof messages> = useRichT("operators");
+
     if (totalPages <= 1) {
         return null;
     }
@@ -202,13 +208,11 @@ export function PaginationCompact({ currentPage, totalPages, onPageChange, class
     // the full pager below the results already switches between.
     return (
         <div className={cn("flex items-center gap-1", className)}>
-            <Button variant="outline" size="icon" disabled={currentPage <= 1} onClick={() => onPageChange(currentPage - 1)} aria-label="Go to previous page" className="size-9 sm:size-7">
+            <Button variant="outline" size="icon" disabled={currentPage <= 1} onClick={() => onPageChange(currentPage - 1)} aria-label={t("pager.previous")} className="size-9 sm:size-7">
                 <ChevronLeft className="size-4 sm:size-3.5" />
             </Button>
-            <span className="whitespace-nowrap px-1 font-medium font-sans text-[12.5px] text-muted-foreground tabular-nums leading-none">
-                Page <strong className="text-foreground">{currentPage}</strong> of <strong className="text-foreground">{totalPages}</strong>
-            </span>
-            <Button variant="outline" size="icon" disabled={currentPage >= totalPages} onClick={() => onPageChange(currentPage + 1)} aria-label="Go to next page" className="size-9 sm:size-7">
+            <span className="whitespace-nowrap px-1 font-medium font-sans text-[12.5px] text-muted-foreground tabular-nums leading-none">{rt("pager.pageOf", { current: <strong className="text-foreground">{currentPage}</strong>, total: <strong className="text-foreground">{totalPages}</strong> })}</span>
+            <Button variant="outline" size="icon" disabled={currentPage >= totalPages} onClick={() => onPageChange(currentPage + 1)} aria-label={t("pager.next")} className="size-9 sm:size-7">
                 <ChevronRight className="size-4 sm:size-3.5" />
             </Button>
         </div>
@@ -224,6 +228,7 @@ interface IJumpToPagePopoverProps {
 }
 
 function JumpToPagePopover({ totalPages, hiddenFrom, hiddenTo, suggestedPage, onJump }: IJumpToPagePopoverProps) {
+    const t: TypedT<typeof messages> = useT("operators");
     const [open, setOpen] = useState(false);
     const [value, setValue] = useState(String(suggestedPage));
     const inputRef = useRef<HTMLInputElement>(null);
@@ -255,7 +260,7 @@ function JumpToPagePopover({ totalPages, hiddenFrom, hiddenTo, suggestedPage, on
                 render={
                     <button
                         type="button"
-                        aria-label={`Jump to a page between ${hiddenFrom} and ${hiddenTo}`}
+                        aria-label={t("pager.jump.aria", { from: hiddenFrom, to: hiddenTo })}
                         className="inline-flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring data-popup-open:bg-accent data-popup-open:text-foreground"
                     >
                         <PaginationEllipsis className="min-w-0" />
@@ -265,10 +270,8 @@ function JumpToPagePopover({ totalPages, hiddenFrom, hiddenTo, suggestedPage, on
             <PopoverContent align="center" sideOffset={6} className="w-60">
                 <div className="flex flex-col gap-2.5">
                     <div className="flex flex-col gap-0.5">
-                        <span className="font-sans font-semibold text-foreground text-sm leading-none">Jump to page</span>
-                        <span className="font-sans text-muted-foreground text-xs tabular-nums leading-none">
-                            Hidden range: {hiddenFrom}-{hiddenTo} · Total {totalPages}
-                        </span>
+                        <span className="font-sans font-semibold text-foreground text-sm leading-none">{t("pager.jump.title")}</span>
+                        <span className="font-sans text-muted-foreground text-xs tabular-nums leading-none">{t("pager.jump.range", { from: hiddenFrom, to: hiddenTo, total: totalPages })}</span>
                     </div>
                     <form
                         onSubmit={(event) => {
@@ -285,15 +288,15 @@ function JumpToPagePopover({ totalPages, hiddenFrom, hiddenTo, suggestedPage, on
                             max={totalPages}
                             value={value}
                             onChange={(event) => setValue(event.currentTarget.value)}
-                            aria-label="Page number"
+                            aria-label={t("pager.jump.input")}
                             aria-invalid={value.length > 0 && !isValid}
                             className="flex-1 tabular-nums `[[type=number]]:[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                         />
-                        <Button type="submit" size="icon" variant="default" disabled={!isValid} aria-label="Go to page" className="size-8 shrink-0">
+                        <Button type="submit" size="icon" variant="default" disabled={!isValid} aria-label={t("pager.goToPage")} className="size-8 shrink-0">
                             <CornerDownLeft className="size-4" />
                         </Button>
                     </form>
-                    <span className="font-sans text-[11px] text-muted-foreground leading-none">Enter a number from 1 to {totalPages}.</span>
+                    <span className="font-sans text-[11px] text-muted-foreground leading-none">{t("pager.jump.hint", { total: totalPages })}</span>
                 </div>
             </PopoverContent>
         </Popover>

@@ -1,7 +1,13 @@
 import { Kicker } from "#/components/ui/kicker";
 import type { IGachaEnhancedStats } from "#/lib/api/gacha";
-import { formatNumber, formatNumberCompact } from "#/lib/utils";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { compareRate, fmtPct } from "./format";
+import type { messages as formatMessages } from "./format.messages";
+import type { messages } from "./RarityPanel.messages";
+
+/** This panel renders its own chrome plus the labels `format.ts` derives. */
+type RarityT = TypedT<typeof messages & typeof formatMessages>;
 
 interface IRarityPanelProps {
     data: IGachaEnhancedStats | null;
@@ -23,7 +29,7 @@ interface IRarityRow {
     color: string;
     starColor: string;
     expected: number;
-    rateHint: string;
+    rateHintKey: keyof typeof messages & string;
 }
 
 // `expected` derivation: 6★ chance is 2% for pulls 1–50 since the last 6★, then
@@ -31,13 +37,15 @@ interface IRarityRow {
 // so the long-run 6★ rate is 1/34.59 ≈ 2.89%. On every pull the non-6★ share splits
 // 8:50:40, so lower rarities scale by (1 − 0.0289)/0.98 - a pity 6★ takes their slot.
 const RARITY_ROWS: IRarityRow[] = [
-    { rarity: 6, countKey: "totalSixStars", color: "oklch(0.85 0.18 80)", starColor: "#f7a452", expected: 0.0289, rateHint: "2% base · +2%/pull after 50" },
-    { rarity: 5, countKey: "totalFiveStars", color: "#f7e79e", starColor: "#f7e79e", expected: 0.0793, rateHint: "8% base · 10-pull guarantee" },
-    { rarity: 4, countKey: "totalFourStars", color: "#bcabdb", starColor: "#bcabdb", expected: 0.4955, rateHint: "50% base" },
-    { rarity: 3, countKey: "totalThreeStars", color: "#88c8e3", starColor: "#88c8e3", expected: 0.3964, rateHint: "40% base" },
+    { rarity: 6, countKey: "totalSixStars", color: "oklch(0.85 0.18 80)", starColor: "#f7a452", expected: 0.0289, rateHintKey: "community.rarity.hint.sixStar" },
+    { rarity: 5, countKey: "totalFiveStars", color: "#f7e79e", starColor: "#f7e79e", expected: 0.0793, rateHintKey: "community.rarity.hint.fiveStar" },
+    { rarity: 4, countKey: "totalFourStars", color: "#bcabdb", starColor: "#bcabdb", expected: 0.4955, rateHintKey: "community.rarity.hint.fourStar" },
+    { rarity: 3, countKey: "totalThreeStars", color: "#88c8e3", starColor: "#88c8e3", expected: 0.3964, rateHintKey: "community.rarity.hint.threeStar" },
 ];
 
 export function RarityPanel({ data, personal }: IRarityPanelProps) {
+    const t: RarityT = useT("gacha");
+    const f = useFormatters();
     const cs = data?.collectiveStats;
     const total = cs?.totalPulls ?? 0;
     const personalTotal = personal?.totalPulls ?? 0;
@@ -47,13 +55,13 @@ export function RarityPanel({ data, personal }: IRarityPanelProps) {
         <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
             <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
-                    <Kicker className="mb-1.5">{cs ? `Outcome mix · ${formatNumberCompact(total)} pulls` : "Outcome mix"}</Kicker>
-                    <h2 className="m-0 text-balance font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">Where every pull lands.</h2>
+                    <Kicker className="mb-1.5">{cs ? t("community.rarity.kicker.withTotal", { count: f.compact(total) }) : t("community.rarity.kicker")}</Kicker>
+                    <h2 className="m-0 text-balance font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{t("community.rarity.title")}</h2>
                 </div>
                 {showPersonal ? (
                     <div className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-md border border-primary/30 bg-primary/8 px-2.5 py-1 font-mono text-[10px] text-foreground/80 uppercase tracking-[0.14em] sm:self-auto">
                         <span className="block h-1.5 w-1.5 rounded-full bg-primary" aria-hidden />
-                        you · {formatNumberCompact(personalTotal)} pulls
+                        {t("community.rarity.you", { count: f.compact(personalTotal) })}
                     </div>
                 ) : null}
             </header>
@@ -91,9 +99,11 @@ export function RarityPanel({ data, personal }: IRarityPanelProps) {
 }
 
 function RarityRow({ row, count, observed, hasData, personal }: { row: IRarityRow; count: number; observed: number; hasData: boolean; personal: { observed: number; count: number } | null }) {
-    const vsExpected = hasData ? compareRate(observed, row.expected) : null;
-    const personalVsCommunity = personal != null ? compareRate(personal.observed, observed) : null;
-    const personalVsExpected = personal != null ? compareRate(personal.observed, row.expected) : null;
+    const t: RarityT = useT("gacha");
+    const f = useFormatters();
+    const vsExpected = hasData ? compareRate(observed, row.expected, t) : null;
+    const personalVsCommunity = personal != null ? compareRate(personal.observed, observed, t) : null;
+    const personalVsExpected = personal != null ? compareRate(personal.observed, row.expected, t) : null;
 
     return (
         <div className="flex flex-col gap-1.5">
@@ -102,7 +112,7 @@ function RarityRow({ row, count, observed, hasData, personal }: { row: IRarityRo
                     <span style={{ color: row.starColor }} className="whitespace-nowrap text-base tracking-wider">
                         {"★".repeat(row.rarity)}
                     </span>
-                    <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">{row.rateHint}</span>
+                    <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">{t(row.rateHintKey)}</span>
                 </div>
                 <div className="flex shrink-0 items-baseline gap-3 font-mono text-[11px] text-muted-foreground tabular-nums">
                     <span className="whitespace-nowrap font-sans font-semibold text-base text-foreground">{hasData ? fmtPct(observed, 2) : "-"}</span>
@@ -112,19 +122,19 @@ function RarityRow({ row, count, observed, hasData, personal }: { row: IRarityRo
             <BaselineBar observed={observed} baseline={row.expected} fillColor={row.color} personalObserved={personal?.observed} hasData={hasData} />
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10.5px] text-muted-foreground">
-                <span className="tabular-nums">{hasData ? `${formatNumber(count)} pulls` : "-"}</span>
+                <span className="tabular-nums">{hasData ? t("community.rarity.pulls", { count: f.number(count) }) : "-"}</span>
                 <span className="opacity-50">·</span>
-                <ComparisonChip label="vs expected" baseline={row.expected} comparison={vsExpected} />
+                <ComparisonChip label={t("community.rarity.chip.vsExpected")} baseline={row.expected} comparison={vsExpected} />
                 {personal != null && personalVsCommunity != null ? (
                     <>
                         <span className="opacity-50">·</span>
-                        <ComparisonChip label="you vs community" baseline={observed} comparison={personalVsCommunity} highlight />
+                        <ComparisonChip label={t("community.rarity.chip.youVsCommunity")} baseline={observed} comparison={personalVsCommunity} highlight />
                     </>
                 ) : null}
                 {personal != null && personalVsExpected != null ? (
                     <>
                         <span className="opacity-50">·</span>
-                        <ComparisonChip label="you vs expected" baseline={row.expected} comparison={personalVsExpected} highlight />
+                        <ComparisonChip label={t("community.rarity.chip.youVsExpected")} baseline={row.expected} comparison={personalVsExpected} highlight />
                     </>
                 ) : null}
             </div>
@@ -154,6 +164,7 @@ function ComparisonChip({ label, baseline, comparison, highlight }: { label: str
 }
 
 function BaselineBar({ observed, baseline, fillColor, personalObserved, hasData }: { observed: number; baseline: number; fillColor: string; personalObserved?: number; hasData: boolean }) {
+    const t: RarityT = useT("gacha");
     // Bar scales to whichever value is largest, so a 65% 3★ bar sits next to a 2% 6★ bar without dwarfing it. Bars share a max within their own row.
     const max = Math.max(observed, baseline, personalObserved ?? 0, 0.001);
     const observedPct = hasData ? (observed / max) * 100 : 0;
@@ -165,25 +176,27 @@ function BaselineBar({ observed, baseline, fillColor, personalObserved, hasData 
             <div className="h-full overflow-hidden rounded-full">
                 <div className="h-full" style={{ width: `${observedPct}%`, background: fillColor }} />
             </div>
-            <div className="pointer-events-none absolute inset-y-0 w-px bg-foreground/60" style={{ left: `${baselineLeftPct}%` }} title={`Expected ${fmtPct(baseline, 2)}`} aria-hidden />
-            {personalLeftPct != null ? <div className="pointer-events-none absolute -top-1 h-4 w-0.5 rounded-full bg-primary shadow-[0_0_0_2px_var(--card)]" style={{ left: `calc(${personalLeftPct}% - 1px)` }} title={`You ${fmtPct(personalObserved ?? 0, 2)}`} aria-hidden /> : null}
+            <div className="pointer-events-none absolute inset-y-0 w-px bg-foreground/60" style={{ left: `${baselineLeftPct}%` }} title={t("community.rarity.bar.expected", { value: fmtPct(baseline, 2) })} aria-hidden />
+            {personalLeftPct != null ? <div className="pointer-events-none absolute -top-1 h-4 w-0.5 rounded-full bg-primary shadow-[0_0_0_2px_var(--card)]" style={{ left: `calc(${personalLeftPct}% - 1px)` }} title={t("community.rarity.bar.you", { value: fmtPct(personalObserved ?? 0, 2) })} aria-hidden /> : null}
         </div>
     );
 }
 
 function Legend({ showPersonal }: { showPersonal: boolean }) {
+    const t: RarityT = useT("gacha");
+
     return (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-border/60 border-t pt-3 font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">
             <span className="inline-flex items-center gap-1.5">
-                <span className="block h-2 w-2 rounded-full bg-foreground/60" aria-hidden /> expected (with pity)
+                <span className="block h-2 w-2 rounded-full bg-foreground/60" aria-hidden /> {t("community.rarity.legend.expected")}
             </span>
             {showPersonal ? (
                 <span className="inline-flex items-center gap-1.5">
-                    <span className="block h-2 w-2 rounded-full bg-primary" aria-hidden /> you
+                    <span className="block h-2 w-2 rounded-full bg-primary" aria-hidden /> {t("community.rarity.legend.you")}
                 </span>
             ) : null}
-            <span className="opacity-60">expected rates fold 6★ soft pity into the advertised 2/8/50/40% base - long-run 6★ is ~2.89%, and lower rarities dip slightly because a pity 6★ takes their slot</span>
-            <span className="opacity-60">comparisons scale to baseline (e.g. 4% vs 2.89% expected = 138% of expected, not "+1.1%")</span>
+            <span className="opacity-60">{t("community.rarity.legend.note")}</span>
+            <span className="opacity-60">{t("community.rarity.legend.scaleNote")}</span>
         </div>
     );
 }

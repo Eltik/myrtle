@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { MyTierLists } from "#/components/tier-lists/my/MyTierLists";
 import { MY_SORT_OPTIONS, type MyListSort, type MyListTypeFilter, type MyViewMode } from "#/components/tier-lists/my/MyToolbar";
 import { myTierListsDetailedQueryOptions } from "#/lib/api/tier-lists";
+import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
@@ -24,7 +25,7 @@ export const Route = createFileRoute("/_authed/tier-lists_/my")({
         if (!context.user) throw redirect({ to: "/", search: { auth: "1", next: location.href } });
     },
     component: RouteComponent,
-    loader: ({ context }) => context.queryClient.ensureQueryData(myTierListsDetailedQueryOptions(Boolean(context.user))),
+    loader: ({ context }) => context.queryClient.ensureQueryData(myTierListsDetailedQueryOptions(Boolean(context.user), context.i18n.gamedataServer)),
     validateSearch: (search: Record<string, unknown>): IMyTierListsSearch => {
         const sortRaw = typeof search.sort === "string" ? (search.sort as MyListSort) : DEFAULTS.sort;
         const sort: MyListSort = VALID_SORTS.has(sortRaw) ? sortRaw : DEFAULTS.sort;
@@ -36,12 +37,14 @@ export const Route = createFileRoute("/_authed/tier-lists_/my")({
         return { sort, type, view, q };
     },
     search: { middlewares: [stripSearchParams(DEFAULTS)] },
-    head: () => {
+    head: ({ match }) => {
+        const t = metaT(match.context.i18n);
         const { meta, links } = seo({
-            title: "My Tier Lists",
-            description: "Manage, edit, and share the tier lists you've created.",
+            title: t("myTierLists.title"),
+            description: t("myTierLists.description"),
             path: "/tier-lists/my",
-            image: defaultOgURL("tier-lists"),
+            image: defaultOgURL("tier-lists", match.context.i18n),
+            locale: match.context.i18n?.locale,
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, { name: "robots", content: "noindex,nofollow" }, ...meta],

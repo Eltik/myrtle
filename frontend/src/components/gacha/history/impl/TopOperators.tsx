@@ -2,8 +2,11 @@ import { useMemo, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
-import { formatNumber, formatProfession, rarityGradient, rarityStarColor } from "#/lib/utils";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import { formatProfession, rarityGradient, rarityStarColor } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
+import type { messages } from "./TopOperators.messages";
 
 interface ITopOperatorsProps {
     records: IClientGachaRecords | null;
@@ -36,6 +39,8 @@ function tallyOperators(items: IGachaItem[]): IOperatorTally[] {
 }
 
 export function TopOperators({ records, operatorsById, isLoading }: ITopOperatorsProps) {
+    const t: TypedT<typeof messages> = useT("gacha");
+    const f = useFormatters();
     const [activeStar, setActiveStar] = useState<StarTab>(6);
 
     const allItems = useMemo<IGachaItem[]>(() => {
@@ -81,8 +86,8 @@ export function TopOperators({ records, operatorsById, isLoading }: ITopOperator
         <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
-                    <Kicker className="mb-1.5">Most pulled · per rarity</Kicker>
-                    <h2 className="m-0 font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">Your top operators.</h2>
+                    <Kicker className="mb-1.5">{t("history.top.kicker")}</Kicker>
+                    <h2 className="m-0 font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{t("history.top.title")}</h2>
                 </div>
                 <div className="inline-flex self-start rounded-[9px] border border-border bg-muted p-0.75 sm:self-auto">
                     {STAR_TABS.map((s) => (
@@ -99,16 +104,16 @@ export function TopOperators({ records, operatorsById, isLoading }: ITopOperator
             </header>
 
             {filtered.length === 0 ? (
-                <div className="py-8 text-center font-sans text-muted-foreground text-sm">No {activeStar}★ operators pulled yet.</div>
+                <div className="py-8 text-center font-sans text-muted-foreground text-sm">{t("history.top.empty", { rarity: activeStar })}</div>
             ) : (
                 <div className="-mx-1 max-h-105 overflow-y-auto pr-1 pl-1 [scrollbar-color:var(--border)_transparent] [scrollbar-width:thin]">
                     <table className="w-full border-collapse">
                         <thead className="sticky top-0 z-10 bg-card">
                             <tr>
                                 <th className="w-8 border-border border-b bg-card px-1.5 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:w-10 sm:px-2">#</th>
-                                <th className="border-border border-b bg-card px-1.5 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2">Operator</th>
-                                <th className="border-border border-b bg-card px-1.5 py-2 text-right font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2 sm:text-left">Copies</th>
-                                <th className="hidden w-40 border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:table-cell">Frequency</th>
+                                <th className="border-border border-b bg-card px-1.5 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2">{t("history.top.col.operator")}</th>
+                                <th className="border-border border-b bg-card px-1.5 py-2 text-right font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2 sm:text-left">{t("history.top.col.copies")}</th>
+                                <th className="hidden w-40 border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:table-cell">{t("history.top.col.frequency")}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -139,7 +144,7 @@ export function TopOperators({ records, operatorsById, isLoading }: ITopOperator
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="whitespace-nowrap px-1.5 py-2.5 text-right align-middle font-medium font-mono text-[12px] text-foreground tabular-nums sm:w-20 sm:px-2 sm:pl-4 sm:text-left sm:text-[13px]">{formatNumber(op.count)}</td>
+                                        <td className="whitespace-nowrap px-1.5 py-2.5 text-right align-middle font-medium font-mono text-[12px] text-foreground tabular-nums sm:w-20 sm:px-2 sm:pl-4 sm:text-left sm:text-[13px]">{f.number(op.count)}</td>
                                         <td className="hidden w-40 px-2 py-2.5 pr-2 align-middle sm:table-cell">
                                             <div className="flex items-center gap-2.5">
                                                 <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">

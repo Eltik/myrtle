@@ -1,6 +1,9 @@
 import type * as React from "react";
 import { Card } from "#/components/ui/card";
+import { useLocale, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { buildAgendaDays, formatRangeTitle, stepAnchor } from "../helpers";
+import type { messages as helperMessages } from "../helpers.messages";
 import type { CalendarScale, IOperatorBirthday, ISelectedDay } from "../types";
 import { AgendaColumns } from "./AgendaColumns";
 import { CalendarToolbar } from "./CalendarToolbar";
@@ -19,11 +22,13 @@ interface ICalendarViewProps {
 
 /** The calendar surface: a toolbar over a month grid or an agenda (day/3day/week). */
 export function CalendarView({ scale, onScaleChange, anchor, onAnchorChange, byDay, onSelect, today }: ICalendarViewProps): React.ReactElement {
+    const t: TypedT<typeof helperMessages> = useT("tools");
+    const locale = useLocale();
     return (
         <Card className="overflow-hidden">
             <CalendarToolbar
-                title={formatRangeTitle(scale, anchor)}
-                titleShort={formatRangeTitle(scale, anchor, true)}
+                title={formatRangeTitle(scale, anchor, locale, t)}
+                titleShort={formatRangeTitle(scale, anchor, locale, t, true)}
                 scale={scale}
                 onScaleChange={onScaleChange}
                 onPrev={() => onAnchorChange(stepAnchor(scale, anchor, -1))}

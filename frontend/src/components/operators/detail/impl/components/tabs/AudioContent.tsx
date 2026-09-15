@@ -6,17 +6,25 @@ import { Skeleton } from "#/components/ui/skeleton";
 import { Slider } from "#/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
+import { operatorGamedataServer } from "#/lib/api/gamedata";
 import { operatorVoicesQueryOptions } from "#/lib/api/voices";
+import { useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { normalizeForSearch } from "#/lib/search/fuzzy";
 import { cn } from "#/lib/utils";
 import type { AudioCategory, IOperatorAudio, IOperatorListItem } from "#/types/operators";
 import type { IVoice, LangType } from "#/types/voices";
 import { audioURL } from "../../assets";
-import { SFX_CATEGORY_LABELS, SFX_CATEGORY_ORDER, SFX_EVENT_LABELS, VOICE_CATEGORY_MAP, VOICE_CATEGORY_ORDER, VOICE_LANGUAGE_LABELS, VOICE_LANGUAGE_ORDER, VOICE_LANGUAGE_SHORT } from "../../constants";
+import { SFX_CATEGORY_LABEL_KEY, SFX_CATEGORY_ORDER, SFX_EVENT_LABEL_KEY, VOICE_CATEGORY_LABEL_KEY, VOICE_CATEGORY_MAP, VOICE_CATEGORY_ORDER, VOICE_LANGUAGE_LABEL_KEY, VOICE_LANGUAGE_ORDER, VOICE_LANGUAGE_SHORT_KEY } from "../../constants";
+import type { messages as detailConstantsMessages } from "../../constants.messages";
+import type { messages } from "./AudioContent.messages";
 
 const ALL_CATEGORY_ID = "all";
 
 type AudioMode = "voice" | "sfx";
+
+/** This tab renders its own chrome plus the language, category and event taxonomies. */
+type AudioT = TypedT<typeof messages & typeof detailConstantsMessages>;
 
 function sanitize(name: string): string {
     return name.replace(/[^a-zA-Z0-9\-_]/g, "_");
@@ -147,6 +155,7 @@ interface IAudioContentProps {
 }
 
 export const AudioContent = memo(function AudioContent({ operator }: IAudioContentProps) {
+    const t: AudioT = useT("operators");
     const { audioRef, player, volume, setVolume, isMuted, setIsMuted, setProgress, markErrored, resetPlayback, stop } = useAudioPlayer();
 
     const hasSfx = (operator.audio?.length ?? 0) > 0;
@@ -179,8 +188,8 @@ export const AudioContent = memo(function AudioContent({ operator }: IAudioConte
 
             <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
                 <div>
-                    <h2 className="font-semibold text-foreground text-xl">Audio / SFX</h2>
-                    <p className="text-muted-foreground text-sm">Operator voice lines and battle sound effects.</p>
+                    <h2 className="font-semibold text-foreground text-xl">{t("audio.title")}</h2>
+                    <p className="text-muted-foreground text-sm">{t("audio.subtitle")}</p>
                 </div>
                 <VolumeControl volume={volume} setVolume={setVolume} isMuted={isMuted} setIsMuted={setIsMuted} />
             </div>
@@ -190,11 +199,11 @@ export const AudioContent = memo(function AudioContent({ operator }: IAudioConte
                     <TabsList>
                         <TabsTrigger value="voice" className="gap-1.5">
                             <Volume2 className="h-4 w-4" />
-                            Voice Lines
+                            {t("audio.tab.voice")}
                         </TabsTrigger>
                         <TabsTrigger value="sfx" className="gap-1.5">
                             <AudioLines className="h-4 w-4" />
-                            Battle SFX
+                            {t("audio.tab.sfx")}
                         </TabsTrigger>
                     </TabsList>
                 </Tabs>
@@ -206,12 +215,14 @@ export const AudioContent = memo(function AudioContent({ operator }: IAudioConte
 });
 
 function VolumeControl({ volume, setVolume, isMuted, setIsMuted }: { volume: number; setVolume: (v: number) => void; isMuted: boolean; setIsMuted: (fn: (m: boolean) => boolean) => void }) {
+    const t: AudioT = useT("operators");
+
     return (
         <div className="flex items-center gap-2">
-            <button type="button" aria-label={isMuted ? "Unmute" : "Mute"} onClick={() => setIsMuted((m) => !m)} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
+            <button type="button" aria-label={isMuted ? t("audio.unmute") : t("audio.mute")} onClick={() => setIsMuted((m) => !m)} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground">
                 {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
             </button>
-            <Slider className="w-24" min={0} max={100} step={1} value={[volume]} onValueChange={(v) => setVolume(Array.isArray(v) ? (v[0] ?? 80) : v)} aria-label="Volume" />
+            <Slider className="w-24" min={0} max={100} step={1} value={[volume]} onValueChange={(v) => setVolume(Array.isArray(v) ? (v[0] ?? 80) : v)} aria-label={t("audio.volume")} />
         </div>
     );
 }
@@ -241,10 +252,10 @@ function CategoryTabsList({ tabs }: { tabs: ICategoryTab[] }) {
     return (
         <div className="mb-4 overflow-x-auto overflow-y-hidden">
             <TabsList variant="underline">
-                {tabs.map((t) => (
-                    <TabsTrigger key={t.id} value={t.id}>
-                        {t.label}
-                        <span className="ml-1.5 text-muted-foreground text-xs">({t.count})</span>
+                {tabs.map((tab) => (
+                    <TabsTrigger key={tab.id} value={tab.id}>
+                        {tab.label}
+                        <span className="ml-1.5 text-muted-foreground text-xs">({tab.count})</span>
                     </TabsTrigger>
                 ))}
             </TabsList>
@@ -269,6 +280,8 @@ interface IAudioRowProps {
 }
 
 function AudioRow({ isPlaying, isUnavailable, isDownloading, progress, downloadLabel, onPlay, onDownload, children }: IAudioRowProps) {
+    const t: AudioT = useT("operators");
+
     return (
         <div className={cn("group relative overflow-hidden rounded-lg border transition-colors", isPlaying ? "border-primary bg-primary/10" : "border-border bg-card/30 hover:bg-secondary/30", isUnavailable && "opacity-60")}>
             <div className="flex items-start gap-3 p-3">
@@ -277,7 +290,7 @@ function AudioRow({ isPlaying, isUnavailable, isDownloading, progress, downloadL
                         type="button"
                         onClick={onPlay}
                         disabled={isUnavailable && !isPlaying}
-                        aria-label={isPlaying ? "Pause" : isUnavailable ? "Unavailable" : "Play"}
+                        aria-label={isPlaying ? t("audio.pause") : isUnavailable ? t("audio.unavailable") : t("audio.play")}
                         className={cn("flex h-9 w-9 items-center justify-center rounded-md transition-colors disabled:cursor-not-allowed disabled:opacity-50", isPlaying ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground hover:bg-secondary/80")}
                     >
                         {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
@@ -297,7 +310,7 @@ function AudioRow({ isPlaying, isUnavailable, isDownloading, progress, downloadL
                                 </button>
                             )}
                         />
-                        <TooltipPopup>Download</TooltipPopup>
+                        <TooltipPopup>{t("audio.download")}</TooltipPopup>
                     </Tooltip>
                 </div>
                 <div className="min-w-0 flex-1">{children}</div>
@@ -322,7 +335,9 @@ interface IVoiceCategory {
 }
 
 function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; player: IPlayer }) {
-    const { data: voicesData, isLoading } = useQuery(operatorVoicesQueryOptions(operator.id ?? "", operator.server));
+    const t: AudioT = useT("operators");
+    const localeServer = useGamedataServer();
+    const { data: voicesData, isLoading } = useQuery(operatorVoicesQueryOptions(operator.id ?? "", operatorGamedataServer(operator.server, localeServer)));
 
     const operatorVoices: IVoice[] = useMemo(() => {
         if (!voicesData) return [];
@@ -359,23 +374,25 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
     const categories: IVoiceCategory[] = useMemo(() => {
         const map = new Map<string, IVoice[]>();
         for (const v of operatorVoices) {
-            const name = VOICE_CATEGORY_MAP[v.placeType] ?? "Other";
-            const id = name.toLowerCase().replace(/\s+/g, "-");
+            // The bucket NAME is an identifier, and the tab id is derived from
+            // it; only `name` below is text a reader sees.
+            const bucket = VOICE_CATEGORY_MAP[v.placeType] ?? "Other";
+            const id = bucket.toLowerCase().replace(/\s+/g, "-");
             const list = map.get(id) ?? [];
             list.push(v);
             map.set(id, list);
         }
         const ordered: IVoiceCategory[] = [];
-        for (const name of VOICE_CATEGORY_ORDER) {
-            const id = name.toLowerCase().replace(/\s+/g, "-");
+        for (const bucket of VOICE_CATEGORY_ORDER) {
+            const id = bucket.toLowerCase().replace(/\s+/g, "-");
             const list = map.get(id);
-            if (list?.length) ordered.push({ id, name, lines: list });
+            if (list?.length) ordered.push({ id, name: t(VOICE_CATEGORY_LABEL_KEY[bucket] ?? "voice.category.other"), lines: list });
         }
         if (ordered.length > 0) {
-            ordered.unshift({ id: ALL_CATEGORY_ID, name: "All", lines: operatorVoices });
+            ordered.unshift({ id: ALL_CATEGORY_ID, name: t("audio.category.all"), lines: operatorVoices });
         }
         return ordered;
-    }, [operatorVoices]);
+    }, [operatorVoices, t]);
 
     const [searchQuery, setSearchQuery] = useState("");
     const normalizedQuery = normalizeForSearch(searchQuery.trim());
@@ -407,7 +424,8 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
     const downloadVoice = (voice: IVoice) => {
         const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceUrl;
         if (!url || !voice.id) return;
-        const langLabel = VOICE_LANGUAGE_LABELS[selectedLanguage] ?? selectedLanguage;
+        const langKey = VOICE_LANGUAGE_LABEL_KEY[selectedLanguage];
+        const langLabel = langKey ? t(langKey) : selectedLanguage;
         player.download(voice.id, audioURL(url, operator.server), `${sanitize(operatorName)}_${sanitize(voice.voiceTitle)}_${sanitize(langLabel)}.${fileExtension(url, "mp3")}`);
     };
 
@@ -418,23 +436,23 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
             <div className="mb-6 space-y-3">
                 {voiceActor && (
                     <p className="text-muted-foreground text-sm">
-                        <span className="text-foreground/60">CV:</span> <span className="font-medium text-foreground">{voiceActor}</span>
+                        <span className="text-foreground/60">{t("audio.cv")}</span> <span className="font-medium text-foreground">{voiceActor}</span>
                     </p>
                 )}
                 <div className="flex flex-wrap items-center gap-4">
                     <Select value={selectedLanguage} onValueChange={(v) => setSelectedLanguage(String(v) as LangType)}>
                         <SelectTrigger className="w-48">
-                            <SelectValue placeholder="Language" />
+                            <SelectValue placeholder={t("audio.language")} />
                         </SelectTrigger>
                         <SelectContent>
                             {availableLanguages.map((lang) => (
                                 <SelectItem key={lang} value={lang}>
-                                    {VOICE_LANGUAGE_LABELS[lang] ?? lang}
+                                    {VOICE_LANGUAGE_LABEL_KEY[lang] ? t(VOICE_LANGUAGE_LABEL_KEY[lang]) : lang}
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
-                    <SearchBox value={searchQuery} onChange={setSearchQuery} placeholder="Search voice lines..." label="Search voice lines" />
+                    <SearchBox value={searchQuery} onChange={setSearchQuery} placeholder={t("audio.search.voice.placeholder")} label={t("audio.search.voice.label")} />
                 </div>
             </div>
 
@@ -444,14 +462,14 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
                     {filteredCategories.map((c) => (
                         <TabsContent key={c.id} value={c.id} className="mt-0">
                             {c.lines.length === 0 ? (
-                                <EmptyState>No voice lines match &ldquo;{searchQuery}&rdquo;.</EmptyState>
+                                <EmptyState>{t("audio.empty.voiceSearch", { query: searchQuery })}</EmptyState>
                             ) : (
                                 <div className="max-h-112 space-y-2 overflow-y-auto pr-2">
                                     {c.lines.map((voice) => {
                                         const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceUrl;
                                         const fullURL = url ? audioURL(url, operator.server) : null;
                                         const isUnavailable = !url || (fullURL !== null && player.erroredURLs.has(fullURL));
-                                        const categoryLabel = c.id === ALL_CATEGORY_ID ? (VOICE_CATEGORY_MAP[voice.placeType] ?? "Other") : null;
+                                        const categoryLabel = c.id === ALL_CATEGORY_ID ? t(VOICE_CATEGORY_LABEL_KEY[VOICE_CATEGORY_MAP[voice.placeType] ?? "Other"] ?? "voice.category.other") : null;
                                         return (
                                             <VoiceLineRow
                                                 key={voice.id ?? voice.charWordId}
@@ -473,7 +491,7 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
                     ))}
                 </Tabs>
             ) : (
-                <EmptyState>No voice data available for this operator.</EmptyState>
+                <EmptyState>{t("audio.empty.voice")}</EmptyState>
             )}
         </div>
     );
@@ -492,6 +510,7 @@ interface IVoiceLineRowProps {
 }
 
 function VoiceLineRow({ voice, isPlaying, progress, isDownloading, isUnavailable, categoryLabel, highlight, onPlay, onDownload }: IVoiceLineRowProps) {
+    const t: AudioT = useT("operators");
     const hasQuery = highlight.length > 0;
     const [isExpanded, setIsExpanded] = useState(false);
     const [canExpand, setCanExpand] = useState(false);
@@ -515,13 +534,13 @@ function VoiceLineRow({ voice, isPlaying, progress, isDownloading, isUnavailable
     const showToggle = isExpanded || (canExpand && !isPlaying && !hasQuery);
 
     return (
-        <AudioRow isPlaying={isPlaying} isUnavailable={isUnavailable} isDownloading={isDownloading} progress={progress} downloadLabel="Download voice line" onPlay={onPlay} onDownload={onDownload}>
+        <AudioRow isPlaying={isPlaying} isUnavailable={isUnavailable} isDownloading={isDownloading} progress={progress} downloadLabel={t("audio.download.voice")} onPlay={onPlay} onDownload={onDownload}>
             <div className="flex flex-wrap items-center gap-2">
                 <div className="font-medium text-foreground text-sm">
                     <HighlightedText text={voice.voiceTitle} query={highlight} />
                 </div>
                 {categoryLabel && <Pill>{categoryLabel}</Pill>}
-                {isUnavailable && <Pill className="bg-muted">Unavailable</Pill>}
+                {isUnavailable && <Pill className="bg-muted">{t("audio.unavailable")}</Pill>}
             </div>
             <p ref={textRef} className={cn("text-muted-foreground text-xs duration-300", showFull ? "" : "line-clamp-2")}>
                 <HighlightedText text={voice.voiceText} query={highlight} />
@@ -530,11 +549,11 @@ function VoiceLineRow({ voice, isPlaying, progress, isDownloading, isUnavailable
                 <button type="button" onClick={() => setIsExpanded((v) => !v)} aria-expanded={isExpanded} className="mt-1 inline-flex items-center gap-1 rounded font-medium text-[11px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
                     {isExpanded ? (
                         <>
-                            Show less <ChevronUp className="h-3 w-3" />
+                            {t("audio.showLess")} <ChevronUp className="h-3 w-3" />
                         </>
                     ) : (
                         <>
-                            Show more <ChevronDown className="h-3 w-3" />
+                            {t("audio.showMore")} <ChevronDown className="h-3 w-3" />
                         </>
                     )}
                 </button>
@@ -566,21 +585,23 @@ interface ISfxItem {
     languages: ISfxLanguageTrack[] | null;
 }
 
-function humanizeEvent(event: string): string {
-    return (
-        SFX_EVENT_LABELS[event] ??
-        event
-            .replace(/^ON_/, "")
-            .toLowerCase()
-            .replace(/_/g, " ")
-            .replace(/\b\w/g, (c) => c.toUpperCase())
-    );
+function humanizeEvent(event: string, t: AudioT): string {
+    const messageKey = SFX_EVENT_LABEL_KEY[event];
+    // An unmapped event is a raw game token with nothing in the catalog to look
+    // it up by, so it is title-cased rather than translated.
+    return messageKey
+        ? t(messageKey)
+        : event
+              .replace(/^ON_/, "")
+              .toLowerCase()
+              .replace(/_/g, " ")
+              .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function sfxLabel(entry: IOperatorAudio): string {
-    if (entry.category === "skill") return entry.skillSlot ? `Skill ${entry.skillSlot}` : "Skill";
-    if (entry.category === "deploy") return "Deployment";
-    return humanizeEvent(entry.event);
+function sfxLabel(entry: IOperatorAudio, t: AudioT): string {
+    if (entry.category === "skill") return entry.skillSlot ? t("audio.sfx.skillSlot", { slot: entry.skillSlot }) : t("audio.sfx.skill");
+    if (entry.category === "deploy") return t("audio.sfx.deployment");
+    return humanizeEvent(entry.event, t);
 }
 
 /** Banks for alternate-skin forms carry a `#` segment (e.g. `…iteration#2`). */
@@ -588,7 +609,7 @@ function isSkinVariant(bankName: string): boolean {
     return bankName.includes("#");
 }
 
-function buildSfxItems(operator: IOperatorListItem): ISfxItem[] {
+function buildSfxItems(operator: IOperatorListItem, t: AudioT): ISfxItem[] {
     const audio = operator.audio ?? [];
     const items: ISfxItem[] = [];
     const seenSignatures = new Set<string>();
@@ -627,7 +648,7 @@ function buildSfxItems(operator: IOperatorListItem): ISfxItem[] {
         items.push({
             id: entry.bankName,
             category: entry.category,
-            label: sfxLabel(entry),
+            label: sfxLabel(entry, t),
             event: entry.event,
             skillSlot: entry.skillSlot ?? null,
             skinVariant: isSkinVariant(entry.bankName),
@@ -642,7 +663,7 @@ function buildSfxItems(operator: IOperatorListItem): ISfxItem[] {
         items.push({
             id: acc.key,
             category: "voice",
-            label: acc.skillSlot ? `Skill ${acc.skillSlot} Voice` : "Battle Voice",
+            label: acc.skillSlot ? t("audio.sfx.skillSlotVoice", { slot: acc.skillSlot }) : t("audio.sfx.battleVoice"),
             event: acc.event,
             skillSlot: acc.skillSlot,
             skinVariant: acc.skinVariant,
@@ -666,14 +687,15 @@ function buildSfxItems(operator: IOperatorListItem): ISfxItem[] {
 }
 
 function SfxPanel({ operator, player }: { operator: IOperatorListItem; player: IPlayer }) {
-    const items = useMemo(() => buildSfxItems(operator), [operator]);
+    const t: AudioT = useT("operators");
+    const items = useMemo(() => buildSfxItems(operator, t), [operator, t]);
 
     const tabs: ICategoryTab[] = useMemo(() => {
         const present = SFX_CATEGORY_ORDER.filter((c) => items.some((i) => i.category === c));
-        const base: ICategoryTab[] = [{ id: ALL_CATEGORY_ID, label: "All", count: items.length }];
-        for (const c of present) base.push({ id: c, label: SFX_CATEGORY_LABELS[c], count: items.filter((i) => i.category === c).length });
+        const base: ICategoryTab[] = [{ id: ALL_CATEGORY_ID, label: t("audio.category.all"), count: items.length }];
+        for (const c of present) base.push({ id: c, label: t(SFX_CATEGORY_LABEL_KEY[c]), count: items.filter((i) => i.category === c).length });
         return base;
-    }, [items]);
+    }, [items, t]);
 
     const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORY_ID);
     useEffect(() => {
@@ -687,23 +709,23 @@ function SfxPanel({ operator, player }: { operator: IOperatorListItem; player: I
         let list = activeCategory === ALL_CATEGORY_ID ? items : items.filter((i) => i.category === activeCategory);
         if (normalizedQuery) {
             list = list.filter((i) => {
-                const hay = `${i.label} ${i.event} ${SFX_CATEGORY_LABELS[i.category]} ${i.skillSlot ? `skill ${i.skillSlot}` : ""}`.toLowerCase();
+                const hay = `${i.label} ${i.event} ${t(SFX_CATEGORY_LABEL_KEY[i.category])} ${i.skillSlot ? `skill ${i.skillSlot}` : ""}`.toLowerCase();
                 return hay.includes(normalizedQuery);
             });
         }
         return list;
-    }, [items, activeCategory, normalizedQuery]);
+    }, [items, activeCategory, normalizedQuery, t]);
 
     const operatorName = operatorDisplayName(operator);
 
     if (items.length === 0) {
-        return <EmptyState>No battle audio available for this operator.</EmptyState>;
+        return <EmptyState>{t("audio.empty.sfx")}</EmptyState>;
     }
 
     return (
         <div>
             <div className="mb-6">
-                <SearchBox value={searchQuery} onChange={setSearchQuery} placeholder="Search sound effects..." label="Search sound effects" />
+                <SearchBox value={searchQuery} onChange={setSearchQuery} placeholder={t("audio.search.sfx.placeholder")} label={t("audio.search.sfx.label")} />
             </div>
 
             <Tabs value={activeCategory} onValueChange={(v) => setActiveCategory(String(v))} className="w-full">
@@ -711,7 +733,7 @@ function SfxPanel({ operator, player }: { operator: IOperatorListItem; player: I
             </Tabs>
 
             {visibleItems.length === 0 ? (
-                <EmptyState>No sound effects match &ldquo;{searchQuery}&rdquo;.</EmptyState>
+                <EmptyState>{t("audio.empty.sfxSearch", { query: searchQuery })}</EmptyState>
             ) : (
                 <div className="max-h-112 space-y-2 overflow-y-auto pr-2">
                     {visibleItems.map((item) => (
@@ -724,6 +746,7 @@ function SfxPanel({ operator, player }: { operator: IOperatorListItem; player: I
 }
 
 function SfxRow({ item, player, operatorName, showCategory }: { item: ISfxItem; player: IPlayer; operatorName: string; showCategory: boolean }) {
+    const t: AudioT = useT("operators");
     const [selectedLang, setSelectedLang] = useState<LangType | null>(item.languages?.[0]?.lang ?? null);
     const [variantIndex, setVariantIndex] = useState(0);
     const [expanded, setExpanded] = useState(false);
@@ -752,16 +775,16 @@ function SfxRow({ item, player, operatorName, showCategory }: { item: ISfxItem; 
     };
 
     return (
-        <AudioRow isPlaying={isRowPlaying} isUnavailable={isUnavailable} isDownloading={player.downloadingId === item.id} progress={player.progress} downloadLabel="Download sound effect" onPlay={onPlay} onDownload={onDownload}>
+        <AudioRow isPlaying={isRowPlaying} isUnavailable={isUnavailable} isDownloading={player.downloadingId === item.id} progress={player.progress} downloadLabel={t("audio.download.sfx")} onPlay={onPlay} onDownload={onDownload}>
             <div className="flex flex-wrap items-center gap-2">
                 <span className="font-medium text-foreground text-sm">{item.label}</span>
-                {showCategory && <Pill>{SFX_CATEGORY_LABELS[item.category]}</Pill>}
-                {item.skinVariant && <Pill>Alt. skin</Pill>}
-                {isUnavailable && <Pill className="bg-muted">Unavailable</Pill>}
+                {showCategory && <Pill>{t(SFX_CATEGORY_LABEL_KEY[item.category])}</Pill>}
+                {item.skinVariant && <Pill>{t("audio.altSkin")}</Pill>}
+                {isUnavailable && <Pill className="bg-muted">{t("audio.unavailable")}</Pill>}
                 {variantCount > 1 && (
                     <button type="button" onClick={() => setExpanded((v) => !v)} aria-expanded={expanded} className="inline-flex items-center gap-1 rounded bg-secondary/60 px-1.5 py-0.5 font-medium text-[10px] text-muted-foreground uppercase tracking-wide transition-colors hover:text-foreground">
                         <Layers className="h-3 w-3" />
-                        {variantCount} variants
+                        {t("audio.variants", { count: variantCount })}
                         {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                     </button>
                 )}
@@ -777,14 +800,14 @@ function SfxRow({ item, player, operatorName, showCategory }: { item: ISfxItem; 
                             <button
                                 key={track.lang}
                                 type="button"
-                                title={VOICE_LANGUAGE_LABELS[track.lang] ?? track.lang}
+                                title={VOICE_LANGUAGE_LABEL_KEY[track.lang] ? t(VOICE_LANGUAGE_LABEL_KEY[track.lang]) : track.lang}
                                 onClick={() => {
                                     setSelectedLang(track.lang);
                                     setVariantIndex(0);
                                 }}
                                 className={cn("rounded px-2 py-0.5 font-medium text-[11px] transition-colors", active ? "bg-primary text-primary-foreground" : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground")}
                             >
-                                {VOICE_LANGUAGE_SHORT[track.lang] ?? track.lang}
+                                {VOICE_LANGUAGE_SHORT_KEY[track.lang] ? t(VOICE_LANGUAGE_SHORT_KEY[track.lang]) : track.lang}
                             </button>
                         );
                     })}
@@ -803,7 +826,7 @@ function SfxRow({ item, player, operatorName, showCategory }: { item: ISfxItem; 
                                 key={i}
                                 type="button"
                                 disabled={errored}
-                                aria-label={`Play variant ${i + 1}`}
+                                aria-label={t("audio.playVariant", { index: i + 1 })}
                                 onClick={() => {
                                     setVariantIndex(i);
                                     player.play(item.id, url);
@@ -829,12 +852,14 @@ function SfxRow({ item, player, operatorName, showCategory }: { item: ISfxItem; 
 // =============================================================================
 
 function SearchBox({ value, onChange, placeholder, label }: { value: string; onChange: (v: string) => void; placeholder: string; label: string }) {
+    const t: AudioT = useT("operators");
+
     return (
         <div className="flex h-9 min-w-60 max-w-115 flex-1 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 transition-[border-color,box-shadow] duration-150 focus-within:border-primary focus-within:shadow-[0_0_0_1px_var(--primary)] [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
             <Search className="h-3.75 w-3.75" aria-hidden="true" />
             <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} aria-label={label} className="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 font-sans text-foreground text-sm leading-none outline-none placeholder:text-muted-foreground" />
             {value && (
-                <button type="button" aria-label="Clear search" onClick={() => onChange("")} className="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground">
+                <button type="button" aria-label={t("audio.search.clear")} onClick={() => onChange("")} className="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground">
                     <X className="h-3.5 w-3.5" />
                 </button>
             )}

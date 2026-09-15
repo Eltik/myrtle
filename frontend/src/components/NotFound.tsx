@@ -1,10 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { Home, Search } from "lucide-react";
+import type * as React from "react";
 import { Button } from "#/components/ui/button";
 import { useCommand } from "#/lib/command-context";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "./NotFound.messages";
 
-export function NotFound() {
+export function NotFound(): React.ReactElement {
     const { open: openCmd } = useCommand();
+    const t: TypedT<typeof messages> = useT("common");
 
     return (
         <section className="relative flex min-h-[60vh] flex-col items-center justify-center overflow-hidden py-16 text-center">
@@ -18,18 +23,18 @@ export function NotFound() {
                     <span className="select-none font-bold font-mono text-[28px] text-primary tracking-tight [text-shadow:0_0_20px_var(--glow-primary)]">404</span>
                 </div>
 
-                <h1 className="m-0 mb-3 font-bold font-sans text-[32px] text-foreground leading-none tracking-tight sm:text-[40px]">Lost in the Wastes</h1>
+                <h1 className="m-0 mb-3 font-bold font-sans text-[32px] text-foreground leading-none tracking-tight sm:text-[40px]">{t("notFound.title")}</h1>
 
-                <p className="m-0 mb-8 font-sans text-[16px] text-muted-foreground leading-[1.6]">The page you are looking for does not exist, has been moved, or is temporarily unavailable.</p>
+                <p className="m-0 mb-8 font-sans text-[16px] text-muted-foreground leading-[1.6]">{t("notFound.description")}</p>
 
                 <div className="flex flex-col gap-3 sm:flex-row">
                     <Button variant="default" size="lg" render={<Link to="/" />}>
                         <Home className="size-4.5" />
-                        Return Home
+                        {t("notFound.returnHome")}
                     </Button>
                     <Button variant="outline" size="lg" onClick={openCmd}>
                         <Search className="size-4.5" />
-                        Search operators
+                        {t("notFound.searchOperators")}
                     </Button>
                 </div>
             </div>

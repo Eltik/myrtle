@@ -3,8 +3,16 @@ import { Button } from "#/components/ui/button";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ClientGachaGroup, IBanner, IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
-import { formatNumber, rarityGradient, rarityStarColor } from "#/lib/utils";
+import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import { rarityGradient, rarityStarColor } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
+import { BANNER_GROUP_LABEL_KEYS, type GachaMessageKey } from "../../constants";
+import type { messages as gachaConstantsMessages } from "../../constants.messages";
+import type { messages } from "./BannerHistory.messages";
+
+/** This panel renders its own chrome plus the shared banner-bucket labels. */
+type BannerHistoryT = TypedT<typeof messages & typeof gachaConstantsMessages>;
 
 interface IBannerHistoryProps {
     records: IClientGachaRecords | null;
@@ -17,11 +25,11 @@ function resolveBannerName(item: IGachaItem, bannersById: Map<string, IBanner>):
     return bannersById.get(item.poolId)?.gachaPoolName || item.poolName || item.poolId;
 }
 
-const TABS: { key: ClientGachaGroup; label: string }[] = [
-    { key: "limited", label: "Limited" },
-    { key: "linkage", label: "Collab" },
-    { key: "regular", label: "Standard" },
-    { key: "special", label: "Kernel" },
+const TABS: { key: ClientGachaGroup; labelKey: GachaMessageKey }[] = [
+    { key: "limited", labelKey: BANNER_GROUP_LABEL_KEYS.limited },
+    { key: "linkage", labelKey: BANNER_GROUP_LABEL_KEYS.linkage },
+    { key: "regular", labelKey: BANNER_GROUP_LABEL_KEYS.regular },
+    { key: "special", labelKey: BANNER_GROUP_LABEL_KEYS.special },
 ];
 
 const RARITY_FILTERS = [6, 5, 4, 3] as const;
@@ -32,9 +40,9 @@ const PAGE_SIZE = 50;
 const EMPTY_RECORDS: IGachaItem[] = [];
 const EMPTY_COUNTS = new Map<number, number>();
 
-function fmtDateTime(ts: number): string {
+function fmtDateTime(ts: number, f: IFormatters): string {
     if (!ts) return "-";
-    return new Date(ts).toLocaleString("en-US", {
+    return f.date(new Date(ts), {
         month: "short",
         day: "numeric",
         year: "numeric",
@@ -44,6 +52,8 @@ function fmtDateTime(ts: number): string {
 }
 
 function PullTable({ items, operatorsById, bannersById, total, emptyMessage, onClearFilter }: { items: IGachaItem[]; operatorsById: Map<string, IOperatorIndexEntry>; bannersById: Map<string, IBanner>; total: number; emptyMessage?: string; onClearFilter?: () => void }) {
+    const t: BannerHistoryT = useT("gacha");
+    const f = useFormatters();
     const [page, setPage] = useState(0);
     const sorted = useMemo(() => [...items].sort((a, b) => b.at - a.at), [items]);
     const pageCount = Math.ceil(sorted.length / PAGE_SIZE);
@@ -55,7 +65,7 @@ function PullTable({ items, operatorsById, bannersById, total, emptyMessage, onC
         // where the chip that would undo it has a 0 count on this tab.
         return (
             <div className="flex flex-col items-center gap-3 py-10 text-center">
-                <p className="m-0 font-sans text-muted-foreground text-sm">{emptyMessage ?? "No pulls recorded for this banner type."}</p>
+                <p className="m-0 font-sans text-muted-foreground text-sm">{emptyMessage ?? t("history.banners.empty")}</p>
                 {/*
                  * `min-h-10` gives a mouse a 40px target, and `Button`'s own
                  * pointer-coarse rule takes the hit area to 44px on touch. Neither is
@@ -63,7 +73,7 @@ function PullTable({ items, operatorsById, bannersById, total, emptyMessage, onC
                  */}
                 {onClearFilter ? (
                     <Button className="min-h-10" variant="outline" onClick={onClearFilter}>
-                        Show all rarities
+                        {t("history.banners.showAllRarities")}
                     </Button>
                 ) : null}
             </div>
@@ -77,9 +87,9 @@ function PullTable({ items, operatorsById, bannersById, total, emptyMessage, onC
                     <thead className="sticky top-0 z-10 bg-card">
                         <tr>
                             <th className="w-10 border-border border-b bg-card px-1.5 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2">#</th>
-                            <th className="border-border border-b bg-card px-1.5 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2">Operator</th>
-                            <th className="hidden border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:table-cell">Banner</th>
-                            <th className="hidden border-border border-b bg-card px-2 py-2 text-right font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] md:table-cell">Date</th>
+                            <th className="border-border border-b bg-card px-1.5 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2">{t("history.banners.col.operator")}</th>
+                            <th className="hidden border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:table-cell">{t("history.banners.col.banner")}</th>
+                            <th className="hidden border-border border-b bg-card px-2 py-2 text-right font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] md:table-cell">{t("history.banners.col.date")}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -113,7 +123,7 @@ function PullTable({ items, operatorsById, bannersById, total, emptyMessage, onC
                                     <td className="hidden px-2 py-2 align-middle sm:table-cell">
                                         <span className="block max-w-45 truncate font-sans text-[12px] text-muted-foreground">{resolveBannerName(item, bannersById)}</span>
                                     </td>
-                                    <td className="hidden whitespace-nowrap px-2 py-2 text-right align-middle font-mono text-[11px] text-muted-foreground tabular-nums md:table-cell">{fmtDateTime(item.at)}</td>
+                                    <td className="hidden whitespace-nowrap px-2 py-2 text-right align-middle font-mono text-[11px] text-muted-foreground tabular-nums md:table-cell">{fmtDateTime(item.at, f)}</td>
                                 </tr>
                             );
                         })}
@@ -123,9 +133,7 @@ function PullTable({ items, operatorsById, bannersById, total, emptyMessage, onC
 
             {pageCount > 1 ? (
                 <div className="flex items-center justify-between border-border border-t pt-3">
-                    <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
-                        {page * PAGE_SIZE + 1}-{Math.min((page + 1) * PAGE_SIZE, sorted.length)} of {formatNumber(sorted.length)} pulls
-                    </span>
+                    <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{t("history.banners.range", { from: page * PAGE_SIZE + 1, to: Math.min((page + 1) * PAGE_SIZE, sorted.length), total: f.number(sorted.length) })}</span>
                     <div className="flex items-center gap-1.5">
                         <button
                             type="button"
@@ -133,7 +141,7 @@ function PullTable({ items, operatorsById, bannersById, total, emptyMessage, onC
                             disabled={page === 0}
                             className="flex h-7 items-center rounded-md border border-border bg-card px-2.5 font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
                         >
-                            Prev
+                            {t("history.banners.prev")}
                         </button>
                         <span className="px-1 font-mono text-[11px] text-muted-foreground tabular-nums">
                             {page + 1} / {pageCount}
@@ -144,7 +152,7 @@ function PullTable({ items, operatorsById, bannersById, total, emptyMessage, onC
                             disabled={page >= pageCount - 1}
                             className="flex h-7 items-center rounded-md border border-border bg-card px-2.5 font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
                         >
-                            Next
+                            {t("history.banners.next")}
                         </button>
                     </div>
                 </div>
@@ -154,6 +162,8 @@ function PullTable({ items, operatorsById, bannersById, total, emptyMessage, onC
 }
 
 export function BannerHistory({ records, operatorsById, bannersById, isLoading }: IBannerHistoryProps) {
+    const t: BannerHistoryT = useT("gacha");
+    const f = useFormatters();
     const [activeTab, setActiveTab] = useState<ClientGachaGroup>("limited");
     const [activeRarities, setActiveRarities] = useState<Set<number>>(() => new Set(RARITY_FILTERS));
 
@@ -201,18 +211,29 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
     const filteredRecords = useMemo(() => activeRecords.filter((item) => activeRarities.has(Number(item.star))), [activeRecords, activeRarities]);
 
     const isFiltered = activeRarities.size !== RARITY_FILTERS.length;
-    const activeTabLabel = TABS.find((t) => t.key === activeTab)?.label ?? "";
+    const activeTabLabelKey = TABS.find((tab) => tab.key === activeTab)?.labelKey;
+    const activeTabLabel = activeTabLabelKey ? t(activeTabLabelKey) : "";
     // Both sides of "x of y" come off work already done: the filtered figure from
     // the counts table, the unfiltered one straight off the bucket. No new walk.
     const visibleCount = filteredTabCounts.get(activeTab) ?? 0;
     const activeTabTotal = records?.[activeTab].total ?? 0;
 
+    // The bare star list, which both the filter summary and the empty state
+    // need: the summary adds "only" to it when just one rarity is on.
+    const rarityStarList = useMemo(
+        () =>
+            RARITY_FILTERS.filter((r) => activeRarities.has(r))
+                .map((r) => `${r}\u2605`)
+                .join(" "),
+        [activeRarities],
+    );
+
     const rarityFilterLabel = useMemo(() => {
         const picked = RARITY_FILTERS.filter((r) => activeRarities.has(r));
-        if (picked.length === 0) return "No rarities selected";
-        if (picked.length === 1) return `${picked[0]}\u2605 only`;
-        return picked.map((r) => `${r}\u2605`).join(" ");
-    }, [activeRarities]);
+        if (picked.length === 0) return t("history.banners.rarity.none");
+        if (picked.length === 1) return t("history.banners.rarity.only", { rarity: picked[0] });
+        return rarityStarList;
+    }, [activeRarities, rarityStarList, t]);
 
     const rarityGroupRef = useRef<HTMLDivElement>(null);
 
@@ -265,8 +286,8 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
     return (
         <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
             <header>
-                <Kicker className="mb-1.5">Pull history</Kicker>
-                <h2 className="m-0 font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">Every pull, sorted newest first.</h2>
+                <Kicker className="mb-1.5">{t("history.banners.kicker")}</Kicker>
+                <h2 className="m-0 font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{t("history.banners.title")}</h2>
             </header>
 
             {/*
@@ -276,7 +297,7 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
              * always mounted so the region exists before its text changes, and
              * sr-only keeps it out of flex flow entirely, costing no space.
              */}
-            <output className="sr-only">{isFiltered ? `Filtered to ${rarityFilterLabel}. Showing ${formatNumber(visibleCount)} of ${formatNumber(activeTabTotal)} ${activeTabLabel} pulls.` : "Showing all rarities."}</output>
+            <output className="sr-only">{isFiltered ? t("history.banners.status.filtered", { rarities: rarityFilterLabel, shown: f.number(visibleCount), total: f.number(activeTabTotal), tab: activeTabLabel }) : t("history.banners.status.all")}</output>
 
             <div className="-mx-1 flex gap-0.5 overflow-x-auto overflow-y-hidden border-border border-b px-1 [scrollbar-width:none] sm:gap-1 [&::-webkit-scrollbar]:hidden">
                 {TABS.map((tab) => {
@@ -289,8 +310,8 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
                             onClick={() => setActiveTab(tab.key)}
                             className={`relative flex shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap border-none bg-none px-2 py-2 font-medium font-sans text-[12px] transition-colors sm:gap-1.5 sm:px-3 sm:text-[13px] ${isActive ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
                         >
-                            {tab.label}
-                            <span className={`inline-flex h-4.5 min-w-5 shrink-0 items-center justify-center rounded-full px-1 font-mono text-[10px] tabular-nums ${isActive ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>{formatNumber(count)}</span>
+                            {t(tab.labelKey)}
+                            <span className={`inline-flex h-4.5 min-w-5 shrink-0 items-center justify-center rounded-full px-1 font-mono text-[10px] tabular-nums ${isActive ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>{f.number(count)}</span>
                             {isActive ? <span className="absolute right-2 -bottom-px left-2 h-0.5 rounded-full bg-primary sm:right-3 sm:left-3" /> : null}
                         </button>
                     );
@@ -298,7 +319,7 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
             </div>
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">Rarity</span>
+                <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.14em]">{t("history.banners.rarityLabel")}</span>
                 {/*
                  * `flex-wrap` is inert while the four chips fit on one line, which
                  * is every width above roughly 320px. Below that the group would
@@ -319,7 +340,7 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
                                 key={rarity}
                                 type="button"
                                 aria-pressed={isActive}
-                                aria-label={`${rarity} star (${count} pulls)`}
+                                aria-label={t("history.banners.rarityChip", { rarity, count })}
                                 disabled={isDisabled}
                                 onClick={() => toggleRarity(rarity)}
                                 className={`flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-2.5 font-medium font-sans text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${isActive ? "bg-card text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.4)]" : "bg-transparent text-muted-foreground hover:enabled:text-foreground"}`}
@@ -327,7 +348,7 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
                                 <span className="tabular-nums" style={isActive ? { color: rarityStarColor(rarity) } : undefined}>
                                     {rarity}★
                                 </span>
-                                <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-mono text-[9.5px] tabular-nums ${isActive ? "bg-primary/15 text-primary" : "bg-muted-foreground/15 text-muted-foreground"}`}>{formatNumber(count)}</span>
+                                <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-mono text-[9.5px] tabular-nums ${isActive ? "bg-primary/15 text-primary" : "bg-muted-foreground/15 text-muted-foreground"}`}>{f.number(count)}</span>
                             </button>
                         );
                     })}
@@ -340,7 +361,7 @@ export function BannerHistory({ records, operatorsById, bannersById, isLoading }
                 operatorsById={operatorsById}
                 bannersById={bannersById}
                 total={filteredRecords.length}
-                emptyMessage={activeRarities.size === 0 ? "Select at least one rarity to display pulls." : isFiltered ? `No ${rarityFilterLabel.replace(" only", "")} pulls in ${activeTabLabel}. Other rarities are hidden by the filter.` : "No pulls recorded for this banner type."}
+                emptyMessage={activeRarities.size === 0 ? t("history.banners.emptyNoRarity") : isFiltered ? t("history.banners.emptyFiltered", { rarities: rarityStarList, tab: activeTabLabel }) : t("history.banners.empty")}
                 onClearFilter={isFiltered ? clearRarityFilter : undefined}
             />
         </section>

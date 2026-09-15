@@ -1,8 +1,38 @@
+import { DEFAULT_LOCALE, formatMessage, sourceMessage } from "#/lib/i18n";
+import { fullMessageKey, type TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import { formatNationId, rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
-import { MONTHS, MONTHS_SHORT, NON_OPERATOR_PROFESSIONS } from "./constants";
+import { NON_OPERATOR_PROFESSIONS } from "./constants";
+import type { messages as helperMessages } from "./helpers.messages";
 import type { CalendarScale, IBirthdayFilters, IOperatorBirthday, ISelectedDay } from "./types";
+
+/** The `t` the range-title helper needs, narrowed to the keys it can render. */
+export type BirthdayHelperT = TypedT<typeof helperMessages>;
+
+/**
+ * Default `t` for a caller outside an `I18nProvider`. It resolves against the
+ * bundled source catalog, so the English is the same one the components render
+ * and this file carries no second copy of the text.
+ */
+const sourceT: BirthdayHelperT = (key, values) => formatMessage(sourceMessage(fullMessageKey("tools", key)) ?? key, DEFAULT_LOCALE, values);
+
+/**
+ * Month names for a locale, index 0 = January. `short` gives the abbreviated
+ * form. These come from `Intl` rather than the message catalog: a locale the
+ * catalog has never seen still gets its own month names.
+ */
+export function monthNames(locale: string, short = false): string[] {
+    const fmt = new Intl.DateTimeFormat(locale, { month: short ? "short" : "long", timeZone: "UTC" });
+    return Array.from({ length: 12 }, (_, i) => fmt.format(new Date(Date.UTC(2021, i, 15))));
+}
+
+/** Abbreviated weekday names for a locale, index 0 = Sunday (the grid is Sunday-first). */
+export function weekdayNames(locale: string): string[] {
+    const fmt = new Intl.DateTimeFormat(locale, { weekday: "short", timeZone: "UTC" });
+    // 2021-08-01 was a Sunday, so the seven days from it start on Sunday.
+    return Array.from({ length: 7 }, (_, i) => fmt.format(new Date(Date.UTC(2021, 7, 1 + i))));
+}
 
 /** Numeric rarity (1-6) for an operator. */
 export function operatorRarity(operator: IOperatorListItem): number {
@@ -185,20 +215,35 @@ export function stepAnchor(scale: CalendarScale, anchor: Date, dir: number): Dat
  * The header label for the visible range, e.g. "October 2026" or "Oct 26 - Nov 1, 2026".
  * `short` drops the weekday and abbreviates months so the title fits on small screens.
  */
-export function formatRangeTitle(scale: CalendarScale, anchor: Date, short = false): string {
-    if (scale === "month") return `${(short ? MONTHS_SHORT : MONTHS)[anchor.getMonth()]} ${anchor.getFullYear()}`;
+export function formatRangeTitle(scale: CalendarScale, anchor: Date, locale: string = DEFAULT_LOCALE, t: BirthdayHelperT = sourceT, short = false): string {
+    const long = monthNames(locale);
+    const abbr = monthNames(locale, true);
+    if (scale === "month") return t("birthdays.range.month", { month: (short ? abbr : long)[anchor.getMonth()], year: anchor.getFullYear() });
     const days = buildAgendaDays(scale, anchor);
     const start = days[0];
     if (days.length === 1) {
-        return short ? `${MONTHS_SHORT[start.getMonth()]} ${start.getDate()}, ${start.getFullYear()}` : start.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+        return short ? t("birthdays.range.day", { month: abbr[start.getMonth()], day: start.getDate(), year: start.getFullYear() }) : new Intl.DateTimeFormat(locale, { weekday: "long", month: "long", day: "numeric", year: "numeric" }).format(start);
     }
 
     const end = days[days.length - 1];
     if (start.getFullYear() !== end.getFullYear()) {
-        return `${MONTHS_SHORT[start.getMonth()]} ${start.getDate()}, ${start.getFullYear()} - ${MONTHS_SHORT[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
+        return t("birthdays.range.crossYear", {
+            startMonth: abbr[start.getMonth()],
+            startDay: start.getDate(),
+            startYear: start.getFullYear(),
+            endMonth: abbr[end.getMonth()],
+            endDay: end.getDate(),
+            endYear: end.getFullYear(),
+        });
     }
     if (start.getMonth() !== end.getMonth()) {
-        return `${MONTHS_SHORT[start.getMonth()]} ${start.getDate()} - ${MONTHS_SHORT[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
+        return t("birthdays.range.crossMonth", {
+            startMonth: abbr[start.getMonth()],
+            startDay: start.getDate(),
+            endMonth: abbr[end.getMonth()],
+            endDay: end.getDate(),
+            year: end.getFullYear(),
+        });
     }
-    return `${MONTHS[start.getMonth()]} ${start.getDate()} - ${end.getDate()}, ${end.getFullYear()}`;
+    return t("birthdays.range.sameMonth", { month: long[start.getMonth()], startDay: start.getDate(), endDay: end.getDate(), year: end.getFullYear() });
 }

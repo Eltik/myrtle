@@ -1,6 +1,9 @@
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, formatProfession } from "#/lib/utils";
 import { CLASSES } from "../constants";
+import type { messages } from "./ClassPicker.messages";
 import { ClassIcon } from "./Icons";
 import styles from "./OperatorFilters.module.css";
 
@@ -9,9 +12,11 @@ export function toggle<T>(list: T[], value: T): T[] {
 }
 
 export function ClassPicker({ selected, onChange }: { selected: string[]; onChange: (v: string[]) => void }) {
+    const t: TypedT<typeof messages> = useT("operators");
+
     return (
         <div className={styles.field}>
-            <div className={styles.fieldLabel}>Class</div>
+            <div className={styles.fieldLabel}>{t("filters.class")}</div>
             <div className={styles.classRow}>
                 {CLASSES.map((cls) => {
                     const on = selected.includes(cls);

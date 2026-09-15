@@ -3,17 +3,20 @@ import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { toastManager } from "#/components/ui/toast";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
+import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { getLevelProgress, type ILevelProgress, MAX_PLAYER_LEVEL } from "#/lib/registry/player-level";
 import { countGameDays } from "#/lib/registry/server-time";
 import { DEFAULT_AVATAR_ID, getAvatarById } from "#/lib/utils";
 import type { IUserProfile } from "#/types/user";
+import type { messages } from "./Hero.messages";
 import shared from "./shared.module.css";
 
 interface IHeroProps {
     profile: IUserProfile;
 }
 
-async function copyToClipboard(text: string, successTitle: string, successDescription: string, errorTitle: string) {
+async function copyToClipboard(text: string, successTitle: string, successDescription: string, errorTitle: string, errorDescription: string) {
     try {
         await navigator.clipboard.writeText(text);
         toastManager.add({
@@ -26,24 +29,29 @@ async function copyToClipboard(text: string, successTitle: string, successDescri
         toastManager.add({
             id: `copy-error-${Date.now()}`,
             title: errorTitle,
-            description: "Clipboard access was denied.",
+            description: errorDescription,
             type: "error",
         });
     }
 }
 
 export function Hero({ profile }: IHeroProps) {
+    const t: TypedT<typeof messages> = useT("user");
+    const f = useFormatters();
     const [avatarErrored, setAvatarErrored] = useState(false);
     const levelProgress = getLevelProgress(profile.level, profile.exp);
     const avatarSrc = getAvatarById(profile.avatar_id ?? DEFAULT_AVATAR_ID);
 
-    const handleShare = () => copyToClipboard(window.location.href, "Link copied", "Profile link copied to clipboard.", "Couldn't copy link");
+    const copyFailed = t("profile.hero.copyFailed.desc");
 
-    const handleCopyUid = () => copyToClipboard(profile.uid, "UID copied", `${profile.uid} copied to clipboard.`, "Couldn't copy UID");
+    const handleShare = () => copyToClipboard(window.location.href, t("profile.hero.share.copied.title"), t("profile.hero.share.copied.desc"), t("profile.hero.share.failed.title"), copyFailed);
 
+    const handleCopyUid = () => copyToClipboard(profile.uid, t("profile.hero.uid.copied.title"), t("profile.hero.copied.desc", { value: profile.uid }), t("profile.hero.uid.failed.title"), copyFailed);
+
+    // The "Doctor" fallback is the game's own name for the player and stays literal.
     const displayNickname = profile.nickname ?? `Doctor ${profile.uid}`;
     const usernameWithDiscriminator = profile.nick_number ? `${displayNickname}#${profile.nick_number}` : displayNickname;
-    const handleCopyUsername = () => copyToClipboard(usernameWithDiscriminator, "Username copied", `${usernameWithDiscriminator} copied to clipboard.`, "Couldn't copy username");
+    const handleCopyUsername = () => copyToClipboard(usernameWithDiscriminator, t("profile.hero.username.copied.title"), t("profile.hero.copied.desc", { value: usernameWithDiscriminator }), t("profile.hero.username.failed.title"), copyFailed);
 
     const totalSigninDays = profile.register_ts && profile.last_online_ts ? countGameDays(profile.register_ts, profile.last_online_ts, profile.server) : 0;
 
@@ -93,17 +101,17 @@ export function Hero({ profile }: IHeroProps) {
                 <div className="flex items-center justify-end gap-2 self-start sm:order-3 sm:pt-1">
                     <Button variant="outline" size="sm" onClick={handleShare} className="gap-1.5">
                         <Share2 className="size-3.5" />
-                        <span className="xs:inline hidden sm:inline">Share</span>
+                        <span className="xs:inline hidden sm:inline">{t("profile.hero.share")}</span>
                     </Button>
                     <Tooltip>
                         <TooltipTrigger
                             render={(triggerProps) => (
-                                <Button {...triggerProps} variant="outline" size="icon" onClick={handleCopyUid} aria-label="Copy UID" className="size-8">
+                                <Button {...triggerProps} variant="outline" size="icon" onClick={handleCopyUid} aria-label={t("profile.hero.copyUid")} className="size-8">
                                     <Copy className="size-3.5" />
                                 </Button>
                             )}
                         />
-                        <TooltipPopup>Copy UID</TooltipPopup>
+                        <TooltipPopup>{t("profile.hero.copyUid")}</TooltipPopup>
                     </Tooltip>
                 </div>
 
@@ -111,19 +119,19 @@ export function Hero({ profile }: IHeroProps) {
                 <div className="col-span-2 flex min-w-0 flex-col sm:order-2 sm:col-span-1">
                     <div className="mb-1.5 flex flex-wrap items-center gap-2">
                         <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-widest">{profile.uid}</span>
-                        <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.28_0.005_285)] bg-muted px-2 py-0.5 font-medium font-mono text-[11px] text-muted-foreground leading-none">{profile.server} server</span>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-[oklch(0.28_0.005_285)] bg-muted px-2 py-0.5 font-medium font-mono text-[11px] text-muted-foreground leading-none">{t("profile.hero.serverTag", { server: profile.server })}</span>
                     </div>
                     <h1 className="wrap-break-word mb-1 flex flex-wrap items-baseline gap-x-1.5 font-bold font-sans text-2xl leading-[1.1] tracking-tight sm:text-3xl lg:text-[36px] lg:leading-[1.05]">
                         <Tooltip>
                             <TooltipTrigger
                                 render={(triggerProps) => (
-                                    <button {...triggerProps} type="button" onClick={handleCopyUsername} aria-label="Copy username" className="cursor-pointer rounded-sm text-left transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                    <button {...triggerProps} type="button" onClick={handleCopyUsername} aria-label={t("profile.hero.copyUsername")} className="cursor-pointer rounded-sm text-left transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                                         {displayNickname}
                                         {profile.nick_number && <span className="ml-1 font-medium font-mono text-base text-muted-foreground sm:text-lg lg:text-xl">#{profile.nick_number}</span>}
                                     </button>
                                 )}
                             />
-                            <TooltipPopup>Copy username</TooltipPopup>
+                            <TooltipPopup>{t("profile.hero.copyUsername")}</TooltipPopup>
                         </Tooltip>
                     </h1>
                     {profile.resume && <p className="mb-3.5 max-w-prose font-normal font-sans text-muted-foreground text-sm leading-normal sm:text-[14.5px] lg:max-w-135">{profile.resume}</p>}
@@ -132,9 +140,9 @@ export function Hero({ profile }: IHeroProps) {
                         <span className="inline-flex items-center gap-2">
                             <span className={shared.dotPulse} aria-hidden="true" />
                             <span>
-                                Registered ·{" "}
+                                {t("profile.hero.registered")}{" "}
                                 <b>
-                                    {new Date((profile.register_ts ?? 0) * 1000).toLocaleDateString("en-US", {
+                                    {f.date(new Date((profile.register_ts ?? 0) * 1000), {
                                         month: "short",
                                         day: "numeric",
                                         year: "numeric",
@@ -146,11 +154,11 @@ export function Hero({ profile }: IHeroProps) {
                             <span className="inline-flex items-center gap-2">
                                 <span aria-hidden="true" className="size-1.5 rounded-full bg-muted-foreground/40" />
                                 <span>
-                                    Signed in ·{" "}
+                                    {t("profile.hero.signedIn")}{" "}
                                     <b className="text-foreground tabular-nums">
-                                        {profile.cumulative_signin.toLocaleString()}/{totalSigninDays.toLocaleString()}
+                                        {f.number(profile.cumulative_signin)}/{f.number(totalSigninDays)}
                                     </b>{" "}
-                                    days
+                                    {t("profile.hero.days")}
                                 </span>
                             </span>
                         )}
@@ -162,15 +170,17 @@ export function Hero({ profile }: IHeroProps) {
 }
 
 function LevelProgressBar({ progress }: { progress: ILevelProgress }) {
+    const t: TypedT<typeof messages> = useT("user");
+    const f: IFormatters = useFormatters();
     const { level, isMax, currentExp, requiredExp, ratio } = progress;
     const percent = Math.round(ratio * 100);
-    const ariaLabel = isMax ? `Level ${level} (max)` : `Level ${level}, ${currentExp.toLocaleString()} of ${requiredExp?.toLocaleString()} EXP to level ${level + 1}`;
+    const ariaLabel = isMax ? t("profile.hero.level.ariaMax", { level }) : t("profile.hero.level.aria", { level, current: f.number(currentExp), required: f.number(requiredExp), next: level + 1 });
 
     return (
         <div className="mb-3.5 w-full max-w-prose lg:max-w-135">
             <div className="mb-1.5 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-widest">
                 <span>
-                    Lv <span className="text-foreground tabular-nums">{level}</span>
+                    {t("profile.hero.level.lv")} <span className="text-foreground tabular-nums">{level}</span>
                     {!isMax && (
                         <>
                             {"/"}
@@ -178,7 +188,7 @@ function LevelProgressBar({ progress }: { progress: ILevelProgress }) {
                         </>
                     )}
                 </span>
-                <span className="tabular-nums">{isMax ? `Max · ${MAX_PLAYER_LEVEL}` : `${currentExp.toLocaleString()} / ${requiredExp?.toLocaleString()} EXP`}</span>
+                <span className="tabular-nums">{isMax ? t("profile.hero.level.max", { max: MAX_PLAYER_LEVEL }) : t("profile.hero.level.exp", { current: f.number(currentExp), required: f.number(requiredExp) })}</span>
             </div>
             <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} aria-label={ariaLabel} className="h-1.5 overflow-hidden rounded-full bg-muted">
                 <div className="h-full rounded-full bg-linear-to-r from-primary/70 to-primary transition-[width] duration-500 ease-out" style={{ width: `${percent}%` }} />

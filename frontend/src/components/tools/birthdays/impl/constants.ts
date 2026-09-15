@@ -1,19 +1,19 @@
 import type { OperatorProfession } from "#/types/operators";
+import type { messages as birthdayConstantsMessages } from "./constants.messages";
 import type { CalendarScale } from "./types";
 
-export const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] as const;
-export const MONTHS_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
-export const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+/** A key in `constants.messages.ts`; resolved by whichever component renders it. */
+export type BirthdayMessageKey = keyof typeof birthdayConstantsMessages & string;
 
 /** Rarity chips, highest first. */
 export const RARITIES = [6, 5, 4, 3, 2, 1] as const;
 
 /** Calendar zoom levels, narrowest first. */
-export const CALENDAR_SCALES: { id: CalendarScale; label: string }[] = [
-    { id: "day", label: "Day" },
-    { id: "3day", label: "3 Day" },
-    { id: "week", label: "Week" },
-    { id: "month", label: "Month" },
+export const CALENDAR_SCALES: { id: CalendarScale; labelKey: BirthdayMessageKey }[] = [
+    { id: "day", labelKey: "birthdays.scale.day" },
+    { id: "3day", labelKey: "birthdays.scale.3day" },
+    { id: "week", labelKey: "birthdays.scale.week" },
+    { id: "month", labelKey: "birthdays.scale.month" },
 ];
 
 /** The eight playable classes, in the game's canonical order. Labels come from `formatProfession`. */

@@ -1,6 +1,9 @@
 import type * as React from "react";
 import { Button } from "#/components/ui/button";
-import { TAG_GROUP_LABELS, TAG_GROUP_ORDER } from "../constants";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import { TAG_GROUP_LABEL_KEYS, TAG_GROUP_ORDER } from "../constants";
+import type { messages as recruitConstantsMessages } from "../constants.messages";
 import type { IRecruitmentTag, TagType } from "../types";
 
 interface ITagSelectorProps {
@@ -11,6 +14,7 @@ interface ITagSelectorProps {
 }
 
 export function TagSelector({ groups, selectedTagIds, onToggle, maxReached }: ITagSelectorProps): React.ReactElement {
+    const t: TypedT<typeof recruitConstantsMessages> = useT("tools");
     return (
         <div className="flex flex-col gap-4">
             {TAG_GROUP_ORDER.map((type) => {
@@ -18,7 +22,7 @@ export function TagSelector({ groups, selectedTagIds, onToggle, maxReached }: IT
                 if (tagsForGroup.length === 0) return null;
                 return (
                     <section key={type}>
-                        <h3 className="mb-2 font-medium font-sans text-[11px] text-muted-foreground uppercase tracking-wide">{TAG_GROUP_LABELS[type]}</h3>
+                        <h3 className="mb-2 font-medium font-sans text-[11px] text-muted-foreground uppercase tracking-wide">{t(TAG_GROUP_LABEL_KEYS[type])}</h3>
                         <div className="grid grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] gap-2">
                             {tagsForGroup.map((tag) => {
                                 const selected = selectedTagIds.has(tag.id);

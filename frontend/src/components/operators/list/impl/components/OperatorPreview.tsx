@@ -1,6 +1,9 @@
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { formatArchetype, formatNationId, formatProfession, getAvatarById, rarityToNumber } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { CampIcon, ClassIcon } from "./Icons";
+import type { messages } from "./OperatorPreview.messages";
 import styles from "./OperatorPreview.module.css";
 
 interface IOperatorPreviewProps {
@@ -8,6 +11,7 @@ interface IOperatorPreviewProps {
 }
 
 export function OperatorPreview({ operator }: IOperatorPreviewProps) {
+    const t: TypedT<typeof messages> = useT("operators");
     const rarity = rarityToNumber(operator.rarity);
     const initial = operator.name.charAt(0).toUpperCase();
     const nationLabel = operator.nationId ? formatNationId(operator.nationId) : null;
@@ -49,18 +53,18 @@ export function OperatorPreview({ operator }: IOperatorPreviewProps) {
             {operator.position && (
                 <div className={styles.meta}>
                     <span className={styles.metaItem}>
-                        <span className={styles.k}>Position</span>
+                        <span className={styles.k}>{t("preview.position")}</span>
                         <span className={styles.v}>{operator.position.charAt(0) + operator.position.slice(1).toLowerCase()}</span>
                     </span>
                     {race && (
                         <span className={styles.metaItem}>
-                            <span className={styles.k}>Race</span>
+                            <span className={styles.k}>{t("preview.race")}</span>
                             <span className={styles.v}>{race}</span>
                         </span>
                     )}
                     {gender && (
                         <span className={styles.metaItem}>
-                            <span className={styles.k}>Gender</span>
+                            <span className={styles.k}>{t("preview.gender")}</span>
                             <span className={styles.v}>{gender}</span>
                         </span>
                     )}

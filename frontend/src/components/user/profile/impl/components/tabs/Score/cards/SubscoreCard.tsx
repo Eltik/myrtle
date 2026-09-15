@@ -3,10 +3,14 @@ import { useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
 import type { IImprovementsResponse, IUserScore } from "#/lib/api/user";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import { Bar, CARD_PADDING, KICKER_TEXT, Kicker, StatCard } from "../../Stats/primitives";
 import { formatPct, type ISubscore, toPct, weightShare } from "../helpers";
+import type { messages as helperMessages } from "../helpers.messages";
 import { ImprovementsPanel } from "../improvements/ImprovementsPanel";
+import type { messages } from "./SubscoreCard.messages";
 
 interface ISubscoreCardProps {
     sub: ISubscore;
@@ -18,6 +22,8 @@ interface ISubscoreCardProps {
 }
 
 export function SubscoreCard({ sub, score, improvements, isImprovementsLoading, scoreRow }: ISubscoreCardProps) {
+    /** Section names and blurbs are declared once, in `helpers.messages.ts`. */
+    const t: TypedT<typeof messages & typeof helperMessages> = useT("user");
     const pct = toPct(score);
     const wShare = weightShare(sub.weight);
     const contribution = (pct * wShare) / 100;
@@ -26,21 +32,19 @@ export function SubscoreCard({ sub, score, improvements, isImprovementsLoading, 
     return (
         <Collapsible open={open} onOpenChange={setOpen}>
             <StatCard color={sub.color} className={open ? "ring-1 ring-border/40" : undefined}>
-                <CollapsibleTrigger render={<button type="button" className={cn("group flex w-full flex-col gap-5 text-left", CARD_PADDING)} aria-expanded={open} aria-label={`${sub.label} details - ${open ? "collapse" : "expand"}`} />}>
+                <CollapsibleTrigger render={<button type="button" className={cn("group flex w-full flex-col gap-5 text-left", CARD_PADDING)} aria-expanded={open} aria-label={t(open ? "score.sub.details.collapse" : "score.sub.details.expand", { label: t(sub.labelKey) })} />}>
                     <div className="flex items-center justify-between">
-                        <Kicker icon={sub.icon} label={sub.label} />
+                        <Kicker icon={sub.icon} label={t(sub.labelKey)} />
                         <Tooltip>
                             <TooltipTrigger
                                 render={
                                     <span className="cursor-default rounded-md border border-border/50 px-1.5 py-0.5 font-mono font-semibold text-[9.5px] text-muted-foreground/80 uppercase tabular-nums tracking-wider" style={{ background: `color-mix(in oklch, ${sub.color} 8%, transparent)` }}>
-                                        {wShare.toFixed(0)}% of grade
+                                        {t("score.sub.shareBadge", { share: wShare.toFixed(0) })}
                                     </span>
                                 }
                             />
                             <TooltipContent sideOffset={5}>
-                                <p>
-                                    Worth {wShare.toFixed(0)}% of your overall grade - at {pct.toFixed(1)}%, this section contributes {contribution.toFixed(1)} of those {wShare.toFixed(0)} points
-                                </p>
+                                <p>{t("score.sub.shareTooltip", { share: wShare.toFixed(0), pct: pct.toFixed(1), contribution: contribution.toFixed(1) })}</p>
                             </TooltipContent>
                         </Tooltip>
                     </div>
@@ -60,19 +64,19 @@ export function SubscoreCard({ sub, score, improvements, isImprovementsLoading, 
                                 </span>
                                 <span className="font-medium font-mono text-base text-muted-foreground/50 tabular-nums">%</span>
                             </div>
-                            <span className={KICKER_TEXT}>{sub.description}</span>
+                            <span className={KICKER_TEXT}>{t(sub.descriptionKey)}</span>
                         </div>
 
                         <div className="space-y-2">
                             <div className="flex items-center justify-between">
-                                <span className={KICKER_TEXT}>Progress</span>
+                                <span className={KICKER_TEXT}>{t("score.sub.progress")}</span>
                                 <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{formatPct(score, 2)}</span>
                             </div>
                             <Bar color={sub.color} pct={pct} />
                         </div>
 
                         <div className="flex items-center justify-between border-border/30 border-t pt-2.5">
-                            <span className="font-mono text-[10px] text-muted-foreground/70 uppercase tracking-wider transition-colors group-hover:text-foreground/85">{open ? "Hide breakdown" : "What can I improve?"}</span>
+                            <span className="font-mono text-[10px] text-muted-foreground/70 uppercase tracking-wider transition-colors group-hover:text-foreground/85">{open ? t("score.sub.hideBreakdown") : t("score.sub.whatToImprove")}</span>
                             <ChevronDown aria-hidden className={cn("size-3.5 shrink-0 text-muted-foreground/65 transition-[transform,color] duration-200 group-hover:text-foreground/85", open && "rotate-180")} />
                         </div>
                     </div>

@@ -23,6 +23,7 @@ import type { RaceData } from "#/types/generated/RaceData";
 import type { SkillBlackboardEntry } from "#/types/generated/SkillBlackboardEntry";
 import type { StatRange } from "#/types/generated/StatRange";
 import type { Refine } from "#/types/refine";
+import { DEFAULT_GAMEDATA_SERVER, gamedataKey, gamedataPath, resolveGamedataServer } from "./gamedata";
 
 export type IEnemyLevel = EnemyLevel;
 export type IEnemyDamageType = DamageType;
@@ -39,36 +40,40 @@ export type IEnemy = Enemy;
 export type IEnemyHandbook = EnemyHandbook;
 
 /** Backend-served square icon for an enemy, keyed by `enemyId`. */
-export function enemyIconURL(enemyId: string): string {
-    return `${env.VITE_BACKEND_URL ?? ""}/api/enemy-icon/${encodeURIComponent(enemyId)}`;
+export function enemyIconURL(enemyId: string, server: string = DEFAULT_GAMEDATA_SERVER): string {
+    return `${env.VITE_BACKEND_URL ?? ""}/api${gamedataPath(server, `/enemy-icon/${encodeURIComponent(enemyId)}`)}`;
 }
 
-export const getEnemiesFn = createServerFn({ method: "GET" }).handler(async () => {
-    const res = await backendFetch("/static/enemies");
-    if (!res.ok) throw new Error(`Failed to load enemies: ${res.status}`);
-    return (await res.json()) as IEnemyHandbook;
-});
+export const getEnemiesFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string | undefined) => server)
+    .handler(async ({ data: server }) => {
+        const res = await backendFetch(gamedataPath(server, "/static/enemies"));
+        if (!res.ok) throw new Error(`Failed to load enemies: ${res.status}`);
+        return (await res.json()) as IEnemyHandbook;
+    });
 
-export function enemiesQueryOptions() {
+export function enemiesQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["enemies"],
-        queryFn: () => getEnemiesFn(),
+        queryKey: ["enemies", ...gamedataKey(server)],
+        queryFn: () => getEnemiesFn({ data: resolveGamedataServer(server) }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });
 }
 
-export const getEnemiesListFn = createServerFn({ method: "GET" }).handler(async () => {
-    const res = await backendFetch("/static/enemies");
-    if (!res.ok) throw new Error(`Failed to load enemies: ${res.status}`);
-    const handbook = (await res.json()) as IEnemyHandbook;
-    return values(handbook.enemyData).sort((a, b) => a.sortId - b.sortId);
-});
+export const getEnemiesListFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string | undefined) => server)
+    .handler(async ({ data: server }) => {
+        const res = await backendFetch(gamedataPath(server, "/static/enemies"));
+        if (!res.ok) throw new Error(`Failed to load enemies: ${res.status}`);
+        const handbook = (await res.json()) as IEnemyHandbook;
+        return values(handbook.enemyData).sort((a, b) => a.sortId - b.sortId);
+    });
 
-export function enemiesListQueryOptions() {
+export function enemiesListQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["enemies", "list"],
-        queryFn: () => getEnemiesListFn(),
+        queryKey: ["enemies", "list", ...gamedataKey(server)],
+        queryFn: () => getEnemiesListFn({ data: resolveGamedataServer(server) }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });
@@ -93,17 +98,19 @@ export type IEnemyStageRef = Refine<
 /** `enemyId -> stages it appears in`. */
 export type IEnemyStageIndex = Record<string, IEnemyStageRef[]>;
 
-export const getEnemyStagesFn = createServerFn({ method: "GET" }).handler(async () => {
-    const res = await backendFetch("/static/enemy-stages");
-    if (!res.ok) throw new Error(`Failed to load enemy stages: ${res.status}`);
-    return (await res.json()) as IEnemyStageIndex;
-});
+export const getEnemyStagesFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string | undefined) => server)
+    .handler(async ({ data: server }) => {
+        const res = await backendFetch(gamedataPath(server, "/static/enemy-stages"));
+        if (!res.ok) throw new Error(`Failed to load enemy stages: ${res.status}`);
+        return (await res.json()) as IEnemyStageIndex;
+    });
 
 /** Full enemy -> stages index. Fetch once and look up by enemy id client-side. */
-export function enemyStagesQueryOptions() {
+export function enemyStagesQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["enemies", "stages"],
-        queryFn: () => getEnemyStagesFn(),
+        queryKey: ["enemies", "stages", ...gamedataKey(server)],
+        queryFn: () => getEnemyStagesFn({ data: resolveGamedataServer(server) }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });
@@ -137,18 +144,18 @@ export interface IEnemyDetail {
 }
 
 export const getEnemyDetailFn = createServerFn({ method: "GET" })
-    .inputValidator((id: string) => id)
-    .handler(async ({ data: id }) => {
-        const res = await backendFetch(`/enemies/${encodeURIComponent(id)}`);
+    .inputValidator((data: { id: string; server?: string }) => data)
+    .handler(async ({ data: { id, server } }) => {
+        const res = await backendFetch(gamedataPath(server, `/enemies/${encodeURIComponent(id)}`));
         if (res.status === 404) return null;
         if (!res.ok) throw new Error(`Failed to load enemy ${id}: ${res.status}`);
         return (await res.json()) as IEnemyDetail;
     });
 
-export function enemyDetailQueryOptions(id: string) {
+export function enemyDetailQueryOptions(id: string, server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["enemies", "detail", id],
-        queryFn: () => getEnemyDetailFn({ data: id }),
+        queryKey: ["enemies", "detail", id, ...gamedataKey(server)],
+        queryFn: () => getEnemyDetailFn({ data: { id, server: resolveGamedataServer(server) } }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
         enabled: !!id,
@@ -157,18 +164,18 @@ export function enemyDetailQueryOptions(id: string) {
 
 /** The "Appears In" list for a single enemy, served by `GET /enemies/{id}/stages`. */
 export const getEnemyAppearsInFn = createServerFn({ method: "GET" })
-    .inputValidator((id: string) => id)
-    .handler(async ({ data: id }) => {
-        const res = await backendFetch(`/enemies/${encodeURIComponent(id)}/stages`);
+    .inputValidator((data: { id: string; server?: string }) => data)
+    .handler(async ({ data: { id, server } }) => {
+        const res = await backendFetch(gamedataPath(server, `/enemies/${encodeURIComponent(id)}/stages`));
         if (res.status === 404) return [] as IEnemyStageRef[];
         if (!res.ok) throw new Error(`Failed to load enemy stages ${id}: ${res.status}`);
         return (await res.json()) as IEnemyStageRef[];
     });
 
-export function enemyAppearsInQueryOptions(id: string) {
+export function enemyAppearsInQueryOptions(id: string, server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["enemies", "appears-in", id],
-        queryFn: () => getEnemyAppearsInFn({ data: id }),
+        queryKey: ["enemies", "appears-in", id, ...gamedataKey(server)],
+        queryFn: () => getEnemyAppearsInFn({ data: { id, server: resolveGamedataServer(server) } }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
         enabled: !!id,

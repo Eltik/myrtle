@@ -1,9 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { formatSubProfession, getAvatarById, parseOperatorName, rarityToNumber } from "#/lib/utils";
 import { RARITY_COLORS } from "../constants";
 import type { IOperatorView, StatMetric } from "../types";
 import { CampIcon, ClassIcon } from "./Icons";
+import type { messages } from "./OperatorCardCompact.messages";
 import { OperatorPreview } from "./OperatorPreview";
 import { OwnershipBadge } from "./OwnershipBadge";
 
@@ -15,9 +18,10 @@ interface IOperatorCardCompactProps {
 }
 
 export function OperatorCardCompact({ operator, statMetric }: IOperatorCardCompactProps) {
+    const t: TypedT<typeof messages> = useT("operators");
     const rarityColor = RARITY_COLORS[rarityToNumber(operator.rarity)] ?? "#ffffff";
     const operatorId = operator.id ?? "";
-    const operatorName = operator.name ?? "Unknown";
+    const operatorName = operator.name ?? t("card.unknownOperator");
     const { displayName, subtitle } = parseOperatorName(operatorName);
     const factionLogoId = operator.nationId || operator.teamId || operator.groupId || "rhodes";
 

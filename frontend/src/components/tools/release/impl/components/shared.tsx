@@ -8,25 +8,32 @@ import { Label } from "#/components/ui/label";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Switch } from "#/components/ui/switch";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, parseOperatorName, rarityToNumber } from "#/lib/utils";
 import type { AutoName } from "#/types/generated/AutoName";
 import type { AutoNameSource } from "#/types/generated/AutoNameSource";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { useAutoTranslate } from "../autoTranslate";
 import { assetUrl } from "../helpers";
+import type { messages } from "./shared.messages";
+
+type SharedT = TypedT<typeof messages>;
 
 export function Tag({ children, className }: { children: React.ReactNode; className?: string }): React.ReactElement {
     return <span className={cn("inline-flex shrink-0 items-center rounded-sm bg-muted px-1.5 py-px font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.06em]", className)}>{children}</span>;
 }
 
-const AUTO_TAG: Record<AutoNameSource, { label: string; title: string }> = {
-    memory: { label: "matched", title: "Same name under an id both servers share, or the EN name of this event's original run" },
-    appellation: { label: "codename", title: "The operator's shipped Latin name" },
-    override: { label: "entered", title: "An English name entered on this row's override" },
+const AUTO_TAG_KEYS: Record<AutoNameSource, { label: keyof typeof messages & string; title: keyof typeof messages & string }> = {
+    memory: { label: "release.auto.memory", title: "release.auto.memory.title" },
+    appellation: { label: "release.auto.appellation", title: "release.auto.appellation.title" },
+    override: { label: "release.auto.override", title: "release.auto.override.title" },
 };
 
 export function AutoTag({ source, className }: { source: AutoNameSource; className?: string }): React.ReactElement {
-    const { label, title } = AUTO_TAG[source];
+    const t: SharedT = useT("tools");
+    const label = t(AUTO_TAG_KEYS[source].label);
+    const title = t(AUTO_TAG_KEYS[source].title);
     return (
         <span className={cn("inline-flex shrink-0 cursor-help items-center rounded-sm border border-border/60 px-1 py-px font-sans text-[9.5px] text-muted-foreground/80 leading-[1.3]", className)} title={title} translate="no">
             {label}
@@ -58,6 +65,7 @@ interface ICnNameProps {
 }
 
 export function CnName({ cn: cnText, en, auto, className, primaryClassName, compact, children }: ICnNameProps): React.ReactElement {
+    const t: SharedT = useT("tools");
     const autoOn = useAutoTranslate();
     const name = resolveName(cnText, en, auto, autoOn);
     const primary = (
@@ -66,7 +74,7 @@ export function CnName({ cn: cnText, en, auto, className, primaryClassName, comp
         </span>
     );
     if (compact) {
-        const tip = [name.original, name.auto ? AUTO_TAG[name.auto.source].label : null].filter(Boolean).join(" \u00b7 ");
+        const tip = [name.original, name.auto ? t(AUTO_TAG_KEYS[name.auto.source].label) : null].filter(Boolean).join(" \u00b7 ");
         return (
             <span className={cn("flex min-w-0 items-center gap-1", className)} title={tip || undefined}>
                 {primary}
@@ -106,10 +114,11 @@ export function ToggleField({ id, label, checked, onChange }: { id: string; labe
 }
 
 export function SectionTitle({ children, count }: { children: React.ReactNode; count?: number }): React.ReactElement {
+    const t: SharedT = useT("tools");
     return (
         <h3 className="m-0 mb-2 flex items-baseline gap-2 font-sans font-semibold text-[15px] text-foreground">
             {children}
-            {count !== undefined && <span className="font-medium font-mono text-[11px] text-muted-foreground">· {count}</span>}
+            {count !== undefined && <span className="font-medium font-mono text-[11px] text-muted-foreground">{t("release.sectionCount", { count })}</span>}
         </h3>
     );
 }
@@ -147,12 +156,13 @@ export function ReleaseLoading(): React.ReactElement {
 }
 
 export function ReleaseError({ error, onRetry }: { error: unknown; onRetry: () => void }): React.ReactElement {
+    const t: SharedT = useT("tools");
     const message = error instanceof Error ? error.message : String(error);
     return (
         <Card className="items-start gap-2 p-4">
-            <p className="m-0 font-sans text-[13px] text-destructive-foreground">{message || "Failed to load."}</p>
+            <p className="m-0 font-sans text-[13px] text-destructive-foreground">{message || t("release.loadFailed")}</p>
             <Button size="sm" variant="outline" onClick={onRetry}>
-                Retry
+                {t("release.retry")}
             </Button>
         </Card>
     );

@@ -9,13 +9,22 @@
  *
  * Ids are date-prefixed so they sort lexically. Add a `-2` suffix for a second
  * entry on the same day. Never reuse an id unless you want it re-shown.
+ *
+ * The prose itself lives in `entries.messages.ts`: an entry carries message
+ * KEYS and whichever component renders it resolves them with `t()`. A new entry
+ * therefore needs its keys added there too.
  */
+
+import type { messages as entryMessages } from "./entries.messages";
 
 export type ReleaseNoteKind = "new" | "improved" | "fixed";
 
+/** A key declared in `entries.messages.ts`. */
+export type ReleaseNoteMessageKey = keyof typeof entryMessages & string;
+
 export interface IReleaseNoteItem {
     kind: ReleaseNoteKind;
-    text: string;
+    textKey: ReleaseNoteMessageKey;
 }
 
 export interface IReleaseNote {
@@ -23,36 +32,52 @@ export interface IReleaseNote {
     id: string;
     /** ISO date, rendered in the dialog eyebrow. */
     date: string;
-    title: string;
+    titleKey: ReleaseNoteMessageKey;
     /** `false` files the entry in the archive without interrupting anyone. */
     announce: boolean;
     /** Markdown. One to three sentences: this is the marquee, not a bullet list. */
-    lead: string;
-    media?: { src: string; alt: string };
+    leadKey: ReleaseNoteMessageKey;
+    media?: { src: string; altKey: ReleaseNoteMessageKey };
     /** Secondary changes, one line each. Deliberately subordinate to `lead`. */
     items?: IReleaseNoteItem[];
     /** Deep link to the thing that changed. Becomes the dialog's primary action. */
     href?: string;
-    hrefLabel?: string;
+    hrefLabelKey?: ReleaseNoteMessageKey;
 }
 
 const ENTRIES: IReleaseNote[] = [
     {
+        id: "2026-09-16",
+        date: "2026-09-16",
+        titleKey: "note.2026-09-16.title",
+        announce: true,
+        leadKey: "note.2026-09-16.lead",
+        href: "/tools/release",
+        hrefLabelKey: "note.2026-09-16.hrefLabel",
+        items: [
+            { kind: "new", textKey: "note.2026-09-16.item.1" },
+            { kind: "new", textKey: "note.2026-09-16.item.2" },
+            { kind: "improved", textKey: "note.2026-09-16.item.3" },
+            { kind: "improved", textKey: "note.2026-09-16.item.4" },
+            { kind: "fixed", textKey: "note.2026-09-16.item.5" },
+        ],
+    },
+    {
         id: "2026-09-10",
         date: "2026-09-10",
-        title: "Build statistics",
+        titleKey: "note.2026-09-10.title",
         announce: true,
-        lead: "Based on community statistics, operators now display what users build for masteries and modules. More bug fixes and grading have been improved.",
+        leadKey: "note.2026-09-10.lead",
         href: "/operators",
-        hrefLabel: "Browse operators",
+        hrefLabelKey: "note.2026-09-10.hrefLabel",
         items: [
-            { kind: "new", text: "Added changelog notifications." },
-            { kind: "new", text: "Added build statistics." },
-            { kind: "new", text: "Display breakpoints and percentages for mastery/module levels." },
-            { kind: "improved", text: "Operator skills/modules default to what is most used." },
-            { kind: "improved", text: "Operator grades were computed from the wrong baseline. Scores across the roster have shifted." },
-            { kind: "fixed", text: "Profile rosters no longer play E2 dynamic art over an operator who has not reached E2." },
-            { kind: "fixed", text: "Check-in dates and Reclamation Algorithm scoring." },
+            { kind: "new", textKey: "note.2026-09-10.item.1" },
+            { kind: "new", textKey: "note.2026-09-10.item.2" },
+            { kind: "new", textKey: "note.2026-09-10.item.3" },
+            { kind: "improved", textKey: "note.2026-09-10.item.4" },
+            { kind: "improved", textKey: "note.2026-09-10.item.5" },
+            { kind: "fixed", textKey: "note.2026-09-10.item.6" },
+            { kind: "fixed", textKey: "note.2026-09-10.item.7" },
         ],
     },
 ];

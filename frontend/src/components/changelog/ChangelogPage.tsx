@@ -6,12 +6,31 @@ import { ReleaseNotesList } from "#/components/changelog/ReleaseNotesList";
 import { Kicker } from "#/components/ui/kicker";
 import { Tabs, TabsList, TabsTab } from "#/components/ui/tabs";
 import { CHANGELOG_RANGES, type ChangelogRangeId, changelogQueryOptions, commitsWithinDays, type IChangelogCommit } from "#/lib/api/changelog";
-import { formatRelative } from "#/lib/utils";
+import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "./ChangelogPage.messages";
 import { ActivityStrip } from "./impl/ActivityStrip";
 import styles from "./impl/ChangelogPage.module.css";
 import { CommitItem } from "./impl/CommitItem";
 
 type ChangelogSurface = "notes" | "commits";
+
+type ChangelogPageT = TypedT<typeof messages>;
+
+type ChangelogMessageKey = keyof typeof messages & string;
+
+/**
+ * Display copy for the time windows `lib/api/changelog` defines. The ranges
+ * themselves are data-layer values, so their names live here rather than in the
+ * query module; `lower` exists because English lower-cases a title-cased label
+ * mid-sentence and most languages do not.
+ */
+const RANGE_KEYS: Record<ChangelogRangeId, { label: ChangelogMessageKey; short: ChangelogMessageKey; lower: ChangelogMessageKey }> = {
+    day: { label: "range.day.label", short: "range.day.short", lower: "range.day.lower" },
+    week: { label: "range.week.label", short: "range.week.short", lower: "range.week.lower" },
+    month: { label: "range.month.label", short: "range.month.short", lower: "range.month.lower" },
+    quarter: { label: "range.quarter.label", short: "range.quarter.short", lower: "range.quarter.lower" },
+};
 
 interface ICommitGroup {
     key: string;
@@ -25,16 +44,16 @@ function startOfDay(d: Date): number {
     return x.getTime();
 }
 
-function groupLabel(dayStart: number, today: number): string {
+function groupLabel(dayStart: number, today: number, t: ChangelogPageT, f: IFormatters): string {
     const diffDays = Math.round((today - dayStart) / 86_400_000);
-    if (diffDays <= 0) return "Today";
-    if (diffDays === 1) return "Yesterday";
+    if (diffDays <= 0) return t("page.group.today");
+    if (diffDays === 1) return t("page.group.yesterday");
     const d = new Date(dayStart);
     const sameYear = d.getFullYear() === new Date(today).getFullYear();
-    return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", ...(sameYear ? {} : { year: "numeric" }) });
+    return f.date(d, { weekday: "short", month: "short", day: "numeric", ...(sameYear ? {} : { year: "numeric" }) });
 }
 
-function groupByDay(commits: IChangelogCommit[]): ICommitGroup[] {
+function groupByDay(commits: IChangelogCommit[], t: ChangelogPageT, f: IFormatters): ICommitGroup[] {
     const today = startOfDay(new Date());
     const groups = new Map<number, IChangelogCommit[]>();
     for (const c of commits) {
@@ -43,7 +62,7 @@ function groupByDay(commits: IChangelogCommit[]): ICommitGroup[] {
         if (bucket) bucket.push(c);
         else groups.set(key, [c]);
     }
-    return [...groups.entries()].sort((a, b) => b[0] - a[0]).map(([key, list]) => ({ key: String(key), label: groupLabel(key, today), commits: list }));
+    return [...groups.entries()].sort((a, b) => b[0] - a[0]).map(([key, list]) => ({ key: String(key), label: groupLabel(key, today, t, f), commits: list }));
 }
 
 function GithubMark({ className }: { className?: string }) {
@@ -67,6 +86,8 @@ function StatCell({ icon, label, value }: { icon: React.ReactNode; label: string
 }
 
 export function ChangelogPage() {
+    const t: ChangelogPageT = useT("changelog");
+    const f = useFormatters();
     const { data, isLoading } = useQuery(changelogQueryOptions());
     const [picked, setPicked] = useState<ChangelogRangeId | null>(null);
 
@@ -81,7 +102,7 @@ export function ChangelogPage() {
     const range = CHANGELOG_RANGES.find((r) => r.id === rangeId) ?? CHANGELOG_RANGES[1];
 
     const filtered = useMemo(() => commitsWithinDays(commits, range.days), [commits, range.days]);
-    const groups = useMemo(() => groupByDay(filtered), [filtered]);
+    const groups = useMemo(() => groupByDay(filtered, t, f), [filtered, t, f]);
     const contributors = useMemo(() => new Set(filtered.map((c) => c.author.login ?? c.author.name)).size, [filtered]);
 
     const [surface, setSurface] = useState<ChangelogSurface>("notes");
@@ -99,10 +120,10 @@ export function ChangelogPage() {
                     <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
                             <Kicker className="mb-2 flex items-center gap-1.5">
-                                <ScrollText className="size-3.5" strokeWidth={2.2} /> Changelog
+                                <ScrollText className="size-3.5" strokeWidth={2.2} /> {t("page.kicker")}
                             </Kicker>
-                            <h1 className="m-0 text-balance font-extrabold text-[clamp(30px,5vw,42px)] text-foreground leading-[1.05] tracking-[-0.02em]">What's shipped</h1>
-                            <p className="m-0 mt-2.5 max-w-[52ch] font-sans text-[15.5px] text-muted-foreground leading-[1.55]">Every commit pushed to myrtle.moe, pulled live from GitHub and grouped by day.</p>
+                            <h1 className="m-0 text-balance font-extrabold text-[clamp(30px,5vw,42px)] text-foreground leading-[1.05] tracking-[-0.02em]">{t("page.title")}</h1>
+                            <p className="m-0 mt-2.5 max-w-[52ch] font-sans text-[15.5px] text-muted-foreground leading-[1.55]">{t("page.blurb")}</p>
                         </div>
                         <a
                             href={repoURL}
@@ -120,8 +141,8 @@ export function ChangelogPage() {
                 {/* Surface tabs: curated notes vs the raw commit feed */}
                 <Tabs className="mb-7" onValueChange={(v) => setSurface(v as ChangelogSurface)} value={surface}>
                     <TabsList variant="underline">
-                        <TabsTab value="notes">Release notes</TabsTab>
-                        <TabsTab value="commits">Commits</TabsTab>
+                        <TabsTab value="notes">{t("page.tab.notes")}</TabsTab>
+                        <TabsTab value="commits">{t("page.tab.commits")}</TabsTab>
                     </TabsList>
                 </Tabs>
 
@@ -132,12 +153,12 @@ export function ChangelogPage() {
                         {/* Summary + activity */}
                         <section className="mb-7 overflow-hidden rounded-2xl border border-border bg-card">
                             <div className="grid grid-cols-3 divide-x divide-border max-[560px]:grid-cols-1 max-[560px]:divide-x-0 max-[560px]:divide-y">
-                                <StatCell icon={<ScrollText strokeWidth={1.8} />} label={`commits · ${range.label.toLowerCase()}`} value={isLoading ? "-" : counts[range.id]} />
-                                <StatCell icon={<Users strokeWidth={1.8} />} label={contributors === 1 ? "contributor" : "contributors"} value={isLoading ? "-" : contributors} />
+                                <StatCell icon={<ScrollText strokeWidth={1.8} />} label={t("page.stat.commits", { range: t(RANGE_KEYS[range.id].lower) })} value={isLoading ? "-" : counts[range.id]} />
+                                <StatCell icon={<Users strokeWidth={1.8} />} label={t("page.stat.contributors", { count: contributors })} value={isLoading ? "-" : contributors} />
                                 <StatCell
                                     icon={data?.branch ? <GitBranch strokeWidth={1.8} /> : <CalendarClock strokeWidth={1.8} />}
-                                    label={data?.branch ? "branch" : "last synced"}
-                                    value={<span className="font-sans text-[14px]">{data?.branch ? data.branch : data?.fetchedAt ? formatRelative(data.fetchedAt) : "-"}</span>}
+                                    label={data?.branch ? t("page.stat.branch") : t("page.stat.lastSynced")}
+                                    value={<span className="font-sans text-[14px]">{data?.branch ? data.branch : data?.fetchedAt ? f.relative(data.fetchedAt) : "-"}</span>}
                                 />
                             </div>
                             {range.days >= 7 && filtered.length > 0 ? (
@@ -151,8 +172,8 @@ export function ChangelogPage() {
                             <TabsList className="w-full max-[560px]:overflow-x-auto">
                                 {CHANGELOG_RANGES.map((r) => (
                                     <TabsTab key={r.id} value={r.id} className="gap-1.5">
-                                        <span className="max-[420px]:hidden">{r.label}</span>
-                                        <span className="min-[421px]:hidden">{r.shortLabel}</span>
+                                        <span className="max-[420px]:hidden">{t(RANGE_KEYS[r.id].label)}</span>
+                                        <span className="min-[421px]:hidden">{t(RANGE_KEYS[r.id].short)}</span>
                                         <span className="rounded-full bg-muted-foreground/12 px-1.5 py-0.5 font-medium text-[11px] text-muted-foreground tabular-nums leading-none">{isLoading ? "·" : counts[r.id]}</span>
                                     </TabsTab>
                                 ))}
@@ -163,16 +184,14 @@ export function ChangelogPage() {
                         {isLoading ? (
                             <TimelineSkeleton />
                         ) : groups.length === 0 ? (
-                            <EmptyState rangeLabel={range.label} />
+                            <EmptyState rangeLower={t(RANGE_KEYS[range.id].lower)} />
                         ) : (
                             <div className="flex flex-col gap-7">
                                 {groups.map((group) => (
                                     <section key={group.key}>
                                         <div className="mb-3.5 flex items-center gap-3">
                                             <h2 className="m-0 font-sans font-semibold text-[14px] text-foreground leading-none tracking-[-0.01em]">{group.label}</h2>
-                                            <span className="font-sans text-[12px] text-muted-foreground leading-none">
-                                                {group.commits.length} commit{group.commits.length === 1 ? "" : "s"}
-                                            </span>
+                                            <span className="font-sans text-[12px] text-muted-foreground leading-none">{t("page.group.commits", { count: group.commits.length })}</span>
                                             <span className="h-px flex-1 bg-border" aria-hidden="true" />
                                         </div>
                                         <ul className="m-0 list-none p-0">
@@ -185,13 +204,13 @@ export function ChangelogPage() {
                             </div>
                         )}
 
-                        {data?.truncated && !isLoading ? <p className="mt-8 text-center font-sans text-[12.5px] text-muted-foreground">Older history is capped - see the full log on GitHub.</p> : null}
+                        {data?.truncated && !isLoading ? <p className="mt-8 text-center font-sans text-[12.5px] text-muted-foreground">{t("page.truncated")}</p> : null}
                     </>
                 )}
 
                 <div className="mt-10 border-border border-t pt-6 text-center">
                     <Link to="/stats" className="font-sans text-[13px] text-primary no-underline hover:underline">
-                        Looking for site stats instead? →
+                        {t("page.statsLink")}
                     </Link>
                 </div>
             </div>
@@ -199,14 +218,15 @@ export function ChangelogPage() {
     );
 }
 
-function EmptyState({ rangeLabel }: { rangeLabel: string }) {
+function EmptyState({ rangeLower }: { rangeLower: string }) {
+    const t: ChangelogPageT = useT("changelog");
     return (
         <div className="flex flex-col items-center rounded-2xl border border-border border-dashed bg-card/40 px-6 py-14 text-center">
             <span className="mb-4 inline-flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
                 <ScrollText className="size-6" strokeWidth={1.6} aria-hidden="true" />
             </span>
-            <p className="m-0 font-sans font-semibold text-[16px] text-foreground">No commits in {rangeLabel.toLowerCase()}</p>
-            <p className="m-0 mt-1.5 max-w-[40ch] font-sans text-[14px] text-muted-foreground leading-[1.55]">Nothing landed in this window yet. Try a wider range above to see recent work.</p>
+            <p className="m-0 font-sans font-semibold text-[16px] text-foreground">{t("page.empty.title", { range: rangeLower })}</p>
+            <p className="m-0 mt-1.5 max-w-[40ch] font-sans text-[14px] text-muted-foreground leading-[1.55]">{t("page.empty.body")}</p>
         </div>
     );
 }

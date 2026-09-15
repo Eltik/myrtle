@@ -2,6 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { useState } from "react";
 import { operatorQueryOptions } from "#/lib/api/operators";
+import { useGamedataServer } from "#/lib/i18n";
 import { OperatorFormSwitcher } from "./impl/components/OperatorFormSwitcher";
 import { OperatorHero } from "./impl/components/OperatorHero";
 import { OperatorTabs } from "./impl/components/OperatorTabs";
@@ -9,7 +10,8 @@ import type { TabType } from "./impl/constants";
 
 export function OperatorDetail() {
     const { id } = useParams({ from: "/operators_/$id" });
-    const { data: operator } = useSuspenseQuery(operatorQueryOptions(id));
+    const server = useGamedataServer();
+    const { data: operator } = useSuspenseQuery(operatorQueryOptions(id, server));
     const [activeTab, setActiveTab] = useState<TabType>("info");
 
     if (!operator) return null;

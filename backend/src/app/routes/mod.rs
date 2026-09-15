@@ -91,6 +91,7 @@ pub mod dps;
 pub mod enemies;
 pub mod gacha;
 pub mod health;
+pub mod i18n;
 pub mod improvements;
 pub mod inventory;
 pub mod leaderboard;
@@ -204,6 +205,7 @@ pub fn router() -> Router<AppState> {
         .route("/gacha/stats/per-banner", get(gacha::per_banner_stats))
         .route("/stats", get(stats::stats))
         .route("/admin/stats", get(stats::admin_stats))
+        .route("/admin/users/{user_id}/role", put(user::set_user_role))
         .route("/operators/index", get(operators::index))
         .route("/operators/ownership", get(operators::ownership))
         .route("/stages/{stage_id}/detail", get(stages::stage_detail))
@@ -295,4 +297,5 @@ pub fn router() -> Router<AppState> {
         .route("/{server}/brand-logo/{id}", get(assets::brand_logo_srv))
         .route("/{server}/assets/{*path}", get(assets::generic_srv))
         .merge(tier_lists::router())
+        .merge(i18n::router())
 }

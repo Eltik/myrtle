@@ -5,11 +5,38 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/component
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import type { IEvaluateResponse } from "#/lib/api/base";
 import { roomLabel } from "#/lib/base/catalog";
+import { type IFormatters, type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages as panelMessages } from "../BasePanel.messages";
 import { useBaseOptimizer } from "../base-context";
 import { TileTooltip } from "../board/tile/components/TileTooltip";
+import type { messages } from "./DeepDive.messages";
 
-const num = (value: number) => Math.round(value).toLocaleString();
+/** The daily LMD and EXP labels are declared with the panel's own headline figures. */
+type DeepT = TypedT<typeof messages & typeof panelMessages>;
+type DeepRichT = TypedRichT<typeof messages>;
+
+/** A key in `DeepDive.messages.ts`, resolved through one of the tables below. */
+type MessageKey = keyof typeof messages & string;
+
+const PERIOD_SUFFIX: Record<Period, MessageKey> = {
+    day: "profile.base.deep.period.day",
+    week: "profile.base.deep.period.week",
+    month: "profile.base.deep.period.month",
+    year: "profile.base.deep.period.year",
+};
+
+const PERIOD_INITIAL: Record<Period, MessageKey> = {
+    day: "profile.base.deep.period.dayInitial",
+    week: "profile.base.deep.period.weekInitial",
+    month: "profile.base.deep.period.monthInitial",
+    year: "profile.base.deep.period.yearInitial",
+};
+
+type Period = "day" | "week" | "month" | "year";
+
+const num = (value: number, f: IFormatters) => f.number(Math.round(value));
 
 /** The comparable numbers of one evaluated draft, for the snapshot diff. */
 interface ISnapshot {
@@ -38,6 +65,7 @@ function snapshotOf(evaluation: IEvaluateResponse): ISnapshot {
 }
 
 function DiffRow({ label, from, to, format, betterLow }: { label: string; from: number; to: number; format: (v: number) => string; betterLow?: boolean }) {
+    const t: DeepT = useT("user");
     const delta = to - from;
     const meaningful = Math.abs(delta) > (Math.abs(from) + Math.abs(to)) * 1e-6 + 1e-9;
     const improved = betterLow ? delta < 0 : delta > 0;
@@ -52,31 +80,31 @@ function DiffRow({ label, from, to, format, betterLow }: { label: string; from: 
                         {format(Math.abs(delta))}
                     </span>
                 ) : (
-                    <span className="text-muted-foreground">no change</span>
+                    <span className="text-muted-foreground">{t("profile.base.deep.noChange")}</span>
                 )}
             </span>
         </div>
     );
 }
 
-function hoursLabel(hours: number): string {
-    if (hours >= 48) return `${(hours / 24).toFixed(1)}d`;
-    return `${hours.toFixed(1)}h`;
+function hoursLabel(hours: number, t: DeepT): string {
+    if (hours >= 48) return t("profile.base.deep.days", { days: (hours / 24).toFixed(1) });
+    return t("profile.base.deep.hours", { hours: hours.toFixed(1) });
 }
 
-/** Wall-clock time `hours` from now, in the viewer's locale. */
-function clockAfter(hours: number): string {
+/** Wall-clock time `hours` from now, in the page's locale. */
+function clockAfter(hours: number, f: IFormatters): string {
     const at = new Date(Date.now() + hours * 3_600_000);
     const sameDay = at.getDate() === new Date().getDate();
-    const time = at.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-    return sameDay ? time : `${at.toLocaleDateString(undefined, { weekday: "short" })} ${time}`;
+    const time = f.time(at, { hour: "numeric", minute: "2-digit" });
+    return sameDay ? time : `${f.date(at, { weekday: "short" })} ${time}`;
 }
 
-function productLabel(room: { room_type: string; formula_type: string | null }): string {
-    if (room.room_type === "TRADING") return "LMD orders";
-    if (room.formula_type === "F_GOLD") return "Pure Gold";
-    if (room.formula_type === "F_EXP") return "Battle Records";
-    return "Unconfigured";
+function productLabel(room: { room_type: string; formula_type: string | null }, t: DeepT): string {
+    if (room.room_type === "TRADING") return t("profile.base.deep.product.lmd");
+    if (room.formula_type === "F_GOLD") return t("profile.base.deep.product.gold");
+    if (room.formula_type === "F_EXP") return t("profile.base.deep.product.exp");
+    return t("profile.base.deep.product.none");
 }
 
 /**
@@ -86,11 +114,14 @@ function productLabel(room: { room_type: string; formula_type: string | null }):
  * panel only formats it.
  */
 export function DeepDive() {
+    const t: DeepT = useT("user");
+    const rt: DeepRichT = useRichT("user");
+    const f = useFormatters();
     const [open, setOpen] = useState(true);
     const [cadence, setCadence] = useState("12");
-    const [period, setPeriod] = useState<"day" | "week" | "month" | "year">("day");
+    const [period, setPeriod] = useState<Period>("day");
     const periodMult = { day: 1, week: 7, month: 30, year: 365 }[period];
-    const periodLabel = { day: "/day", week: "/week", month: "/month", year: "/year" }[period];
+    const periodLabel = t(PERIOD_SUFFIX[period]);
     const [snapshot, setSnapshot] = useState<ISnapshot | null>(null);
     const api = useBaseOptimizer();
     const evaluation = api.evaluation;
@@ -108,15 +139,17 @@ export function DeepDive() {
     const sustainability = api.rotation?.rotation.sustainability;
     const interval = claim?.intervals.find((i) => String(i.hours) === cadence);
     const losses = interval
-        ? [interval.lost_lmd_per_day >= 1 ? `−${num(interval.lost_lmd_per_day * periodMult)} LMD` : null, interval.lost_gold_per_day >= 0.1 ? `−${(interval.lost_gold_per_day * periodMult).toFixed(1)} gold` : null, interval.lost_exp_per_day >= 1 ? `−${num(interval.lost_exp_per_day * periodMult)} EXP` : null].filter(
-              Boolean,
-          )
+        ? [
+              interval.lost_lmd_per_day >= 1 ? t("profile.base.deep.lost.lmd", { amount: num(interval.lost_lmd_per_day * periodMult, f) }) : null,
+              interval.lost_gold_per_day >= 0.1 ? t("profile.base.deep.lost.gold", { amount: (interval.lost_gold_per_day * periodMult).toFixed(1) }) : null,
+              interval.lost_exp_per_day >= 1 ? t("profile.base.deep.lost.exp", { amount: num(interval.lost_exp_per_day * periodMult, f) }) : null,
+          ].filter(Boolean)
         : [];
 
     return (
         <Collapsible onOpenChange={setOpen} open={open}>
             <CollapsibleTrigger className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-2.5 transition-colors hover:bg-muted/40">
-                <span className="font-medium text-[13px]">Deep Dive</span>
+                <span className="font-medium text-[13px]">{t("profile.base.deep.title")}</span>
                 <ChevronDown className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
             </CollapsibleTrigger>
 
@@ -124,37 +157,41 @@ export function DeepDive() {
                 <div className="mt-2 flex flex-col gap-4 rounded-xl border border-border bg-card px-4 py-3">
                     {claim && (
                         <section className="flex flex-col gap-2">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Check-in economics</h3>
+                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.checkin")}</h3>
                             <div className="flex flex-wrap items-center justify-between gap-3">
                                 <div className="flex flex-col gap-0.5">
-                                    <span className="text-[12px]">
-                                        Log in before <span className="font-semibold text-foreground">{clockAfter(claim.next_full_hours)}</span> to lose nothing
-                                    </span>
+                                    <span className="text-[12px]">{rt("profile.base.deep.logInBefore", { time: <span className="font-semibold text-foreground">{clockAfter(claim.next_full_hours, f)}</span> })}</span>
                                     <span className="text-[11px] text-muted-foreground">
-                                        {stallRoom ? roomLabel(stallRoom.room_type, api.catalog) : "First room"} stalls {hoursLabel(claim.next_full_hours)} after a claim - buffers below.{" "}
-                                        <TileTooltip label={<span className="block max-w-64">Order sizes are modeled conservatively (small orders, fast turnover), so real deadlines can be later than shown - never earlier. Trading posts are assumed gold-supplied.</span>}>
-                                            <span className="cursor-help underline decoration-dotted underline-offset-2">conservative</span>
+                                        {t("profile.base.deep.stalls", { room: stallRoom ? roomLabel(stallRoom.room_type, api.catalog) : t("profile.base.deep.firstRoom"), duration: hoursLabel(claim.next_full_hours, t) })}{" "}
+                                        <TileTooltip label={<span className="block max-w-64">{t("profile.base.deep.conservative.tooltip")}</span>}>
+                                            <span className="cursor-help underline decoration-dotted underline-offset-2">{t("profile.base.deep.conservative")}</span>
                                         </TileTooltip>
                                     </span>
                                     {evaluation.drones && (
                                         <span className="text-[11px] text-muted-foreground">
-                                            Drones{" "}
-                                            <span className="font-mono tabular-nums">
-                                                {Math.round(evaluation.drones.current)}/{evaluation.drones.max}
-                                            </span>
                                             {evaluation.drones.full_in_hours != null ? (
-                                                <>
-                                                    {" "}
-                                                    - full in <span className="font-mono tabular-nums">{hoursLabel(evaluation.drones.full_in_hours)}</span>, spend before then
-                                                </>
+                                                rt("profile.base.deep.dronesFilling", {
+                                                    meter: (
+                                                        <span className="font-mono tabular-nums">
+                                                            {Math.round(evaluation.drones.current)}/{evaluation.drones.max}
+                                                        </span>
+                                                    ),
+                                                    when: <span className="font-mono tabular-nums">{hoursLabel(evaluation.drones.full_in_hours, t)}</span>,
+                                                })
                                             ) : (
-                                                <span className="text-destructive"> - full, recovery is being wasted</span>
+                                                <>
+                                                    {t("profile.base.deep.drones")}{" "}
+                                                    <span className="font-mono tabular-nums">
+                                                        {Math.round(evaluation.drones.current)}/{evaluation.drones.max}
+                                                    </span>
+                                                    <span className="text-destructive">{t("profile.base.deep.dronesFull")}</span>
+                                                </>
                                             )}
                                         </span>
                                     )}
                                     {(evaluation.trainer_hints ?? []).length > 0 && (
                                         <span className="text-[11px]">
-                                            <span className="text-muted-foreground">Best trainers for {api.trainingClass}: </span>
+                                            <span className="text-muted-foreground">{t("profile.base.deep.trainers", { class: api.trainingClass })}</span>
                                             {(evaluation.trainer_hints ?? []).map((h, i) => (
                                                 <span key={h.operator.operator_id}>
                                                     {i > 0 && <span className="text-muted-foreground"> · </span>}
@@ -165,11 +202,11 @@ export function DeepDive() {
                                     )}
                                     {atRisk.length > 0 && (
                                         <span className="text-[11px]">
-                                            <span className="text-muted-foreground">At risk from their current bar{evaluation.morale_synced_hours_ago != null && ` (projected from your sync ${hoursLabel(evaluation.morale_synced_hours_ago)} ago)`}: </span>
+                                            <span className="text-muted-foreground">{evaluation.morale_synced_hours_ago != null ? t("profile.base.deep.atRisk.synced", { ago: hoursLabel(evaluation.morale_synced_hours_ago, t) }) : t("profile.base.deep.atRisk")}</span>
                                             {atRisk.map((e, i) => (
                                                 <span key={e.operator_id}>
                                                     {i > 0 && <span className="text-muted-foreground"> · </span>}
-                                                    {e.name} <span className={cn("font-mono tabular-nums", (e.lasts_hours ?? 99) < 12 ? "text-destructive" : "text-muted-foreground")}>{hoursLabel(e.lasts_hours ?? 0)}</span>
+                                                    {e.name} <span className={cn("font-mono tabular-nums", (e.lasts_hours ?? 99) < 12 ? "text-destructive" : "text-muted-foreground")}>{hoursLabel(e.lasts_hours ?? 0, t)}</span>
                                                 </span>
                                             ))}
                                         </span>
@@ -177,7 +214,7 @@ export function DeepDive() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <ToggleGroup
-                                        aria-label="Check-in cadence"
+                                        aria-label={t("profile.base.deep.cadence.aria")}
                                         onValueChange={(next: string[]) => {
                                             if (next[0]) setCadence(next[0]);
                                         }}
@@ -185,12 +222,12 @@ export function DeepDive() {
                                     >
                                         {claim.intervals.map((i) => (
                                             <ToggleGroupItem key={i.hours} size="sm" value={String(i.hours)}>
-                                                {i.hours}h
+                                                {t("profile.base.deep.cadence.hours", { hours: i.hours })}
                                             </ToggleGroupItem>
                                         ))}
                                     </ToggleGroup>
                                     <input
-                                        aria-label="Custom check-in cadence in hours"
+                                        aria-label={t("profile.base.deep.cadence.custom")}
                                         className="w-14 rounded-md border border-border bg-transparent px-1.5 py-0.5 text-center font-mono text-[11px] tabular-nums placeholder:text-muted-foreground/50"
                                         inputMode="numeric"
                                         onChange={(e) => {
@@ -202,10 +239,10 @@ export function DeepDive() {
                                                 api.setClaimIntervalHours(undefined);
                                             }
                                         }}
-                                        placeholder="h"
+                                        placeholder={t("profile.base.deep.cadence.customPlaceholder")}
                                     />
                                     <ToggleGroup
-                                        aria-label="Loss period"
+                                        aria-label={t("profile.base.deep.period.aria")}
                                         onValueChange={(next: string[]) => {
                                             if (next[0]) setPeriod(next[0] as typeof period);
                                         }}
@@ -213,11 +250,11 @@ export function DeepDive() {
                                     >
                                         {(["day", "week", "month", "year"] as const).map((pp) => (
                                             <ToggleGroupItem key={pp} size="sm" value={pp}>
-                                                {pp[0].toUpperCase()}
+                                                {t(PERIOD_INITIAL[pp])}
                                             </ToggleGroupItem>
                                         ))}
                                     </ToggleGroup>
-                                    <span className={cn("font-mono text-[11.5px] tabular-nums", losses.length > 0 ? "text-destructive" : "text-muted-foreground")}>{losses.length > 0 ? `${losses.join(" · ")} ${periodLabel}` : "nothing lost"}</span>
+                                    <span className={cn("font-mono text-[11.5px] tabular-nums", losses.length > 0 ? "text-destructive" : "text-muted-foreground")}>{losses.length > 0 ? t("profile.base.deep.lost.suffix", { losses: losses.join(" · "), period: periodLabel }) : t("profile.base.deep.lost.nothing")}</span>
                                 </div>
                             </div>
                         </section>
@@ -225,18 +262,20 @@ export function DeepDive() {
 
                     {(evaluation.dorms.per_dorm ?? []).some((d) => (d.comfort_upside_per_hour ?? 0) > 0.05) && (
                         <section className="flex flex-col gap-1">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Furniture upside</h3>
+                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.furniture")}</h3>
                             {(evaluation.dorms.per_dorm ?? [])
                                 .filter((d) => (d.comfort_upside_per_hour ?? 0) > 0.05)
                                 .map((d) => (
-                                    <span className="text-[11.5px]" key={d.slot_id}>
-                                        <span className="text-muted-foreground">Dormitory Lv{d.level} ambience</span>{" "}
-                                        <span className="font-mono tabular-nums">
-                                            {d.comfort}/{d.comfort_limit}
-                                        </span>
-                                        <span className="text-muted-foreground"> - </span>
-                                        <span className="font-mono font-semibold text-emerald-400 tabular-nums">+{(d.comfort_upside_per_hour ?? 0).toFixed(2)}/h</span>
-                                        <span className="text-muted-foreground"> recovery sitting in the furniture shop.</span>
+                                    <span className="text-[11.5px] text-muted-foreground" key={d.slot_id}>
+                                        {rt("profile.base.deep.furniture.line", {
+                                            level: d.level,
+                                            meter: (
+                                                <span className="font-mono text-foreground tabular-nums">
+                                                    {d.comfort}/{d.comfort_limit}
+                                                </span>
+                                            ),
+                                            rate: <span className="font-mono font-semibold text-emerald-400 tabular-nums">{t("profile.base.deep.furniture.rate", { rate: (d.comfort_upside_per_hour ?? 0).toFixed(2) })}</span>,
+                                        })}
                                     </span>
                                 ))}
                         </section>
@@ -244,27 +283,32 @@ export function DeepDive() {
 
                     {rooms.length > 0 && (
                         <section className="flex flex-col gap-2">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Output by facility</h3>
+                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.outputByFacility")}</h3>
                             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                                 {rooms.map((room) => {
-                                    const daily = room.room_type === "TRADING" ? `${num(room.yield_lmd_per_day)} LMD` : room.formula_type === "F_GOLD" ? `${room.yield_gold_per_day.toFixed(1)} gold` : `${num(room.yield_exp_per_day)} EXP`;
+                                    const daily =
+                                        room.room_type === "TRADING"
+                                            ? t("profile.base.deep.daily.lmd", { amount: num(room.yield_lmd_per_day, f) })
+                                            : room.formula_type === "F_GOLD"
+                                              ? t("profile.base.deep.daily.gold", { amount: room.yield_gold_per_day.toFixed(1) })
+                                              : t("profile.base.deep.daily.exp", { amount: num(room.yield_exp_per_day, f) });
                                     const overflows = room.fill_hours != null && interval !== undefined && room.fill_hours < interval.hours;
                                     return (
                                         <div className="flex flex-col gap-1 rounded-lg border border-border/60 bg-muted/10 px-3 py-2" key={room.slot_id}>
                                             <div className="flex items-baseline justify-between gap-2">
                                                 <span className="min-w-0 truncate font-medium text-[12px]">{roomLabel(room.room_type, api.catalog)}</span>
-                                                <span className="shrink-0 text-[10px] text-muted-foreground uppercase tracking-wide">{productLabel(room)}</span>
+                                                <span className="shrink-0 text-[10px] text-muted-foreground uppercase tracking-wide">{productLabel(room, t)}</span>
                                             </div>
                                             <div className="flex items-baseline justify-between gap-2">
                                                 <span className="font-mono font-semibold text-[13px] tabular-nums">
                                                     {daily}
-                                                    <span className="font-normal text-[10px] text-muted-foreground"> /day</span>
+                                                    <span className="font-normal text-[10px] text-muted-foreground">{t("profile.base.deep.perDay")}</span>
                                                 </span>
                                                 <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{Math.round(room.total_efficiency)}%</span>
                                             </div>
                                             <span className={cn("text-[10.5px]", overflows ? "text-destructive" : "text-muted-foreground")}>
-                                                full in {room.fill_hours == null ? "-" : hoursLabel(room.fill_hours)} · {room.capacity} {room.room_type === "TRADING" ? "orders" : "items"}
-                                                {overflows && " - overflows at this cadence"}
+                                                {t("profile.base.deep.fullIn", { duration: room.fill_hours == null ? "-" : hoursLabel(room.fill_hours, t), count: room.capacity, unit: room.room_type === "TRADING" ? t("profile.base.deep.unit.orders") : t("profile.base.deep.unit.items") })}
+                                                {overflows && t("profile.base.deep.overflows")}
                                             </span>
                                         </div>
                                     );
@@ -275,17 +319,17 @@ export function DeepDive() {
 
                     <section className="flex flex-col gap-1.5">
                         <div className="flex items-center justify-between gap-3">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Compare</h3>
+                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.compare")}</h3>
                             <div className="flex items-center gap-1.5">
                                 <Button
                                     disabled={!api.rotation}
                                     onClick={() => {
                                         const rot = api.rotation?.rotation;
-                                        const lines: string[] = [`Base plan - ${num(evaluation.assignment.yield_lmd_per_day)} LMD/day, ${num(evaluation.assignment.yield_exp_per_day)} EXP/day`];
+                                        const lines: string[] = [t("profile.base.deep.copy.header", { lmd: num(evaluation.assignment.yield_lmd_per_day, f), exp: num(evaluation.assignment.yield_exp_per_day, f) })];
                                         for (const shift of rot?.shifts ?? []) {
-                                            lines.push(`\nShift ${shift.index}`);
+                                            lines.push(`\n${t("profile.base.deep.copy.shift", { n: shift.index })}`);
                                             for (const r of shift.rooms.filter((r) => r.active && r.recommended.length > 0)) {
-                                                lines.push(`  ${roomLabel(r.room_type, api.catalog)}: ${r.recommended.map((o) => o.name).join(", ")}`);
+                                                lines.push(`  ${t("profile.base.deep.copy.room", { room: roomLabel(r.room_type, api.catalog), operators: r.recommended.map((o) => o.name).join(", ") })}`);
                                             }
                                         }
                                         void navigator.clipboard.writeText(lines.join("\n"));
@@ -294,14 +338,14 @@ export function DeepDive() {
                                     variant="ghost"
                                 >
                                     <Copy />
-                                    Copy plan
+                                    {t("profile.base.deep.copyPlan")}
                                 </Button>
                                 <Button onClick={() => setSnapshot(live)} size="sm" variant="outline">
                                     <Camera />
-                                    {snapshot ? "Re-snapshot" : "Snapshot"}
+                                    {snapshot ? t("profile.base.deep.resnapshot") : t("profile.base.deep.snapshot")}
                                 </Button>
                                 {snapshot && (
-                                    <Button aria-label="Clear snapshot" onClick={() => setSnapshot(null)} size="icon-sm" variant="ghost">
+                                    <Button aria-label={t("profile.base.deep.clearSnapshot")} onClick={() => setSnapshot(null)} size="icon-sm" variant="ghost">
                                         <X />
                                     </Button>
                                 )}
@@ -309,38 +353,47 @@ export function DeepDive() {
                         </div>
                         {snapshot ? (
                             <div className="flex flex-col divide-y divide-border/60">
-                                <DiffRow format={(v) => `${Math.round(v)}%`} from={snapshot.efficiency} label="Production efficiency" to={live.efficiency} />
-                                <DiffRow format={num} from={snapshot.lmd} label="LMD / day" to={live.lmd} />
-                                <DiffRow format={num} from={snapshot.exp} label="EXP / day" to={live.exp} />
-                                <DiffRow format={(v) => v.toFixed(1)} from={snapshot.gold} label="Pure Gold / day" to={live.gold} />
-                                <DiffRow format={(v) => String(Math.round(v))} from={snapshot.tradingCapacity} label="Trading capacity" to={live.tradingCapacity} />
-                                <DiffRow format={(v) => String(Math.round(v))} from={snapshot.powerNet} label="Power net" to={live.powerNet} />
-                                <DiffRow format={(v) => `${v.toFixed(2)}/h`} from={snapshot.dormRecovery} label="Dorm recovery" to={live.dormRecovery} />
-                                {snapshot.nextFullHours !== null && live.nextFullHours !== null && <DiffRow format={(v) => hoursLabel(v)} from={snapshot.nextFullHours} label="First room stalls" to={live.nextFullHours} />}
+                                <DiffRow format={(v) => `${Math.round(v)}%`} from={snapshot.efficiency} label={t("profile.base.deep.diff.efficiency")} to={live.efficiency} />
+                                <DiffRow format={(v) => num(v, f)} from={snapshot.lmd} label={t("profile.base.headline.lmd")} to={live.lmd} />
+                                <DiffRow format={(v) => num(v, f)} from={snapshot.exp} label={t("profile.base.headline.exp")} to={live.exp} />
+                                <DiffRow format={(v) => v.toFixed(1)} from={snapshot.gold} label={t("profile.base.deep.diff.gold")} to={live.gold} />
+                                <DiffRow format={(v) => String(Math.round(v))} from={snapshot.tradingCapacity} label={t("profile.base.deep.diff.tradingCapacity")} to={live.tradingCapacity} />
+                                <DiffRow format={(v) => String(Math.round(v))} from={snapshot.powerNet} label={t("profile.base.deep.diff.powerNet")} to={live.powerNet} />
+                                <DiffRow format={(v) => `${v.toFixed(2)}/h`} from={snapshot.dormRecovery} label={t("profile.base.deep.diff.dormRecovery")} to={live.dormRecovery} />
+                                {snapshot.nextFullHours !== null && live.nextFullHours !== null && <DiffRow format={(v) => hoursLabel(v, t)} from={snapshot.nextFullHours} label={t("profile.base.deep.diff.firstStall")} to={live.nextFullHours} />}
                             </div>
                         ) : (
-                            <span className="text-[11.5px] text-muted-foreground">Snapshot the current numbers, then edit the board or run the optimizer - the difference tracks live.</span>
+                            <span className="text-[11.5px] text-muted-foreground">{t("profile.base.deep.snapshotHint")}</span>
                         )}
                     </section>
 
                     {api.rotationLoading && !sustainability && (
                         <section className="flex flex-col gap-1">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Simulated totals &amp; rotation events</h3>
-                            <span className="animate-pulse text-[11.5px] text-muted-foreground">Simulating the rotation - this is the slow part…</span>
+                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.simulating.title")}</h3>
+                            <span className="animate-pulse text-[11.5px] text-muted-foreground">{t("profile.base.deep.simulating")}</span>
                         </section>
                     )}
 
                     {sustainability?.facilities && sustainability.facilities.length > 0 && (
                         <section className="flex flex-col gap-1.5">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Simulated totals · {Math.round(sustainability.horizon_hours / 24)} days under the rotation</h3>
+                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.simulated.title", { days: Math.round(sustainability.horizon_hours / 24) })}</h3>
                             <div className="flex flex-col divide-y divide-border/60">
-                                {sustainability.facilities.map((f) => {
-                                    const produced = f.room_type === "TRADING" ? `${num(f.lmd)} LMD` : f.formula_type === "F_GOLD" ? `${f.gold.toFixed(1)} gold` : f.formula_type === "F_EXP" ? `${num(f.exp)} EXP` : "-";
+                                {sustainability.facilities.map((facility) => {
+                                    const produced =
+                                        facility.room_type === "TRADING"
+                                            ? t("profile.base.deep.daily.lmd", { amount: num(facility.lmd, f) })
+                                            : facility.formula_type === "F_GOLD"
+                                              ? t("profile.base.deep.daily.gold", { amount: facility.gold.toFixed(1) })
+                                              : facility.formula_type === "F_EXP"
+                                                ? t("profile.base.deep.daily.exp", { amount: num(facility.exp, f) })
+                                                : "-";
                                     return (
-                                        <div className="flex items-baseline gap-3 py-1 text-[11.5px]" key={f.slot_id}>
-                                            <span className="min-w-0 flex-1 truncate">{roomLabel(f.room_type, api.catalog)}</span>
+                                        <div className="flex items-baseline gap-3 py-1 text-[11.5px]" key={facility.slot_id}>
+                                            <span className="min-w-0 flex-1 truncate">{roomLabel(facility.room_type, api.catalog)}</span>
                                             <span className="font-mono tabular-nums">{produced}</span>
-                                            <span className={cn("w-24 text-right font-mono tabular-nums", f.idle_hours > 0.05 ? "text-destructive" : "text-muted-foreground")}>{f.idle_hours > 0.05 ? `${f.idle_hours.toFixed(1)}h idle` : "no idle"}</span>
+                                            <span className={cn("w-24 text-right font-mono tabular-nums", facility.idle_hours > 0.05 ? "text-destructive" : "text-muted-foreground")}>
+                                                {facility.idle_hours > 0.05 ? t("profile.base.deep.idle", { hours: facility.idle_hours.toFixed(1) }) : t("profile.base.deep.noIdle")}
+                                            </span>
                                         </div>
                                     );
                                 })}
@@ -350,16 +403,16 @@ export function DeepDive() {
 
                     {evaluation.unrotated && (
                         <section className="flex flex-col gap-1">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Without rotating · {Math.round(evaluation.unrotated.horizon_hours / 24)} days</h3>
+                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.unrotated.title", { days: Math.round(evaluation.unrotated.horizon_hours / 24) })}</h3>
                             {evaluation.unrotated.depleted.length === 0 ? (
-                                <span className="text-[11.5px] text-muted-foreground">Your stationed crews hold up even with no swaps at all.</span>
+                                <span className="text-[11.5px] text-muted-foreground">{t("profile.base.deep.unrotated.fine")}</span>
                             ) : (
-                                <span className="text-[11.5px]">
-                                    <span className="font-semibold text-destructive">{evaluation.unrotated.depleted.length} operators run dry</span>
-                                    <span className="text-muted-foreground">
-                                        {" "}
-                                        if you never swap - first at {(evaluation.unrotated.depleted[0]?.at_hours ?? 0).toFixed(1)}h ({evaluation.unrotated.depleted[0]?.operator.name}). Rotate or lose the hours.
-                                    </span>
+                                <span className="text-[11.5px] text-muted-foreground">
+                                    {rt("profile.base.deep.unrotated.line", {
+                                        count: <span className="font-semibold text-destructive">{t("profile.base.deep.unrotated.dry", { count: evaluation.unrotated.depleted.length })}</span>,
+                                        hours: (evaluation.unrotated.depleted[0]?.at_hours ?? 0).toFixed(1),
+                                        name: evaluation.unrotated.depleted[0]?.operator.name,
+                                    })}
                                 </span>
                             )}
                         </section>
@@ -367,18 +420,16 @@ export function DeepDive() {
 
                     {sustainability && (
                         <section className="flex flex-col gap-1.5">
-                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Rotation events · {Math.round(sustainability.horizon_hours / 24)} simulated days</h3>
+                            <h3 className="font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.deep.events.title", { days: Math.round(sustainability.horizon_hours / 24) })}</h3>
                             {sustainability.depleted.length === 0 ? (
-                                <span className="text-[11.5px] text-muted-foreground">Nobody runs dry - every operator survives the recommended rotation.</span>
+                                <span className="text-[11.5px] text-muted-foreground">{t("profile.base.deep.events.none")}</span>
                             ) : (
                                 <div className="flex flex-col divide-y divide-border/60">
                                     {sustainability.depleted.map((event) => (
                                         <div className="flex items-baseline gap-3 py-1 text-[11.5px]" key={`${event.operator.operator_id}:${event.at_hours}`}>
-                                            <span className="w-24 shrink-0 font-mono text-muted-foreground tabular-nums">
-                                                Day {Math.floor(event.at_hours / 24) + 1}, {(event.at_hours % 24).toFixed(1)}h
-                                            </span>
+                                            <span className="w-24 shrink-0 font-mono text-muted-foreground tabular-nums">{t("profile.base.deep.events.when", { day: Math.floor(event.at_hours / 24) + 1, hours: (event.at_hours % 24).toFixed(1) })}</span>
                                             <span className="min-w-0 flex-1 truncate">
-                                                {event.operator.name} <span className="text-muted-foreground">runs dry in {roomLabel(event.room_type, api.catalog)}</span>
+                                                {event.operator.name} <span className="text-muted-foreground">{t("profile.base.deep.events.runsDry", { room: roomLabel(event.room_type, api.catalog) })}</span>
                                             </span>
                                         </div>
                                     ))}

@@ -1,8 +1,11 @@
 import { BookMarked, ChevronDown, FileText, FlaskConical, ScrollText, Sparkles } from "lucide-react";
 import { memo, useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
+import type { messages } from "./LoreContent.messages";
 
 interface ILoreContentProps {
     operator: IOperatorListItem;
@@ -29,21 +32,22 @@ const STAT_HEADERS = new Set([
 ]);
 
 export const LoreContent = memo(function LoreContent({ operator }: ILoreContentProps) {
+    const t: TypedT<typeof messages> = useT("operators");
     const stories = operator.handbook?.storyTextAudio ?? [];
     const hasStories = stories.length > 0;
 
     return (
         <div className="min-w-0 overflow-hidden p-4 md:p-6">
             <div className="mb-6">
-                <h2 className="font-semibold text-foreground text-xl md:text-2xl">Operator Files</h2>
-                <p className="mt-1 text-muted-foreground text-sm">Personal records, archives, and classified documents.</p>
+                <h2 className="font-semibold text-foreground text-xl md:text-2xl">{t("lore.title")}</h2>
+                <p className="mt-1 text-muted-foreground text-sm">{t("lore.subtitle")}</p>
             </div>
 
             {hasStories ? (
                 <div className="space-y-4">
                     <div className="flex items-center gap-2">
                         <BookMarked className="h-5 w-5 text-primary" />
-                        <h3 className="font-semibold text-foreground text-lg">Archive Files</h3>
+                        <h3 className="font-semibold text-foreground text-lg">{t("lore.archives")}</h3>
                     </div>
                     {stories.map((section, idx) => {
                         const title = section.storyTitle.toLowerCase();
@@ -62,8 +66,8 @@ export const LoreContent = memo(function LoreContent({ operator }: ILoreContentP
             ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                     <FileText className="mb-4 h-12 w-12 text-muted-foreground/50" />
-                    <h3 className="mb-2 font-medium text-foreground">No Records Available</h3>
-                    <p className="text-muted-foreground text-sm">This operator's files are classified or not yet documented.</p>
+                    <h3 className="mb-2 font-medium text-foreground">{t("lore.empty.title")}</h3>
+                    <p className="text-muted-foreground text-sm">{t("lore.empty.body")}</p>
                 </div>
             )}
         </div>

@@ -1,4 +1,6 @@
 import type { IRosterEntry } from "#/lib/api/user";
+import { DEFAULT_LOCALE, formatMessage, sourceMessage } from "#/lib/i18n";
+import { fullMessageKey, type TypedT } from "#/lib/i18n/messages";
 import { rarityToNumber } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import type { IStage, IZone, StageClearsMap } from "#/types/stages";
@@ -6,6 +8,17 @@ import { getActivityIdFromZoneId, getPermanentEventInfo, getPermanentZonePrefix,
 import { CHALLENGES } from "./challenges";
 import { UNPLAYABLE_OPERATOR_IDS } from "./constants";
 import type { IChallenge, IRandomizerOperator, IRandomizerSettings, IRosterIndex } from "./types";
+import type { messages as utilMessages } from "./utils.messages";
+
+/** The `t` the stage-grouping helper needs, narrowed to the keys it can render. */
+export type RandomizerUtilsT = TypedT<typeof utilMessages>;
+
+/**
+ * Default `t` for a caller outside an `I18nProvider`. It resolves against the
+ * bundled source catalog, so the English is the same one the components render
+ * and this file carries no second copy of the text.
+ */
+const sourceT: RandomizerUtilsT = (key, values) => formatMessage(sourceMessage(fullMessageKey("tools", key)) ?? key, DEFAULT_LOCALE, values);
 
 const HEART_OF_SURGING_FLAME_NAME = "Heart of Surging Flame";
 
@@ -265,7 +278,7 @@ function getActivityIdFromStageId(stageId: string): string | null {
  * Main Story (one per mainline episode), Events (full sidestories / permanent SS/BL),
  * and Other (mini events, sandbox, festivals, etc.).
  */
-export function buildStageGroups(stages: IStage[], zones: IZone[], lookup: IActivityLookup): IStageGroup[] {
+export function buildStageGroups(stages: IStage[], zones: IZone[], lookup: IActivityLookup, t: RandomizerUtilsT = sourceT): IStageGroup[] {
     const zoneById = new Map(zones.map((z) => [z.zoneId, z]));
     const now = Math.floor(Date.now() / 1000);
 
@@ -301,7 +314,7 @@ export function buildStageGroups(stages: IStage[], zones: IZone[], lookup: IActi
             // Group by chapter number so MAINLINE / MAINLINE_ACTIVITY / MAINLINE_RETRO
             // variants of the same chapter merge into one entry.
             groupId = `mainline:${chapterNumber || zone.zoneId}`;
-            label = `Chapter ${chapterNumber} - ${chapterName}`;
+            label = t("randomizer.stages.chapter", { number: chapterNumber, name: chapterName });
             sublabel = zone.zoneNameFirst && zone.zoneNameFirst !== chapterName ? zone.zoneNameFirst : undefined;
             section = "MAIN";
             isOpen = true;
@@ -316,11 +329,11 @@ export function buildStageGroups(stages: IStage[], zones: IZone[], lookup: IActi
 
             const isPermanentSideOrBranch = !!retro && (retro.type === "SIDESTORY" || retro.type === "BRANCHLINE");
             if (isPermanentSideOrBranch) {
-                sublabel = "Permanent";
+                sublabel = t("randomizer.stages.permanent");
                 isOpen = true;
             } else if (activity) {
                 isOpen = activity.startTime <= now && now <= activity.endTime;
-                sublabel = activity.isReplicate ? "Rerun" : undefined;
+                sublabel = activity.isReplicate ? t("randomizer.stages.rerun") : undefined;
             } else {
                 isOpen = false;
             }
@@ -335,7 +348,7 @@ export function buildStageGroups(stages: IStage[], zones: IZone[], lookup: IActi
                 const retro = lookup.retroByZonePrefix.get(permanentPrefix);
                 groupId = `permanent:${permanentPrefix}`;
                 label = retro?.name ?? getZoneDisplayName(zone, zone.zoneId);
-                sublabel = "Permanent";
+                sublabel = t("randomizer.stages.permanent");
                 section = "EVENT";
                 isOpen = true;
                 sortKey = retro?.startTime ?? 0;
@@ -347,11 +360,11 @@ export function buildStageGroups(stages: IStage[], zones: IZone[], lookup: IActi
 
                 const isPermanentSideOrBranch = !!retro && (retro.type === "SIDESTORY" || retro.type === "BRANCHLINE");
                 if (isPermanentSideOrBranch) {
-                    sublabel = "Permanent";
+                    sublabel = t("randomizer.stages.permanent");
                     isOpen = true;
                 } else if (activity) {
                     isOpen = activity.startTime <= now && now <= activity.endTime;
-                    sublabel = activity.isReplicate ? "Rerun" : undefined;
+                    sublabel = activity.isReplicate ? t("randomizer.stages.rerun") : undefined;
                 } else {
                     isOpen = false;
                 }
@@ -392,8 +405,8 @@ export function buildStageGroups(stages: IStage[], zones: IZone[], lookup: IActi
     return out;
 }
 
-export const STAGE_SECTION_LABEL: Record<StageGroupSection, string> = {
-    MAIN: "Main Story",
-    EVENT: "Events",
-    OTHER: "Other",
+export const STAGE_SECTION_LABEL_KEYS: Record<StageGroupSection, keyof typeof utilMessages & string> = {
+    MAIN: "randomizer.section.main",
+    EVENT: "randomizer.section.event",
+    OTHER: "randomizer.section.other",
 };

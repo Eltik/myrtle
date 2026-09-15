@@ -7,9 +7,12 @@ import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle }
 import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { adminStatsQueryOptions, healthQueryOptions } from "#/lib/api/admin";
-import { cn, formatRelativeShort } from "#/lib/utils";
+import { type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import { cn } from "#/lib/utils";
 import { HCode, PageHead } from "../AdminShell";
 import { CardKV } from "../Primitives";
+import type { messages } from "./Settings.messages";
 
 interface IGameDataTileProps {
     label: string;
@@ -17,15 +20,19 @@ interface IGameDataTileProps {
 }
 
 function GameDataTile({ label, value }: IGameDataTileProps): React.ReactElement {
+    const f = useFormatters();
     return (
         <div className="flex flex-col gap-1 rounded-lg border border-border bg-background/40 p-3">
             <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.08em]">{label}</span>
-            <span className="font-semibold text-[18px] tabular-nums leading-none">{value != null ? value.toLocaleString() : "-"}</span>
+            <span className="font-semibold text-[18px] tabular-nums leading-none">{value != null ? f.number(value) : "-"}</span>
         </div>
     );
 }
 
 export function AdminSettings(): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("admin");
+    const rt: TypedRichT<typeof messages> = useRichT("admin");
+    const f = useFormatters();
     const { user, isAuthenticated } = useAuth();
     const healthQuery = useQuery(healthQueryOptions());
     const statsQuery = useQuery(adminStatsQueryOptions(isAuthenticated));
@@ -34,64 +41,62 @@ export function AdminSettings(): React.ReactElement {
 
     return (
         <>
-            <PageHead kicker="Operate" title="Settings" sub="Service-wide configuration. Most values live in env vars and require a redeploy." />
+            <PageHead kicker={t("settings.kicker")} title={t("settings.title")} sub={t("settings.sub")} />
 
             <div className="grid grid-cols-1 gap-4.5 lg:grid-cols-2">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-sm">Runtime probe</CardTitle>
-                        <CardDescription className="text-xs">
-                            Live data from <HCode>GET /health</HCode>.
-                        </CardDescription>
+                        <CardTitle className="text-sm">{t("settings.probe.title")}</CardTitle>
+                        <CardDescription className="text-xs">{rt("settings.probe.desc", { endpoint: <HCode>GET /health</HCode> })}</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-0">
                         {healthQuery.isPending ? (
                             <Skeleton className="h-32 w-full" />
                         ) : healthQuery.data ? (
                             <>
-                                <CardKV k="Cache backend" v={healthQuery.data.cache.backend} />
-                                <CardKV k="Cache status" v={healthQuery.data.cache.status} />
-                                <CardKV k="Database status" v={healthQuery.data.database.status} />
-                                <CardKV k="Service status" v={healthQuery.data.status} />
-                                <CardKV k="Probe timestamp" v={healthQuery.data.timestamp} />
+                                <CardKV k={t("settings.kv.cacheBackend")} v={healthQuery.data.cache.backend} />
+                                <CardKV k={t("settings.kv.cacheStatus")} v={healthQuery.data.cache.status} />
+                                <CardKV k={t("settings.kv.databaseStatus")} v={healthQuery.data.database.status} />
+                                <CardKV k={t("settings.kv.serviceStatus")} v={healthQuery.data.status} />
+                                <CardKV k={t("settings.kv.probeTimestamp")} v={healthQuery.data.timestamp} />
                             </>
                         ) : (
-                            <div className="text-[13px] text-muted-foreground">Probe failed.</div>
+                            <div className="text-[13px] text-muted-foreground">{t("settings.probe.failed")}</div>
                         )}
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-sm">Signed-in User</CardTitle>
-                        <CardDescription className="text-xs">Your current session.</CardDescription>
+                        <CardTitle className="text-sm">{t("settings.user.title")}</CardTitle>
+                        <CardDescription className="text-xs">{t("settings.user.desc")}</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-0">
-                        <CardKV k="Nickname" v={user?.nickname ?? "-"} />
-                        <CardKV k="UID" v={user?.uid ?? "-"} />
-                        <CardKV k="Server" v={user?.server ?? "-"} />
+                        <CardKV k={t("settings.kv.nickname")} v={user?.nickname ?? "-"} />
+                        <CardKV k={t("settings.kv.uid")} v={user?.uid ?? "-"} />
+                        <CardKV k={t("settings.kv.server")} v={user?.server ?? "-"} />
                         <CardKV
-                            k="Role"
+                            k={t("settings.kv.role")}
                             v={
                                 <>
                                     {user?.role ?? "-"}
                                     {user?.role === "super_admin" ? (
                                         <Badge variant="success" className="ml-2">
-                                            super
+                                            {t("settings.badge.super")}
                                         </Badge>
                                     ) : null}
                                 </>
                             }
                         />
-                        <CardKV k="Total score" v={user?.total_score?.toLocaleString() ?? "-"} />
+                        <CardKV k={t("settings.kv.totalScore")} v={user?.total_score != null ? f.number(user.total_score) : "-"} />
                         <div className="mt-3 flex items-center gap-2">
                             <Button variant="outline" size="sm" render={<Link to="/settings" />}>
-                                Account settings
+                                {t("settings.accountSettings")}
                             </Button>
                             {user?.uid ? (
                                 <Button variant="outline" size="sm" render={<Link to="/user/$id" params={{ id: user.uid }} target="_blank" />}>
                                     <ExternalLinkIcon />
-                                    Public profile
+                                    {t("settings.publicProfile")}
                                 </Button>
                             ) : null}
                         </div>
@@ -103,14 +108,12 @@ export function AdminSettings(): React.ReactElement {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-sm">Loaded game data</CardTitle>
-                    <CardDescription className="text-xs">
-                        Snapshot of what the backend currently has resident from <HCode>GAME_DATA_DIR</HCode>. Counts come from <HCode>GET /admin/stats</HCode> - they reflect the live in-memory dataset, so any drift here means the asset import is out of date and a redeploy or asset refresh is needed.
-                    </CardDescription>
+                    <CardTitle className="text-sm">{t("settings.gameData.title")}</CardTitle>
+                    <CardDescription className="text-xs">{rt("settings.gameData.desc", { dir: <HCode>GAME_DATA_DIR</HCode>, endpoint: <HCode>GET /admin/stats</HCode> })}</CardDescription>
                     <CardAction>
                         <Button variant="outline" size="sm" onClick={() => statsQuery.refetch()} disabled={statsQuery.isFetching}>
                             <RefreshCwIcon className={cn(statsQuery.isFetching && "animate-spin")} />
-                            Refresh
+                            {t("settings.refresh")}
                         </Button>
                     </CardAction>
                 </CardHeader>
@@ -123,30 +126,33 @@ export function AdminSettings(): React.ReactElement {
                             ))}
                         </div>
                     ) : statsQuery.isError ? (
-                        <div className="rounded-lg border border-destructive/32 bg-destructive/8 p-3 text-[13px] text-destructive-foreground">Failed to load /admin/stats. Your account may not have tier_list_admin or above.</div>
+                        <div className="rounded-lg border border-destructive/32 bg-destructive/8 p-3 text-[13px] text-destructive-foreground">{t("settings.gameData.error")}</div>
                     ) : gd ? (
                         <>
                             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-7">
-                                <GameDataTile label="Operators" value={gd.operators} />
-                                <GameDataTile label="Skills" value={gd.skills} />
-                                <GameDataTile label="Modules" value={gd.modules} />
-                                <GameDataTile label="Skins" value={gd.skins} />
-                                <GameDataTile label="Stages" value={gd.stages} />
-                                <GameDataTile label="Zones" value={gd.zones} />
-                                <GameDataTile label="Enemies" value={gd.enemies} />
+                                <GameDataTile label={t("settings.tile.operators")} value={gd.operators} />
+                                <GameDataTile label={t("settings.tile.skills")} value={gd.skills} />
+                                <GameDataTile label={t("settings.tile.modules")} value={gd.modules} />
+                                <GameDataTile label={t("settings.tile.skins")} value={gd.skins} />
+                                <GameDataTile label={t("settings.tile.stages")} value={gd.stages} />
+                                <GameDataTile label={t("settings.tile.zones")} value={gd.zones} />
+                                <GameDataTile label={t("settings.tile.enemies")} value={gd.enemies} />
                             </div>
                             <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 border-border border-t pt-3 text-[12px] text-muted-foreground">
                                 <span>
-                                    Snapshot computed <span className="font-medium text-foreground">{formatRelativeShort(statsQuery.data?.computedAt)}</span>
-                                    <span className="ml-1.5 opacity-70">(cached for ~60s)</span>
+                                    {rt("settings.snapshotComputed", { when: <span className="font-medium text-foreground">{f.relativeShort(statsQuery.data?.computedAt)}</span> })}
+                                    <span className="ml-1.5 opacity-70">{t("settings.cachedFor")}</span>
                                 </span>
                                 <span>
-                                    {statsQuery.data?.tierLists.totalPlacements.toLocaleString() ?? "-"} placements across {statsQuery.data?.tierLists.total ?? "-"} tier lists
+                                    {t("settings.placementsAcross", {
+                                        placements: statsQuery.data?.tierLists.totalPlacements != null ? f.number(statsQuery.data.tierLists.totalPlacements) : "-",
+                                        lists: statsQuery.data?.tierLists.total ?? "-",
+                                    })}
                                 </span>
                             </div>
                         </>
                     ) : (
-                        <div className="text-[13px] text-muted-foreground">No data.</div>
+                        <div className="text-[13px] text-muted-foreground">{t("settings.gameData.empty")}</div>
                     )}
                 </CardContent>
             </Card>

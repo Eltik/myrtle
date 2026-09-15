@@ -7,7 +7,10 @@ import { XIcon } from "lucide-react";
 import type React from "react";
 import { Button } from "#/components/ui/button";
 import { ScrollArea } from "#/components/ui/scroll-area";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./dialog.messages";
 
 export const DialogCreateHandle: typeof DialogPrimitive.createHandle = DialogPrimitive.createHandle;
 
@@ -45,6 +48,8 @@ export function DialogPopup({
     closeProps?: DialogPrimitive.Close.Props;
     portalProps?: DialogPrimitive.Portal.Props;
 }): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("common");
+
     return (
         <DialogPortal {...portalProps}>
             <DialogBackdrop />
@@ -60,7 +65,7 @@ export function DialogPopup({
                 >
                     {children}
                     {showCloseButton && (
-                        <DialogPrimitive.Close aria-label="Close" className="absolute end-2 top-2" render={<Button size="icon" variant="ghost" />} {...closeProps}>
+                        <DialogPrimitive.Close aria-label={t("dialog.close")} className="absolute end-2 top-2" render={<Button size="icon" variant="ghost" />} {...closeProps}>
                             <XIcon />
                         </DialogPrimitive.Close>
                     )}

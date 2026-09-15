@@ -1,8 +1,10 @@
 import * as React from "react";
+import { useLocale, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
-import { WEEKDAYS } from "../constants";
-import { buildCalendarCells, isToday, opsOn } from "../helpers";
+import { buildCalendarCells, isToday, opsOn, weekdayNames } from "../helpers";
 import type { IOperatorBirthday, ISelectedDay } from "../types";
+import type { messages } from "./MonthGrid.messages";
 import { OpChip } from "./OpChip";
 
 /** Operator chips shown per month cell before collapsing to "+N". */
@@ -17,6 +19,9 @@ interface IMonthGridProps {
 
 /** Classic 6-week month grid; each day is a chip-preview cell that opens the day dialog. */
 export function MonthGrid({ anchor, byDay, onSelect, today }: IMonthGridProps): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("tools");
+    const locale = useLocale();
+    const weekdays = React.useMemo(() => weekdayNames(locale), [locale]);
     const year = anchor.getFullYear();
     const month = anchor.getMonth() + 1;
     const cells = React.useMemo(() => buildCalendarCells(year, month), [year, month]);
@@ -24,7 +29,7 @@ export function MonthGrid({ anchor, byDay, onSelect, today }: IMonthGridProps): 
     return (
         <>
             <div className="grid grid-cols-7 px-2 pt-2">
-                {WEEKDAYS.map((w) => (
+                {weekdays.map((w) => (
                     <span key={w} className="px-1.5 py-2 text-center font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.08em]">
                         {w}
                     </span>
@@ -59,7 +64,7 @@ export function MonthGrid({ anchor, byDay, onSelect, today }: IMonthGridProps): 
                                     {visible.map((b) => (
                                         <OpChip key={b.operator.id} operator={b.operator} />
                                     ))}
-                                    {overflow > 0 && <span className="inline-flex h-5.5 items-center justify-center rounded-md border border-border bg-card px-1.5 font-medium font-mono text-[10.5px] text-muted-foreground">+{overflow}</span>}
+                                    {overflow > 0 && <span className="inline-flex h-5.5 items-center justify-center rounded-md border border-border bg-card px-1.5 font-medium font-mono text-[10.5px] text-muted-foreground">{t("birthdays.month.overflow", { count: overflow })}</span>}
                                 </div>
                             )}
                         </button>

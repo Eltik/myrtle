@@ -70,6 +70,7 @@ pub enum GlobalRole {
     User, // Default - no special permissions
     TierListEditor, // Can edit tier lists they have permission for
     TierListAdmin,  // Can manage all tier lists
+    Translator,     // Can edit UI translations for locales granted in translation_permissions
     SuperAdmin,     // Full access to everything
 }
 
@@ -82,6 +83,8 @@ impl GlobalRole {
         matches!(self, Self::SuperAdmin)
     }
 
+    /// Holds one of the TIER-LIST staff roles. Deliberately excludes
+    /// `Translator`
     pub const fn is_any_admin_role(self) -> bool {
         matches!(
             self,
@@ -89,8 +92,26 @@ impl GlobalRole {
         )
     }
 
-    pub const fn can_have_tier_permissions(self) -> bool {
+    /// May load the admin panel at all. This is the gate the `/admin` route
+    /// tree uses
+    pub const fn can_access_admin_panel(self) -> bool {
         !matches!(self, Self::User)
+    }
+
+    /// May write translations, subject to a per-locale grant in
+    /// `translation_permissions`. The role is the ticket into the building;
+    /// the grant row says which rooms. `SuperAdmin` skips the grant check.
+    pub const fn is_translator(self) -> bool {
+        matches!(self, Self::Translator | Self::SuperAdmin)
+    }
+
+    /// May be granted a per-tier-list permission row. Enumerated rather than
+    /// `!User` so that adding a non-tier-list role never silently widens it.
+    pub const fn can_have_tier_permissions(self) -> bool {
+        matches!(
+            self,
+            Self::TierListEditor | Self::TierListAdmin | Self::SuperAdmin
+        )
     }
 
     pub const fn global_tier_permission(self) -> Option<Permission> {
@@ -105,6 +126,7 @@ impl GlobalRole {
             Self::User,
             Self::TierListEditor,
             Self::TierListAdmin,
+            Self::Translator,
             Self::SuperAdmin,
         ]
     }
@@ -116,8 +138,24 @@ impl fmt::Display for GlobalRole {
             Self::User => "user",
             Self::TierListEditor => "tier_list_editor",
             Self::TierListAdmin => "tier_list_admin",
+            Self::Translator => "translator",
             Self::SuperAdmin => "super_admin",
         })
+    }
+}
+
+impl FromStr for GlobalRole {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "user" => Ok(Self::User),
+            "tier_list_editor" => Ok(Self::TierListEditor),
+            "tier_list_admin" => Ok(Self::TierListAdmin),
+            "translator" => Ok(Self::Translator),
+            "super_admin" => Ok(Self::SuperAdmin),
+            _ => Err(format!("Unknown role: {s}")),
+        }
     }
 }
 

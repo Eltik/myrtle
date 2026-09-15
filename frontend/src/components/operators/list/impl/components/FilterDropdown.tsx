@@ -1,6 +1,9 @@
 import { X } from "lucide-react";
 import { Fragment, type ReactNode, useId, useMemo } from "react";
 import { Combobox, ComboboxCollection, ComboboxEmpty, ComboboxGroup, ComboboxGroupLabel, ComboboxInput, ComboboxItem, ComboboxList, ComboboxPopup, ComboboxSeparator } from "#/components/ui/combobox";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "./FilterDropdown.messages";
 
 interface IGroup {
     key: string;
@@ -28,6 +31,7 @@ interface IFilterDropdownProps {
 }
 
 export function FilterDropdown({ label, placeholder, options, selected, onChange, formatOption, groupBy, groupOrder, formatGroup, renderOptionIcon }: IFilterDropdownProps) {
+    const t: TypedT<typeof messages> = useT("operators");
     const id = useId();
     const format = formatOption ?? ((v: string) => v);
 
@@ -71,9 +75,9 @@ export function FilterDropdown({ label, placeholder, options, selected, onChange
                 </label>
             )}
             <Combobox<string, true> multiple items={items} value={selected} onValueChange={onChange} itemToStringLabel={format}>
-                <ComboboxInput id={id} aria-label={label ?? placeholder} placeholder={selected.length > 0 ? `${selected.length} selected` : placeholder} />
+                <ComboboxInput id={id} aria-label={label ?? placeholder} placeholder={selected.length > 0 ? t("filters.dropdown.selected", { count: selected.length }) : placeholder} />
                 <ComboboxPopup>
-                    <ComboboxEmpty>No matches</ComboboxEmpty>
+                    <ComboboxEmpty>{t("filters.dropdown.noMatches")}</ComboboxEmpty>
                     <ComboboxList>
                         {groups
                             ? (group: IGroup) => (

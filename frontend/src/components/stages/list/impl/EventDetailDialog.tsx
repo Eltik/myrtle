@@ -1,8 +1,11 @@
 import { ChevronRight, Skull } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogDescription, DialogPopup, DialogTitle } from "#/components/ui/dialog";
-import { STAGE_GROUP_DESCRIPTION, STAGE_GROUP_LABEL } from "#/lib/registry/stage-groups";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import { STAGE_GROUP_DESCRIPTION_KEY, STAGE_GROUP_LABEL } from "#/lib/registry/stage-groups";
 import { coverImage, type IEventVM } from "./derive";
+import type { messages } from "./EventDetailDialog.messages";
 import { PreviewFallback, STAGE_GROUP_ICON } from "./PreviewFallback";
 import { StagePreview } from "./StagePreview";
 
@@ -23,6 +26,10 @@ function Stat({ label, value, tone }: { label: string; value: string; tone?: str
  * list behind it.
  */
 export function EventDetailDialog({ event, onClose, onBrowse }: { event: IEventVM | null; onClose: () => void; onBrowse: (event: IEventVM) => void }) {
+    // The stage-group descriptions live in the `nav` namespace with the rest
+    // of the registry copy, so this dialog resolves them from there.
+    const t: TypedT<typeof messages> = useT("stages");
+    const tNav = useT("nav");
     // Keep rendering the last event through the close animation.
     const [last, setLast] = useState<IEventVM | null>(event);
     if (event && event !== last) setLast(event);
@@ -66,18 +73,18 @@ export function EventDetailDialog({ event, onClose, onBrowse }: { event: IEventV
 
                 {/* Category details */}
                 <div className="flex flex-col gap-4 p-4.5 pt-4 sm:gap-4.5 sm:p-6 sm:pt-5">
-                    <DialogDescription className="text-pretty font-sans text-[13px] leading-[1.6]">{STAGE_GROUP_DESCRIPTION[ev.group]}</DialogDescription>
+                    <DialogDescription className="text-pretty font-sans text-[13px] leading-[1.6]">{tNav(STAGE_GROUP_DESCRIPTION_KEY[ev.group])}</DialogDescription>
 
                     <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                        <Stat label="Operations" value={String(ev.stageCount)} />
-                        <Stat label="Bosses" value={ev.bossCount > 0 ? String(ev.bossCount) : "-"} tone={ev.bossCount > 0 ? "var(--enemy-boss)" : undefined} />
-                        <Stat label="Codes" value={ev.codeRange || "-"} />
-                        <Stat label="Sanity total" value={totalSanity > 0 ? `${totalSanity} ◆` : "Free"} />
+                        <Stat label={t("event.stat.operations")} value={String(ev.stageCount)} />
+                        <Stat label={t("event.stat.bosses")} value={ev.bossCount > 0 ? String(ev.bossCount) : "-"} tone={ev.bossCount > 0 ? "var(--enemy-boss)" : undefined} />
+                        <Stat label={t("event.stat.codes")} value={ev.codeRange || "-"} />
+                        <Stat label={t("event.stat.sanity")} value={totalSanity > 0 ? `${totalSanity} ◆` : t("event.stat.sanity.free")} />
                     </div>
 
                     {previews.length > 0 && (
                         <div>
-                            <div className="mb-2 font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">Field previews</div>
+                            <div className="mb-2 font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("event.previews")}</div>
                             <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
                                 {previews.map((s) => (
                                     <div key={s.stageId} className="relative aspect-16/10 overflow-hidden rounded-md border border-border">
@@ -93,7 +100,7 @@ export function EventDetailDialog({ event, onClose, onBrowse }: { event: IEventV
                         <span className="font-mono text-[10.5px] text-muted-foreground">
                             {ev.bossCount > 0 && (
                                 <span className="mr-3 inline-flex items-center gap-1" style={{ color: "var(--enemy-boss)" }}>
-                                    <Skull className="h-3 w-3" aria-hidden="true" /> Boss operation{ev.bossCount === 1 ? "" : "s"} inside
+                                    <Skull className="h-3 w-3" aria-hidden="true" /> {t("event.bossInside", { count: ev.bossCount })}
                                 </span>
                             )}
                             {ev.statusLabel}
@@ -103,7 +110,7 @@ export function EventDetailDialog({ event, onClose, onBrowse }: { event: IEventV
                             onClick={() => onBrowse(ev)}
                             className="inline-flex h-10 w-full flex-none cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-4 font-sans font-semibold text-[12.5px] text-primary-foreground shadow-sm transition-transform hover:-translate-y-px sm:h-8.5 sm:w-auto"
                         >
-                            Browse stages
+                            {t("event.browse")}
                             <ChevronRight className="h-3.25 w-3.25" aria-hidden="true" />
                         </button>
                     </div>

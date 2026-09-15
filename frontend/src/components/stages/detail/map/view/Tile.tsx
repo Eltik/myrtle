@@ -1,4 +1,6 @@
+import type { TypedT } from "#/lib/i18n/messages";
 import { BOX_TILES, TILE_TYPES } from "../impl/tile/tile-defs";
+import type { messages as tileMessages } from "../impl/tile/tile-defs.messages";
 import type { IMapOperator, IRawTile } from "../impl/types";
 import { coordLabel } from "../impl/util/coord";
 import { cx } from "../impl/util/cx";
@@ -64,11 +66,13 @@ export interface ITileContext {
     operators: Map<number, IMapOperator>;
     disallow: Set<number>;
     hovered?: boolean;
+    /** Resolves a tile's glyph key against `tile-defs.messages.ts`. */
+    t: TypedT<typeof tileMessages>;
 }
 
 export function Tile({ def, row, col, ctx }: { def: IRawTile; row: number; col: number; ctx: ITileContext }) {
     const key = def.tileKey;
-    const type = TILE_TYPES[key] || ({ content: "" } as (typeof TILE_TYPES)[string]);
+    const type = TILE_TYPES[key] || ({} as (typeof TILE_TYPES)[string]);
     const heightCode = encodeHeightType(def.heightType); // 0 lowland, 1 highland
     const buildCode = encodeBuildableType(def.buildableType); // 0 none .. 3 all
 
@@ -82,7 +86,7 @@ export function Tile({ def, row, col, ctx }: { def: IRawTile; row: number; col: 
     const overlays: IOverlaySpec[] = [];
     if (type.effect) overlays.push({ type: type.effect, content: "", options: { content_on_top: block || box } });
 
-    const contentOv: IOverlaySpec | null = type.content ? { type: "content", content: type.content, options: { content_on_top: block && type.content_on_top, content_on_box: box && type.content_on_top, content_fade_out_perspective: key === "tile_hole" } } : null;
+    const contentOv: IOverlaySpec | null = type.contentKey ? { type: "content", content: ctx.t(type.contentKey), options: { content_on_top: block && type.content_on_top, content_on_box: box && type.content_on_top, content_fade_out_perspective: key === "tile_hole" } } : null;
 
     const coordShown = !COORD_EXCLUDE.includes(key) && !(!block && contentOv) && coordStr;
     if (coordShown) overlays.push({ type: "coord", content: coordStr, options: { content_fade_out_perspective: block, content_fade_out_flat: type.content_on_top } });

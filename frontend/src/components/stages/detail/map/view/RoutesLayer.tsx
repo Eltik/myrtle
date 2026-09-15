@@ -1,8 +1,11 @@
 import { enemyIconURL } from "#/lib/api/enemies";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import type { IMapSettings } from "../../impl/MapSettings";
 import type { RouteEntries, RouteEntry } from "../impl/route/route-entries";
 import type { EnemyHoverFn } from "../impl/types";
 import { cx } from "../impl/util/cx";
+import type { messages } from "./RoutesLayer.messages";
 
 const WINDOW_BACK = 10;
 const WINDOW_FWD = 20;
@@ -19,6 +22,7 @@ function IconBadge({ enemyKey, ring }: { enemyKey: string; ring: string }) {
 }
 
 function RouteEl({ entry, active, inWindow, dims, settings, is3D, speed, onEnemyHover }: { entry: RouteEntry; active: boolean; inWindow: boolean; dims: { width: number; height: number }; settings: IMapSettings; is3D: boolean; speed: number; onEnemyHover?: EnemyHoverFn }) {
+    const t: TypedT<typeof messages> = useT("stages");
     const hoverProps = entry.enemyKey
         ? {
               style: { pointerEvents: "auto" as const, cursor: "help" },
@@ -47,7 +51,7 @@ function RouteEl({ entry, active, inWindow, dims, settings, is3D, speed, onEnemy
         <>
             <div className={cx("route", active ? "route_active" : "route_inactive", entry.isAir && "route_air")} style={{ display }}>
                 <svg width={dims.width} height={dims.height} viewBox={vb}>
-                    <title>enemy route</title>
+                    <title>{t("routes.svgTitle")}</title>
                     <path id={pathId} d={entry.d} style={pathStyle} />
                     {/* biome-ignore lint/suspicious/noArrayIndexKey: static route geometry (never reordered); position alone collides when a path revisits a tile */}
                     {settings.showRoutes && entry.dots.map((p, i) => <circle key={`dot-${i}-${p.x}-${p.y}`} cx={p.x} cy={p.y} r={3.5} style={markOpacity()} />)}
@@ -78,7 +82,7 @@ function RouteEl({ entry, active, inWindow, dims, settings, is3D, speed, onEnemy
             </div>
             <div className={cx("route_shadow", active ? "route_active" : "route_inactive", entry.isAir && "route_air_shadow")} style={{ display }}>
                 <svg width={dims.width} height={dims.height} viewBox={vb}>
-                    <title>enemy route shadow</title>
+                    <title>{t("routes.svgTitle.shadow")}</title>
                     <path d={entry.d} style={pathStyle} />
                 </svg>
             </div>

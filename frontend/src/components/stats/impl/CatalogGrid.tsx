@@ -1,5 +1,7 @@
 import type { IGameDataStats, IRostersStats, ITierListStats } from "#/lib/api/stats";
-import { formatNumber, formatNumberCompact } from "#/lib/utils";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "./CatalogGrid.messages";
 
 type IconName = "users" | "skill" | "module" | "skin" | "zone" | "enemy" | "tiers" | "sync";
 
@@ -95,21 +97,24 @@ interface ICatalogGridProps {
 }
 
 export function CatalogGrid({ gameData, tierLists, rosters }: ICatalogGridProps) {
+    const t: TypedT<typeof messages> = useT("stats");
+    const f = useFormatters();
+
     const tiles: ICatalogTile[] = [
-        { icon: "users", label: "Operators", value: formatNumber(gameData.operators), meta: "playable + alters" },
-        { icon: "skill", label: "Skills", value: formatNumber(gameData.skills), meta: "across all archetypes" },
-        { icon: "module", label: "Modules", value: formatNumber(gameData.modules), meta: "stage-3 unlocked" },
-        { icon: "skin", label: "Skins", value: formatNumber(gameData.skins), meta: "elite & seasonal" },
-        { icon: "zone", label: "Stages", value: formatNumber(gameData.stages), meta: `across ${formatNumber(gameData.zones)} zones` },
-        { icon: "enemy", label: "Enemies", value: formatNumber(gameData.enemies), meta: "indexed" },
-        { icon: "tiers", label: "Tier lists", value: `${formatNumber(tierLists.active)}/${formatNumber(tierLists.total)}`, meta: `${formatNumberCompact(tierLists.totalPlacements)} placements` },
-        { icon: "sync", label: "Rosters", value: formatNumberCompact(rosters.total), meta: "Yostar-linked doctors" },
+        { icon: "users", label: t("catalog.operators"), value: f.number(gameData.operators), meta: t("catalog.operators.meta") },
+        { icon: "skill", label: t("catalog.skills"), value: f.number(gameData.skills), meta: t("catalog.skills.meta") },
+        { icon: "module", label: t("catalog.modules"), value: f.number(gameData.modules), meta: t("catalog.modules.meta") },
+        { icon: "skin", label: t("catalog.skins"), value: f.number(gameData.skins), meta: t("catalog.skins.meta") },
+        { icon: "zone", label: t("catalog.stages"), value: f.number(gameData.stages), meta: t("catalog.stages.meta", { count: f.number(gameData.zones) }) },
+        { icon: "enemy", label: t("catalog.enemies"), value: f.number(gameData.enemies), meta: t("catalog.enemies.meta") },
+        { icon: "tiers", label: t("catalog.tierLists"), value: `${f.number(tierLists.active)}/${f.number(tierLists.total)}`, meta: t("catalog.tierLists.meta", { count: f.compact(tierLists.totalPlacements) }) },
+        { icon: "sync", label: t("catalog.rosters"), value: f.compact(rosters.total), meta: t("catalog.rosters.meta") },
     ];
 
     return (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {tiles.map((t) => (
-                <CatalogCell key={t.label} {...t} />
+            {tiles.map((tile) => (
+                <CatalogCell key={tile.icon} {...tile} />
             ))}
         </div>
     );

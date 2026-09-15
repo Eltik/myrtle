@@ -1,10 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { env } from "#/env";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import { LEVEL_TOKENS } from "../tokens";
 import type { IEnemyStatMaxByLevel, IEnemyView } from "../types";
 import { DamageDots, LevelBadge, StatBar } from "./atoms";
+import type { messages } from "./EnemyCardGrid.messages";
 import styles from "./EnemyCardGrid.module.css";
 import { EnemyPlaceholder } from "./EnemyPlaceholder";
 
@@ -14,6 +17,7 @@ interface IEnemyCardGridProps {
 }
 
 export function EnemyCardGrid({ enemy, statMax }: IEnemyCardGridProps) {
+    const t: TypedT<typeof messages> = useT("enemies");
     const [imgError, setImgError] = useState(false);
     const tok = LEVEL_TOKENS[enemy.enemyLevel];
     const hasPortrait = !!enemy.portrait && !imgError;
@@ -31,11 +35,11 @@ export function EnemyCardGrid({ enemy, statMax }: IEnemyCardGridProps) {
             style={{
                 borderColor: enemy.enemyLevel === "NORMAL" ? "color-mix(in oklch, var(--border) 80%, transparent)" : tok.accentSoft,
             }}
-            aria-label={`${enemy.name} (${enemy.enemyIndex})`}
+            aria-label={t("cardGrid.aria", { name: enemy.name, index: enemy.enemyIndex })}
         >
             <div className="relative aspect-square w-full bg-[color-mix(in_oklch,var(--muted)_50%,transparent)]">
                 <div className="absolute inset-0 origin-center transition-transform duration-150 ease-in-out group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100">
-                    {hasPortrait && portraitSrc ? <img src={portraitSrc} alt={`${enemy.name} portrait`} loading="lazy" decoding="async" onError={() => setImgError(true)} className="block h-full w-full object-contain" /> : <EnemyPlaceholder className="h-full w-full p-4.5" />}
+                    {hasPortrait && portraitSrc ? <img src={portraitSrc} alt={t("cardGrid.portraitAlt", { name: enemy.name })} loading="lazy" decoding="async" onError={() => setImgError(true)} className="block h-full w-full object-contain" /> : <EnemyPlaceholder className="h-full w-full p-4.5" />}
                 </div>
 
                 <span className="absolute top-1.5 left-1.5 rounded-sm bg-background/75 px-1 py-0.5 font-medium font-mono text-[8.5px] text-muted-foreground uppercase leading-none tracking-[0.12em] backdrop-blur-[6px] sm:top-2 sm:left-2 sm:px-1.25 sm:py-0.75 sm:text-[9px] sm:tracking-[0.14em]">{enemy.enemyIndex}</span>
@@ -54,9 +58,9 @@ export function EnemyCardGrid({ enemy, statMax }: IEnemyCardGridProps) {
                 </div>
 
                 <div className="flex flex-col gap-1">
-                    <StatBar label="HP" value={enemy.flatStats.maxHp} max={tierMax.hp} color={tok.accent} />
-                    <StatBar label="ATK" value={enemy.flatStats.atk} max={tierMax.atk} color="color-mix(in oklch, var(--foreground) 50%, transparent)" />
-                    <StatBar label="DEF" value={enemy.flatStats.def} max={tierMax.def} color="color-mix(in oklch, var(--foreground) 30%, transparent)" />
+                    <StatBar label={t("cardGrid.hp")} value={enemy.flatStats.maxHp} max={tierMax.hp} color={tok.accent} />
+                    <StatBar label={t("cardGrid.atk")} value={enemy.flatStats.atk} max={tierMax.atk} color="color-mix(in oklch, var(--foreground) 50%, transparent)" />
+                    <StatBar label={t("cardGrid.def")} value={enemy.flatStats.def} max={tierMax.def} color="color-mix(in oklch, var(--foreground) 30%, transparent)" />
                 </div>
             </div>
         </Link>

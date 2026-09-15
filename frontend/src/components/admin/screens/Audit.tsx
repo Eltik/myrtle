@@ -10,18 +10,25 @@ import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
 import { globalAuditLogQueryOptions, type IAuditLogActor, type IAuditLogEntry } from "#/lib/api/admin";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
-import { cn, formatRelativeShort, getSecretaryAvatarURL } from "#/lib/utils";
+import { type TypedRichT, useFormatters, useGamedataServer, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import { cn, getSecretaryAvatarURL } from "#/lib/utils";
 import { HCode, PageHead } from "../AdminShell";
+import type { messages } from "./Audit.messages";
+
+type AuditT = TypedT<typeof messages>;
+type AuditRichT = TypedRichT<typeof messages>;
 
 function ActorCell({ actor }: { actor: IAuditLogActor }): React.ReactElement {
+    const t: AuditT = useT("admin");
     // actor.uid is null only when the FK target user has been hard-deleted.
     if (!actor.uid) {
         const shortUuid = `${actor.user_id.slice(0, 8)}…`;
         return (
-            <span className="inline-flex items-center gap-2" title={`Internal user_id ${actor.user_id} - referenced user no longer exists.`}>
+            <span className="inline-flex items-center gap-2" title={t("audit.actor.deletedTitle", { id: actor.user_id })}>
                 <span className="inline-block size-5.5 shrink-0 rounded-full bg-muted" />
                 <span>
-                    <span className="font-medium text-muted-foreground">Deleted user</span>
+                    <span className="font-medium text-muted-foreground">{t("audit.actor.deleted")}</span>
                     <span className="ml-1 font-mono text-[11.5px] text-muted-foreground/70">{shortUuid}</span>
                 </span>
             </span>
@@ -35,14 +42,14 @@ function ActorCell({ actor }: { actor: IAuditLogActor }): React.ReactElement {
             </span>
             <span>
                 <span className="font-medium">{actor.nickname ?? "-"}</span>
-                <span className="ml-1 font-mono text-[11.5px] text-muted-foreground">UID {actor.uid}</span>
+                <span className="ml-1 font-mono text-[11.5px] text-muted-foreground">{t("audit.uid", { uid: actor.uid })}</span>
             </span>
         </Link>
     );
 }
 
 function OperatorTargetCell({ operatorId }: { operatorId: string }): React.ReactElement {
-    const opsQuery = useQuery(operatorsIndexQueryOptions());
+    const opsQuery = useQuery(operatorsIndexQueryOptions(useGamedataServer()));
     const op = opsQuery.data?.find((o) => o.id === operatorId);
     return (
         <Link to="/operators/$id" params={{ id: operatorId }} target="_blank" className="inline-flex items-center gap-2 hover:underline">
@@ -60,7 +67,24 @@ function OperatorTargetCell({ operatorId }: { operatorId: string }): React.React
 
 type FieldFilter = "all" | "pros" | "cons" | "notes" | "trivia" | "summary";
 
-function diffPreview(entry: IAuditLogEntry): React.ReactNode {
+function fieldLabel(t: AuditT, field: FieldFilter): string {
+    switch (field) {
+        case "all":
+            return t("audit.filter.all");
+        case "pros":
+            return t("audit.filter.pros");
+        case "cons":
+            return t("audit.filter.cons");
+        case "notes":
+            return t("audit.filter.notes");
+        case "trivia":
+            return t("audit.filter.trivia");
+        case "summary":
+            return t("audit.filter.summary");
+    }
+}
+
+function diffPreview(entry: IAuditLogEntry, t: AuditT): React.ReactNode {
     const oldVal = entry.old_value?.trim() ?? "";
     const newVal = entry.new_value?.trim() ?? "";
     const truncate = (s: string, n = 80): string => (s.length > n ? `${s.slice(0, n)}…` : s);
@@ -68,7 +92,7 @@ function diffPreview(entry: IAuditLogEntry): React.ReactNode {
         return (
             <span className="text-[12.5px]">
                 <Badge variant="success" className="mr-1.5 align-middle">
-                    added
+                    {t("audit.diff.added")}
                 </Badge>
                 <span className="text-muted-foreground">{truncate(newVal)}</span>
             </span>
@@ -78,7 +102,7 @@ function diffPreview(entry: IAuditLogEntry): React.ReactNode {
         return (
             <span className="text-[12.5px]">
                 <Badge variant="warning" className="mr-1.5 align-middle">
-                    cleared
+                    {t("audit.diff.cleared")}
                 </Badge>
                 <span className="text-muted-foreground line-through">{truncate(oldVal)}</span>
             </span>
@@ -96,6 +120,9 @@ function diffPreview(entry: IAuditLogEntry): React.ReactNode {
 const PAGE_SIZE = 100;
 
 export function Audit(): React.ReactElement {
+    const t: AuditT = useT("admin");
+    const rt: AuditRichT = useRichT("admin");
+    const fmt = useFormatters();
     const [fieldFilter, setFieldFilter] = useState<FieldFilter>("all");
     const [search, setSearch] = useState("");
 
@@ -129,17 +156,13 @@ export function Audit(): React.ReactElement {
     return (
         <>
             <PageHead
-                kicker="Operate"
-                title="Audit log"
-                sub={
-                    <>
-                        Append-only edit trail from <HCode>operator_notes_audit_log</HCode>. Each row was written when an admin saved an operator note. Permission grants and tier-list publishes don't yet emit audit rows in v3.
-                    </>
-                }
+                kicker={t("audit.kicker")}
+                title={t("audit.title")}
+                sub={rt("audit.sub", { table: <HCode>operator_notes_audit_log</HCode> })}
                 action={
                     <Button variant="outline" size="sm" onClick={() => auditQuery.refetch()} disabled={auditQuery.isFetching}>
                         <RefreshCwIcon className={cn(auditQuery.isFetching && "animate-spin")} />
-                        Refresh
+                        {t("audit.refresh")}
                     </Button>
                 }
             />
@@ -151,25 +174,25 @@ export function Audit(): React.ReactElement {
                             <InputGroupAddon>
                                 <SearchIcon />
                             </InputGroupAddon>
-                            <Input placeholder="Filter by actor, operator, field, content…" size="sm" value={search} onChange={(e) => setSearch(e.target.value)} />
+                            <Input placeholder={t("audit.searchPlaceholder")} size="sm" value={search} onChange={(e) => setSearch(e.target.value)} />
                         </InputGroup>
                     </div>
                     <div className="inline-flex max-w-full gap-px overflow-x-auto rounded-[9px] border border-border bg-card p-0.75 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                        {(["all", "pros", "cons", "notes", "trivia", "summary"] as const).map((f) => (
+                        {(["all", "pros", "cons", "notes", "trivia", "summary"] as const).map((field) => (
                             <button
-                                key={f}
+                                key={field}
                                 type="button"
-                                onClick={() => setFieldFilter(f)}
-                                className={cn("inline-flex h-6.5 shrink-0 cursor-pointer items-center whitespace-nowrap rounded-md px-3 font-medium text-[12.5px] transition-colors", fieldFilter === f ? "bg-background text-foreground shadow-xs/5" : "text-muted-foreground hover:text-foreground")}
+                                onClick={() => setFieldFilter(field)}
+                                className={cn("inline-flex h-6.5 shrink-0 cursor-pointer items-center whitespace-nowrap rounded-md px-3 font-medium text-[12.5px] transition-colors", fieldFilter === field ? "bg-background text-foreground shadow-xs/5" : "text-muted-foreground hover:text-foreground")}
                             >
-                                {f === "all" ? "All fields" : f.charAt(0).toUpperCase() + f.slice(1)}
+                                {fieldLabel(t, field)}
                             </button>
                         ))}
                     </div>
                     <div className="flex-1" />
                     <span className="text-[12px] text-muted-foreground">
-                        {filtered.length} of {shown.toLocaleString()} shown
-                        {total > shown ? <span className="ml-1 opacity-70">/ {total.toLocaleString()} total</span> : null}
+                        {t("audit.countShown", { filtered: filtered.length, shown: fmt.number(shown) })}
+                        {total > shown ? <span className="ml-1 opacity-70">{t("audit.countTotal", { total: fmt.number(total) })}</span> : null}
                     </span>
                 </div>
                 {loading ? (
@@ -179,15 +202,15 @@ export function Audit(): React.ReactElement {
                         <Skeleton className="h-10" />
                     </div>
                 ) : auditQuery.isError ? (
-                    <div className="px-3.5 py-16 text-center text-[13px] text-destructive">Failed to load audit log: {(auditQuery.error as Error)?.message ?? "unknown error"}</div>
+                    <div className="px-3.5 py-16 text-center text-[13px] text-destructive">{t("audit.loadError", { message: (auditQuery.error as Error)?.message ?? t("audit.unknownError") })}</div>
                 ) : filtered.length === 0 ? (
-                    <div className="px-3.5 py-16 text-center text-[13px] text-muted-foreground">{shown === 0 ? "No audit rows yet." : "No rows match your filter."}</div>
+                    <div className="px-3.5 py-16 text-center text-[13px] text-muted-foreground">{shown === 0 ? t("audit.empty") : t("audit.noMatch")}</div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-220 border-collapse text-[13px]">
                             <thead>
                                 <tr>
-                                    {["When", "Actor", "Operator", "Field", "Change"].map((h) => (
+                                    {[t("audit.th.when"), t("audit.th.actor"), t("audit.th.operator"), t("audit.th.field"), t("audit.th.change")].map((h) => (
                                         <th key={h} className="bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_1.5%)] px-3.5 py-2.5 text-left font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">
                                             {h}
                                         </th>
@@ -198,7 +221,7 @@ export function Audit(): React.ReactElement {
                                 {filtered.map((r) => (
                                     <tr key={r.id} className="border-border border-b last:border-0 hover:bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)]">
                                         <td className="whitespace-nowrap px-3.5 py-2.5 text-muted-foreground" title={r.changed_at}>
-                                            {formatRelativeShort(r.changed_at)}
+                                            {fmt.relativeShort(r.changed_at)}
                                         </td>
                                         <td className="px-3.5 py-2.5">
                                             <ActorCell actor={r.actor} />
@@ -211,7 +234,7 @@ export function Audit(): React.ReactElement {
                                                 {r.field_name}
                                             </Badge>
                                         </td>
-                                        <td className="max-w-105 px-3.5 py-2.5">{diffPreview(r)}</td>
+                                        <td className="max-w-105 px-3.5 py-2.5">{diffPreview(r, t)}</td>
                                     </tr>
                                 ))}
                             </tbody>

@@ -4,10 +4,21 @@
  * single source of truth - the frontend never re-derives a group from ids.
  */
 
+import type { messages as stageGroupMessages } from "#/lib/registry/stage-groups.messages";
+
 export type StageGroupKey = "story" | "events" | "annihilation" | "is" | "ra" | "sss" | "paradox" | "cc" | "supplies" | "other";
+
+/** A key in `stage-groups.messages.ts`; resolved by whichever component renders it. */
+export type StageGroupMessageKey = keyof typeof stageGroupMessages & string;
 
 export interface IStageGroup {
     key: StageGroupKey;
+    /**
+     * Official in-game mode name, deliberately NOT in the message catalog:
+     * game vocabulary belongs to the game-data layer, which ships its own
+     * name per region. Only the site's own prose about a group is a message
+     * (see `STAGE_GROUP_DESCRIPTION_KEY`).
+     */
     label: string;
 }
 
@@ -27,18 +38,22 @@ export const STAGE_GROUPS: IStageGroup[] = [
 
 export const STAGE_GROUP_LABEL: Record<StageGroupKey, string> = Object.fromEntries(STAGE_GROUPS.map((g) => [g.key, g.label])) as Record<StageGroupKey, string>;
 
-/** One-line blurb per group, shown in the stage-list detail dialog. */
-export const STAGE_GROUP_DESCRIPTION: Record<StageGroupKey, string> = {
-    story: "The mainline campaign - Rhodes Island's canonical operations, told episode by episode across Terra.",
-    events: "Limited-time side stories, intermezzi and reruns, each with its own maps, mechanics and rewards.",
-    annihilation: "Endless-wave defense operations scored by total kills - the weekly source of Orundum.",
-    is: "Roguelike expeditions: assemble a squad node by node across randomized floors, one run at a time.",
-    ra: "A survival sandbox - scout the wilds, gather resources, build defenses and endure each cycle.",
-    sss: "Deck-building defense runs against escalating security directives at fixed installations.",
-    paradox: "Operator-specific challenge simulations that stress-test a single unit's kit.",
-    cc: "Score-attack contracts - stack risk modifiers on a fixed map for higher rewards.",
-    supplies: "Daily and weekly resource runs for LMD, battle records, skill summaries and chips.",
-    other: "Special and uncategorized operations that sit outside the regular rotation.",
+/**
+ * One-line blurb per group, shown in the stage-list detail dialog. These are
+ * message KEYS, not text: this module has no React, so the dialog resolves
+ * them with `t()` against `stage-groups.messages.ts`.
+ */
+export const STAGE_GROUP_DESCRIPTION_KEY: Record<StageGroupKey, StageGroupMessageKey> = {
+    story: "stageGroup.story.desc",
+    events: "stageGroup.events.desc",
+    annihilation: "stageGroup.annihilation.desc",
+    is: "stageGroup.is.desc",
+    ra: "stageGroup.ra.desc",
+    sss: "stageGroup.sss.desc",
+    paradox: "stageGroup.paradox.desc",
+    cc: "stageGroup.cc.desc",
+    supplies: "stageGroup.supplies.desc",
+    other: "stageGroup.other.desc",
 };
 
 /** Index of a group key in display order (unknown keys sort last). */

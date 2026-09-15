@@ -73,6 +73,19 @@ pub enum CacheKey<'a> {
     DpsList {
         kind: &'a str,
     },
+    /// A rendered UI message catalog. The content hash is part of the key, so
+    /// a body under a given key can never be stale - a translator's edit moves
+    /// the hash and therefore the key. The long TTL is safe for the same
+    /// reason; `invalidate_by_prefix("i18n:")` on write only keeps the store
+    /// from accumulating orphaned bodies.
+    I18nCatalog {
+        locale: &'a str,
+        namespace: &'a str,
+        hash: &'a str,
+    },
+    /// locale+namespace -> current catalog hash. This is the only i18n read
+    /// that must go stale quickly, because it is what publishes a new hash.
+    I18nManifest,
 }
 
 impl CacheKey<'_> {
@@ -144,6 +157,12 @@ impl CacheKey<'_> {
                 format!("base:rotation:{uid}:{request_hash}")
             }
             CacheKey::DpsList { kind } => format!("dps:list:{kind}"),
+            CacheKey::I18nCatalog {
+                locale,
+                namespace,
+                hash,
+            } => format!("i18n:catalog:{locale}:{namespace}:{hash}"),
+            CacheKey::I18nManifest => "i18n:manifest".to_owned(),
         }
     }
 
@@ -169,6 +188,8 @@ impl CacheKey<'_> {
             CacheKey::CommunityEnemyAverage => Duration::from_mins(30),
             CacheKey::BaseRotation { .. } => Duration::from_mins(5),
             CacheKey::DpsList { .. } => Duration::from_hours(1),
+            CacheKey::I18nCatalog { .. } => Duration::from_hours(24), // content-addressed; cannot go stale
+            CacheKey::I18nManifest => Duration::from_secs(30),
         }
     }
 }

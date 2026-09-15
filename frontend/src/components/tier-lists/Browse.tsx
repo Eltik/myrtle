@@ -5,7 +5,10 @@ import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { useDebounce } from "#/hooks/use-debounce";
 import { browseTierListsQueryOptions, favoritedTierListsQueryOptions, type ITierListBrowseItem, recordTierListViewFn, tierListFlairsQueryOptions } from "#/lib/api/tier-lists";
+import { useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { Route } from "#/routes/tier-lists";
+import type { messages } from "./Browse.messages";
 import BrowseCard from "./BrowseCard";
 import { FilterToolbar, type IFlairOption, type TierListSort, type TierListType } from "./FilterToolbar";
 import { Hero } from "./Hero";
@@ -17,6 +20,7 @@ const INITIAL_PAGE_SIZE = 24;
 const OFFICIAL_RAIL_LIMIT = 8;
 
 export function Browse() {
+    const t: TypedT<typeof messages> = useT("tierLists");
     const queryClient = useQueryClient();
     const navigate = useNavigate({ from: "/tier-lists" });
     const search = Route.useSearch();
@@ -29,8 +33,9 @@ export function Browse() {
         }
     }, [authed, search, navigate]);
 
-    const browseQuery = useQuery(browseTierListsQueryOptions());
-    const favoritesQuery = useQuery(favoritedTierListsQueryOptions(authed));
+    const gamedataServer = useGamedataServer();
+    const browseQuery = useQuery(browseTierListsQueryOptions(gamedataServer));
+    const favoritesQuery = useQuery(favoritedTierListsQueryOptions(authed, gamedataServer));
     const viewingFavorites = authed && search.type === "favorites";
 
     const { data, isLoading, isError, refetch, isFetching } = viewingFavorites ? favoritesQuery : browseQuery;
@@ -179,14 +184,14 @@ export function Browse() {
                         </div>
                     ) : isError ? (
                         <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-10 text-center">
-                            <p className="m-0 font-sans text-muted-foreground text-sm">Failed to load tier lists.</p>
+                            <p className="m-0 font-sans text-muted-foreground text-sm">{t("browse.error")}</p>
                             <button
                                 type="button"
                                 onClick={() => refetch()}
                                 disabled={isFetching}
                                 className="mt-3 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent disabled:opacity-60"
                             >
-                                {isFetching ? "Retrying…" : "Retry"}
+                                {isFetching ? t("browse.retrying") : t("browse.retry")}
                             </button>
                         </div>
                     ) : sorted.length === 0 ? (
@@ -195,18 +200,18 @@ export function Browse() {
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto h-7 w-7 text-muted-foreground/70" aria-hidden="true">
                                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                                 </svg>
-                                <p className="mt-3 mb-0 font-medium font-sans text-foreground text-sm">No favorites yet</p>
-                                <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">Tap the heart on any tier list to save it here for quick access.</p>
+                                <p className="mt-3 mb-0 font-medium font-sans text-foreground text-sm">{t("browse.favorites.emptyTitle")}</p>
+                                <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">{t("browse.favorites.emptyBody")}</p>
                                 <button type="button" onClick={() => setType("all")} className="mt-4 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent">
-                                    Browse tier lists
+                                    {t("browse.favorites.emptyAction")}
                                 </button>
                             </div>
                         ) : (
                             <div className="rounded-lg border border-border border-dashed bg-muted/20 px-5 py-12 text-center">
-                                <p className="m-0 font-medium font-sans text-foreground text-sm">No lists match these filters.</p>
-                                <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">Try clearing flairs or switching the type filter.</p>
+                                <p className="m-0 font-medium font-sans text-foreground text-sm">{t("browse.filtered.emptyTitle")}</p>
+                                <p className="mt-1 font-sans text-[12.5px] text-muted-foreground">{t("browse.filtered.emptyBody")}</p>
                                 <button type="button" onClick={clearAllFilters} className="mt-4 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-3 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent">
-                                    Clear filters
+                                    {t("browse.filtered.clear")}
                                 </button>
                             </div>
                         )
@@ -226,7 +231,7 @@ export function Browse() {
                                         className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border border-dashed bg-transparent px-4 py-2.5 font-medium font-sans text-[12.5px] text-muted-foreground leading-none transition-colors hover:border-primary hover:bg-[color-mix(in_srgb,var(--primary)_5%,transparent)] hover:text-foreground"
                                     >
                                         <span className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_color-mix(in_srgb,var(--primary)_50%,transparent)]" aria-hidden="true" />
-                                        <span>Load {Math.min(PAGE_INCREMENT, sorted.length - visibleCount)} more</span>
+                                        <span>{t("browse.loadMore", { count: Math.min(PAGE_INCREMENT, sorted.length - visibleCount) })}</span>
                                         <span className="font-mono text-[10.5px] text-muted-foreground/70 tabular-nums">
                                             {visibleCount} / {sorted.length}
                                         </span>

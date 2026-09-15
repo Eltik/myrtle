@@ -1,5 +1,7 @@
 import type { IGachaEnhancedStats } from "#/lib/api/gacha";
-import { formatNumber, formatNumberCompact } from "#/lib/utils";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "./KpiStrip.messages";
 
 interface IKpiStripProps {
     data: IGachaEnhancedStats | null;
@@ -35,6 +37,8 @@ function Kpi({ label, value, meta, featured }: IKpiProps) {
 const SKELETON = <span className="text-muted-foreground/60">-</span>;
 
 export function KpiStrip({ data }: IKpiStripProps) {
+    const t: TypedT<typeof messages> = useT("gacha");
+    const f = useFormatters();
     const cs = data?.collectiveStats;
     const pr = data?.pullRates;
 
@@ -42,7 +46,7 @@ export function KpiStrip({ data }: IKpiStripProps) {
         <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr] overflow-hidden rounded-[14px] border border-border bg-card max-[1180px]:grid-cols-2 max-[520px]:grid-cols-1">
             <Kpi
                 featured
-                label="6★ rate · all-time"
+                label={t("community.kpi.sixStarRate")}
                 value={
                     pr ? (
                         <>
@@ -53,18 +57,10 @@ export function KpiStrip({ data }: IKpiStripProps) {
                         SKELETON
                     )
                 }
-                meta={
-                    cs ? (
-                        <span>
-                            {formatNumber(cs.totalSixStars)} of {formatNumber(cs.totalPulls)} pulls
-                        </span>
-                    ) : (
-                        <span>-</span>
-                    )
-                }
+                meta={cs ? <span>{t("community.kpi.sixStarRate.meta", { six: f.number(cs.totalSixStars), total: f.number(cs.totalPulls) })}</span> : <span>-</span>}
             />
             <Kpi
-                label="5★ rate · all-time"
+                label={t("community.kpi.fiveStarRate")}
                 value={
                     pr ? (
                         <>
@@ -75,10 +71,10 @@ export function KpiStrip({ data }: IKpiStripProps) {
                         SKELETON
                     )
                 }
-                meta={cs ? <span>{formatNumber(cs.totalFiveStars)} pulls</span> : <span>-</span>}
+                meta={cs ? <span>{t("community.kpi.fiveStarRate.meta", { count: f.number(cs.totalFiveStars) })}</span> : <span>-</span>}
             />
-            <Kpi label="Avg pulls / 6★" value={data ? data.averagePullsToSixStar.toFixed(1) : SKELETON} meta={data ? <span>avg pulls / 5★ · {data.averagePullsToFiveStar.toFixed(1)}</span> : <span>-</span>} />
-            <Kpi label="Total pulls" value={cs ? formatNumberCompact(cs.totalPulls) : SKELETON} meta={cs ? <span>{formatNumberCompact(cs.totalUsers)} contributing doctors</span> : <span>-</span>} />
+            <Kpi label={t("community.kpi.avgPullsSixStar")} value={data ? data.averagePullsToSixStar.toFixed(1) : SKELETON} meta={data ? <span>{t("community.kpi.avgPullsFiveStar.meta", { value: data.averagePullsToFiveStar.toFixed(1) })}</span> : <span>-</span>} />
+            <Kpi label={t("community.kpi.totalPulls")} value={cs ? f.compact(cs.totalPulls) : SKELETON} meta={cs ? <span>{t("community.kpi.totalPulls.meta", { count: f.compact(cs.totalUsers) })}</span> : <span>-</span>} />
         </div>
     );
 }

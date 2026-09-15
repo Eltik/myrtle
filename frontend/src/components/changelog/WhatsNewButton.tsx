@@ -7,12 +7,16 @@ import { useEffect } from "react";
 import { Button } from "#/components/ui/button";
 import { LATEST_ANNOUNCED_NOTE } from "#/content/changelog/entries";
 import { hasUnseenReleaseNote, initReleaseNotes, openReleaseNoteDialog, releaseNoteStore } from "#/lib/changelog/store";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "./WhatsNewButton.messages";
 
 /**
  * The ONLY entry point to the announcement. Nothing opens on its own: the dot is
  * the whole notification, and the click that opens the dialog is what clears it.
  */
 export function WhatsNewButton(): React.ReactElement | null {
+    const t: TypedT<typeof messages> = useT("changelog");
     const unseen = useSelector(releaseNoteStore, hasUnseenReleaseNote);
 
     useEffect(() => {
@@ -22,7 +26,7 @@ export function WhatsNewButton(): React.ReactElement | null {
     if (LATEST_ANNOUNCED_NOTE === null) return null;
 
     return (
-        <Button aria-label={unseen ? "What's new (unread)" : "What's new"} className="relative" onClick={openReleaseNoteDialog} size="icon" variant="ghost">
+        <Button aria-label={unseen ? t("whatsNew.aria.unread") : t("whatsNew.aria")} className="relative" onClick={openReleaseNoteDialog} size="icon" variant="ghost">
             <BellIcon className="h-4 w-4" aria-hidden="true" />
             {unseen && <span aria-hidden="true" className="absolute end-1.5 top-1.5 size-2 rounded-full bg-primary ring-2 ring-background" />}
         </Button>

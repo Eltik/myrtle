@@ -8,10 +8,13 @@ import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { useWindowVirtualRows } from "#/hooks/use-window-virtual-rows";
 import { materialsQueryOptions } from "#/lib/api/materials";
 import type { IInventoryItem } from "#/lib/api/user";
-import { capitalize } from "#/lib/utils";
+import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { CompactCard } from "./CompactCard";
 import { DetailedCard } from "./DetailedCard";
 import { CATEGORY_LABELS, CATEGORY_ORDER } from "./helpers";
+import type { messages as helperMessages } from "./helpers.messages";
+import type { messages } from "./ItemsTab.messages";
 import type { IItemEntry, ItemRarityFilter, ItemSortKey, ItemViewMode } from "./types";
 import { useItems } from "./useItems";
 
@@ -19,20 +22,26 @@ interface IItemsTabProps {
     inventory: IInventoryItem[];
 }
 
-const SORT_LABELS: Record<ItemSortKey, string> = {
-    rarity: "Sort by Rarity",
-    qty: "Sort by Quantity",
-    name: "Sort by Name",
-    category: "Sort by Category",
+/** The category chip names are declared in `helpers.messages.ts`. */
+type TabT = TypedT<typeof messages & typeof helperMessages>;
+
+/** A key in `ItemsTab.messages.ts`; resolved by the toolbar below. */
+type MessageKey = keyof typeof messages & string;
+
+const SORT_LABELS: Record<ItemSortKey, MessageKey> = {
+    rarity: "profile.items.sort.rarity",
+    qty: "profile.items.sort.qty",
+    name: "profile.items.sort.name",
+    category: "profile.items.sort.category",
 };
 
-const RARITY_OPTIONS: { value: ItemRarityFilter; label: string }[] = [
-    { value: "all", label: "All Rarities" },
-    { value: "5", label: "5 Star" },
-    { value: "4", label: "4 Star" },
-    { value: "3", label: "3 Star" },
-    { value: "2", label: "2 Star" },
-    { value: "1", label: "1 Star" },
+const RARITY_OPTIONS: { value: ItemRarityFilter; labelKey: MessageKey }[] = [
+    { value: "all", labelKey: "profile.items.rarity.all" },
+    { value: "5", labelKey: "profile.items.rarity.5" },
+    { value: "4", labelKey: "profile.items.rarity.4" },
+    { value: "3", labelKey: "profile.items.rarity.3" },
+    { value: "2", labelKey: "profile.items.rarity.2" },
+    { value: "1", labelKey: "profile.items.rarity.1" },
 ];
 
 const DETAILED_MIN_CARD_WIDTH_PX = 300;
@@ -44,21 +53,24 @@ const COMPACT_ROW_ESTIMATE_PX = 130;
 const COMPACT_CARD_LABEL_PX = 30; // quantity label + padding below a square icon
 const ITEMS_VIRTUAL_OVERSCAN = 4;
 
-function getRarityLabel(value: ItemRarityFilter): string {
-    return RARITY_OPTIONS.find((o) => o.value === value)?.label ?? value;
+function getRarityLabel(value: ItemRarityFilter, t: TabT): string {
+    const key = RARITY_OPTIONS.find((o) => o.value === value)?.labelKey;
+    return key ? t(key) : value;
 }
 
 export function ItemsTab({ inventory }: IItemsTabProps) {
-    const { data: materials } = useQuery(materialsQueryOptions());
+    const t: TabT = useT("user");
+    const f = useFormatters();
+    const { data: materials } = useQuery(materialsQueryOptions(useGamedataServer()));
     const { filters, set, toggleSortOrder, sorted, categoryCounts, totalQty } = useItems(inventory, materials);
 
     const visibleCategories = CATEGORY_ORDER.filter((c) => c === "all" || (categoryCounts.get(c) ?? 0) > 0);
 
     return (
-        <section aria-label="Inventory items" className="flex flex-col gap-4">
+        <section aria-label={t("profile.items.aria")} className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center gap-2">
                 {visibleCategories.map((c) => (
-                    <FilterChip key={c} label={CATEGORY_LABELS[c]} active={c === filters.category} count={categoryCounts.get(c) ?? 0} onSelect={() => set("category", c)} />
+                    <FilterChip key={c} label={t(CATEGORY_LABELS[c])} active={c === filters.category} count={categoryCounts.get(c) ?? 0} onSelect={() => set("category", c)} />
                 ))}
             </div>
 
@@ -67,38 +79,38 @@ export function ItemsTab({ inventory }: IItemsTabProps) {
                     <InputGroupAddon>
                         <Search />
                     </InputGroupAddon>
-                    <InputGroupInput onChange={(e) => set("search", e.target.value)} placeholder="Search items..." value={filters.search} />
+                    <InputGroupInput onChange={(e) => set("search", e.target.value)} placeholder={t("profile.items.search.placeholder")} value={filters.search} />
                 </InputGroup>
                 <Select onValueChange={(v) => v && set("sortBy", v as ItemSortKey)} value={filters.sortBy}>
                     <SelectTrigger className="w-full sm:w-48">
-                        <SelectValue placeholder="Sort by">{(value) => SORT_LABELS[value as ItemSortKey] ?? value}</SelectValue>
+                        <SelectValue placeholder={t("profile.items.sort.placeholder")}>{(value) => (SORT_LABELS[value as ItemSortKey] ? t(SORT_LABELS[value as ItemSortKey]) : value)}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                        {(Object.entries(SORT_LABELS) as [ItemSortKey, string][]).map(([value, label]) => (
+                        {(Object.entries(SORT_LABELS) as [ItemSortKey, MessageKey][]).map(([value, labelKey]) => (
                             <SelectItem key={value} value={value}>
-                                {label}
+                                {t(labelKey)}
                             </SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
                 <Select onValueChange={(v) => v && set("rarity", v as ItemRarityFilter)} value={filters.rarity}>
                     <SelectTrigger className="w-full sm:w-36">
-                        <SelectValue placeholder="Filter by Rarity">{(value) => getRarityLabel(value as ItemRarityFilter)}</SelectValue>
+                        <SelectValue placeholder={t("profile.items.rarity.placeholder")}>{(value) => getRarityLabel(value as ItemRarityFilter, t)}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                         {RARITY_OPTIONS.map((o) => (
                             <SelectItem key={o.value} value={o.value}>
-                                {o.label}
+                                {t(o.labelKey)}
                             </SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
                 <Button className="w-full sm:w-auto" onClick={toggleSortOrder} variant="outline">
-                    <span>{capitalize(filters.sortOrder)}</span>
+                    <span>{filters.sortOrder === "asc" ? t("profile.items.sort.asc") : t("profile.items.sort.desc")}</span>
                     {filters.sortOrder === "asc" ? <ArrowUp /> : <ArrowDown />}
                 </Button>
                 <ToggleGroup
-                    aria-label="View mode"
+                    aria-label={t("profile.items.viewMode.aria")}
                     className="md:bg-secondary/50"
                     onValueChange={(value) => {
                         const next = value[0] as ItemViewMode | undefined;
@@ -107,22 +119,22 @@ export function ItemsTab({ inventory }: IItemsTabProps) {
                     value={[filters.viewMode]}
                     variant="outline"
                 >
-                    <ToggleGroupItem aria-label="Detailed view" value="detailed">
+                    <ToggleGroupItem aria-label={t("profile.items.viewMode.detailed")} value="detailed">
                         <LayoutGrid />
                     </ToggleGroupItem>
-                    <ToggleGroupItem aria-label="Compact view" value="compact">
+                    <ToggleGroupItem aria-label={t("profile.items.viewMode.compact")} value="compact">
                         <Grid3x3 />
                     </ToggleGroupItem>
                 </ToggleGroup>
                 <div className="hidden items-center gap-3 font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em] sm:ml-auto md:flex">
                     <span>
-                        <span className="text-foreground tabular-nums">{sorted.length}</span> items
+                        <span className="text-foreground tabular-nums">{sorted.length}</span> {t("profile.items.count.items")}
                     </span>
                     <span aria-hidden className="text-border">
                         ·
                     </span>
                     <span>
-                        <span className="text-foreground tabular-nums">{totalQty.toLocaleString()}</span> total
+                        <span className="text-foreground tabular-nums">{f.number(totalQty)}</span> {t("profile.items.count.total")}
                     </span>
                 </div>
             </div>
@@ -206,11 +218,12 @@ function VirtualizedItemsGrid({ items, viewMode }: { items: IItemEntry[]; viewMo
 }
 
 function EmptyItems({ hasInventory }: { hasInventory: boolean }) {
+    const t: TypedT<typeof messages> = useT("user");
     return (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card px-8 py-16 text-center">
-            <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">Inventory</span>
-            <h3 className="font-semibold text-lg tracking-tight">{hasInventory ? "No items match" : "No items yet"}</h3>
-            <p className="max-w-sm text-muted-foreground text-sm">{hasInventory ? "Try clearing filters or a different category." : "This Doctor's inventory is empty."}</p>
+            <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("profile.items.empty.kicker")}</span>
+            <h3 className="font-semibold text-lg tracking-tight">{hasInventory ? t("profile.items.empty.filtered.title") : t("profile.items.empty.none.title")}</h3>
+            <p className="max-w-sm text-muted-foreground text-sm">{hasInventory ? t("profile.items.empty.filtered.desc") : t("profile.items.empty.none.desc")}</p>
         </div>
     );
 }

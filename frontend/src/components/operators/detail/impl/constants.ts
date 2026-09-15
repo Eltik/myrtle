@@ -1,15 +1,19 @@
 import { BookOpen, Info, Shirt, Sparkles, TrendingUp, Volume2 } from "lucide-react";
+import type { messages as detailConstantsMessages } from "#/components/operators/detail/impl/constants.messages";
 import type { AudioCategory, OperatorRarityTier } from "#/types/operators";
 
 export type TabType = "info" | "skills" | "levelup" | "skins" | "audio" | "lore";
 
-export const TABS: { type: TabType; label: string; icon: React.ElementType }[] = [
-    { type: "info", label: "Information", icon: Info },
-    { type: "skills", label: "Skills", icon: Sparkles },
-    { type: "levelup", label: "Level-Up Cost", icon: TrendingUp },
-    { type: "skins", label: "Skins", icon: Shirt },
-    { type: "audio", label: "Audio/SFX", icon: Volume2 },
-    { type: "lore", label: "Lore", icon: BookOpen },
+/** A key in `constants.messages.ts`; resolved by whichever component renders it. */
+export type DetailMessageKey = keyof typeof detailConstantsMessages & string;
+
+export const TABS: { type: TabType; labelKey: DetailMessageKey; icon: React.ElementType }[] = [
+    { type: "info", labelKey: "tab.info", icon: Info },
+    { type: "skills", labelKey: "tab.skills", icon: Sparkles },
+    { type: "levelup", labelKey: "tab.levelup", icon: TrendingUp },
+    { type: "skins", labelKey: "tab.skins", icon: Shirt },
+    { type: "audio", labelKey: "tab.audio", icon: Volume2 },
+    { type: "lore", labelKey: "tab.lore", icon: BookOpen },
 ];
 
 export const RARITY_COLORS: Record<OperatorRarityTier, string> = {
@@ -30,37 +34,55 @@ export const RARITY_GLOW: Record<OperatorRarityTier, string> = {
     TIER_1: "drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]",
 };
 
-export const VOICE_LANGUAGE_LABELS: Record<string, string> = {
-    JP: "Japanese",
-    CN_MANDARIN: "Mandarin",
-    EN: "English",
-    KR: "Korean",
-    CN_TOPOLECT: "Cantonese",
-    GER: "German",
-    ITA: "Italian",
-    RUS: "Russian",
-    FRE: "French",
-    SPA: "Spanish",
-    LINKAGE: "Linkage",
+export const VOICE_LANGUAGE_LABEL_KEY: Record<string, DetailMessageKey> = {
+    JP: "voice.lang.jp",
+    CN_MANDARIN: "voice.lang.cnMandarin",
+    EN: "voice.lang.en",
+    KR: "voice.lang.kr",
+    CN_TOPOLECT: "voice.lang.cnTopolect",
+    GER: "voice.lang.ger",
+    ITA: "voice.lang.ita",
+    RUS: "voice.lang.rus",
+    FRE: "voice.lang.fre",
+    SPA: "voice.lang.spa",
+    LINKAGE: "voice.lang.linkage",
 };
 
 export const VOICE_LANGUAGE_ORDER = ["JP", "CN_MANDARIN", "EN", "KR", "CN_TOPOLECT", "GER", "ITA", "RUS", "FRE", "SPA", "LINKAGE"] as const;
 
-export const VOICE_LANGUAGE_SHORT: Record<string, string> = {
-    JP: "JP",
-    CN_MANDARIN: "CN",
-    EN: "EN",
-    KR: "KR",
-    CN_TOPOLECT: "粤",
-    GER: "DE",
-    ITA: "IT",
-    RUS: "RU",
-    FRE: "FR",
-    SPA: "ES",
-    LINKAGE: "LINK",
+export const VOICE_LANGUAGE_SHORT_KEY: Record<string, DetailMessageKey> = {
+    JP: "voice.lang.short.jp",
+    CN_MANDARIN: "voice.lang.short.cnMandarin",
+    EN: "voice.lang.short.en",
+    KR: "voice.lang.short.kr",
+    CN_TOPOLECT: "voice.lang.short.cnTopolect",
+    GER: "voice.lang.short.ger",
+    ITA: "voice.lang.short.ita",
+    RUS: "voice.lang.short.rus",
+    FRE: "voice.lang.short.fre",
+    SPA: "voice.lang.short.spa",
+    LINKAGE: "voice.lang.short.linkage",
 };
 
+/**
+ * Voice-line buckets in display order. These are IDENTIFIERS, not labels: the
+ * tab ids are derived from them and `VOICE_CATEGORY_MAP` sorts the game's raw
+ * `placeType` tokens into them. The text a reader sees comes from
+ * `VOICE_CATEGORY_LABEL_KEY`.
+ */
 export const VOICE_CATEGORY_ORDER = ["Greetings", "Conversations", "Trust", "Promotions", "Battle", "Idle", "Dorm", "Special", "Other"];
+
+export const VOICE_CATEGORY_LABEL_KEY: Record<string, DetailMessageKey> = {
+    Greetings: "voice.category.greetings",
+    Conversations: "voice.category.conversations",
+    Trust: "voice.category.trust",
+    Promotions: "voice.category.promotions",
+    Battle: "voice.category.battle",
+    Idle: "voice.category.idle",
+    Dorm: "voice.category.dorm",
+    Special: "voice.category.special",
+    Other: "voice.category.other",
+};
 
 export const VOICE_CATEGORY_MAP: Record<string, string> = {
     HOME_PLACE: "Greetings",
@@ -96,29 +118,29 @@ export const VOICE_CATEGORY_MAP: Record<string, string> = {
 
 export const SFX_CATEGORY_ORDER: AudioCategory[] = ["deploy", "attack", "skill", "voice", "other"];
 
-export const SFX_CATEGORY_LABELS: Record<AudioCategory, string> = {
-    deploy: "Deploy",
-    attack: "Attack",
-    skill: "Skill",
-    voice: "Voice",
-    other: "Other",
+export const SFX_CATEGORY_LABEL_KEY: Record<AudioCategory, DetailMessageKey> = {
+    deploy: "sfx.category.deploy",
+    attack: "sfx.category.attack",
+    skill: "sfx.category.skill",
+    voice: "sfx.category.voice",
+    other: "sfx.category.other",
 };
 
-export const SFX_EVENT_LABELS: Record<string, string> = {
-    ON_UNIT_BORN: "Deployment",
-    ON_ABILITY_START: "Attack",
-    ON_ABILITY_HIT: "Attack Impact",
-    ON_ABILITY_ON: "Attack (Active)",
-    ON_ABILITY_END: "Attack End",
-    ON_ABILITY_ATTACK_FINISH: "Attack Finish",
-    ON_ABILITY_CHECK_POINT: "Attack Checkpoint",
-    ON_SKILL_START: "Skill Activation",
-    ON_SKILL_CHANT_START: "Skill Charge",
-    ON_SKILL_SPECIAL_POINT: "Skill Trigger",
-    ON_SKILL_FINISH: "Skill End",
-    ON_SKILL_ON: "Skill Ready",
-    ON_SKILL_FAILED: "Skill Failed",
-    ON_UNIT_DEAD: "Defeated",
-    ON_SPINE_EVENT_TRIGGER: "Animation Cue",
-    ON_CUSTOM_TRIGGER: "Custom Trigger",
+export const SFX_EVENT_LABEL_KEY: Record<string, DetailMessageKey> = {
+    ON_UNIT_BORN: "sfx.event.unitBorn",
+    ON_ABILITY_START: "sfx.event.abilityStart",
+    ON_ABILITY_HIT: "sfx.event.abilityHit",
+    ON_ABILITY_ON: "sfx.event.abilityOn",
+    ON_ABILITY_END: "sfx.event.abilityEnd",
+    ON_ABILITY_ATTACK_FINISH: "sfx.event.abilityAttackFinish",
+    ON_ABILITY_CHECK_POINT: "sfx.event.abilityCheckPoint",
+    ON_SKILL_START: "sfx.event.skillStart",
+    ON_SKILL_CHANT_START: "sfx.event.skillChantStart",
+    ON_SKILL_SPECIAL_POINT: "sfx.event.skillSpecialPoint",
+    ON_SKILL_FINISH: "sfx.event.skillFinish",
+    ON_SKILL_ON: "sfx.event.skillOn",
+    ON_SKILL_FAILED: "sfx.event.skillFailed",
+    ON_UNIT_DEAD: "sfx.event.unitDead",
+    ON_SPINE_EVENT_TRIGGER: "sfx.event.spineEventTrigger",
+    ON_CUSTOM_TRIGGER: "sfx.event.customTrigger",
 };

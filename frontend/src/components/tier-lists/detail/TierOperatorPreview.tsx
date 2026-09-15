@@ -1,8 +1,11 @@
 import { CampIcon, ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import type { ITierOperator } from "#/lib/api/tier-lists";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { stripMarkdown } from "#/lib/markdown";
 import { formatArchetype, formatNationId, formatProfession, getAvatarById, parseOperatorName } from "#/lib/utils";
 import { operatorPlacementNote } from "../shared";
+import type { messages } from "./TierOperatorPreview.messages";
 import styles from "./TierOperatorPreview.module.css";
 
 interface ITierOperatorPreviewProps {
@@ -10,11 +13,12 @@ interface ITierOperatorPreviewProps {
 }
 
 export function TierOperatorPreview({ operator }: ITierOperatorPreviewProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
     const { displayName, subtitle } = parseOperatorName(operator.name);
     const note = operatorPlacementNote(operator);
     const archetype = formatArchetype(operator.subProfessionId);
     const factionId = operator.nationId && operator.nationId.length > 0 ? operator.nationId : "rhodes";
-    const positionLabel = operator.position === "RANGED" ? "Ranged" : operator.position === "MELEE" ? "Melee" : null;
+    const positionLabel = operator.position === "RANGED" ? t("detail.preview.position.ranged") : operator.position === "MELEE" ? t("detail.preview.position.melee") : null;
     const initial = operator.name.charAt(0).toUpperCase();
 
     return (
@@ -27,7 +31,7 @@ export function TierOperatorPreview({ operator }: ITierOperatorPreviewProps) {
                 <div className={styles.title}>
                     <div className={styles.name}>{displayName}</div>
                     {subtitle && <div className={styles.subtitle}>{subtitle}</div>}
-                    <div className={styles.rarity} role="img" aria-label={`${operator.rarity}-star`}>
+                    <div className={styles.rarity} role="img" aria-label={t("detail.preview.rarityLabel", { rarity: operator.rarity })}>
                         {Array.from({ length: operator.rarity }, (_, i) => (
                             // biome-ignore lint/suspicious/noArrayIndexKey: decorative stars
                             <span key={`s-${i}`} aria-hidden="true">
@@ -55,13 +59,13 @@ export function TierOperatorPreview({ operator }: ITierOperatorPreviewProps) {
                 <div className={styles.meta}>
                     {operator.nationId && (
                         <span className={styles.metaItem}>
-                            <span className={styles.k}>Nation</span>
+                            <span className={styles.k}>{t("detail.preview.nation")}</span>
                             <span className={styles.v}>{formatNationId(operator.nationId)}</span>
                         </span>
                     )}
                     {positionLabel && (
                         <span className={styles.metaItem}>
-                            <span className={styles.k}>Position</span>
+                            <span className={styles.k}>{t("detail.preview.position")}</span>
                             <span className={styles.v}>{positionLabel}</span>
                         </span>
                     )}
@@ -74,7 +78,7 @@ export function TierOperatorPreview({ operator }: ITierOperatorPreviewProps) {
                 </p>
             )}
 
-            <p className={styles.hint}>Click to view operator</p>
+            <p className={styles.hint}>{t("detail.preview.hint")}</p>
         </article>
     );
 }

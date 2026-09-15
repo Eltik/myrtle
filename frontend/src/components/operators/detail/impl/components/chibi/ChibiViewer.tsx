@@ -3,7 +3,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Spinner } from "#/components/ui/spinner";
 import type { IChibiCharacter, IChibiSkin } from "#/lib/api/chibis";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { capitalize } from "#/lib/utils";
+import type { messages } from "./ChibiViewer.messages";
 import { ANIMATION_SPEED, CHIBI_OFFSET_X, CHIBI_OFFSET_Y, type ViewType } from "./constants";
 import { DownloadButton } from "./download-button";
 import { chibiMaxScale, getAvailableViewTypes, type IAnimationBounds, loadSpineWithEncodedURLs, measureAnimationBounds, resolveChibiView } from "./helpers";
@@ -29,7 +32,15 @@ function pickInitialAnimation(animations: string[], viewType: ViewType): string 
     return animations[0] ?? "Idle";
 }
 
+const VIEW_MESSAGE_KEY: Partial<Record<ViewType, keyof typeof messages & string>> = {
+    front: "chibi.view.front",
+    back: "chibi.view.back",
+    dorm: "chibi.view.dorm",
+    down: "chibi.view.down",
+};
+
 export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
+    const t: TypedT<typeof messages> = useT("operators");
     const appRef = useRef<PIXI.Application | null>(null);
     const spineRef = useRef<import("pixi-spine").Spine | null>(null);
     const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -89,7 +100,7 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
             const resolved = resolveChibiView(chibi, skinName, viewType);
             const skinData = resolved?.files;
             if (!resolved || !skinData?.atlas || !skinData.skel || !skinData.png) {
-                setError("No spine data available");
+                setError(t("chibi.error.noData"));
                 setIsLoading(false);
                 return;
             }
@@ -137,7 +148,7 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
             } catch (err) {
                 console.error("Failed to load Spine:", err);
                 if (currentLoadId === loadIdRef.current && mountedRef.current) {
-                    setError("Failed to load chibi");
+                    setError(t("chibi.error.failed"));
                     setIsLoading(false);
                 }
             }
@@ -192,7 +203,7 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
             mountedRef.current = false;
             cleanup();
         };
-    }, [chibi, skin, viewType, server]);
+    }, [chibi, skin, viewType, server, t]);
 
     const handleAnimationChange = (value: string | null) => {
         setSelectedAnimation(value ?? selectedAnimation);
@@ -209,24 +220,29 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
 
     return (
         <div className="w-full rounded-lg border border-border bg-card/30 p-3">
-            <h4 className="mb-2 font-medium text-foreground">Chibi Preview</h4>
+            <h4 className="mb-2 font-medium text-foreground">{t("chibi.title")}</h4>
 
             <div className="mb-3 flex flex-wrap items-center gap-2">
                 <Select disabled={isLoading || availableViewTypes.length <= 1 || isRecording} onValueChange={handleViewTypeChange} value={viewType}>
                     <SelectTrigger className="h-8 w-22.5 text-xs">
-                        <SelectValue placeholder="View">{(value: string) => capitalize(value)}</SelectValue>
+                        <SelectValue placeholder={t("chibi.view")}>
+                            {(value: string) => {
+                                const messageKey = VIEW_MESSAGE_KEY[value as ViewType];
+                                return messageKey ? t(messageKey) : capitalize(value);
+                            }}
+                        </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                        {availableViewTypes.includes("front") && <SelectItem value="front">Front</SelectItem>}
-                        {availableViewTypes.includes("back") && <SelectItem value="back">Back</SelectItem>}
-                        {availableViewTypes.includes("dorm") && <SelectItem value="dorm">Dorm</SelectItem>}
-                        {availableViewTypes.includes("down") && <SelectItem value="down">Down</SelectItem>}
+                        {availableViewTypes.includes("front") && <SelectItem value="front">{t("chibi.view.front")}</SelectItem>}
+                        {availableViewTypes.includes("back") && <SelectItem value="back">{t("chibi.view.back")}</SelectItem>}
+                        {availableViewTypes.includes("dorm") && <SelectItem value="dorm">{t("chibi.view.dorm")}</SelectItem>}
+                        {availableViewTypes.includes("down") && <SelectItem value="down">{t("chibi.view.down")}</SelectItem>}
                     </SelectContent>
                 </Select>
 
                 <Select disabled={isLoading || availableAnimations.length === 0 || isRecording} onValueChange={handleAnimationChange} value={selectedAnimation}>
                     <SelectTrigger className="h-8 min-w-25 flex-1 text-xs">
-                        <SelectValue placeholder="Animation" />
+                        <SelectValue placeholder={t("chibi.animation")} />
                     </SelectTrigger>
                     <SelectContent className="max-h-48">
                         {availableAnimations.map((anim) => (

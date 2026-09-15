@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, HeadContent, Outlet, Scripts, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
+import { createRootRouteWithContext, HeadContent, Outlet, redirect, Scripts, useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import { useSelector } from "@tanstack/react-store";
 import { lazy, Suspense, useEffect, useRef } from "react";
 import { ReleaseNoteDialog } from "#/components/changelog/ReleaseNoteDialog";
@@ -8,7 +8,11 @@ import { AnchoredToastProvider, ToastProvider } from "#/components/ui/toast";
 import { getSessionFn } from "#/lib/auth/server";
 import { authActions, authStore } from "#/lib/auth/store";
 import { CommandProvider } from "#/lib/command-context";
-import { seo } from "#/lib/seo";
+import type { IBootstrap } from "#/lib/i18n";
+import { DEFAULT_LOCALE, directionForLocale, I18nProvider } from "#/lib/i18n";
+import { getI18nBootstrapFn } from "#/lib/i18n/server";
+import { metaT } from "#/lib/meta";
+import { absolute, localizedPath, seo } from "#/lib/seo";
 import Footer from "../components/Footer";
 import Header from "../components/header/Header";
 import { RouterProgress } from "../components/RouterProgress";
@@ -16,6 +20,11 @@ import appCss from "../styles.css?url";
 
 interface IMyRouterContext {
     queryClient: QueryClient;
+}
+
+/** What `beforeLoad` adds to the context, alongside `user`. */
+interface IRootContext {
+    i18n: IBootstrap;
 }
 
 const TanStackDevtoolsRoot = import.meta.env.DEV ? lazy(() => import("../integrations/tanstack-query/devtools")) : null;
@@ -28,14 +37,27 @@ else if(raw.indexOf('c:')===0){var hex=raw.slice(2);if(/^#[0-9a-fA-F]{6}$/.test(
 }}catch(e){}})();`;
 
 export const Route = createRootRouteWithContext<IMyRouterContext>()({
-    beforeLoad: async () => {
-        const user = await getSessionFn();
-        return { user };
+    beforeLoad: async (): Promise<{ user: Awaited<ReturnType<typeof getSessionFn>> } & IRootContext> => {
+        // One round trip, not two: the catalog is needed for the very first
+        // painted character, so it must not queue behind the session.
+        const [user, i18n] = await Promise.all([getSessionFn(), getI18nBootstrapFn()]);
+
+        // The URL claimed a locale the backend does not serve. `href` rather
+        // than `to`, because `to` would be rebuilt through the router's
+        // locale rewrite and put the bad prefix straight back on.
+        if (i18n.redirectTo) throw redirect({ href: i18n.redirectTo });
+
+        return { user, i18n };
     },
-    head: () => {
+    head: ({ match }) => {
+        // `head()` is not a component, so there is no `useT()` here - but the
+        // match's context is the resolved route context, which already carries
+        // the `i18n` bootstrap `beforeLoad` above loaded. See `lib/meta.ts`.
+        const t = metaT(match.context.i18n);
         const { meta, links } = seo({
-            title: "Myrtle",
-            description: "Arknights companion - operators, rosters, tier lists.",
+            title: t("root.title"),
+            description: t("root.description"),
+            locale: match.context.i18n?.locale,
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],
@@ -147,18 +169,57 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     // page has no UI to inspect, and every other route keeps its devtools.
     const devtoolsPath = useRouterState({ select: (s) => s.location.pathname });
     const showDevtools = TanStackDevtoolsRoot !== null && !devtoolsPath.startsWith("/dyntest");
+
+    // Getting `lang` right is not cosmetic: it drives hyphenation, the font
+    // fallback chain for CJK, `:lang()` rules, and how a screen reader
+    // pronounces the page.
+    // The whole i18n bootstrap, not just the locale: the provider has to live
+    // HERE rather than in `RootComponent`, because `SiteChrome` - the Header
+    // and Footer - is rendered by this shell, which sits ABOVE
+    // `RootComponent`. With the provider one level lower, every string in the
+    // header and footer read the default empty context and fell back to
+    // English whatever locale the page was, and both language switchers saw
+    // `available: []` and rendered nothing at all.
+    const i18n = Route.useRouteContext({ select: (c) => c.i18n });
+    const locale = i18n?.locale ?? DEFAULT_LOCALE;
+    const alternates = i18n?.available.map((l) => l.code) ?? [];
+    const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+    // One canonical, one og:url and the whole hreflang set for every route.
+    //
+    // This lives here rather than in each route's `seo()` because only the
+    // shell knows the locale - a route's `head()` has no access to it - and a
+    // single missed call site would declare the English page as a
+    // translation's canonical, which is how a translated site fails to get
+    // indexed at all. `pathname` is the router's internal path, with the
+    // locale prefix already stripped by the location rewrite, so it composes
+    // cleanly with every locale.
+    const canonical = absolute(localizedPath(pathname, locale));
+
     return (
-        <html lang="en" suppressHydrationWarning>
+        <html lang={locale} dir={directionForLocale(locale)} suppressHydrationWarning>
             <head>
                 {/* biome-ignore lint/security/noDangerouslySetInnerHtml: theme init script */}
                 <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
                 <HeadContent />
+                <link rel="canonical" href={canonical} />
+                <meta property="og:url" content={canonical} />
+                {alternates.length > 1
+                    ? [
+                          ...alternates.map((code) => <link key={code} rel="alternate" hrefLang={code} href={absolute(localizedPath(pathname, code))} />),
+                          // `x-default` is what a crawler serves a visitor whose
+                          // language matches none of ours.
+                          <link key="x-default" rel="alternate" hrefLang="x-default" href={absolute(localizedPath(pathname, DEFAULT_LOCALE))} />,
+                      ]
+                    : null}
             </head>
             <body className="wrap-anywhere font-sans antialiased selection:bg-primary/30 selection:text-foreground">
                 <RouterProgress />
-                <CommandProvider>
-                    <SiteChrome>{children}</SiteChrome>
-                </CommandProvider>
+                <I18nProvider locale={locale} available={i18n?.available ?? []} messages={i18n?.messages ?? {}} gamedataServer={i18n?.gamedataServer}>
+                    <CommandProvider>
+                        <SiteChrome>{children}</SiteChrome>
+                    </CommandProvider>
+                </I18nProvider>
                 {showDevtools && TanStackDevtoolsRoot ? (
                     <Suspense fallback={null}>
                         <TanStackDevtoolsRoot />

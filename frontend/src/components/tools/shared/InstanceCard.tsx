@@ -9,12 +9,20 @@ import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Slider } from "#/components/ui/slider";
 import { Switch } from "#/components/ui/switch";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./InstanceCard.messages";
 import { eliteIcon, moduleIconURL, potentialIcon, skillIconURL, specializedIcon } from "./icons";
 import { conditionalKey } from "./instance";
 import { clampRankToElite, isMasteryRank, maxSkillRankForElite, rankLockReason, skillRankLabel } from "./skill";
+import type { messages as skillMessages } from "./skill.messages";
 import type { IBuildConfig, ICalcBuffs, ICalcConditionals, IInstance } from "./types";
 import { useOperatorDetail } from "./useOperatorDetail";
+import type { messages as detailMessages } from "./useOperatorDetail.messages";
+
+/** This card renders its own chrome plus the labels `skill.ts` derives. */
+type CardT = TypedT<typeof messages & typeof skillMessages & typeof detailMessages>;
 
 interface IInstanceCardProps {
     inst: IInstance;
@@ -37,6 +45,7 @@ const SKILL_LEVELS = [1, 2, 3, 4, 5, 6, 7] as const;
 const MASTERY_RANKS = [8, 9, 10] as const;
 
 export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleConditional, onToggleVisibility, onToggleCollapsed, onMoveUp, onMoveDown, onDuplicate, onRemove, onUpdateBuffs }: IInstanceCardProps): React.ReactElement {
+    const t: CardT = useT("tools");
     const { op, config, color, visible, collapsed } = inst;
     const [buffsOpen, setBuffsOpen] = React.useState(false);
     const detail = useOperatorDetail(op);
@@ -47,7 +56,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
     const maxRank = maxSkillRankForElite(promotion);
 
     const skillSummary = detail.skillName(config.skillIndex);
-    const moduleSummary = config.moduleIndex > 0 ? detail.moduleName(config.moduleIndex) : "No module";
+    const moduleSummary = config.moduleIndex > 0 ? detail.moduleName(config.moduleIndex) : t("calc.detail.noModule");
 
     const optionalModules = op.availableModules.filter((m) => m > 0);
 
@@ -62,42 +71,40 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                         <span className="truncate font-semibold text-[13px] leading-tight">{op.name}</span>
                         <span className="shrink-0 rounded bg-muted px-1 py-0.5 font-mono text-[9.5px] text-muted-foreground">#{index + 1}</span>
                     </div>
-                    <div className="truncate text-[11px] text-muted-foreground">
-                        {skillSummary} · {skillRankLabel(config.skillRank)} · {moduleSummary}
-                    </div>
+                    <div className="truncate text-[11px] text-muted-foreground">{t("calc.instance.buildSummary", { skill: skillSummary, rank: skillRankLabel(config.skillRank, t), module: moduleSummary })}</div>
                 </div>
                 <div className="flex shrink-0 items-center gap-0.5">
-                    <IconButton label={visible ? "Hide curve" : "Show curve"} onClick={onToggleVisibility}>
+                    <IconButton label={visible ? t("calc.instance.hideCurve") : t("calc.instance.showCurve")} onClick={onToggleVisibility}>
                         {visible ? <Eye /> : <EyeOff />}
                     </IconButton>
                     {!isFirst && (
                         <span className="hidden sm:inline-flex">
-                            <IconButton label="Move up" onClick={onMoveUp}>
+                            <IconButton label={t("calc.instance.moveUp")} onClick={onMoveUp}>
                                 <ArrowUp />
                             </IconButton>
                         </span>
                     )}
                     {!isLast && (
                         <span className="hidden sm:inline-flex">
-                            <IconButton label="Move down" onClick={onMoveDown}>
+                            <IconButton label={t("calc.instance.moveDown")} onClick={onMoveDown}>
                                 <ArrowDown />
                             </IconButton>
                         </span>
                     )}
-                    <IconButton label="Duplicate" onClick={onDuplicate}>
+                    <IconButton label={t("calc.instance.duplicate")} onClick={onDuplicate}>
                         <Copy />
                     </IconButton>
-                    <IconButton label={collapsed ? "Expand" : "Collapse"} onClick={onToggleCollapsed}>
+                    <IconButton label={collapsed ? t("calc.instance.expand") : t("calc.instance.collapse")} onClick={onToggleCollapsed}>
                         {collapsed ? <ChevronDown /> : <ChevronUp />}
                     </IconButton>
-                    <IconButton label="Remove" onClick={onRemove}>
+                    <IconButton label={t("calc.instance.remove")} onClick={onRemove}>
                         <X />
                     </IconButton>
                 </div>
             </CardHeader>
             {!collapsed && (
                 <CardPanel className="space-y-3.5 px-4 pt-0 pb-3">
-                    <FieldRow label="Promotion">
+                    <FieldRow label={t("calc.instance.promotion")}>
                         <div className="flex flex-wrap gap-1.5">
                             {Array.from({ length: detail.phaseCount }, (_, i) => i).map((p) => (
                                 <IconChip
@@ -118,7 +125,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
 
                     <div>
                         <div className="mb-1.5 flex items-baseline justify-between">
-                            <Label className="font-medium text-[11px] text-muted-foreground leading-none">Level</Label>
+                            <Label className="font-medium text-[11px] text-muted-foreground leading-none">{t("calc.instance.level")}</Label>
                             <span className="font-mono text-[10.5px] text-foreground tabular-nums">
                                 {level}
                                 <span className="text-muted-foreground"> / {maxLevel}</span>
@@ -127,7 +134,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                         <Slider min={1} max={maxLevel} step={1} value={[level]} onValueChange={(v) => onUpdate({ level: Array.isArray(v) ? (v[0] ?? 1) : v })} />
                     </div>
 
-                    <FieldRow label="Potential">
+                    <FieldRow label={t("calc.instance.potential")}>
                         <div className="flex flex-wrap gap-1">
                             {[1, 2, 3, 4, 5, 6].map((p) => (
                                 <Tooltip key={`pot-${p}`}>
@@ -137,7 +144,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                                 {...triggerProps}
                                                 type="button"
                                                 onClick={() => onUpdate({ potential: p })}
-                                                aria-label={`Potential ${p}`}
+                                                aria-label={t("calc.instance.potentialAria", { rank: p })}
                                                 className={cn(
                                                     "flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md border bg-card outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                                                     config.potential === p ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
@@ -154,11 +161,11 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                     </FieldRow>
 
                     {op.availableSkills.length > 0 && (
-                        <FieldRow label="Skill">
+                        <FieldRow label={t("calc.instance.skill")}>
                             <div className="grid grid-cols-3 gap-1.5">
                                 {op.availableSkills.map((s) => {
                                     const skill = detail.skillAt(s);
-                                    const skillName = skill?.static?.levels?.[0]?.name ?? `Skill ${s}`;
+                                    const skillName = skill?.static?.levels?.[0]?.name ?? t("calc.instance.skillFallback", { index: s });
                                     return (
                                         <Tooltip key={`skill-${s}`}>
                                             <TooltipTrigger
@@ -167,7 +174,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                                         {...triggerProps}
                                                         type="button"
                                                         onClick={() => onUpdate({ skillIndex: s })}
-                                                        aria-label={`Use ${skillName}`}
+                                                        aria-label={t("calc.instance.useSkill", { skill: skillName })}
                                                         className={cn(
                                                             "flex min-w-0 cursor-pointer flex-col items-center gap-1 rounded-md border bg-card px-1 py-1.5 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                                                             config.skillIndex === s ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
@@ -182,9 +189,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                                     </button>
                                                 )}
                                             />
-                                            <TooltipPopup className="max-w-56">
-                                                S{s} · {skillName}
-                                            </TooltipPopup>
+                                            <TooltipPopup className="max-w-56">{t("calc.detail.designatorWithName", { label: `S${s}`, name: skillName })}</TooltipPopup>
                                         </Tooltip>
                                     );
                                 })}
@@ -192,21 +197,21 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                         </FieldRow>
                     )}
 
-                    <FieldRow label="Skill level">
+                    <FieldRow label={t("calc.instance.skillLevel")}>
                         <div className="flex flex-wrap items-center gap-1">
                             {SKILL_LEVELS.map((lvl) => (
-                                <RankChip key={`lvl-${lvl}`} rank={lvl} selected={config.skillRank === lvl} lockReason={rankLockReason(lvl, promotion)} onSelect={() => onUpdate({ skillRank: lvl })} />
+                                <RankChip key={`lvl-${lvl}`} rank={lvl} selected={config.skillRank === lvl} lockReason={rankLockReason(lvl, promotion, t)} onSelect={() => onUpdate({ skillRank: lvl })} t={t} />
                             ))}
                             <span aria-hidden="true" className="mx-0.5 h-6 w-px shrink-0 bg-border" />
                             {MASTERY_RANKS.map((m) => (
-                                <RankChip key={`m-${m}`} rank={m} selected={config.skillRank === m} lockReason={rankLockReason(m, promotion)} onSelect={() => onUpdate({ skillRank: m })} />
+                                <RankChip key={`m-${m}`} rank={m} selected={config.skillRank === m} lockReason={rankLockReason(m, promotion, t)} onSelect={() => onUpdate({ skillRank: m })} t={t} />
                             ))}
                         </div>
-                        {maxRank < 10 && <p className="mt-1 text-[10px] text-muted-foreground/80 leading-snug">{maxRank < 7 ? "Promote to E1 for skill levels 5-7, E2 for masteries." : "Promote to E2 to unlock masteries."}</p>}
+                        {maxRank < 10 && <p className="mt-1 text-[10px] text-muted-foreground/80 leading-snug">{maxRank < 7 ? t("calc.instance.rankHint.e1") : t("calc.instance.rankHint.e2")}</p>}
                     </FieldRow>
 
                     {optionalModules.length > 0 && (
-                        <FieldRow label="Module">
+                        <FieldRow label={t("calc.instance.module")}>
                             <div className="flex flex-wrap gap-1.5">
                                 <button
                                     type="button"
@@ -216,11 +221,11 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                         config.moduleIndex === 0 ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
                                     )}
                                 >
-                                    No module
+                                    {t("calc.detail.noModule")}
                                 </button>
                                 {optionalModules.map((m) => {
                                     const mod = detail.moduleAt(m);
-                                    const typeLabel = mod?.typeName1 && mod?.typeName2 ? `${mod.typeName1}-${mod.typeName2}` : (mod?.uniEquipName ?? `Mod ${m}`);
+                                    const typeLabel = mod?.typeName1 && mod?.typeName2 ? `${mod.typeName1}-${mod.typeName2}` : (mod?.uniEquipName ?? t("calc.detail.moduleFallback", { index: m }));
                                     return (
                                         <Tooltip key={`mod-${m}`}>
                                             <TooltipTrigger
@@ -243,7 +248,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                                     </button>
                                                 )}
                                             />
-                                            <TooltipPopup className="max-w-56">{mod?.uniEquipName ?? `Module ${m}`}</TooltipPopup>
+                                            <TooltipPopup className="max-w-56">{mod?.uniEquipName ?? t("calc.instance.moduleFallbackTooltip", { index: m })}</TooltipPopup>
                                         </Tooltip>
                                     );
                                 })}
@@ -252,7 +257,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                     )}
 
                     {config.moduleIndex > 0 && (
-                        <FieldRow label="Module level">
+                        <FieldRow label={t("calc.instance.moduleLevel")}>
                             <div className="flex gap-1">
                                 {[1, 2, 3].map((l) => (
                                     <button
@@ -273,7 +278,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
 
                     <div>
                         <div className="mb-1.5 flex items-baseline justify-between">
-                            <Label className="font-medium text-[11px] text-muted-foreground leading-none">Trust</Label>
+                            <Label className="font-medium text-[11px] text-muted-foreground leading-none">{t("calc.instance.trust")}</Label>
                             <span className="font-mono text-[10.5px] text-foreground tabular-nums">{config.trust}%</span>
                         </div>
                         <Slider min={0} max={100} step={5} value={[config.trust]} onValueChange={(v) => onUpdate({ trust: Array.isArray(v) ? (v[0] ?? 0) : v })} />
@@ -281,7 +286,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
 
                     {op.conditionals.length > 0 && (
                         <div>
-                            <Label className="mb-1.5 block font-medium text-[11px] text-muted-foreground leading-none">Conditionals</Label>
+                            <Label className="mb-1.5 block font-medium text-[11px] text-muted-foreground leading-none">{t("calc.instance.conditionals")}</Label>
                             <div className="space-y-1">
                                 {op.conditionals.map((cond) => {
                                     const key = conditionalKey(cond);
@@ -312,15 +317,15 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                     {onUpdateBuffs && (
                         <Collapsible open={buffsOpen} onOpenChange={setBuffsOpen}>
                             <button type="button" className="flex w-full cursor-pointer items-center justify-between rounded py-1 text-left font-medium text-[11px] text-muted-foreground hover:text-foreground" onClick={() => setBuffsOpen((v) => !v)}>
-                                External buffs
+                                {t("calc.instance.externalBuffs")}
                                 {buffsOpen ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
                             </button>
                             <CollapsibleContent>
                                 <div className="grid grid-cols-2 gap-2 pt-1.5">
-                                    <NumField label="ATK %" value={Math.round((config.buffs.atk ?? 0) * 100)} min={0} max={500} step={5} onChange={(v) => onUpdateBuffs({ atk: v / 100 })} />
-                                    <NumField label="Flat ATK" value={config.buffs.flatAtk ?? 0} min={0} max={2000} step={10} onChange={(v) => onUpdateBuffs({ flatAtk: v })} />
-                                    <NumField label="ASPD" value={config.buffs.aspd ?? 0} min={0} max={200} step={5} onChange={(v) => onUpdateBuffs({ aspd: v })} />
-                                    <NumField label="Fragile %" value={Math.round((config.buffs.fragile ?? 0) * 100)} min={0} max={300} step={5} onChange={(v) => onUpdateBuffs({ fragile: v / 100 })} />
+                                    <NumField label={t("calc.instance.buff.atkPct")} value={Math.round((config.buffs.atk ?? 0) * 100)} min={0} max={500} step={5} onChange={(v) => onUpdateBuffs({ atk: v / 100 })} />
+                                    <NumField label={t("calc.instance.buff.flatAtk")} value={config.buffs.flatAtk ?? 0} min={0} max={2000} step={10} onChange={(v) => onUpdateBuffs({ flatAtk: v })} />
+                                    <NumField label={t("calc.instance.buff.aspd")} value={config.buffs.aspd ?? 0} min={0} max={200} step={5} onChange={(v) => onUpdateBuffs({ aspd: v })} />
+                                    <NumField label={t("calc.instance.buff.fragile")} value={Math.round((config.buffs.fragile ?? 0) * 100)} min={0} max={300} step={5} onChange={(v) => onUpdateBuffs({ fragile: v / 100 })} />
                                 </div>
                             </CollapsibleContent>
                         </Collapsible>
@@ -336,12 +341,13 @@ interface IRankChipProps {
     selected: boolean;
     lockReason: string | null;
     onSelect: () => void;
+    t: CardT;
 }
 
-function RankChip({ rank, selected, lockReason, onSelect }: IRankChipProps): React.ReactElement {
+function RankChip({ rank, selected, lockReason, onSelect, t }: IRankChipProps): React.ReactElement {
     const locked = lockReason !== null;
     const mastery = isMasteryRank(rank);
-    const tip = locked ? lockReason : skillRankLabel(rank);
+    const tip = locked ? lockReason : skillRankLabel(rank, t);
     return (
         <Tooltip>
             <TooltipTrigger
@@ -350,7 +356,7 @@ function RankChip({ rank, selected, lockReason, onSelect }: IRankChipProps): Rea
                         {...triggerProps}
                         type="button"
                         disabled={locked}
-                        aria-label={skillRankLabel(rank)}
+                        aria-label={skillRankLabel(rank, t)}
                         aria-pressed={selected}
                         onClick={() => !locked && onSelect()}
                         className={cn(

@@ -4,8 +4,11 @@ import { BoldIcon, CodeIcon, EyeIcon, ItalicIcon, LinkIcon, ListIcon, ListOrdere
 import type React from "react";
 import { useCallback, useId, useRef, useState } from "react";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "#/components/ui/tabs";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { Markdown } from "#/lib/markdown";
 import { cn } from "#/lib/utils";
+import type { messages } from "./markdown-editor.messages";
 
 export interface IMarkdownEditorProps {
     id?: string;
@@ -36,6 +39,7 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
     const inputId = id ?? fallbackId;
     const ref = useRef<HTMLTextAreaElement>(null);
     const [tab, setTab] = useState<"write" | "preview">("write");
+    const t: TypedT<typeof messages> = useT("common");
 
     const apply = useCallback(
         (action: ToolbarAction) => {
@@ -101,17 +105,17 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
                     <TabsList variant="default" className="h-9 p-0.5 sm:h-7">
                         <TabsTab value="write" className="h-8 gap-1.5 px-2.5 text-[13px] sm:h-6 sm:px-2 sm:text-[12px]">
                             <PencilLineIcon className="size-4 sm:size-3.5" />
-                            <span>Write</span>
+                            <span>{t("markdownEditor.write")}</span>
                         </TabsTab>
                         <TabsTab value="preview" className="h-8 gap-1.5 px-2.5 text-[13px] sm:h-6 sm:px-2 sm:text-[12px]">
                             <EyeIcon className="size-4 sm:size-3.5" />
-                            <span>Preview</span>
+                            <span>{t("markdownEditor.preview")}</span>
                         </TabsTab>
                     </TabsList>
 
                     {/* Desktop toolbar lives on this row */}
                     {!hideToolbar && isWrite && (
-                        <div className="hidden items-center gap-0.5 sm:flex" role="toolbar" aria-label="Formatting">
+                        <div className="hidden items-center gap-0.5 sm:flex" role="toolbar" aria-label={t("markdownEditor.formatting")}>
                             <ToolbarButtons apply={apply} disabled={disabled} />
                         </div>
                     )}
@@ -122,7 +126,7 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
                     <div
                         className="scrollbar-thin -mb-px flex items-center gap-0.5 overflow-x-auto border-border/70 border-b px-1.5 py-1 sm:hidden"
                         role="toolbar"
-                        aria-label="Formatting"
+                        aria-label={t("markdownEditor.formatting")}
                         // Allow horizontal scroll without page bounce
                         style={{ scrollbarWidth: "thin", WebkitOverflowScrolling: "touch" }}
                     >
@@ -159,7 +163,7 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
 
                 <TabsPanel value="preview" className="flex flex-col">
                     <div className={cn("min-h-32 px-3 py-2.5 font-sans text-[15px] text-foreground sm:min-h-24 sm:text-sm", size === "sm" && "px-2.5 py-2 sm:text-[13px]")} style={{ minHeight: `${Math.max(rows, 2) * 1.6}em` }}>
-                        {value.trim() ? <Markdown text={value} flush /> : <p className="m-0 font-sans text-muted-foreground/70 text-sm italic">Nothing to preview yet.</p>}
+                        {value.trim() ? <Markdown text={value} flush /> : <p className="m-0 font-sans text-muted-foreground/70 text-sm italic">{t("markdownEditor.nothingToPreview")}</p>}
                     </div>
                 </TabsPanel>
             </Tabs>
@@ -169,7 +173,7 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
                     <span className="hidden sm:inline">
                         <span className="font-semibold text-foreground/80">**bold**</span> · <span className="font-semibold text-foreground/80">*italic*</span> · <span className="font-semibold text-foreground/80">`code`</span> · <span className="font-semibold text-foreground/80">[link](url)</span>
                     </span>
-                    <span className="sm:hidden">Markdown</span>
+                    <span className="sm:hidden">{t("markdownEditor.markdownHint")}</span>
                     {maxLength != null && (
                         <span className="ml-auto tabular-nums">
                             <span className="text-foreground">{value.length}</span> / {maxLength}
@@ -182,28 +186,30 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
 }
 
 function ToolbarButtons({ apply, disabled, mobile = false }: { apply: (a: ToolbarAction) => void; disabled?: boolean; mobile?: boolean }) {
+    const t: TypedT<typeof messages> = useT("common");
+
     return (
         <>
-            <FormatButton label="Bold (⌘B)" onClick={() => apply("bold")} disabled={disabled} mobile={mobile}>
+            <FormatButton label={t("markdownEditor.bold")} onClick={() => apply("bold")} disabled={disabled} mobile={mobile}>
                 <BoldIcon className="size-4 sm:size-3.5" />
             </FormatButton>
-            <FormatButton label="Italic (⌘I)" onClick={() => apply("italic")} disabled={disabled} mobile={mobile}>
+            <FormatButton label={t("markdownEditor.italic")} onClick={() => apply("italic")} disabled={disabled} mobile={mobile}>
                 <ItalicIcon className="size-4 sm:size-3.5" />
             </FormatButton>
-            <FormatButton label="Inline code" onClick={() => apply("code")} disabled={disabled} mobile={mobile}>
+            <FormatButton label={t("markdownEditor.inlineCode")} onClick={() => apply("code")} disabled={disabled} mobile={mobile}>
                 <CodeIcon className="size-4 sm:size-3.5" />
             </FormatButton>
-            <FormatButton label="Link (⌘K)" onClick={() => apply("link")} disabled={disabled} mobile={mobile}>
+            <FormatButton label={t("markdownEditor.link")} onClick={() => apply("link")} disabled={disabled} mobile={mobile}>
                 <LinkIcon className="size-4 sm:size-3.5" />
             </FormatButton>
             <span className={cn("mx-1 h-5 w-px shrink-0 bg-border sm:h-4")} aria-hidden="true" />
-            <FormatButton label="Bullet list" onClick={() => apply("ul")} disabled={disabled} mobile={mobile}>
+            <FormatButton label={t("markdownEditor.bulletList")} onClick={() => apply("ul")} disabled={disabled} mobile={mobile}>
                 <ListIcon className="size-4 sm:size-3.5" />
             </FormatButton>
-            <FormatButton label="Numbered list" onClick={() => apply("ol")} disabled={disabled} mobile={mobile}>
+            <FormatButton label={t("markdownEditor.numberedList")} onClick={() => apply("ol")} disabled={disabled} mobile={mobile}>
                 <ListOrderedIcon className="size-4 sm:size-3.5" />
             </FormatButton>
-            <FormatButton label="Quote" onClick={() => apply("quote")} disabled={disabled} mobile={mobile}>
+            <FormatButton label={t("markdownEditor.quote")} onClick={() => apply("quote")} disabled={disabled} mobile={mobile}>
                 <QuoteIcon className="size-4 sm:size-3.5" />
             </FormatButton>
         </>

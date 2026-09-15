@@ -2,8 +2,16 @@ import { useMemo, useRef, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { type ClientGachaGroup, classifyBannerGroup, type IBanner, type IDatePullData, type IDayOfWeekPullData, type IHourlyPullData, type IPullTimingData } from "#/lib/api/gacha";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import { BANNER_GROUP_LABEL_KEYS } from "../../constants";
+import type { messages as gachaConstantsMessages } from "../../constants.messages";
 import styles from "./CommunityPage.module.css";
 import { fmtPct } from "./format";
+import type { messages } from "./TimingPanel.messages";
+
+/** This panel renders its own chrome plus the shared banner-bucket labels. */
+type TimingT = TypedT<typeof messages & typeof gachaConstantsMessages>;
 
 interface ITimingPanelProps {
     timing: IPullTimingData | null | undefined;
@@ -11,13 +19,6 @@ interface ITimingPanelProps {
     firstPullAt?: number | null;
     banners: IBanner[];
 }
-
-const TYPE_LABELS: Record<ClientGachaGroup, string> = {
-    limited: "Limited",
-    linkage: "Collab",
-    regular: "Standard",
-    special: "Kernel",
-};
 
 const TYPE_COLORS: Record<ClientGachaGroup, string> = {
     limited: "oklch(0.85 0.18 80)",
@@ -30,6 +31,7 @@ const TYPE_COLORS: Record<ClientGachaGroup, string> = {
 const TRACK_ORDER: ClientGachaGroup[] = ["limited", "linkage", "special", "regular"];
 
 export function TimingPanel({ timing, firstPullAt, banners }: ITimingPanelProps) {
+    const t: TimingT = useT("gacha");
     if (!timing) return null;
 
     const byDate = [...(timing.byDate ?? [])].sort((a, b) => a.date.localeCompare(b.date));
@@ -39,18 +41,18 @@ export function TimingPanel({ timing, firstPullAt, banners }: ITimingPanelProps)
         <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px]">
             <header className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
-                    <Kicker className="mb-1.5">Pull timing</Kicker>
-                    <h2 className="m-0 text-balance font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">When the community pulls.</h2>
+                    <Kicker className="mb-1.5">{t("community.timing.kicker")}</Kicker>
+                    <h2 className="m-0 text-balance font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{t("community.timing.title")}</h2>
                 </div>
                 <div className="inline-flex flex-wrap items-center gap-x-3.5 gap-y-1 font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">
                     <span className="inline-flex items-center">
                         <span aria-hidden className="mr-1.5 inline-block h-2 w-2 rounded-sm bg-primary align-middle" />
-                        Total pulls
+                        {t("community.timing.legend.totalPulls")}
                     </span>
                     {TRACK_ORDER.map((g) => (
                         <span key={g} className="inline-flex items-center">
                             <span aria-hidden className="mr-1.5 inline-block h-2 w-2 rounded-sm align-middle" style={{ background: TYPE_COLORS[g] }} />
-                            {TYPE_LABELS[g]}
+                            {t(BANNER_GROUP_LABEL_KEYS[g])}
                         </span>
                     ))}
                 </div>
@@ -59,18 +61,18 @@ export function TimingPanel({ timing, firstPullAt, banners }: ITimingPanelProps)
             <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
                 {byDate.length > 0 ? (
                     <div className="md:col-span-2">
-                        <div className="mb-2.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">By date · last {dayCount} days</div>
+                        <div className="mb-2.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("community.timing.byDate", { count: dayCount })}</div>
                         <TimingByDate rows={byDate} banners={banners} />
                     </div>
                 ) : null}
 
                 <div className="flex flex-col">
-                    <div className="mb-2.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">By hour of day · UTC</div>
+                    <div className="mb-2.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("community.timing.byHour")}</div>
                     <TimingByHour rows={timing.byHour} />
                 </div>
 
                 <div>
-                    <div className="mb-2.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">By day of week</div>
+                    <div className="mb-2.5 font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("community.timing.byDayOfWeek")}</div>
                     <TimingByDow rows={timing.byDayOfWeek} />
                 </div>
             </div>
@@ -151,11 +153,12 @@ function upperBoundIdx(arr: number[], target: number): number {
 }
 
 function TimingByDate({ rows, banners }: { rows: IDatePullData[]; banners: IBanner[] }) {
+    const f = useFormatters();
     const series = rows.map((r) => r.pullCount);
     const days = rows.map((r) => {
         const d = new Date(r.date);
         if (Number.isNaN(d.getTime())) return r.date;
-        return `${d.toLocaleString("en", { month: "short" })} ${d.getDate()}`;
+        return f.date(d, { month: "short", day: "numeric" });
     });
     const bands = useMemo(() => buildBannerBands(rows, banners), [rows, banners]);
     return <ActivityChart days={days} data={series} color="var(--primary)" height={220} bands={bands} />;
@@ -196,6 +199,8 @@ function TimingByDow({ rows }: { rows: IDayOfWeekPullData[] }) {
 }
 
 function ActivityChart({ data, days, color, height, bands }: { data: number[]; days: string[]; color: string; height: number; bands: ReturnType<typeof buildBannerBands> }) {
+    const t: TimingT = useT("gacha");
+    const f = useFormatters();
     const isNarrow = useMediaQuery("(max-width: 520px)");
     const PAD_T = 8;
     const X_AXIS_H = 24;
@@ -287,8 +292,8 @@ function ActivityChart({ data, days, color, height, bands }: { data: number[]; d
                             <div className={styles.acHoverCardDate}>{days[hoverIdx]}</div>
                             <div className={styles.acHoverCardValue}>
                                 <span aria-hidden className={styles.acHoverCardSwatch} style={{ background: color }} />
-                                {data[hoverIdx].toLocaleString()}
-                                <span className={styles.acHoverCardLabel}>pulls</span>
+                                {f.number(data[hoverIdx])}
+                                <span className={styles.acHoverCardLabel}>{t("community.timing.hover.pulls")}</span>
                             </div>
                             {activeBands.length > 0 ? (
                                 <div className={styles.acHoverCardBanners}>
@@ -298,7 +303,7 @@ function ActivityChart({ data, days, color, height, bands }: { data: number[]; d
                                             <span className={styles.acHoverCardBannerName}>{b.name}</span>
                                         </div>
                                     ))}
-                                    {activeBands.length > 5 ? <div className={styles.acHoverCardBannerMore}>+{activeBands.length - 5} more</div> : null}
+                                    {activeBands.length > 5 ? <div className={styles.acHoverCardBannerMore}>{t("community.timing.hover.more", { count: activeBands.length - 5 })}</div> : null}
                                 </div>
                             ) : null}
                         </div>
@@ -331,7 +336,7 @@ function ActivityChart({ data, days, color, height, bands }: { data: number[]; d
                                                 width: `${widthPct}%`,
                                                 background: TYPE_COLORS[b.group],
                                             }}
-                                            title={`${b.name} - ${TYPE_LABELS[b.group]}`}
+                                            title={t("community.timing.band", { name: b.name, type: t(BANNER_GROUP_LABEL_KEYS[b.group]) })}
                                         />
                                     );
                                 })}

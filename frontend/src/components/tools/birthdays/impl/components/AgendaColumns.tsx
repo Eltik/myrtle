@@ -1,9 +1,11 @@
 import { CalendarX } from "lucide-react";
-import type * as React from "react";
+import * as React from "react";
+import { useLocale, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, parseOperatorName } from "#/lib/utils";
-import { WEEKDAYS } from "../constants";
-import { isSameDate, opsOn, toSelectedDay } from "../helpers";
+import { isSameDate, opsOn, toSelectedDay, weekdayNames } from "../helpers";
 import type { CalendarScale, IOperatorBirthday, ISelectedDay } from "../types";
+import type { messages } from "./AgendaColumns.messages";
 import { BirthdayEmpty } from "./BirthdayEmpty";
 import { OpChip } from "./OpChip";
 import { OperatorRow } from "./OperatorRow";
@@ -23,10 +25,13 @@ const dayOps = (byDay: Map<string, IOperatorBirthday[]>, date: Date) => opsOn(by
 
 /** Day / 3 Day / Week agenda. Day shows a full inline list; the wider scales show clickable day columns. */
 export function AgendaColumns({ scale, days, byDay, today, onSelect }: IAgendaColumnsProps): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("tools");
+    const locale = useLocale();
+    const weekdays = React.useMemo(() => weekdayNames(locale), [locale]);
     if (scale === "day") {
         const ops = dayOps(byDay, days[0]);
         if (ops.length === 0) {
-            return <BirthdayEmpty className="py-14" icon={<CalendarX />} title="No birthdays" description="No operators in your current filter celebrate on this day." />;
+            return <BirthdayEmpty className="py-14" icon={<CalendarX />} title={t("birthdays.agenda.empty.title")} description={t("birthdays.agenda.empty.desc")} />;
         }
         return (
             <div className="flex flex-col gap-0.5 p-2">
@@ -58,7 +63,7 @@ export function AgendaColumns({ scale, days, byDay, today, onSelect }: IAgendaCo
                         >
                             <div className="flex items-baseline justify-between gap-1">
                                 <div className="flex min-w-0 flex-col gap-0.5">
-                                    <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.08em]">{WEEKDAYS[date.getDay()]}</span>
+                                    <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.08em]">{weekdays[date.getDay()]}</span>
                                     <span className={cn("font-bold font-sans text-[20px] leading-none tracking-tight", isToday ? "text-primary" : "text-foreground")}>{date.getDate()}</span>
                                 </div>
                                 {ops.length > 0 && <span className="font-medium font-mono text-[10.5px] text-muted-foreground">{ops.length}</span>}
@@ -74,7 +79,7 @@ export function AgendaColumns({ scale, days, byDay, today, onSelect }: IAgendaCo
                                             </div>
                                         );
                                     })}
-                                    {overflow > 0 && <span className="ps-0.5 font-medium font-mono text-[10.5px] text-muted-foreground">+{overflow} more</span>}
+                                    {overflow > 0 && <span className="ps-0.5 font-medium font-mono text-[10.5px] text-muted-foreground">{t("birthdays.agenda.overflow", { count: overflow })}</span>}
                                 </div>
                             )}
                         </button>

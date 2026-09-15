@@ -35,11 +35,16 @@ export function buildSweepPoints(range: ISweepRange, integer = false): number[] 
     return out;
 }
 
-export function formatLargeNumber(n: number | null | undefined): string {
+/**
+ * Compact chart-axis/tooltip formatting. The locale is an optional argument
+ * rather than a hook so the recharts tick callbacks and the PNG exporter can
+ * keep calling it; components pass the active locale from `useLocale()`.
+ */
+export function formatLargeNumber(n: number | null | undefined, locale?: string): string {
     if (n == null || !Number.isFinite(n)) return "-";
     const v = Math.abs(n);
     if (v >= 1_000_000) return `${(n / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`;
     if (v >= 10_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, "")}k`;
-    if (v >= 1_000) return Math.round(n).toLocaleString("en-US");
+    if (v >= 1_000) return Math.round(n).toLocaleString(locale ?? "en-US");
     return (Math.round(n * 10) / 10).toString();
 }

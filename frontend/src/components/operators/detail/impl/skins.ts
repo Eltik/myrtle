@@ -1,5 +1,7 @@
 import type { IDisplaySkin, ISkin } from "#/lib/api/skins";
+import type { TypedT } from "#/lib/i18n/messages";
 import { operatorElite0, operatorElite2, skinTexture, skinThumbnail } from "./assets";
+import type { messages as skinMessages } from "./skins.messages";
 
 export interface IUISkin {
     id: string;
@@ -26,9 +28,11 @@ interface IBuildArgs {
      *  is replaced with the E2 art and the "Evolved" entry is suppressed. */
     isBranchForm?: boolean;
     server?: "en" | "cn";
+    /** Resolves the stand-in copy this builder supplies; see `skins.messages.ts`. */
+    t: TypedT<typeof skinMessages>;
 }
 
-export function buildOperatorSkinList({ skinsFromBackend, operatorId, operatorSkin, operatorPortrait, phasesLength, artistFallback, isBranchForm, server }: IBuildArgs): IUISkin[] {
+export function buildOperatorSkinList({ skinsFromBackend, operatorId, operatorSkin, operatorPortrait, phasesLength, artistFallback, isBranchForm, server, t }: IBuildArgs): IUISkin[] {
     const skins: IUISkin[] = [];
 
     const e0 = operatorElite0(operatorId, operatorSkin, operatorPortrait, server);
@@ -37,9 +41,9 @@ export function buildOperatorSkinList({ skinsFromBackend, operatorId, operatorSk
     if (isBranchForm) {
         skins.push({
             id: `${operatorId}_default`,
-            name: "Default",
-            kicker: "Elite 2",
-            sub: artistFallback ? `Artist · ${artistFallback}` : "Unlocked by default",
+            name: t("skins.default.name"),
+            kicker: t("skins.kicker.elite2"),
+            sub: artistFallback ? t("skins.artist", { artist: artistFallback }) : t("skins.unlockedByDefault"),
             image: e2,
             thumbnail: e2,
             isDefault: true,
@@ -47,9 +51,9 @@ export function buildOperatorSkinList({ skinsFromBackend, operatorId, operatorSk
     } else {
         skins.push({
             id: `${operatorId}_default`,
-            name: "Default",
-            kicker: phasesLength > 2 ? "Elite 0 / Elite 1" : "Elite 0",
-            sub: artistFallback ? `Artist · ${artistFallback}` : "Unlocked by default",
+            name: t("skins.default.name"),
+            kicker: phasesLength > 2 ? t("skins.kicker.elite0or1") : t("skins.kicker.elite0"),
+            sub: artistFallback ? t("skins.artist", { artist: artistFallback }) : t("skins.unlockedByDefault"),
             image: e0,
             thumbnail: e0,
             isDefault: true,
@@ -58,9 +62,9 @@ export function buildOperatorSkinList({ skinsFromBackend, operatorId, operatorSk
         if (phasesLength > 2) {
             skins.push({
                 id: `${operatorId}_e2`,
-                name: "Evolved Art",
-                kicker: "Elite 2",
-                sub: artistFallback ? `Artist · ${artistFallback}` : "Elite 2 Promotion",
+                name: t("skins.evolvedArt.name"),
+                kicker: t("skins.kicker.elite2"),
+                sub: artistFallback ? t("skins.artist", { artist: artistFallback }) : t("skins.elite2Promotion"),
                 image: e2,
                 thumbnail: e2,
                 isDefault: false,
@@ -77,9 +81,9 @@ export function buildOperatorSkinList({ skinsFromBackend, operatorId, operatorSk
         const tex = skinTexture(operatorId, id, server);
         skins.push({
             id,
-            name: display?.skinName ?? "Outfit",
-            kicker: display?.skinGroupName ?? "Skin",
-            sub: artistFallback ? `Artist · ${artistFallback}` : (display?.obtainApproach ?? "Special Outfit"),
+            name: display?.skinName ?? t("skins.fallback.name"),
+            kicker: display?.skinGroupName ?? t("skins.fallback.kicker"),
+            sub: artistFallback ? t("skins.artist", { artist: artistFallback }) : (display?.obtainApproach ?? t("skins.fallback.sub")),
             image: tex,
             thumbnail: skinThumbnail(operatorId, id, server),
             isDefault: false,

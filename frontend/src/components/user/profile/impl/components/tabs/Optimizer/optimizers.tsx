@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import type { IRosterEntry } from "#/lib/api/user";
 import type { IOperatorListItem } from "#/types/operators";
 import { BaseOptimizer } from "./base/BaseOptimizer";
+import type { messages as optimizerMessages } from "./optimizers.messages";
 
 export interface IOptimizerProps {
     uid: string;
@@ -9,23 +10,26 @@ export interface IOptimizerProps {
     operatorsStatic: IOperatorListItem[];
 }
 
+/** A key in `optimizers.messages.ts`; resolved by the tab strip. */
+export type OptimizerMessageKey = keyof typeof optimizerMessages & string;
+
 export interface IOptimizerDef {
     id: string;
-    label: string;
-    blurb: string;
+    labelKey: OptimizerMessageKey;
+    blurbKey: OptimizerMessageKey;
     Component?: ComponentType<IOptimizerProps>;
 }
 
 export const OPTIMIZERS: IOptimizerDef[] = [
     {
         id: "base",
-        label: "Base Optimizer",
-        blurb: "Solve the best peak staffing for the RIIC, then plans a shift rotation.",
+        labelKey: "profile.optimizer.base.label",
+        blurbKey: "profile.optimizer.base.blurb",
         Component: BaseOptimizer,
     },
     {
         id: "account",
-        label: "Account Optimizer",
-        blurb: "Where to spend next across the account - promotions, masteries and modules, ranked by what each actually returns.",
+        labelKey: "profile.optimizer.account.label",
+        blurbKey: "profile.optimizer.account.blurb",
     },
 ];

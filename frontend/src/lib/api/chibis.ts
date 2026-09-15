@@ -1,13 +1,13 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
-
 // Generated from `backend/src/core/gamedata/types/chibi.rs`. To change a field,
 // edit the Rust struct and run `bun run gen:types` - do not redeclare it here.
 import type { ChibiCharacter } from "#/types/generated/ChibiCharacter";
 import type { ChibiData } from "#/types/generated/ChibiData";
 import type { ChibiSkin } from "#/types/generated/ChibiSkin";
 import type { SpineFiles } from "#/types/generated/SpineFiles";
+import { DEFAULT_GAMEDATA_SERVER, gamedataKey, gamedataPath, resolveGamedataServer } from "./gamedata";
 
 export type IChibiSpineFiles = SpineFiles;
 
@@ -26,19 +26,18 @@ export type IChibiResponse = ChibiData;
  * entire chibi catalog to render one operator. 404 -> `null`.
  */
 export const getChibiByOperatorFn = createServerFn({ method: "GET" })
-    .inputValidator((data: { operatorId: string; server: "en" | "cn" }) => data)
+    .inputValidator((data: { operatorId: string; server: string }) => data)
     .handler(async ({ data: { operatorId, server } }) => {
-        const path = server === "cn" ? `/cn/chibis/${encodeURIComponent(operatorId)}` : `/chibis/${encodeURIComponent(operatorId)}`;
-        const res = await backendFetch(path);
+        const res = await backendFetch(gamedataPath(server, `/chibis/${encodeURIComponent(operatorId)}`));
         if (res.status === 404) return null;
         if (!res.ok) throw new Error(`Failed to load chibi ${operatorId}: ${res.status}`);
         return (await res.json()) as IChibiCharacter;
     });
 
-export function chibiByOperatorQueryOptions(operatorId: string, server: "en" | "cn" = "en") {
+export function chibiByOperatorQueryOptions(operatorId: string, server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["chibis", "operator", server, operatorId],
-        queryFn: () => (operatorId ? getChibiByOperatorFn({ data: { operatorId, server } }) : Promise.resolve(null)),
+        queryKey: ["chibis", "operator", resolveGamedataServer(server), operatorId],
+        queryFn: () => (operatorId ? getChibiByOperatorFn({ data: { operatorId, server: resolveGamedataServer(server) } }) : Promise.resolve(null)),
         enabled: !!operatorId,
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
@@ -52,18 +51,17 @@ export function chibiByOperatorQueryOptions(operatorId: string, server: "en" | "
  * of hitting `/chibis/{id}` per operator.
  */
 export const getOperatorChibisFn = createServerFn({ method: "GET" })
-    .inputValidator((data: { server: "en" | "cn" }) => data)
+    .inputValidator((data: { server: string }) => data)
     .handler(async ({ data: { server } }) => {
-        const path = server === "cn" ? "/cn/static/chibis" : "/static/chibis";
-        const res = await backendFetch(path);
+        const res = await backendFetch(gamedataPath(server, "/static/chibis"));
         if (!res.ok) throw new Error(`Failed to load chibi catalog: ${res.status}`);
         return (await res.json()) as IChibiResponse;
     });
 
-export function operatorChibisQueryOptions(server: "en" | "cn" = "en") {
+export function operatorChibisQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["chibis", "catalog", server],
-        queryFn: () => getOperatorChibisFn({ data: { server } }),
+        queryKey: ["chibis", "catalog", resolveGamedataServer(server)],
+        queryFn: () => getOperatorChibisFn({ data: { server: resolveGamedataServer(server) } }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });
@@ -71,16 +69,18 @@ export function operatorChibisQueryOptions(server: "en" | "cn" = "en") {
 
 // Enemy chibis reuse the same response shape; `operatorCode` carries the
 // enemy id (e.g. "enemy_1000_gopro") and skins are alternate in-fight forms.
-export const getEnemyChibisFn = createServerFn({ method: "GET" }).handler(async () => {
-    const res = await backendFetch("/static/enemy-chibis");
-    if (!res.ok) throw new Error(`Failed to load enemy chibis: ${res.status}`);
-    return (await res.json()) as IChibiResponse;
-});
+export const getEnemyChibisFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string | undefined) => server)
+    .handler(async ({ data: server }) => {
+        const res = await backendFetch(gamedataPath(server, "/static/enemy-chibis"));
+        if (!res.ok) throw new Error(`Failed to load enemy chibis: ${res.status}`);
+        return (await res.json()) as IChibiResponse;
+    });
 
-export function enemyChibisQueryOptions() {
+export function enemyChibisQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["enemy-chibis"],
-        queryFn: () => getEnemyChibisFn(),
+        queryKey: ["enemy-chibis", ...gamedataKey(server)],
+        queryFn: () => getEnemyChibisFn({ data: resolveGamedataServer(server) }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });

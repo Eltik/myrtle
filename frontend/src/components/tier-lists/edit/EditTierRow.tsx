@@ -2,11 +2,14 @@ import { ChevronDownIcon, ChevronUpIcon, SettingsIcon } from "lucide-react";
 import { Fragment, useCallback, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
 import type { ITierOperator } from "#/lib/api/tier-lists";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { readableTextColor } from "../detail/contrast";
 import { hasOperatorDrag, readOperatorDrag } from "./dnd";
 import { useTierDropIndex } from "./drag-controller";
 import { EditableOpTile } from "./EditableOpTile";
 import styles from "./Editor.module.css";
+import type { messages } from "./EditTierRow.messages";
 import type { IEditTier } from "./state";
 
 interface IEditTierRowProps {
@@ -24,6 +27,7 @@ interface IEditTierRowProps {
 }
 
 export function EditTierRow({ tier, operators, notedOperatorIds, canMoveUp, canMoveDown, onMoveUp, onMoveDown, onOpenSettings, onPlace, onActivateOperator }: IEditTierRowProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
     const textColor = readableTextColor(tier.color);
     const touchDropIndex = useTierDropIndex(tier.id);
     const [mouseDropIndex, setMouseDropIndex] = useState<number | null>(null);
@@ -94,11 +98,11 @@ export function EditTierRow({ tier, operators, notedOperatorIds, canMoveUp, canM
             }}
             aria-labelledby={labelledById}
         >
-            <button id={labelledById} type="button" className={styles.label} onClick={onOpenSettings} aria-label={`Edit tier "${tier.name}"`}>
+            <button id={labelledById} type="button" className={styles.label} onClick={onOpenSettings} aria-label={t("edit.row.editTier", { name: tier.name })}>
                 <span>{tier.name}</span>
             </button>
 
-            <ul ref={dropAreaRef} data-tl-drop-tier={tier.id} className={styles.dropArea} data-empty={isEmpty || undefined} data-over={dropIndex !== null || undefined} onDragOver={handleOver} onDragLeave={handleLeave} onDrop={handleDrop} aria-label={`Operators in tier ${tier.name}`}>
+            <ul ref={dropAreaRef} data-tl-drop-tier={tier.id} className={styles.dropArea} data-empty={isEmpty || undefined} data-over={dropIndex !== null || undefined} onDragOver={handleOver} onDragLeave={handleLeave} onDrop={handleDrop} aria-label={t("edit.row.dropArea", { name: tier.name })}>
                 {operators.map((op, i) => {
                     if (!op) return null;
                     return (
@@ -113,14 +117,14 @@ export function EditTierRow({ tier, operators, notedOperatorIds, canMoveUp, canM
                 <li className={styles.dropMarker} data-active={showMarker(lastIndex) || undefined} aria-hidden="true" />
             </ul>
 
-            <div className={styles.rowActions} role="toolbar" aria-label={`Tier ${tier.name} actions`}>
-                <Button type="button" size="icon-xs" variant="outline" onClick={onMoveUp} disabled={!canMoveUp} aria-label="Move tier up">
+            <div className={styles.rowActions} role="toolbar" aria-label={t("edit.row.actions", { name: tier.name })}>
+                <Button type="button" size="icon-xs" variant="outline" onClick={onMoveUp} disabled={!canMoveUp} aria-label={t("edit.row.moveUp")}>
                     <ChevronUpIcon />
                 </Button>
-                <Button type="button" size="icon-xs" variant="outline" onClick={onOpenSettings} aria-label="Tier settings">
+                <Button type="button" size="icon-xs" variant="outline" onClick={onOpenSettings} aria-label={t("edit.row.settings")}>
                     <SettingsIcon />
                 </Button>
-                <Button type="button" size="icon-xs" variant="outline" onClick={onMoveDown} disabled={!canMoveDown} aria-label="Move tier down">
+                <Button type="button" size="icon-xs" variant="outline" onClick={onMoveDown} disabled={!canMoveDown} aria-label={t("edit.row.moveDown")}>
                     <ChevronDownIcon />
                 </Button>
             </div>

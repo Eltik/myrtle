@@ -1,5 +1,10 @@
 import type { ITierListDetail, ITierOperator } from "#/lib/api/tier-lists";
+import type { TypedT } from "#/lib/i18n/messages";
 import { operatorPlacementNote } from "../shared";
+import type { messages as stateMessages } from "./state.messages";
+
+/** The `t` `diffStates` needs, narrowed to the keys it can render. */
+export type EditStateT = TypedT<typeof stateMessages>;
 
 const DRAFT_PREFIX = "draft_";
 
@@ -177,32 +182,32 @@ function operatorDescription(state: IEditState, operatorId: string): string {
     return (state.descriptionByOperatorId[operatorId] ?? "").trim();
 }
 
-export function diffStates(original: IEditState, current: IEditState): IPendingChange[] {
+export function diffStates(original: IEditState, current: IEditState, t: EditStateT): IPendingChange[] {
     const changes: IPendingChange[] = [];
     if (original.title !== current.title || original.description !== current.description) {
-        changes.push({ kind: "title-desc", label: "List details" });
+        changes.push({ kind: "title-desc", label: t("edit.change.listDetails") });
     }
 
     const origTierById = new Map(original.tiers.map((t) => [t.id, t] as const));
     const currTierById = new Map(current.tiers.map((t) => [t.id, t] as const));
 
-    for (const t of current.tiers) {
-        if (isDraftId(t.id)) {
-            changes.push({ kind: "tier-create", label: `New tier "${t.name}"` });
+    for (const tier of current.tiers) {
+        if (isDraftId(tier.id)) {
+            changes.push({ kind: "tier-create", label: t("edit.change.tierCreated", { name: tier.name }) });
             continue;
         }
-        const original = origTierById.get(t.id);
+        const original = origTierById.get(tier.id);
         if (!original) continue;
-        if (original.name !== t.name || original.color !== t.color || original.description !== t.description) {
-            changes.push({ kind: "tier-update", label: `Updated "${t.name}"` });
+        if (original.name !== tier.name || original.color !== tier.color || original.description !== tier.description) {
+            changes.push({ kind: "tier-update", label: t("edit.change.tierUpdated", { name: tier.name }) });
         }
     }
-    for (const t of original.tiers) {
-        if (!currTierById.has(t.id)) changes.push({ kind: "tier-delete", label: `Deleted "${t.name}"` });
+    for (const tier of original.tiers) {
+        if (!currTierById.has(tier.id)) changes.push({ kind: "tier-delete", label: t("edit.change.tierDeleted", { name: tier.name }) });
     }
 
     const orderChanged = original.tiers.length === current.tiers.length && original.tiers.some((t, i) => current.tiers[i]?.id !== t.id);
-    if (orderChanged) changes.push({ kind: "tier-move", label: "Reordered tiers" });
+    if (orderChanged) changes.push({ kind: "tier-move", label: t("edit.change.tiersReordered") });
 
     const origPlacement = new Map<string, { tierId: string; subOrder: number }>();
     for (const t of original.tiers) {
@@ -236,11 +241,11 @@ export function diffStates(original: IEditState, current: IEditState): IPendingC
         if (operatorDescription(original, id) !== operatorDescription(current, id)) described++;
     }
 
-    if (added) changes.push({ kind: "placement-add", label: `${added} operator${added === 1 ? "" : "s"} placed` });
-    if (moved) changes.push({ kind: "placement-move", label: `${moved} operator${moved === 1 ? "" : "s"} moved` });
-    if (reordered) changes.push({ kind: "placement-move", label: `${reordered} operator${reordered === 1 ? "" : "s"} reordered` });
-    if (removed) changes.push({ kind: "placement-remove", label: `${removed} operator${removed === 1 ? "" : "s"} unplaced` });
-    if (described) changes.push({ kind: "placement-desc", label: `${described} description${described === 1 ? "" : "s"} edited` });
+    if (added) changes.push({ kind: "placement-add", label: t("edit.change.placed", { count: added }) });
+    if (moved) changes.push({ kind: "placement-move", label: t("edit.change.moved", { count: moved }) });
+    if (reordered) changes.push({ kind: "placement-move", label: t("edit.change.reordered", { count: reordered }) });
+    if (removed) changes.push({ kind: "placement-remove", label: t("edit.change.unplaced", { count: removed }) });
+    if (described) changes.push({ kind: "placement-desc", label: t("edit.change.described", { count: described }) });
 
     return changes;
 }

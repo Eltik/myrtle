@@ -1,5 +1,8 @@
 import type { ITierListBrowseItem } from "#/lib/api/tier-lists";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import BrowseCard from "./BrowseCard";
+import type { messages } from "./OfficialRail.messages";
 
 interface IOfficialRailProps {
     lists: ITierListBrowseItem[];
@@ -8,14 +11,15 @@ interface IOfficialRailProps {
 }
 
 export function OfficialRail({ lists, onOpen, onViewAll }: IOfficialRailProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
     if (lists.length === 0) return null;
 
     return (
         <section className="mx-auto mt-4 w-[min(1080px,calc(100%-2rem))]">
             <header className="mb-3 flex items-end justify-between gap-3">
-                <h2 className="m-0 font-sans font-semibold text-base text-foreground tracking-tight">Official</h2>
+                <h2 className="m-0 font-sans font-semibold text-base text-foreground tracking-tight">{t("browse.official.title")}</h2>
                 <button type="button" onClick={onViewAll} className="inline-flex items-center gap-1 font-medium font-sans text-[12.5px] text-muted-foreground leading-none transition-colors hover:text-foreground [&>svg]:h-3 [&>svg]:w-3 [&>svg]:transition-transform hover:[&>svg]:translate-x-0.5">
-                    View all
+                    {t("browse.official.viewAll")}
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                         <path d="M5 12h14" />
                         <path d="m12 5 7 7-7 7" />

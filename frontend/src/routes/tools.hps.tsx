@@ -5,19 +5,22 @@ import { Button } from "#/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { hpsOperatorsQueryOptions } from "#/lib/api/hps";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
+import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/tools/hps")({
     component: RouteComponent,
     errorComponent: HpsErrorComponent,
-    loader: ({ context: { queryClient } }) => Promise.all([queryClient.prefetchQuery(hpsOperatorsQueryOptions()), queryClient.prefetchQuery(operatorsListQueryOptions())]),
-    head: () => {
+    loader: ({ context: { queryClient, i18n } }) => Promise.all([queryClient.prefetchQuery(hpsOperatorsQueryOptions()), queryClient.prefetchQuery(operatorsListQueryOptions(i18n.gamedataServer))]),
+    head: ({ match }) => {
+        const t = metaT(match.context.i18n);
         const { meta, links } = seo({
-            title: "HPS Calculator",
-            description: "Compare Arknights healer HPS across target counts and team buffs. Configure skills, modules, buffs, and conditionals.",
+            title: t("toolsHps.title"),
+            description: t("toolsHps.description"),
             path: "/tools/hps",
-            image: defaultOgURL("tools-hps"),
+            image: defaultOgURL("tools-hps", match.context.i18n),
+            locale: match.context.i18n?.locale,
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],

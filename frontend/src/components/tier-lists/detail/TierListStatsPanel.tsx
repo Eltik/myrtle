@@ -1,6 +1,8 @@
 import { Eye, Flame, Heart, Share2, UserRound } from "lucide-react";
 import type { ITierListDetail } from "#/lib/api/tier-lists";
-import { formatNumber, formatNumberCompact } from "#/lib/utils";
+import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "./TierListStatsPanel.messages";
 
 interface ITierListStatsPanelProps {
     detail: ITierListDetail;
@@ -14,31 +16,33 @@ interface IStatRow {
     accent?: boolean;
 }
 
-function formatTimeline(iso: string): string {
+function formatTimeline(iso: string, f: IFormatters): string {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return "-";
-    return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    return f.date(d, { year: "numeric", month: "short", day: "numeric" });
 }
 
 export function TierListStatsPanel({ detail }: ITierListStatsPanelProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
+    const f = useFormatters();
     const stats = detail.stats;
 
     const rows: IStatRow[] = stats
         ? [
-              { icon: Eye, label: "All-time views", value: formatNumberCompact(stats.viewCount), title: `${formatNumber(stats.viewCount)} total views` },
-              { icon: UserRound, label: "Unique viewers", value: formatNumberCompact(stats.uniqueViewCount), title: `${formatNumber(stats.uniqueViewCount)} unique viewers` },
-              { icon: Heart, label: "Favorites", value: formatNumberCompact(stats.favoriteCount), title: `${formatNumber(stats.favoriteCount)} favorites` },
-              { icon: Share2, label: "Shares", value: formatNumberCompact(stats.shareCount), title: `${formatNumber(stats.shareCount)} shares` },
-              { icon: Flame, label: "Views · 24h", value: formatNumberCompact(stats.viewsLast24h), title: `${formatNumber(stats.viewsLast24h)} views in the last 24h`, accent: stats.viewsLast24h > 0 },
+              { icon: Eye, label: t("detail.stats.views"), value: f.compact(stats.viewCount), title: t("detail.stats.views.title", { count: f.number(stats.viewCount) }) },
+              { icon: UserRound, label: t("detail.stats.uniqueViews"), value: f.compact(stats.uniqueViewCount), title: t("detail.stats.uniqueViews.title", { count: f.number(stats.uniqueViewCount) }) },
+              { icon: Heart, label: t("detail.stats.favorites"), value: f.compact(stats.favoriteCount), title: t("detail.stats.favorites.title", { count: f.number(stats.favoriteCount) }) },
+              { icon: Share2, label: t("detail.stats.shares"), value: f.compact(stats.shareCount), title: t("detail.stats.shares.title", { count: f.number(stats.shareCount) }) },
+              { icon: Flame, label: t("detail.stats.views24h"), value: f.compact(stats.viewsLast24h), title: t("detail.stats.views24h.title", { count: f.number(stats.viewsLast24h) }), accent: stats.viewsLast24h > 0 },
           ]
         : [];
 
     return (
-        <aside aria-label="Tier list stats" className="lg:sticky lg:top-20">
+        <aside aria-label={t("detail.stats.panelLabel")} className="lg:sticky lg:top-20">
             <div className="rounded-2xl border border-border bg-card/60 backdrop-blur-sm">
                 <header className="flex items-baseline justify-between gap-3 border-border/60 border-b px-4 py-3">
-                    <h2 className="m-0 font-sans font-semibold text-foreground text-sm tracking-tight">Stats</h2>
-                    {stats?.isTrending && <span className="inline-flex items-center gap-1 font-bold font-mono text-[10.5px] text-primary uppercase tracking-wider">Trending now</span>}
+                    <h2 className="m-0 font-sans font-semibold text-foreground text-sm tracking-tight">{t("detail.stats.title")}</h2>
+                    {stats?.isTrending && <span className="inline-flex items-center gap-1 font-bold font-mono text-[10.5px] text-primary uppercase tracking-wider">{t("detail.stats.trending")}</span>}
                 </header>
 
                 {stats ? (
@@ -57,17 +61,17 @@ export function TierListStatsPanel({ detail }: ITierListStatsPanelProps) {
                         })}
                     </dl>
                 ) : (
-                    <p className="px-4 py-6 text-center font-sans text-[12.5px] text-muted-foreground">No stats yet.</p>
+                    <p className="px-4 py-6 text-center font-sans text-[12.5px] text-muted-foreground">{t("detail.stats.empty")}</p>
                 )}
 
                 <footer className="space-y-1 border-border/60 border-t px-4 py-3 font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider">
                     <div className="flex items-center justify-between gap-2">
-                        <span>Created</span>
-                        <span className="text-foreground/80">{formatTimeline(detail.createdAt)}</span>
+                        <span>{t("detail.stats.created")}</span>
+                        <span className="text-foreground/80">{formatTimeline(detail.createdAt, f)}</span>
                     </div>
                     <div className="flex items-center justify-between gap-2">
-                        <span>Updated</span>
-                        <span className="text-foreground/80">{formatTimeline(detail.updatedAt)}</span>
+                        <span>{t("detail.stats.updated")}</span>
+                        <span className="text-foreground/80">{formatTimeline(detail.updatedAt, f)}</span>
                     </div>
                 </footer>
             </div>

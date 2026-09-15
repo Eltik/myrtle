@@ -4,12 +4,19 @@ import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
 import { Input } from "#/components/ui/input";
 import { Switch } from "#/components/ui/switch";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import { cn } from "#/lib/utils";
 import type { IStage, IZone, StageClearsMap } from "#/types/stages";
 import type { IActivityLookup } from "../activity-lookup";
 import type { IRandomizerSettings } from "../types";
-import { buildStageGroups, type IStageGroup, isStageCleared, STAGE_SECTION_LABEL, type StageGroupSection } from "../utils";
+import { buildStageGroups, type IStageGroup, isStageCleared, STAGE_SECTION_LABEL_KEYS, type StageGroupSection } from "../utils";
+import type { messages as utilMessages } from "../utils.messages";
+import type { messages } from "./StageFiltersPanel.messages";
+
+/** This panel renders its own chrome plus the group labels `utils.ts` derives. */
+type StageFiltersT = TypedT<typeof messages & typeof utilMessages>;
 
 interface IStageFiltersPanelProps {
     settings: IRandomizerSettings;
@@ -24,11 +31,12 @@ interface IStageFiltersPanelProps {
 const SECTION_ORDER: StageGroupSection[] = ["MAIN", "EVENT", "OTHER"];
 
 export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zones, activityLookup, stageClears }: IStageFiltersPanelProps): React.ReactElement {
+    const t: StageFiltersT = useT("tools");
     const [query, setQuery] = React.useState("");
     const [openGroups, setOpenGroups] = React.useState<Set<string>>(() => new Set());
     const [collapsedSections, setCollapsedSections] = React.useState<Set<StageGroupSection>>(() => new Set());
 
-    const groups = React.useMemo(() => buildStageGroups(stages, zones, activityLookup), [stages, zones, activityLookup]);
+    const groups = React.useMemo(() => buildStageGroups(stages, zones, activityLookup, t), [stages, zones, activityLookup, t]);
 
     const trimmedQuery = compactForSearch(query);
 
@@ -128,17 +136,17 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
 
     return (
         <div className="flex flex-col gap-4">
-            <FieldGroup label="Eligibility">
-                <SwitchRow label="Only currently available" description="Hide events that aren't open right now (permanent events stay)." checked={settings.onlyAvailableStages} onChange={(v) => onChange({ onlyAvailableStages: v })} />
-                <SwitchRow label="Only stages I've cleared" description="Deselects every stage you haven't cleared in your profile." checked={settings.onlyCompletedStages} onChange={onChangeCompletedToggle} locked={!hasProfile} />
+            <FieldGroup label={t("randomizer.stages.eligibility")}>
+                <SwitchRow label={t("randomizer.stages.onlyAvailable")} description={t("randomizer.stages.onlyAvailable.desc")} checked={settings.onlyAvailableStages} onChange={(v) => onChange({ onlyAvailableStages: v })} />
+                <SwitchRow label={t("randomizer.stages.onlyCleared")} description={t("randomizer.stages.onlyCleared.desc")} checked={settings.onlyCompletedStages} onChange={onChangeCompletedToggle} locked={!hasProfile} />
             </FieldGroup>
 
-            <FieldGroup label="Stage pool">
+            <FieldGroup label={t("randomizer.stages.pool")}>
                 <div className="relative">
                     <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                    <Input value={query} onChange={(e) => setQuery(e.currentTarget.value)} placeholder="Search events or stages…" size="sm" className="rounded-md border-input pl-7" />
+                    <Input value={query} onChange={(e) => setQuery(e.currentTarget.value)} placeholder={t("randomizer.stages.search")} size="sm" className="rounded-md border-input pl-7" />
                     {query && (
-                        <button type="button" onClick={() => setQuery("")} className="absolute top-1/2 right-1.5 inline-flex size-5 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" aria-label="Clear search">
+                        <button type="button" onClick={() => setQuery("")} className="absolute top-1/2 right-1.5 inline-flex size-5 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={t("randomizer.stages.clearSearch")}>
                             <X className="size-3" />
                         </button>
                     )}
@@ -146,20 +154,20 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
 
                 <div className="flex flex-wrap items-center justify-between gap-2 font-mono text-[11px] text-muted-foreground uppercase tracking-[0.16em]">
                     <span>
-                        <span className="text-foreground">{selectedCount}</span> / {totalStages} stages
+                        <span className="text-foreground">{selectedCount}</span> / {totalStages} {t("randomizer.stages.count")}
                     </span>
                     <div className="flex flex-wrap gap-1.5">
                         <Button onClick={onSelectAll} size="xs" variant="ghost" disabled={deselected.size === 0}>
-                            All
+                            {t("randomizer.stages.all")}
                         </Button>
                         <Button onClick={onDeselectAll} size="xs" variant="ghost" disabled={selectedCount === 0}>
-                            None
+                            {t("randomizer.stages.none")}
                         </Button>
                     </div>
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    {visibleGroups.length === 0 && <p className="rounded-md border border-border/50 bg-card/40 px-3 py-6 text-center text-[12px] text-muted-foreground">No events match.</p>}
+                    {visibleGroups.length === 0 && <p className="rounded-md border border-border/50 bg-card/40 px-3 py-6 text-center text-[12px] text-muted-foreground">{t("randomizer.stages.noMatch")}</p>}
                     {SECTION_ORDER.map((section) => {
                         const sectionGroups = groupsBySection.get(section) ?? [];
                         if (sectionGroups.length === 0) return null;
@@ -170,10 +178,8 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
                             <section key={section} className="flex flex-col gap-1.5">
                                 <button type="button" onClick={() => onToggleSection(section)} className="flex items-center gap-1.5 rounded-sm px-0.5 outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-expanded={isExpanded}>
                                     <ChevronDown aria-hidden="true" className={cn("size-3 text-muted-foreground/70 transition-transform duration-150", !isExpanded && "-rotate-90")} />
-                                    <h3 className="font-mono text-[10px] text-muted-foreground/70 uppercase tracking-[0.2em]">{STAGE_SECTION_LABEL[section]}</h3>
-                                    <span className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.16em]">
-                                        {selectedSectionStages}/{totalSectionStages}
-                                    </span>
+                                    <h3 className="font-mono text-[10px] text-muted-foreground/70 uppercase tracking-[0.2em]">{t(STAGE_SECTION_LABEL_KEYS[section])}</h3>
+                                    <span className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.16em]">{t("randomizer.stages.sectionCount", { selected: selectedSectionStages, total: totalSectionStages })}</span>
                                 </button>
                                 {isExpanded &&
                                     sectionGroups.map((group) => {
@@ -191,6 +197,7 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
                                                 onToggleGroup={() => onToggleGroup(group)}
                                                 deselected={deselected}
                                                 onToggleStage={onToggleStage}
+                                                t={t}
                                             />
                                         );
                                     })}
@@ -211,14 +218,15 @@ interface IEventRowProps {
     onToggleGroup: () => void;
     deselected: Set<string>;
     onToggleStage: (stageId: string) => void;
+    t: StageFiltersT;
 }
 
-function EventRow({ group, isOpen, onToggleExpand, checkboxState, onToggleGroup, deselected, onToggleStage }: IEventRowProps): React.ReactElement {
+function EventRow({ group, isOpen, onToggleExpand, checkboxState, onToggleGroup, deselected, onToggleStage, t }: IEventRowProps): React.ReactElement {
     const selectedCount = group.stages.length - group.stages.reduce((acc, s) => acc + (deselected.has(s.stageId) ? 1 : 0), 0);
     return (
         <div className="overflow-hidden rounded-md border border-border/50 bg-card/60">
             <div className="flex items-center gap-2 px-2.5 py-2">
-                <Checkbox checked={checkboxState === "checked"} indeterminate={checkboxState === "indeterminate"} onCheckedChange={onToggleGroup} aria-label={`Toggle ${group.label}`} />
+                <Checkbox checked={checkboxState === "checked"} indeterminate={checkboxState === "indeterminate"} onCheckedChange={onToggleGroup} aria-label={t("randomizer.stages.toggleGroup", { group: group.label })} />
                 <button type="button" onClick={onToggleExpand} className="flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-expanded={isOpen}>
                     <ChevronDown aria-hidden="true" className={cn("size-3.5 shrink-0 text-muted-foreground transition-transform duration-150", isOpen && "rotate-180")} />
                     <div className="min-w-0 flex-1">
@@ -227,9 +235,9 @@ function EventRow({ group, isOpen, onToggleExpand, checkboxState, onToggleGroup,
                             {group.section !== "MAIN" && !group.isOpen && <Lock aria-hidden="true" className="size-3 shrink-0 text-muted-foreground/60" />}
                         </p>
                         <p className="mt-0.5 font-mono text-[10.5px] text-muted-foreground/80 uppercase tracking-[0.14em]">
-                            {group.section === "MAIN" ? "Mainline" : (group.sublabel ?? (group.section === "OTHER" ? "Mini" : "Event"))}
+                            {group.section === "MAIN" ? t("randomizer.stages.tag.mainline") : (group.sublabel ?? (group.section === "OTHER" ? t("randomizer.stages.tag.mini") : t("randomizer.stages.tag.event")))}
                             <span className="mx-1.5 opacity-50">·</span>
-                            {selectedCount}/{group.stages.length}
+                            {t("randomizer.stages.groupCount", { selected: selectedCount, total: group.stages.length })}
                         </p>
                     </div>
                 </button>
@@ -242,11 +250,11 @@ function EventRow({ group, isOpen, onToggleExpand, checkboxState, onToggleGroup,
                             <li key={stage.stageId}>
                                 {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox is a Base UI primitive with its own aria-label; wrapping label provides the click target */}
                                 <label className={cn("flex cursor-pointer items-center gap-2.5 rounded-sm px-1.5 py-1.5 transition-colors hover:bg-accent/40", isDeselected && "opacity-60")}>
-                                    <Checkbox checked={!isDeselected} onCheckedChange={() => onToggleStage(stage.stageId)} aria-label={`Toggle ${stage.code}${stage.name ? ` - ${stage.name}` : ""}`} />
-                                    <StageModeBadge stage={stage} />
+                                    <Checkbox checked={!isDeselected} onCheckedChange={() => onToggleStage(stage.stageId)} aria-label={t("randomizer.stages.toggleStage", { stage: stage.name ? t("randomizer.stages.stageLabel", { code: stage.code, name: stage.name }) : stage.code })} />
+                                    <StageModeBadge stage={stage} t={t} />
                                     <span className="inline-flex min-w-13 shrink-0 justify-start font-medium font-mono text-[11.5px] text-foreground">{stage.code}</span>
                                     <span className="min-w-0 flex-1 truncate text-[11.5px] text-muted-foreground">{stage.name ?? ""}</span>
-                                    {isChallengeModeStage(stage) && <span className="shrink-0 rounded-sm border border-amber-500/40 bg-amber-500/10 px-1 font-mono text-[9px] text-amber-500/90 uppercase tracking-[0.14em]">CM</span>}
+                                    {isChallengeModeStage(stage) && <span className="shrink-0 rounded-sm border border-amber-500/40 bg-amber-500/10 px-1 font-mono text-[9px] text-amber-500/90 uppercase tracking-[0.14em]">{t("randomizer.stages.badge.cm")}</span>}
                                 </label>
                             </li>
                         );
@@ -273,10 +281,10 @@ function isChallengeModeStage(stage: IStage): boolean {
     return stage.difficulty === "FOUR_STAR" || stage.difficulty === "SIX_STAR";
 }
 
-function StageModeBadge({ stage }: { stage: IStage }): React.ReactElement | null {
+function StageModeBadge({ stage, t }: { stage: IStage; t: StageFiltersT }): React.ReactElement | null {
     const mode = getStageMode(stage);
-    if (mode === "ADVERSE") return <span className="shrink-0 rounded-sm border border-rose-500/40 bg-rose-500/10 px-1 font-mono text-[9px] text-rose-500/90 uppercase tracking-[0.14em]">ADV</span>;
-    if (mode === "STORY") return <span className="shrink-0 rounded-sm border border-border/50 px-1 font-mono text-[9px] text-muted-foreground uppercase tracking-[0.14em]">STR</span>;
+    if (mode === "ADVERSE") return <span className="shrink-0 rounded-sm border border-rose-500/40 bg-rose-500/10 px-1 font-mono text-[9px] text-rose-500/90 uppercase tracking-[0.14em]">{t("randomizer.stages.badge.adverse")}</span>;
+    if (mode === "STORY") return <span className="shrink-0 rounded-sm border border-border/50 px-1 font-mono text-[9px] text-muted-foreground uppercase tracking-[0.14em]">{t("randomizer.stages.badge.story")}</span>;
     return null;
 }
 

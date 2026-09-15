@@ -3,6 +3,9 @@ import * as React from "react";
 import { CartesianGrid, Legend, Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { Spinner } from "#/components/ui/spinner";
+import { useLocale, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "./CalcChart.messages";
 import { formatLargeNumber } from "./constants";
 import type { ICurvePoint, IInstance } from "./types";
 
@@ -27,6 +30,8 @@ interface ICalcChartProps {
 }
 
 export function CalcChart({ instances, rows, xLabel, yLabel, allowDecimals, formatTooltipX, snapshotX, isLoading, onLegendClick, emptyIcon, emptyTitle, emptyDescription, containerRef }: ICalcChartProps): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("tools");
+    const locale = useLocale();
     const visible = React.useMemo(() => instances.filter((i) => i.visible), [instances]);
     const sameOpCounts = React.useMemo(() => {
         const counts = new Map<string, number>();
@@ -53,19 +58,19 @@ export function CalcChart({ instances, rows, xLabel, yLabel, allowDecimals, form
                     <EmptyMedia variant="icon">
                         <EyeOff />
                     </EmptyMedia>
-                    <EmptyTitle>All curves hidden</EmptyTitle>
-                    <EmptyDescription>Toggle visibility on a card (or use the chart legend) to plot it again.</EmptyDescription>
+                    <EmptyTitle>{t("calc.chart.allHidden.title")}</EmptyTitle>
+                    <EmptyDescription>{t("calc.chart.allHidden.desc")}</EmptyDescription>
                 </EmptyHeader>
             </Empty>
         );
     }
 
     return (
-        <div ref={containerRef} className="relative h-85 w-full sm:h-100 xl:h-110" role="img" aria-label={`${yLabel} by ${xLabel} for ${visible.length} operator${visible.length === 1 ? "" : "s"}`}>
+        <div ref={containerRef} className="relative h-85 w-full sm:h-100 xl:h-110" role="img" aria-label={t("calc.chart.ariaLabel", { yLabel, xLabel, count: visible.length })}>
             {isLoading && (
                 <span aria-live="polite" className="absolute top-2 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-md bg-background/72 px-2 py-1 text-[11px] text-muted-foreground shadow-sm backdrop-blur-sm">
                     <Spinner className="size-3" />
-                    Calculating
+                    {t("calc.chart.calculating")}
                 </span>
             )}
             <ResponsiveContainer width="100%" height="100%">
@@ -78,13 +83,13 @@ export function CalcChart({ instances, rows, xLabel, yLabel, allowDecimals, form
                         allowDecimals={allowDecimals}
                         stroke="var(--muted-foreground)"
                         tick={{ fill: "var(--muted-foreground)", fontSize: 11 }}
-                        tickFormatter={(v) => formatLargeNumber(v as number)}
+                        tickFormatter={(v) => formatLargeNumber(v as number, locale)}
                         label={{ value: xLabel, position: "insideBottom", offset: -16, fill: "var(--muted-foreground)", fontSize: 12 }}
                     />
-                    <YAxis stroke="var(--muted-foreground)" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} tickFormatter={(v) => formatLargeNumber(v as number)} width={64} label={{ value: yLabel, angle: -90, position: "insideLeft", fill: "var(--muted-foreground)", fontSize: 11, dy: 50 }} />
-                    <Tooltip content={<CalcTooltip instances={instances} yLabel={yLabel} formatTooltipX={formatTooltipX} />} cursor={{ stroke: "var(--border)", strokeWidth: 1 }} />
+                    <YAxis stroke="var(--muted-foreground)" tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} tickFormatter={(v) => formatLargeNumber(v as number, locale)} width={64} label={{ value: yLabel, angle: -90, position: "insideLeft", fill: "var(--muted-foreground)", fontSize: 11, dy: 50 }} />
+                    <Tooltip content={<CalcTooltip instances={instances} yLabel={yLabel} formatTooltipX={formatTooltipX} locale={locale} />} cursor={{ stroke: "var(--border)", strokeWidth: 1 }} />
                     {snapshotX >= (rows[0]?.x ?? 0) && snapshotX <= (rows[rows.length - 1]?.x ?? 0) && (
-                        <ReferenceLine x={snapshotX} stroke="var(--muted-foreground)" strokeDasharray="2 4" strokeOpacity={0.5} label={{ value: "snapshot", position: "insideTopLeft", fill: "var(--muted-foreground)", fontSize: 9.5, dy: 4, dx: 4 }} />
+                        <ReferenceLine x={snapshotX} stroke="var(--muted-foreground)" strokeDasharray="2 4" strokeOpacity={0.5} label={{ value: t("calc.chart.snapshot"), position: "insideTopLeft", fill: "var(--muted-foreground)", fontSize: 9.5, dy: 4, dx: 4 }} />
                     )}
                     <Legend
                         verticalAlign="top"
@@ -112,7 +117,7 @@ interface ITooltipPayload {
     payload?: { dataKey?: string; value?: number; color?: string }[];
 }
 
-function CalcTooltip({ instances, yLabel, formatTooltipX, ...rest }: ITooltipPayload & { instances: IInstance[]; yLabel: string; formatTooltipX: (x: number) => string }): React.ReactElement | null {
+function CalcTooltip({ instances, yLabel, formatTooltipX, locale, ...rest }: ITooltipPayload & { instances: IInstance[]; yLabel: string; formatTooltipX: (x: number) => string; locale: string }): React.ReactElement | null {
     if (!rest.active || !rest.payload || rest.payload.length === 0) return null;
 
     return (
@@ -128,7 +133,7 @@ function CalcTooltip({ instances, yLabel, formatTooltipX, ...rest }: ITooltipPay
                                 <span aria-hidden="true" className="inline-block size-2 rounded-full" style={{ backgroundColor: inst.color }} />
                                 <span className="font-medium">{inst.op.name}</span>
                             </span>
-                            <span className="font-mono tabular-nums">{p.value == null ? "-" : formatLargeNumber(p.value)}</span>
+                            <span className="font-mono tabular-nums">{p.value == null ? "-" : formatLargeNumber(p.value, locale)}</span>
                         </div>
                     );
                 })}

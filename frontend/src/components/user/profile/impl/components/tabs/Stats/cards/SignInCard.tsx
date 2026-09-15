@@ -1,9 +1,19 @@
 import { CalendarCheck, CalendarDays, Check, Clock } from "lucide-react";
+import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { countGameDays, gameDate } from "#/lib/registry/server-time";
 import { cn } from "#/lib/utils";
 import type { IUserCheckin } from "#/types/user";
 import { PALETTE } from "../palette";
 import { CARD_PADDING, KICKER_TEXT, Kicker, MetricRow, StatCard, Tile } from "../primitives";
+import type { messages } from "./SignInCard.messages";
+
+type CardT = TypedT<typeof messages>;
+
+/** Options matching what `Date.prototype.toLocaleString()` renders by default. */
+const DATE_TIME: Intl.DateTimeFormatOptions = { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric", second: "numeric" };
+const DATE_SHORT: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" };
+const MONTH_LONG: Intl.DateTimeFormatOptions = { month: "long", year: "numeric" };
 
 interface ICardProps {
     checkin: IUserCheckin | null | undefined;
@@ -34,26 +44,22 @@ function monthState(checkin: IUserCheckin, server: string) {
     return { sync, year, month, daysInMonth, claimed, elapsed, behind: elapsed - claimed };
 }
 
-/** "3 weeks ago", "yesterday", etc. Client-rendered, so `Date.now()` is fine. */
-function relativeTime(date: Date): string {
-    const diffSec = Math.round((date.getTime() - Date.now()) / 1000);
-    const abs = Math.abs(diffSec);
-    const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
-    if (abs < 60) return rtf.format(diffSec, "second");
-    if (abs < 3600) return rtf.format(Math.round(diffSec / 60), "minute");
-    if (abs < 86_400) return rtf.format(Math.round(diffSec / 3600), "hour");
-    if (abs < 2_592_000) return rtf.format(Math.round(diffSec / 86_400), "day");
-    if (abs < 31_536_000) return rtf.format(Math.round(diffSec / 2_592_000), "month");
-    return rtf.format(Math.round(diffSec / 31_536_000), "year");
-}
-
 /** "2y 7mo" / "8mo" / "12d" from a day count. */
-function humanAge(days: number): string {
-    if (days < 31) return `${days}d`;
+function humanAge(days: number, t: CardT): string {
+    if (days < 31) return t("profile.stats.signin.age.days", { n: days });
     const years = Math.floor(days / 365);
     const months = Math.floor((days % 365) / 30.44);
-    if (years > 0) return months > 0 ? `${years}y ${months}mo` : `${years}y`;
-    return `${months}mo`;
+    if (years > 0) return months > 0 ? t("profile.stats.signin.age.yearsMonths", { years, months }) : t("profile.stats.signin.age.years", { years });
+    return t("profile.stats.signin.age.months", { months });
+}
+
+/** "3 weeks ago", "yesterday", etc., in the page's locale. */
+function relativeTime(date: Date, f: IFormatters): string {
+    // `relativeLong`, not `relative`: this card previously built its own
+    // `Intl.RelativeTimeFormat` with the DEFAULT (long) style, so it read
+    // "3 weeks ago". The shared `relative` is the narrow style used in dense
+    // UI ("3 wk. ago"), which would have silently reworded this card.
+    return f.relativeLong(date.toISOString());
 }
 
 function StatRow({ label, value, title }: { label: string; value: string; title?: string }) {
@@ -67,6 +73,8 @@ function StatRow({ label, value, title }: { label: string; value: string; title?
 
 /** Left card: lifetime / account-level sign-in engagement. */
 export function SignInOverviewCard({ checkin, server }: ICardProps) {
+    const t: CardT = useT("user");
+    const f = useFormatters();
     if (!checkin) return null;
 
     const { cumulative_signin, register_ts, last_online_ts } = checkin;
@@ -80,21 +88,21 @@ export function SignInOverviewCard({ checkin, server }: ICardProps) {
     return (
         <StatCard color={SIGNIN}>
             <div className={cn("flex h-full flex-col gap-5", CARD_PADDING)}>
-                <Kicker icon={CalendarDays} label="Sign-In Record" />
+                <Kicker icon={CalendarDays} label={t("profile.stats.signin.record.title")} />
 
                 <div className="grid grid-cols-2 gap-3">
-                    <Tile color={SIGNIN} sub="total sign-ins" tooltip="Lifetime cumulative sign-in days" value={cumulative_signin.toLocaleString()} />
-                    {ageDays !== null && <Tile color={SIGNIN} sub="days since joining" value={ageDays.toLocaleString()} />}
+                    <Tile color={SIGNIN} sub={t("profile.stats.signin.total")} tooltip={t("profile.stats.signin.total.tooltip")} value={f.number(cumulative_signin)} />
+                    {ageDays !== null && <Tile color={SIGNIN} sub={t("profile.stats.signin.age")} value={f.number(ageDays)} />}
                 </div>
 
-                {rate !== null && <MetricRow color={SIGNIN} label="Sign-in rate" pct={rate} value={`${rate}%`} />}
+                {rate !== null && <MetricRow color={SIGNIN} label={t("profile.stats.signin.rate")} pct={rate} value={`${rate}%`} />}
 
                 <div className="flex flex-col gap-2.5">
-                    {register_ts ? <StatRow label="Member since" value={new Date(register_ts * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} /> : null}
-                    {ageDays !== null && <StatRow label="Account age" value={humanAge(ageDays)} />}
-                    <StatRow label="This month" title="Sign-ins claimed this month, out of the days elapsed" value={`${claimed} / ${elapsed}`} />
-                    {missed !== null && <StatRow label="Days missed" title="Days since joining without a sign-in" value={missed.toLocaleString()} />}
-                    {last_online_ts ? <StatRow label="Last online" title={new Date(last_online_ts * 1000).toLocaleString()} value={relativeTime(new Date(last_online_ts * 1000))} /> : null}
+                    {register_ts ? <StatRow label={t("profile.stats.signin.memberSince")} value={f.date(new Date(register_ts * 1000), DATE_SHORT)} /> : null}
+                    {ageDays !== null && <StatRow label={t("profile.stats.signin.accountAge")} value={humanAge(ageDays, t)} />}
+                    <StatRow label={t("profile.stats.signin.thisMonth")} title={t("profile.stats.signin.thisMonth.tooltip")} value={`${claimed} / ${elapsed}`} />
+                    {missed !== null && <StatRow label={t("profile.stats.signin.missed")} title={t("profile.stats.signin.missed.tooltip")} value={f.number(missed)} />}
+                    {last_online_ts ? <StatRow label={t("profile.stats.signin.lastOnline")} title={f.date(new Date(last_online_ts * 1000), DATE_TIME)} value={relativeTime(new Date(last_online_ts * 1000), f)} /> : null}
                 </div>
             </div>
         </StatCard>
@@ -127,30 +135,32 @@ function LegendSwatch({ state }: { state: SlotState }) {
  * the end of the claimed run.
  */
 export function SignInCalendarCard({ checkin, server }: ICardProps) {
+    const t: CardT = useT("user");
+    const f = useFormatters();
     if (!checkin) return null;
 
     const { monthly_card_flags, can_check_in } = checkin;
     const { sync, year, month, daysInMonth, claimed, elapsed, behind } = monthState(checkin, server);
 
     const monthAnchor = new Date(year, month, 1);
-    const monthLabel = monthAnchor.toLocaleDateString("en-US", { month: "long", year: "numeric" });
-    const syncAbsolute = sync.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const monthLabel = f.date(monthAnchor, MONTH_LONG);
+    const syncAbsolute = f.date(sync, DATE_SHORT);
 
     // The next slot the player can take - the one the game highlights.
     const nextSlot = claimed < daysInMonth ? claimed + 1 : null;
     const cardDays = monthly_card_flags.filter((f) => f === 1).length;
 
-    const summary = `${monthLabel}: ${claimed} of ${elapsed} days claimed, as of ${syncAbsolute}`;
+    const summary = t("profile.stats.signin.summary", { month: monthLabel, claimed, elapsed, date: syncAbsolute });
     const slots = Array.from({ length: daysInMonth }, (_, d) => d + 1);
 
     return (
         <StatCard color={SIGNIN}>
             <div className={cn("flex h-full flex-col gap-4", CARD_PADDING)}>
                 <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                    <Kicker icon={CalendarCheck} label="Daily Sign-In" />
-                    <span className="inline-flex items-center gap-1.5 font-medium text-[11px] text-muted-foreground" title={`Last synced ${syncAbsolute}`}>
+                    <Kicker icon={CalendarCheck} label={t("profile.stats.signin.calendar.title")} />
+                    <span className="inline-flex items-center gap-1.5 font-medium text-[11px] text-muted-foreground" title={t("profile.stats.signin.syncedTitle", { date: syncAbsolute })}>
                         <Clock aria-hidden className="size-3" />
-                        Synced {relativeTime(sync)}
+                        {t("profile.stats.signin.synced", { ago: relativeTime(sync, f) })}
                     </span>
                 </div>
 
@@ -160,7 +170,7 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
                         <span className="font-semibold" style={{ color: SIGNIN }}>
                             {claimed}
                         </span>{" "}
-                        / {elapsed} claimed
+                        / {elapsed} {t("profile.stats.signin.claimed")}
                     </span>
                 </div>
 
@@ -171,6 +181,12 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
                         {slots.map((slot) => {
                             const state: SlotState = slot <= claimed ? "claimed" : slot <= elapsed ? "open" : "upcoming";
                             const withCard = state === "claimed" && monthly_card_flags[slot - 1] === 1;
+                            // Each clause is its own message; the middle dots are the joiner, not part of the words.
+                            const titleParts = [t("profile.stats.signin.cell.day", { day: slot })];
+                            if (state === "claimed") titleParts.push(t("profile.stats.signin.state.claimed"));
+                            else if (state === "open") titleParts.push(t("profile.stats.signin.state.unclaimed"));
+                            if (withCard) titleParts.push(t("profile.stats.signin.cell.monthlyCard"));
+                            if (slot === nextSlot) titleParts.push(t("profile.stats.signin.cell.nextUp"));
                             return (
                                 <div
                                     className={cn(CELL_BASE, state === "open" && "border-border/60 border-dashed text-muted-foreground/55", state === "upcoming" && "border-transparent text-muted-foreground/30", state === "claimed" && "border-transparent")}
@@ -179,7 +195,7 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
                                         ...(state === "claimed" && claimedStyle()),
                                         ...(slot === nextSlot && { boxShadow: `inset 0 0 0 1.5px color-mix(in oklch, ${SIGNIN} 55%, transparent)` }),
                                     }}
-                                    title={`Day ${slot}${state === "claimed" ? " · Claimed" : state === "open" ? " · Unclaimed" : ""}${withCard ? " · Monthly card" : ""}${slot === nextSlot ? " · Next up" : ""}`}
+                                    title={titleParts.join(" · ")}
                                 >
                                     {slot}
                                     {state === "claimed" && <Check aria-hidden className="absolute top-0.5 right-0.5 size-2" style={{ color: SIGNIN }} />}
@@ -192,34 +208,34 @@ export function SignInCalendarCard({ checkin, server }: ICardProps) {
                 {/* Legend - state is not conveyed by color alone. */}
                 <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 font-mono text-[9.5px] text-muted-foreground/70 uppercase tracking-wide">
                     <span className="inline-flex items-center gap-1.5">
-                        <LegendSwatch state="claimed" /> Claimed
+                        <LegendSwatch state="claimed" /> {t("profile.stats.signin.state.claimed")}
                     </span>
                     <span className="inline-flex items-center gap-1.5">
-                        <LegendSwatch state="open" /> Unclaimed
+                        <LegendSwatch state="open" /> {t("profile.stats.signin.state.unclaimed")}
                     </span>
                     <span className="inline-flex items-center gap-1.5">
-                        <LegendSwatch state="upcoming" /> Upcoming
+                        <LegendSwatch state="upcoming" /> {t("profile.stats.signin.state.upcoming")}
                     </span>
                 </div>
 
                 <div className="mt-auto flex items-center justify-between gap-2 border-border/40 border-t pt-2.5">
-                    <span className={KICKER_TEXT}>Days behind</span>
-                    <span className="font-mono text-[11px] text-foreground tabular-nums" title={cardDays > 0 ? `${cardDays} of this month's ${claimed} claims came with the monthly card` : undefined}>
+                    <span className={KICKER_TEXT}>{t("profile.stats.signin.behind")}</span>
+                    <span className="font-mono text-[11px] text-foreground tabular-nums" title={cardDays > 0 ? t("profile.stats.signin.cardDays.tooltip", { cardDays, claimed }) : undefined}>
                         {behind === 0 ? (
                             <span className="font-semibold" style={{ color: SIGNIN }}>
-                                All caught up
+                                {t("profile.stats.signin.caughtUp")}
                             </span>
                         ) : (
                             <>
                                 <span className="font-semibold" style={{ color: SIGNIN }}>
                                     {behind}
                                 </span>{" "}
-                                {behind === 1 ? "day" : "days"}
+                                {t("profile.stats.signin.behind.days", { count: behind })}
                             </>
                         )}
                         {can_check_in && (
                             <span className="ml-2 font-semibold" style={{ color: SIGNIN }}>
-                                · claim ready
+                                {t("profile.stats.signin.claimReady")}
                             </span>
                         )}
                     </span>

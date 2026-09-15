@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { releaseBannersQueryOptions, releaseEventsQueryOptions, releaseSkinsQueryOptions } from "#/lib/api/release";
+import { DEFAULT_LOCALE, formatMessage, sourceMessage, useGamedataServer, useT } from "#/lib/i18n";
+import { fullMessageKey, type TypedT } from "#/lib/i18n/messages";
 import { parseOperatorName } from "#/lib/utils";
 import type { AutoName } from "#/types/generated/AutoName";
 import type { EventAnchor } from "#/types/generated/EventAnchor";
@@ -15,7 +17,15 @@ import type { ReviewWindow } from "#/types/generated/ReviewWindow";
 import { groupNewSkins, type INewSkinGroup } from "./components/SkinsTab";
 import { buildOperatorLookup, type OperatorLookup } from "./components/shared";
 import { resolvedEnStart } from "./helpers";
+import type { messages as helperMessages } from "./helpers.messages";
 import { REVIEW_NAME_CN, REVIEW_NAME_EN, reviewOutfits } from "./reviews";
+import type { messages as scheduleMessages } from "./schedule.messages";
+
+/** A key in `schedule.messages.ts`; resolved by whichever component renders it. */
+export type ScheduleMessageKey = keyof typeof scheduleMessages & string;
+
+/** The `t` the row builders need: their own detail keys plus the shared helper keys. */
+export type ScheduleT = TypedT<typeof scheduleMessages & typeof helperMessages>;
 
 export const DAY_SECS = 86_400;
 
@@ -52,7 +62,10 @@ export interface IScheduleSkin {
     portraitPath: string | null;
 }
 
-export const KIND_LABEL: Record<ScheduleKind, string> = { event: "Events", banner: "Banners", skin: "New skins", rerun: "Skin reruns", review: "Fashion Reviews" };
+export const KIND_LABEL_KEYS: Record<ScheduleKind, ScheduleMessageKey> = { event: "release.kind.event", banner: "release.kind.banner", skin: "release.kind.skin", rerun: "release.kind.rerun", review: "release.kind.review" };
+
+/** Default `t` for a caller outside an `I18nProvider`; resolves against the bundled source catalog. */
+const sourceT: ScheduleT = (key, values) => formatMessage(sourceMessage(fullMessageKey("tools", key)) ?? key, DEFAULT_LOCALE, values);
 
 function cnLength(start: number, end: number | null | undefined): number | null {
     return end && end > start ? end - start : null;
@@ -175,7 +188,7 @@ export function newSkinItem(g: INewSkinGroup, lookup: OperatorLookup): ISchedule
     };
 }
 
-export function rerunItem(r: RerunForecast, lookup: OperatorLookup): IScheduleItem | null {
+export function rerunItem(r: RerunForecast, lookup: OperatorLookup, t: ScheduleT = sourceT): IScheduleItem | null {
     const start = resolvedEnStart(r.next);
     if (start === null) return null;
     const listing = r.basis.kind === "cn_listing" ? r.basis : null;
@@ -189,7 +202,7 @@ export function rerunItem(r: RerunForecast, lookup: OperatorLookup): IScheduleIt
         nameEn: r.skinGroupName || null,
         nameAuto: null,
         tag: "RERUN",
-        detail: operatorNames(r.skins, lookup) || `${r.skinIds.length} skins`,
+        detail: operatorNames(r.skins, lookup) || t("release.detail.skinCount", { count: r.skinIds.length }),
         skins: r.skins.map((s) => ({ skinId: s.skinId, charId: s.charId, skinName: s.skinName, skinNameEn: s.skinName, skinNameAuto: null, charName: s.charName, portraitPath: s.portraitPath })),
         imagePath: r.skins.find((s) => s.portraitPath)?.portraitPath ?? null,
         start,
@@ -203,7 +216,7 @@ export function rerunItem(r: RerunForecast, lookup: OperatorLookup): IScheduleIt
     };
 }
 
-export function reviewItem(r: ReviewWindow, pool: ReviewOutfit[]): IScheduleItem | null {
+export function reviewItem(r: ReviewWindow, pool: ReviewOutfit[], t: ScheduleT = sourceT): IScheduleItem | null {
     const w = window(r.resolution, r.cnStart, r.cnEnd);
     if (!w) return null;
     const outfits = reviewOutfits(r, pool);
@@ -214,7 +227,7 @@ export function reviewItem(r: ReviewWindow, pool: ReviewOutfit[]): IScheduleItem
         nameEn: REVIEW_NAME_EN,
         nameAuto: null,
         tag: "FASHION REVIEW",
-        detail: `${outfits.length} outfits at least two years old, every brand`,
+        detail: t("release.detail.reviewOutfits", { count: outfits.length }),
         skins: outfits.map((o) => ({ skinId: o.skinId, charId: o.charId, skinName: o.skinName, skinNameEn: o.skinName, skinNameAuto: null, charName: o.charName, portraitPath: o.portraitPath })).reverse(),
         imagePath: null,
         start: w.start,
@@ -237,10 +250,11 @@ export interface ISchedule {
 }
 
 export function useSchedule(): ISchedule {
+    const t: ScheduleT = useT("tools");
     const events = useQuery(releaseEventsQueryOptions());
     const banners = useQuery(releaseBannersQueryOptions());
     const skins = useQuery(releaseSkinsQueryOptions());
-    const index = useQuery(operatorsIndexQueryOptions());
+    const index = useQuery(operatorsIndexQueryOptions(useGamedataServer()));
     const lookup = React.useMemo(() => buildOperatorLookup(index.data), [index.data]);
     const model = events.data?.model ?? banners.data?.model ?? skins.data?.model ?? null;
 
@@ -261,16 +275,16 @@ export function useSchedule(): ISchedule {
             if (it) out.push(it);
         }
         for (const r of skins.data?.rerunForecasts ?? []) {
-            const it = rerunItem(r, lookup);
+            const it = rerunItem(r, lookup, t);
             if (it) out.push(it);
         }
         for (const r of skins.data?.reviews ?? []) {
-            const it = reviewItem(r, skins.data?.reviewPool ?? []);
+            const it = reviewItem(r, skins.data?.reviewPool ?? [], t);
             if (it) out.push(it);
         }
         out.sort((a, b) => a.start - b.start || a.kind.localeCompare(b.kind));
         return out;
-    }, [events.data, banners.data, skins.data, model, lookup]);
+    }, [events.data, banners.data, skins.data, model, lookup, t]);
 
     const refetch = React.useCallback(() => {
         void events.refetch();

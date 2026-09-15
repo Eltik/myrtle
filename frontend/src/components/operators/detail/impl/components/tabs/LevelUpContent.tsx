@@ -3,19 +3,25 @@ import { ArrowUpRight, Box, ChevronDown, ChevronsUp, Sigma, Sparkles, Star, Tren
 import { memo, useMemo, useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
+import { operatorGamedataServer } from "#/lib/api/gamedata";
 import { type IMaterials, materialsQueryOptions } from "#/lib/api/materials";
+import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { ILevelUpCostItem, IOperatorListItem, IUnlockCondition } from "#/types/operators";
 import { asset, itemIcon } from "../../assets";
+import type { messages } from "./LevelUpContent.messages";
 
 interface ILevelUpContentProps {
     operator: IOperatorListItem;
 }
 
-const PHASE_LABEL: Record<IUnlockCondition["phase"], string> = {
-    PHASE_0: "E0",
-    PHASE_1: "E1",
-    PHASE_2: "E2",
+type LevelUpT = TypedT<typeof messages>;
+
+const PHASE_MESSAGE_KEY: Record<IUnlockCondition["phase"], keyof typeof messages & string> = {
+    PHASE_0: "levelup.phase.e0",
+    PHASE_1: "levelup.phase.e1",
+    PHASE_2: "levelup.phase.e2",
 };
 
 function aggregate(items: ILevelUpCostItem[]): ILevelUpCostItem[] {
@@ -33,14 +39,13 @@ function aggregate(items: ILevelUpCostItem[]): ILevelUpCostItem[] {
     });
 }
 
-function formatItemCount(count: number): string {
-    if (count >= 10_000) return `${Math.round(count / 1000).toLocaleString()}k`;
-    return count.toLocaleString();
-}
-
 function ItemTile({ item, materials, server }: { item: ILevelUpCostItem; materials: IMaterials | undefined; server?: "en" | "cn" }) {
+    const t: LevelUpT = useT("operators");
+    const f = useFormatters();
     const name = materials?.items[item.id]?.name ?? item.id;
     const src = itemIcon(item.id, item.iconId, item.image, server);
+    // Five-figure counts are shortened so the badge on a 56px tile stays legible.
+    const shortCount = item.count >= 10_000 ? t("levelup.countThousands", { value: f.number(Math.round(item.count / 1000)) }) : f.number(item.count);
     return (
         <Tooltip>
             <TooltipTrigger
@@ -55,7 +60,7 @@ function ItemTile({ item, materials, server }: { item: ILevelUpCostItem; materia
                                 (e.currentTarget as HTMLImageElement).style.visibility = "hidden";
                             }}
                         />
-                        <span className="absolute right-0 bottom-0 whitespace-nowrap rounded-tl-md bg-background/85 px-1 font-semibold text-[10px] text-foreground leading-tight">×{formatItemCount(item.count)}</span>
+                        <span className="absolute right-0 bottom-0 whitespace-nowrap rounded-tl-md bg-background/85 px-1 font-semibold text-[10px] text-foreground leading-tight">{t("levelup.itemCount", { count: shortCount })}</span>
                     </div>
                 )}
             />
@@ -66,7 +71,7 @@ function ItemTile({ item, materials, server }: { item: ILevelUpCostItem; materia
                     </div>
                     <div className="flex flex-col">
                         <span className="font-semibold text-foreground text-sm leading-tight">{name}</span>
-                        <span className="text-muted-foreground text-xs">×{item.count.toLocaleString()}</span>
+                        <span className="text-muted-foreground text-xs">{t("levelup.itemCount", { count: f.number(item.count) })}</span>
                     </div>
                 </div>
             </TooltipPopup>
@@ -109,8 +114,10 @@ function Section({ icon, title, subtitle, children, className }: { icon: React.R
 }
 
 export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelUpContentProps) {
+    const t: LevelUpT = useT("operators");
     const [activeSkill, setActiveSkill] = useState(0);
-    const { data: materials } = useQuery(materialsQueryOptions(operator.server));
+    const localeServer = useGamedataServer();
+    const { data: materials } = useQuery(materialsQueryOptions(operatorGamedataServer(operator.server, localeServer)));
 
     const elitePromotions = useMemo(() => operator.phases.map((p, idx) => ({ to: idx, cost: p.evolveCost ?? [] })).filter((r) => r.cost.length > 0), [operator.phases]);
     const levelingRows = useMemo(() => operator.phases.map((p, idx) => ({ phase: idx, maxLevel: p.maxLevel, cost: p.levelUpCost ?? [] })).filter((r) => r.cost.length > 0), [operator.phases]);
@@ -144,8 +151,8 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                             <Star className="h-5 w-5" />
                         </div>
                         <div>
-                            <h3 className="font-semibold text-foreground text-sm">No upgrade costs</h3>
-                            <p className="mt-1 text-muted-foreground text-xs">{operator.name} doesn&apos;t require materials to level up.</p>
+                            <h3 className="font-semibold text-foreground text-sm">{t("levelup.empty.title")}</h3>
+                            <p className="mt-1 text-muted-foreground text-xs">{t("levelup.empty.body", { name: operator.name })}</p>
                         </div>
                     </div>
                 </section>
@@ -154,42 +161,49 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
     }
 
     const activeMastery = masterySkills[Math.min(activeSkill, masterySkills.length - 1)];
-    const activeMasteryName = activeMastery?.static?.levels?.[0]?.name ?? `Skill ${activeSkill + 1}`;
+    const activeMasteryName = activeMastery?.static?.levels?.[0]?.name ?? t("levelup.skillFallback", { index: activeSkill + 1 });
 
     return (
         <div className="min-w-0 overflow-hidden p-4 md:p-6">
             <div className="mb-6">
-                <h2 className="font-semibold text-foreground text-xl">Level Up</h2>
-                <p className="text-muted-foreground text-sm">Materials needed to fully promote, master skills, and upgrade modules.</p>
+                <h2 className="font-semibold text-foreground text-xl">{t("levelup.title")}</h2>
+                <p className="text-muted-foreground text-sm">{t("levelup.subtitle")}</p>
             </div>
 
             <div className="flex flex-col gap-5">
                 {levelingRows.length > 0 && (
-                    <Section icon={<TrendingUp className="h-4 w-4" />} subtitle="Cost of leveling the operator to max level" title="Operator Level">
+                    <Section icon={<TrendingUp className="h-4 w-4" />} subtitle={t("levelup.section.operatorLevel.desc")} title={t("levelup.section.operatorLevel")}>
                         {levelingRows.map((r) => (
-                            <CostRow hint={`Level 1 to ${r.maxLevel}`} items={r.cost} key={r.phase} label={`Elite ${r.phase}`} materials={materials} />
+                            <CostRow hint={t("levelup.row.levelRange", { max: r.maxLevel })} items={r.cost} key={r.phase} label={t("levelup.row.elite", { phase: r.phase })} materials={materials} />
                         ))}
                     </Section>
                 )}
 
                 {elitePromotions.length > 0 && (
-                    <Section icon={<ChevronsUp className="h-4 w-4" />} subtitle="Materials required to advance promotion stages" title="Elite Promotion">
+                    <Section icon={<ChevronsUp className="h-4 w-4" />} subtitle={t("levelup.section.elite.desc")} title={t("levelup.section.elite")}>
                         {elitePromotions.map((r) => (
-                            <CostRow hint={`Promote to E${r.to}`} items={r.cost} key={r.to} label={`Elite ${r.to}`} materials={materials} server={operator.server} />
+                            <CostRow hint={t("levelup.row.promoteTo", { to: r.to })} items={r.cost} key={r.to} label={t("levelup.row.elite", { phase: r.to })} materials={materials} server={operator.server} />
                         ))}
                     </Section>
                 )}
 
                 {allSkillRows.length > 0 && (
-                    <Section icon={<ArrowUpRight className="h-4 w-4" />} subtitle="Cost to raise all skill levels (Rank 1 → 7)" title="Skill Levels">
+                    <Section icon={<ArrowUpRight className="h-4 w-4" />} subtitle={t("levelup.section.skillLevels.desc")} title={t("levelup.section.skillLevels")}>
                         {allSkillRows.map((r, i) => (
-                            <CostRow hint={`${PHASE_LABEL[r.unlockCond.phase]} · Lv. ${r.unlockCond.level}`} items={r.lvlUpCost} key={`${r.unlockCond.phase}-${r.unlockCond.level}`} label={`Lv. ${i + 1} → ${i + 2}`} materials={materials} server={operator.server} />
+                            <CostRow
+                                hint={t("levelup.row.unlockAt", { phase: t(PHASE_MESSAGE_KEY[r.unlockCond.phase]), level: r.unlockCond.level })}
+                                items={r.lvlUpCost}
+                                key={`${r.unlockCond.phase}-${r.unlockCond.level}`}
+                                label={t("levelup.row.skillStep", { from: i + 1, to: i + 2 })}
+                                materials={materials}
+                                server={operator.server}
+                            />
                         ))}
                     </Section>
                 )}
 
                 {activeMastery && (
-                    <Section icon={<Sparkles className="h-4 w-4" />} subtitle="Materials needed for Mastery 1, 2, and 3" title="Skill Mastery">
+                    <Section icon={<Sparkles className="h-4 w-4" />} subtitle={t("levelup.section.mastery.desc")} title={t("levelup.section.mastery")}>
                         {masterySkills.length > 1 && (
                             <div className="flex gap-1.5 overflow-x-auto border-border border-b bg-muted/30 px-5 py-2.5">
                                 {masterySkills.map((s, i) => (
@@ -200,20 +214,27 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                                         type="button"
                                     >
                                         <span className="grid h-5 w-5 shrink-0 place-items-center rounded bg-background/60 font-bold text-[10px]">{i + 1}</span>
-                                        <span>{s.static?.levels?.[0]?.name ?? `Skill ${i + 1}`}</span>
+                                        <span>{s.static?.levels?.[0]?.name ?? t("levelup.skillFallback", { index: i + 1 })}</span>
                                     </button>
                                 ))}
                             </div>
                         )}
                         <div className="px-5 pt-3 pb-1 text-muted-foreground text-xs uppercase tracking-wider">{activeMasteryName}</div>
                         {activeMastery.levelUpCostCond.map((c, i) => (
-                            <CostRow hint={`${PHASE_LABEL[c.unlockCond.phase]} · Lv. ${c.unlockCond.level}`} items={c.levelUpCost} key={`${c.unlockCond.phase}-${c.unlockCond.level}`} label={`Mastery ${i + 1}`} materials={materials} server={operator.server} />
+                            <CostRow
+                                hint={t("levelup.row.unlockAt", { phase: t(PHASE_MESSAGE_KEY[c.unlockCond.phase]), level: c.unlockCond.level })}
+                                items={c.levelUpCost}
+                                key={`${c.unlockCond.phase}-${c.unlockCond.level}`}
+                                label={t("levelup.row.mastery", { index: i + 1 })}
+                                materials={materials}
+                                server={operator.server}
+                            />
                         ))}
                     </Section>
                 )}
 
                 {validModules.length > 0 && (
-                    <Section icon={<Box className="h-4 w-4" />} subtitle="Upgrade materials for each equipment module" title="Modules">
+                    <Section icon={<Box className="h-4 w-4" />} subtitle={t("levelup.section.modules.desc")} title={t("levelup.section.modules")}>
                         <div className="divide-y divide-border">
                             {validModules.map((m) => (
                                 <div className="px-5 py-4" key={m.uniEquipId}>
@@ -233,7 +254,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                                         {Object.entries(m.itemCost ?? {})
                                             .sort(([a], [b]) => Number(a) - Number(b))
                                             .map(([stage, items]) => (
-                                                <CostRow items={items ?? []} key={stage} label={`Stage ${stage}`} materials={materials} server={operator.server} />
+                                                <CostRow items={items ?? []} key={stage} label={t("levelup.row.stage", { stage })} materials={materials} server={operator.server} />
                                             ))}
                                     </div>
                                 </div>
@@ -242,7 +263,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                     </Section>
                 )}
 
-                <Section icon={<Sigma className="h-4 w-4" />} subtitle="Every material needed to fully max this operator" title="Grand Total">
+                <Section icon={<Sigma className="h-4 w-4" />} subtitle={t("levelup.section.total.desc")} title={t("levelup.section.total")}>
                     <div className="px-5 py-4">
                         <div className="flex flex-wrap gap-2.5">
                             {grandTotal.map((it) => (

@@ -1,4 +1,5 @@
 import type { IEnemyDamageType, IEnemyLevel } from "#/lib/api/enemies";
+import type { EnemyListMessageKey } from "./constants";
 
 export interface ILevelToken {
     accent: string;
@@ -34,12 +35,13 @@ export const LEVEL_TOKENS: Record<IEnemyLevel, ILevelToken> = {
 
 export interface IDamageToken {
     color: string;
-    label: string;
+    /** Message key for the damage type's name, shared with `DAMAGE_TYPE_LABEL_KEY`. */
+    labelKey: EnemyListMessageKey;
 }
 
 export const DAMAGE_TOKENS: Record<IEnemyDamageType, IDamageToken> = {
-    PHYSIC: { color: "var(--dmg-physic)", label: "Physical" },
-    MAGIC: { color: "var(--dmg-magic)", label: "Arts" },
-    HEAL: { color: "var(--dmg-heal)", label: "Heal" },
-    NO_DAMAGE: { color: "var(--dmg-none)", label: "No Damage" },
+    PHYSIC: { color: "var(--dmg-physic)", labelKey: "damageType.PHYSIC" },
+    MAGIC: { color: "var(--dmg-magic)", labelKey: "damageType.MAGIC" },
+    HEAL: { color: "var(--dmg-heal)", labelKey: "damageType.HEAL" },
+    NO_DAMAGE: { color: "var(--dmg-none)", labelKey: "damageType.NO_DAMAGE" },
 };

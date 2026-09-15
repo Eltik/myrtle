@@ -1,8 +1,12 @@
 import { PieChart } from "lucide-react";
 import type { IUserScore } from "#/lib/api/user";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { CARD_PADDING, Kicker, StatCard } from "../../Stats/primitives";
 import { SUBSCORES, toPct, weightShare } from "../helpers";
+import type { messages as helperMessages } from "../helpers.messages";
 import { gradeColor } from "../palette";
+import type { messages } from "./ContributionCard.messages";
 
 interface IProps {
     score: IUserScore;
@@ -15,6 +19,9 @@ interface IProps {
  * "earned / potential" per section, so the biggest untapped pools stand out.
  */
 export function ContributionCard({ score }: IProps) {
+    /** Section names are declared once, in `helpers.messages.ts`. */
+    const t: TypedT<typeof messages & typeof helperMessages> = useT("user");
+
     const rows = SUBSCORES.map((sub) => {
         const share = weightShare(sub.weight);
         const frac = toPct(score[sub.key]) / 100;
@@ -24,10 +31,10 @@ export function ContributionCard({ score }: IProps) {
     return (
         <StatCard className="sm:col-span-2" color={gradeColor(score.grade)}>
             <div className={`${CARD_PADDING} flex flex-col gap-4`}>
-                <Kicker icon={PieChart} label="Grade composition" />
+                <Kicker icon={PieChart} label={t("score.contribution.title")} />
                 <div className="flex h-3 w-full overflow-hidden rounded-full border border-border/40 bg-muted/25">
                     {rows.map(({ sub, share, earned }) => (
-                        <div key={sub.key} className="relative h-full border-background/60 border-r last:border-r-0" style={{ width: `${share}%` }} title={`${sub.label}: ${earned.toFixed(1)} of ${share.toFixed(1)} pts`}>
+                        <div key={sub.key} className="relative h-full border-background/60 border-r last:border-r-0" style={{ width: `${share}%` }} title={t("score.contribution.segment", { label: t(sub.labelKey), earned: earned.toFixed(1), share: share.toFixed(1) })}>
                             <div className="absolute inset-y-0 left-0" style={{ width: `${(earned / share) * 100}%`, background: sub.color, opacity: 0.85 }} />
                         </div>
                     ))}
@@ -37,7 +44,7 @@ export function ContributionCard({ score }: IProps) {
                         <div key={sub.key} className="flex items-center justify-between gap-2 text-[11px]">
                             <span className="flex min-w-0 items-center gap-1.5">
                                 <span className="size-2 shrink-0 rounded-full" style={{ background: sub.color }} />
-                                <span className="truncate text-muted-foreground">{sub.label}</span>
+                                <span className="truncate text-muted-foreground">{t(sub.labelKey)}</span>
                             </span>
                             <span className="font-mono text-foreground/85 tabular-nums">
                                 {earned.toFixed(1)}

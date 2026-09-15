@@ -2,11 +2,14 @@ import * as PIXI from "pixi.js";
 import { useEffect, useRef, useState } from "react";
 import { Spinner } from "#/components/ui/spinner";
 import type { IChibiSpineFiles } from "#/lib/api/chibis";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, decodedSize, loadDecoded } from "#/lib/utils";
 import { ANIMATION_SPEED } from "../chibi/constants";
 import { baseTextureOf, chibiAssetURL, DEFAULT_SPINE_FIT, type IAnimationBounds, type ISpineFit, layoutSpine, loadSpineWithEncodedURLs, measureAnimationBounds, visibleRect } from "../chibi/helpers";
 import { createHDRScene, type IHDRScene, sceneCompositeGamma } from "./hdrTonemap";
 import { ensureAdditiveSpriteBoost, type FindBone, type ILoadedParticles, loadParticles, particleCensus } from "./particles";
+import type { messages } from "./SceneIllust.messages";
 import {
     applySceneLayerAmount,
     applySceneLayerColor,
@@ -1893,6 +1896,7 @@ function reseatSeparatorWash(spine: unknown, seps: ISeparatorWash[]): void {
 }
 
 export function SceneIllust({ files, server, fit, framing = "character", backdrop, surface = "viewer", onReady, onHandle }: ISceneIllustProps) {
+    const t: TypedT<typeof messages> = useT("operators");
     const appRef = useRef<PIXI.Application | null>(null);
     const spineRef = useRef<import("pixi-spine").Spine | null>(null);
     const boundsRef = useRef<IAnimationBounds | null>(null);
@@ -6439,7 +6443,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 if (loadAbort.signal.aborted) return;
                 console.error("Failed to load dynamic illustration:", err);
                 if (currentLoadId === loadIdRef.current && mountedRef.current) {
-                    setError("Failed to load animation");
+                    setError(t("scene.error"));
                     setIsLoading(false);
                 }
             }
@@ -6478,7 +6482,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
             resizeObserver.disconnect();
             cleanup();
         };
-    }, [files.skel, files.atlas, files.png, server, backdrop, surface]);
+    }, [files.skel, files.atlas, files.png, server, backdrop, surface, t]);
 
     return (
         <div className="absolute inset-0">
@@ -6488,7 +6492,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 ref={containerRef}
                 role="button"
                 tabIndex={0}
-                aria-label="Play the interact animation"
+                aria-label={t("scene.interact")}
                 onClick={() => {
                     if (!tapInteractOn()) return;
                     const c = compositesRef.current.find((x) => x.spine === spineRef.current) ?? null;
@@ -6504,7 +6508,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
             {isLoading && (
                 <div className="absolute right-3 bottom-3 flex items-center gap-2 rounded-md border border-white/20 bg-black/40 px-2.5 py-1.5 text-white/80 text-xs backdrop-blur-md">
                     <Spinner className="h-3.5 w-3.5" />
-                    Loading animation
+                    {t("scene.loading")}
                 </div>
             )}
             {error && <div className="absolute right-3 bottom-3 rounded-md border border-white/20 bg-black/40 px-2.5 py-1.5 text-white/80 text-xs backdrop-blur-md">{error}</div>}

@@ -3,6 +3,9 @@ import { Label } from "#/components/ui/label";
 import { NumberField, NumberFieldDecrement, NumberFieldGroup, NumberFieldIncrement, NumberFieldInput } from "#/components/ui/number-field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "#/components/ui/tabs";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "./AxisControls.messages";
 import { STEP_OPTIONS } from "./constants";
 import type { IAxisInput, ISweepRange } from "./types";
 
@@ -35,6 +38,7 @@ interface IAxisControlsProps {
 }
 
 export function AxisControls({ axes, xAxis, onChangeAxis, metrics, yMetric, onChangeMetric, sweep, axisInput, pointCount, onChangeSweep, hydrationToken, metricHint, rangeAction }: IAxisControlsProps): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("tools");
     const stepValue = (sweep.max - sweep.min) / Math.max(1, pointCount - 1);
     const showPoints = !axisInput.integer;
     const metricLabel = metrics.find((m) => m.value === yMetric)?.label ?? yMetric;
@@ -42,7 +46,7 @@ export function AxisControls({ axes, xAxis, onChangeAxis, metrics, yMetric, onCh
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
                 <div className="w-full space-y-1.5 sm:w-auto">
-                    <Label className="block font-medium text-[12px] text-muted-foreground leading-none">X axis</Label>
+                    <Label className="block font-medium text-[12px] text-muted-foreground leading-none">{t("calc.axis.xAxis")}</Label>
                     <Tabs value={xAxis} onValueChange={onChangeAxis}>
                         <TabsList className="w-full sm:w-fit">
                             {axes.map((a) => (
@@ -54,10 +58,10 @@ export function AxisControls({ axes, xAxis, onChangeAxis, metrics, yMetric, onCh
                     </Tabs>
                 </div>
                 <div className="w-full space-y-1.5 sm:w-auto sm:flex-none">
-                    <Label className="block font-medium text-[12px] text-muted-foreground leading-none">Y metric</Label>
+                    <Label className="block font-medium text-[12px] text-muted-foreground leading-none">{t("calc.axis.yMetric")}</Label>
                     <Select value={yMetric} onValueChange={(v) => v != null && onChangeMetric(v)}>
                         <SelectTrigger size="sm">
-                            <SelectValue placeholder="Metric">{() => metricLabel}</SelectValue>
+                            <SelectValue placeholder={t("calc.axis.metricPlaceholder")}>{() => metricLabel}</SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                             {metrics.map((m) => (
@@ -72,7 +76,7 @@ export function AxisControls({ axes, xAxis, onChangeAxis, metrics, yMetric, onCh
             <div className="flex w-full flex-col items-stretch gap-1 sm:ml-auto sm:w-auto">
                 <div className="grid grid-cols-2 items-end gap-2 sm:flex sm:items-end sm:gap-2">
                     <NumberField key={`${xAxis}-min-${hydrationToken}`} defaultValue={sweep.min} min={0} max={sweep.max - 1} step={axisInput.step} onValueChange={(v) => onChangeSweep({ min: v ?? 0 })} size="sm" className="w-full sm:w-24">
-                        <Label className="block text-[10.5px] text-muted-foreground/80 leading-none">From</Label>
+                        <Label className="block text-[10.5px] text-muted-foreground/80 leading-none">{t("calc.axis.from")}</Label>
                         <NumberFieldGroup>
                             <NumberFieldDecrement />
                             <NumberFieldInput />
@@ -80,7 +84,7 @@ export function AxisControls({ axes, xAxis, onChangeAxis, metrics, yMetric, onCh
                         </NumberFieldGroup>
                     </NumberField>
                     <NumberField key={`${xAxis}-max-${hydrationToken}`} defaultValue={sweep.max} min={sweep.min + 1} max={axisInput.maxBound} step={axisInput.step} onValueChange={(v) => onChangeSweep({ max: v ?? 0 })} size="sm" className="w-full sm:w-24">
-                        <Label className="block text-[10.5px] text-muted-foreground/80 leading-none">To</Label>
+                        <Label className="block text-[10.5px] text-muted-foreground/80 leading-none">{t("calc.axis.to")}</Label>
                         <NumberFieldGroup>
                             <NumberFieldDecrement />
                             <NumberFieldInput />
@@ -89,10 +93,10 @@ export function AxisControls({ axes, xAxis, onChangeAxis, metrics, yMetric, onCh
                     </NumberField>
                     {showPoints && (
                         <div className="space-y-1">
-                            <Label className="block text-[10.5px] text-muted-foreground/80 leading-none">Points</Label>
+                            <Label className="block text-[10.5px] text-muted-foreground/80 leading-none">{t("calc.axis.points")}</Label>
                             <Select value={String(sweep.steps)} onValueChange={(v) => onChangeSweep({ steps: Number(v) })}>
                                 <SelectTrigger size="sm" className="w-full sm:min-w-16">
-                                    <SelectValue placeholder="Points">{(v: string) => v}</SelectValue>
+                                    <SelectValue placeholder={t("calc.axis.pointsPlaceholder")}>{(v: string) => v}</SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                     {STEP_OPTIONS.map((s) => (
@@ -113,14 +117,11 @@ export function AxisControls({ axes, xAxis, onChangeAxis, metrics, yMetric, onCh
                         </div>
                     )}
                 </div>
-                <p className="font-mono text-[10.5px] text-muted-foreground/80 sm:text-right">
-                    {pointCount} points
-                    {axisInput.integer ? " · whole numbers" : ` · ~${Math.round(stepValue)}${axisInput.unit} apart`}
-                </p>
+                <p className="font-mono text-[10.5px] text-muted-foreground/80 sm:text-right">{t("calc.axis.pointSummary", { count: pointCount, mode: axisInput.integer ? "whole" : "spacing", step: Math.round(stepValue), unit: axisInput.unit })}</p>
             </div>
             {metricHint && (
                 <p className="order-last w-full text-[11px] text-muted-foreground leading-snug sm:basis-full">
-                    <span className="font-medium text-foreground">{metricLabel}:</span> {metricHint}
+                    <span className="font-medium text-foreground">{t("calc.axis.metricHint", { metric: metricLabel })}</span> {metricHint}
                 </p>
             )}
         </div>

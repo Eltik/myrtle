@@ -8,12 +8,19 @@ import { Dialog } from "#/components/ui/dialog";
 import { Progress } from "#/components/ui/progress";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { Separator } from "#/components/ui/separator";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { formatProfession } from "#/lib/utils";
 import type { IEnrichedSkill, IModule } from "#/types/operators";
 import { DynamicArtOverlay } from "../../../DynamicArtOverlay";
+import type { messages } from "./DetailedCard.messages";
 import { getAttributeStats, getTrustPercent, isMaxed, MAX_LEVEL_BY_RARITY, moduleIconURL, moduleTypeLabel, ownedHeroURL, rarityIcon, skillIconURL, specializedIcon } from "./helpers.card";
+import type { messages as cardMessages } from "./helpers.card.messages";
 import { OperatorDialog } from "./OperatorDialog";
 import type { IOwnedEntry } from "./types";
+
+/** The shared card vocabulary is declared in `helpers.card.messages.ts`. */
+type DetailedT = TypedT<typeof messages & typeof cardMessages>;
 
 interface IDetailedCardProps {
     entry: IOwnedEntry;
@@ -21,6 +28,7 @@ interface IDetailedCardProps {
 }
 
 export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
+    const t: DetailedT = useT("user");
     const op = entry.static;
     const star = entry.rarity;
     const rarityColor = RARITY_COLORS[star] ?? "#ffffff";
@@ -81,7 +89,7 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
             <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
                 <Card
                     ref={cardRef}
-                    aria-label={`Open details for ${entry.name}`}
+                    aria-label={t("profile.roster.detailed.openAria", { name: entry.name })}
                     className="fade-in slide-in-from-bottom-4 flex w-full animate-in cursor-pointer flex-col gap-0 overflow-hidden border-2 border-muted/30 py-0 pb-1 text-left transition-all duration-300 hover:border-muted hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={(e) => {
                         if ((e.target as HTMLElement).closest("[data-roster-card-accordion]")) return;
@@ -111,7 +119,7 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                                 <h3 className={`mt-2 max-w-3/4 text-left font-bold text-white text-xl transition-all duration-300 ${hovered ? "translate-y-0" : "translate-y-1"}`}>{entry.name}</h3>
                                 <div className={`flex items-center justify-between transition-all duration-300 ${hovered ? "translate-y-0" : "translate-y-1"}`}>
                                     <div className="flex items-center gap-2">
-                                        <img alt={`${star} Star`} className="h-4.5 w-auto object-contain" decoding="async" height={18} loading="lazy" src={rarityIcon(star)} width={60} />
+                                        <img alt={t("profile.roster.card.rarityAlt", { star })} className="h-4.5 w-auto object-contain" decoding="async" height={18} loading="lazy" src={rarityIcon(star)} width={60} />
                                         {op && (
                                             <div className="flex flex-row items-center gap-1">
                                                 <ClassIcon profession={op.profession} size={20} />
@@ -119,13 +127,13 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                                             </div>
                                         )}
                                     </div>
-                                    <img alt={`Elite ${entry.elite}`} className="h-6 w-6 object-contain" decoding="async" height={24} loading="lazy" src={eliteIcon(entry.elite)} width={24} />
+                                    <img alt={t("profile.roster.card.eliteAlt", { elite: entry.elite })} className="h-6 w-6 object-contain" decoding="async" height={24} loading="lazy" src={eliteIcon(entry.elite)} width={24} />
                                 </div>
                             </div>
                         </div>
                         {maxed && (
                             <div className="absolute top-2 z-10 rounded-r-md px-2 py-0.5 text-center font-semibold text-xs shadow-md" style={{ color: rarityColor }}>
-                                Maxed
+                                {t("profile.roster.card.maxed")}
                             </div>
                         )}
                     </div>
@@ -133,14 +141,14 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <div className="flex items-center justify-between">
-                                    <span className="font-medium text-sm">Level</span>
+                                    <span className="font-medium text-sm">{t("profile.roster.card.level")}</span>
                                     <span className="font-bold text-sm">{entry.level}</span>
                                 </div>
                                 <Progress className="h-1.5 transition-all duration-1000 ease-out" value={levelProgress} />
                             </div>
                             <div>
                                 <div className="flex items-center justify-between">
-                                    <span className="font-medium text-sm">Trust</span>
+                                    <span className="font-medium text-sm">{t("profile.roster.card.trust")}</span>
                                     <span className="font-bold text-sm">{trustPct}%</span>
                                 </div>
                                 <Progress className="h-1.5 transition-all duration-1000 ease-out" value={trustProgress} />
@@ -148,30 +156,30 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                         </div>
                         <Separator className="my-3" />
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                            <Stat label="HP" value={stats?.maxHp} />
-                            <Stat label="ATK" value={stats?.atk} />
-                            <Stat label="DEF" value={stats?.def} />
-                            <Stat label="RES" value={stats?.magicResistance} />
-                            <Stat label="Cost" value={stats?.cost} />
-                            <Stat label="Block" value={stats?.blockCnt} />
+                            <Stat label={t("profile.roster.card.stat.hp")} value={stats?.maxHp} />
+                            <Stat label={t("profile.roster.card.stat.atk")} value={stats?.atk} />
+                            <Stat label={t("profile.roster.card.stat.def")} value={stats?.def} />
+                            <Stat label={t("profile.roster.card.stat.res")} value={stats?.magicResistance} />
+                            <Stat label={t("profile.roster.card.stat.cost")} value={stats?.cost} />
+                            <Stat label={t("profile.roster.card.stat.block")} value={stats?.blockCnt} />
                         </div>
                         <Separator className="my-3" />
                         <div data-roster-card-accordion>
                             <Accordion className="w-full" multiple>
                                 <AccordionItem className="border-b-0" value="potential">
-                                    <AccordionTrigger className="py-2 font-medium text-sm hover:underline">Potential</AccordionTrigger>
+                                    <AccordionTrigger className="py-2 font-medium text-sm hover:underline">{t("profile.roster.card.potential")}</AccordionTrigger>
                                     <AccordionContent>
                                         <div className="flex items-center justify-between py-1">
-                                            <span className="text-sm">Current Potential</span>
+                                            <span className="text-sm">{t("profile.roster.detailed.currentPotential")}</span>
                                             <div className="flex items-center gap-1">
-                                                <img alt={`Potential ${entry.potential + 1}`} className="h-6 w-6" decoding="async" height={24} loading="lazy" src={potentialIcon(entry.potential)} width={24} />
+                                                <img alt={t("profile.roster.card.potentialAlt", { rank: entry.potential + 1 })} className="h-6 w-6" decoding="async" height={24} loading="lazy" src={potentialIcon(entry.potential)} width={24} />
                                                 <span className="text-muted-foreground text-sm">+{entry.potential}</span>
                                             </div>
                                         </div>
                                     </AccordionContent>
                                 </AccordionItem>
                                 <AccordionItem className="border-b-0" value="skills">
-                                    <AccordionTrigger className="py-2 font-medium text-sm hover:underline">Skills</AccordionTrigger>
+                                    <AccordionTrigger className="py-2 font-medium text-sm hover:underline">{t("profile.roster.card.skills")}</AccordionTrigger>
                                     <AccordionContent>
                                         <ScrollArea className="max-h-45 w-full">
                                             {skills.length > 0 ? (
@@ -181,13 +189,13 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <p className="text-muted-foreground text-sm">{op ? "No skills found." : "Loading skills…"}</p>
+                                                <p className="text-muted-foreground text-sm">{op ? t("profile.roster.card.noSkills") : t("profile.roster.detailed.loadingSkills")}</p>
                                             )}
                                         </ScrollArea>
                                     </AccordionContent>
                                 </AccordionItem>
                                 <AccordionItem className="border-b-0" value="modules">
-                                    <AccordionTrigger className="py-2 font-medium text-sm hover:underline">Modules</AccordionTrigger>
+                                    <AccordionTrigger className="py-2 font-medium text-sm hover:underline">{t("profile.roster.card.modules")}</AccordionTrigger>
                                     <AccordionContent>
                                         {modules.length > 0 ? (
                                             <div className="space-y-2">
@@ -196,7 +204,7 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                                                 ))}
                                             </div>
                                         ) : (
-                                            <p className="text-muted-foreground text-sm">{op ? "No modules unlocked." : "Loading modules…"}</p>
+                                            <p className="text-muted-foreground text-sm">{op ? t("profile.roster.card.noModules") : t("profile.roster.detailed.loadingModules")}</p>
                                         )}
                                     </AccordionContent>
                                 </AccordionItem>
@@ -220,25 +228,27 @@ function Stat({ label, value }: { label: string; value: number | undefined }) {
 }
 
 function SkillRow({ skill, index, mastery, isDefault, skillLevel }: { skill: IEnrichedSkill; index: number; mastery: number; isDefault: boolean; skillLevel: number }) {
-    const name = skill.static?.levels?.[0]?.name ?? `Skill ${index + 1}`;
+    const t: DetailedT = useT("user");
+    const name = skill.static?.levels?.[0]?.name ?? t("profile.roster.card.skillFallback", { n: index + 1 });
     return (
         <div className={`grid items-center gap-2 rounded-md px-2.5 py-1.5 ${isDefault ? "border border-primary/30 bg-primary/5 shadow-[0_0_8px_rgba(var(--primary),0.15)]" : "bg-muted/30"}`} style={{ gridTemplateColumns: "24px minmax(0, 1fr) auto" }}>
-            <img alt="Skill" className="h-6 w-6 rounded" decoding="async" height={24} loading="lazy" src={skillIconURL(skill)} width={24} />
+            <img alt={t("profile.roster.card.skillAlt")} className="h-6 w-6 rounded" decoding="async" height={24} loading="lazy" src={skillIconURL(skill)} width={24} />
             <span className="truncate font-medium text-xs" title={name}>
                 {name}
             </span>
             <div className="flex items-center gap-1 text-muted-foreground text-xs">
-                <span>Lv.{skillLevel}</span>
-                {mastery > 0 && <img alt={`M${mastery}`} className="h-4 w-4" decoding="async" height={16} loading="lazy" src={specializedIcon(mastery)} width={16} />}
+                <span>{t("profile.roster.card.skillLevel", { level: skillLevel })}</span>
+                {mastery > 0 && <img alt={t("profile.roster.card.masteryAlt", { mastery })} className="h-4 w-4" decoding="async" height={16} loading="lazy" src={specializedIcon(mastery)} width={16} />}
             </div>
         </div>
     );
 }
 
 function ModuleRow({ module, level, isEquipped }: { module: IModule; level: number; isEquipped: boolean }) {
+    const t: DetailedT = useT("user");
     return (
         <div className={`flex items-center gap-2 rounded-md px-2.5 py-1.5 ${isEquipped ? "border border-primary/30 bg-primary/5 shadow-[0_0_8px_rgba(var(--primary),0.15)]" : "bg-muted/30"}`}>
-            <img alt="Module" className="h-6 w-6 shrink-0 object-contain" decoding="async" height={24} loading="lazy" src={moduleIconURL(module)} width={24} />
+            <img alt={t("profile.roster.card.moduleAlt")} className="h-6 w-6 shrink-0 object-contain" decoding="async" height={24} loading="lazy" src={moduleIconURL(module)} width={24} />
             <div className="min-w-0 flex-1">
                 <span className="truncate font-medium text-xs" title={module.uniEquipName}>
                     {module.uniEquipName}
@@ -246,7 +256,7 @@ function ModuleRow({ module, level, isEquipped }: { module: IModule; level: numb
             </div>
             <div className="flex shrink-0 items-center gap-1.5 text-muted-foreground text-xs">
                 <span>{moduleTypeLabel(module)}</span>
-                <span>Lv.{level}</span>
+                <span>{t("profile.roster.card.moduleLevel", { level })}</span>
             </div>
         </div>
     );

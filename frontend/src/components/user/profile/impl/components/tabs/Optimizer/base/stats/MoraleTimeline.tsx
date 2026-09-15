@@ -2,11 +2,15 @@ import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { IMoraleTimeline } from "#/lib/api/user";
 import { type Catalog, roomLabel } from "#/lib/base/catalog";
 import { roomAccent } from "#/lib/base/room-colors";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./MoraleTimeline.messages";
 
 const MORALE_MAX = 24;
 
 function Sparkline({ samples }: { samples: number[] }) {
+    const t: TypedT<typeof messages> = useT("user");
     const w = 96;
     const h = 26;
     const pad = 1.5;
@@ -18,7 +22,7 @@ function Sparkline({ samples }: { samples: number[] }) {
 
     return (
         <svg className="shrink-0" height={h} role="img" viewBox={`0 0 ${w} ${h}`} width={w}>
-            <title>Morale across the simulated week</title>
+            <title>{t("profile.base.morale.sparkline")}</title>
             <polyline fill="none" points={points} stroke="var(--color-red-500, #ef4444)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
         </svg>
     );

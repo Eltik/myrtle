@@ -5,19 +5,22 @@ import { Button } from "#/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { dpsOperatorsQueryOptions } from "#/lib/api/dps";
 import { operatorsListQueryOptions } from "#/lib/api/operators";
+import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/tools/dps")({
     component: RouteComponent,
     errorComponent: DpsErrorComponent,
-    loader: ({ context: { queryClient } }) => Promise.all([queryClient.prefetchQuery(dpsOperatorsQueryOptions()), queryClient.prefetchQuery(operatorsListQueryOptions())]),
-    head: () => {
+    loader: ({ context: { queryClient, i18n } }) => Promise.all([queryClient.prefetchQuery(dpsOperatorsQueryOptions()), queryClient.prefetchQuery(operatorsListQueryOptions(i18n.gamedataServer))]),
+    head: ({ match }) => {
+        const t = metaT(match.context.i18n);
         const { meta, links } = seo({
-            title: "DPS Calculator",
-            description: "Compare Arknights operator DPS across varying enemy DEF, RES, or target count. Configure skills, modules, buffs, and conditionals.",
+            title: t("toolsDps.title"),
+            description: t("toolsDps.description"),
             path: "/tools/dps",
-            image: defaultOgURL("tools-dps"),
+            image: defaultOgURL("tools-dps", match.context.i18n),
+            locale: match.context.i18n?.locale,
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],

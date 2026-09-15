@@ -1,20 +1,28 @@
 import { Link } from "@tanstack/react-router";
 import { Package } from "lucide-react";
 import { useState } from "react";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { RARITY_HEX_MUTED } from "#/lib/utils";
+import type { StageDetailMessageKey } from "./constants";
+import type { messages as detailConstantsMessages } from "./constants.messages";
+import type { messages } from "./DropsSection.messages";
 import { SectionHead } from "./primitives";
 import type { IDropGroup, IResolvedDrop } from "./types";
 
-function RateMeter({ occ }: { occ: { label: string; level: number; tone: string } }) {
+function RateMeter({ occ }: { occ: { labelKey: StageDetailMessageKey; level: number; tone: string } }) {
+    const t: TypedT<typeof messages> = useT("stages");
+    const tConst: TypedT<typeof detailConstantsMessages> = useT("stages");
+    const label = tConst(occ.labelKey);
     return (
-        <span className="inline-flex items-center gap-1.5" title={`Drop rate: ${occ.label}`}>
+        <span className="inline-flex items-center gap-1.5" title={t("drops.rateTitle", { rate: label })}>
             <span aria-hidden="true" className="flex items-center gap-0.5">
                 {[0, 1, 2, 3, 4].map((i) => (
                     <span key={i} className="h-2.5 w-1 rounded-[1px]" style={{ background: i < occ.level ? occ.tone : "color-mix(in oklch, var(--muted-foreground) 28%, transparent)" }} />
                 ))}
             </span>
             <span className="font-medium font-mono text-[10px] uppercase leading-none tracking-[0.08em]" style={{ color: occ.tone }}>
-                {occ.label}
+                {label}
             </span>
         </span>
     );
@@ -66,8 +74,10 @@ function DropCard({ drop }: { drop: IResolvedDrop }) {
 }
 
 export function DropsSection({ groups }: { groups: IDropGroup[] }) {
-    if (groups.length === 0) return null;
+    const t: TypedT<typeof messages> = useT("stages");
+    const tConst: TypedT<typeof detailConstantsMessages> = useT("stages");
     const total = groups.reduce((sum, g) => sum + g.drops.length, 0);
+    if (groups.length === 0) return null;
     return (
         <section className="flex flex-col gap-4">
             <SectionHead
@@ -77,11 +87,11 @@ export function DropsSection({ groups }: { groups: IDropGroup[] }) {
                     </span>
                 }
             >
-                Drops
+                {t("drops.title")}
             </SectionHead>
             {groups.map((group) => (
                 <div key={group.type} className="flex flex-col gap-2">
-                    <span className="font-medium font-mono text-[9.5px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{group.label}</span>
+                    <span className="font-medium font-mono text-[9.5px] text-muted-foreground uppercase leading-none tracking-[0.12em]">{group.labelKey ? tConst(group.labelKey) : group.type}</span>
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
                         {group.drops.map((drop) => (
                             <DropCard key={`${group.type}-${drop.reward.id}`} drop={drop} />

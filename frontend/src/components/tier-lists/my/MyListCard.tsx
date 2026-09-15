@@ -3,8 +3,10 @@ import { CopyIcon, ExternalLinkIcon, HeartIcon, LayoutGridIcon, MoreHorizontalIc
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ITierListBrowseItem } from "#/lib/api/tier-lists";
-import { formatNumberCompact } from "#/lib/utils";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { buildThumbRows, MAX_THUMB_TIERS } from "../shared";
+import type { messages } from "./MyListCard.messages";
 import styles from "./MyListCard.module.css";
 
 interface IMyListCardProps {
@@ -15,6 +17,8 @@ interface IMyListCardProps {
 }
 
 export function MyListCard({ tl, onEdit, onDelete, onCopyLink }: IMyListCardProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
+    const f = useFormatters();
     const rows = buildThumbRows(tl);
     const hasOps = rows.some((r) => r.visible.length > 0);
     const isEmpty = !hasOps;
@@ -24,11 +28,11 @@ export function MyListCard({ tl, onEdit, onDelete, onCopyLink }: IMyListCardProp
         <article className={`${styles.card} group`} aria-labelledby={`my-tl-${tl.id}-title`}>
             <Link to="/tier-lists/my/$id/edit" params={{ id: tl.slug }} className={styles.thumbLink}>
                 <div className={styles.thumb} data-rows={hasOps ? rows.length : 0}>
-                    {isEmpty && <span className={`${styles.cornerBadge} ${styles.cornerBadgeDraft}`}>Empty draft</span>}
+                    {isEmpty && <span className={`${styles.cornerBadge} ${styles.cornerBadgeDraft}`}>{t("my.card.emptyDraft")}</span>}
                     {isOfficial && (
                         <span className={`${styles.cornerBadge} ${styles.cornerBadgeOfficial}`}>
                             <ShieldCheckIcon className="h-2.5 w-2.5" aria-hidden="true" />
-                            Official
+                            {t("my.card.official")}
                         </span>
                     )}
                     {!isOfficial && tl.flairLabel && (
@@ -38,12 +42,12 @@ export function MyListCard({ tl, onEdit, onDelete, onCopyLink }: IMyListCardProp
                     )}
 
                     {isEmpty ? (
-                        <div className={styles.emptyThumb}>No operators placed yet</div>
+                        <div className={styles.emptyThumb}>{t("my.card.emptyThumb")}</div>
                     ) : (
                         <>
                             {rows.map((row) => (
                                 <div key={row.name} className={styles.tierRow} style={{ ["--row-color" as string]: row.color }}>
-                                    <span className={styles.tierPill} title={`Tier ${row.name}`}>
+                                    <span className={styles.tierPill} title={t("my.card.tier", { name: row.name })}>
                                         {row.name}
                                     </span>
                                     <div className={styles.tierOps}>
@@ -66,58 +70,58 @@ export function MyListCard({ tl, onEdit, onDelete, onCopyLink }: IMyListCardProp
                 <div className="flex min-w-0 items-start gap-2">
                     <Link to="/tier-lists/my/$id/edit" params={{ id: tl.slug }} className="min-w-0 flex-1 no-underline">
                         <h3 id={`my-tl-${tl.id}-title`} className="m-0 line-clamp-1 font-sans font-semibold text-[15px] text-foreground leading-snug tracking-tight transition-colors group-hover:text-primary" title={tl.title}>
-                            {tl.title || "Untitled list"}
+                            {tl.title || t("my.card.untitled")}
                         </h3>
                         {tl.description && <p className="m-0 mt-0.5 line-clamp-1 font-sans text-[12px] text-muted-foreground leading-snug">{tl.description}</p>}
                     </Link>
 
                     <Menu>
-                        <MenuTrigger aria-label="List actions" className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground">
+                        <MenuTrigger aria-label={t("my.card.actions")} className="inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground">
                             <MoreHorizontalIcon className="h-4 w-4" />
                         </MenuTrigger>
                         <MenuPopup align="end" sideOffset={6} className="min-w-44">
                             <MenuItem render={<Link to="/tier-lists/$id" params={{ id: tl.slug }} />}>
                                 <ExternalLinkIcon />
-                                Open
+                                {t("my.card.open")}
                             </MenuItem>
                             <MenuItem render={<Link to="/tier-lists/my/$id/edit" params={{ id: tl.slug }} />}>
                                 <LayoutGridIcon />
-                                Edit Tierlist
+                                {t("my.card.editBoard")}
                             </MenuItem>
                             <MenuItem onClick={() => onEdit(tl.slug)}>
                                 <PencilIcon />
-                                Edit details
+                                {t("my.card.editDetails")}
                             </MenuItem>
                             <MenuItem onClick={() => onCopyLink(tl.slug)}>
                                 <CopyIcon />
-                                Copy share link
+                                {t("my.card.copyLink")}
                             </MenuItem>
                             <MenuItem onClick={() => onDelete(tl.slug)} variant="destructive">
                                 <TrashIcon />
-                                Delete
+                                {t("my.card.delete")}
                             </MenuItem>
                         </MenuPopup>
                     </Menu>
                 </div>
 
                 <div className="mt-auto flex items-center gap-3 font-mono text-[11px] text-muted-foreground tabular-nums leading-none">
-                    <span className="inline-flex items-center gap-1" title={`${tl.views.toLocaleString()} views`}>
+                    <span className="inline-flex items-center gap-1" title={t("my.card.views", { count: f.number(tl.views) })}>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 opacity-70" aria-hidden="true">
                             <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                             <circle cx="12" cy="12" r="3" />
                         </svg>
-                        <span className="font-semibold text-foreground">{formatNumberCompact(tl.views)}</span>
+                        <span className="font-semibold text-foreground">{f.compact(tl.views)}</span>
                     </span>
-                    <span className="inline-flex items-center gap-1" title={`${tl.favorites.toLocaleString()} favorites`}>
+                    <span className="inline-flex items-center gap-1" title={t("my.card.favorites", { count: f.number(tl.favorites) })}>
                         <HeartIcon className="h-2.75 w-2.75 fill-current opacity-70" aria-hidden="true" />
-                        <span className="font-semibold text-foreground">{formatNumberCompact(tl.favorites)}</span>
+                        <span className="font-semibold text-foreground">{f.compact(tl.favorites)}</span>
                     </span>
                     {tl.views24h > 0 && (
-                        <span className="inline-flex items-center gap-0.5 text-primary" title={`${tl.views24h.toLocaleString()} views in the last 24h`}>
+                        <span className="inline-flex items-center gap-0.5 text-primary" title={t("my.card.views24h", { count: f.number(tl.views24h) })}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden="true">
                                 <path d="m6 14 6-6 6 6" />
                             </svg>
-                            <span className="font-bold">{formatNumberCompact(tl.views24h)}</span>
+                            <span className="font-bold">{f.compact(tl.views24h)}</span>
                         </span>
                     )}
                     <span className="ml-auto shrink-0 text-[10.5px] text-muted-foreground/80">{tl.updated}</span>

@@ -1,6 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { env } from "#/env";
+import { DEFAULT_LOCALE } from "#/lib/i18n/locale";
 import type { OperatorRarity, OperatorRarityTier } from "#/types/operators";
 
 export function cn(...inputs: ClassValue[]): string {
@@ -68,27 +69,49 @@ export function parseOperatorName(name: string): { displayName: string; subtitle
     return { displayName: parts[0] ?? name, subtitle: parts[2] ?? null };
 }
 
-/** Locale number formatting - "1,234,567". */
-export function formatNumber(n: number | null | undefined): string {
-    return Number(n ?? 0).toLocaleString("en-US");
+/** Locale number formatting - "1,234,567".
+ *
+ *  `locale` defaults to the source locale, which keeps every existing call
+ *  site rendering exactly what it rendered before i18n: `Intl.NumberFormat`
+ *  under `en` and `Number#toLocaleString("en-US")` produce identical output
+ *  for grouping and decimals (verified across 0, 1, 999, 1e3, 1234, 1.23e6,
+ *  1e9 and negatives). Components with a locale in hand should prefer
+ *  `useFormatters()` from `#/lib/i18n/formatters`. */
+export function formatNumber(n: number | null | undefined, locale: string = DEFAULT_LOCALE): string {
+    return new Intl.NumberFormat(locale).format(Number(n ?? 0));
 }
 
-/** Brand-style compact: 1.2k / 2.3M (lowercase k, uppercase M). */
-export function formatNumberCompact(n: number | null | undefined): string {
+/** Brand-style compact: 1.2k / 2.3M (lowercase k, uppercase M).
+ *
+ *  English keeps the hand-written suffixes rather than `notation: "compact"`,
+ *  because `Intl` renders an uppercase `1K` where this site's typography uses
+ *  `1k`, and these numbers sit in fixed-width tiles. Every other locale goes
+ *  through `Intl`, which is not cosmetic: Japanese groups by ten-thousands, so
+ *  1,234,567 is `123.5万` and no suffix table here could have produced that. */
+export function formatNumberCompact(n: number | null | undefined, locale: string = DEFAULT_LOCALE): string {
     const v = Number(n ?? 0);
+
+    if (!locale.startsWith("en")) {
+        return new Intl.NumberFormat(locale, { notation: "compact", maximumFractionDigits: 1 }).format(v);
+    }
+
     if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
     if (v >= 1_000) return `${(v / 1_000).toFixed(1).replace(/\.0$/, "")}k`;
-    return formatNumber(v);
+    return formatNumber(v, locale);
 }
 
 /** Format a fraction in [0, 1] as a percentage, using more decimals for smaller
  *  shares so tiny values stay legible without over-reporting larger ones. */
-export function formatSharePct(fraction: number): string {
+export function formatSharePct(fraction: number, locale: string = DEFAULT_LOCALE): string {
     const p = fraction * 100;
-    if (p >= 10) return `${p.toFixed(0)}%`;
-    if (p >= 1) return `${p.toFixed(1)}%`;
-    if (p > 0) return `${p.toFixed(2)}%`;
-    return "0%";
+    const digits = p >= 10 ? 0 : p >= 1 ? 1 : p > 0 ? 2 : 0;
+    // `style: "percent"` would re-multiply and, more importantly, moves the
+    // sign for locales that write it differently - which is the point.
+    return new Intl.NumberFormat(locale, {
+        style: "percent",
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+    }).format(fraction);
 }
 
 export const formatProfession = (profession: string): string => {
@@ -411,25 +434,58 @@ export function capitalize(s: string): string {
 
 export const DEFAULT_AVATAR_ID = "char_002_amiya";
 
-export function formatRelative(iso: string | null | undefined): string {
+export function formatRelative(iso: string | null | undefined, locale: string = DEFAULT_LOCALE, style: "narrow" | "long" = "narrow"): string {
     if (!iso) return "-";
     const then = new Date(iso).getTime();
     if (Number.isNaN(then)) return "-";
+
     const diffMs = Date.now() - then;
-    if (diffMs < 60_000) return "just now";
+    if (diffMs < 60_000) return relativeJustNow(locale);
+
     const mins = Math.floor(diffMs / 60_000);
-    if (mins < 60) return `${mins}m ago`;
+    if (mins < 60) return relative(locale, -mins, "minute", "auto", style);
     const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
+    if (hrs < 24) return relative(locale, -hrs, "hour", "auto", style);
     const days = Math.floor(hrs / 24);
-    if (days === 1) return "yesterday";
-    if (days < 7) return `${days}d ago`;
+    // `numeric: "auto"` is what turns -1 day into "yesterday" rather than
+    // "1d ago", which is the wording this site already used.
+    if (days < 7) return relative(locale, -days, "day", "auto", style);
+
     const weeks = Math.floor(days / 7);
-    if (weeks === 1) return "last week";
-    if (weeks < 5) return `${weeks}w ago`;
+    // The one place Intl and this site's existing copy disagree: `auto` gives
+    // "last wk." where this site says "last week". Every other branch is
+    // byte-identical to the hand-written version it replaced, verified across
+    // 16 sampled offsets from 30s to 800d. Preserved for English only; other
+    // locales get their own correct wording from Intl.
+    if (weeks === 1 && locale.startsWith("en")) return "last week";
+    // Long style: Intl already says "3 weeks ago" rather than "3 wk. ago", so
+    // nothing below needs an English override.
+    if (weeks < 5) return relative(locale, -weeks, "week", "always", style);
     const months = Math.floor(days / 30);
-    if (months < 12) return `${months}mo ago`;
-    return `${Math.floor(days / 365)}y ago`;
+    if (months < 12) return relative(locale, -months, "month", "always", style);
+    return relative(locale, -Math.floor(days / 365), "year", "always", style);
+}
+
+/** "just now" is not an Intl concept - there is no zero-distance phrasing in
+ *  `RelativeTimeFormat` - so it stays a message. English is inlined here to
+ *  keep this a pure function; a locale that needs it translated reads
+ *  `common.time.justNow` through `useRelativeTime()`. */
+function relativeJustNow(locale: string): string {
+    if (locale.startsWith("en")) return "just now";
+    try {
+        return new Intl.RelativeTimeFormat(locale, { numeric: "auto", style: "narrow" }).format(0, "second");
+    } catch {
+        return "just now";
+    }
+}
+
+function relative(locale: string, value: number, unit: Intl.RelativeTimeFormatUnit, numeric: "auto" | "always", style: "narrow" | "long" = "narrow"): string {
+    try {
+        return new Intl.RelativeTimeFormat(locale, { numeric, style }).format(value, unit);
+    } catch {
+        // An unknown or malformed locale tag must not break a timestamp.
+        return new Intl.RelativeTimeFormat(DEFAULT_LOCALE, { numeric, style }).format(value, unit);
+    }
 }
 
 /**
@@ -437,7 +493,7 @@ export function formatRelative(iso: string | null | undefined): string {
  * the settings page. Falls back to a locale date for anything older than 30
  * days. Accepts either an ISO timestamp or a unix epoch (seconds or ms).
  */
-export function formatRelativeShort(input: string | number | null | undefined): string {
+export function formatRelativeShort(input: string | number | null | undefined, locale: string = DEFAULT_LOCALE): string {
     if (input == null) return "-";
     let ms: number;
     if (typeof input === "number") {
@@ -447,12 +503,12 @@ export function formatRelativeShort(input: string | number | null | undefined): 
     }
     if (!Number.isFinite(ms)) return typeof input === "string" ? input : "-";
     const diff = (Date.now() - ms) / 1000;
-    if (diff < 0) return "just now";
-    if (diff < 60) return "just now";
-    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} h ago`;
-    if (diff < 86400 * 30) return `${Math.floor(diff / 86400)} d ago`;
-    return new Date(ms).toLocaleDateString();
+    if (diff < 0) return relativeJustNow(locale);
+    if (diff < 60) return relativeJustNow(locale);
+    if (diff < 3600) return relative(locale, -Math.floor(diff / 60), "minute", "always");
+    if (diff < 86400) return relative(locale, -Math.floor(diff / 3600), "hour", "always");
+    if (diff < 86400 * 30) return relative(locale, -Math.floor(diff / 86400), "day", "always");
+    return new Intl.DateTimeFormat(locale).format(new Date(ms));
 }
 
 export function lerpByLevel(level: number, maxLevel: number, base: number, max: number): number {

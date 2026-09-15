@@ -2,19 +2,26 @@ import { useState } from "react";
 import { Input } from "#/components/ui/input";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
 import { useMediaQuery } from "#/hooks/use-media-query";
+import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./FilterToolbar.messages";
+
+type FilterToolbarT = TypedT<typeof messages>;
+type FilterToolbarRichT = TypedRichT<typeof messages>;
+type FilterToolbarMessageKey = keyof typeof messages & string;
 
 export type TierListType = "all" | "official" | "community" | "favorites";
 
 export type TierListSort = "trending" | "recent" | "newest" | "views" | "favorites" | "shares";
 
-export const SORT_OPTIONS: Array<{ value: TierListSort; label: string; hint: string }> = [
-    { value: "trending", label: "Trending", hint: "Hot in the last 24h" },
-    { value: "recent", label: "Recently updated", hint: "Latest edits first" },
-    { value: "newest", label: "Newest", hint: "Most recently created" },
-    { value: "views", label: "Most viewed", hint: "All-time view count" },
-    { value: "favorites", label: "Most favorited", hint: "All-time favorites" },
-    { value: "shares", label: "Most shared", hint: "All-time shares" },
+export const SORT_OPTIONS: Array<{ value: TierListSort; labelKey: FilterToolbarMessageKey; hintKey: FilterToolbarMessageKey }> = [
+    { value: "trending", labelKey: "browse.sort.trending", hintKey: "browse.sort.trending.hint" },
+    { value: "recent", labelKey: "browse.sort.recent", hintKey: "browse.sort.recent.hint" },
+    { value: "newest", labelKey: "browse.sort.newest", hintKey: "browse.sort.newest.hint" },
+    { value: "views", labelKey: "browse.sort.views", hintKey: "browse.sort.views.hint" },
+    { value: "favorites", labelKey: "browse.sort.favorites", hintKey: "browse.sort.favorites.hint" },
+    { value: "shares", labelKey: "browse.sort.shares", hintKey: "browse.sort.shares.hint" },
 ];
 
 export interface IFlairOption {
@@ -41,10 +48,10 @@ interface IFilterToolbarProps {
     onClearFlairs: () => void;
 }
 
-const BASE_TYPE_TABS: Array<{ value: TierListType; label: string }> = [
-    { value: "all", label: "All" },
-    { value: "official", label: "Official" },
-    { value: "community", label: "Community" },
+const BASE_TYPE_TABS: Array<{ value: TierListType; labelKey: FilterToolbarMessageKey }> = [
+    { value: "all", labelKey: "browse.type.all" },
+    { value: "official", labelKey: "browse.type.official" },
+    { value: "community", labelKey: "browse.type.community" },
 ];
 
 // The bar spans the full viewport but its surface stays fully opaque across the centered 1080px content,
@@ -54,7 +61,9 @@ const CONTENT_WIDTH = "1080px";
 const FADE_MASK = `linear-gradient(to right, transparent, #000 max(0px, (100vw - ${CONTENT_WIDTH}) / 2), #000 min(100vw, (100vw + ${CONTENT_WIDTH}) / 2), transparent)`;
 
 export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions, resultCount, totalCount, showFavoritesTab, onTypeChange, onSortChange, onQueryChange, onFlairToggle, onClearFlairs }: IFilterToolbarProps) {
-    const typeTabs = showFavoritesTab ? [...BASE_TYPE_TABS, { value: "favorites" as const, label: "Favorites" }] : BASE_TYPE_TABS;
+    const t: FilterToolbarT = useT("tierLists");
+    const rt: FilterToolbarRichT = useRichT("tierLists");
+    const typeTabs = showFavoritesTab ? [...BASE_TYPE_TABS, { value: "favorites" as const, labelKey: "browse.type.favorites" as const }] : BASE_TYPE_TABS;
     const activeSort = SORT_OPTIONS.find((s) => s.value === sort) ?? SORT_OPTIONS[0];
     const hasActiveFilters = selectedFlairs.length > 0 || query.length > 0 || type !== "all" || sort !== "recent";
     const isDesktop = useMediaQuery("sm");
@@ -65,7 +74,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
         <div className="sticky top-14 z-30 mx-[calc(50%-50vw)] w-screen border-border border-y bg-card/85 backdrop-blur-md backdrop-saturate-150 sm:top-16" style={{ maskImage: FADE_MASK, WebkitMaskImage: FADE_MASK }}>
             <div className="mx-auto w-[min(1080px,calc(100%-2rem))] py-3">
                 <div className="flex flex-wrap items-center gap-2.5">
-                    <div role="tablist" aria-label="Tier list type" className="inline-flex shrink-0 gap-0.5 rounded-[10px] border border-border bg-muted p-0.75">
+                    <div role="tablist" aria-label={t("browse.type.label")} className="inline-flex shrink-0 gap-0.5 rounded-[10px] border border-border bg-muted p-0.75">
                         {typeTabs.map((tab) => {
                             const active = type === tab.value;
                             const isFavorites = tab.value === "favorites";
@@ -86,7 +95,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                                         </svg>
                                     )}
-                                    {tab.label}
+                                    {t(tab.labelKey)}
                                 </button>
                             );
                         })}
@@ -95,14 +104,14 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                     <Menu>
                         <MenuTrigger
                             className={cn("inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-popover px-2.5 font-medium font-sans text-foreground text-xs leading-none transition-colors hover:bg-accent", "[&>svg]:h-3 [&>svg]:w-3 [&>svg]:opacity-80")}
-                            aria-label={`Sort: ${activeSort?.label}`}
+                            aria-label={t("browse.sortTrigger", { label: activeSort ? t(activeSort.labelKey) : "" })}
                         >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <path d="M3 6h18" />
                                 <path d="M7 12h10" />
                                 <path d="M11 18h2" />
                             </svg>
-                            <span>{activeSort?.label}</span>
+                            <span>{activeSort ? t(activeSort.labelKey) : ""}</span>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <path d="m6 9 6 6 6-6" />
                             </svg>
@@ -110,8 +119,8 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                         <MenuPopup align="start" sideOffset={6} className="min-w-56">
                             {SORT_OPTIONS.map((opt) => (
                                 <MenuItem key={opt.value} onClick={() => onSortChange(opt.value)} className={cn("flex-col items-start gap-0.5 py-1.5", opt.value === sort && "bg-accent/60 text-accent-foreground")}>
-                                    <span className="font-medium">{opt.label}</span>
-                                    <span className="font-mono text-[10.5px] text-muted-foreground">{opt.hint}</span>
+                                    <span className="font-medium">{t(opt.labelKey)}</span>
+                                    <span className="font-mono text-[10.5px] text-muted-foreground">{t(opt.hintKey)}</span>
                                 </MenuItem>
                             ))}
                         </MenuPopup>
@@ -129,7 +138,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                                 <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
                                 <circle cx="7.5" cy="7.5" r="1.25" fill="currentColor" stroke="none" />
                             </svg>
-                            <span>Flairs</span>
+                            <span>{t("browse.flairs")}</span>
                             {selectedFlairs.length > 0 && <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 font-mono font-semibold text-[9.5px] text-primary-foreground tabular-nums leading-none">{selectedFlairs.length}</span>}
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cn("h-3 w-3 opacity-80 transition-transform duration-200", flairsOpen && "rotate-180")} aria-hidden="true">
                                 <path d="m6 9 6 6 6-6" />
@@ -144,9 +153,9 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                                 <path d="m21 21-4.35-4.35" />
                             </svg>
                         </span>
-                        <Input type="search" size="sm" value={query} onChange={(e) => onQueryChange((e.target as HTMLInputElement).value)} placeholder="Search lists..." aria-label="Search tier lists" className="pl-7.5" />
+                        <Input type="search" size="sm" value={query} onChange={(e) => onQueryChange((e.target as HTMLInputElement).value)} placeholder={t("browse.search.placeholder")} aria-label={t("browse.search.label")} className="pl-7.5" />
                         {query.length > 0 && (
-                            <button type="button" onClick={() => onQueryChange("")} aria-label="Clear search" className="absolute inset-y-0 right-1.5 my-auto inline-flex h-5 w-5 items-center justify-center rounded-full text-black hover:bg-accent hover:text-foreground dark:text-muted-foreground">
+                            <button type="button" onClick={() => onQueryChange("")} aria-label={t("browse.search.clear")} className="absolute inset-y-0 right-1.5 my-auto inline-flex h-5 w-5 items-center justify-center rounded-full text-black hover:bg-accent hover:text-foreground dark:text-muted-foreground">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden="true">
                                     <path d="M18 6 6 18" />
                                     <path d="m6 6 12 12" />
@@ -166,7 +175,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                             className="mt-2.5 flex w-full items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-2.5 py-1.5 font-mono text-[10.5px] text-muted-foreground uppercase tracking-wider transition-colors hover:bg-muted hover:text-foreground sm:hidden"
                         >
                             <span className="inline-flex items-center gap-1.5">
-                                <span>Flairs</span>
+                                <span>{t("browse.flairs")}</span>
                                 {selectedFlairs.length > 0 && <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 font-mono font-semibold text-[9.5px] text-primary-foreground tabular-nums leading-none">{selectedFlairs.length}</span>}
                             </span>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={cn("h-3 w-3 transition-transform duration-200", flairsOpen && "rotate-180")} aria-hidden="true">
@@ -185,7 +194,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                                         type="button"
                                         onClick={() => onFlairToggle(flair.code)}
                                         aria-pressed={active}
-                                        aria-label={`Flair ${flair.label}${hasMatches ? `, ${count} list${count === 1 ? "" : "s"}` : ", no lists"}`}
+                                        aria-label={hasMatches ? t("browse.flair.chip", { label: flair.label, count }) : t("browse.flair.chipEmpty", { label: flair.label })}
                                         disabled={!hasMatches && !active}
                                         className={cn("inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 py-1 font-medium font-sans text-xs leading-none transition-colors disabled:cursor-not-allowed disabled:opacity-50")}
                                         style={
@@ -226,7 +235,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
                                         <path d="M18 6 6 18" />
                                         <path d="m6 6 12 12" />
                                     </svg>
-                                    Clear
+                                    {t("browse.flair.clear")}
                                 </button>
                             )}
                         </div>
@@ -235,13 +244,8 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
 
                 {hasActiveFilters && (
                     <p aria-live="polite" className="mt-2 font-mono text-[10.5px] text-muted-foreground leading-none tracking-wide">
-                        <span className="text-foreground tabular-nums">{resultCount}</span> of <span className="tabular-nums">{totalCount}</span>
-                        {query.length > 0 && (
-                            <>
-                                {" "}
-                                · matching <span className="text-foreground">"{query}"</span>
-                            </>
-                        )}
+                        {rt("browse.results.count", { shown: <span className="text-foreground tabular-nums">{resultCount}</span>, total: <span className="tabular-nums">{totalCount}</span> })}
+                        {query.length > 0 && <> {rt("browse.results.matching", { query: <span className="text-foreground">"{query}"</span> })}</>}
                     </p>
                 )}
             </div>

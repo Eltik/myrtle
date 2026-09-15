@@ -1,8 +1,11 @@
 import { useState } from "react";
 
+import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 
 import type { IUserProfile } from "#/types/user";
+import type { messages } from "./StatStrip.messages";
 
 interface IStatCardProps {
     kicker: string;
@@ -15,9 +18,9 @@ interface IStatCardProps {
     onClick?: () => void;
 }
 
-function formatValue(value: string | number | null) {
+function formatValue(value: string | number | null, f: IFormatters) {
     if (value === null || value === undefined) return "-";
-    if (typeof value === "number") return value.toLocaleString();
+    if (typeof value === "number") return f.number(value);
     return value;
 }
 
@@ -32,6 +35,7 @@ function formatCompact(value: string | number | null) {
 }
 
 function StatCard({ kicker, value, sub, accent, live, compactOnMobile, unformatted, onClick }: IStatCardProps) {
+    const f = useFormatters();
     const interactive = typeof onClick === "function";
     const className = cn(
         "group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card text-left sm:rounded-2xl",
@@ -75,10 +79,10 @@ function StatCard({ kicker, value, sub, accent, live, compactOnMobile, unformatt
                 ) : compactOnMobile ? (
                     <>
                         <span className="sm:hidden">{formatCompact(value)}</span>
-                        <span className="hidden sm:inline">{formatValue(value)}</span>
+                        <span className="hidden sm:inline">{formatValue(value, f)}</span>
                     </>
                 ) : (
-                    formatValue(value)
+                    formatValue(value, f)
                 )}
             </div>
             <p
@@ -113,13 +117,15 @@ interface IStatStripProps {
 }
 
 export function StatStrip({ profile, rosterCount }: IStatStripProps) {
+    const t: TypedT<typeof messages> = useT("user");
     const [orundumRaw, setOrundumRaw] = useState(false);
     return (
         <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: "clamp(0.5rem, 0.6vw + 0.375rem, 0.875rem)" }}>
-            <StatCard kicker="Operators" value={rosterCount ?? profile.operator_count} sub="Unique units in roster" live />
-            <StatCard kicker="Skins" value={profile.non_default_skin_count} sub="Outfits collected" />
-            <StatCard kicker="Items" value={profile.item_count} sub="Inventory entries" />
-            <StatCard kicker="Orundum" value={profile.orundum} sub="Orundum Available" compactOnMobile={!orundumRaw} unformatted={orundumRaw} onClick={() => setOrundumRaw((v) => !v)} />
+            <StatCard kicker={t("profile.strip.operators.kicker")} value={rosterCount ?? profile.operator_count} sub={t("profile.strip.operators.sub")} live />
+            <StatCard kicker={t("profile.strip.skins.kicker")} value={profile.non_default_skin_count} sub={t("profile.strip.skins.sub")} />
+            <StatCard kicker={t("profile.strip.items.kicker")} value={profile.item_count} sub={t("profile.strip.items.sub")} />
+            {/* "Orundum" is the in-game currency's own name and stays as game vocabulary. */}
+            <StatCard kicker="Orundum" value={profile.orundum} sub={t("profile.strip.orundum.sub")} compactOnMobile={!orundumRaw} unformatted={orundumRaw} onClick={() => setOrundumRaw((v) => !v)} />
         </div>
     );
 }

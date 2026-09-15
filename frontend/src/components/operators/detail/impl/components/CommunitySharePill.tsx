@@ -1,7 +1,10 @@
 import { memo } from "react";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { IChoiceShare } from "../useCommunityDefaults";
+import type { messages } from "./CommunitySharePill.messages";
 
 interface ICommunitySharePillProps {
     /** `undefined` when this option drew no picks, or when the whole
@@ -27,6 +30,9 @@ interface ICommunitySharePillProps {
  * nobody has synced a roster with this option set.
  */
 export const CommunitySharePill = memo(function CommunitySharePill({ share, total, cohort, className }: ICommunitySharePillProps) {
+    const t: TypedT<typeof messages> = useT("operators");
+    const f = useFormatters();
+
     if (!share || total <= 0) return null;
 
     const pct = share.share * 100;
@@ -40,8 +46,7 @@ export const CommunitySharePill = memo(function CommunitySharePill({ share, tota
         <Tooltip>
             <TooltipTrigger render={<span className={cn("inline-flex shrink-0 items-center rounded-full px-1.5 py-px font-mono font-semibold text-[10px] tabular-nums leading-none tracking-wider", isTop ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground", className)}>{label}</span>} />
             <TooltipPopup side="top" sideOffset={6}>
-                {share.users.toLocaleString()} of {total.toLocaleString()} {cohort}
-                {isTop ? " - the most common choice" : ""}
+                {t("share.tooltip", { users: f.number(share.users), total: f.number(total), cohort, top: isTop ? "yes" : "no" })}
             </TooltipPopup>
         </Tooltip>
     );

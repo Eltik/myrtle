@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SettingsPage } from "#/components/settings/SettingsPage";
+import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
@@ -8,12 +9,14 @@ import { seo } from "#/lib/seo";
 // SettingsPage render only when signed in.
 export const Route = createFileRoute("/settings")({
     component: RouteComponent,
-    head: () => {
+    head: ({ match }) => {
+        const t = metaT(match.context.i18n);
         const { meta, links } = seo({
-            title: "Settings",
-            description: "Manage your account, profile, and preferences.",
+            title: t("settings.title"),
+            description: t("settings.description"),
             path: "/settings",
-            image: defaultOgURL("settings"),
+            image: defaultOgURL("settings", match.context.i18n),
+            locale: match.context.i18n?.locale,
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta],

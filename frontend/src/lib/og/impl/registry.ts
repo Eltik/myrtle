@@ -4,12 +4,13 @@ import { deepCamelize, getOperatorsListFn } from "#/lib/api/operators";
 import { stagePreviewAssetPaths } from "#/lib/api/stages";
 import type { IRosterEntry } from "#/lib/api/user";
 import { backendFetch } from "#/lib/fetch";
+import { metaSourceForLocale } from "#/lib/meta";
 import { formatGroupId, formatNationId, formatNumber, formatTeamId, rarityToNumber, toAvatarStem } from "#/lib/utils";
 import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
 import type { IStage, IZone } from "#/types/stages";
 import type { IUserProfile } from "#/types/user";
 import { ogHash } from "./hash";
-import { DEFAULT_OG_PRESETS } from "./presets";
+import { defaultOgPreset, defaultOgTagLabels, resolveDefaultOgPreset } from "./presets";
 import type { IRenderDimensions } from "./render";
 import { DefaultTemplate, type IDefaultOgData } from "./templates/Default";
 import { type IOperatorOgData, OperatorTemplate } from "./templates/Operator";
@@ -19,7 +20,12 @@ import { type ITierListBoardImageData, type ITierListBoardImageOperator, type IT
 import { type IUserOgData, type IUserSupportModule, type IUserSupportSkill, type IUserSupportUnit, UserTemplate } from "./templates/User";
 
 export interface IOgHandler<TData> {
-    fetch: (id: string) => Promise<TData | null>;
+    /**
+     * Load the template's data. `locale` is the locale the embedding page was
+     * rendered in, read off the request by `ogLocale` - a handler whose text
+     * is all game or user data ignores it.
+     */
+    fetch: (id: string, locale?: string) => Promise<TData | null>;
     hash: (data: TData) => string;
     cacheVersion: (id: string, version?: string) => string;
     template: (data: TData) => ReactNode;
@@ -33,7 +39,7 @@ export interface IOgHandler<TData> {
 interface IOgHandlerDef<TData> {
     kind: string;
     hashVersion: string;
-    fetch: (id: string) => Promise<TData | null>;
+    fetch: (id: string, locale?: string) => Promise<TData | null>;
     hashParts: (data: TData) => unknown[];
     template: (data: TData) => ReactNode;
     dimensions?: (data: TData) => IRenderDimensions;
@@ -490,11 +496,23 @@ export const DEFAULT_OG_ID = "_root";
 const defaultHandler = defineOgHandler<IDefaultOgData>({
     kind: "default",
     hashVersion: DEFAULT_HASH_VERSION,
-    fetch: async (id) => {
-        const preset = (DEFAULT_OG_PRESETS as Record<string, IDefaultOgData>)[id];
-        if (preset) return preset;
-        return { title: decodeURIComponent(id) };
+    // The only handler whose text is authored rather than fetched, so the only
+    // one that needs a catalog. There is no React tree and no router match
+    // here - satori is handed a plain element tree on the server - so the
+    // locale arrives as a request param and the catalog is fetched for it.
+    // `metaSourceForLocale` returns null for the source locale, which resolves
+    // every key to the bundled English without a round trip.
+    fetch: async (id, locale) => {
+        const source = await metaSourceForLocale(locale);
+        const preset = defaultOgPreset(id);
+        if (preset) return resolveDefaultOgPreset(preset, source);
+        // Not a registered slug: the id IS the title, for one-off pages.
+        return { title: decodeURIComponent(id), tagLabels: defaultOgTagLabels(source) };
     },
+    // `tagLabels` are deliberately absent: they are the same five words on
+    // every card in a given locale, and the locale is already in the cache key
+    // (see `ogResponse`). Hashing them would change every English URL for no
+    // change in the image.
     hashParts: (data) => [data.title, data.subtitle ?? "", data.activeTag ?? ""],
     template: (data) => DefaultTemplate(data),
 });

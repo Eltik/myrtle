@@ -8,12 +8,17 @@ import { Separator } from "#/components/ui/separator";
 import { Slider } from "#/components/ui/slider";
 import { Switch } from "#/components/ui/switch";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
+import { operatorGamedataServer } from "#/lib/api/gamedata";
 import { rangesQueryOptions } from "#/lib/api/ranges";
+import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { asset, eliteIcon, potentialIcon } from "../../assets";
+import type { messages as detailConstantsMessages } from "../../constants.messages";
 import { descriptionToHtml, renderDescriptionDiffHtml } from "../../description";
 import { combinedDescriptionBlackboard, formatAttributeKey, formatStatValue, getActiveTalentCandidate, getOperatorAttributeStats } from "../../helpers";
+import type { messages as helperMessages } from "../../helpers.messages";
 import { useCommunityDefaults } from "../../useCommunityDefaults";
 import { BaseSkillsSection } from "../BaseSkillsSection";
 import { CommunitySharePill } from "../CommunitySharePill";
@@ -21,6 +26,7 @@ import { LevelBreakdown } from "../LevelBreakdown";
 import { OperatorNotes } from "../OperatorNotes";
 import { OperatorRange } from "../OperatorRange";
 import { SummonsSection } from "../SummonsSection";
+import type { messages } from "./InfoContent.messages";
 
 interface IInfoContentProps {
     operator: IOperatorListItem;
@@ -28,7 +34,12 @@ interface IInfoContentProps {
 
 type Stat = { iconURL: string; label: string; value: string };
 
+/** This tab renders its own chrome, the shared stat labels, and the labels `helpers.ts` derives. */
+type InfoT = TypedT<typeof messages & typeof detailConstantsMessages & typeof helperMessages>;
+
 export const InfoContent = memo(function InfoContent({ operator }: IInfoContentProps) {
+    const t: InfoT = useT("operators");
+    const f = useFormatters();
     const [phaseIndex, setPhaseIndex] = useState(operator.phases.length - 1);
     const [level, setLevel] = useState(operator.phases[operator.phases.length - 1]?.maxLevel ?? 1);
     const [trustLevel, setTrustLevel] = useState(100);
@@ -43,7 +54,8 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
     // so late-arriving community data cannot override a deliberate choice.
     const moduleSettled = useRef(false);
 
-    const { data: ranges } = useQuery(rangesQueryOptions());
+    const localeServer = useGamedataServer();
+    const { data: ranges } = useQuery(rangesQueryOptions(operatorGamedataServer(operator.server, localeServer)));
     const currentRange = ranges?.[operator.phases[phaseIndex]?.rangeId ?? ""];
 
     const availableModules = useMemo(() => operator.modules.filter((m) => m.type !== "INITIAL"), [operator.modules]);
@@ -90,49 +102,49 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
         [operator, phaseIndex, level, trustLevel, potentialRank, moduleId, moduleLevel],
     );
 
-    const fmt = (n: number | undefined) => (typeof n === "number" ? Math.round(n).toLocaleString() : (n ?? "-"));
+    const fmt = (n: number | undefined) => (typeof n === "number" ? f.number(Math.round(n)) : (n ?? "-"));
 
     const leftStats: Stat[] = [
         {
             iconURL: "/stat-icons/HP.png",
-            label: "Health",
+            label: t("stat.health"),
             value: fmt(stats?.maxHp),
         },
         {
             iconURL: "/stat-icons/DEF.png",
-            label: "Defense",
+            label: t("stat.defense"),
             value: fmt(stats?.def),
         },
         {
             iconURL: "/stat-icons/RES.png",
-            label: "Arts Resistance",
+            label: t("stat.artsResistance"),
             value: fmt(stats?.magicResistance),
         },
         {
             iconURL: "/stat-icons/RDP.png",
-            label: "Redeploy Time",
-            value: `${stats?.respawnTime ?? 0} sec`,
+            label: t("stat.redeployTime"),
+            value: t("stat.seconds", { value: stats?.respawnTime ?? 0 }),
         },
     ];
     const rightStats: Stat[] = [
         {
             iconURL: "/stat-icons/ATK.png",
-            label: "Attack Power",
+            label: t("stat.attackPower"),
             value: fmt(stats?.atk),
         },
         {
             iconURL: "/stat-icons/ASPD.png",
-            label: "Attack Interval",
-            value: `${stats?.attackSpeed?.toFixed(2) ?? "0.00"} sec`,
+            label: t("stat.attackInterval"),
+            value: t("stat.seconds", { value: stats?.attackSpeed?.toFixed(2) ?? "0.00" }),
         },
         {
             iconURL: "/stat-icons/BLOCK.png",
-            label: "Block",
+            label: t("stat.block"),
             value: fmt(stats?.blockCnt),
         },
         {
             iconURL: "/stat-icons/COST.png",
-            label: "DP Cost",
+            label: t("stat.dpCost"),
             value: fmt(stats?.cost),
         },
     ];
@@ -140,7 +152,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
     return (
         <div className="min-w-0 overflow-hidden p-4 md:p-6">
             <div className="mb-6">
-                <h2 className="font-semibold text-foreground text-xl">Operator Information</h2>
+                <h2 className="font-semibold text-foreground text-xl">{t("info.title")}</h2>
                 <p
                     className="wrap-break-word text-muted-foreground text-sm"
                     // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized in description-to-html
@@ -152,7 +164,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                 <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
                     <span className="flex items-center gap-2">
                         <User className="h-4 w-4 text-primary" />
-                        <span className="font-medium text-sm">Profile</span>
+                        <span className="font-medium text-sm">{t("info.profile")}</span>
                     </span>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
@@ -162,30 +174,30 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                 <div className="rounded-lg border border-border/50 bg-card/40 p-3">
                                     <div className="flex items-center gap-1.5 text-muted-foreground">
                                         <MapPin className="h-3.5 w-3.5" />
-                                        <span className="text-xs">Place of Birth</span>
+                                        <span className="text-xs">{t("info.profile.placeOfBirth")}</span>
                                     </div>
-                                    <div className="mt-1 truncate text-foreground text-sm">{operator.profile.basicInfo.placeOfBirth ?? "Unknown"}</div>
+                                    <div className="mt-1 truncate text-foreground text-sm">{operator.profile.basicInfo.placeOfBirth ?? t("info.profile.unknown")}</div>
                                 </div>
                                 <div className="rounded-lg border border-border/50 bg-card/40 p-3">
                                     <div className="flex items-center gap-1.5 text-muted-foreground">
                                         <Dna className="h-3.5 w-3.5" />
-                                        <span className="text-xs">Race</span>
+                                        <span className="text-xs">{t("info.profile.race")}</span>
                                     </div>
-                                    <div className="mt-1 truncate text-foreground text-sm">{operator.profile.basicInfo.race ?? "Unknown"}</div>
+                                    <div className="mt-1 truncate text-foreground text-sm">{operator.profile.basicInfo.race ?? t("info.profile.unknown")}</div>
                                 </div>
                                 <div className="rounded-lg border border-border/50 bg-card/40 p-3">
                                     <div className="flex items-center gap-1.5 text-muted-foreground">
                                         <User className="h-3.5 w-3.5" />
-                                        <span className="text-xs">Gender</span>
+                                        <span className="text-xs">{t("info.profile.gender")}</span>
                                     </div>
-                                    <div className="mt-1 truncate text-foreground text-sm">{operator.profile.basicInfo.gender ?? "Unknown"}</div>
+                                    <div className="mt-1 truncate text-foreground text-sm">{operator.profile.basicInfo.gender ?? t("info.profile.unknown")}</div>
                                 </div>
                                 <div className="rounded-lg border border-border/50 bg-card/40 p-3">
                                     <div className="flex items-center gap-1.5 text-muted-foreground">
                                         <Info className="h-3.5 w-3.5" />
-                                        <span className="text-xs">Height</span>
+                                        <span className="text-xs">{t("info.profile.height")}</span>
                                     </div>
-                                    <div className="mt-1 truncate text-foreground text-sm">{operator.profile.basicInfo.height ?? "Unknown"}</div>
+                                    <div className="mt-1 truncate text-foreground text-sm">{operator.profile.basicInfo.height ?? t("info.profile.unknown")}</div>
                                 </div>
                             </>
                         )}
@@ -193,7 +205,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                             <div className="rounded-lg border border-border/50 bg-card/40 p-3">
                                 <div className="flex items-center gap-1.5 text-muted-foreground">
                                     <Palette className="h-3.5 w-3.5" />
-                                    <span className="text-xs">Artist</span>
+                                    <span className="text-xs">{t("info.profile.artist")}</span>
                                 </div>
                                 <div className="mt-1 truncate text-foreground text-sm">{operator.artists.join(", ")}</div>
                             </div>
@@ -212,15 +224,15 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                 <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
                     <span className="flex items-center gap-2">
                         <Package className="h-4 w-4 text-primary" />
-                        <span className="font-medium text-sm">Operator Controls</span>
+                        <span className="font-medium text-sm">{t("info.controls")}</span>
                     </span>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                     <div className="mt-3 space-y-4 rounded-lg border border-border/50 bg-card/30 p-4">
-                        <p className="text-muted-foreground text-xs">Adjust to see how stats change at different levels, promotions, potentials, modules, and trust.</p>
+                        <p className="text-muted-foreground text-xs">{t("info.controls.desc")}</p>
 
                         <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-muted-foreground text-sm">Promotion:</span>
+                            <span className="text-muted-foreground text-sm">{t("info.promotion")}</span>
                             {operator.phases.map((_, idx) => (
                                 <button
                                     className={cn("flex h-10 w-10 items-center justify-center rounded-lg border transition-colors", phaseIndex === idx ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")}
@@ -232,7 +244,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                     }}
                                     type="button"
                                 >
-                                    <img alt={`Elite ${idx}`} className="icon-theme-aware h-6 w-6 object-contain" decoding="async" loading="lazy" src={eliteIcon(idx, operator.server)} />
+                                    <img alt={t("info.eliteAlt", { elite: idx })} className="icon-theme-aware h-6 w-6 object-contain" decoding="async" loading="lazy" src={eliteIcon(idx, operator.server)} />
                                 </button>
                             ))}
                         </div>
@@ -240,7 +252,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-muted-foreground text-sm">Level</span>
+                                    <span className="text-muted-foreground text-sm">{t("info.level")}</span>
                                     <span className="font-mono text-foreground text-sm">
                                         {level} / {operator.phases[phaseIndex]?.maxLevel ?? 1}
                                     </span>
@@ -250,7 +262,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between">
                                     <span className="flex items-center gap-1 text-muted-foreground text-sm">
-                                        <Heart className="h-3.5 w-3.5" /> Trust
+                                        <Heart className="h-3.5 w-3.5" /> {t("info.trust")}
                                     </span>
                                     <span className="font-mono text-foreground text-sm">{trustLevel}%</span>
                                 </div>
@@ -260,10 +272,10 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
 
                         <div className="space-y-2">
                             <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                                Potential
+                                {t("info.potential")}
                                 <Tooltip>
                                     <TooltipTrigger render={(props) => <Info className="h-3 w-3 cursor-help text-muted-foreground" {...props} />} />
-                                    <TooltipPopup>Select a potential rank to see stat bonuses.</TooltipPopup>
+                                    <TooltipPopup>{t("info.potential.tip")}</TooltipPopup>
                                 </Tooltip>
                             </div>
                             <div className="flex flex-wrap gap-1.5">
@@ -282,11 +294,11 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                                         onClick={() => setPotentialRank(idx)}
                                                         className={cn("flex h-8 w-8 items-center justify-center rounded-md border transition-colors", potentialRank === idx ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")}
                                                     >
-                                                        <img alt={`Pot ${idx}`} className="h-5 w-5 object-contain" decoding="async" loading="lazy" src={potentialIcon(idx, operator.server)} />
+                                                        <img alt={t("info.potential.alt", { rank: idx })} className="h-5 w-5 object-contain" decoding="async" loading="lazy" src={potentialIcon(idx, operator.server)} />
                                                     </button>
                                                 )}
                                             />
-                                            <TooltipPopup>{rank ? `Pot ${idx}: ${rank.description}` : `Pot ${idx}: Base potential`}</TooltipPopup>
+                                            <TooltipPopup>{rank ? t("info.potential.rankTip", { rank: idx, description: rank.description }) : t("info.potential.baseTip", { rank: idx })}</TooltipPopup>
                                         </Tooltip>
                                     );
                                 })}
@@ -296,7 +308,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                         {phaseIndex === 2 && availableModules.length > 0 && (
                             <div className="grid gap-3 md:grid-cols-2">
                                 <div className="space-y-1">
-                                    <span className="text-muted-foreground text-xs">Module</span>
+                                    <span className="text-muted-foreground text-xs">{t("info.module")}</span>
                                     <Select
                                         value={moduleId || "none"}
                                         onValueChange={(v) => {
@@ -313,9 +325,9 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                         }}
                                     >
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Select module">
+                                            <SelectValue placeholder={t("info.module.placeholder")}>
                                                 {(value: string) => {
-                                                    if (value === "none") return "No Module";
+                                                    if (value === "none") return t("info.module.none");
                                                     const m = availableModules.find((x) => x.uniEquipId === value);
                                                     if (!m) return value;
                                                     return m.typeName1 && m.typeName2 ? `${m.typeName1}-${m.typeName2}` : m.uniEquipName;
@@ -323,12 +335,12 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                             </SelectValue>
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="none">No Module</SelectItem>
+                                            <SelectItem value="none">{t("info.module.none")}</SelectItem>
                                             {availableModules.map((mod) => (
                                                 <SelectItem key={mod.uniEquipId} value={mod.uniEquipId}>
                                                     <span className="flex items-center gap-2">
                                                         {mod.typeName1 && mod.typeName2 ? `${mod.typeName1}-${mod.typeName2}` : mod.uniEquipName}
-                                                        <CommunitySharePill share={moduleShares.get(mod.uniEquipId)} total={moduleTotal} cohort="owners with a module equipped use this" />
+                                                        <CommunitySharePill share={moduleShares.get(mod.uniEquipId)} total={moduleTotal} cohort={t("info.module.cohort")} />
                                                     </span>
                                                 </SelectItem>
                                             ))}
@@ -338,23 +350,19 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                         designator, so the selected module's
                                         share is restated here rather than being
                                         reachable only by opening the dropdown. */}
-                                    {moduleId && moduleShares.has(moduleId) && (
-                                        <p className="text-[11px] text-muted-foreground">
-                                            {Math.round((moduleShares.get(moduleId)?.share ?? 0) * 100)}% of the {moduleTotal.toLocaleString()} owners with a module equipped use this one
-                                        </p>
-                                    )}
+                                    {moduleId && moduleShares.has(moduleId) && <p className="text-[11px] text-muted-foreground">{t("info.module.shareLine", { pct: Math.round((moduleShares.get(moduleId)?.share ?? 0) * 100), total: f.number(moduleTotal) })}</p>}
                                 </div>
                                 {currentModule?.data?.phases && currentModule.data.phases.length > 0 && (
                                     <div className="space-y-1">
-                                        <span className="text-muted-foreground text-xs">Module Level</span>
+                                        <span className="text-muted-foreground text-xs">{t("info.module.level")}</span>
                                         <Select value={String(moduleLevel)} onValueChange={(v) => setModuleLevel(Number.parseInt(String(v), 10))}>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select level">{(value: string) => `Level ${value}`}</SelectValue>
+                                                <SelectValue placeholder={t("info.module.levelPlaceholder")}>{(value: string) => t("info.module.levelOption", { level: value })}</SelectValue>
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {currentModule.data.phases.map((phase) => (
                                                     <SelectItem key={phase.equipLevel} value={String(phase.equipLevel)}>
-                                                        Level {phase.equipLevel}
+                                                        {t("info.module.levelOption", { level: phase.equipLevel })}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
@@ -372,7 +380,18 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                     (() => {
                                         const lv = moduleLevels.get(moduleId);
                                         if (!lv) return null;
-                                        return <LevelBreakdown className="md:col-span-2" buckets={lv.buckets} total={lv.total} title="Community module level" labels={["Not unlocked", "Lv1", "Lv2", "Lv3"]} summary="unlocked this module" cohort="E2 owners" ownLevel={ownModuleLevels.get(moduleId) ?? null} />;
+                                        return (
+                                            <LevelBreakdown
+                                                className="md:col-span-2"
+                                                buckets={lv.buckets}
+                                                total={lv.total}
+                                                title={t("info.module.breakdown.title")}
+                                                labels={[t("info.module.breakdown.notUnlocked"), t("info.module.breakdown.lv1"), t("info.module.breakdown.lv2"), t("info.module.breakdown.lv3")]}
+                                                summary={t("info.module.breakdown.summary")}
+                                                cohort={t("info.cohort.e2Owners")}
+                                                ownLevel={ownModuleLevels.get(moduleId) ?? null}
+                                            />
+                                        );
                                     })()}
                             </div>
                         )}
@@ -383,7 +402,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
             <Separator className="my-6" />
 
             <div className="mb-6">
-                <h3 className="mb-4 font-medium text-foreground">Combat Stats</h3>
+                <h3 className="mb-4 font-medium text-foreground">{t("info.combatStats")}</h3>
                 <div className="grid grid-cols-1 divide-y divide-border rounded-lg border border-border bg-card md:grid-cols-2 md:divide-x md:divide-y-0">
                     {[leftStats, rightStats].map((column, colIdx) => (
                         // biome-ignore lint/suspicious/noArrayIndexKey: fixed two-column split, order is stable
@@ -403,19 +422,19 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
             </div>
             {operator.tagList && operator.tagList.length > 0 && (
                 <div className="mb-6">
-                    <h3 className="mb-3 font-medium text-foreground">Tags</h3>
+                    <h3 className="mb-3 font-medium text-foreground">{t("info.tags")}</h3>
                     <div className="flex flex-wrap gap-2">
-                        {operator.tagList.map((t) => (
-                            <Badge key={t} variant="secondary" className="bg-accent">
-                                {t}
+                        {operator.tagList.map((tag) => (
+                            <Badge key={tag} variant="secondary" className="bg-accent">
+                                {tag}
                             </Badge>
                         ))}
                     </div>
                 </div>
             )}
             <div className="mb-6">
-                <h3 className="mb-3 font-medium text-foreground">Attack Range</h3>
-                {currentRange ? <OperatorRange range={currentRange} /> : <p className="text-muted-foreground text-sm">No range data available.</p>}
+                <h3 className="mb-3 font-medium text-foreground">{t("info.attackRange")}</h3>
+                {currentRange ? <OperatorRange range={currentRange} /> : <p className="text-muted-foreground text-sm">{t("info.attackRange.empty")}</p>}
             </div>
 
             {phaseIndex === 2 && currentModule && (
@@ -424,7 +443,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                         <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
                             <span className="flex items-center gap-2">
                                 <Package className="h-4 w-4 text-primary" />
-                                <span className="font-medium text-sm">Module Details</span>
+                                <span className="font-medium text-sm">{t("info.moduleDetails")}</span>
                             </span>
                             <ChevronDown className={cn("h-4 w-4 transition-transform", showModuleDetails && "rotate-180")} />
                         </CollapsibleTrigger>
@@ -447,22 +466,22 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                 )}
                                 {moduleLevel > 0 && currentModule.data?.phases?.[moduleLevel - 1] ? (
                                     <div className="space-y-3">
-                                        <h5 className="font-medium text-foreground text-sm">Level {moduleLevel} Stats</h5>
+                                        <h5 className="font-medium text-foreground text-sm">{t("info.moduleDetails.levelStats", { level: moduleLevel })}</h5>
                                         {currentModule.data?.phases?.[moduleLevel - 1].attributeBlackboard && currentModule.data?.phases?.[moduleLevel - 1].attributeBlackboard.length > 0 ? (
                                             <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
                                                 {currentModule.data?.phases?.[moduleLevel - 1].attributeBlackboard.map((attr) => (
                                                     <div className="rounded-md bg-secondary/30 p-2" key={`${attr.key}-${moduleLevel}`}>
-                                                        <span className="text-muted-foreground text-xs">{formatAttributeKey(attr.key)}:</span>
+                                                        <span className="text-muted-foreground text-xs">{formatAttributeKey(attr.key, t)}:</span>
                                                         <span className="ml-1 font-medium text-foreground text-sm">{formatStatValue(attr.value)}</span>
                                                     </div>
                                                 ))}
                                             </div>
                                         ) : (
-                                            <p className="text-muted-foreground text-xs">No stat bonuses at this level.</p>
+                                            <p className="text-muted-foreground text-xs">{t("info.moduleDetails.noBonuses")}</p>
                                         )}
                                     </div>
                                 ) : (
-                                    <p className="text-muted-foreground text-xs">Select a module level to see its effects.</p>
+                                    <p className="text-muted-foreground text-xs">{t("info.moduleDetails.pickLevel")}</p>
                                 )}
 
                                 {moduleLevel > 0 && currentModule.data?.phases?.[moduleLevel - 1] ? (
@@ -500,7 +519,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                             return (
                                                 <>
                                                     <div className="mb-1 flex items-center justify-between">
-                                                        <h6 className="font-medium text-foreground text-xs">Trait Changes</h6>
+                                                        <h6 className="font-medium text-foreground text-xs">{t("info.traitChanges")}</h6>
                                                         <Tooltip>
                                                             <TooltipTrigger
                                                                 render={(props) => (
@@ -509,13 +528,13 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                                                     </span>
                                                                 )}
                                                             />
-                                                            <TooltipPopup>Show diff vs. base</TooltipPopup>
+                                                            <TooltipPopup>{t("info.showDiff.tip")}</TooltipPopup>
                                                         </Tooltip>
                                                     </div>
                                                     <div className="rounded-md bg-secondary/20 p-2">
                                                         {baseHtml && (
                                                             <div className="mb-2 border-border/40 border-b pb-2 opacity-50">
-                                                                <div className="mb-0.5 font-medium text-[10px] text-muted-foreground uppercase tracking-wider">Base Trait</div>
+                                                                <div className="mb-0.5 font-medium text-[10px] text-muted-foreground uppercase tracking-wider">{t("info.baseTrait")}</div>
                                                                 <span
                                                                     className="block text-muted-foreground text-xs"
                                                                     // biome-ignore lint/security/noDangerouslySetInnerHtml: Sanitized
@@ -540,7 +559,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                             if (talentCandidates.length === 0) return null;
                                             return (
                                                 <div>
-                                                    <h6 className="mb-1 font-medium text-foreground text-xs">Talent Changes</h6>
+                                                    <h6 className="mb-1 font-medium text-foreground text-xs">{t("info.talentChanges")}</h6>
                                                     {talentCandidates.map((c, cIdx) => {
                                                         const oldTalent = operator.talents?.[c.talentIndex];
                                                         const oldCand = oldTalent?.candidates?.[oldTalent.candidates.length - 1];
@@ -589,7 +608,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                 <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
                     <span className="flex items-center gap-2">
                         <LibraryBig className="h-4 w-4 text-primary" />
-                        <span className="font-medium text-sm">Talents</span>
+                        <span className="font-medium text-sm">{t("info.talents")}</span>
                     </span>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
@@ -613,8 +632,8 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                             modifiedByModule: boolean;
                         };
 
-                        const baseList: Eff[] = (operator.talents ?? []).map((t, idx) => {
-                            const c = getActiveTalentCandidate(t, phaseIndex, level, potentialRank);
+                        const baseList: Eff[] = (operator.talents ?? []).map((entry, idx) => {
+                            const c = getActiveTalentCandidate(entry, phaseIndex, level, potentialRank);
                             return {
                                 key: `t-${idx}`,
                                 name: c?.name ?? null,
@@ -664,30 +683,30 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                             }
                         }
 
-                        const visible = baseList.filter((t) => t.name || t.description);
+                        const visible = baseList.filter((eff) => eff.name || eff.description);
                         if (visible.length === 0) {
-                            return <p className="mt-3 text-muted-foreground text-xs">No talents unlocked at this configuration.</p>;
+                            return <p className="mt-3 text-muted-foreground text-xs">{t("info.talents.empty")}</p>;
                         }
 
                         return (
                             <div className="mt-3 space-y-3">
-                                {visible.map((t) => {
-                                    const renderingDiff = t.modifiedByModule && showDiff && !!t.baseDescription;
-                                    const html = renderingDiff ? renderDescriptionDiffHtml(t.baseDescription ?? "", t.description, t.baseBlackboard, t.blackboard) : descriptionToHtml(t.description, t.blackboard);
-                                    const baseHtml = renderingDiff ? descriptionToHtml(t.baseDescription ?? "", t.baseBlackboard) : null;
+                                {visible.map((talent) => {
+                                    const renderingDiff = talent.modifiedByModule && showDiff && !!talent.baseDescription;
+                                    const html = renderingDiff ? renderDescriptionDiffHtml(talent.baseDescription ?? "", talent.description, talent.baseBlackboard, talent.blackboard) : descriptionToHtml(talent.description, talent.blackboard);
+                                    const baseHtml = renderingDiff ? descriptionToHtml(talent.baseDescription ?? "", talent.baseBlackboard) : null;
                                     return (
-                                        <div className="rounded-lg border border-border/50 bg-card/30 p-3" key={t.key}>
+                                        <div className="rounded-lg border border-border/50 bg-card/30 p-3" key={talent.key}>
                                             <div className="mb-1 flex items-center gap-2">
-                                                <h4 className="font-medium text-foreground text-sm">{t.name ?? "Unnamed Talent"}</h4>
-                                                {t.requiredPotentialRank > 0 && (
+                                                <h4 className="font-medium text-foreground text-sm">{talent.name ?? t("info.talents.unnamed")}</h4>
+                                                {talent.requiredPotentialRank > 0 && (
                                                     <Tooltip>
-                                                        <TooltipTrigger render={(props) => <img alt={`Pot ${t.requiredPotentialRank}`} className="h-4 w-4" decoding="async" loading="lazy" src={potentialIcon(t.requiredPotentialRank, operator.server)} {...props} />} />
-                                                        <TooltipPopup>Requires Potential {t.requiredPotentialRank}</TooltipPopup>
+                                                        <TooltipTrigger render={(props) => <img alt={t("info.potential.alt", { rank: talent.requiredPotentialRank })} className="h-4 w-4" decoding="async" loading="lazy" src={potentialIcon(talent.requiredPotentialRank, operator.server)} {...props} />} />
+                                                        <TooltipPopup>{t("info.talents.requiresPotential", { rank: talent.requiredPotentialRank })}</TooltipPopup>
                                                     </Tooltip>
                                                 )}
-                                                {t.modifiedByModule && (
+                                                {talent.modifiedByModule && (
                                                     <Badge variant="outline" className="text-[10px]">
-                                                        Module
+                                                        {t("info.talents.moduleBadge")}
                                                     </Badge>
                                                 )}
                                             </div>

@@ -4,15 +4,20 @@ import { ChevronDown, ChevronRight, Info, Maximize2, Search, Skull } from "lucid
 import { useEffect, useMemo, useState } from "react";
 import { useWindowVirtualRows } from "#/hooks/use-window-virtual-rows";
 import { stageIndexQueryOptions } from "#/lib/api/stages";
+import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import type { StageGroupKey } from "#/lib/registry/stage-groups";
 import { cn } from "#/lib/utils";
 import { buildStageTree, coverImage, filterTree, type IEventVM, type IGroupVM, type IStageCardVM } from "./impl/derive";
 import { EventDetailDialog } from "./impl/EventDetailDialog";
 import { PreviewFallback, STAGE_GROUP_ICON } from "./impl/PreviewFallback";
 import { StagePreview } from "./impl/StagePreview";
+import type { messages } from "./StageList.messages";
 
 export function StageList() {
-    const { data: entries } = useSuspenseQuery(stageIndexQueryOptions());
+    const t: TypedT<typeof messages> = useT("stages");
+    const f = useFormatters();
+    const { data: entries } = useSuspenseQuery(stageIndexQueryOptions(useGamedataServer()));
     const tree = useMemo(() => buildStageTree(entries), [entries]);
 
     const [q, setQ] = useState("");
@@ -49,11 +54,11 @@ export function StageList() {
     return (
         <div className="relative z-1 mx-auto w-[min(1200px,calc(100%-2rem))] pb-28">
             {/* Breadcrumb */}
-            <nav className="pt-7 pb-0 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label="Breadcrumb">
+            <nav className="pt-7 pb-0 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label={t("list.breadcrumb")}>
                 <ol className="flex items-center gap-1.5">
-                    <li>Collection</li>
+                    <li>{t("list.breadcrumb.collection")}</li>
                     <ChevronRight className="h-2.5 w-2.5" aria-hidden="true" />
-                    <li className="text-foreground">Stages</li>
+                    <li className="text-foreground">{t("list.breadcrumb.stages")}</li>
                 </ol>
             </nav>
 
@@ -61,16 +66,14 @@ export function StageList() {
                 <div>
                     <div className="mb-3 flex items-center gap-2.5">
                         <span className="h-px w-5" style={{ background: "var(--primary)" }} />
-                        <span className="font-mono font-semibold text-[10.5px] text-primary uppercase tracking-[0.24em]">The Stage Record</span>
+                        <span className="font-mono font-semibold text-[10.5px] text-primary uppercase tracking-[0.24em]">{t("list.kicker")}</span>
                     </div>
-                    <h1 className="m-0 text-balance font-bold font-sans text-[27px] text-foreground leading-[0.98] tracking-[-0.035em] sm:text-[34px]">Every operation, catalogued.</h1>
-                    <p className="mt-3 max-w-140 text-pretty font-sans text-[13px] text-muted-foreground leading-[1.55]">Browse by story arc and code - each stage opens to a faux-3D board and enemy-pathing simulator. Ordered by episode and code.</p>
+                    <h1 className="m-0 text-balance font-bold font-sans text-[27px] text-foreground leading-[0.98] tracking-[-0.035em] sm:text-[34px]">{t("list.title")}</h1>
+                    <p className="mt-3 max-w-140 text-pretty font-sans text-[13px] text-muted-foreground leading-[1.55]">{t("list.blurb")}</p>
                 </div>
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 lg:block lg:text-right">
-                    <div className="font-light font-mono text-[26px] text-primary leading-none tracking-[-0.02em] lg:text-[34px]">{tree.totalStages.toLocaleString()}</div>
-                    <div className="font-mono text-[10px] text-muted-foreground tracking-[0.12em] lg:mt-1.5">
-                        STAGES · {tree.totalZones} ZONES · {tree.groups.length} CATEGORIES
-                    </div>
+                    <div className="font-light font-mono text-[26px] text-primary leading-none tracking-[-0.02em] lg:text-[34px]">{f.number(tree.totalStages)}</div>
+                    <div className="font-mono text-[10px] text-muted-foreground tracking-[0.12em] lg:mt-1.5">{t("list.counts", { zones: tree.totalZones, categories: tree.groups.length })}</div>
                 </div>
             </div>
 
@@ -92,31 +95,31 @@ export function StageList() {
                     <input
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
-                        placeholder="Search event, code or stage…"
-                        aria-label="Search stages"
+                        placeholder={t("list.search.placeholder")}
+                        aria-label={t("list.search.aria")}
                         className="h-10 w-full rounded-[9px] border border-border bg-secondary/50 pr-3.5 pl-9 font-sans text-[13px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/40 sm:h-9.5"
                     />
                 </div>
-                <span className="font-mono text-[11px] text-muted-foreground">{searching ? `${visibleStageCount} matches` : `${visibleEvents.length} zones`}</span>
+                <span className="font-mono text-[11px] text-muted-foreground">{searching ? t("list.count.matches", { count: visibleStageCount }) : t("list.count.zones", { count: visibleEvents.length })}</span>
                 <div className="ml-auto flex gap-0.5 rounded-[9px] border border-border bg-secondary/45 p-0.75">
                     <button type="button" onClick={collapseAll} className="h-8 cursor-pointer rounded-md px-2.5 font-sans font-semibold text-[11.5px] text-muted-foreground transition-colors hover:text-foreground sm:h-6.5">
-                        Collapse
+                        {t("list.collapse")}
                     </button>
                     <button type="button" onClick={expandAll} className="h-8 cursor-pointer rounded-md px-2.5 font-sans font-semibold text-[11.5px] text-muted-foreground transition-colors hover:text-foreground sm:h-6.5">
-                        Expand all
+                        {t("list.expandAll")}
                     </button>
                 </div>
             </div>
 
             {/* Filter pills */}
             <div className="msv-scroll mb-8 flex gap-1.5 overflow-x-auto pb-1.5">
-                <FilterPill label="All" count={tree.totalZones} tone="var(--primary)" active={filter === "all"} onClick={() => setFilter("all")} />
+                <FilterPill label={t("list.filter.all")} count={tree.totalZones} tone="var(--primary)" active={filter === "all"} onClick={() => setFilter("all")} />
                 {tree.groups.map((g) => (
                     <FilterPill key={g.key} label={g.label} count={g.zoneCount} tone={g.tone} active={filter === g.key} onClick={() => setFilter((f) => (f === g.key ? "all" : g.key))} />
                 ))}
             </div>
 
-            {empty && <div className="rounded-[14px] border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">No stages match your search.</div>}
+            {empty && <div className="rounded-[14px] border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("list.empty")}</div>}
 
             {/* Timeline spine - decoration only above sm; phones get the full width back. */}
             <div className="relative sm:pl-6.5">
@@ -286,6 +289,7 @@ function VirtualStageTree({ groups, searching, open, closedSections, onToggleSec
 }
 
 function GroupHeaderRow({ row, open, onToggle }: { row: Extract<FlatRow, { kind: "group" }>; open: boolean; onToggle: () => void }) {
+    const t: TypedT<typeof messages> = useT("stages");
     const { group, first } = row;
     const Icon = STAGE_GROUP_ICON[group.key];
     return (
@@ -296,9 +300,7 @@ function GroupHeaderRow({ row, open, onToggle }: { row: Extract<FlatRow, { kind:
                     <button type="button" onClick={onToggle} aria-expanded={open} aria-controls={`section-${group.key}`} className="group/section flex w-full cursor-pointer flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-md py-1 text-left ring-inset focus-visible:ring-2 focus-visible:ring-ring/60">
                         <Icon className="h-3.75 w-3.75 flex-none self-center" style={{ color: group.tone }} aria-hidden="true" />
                         <span className="font-bold font-sans text-[17px] text-foreground tracking-[-0.02em]">{group.label}</span>
-                        <span className="whitespace-nowrap font-mono text-[10px] text-muted-foreground tracking-widest">
-                            {group.zoneCount} zones · {group.stageCount} stages
-                        </span>
+                        <span className="whitespace-nowrap font-mono text-[10px] text-muted-foreground tracking-widest">{t("list.group.counts", { zones: group.zoneCount, stages: group.stageCount })}</span>
                         <span className="h-px flex-1 bg-border" />
                         <ChevronDown className="h-3.75 w-3.75 flex-none self-center text-muted-foreground transition-[transform,color] duration-200 group-hover/section:text-foreground" style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }} aria-hidden="true" />
                     </button>
@@ -309,6 +311,7 @@ function GroupHeaderRow({ row, open, onToggle }: { row: Extract<FlatRow, { kind:
 }
 
 function EventHeaderRow({ row, onToggle, onDetails }: { row: Extract<FlatRow, { kind: "event" }>; onToggle: () => void; onDetails: () => void }) {
+    const t: TypedT<typeof messages> = useT("stages");
     const { event, open, group } = row;
     const cover = coverImage(event);
     return (
@@ -316,10 +319,10 @@ function EventHeaderRow({ row, onToggle, onDetails }: { row: Extract<FlatRow, { 
             <div id={`zone-${event.zoneId}`} className="msv-row relative flex items-center gap-3 px-3.5 py-3.5 sm:gap-4 sm:px-4.5" style={{ background: open ? `color-mix(in oklch, ${event.tone} 7%, transparent)` : "transparent" }}>
                 {open && <span className="pointer-events-none absolute top-0 bottom-0 left-0 z-1 w-0.5 rounded-r" style={{ background: event.tone }} />}
 
-                <button type="button" onClick={onToggle} aria-expanded={open} aria-label={`${open ? "Collapse" : "Expand"} ${event.title}`} className="absolute inset-0 cursor-pointer rounded-none ring-inset focus-visible:ring-2 focus-visible:ring-ring/60" />
+                <button type="button" onClick={onToggle} aria-expanded={open} aria-label={open ? t("list.zone.collapse", { title: event.title }) : t("list.zone.expand", { title: event.title })} className="absolute inset-0 cursor-pointer rounded-none ring-inset focus-visible:ring-2 focus-visible:ring-ring/60" />
 
                 {/* Zone thumbnail: opens the enlarged-banner detail dialog. */}
-                <button type="button" onClick={onDetails} aria-haspopup="dialog" aria-label={`About ${event.title}`} className="group relative z-1 h-10 w-16 flex-none cursor-zoom-in overflow-hidden rounded-md border border-border ring-inset focus-visible:ring-2 focus-visible:ring-ring/60">
+                <button type="button" onClick={onDetails} aria-haspopup="dialog" aria-label={t("list.zone.about", { title: event.title })} className="group relative z-1 h-10 w-16 flex-none cursor-zoom-in overflow-hidden rounded-md border border-border ring-inset focus-visible:ring-2 focus-visible:ring-ring/60">
                     <PreviewFallback tone={event.tone} group={event.group} iconClassName="h-3.5 w-3.5" />
                     {cover && <StagePreview src={cover} />}
                     <span className="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
@@ -336,7 +339,8 @@ function EventHeaderRow({ row, onToggle, onDetails }: { row: Extract<FlatRow, { 
                 </div>
 
                 <span className="pointer-events-none relative z-1 hidden whitespace-nowrap font-mono text-[10.5px] text-muted-foreground sm:inline">
-                    {event.stageCount} ops{event.bossCount > 0 ? ` · ${event.bossCount} boss` : ""}
+                    {t("list.zone.ops", { count: event.stageCount })}
+                    {event.bossCount > 0 ? ` · ${t("list.zone.boss", { count: event.bossCount })}` : ""}
                 </span>
                 <span
                     className="pointer-events-none relative z-1 hidden h-5.25 flex-none items-center whitespace-nowrap rounded-full border px-2.5 font-mono font-semibold text-[9px] uppercase tracking-[0.09em] sm:inline-flex"
@@ -366,6 +370,7 @@ function StagesRow({ row, cols }: { row: Extract<FlatRow, { kind: "stages" }>; c
 }
 
 function StageCardInner({ card, tone, group }: { card: IStageCardVM; tone: string; group: StageGroupKey }) {
+    const t: TypedT<typeof messages> = useT("stages");
     return (
         <>
             <div className="relative aspect-16/10 w-full flex-none overflow-hidden">
@@ -389,15 +394,15 @@ function StageCardInner({ card, tone, group }: { card: IStageCardVM; tone: strin
                         className="absolute top-1.75 right-1.75 z-2 inline-flex h-4.25 items-center gap-1 rounded-full px-1.75 font-bold font-mono text-[8.5px] text-white uppercase tracking-[0.08em]"
                         style={{ background: "color-mix(in oklch, var(--enemy-boss) 88%, black)", boxShadow: "0 0 10px color-mix(in oklch, var(--enemy-boss) 60%, transparent)" }}
                     >
-                        <Skull className="h-2.5 w-2.5" /> Boss
+                        <Skull className="h-2.5 w-2.5" /> {t("list.card.boss")}
                     </span>
                 )}
             </div>
             <div className="flex flex-col gap-1.5 px-2.5 pt-2 pb-2.5">
                 <span className="line-clamp-2 min-h-8 font-sans font-semibold text-[12.5px] text-foreground leading-tight">{card.title}</span>
                 <div className="flex items-center justify-between gap-1.5">
-                    <span className="font-mono text-[9.5px] text-muted-foreground">{card.apCost > 0 ? `${card.apCost} ◆ Sanity` : "Free entry"}</span>
-                    {card.hasChallenge && <span className="font-mono text-[9.5px] text-muted-foreground/80">CM</span>}
+                    <span className="font-mono text-[9.5px] text-muted-foreground">{card.apCost > 0 ? t("list.card.sanity", { cost: card.apCost }) : t("list.card.free")}</span>
+                    {card.hasChallenge && <span className="font-mono text-[9.5px] text-muted-foreground/80">{t("list.card.cm")}</span>}
                 </div>
             </div>
         </>
@@ -422,6 +427,7 @@ function StageCard({ card, tone, group }: { card: IStageCardVM; tone: string; gr
 }
 
 function FeaturedHero({ event, onBrowse, onDetails }: { event: IEventVM; onBrowse: () => void; onDetails: () => void }) {
+    const t: TypedT<typeof messages> = useT("stages");
     const cover = coverImage(event);
     return (
         <div className="relative mb-7 h-66 overflow-hidden rounded-2xl border border-border bg-card sm:mb-8 sm:h-60">
@@ -449,17 +455,19 @@ function FeaturedHero({ event, onBrowse, onDetails }: { event: IEventVM; onBrows
                     <div className="mt-3 flex flex-wrap items-center gap-x-3.5 gap-y-2 sm:mt-3.5">
                         {event.codeRange && <span className="font-mono text-[11px] text-white/75">{event.codeRange}</span>}
                         {event.codeRange && <span className="h-3 w-px bg-white/25" />}
-                        <span className="font-mono text-[11px] text-white/75">{event.stageCount} operations</span>
+                        <span className="font-mono text-[11px] text-white/75">
+                            {event.stageCount} {t("list.hero.operations", { count: event.stageCount })}
+                        </span>
                         {event.bossCount > 0 && (
                             <>
                                 <span className="h-3 w-px bg-white/25" />
                                 <span className="font-mono text-[11px]" style={{ color: "var(--enemy-boss)" }}>
-                                    {event.bossCount} {event.bossCount === 1 ? "boss" : "bosses"}
+                                    {event.bossCount} {t("list.hero.bosses", { count: event.bossCount })}
                                 </span>
                             </>
                         )}
                         <button type="button" onClick={onBrowse} className="inline-flex h-10 flex-none cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-4 font-sans font-semibold text-[12.5px] text-primary-foreground shadow-sm transition-transform hover:-translate-y-px sm:ml-1 sm:h-8.5">
-                            Browse stages
+                            {t("list.hero.browse")}
                             <ChevronRight className="h-3.25 w-3.25" aria-hidden="true" />
                         </button>
                         <button
@@ -469,7 +477,7 @@ function FeaturedHero({ event, onBrowse, onDetails }: { event: IEventVM; onBrows
                             className="inline-flex h-10 flex-none cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg border border-white/25 bg-white/10 px-3.5 font-sans font-semibold text-[12.5px] text-white backdrop-blur-sm transition-colors hover:bg-white/18 sm:h-8.5"
                         >
                             <Info className="h-3.25 w-3.25" aria-hidden="true" />
-                            Details
+                            {t("list.hero.details")}
                         </button>
                     </div>
                 </div>

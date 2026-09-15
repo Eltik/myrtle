@@ -1,34 +1,40 @@
 import type { IMaterialItem } from "#/lib/api/materials";
+import type { messages as helperMessages } from "./helpers.messages";
 import type { ItemCategory } from "./types";
 
 export { RARITY_HEX_MUTED as RARITY_COLORS } from "#/lib/utils";
 
-export const CATEGORY_LABELS: Record<ItemCategory, string> = {
-    all: "All",
-    exp: "EXP",
-    lmd: "Currency",
-    mat: "Materials",
-    skill: "Skill Books",
-    module: "Module Mats",
-    chip: "Chips",
-    furniture: "Furniture",
-    ticket: "Tickets",
-    consume: "Consumables",
-    other: "Other",
+/** A key in `helpers.messages.ts`; resolved by whichever card renders it. */
+export type ItemMessageKey = keyof typeof helperMessages & string;
+
+/** Category chip names. */
+export const CATEGORY_LABELS: Record<ItemCategory, ItemMessageKey> = {
+    all: "profile.items.category.all",
+    exp: "profile.items.category.exp",
+    lmd: "profile.items.category.lmd",
+    mat: "profile.items.category.mat",
+    skill: "profile.items.category.skill",
+    module: "profile.items.category.module",
+    chip: "profile.items.category.chip",
+    furniture: "profile.items.category.furniture",
+    ticket: "profile.items.category.ticket",
+    consume: "profile.items.category.consume",
+    other: "profile.items.category.other",
 };
 
-export const CATEGORY_ITEM_LABELS: Record<ItemCategory, string> = {
-    all: "Item",
-    exp: "Battle Record",
-    lmd: "Currency",
-    mat: "Material",
-    skill: "Skill book",
-    module: "Module mat",
-    chip: "Chip",
-    furniture: "Furniture",
-    ticket: "Ticket",
-    consume: "Consumable",
-    other: "Item",
+/** What a single entry of each category is called on its card. */
+export const CATEGORY_ITEM_LABELS: Record<ItemCategory, ItemMessageKey> = {
+    all: "profile.items.itemLabel.all",
+    exp: "profile.items.itemLabel.exp",
+    lmd: "profile.items.itemLabel.lmd",
+    mat: "profile.items.itemLabel.mat",
+    skill: "profile.items.itemLabel.skill",
+    module: "profile.items.itemLabel.module",
+    chip: "profile.items.itemLabel.chip",
+    furniture: "profile.items.itemLabel.furniture",
+    ticket: "profile.items.itemLabel.ticket",
+    consume: "profile.items.itemLabel.consume",
+    other: "profile.items.itemLabel.other",
 };
 
 export const CATEGORY_ORDER: ItemCategory[] = ["all", "exp", "lmd", "mat", "skill", "module", "chip", "furniture", "ticket", "consume", "other"];
@@ -39,6 +45,9 @@ export function rarityTierToNumber(tier: string | null | undefined): number {
     return n >= 1 && n <= 6 ? n : 1;
 }
 
+// `formatItemType` and `formatVoucherId` title-case a raw API code
+// (`SKILL_SUMMARY` -> `Skill Summary`), so what they return is the code itself,
+// not prose - which is why neither goes through the catalog.
 export function formatItemType(itemType: string | null | undefined): string {
     if (!itemType || itemType === "UNKNOWN" || itemType === "NONE") return "Item";
     return itemType

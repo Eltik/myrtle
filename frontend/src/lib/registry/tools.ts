@@ -1,12 +1,20 @@
+import type { messages as toolMessages } from "#/lib/registry/tools.messages";
+
 export type ToolIconName = "chart" | "calc" | "star" | "dice" | "cake" | "pack" | "search" | "trophy" | "users" | "user" | "history" | "tiers" | "heart" | "list-todo" | "shield" | "crosshair" | "map" | "calendar-clock";
 
 export type ToolCategory = "calculator" | "fun";
 
+/**
+ * A key in `tools.messages.ts`. This module has no React, so it cannot resolve
+ * text itself; it carries keys and the rendering component calls `t()`.
+ */
+export type ToolMessageKey = keyof typeof toolMessages & string;
+
 export interface ITool {
     id: string;
     href: string;
-    label: string;
-    desc: string;
+    labelKey: ToolMessageKey;
+    descKey: ToolMessageKey;
     icon: ToolIconName;
     category: ToolCategory;
     keywords: string[];
@@ -14,12 +22,12 @@ export interface ITool {
 
 export interface IToolCategory {
     id: ToolCategory;
-    label: string;
+    labelKey: ToolMessageKey;
 }
 
 export const TOOL_CATEGORIES: IToolCategory[] = [
-    { id: "calculator", label: "Calculators" },
-    { id: "fun", label: "For Fun" },
+    { id: "calculator", labelKey: "toolCategory.calculator" },
+    { id: "fun", labelKey: "toolCategory.fun" },
 ];
 
 export function modKey(isMac: boolean): string {
@@ -30,8 +38,8 @@ export const TOOLS: ITool[] = [
     {
         id: "recruitment",
         href: "/tools/recruitment",
-        label: "Recruitment calculator",
-        desc: "Guaranteed tag combos · 1h parity",
+        labelKey: "tool.recruitment.label",
+        descKey: "tool.recruitment.desc",
         icon: "calc",
         category: "calculator",
         keywords: ["recruit", "tag", "calculator", "hire"],
@@ -39,8 +47,8 @@ export const TOOLS: ITool[] = [
     {
         id: "planner",
         href: "/tools/planner",
-        label: "Operator planner",
-        desc: "Plan promotions, skills, and modules",
+        labelKey: "tool.planner.label",
+        descKey: "tool.planner.desc",
         icon: "list-todo",
         category: "calculator",
         keywords: ["plan", "planner", "promotion", "skill", "module", "target"],
@@ -48,8 +56,8 @@ export const TOOLS: ITool[] = [
     {
         id: "dps",
         href: "/tools/dps",
-        label: "DPS charts",
-        desc: "Interactive damage curves per skill",
+        labelKey: "tool.dps.label",
+        descKey: "tool.dps.desc",
         icon: "chart",
         category: "calculator",
         keywords: ["damage", "dps", "chart", "skill", "curve", "calculator"],
@@ -57,8 +65,8 @@ export const TOOLS: ITool[] = [
     {
         id: "hps",
         href: "/tools/hps",
-        label: "HPS charts",
-        desc: "Interactive healing curves per skill",
+        labelKey: "tool.hps.label",
+        descKey: "tool.hps.desc",
         icon: "heart",
         category: "calculator",
         keywords: ["healing", "hps", "heal", "medic", "chart", "skill", "curve", "calculator"],
@@ -66,8 +74,8 @@ export const TOOLS: ITool[] = [
     {
         id: "randomizer",
         href: "/tools/randomizer",
-        label: "Randomizer",
-        desc: "Pick a squad, break the meta",
+        labelKey: "tool.randomizer.label",
+        descKey: "tool.randomizer.desc",
         icon: "dice",
         category: "fun",
         keywords: ["random", "squad", "pick", "roll"],
@@ -75,8 +83,8 @@ export const TOOLS: ITool[] = [
     {
         id: "birthdays",
         href: "/tools/birthdays",
-        label: "Birthdays",
-        desc: "View and track operator birthdays",
+        labelKey: "tool.birthdays.label",
+        descKey: "tool.birthdays.desc",
         icon: "cake",
         category: "fun",
         keywords: ["birthday", "operator", "track"],
@@ -84,8 +92,8 @@ export const TOOLS: ITool[] = [
     {
         id: "release",
         href: "/tools/release",
-        label: "Release Planner",
-        desc: "When CN events, skins, and banners land on EN",
+        labelKey: "tool.release.label",
+        descKey: "tool.release.desc",
         icon: "calendar-clock",
         category: "calculator",
         keywords: ["release", "upcoming", "events", "banners", "skins", "cn", "en", "schedule", "planner", "lag", "originite", "prime", "op", "budget"],

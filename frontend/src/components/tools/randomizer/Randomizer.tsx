@@ -6,6 +6,8 @@ import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { activitiesQueryOptions, retroActsQueryOptions, stagesQueryOptions, userStageClearsQueryOptions, zonesQueryOptions } from "#/lib/api/stages";
 import { userRosterQueryOptions } from "#/lib/api/user";
+import { useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { buildActivityLookup } from "./impl/activity-lookup";
 import { BriefingHero } from "./impl/components/BriefingHero";
 import { EmptyState } from "./impl/components/EmptyState";
@@ -16,6 +18,7 @@ import { StageSlab } from "./impl/components/StageSlab";
 import { DEFAULT_SETTINGS, SETTINGS_VERSION, STORAGE_KEY_SETTINGS } from "./impl/constants";
 import type { IChallenge, IRandomizerOperator, IRandomizerSettings } from "./impl/types";
 import { buildRosterIndex, filterPlayableStages, pickRandomChallenge, pickRandomSquad, pickRandomStage, selectAvailableOperators, selectAvailableStages, toRandomizerOperator } from "./impl/utils";
+import type { messages } from "./Randomizer.messages";
 
 const ROSTER_STORAGE_KEY = "randomizer-roster-v4";
 
@@ -29,15 +32,17 @@ function migrateSettings(saved: IPersistedSettings): IRandomizerSettings {
 }
 
 export function Randomizer(): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("tools");
     const { user, isAuthenticated } = useAuth();
     const hasProfile = isAuthenticated;
     const uid = user?.uid ?? null;
 
-    const { data: operatorsIndex = [] } = useQuery(operatorsIndexQueryOptions());
-    const { data: stages = [] } = useQuery(stagesQueryOptions());
-    const { data: zones = [] } = useQuery(zonesQueryOptions());
-    const { data: activities = [] } = useQuery(activitiesQueryOptions());
-    const { data: retroActs = [] } = useQuery(retroActsQueryOptions());
+    const server = useGamedataServer();
+    const { data: operatorsIndex = [] } = useQuery(operatorsIndexQueryOptions(server));
+    const { data: stages = [] } = useQuery(stagesQueryOptions(server));
+    const { data: zones = [] } = useQuery(zonesQueryOptions(server));
+    const { data: activities = [] } = useQuery(activitiesQueryOptions(server));
+    const { data: retroActs = [] } = useQuery(retroActsQueryOptions(server));
     const { data: rosterEntries } = useQuery({ ...userRosterQueryOptions(uid ?? ""), enabled: !!uid });
     const { data: stageClears } = useQuery(userStageClearsQueryOptions(uid));
 
@@ -161,9 +166,9 @@ export function Randomizer(): React.ReactElement {
     return (
         <div className="relative z-1 mx-auto w-[min(1320px,calc(100%-2rem))] py-5 pb-20">
             <nav aria-label="breadcrumb" className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none">
-                <span>Tools</span>
+                <span>{t("randomizer.breadcrumb.tools")}</span>
                 <ChevronRight className="size-2.5" />
-                <span className="text-foreground">Randomizer</span>
+                <span className="text-foreground">{t("randomizer.breadcrumb.title")}</span>
             </nav>
 
             <BriefingHero operatorsAvailable={availableOperators.length} operatorsRoster={effectiveRosterSet.size} stagesAvailable={availableStages.length} hasResult={hasResult} canRoll={canRoll} onRollAll={rollAll} onReset={reset} onOpenSettings={() => setSettingsOpen(true)} />

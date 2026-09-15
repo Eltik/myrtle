@@ -166,7 +166,7 @@ export function groupDrops(stage: IStage, items: Record<string, IMaterialItem | 
             const meta = DROP_TYPE_META[type];
             return {
                 type,
-                label: meta?.label ?? type,
+                labelKey: meta?.labelKey ?? null,
                 order: meta?.order ?? 99,
                 drops: drops.sort((a, b) => b.occ.level - a.occ.level || b.rarity - a.rarity),
             };

@@ -1,17 +1,20 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { isAnyAdminRole } from "#/lib/api/admin";
+import { canAccessAdminPanel } from "#/lib/api/admin";
+import { metaT } from "#/lib/meta";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/_authed/admin")({
     beforeLoad: ({ context, location }) => {
         if (!context.user) throw redirect({ to: "/", search: { auth: "1", next: location.href } });
-        if (!isAnyAdminRole(context.user.role)) throw redirect({ to: "/" });
+        if (!canAccessAdminPanel(context.user.role)) throw redirect({ to: "/" });
     },
     component: AdminLayout,
-    head: () => {
+    head: ({ match }) => {
+        const t = metaT(match.context.i18n);
         const { meta, links } = seo({
-            title: "myrtle.moe · admin",
-            description: "Operations console for myrtle.moe.",
+            title: t("admin.title"),
+            description: t("admin.description"),
+            locale: match.context.i18n?.locale,
         });
         return {
             meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, { name: "robots", content: "noindex,nofollow" }, ...meta],

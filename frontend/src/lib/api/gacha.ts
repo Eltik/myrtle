@@ -32,21 +32,24 @@ import type { PullRates } from "#/types/generated/PullRates";
 import type { PullTimingData } from "#/types/generated/PullTimingData";
 import type { RarityRate } from "#/types/generated/RarityRate";
 import type { WeightUpChar } from "#/types/generated/WeightUpChar";
+import { DEFAULT_GAMEDATA_SERVER, gamedataKey, gamedataPath, resolveGamedataServer } from "./gamedata";
 
 export type IBanner = GachaPoolClient;
 export type IWeightUpChar = WeightUpChar;
 export type IRarityRate = RarityRate;
 
-export const getBannersFn = createServerFn({ method: "GET" }).handler(async () => {
-    const res = await backendFetch("/static/banners");
-    if (!res.ok) throw new Error(`Failed to load banners: ${res.status}`);
-    return (await res.json()) as IBanner[];
-});
+export const getBannersFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string | undefined) => server)
+    .handler(async ({ data: server }) => {
+        const res = await backendFetch(gamedataPath(server, "/static/banners"));
+        if (!res.ok) throw new Error(`Failed to load banners: ${res.status}`);
+        return (await res.json()) as IBanner[];
+    });
 
-export function bannersQueryOptions() {
+export function bannersQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["banners"],
-        queryFn: () => getBannersFn(),
+        queryKey: ["banners", ...gamedataKey(server)],
+        queryFn: () => getBannersFn({ data: resolveGamedataServer(server) }),
         // Banners are static-data; refresh roughly once per session.
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,

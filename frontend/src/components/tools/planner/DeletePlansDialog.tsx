@@ -2,6 +2,11 @@ import { TriangleAlertIcon } from "lucide-react";
 import { useState } from "react";
 import { AlertDialog, AlertDialogClose, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogPopup, AlertDialogTitle } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
+import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "./DeletePlansDialog.messages";
+
+type DeleteT = TypedT<typeof messages>;
 
 export interface IDeletePlansTarget {
     ids: string[];
@@ -16,12 +21,14 @@ interface IDeletePlansDialogProps {
     errorMessage: string | null;
 }
 
-function formatNames(names: string[]): string {
+function formatNames(names: string[], t: DeleteT): string {
     if (names.length <= 3) return names.join(", ");
-    return `${names.slice(0, 3).join(", ")} and ${names.length - 3} more`;
+    return t("planner.delete.names", { names: names.slice(0, 3).join(", "), count: names.length - 3 });
 }
 
 export function DeletePlansDialog({ target, onOpenChange, onConfirm, isSubmitting, errorMessage }: IDeletePlansDialogProps) {
+    const t: DeleteT = useT("tools");
+    const rt: TypedRichT<typeof messages> = useRichT("tools");
     const open = target !== null;
 
     // The target goes null the moment the dialog starts closing, but the close
@@ -45,10 +52,8 @@ export function DeletePlansDialog({ target, onOpenChange, onConfirm, isSubmittin
                             <TriangleAlertIcon className="h-4.5 w-4.5" aria-hidden="true" />
                         </span>
                         <div className="flex min-w-0 flex-col gap-1">
-                            <AlertDialogTitle>{count === 1 ? "Delete plan?" : `Delete ${count} plans?`}</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                <span className="font-medium text-foreground">{shown ? formatNames(shown.names) : "This plan"}</span> and {count === 1 ? "its" : "their"} promotion, level, skill, and module goals will be permanently removed. This cannot be undone.
-                            </AlertDialogDescription>
+                            <AlertDialogTitle>{t("planner.delete.title", { count })}</AlertDialogTitle>
+                            <AlertDialogDescription>{rt("planner.delete.desc", { names: <span className="font-medium text-foreground">{shown ? formatNames(shown.names, t) : t("planner.delete.fallbackName")}</span>, count })}</AlertDialogDescription>
                         </div>
                     </div>
                 </AlertDialogHeader>
@@ -60,9 +65,9 @@ export function DeletePlansDialog({ target, onOpenChange, onConfirm, isSubmittin
                 )}
 
                 <AlertDialogFooter>
-                    <AlertDialogClose render={<Button type="button" variant="outline" disabled={isSubmitting} />}>Cancel</AlertDialogClose>
+                    <AlertDialogClose render={<Button type="button" variant="outline" disabled={isSubmitting} />}>{t("planner.delete.cancel")}</AlertDialogClose>
                     <Button type="button" variant="destructive" loading={isSubmitting} onClick={handleConfirm}>
-                        {count === 1 ? "Delete plan" : `Delete ${count} plans`}
+                        {t("planner.delete.confirm", { count })}
                     </Button>
                 </AlertDialogFooter>
             </AlertDialogPopup>

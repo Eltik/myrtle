@@ -5,9 +5,12 @@ import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, Dia
 import { Field, FieldDescription, FieldLabel } from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
 import { MarkdownEditor } from "#/components/ui/markdown-editor";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { TIER_DESCRIPTION_MAX as DESC_MAX, TIER_NAME_MAX as NAME_MAX } from "../shared";
 import { ColorPicker } from "./ColorPicker";
 import type { IEditTier } from "./state";
+import type { messages } from "./TierSettingsDialog.messages";
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
@@ -21,6 +24,7 @@ interface ITierSettingsDialogProps {
 }
 
 export function TierSettingsDialog({ tier, canDelete, onClose, onSave, onDelete, onClear }: ITierSettingsDialogProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
     const nameId = useId();
     const descId = useId();
     const nameInputRef = useRef<HTMLInputElement>(null);
@@ -77,57 +81,57 @@ export function TierSettingsDialog({ tier, canDelete, onClose, onSave, onDelete,
             <DialogPopup className="sm:max-w-md">
                 <form onSubmit={handleSave} onKeyDown={handleKeyDown} className="flex min-h-0 flex-col">
                     <DialogHeader>
-                        <DialogTitle>Tier settings</DialogTitle>
-                        <DialogDescription>Customize the label, color, and description for this tier. Changes take effect when you save the list.</DialogDescription>
+                        <DialogTitle>{t("edit.tierSettings.title")}</DialogTitle>
+                        <DialogDescription>{t("edit.tierSettings.description")}</DialogDescription>
                     </DialogHeader>
 
                     <DialogPanel className="flex flex-col gap-5">
                         <Field>
                             <FieldLabel htmlFor={nameId}>
-                                Label
+                                {t("edit.tierSettings.label")}
                                 <span className="ml-auto font-mono text-[10.5px] text-muted-foreground tabular-nums">
                                     {name.length} / {NAME_MAX}
                                 </span>
                             </FieldLabel>
-                            <Input ref={nameInputRef} id={nameId} value={name} onChange={(e) => setName((e.target as HTMLInputElement).value.slice(0, NAME_MAX))} placeholder="S, A, Pick-One, etc." autoFocus required aria-invalid={trimmedName.length === 0 && name.length > 0 ? true : undefined} />
-                            <FieldDescription>Short labels like "S" or "A" read clearest; up to {NAME_MAX} characters.</FieldDescription>
+                            <Input ref={nameInputRef} id={nameId} value={name} onChange={(e) => setName((e.target as HTMLInputElement).value.slice(0, NAME_MAX))} placeholder={t("edit.tierSettings.labelPlaceholder")} autoFocus required aria-invalid={trimmedName.length === 0 && name.length > 0 ? true : undefined} />
+                            <FieldDescription>{t("edit.tierSettings.labelHint", { max: NAME_MAX })}</FieldDescription>
                         </Field>
 
                         <Field>
-                            <FieldLabel>Color</FieldLabel>
+                            <FieldLabel>{t("edit.tierSettings.color")}</FieldLabel>
                             <ColorPicker value={color} onChange={setColor} />
                         </Field>
 
                         <Field>
                             <FieldLabel htmlFor={descId}>
-                                Description
+                                {t("edit.tierSettings.descriptionLabel")}
                                 <span className="ml-auto font-mono text-[10.5px] text-muted-foreground tabular-nums">
                                     {description.length} / {DESC_MAX}
                                 </span>
                             </FieldLabel>
-                            <MarkdownEditor id={descId} value={description} onChange={setDescription} placeholder="When should an operator land here?" rows={3} maxLength={DESC_MAX} showHint={false} textareaClassName="min-h-20 sm:min-h-24" />
-                            <FieldDescription>Optional. Shown to viewers in the tier hover/detail.</FieldDescription>
+                            <MarkdownEditor id={descId} value={description} onChange={setDescription} placeholder={t("edit.tierSettings.descriptionPlaceholder")} rows={3} maxLength={DESC_MAX} showHint={false} textareaClassName="min-h-20 sm:min-h-24" />
+                            <FieldDescription>{t("edit.tierSettings.descriptionHint")}</FieldDescription>
                         </Field>
 
                         {operatorCount > 0 && (
                             <div className="-mx-6 -mb-6 flex flex-wrap items-center justify-between gap-2 border-border border-t px-6 py-3">
                                 <p className="m-0 font-sans text-[12.5px] text-muted-foreground">
-                                    <span className="font-medium text-foreground tabular-nums">{operatorCount}</span> operator{operatorCount === 1 ? "" : "s"} in this tier
+                                    <span className="font-medium text-foreground tabular-nums">{operatorCount}</span> {t("edit.tierSettings.operatorCount", { count: operatorCount })}
                                 </p>
                                 {confirmingClear ? (
                                     <div className="flex items-center gap-2">
-                                        <span className="font-sans text-[12.5px] text-muted-foreground">Remove all?</span>
+                                        <span className="font-sans text-[12.5px] text-muted-foreground">{t("edit.tierSettings.clearConfirmPrompt")}</span>
                                         <Button type="button" size="sm" variant="destructive" onClick={onClear}>
-                                            Confirm
+                                            {t("edit.tierSettings.confirm")}
                                         </Button>
                                         <Button type="button" size="sm" variant="ghost" onClick={() => setConfirmingClear(false)}>
-                                            Cancel
+                                            {t("edit.tierSettings.cancel")}
                                         </Button>
                                     </div>
                                 ) : (
                                     <Button type="button" size="sm" variant="destructive-outline" onClick={() => setConfirmingClear(true)}>
                                         <EraserIcon />
-                                        Clear operators
+                                        {t("edit.tierSettings.clear")}
                                     </Button>
                                 )}
                             </div>
@@ -138,28 +142,28 @@ export function TierSettingsDialog({ tier, canDelete, onClose, onSave, onDelete,
                         {canDelete ? (
                             confirmingDelete ? (
                                 <div className="flex items-center gap-2">
-                                    <span className="font-sans text-[12.5px] text-muted-foreground">Delete this tier?</span>
+                                    <span className="font-sans text-[12.5px] text-muted-foreground">{t("edit.tierSettings.deleteConfirmPrompt")}</span>
                                     <Button type="button" size="sm" variant="destructive" onClick={onDelete}>
-                                        Confirm
+                                        {t("edit.tierSettings.confirm")}
                                     </Button>
                                     <Button type="button" size="sm" variant="ghost" onClick={() => setConfirmingDelete(false)}>
-                                        Cancel
+                                        {t("edit.tierSettings.cancel")}
                                     </Button>
                                 </div>
                             ) : (
                                 <Button type="button" variant="destructive-outline" size="sm" onClick={() => setConfirmingDelete(true)}>
                                     <Trash2Icon />
-                                    Delete tier
+                                    {t("edit.tierSettings.delete")}
                                 </Button>
                             )
                         ) : (
-                            <span className="font-sans text-[11.5px] text-muted-foreground italic">Lists must have at least one tier.</span>
+                            <span className="font-sans text-[11.5px] text-muted-foreground italic">{t("edit.tierSettings.lastTier")}</span>
                         )}
 
                         <div className="flex items-center gap-2">
-                            <DialogClose render={<Button type="button" variant="outline" />}>Cancel</DialogClose>
+                            <DialogClose render={<Button type="button" variant="outline" />}>{t("edit.tierSettings.cancel")}</DialogClose>
                             <Button type="submit" disabled={!canSave}>
-                                Save tier
+                                {t("edit.tierSettings.save")}
                             </Button>
                         </div>
                     </DialogFooter>

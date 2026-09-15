@@ -1,17 +1,26 @@
 import { ChevronDown, GitCommitHorizontal } from "lucide-react";
 import type { IChangelogCommit } from "#/lib/api/changelog";
-import { cn, formatRelative } from "#/lib/utils";
+import { type IFormatters, useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import { cn } from "#/lib/utils";
+import type { messages } from "./CommitItem.messages";
 import { commitTypeStyle } from "./commit-types";
+import type { messages as commitTypeMessages } from "./commit-types.messages";
 
 const BODY_PREVIEW_LIMIT = 220;
 
-function absoluteDate(iso: string): string {
+/** Resolves this file's own keys plus the commit-type labels the styles table points at. */
+type CommitItemT = TypedT<typeof messages & typeof commitTypeMessages>;
+
+function absoluteDate(iso: string, f: IFormatters): string {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return "";
-    return d.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+    return f.date(d, { dateStyle: "medium", timeStyle: "short" });
 }
 
 export function CommitItem({ commit }: { commit: IChangelogCommit }) {
+    const t: CommitItemT = useT("changelog");
+    const f = useFormatters();
     const style = commitTypeStyle(commit.type);
     const { Icon } = style;
     const hasBody = commit.body.length > 0;
@@ -32,10 +41,10 @@ export function CommitItem({ commit }: { commit: IChangelogCommit }) {
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
                     <span className={cn("inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-[11px] uppercase leading-none tracking-wide ring-1 ring-inset", style.pillClass)}>
                         <Icon className="size-3" strokeWidth={2} aria-hidden="true" />
-                        {style.label}
+                        {t(style.labelKey)}
                     </span>
                     {commit.scope ? <span className="inline-flex shrink-0 items-center rounded-md bg-muted px-1.5 py-0.5 font-medium font-mono text-[11px] text-muted-foreground leading-none">{commit.scope}</span> : null}
-                    {commit.breaking ? <span className="inline-flex shrink-0 items-center rounded-md bg-destructive/12 px-1.5 py-0.5 font-semibold text-[11px] text-destructive-foreground uppercase leading-none tracking-wide ring-1 ring-destructive/25 ring-inset">Breaking</span> : null}
+                    {commit.breaking ? <span className="inline-flex shrink-0 items-center rounded-md bg-destructive/12 px-1.5 py-0.5 font-semibold text-[11px] text-destructive-foreground uppercase leading-none tracking-wide ring-1 ring-destructive/25 ring-inset">{t("commit.breaking")}</span> : null}
                 </div>
 
                 <p className="m-0 mt-2 font-sans font-semibold text-[15px] text-foreground leading-snug">{commit.title}</p>
@@ -45,7 +54,7 @@ export function CommitItem({ commit }: { commit: IChangelogCommit }) {
                         <details className="group/body mt-1.5">
                             <summary className="inline-flex cursor-pointer list-none items-center gap-1 font-sans text-[13px] text-muted-foreground leading-none transition-colors hover:text-foreground [&::-webkit-details-marker]:hidden">
                                 <ChevronDown className="size-3.5 transition-transform duration-200 group-open/body:rotate-180" strokeWidth={2} aria-hidden="true" />
-                                Details
+                                {t("commit.details")}
                             </summary>
                             <p className="m-0 mt-2 whitespace-pre-line font-sans text-[13.5px] text-muted-foreground leading-[1.6]">{commit.body}</p>
                         </details>
@@ -74,15 +83,15 @@ export function CommitItem({ commit }: { commit: IChangelogCommit }) {
                     <span aria-hidden="true" className="text-border">
                         ·
                     </span>
-                    <time dateTime={commit.date} title={absoluteDate(commit.date)} className="tabular-nums">
-                        {formatRelative(commit.date)}
+                    <time dateTime={commit.date} title={absoluteDate(commit.date, f)} className="tabular-nums">
+                        {f.relative(commit.date)}
                     </time>
                     <a
                         href={commit.url}
                         target="_blank"
                         rel="noreferrer"
                         className="ml-auto inline-flex items-center gap-1 rounded-md bg-muted/60 px-1.5 py-0.5 font-medium font-mono text-[11.5px] text-muted-foreground no-underline transition-colors hover:bg-muted hover:text-foreground"
-                        title={`View ${commit.shortSha} on GitHub`}
+                        title={t("commit.viewOnGitHub", { sha: commit.shortSha })}
                     >
                         {commit.shortSha}
                     </a>

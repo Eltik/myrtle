@@ -5,9 +5,12 @@ import { Field, FieldDescription, FieldLabel } from "#/components/ui/field";
 import { MarkdownEditor } from "#/components/ui/markdown-editor";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ITierOperator } from "#/lib/api/tier-lists";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { RARITY_HEX_MUTED } from "#/lib/utils";
 import { readableTextColor } from "../detail/contrast";
 import { PLACEMENT_DESCRIPTION_MAX } from "../shared";
+import type { messages } from "./PickTierDialog.messages";
 import type { IEditTier } from "./state";
 
 interface IPickTierDialogProps {
@@ -21,6 +24,7 @@ interface IPickTierDialogProps {
 }
 
 export function PickTierDialog({ operator, currentTierId, description, tiers, onClose, onPick, onDescriptionChange }: IPickTierDialogProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
     const accent = operator ? (RARITY_HEX_MUTED[operator.rarity] ?? RARITY_HEX_MUTED[1]) : null;
     const descId = useId();
     const isPlaced = currentTierId !== null;
@@ -39,38 +43,38 @@ export function PickTierDialog({ operator, currentTierId, description, tiers, on
                             <span className="font-sans">{operator?.name ?? ""}</span>
                         </span>
                     </DialogTitle>
-                    <DialogDescription>Choose a tier, then add an optional note. You can also drag operators directly onto a tier.</DialogDescription>
+                    <DialogDescription>{t("edit.pick.description")}</DialogDescription>
                 </DialogHeader>
 
                 <DialogPanel className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1.5">
-                        <p className="m-0 font-bold font-mono text-[10.5px] text-muted-foreground/80 uppercase leading-none tracking-[0.16em]">Placement</p>
-                        {tiers.map((t) => {
-                            const isCurrent = t.id === currentTierId;
-                            const fg = readableTextColor(t.color);
+                        <p className="m-0 font-bold font-mono text-[10.5px] text-muted-foreground/80 uppercase leading-none tracking-[0.16em]">{t("edit.pick.placement")}</p>
+                        {tiers.map((tier) => {
+                            const isCurrent = tier.id === currentTierId;
+                            const fg = readableTextColor(tier.color);
                             return (
                                 <button
-                                    key={t.id}
+                                    key={tier.id}
                                     type="button"
                                     className="flex items-center gap-3 rounded-lg border border-border px-2.5 py-2 text-left font-sans text-sm transition-colors hover:bg-accent/50 data-[selected=true]:border-ring data-[selected=true]:bg-accent/30"
                                     data-selected={isCurrent || undefined}
                                     aria-pressed={isCurrent}
-                                    onClick={() => onPick(t.id)}
+                                    onClick={() => onPick(tier.id)}
                                 >
                                     <span
                                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md font-extrabold font-sans text-[15px] leading-none tracking-tight"
                                         style={{
-                                            background: t.color,
+                                            background: tier.color,
                                             color: fg,
                                             textShadow: fg === "white" ? "0 1px 0 oklch(0 0 0 / 0.25)" : "0 1px 0 oklch(1 0 0 / 0.5)",
                                         }}
                                         aria-hidden="true"
                                     >
-                                        {t.name.length <= 2 ? t.name : t.name.charAt(0)}
+                                        {tier.name.length <= 2 ? tier.name : tier.name.charAt(0)}
                                     </span>
-                                    <span className="min-w-0 flex-1 truncate">{t.name}</span>
-                                    <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{t.operatorIds.length}</span>
-                                    {isCurrent && <span className="font-bold font-mono text-[10px] text-primary uppercase tracking-wider">Current</span>}
+                                    <span className="min-w-0 flex-1 truncate">{tier.name}</span>
+                                    <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{tier.operatorIds.length}</span>
+                                    {isCurrent && <span className="font-bold font-mono text-[10px] text-primary uppercase tracking-wider">{t("edit.pick.current")}</span>}
                                 </button>
                             );
                         })}
@@ -78,25 +82,25 @@ export function PickTierDialog({ operator, currentTierId, description, tiers, on
 
                     <Field>
                         <FieldLabel htmlFor={descId}>
-                            Description
+                            {t("edit.pick.noteLabel")}
                             <span className="ml-auto font-mono text-[10.5px] text-muted-foreground tabular-nums">
                                 {description.length} / {PLACEMENT_DESCRIPTION_MAX}
                             </span>
                         </FieldLabel>
-                        <MarkdownEditor id={descId} value={description} onChange={onDescriptionChange} placeholder="Why does this operator land here?" rows={4} maxLength={PLACEMENT_DESCRIPTION_MAX} showHint={false} />
-                        <FieldDescription>{isPlaced ? "Optional. Shown to viewers on this operator's tile." : "Pick a tier above to save this note with the placement."}</FieldDescription>
+                        <MarkdownEditor id={descId} value={description} onChange={onDescriptionChange} placeholder={t("edit.pick.notePlaceholder")} rows={4} maxLength={PLACEMENT_DESCRIPTION_MAX} showHint={false} />
+                        <FieldDescription>{isPlaced ? t("edit.pick.noteHintPlaced") : t("edit.pick.noteHintUnplaced")}</FieldDescription>
                     </Field>
                 </DialogPanel>
 
                 <DialogFooter className="justify-between sm:justify-between">
                     {isPlaced ? (
                         <Button type="button" variant="destructive-outline" size="sm" onClick={() => onPick(null)}>
-                            Unplace
+                            {t("edit.pick.unplace")}
                         </Button>
                     ) : (
                         <span />
                     )}
-                    <DialogClose render={<Button type="button" variant="outline" />}>Done</DialogClose>
+                    <DialogClose render={<Button type="button" variant="outline" />}>{t("edit.pick.done")}</DialogClose>
                 </DialogFooter>
             </DialogPopup>
         </Dialog>

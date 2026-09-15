@@ -4,16 +4,20 @@ import { Button } from "#/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "#/components/ui/popover";
 import { Switch } from "#/components/ui/switch";
 import { useTheme } from "#/hooks/use-theme";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { accentToRenderedHex, COLOR_PRESETS, PRESET_MATCH_TOLERANCE } from "#/lib/theme/color-utils";
 import { cn } from "#/lib/utils";
+import type { messages } from "./ThemeToggle.messages";
 
 export default function ThemeToggle() {
     const { mode, resolved, accent, isDefaultAccent, dynamicArtwork, setMode, setPresetHue, setCustomHex, resetAccent, setDynamicArtwork } = useTheme();
     const customInputId = useId();
     const dynamicArtId = useId();
+    const t: TypedT<typeof messages> = useT("nav");
 
     const TriggerIcon = mode === "auto" ? MonitorIcon : mode === "dark" ? MoonIcon : SunIcon;
-    const triggerLabel = mode === "auto" ? "Theme: System" : `Theme: ${mode === "dark" ? "Dark" : "Light"}`;
+    const triggerLabel = t("themeToggle.trigger", { mode });
 
     const renderedHex = accentToRenderedHex(accent, resolved === "dark");
     const customLabel = accent?.type === "custom" ? accent.hex.toUpperCase() : renderedHex.toUpperCase();
@@ -26,7 +30,7 @@ export default function ThemeToggle() {
         <Popover>
             <PopoverTrigger
                 render={
-                    <Button variant="ghost" size="icon" aria-label={`${triggerLabel}. Open appearance settings.`} title={triggerLabel}>
+                    <Button variant="ghost" size="icon" aria-label={t("themeToggle.triggerAria", { label: triggerLabel })} title={triggerLabel}>
                         <TriggerIcon className="h-4 w-4" />
                     </Button>
                 }
@@ -35,12 +39,12 @@ export default function ThemeToggle() {
                 <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-1.5 font-medium text-muted-foreground text-xs">
                         <SunIcon className="h-3.5 w-3.5" />
-                        <span>Appearance</span>
+                        <span>{t("themeToggle.appearance")}</span>
                     </div>
                     <div className="grid grid-cols-3 gap-1">
-                        <ModeButton active={mode === "light"} icon={<SunIcon className="h-3.5 w-3.5" />} label="Light" onClick={() => setMode("light")} />
-                        <ModeButton active={mode === "dark"} icon={<MoonIcon className="h-3.5 w-3.5" />} label="Dark" onClick={() => setMode("dark")} />
-                        <ModeButton active={mode === "auto"} icon={<MonitorIcon className="h-3.5 w-3.5" />} label="Auto" onClick={() => setMode("auto")} />
+                        <ModeButton active={mode === "light"} icon={<SunIcon className="h-3.5 w-3.5" />} label={t("themeToggle.light")} onClick={() => setMode("light")} />
+                        <ModeButton active={mode === "dark"} icon={<MoonIcon className="h-3.5 w-3.5" />} label={t("themeToggle.dark")} onClick={() => setMode("dark")} />
+                        <ModeButton active={mode === "auto"} icon={<MonitorIcon className="h-3.5 w-3.5" />} label={t("themeToggle.auto")} onClick={() => setMode("auto")} />
                     </div>
 
                     <div className="-mx-1 h-px bg-border" />
@@ -48,12 +52,12 @@ export default function ThemeToggle() {
                     <div className="flex items-center justify-between font-medium text-muted-foreground text-xs">
                         <span className="flex items-center gap-1.5">
                             <PaletteIcon className="h-3.5 w-3.5" />
-                            Accent
+                            {t("themeToggle.accent")}
                         </span>
                         {!isDefaultAccent && (
-                            <button type="button" onClick={resetAccent} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" aria-label="Reset accent color to default">
+                            <button type="button" onClick={resetAccent} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" aria-label={t("themeToggle.resetAccentAria")}>
                                 <RotateCcwIcon className="h-3 w-3" />
-                                Reset
+                                {t("themeToggle.reset")}
                             </button>
                         )}
                     </div>
@@ -68,7 +72,7 @@ export default function ThemeToggle() {
                                     type="button"
                                     onClick={() => setPresetHue(preset.hue)}
                                     title={preset.name}
-                                    aria-label={`Set accent color to ${preset.name}`}
+                                    aria-label={t("themeToggle.setAccent", { name: preset.name })}
                                     aria-pressed={selected}
                                     className={cn("relative aspect-square w-full rounded-full ring-offset-2 ring-offset-popover transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", selected && "ring-2 ring-foreground")}
                                     style={{ backgroundColor: swatch }}
@@ -82,10 +86,10 @@ export default function ThemeToggle() {
                             <span className="relative inline-block size-5 overflow-hidden rounded-full border border-border" aria-hidden="true">
                                 <span className="absolute inset-0" style={{ backgroundColor: renderedHex }} />
                             </span>
-                            Custom color
+                            {t("themeToggle.customColor")}
                         </span>
                         <span className="font-mono text-[10px] text-muted-foreground/70 tabular-nums">{customLabel}</span>
-                        <input id={customInputId} type="color" value={renderedHex} onChange={onPickCustom} className="sr-only" aria-label="Choose custom accent color" />
+                        <input id={customInputId} type="color" value={renderedHex} onChange={onPickCustom} className="sr-only" aria-label={t("themeToggle.chooseCustomColor")} />
                     </label>
 
                     <div className="-mx-1 h-px bg-border" />
@@ -93,23 +97,24 @@ export default function ThemeToggle() {
                     <label htmlFor={dynamicArtId} className="flex cursor-pointer items-center justify-between gap-2">
                         <span className="flex items-center gap-1.5 font-medium text-muted-foreground text-xs">
                             <SparklesIcon className="h-3.5 w-3.5" />
-                            Dynamic art
+                            {t("themeToggle.dynamicArt")}
                         </span>
-                        <Switch id={dynamicArtId} checked={dynamicArtwork} onCheckedChange={setDynamicArtwork} aria-label="Animate dynamic (L2D) operator art" />
+                        <Switch id={dynamicArtId} checked={dynamicArtwork} onCheckedChange={setDynamicArtwork} aria-label={t("themeToggle.dynamicArtAria")} />
                     </label>
-                    <p className="text-[10px] text-muted-foreground/70 leading-snug">Animate L2D art on operator and profile pages. Heavier to load.</p>
+                    <p className="text-[10px] text-muted-foreground/70 leading-snug">{t("themeToggle.dynamicArtNote")}</p>
                 </div>
             </PopoverContent>
         </Popover>
     );
 }
 
-function ModeButton({ active, icon, label, onClick }: { active: boolean; icon: React.ReactNode; label: string; onClick: () => void }) {
+function ModeButton({ active, icon, label, lang, onClick }: { active: boolean; icon?: React.ReactNode; label: string; lang?: string; onClick: () => void }) {
     return (
         <button
             type="button"
             onClick={onClick}
             aria-pressed={active}
+            lang={lang}
             className={cn("inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 font-medium text-foreground text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", active ? "border-border bg-accent" : "hover:bg-accent/60")}
         >
             {icon}

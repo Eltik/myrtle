@@ -3,12 +3,17 @@ import { Skeleton } from "#/components/ui/skeleton";
 import { buildBoard } from "#/lib/base/board";
 import { toRosterOptions } from "#/lib/base/roster";
 import { useOptimizer } from "#/lib/base/use-optimizer";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "../OptimizerTab.messages";
 import type { IOptimizerProps } from "../optimizers";
 import { BasePanel } from "./BasePanel";
 import { BaseOptimizerProvider } from "./base-context";
 import { crewsForShift } from "./shift-crews";
 
 export function BaseOptimizer({ uid, roster, operatorsStatic }: IOptimizerProps) {
+    /** The empty state is declared next to the tab that hosts this optimizer. */
+    const t: TypedT<typeof messages> = useT("user");
     const api = useOptimizer(uid);
 
     const rosterById = useMemo(() => new Map(toRosterOptions(roster, operatorsStatic, api.ignorePromotion).map((op) => [op.id, op])), [roster, operatorsStatic, api.ignorePromotion]);
@@ -29,7 +34,7 @@ export function BaseOptimizer({ uid, roster, operatorsStatic }: IOptimizerProps)
     if (api.layout.length === 0) {
         return (
             <div className="rounded-xl border border-border border-dashed p-8 text-center">
-                <p className="text-muted-foreground text-sm">This profile has no base data to plan against yet.</p>
+                <p className="text-muted-foreground text-sm">{t("profile.optimizer.noBaseData")}</p>
             </div>
         );
     }

@@ -1,5 +1,13 @@
 import { Kicker } from "#/components/ui/kicker";
 import type { ClientGachaGroup, IBanner, IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import { BANNER_GROUP_LABEL_KEYS, type GachaMessageKey } from "../../constants";
+import type { messages as gachaConstantsMessages } from "../../constants.messages";
+import type { messages } from "./PityPanel.messages";
+
+/** This panel renders its own chrome plus the shared banner-bucket labels. */
+type PityT = TypedT<typeof messages & typeof gachaConstantsMessages>;
 
 interface IPityPanelProps {
     records: IClientGachaRecords | null;
@@ -9,7 +17,7 @@ interface IPityPanelProps {
 
 interface IBannerPity {
     key: ClientGachaGroup;
-    label: string;
+    labelKey: GachaMessageKey;
     pity: number;
     softPityAt: number;
     hardPityAt: number;
@@ -51,15 +59,16 @@ function pityWithLimitedReset(items: IGachaItem[], bannersById: Map<string, IBan
     return { pity: computePity(items), reset: false };
 }
 
-const BANNER_CONFIGS: { key: ClientGachaGroup; label: string; softPityAt: number; hardPityAt: number; color: string }[] = [
-    { key: "limited", label: "Limited", softPityAt: 50, hardPityAt: 99, color: "oklch(0.85 0.18 80)" },
+const BANNER_CONFIGS: { key: ClientGachaGroup; labelKey: GachaMessageKey; softPityAt: number; hardPityAt: number; color: string }[] = [
+    { key: "limited", labelKey: BANNER_GROUP_LABEL_KEYS.limited, softPityAt: 50, hardPityAt: 99, color: "oklch(0.85 0.18 80)" },
     // Collab/joint operation banners: separate pity from limited, hard guarantee at 120 pulls.
-    { key: "linkage", label: "Collab", softPityAt: 50, hardPityAt: 120, color: "oklch(0.78 0.16 320)" },
-    { key: "regular", label: "Standard", softPityAt: 50, hardPityAt: 99, color: "#bcabdb" },
-    { key: "special", label: "Kernel", softPityAt: 45, hardPityAt: 80, color: "#88c8e3" },
+    { key: "linkage", labelKey: BANNER_GROUP_LABEL_KEYS.linkage, softPityAt: 50, hardPityAt: 120, color: "oklch(0.78 0.16 320)" },
+    { key: "regular", labelKey: BANNER_GROUP_LABEL_KEYS.regular, softPityAt: 50, hardPityAt: 99, color: "#bcabdb" },
+    { key: "special", labelKey: BANNER_GROUP_LABEL_KEYS.special, softPityAt: 45, hardPityAt: 80, color: "#88c8e3" },
 ];
 
 function PityMeter({ pity, softPityAt, hardPityAt, color }: { pity: number; softPityAt: number; hardPityAt: number; color: string }) {
+    const t: PityT = useT("gacha");
     const pct = Math.min((pity / hardPityAt) * 100, 100);
     const softPct = (softPityAt / hardPityAt) * 100;
     const isSoftPity = pity >= softPityAt;
@@ -77,17 +86,18 @@ function PityMeter({ pity, softPityAt, hardPityAt, color }: { pity: number; soft
                         }}
                     />
                 </div>
-                <div className="pointer-events-none absolute top-0 bottom-0 w-px bg-foreground/30" style={{ left: `${softPct}%` }} title={`Soft pity at ${softPityAt}`} aria-hidden />
+                <div className="pointer-events-none absolute top-0 bottom-0 w-px bg-foreground/30" style={{ left: `${softPct}%` }} title={t("history.pity.softPityAt.title", { count: softPityAt })} aria-hidden />
             </div>
             <div className="flex items-center justify-between font-mono text-[10px] text-muted-foreground">
-                <span>soft pity at {softPityAt}</span>
-                <span>guaranteed at {hardPityAt}</span>
+                <span>{t("history.pity.softPityAt", { count: softPityAt })}</span>
+                <span>{t("history.pity.guaranteedAt", { count: hardPityAt })}</span>
             </div>
         </div>
     );
 }
 
-function PityCard({ label, pity, softPityAt, hardPityAt, color, total, reset, resetReason }: { label: string; pity: number; softPityAt: number; hardPityAt: number; color: string; total: number; reset?: boolean; resetReason?: string }) {
+function PityCard({ labelKey, pity, softPityAt, hardPityAt, color, total, reset, resetReason }: { labelKey: GachaMessageKey; pity: number; softPityAt: number; hardPityAt: number; color: string; total: number; reset?: boolean; resetReason?: string }) {
+    const t: PityT = useT("gacha");
     const isSoftPity = pity >= softPityAt;
     const isNearHard = pity >= hardPityAt - 5;
     const statusColor = reset ? "text-muted-foreground" : isNearHard ? "text-[oklch(0.78_0.18_25)]" : isSoftPity ? "text-[oklch(0.78_0.18_80)]" : "text-foreground";
@@ -96,48 +106,46 @@ function PityCard({ label, pity, softPityAt, hardPityAt, color, total, reset, re
         <div className="flex flex-col gap-3 rounded-xl border border-border bg-muted/30 p-4">
             <div className="flex items-start justify-between gap-3">
                 <div>
-                    <div className="mb-1 font-mono text-[10px] text-muted-foreground uppercase tracking-[0.16em]">{label} banner</div>
+                    <div className="mb-1 font-mono text-[10px] text-muted-foreground uppercase tracking-[0.16em]">{t("history.pity.cardLabel", { type: t(labelKey) })}</div>
                     <div className={`font-bold font-sans text-[32px] tabular-nums leading-none tracking-[-0.04em] ${statusColor}`}>
                         {pity}
-                        <span className="ml-1 font-medium font-mono text-[13px] text-muted-foreground">pulls</span>
+                        <span className="ml-1 font-medium font-mono text-[13px] text-muted-foreground">{t("history.pity.pullsUnit")}</span>
                     </div>
                 </div>
                 <div className="flex flex-col items-end gap-1 text-right">
                     {reset ? (
                         <span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted px-2 py-0.5 font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">
                             <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
-                            banner ended
+                            {t("history.pity.bannerEnded")}
                         </span>
                     ) : (
                         <>
                             {isSoftPity ? (
                                 <span className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[9.5px] text-amber-600 uppercase tracking-[0.14em] dark:text-amber-400">
                                     <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
-                                    soft pity
+                                    {t("history.pity.softPity")}
                                 </span>
                             ) : null}
                             {isNearHard ? (
                                 <span className="inline-flex items-center gap-1 rounded-md border border-red-500/30 bg-red-500/10 px-2 py-0.5 font-mono text-[9.5px] text-red-600 uppercase tracking-[0.14em] dark:text-red-400">
                                     <span className="block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
-                                    near guaranteed
+                                    {t("history.pity.nearGuaranteed")}
                                 </span>
                             ) : null}
                         </>
                     )}
-                    <span className="font-mono text-[10px] text-muted-foreground tabular-nums">{total} total</span>
+                    <span className="font-mono text-[10px] text-muted-foreground tabular-nums">{t("history.pity.total", { count: total })}</span>
                 </div>
             </div>
             <PityMeter pity={pity} softPityAt={softPityAt} hardPityAt={hardPityAt} color={color} />
-            {reset && resetReason ? (
-                <div className="font-mono text-[10px] text-muted-foreground leading-snug">
-                    Pity does not carry between {label} banners. Your last pull was on “{resetReason},” which has ended.
-                </div>
-            ) : null}
+            {reset && resetReason ? <div className="font-mono text-[10px] text-muted-foreground leading-snug">{t("history.pity.resetNote", { type: t(labelKey), banner: resetReason })}</div> : null}
         </div>
     );
 }
 
 export function PityPanel({ records, bannersById, isLoading }: IPityPanelProps) {
+    const t: PityT = useT("gacha");
+
     if (isLoading) {
         return (
             <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
@@ -166,12 +174,12 @@ export function PityPanel({ records, bannersById, isLoading }: IPityPanelProps) 
     return (
         <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-4.5 sm:p-[22px_24px]">
             <header>
-                <Kicker className="mb-1.5">Current pity</Kicker>
-                <h2 className="m-0 font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">Pulls since last 6★.</h2>
+                <Kicker className="mb-1.5">{t("history.pity.kicker")}</Kicker>
+                <h2 className="m-0 font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{t("history.pity.title")}</h2>
             </header>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {pities.map((p) => (
-                    <PityCard key={p.key} label={p.label} pity={p.pity} softPityAt={p.softPityAt} hardPityAt={p.hardPityAt} color={p.color} total={records[p.key].total} reset={p.reset} resetReason={p.resetReason} />
+                    <PityCard key={p.key} labelKey={p.labelKey} pity={p.pity} softPityAt={p.softPityAt} hardPityAt={p.hardPityAt} color={p.color} total={records[p.key].total} reset={p.reset} resetReason={p.resetReason} />
                 ))}
             </div>
         </section>

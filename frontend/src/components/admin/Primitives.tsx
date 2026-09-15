@@ -1,5 +1,8 @@
 import type * as React from "react";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./Primitives.messages";
 
 // Server-coded gradient (used as avatar background tint).
 export const SERVER_TINT: Record<string, string> = {
@@ -116,22 +119,30 @@ interface IRoleBadgeProps {
 }
 
 export function RoleBadge({ role }: IRoleBadgeProps): React.ReactElement {
-    if (role === "super_admin") return <span className="inline-flex h-4.5 items-center rounded-sm bg-primary px-1.5 font-medium text-[11px] text-primary-foreground leading-none">super_admin</span>;
+    const t: TypedT<typeof messages> = useT("admin");
+    if (role === "super_admin") return <span className="inline-flex h-4.5 items-center rounded-sm bg-primary px-1.5 font-medium text-[11px] text-primary-foreground leading-none">{t("role.superAdmin")}</span>;
     if (role === "tier_list_admin")
         return (
             <span className="inline-flex h-4.5 items-center gap-1 rounded-sm bg-success/8 px-1.5 font-medium text-[11px] text-success-foreground leading-none">
                 <span className="size-1.5 rounded-full bg-success-foreground/85" />
-                tier_list_admin
+                {t("role.tierListAdmin")}
             </span>
         );
     if (role === "tier_list_editor")
         return (
             <span className="inline-flex h-4.5 items-center gap-1 rounded-sm bg-info/8 px-1.5 font-medium text-[11px] text-info-foreground leading-none">
                 <span className="size-1.5 rounded-full bg-info-foreground/85" />
-                tier_list_editor
+                {t("role.tierListEditor")}
             </span>
         );
-    return <span className="font-mono text-[12px] text-muted-foreground">user</span>;
+    if (role === "translator")
+        return (
+            <span className="inline-flex h-4.5 items-center gap-1 rounded-sm bg-[oklch(0.62_0.17_305/0.1)] px-1.5 font-medium text-[11px] text-[oklch(0.45_0.17_305)] leading-none dark:bg-[oklch(0.62_0.17_305/0.18)] dark:text-[oklch(0.82_0.11_305)]">
+                <span className="size-1.5 rounded-full bg-current/85" />
+                {t("role.translator")}
+            </span>
+        );
+    return <span className="font-mono text-[12px] text-muted-foreground">{t("role.user")}</span>;
 }
 
 interface ILevelBadgeProps {
@@ -139,22 +150,23 @@ interface ILevelBadgeProps {
 }
 
 export function LevelBadge({ level }: ILevelBadgeProps): React.ReactElement {
-    if (level === "Admin") return <span className="inline-flex h-4.5 items-center rounded-sm bg-primary px-1.5 font-medium text-[11px] text-primary-foreground leading-none">Admin</span>;
+    const t: TypedT<typeof messages> = useT("admin");
+    if (level === "Admin") return <span className="inline-flex h-4.5 items-center rounded-sm bg-primary px-1.5 font-medium text-[11px] text-primary-foreground leading-none">{t("level.admin")}</span>;
     if (level === "Publish")
         return (
             <span className="inline-flex h-4.5 items-center gap-1 rounded-sm bg-success/8 px-1.5 font-medium text-[11px] text-success-foreground leading-none">
                 <span className="size-1.5 rounded-full bg-success-foreground/85" />
-                Publish
+                {t("level.publish")}
             </span>
         );
     if (level === "Edit")
         return (
             <span className="inline-flex h-4.5 items-center gap-1 rounded-sm bg-info/8 px-1.5 font-medium text-[11px] text-info-foreground leading-none">
                 <span className="size-1.5 rounded-full bg-info-foreground/85" />
-                Edit
+                {t("level.edit")}
             </span>
         );
-    return <span className="inline-flex h-4.5 items-center rounded-sm border border-input bg-background px-1.5 font-medium text-[11px] text-foreground leading-none">View</span>;
+    return <span className="inline-flex h-4.5 items-center rounded-sm border border-input bg-background px-1.5 font-medium text-[11px] text-foreground leading-none">{t("level.view")}</span>;
 }
 
 interface ITimelineProps {

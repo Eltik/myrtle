@@ -1,9 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, formatArchetype, formatProfession, getAvatarById, rarityToNumber } from "#/lib/utils";
 import { LIST_GRID_COLS, RARITY_COLORS } from "../constants";
 import type { IOperatorView, StatMetric } from "../types";
 import { CampIcon, ClassIcon } from "./Icons";
+import type { messages } from "./OperatorCardList.messages";
 import { OperatorPreview } from "./OperatorPreview";
 import { OwnershipBadge } from "./OwnershipBadge";
 
@@ -15,8 +18,10 @@ interface IOperatorCardListProps {
 }
 
 function RarityStars({ rarity, className }: { rarity: number; className?: string }) {
+    const t: TypedT<typeof messages> = useT("operators");
+
     return (
-        <span role="img" className={cn("inline-flex items-center gap-0.5", className)} aria-label={`${rarity} star`}>
+        <span role="img" className={cn("inline-flex items-center gap-0.5", className)} aria-label={t("card.rarityStars", { rarity })}>
             {Array.from({ length: rarity }, (_, i) => (
                 // biome-ignore lint/suspicious/noArrayIndexKey: decorative stars with fixed count
                 <span key={i} aria-hidden="true">

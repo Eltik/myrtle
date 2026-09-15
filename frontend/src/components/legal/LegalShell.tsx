@@ -2,7 +2,10 @@ import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { Button } from "#/components/ui/button";
 import { Separator } from "#/components/ui/separator";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import styles from "./LegalPageShell.module.css";
+import type { messages } from "./LegalShell.messages";
 
 interface ILegalContainerProps {
     children: ReactNode;
@@ -43,14 +46,16 @@ export function SectionHeading({ icon, title, subtitle }: ISectionHeadingProps) 
 }
 
 export function RelatedLinksFooter({ children }: { children: ReactNode }) {
+    const t: TypedT<typeof messages> = useT("legal");
+
     return (
         <div className="mt-12 flex flex-col gap-4 rounded-xl border border-border bg-[color-mix(in_srgb,var(--muted)_30%,transparent)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
             <div>
-                <p className="m-0 mb-1.5 font-medium font-sans text-[14px] text-foreground">Related Documents</p>
+                <p className="m-0 mb-1.5 font-medium font-sans text-[14px] text-foreground">{t("shell.relatedDocuments")}</p>
                 <div className="inline-flex flex-wrap gap-x-4 gap-y-1.5">{children}</div>
             </div>
             <Button variant="outline" size="lg" render={<Link to="/" />}>
-                Return Home
+                {t("shell.returnHome")}
             </Button>
         </div>
     );

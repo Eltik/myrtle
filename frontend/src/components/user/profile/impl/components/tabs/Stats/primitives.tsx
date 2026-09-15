@@ -4,8 +4,11 @@ import { Collapsible, CollapsibleContent } from "#/components/ui/collapsible";
 import { Dialog, DialogTrigger } from "#/components/ui/dialog";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { IOperatorGapItem } from "./helpers";
+import type { messages } from "./primitives.messages";
 
 export const KICKER_TEXT = "font-mono font-semibold text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground";
 export const CARD_PADDING = "p-4 sm:p-5";
@@ -133,7 +136,8 @@ interface IGapListProps {
     label?: string;
 }
 
-export function GapList({ items, label = "To Go" }: IGapListProps) {
+export function GapList({ items, label }: IGapListProps) {
+    const t: TypedT<typeof messages> = useT("user");
     const [openKey, setOpenKey] = useState<string | null>(null);
     const [lastKey, setLastKey] = useState<string | null>(null);
     const visible = items.filter((item) => item.value > 0);
@@ -142,7 +146,7 @@ export function GapList({ items, label = "To Go" }: IGapListProps) {
         return (
             <div className="flex items-center gap-1.5">
                 <span aria-hidden className="h-1 w-1 rounded-full bg-emerald-500/70" />
-                <span className={cn(KICKER_TEXT, "text-emerald-500/80")}>All Complete</span>
+                <span className={cn(KICKER_TEXT, "text-emerald-500/80")}>{t("profile.stats.gaps.allComplete")}</span>
             </div>
         );
     }
@@ -162,12 +166,12 @@ export function GapList({ items, label = "To Go" }: IGapListProps) {
     return (
         <div className="space-y-2.5">
             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                <span className={KICKER_TEXT}>{label}</span>
+                <span className={KICKER_TEXT}>{label ?? t("profile.stats.gaps.toGo")}</span>
                 {visible.map((item) => {
                     if (item.dialogContent) {
                         return (
                             <Dialog key={item.key}>
-                                <DialogTrigger aria-label={`Show ${item.value} ${item.label}`} className={pillClasses(false)}>
+                                <DialogTrigger aria-label={t("profile.stats.gaps.showAria", { value: item.value, label: item.label })} className={pillClasses(false)}>
                                     <GapPillContent item={item} mode="dialog" />
                                 </DialogTrigger>
                                 {item.dialogContent}
@@ -196,12 +200,13 @@ interface IGapPillContentProps {
 }
 
 function GapPillContent({ item, mode, expanded = false }: IGapPillContentProps) {
+    const f = useFormatters();
     return (
         <>
             <span aria-hidden className="h-1 w-1 shrink-0 rounded-full" style={{ background: item.color }} />
             <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
                 <span className="font-semibold" style={{ color: item.color }}>
-                    {item.value.toLocaleString()}
+                    {f.number(item.value)}
                 </span>{" "}
                 {item.label}
             </span>
@@ -219,13 +224,15 @@ interface IGapPillProps {
 }
 
 function GapPill({ item, expanded, mode, onToggle }: IGapPillProps) {
+    const t: TypedT<typeof messages> = useT("user");
+    const f = useFormatters();
     if (mode === "static") {
         const staticNode = (
             <span className="inline-flex cursor-default items-center gap-1.5 rounded-md">
                 <span aria-hidden className="h-1 w-1 shrink-0 rounded-full" style={{ background: item.color }} />
                 <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
                     <span className="font-semibold" style={{ color: item.color }}>
-                        {item.value.toLocaleString()}
+                        {f.number(item.value)}
                     </span>{" "}
                     {item.label}
                 </span>
@@ -243,7 +250,7 @@ function GapPill({ item, expanded, mode, onToggle }: IGapPillProps) {
     }
 
     const trigger = (
-        <button aria-expanded={expanded} aria-label={`Show ${item.value} ${item.label}`} className={pillClasses(expanded)} onClick={onToggle} type="button">
+        <button aria-expanded={expanded} aria-label={t("profile.stats.gaps.showAria", { value: item.value, label: item.label })} className={pillClasses(expanded)} onClick={onToggle} type="button">
             <GapPillContent expanded={expanded} item={item} mode="collapse" />
         </button>
     );
@@ -268,6 +275,8 @@ interface IGapDetailsPanelProps {
 }
 
 function GapDetailsPanel({ title, color, items }: IGapDetailsPanelProps) {
+    const t: TypedT<typeof messages> = useT("user");
+    const f = useFormatters();
     const rendered = items.length > MAX_RENDERED_DETAILS ? items.slice(0, MAX_RENDERED_DETAILS) : items;
     const overflow = items.length - rendered.length;
 
@@ -277,9 +286,9 @@ function GapDetailsPanel({ title, color, items }: IGapDetailsPanelProps) {
                 <span className={KICKER_TEXT}>{title}</span>
                 <span className="font-mono text-[10px] text-muted-foreground/70 tabular-nums">
                     <span className="font-semibold" style={{ color }}>
-                        {items.length.toLocaleString()}
+                        {f.number(items.length)}
                     </span>{" "}
-                    total
+                    {t("profile.stats.gaps.total")}
                 </span>
             </div>
             <ul className="max-h-64 space-y-px overflow-y-auto p-1.5">
@@ -292,7 +301,7 @@ function GapDetailsPanel({ title, color, items }: IGapDetailsPanelProps) {
                         {d.sub && <span className="shrink-0 font-mono text-[10px] text-muted-foreground/80 tabular-nums">{d.sub}</span>}
                     </li>
                 ))}
-                {overflow > 0 && <li className="px-1.5 pt-1 text-center font-mono text-[10px] text-muted-foreground/60">+ {overflow.toLocaleString()} more (not rendered)</li>}
+                {overflow > 0 && <li className="px-1.5 pt-1 text-center font-mono text-[10px] text-muted-foreground/60">{t("profile.stats.gaps.overflow", { n: f.number(overflow) })}</li>}
             </ul>
         </div>
     );

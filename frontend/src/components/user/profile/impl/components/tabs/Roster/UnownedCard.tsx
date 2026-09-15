@@ -4,9 +4,16 @@ import { RARITY_COLORS } from "#/components/operators/list/impl/constants";
 import { Card, CardContent } from "#/components/ui/card";
 import { Progress } from "#/components/ui/progress";
 import { Separator } from "#/components/ui/separator";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { formatProfession, getAvatarById } from "#/lib/utils";
 import { parseOperatorName, rarityIcon } from "./helpers.card";
+import type { messages as cardMessages } from "./helpers.card.messages";
 import type { IUnownedEntry, ViewMode } from "./types";
+import type { messages } from "./UnownedCard.messages";
+
+/** The shared card vocabulary is declared in `helpers.card.messages.ts`. */
+type UnownedT = TypedT<typeof messages & typeof cardMessages>;
 
 interface IUnownedCardProps {
     entry: IUnownedEntry;
@@ -47,6 +54,7 @@ function UnownedCompact({ entry }: { entry: IUnownedEntry }) {
 }
 
 function UnownedDetailed({ entry }: { entry: IUnownedEntry }) {
+    const t: UnownedT = useT("user");
     const star = entry.rarity;
     const profession = entry.meta.profession;
     const heroSrc = operatorElite0(entry.operator_id, entry.static?.skin ?? null, entry.static?.portrait ?? null);
@@ -61,32 +69,32 @@ function UnownedDetailed({ entry }: { entry: IUnownedEntry }) {
                         <h3 className="mt-2 max-w-3/4 text-left font-bold text-white text-xl">{entry.name}</h3>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <img alt={`${star} Star`} className="h-4.5 w-auto object-contain" decoding="async" height={18} loading="lazy" src={rarityIcon(star)} width={60} />
+                                <img alt={t("profile.roster.card.rarityAlt", { star })} className="h-4.5 w-auto object-contain" decoding="async" height={18} loading="lazy" src={rarityIcon(star)} width={60} />
                                 <div className="flex flex-row items-center gap-1">
                                     <ClassIcon profession={profession} size={20} />
                                     <span className="text-sm text-white">{formatProfession(profession)}</span>
                                 </div>
                             </div>
-                            <img alt="Elite 0" className="h-6 w-6 object-contain" decoding="async" height={24} loading="lazy" src={eliteIcon(0)} width={24} />
+                            <img alt={t("profile.roster.card.eliteAlt", { elite: 0 })} className="h-6 w-6 object-contain" decoding="async" height={24} loading="lazy" src={eliteIcon(0)} width={24} />
                         </div>
                     </div>
                 </div>
 
-                <div className="absolute top-2 z-10 rounded-r-md bg-muted/80 px-2 py-0.5 text-center font-semibold text-muted-foreground text-xs shadow-md">Not Owned</div>
+                <div className="absolute top-2 z-10 rounded-r-md bg-muted/80 px-2 py-0.5 text-center font-semibold text-muted-foreground text-xs shadow-md">{t("profile.roster.unowned.badge")}</div>
             </div>
 
             <CardContent className="min-w-0 flex-1 overflow-hidden px-4 pt-2 pb-2">
                 <div className="grid grid-cols-2 gap-4">
-                    <BlankBar label="Level" />
-                    <BlankBar label="Trust" />
+                    <BlankBar label={t("profile.roster.card.level")} />
+                    <BlankBar label={t("profile.roster.card.trust")} />
                 </div>
 
                 <Separator className="my-3" />
 
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                    {["HP", "ATK", "DEF", "RES", "Cost", "Block"].map((label) => (
-                        <div className="flex items-center justify-between" key={label}>
-                            <span className="text-muted-foreground">{label}</span>
+                    {(["profile.roster.card.stat.hp", "profile.roster.card.stat.atk", "profile.roster.card.stat.def", "profile.roster.card.stat.res", "profile.roster.card.stat.cost", "profile.roster.card.stat.block"] as const).map((key) => (
+                        <div className="flex items-center justify-between" key={key}>
+                            <span className="text-muted-foreground">{t(key)}</span>
                             <span className="font-medium text-muted-foreground">--</span>
                         </div>
                     ))}
@@ -95,9 +103,9 @@ function UnownedDetailed({ entry }: { entry: IUnownedEntry }) {
                 <Separator className="my-3" />
 
                 <div className="w-full">
-                    {["Potential", "Skills", "Modules"].map((label) => (
-                        <div className="flex items-center justify-between border-b-0 py-2" key={label}>
-                            <span className="font-medium text-muted-foreground/50 text-sm">{label}</span>
+                    {(["profile.roster.card.potential", "profile.roster.card.skills", "profile.roster.card.modules"] as const).map((key) => (
+                        <div className="flex items-center justify-between border-b-0 py-2" key={key}>
+                            <span className="font-medium text-muted-foreground/50 text-sm">{t(key)}</span>
                         </div>
                     ))}
                 </div>

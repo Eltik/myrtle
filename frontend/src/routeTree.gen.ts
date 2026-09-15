@@ -45,6 +45,7 @@ import { Route as AuthedAdminIndexRouteImport } from './routes/_authed/admin/ind
 import { Route as ApiOgDefaultRouteImport } from './routes/api/og/default'
 import { Route as AuthedTierListsMyRouteImport } from './routes/_authed/tier-lists_.my'
 import { Route as AuthedAdminUsersRouteImport } from './routes/_authed/admin/users'
+import { Route as AuthedAdminTranslationsRouteImport } from './routes/_authed/admin/translations'
 import { Route as AuthedAdminSettingsRouteImport } from './routes/_authed/admin/settings'
 import { Route as AuthedAdminPermissionsRouteImport } from './routes/_authed/admin/permissions'
 import { Route as AuthedAdminOperatorNotesRouteImport } from './routes/_authed/admin/operator-notes'
@@ -234,6 +235,11 @@ const AuthedAdminUsersRoute = AuthedAdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AuthedAdminRoute,
 } as any)
+const AuthedAdminTranslationsRoute = AuthedAdminTranslationsRouteImport.update({
+  id: '/translations',
+  path: '/translations',
+  getParentRoute: () => AuthedAdminRoute,
+} as any)
 const AuthedAdminSettingsRoute = AuthedAdminSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -320,6 +326,7 @@ export interface FileRoutesByFullPath {
   '/admin/operator-notes': typeof AuthedAdminOperatorNotesRoute
   '/admin/permissions': typeof AuthedAdminPermissionsRoute
   '/admin/settings': typeof AuthedAdminSettingsRoute
+  '/admin/translations': typeof AuthedAdminTranslationsRoute
   '/admin/users': typeof AuthedAdminUsersRoute
   '/tier-lists/my': typeof AuthedTierListsMyRoute
   '/api/og/default': typeof ApiOgDefaultRoute
@@ -365,6 +372,7 @@ export interface FileRoutesByTo {
   '/admin/operator-notes': typeof AuthedAdminOperatorNotesRoute
   '/admin/permissions': typeof AuthedAdminPermissionsRoute
   '/admin/settings': typeof AuthedAdminSettingsRoute
+  '/admin/translations': typeof AuthedAdminTranslationsRoute
   '/admin/users': typeof AuthedAdminUsersRoute
   '/tier-lists/my': typeof AuthedTierListsMyRoute
   '/api/og/default': typeof ApiOgDefaultRoute
@@ -413,6 +421,7 @@ export interface FileRoutesById {
   '/_authed/admin/operator-notes': typeof AuthedAdminOperatorNotesRoute
   '/_authed/admin/permissions': typeof AuthedAdminPermissionsRoute
   '/_authed/admin/settings': typeof AuthedAdminSettingsRoute
+  '/_authed/admin/translations': typeof AuthedAdminTranslationsRoute
   '/_authed/admin/users': typeof AuthedAdminUsersRoute
   '/_authed/tier-lists_/my': typeof AuthedTierListsMyRoute
   '/api/og/default': typeof ApiOgDefaultRoute
@@ -461,6 +470,7 @@ export interface FileRouteTypes {
     | '/admin/operator-notes'
     | '/admin/permissions'
     | '/admin/settings'
+    | '/admin/translations'
     | '/admin/users'
     | '/tier-lists/my'
     | '/api/og/default'
@@ -506,6 +516,7 @@ export interface FileRouteTypes {
     | '/admin/operator-notes'
     | '/admin/permissions'
     | '/admin/settings'
+    | '/admin/translations'
     | '/admin/users'
     | '/tier-lists/my'
     | '/api/og/default'
@@ -553,6 +564,7 @@ export interface FileRouteTypes {
     | '/_authed/admin/operator-notes'
     | '/_authed/admin/permissions'
     | '/_authed/admin/settings'
+    | '/_authed/admin/translations'
     | '/_authed/admin/users'
     | '/_authed/tier-lists_/my'
     | '/api/og/default'
@@ -853,6 +865,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAdminUsersRouteImport
       parentRoute: typeof AuthedAdminRoute
     }
+    '/_authed/admin/translations': {
+      id: '/_authed/admin/translations'
+      path: '/translations'
+      fullPath: '/admin/translations'
+      preLoaderRoute: typeof AuthedAdminTranslationsRouteImport
+      parentRoute: typeof AuthedAdminRoute
+    }
     '/_authed/admin/settings': {
       id: '/_authed/admin/settings'
       path: '/settings'
@@ -926,6 +945,7 @@ interface AuthedAdminRouteChildren {
   AuthedAdminOperatorNotesRoute: typeof AuthedAdminOperatorNotesRoute
   AuthedAdminPermissionsRoute: typeof AuthedAdminPermissionsRoute
   AuthedAdminSettingsRoute: typeof AuthedAdminSettingsRoute
+  AuthedAdminTranslationsRoute: typeof AuthedAdminTranslationsRoute
   AuthedAdminUsersRoute: typeof AuthedAdminUsersRoute
   AuthedAdminIndexRoute: typeof AuthedAdminIndexRoute
 }
@@ -937,6 +957,7 @@ const AuthedAdminRouteChildren: AuthedAdminRouteChildren = {
   AuthedAdminOperatorNotesRoute: AuthedAdminOperatorNotesRoute,
   AuthedAdminPermissionsRoute: AuthedAdminPermissionsRoute,
   AuthedAdminSettingsRoute: AuthedAdminSettingsRoute,
+  AuthedAdminTranslationsRoute: AuthedAdminTranslationsRoute,
   AuthedAdminUsersRoute: AuthedAdminUsersRoute,
   AuthedAdminIndexRoute: AuthedAdminIndexRoute,
 }

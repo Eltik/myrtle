@@ -4,9 +4,12 @@ import { useRef, useState } from "react";
 import { Kbd } from "#/components/ui/kbd";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "#/components/ui/menu";
 import { useIsMac } from "#/hooks/use-is-mac";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { ToolIcon } from "#/lib/registry/ToolIcon";
 import { modKey, type ToolIconName } from "#/lib/registry/tools";
 import { cn } from "#/lib/utils";
+import type { messages } from "./MainNav.messages";
 import styles from "./MainNav.module.css";
 
 export interface INavSection {
@@ -42,6 +45,7 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
     };
 
     const isMac = useIsMac();
+    const t: TypedT<typeof messages> = useT("nav");
 
     const sections: INavSection[] = item.sections ?? (item.items ? [{ title: item.label, items: item.items }] : []);
     const showSectionTitles = (item.sections?.length ?? 0) > 1;
@@ -82,8 +86,8 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
                     {hasIcons && (
                         <div className="mt-1.5 flex items-center justify-between gap-2 border-white/5 border-t px-3 pt-2.5 pb-2 font-sans text-[11.5px] text-muted-foreground leading-none">
                             <span className="inline-flex items-center gap-1.5 font-medium font-mono text-[11.5px]">
-                                Press <Kbd>{modKey(isMac)}</Kbd>
-                                <Kbd>K</Kbd> for all commands
+                                {t("mainNav.press")} <Kbd>{modKey(isMac)}</Kbd>
+                                <Kbd>K</Kbd> {t("mainNav.forAllCommands")}
                             </span>
                             <button
                                 type="button"
@@ -93,7 +97,7 @@ function HoverDropdown({ item, isActive, onOpenCommand }: { item: INavItem; isAc
                                     onOpenCommand?.();
                                 }}
                             >
-                                Open palette →
+                                {t("mainNav.openPalette")}
                             </button>
                         </div>
                     )}

@@ -5,22 +5,31 @@ import { Badge } from "#/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Slider } from "#/components/ui/slider";
 import { Switch } from "#/components/ui/switch";
+import { operatorGamedataServer } from "#/lib/api/gamedata";
 import { type IRange, rangesQueryOptions } from "#/lib/api/ranges";
+import { useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { IOperatorListItem, ISkillLevel } from "#/types/operators";
 import { asset } from "../../assets";
 import { descriptionToHtml } from "../../description";
 import { computeSkillDiff, formatBlackboardValue, formatSkillLevel, getSkillTypeLabel, getSpTypeLabel } from "../../helpers";
+import type { messages as helperMessages } from "../../helpers.messages";
 import { useCommunityDefaults } from "../../useCommunityDefaults";
 import { CommunitySharePill } from "../CommunitySharePill";
 import { LevelBreakdown } from "../LevelBreakdown";
 import { OperatorRange } from "../OperatorRange";
+import type { messages } from "./SkillsContent.messages";
 
 interface ISkillsContentProps {
     operator: IOperatorListItem;
 }
 
+/** This tab renders both its own chrome and the labels `helpers.ts` derives. */
+type SkillsT = TypedT<typeof messages & typeof helperMessages>;
+
 export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsContentProps) {
+    const t: SkillsT = useT("operators");
     const [selectedSkillIndex, setSelectedSkillIndex] = useState(operator.skills.length > 0 ? operator.skills.length - 1 : 0);
     const [skillLevel, setSkillLevel] = useState(Math.max(0, (operator.skills[selectedSkillIndex]?.static?.levels ?? []).length - 1));
     const [comparisonMode, setComparisonMode] = useState(false);
@@ -33,7 +42,8 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
 
     const levelsCount = (operator.skills[selectedSkillIndex]?.static?.levels ?? []).length;
 
-    const { data: ranges } = useQuery(rangesQueryOptions());
+    const localeServer = useGamedataServer();
+    const { data: ranges } = useQuery(rangesQueryOptions(operatorGamedataServer(operator.server, localeServer)));
     const baseRangeId = operator.phases[operator.phases.length - 1]?.rangeId ?? null;
     const baseRange: IRange | undefined = baseRangeId ? ranges?.[baseRangeId] : undefined;
     const skillRangeId = skillData?.rangeId ?? null;
@@ -99,14 +109,14 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
         return (
             <div className="flex flex-col items-center justify-center gap-4 p-16 text-center">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-secondary/30">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} role="img" aria-label="No skills">
-                        <title>No skills</title>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-muted-foreground/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} role="img" aria-label={t("skills.empty.icon")}>
+                        <title>{t("skills.empty.icon")}</title>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                 </div>
                 <div className="space-y-1">
-                    <p className="font-medium text-foreground text-sm">No Skills</p>
-                    <p className="max-w-xs text-muted-foreground text-xs leading-relaxed">This operator has no active skills. They may rely solely on their talent or passive abilities.</p>
+                    <p className="font-medium text-foreground text-sm">{t("skills.empty.title")}</p>
+                    <p className="max-w-xs text-muted-foreground text-xs leading-relaxed">{t("skills.empty.body")}</p>
                 </div>
             </div>
         );
@@ -115,13 +125,13 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
     return (
         <div className="min-w-0 overflow-hidden p-4 md:p-6">
             <div className="mb-6">
-                <h2 className="font-semibold text-foreground text-xl">Skills</h2>
-                <p className="text-muted-foreground text-sm">Skill details, mastery information, and skill comparisons.</p>
+                <h2 className="font-semibold text-foreground text-xl">{t("skills.title")}</h2>
+                <p className="text-muted-foreground text-sm">{t("skills.subtitle")}</p>
             </div>
 
             <div className="mb-6 flex flex-wrap gap-2">
                 {operator.skills.map((skill, idx) => {
-                    const name = skill.static?.levels?.[0]?.name ?? `Skill ${idx + 1}`;
+                    const name = skill.static?.levels?.[0]?.name ?? t("skills.fallbackName", { index: idx + 1 });
                     const image = skill.static?.image;
                     const isSelected = selectedSkillIndex === idx;
                     return (
@@ -136,7 +146,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                             {/* Keyed by skillId, never by position: the game's
                                 own default index is positional, but matching on
                                 it here would repeat the module-order bug. */}
-                            <CommunitySharePill className="ms-auto sm:ms-0" share={skill.skillId ? skillShares.get(skill.skillId) : undefined} total={skillTotal} cohort="E2 owners use this skill" />
+                            <CommunitySharePill className="ms-auto sm:ms-0" share={skill.skillId ? skillShares.get(skill.skillId) : undefined} total={skillTotal} cohort={t("skills.cohort")} />
                         </button>
                     );
                 })}
@@ -149,7 +159,18 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                 const skillId = operator.skills[selectedSkillIndex]?.skillId;
                 const mastery = skillId ? masteries.get(skillId) : undefined;
                 if (!mastery) return null;
-                return <LevelBreakdown className="mb-6" buckets={mastery.buckets} total={mastery.total} title="Community mastery" labels={["No mastery", "M1", "M2", "M3"]} summary="mastered this skill" cohort="E2 owners" ownLevel={skillId ? (ownMasteries.get(skillId) ?? null) : null} />;
+                return (
+                    <LevelBreakdown
+                        className="mb-6"
+                        buckets={mastery.buckets}
+                        total={mastery.total}
+                        title={t("skills.mastery.title")}
+                        labels={[t("skills.mastery.none"), t("skills.mastery.m1"), t("skills.mastery.m2"), t("skills.mastery.m3")]}
+                        summary={t("skills.mastery.summary")}
+                        cohort={t("skills.mastery.cohort")}
+                        ownLevel={skillId ? (ownMasteries.get(skillId) ?? null) : null}
+                    />
+                );
             })()}
 
             <div className="mb-6 rounded-md border border-border bg-secondary/20 p-5">
@@ -157,7 +178,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                     <div className="mb-5 flex items-center justify-between gap-4 border-border border-b pb-5">
                         <span className="flex items-center gap-2.5">
                             {comparisonMode ? <Columns className="h-4 w-4 text-primary" /> : <Rows className="h-4 w-4 text-muted-foreground" />}
-                            <span className="font-medium text-foreground text-sm">Compare Skill Levels</span>
+                            <span className="font-medium text-foreground text-sm">{t("skills.compare.toggle")}</span>
                         </span>
                         <Switch checked={comparisonMode} onCheckedChange={setComparisonMode} />
                     </div>
@@ -166,20 +187,20 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                     <div className="flex flex-col gap-4 md:flex-row md:items-center">
                         <div className="flex-1 space-y-2">
                             <div className="flex items-center justify-between">
-                                <span className="text-muted-foreground text-sm">Skill Level</span>
-                                <span className="font-mono text-foreground text-sm">{formatSkillLevel(skillLevel)}</span>
+                                <span className="text-muted-foreground text-sm">{t("skills.level")}</span>
+                                <span className="font-mono text-foreground text-sm">{formatSkillLevel(skillLevel, t)}</span>
                             </div>
                             <Slider min={0} max={Math.max(0, levelsCount - 1)} step={1} value={[skillLevel]} onValueChange={(v) => setSkillLevel(Array.isArray(v) ? (v[0] ?? 0) : v)} />
                         </div>
                         <Select value={String(skillLevel)} onValueChange={(v) => setSkillLevel(Number.parseInt(String(v), 10))}>
                             <SelectTrigger className="w-36">
-                                <SelectValue>{(value) => formatSkillLevel(Number(value))}</SelectValue>
+                                <SelectValue>{(value) => formatSkillLevel(Number(value), t)}</SelectValue>
                             </SelectTrigger>
                             <SelectContent>
                                 {operator.skills[selectedSkillIndex].static?.levels.map((_, i) => (
                                     // biome-ignore lint/suspicious/noArrayIndexKey: skill level index is the canonical identifier
                                     <SelectItem key={`level-${i}`} value={String(i)}>
-                                        {formatSkillLevel(i)}
+                                        {formatSkillLevel(i, t)}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -189,8 +210,8 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                     <div className="space-y-4">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex items-center gap-2">
-                                <span className="font-medium text-foreground text-sm">Select Levels</span>
-                                <span className="text-muted-foreground text-xs">({comparisonLevels.length} selected)</span>
+                                <span className="font-medium text-foreground text-sm">{t("skills.compare.selectLevels")}</span>
+                                <span className="text-muted-foreground text-xs">{t("skills.compare.selectedCount", { count: comparisonLevels.length })}</span>
                             </div>
                             <button
                                 type="button"
@@ -198,7 +219,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                                 className={cn("inline-flex h-9 items-center gap-2 rounded-sm border px-3 font-medium text-xs transition-colors", showDifferencesOnly ? "border-border bg-muted text-foreground shadow-sm ring-1 ring-border" : "border-border bg-secondary/50 text-foreground hover:bg-muted")}
                             >
                                 <GitCompareArrows className="h-4 w-4" />
-                                {showDifferencesOnly ? "Show Full" : "Show Diff"}
+                                {showDifferencesOnly ? t("skills.compare.showFull") : t("skills.compare.showDiff")}
                             </button>
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -215,7 +236,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                                             isOn ? (isMastery ? "border-border bg-muted text-foreground shadow-sm ring-1 ring-border" : "border-primary bg-primary/10 text-primary") : "border-border bg-secondary/30 text-muted-foreground hover:text-foreground",
                                         )}
                                     >
-                                        {formatSkillLevel(idx)}
+                                        {formatSkillLevel(idx, t)}
                                     </button>
                                 );
                             })}
@@ -229,17 +250,17 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                     <div className="mb-5 flex items-start gap-4">
                         {operator.skills[selectedSkillIndex].static?.image && (
                             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md border border-border bg-secondary/50">
-                                <img alt={skillData.name ?? "Skill"} className="h-12 w-12 object-contain" decoding="async" loading="lazy" src={asset(operator.skills[selectedSkillIndex].static.image, operator.server)} />
+                                <img alt={skillData.name ?? t("skills.imageAlt")} className="h-12 w-12 object-contain" decoding="async" loading="lazy" src={asset(operator.skills[selectedSkillIndex].static.image, operator.server)} />
                             </div>
                         )}
                         <div className="min-w-0 flex-1">
                             <h3 className="font-semibold text-foreground text-lg">{skillData.name}</h3>
                             <div className="mt-2 flex flex-wrap gap-2">
                                 <Badge className="rounded-sm bg-secondary/50" variant="secondary">
-                                    {getSpTypeLabel(skillData.spData?.spType ?? "")}
+                                    {getSpTypeLabel(skillData.spData?.spType ?? "", t)}
                                 </Badge>
                                 <Badge className="rounded-sm bg-secondary/50" variant="secondary">
-                                    {getSkillTypeLabel(skillData.skillType ?? "")}
+                                    {getSkillTypeLabel(skillData.skillType ?? "", t)}
                                 </Badge>
                             </div>
                         </div>
@@ -247,16 +268,16 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
 
                     <div className="mb-5 grid grid-cols-3 gap-3">
                         <div className="rounded-sm border border-border/50 bg-secondary/20 p-3 text-center">
-                            <div className="text-muted-foreground text-xs">SP Cost</div>
+                            <div className="text-muted-foreground text-xs">{t("skills.spCost")}</div>
                             <div className="mt-1 font-mono font-semibold text-foreground text-lg">{skillData.spData?.spCost ?? "-"}</div>
                         </div>
                         <div className="rounded-sm border border-border/50 bg-secondary/20 p-3 text-center">
-                            <div className="text-muted-foreground text-xs">Initial SP</div>
+                            <div className="text-muted-foreground text-xs">{t("skills.initialSp")}</div>
                             <div className="mt-1 font-mono font-semibold text-foreground text-lg">{skillData.spData?.initSp ?? "-"}</div>
                         </div>
                         <div className="rounded-sm border border-border/50 bg-secondary/20 p-3 text-center">
-                            <div className="text-muted-foreground text-xs">Duration</div>
-                            <div className="mt-1 font-mono font-semibold text-foreground text-lg">{skillData.duration && skillData.duration > 0 ? `${skillData.duration}s` : "-"}</div>
+                            <div className="text-muted-foreground text-xs">{t("skills.duration")}</div>
+                            <div className="mt-1 font-mono font-semibold text-foreground text-lg">{skillData.duration && skillData.duration > 0 ? t("skills.durationSeconds", { value: skillData.duration }) : "-"}</div>
                         </div>
                     </div>
 
@@ -271,7 +292,7 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                     {skillRange && (
                         <div className="mt-5 rounded-sm border border-border/50 bg-secondary/10 p-4">
                             <div className="mb-3 flex items-center justify-between">
-                                <span className="font-medium text-muted-foreground text-xs uppercase tracking-wide">Range</span>
+                                <span className="font-medium text-muted-foreground text-xs uppercase tracking-wide">{t("skills.range")}</span>
                                 {baseRange && (
                                     <button
                                         type="button"
@@ -279,18 +300,18 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                                         className={cn("inline-flex h-8 items-center gap-2 rounded-sm border px-3 font-medium text-xs transition-colors", showRangeDiff ? "border-border bg-muted text-foreground shadow-sm ring-1 ring-border" : "border-border bg-secondary/50 text-foreground hover:bg-muted")}
                                     >
                                         <GitCompareArrows className="h-4 w-4" />
-                                        {showRangeDiff ? "Hide Diff" : "Show Diff"}
+                                        {showRangeDiff ? t("skills.range.hideDiff") : t("skills.compare.showDiff")}
                                     </button>
                                 )}
                             </div>
                             {showRangeDiff && baseRange ? (
                                 <div className="flex flex-wrap items-start gap-6">
                                     <div className="space-y-1.5">
-                                        <span className="block font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">Original</span>
+                                        <span className="block font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("skills.range.original")}</span>
                                         <OperatorRange range={baseRange} />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <span className="block font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">On Skill</span>
+                                        <span className="block font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("skills.range.onSkill")}</span>
                                         <OperatorRange range={skillRange} />
                                     </div>
                                 </div>
@@ -306,29 +327,29 @@ export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsCo
                     <div className="flex items-start gap-4 rounded-md border border-border bg-card/50 p-5 shadow-sm">
                         {operator.skills[selectedSkillIndex].static?.image && (
                             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-sm border border-border bg-secondary/50 shadow-sm">
-                                <img alt={operator.skills[selectedSkillIndex].static.levels[comparisonLevels[0] ?? 0]?.name ?? "Skill"} className="h-10 w-10 object-contain" decoding="async" loading="lazy" src={asset(operator.skills[selectedSkillIndex].static.image, operator.server)} />
+                                <img alt={operator.skills[selectedSkillIndex].static.levels[comparisonLevels[0] ?? 0]?.name ?? t("skills.imageAlt")} className="h-10 w-10 object-contain" decoding="async" loading="lazy" src={asset(operator.skills[selectedSkillIndex].static.image, operator.server)} />
                             </div>
                         )}
                         <div className="min-w-0 flex-1">
                             <h3 className="font-semibold text-foreground text-lg">{operator.skills[selectedSkillIndex].static?.levels[comparisonLevels[0] ?? 0]?.name}</h3>
                             <div className="mt-2 flex flex-wrap gap-2">
                                 <Badge className="rounded-sm bg-secondary shadow-sm" variant="secondary">
-                                    {getSpTypeLabel(operator.skills[selectedSkillIndex].static?.levels[comparisonLevels[0] ?? 0]?.spData?.spType ?? "")}
+                                    {getSpTypeLabel(operator.skills[selectedSkillIndex].static?.levels[comparisonLevels[0] ?? 0]?.spData?.spType ?? "", t)}
                                 </Badge>
                                 <Badge className="rounded-sm bg-secondary shadow-sm" variant="secondary">
-                                    {getSkillTypeLabel(operator.skills[selectedSkillIndex].static?.levels[comparisonLevels[0] ?? 0]?.skillType ?? "")}
+                                    {getSkillTypeLabel(operator.skills[selectedSkillIndex].static?.levels[comparisonLevels[0] ?? 0]?.skillType ?? "", t)}
                                 </Badge>
                             </div>
                         </div>
                     </div>
 
                     <div className="hidden items-center gap-6 px-4 font-medium text-muted-foreground text-xs uppercase tracking-wider md:flex">
-                        <div className="w-20 shrink-0">Level</div>
-                        <div className="min-w-0 flex-1">Description / Changes</div>
+                        <div className="w-20 shrink-0">{t("skills.column.level")}</div>
+                        <div className="min-w-0 flex-1">{t("skills.column.description")}</div>
                         <div className="flex shrink-0 gap-3">
-                            <div className="w-14 text-center">SP</div>
-                            <div className="w-14 text-center">Init</div>
-                            <div className="w-14 text-center">Dur</div>
+                            <div className="w-14 text-center">{t("skills.column.sp")}</div>
+                            <div className="w-14 text-center">{t("skills.column.init")}</div>
+                            <div className="w-14 text-center">{t("skills.column.dur")}</div>
                         </div>
                     </div>
 
@@ -377,6 +398,7 @@ interface ISkillComparisonRowProps {
 }
 
 export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex, levelData, prevLevelData, isFirst, isLast, showDifferencesOnly, range, baseRange, showRangeDiff, onToggleRangeDiff }: ISkillComparisonRowProps) {
+    const t: SkillsT = useT("operators");
     const descriptionHtml = useMemo(() => descriptionToHtml(levelData.description ?? "", levelData.blackboard ?? []), [levelData.description, levelData.blackboard]);
     const diff = useMemo(() => computeSkillDiff(prevLevelData, levelData), [prevLevelData, levelData]);
     const hasChanges = diff.spCostChanged || diff.initSpChanged || diff.durationChanged || diff.blackboardChanges.size > 0;
@@ -384,19 +406,19 @@ export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex,
     const diffSummary = useMemo(() => {
         if (!showDifferencesOnly || isFirst || !prevLevelData) return null;
         const out: { label: string; value: string }[] = [];
-        if (diff.spCostChanged) out.push({ label: "SP Cost", value: `${prevLevelData.spData?.spCost} → ${levelData.spData?.spCost}` });
-        if (diff.initSpChanged) out.push({ label: "Initial SP", value: `${prevLevelData.spData?.initSp} → ${levelData.spData?.initSp}` });
+        if (diff.spCostChanged) out.push({ label: t("skills.spCost"), value: `${prevLevelData.spData?.spCost} → ${levelData.spData?.spCost}` });
+        if (diff.initSpChanged) out.push({ label: t("skills.initialSp"), value: `${prevLevelData.spData?.initSp} → ${levelData.spData?.initSp}` });
         if (diff.durationChanged) {
-            const prevDur = prevLevelData.duration && prevLevelData.duration > 0 ? `${prevLevelData.duration}s` : "-";
-            const currDur = levelData.duration && levelData.duration > 0 ? `${levelData.duration}s` : "-";
-            out.push({ label: "Duration", value: `${prevDur} → ${currDur}` });
+            const prevDur = prevLevelData.duration && prevLevelData.duration > 0 ? t("skills.durationSeconds", { value: prevLevelData.duration }) : "-";
+            const currDur = levelData.duration && levelData.duration > 0 ? t("skills.durationSeconds", { value: levelData.duration }) : "-";
+            out.push({ label: t("skills.duration"), value: `${prevDur} → ${currDur}` });
         }
         for (const [key, { prev, curr }] of diff.blackboardChanges) {
             const display = key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ");
             out.push({ label: display, value: `${formatBlackboardValue(key, prev)} → ${formatBlackboardValue(key, curr)}` });
         }
         return out;
-    }, [showDifferencesOnly, isFirst, diff, prevLevelData, levelData]);
+    }, [showDifferencesOnly, isFirst, diff, prevLevelData, levelData, t]);
 
     if (showDifferencesOnly && !isFirst && !hasChanges) return null;
 
@@ -404,7 +426,7 @@ export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex,
         <div className={cn("flex flex-col gap-4 border-border bg-card/30 p-5 md:flex-row md:items-start md:gap-6 md:p-6", isFirst && "rounded-t-lg border", !isFirst && !isLast && "border-x border-b", isLast && "rounded-b-lg border-x border-b", isFirst && isLast && "rounded-lg")}>
             <div className="flex shrink-0 items-center gap-2 md:w-20 md:flex-col md:items-start md:gap-1.5">
                 <Badge className={cn("rounded-sm font-mono text-sm shadow-sm", levelIndex >= 7 ? "border-border bg-muted text-foreground" : "border-border bg-muted/50 text-muted-foreground")} variant="secondary">
-                    {formatSkillLevel(levelIndex)}
+                    {formatSkillLevel(levelIndex, t)}
                 </Badge>
             </div>
 
@@ -429,7 +451,7 @@ export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex,
                 {range && (
                     <div className="mt-4 rounded-sm border border-border/50 bg-secondary/10 p-3">
                         <div className="mb-2 flex items-center justify-between">
-                            <span className="font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">Range</span>
+                            <span className="font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("skills.range")}</span>
                             {baseRange && onToggleRangeDiff && (
                                 <button
                                     type="button"
@@ -437,18 +459,18 @@ export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex,
                                     className={cn("inline-flex h-7 items-center gap-1.5 rounded-sm border px-2 font-medium text-[0.625rem] transition-colors", showRangeDiff ? "border-border bg-muted text-foreground shadow-sm ring-1 ring-border" : "border-border bg-secondary/50 text-foreground hover:bg-muted")}
                                 >
                                     <GitCompareArrows className="h-3 w-3" />
-                                    {showRangeDiff ? "Hide Diff" : "Show Diff"}
+                                    {showRangeDiff ? t("skills.range.hideDiff") : t("skills.compare.showDiff")}
                                 </button>
                             )}
                         </div>
                         {showRangeDiff && baseRange ? (
                             <div className="flex flex-wrap items-start gap-4">
                                 <div className="space-y-1.5">
-                                    <span className="block font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">Original</span>
+                                    <span className="block font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("skills.range.original")}</span>
                                     <OperatorRange range={baseRange} />
                                 </div>
                                 <div className="space-y-1.5">
-                                    <span className="block font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">On Skill</span>
+                                    <span className="block font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("skills.range.onSkill")}</span>
                                     <OperatorRange range={range} />
                                 </div>
                             </div>
@@ -461,16 +483,16 @@ export const SkillComparisonRow = memo(function SkillComparisonRow({ levelIndex,
 
             <div className="flex shrink-0 items-center gap-2.5 md:gap-3">
                 <div className={cn("flex flex-col items-center justify-center rounded-sm border px-3.5 py-1.5 transition-all duration-200", diff.spCostChanged ? "border-border bg-muted shadow-sm ring-1 ring-border" : "border-border/60 bg-muted/40")}>
-                    <div className="font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">SP</div>
+                    <div className="font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("skills.column.sp")}</div>
                     <div className="mt-0.5 font-mono font-semibold text-base text-foreground">{levelData.spData?.spCost ?? "-"}</div>
                 </div>
                 <div className={cn("flex flex-col items-center justify-center rounded-sm border px-3.5 py-1.5 transition-all duration-200", diff.initSpChanged ? "border-border bg-muted shadow-sm ring-1 ring-border" : "border-border/60 bg-muted/40")}>
-                    <div className="font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">Init</div>
+                    <div className="font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("skills.column.init")}</div>
                     <div className="mt-0.5 font-mono font-semibold text-base text-foreground">{levelData.spData?.initSp ?? "-"}</div>
                 </div>
                 <div className={cn("flex flex-col items-center justify-center rounded-sm border px-3.5 py-1.5 transition-all duration-200", diff.durationChanged ? "border-border bg-muted shadow-sm ring-1 ring-border" : "border-border/60 bg-muted/40")}>
-                    <div className="font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">Dur</div>
-                    <div className="mt-0.5 font-mono font-semibold text-base text-foreground">{levelData.duration && levelData.duration > 0 ? `${levelData.duration}s` : "-"}</div>
+                    <div className="font-medium text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("skills.column.dur")}</div>
+                    <div className="mt-0.5 font-mono font-semibold text-base text-foreground">{levelData.duration && levelData.duration > 0 ? t("skills.durationSeconds", { value: levelData.duration }) : "-"}</div>
                 </div>
             </div>
         </div>

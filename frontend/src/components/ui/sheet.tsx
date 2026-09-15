@@ -7,7 +7,10 @@ import { XIcon } from "lucide-react";
 import type React from "react";
 import { Button } from "#/components/ui/button";
 import { ScrollArea } from "#/components/ui/scroll-area";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./sheet.messages";
 
 export const Sheet: typeof SheetPrimitive.Root = SheetPrimitive.Root;
 
@@ -59,6 +62,8 @@ export function SheetPopup({
     closeProps?: SheetPrimitive.Close.Props;
     portalProps?: SheetPrimitive.Portal.Props;
 }): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("common");
+
     return (
         <SheetPortal {...portalProps}>
             <SheetBackdrop />
@@ -78,7 +83,7 @@ export function SheetPopup({
                 >
                     {children}
                     {showCloseButton && (
-                        <SheetPrimitive.Close aria-label="Close" className="absolute end-2 top-2" render={<Button size="icon" variant="ghost" />} {...closeProps}>
+                        <SheetPrimitive.Close aria-label={t("sheet.close")} className="absolute end-2 top-2" render={<Button size="icon" variant="ghost" />} {...closeProps}>
                             <XIcon />
                         </SheetPrimitive.Close>
                     )}

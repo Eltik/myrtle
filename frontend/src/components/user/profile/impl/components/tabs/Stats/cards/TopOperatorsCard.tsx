@@ -4,9 +4,17 @@ import { eliteIcon } from "#/components/operators/detail/impl/assets";
 import { RARITY_COLORS } from "#/components/operators/list/impl/constants";
 import { PreviewCard, PreviewCardPopup, PreviewCardTrigger } from "#/components/ui/preview-card";
 import type { IRosterEntry } from "#/lib/api/user";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
+import type { messages } from "./TopOperatorsCard.messages";
+
+/** The remaining-work labels are declared once, in `Roster/helpers.card.messages.ts`. */
+type TopT = TypedT<typeof messages & typeof cardMessages>;
+
 import { operatorCompleteness, operatorMissing, ownedAvatar, parseOperatorName, RARITY_WEIGHT, specializedIcon } from "../../Roster/helpers.card";
+import type { messages as cardMessages } from "../../Roster/helpers.card.messages";
 import { PALETTE } from "../palette";
 import { Kicker, StatCard } from "../primitives";
 
@@ -26,6 +34,7 @@ interface ITopOperatorsCardProps {
 }
 
 export function TopOperatorsCard({ roster, operatorsStatic }: ITopOperatorsCardProps) {
+    const t: TypedT<typeof messages> = useT("user");
     const top = useMemo<IRanked[]>(() => {
         const opMap = new Map<string, IOperatorListItem>();
         for (const op of operatorsStatic) if (op.id) opMap.set(op.id, op);
@@ -47,7 +56,7 @@ export function TopOperatorsCard({ roster, operatorsStatic }: ITopOperatorsCardP
     return (
         <StatCard className="sm:col-span-2" color={PALETTE.top}>
             <div className="p-4 pb-3 sm:p-5 sm:pb-3">
-                <Kicker icon={Medal} label="Top Operators" />
+                <Kicker icon={Medal} label={t("profile.stats.top.title")} />
             </div>
             <div className="grid grid-cols-2 gap-px bg-border sm:grid-cols-4">
                 {top.map((ranked, i) => (
@@ -59,13 +68,14 @@ export function TopOperatorsCard({ roster, operatorsStatic }: ITopOperatorsCardP
 }
 
 function TopOperatorTile({ ranked, rank }: { ranked: IRanked; rank: number }) {
+    const t: TopT = useT("user");
     const { entry, op, rarity } = ranked;
     const rarityColor = RARITY_COLORS[rarity] ?? "#ffffff";
     const { displayName, subtitle } = parseOperatorName(op.name);
     const avatarURL = ownedAvatar(entry.operator_id, entry.skin_id);
     const hasMasteries = entry.masteries.some((m) => m.mastery > 0);
     const completenessPct = Math.round(ranked.completeness * 100);
-    const missing = useMemo(() => operatorMissing(entry, op), [entry, op]);
+    const missing = useMemo(() => operatorMissing(entry, op, t), [entry, op, t]);
 
     return (
         <PreviewCard>
@@ -88,14 +98,14 @@ function TopOperatorTile({ ranked, rank }: { ranked: IRanked; rank: number }) {
                                     {subtitle}
                                 </p>
                             )}
-                            <p className="font-mono text-[10.5px] text-muted-foreground/70">Lv {entry.level}</p>
+                            <p className="font-mono text-[10.5px] text-muted-foreground/70">{t("profile.stats.top.level", { level: entry.level })}</p>
                         </div>
                     </div>
 
                     {hasMasteries && <div className="flex gap-1">{entry.masteries.map((m) => (m.mastery > 0 ? <img alt={`M${m.mastery}`} className="h-4 w-4 opacity-90" key={m.index} src={specializedIcon(m.mastery)} /> : <div className="h-4 w-4 rounded-sm bg-muted/40" key={m.index} />))}</div>}
 
                     <div className="mt-auto flex items-center gap-2 pt-0.5">
-                        <div aria-label={`${completenessPct}% complete`} aria-valuemax={100} aria-valuemin={0} aria-valuenow={completenessPct} className="h-1 flex-1 overflow-hidden rounded-full bg-muted/40" role="progressbar">
+                        <div aria-label={t("profile.stats.top.completeAria", { pct: completenessPct })} aria-valuemax={100} aria-valuemin={0} aria-valuenow={completenessPct} className="h-1 flex-1 overflow-hidden rounded-full bg-muted/40" role="progressbar">
                             <div className="h-full rounded-full" style={{ width: `${completenessPct}%`, background: rarityColor, opacity: 0.7 }} />
                         </div>
                         <span className="font-mono text-[10px] text-muted-foreground/70 tabular-nums">{completenessPct}%</span>
@@ -114,11 +124,11 @@ function TopOperatorTile({ ranked, rank }: { ranked: IRanked; rank: number }) {
                     {missing.length === 0 ? (
                         <div className="flex items-center gap-1.5 font-medium text-emerald-500 text-xs">
                             <Check className="h-3.5 w-3.5" />
-                            Fully built
+                            {t("profile.stats.top.fullyBuilt")}
                         </div>
                     ) : (
                         <div className="flex flex-col gap-1.5">
-                            <span className="font-medium text-[10px] text-muted-foreground/60 uppercase tracking-wide">Remaining</span>
+                            <span className="font-medium text-[10px] text-muted-foreground/60 uppercase tracking-wide">{t("profile.stats.top.remaining")}</span>
                             <ul className="flex flex-col gap-1">
                                 {missing.map((gap) => (
                                     <li className="flex items-center gap-2 text-foreground/80 text-xs" key={gap.tag}>

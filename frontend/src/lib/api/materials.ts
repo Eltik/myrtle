@@ -2,6 +2,7 @@ import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { checkSample, firstValue, materialItemContract } from "#/lib/api/contract";
 import { backendFetch } from "#/lib/fetch";
+import { DEFAULT_GAMEDATA_SERVER, gamedataKey, gamedataPath, resolveGamedataServer } from "./gamedata";
 
 export type { ApSupply as IApSupply } from "#/types/generated/ApSupply";
 export type { BuildingProduct as IBuildingProduct } from "#/types/generated/BuildingProduct";
@@ -36,38 +37,42 @@ import type { Materials as IMaterials } from "#/types/generated/Materials";
 export type { Materials as IMaterials } from "#/types/generated/Materials";
 
 export const getMaterialsFn = createServerFn({ method: "GET" })
-    .inputValidator((server: "en" | "cn") => server)
+    .inputValidator((server: string) => server)
     .handler(async ({ data: server }) => {
-        const res = await backendFetch(server === "cn" ? "/cn/static/materials" : "/static/materials");
+        const res = await backendFetch(gamedataPath(server, "/static/materials"));
         if (!res.ok) throw new Error(`Failed to load materials: ${res.status}`);
         const payload = (await res.json()) as IMaterials;
         checkSample("static/materials", materialItemContract, firstValue(payload.items));
         return payload;
     });
 
-export function materialsQueryOptions(server: "en" | "cn" = "en") {
+export function materialsQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["materials", server],
-        queryFn: () => getMaterialsFn({ data: server }),
+        // This key already carried the server, so it keeps that exact shape -
+        // `["materials", "en"]` is what an English render used before and after.
+        queryKey: ["materials", resolveGamedataServer(server)],
+        queryFn: () => getMaterialsFn({ data: resolveGamedataServer(server) }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });
 }
 
-export const getItemsListFn = createServerFn({ method: "GET" }).handler(async () => {
-    const res = await backendFetch("/static/materials");
-    if (!res.ok) throw new Error(`Failed to load materials: ${res.status}`);
-    const materials = (await res.json()) as IMaterials;
-    checkSample("static/materials", materialItemContract, firstValue(materials.items));
-    return Object.values(materials.items)
-        .filter((i): i is IMaterialItem => i !== undefined)
-        .sort((a, b) => a.sortId - b.sortId);
-});
+export const getItemsListFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string | undefined) => server)
+    .handler(async ({ data: server }) => {
+        const res = await backendFetch(gamedataPath(server, "/static/materials"));
+        if (!res.ok) throw new Error(`Failed to load materials: ${res.status}`);
+        const materials = (await res.json()) as IMaterials;
+        checkSample("static/materials", materialItemContract, firstValue(materials.items));
+        return Object.values(materials.items)
+            .filter((i): i is IMaterialItem => i !== undefined)
+            .sort((a, b) => a.sortId - b.sortId);
+    });
 
-export function itemsListQueryOptions() {
+export function itemsListQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["materials", "list"],
-        queryFn: () => getItemsListFn(),
+        queryKey: ["materials", "list", ...gamedataKey(server)],
+        queryFn: () => getItemsListFn({ data: resolveGamedataServer(server) }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });

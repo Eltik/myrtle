@@ -2,9 +2,12 @@ import { useMemo, useState } from "react";
 import { Kicker } from "#/components/ui/kicker";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { IOperatorPopularity } from "#/lib/api/gacha";
-import { formatNumber, formatProfession, rarityGradient, rarityStarColor } from "#/lib/utils";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import { formatProfession, rarityGradient, rarityStarColor } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { fmtPct } from "./format";
+import type { messages } from "./Leaderboard.messages";
 
 const RARITIES = [6, 5, 4] as const;
 type Rarity = (typeof RARITIES)[number];
@@ -16,6 +19,7 @@ interface ILeaderboardProps {
 }
 
 export function Leaderboard({ ops, operatorsById, isLoading }: ILeaderboardProps) {
+    const t: TypedT<typeof messages> = useT("gacha");
     const [rarity, setRarity] = useState<Rarity>(6);
     const filtered = useMemo(() => ops.filter((o) => o.rarity === rarity), [ops, rarity]);
 
@@ -23,8 +27,8 @@ export function Leaderboard({ ops, operatorsById, isLoading }: ILeaderboardProps
         <section className="flex flex-col gap-4 rounded-[14px] border border-border bg-card p-[18px_18px] sm:p-[22px_24px] lg:absolute lg:inset-0">
             <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <div>
-                    <Kicker className="mb-1.5">Most pulled · per rarity</Kicker>
-                    <h2 className="m-0 text-balance font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">The top of the pile.</h2>
+                    <Kicker className="mb-1.5">{t("community.leaderboard.kicker")}</Kicker>
+                    <h2 className="m-0 text-balance font-sans font-semibold text-[20px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[22px]">{t("community.leaderboard.title")}</h2>
                 </div>
                 <div className="inline-flex self-start rounded-[9px] border border-border bg-muted p-0.75 sm:self-auto">
                     {RARITIES.map((r) => (
@@ -46,6 +50,9 @@ export function Leaderboard({ ops, operatorsById, isLoading }: ILeaderboardProps
 }
 
 function LeaderTable({ ops, operatorsById, isLoading }: { ops: IOperatorPopularity[]; operatorsById: Map<string, IOperatorIndexEntry>; isLoading: boolean }) {
+    const t: TypedT<typeof messages> = useT("gacha");
+    const f = useFormatters();
+
     if (isLoading && ops.length === 0) {
         return (
             <div className="flex flex-col gap-2.5 py-2">
@@ -65,7 +72,7 @@ function LeaderTable({ ops, operatorsById, isLoading }: { ops: IOperatorPopulari
     }
 
     if (ops.length === 0) {
-        return <div className="py-8 text-center font-sans text-muted-foreground text-sm">No data for this rarity yet.</div>;
+        return <div className="py-8 text-center font-sans text-muted-foreground text-sm">{t("community.leaderboard.empty")}</div>;
     }
 
     const max = Math.max(...ops.map((o) => o.pullCount));
@@ -76,9 +83,9 @@ function LeaderTable({ ops, operatorsById, isLoading }: { ops: IOperatorPopulari
                 <thead className="sticky top-0 z-10 bg-card">
                     <tr>
                         <th className="w-8 border-border border-b bg-card px-1.5 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:w-10 sm:px-2">#</th>
-                        <th className="border-border border-b bg-card px-1.5 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2">Operator</th>
-                        <th className="border-border border-b bg-card px-1.5 py-2 text-right font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2 sm:text-left">Pulls</th>
-                        <th className="hidden border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:table-cell">Share</th>
+                        <th className="border-border border-b bg-card px-1.5 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2">{t("community.leaderboard.col.operator")}</th>
+                        <th className="border-border border-b bg-card px-1.5 py-2 text-right font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:px-2 sm:text-left">{t("community.leaderboard.col.pulls")}</th>
+                        <th className="hidden border-border border-b bg-card px-2 py-2 text-left font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em] sm:table-cell">{t("community.leaderboard.col.share")}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -111,7 +118,7 @@ function LeaderTable({ ops, operatorsById, isLoading }: { ops: IOperatorPopulari
                                         </div>
                                     </div>
                                 </td>
-                                <td className="whitespace-nowrap px-1.5 py-2.5 text-right align-middle font-medium font-mono text-[12px] text-foreground tabular-nums sm:w-25 sm:px-2 sm:pl-4 sm:text-left sm:text-[13px]">{formatNumber(op.pullCount)}</td>
+                                <td className="whitespace-nowrap px-1.5 py-2.5 text-right align-middle font-medium font-mono text-[12px] text-foreground tabular-nums sm:w-25 sm:px-2 sm:pl-4 sm:text-left sm:text-[13px]">{f.number(op.pullCount)}</td>
                                 <td className="hidden w-45 px-2 py-2.5 pr-2 align-middle sm:table-cell">
                                     <div className="flex items-center gap-2.5">
                                         <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">

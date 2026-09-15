@@ -14,12 +14,18 @@ import { toastManager } from "#/components/ui/toast";
 import { type IUpdateOperatorNoteInput, operatorNoteAuditLogQueryOptions, updateOperatorNoteFn } from "#/lib/api/admin";
 import { type IOperatorNote, noteHasContent, operatorNoteQueryOptions, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { type TypedRichT, useFormatters, useGamedataServer, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { Markdown } from "#/lib/markdown";
 import { normalizeForSearch } from "#/lib/search/fuzzy";
-import { cn, formatRelativeShort, formatSubProfession } from "#/lib/utils";
+import { cn, formatSubProfession } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { HCode, PageHead } from "../AdminShell";
 import { MonoSection, RARITY_BG } from "../Primitives";
+import type { messages } from "./OperatorNotes.messages";
+
+type NotesT = TypedT<typeof messages>;
+type NotesRichT = TypedRichT<typeof messages>;
 
 interface INoteCombined {
     operatorId: string;
@@ -30,14 +36,23 @@ interface INoteCombined {
 type StatusFilter = "all" | "has-content" | "empty";
 type SortMode = "recent" | "name" | "rarity";
 
-const SORT_LABELS: Record<SortMode, string> = {
-    recent: "Recently updated",
-    name: "Name (A→Z)",
-    rarity: "Rarity (high→low)",
-};
+const SORT_MODES: readonly SortMode[] = ["recent", "name", "rarity"] as const;
+
+function sortLabel(t: NotesT, mode: SortMode): string {
+    switch (mode) {
+        case "recent":
+            return t("notes.sort.recent");
+        case "name":
+            return t("notes.sort.name");
+        case "rarity":
+            return t("notes.sort.rarity");
+    }
+}
 
 export function OperatorNotes(): React.ReactElement {
-    const opsQuery = useQuery(operatorsIndexQueryOptions());
+    const t: NotesT = useT("admin");
+    const rt: NotesRichT = useRichT("admin");
+    const opsQuery = useQuery(operatorsIndexQueryOptions(useGamedataServer()));
     const notesQuery = useQuery(operatorNotesListQueryOptions());
     const [editingId, setEditingId] = useState<string | null>(null);
     const [search, setSearch] = useState("");
@@ -80,15 +95,7 @@ export function OperatorNotes(): React.ReactElement {
 
     return (
         <>
-            <PageHead
-                kicker="Manage"
-                title="Operator notes"
-                sub={
-                    <>
-                        Community guidance attached to each operator. Edits write to <HCode>operator_notes</HCode> and append a diff to <HCode>operator_notes_audit</HCode>.
-                    </>
-                }
-            />
+            <PageHead kicker={t("notes.kicker")} title={t("notes.title")} sub={rt("notes.sub", { table: <HCode>operator_notes</HCode>, auditTable: <HCode>operator_notes_audit</HCode> })} />
 
             {editingId ? (
                 <NoteEditor operatorId={editingId} onClose={() => setEditingId(null)} />
@@ -100,15 +107,15 @@ export function OperatorNotes(): React.ReactElement {
                                 <InputGroupAddon>
                                     <SearchIcon />
                                 </InputGroupAddon>
-                                <Input placeholder="Search name, char_id, summary, or tag…" size="sm" value={search} onChange={(e) => setSearch(e.target.value)} />
+                                <Input placeholder={t("notes.searchPlaceholder")} size="sm" value={search} onChange={(e) => setSearch(e.target.value)} />
                             </InputGroup>
                         </div>
                         <div className="inline-flex max-w-full gap-px overflow-x-auto rounded-[9px] border border-border bg-card p-0.75">
                             {(
                                 [
-                                    { value: "all", label: `All · ${counts.all}` },
-                                    { value: "has-content", label: `Has content · ${counts.withContent}` },
-                                    { value: "empty", label: `Empty · ${counts.empty}` },
+                                    { value: "all", label: t("notes.filter.all", { count: counts.all }) },
+                                    { value: "has-content", label: t("notes.filter.hasContent", { count: counts.withContent }) },
+                                    { value: "empty", label: t("notes.filter.empty", { count: counts.empty }) },
                                 ] as { value: StatusFilter; label: string }[]
                             ).map((it) => (
                                 <button
@@ -126,23 +133,21 @@ export function OperatorNotes(): React.ReactElement {
                                 render={(triggerProps) => (
                                     <button {...triggerProps} type="button" className="inline-flex h-7 shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-border bg-card px-2.5 font-medium text-[12.5px] text-foreground hover:bg-accent">
                                         <ArrowUpDownIcon className="size-3.5 opacity-70" strokeWidth={1.9} />
-                                        <span>{SORT_LABELS[sortMode]}</span>
+                                        <span>{sortLabel(t, sortMode)}</span>
                                     </button>
                                 )}
                             />
                             <DropdownMenuContent align="end" className="w-48">
-                                {(Object.keys(SORT_LABELS) as SortMode[]).map((m) => (
+                                {SORT_MODES.map((m) => (
                                     <DropdownMenuItem key={m} className="cursor-pointer" onClick={() => setSortMode(m)}>
                                         {sortMode === m ? <CheckIcon className="mr-2 h-4 w-4 text-primary" /> : <span className="mr-2 inline-block h-4 w-4" />}
-                                        {SORT_LABELS[m]}
+                                        {sortLabel(t, m)}
                                     </DropdownMenuItem>
                                 ))}
                             </DropdownMenuContent>
                         </DropdownMenu>
                         <div className="flex-1" />
-                        <span className="font-mono text-[11.5px] text-muted-foreground tabular-nums">
-                            {filtered.length} of {counts.all}
-                        </span>
+                        <span className="font-mono text-[11.5px] text-muted-foreground tabular-nums">{t("notes.countShown", { filtered: filtered.length, total: counts.all })}</span>
                     </div>
                     {notesQuery.isPending || opsQuery.isPending ? (
                         <div className="space-y-2 p-4">
@@ -154,7 +159,7 @@ export function OperatorNotes(): React.ReactElement {
                         <div className="px-3.5 py-16 text-center text-[13px] text-muted-foreground">
                             {search || statusFilter !== "all" ? (
                                 <>
-                                    No notes match these filters.{" "}
+                                    {t("notes.noMatch")}{" "}
                                     <button
                                         type="button"
                                         className="cursor-pointer text-foreground underline underline-offset-2 hover:text-primary"
@@ -163,11 +168,11 @@ export function OperatorNotes(): React.ReactElement {
                                             setStatusFilter("all");
                                         }}
                                     >
-                                        Reset
+                                        {t("notes.reset")}
                                     </button>
                                 </>
                             ) : (
-                                "No operator notes yet."
+                                t("notes.empty")
                             )}
                         </div>
                     ) : (
@@ -186,6 +191,8 @@ export function OperatorNotes(): React.ReactElement {
 }
 
 function NoteRow({ op, note, onOpen }: { op: IOperatorIndexEntry; note: IOperatorNote | null; onOpen: () => void }): React.ReactElement {
+    const t: NotesT = useT("admin");
+    const f = useFormatters();
     const hasContent = note ? noteHasContent(note) : false;
     const tags = note?.tags ?? [];
     const summary = note?.summary?.trim() || note?.notes?.trim().split("\n")[0] || null;
@@ -209,7 +216,7 @@ function NoteRow({ op, note, onOpen }: { op: IOperatorIndexEntry; note: IOperato
                     <span className="hidden text-[11.5px] text-muted-foreground sm:inline">· {formatSubProfession(op.subProfessionId)}</span>
                 </div>
 
-                {summary ? <p className="line-clamp-2 text-[12.5px] text-muted-foreground leading-snug">{summary}</p> : <p className="text-[12px] text-muted-foreground/70 italic">No summary yet - click to add one.</p>}
+                {summary ? <p className="line-clamp-2 text-[12.5px] text-muted-foreground leading-snug">{summary}</p> : <p className="text-[12px] text-muted-foreground/70 italic">{t("notes.noSummary")}</p>}
 
                 {tags.length > 0 ? (
                     <div className="mt-0.5 flex flex-wrap gap-1">
@@ -224,8 +231,8 @@ function NoteRow({ op, note, onOpen }: { op: IOperatorIndexEntry; note: IOperato
             </div>
 
             <div className="flex shrink-0 flex-col items-end gap-1.5 self-stretch">
-                {hasContent ? <Badge variant="success">filled</Badge> : <Badge variant="outline">empty</Badge>}
-                {note?.updated_at ? <span className="whitespace-nowrap font-mono text-[10.5px] text-muted-foreground">{formatRelativeShort(note.updated_at)}</span> : null}
+                {hasContent ? <Badge variant="success">{t("notes.badge.filled")}</Badge> : <Badge variant="outline">{t("notes.badge.empty")}</Badge>}
+                {note?.updated_at ? <span className="whitespace-nowrap font-mono text-[10.5px] text-muted-foreground">{f.relativeShort(note.updated_at)}</span> : null}
                 <ChevronRightIcon className="mt-auto hidden size-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 sm:block" strokeWidth={1.9} />
             </div>
         </button>
@@ -233,8 +240,11 @@ function NoteRow({ op, note, onOpen }: { op: IOperatorIndexEntry; note: IOperato
 }
 
 function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () => void }): React.ReactElement {
+    const t: NotesT = useT("admin");
+    const rt: NotesRichT = useRichT("admin");
+    const f = useFormatters();
     const queryClient = useQueryClient();
-    const opsQuery = useQuery(operatorsIndexQueryOptions());
+    const opsQuery = useQuery(operatorsIndexQueryOptions(useGamedataServer()));
     const noteQuery = useQuery(operatorNoteQueryOptions(operatorId));
     const auditQuery = useQuery(operatorNoteAuditLogQueryOptions(operatorId));
 
@@ -281,9 +291,9 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
             void queryClient.invalidateQueries({ queryKey: ["operator-notes"] });
             void queryClient.invalidateQueries({ queryKey: ["admin", "operator-notes", "audit", operatorId] });
             setDirtyBaseline(JSON.stringify({ summary: data.summary ?? "", notes: data.notes ?? "", pros: data.pros ?? "", cons: data.cons ?? "", trivia: data.trivia ?? "", tags: data.tags ?? [] }));
-            toastManager.add({ id: `note-save-${Date.now()}`, title: "Note saved", description: `Updated operator notes for ${op?.name ?? operatorId}.`, type: "success" });
+            toastManager.add({ id: `note-save-${Date.now()}`, title: t("notes.toast.saved"), description: t("notes.toast.saved.desc", { name: op?.name ?? operatorId }), type: "success" });
         },
-        onError: (err: unknown) => toastManager.add({ id: `note-save-err-${Date.now()}`, title: "Failed to save", description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `note-save-err-${Date.now()}`, title: t("notes.toast.failed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
     });
 
     if (noteQuery.isPending || opsQuery.isPending) {
@@ -304,21 +314,13 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                         >
                             <OperatorAvatar charId={operatorId} name={op?.name ?? "?"} />
                         </span>
-                        <span className="font-mono">{operatorId}</span> · {op?.name ?? "Operator"}
+                        <span className="font-mono">{operatorId}</span> · {op?.name ?? t("notes.operatorFallback")}
                     </CardTitle>
-                    <CardDescription className="text-xs">
-                        {note ? (
-                            <>
-                                Last updated {formatRelativeShort(note.updated_at)} · {auditQuery.data?.length ?? 0} revision{(auditQuery.data?.length ?? 0) === 1 ? "" : "s"}
-                            </>
-                        ) : (
-                            "New note - nothing saved yet."
-                        )}
-                    </CardDescription>
+                    <CardDescription className="text-xs">{note ? t("notes.editor.lastUpdated", { when: f.relativeShort(note.updated_at), count: auditQuery.data?.length ?? 0 }) : t("notes.editor.new")}</CardDescription>
                     <CardAction>
                         <div className="flex items-center gap-2">
                             <Button variant="ghost" size="sm" onClick={onClose}>
-                                Back
+                                {t("notes.back")}
                             </Button>
                             <Button
                                 size="sm"
@@ -337,29 +339,29 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                                 }
                             >
                                 <CheckIcon />
-                                Save
+                                {t("notes.save")}
                             </Button>
                         </div>
                     </CardAction>
                 </CardHeader>
                 <div className="grid grid-cols-1 border-border border-t lg:grid-cols-2">
                     <div className="border-border border-b p-4 lg:border-r lg:border-b-0">
-                        <Field label="Summary" hint="One-line synopsis for the operator card.">
+                        <Field label={t("notes.field.summary")} hint={t("notes.field.summary.hint")}>
                             <Input size="sm" value={summary} onChange={(e) => setSummary(e.target.value)} />
                         </Field>
-                        <Field label="Pros">
-                            <MarkdownEditor value={pros} onChange={setPros} rows={3} size="sm" placeholder="What's strong about this operator?" showHint={false} />
+                        <Field label={t("notes.field.pros")}>
+                            <MarkdownEditor value={pros} onChange={setPros} rows={3} size="sm" placeholder={t("notes.field.pros.placeholder")} showHint={false} />
                         </Field>
-                        <Field label="Cons">
-                            <MarkdownEditor value={cons} onChange={setCons} rows={3} size="sm" placeholder="Where do they fall short?" showHint={false} />
+                        <Field label={t("notes.field.cons")}>
+                            <MarkdownEditor value={cons} onChange={setCons} rows={3} size="sm" placeholder={t("notes.field.cons.placeholder")} showHint={false} />
                         </Field>
-                        <Field label="Notes">
-                            <MarkdownEditor value={notes} onChange={setNotes} rows={5} size="sm" placeholder="Deeper guidance, usage tips, synergies." showHint={false} />
+                        <Field label={t("notes.field.notes")}>
+                            <MarkdownEditor value={notes} onChange={setNotes} rows={5} size="sm" placeholder={t("notes.field.notes.placeholder")} showHint={false} />
                         </Field>
-                        <Field label="Trivia">
-                            <MarkdownEditor value={trivia} onChange={setTrivia} rows={3} size="sm" placeholder="Lore, fun facts." showHint={false} />
+                        <Field label={t("notes.field.trivia")}>
+                            <MarkdownEditor value={trivia} onChange={setTrivia} rows={3} size="sm" placeholder={t("notes.field.trivia.placeholder")} showHint={false} />
                         </Field>
-                        <Field label="Tags">
+                        <Field label={t("notes.field.tags")}>
                             <div className="flex gap-2">
                                 <Input
                                     size="sm"
@@ -371,11 +373,11 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                                             addTag();
                                         }
                                     }}
-                                    placeholder="Add a tag…"
+                                    placeholder={t("notes.tagPlaceholder")}
                                 />
                                 <Button type="button" variant="outline" size="sm" onClick={addTag} disabled={!tagInput.trim()}>
                                     <PlusIcon />
-                                    Add
+                                    {t("notes.addTag")}
                                 </Button>
                             </div>
                             {tags.length > 0 ? (
@@ -383,7 +385,7 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                                     {tags.map((tag) => (
                                         <Badge key={tag} variant="secondary" className="gap-1 pr-1">
                                             <span>{tag}</span>
-                                            <button type="button" onClick={() => removeTag(tag)} className="-mr-0.5 inline-flex size-3.5 cursor-pointer items-center justify-center rounded-sm hover:bg-foreground/10" aria-label={`Remove ${tag}`}>
+                                            <button type="button" onClick={() => removeTag(tag)} className="-mr-0.5 inline-flex size-3.5 cursor-pointer items-center justify-center rounded-sm hover:bg-foreground/10" aria-label={t("notes.removeTag", { tag })}>
                                                 <XIcon className="size-3" strokeWidth={2.2} />
                                             </button>
                                         </Badge>
@@ -394,32 +396,32 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                     </div>
                     <div>
                         <div className="flex items-center justify-between border-border border-b px-3.5 py-2">
-                            <MonoSection>Preview</MonoSection>
-                            {dirty ? <Badge variant="warning">unsaved changes</Badge> : <Badge variant="outline">saved</Badge>}
+                            <MonoSection>{t("notes.preview")}</MonoSection>
+                            {dirty ? <Badge variant="warning">{t("notes.unsaved")}</Badge> : <Badge variant="outline">{t("notes.saved")}</Badge>}
                         </div>
                         <div className="max-h-[60vh] overflow-auto p-4 font-sans text-[13px] leading-[1.6] lg:h-160 lg:max-h-none">
                             {summary ? <p className="mb-3 whitespace-pre-line font-medium">{summary}</p> : null}
                             {pros ? (
                                 <>
-                                    <h3 className="mt-2 mb-1.5 font-semibold text-[14px]">Pros</h3>
+                                    <h3 className="mt-2 mb-1.5 font-semibold text-[14px]">{t("notes.field.pros")}</h3>
                                     <Markdown text={pros} className="text-muted-foreground" />
                                 </>
                             ) : null}
                             {cons ? (
                                 <>
-                                    <h3 className="mt-3 mb-1.5 font-semibold text-[14px]">Cons</h3>
+                                    <h3 className="mt-3 mb-1.5 font-semibold text-[14px]">{t("notes.field.cons")}</h3>
                                     <Markdown text={cons} className="text-muted-foreground" />
                                 </>
                             ) : null}
                             {notes ? (
                                 <>
-                                    <h3 className="mt-3 mb-1.5 font-semibold text-[14px]">Notes</h3>
+                                    <h3 className="mt-3 mb-1.5 font-semibold text-[14px]">{t("notes.field.notes")}</h3>
                                     <Markdown text={notes} className="text-muted-foreground" />
                                 </>
                             ) : null}
                             {trivia ? (
                                 <>
-                                    <h3 className="mt-3 mb-1.5 font-semibold text-[14px]">Trivia</h3>
+                                    <h3 className="mt-3 mb-1.5 font-semibold text-[14px]">{t("notes.field.trivia")}</h3>
                                     <Markdown text={trivia} className="text-muted-foreground" />
                                 </>
                             ) : null}
@@ -432,7 +434,7 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                                     ))}
                                 </div>
                             ) : null}
-                            {!summary && !pros && !cons && !notes && !trivia && tags.length === 0 ? <p className="text-muted-foreground">Nothing yet - start writing on the left.</p> : null}
+                            {!summary && !pros && !cons && !notes && !trivia && tags.length === 0 ? <p className="text-muted-foreground">{t("notes.preview.empty")}</p> : null}
                         </div>
                     </div>
                 </div>
@@ -444,17 +446,15 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-sm">
                         <ActivityIcon className="size-4" />
-                        Revision history
+                        {t("notes.history.title")}
                     </CardTitle>
-                    <CardDescription className="text-xs">
-                        Each save appends a row to <HCode>operator_notes_audit</HCode> with a JWT-signed actor stamp.
-                    </CardDescription>
+                    <CardDescription className="text-xs">{rt("notes.history.desc", { table: <HCode>operator_notes_audit</HCode> })}</CardDescription>
                 </CardHeader>
                 <div className="p-4">
                     {auditQuery.isPending ? (
                         <Skeleton className="h-32 w-full" />
                     ) : (auditQuery.data?.length ?? 0) === 0 ? (
-                        <div className="py-6 text-center text-[13px] text-muted-foreground">No revisions yet.</div>
+                        <div className="py-6 text-center text-[13px] text-muted-foreground">{t("notes.history.empty")}</div>
                     ) : (
                         <div className="relative pl-4">
                             <div className="absolute top-1 bottom-1 left-1 w-0.5 rounded bg-border" />
@@ -462,10 +462,17 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
                                 <div key={rev.id} className="relative pb-3.5 last:pb-0">
                                     <span className={`absolute top-1 -left-4.5 size-2.5 rounded-full border-2 bg-card shadow-[0_0_0_3px_var(--background)] ${i === 0 ? "border-primary" : "border-border"}`} />
                                     <div className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.06em]">
-                                        {formatRelativeShort(rev.changed_at)} · {rev.field_name}
+                                        {f.relativeShort(rev.changed_at)} · {rev.field_name}
                                     </div>
                                     <div className="mt-1 text-[12.5px] leading-normal">
-                                        <span className="font-mono text-muted-foreground">UID&nbsp;{rev.changed_by}</span> updated <span className="font-mono">{rev.field_name}</span>
+                                        {rt("notes.history.updated", {
+                                            actor: (
+                                                <span className="font-mono text-muted-foreground">
+                                                    {t("notes.uid")}&nbsp;{rev.changed_by}
+                                                </span>
+                                            ),
+                                            field: <span className="font-mono">{rev.field_name}</span>,
+                                        })}
                                     </div>
                                     {rev.old_value !== null || rev.new_value !== null ? (
                                         <div className="mt-1.5 rounded-lg border border-border bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)] p-2 font-mono text-[11.5px] leading-normal">

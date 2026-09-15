@@ -4,7 +4,10 @@ import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, Dia
 import { Field, FieldDescription, FieldLabel } from "#/components/ui/field";
 import { Input } from "#/components/ui/input";
 import { Textarea } from "#/components/ui/textarea";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { LIST_DESCRIPTION_MAX as DESC_MAX, LIST_NAME_MAX as NAME_MAX } from "../shared";
+import type { messages } from "./EditListDialog.messages";
 
 export interface IEditListInitial {
     slug: string;
@@ -21,6 +24,7 @@ interface IEditListDialogProps {
 }
 
 export function EditListDialog({ initial, onOpenChange, onSubmit, isSubmitting, errorMessage }: IEditListDialogProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
     const open = initial !== null;
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
@@ -49,30 +53,30 @@ export function EditListDialog({ initial, onOpenChange, onSubmit, isSubmitting, 
             <DialogPopup>
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Edit list details</DialogTitle>
-                        <DialogDescription>Rename the list and update its description. Changes go live immediately.</DialogDescription>
+                        <DialogTitle>{t("my.edit.title")}</DialogTitle>
+                        <DialogDescription>{t("my.edit.description")}</DialogDescription>
                     </DialogHeader>
 
                     <div className="flex flex-col gap-5 px-6 pb-2">
                         <Field>
                             <FieldLabel htmlFor={nameId}>
-                                Name
+                                {t("my.edit.name")}
                                 <span className="ml-auto font-mono text-[10.5px] text-muted-foreground tabular-nums">
                                     {name.length} / {NAME_MAX}
                                 </span>
                             </FieldLabel>
                             <Input id={nameId} value={name} onChange={(e) => setName((e.target as HTMLInputElement).value.slice(0, NAME_MAX))} required autoFocus />
-                            <FieldDescription>The URL slug will not change when you rename the list.</FieldDescription>
+                            <FieldDescription>{t("my.edit.nameHint")}</FieldDescription>
                         </Field>
 
                         <Field>
                             <FieldLabel htmlFor={descId}>
-                                Description
+                                {t("my.edit.descriptionLabel")}
                                 <span className="ml-auto font-mono text-[10.5px] text-muted-foreground tabular-nums">
                                     {description.length} / {DESC_MAX}
                                 </span>
                             </FieldLabel>
-                            <Textarea id={descId} value={description} onChange={(e) => setDescription(e.target.value.slice(0, DESC_MAX))} rows={3} placeholder="A sentence or two about this list." />
+                            <Textarea id={descId} value={description} onChange={(e) => setDescription(e.target.value.slice(0, DESC_MAX))} rows={3} placeholder={t("my.edit.descriptionPlaceholder")} />
                         </Field>
 
                         {errorMessage && (
@@ -83,9 +87,9 @@ export function EditListDialog({ initial, onOpenChange, onSubmit, isSubmitting, 
                     </div>
 
                     <DialogFooter>
-                        <DialogClose render={<Button type="button" variant="outline" />}>Cancel</DialogClose>
+                        <DialogClose render={<Button type="button" variant="outline" />}>{t("my.edit.cancel")}</DialogClose>
                         <Button type="submit" disabled={!canSubmit} loading={isSubmitting}>
-                            Save changes
+                            {t("my.edit.submit")}
                         </Button>
                     </DialogFooter>
                 </form>

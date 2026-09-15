@@ -2,10 +2,15 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "#/components/ui/tabs";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { CALENDAR_SCALES } from "../constants";
+import type { messages as birthdayConstantsMessages } from "../constants.messages";
 import type { CalendarScale } from "../types";
+import type { messages } from "./CalendarToolbar.messages";
 
-const UNIT: Record<CalendarScale, string> = { day: "day", "3day": "period", week: "week", month: "month" };
+/** This toolbar renders its own chrome plus the zoom-level labels from `constants.ts`. */
+type ToolbarT = TypedT<typeof messages & typeof birthdayConstantsMessages>;
 
 interface ICalendarToolbarProps {
     title: string;
@@ -20,17 +25,18 @@ interface ICalendarToolbarProps {
 
 /** Calendar header: Today + range stepper on the left, scale switcher on the right. */
 export function CalendarToolbar({ title, titleShort, scale, onScaleChange, onPrev, onNext, onToday }: ICalendarToolbarProps): React.ReactElement {
+    const t: ToolbarT = useT("tools");
     return (
         <div className="flex flex-col gap-3 border-border border-b px-4 py-3.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:px-5">
             <div className="flex min-w-0 items-center gap-2">
                 <Button variant="outline" size="sm" onClick={onToday}>
-                    Today
+                    {t("birthdays.toolbar.today")}
                 </Button>
                 <div className="flex items-center gap-1">
-                    <Button variant="outline" size="icon-sm" aria-label={`Previous ${UNIT[scale]}`} onClick={onPrev}>
+                    <Button variant="outline" size="icon-sm" aria-label={t("birthdays.toolbar.prev", { scale })} onClick={onPrev}>
                         <ChevronLeft />
                     </Button>
-                    <Button variant="outline" size="icon-sm" aria-label={`Next ${UNIT[scale]}`} onClick={onNext}>
+                    <Button variant="outline" size="icon-sm" aria-label={t("birthdays.toolbar.next", { scale })} onClick={onNext}>
                         <ChevronRight />
                     </Button>
                 </div>
@@ -43,7 +49,7 @@ export function CalendarToolbar({ title, titleShort, scale, onScaleChange, onPre
                 <TabsList className="w-full sm:w-fit">
                     {CALENDAR_SCALES.map((s) => (
                         <TabsTrigger key={s.id} value={s.id} className="flex-1 sm:flex-none">
-                            {s.label}
+                            {t(s.labelKey)}
                         </TabsTrigger>
                     ))}
                 </TabsList>

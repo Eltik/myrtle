@@ -3,12 +3,17 @@ import { ChevronDown, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
+import { operatorGamedataServer } from "#/lib/api/gamedata";
 import { rangesQueryOptions } from "#/lib/api/ranges";
+import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn, getAvatarById } from "#/lib/utils";
 import type { IDrone } from "#/types/operators";
+import type { messages as detailConstantsMessages } from "../constants.messages";
 import { descriptionToHtml } from "../description";
 import { clampDronePhase, droneTalentBlackboard, getDroneAttributeStats } from "../helpers";
 import { OperatorRange } from "./OperatorRange";
+import type { messages } from "./SummonsSection.messages";
 
 interface ISummonsSectionProps {
     drones: IDrone[];
@@ -17,14 +22,19 @@ interface ISummonsSectionProps {
     server?: "en" | "cn";
 }
 
-const POSITION_LABEL: Record<string, string> = {
-    MELEE: "Melee",
-    RANGED: "Ranged",
-    ALL: "Melee/Ranged",
-    NONE: "-",
+type SummonsT = TypedT<typeof messages & typeof detailConstantsMessages>;
+
+const POSITION_MESSAGE_KEY: Record<string, keyof typeof messages & string> = {
+    MELEE: "summons.position.melee",
+    RANGED: "summons.position.ranged",
+    ALL: "summons.position.all",
 };
 
+/** `NONE` has no message: the game means "not placeable", which the design shows as a dash. */
+const POSITION_NONE_LABEL = "-";
+
 export function SummonsSection({ drones, parentPhaseIndex, parentLevel, server }: ISummonsSectionProps) {
+    const t: TypedT<typeof messages> = useT("operators");
     const [open, setOpen] = useState(true);
     const [activeId, setActiveId] = useState<string>(() => drones[0]?.id ?? "");
 
@@ -37,7 +47,7 @@ export function SummonsSection({ drones, parentPhaseIndex, parentLevel, server }
             <CollapsibleTrigger className="flex w-full items-center justify-between rounded-lg border border-border bg-secondary/30 px-4 py-3 transition-colors hover:bg-secondary/50">
                 <span className="flex items-center gap-2">
                     <Sparkles className="h-4 w-4 text-primary" />
-                    <span className="font-medium text-sm">Summons</span>
+                    <span className="font-medium text-sm">{t("summons.title")}</span>
                     <Badge variant="outline" className="text-[10px]">
                         {drones.length}
                     </Badge>
@@ -79,7 +89,10 @@ interface ISummonCardProps {
 }
 
 function SummonCard({ drone, parentPhaseIndex, parentLevel, server }: ISummonCardProps) {
-    const { data: ranges } = useQuery(rangesQueryOptions());
+    const t: SummonsT = useT("operators");
+    const f = useFormatters();
+    const localeServer = useGamedataServer();
+    const { data: ranges } = useQuery(rangesQueryOptions(operatorGamedataServer(server, localeServer)));
 
     const phaseIndex = clampDronePhase(drone, parentPhaseIndex);
     const phase = drone.phases[phaseIndex];
@@ -89,21 +102,22 @@ function SummonCard({ drone, parentPhaseIndex, parentLevel, server }: ISummonCar
 
     const range = phase?.rangeId ? ranges?.[phase.rangeId] : undefined;
     const avatarSrc = drone.id ? getAvatarById(drone.id, server) : null;
-    const positionLabel = POSITION_LABEL[drone.position] ?? drone.position;
+    const positionKey = POSITION_MESSAGE_KEY[drone.position];
+    const positionLabel = positionKey ? t(positionKey) : drone.position === "NONE" ? POSITION_NONE_LABEL : drone.position;
 
-    const fmt = (n: number | undefined) => (typeof n === "number" ? Math.round(n).toLocaleString() : "-");
+    const fmt = (n: number | undefined) => (typeof n === "number" ? f.number(Math.round(n)) : "-");
 
     const leftStats = [
-        { iconURL: "/stat-icons/HP.png", label: "Health", value: fmt(stats?.maxHp) },
-        { iconURL: "/stat-icons/DEF.png", label: "Defense", value: fmt(stats?.def) },
-        { iconURL: "/stat-icons/RES.png", label: "Arts Resistance", value: fmt(stats?.magicResistance) },
-        { iconURL: "/stat-icons/RDP.png", label: "Redeploy Time", value: `${stats?.respawnTime ?? 0} sec` },
+        { iconURL: "/stat-icons/HP.png", label: t("stat.health"), value: fmt(stats?.maxHp) },
+        { iconURL: "/stat-icons/DEF.png", label: t("stat.defense"), value: fmt(stats?.def) },
+        { iconURL: "/stat-icons/RES.png", label: t("stat.artsResistance"), value: fmt(stats?.magicResistance) },
+        { iconURL: "/stat-icons/RDP.png", label: t("stat.redeployTime"), value: t("stat.seconds", { value: stats?.respawnTime ?? 0 }) },
     ];
     const rightStats = [
-        { iconURL: "/stat-icons/ATK.png", label: "Attack Power", value: fmt(stats?.atk) },
-        { iconURL: "/stat-icons/ASPD.png", label: "Attack Interval", value: `${stats?.attackSpeed?.toFixed(2) ?? "0.00"} sec` },
-        { iconURL: "/stat-icons/BLOCK.png", label: "Block", value: fmt(stats?.blockCnt) },
-        { iconURL: "/stat-icons/COST.png", label: "DP Cost", value: fmt(stats?.cost) },
+        { iconURL: "/stat-icons/ATK.png", label: t("stat.attackPower"), value: fmt(stats?.atk) },
+        { iconURL: "/stat-icons/ASPD.png", label: t("stat.attackInterval"), value: t("stat.seconds", { value: stats?.attackSpeed?.toFixed(2) ?? "0.00" }) },
+        { iconURL: "/stat-icons/BLOCK.png", label: t("stat.block"), value: fmt(stats?.blockCnt) },
+        { iconURL: "/stat-icons/COST.png", label: t("stat.dpCost"), value: fmt(stats?.cost) },
     ];
 
     const visibleTalents = (drone.talents ?? [])
@@ -153,14 +167,14 @@ function SummonCard({ drone, parentPhaseIndex, parentLevel, server }: ISummonCar
 
             {range && (
                 <div className="mt-4">
-                    <h5 className="mb-2 font-medium text-foreground text-xs">Attack Range</h5>
+                    <h5 className="mb-2 font-medium text-foreground text-xs">{t("summons.attackRange")}</h5>
                     <OperatorRange range={range} />
                 </div>
             )}
 
             {visibleTalents.length > 0 && (
                 <div className="mt-4 space-y-2">
-                    <h5 className="font-medium text-foreground text-xs">Talents</h5>
+                    <h5 className="font-medium text-foreground text-xs">{t("summons.talents")}</h5>
                     {visibleTalents.map((t) => {
                         const html = descriptionToHtml(t.description, t.blackboard);
                         return (

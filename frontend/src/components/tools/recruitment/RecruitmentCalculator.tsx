@@ -4,6 +4,8 @@ import { ChevronRight } from "lucide-react";
 import * as React from "react";
 import { Card, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
 import { recruitmentDataQueryOptions } from "#/lib/api/recruitment";
+import { useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { Route } from "#/routes/tools.recruitment";
 import { calculateResults } from "./impl/calculator";
 import { CalculatorOptionsPanel } from "./impl/components/CalculatorOptionsPanel";
@@ -13,6 +15,7 @@ import { TagSelector } from "./impl/components/TagSelector";
 import { MAX_SELECTED_TAGS } from "./impl/constants";
 import { groupTagsByType, transformTags } from "./impl/helpers";
 import type { ICalculatorOptions, IRecruitmentTag, OperatorSortMode } from "./impl/types";
+import type { messages } from "./RecruitmentCalculator.messages";
 
 const DEFAULT_OPTIONS: Required<ICalculatorOptions> = {
     includeRobots: true,
@@ -22,7 +25,8 @@ const DEFAULT_OPTIONS: Required<ICalculatorOptions> = {
 };
 
 export function RecruitmentCalculator(): React.ReactElement {
-    const { data } = useQuery(recruitmentDataQueryOptions());
+    const t: TypedT<typeof messages> = useT("tools");
+    const { data } = useQuery(recruitmentDataQueryOptions(useGamedataServer()));
     const { tags: selectedIds } = Route.useSearch();
     const navigate = useNavigate({ from: Route.fullPath });
 
@@ -101,16 +105,14 @@ export function RecruitmentCalculator(): React.ReactElement {
     return (
         <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-1.5rem))] py-4 pb-24 sm:w-[min(1400px,calc(100%-2rem))] sm:py-5 sm:pb-20">
             <nav aria-label="breadcrumb" className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none">
-                <span>Tools</span>
+                <span>{t("recruit.breadcrumb.tools")}</span>
                 <ChevronRight className="size-2.5" />
-                <span className="text-foreground">Recruitment Calculator</span>
+                <span className="text-foreground">{t("recruit.title")}</span>
             </nav>
             <div className="flex flex-wrap items-end justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                    <h1 className="m-0 font-bold font-sans text-[24px] text-foreground leading-[1.1] tracking-tight sm:text-[30px]">Recruitment Calculator</h1>
-                    <p className="mt-1.5 max-w-2xl font-sans text-[13px] text-muted-foreground leading-normal sm:text-[13.5px]">
-                        Pick the tags shown in your recruitment screen - up to {MAX_SELECTED_TAGS}. Combinations are ranked by guaranteed minimum rarity - the best worst case first. Six-star operators only appear in combinations that include "Top Operator".
-                    </p>
+                    <h1 className="m-0 font-bold font-sans text-[24px] text-foreground leading-[1.1] tracking-tight sm:text-[30px]">{t("recruit.title")}</h1>
+                    <p className="mt-1.5 max-w-2xl font-sans text-[13px] text-muted-foreground leading-normal sm:text-[13.5px]">{t("recruit.intro", { max: MAX_SELECTED_TAGS })}</p>
                 </div>
             </div>
 
@@ -119,10 +121,8 @@ export function RecruitmentCalculator(): React.ReactElement {
                     <Card>
                         <CardHeader className="p-4 sm:p-6">
                             <CardTitle className="text-[15px]">
-                                Tags
-                                <span className="ml-1.5 font-medium font-mono text-[11px] text-muted-foreground">
-                                    ({selectedIds.length}/{MAX_SELECTED_TAGS})
-                                </span>
+                                {t("recruit.tags")}
+                                <span className="ml-1.5 font-medium font-mono text-[11px] text-muted-foreground">{t("recruit.tags.count", { selected: selectedIds.length, max: MAX_SELECTED_TAGS })}</span>
                             </CardTitle>
                         </CardHeader>
                         <CardPanel className="px-4 pt-0 pb-4 sm:px-6 sm:pb-6">
@@ -132,7 +132,7 @@ export function RecruitmentCalculator(): React.ReactElement {
 
                     <Card>
                         <CardHeader className="p-4 sm:p-6">
-                            <CardTitle className="text-[15px]">Options</CardTitle>
+                            <CardTitle className="text-[15px]">{t("recruit.options")}</CardTitle>
                         </CardHeader>
                         <CardPanel className="px-4 pt-0 pb-4 sm:px-6 sm:pb-6">
                             <CalculatorOptionsPanel options={options} onChangeIncludeRobots={onChangeIncludeRobots} onChangeIncludeTwoStars={onChangeIncludeTwoStars} onChangeIncludeThreeStars={onChangeIncludeThreeStars} onChangeSortMode={onChangeSortMode} />

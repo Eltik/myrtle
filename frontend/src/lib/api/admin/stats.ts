@@ -9,6 +9,7 @@ export interface IRoleBreakdown {
     user: number;
     tierListEditor: number;
     tierListAdmin: number;
+    translator: number;
     superAdmin: number;
 }
 

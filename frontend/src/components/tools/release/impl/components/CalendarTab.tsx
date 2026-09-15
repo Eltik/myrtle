@@ -2,14 +2,19 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Card } from "#/components/ui/card";
+import { useFormatters, useLocale, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import { useAutoTranslate } from "../autoTranslate";
-import { formatDateRange } from "../helpers";
+import { formatDateRange, weekdayNames } from "../helpers";
+import type { messages as helperMessages } from "../helpers.messages";
 import { DAY_SECS, dayOf, dayStart, type IScheduleItem, overlaps, packLanes, type ScheduleKind, useSchedule } from "../schedule";
+import type { messages } from "./CalendarTab.messages";
 import { ALL_KINDS, itemName, KIND_STYLE, ScheduleControls, ScheduleDetail } from "./ScheduleShared";
 import { ReleaseEmpty, ReleaseError, ReleaseLoading } from "./shared";
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+/** This tab renders its own chrome plus the date wording `helpers.ts` derives. */
+type CalendarT = TypedT<typeof messages & typeof helperMessages>;
 const DAY_HEADER_PX = 26;
 const LANE_PX = 22;
 const MIN_WEEK_PX = DAY_HEADER_PX + 3 * LANE_PX;
@@ -20,6 +25,10 @@ interface ICalendarTabProps {
 }
 
 export function CalendarTab({ today }: ICalendarTabProps): React.ReactElement {
+    const t: CalendarT = useT("tools");
+    const locale = useLocale();
+    const f = useFormatters();
+    const weekdays = React.useMemo(() => weekdayNames(locale), [locale]);
     const schedule = useSchedule();
     const autoOn = useAutoTranslate();
     const [kinds, setKinds] = React.useState<Set<ScheduleKind>>(() => new Set(ALL_KINDS.filter((k) => k !== "rerun" && k !== "review")));
@@ -51,7 +60,7 @@ export function CalendarTab({ today }: ICalendarTabProps): React.ReactElement {
     if (schedule.isPending) return <ReleaseLoading />;
     if (schedule.error) return <ReleaseError error={schedule.error} onRetry={schedule.refetch} />;
 
-    const month = cursor.toLocaleDateString("en-US", { month: "long" });
+    const month = f.date(cursor, { month: "long" });
     return (
         <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
@@ -59,13 +68,13 @@ export function CalendarTab({ today }: ICalendarTabProps): React.ReactElement {
                     <span className="font-bold">{month}</span> {cursor.getFullYear()}
                 </h3>
                 <div className="flex items-center gap-1">
-                    <Button size="sm" variant="ghost" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))} aria-label="Previous month">
+                    <Button size="sm" variant="ghost" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))} aria-label={t("release.calendar.prev")}>
                         <ChevronLeft />
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => setCursor(new Date(today.getFullYear(), today.getMonth(), 1))}>
-                        Today
+                        {t("release.calendar.today")}
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))} aria-label="Next month">
+                    <Button size="sm" variant="ghost" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))} aria-label={t("release.calendar.next")}>
                         <ChevronRight />
                     </Button>
                 </div>
@@ -73,11 +82,11 @@ export function CalendarTab({ today }: ICalendarTabProps): React.ReactElement {
             <ScheduleControls kinds={kinds} onKindsChange={setKinds} stageOnly={stageOnly} onStageOnlyChange={setStageOnly} counts={counts} />
             {selectedItem && <ScheduleDetail item={selectedItem} lookup={schedule.lookup} today={today} onClose={() => setSelected(null)} />}
             {schedule.items.length === 0 ? (
-                <ReleaseEmpty title="Nothing dated" description="The backend returned no rows with an EN date." />
+                <ReleaseEmpty title={t("release.calendar.empty.title")} description={t("release.calendar.empty.desc")} />
             ) : (
                 <Card className="flex gap-0 overflow-y-auto p-0" style={{ height: `max(${weeks.length * MIN_WEEK_PX + 32}px, calc(100dvh - ${NAV_CLEARANCE_REM}rem))` }}>
                     <div className="grid shrink-0 grid-cols-7 border-border border-b">
-                        {WEEKDAYS.map((d) => (
+                        {weekdays.map((d) => (
                             <div key={d} className="px-1.5 py-1.5 text-right font-medium font-sans text-[11.5px] text-muted-foreground sm:px-2">
                                 <span className="sm:hidden">{d.charAt(0)}</span>
                                 <span className="max-sm:hidden">{d}</span>
@@ -85,7 +94,7 @@ export function CalendarTab({ today }: ICalendarTabProps): React.ReactElement {
                         ))}
                     </div>
                     {weeks.map((weekStart) => (
-                        <CalendarWeek key={weekStart} weekStart={weekStart} monthFrom={monthFrom} monthTo={monthTo} todayDay={todayDay} items={shown} selected={selected} onSelect={setSelected} autoOn={autoOn} />
+                        <CalendarWeek key={weekStart} weekStart={weekStart} monthFrom={monthFrom} monthTo={monthTo} todayDay={todayDay} items={shown} selected={selected} onSelect={setSelected} autoOn={autoOn} t={t} locale={locale} />
                     ))}
                 </Card>
             )}
@@ -102,6 +111,8 @@ interface ICalendarWeekProps {
     selected: string | null;
     onSelect: (key: string | null) => void;
     autoOn: boolean;
+    t: CalendarT;
+    locale: string;
 }
 
 function useVisibleLanes(): [React.RefObject<HTMLDivElement | null>, number] {
@@ -119,7 +130,7 @@ function useVisibleLanes(): [React.RefObject<HTMLDivElement | null>, number] {
     return [ref, lanes];
 }
 
-function CalendarWeek({ weekStart, monthFrom, monthTo, todayDay, items, selected, onSelect, autoOn }: ICalendarWeekProps): React.ReactElement {
+function CalendarWeek({ weekStart, monthFrom, monthTo, todayDay, items, selected, onSelect, autoOn, t, locale }: ICalendarWeekProps): React.ReactElement {
     const [ref, visibleLanes] = useVisibleLanes();
     const [expanded, setExpanded] = React.useState(false);
     const weekEnd = weekStart + 7 * DAY_SECS - 1;
@@ -162,7 +173,7 @@ function CalendarWeek({ weekStart, monthFrom, monthTo, todayDay, items, selected
                             key={it.key}
                             type="button"
                             onClick={() => onSelect(isSel ? null : it.key)}
-                            title={`${name}\n${formatDateRange(it.start, it.end)}`}
+                            title={t("release.calendar.pillTitle", { name, dates: formatDateRange(it.start, it.end, locale, t) })}
                             className={cn(
                                 "z-1 my-0.5 flex min-w-0 cursor-pointer items-center gap-1.5 px-1.5 text-left font-medium font-sans text-[11.5px] leading-[18px] outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring",
                                 style.pill,
@@ -180,7 +191,7 @@ function CalendarWeek({ weekStart, monthFrom, monthTo, todayDay, items, selected
             {hiddenPerDay.map((hidden, i) =>
                 hidden > 0 ? (
                     <button key={days[i]} type="button" onClick={() => setExpanded(true)} className="z-1 cursor-pointer px-1.5 text-left font-sans text-[10.5px] text-muted-foreground leading-[18px] hover:text-foreground" style={{ gridColumn: i + 1, gridRow: rows + 2 }}>
-                        +{hidden} more
+                        {t("release.calendar.more", { count: hidden })}
                     </button>
                 ) : null,
             )}

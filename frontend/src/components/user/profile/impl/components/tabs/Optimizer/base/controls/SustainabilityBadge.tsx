@@ -1,5 +1,8 @@
 import { CircleCheck, TriangleAlert } from "lucide-react";
 import { Badge } from "#/components/ui/badge";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "./SustainabilityBadge.messages";
 
 interface IProps {
     verdict: string;
@@ -9,6 +12,7 @@ interface IProps {
 }
 
 export function SustainabilityBadge({ verdict, depletedCount, dormOverflow, horizonHours }: IProps) {
+    const t: TypedT<typeof messages> = useT("user");
     const holds = verdict === "holds_up";
     const days = Math.round(horizonHours / 24);
 
@@ -16,11 +20,11 @@ export function SustainabilityBadge({ verdict, depletedCount, dormOverflow, hori
         <div className="flex items-center gap-2">
             <Badge className="gap-1" variant={holds ? "secondary" : "destructive"}>
                 {holds ? <CircleCheck className="h-3 w-3" /> : <TriangleAlert className="h-3 w-3" />}
-                {holds ? "Holds up" : "Depletes"}
+                {holds ? t("profile.base.sustain.holds") : t("profile.base.sustain.depletes")}
             </Badge>
             <p className="text-[11px] text-muted-foreground">
-                {holds ? `Nobody runs dry over ${days} simulated day${days === 1 ? "" : "s"}.` : `${depletedCount} operator${depletedCount === 1 ? "" : "s"} hit zero morale within ${days} day${days === 1 ? "" : "s"}.`}
-                {dormOverflow > 0 ? ` Dorms are ${dormOverflow} bed${dormOverflow === 1 ? "" : "s"} short at peak.` : ""}
+                {holds ? t("profile.base.sustain.holdsDetail", { days }) : t("profile.base.sustain.depletesDetail", { count: depletedCount, days })}
+                {dormOverflow > 0 ? t("profile.base.sustain.dormOverflow", { beds: dormOverflow }) : ""}
             </p>
         </div>
     );

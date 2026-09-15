@@ -1,5 +1,19 @@
+import { DEFAULT_LOCALE, formatMessage, sourceMessage } from "#/lib/i18n";
+import { fullMessageKey, type TypedT } from "#/lib/i18n/messages";
 import { lerpByLevel } from "#/lib/utils";
 import type { IAttributeData, IBlackboard, IDrone, IOperatorListItem, IOperatorModule, IOperatorPhase, ISkillLevel, ITalent, ITalentCandidate, IUnlockCondition } from "#/types/operators";
+import type { messages as helperMessages } from "./helpers.messages";
+
+/** The `t` these label helpers need, narrowed to the keys they can render. */
+export type HelperT = TypedT<typeof helperMessages>;
+
+/**
+ * Default `t` for a caller that is not inside an `I18nProvider` - today only
+ * the planner dialog, which reads these labels from outside this feature. It
+ * resolves against the bundled source catalog, so the English is the same one
+ * the components render and this file carries no second copy of the text.
+ */
+const sourceT: HelperT = (key, values) => formatMessage(sourceMessage(fullMessageKey("operators", key)) ?? key, DEFAULT_LOCALE, values);
 
 export function blackboardKeyMap(blackboard: IBlackboard[]): { key: string; value: number }[] {
     return (blackboard ?? []).filter((b) => b.key != null).map((b) => ({ key: b.key, value: b.value }));
@@ -184,21 +198,25 @@ export function droneTalentBlackboard(drone: IDrone): { key: string; value: numb
     return blackboardKeyMap(out);
 }
 
-export function formatAttributeKey(key: string): string {
-    const map: Record<string, string> = {
-        atk: "ATK",
-        max_hp: "HP",
-        def: "DEF",
-        attack_speed: "ASPD",
-        magic_resistance: "RES",
-        cost: "DP Cost",
-        respawn_time: "Redeploy",
-        block_cnt: "Block",
-        hp_recovery_per_sec: "HP Regen",
-        sp_recovery_per_sec: "SP Regen",
-        base_attack_time: "Attack Interval",
-    };
-    return map[key.toLowerCase()] ?? key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const ATTRIBUTE_MESSAGE_KEY: Record<string, keyof typeof helperMessages & string> = {
+    atk: "attr.atk",
+    max_hp: "attr.maxHp",
+    def: "attr.def",
+    attack_speed: "attr.attackSpeed",
+    magic_resistance: "attr.magicResistance",
+    cost: "attr.cost",
+    respawn_time: "attr.respawnTime",
+    block_cnt: "attr.blockCnt",
+    hp_recovery_per_sec: "attr.hpRecovery",
+    sp_recovery_per_sec: "attr.spRecovery",
+    base_attack_time: "attr.baseAttackTime",
+};
+
+export function formatAttributeKey(key: string, t: HelperT = sourceT): string {
+    const messageKey = ATTRIBUTE_MESSAGE_KEY[key.toLowerCase()];
+    // An unmapped key is a raw game token with nothing in the catalog to look
+    // it up by, so it is title-cased rather than translated.
+    return messageKey ? t(messageKey) : key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export function formatStatValue(value: number): string {
@@ -233,35 +251,39 @@ export function getActiveTalentCandidate(talent: ITalent, phaseIndex: number, le
     return chosen;
 }
 
-export function formatSkillLevel(idx: number): string {
-    if (idx < 7) return `Lv.${idx + 1}`;
-    return `M${idx - 6}`;
+export function formatSkillLevel(idx: number, t: HelperT = sourceT): string {
+    if (idx < 7) return t("skill.level.lv", { level: idx + 1 });
+    return t("skill.level.mastery", { level: idx - 6 });
 }
 
-export function getSpTypeLabel(spType: string | number): string {
-    const map: Record<string, string> = {
-        INCREASE_WITH_TIME: "Auto Recovery",
-        "1": "Auto Recovery",
-        INCREASE_WHEN_ATTACK: "Offensive Recovery",
-        "2": "Offensive Recovery",
-        INCREASE_WHEN_TAKEN_DAMAGE: "Defensive Recovery",
-        "4": "Defensive Recovery",
-        ON_DEPLOYMENT: "On Deployment",
-        "8": "On Deployment",
-    };
-    return map[String(spType)] ?? String(spType);
+const SP_TYPE_MESSAGE_KEY: Record<string, keyof typeof helperMessages & string> = {
+    INCREASE_WITH_TIME: "skill.spType.autoRecovery",
+    "1": "skill.spType.autoRecovery",
+    INCREASE_WHEN_ATTACK: "skill.spType.offensiveRecovery",
+    "2": "skill.spType.offensiveRecovery",
+    INCREASE_WHEN_TAKEN_DAMAGE: "skill.spType.defensiveRecovery",
+    "4": "skill.spType.defensiveRecovery",
+    ON_DEPLOYMENT: "skill.spType.onDeployment",
+    "8": "skill.spType.onDeployment",
+};
+
+export function getSpTypeLabel(spType: string | number, t: HelperT = sourceT): string {
+    const messageKey = SP_TYPE_MESSAGE_KEY[String(spType)];
+    return messageKey ? t(messageKey) : String(spType);
 }
 
-export function getSkillTypeLabel(skillType: string | number): string {
-    const map: Record<string, string> = {
-        PASSIVE: "Passive",
-        "0": "Passive",
-        MANUAL: "Manual Trigger",
-        "1": "Manual Trigger",
-        AUTO: "Auto Trigger",
-        "2": "Auto Trigger",
-    };
-    return map[String(skillType)] ?? String(skillType);
+const SKILL_TYPE_MESSAGE_KEY: Record<string, keyof typeof helperMessages & string> = {
+    PASSIVE: "skill.type.passive",
+    "0": "skill.type.passive",
+    MANUAL: "skill.type.manual",
+    "1": "skill.type.manual",
+    AUTO: "skill.type.auto",
+    "2": "skill.type.auto",
+};
+
+export function getSkillTypeLabel(skillType: string | number, t: HelperT = sourceT): string {
+    const messageKey = SKILL_TYPE_MESSAGE_KEY[String(skillType)];
+    return messageKey ? t(messageKey) : String(skillType);
 }
 
 interface ISkillDiff {

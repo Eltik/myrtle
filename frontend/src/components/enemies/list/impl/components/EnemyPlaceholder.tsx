@@ -1,5 +1,8 @@
 import type React from "react";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./EnemyPlaceholder.messages";
 
 interface IEnemyPlaceholderProps {
     className?: string;
@@ -7,9 +10,10 @@ interface IEnemyPlaceholderProps {
 }
 
 export function EnemyPlaceholder({ className, style }: IEnemyPlaceholderProps) {
+    const t: TypedT<typeof messages> = useT("enemies");
     return (
         <svg role="img" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none" className={cn("text-muted-foreground opacity-40", className)} style={style}>
-            <title>Enemy placeholder</title>
+            <title>{t("placeholder.title")}</title>
             <rect fill="currentColor" height="100" opacity="0.08" rx="8" width="100" />
             <circle cx="50" cy="36" fill="currentColor" opacity="0.3" r="14" />
             <path d="M30 78c0-11.046 8.954-20 20-20s20 8.954 20 20" fill="currentColor" opacity="0.2" />

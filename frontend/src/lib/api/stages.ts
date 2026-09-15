@@ -6,6 +6,7 @@ import type { StageIndexEntry } from "#/types/generated/StageIndexEntry";
 import type { IActivity, IRetroAct, IStage, IZone, StageClearsMap } from "#/types/stages";
 import { optionalSiteToken } from "./_shared.server";
 import type { IEnemy } from "./enemies";
+import { DEFAULT_GAMEDATA_SERVER, gamedataKey, gamedataPath, resolveGamedataServer } from "./gamedata";
 import type { ILevel } from "./level";
 import type { IMaterialItem } from "./materials";
 
@@ -102,17 +103,19 @@ export function stagePreviewURLs(stage: IStage): string[] {
     return stagePreviewAssetPaths(stage).map((path) => `${base}/api/assets${path}`);
 }
 
-export const getStagesFn = createServerFn({ method: "GET" }).handler(async () => {
-    const res = await backendFetch("/static/stages");
-    if (!res.ok) throw new Error(`Failed to load stages: ${res.status}`);
-    const raw = (await res.json()) as Record<string, IStage>;
-    return Object.values(raw);
-});
+export const getStagesFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string | undefined) => server)
+    .handler(async ({ data: server }) => {
+        const res = await backendFetch(gamedataPath(server, "/static/stages"));
+        if (!res.ok) throw new Error(`Failed to load stages: ${res.status}`);
+        const raw = (await res.json()) as Record<string, IStage>;
+        return Object.values(raw);
+    });
 
-export function stagesQueryOptions() {
+export function stagesQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["static", "stages"],
-        queryFn: () => getStagesFn(),
+        queryKey: ["static", "stages", ...gamedataKey(server)],
+        queryFn: () => getStagesFn({ data: resolveGamedataServer(server) }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });
@@ -184,16 +187,18 @@ export function syntheticStageFromIndex(e: IStageIndexEntry): { stage: IStage; z
     };
 }
 
-export const getStageIndexFn = createServerFn({ method: "GET" }).handler(async () => {
-    const res = await backendFetch("/static/stage-index");
-    if (!res.ok) throw new Error(`Failed to load stage index: ${res.status}`);
-    return (await res.json()) as IStageIndexEntry[];
-});
+export const getStageIndexFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string | undefined) => server)
+    .handler(async ({ data: server }) => {
+        const res = await backendFetch(gamedataPath(server, "/static/stage-index"));
+        if (!res.ok) throw new Error(`Failed to load stage index: ${res.status}`);
+        return (await res.json()) as IStageIndexEntry[];
+    });
 
-export function stageIndexQueryOptions() {
+export function stageIndexQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["static", "stage-index"],
-        queryFn: () => getStageIndexFn(),
+        queryKey: ["static", "stage-index", ...gamedataKey(server)],
+        queryFn: () => getStageIndexFn({ data: resolveGamedataServer(server) }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });
@@ -218,66 +223,72 @@ export interface IStageDetail {
 }
 
 export const getStageDetailFn = createServerFn({ method: "GET" })
-    .inputValidator((stageId: string) => stageId)
-    .handler(async ({ data: stageId }) => {
-        const res = await backendFetch(`/stages/${encodeURIComponent(stageId)}/detail`);
+    .inputValidator((data: { stageId: string; server?: string }) => data)
+    .handler(async ({ data: { stageId, server } }) => {
+        const res = await backendFetch(gamedataPath(server, `/stages/${encodeURIComponent(stageId)}/detail`));
         if (res.status === 404) return null;
         if (!res.ok) throw new Error(`Failed to load stage detail ${stageId}: ${res.status}`);
         return (await res.json()) as IStageDetail;
     });
 
-export function stageDetailQueryOptions(stageId: string) {
+export function stageDetailQueryOptions(stageId: string, server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["stages", "detail", stageId],
-        queryFn: () => getStageDetailFn({ data: stageId }),
+        queryKey: ["stages", "detail", stageId, ...gamedataKey(server)],
+        queryFn: () => getStageDetailFn({ data: { stageId, server: resolveGamedataServer(server) } }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });
 }
 
-export const getZonesFn = createServerFn({ method: "GET" }).handler(async () => {
-    const res = await backendFetch("/static/zones");
-    if (!res.ok) throw new Error(`Failed to load zones: ${res.status}`);
-    const raw = (await res.json()) as Record<string, IZone>;
-    return Object.values(raw);
-});
+export const getZonesFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string | undefined) => server)
+    .handler(async ({ data: server }) => {
+        const res = await backendFetch(gamedataPath(server, "/static/zones"));
+        if (!res.ok) throw new Error(`Failed to load zones: ${res.status}`);
+        const raw = (await res.json()) as Record<string, IZone>;
+        return Object.values(raw);
+    });
 
-export function zonesQueryOptions() {
+export function zonesQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["static", "zones"],
-        queryFn: () => getZonesFn(),
+        queryKey: ["static", "zones", ...gamedataKey(server)],
+        queryFn: () => getZonesFn({ data: resolveGamedataServer(server) }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });
 }
 
-export const getActivitiesFn = createServerFn({ method: "GET" }).handler(async () => {
-    const res = await backendFetch("/static/activities");
-    if (!res.ok) throw new Error(`Failed to load activities: ${res.status}`);
-    const raw = (await res.json()) as Record<string, IActivity>;
-    return Object.values(raw);
-});
+export const getActivitiesFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string | undefined) => server)
+    .handler(async ({ data: server }) => {
+        const res = await backendFetch(gamedataPath(server, "/static/activities"));
+        if (!res.ok) throw new Error(`Failed to load activities: ${res.status}`);
+        const raw = (await res.json()) as Record<string, IActivity>;
+        return Object.values(raw);
+    });
 
-export function activitiesQueryOptions() {
+export function activitiesQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["static", "activities"],
-        queryFn: () => getActivitiesFn(),
+        queryKey: ["static", "activities", ...gamedataKey(server)],
+        queryFn: () => getActivitiesFn({ data: resolveGamedataServer(server) }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });
 }
 
-export const getRetroActsFn = createServerFn({ method: "GET" }).handler(async () => {
-    const res = await backendFetch("/static/retro_acts");
-    if (!res.ok) throw new Error(`Failed to load retro acts: ${res.status}`);
-    const raw = (await res.json()) as Record<string, IRetroAct>;
-    return Object.values(raw);
-});
+export const getRetroActsFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string | undefined) => server)
+    .handler(async ({ data: server }) => {
+        const res = await backendFetch(gamedataPath(server, "/static/retro_acts"));
+        if (!res.ok) throw new Error(`Failed to load retro acts: ${res.status}`);
+        const raw = (await res.json()) as Record<string, IRetroAct>;
+        return Object.values(raw);
+    });
 
-export function retroActsQueryOptions() {
+export function retroActsQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["static", "retro_acts"],
-        queryFn: () => getRetroActsFn(),
+        queryKey: ["static", "retro_acts", ...gamedataKey(server)],
+        queryFn: () => getRetroActsFn({ data: resolveGamedataServer(server) }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });

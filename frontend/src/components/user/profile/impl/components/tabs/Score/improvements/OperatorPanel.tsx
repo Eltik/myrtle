@@ -2,8 +2,18 @@ import { ChevronDown } from "lucide-react";
 import { memo, useMemo, useState } from "react";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { IImprovementsResponse, IOperatorGap, IScoreDimension, IUpgradeDelta } from "#/lib/api/user";
+import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./OperatorPanel.messages";
 import { EmptyHint, operatorRarityColor, PANEL_PADDING, SectionHeader, ShowMoreButton, StatTile, TEXT_BADGE, TEXT_BODY, TEXT_KICKER } from "./shared";
+import type { messages as sharedMessages } from "./shared.messages";
+
+/** This panel also renders the show-more chrome declared in `shared.messages.ts`. */
+type PanelT = TypedT<typeof messages & typeof sharedMessages>;
+
+/** A key in `OperatorPanel.messages.ts`, resolved through one of the tables below. */
+type MessageKey = keyof typeof messages & string;
 
 interface IProps {
     improvements: IImprovementsResponse;
@@ -13,55 +23,58 @@ interface IProps {
 const TAG_ORDER = ["ELITE", "MAX_LEVEL", "M3", "SL7", "MOD3", "POT6", "TRUST"] as const;
 type Tag = (typeof TAG_ORDER)[number];
 
-const TAG_LABEL: Record<Tag, string> = {
-    ELITE: "E↑",
-    MAX_LEVEL: "Lvl",
-    M3: "M3",
-    SL7: "SL7",
-    MOD3: "Mod",
-    POT6: "Pot",
-    TRUST: "Trust",
+const TAG_LABEL: Record<Tag, MessageKey> = {
+    ELITE: "score.improvements.operator.tag.elite.label",
+    MAX_LEVEL: "score.improvements.operator.tag.maxLevel.label",
+    M3: "score.improvements.operator.tag.m3.label",
+    SL7: "score.improvements.operator.tag.sl7.label",
+    MOD3: "score.improvements.operator.tag.mod3.label",
+    POT6: "score.improvements.operator.tag.pot6.label",
+    TRUST: "score.improvements.operator.tag.trust.label",
 };
 
-const TAG_DESC: Record<Tag, string> = {
-    ELITE: "Elite promotion",
-    MAX_LEVEL: "Level cap",
-    M3: "Mastery 3",
-    SL7: "Skill 7",
-    MOD3: "Module L3",
-    POT6: "Potential 6",
-    TRUST: "Max trust",
+const TAG_DESC: Record<Tag, MessageKey> = {
+    ELITE: "score.improvements.operator.tag.elite.desc",
+    MAX_LEVEL: "score.improvements.operator.tag.maxLevel.desc",
+    M3: "score.improvements.operator.tag.m3.desc",
+    SL7: "score.improvements.operator.tag.sl7.desc",
+    MOD3: "score.improvements.operator.tag.mod3.desc",
+    POT6: "score.improvements.operator.tag.pot6.desc",
+    TRUST: "score.improvements.operator.tag.trust.desc",
 };
 
-const TAG_TOOLTIP_DETAIL: Record<Tag, string> = {
-    ELITE: "promoting to max elite and re-leveling to its new cap",
-    MAX_LEVEL: "leveling to the cap of this operator's current elite phase",
-    M3: "raising one skill to Mastery 3",
-    SL7: "raising the shared skill level to 7",
-    MOD3: "raising one advanced module to Level 3",
-    POT6: "reaching Potential 6",
-    TRUST: "reaching the trust target (200% for published support units, 100% otherwise)",
+const TAG_TOOLTIP_DETAIL: Record<Tag, MessageKey> = {
+    ELITE: "score.improvements.operator.tag.elite.detail",
+    MAX_LEVEL: "score.improvements.operator.tag.maxLevel.detail",
+    M3: "score.improvements.operator.tag.m3.detail",
+    SL7: "score.improvements.operator.tag.sl7.detail",
+    MOD3: "score.improvements.operator.tag.mod3.detail",
+    POT6: "score.improvements.operator.tag.pot6.detail",
+    TRUST: "score.improvements.operator.tag.trust.detail",
 };
 
 // Labels for the score-breakdown axes (`IScoreDimension.kind`).
-const DIM_LABEL: Record<string, string> = {
-    elite: "Elites",
-    level: "Levels",
-    mastery: "Masteries",
-    skill_level: "Skill levels",
-    module: "Modules",
-    potential: "Potential",
-    trust: "Trust",
+const DIM_LABEL: Record<string, MessageKey> = {
+    elite: "score.improvements.operator.dim.elite.label",
+    level: "score.improvements.operator.dim.level.label",
+    mastery: "score.improvements.operator.dim.mastery.label",
+    skill_level: "score.improvements.operator.dim.skillLevel.label",
+    module: "score.improvements.operator.dim.module.label",
+    potential: "score.improvements.operator.dim.potential.label",
+    trust: "score.improvements.operator.dim.trust.label",
 };
 
-const DIM_TOOLTIP: Record<string, string> = {
-    elite: "Promotion progress toward each operator's max elite",
-    level: "Level progress across all elite phases",
-    mastery: "Skill masteries, anchored on M3 milestones",
-    skill_level: "Skill levels toward SL7 on operators without masteries",
-    module: "Advanced module levels, anchored on Mod3 milestones",
-    potential: "Potential on operators where dupes are scarce",
-    trust: "Trust toward 100% (200% for published support units)",
+// These read mid-sentence, after the axis name, so their English is declared
+// lowercase rather than lowercased at the call site - `toLowerCase()` on a
+// translated string is wrong in several locales.
+const DIM_TOOLTIP: Record<string, MessageKey> = {
+    elite: "score.improvements.operator.dim.elite.tooltip",
+    level: "score.improvements.operator.dim.level.tooltip",
+    mastery: "score.improvements.operator.dim.mastery.tooltip",
+    skill_level: "score.improvements.operator.dim.skillLevel.tooltip",
+    module: "score.improvements.operator.dim.module.tooltip",
+    potential: "score.improvements.operator.dim.potential.tooltip",
+    trust: "score.improvements.operator.dim.trust.tooltip",
 };
 
 const INITIAL_VISIBLE = 18;
@@ -72,6 +85,8 @@ const INITIAL_VISIBLE = 18;
 const SHOW_DELTA_THRESHOLD_PCT = 0.005;
 
 export function OperatorPanel({ improvements, accent }: IProps) {
+    const t: TypedT<typeof messages> = useT("user");
+    const rt: TypedRichT<typeof messages> = useRichT("user");
     const ops = improvements.operators.below_milestone;
     const [activeFilter, setActiveFilter] = useState<Tag | null>(null);
 
@@ -122,7 +137,7 @@ export function OperatorPanel({ improvements, accent }: IProps) {
         return (
             <div className={`${PANEL_PADDING} flex flex-col gap-4`}>
                 <ScoreBreakdown dims={improvements.operators.score_breakdown} accent={accent} />
-                <EmptyHint>Every owned operator is at their last milestone - nothing to upgrade here.</EmptyHint>
+                <EmptyHint>{t("score.improvements.operator.empty")}</EmptyHint>
             </div>
         );
     }
@@ -133,33 +148,36 @@ export function OperatorPanel({ improvements, accent }: IProps) {
         <div className={`${PANEL_PADDING} flex flex-col gap-4`}>
             <ScoreBreakdown dims={improvements.operators.score_breakdown} accent={accent} />
 
-            <SectionHeader title="Operators below milestone" count={`${ops.length} total · +${totalOverallGainPct.toFixed(1)} to overall grade`} accent={accent} />
+            <SectionHeader title={t("score.improvements.operator.title")} count={t("score.improvements.operator.count", { n: ops.length, gain: totalOverallGainPct.toFixed(1) })} accent={accent} />
 
             {/* By upgrade type - also acts as a filter for the rarity buckets below. */}
             <div className="flex flex-col gap-2">
-                <span className={cn(TEXT_KICKER, "text-muted-foreground/70")}>By upgrade type · % gained in this section</span>
+                <span className={cn(TEXT_KICKER, "text-muted-foreground/70")}>{t("score.improvements.operator.byType")}</span>
                 <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
                     {TAG_ORDER.map((tag) => {
                         const gain = tagGains[tag];
-                        const sub = gain > 0.01 ? `+${gain.toFixed(1)}%` : TAG_DESC[tag];
-                        return <StatTile key={tag} value={tagCounts[tag]} label={TAG_LABEL[tag]} sub={sub} accent={accent} active={activeFilter === tag} onClick={tagCounts[tag] > 0 ? () => setActiveFilter((cur) => (cur === tag ? null : tag)) : undefined} />;
+                        const sub = gain > 0.01 ? `+${gain.toFixed(1)}%` : t(TAG_DESC[tag]);
+                        return <StatTile key={tag} value={tagCounts[tag]} label={t(TAG_LABEL[tag])} sub={sub} accent={accent} active={activeFilter === tag} onClick={tagCounts[tag] > 0 ? () => setActiveFilter((cur) => (cur === tag ? null : tag)) : undefined} />;
                     })}
                 </div>
                 {activeFilter && (
                     <button type="button" onClick={() => setActiveFilter(null)} className={cn("self-start", TEXT_KICKER, "text-muted-foreground transition-colors hover:text-foreground")}>
-                        Clear filter ({totalShown} shown)
+                        {t("score.improvements.operator.clearFilter", { n: totalShown })}
                     </button>
                 )}
             </div>
 
             {/* Per-rarity collapsible buckets. */}
-            <div className="flex flex-col gap-1.5">{buckets.length === 0 ? <EmptyHint>No operators match this filter.</EmptyHint> : buckets.map(([rarity, list], idx) => <RarityBucket key={rarity} rarity={rarity} ops={list} defaultOpen={idx === 0} accent={accent} />)}</div>
+            <div className="flex flex-col gap-1.5">{buckets.length === 0 ? <EmptyHint>{t("score.improvements.operator.noMatch")}</EmptyHint> : buckets.map(([rarity, list], idx) => <RarityBucket key={rarity} rarity={rarity} ops={list} defaultOpen={idx === 0} accent={accent} />)}</div>
 
             {/* Footnote: explain the units the user is reading so they don't
                 have to hunt down the math. */}
             <p className={cn(TEXT_BADGE, "text-muted-foreground/60 leading-relaxed")}>
-                The header's <span className="text-foreground/80">+{totalOverallGainPct.toFixed(1)} to overall grade</span> is what finishing every upgrade here would add to your headline score. The per-tag, per-rarity, and per-operator figures below are <span className="text-foreground/80">% of this section</span>{" "}
-                (the percentage shown at the top of the card) - there's +{totalSubscoreGainPct.toFixed(1)}% of room left here to climb toward 100%. ELITE includes a full re-level at the new phase, so it overlaps MAX_LEVEL; the per-op total deduplicates the pair.
+                {rt("score.improvements.operator.footnote", {
+                    gain: <span className="text-foreground/80">{t("score.improvements.operator.footnote.headerGain", { gain: totalOverallGainPct.toFixed(1) })}</span>,
+                    unit: <span className="text-foreground/80">{t("score.improvements.operator.footnote.sectionUnit")}</span>,
+                    room: totalSubscoreGainPct.toFixed(1),
+                })}
             </p>
         </div>
     );
@@ -171,22 +189,27 @@ export function OperatorPanel({ improvements, accent }: IProps) {
  * of this section); the earned figures sum to the section score on the card.
  */
 function ScoreBreakdown({ dims, accent }: { dims: IScoreDimension[] | undefined; accent: string }) {
+    const t: TypedT<typeof messages> = useT("user");
+    const rt: TypedRichT<typeof messages> = useRichT("user");
     // Tolerate an older backend that doesn't send the breakdown yet.
     if (!dims?.length) return null;
     const totalPct = dims.reduce((acc, d) => acc + d.contribution * 100, 0);
 
     return (
         <div className="flex flex-col gap-2.5">
-            <SectionHeader title="Where your score comes from" count={`${totalPct.toFixed(1)}% earned`} accent={accent} />
+            <SectionHeader title={t("score.improvements.operator.dim.title")} count={t("score.improvements.operator.dim.earned", { pct: totalPct.toFixed(1) })} accent={accent} />
             <div className="flex flex-col gap-1.5">
                 {dims.map((d) => {
                     const sharePct = d.weight_share * 100;
                     const earnedPct = d.contribution * 100;
                     const completionPct = Math.max(0, Math.min(100, d.completion * 100));
-                    const label = DIM_LABEL[d.kind] ?? d.kind;
-                    const detail = DIM_TOOLTIP[d.kind];
+                    // An axis the backend adds later has no key here; fall back to its raw code.
+                    const labelKey = DIM_LABEL[d.kind];
+                    const label = labelKey ? t(labelKey) : d.kind;
+                    const detailKey = DIM_TOOLTIP[d.kind];
+                    const titleValues = { label, share: sharePct.toFixed(1), completion: completionPct.toFixed(0), earned: earnedPct.toFixed(1) };
                     return (
-                        <div key={d.kind} className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-2.5" title={`${label}${detail ? ` - ${detail.toLowerCase()}` : ""}: worth ${sharePct.toFixed(1)}% of this section. You've completed ${completionPct.toFixed(0)}% of that, earning ${earnedPct.toFixed(1)}%.`}>
+                        <div key={d.kind} className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-2.5" title={detailKey ? t("score.improvements.operator.dim.rowTitleDetail", { ...titleValues, detail: t(detailKey) }) : t("score.improvements.operator.dim.rowTitle", titleValues)}>
                             <span className={cn(TEXT_BADGE, "truncate text-muted-foreground")}>{label}</span>
                             <div className="h-1 w-full overflow-hidden rounded-full bg-muted/40">
                                 <div
@@ -204,9 +227,7 @@ function ScoreBreakdown({ dims, accent }: { dims: IScoreDimension[] | undefined;
                     );
                 })}
             </div>
-            <p className={cn(TEXT_BADGE, "text-muted-foreground/60 leading-relaxed")}>
-                Each row is one investment axis: <span className="text-foreground/80">earned / available</span>, both in % of this section. What an axis is worth depends on your roster (rarer operators and their masteries/modules count for more); the earned figures add up to the section score at the top of the card.
-            </p>
+            <p className={cn(TEXT_BADGE, "text-muted-foreground/60 leading-relaxed")}>{rt("score.improvements.operator.dim.footnote", { unit: <span className="text-foreground/80">{t("score.improvements.operator.dim.footnote.unit")}</span> })}</p>
         </div>
     );
 }
@@ -219,6 +240,7 @@ interface IBucketProps {
 }
 
 function RarityBucket({ rarity, ops, defaultOpen, accent }: IBucketProps) {
+    const t: PanelT = useT("user");
     const [open, setOpen] = useState(defaultOpen);
     const [showAll, setShowAll] = useState(false);
     const color = operatorRarityColor(rarity);
@@ -237,13 +259,9 @@ function RarityBucket({ rarity, ops, defaultOpen, accent }: IBucketProps) {
                     {rarity}★
                 </span>
                 <span className={cn(TEXT_BADGE, "text-foreground/85")}>{ops.length}</span>
-                <span className={cn(TEXT_KICKER, "text-muted-foreground/65")}>to upgrade</span>
+                <span className={cn(TEXT_KICKER, "text-muted-foreground/65")}>{t("score.improvements.operator.bucket.toUpgrade")}</span>
                 {bucketGain > 0.01 && (
-                    <span
-                        className={cn(TEXT_BADGE, "rounded-sm border border-border/40 bg-background px-1 py-px font-semibold tabular-nums")}
-                        style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }}
-                        title={`Maxing every ${rarity}★ below milestone adds ~${bucketGain.toFixed(1)}% to this section's score.`}
-                    >
+                    <span className={cn(TEXT_BADGE, "rounded-sm border border-border/40 bg-background px-1 py-px font-semibold tabular-nums")} style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }} title={t("score.improvements.operator.bucket.gainTitle", { rarity, gain: bucketGain.toFixed(1) })}>
                         +{bucketGain.toFixed(1)}%
                     </span>
                 )}
@@ -265,12 +283,12 @@ function RarityBucket({ rarity, ops, defaultOpen, accent }: IBucketProps) {
                     </div>
                     {remaining > 0 && (
                         <div className="mt-2">
-                            <ShowMoreButton onClick={() => setShowAll(true)} label={`Show ${remaining} more`} />
+                            <ShowMoreButton onClick={() => setShowAll(true)} label={t("score.improvements.showMore", { n: remaining })} />
                         </div>
                     )}
                     {showAll && ops.length > INITIAL_VISIBLE && (
                         <div className="mt-2">
-                            <ShowMoreButton onClick={() => setShowAll(false)} label="Show less" />
+                            <ShowMoreButton onClick={() => setShowAll(false)} label={t("score.improvements.showLess")} />
                         </div>
                     )}
                 </div>
@@ -293,6 +311,7 @@ function PreviewStrip({ ops, color, dim }: { ops: IOperatorGap[]; color: string;
 }
 
 const OperatorRow = memo(function OperatorRow({ op, color, accent }: { op: IOperatorGap; color: string; accent: string }) {
+    const t: TypedT<typeof messages> = useT("user");
     const sortedTags = TAG_ORDER.filter((t) => op.missing.includes(t));
 
     // Map tag → delta so the tag chip can show the projected gain inline. The
@@ -324,7 +343,7 @@ const OperatorRow = memo(function OperatorRow({ op, color, accent }: { op: IOper
                         <span
                             className={cn(TEXT_BADGE, "shrink-0 rounded-sm border border-border/40 bg-background px-1 py-px font-semibold tabular-nums")}
                             style={{ color: `color-mix(in oklch, ${accent} 70%, var(--foreground))` }}
-                            title={`Completing every upgrade on ${op.name} would add ~${subscoreGainPct.toFixed(2)}% to this section (~${totalScoreGainPct.toFixed(2)} to your overall grade). ELITE/MAX_LEVEL overlap is deduped.`}
+                            title={t("score.improvements.operator.row.gainTitle", { name: op.name, section: subscoreGainPct.toFixed(2), overall: totalScoreGainPct.toFixed(2) })}
                         >
                             +{subscoreGainPct.toFixed(2)}
                         </span>
@@ -344,10 +363,16 @@ const OperatorRow = memo(function OperatorRow({ op, color, accent }: { op: IOper
                             const d = deltaByTag[tag];
                             const tagDeltaPct = d ? d.operator_grade_delta * 100 : 0;
                             const showNumber = tagDeltaPct >= SHOW_DELTA_THRESHOLD_PCT;
-                            const tooltip = d ? `${TAG_DESC[tag]} - ${TAG_TOOLTIP_DETAIL[tag]}: ${showNumber ? `+${tagDeltaPct.toFixed(2)}% to this section (+${(d.total_score_delta * 100).toFixed(2)} to overall grade)` : "less than 0.01% - negligible"}` : TAG_DESC[tag];
+                            const tooltip = d
+                                ? t("score.improvements.operator.tag.tooltip", {
+                                      desc: t(TAG_DESC[tag]),
+                                      detail: t(TAG_TOOLTIP_DETAIL[tag]),
+                                      value: showNumber ? t("score.improvements.operator.tag.tooltip.gain", { section: tagDeltaPct.toFixed(2), overall: (d.total_score_delta * 100).toFixed(2) }) : t("score.improvements.operator.tag.tooltip.negligible"),
+                                  })
+                                : t(TAG_DESC[tag]);
                             return (
                                 <span key={tag} className={cn("rounded-sm border border-border/40 bg-background px-1 py-px font-semibold", TEXT_BADGE)} style={{ color: `color-mix(in oklch, ${color} 65%, var(--foreground))` }} title={tooltip}>
-                                    {TAG_LABEL[tag]}
+                                    {t(TAG_LABEL[tag])}
                                     {showNumber ? <span className="ml-1 font-mono text-muted-foreground/85">+{tagDeltaPct.toFixed(2)}</span> : <span className="ml-1 text-muted-foreground/45">·</span>}
                                 </span>
                             );

@@ -1,6 +1,9 @@
 import { Footprints, type LucideIcon, PersonStanding, Skull, Spline, Timer } from "lucide-react";
 import { Switch } from "#/components/ui/switch";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages } from "./MapSettings.messages";
 import { Kicker } from "./primitives";
 
 export interface IMapSettings {
@@ -24,24 +27,27 @@ export const DEFAULT_MAP_SETTINGS: IMapSettings = {
     walkingChibis: true,
 };
 
+type MapSettingsMessageKey = keyof typeof messages & string;
+
 interface ISettingDef {
     key: keyof IMapSettings;
     icon: LucideIcon;
-    label: string;
-    description: string;
+    labelKey: MapSettingsMessageKey;
+    descriptionKey: MapSettingsMessageKey;
     /** Other setting that must be on for this one to apply. */
     requires?: keyof IMapSettings;
 }
 
 const SETTINGS: ISettingDef[] = [
-    { key: "showRoutes", icon: Spline, label: "Route Lines", description: "Draw the paths enemies follow across the map." },
-    { key: "showEnemyIcons", icon: Skull, label: "Enemy Icons", description: "Show each spawning enemy's icon on its route." },
-    { key: "showMovement", icon: Footprints, label: "Enemy Movement", description: "Animate the icon along its route instead of parking it at the spawn.", requires: "showEnemyIcons" },
-    { key: "showTimers", icon: Timer, label: "Wait Timers", description: "Show how long enemies pause at points on their route." },
-    { key: "walkingChibis", icon: PersonStanding, label: "Walking Chibis", description: "In 3D view, replace the icon with the enemy's animated chibi walking the route." },
+    { key: "showRoutes", icon: Spline, labelKey: "mapSettings.showRoutes", descriptionKey: "mapSettings.showRoutes.desc" },
+    { key: "showEnemyIcons", icon: Skull, labelKey: "mapSettings.showEnemyIcons", descriptionKey: "mapSettings.showEnemyIcons.desc" },
+    { key: "showMovement", icon: Footprints, labelKey: "mapSettings.showMovement", descriptionKey: "mapSettings.showMovement.desc", requires: "showEnemyIcons" },
+    { key: "showTimers", icon: Timer, labelKey: "mapSettings.showTimers", descriptionKey: "mapSettings.showTimers.desc" },
+    { key: "walkingChibis", icon: PersonStanding, labelKey: "mapSettings.walkingChibis", descriptionKey: "mapSettings.walkingChibis.desc" },
 ];
 
 function SettingRow({ def, checked, disabled, onChange }: { def: ISettingDef; checked: boolean; disabled: boolean; onChange: (v: boolean) => void }) {
+    const t: TypedT<typeof messages> = useT("stages");
     const id = `map-setting-${def.key}`;
     const Icon = def.icon;
     return (
@@ -50,8 +56,8 @@ function SettingRow({ def, checked, disabled, onChange }: { def: ISettingDef; ch
                 <Icon />
             </span>
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                <span className="font-medium font-sans text-[12.5px] text-foreground leading-none">{def.label}</span>
-                <span className="font-sans text-[11px] text-muted-foreground leading-tight">{def.description}</span>
+                <span className="font-medium font-sans text-[12.5px] text-foreground leading-none">{t(def.labelKey)}</span>
+                <span className="font-sans text-[11px] text-muted-foreground leading-tight">{t(def.descriptionKey)}</span>
             </span>
             <Switch id={id} checked={checked} disabled={disabled} onCheckedChange={onChange} />
         </label>
@@ -59,10 +65,11 @@ function SettingRow({ def, checked, disabled, onChange }: { def: ISettingDef; ch
 }
 
 export function MapSettings({ settings, onChange }: { settings: IMapSettings; onChange: (next: IMapSettings) => void }) {
+    const t: TypedT<typeof messages> = useT("stages");
     return (
         <div className="flex flex-col rounded-[10px] border border-border bg-card px-3.5 py-2.5">
             <div className="mb-1 flex items-center">
-                <Kicker>Settings</Kicker>
+                <Kicker>{t("mapSettings.title")}</Kicker>
             </div>
             <div className="grid gap-x-6 sm:grid-cols-2">
                 {SETTINGS.map((def) => (

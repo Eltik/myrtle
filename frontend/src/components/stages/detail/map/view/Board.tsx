@@ -1,8 +1,12 @@
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages as tileMessages } from "../impl/tile/tile-defs.messages";
 import type { ILevel, IMapOperator } from "../impl/types";
 import { cx } from "../impl/util/cx";
 import { type ITileContext, Tile } from "./Tile";
 
 export function Board({ level, coordOverride, operators, hovered }: { level: ILevel; coordOverride?: string | null; operators: Map<number, IMapOperator>; hovered?: boolean }) {
+    const t: TypedT<typeof tileMessages> = useT("stages");
     const { tiles } = level.mapData;
     const width = level.mapData.map[0].length;
     const height = level.mapData.map.length;
@@ -13,6 +17,7 @@ export function Board({ level, coordOverride, operators, hovered }: { level: ILe
         operators,
         disallow: new Set(level.tilesDisallowToLocate || []),
         hovered,
+        t,
     };
 
     return (

@@ -1,5 +1,8 @@
 import type { IServerShare } from "#/lib/api/user";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { SERVERS } from "../constants";
+import type { messages } from "./ServerSplitCard.messages";
 import { ServerTag } from "./ServerTag";
 
 const SERVER_BAR_COLORS: Record<string, string> = {
@@ -11,13 +14,14 @@ const SERVER_BAR_COLORS: Record<string, string> = {
 };
 
 export function ServerSplitCard({ shares }: { shares: IServerShare[] }) {
+    const t: TypedT<typeof messages> = useT("user");
     const total = shares.reduce((acc, s) => acc + s.players, 0);
     const byServer = new Map<string, number>(shares.map((s) => [s.server.toUpperCase(), s.players]));
 
     return (
         <aside className="rounded-xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
             <div className="mb-2.5 flex items-center justify-between">
-                <span className="font-sans font-semibold text-[13.5px] text-foreground leading-tight tracking-tight">Server share · top 250</span>
+                <span className="font-sans font-semibold text-[13.5px] text-foreground leading-tight tracking-tight">{t("leaderboard.serverSplit.title")}</span>
             </div>
             <div className="flex h-2 overflow-hidden rounded-full bg-muted">
                 {total === 0 ? (

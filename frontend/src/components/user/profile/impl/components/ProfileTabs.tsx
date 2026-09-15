@@ -1,6 +1,9 @@
 import { type Dispatch, type SetStateAction, useEffect, useRef, useState } from "react";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { TabId } from "../types";
+import type { messages } from "./ProfileTabs.messages";
 import styles from "./ProfileTabs.module.css";
 
 interface ITab {
@@ -25,6 +28,7 @@ interface IProfileTabsProps {
 export const PROFILE_STICKY_OFFSET_PX = 64 + 44;
 
 export function ProfileTabs({ tabs, active, onChange }: IProfileTabsProps) {
+    const t: TypedT<typeof messages> = useT("user");
     const wrapRef = useRef<HTMLDivElement>(null);
     const [indicator, setIndicator] = useState({ left: 0, width: 0 });
 
@@ -38,7 +42,7 @@ export function ProfileTabs({ tabs, active, onChange }: IProfileTabsProps) {
     }, [active]);
 
     return (
-        <div className={cn(styles.tabs, "overflow-y-hidden")} role="tablist" aria-label="Profile sections">
+        <div className={cn(styles.tabs, "overflow-y-hidden")} role="tablist" aria-label={t("profile.tabs.label")}>
             <div className={styles.inner} ref={wrapRef}>
                 {tabs.map((tab) => (
                     <button key={tab.id} type="button" role="tab" aria-selected={active === tab.id} data-tab={tab.id} className={cn(styles.tab, active === tab.id && styles.tabActive)} onClick={() => onChange(tab.id as SetStateAction<TabId>)}>

@@ -6,6 +6,8 @@ import { operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api
 import { publicPlansQueryOptions } from "#/lib/api/planner";
 import { userEncounteredEnemiesQueryOptions, userImprovementsQueryOptions, userInventoryQueryOptions, userQueryOptions, userRosterQueryOptions, userScoreQueryOptions } from "#/lib/api/user";
 import { voicesQueryOptions } from "#/lib/api/voices";
+import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { Hero } from "./impl/components/Hero";
 import { ProfileTabs } from "./impl/components/ProfileTabs";
 import { StatStrip } from "./impl/components/StatStrip";
@@ -18,6 +20,7 @@ import { ScoreTab } from "./impl/components/tabs/Score/ScoreTab";
 import { StatsTab } from "./impl/components/tabs/Stats/StatsTab";
 import { DynamicArtProvider } from "./impl/dynamic-art";
 import type { TabId } from "./impl/types";
+import type { messages } from "./UserProfile.messages";
 
 const SKELETON_TAG_WIDTHS = [
     { id: "tag-1", width: 64 },
@@ -33,6 +36,8 @@ const SKELETON_TAG_WIDTHS = [
 const SKELETON_GRID_IDS = Array.from({ length: 20 }, (_, i) => `grid-${i}`);
 
 export function UserProfile() {
+    const t: TypedT<typeof messages> = useT("user");
+    const rt: TypedRichT<typeof messages> = useRichT("user");
     const { id } = useParams({ from: "/user/$id" });
     const [activeTab, setActiveTab] = useState<TabId>("stats");
 
@@ -42,7 +47,8 @@ export function UserProfile() {
     // tab that needs it and fetched only once that tab first becomes active.
     const { data, isLoading } = useQuery(userQueryOptions(id));
     const { data: roster } = useQuery(userRosterQueryOptions(id));
-    const { data: operatorsStatic } = useQuery(operatorsListQueryOptions());
+    const gamedataServer = useGamedataServer();
+    const { data: operatorsStatic } = useQuery(operatorsListQueryOptions(gamedataServer));
 
     const { data: inventory } = useQuery({ ...userInventoryQueryOptions(id), enabled: activeTab === "inventory" });
     const { data: score, isLoading: isScoreLoading } = useQuery({ ...userScoreQueryOptions(id), enabled: activeTab === "score" });
@@ -54,32 +60,32 @@ export function UserProfile() {
         enabled: activeTab === "score",
     });
     const { data: encounteredEnemies, isLoading: isEnemiesLoading } = useQuery({ ...userEncounteredEnemiesQueryOptions(id), enabled: activeTab === "enemies" });
-    const { data: operatorsIndex } = useQuery({ ...operatorsIndexQueryOptions(), enabled: activeTab === "roster" });
-    const { data: voices } = useQuery({ ...voicesQueryOptions(), enabled: activeTab === "roster" });
+    const { data: operatorsIndex } = useQuery({ ...operatorsIndexQueryOptions(gamedataServer), enabled: activeTab === "roster" });
+    const { data: voices } = useQuery({ ...voicesQueryOptions(gamedataServer), enabled: activeTab === "roster" });
 
     const tabs = useMemo(
         () => [
-            { id: "stats" as TabId, label: "Stats" },
-            { id: "score" as TabId, label: "Score" },
+            { id: "stats" as TabId, label: t("profile.tab.stats") },
+            { id: "score" as TabId, label: t("profile.tab.score") },
             {
                 id: "roster" as TabId,
-                label: "Roster",
+                label: t("profile.tab.roster"),
                 count: data?.operator_count ?? roster?.length ?? undefined,
             },
-            { id: "plans" as TabId, label: "Plans", count: publicPlans?.length },
+            { id: "plans" as TabId, label: t("profile.tab.plans"), count: publicPlans?.length },
             {
                 id: "inventory" as TabId,
-                label: "Inventory",
+                label: t("profile.tab.inventory"),
                 count: data?.item_count ?? inventory?.length ?? undefined,
             },
             {
                 id: "enemies" as TabId,
-                label: "Enemies",
+                label: t("profile.tab.enemies"),
                 count: encounteredEnemies?.encounteredCount ?? undefined,
             },
-            { id: "optimizer" as TabId, label: "Optimizer" },
+            { id: "optimizer" as TabId, label: t("profile.tab.optimizer") },
         ],
-        [data, roster, inventory, encounteredEnemies, publicPlans],
+        [data, roster, inventory, encounteredEnemies, publicPlans, t],
     );
 
     if (isLoading) {
@@ -151,11 +157,9 @@ export function UserProfile() {
         return (
             <main className="m-[0_auto] flex w-[min(1440px,calc(100%-2rem))] flex-1 flex-col gap-7 p-[24px_0_64px]">
                 <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-card px-8 py-16 text-center">
-                    <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">Doctor</span>
-                    <h1 className="font-bold text-2xl tracking-tight">Profile not found</h1>
-                    <p className="max-w-sm text-muted-foreground text-sm">
-                        No Doctor with ID <code className="font-mono">{id}</code> exists, or their profile is private.
-                    </p>
+                    <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">{t("profile.notFound.eyebrow")}</span>
+                    <h1 className="font-bold text-2xl tracking-tight">{t("profile.notFound.title")}</h1>
+                    <p className="max-w-sm text-muted-foreground text-sm">{rt("profile.notFound.desc", { id: <code className="font-mono">{id}</code> })}</p>
                 </div>
             </main>
         );

@@ -4,39 +4,66 @@ import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ISkillLine } from "#/lib/api/user";
 import { type ITile, vacanciesOf } from "#/lib/base/board";
 import { isProduction, powerOf } from "#/lib/base/catalog";
+import { useFormatters, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
+import type { messages as panelMessages } from "../BasePanel.messages";
 import { useBaseOptimizer } from "../base-context";
 import { BaseSkill } from "./BaseSkill";
+import type { messages } from "./RoomPopover.messages";
 import { TileTooltip } from "./tile/components/TileTooltip";
+
+/** The "Optimizing…" label is shared with the panel's own button. */
+type RoomT = TypedT<typeof messages & typeof panelMessages>;
+
+/** A key in `RoomPopover.messages.ts`, resolved through one of the tables below. */
+type MessageKey = keyof typeof messages & string;
+
+// Keyed by the API's `disposition` values.
+const DISPOSITION_LABEL: Record<string, MessageKey> = {
+    inactive: "profile.base.room.disposition.inactive",
+    covered: "profile.base.room.disposition.covered",
+    per_room: "profile.base.room.disposition.per_room",
+    morale: "profile.base.room.disposition.morale",
+    capacity: "profile.base.room.disposition.capacity",
+    non_production: "profile.base.room.disposition.non_production",
+    unmodeled: "profile.base.room.disposition.unmodeled",
+};
+
+const DISPOSITION_HINT: Record<string, MessageKey> = {
+    inactive: "profile.base.room.disposition.inactive.hint",
+    covered: "profile.base.room.disposition.covered.hint",
+    per_room: "profile.base.room.disposition.per_room.hint",
+    morale: "profile.base.room.disposition.morale.hint",
+    capacity: "profile.base.room.disposition.capacity.hint",
+    non_production: "profile.base.room.disposition.non_production.hint",
+    unmodeled: "profile.base.room.disposition.unmodeled.hint",
+};
+
+// The figure a non-producing room reports instead of an efficiency, in its own
+// units: a plant its drone recovery, the Reception Room its clue search, the
+// Office its HR contact speed.
+const EFFICIENCY_LABEL: Record<string, MessageKey> = {
+    POWER: "profile.base.room.droneRecovery",
+    MEETING: "profile.base.room.clueSearch",
+    HIRE: "profile.base.room.hrContact",
+};
 
 /** The marginal chip on a skill row: what this line is worth in THIS crew. */
 function LedgerChip({ line }: { line: ISkillLine }) {
+    const t: RoomT = useT("user");
     if (line.disposition === "contributes") {
-        const parts = [Math.abs(line.speed_pct) > 1e-9 ? `${line.speed_pct > 0 ? "+" : ""}${trim(line.speed_pct)}%` : null, line.value_pct && Math.abs(line.value_pct) > 1e-9 ? `${line.value_pct > 0 ? "+" : ""}${trim(line.value_pct)}% value` : null].filter(Boolean);
+        const parts = [Math.abs(line.speed_pct) > 1e-9 ? `${line.speed_pct > 0 ? "+" : ""}${trim(line.speed_pct)}%` : null, line.value_pct && Math.abs(line.value_pct) > 1e-9 ? t("profile.base.room.value", { pct: `${line.value_pct > 0 ? "+" : ""}${trim(line.value_pct)}` }) : null].filter(Boolean);
         const chip = <span className={cn("shrink-0 font-mono font-semibold text-[10px] text-foreground tabular-nums", line.note && "underline decoration-dotted underline-offset-2")}>{parts.join(" · ")}</span>;
         // A count skill's marginal is spread over the skills it counts (its
         // own included), so the chip explains itself rather than reading as a
         // separate flat bonus.
         return line.note ? <TileTooltip label={<span className="block max-w-56">{line.note}</span>}>{chip}</TileTooltip> : chip;
     }
-    const label = {
-        inactive: "inactive",
-        covered: "covered",
-        per_room: "per-room",
-        morale: "morale",
-        capacity: "capacity",
-        non_production: "reception / HR",
-        unmodeled: "not modeled",
-    }[line.disposition];
-    const hint = {
-        inactive: "This skill's condition isn't met by this crew, so it adds nothing here.",
-        covered: "A stronger skill of the same type is already active in this crew - the game only applies the most effective one, so this copy adds nothing on top.",
-        per_room: "Active - this skill buffs matching operators in the rooms that satisfy it, so its value is counted inside those rooms' numbers. Open those rooms to see the credit.",
-        morale: "This skill changes morale drain or recovery - it shows up in the sustainability simulation, not in this room's efficiency.",
-        capacity: "This skill raises the room's order capacity, not its speed - it buys longer gaps between check-ins.",
-        non_production: "Non-production value (clues, training, HR) - counted in its own units, never folded into the efficiency number.",
-        unmodeled: "The optimizer deliberately prices this at zero rather than guessing.",
-    }[line.disposition];
+    const labelKey = DISPOSITION_LABEL[line.disposition];
+    const label = labelKey ? t(labelKey) : line.disposition;
+    const hintKey = DISPOSITION_HINT[line.disposition];
+    const hint = hintKey ? t(hintKey) : undefined;
     return (
         <TileTooltip label={<span className="block max-w-56">{hint}</span>}>
             <span className={cn("shrink-0 text-[9px] uppercase tracking-wider", line.disposition === "inactive" ? "text-muted-foreground/60 line-through" : "text-muted-foreground")}>{label}</span>
@@ -58,6 +85,8 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 export function RoomPopover({ tile }: { tile: ITile }) {
+    const t: RoomT = useT("user");
+    const f = useFormatters();
     const api = useBaseOptimizer();
     const room = api.boardRooms.find((r) => r.slot_id === tile.slotId);
     const scored = api.evaluation?.assignment.rooms.find((r) => r.slot_id === tile.slotId);
@@ -84,10 +113,8 @@ export function RoomPopover({ tile }: { tile: ITile }) {
     const efficiency = api.viewShift == null ? scored?.total_efficiency : shiftRoom?.efficiency;
 
     const producesOwnOutput = scored !== undefined;
-    // Non-producing rooms report their own figure in their own units: a plant
-    // its drone recovery, the Reception Room its clue search, the Office its
-    // HR contact speed.
-    const efficiencyLabel = ({ POWER: "Drone recovery", MEETING: "Clue search", HIRE: "HR contact" } as Record<string, string>)[room?.room_type ?? ""] ?? "Efficiency";
+    const efficiencyLabelKey = EFFICIENCY_LABEL[room?.room_type ?? ""];
+    const efficiencyLabel = t(efficiencyLabelKey ?? "profile.base.room.efficiency");
     const unstaffed = tile.seats > 0 && tile.operators.length === 0;
 
     const formula = room?.formula_type ? api.formulas.find((f) => f.formula_type === room.formula_type) : undefined;
@@ -99,17 +126,15 @@ export function RoomPopover({ tile }: { tile: ITile }) {
         <div className="flex w-76 flex-col gap-3">
             <header className="flex items-baseline justify-between gap-2">
                 <h2 className="font-semibold text-[13px] text-foreground">{tile.name}</h2>
-                <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
-                    Lv {tile.level}/{tile.maxPhase}
-                </span>
+                <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{t("profile.base.room.level", { level: tile.level, max: tile.maxPhase })}</span>
             </header>
 
             <dl className="flex flex-wrap gap-x-6 gap-y-2">
-                {tile.seats > 0 && <Stat label="Staffed" value={`${tile.operators.length}/${tile.seats}`} />}
-                {power !== 0 && <Stat label={power > 0 ? "Generates" : "Draws"} value={`${Math.abs(power)} kW`} />}
-                {formula && <Stat label="Producing" value={formula.label} />}
-                {efficiency != null && <Stat label={efficiencyLabel} value={`${efficiencyLabel === "Efficiency" ? "" : "+"}${Math.round(efficiency)}%`} />}
-                {scored && isProduction(tile.facility ?? "") && scored.yield_lmd_per_day > 0 && <Stat label="LMD / day" value={Math.round(scored.yield_lmd_per_day).toLocaleString()} />}
+                {tile.seats > 0 && <Stat label={t("profile.base.room.staffed")} value={`${tile.operators.length}/${tile.seats}`} />}
+                {power !== 0 && <Stat label={power > 0 ? t("profile.base.room.generates") : t("profile.base.room.draws")} value={t("profile.base.room.power", { kw: Math.abs(power) })} />}
+                {formula && <Stat label={t("profile.base.room.producing")} value={formula.label} />}
+                {efficiency != null && <Stat label={efficiencyLabel} value={`${efficiencyLabelKey === undefined ? "" : "+"}${Math.round(efficiency)}%`} />}
+                {scored && isProduction(tile.facility ?? "") && scored.yield_lmd_per_day > 0 && <Stat label={t("profile.base.room.lmd")} value={f.number(Math.round(scored.yield_lmd_per_day))} />}
             </dl>
 
             {tile.seats > 0 && (
@@ -122,13 +147,13 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                                 </span>
                                 <span className="min-w-0 flex-1 truncate text-[12px]">{op.name}</span>
                                 {sustained.has(op.id) && (
-                                    <TileTooltip label={<span className="block max-w-56">Runs around the clock: Fiammetta's morale swap keeps this operator at full morale, so the plan never rotates them out.</span>}>
-                                        <span className="shrink-0 rounded border border-emerald-500/50 bg-emerald-500/10 px-1 py-px font-mono text-[9px] text-emerald-500 uppercase tracking-wider">24/7</span>
+                                    <TileTooltip label={<span className="block max-w-56">{t("profile.base.room.sustained.tooltip")}</span>}>
+                                        <span className="shrink-0 rounded border border-emerald-500/50 bg-emerald-500/10 px-1 py-px font-mono text-[9px] text-emerald-500 uppercase tracking-wider">{t("profile.base.room.sustained")}</span>
                                     </TileTooltip>
                                 )}
                                 {benched.has(op.id) && (
-                                    <TileTooltip label={<span className="block max-w-56">Spare seat: this operator fills a free seat at the lowest opportunity cost. They were not chosen for their skills - any effect that still applies is a bonus.</span>}>
-                                        <span className="shrink-0 rounded border border-border px-1 py-px text-[9px] text-muted-foreground uppercase tracking-wider">Bench</span>
+                                    <TileTooltip label={<span className="block max-w-56">{t("profile.base.room.bench.tooltip")}</span>}>
+                                        <span className="shrink-0 rounded border border-border px-1 py-px text-[9px] text-muted-foreground uppercase tracking-wider">{t("profile.base.room.bench")}</span>
                                     </TileTooltip>
                                 )}
                             </div>
@@ -145,7 +170,7 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                                             <div className={cn("flex items-start justify-between gap-2", replaced && "opacity-40")} key={skill.buffId}>
                                                 <BaseSkill skill={skill} />
                                                 {line && <LedgerChip line={line} />}
-                                                {replaced && <span className="shrink-0 text-[9px] text-muted-foreground uppercase tracking-wider">replaced</span>}
+                                                {replaced && <span className="shrink-0 text-[9px] text-muted-foreground uppercase tracking-wider">{t("profile.base.room.replaced")}</span>}
                                             </div>
                                         );
                                     })}
@@ -153,11 +178,11 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                             )}
                         </div>
                     ))}
-                    {vacancies > 0 && <p className="text-[11px] text-muted-foreground">{vacancies === tile.seats ? "Nobody is working here." : `${vacancies} seat${vacancies === 1 ? "" : "s"} open.`}</p>}
-                    {ledger.length > 0 && <p className="text-[10px] text-muted-foreground/70 leading-snug">Values are marginals - what this room loses if that one skill is removed. Coupled skills overlap, so they don&rsquo;t sum to the room total.</p>}
+                    {vacancies > 0 && <p className="text-[11px] text-muted-foreground">{vacancies === tile.seats ? t("profile.base.room.nobodyWorking") : t("profile.base.room.seatsOpen", { count: vacancies })}</p>}
+                    {ledger.length > 0 && <p className="text-[10px] text-muted-foreground/70 leading-snug">{t("profile.base.room.marginalNote")}</p>}
                     {ccLines.length > 0 && (
                         <div className="flex flex-col gap-1 rounded-md border border-border/50 bg-muted/10 px-2 py-1.5">
-                            <span className="text-[9px] text-muted-foreground uppercase tracking-wider">From the Control Center</span>
+                            <span className="text-[9px] text-muted-foreground uppercase tracking-wider">{t("profile.base.room.fromControlCenter")}</span>
                             {ccLines.map((l) => (
                                 <div className="flex items-baseline justify-between gap-2 text-[11px]" key={`${l.operator_id}:${l.buff_id}`}>
                                     <span className="min-w-0 truncate">
@@ -172,19 +197,17 @@ export function RoomPopover({ tile }: { tile: ITile }) {
             )}
 
             {!producesOwnOutput && tile.seats > 0 && (
-                <p className="border-border border-t pt-2 text-[11px] text-muted-foreground">
-                    {api.evaluationError ? "This layout could not be scored." : api.evaluating ? "Scoring…" : unstaffed ? "An empty room produces nothing and buffs nothing." : "Only producing rooms report an efficiency. This crew contributes through the bonuses they cast elsewhere."}
-                </p>
+                <p className="border-border border-t pt-2 text-[11px] text-muted-foreground">{api.evaluationError ? t("profile.base.room.scoreFailed") : api.evaluating ? t("profile.base.room.scoring") : unstaffed ? t("profile.base.room.emptyRoom") : t("profile.base.room.nonProducing")}</p>
             )}
             {room && ["TRADING", "MANUFACTURE", "POWER", "CONTROL", "MEETING", "HIRE", "DORMITORY"].includes(room.room_type) && (
                 <Button className="w-full" disabled={api.optimizing} onClick={() => api.runOptimize([tile.slotId])} size="sm" variant="outline">
                     <Sparkles />
-                    {api.optimizing ? "Optimizing…" : "Optimize this room only"}
+                    {api.optimizing ? t("profile.base.optimizing") : t("profile.base.room.optimizeOne")}
                 </Button>
             )}
             {change && (
                 <div className="flex items-baseline justify-between gap-2 rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5">
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Optimized</span>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("profile.base.room.optimized")}</span>
                     <span className="font-mono text-[11px] tabular-nums">
                         {Math.round(change.efficiency_before)}% → <span className="font-semibold text-foreground">{Math.round(change.efficiency_after)}%</span>
                     </span>

@@ -1,11 +1,14 @@
 import { Layers, Palette } from "lucide-react";
 import { useMemo } from "react";
 import type { ISkinIndexEntry } from "#/lib/api/skins";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import type { IModuleGapDetails } from "../helpers";
 import { PALETTE } from "../palette";
 import { CARD_PADDING, GapList, type IGapItem, Kicker, MetricRow, StatCard, Tile } from "../primitives";
+import type { messages } from "./ModulesSkinsCard.messages";
 import { SkinViewerDialog } from "./SkinViewerDialog";
 
 interface IModulesSkinsCardProps {
@@ -17,6 +20,7 @@ interface IModulesSkinsCardProps {
 }
 
 export function ModulesSkinsCard({ modules, skins, charSkins, ownedSkinIds, operatorsStatic }: IModulesSkinsCardProps) {
+    const t: TypedT<typeof messages> = useT("user");
     const operatorsMap = useMemo(() => {
         const map = new Map<string, IOperatorListItem>();
         for (const op of operatorsStatic) {
@@ -31,18 +35,18 @@ export function ModulesSkinsCard({ modules, skins, charSkins, ownedSkinIds, oper
     const moduleGaps: IGapItem[] = [
         {
             key: "locked",
-            label: "locked",
+            label: t("profile.stats.modules.gap.locked"),
             value: Math.max(0, modules.totalAvailable - modules.unlocked),
             color: PALETTE.modules.unlocked,
-            tooltip: "Click to view modules available on owned operators but not unlocked",
+            tooltip: t("profile.stats.modules.gap.locked.tooltip"),
             details: modules.details.locked,
         },
         {
             key: "belowMax",
-            label: "below max",
+            label: t("profile.stats.modules.gap.belowMax"),
             value: Math.max(0, modules.unlocked - modules.atMax),
             color: PALETTE.modules.max,
-            tooltip: "Click to view unlocked modules that are not yet at level 3",
+            tooltip: t("profile.stats.modules.gap.belowMax.tooltip"),
             details: modules.details.belowMax,
         },
     ];
@@ -50,10 +54,10 @@ export function ModulesSkinsCard({ modules, skins, charSkins, ownedSkinIds, oper
     const skinGaps: IGapItem[] = [
         {
             key: "missing",
-            label: "missing",
+            label: t("profile.stats.skins.gap.missing"),
             value: Math.max(0, skins.totalAvailable - skins.totalOwned),
             color: PALETTE.skins,
-            tooltip: "Open the skin collection viewer",
+            tooltip: t("profile.stats.skins.gap.missing.tooltip"),
             dialogContent: <SkinViewerDialog color={PALETTE.skins} operatorsMap={operatorsMap} ownedIds={ownedSkinIds} profileOwnedCount={skins.totalOwned} skins={allSkins} />,
         },
     ];
@@ -62,12 +66,12 @@ export function ModulesSkinsCard({ modules, skins, charSkins, ownedSkinIds, oper
         <StatCard color={PALETTE.modules.accent}>
             <div className={cn("flex h-full flex-col gap-5", CARD_PADDING)}>
                 <div className="space-y-4">
-                    <Kicker icon={Layers} label="Modules" />
+                    <Kicker icon={Layers} label={t("profile.stats.modules.title")} />
                     <div className="grid grid-cols-2 gap-2">
                         <Tile
                             color={PALETTE.modules.unlocked}
-                            sub="Unlocked"
-                            tooltip={`${modules.unlocked} of ${modules.totalAvailable} available modules unlocked`}
+                            sub={t("profile.stats.modules.unlocked")}
+                            tooltip={t("profile.stats.modules.unlocked.tooltip", { unlocked: modules.unlocked, total: modules.totalAvailable })}
                             value={
                                 <span>
                                     {modules.unlocked}
@@ -75,20 +79,20 @@ export function ModulesSkinsCard({ modules, skins, charSkins, ownedSkinIds, oper
                                 </span>
                             }
                         />
-                        <Tile color={PALETTE.modules.max} sub="Max Lv" tooltip="Modules upgraded to level 3" value={modules.atMax} />
+                        <Tile color={PALETTE.modules.max} sub={t("profile.stats.modules.maxLevel")} tooltip={t("profile.stats.modules.maxLevel.tooltip")} value={modules.atMax} />
                     </div>
-                    <MetricRow color={PALETTE.modules.accent} label="Unlock Rate" pct={moduleUnlockPct} value={`${moduleUnlockPct.toFixed(1)}%`} />
+                    <MetricRow color={PALETTE.modules.accent} label={t("profile.stats.modules.unlockRate")} pct={moduleUnlockPct} value={`${moduleUnlockPct.toFixed(1)}%`} />
                     <GapList items={moduleGaps} />
                 </div>
 
                 <div className="border-border/60 border-t" />
 
                 <div className="space-y-4">
-                    <Kicker icon={Palette} label="Skins" />
+                    <Kicker icon={Palette} label={t("profile.stats.skins.title")} />
                     <Tile
                         color={PALETTE.skins}
-                        sub="Skins Collected"
-                        tooltip={`${skins.totalOwned} of ${skins.totalAvailable} non-default skins collected`}
+                        sub={t("profile.stats.skins.collected")}
+                        tooltip={t("profile.stats.skins.collected.tooltip", { owned: skins.totalOwned, total: skins.totalAvailable })}
                         value={
                             <span>
                                 {skins.totalOwned}
@@ -96,7 +100,7 @@ export function ModulesSkinsCard({ modules, skins, charSkins, ownedSkinIds, oper
                             </span>
                         }
                     />
-                    <MetricRow color={PALETTE.skins} label="Collected" pct={skins.percentage} value={`${skins.percentage.toFixed(1)}%`} />
+                    <MetricRow color={PALETTE.skins} label={t("profile.stats.skins.rate")} pct={skins.percentage} value={`${skins.percentage.toFixed(1)}%`} />
                     <GapList items={skinGaps} />
                 </div>
             </div>

@@ -4,6 +4,9 @@ import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Field, FieldDescription, FieldLabel } from "#/components/ui/field";
 import { MarkdownEditor } from "#/components/ui/markdown-editor";
+import { useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
+import type { messages } from "./PublishVersionDialog.messages";
 
 const CHANGELOG_MAX = 1000;
 
@@ -18,6 +21,7 @@ interface IPublishVersionDialogProps {
 }
 
 export function PublishVersionDialog({ open, publishing, latestVersion, nextVersion, publishError, onClose, onPublish }: IPublishVersionDialogProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
     const changelogId = useId();
     const [changelog, setChangelog] = useState("");
 
@@ -38,30 +42,30 @@ export function PublishVersionDialog({ open, publishing, latestVersion, nextVers
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <RocketIcon className="h-4 w-4 text-primary" aria-hidden="true" />
-                            Publish a version
+                            {t("edit.publishDialog.title")}
                         </DialogTitle>
-                        <DialogDescription>Snapshots the current tiers and placements as version v{nextVersion ?? "?"}. Older versions stay accessible to viewers.</DialogDescription>
+                        <DialogDescription>{t("edit.publishDialog.description", { version: nextVersion ?? "?" })}</DialogDescription>
                     </DialogHeader>
 
                     <div className="flex flex-col gap-5 px-6 pb-2">
                         <div className="flex items-center justify-between rounded-lg border border-border bg-muted/30 px-3 py-2 font-mono text-[11px] text-muted-foreground tabular-nums">
                             <span>
-                                Latest published: <span className="text-foreground">{latestVersion ? `v${latestVersion}` : "-"}</span>
+                                {t("edit.publishDialog.latest")} <span className="text-foreground">{latestVersion ? `v${latestVersion}` : "-"}</span>
                             </span>
                             <span>
-                                Next: <span className="text-foreground">v{nextVersion ?? "?"}</span>
+                                {t("edit.publishDialog.next")} <span className="text-foreground">v{nextVersion ?? "?"}</span>
                             </span>
                         </div>
 
                         <Field>
                             <FieldLabel htmlFor={changelogId}>
-                                Changelog
+                                {t("edit.publishDialog.changelog")}
                                 <span className="ml-auto font-mono text-[10.5px] text-muted-foreground tabular-nums">
                                     {changelog.length} / {CHANGELOG_MAX}
                                 </span>
                             </FieldLabel>
-                            <MarkdownEditor id={changelogId} value={changelog} onChange={setChangelog} placeholder="What changed in this version? e.g. Promoted Texas to S, added Wis'adel." rows={4} autoFocus disabled={publishing} maxLength={CHANGELOG_MAX} showHint={false} />
-                            <FieldDescription>Optional but recommended. Viewers see this on the version history.</FieldDescription>
+                            <MarkdownEditor id={changelogId} value={changelog} onChange={setChangelog} placeholder={t("edit.publishDialog.changelogPlaceholder")} rows={4} autoFocus disabled={publishing} maxLength={CHANGELOG_MAX} showHint={false} />
+                            <FieldDescription>{t("edit.publishDialog.changelogHint")}</FieldDescription>
                         </Field>
 
                         {publishError && (
@@ -72,10 +76,10 @@ export function PublishVersionDialog({ open, publishing, latestVersion, nextVers
                     </div>
 
                     <DialogFooter>
-                        <DialogClose render={<Button type="button" variant="outline" disabled={publishing} />}>Cancel</DialogClose>
+                        <DialogClose render={<Button type="button" variant="outline" disabled={publishing} />}>{t("edit.publishDialog.cancel")}</DialogClose>
                         <Button type="submit" loading={publishing}>
                             <RocketIcon />
-                            Publish v{nextVersion ?? "?"}
+                            {t("edit.publishDialog.submit", { version: nextVersion ?? "?" })}
                         </Button>
                     </DialogFooter>
                 </form>
