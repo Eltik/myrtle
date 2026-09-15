@@ -110,7 +110,10 @@ pub async fn observe(req: Request, next: Next) -> Response {
     }
 
     // One line per request: route, status, latency and the id to correlate on.
-    // Server errors log at WARN so they surface without widening the filter.
+    // It is DEBUG, not INFO: production runs at `backend=info` and this line was
+    // the whole of the log volume there, while route, status and latency are
+    // already on the metrics above and the id is on the response header. Server
+    // errors log at WARN so they surface without widening the filter.
     let latency_ms = elapsed.as_secs_f64() * 1000.0;
     if status.is_server_error() {
         tracing::warn!(
@@ -120,7 +123,7 @@ pub async fn observe(req: Request, next: Next) -> Response {
             "request failed"
         );
     } else {
-        tracing::info!(
+        tracing::debug!(
             parent: &span,
             status = status.as_u16(),
             latency_ms,
