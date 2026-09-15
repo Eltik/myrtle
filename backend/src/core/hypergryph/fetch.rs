@@ -10,7 +10,9 @@ use crate::core::hypergryph::{
 };
 use crate::utils::redact::redacted_body;
 
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
+/// Deadline for one exchange, body included; suits the small answers most
+/// endpoints give. `account/syncData` needs more (see [`FetchRequest::timeout`]).
+pub const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
 
 #[derive(Debug, Deserialize)]
 pub struct UpstreamError {
@@ -40,6 +42,8 @@ impl std::fmt::Display for UpstreamError {
 
 pub mod upstream_code {
     pub const STAGE_NO_REPLAY: i64 = 5516;
+    /// `templateShop/getGoodList` for an activity that has no token shop.
+    pub const INVALID_SHOP_ID: i64 = 5681;
 }
 
 #[derive(Debug)]
@@ -63,6 +67,9 @@ pub struct FetchRequest<'a> {
     pub session: Option<&'a AuthSession>,
     pub server: Server,
     pub sign: bool,
+    /// Whole-exchange deadline, [`REQUEST_TIMEOUT`] unless the answer is
+    /// large (the whole player from `account/syncData`).
+    pub timeout: Duration,
 }
 pub async fn fetch(
     client: &Client,
@@ -114,7 +121,7 @@ pub async fn fetch(
         builder = builder.json(b);
     }
 
-    Ok(builder.timeout(REQUEST_TIMEOUT).send().await?)
+    Ok(builder.timeout(req.timeout).send().await?)
 }
 
 pub async fn fetch_domain(
@@ -135,6 +142,17 @@ pub async fn fetch_domain(
 /// Read the response body. Non-2xx statuses are parsed as the Arknights error
 /// envelope (`FetchError::Upstream`) or, failing that, surfaced as `ParseError`.
 pub async fn read_body(response: Response, context: &str) -> Result<String, FetchError> {
+    read_body_tolerating(response, context, &[]).await
+}
+
+/// [`read_body`] for a caller that expects some envelope codes as ordinary
+/// answers (a shop that does not exist, a stage with no replay): those still
+/// come back as `FetchError::Upstream` but are not logged as warnings.
+pub async fn read_body_tolerating(
+    response: Response,
+    context: &str,
+    tolerated: &[i64],
+) -> Result<String, FetchError> {
     let status = response.status();
     let text = response
         .text()
@@ -146,7 +164,11 @@ pub async fn read_body(response: Response, context: &str) -> Result<String, Fetc
     }
 
     if let Ok(err) = serde_json::from_str::<UpstreamError>(&text) {
-        tracing::warn!(context, %status, code = err.code, msg = %err.msg, "upstream error");
+        if tolerated.contains(&err.code) {
+            tracing::debug!(context, %status, code = err.code, msg = %err.msg, "upstream error (expected)");
+        } else {
+            tracing::warn!(context, %status, code = err.code, msg = %err.msg, "upstream error");
+        }
         return Err(FetchError::Upstream(err));
     }
 
@@ -160,7 +182,16 @@ pub async fn parse_json<T: serde::de::DeserializeOwned>(
     response: Response,
     context: &str,
 ) -> Result<T, FetchError> {
-    let text = read_body(response, context).await?;
+    parse_json_tolerating(response, context, &[]).await
+}
+
+/// [`parse_json`] over [`read_body_tolerating`].
+pub async fn parse_json_tolerating<T: serde::de::DeserializeOwned>(
+    response: Response,
+    context: &str,
+    tolerated: &[i64],
+) -> Result<T, FetchError> {
+    let text = read_body_tolerating(response, context, tolerated).await?;
     serde_json::from_str::<T>(&text).map_err(|e| {
         // Body and serde detail stay in logs; the surfaced error is intentionally generic
         // so we don't leak the upstream schema to API clients.
@@ -175,6 +206,17 @@ pub async fn auth_request(
     body: Option<&serde_json::Value>,
     session: &mut AuthSession,
     server: Server,
+) -> Result<Response, FetchError> {
+    auth_request_with_timeout(client, endpoint, body, session, server, REQUEST_TIMEOUT).await
+}
+
+pub async fn auth_request_with_timeout(
+    client: &Client,
+    endpoint: &str,
+    body: Option<&serde_json::Value>,
+    session: &mut AuthSession,
+    server: Server,
+    timeout: Duration,
 ) -> Result<Response, FetchError> {
     if session.uid.is_empty() {
         return Err(FetchError::NotLoggedIn);
@@ -191,6 +233,7 @@ pub async fn auth_request(
             session: Some(session),
             server,
             sign: false,
+            timeout,
         },
     )
     .await

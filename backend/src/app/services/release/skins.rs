@@ -5,8 +5,8 @@ use crate::{
     core::{
         gamedata::types::{GameData, skin::Skin},
         release::{
-            BatchForecast, NewSkin, RerunForecast, Resolution, SkinGroupArt, SkinTile,
-            SkinsResponse, estimate, ledger, prices, resolve,
+            BatchForecast, NewSkin, RerunForecast, Resolution, ReviewOutfit, ReviewWindow,
+            SkinGroupArt, SkinTile, SkinsResponse, estimate, ledger, prices, resolve,
             skins::{self, GroupHistory, RerunBasis},
         },
         translate::{self, TranslationMemory},
@@ -315,6 +315,53 @@ fn reruns(
     out
 }
 
+fn review_pool(p: &Planner, names: &Names<'_>) -> Vec<ReviewOutfit> {
+    let (cn, en) = (&*p.ctx.cn, &*p.ctx.en);
+    let mut out: Vec<ReviewOutfit> = cn
+        .skins
+        .char_skins
+        .values()
+        .filter(|s| s.display_skin.get_time > 0 && skins::review_eligible(s, &cn.skins.brand_list))
+        .map(|s| ReviewOutfit {
+            tile: tile(p, names, s),
+            cn_get_time: s.display_skin.get_time,
+            en_get_time: en
+                .skins
+                .char_skins
+                .get(&s.skin_id)
+                .map(|e| e.display_skin.get_time)
+                .filter(|t| *t > 0),
+        })
+        .collect();
+    out.sort_by(|a, b| {
+        a.cn_get_time
+            .cmp(&b.cn_get_time)
+            .then_with(|| a.tile.skin_id.cmp(&b.tile.skin_id))
+    });
+    out
+}
+
+fn reviews(p: &Planner) -> Vec<ReviewWindow> {
+    let cn = skins::review_windows(&p.ctx.cn);
+    let en = skins::review_windows(&p.ctx.en);
+    cn.iter()
+        .zip(skins::pair_reviews(&cn, &en))
+        .map(|(&(cn_start, cn_end), en_window)| ReviewWindow {
+            cn_start,
+            cn_end,
+            pool_cutoff: skins::review_pool_cutoff(cn_start),
+            resolution: match en_window {
+                Some((en_start, en_end)) => Resolution::Confirmed {
+                    en_id: format!("review:{en_start}"),
+                    en_start,
+                    en_end,
+                },
+                None => estimate::estimate(&p.models.general, cn_start),
+            },
+        })
+        .collect()
+}
+
 pub async fn get_skins(state: &AppState) -> Result<SkinsResponse, ApiError> {
     let key = cache_key("release:skins", estimate::window_from_env());
     if let Some(c) = state.cache.get::<SkinsResponse>(&key).await {
@@ -329,11 +376,14 @@ pub async fn get_skins(state: &AppState) -> Result<SkinsResponse, ApiError> {
     };
     let (en_groups, en_batches) = skins::group_histories(en, &skins::batch_families(en, cn));
     let (cn_groups, cn_batches) = skins::group_histories(cn, &skins::batch_families(cn, en));
+    let review_pool = review_pool(&p, &names);
     let out = SkinsResponse {
         anniversaries: skins::anniversary_models(&en_groups, p.now),
         batches: batches(&p, &names, &en_batches, &cn_batches),
         new_skins: new_skins(&p, &names, &mut art),
         rerun_forecasts: reruns(&p, &names, &en_groups, &cn_groups, &mut art),
+        reviews: reviews(&p),
+        review_pool,
         group_art: art.map,
         model: p.models.general.clone(),
         yearly: p.models.yearly.clone(),

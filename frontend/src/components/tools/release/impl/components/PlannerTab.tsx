@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ListChecks, RotateCcw } from "lucide-react";
+import { ChevronDown, ListChecks, RotateCcw } from "lucide-react";
 import * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
@@ -9,9 +9,10 @@ import { refreshRosterFn } from "#/lib/api/auth";
 import { userStageClearsQueryOptions } from "#/lib/api/stages";
 import { userQueryOptions } from "#/lib/api/user";
 import { cn } from "#/lib/utils";
+import type { ShopGood } from "#/types/generated/ShopGood";
 import { useAutoTranslate } from "../autoTranslate";
-import { formatDate } from "../helpers";
-import { balances, EMPTY_STATE, type IPlanRow, type IPlanSkin, type IPlanState, type IRowBalance, rowDeviates, rowExpense, rowIncome, rowPotential, type StageClears, type StageStatus, stageKey, stageOn, stageStatus, usePlanData } from "../plan";
+import { formatDate, formatDateRange } from "../helpers";
+import { balances, EMPTY_STATE, type IPlanRow, type IPlanSkin, type IPlanState, type IRowBalance, rowDeviates, rowExpense, rowIncome, rowPotential, SANITY_PER_TOKEN, SHOP_KIND_LABEL, type StageClears, type StageStatus, shopBuyout, shopGroups, stageKey, stageOn, stageStatus, usePlanData } from "../plan";
 import { useStoredState } from "../planStore";
 import { Calcs, Op, OpIcon } from "./Primes";
 import { ResolutionBadge } from "./ResolutionBadge";
@@ -77,8 +78,7 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
                 <ToggleField id="planner-show-past" label="Show past" checked={showPast} onChange={setShowPast} />
                 <span className="font-sans text-[11px] text-muted-foreground">
-                    Income is each event's first-clear Originite Prime, expenses the outfits you pick. Stage defaults come from your account: three-starred stages start unchecked, the rest checked, with closed events read from your missions, medals and story unlocks. Store outfits cost 18, plus 3 each for dynamic art,
-                    own voice lines and a special variant (the old 15 tier shows as 18); outfits handed out elsewhere cost nothing.{" "}
+                    First-clear Originite Prime in, the outfits you pick out; stage defaults follow your account, outfit prices the game data.{" "}
                     {uid ? (sync.saving ? "Saving to your account…" : sync.savedAt ? `Saved to your account ${formatDate(sync.savedAt)}.` : "Saved to your account as you go.") : "Sign in to keep the plan on your account; until then it stays in this browser."}
                 </span>
             </div>
@@ -157,7 +157,9 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
 }
 
 function rowTag(row: IPlanRow): string {
-    return row.kind === "event" ? (row.rerun ? "Rerun" : "Event") : "Store sale";
+    if (row.kind === "review") return "Fashion Review";
+    if (row.kind === "listing") return "Store sale";
+    return row.rerun ? "Rerun" : "Event";
 }
 
 function EventCard({ row, total, state, active, onOpen }: { row: IPlanRow; total: IRowBalance | undefined; state: IPlanState; active: boolean; onOpen: () => void }): React.ReactElement {
@@ -167,7 +169,7 @@ function EventCard({ row, total, state, active, onOpen }: { row: IPlanRow; total
         <button type="button" onClick={onOpen} className={cn("grid w-full cursor-pointer gap-x-3 gap-y-2 rounded-xl border p-2.5 text-left transition-all hover:border-primary/50 sm:grid-cols-[minmax(0,1fr)_auto]", active ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border/60 bg-card")}>
             <div className="flex min-w-0 flex-col gap-1">
                 <CnName cn={row.nameCn} en={row.nameEn} auto={row.nameAuto} compact primaryClassName="font-sans font-semibold text-[13px] text-foreground">
-                    <Tag className={row.kind === "listing" ? "text-fuchsia-400" : undefined}>{rowTag(row)}</Tag>
+                    <Tag className={row.kind === "listing" ? "text-fuchsia-400" : row.kind === "review" ? "text-teal-400" : undefined}>{rowTag(row)}</Tag>
                 </CnName>
                 <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
                     {formatDate(row.enStart)}
@@ -288,6 +290,7 @@ function EventDetail({ row, state, clears, total, today, lookup, onPick, onStage
                     </div>
                 </div>
             )}
+            {row.kind === "event" && (row.missionTokens > 0 || row.shop) && <ShopBuyout row={row} />}
             {row.farmStages.length > 0 && (
                 <div className="flex flex-col gap-2 border-border/40 border-t pt-3">
                     <span className="font-sans font-semibold text-[12.5px] text-foreground">
@@ -318,6 +321,115 @@ function EventDetail({ row, state, clears, total, today, lookup, onPick, onStage
             )}
         </div>
     );
+}
+
+function ShopBuyout({ row }: { row: IPlanRow }): React.ReactElement {
+    const buyout = shopBuyout(row);
+    const [open, setOpen] = React.useState(false);
+    const shop = row.shop;
+    return (
+        <div className="flex flex-col gap-1.5 border-border/40 border-t pt-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                <span className="font-sans font-semibold text-[12.5px] text-foreground">
+                    Event shop
+                    {shop && (
+                        <span className="font-medium font-mono text-[10.5px] text-muted-foreground">
+                            {" "}
+                            · {shop.shopName} · {shop.server.toUpperCase()} {formatDateRange(shop.startTime, shop.endTime)}
+                        </span>
+                    )}
+                </span>
+                {shop && (
+                    <button type="button" onClick={() => setOpen((v) => !v)} className="flex cursor-pointer items-center gap-1 font-sans text-[11.5px] text-muted-foreground hover:text-foreground">
+                        {open ? "Hide goods" : `Show ${shop.goods.length} goods`}
+                        <ChevronDown className={cn("size-3.5 transition-transform", open && "rotate-180")} />
+                    </button>
+                )}
+            </div>
+            {buyout && shop ? (
+                <>
+                    <dl className="m-0 grid grid-cols-[auto_auto] gap-x-4 gap-y-0.5 font-mono text-[11.5px] tabular-nums">
+                        <dt className="flex items-center gap-1.5 font-sans text-muted-foreground">
+                            <ShopIcon item={shop.token} size="size-4" />
+                            Buy everything <span className="text-[10px]">· {buyout.limitedGoods} limited goods</span>
+                        </dt>
+                        <dd className="m-0 text-right text-foreground">{buyout.total.toLocaleString()}</dd>
+                        <dt className="font-sans text-muted-foreground">Missions</dt>
+                        <dd className="m-0 text-right text-emerald-500">-{buyout.missions.toLocaleString()}</dd>
+                        <dt className="font-sans font-semibold text-foreground">To farm</dt>
+                        <dd className="m-0 text-right font-semibold text-foreground">
+                            {buyout.remaining.toLocaleString()} {shop.token.nameEn ?? shop.token.name} · {buyout.sanity.toLocaleString()} sanity
+                        </dd>
+                    </dl>
+                    <p className="m-0 font-sans text-[10.5px] text-muted-foreground">{SANITY_PER_TOKEN} sanity per token, from the game server's shop. First-clear token rewards are not in the data, so the sanity figure is an upper bound.</p>
+                    {open && <ShopGoods row={row} />}
+                </>
+            ) : (
+                <p className="m-0 font-sans text-[11.5px] text-muted-foreground">Missions pay {row.missionTokens} tokens. The shop is fetched from the game server once it opens on a server this site has an account on.</p>
+            )}
+        </div>
+    );
+}
+
+function ShopGoods({ row }: { row: IPlanRow }): React.ReactElement | null {
+    if (!row.shop) return null;
+    const { limited, unlimited } = shopGroups(row.shop);
+    const token = row.shop.token.nameEn ?? row.shop.token.name;
+    return (
+        <div className="flex flex-col gap-3 pt-1">
+            {limited.map((g) => (
+                <div key={g.kind} className="flex flex-col gap-1">
+                    <div className="flex items-baseline justify-between gap-2">
+                        <span className="font-sans font-semibold text-[11.5px] text-foreground">
+                            {SHOP_KIND_LABEL[g.kind]} <span className="font-medium font-mono text-[10px] text-muted-foreground">· {g.goods.length}</span>
+                        </span>
+                        <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{g.tokens.toLocaleString()}</span>
+                    </div>
+                    <ul className="m-0 grid list-none grid-cols-1 gap-x-4 gap-y-0.5 p-0 sm:grid-cols-2">
+                        {g.goods.map((good) => (
+                            <ShopGoodRow key={good.goodId} good={good} />
+                        ))}
+                    </ul>
+                </div>
+            ))}
+            {unlimited.length > 0 && (
+                <div className="flex flex-col gap-1">
+                    <span className="font-sans font-semibold text-[11.5px] text-foreground">
+                        Unlimited <span className="font-medium font-mono text-[10px] text-muted-foreground">· not in the total, {token} left over goes here</span>
+                    </span>
+                    <ul className="m-0 grid list-none grid-cols-1 gap-x-4 gap-y-0.5 p-0 sm:grid-cols-2">
+                        {unlimited.map((good) => (
+                            <ShopGoodRow key={good.goodId} good={good} />
+                        ))}
+                    </ul>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function ShopGoodRow({ good }: { good: ShopGood }): React.ReactElement {
+    const name = good.item.nameEn ?? good.item.name;
+    const cnOnly = good.item.nameEn === null;
+    return (
+        <li className="flex min-w-0 items-center gap-2 font-mono text-[11px] tabular-nums">
+            <ShopIcon item={good.item} size="size-6" />
+            <span className="min-w-0 flex-1 truncate font-sans text-[11.5px] text-foreground" lang={cnOnly ? "zh-CN" : undefined} translate={cnOnly ? "yes" : undefined} title={name}>
+                {name}
+                {good.count > 1 && <span className="text-muted-foreground"> ×{good.count.toLocaleString()}</span>}
+            </span>
+            <span className="shrink-0 text-muted-foreground">
+                {good.price.toLocaleString()}
+                {good.availCount > 0 ? ` × ${good.availCount}` : ""}
+            </span>
+            {good.availCount > 0 && <span className="w-12 shrink-0 text-right text-foreground">{(good.price * good.availCount).toLocaleString()}</span>}
+        </li>
+    );
+}
+
+function ShopIcon({ item, size }: { item: ShopGood["item"]; size: string }): React.ReactElement {
+    const art = useArt(item.iconPath);
+    return art.src ? <img src={art.src} alt="" loading="lazy" onError={art.onError} className={cn("shrink-0 rounded-sm bg-black/30 object-contain", size)} /> : <span aria-hidden="true" className={cn("shrink-0 rounded-sm bg-muted", size)} />;
 }
 
 interface ISummaryProps {

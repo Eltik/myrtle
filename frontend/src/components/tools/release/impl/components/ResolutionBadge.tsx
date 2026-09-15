@@ -34,7 +34,7 @@ export function ResolutionBadge({ resolution, today, note, caption, standing, cl
 
     switch (resolution.status) {
         case "confirmed":
-            chip = <Badge variant="default">Confirmed</Badge>;
+            chip = <Badge variant="success">Confirmed</Badge>;
             dateText = formatDateRange(resolution.enStart, resolution.enEnd);
             break;
         case "override":

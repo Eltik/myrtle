@@ -103,6 +103,83 @@ pub struct LagResponse {
     pub backtest: Backtest,
 }
 
+/// What a shop good is, for grouping; the server's `item_type` is kept beside
+/// it for anything finer.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "lowercase")]
+#[ts(export)]
+pub enum ShopGoodKind {
+    Outfit,
+    Furniture,
+    Material,
+    Currency,
+    Exp,
+    Ticket,
+    Other,
+}
+
+impl ShopGoodKind {
+    pub fn of(item_type: &str) -> Self {
+        match item_type {
+            "CHAR_SKIN" => Self::Outfit,
+            "FURN" | "HOME_THEME" => Self::Furniture,
+            "MATERIAL" => Self::Material,
+            "GOLD" | "DIAMOND_SHD" | "AP_SUPPLY" => Self::Currency,
+            "CARD_EXP" => Self::Exp,
+            t if t.starts_with("TKT_") => Self::Ticket,
+            _ => Self::Other,
+        }
+    }
+}
+
+/// An item as the shop names it: the client table's name and icon, EN when
+/// the item exists there.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct ShopItem {
+    pub item_id: String,
+    pub name: String,
+    pub name_en: Option<String>,
+    pub icon_path: Option<String>,
+    pub rarity: i32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct ShopGood {
+    pub good_id: String,
+    pub item_type: String,
+    pub kind: ShopGoodKind,
+    pub item: ShopItem,
+    pub count: i32,
+    pub price: i32,
+    /// Purchase limit; `-1` is unlimited stock, which the buy-out leaves out.
+    pub avail_count: i32,
+}
+
+/// An event's token shop as the planner shows it: the game server's goods
+/// (see `gamedata::types::event_shop`) with the names and icons the client
+/// tables give them.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct EventShop {
+    /// Which server's shop this is: CN when that account has fetched it,
+    /// else EN.
+    pub server: String,
+    pub shop_name: String,
+    pub token: ShopItem,
+    #[ts(type = "number")]
+    pub start_time: i64,
+    #[ts(type = "number")]
+    pub end_time: i64,
+    /// Token cost of every limited good at full stock, the server's figure.
+    pub max_price: i32,
+    pub goods: Vec<ShopGood>,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
@@ -118,6 +195,8 @@ pub struct ReleaseEvent {
     pub cn_end: i64,
     pub op_stages: Vec<OpStage>,
     pub farm_stages: Vec<FarmStage>,
+    pub mission_tokens: i32,
+    pub shop: Option<EventShop>,
     pub name_en_auto: Option<AutoName>,
     pub image_path: Option<String>,
     pub resolution: Resolution,
@@ -277,6 +356,34 @@ pub struct RerunForecast {
     pub basis: RerunBasis,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct ReviewWindow {
+    #[ts(type = "number")]
+    pub cn_start: i64,
+    #[ts(type = "number")]
+    pub cn_end: i64,
+    /// Newest CN release date this edition stocks; the pool is every
+    /// `ReviewOutfit` with `cn_get_time` at or before it.
+    #[ts(type = "number")]
+    pub pool_cutoff: i64,
+    pub resolution: Resolution,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct ReviewOutfit {
+    #[serde(flatten)]
+    #[ts(flatten)]
+    pub tile: SkinTile,
+    #[ts(type = "number")]
+    pub cn_get_time: i64,
+    #[ts(type = "number | null")]
+    pub en_get_time: Option<i64>,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
@@ -287,6 +394,8 @@ pub struct SkinsResponse {
     pub batches: Vec<BatchForecast>,
     pub new_skins: Vec<NewSkin>,
     pub rerun_forecasts: Vec<RerunForecast>,
+    pub reviews: Vec<ReviewWindow>,
+    pub review_pool: Vec<ReviewOutfit>,
     pub group_art: HashMap<String, SkinGroupArt>,
 }
 

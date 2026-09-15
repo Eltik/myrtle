@@ -3,7 +3,7 @@ use ts_rs::TS;
 
 use crate::core::gamedata::types::skin::Skin;
 
-const STORE: i32 = 18;
+pub const STORE: i32 = 18;
 const DYNAMIC_ART: i32 = 3;
 const OWN_VOICE: i32 = 3;
 const SPECIAL_DYNAMIC_ART: i32 = 3;
@@ -32,19 +32,20 @@ pub fn own_voice(skin: &Skin) -> bool {
         .is_some_and(|v| v == skin.skin_id.replace('@', "_"))
 }
 
+pub fn store_price(skin: &Skin) -> i32 {
+    if !sold_in_store(skin) {
+        return 0;
+    }
+    STORE
+        + i32::from(skin.dyn_illust_id.is_some()) * DYNAMIC_ART
+        + i32::from(own_voice(skin)) * OWN_VOICE
+        + i32::from(skin.sp_dyn_illust_id.is_some()) * SPECIAL_DYNAMIC_ART
+}
+
 pub fn skin_price(skin: &Skin, obtain: String) -> SkinPrice {
-    let store = sold_in_store(skin);
-    let price = if store {
-        STORE
-            + i32::from(skin.dyn_illust_id.is_some()) * DYNAMIC_ART
-            + i32::from(own_voice(skin)) * OWN_VOICE
-            + i32::from(skin.sp_dyn_illust_id.is_some()) * SPECIAL_DYNAMIC_ART
-    } else {
-        0
-    };
     SkinPrice {
-        price,
-        store,
+        price: store_price(skin),
+        store: sold_in_store(skin),
         obtain,
     }
 }

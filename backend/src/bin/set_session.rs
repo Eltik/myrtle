@@ -13,17 +13,26 @@
 //!   cargo run --bin set-session -- --email account@example.com
 //!   cargo run --bin set-session -- --email account@example.com --code 123456
 //!   cargo run --bin set-session -- --server jp --email account@example.com
+//!   cargo run --bin set-session -- --server bili --bili-user 13800000000 --bili-pass '...'
+//!   cargo run --bin set-session -- --server bili --import session.json
 //!   cargo run --bin set-session -- --status
 //!
 //! Options:
-//!   --email <addr>    Yostar account address
+//!   --email <addr>    Yostar account address (EN, JP, KR)
 //!   --code <n>        Code from the email; with --email, performs the login
-//!   --import <path>   Adopt an existing `AuthSession` JSON instead of logging in
+//!   --bili-user <u>   Bilibili account (phone, email or username); the CN
+//!                     Bilibili channel, password login through the `BiliGame` SDK
+//!   --bili-pass <p>   Its password (set one at bilibili.com if the account only
+//!                     has SMS login; the SDK's SMS endpoint is not known)
+//!   --import <path>   Adopt an existing `AuthSession` JSON instead of logging in.
+//!                     For bili, `yostar_uid` / `yostar_token` are the SDK's
+//!                     `uid` / `access_key` as seen in the client's login traffic.
 //!   --status          Verify the stored session still refreshes
-//!   --server <code>   EN | JP | KR (default: BIN_SERVER, else first of SERVERS)
+//!   --server <code>   EN | JP | KR | bili (default: BIN_SERVER, else first of SERVERS)
 //!   --out <path>      Override the session file path
 //!
-//! Sessions are stored one file per server under `GAME_SESSION_DIR`.
+//! Sessions are stored one file per server under `GAME_SESSION_DIR`; the
+//! Bilibili channel's is `bili.json` and serves the CN game data.
 
 use anyhow::{Context, Result, bail};
 use backend::{
@@ -61,9 +70,11 @@ fn print_help() {
          Options:\n\
            --email <addr>    Yostar account address (alone: sends a login code)\n\
            --code <n>        Code from the email; combine with --email to log in\n\
+           --bili-user <u>   Bilibili account for --server bili (password login)\n\
+           --bili-pass <p>   Its password\n\
            --import <path>   Adopt an existing AuthSession JSON instead of logging in\n\
            --status          Verify the stored session still refreshes\n\
-           --server <code>   EN | JP | KR (default: BIN_SERVER, else first of SERVERS)\n\
+           --server <code>   EN | JP | KR | bili (default: BIN_SERVER, else first of SERVERS)\n\
            --out <path>      Override the session file path\n\
            -h, --help        Show this message\n\
          \n\
@@ -104,10 +115,26 @@ async fn main() -> Result<()> {
         return import(&client, server, &out, &path).await;
     }
 
+    if let Some(user) = flag("--bili-user") {
+        if server != Server::Bilibili {
+            bail!("--bili-user needs --server bili");
+        }
+        let Some(pass) = flag("--bili-pass") else {
+            bail!("--bili-user needs --bili-pass");
+        };
+        let session = session::login_bilibili(&client, &user, &pass)
+            .await
+            .map_err(|e| anyhow::anyhow!("bilibili login failed: {e:?}"))?;
+        return persist(&out, &session, server);
+    }
+
     let Some(email) = flag("--email") else {
         print_help();
-        bail!("nothing to do: pass --email, --import or --status");
+        bail!("nothing to do: pass --email, --bili-user, --import or --status");
     };
+    if server == Server::Bilibili {
+        bail!("--server bili logs in with --bili-user / --bili-pass or --import, not --email");
+    }
 
     // Step 2: exchange the code for a durable session.
     if let Some(code) = flag("--code") {
@@ -188,7 +215,7 @@ fn persist(out: &Path, session: &AuthSession, server: Server) -> Result<()> {
     println!("  uid    : {}", session.uid);
     println!("  server : {}", server.as_str());
     println!();
-    println!("The backend will renew this itself from the durable Yostar token.");
+    println!("The backend will renew this itself from the durable channel token.");
     println!("Keep the file secret - it holds live game credentials.");
     Ok(())
 }

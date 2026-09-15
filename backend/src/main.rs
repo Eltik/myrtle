@@ -3,8 +3,8 @@ use backend::core::hypergryph::{config, loaders};
 use backend::core::service_account::ServiceAccounts;
 use backend::core::startup;
 use backend::core::{
-    asset_watcher, dps_watcher, gacha_detail_job, leaderboard_snapshot_job, medal_ownership_job,
-    operator_ownership_job, regrade_job, release, trending_job,
+    asset_watcher, dps_watcher, event_shop_job, gacha_detail_job, leaderboard_snapshot_job,
+    medal_ownership_job, operator_ownership_job, regrade_job, release, trending_job,
 };
 use backend::{
     app::{
@@ -168,6 +168,7 @@ async fn main() {
         medal_ownership_job::spawn(state.clone());
         regrade_job::spawn(state.clone());
         gacha_detail_job::spawn(state.clone());
+        event_shop_job::spawn(state.clone());
     }
 
     drop(jobs_phase);

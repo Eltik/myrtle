@@ -39,6 +39,9 @@ pub enum AssetKind {
     BrandKv,
     /// `textures/spritepack/ui_brand_image_hub_N/brand`_{`brand_id}.png`
     BrandLogo,
+    /// `textures/spritepack/fur_icon_N/{furniture_icon_id}.png`: the furniture
+    /// catalogue icons, which event shops sell by the piece.
+    FurnitureIcon,
 }
 
 const ALL_KINDS: &[AssetKind] = &[
@@ -57,6 +60,7 @@ const ALL_KINDS: &[AssetKind] = &[
     AssetKind::LoadingIllust,
     AssetKind::BrandKv,
     AssetKind::BrandLogo,
+    AssetKind::FurnitureIcon,
 ];
 
 #[derive(Debug, Clone, Default)]
@@ -410,6 +414,8 @@ fn classify_dir(dir_name: &str) -> Option<AssetKind> {
         Some(AssetKind::BrandKv)
     } else if dir_name.starts_with("ui_brand_image_hub_") {
         Some(AssetKind::BrandLogo)
+    } else if dir_name.starts_with("fur_icon_") {
+        Some(AssetKind::FurnitureIcon)
     } else {
         None
     }

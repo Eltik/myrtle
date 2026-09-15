@@ -2,6 +2,7 @@ pub mod alerts;
 pub mod asset_watcher;
 pub mod auth;
 pub mod dps_watcher;
+pub mod event_shop_job;
 pub mod gacha_detail_job;
 pub mod gacha_resync;
 pub mod gamedata;

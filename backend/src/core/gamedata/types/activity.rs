@@ -52,6 +52,12 @@ pub struct ActivityBasicInfo {
     /// be cleared after they end and aren't rebroadcast.
     #[serde(alias = "Type_", rename = "type", default)]
     pub activity_type: String,
+
+    /// The event token shop's id on the game server (`shop_act54side`), the
+    /// argument to `templateShop/getGoodList`. Absent when the activity has no
+    /// token shop (sign-ins, logins, and the few events with a bespoke shop).
+    #[serde(alias = "TemplateShopId", default)]
+    pub template_shop_id: Option<String>,
 }
 
 impl ActivityBasicInfo {
@@ -96,6 +102,8 @@ pub struct ActivityTableFile {
     pub zone_to_activity: HashMap<String, String>,
     #[serde(default)]
     pub mission_data: Vec<ActivityMission>,
+    #[serde(default, deserialize_with = "deserialize_fb_map_or_default")]
+    pub activity_items: HashMap<String, Vec<String>>,
 }
 
 /// One event mission (`MissionData`). Only the template and its parameters
@@ -109,6 +117,38 @@ pub struct ActivityMission {
     pub template: String,
     #[serde(default)]
     pub param: Vec<String>,
+    #[serde(default)]
+    pub rewards: Vec<MissionReward>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct MissionReward {
+    pub id: String,
+    #[serde(default)]
+    pub count: i32,
+}
+
+/// Event currency each activity's missions pay out, summed over
+/// `MissionData` rewards whose item is one of the activity's tokens
+/// (`ActivityItems`); a rerun has its own `_rep_1` tokens and missions.
+pub fn mission_tokens_by_activity(
+    missions: &[ActivityMission],
+    activity_items: &HashMap<String, Vec<String>>,
+) -> HashMap<String, i32> {
+    let owner: HashMap<&str, &str> = activity_items
+        .iter()
+        .flat_map(|(act, items)| items.iter().map(move |i| (i.as_str(), act.as_str())))
+        .collect();
+    let mut out: HashMap<String, i32> = HashMap::new();
+    for m in missions {
+        for r in &m.rewards {
+            if let Some(act) = owner.get(r.id.as_str()) {
+                *out.entry((*act).to_string()).or_default() += r.count;
+            }
+        }
+    }
+    out
 }
 
 /// One stage that awards Originite Prime on first clear.

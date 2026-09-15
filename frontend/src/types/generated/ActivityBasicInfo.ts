@@ -24,4 +24,10 @@ export type ActivityBasicInfo = {
      * be cleared after they end and aren't rebroadcast.
      */
     type: string;
+    /**
+     * The event token shop's id on the game server (`shop_act54side`), the
+     * argument to `templateShop/getGoodList`. Absent when the activity has no
+     * token shop (sign-ins, logins, and the few events with a bespoke shop).
+     */
+    templateShopId: string | null;
 };

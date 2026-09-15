@@ -4,16 +4,20 @@ import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { releaseEventsQueryOptions, releaseSkinsQueryOptions } from "#/lib/api/release";
 import type { AutoName } from "#/types/generated/AutoName";
 import type { EventAnchor } from "#/types/generated/EventAnchor";
+import type { EventShop } from "#/types/generated/EventShop";
 import type { FarmStage } from "#/types/generated/FarmStage";
 import type { OpStage } from "#/types/generated/OpStage";
 import type { ReleaseEvent } from "#/types/generated/ReleaseEvent";
 import type { Resolution } from "#/types/generated/Resolution";
+import type { ShopGood } from "#/types/generated/ShopGood";
+import type { ShopGoodKind } from "#/types/generated/ShopGoodKind";
 import type { SkinPrice } from "#/types/generated/SkinPrice";
 import type { SkinTile } from "#/types/generated/SkinTile";
 import type { StageClearsMap } from "#/types/stages";
 import { groupNewSkins } from "./components/SkinsTab";
 import { buildOperatorLookup, type OperatorLookup } from "./components/shared";
 import { isPast, resolvedEnStart, sortKey } from "./helpers";
+import { REVIEW_NAME_CN, REVIEW_NAME_EN, reviewOutfits, reviewYearGroup } from "./reviews";
 import { cnDay } from "./schedule";
 
 export interface IPlanSkin {
@@ -32,7 +36,7 @@ export interface IPlanSkin {
 
 export interface IPlanRow {
     key: string;
-    kind: "event" | "listing";
+    kind: "event" | "listing" | "review";
     cnId: string | null;
     nameCn: string;
     nameEn: string | null;
@@ -42,6 +46,8 @@ export interface IPlanRow {
     resolution: Resolution;
     opStages: OpStage[];
     farmStages: FarmStage[];
+    missionTokens: number;
+    shop: EventShop | null;
     rerun: boolean;
     skins: IPlanSkin[];
 }
@@ -129,6 +135,8 @@ export function usePlanData(today: Date, showPast: boolean): IPlanData {
                 resolution: e.resolution,
                 opStages: e.opStages,
                 farmStages: e.farmStages,
+                missionTokens: e.missionTokens,
+                shop: e.shop,
                 rerun: isRerun(e),
                 skins: [],
             });
@@ -141,7 +149,7 @@ export function usePlanData(today: Date, showPast: boolean): IPlanData {
             const key = `sale:${cnDay(cnStart)}`;
             const existing = listings.find((l) => l.key === key);
             if (existing) return existing;
-            const row: IPlanRow = { key, kind: "listing", cnId: null, nameCn: "商店上架", nameEn: "Store sale", nameAuto: null, imagePath: null, enStart: resolvedEnStart(resolution) ?? 0, resolution, opStages: [], farmStages: [], rerun: false, skins: [] };
+            const row: IPlanRow = { key, kind: "listing", cnId: null, nameCn: "商店上架", nameEn: "Store sale", nameAuto: null, imagePath: null, enStart: resolvedEnStart(resolution) ?? 0, resolution, opStages: [], farmStages: [], missionTokens: 0, shop: null, rerun: false, skins: [] };
             listings.push(row);
             return row;
         };
@@ -158,7 +166,32 @@ export function usePlanData(today: Date, showPast: boolean): IPlanData {
                 attach(listing?.anchor, () => saleRow(listing?.cn_start ?? resolvedEnStart(r.next) ?? 0, r.next), planSkin(s, r.skinGroupName || r.skinGroupId, true, { skinNameEn: s.skinName }));
             }
         }
-        const all = [...byEvent.values(), ...listings].filter((row) => showPast || !isPast(sortKey(row.resolution, row.enStart, model), today));
+        const pool = skins.data?.reviewPool ?? [];
+        const reviews: IPlanRow[] = (skins.data?.reviews ?? []).flatMap((r) => {
+            const enStart = resolvedEnStart(r.resolution);
+            if (enStart === null) return [];
+            const outfits = reviewOutfits(r, pool);
+            return [
+                {
+                    key: `review:${r.cnStart}`,
+                    kind: "review" as const,
+                    cnId: null,
+                    nameCn: REVIEW_NAME_CN,
+                    nameEn: REVIEW_NAME_EN,
+                    nameAuto: null,
+                    imagePath: null,
+                    enStart,
+                    resolution: r.resolution,
+                    opStages: [],
+                    farmStages: [],
+                    missionTokens: 0,
+                    shop: null,
+                    rerun: true,
+                    skins: outfits.map((o) => planSkin(o, reviewYearGroup(o), true, { skinNameEn: o.skinName })).reverse(),
+                },
+            ];
+        });
+        const all = [...byEvent.values(), ...listings, ...reviews].filter((row) => showPast || !isPast(sortKey(row.resolution, row.enStart, model), today));
         all.sort((a, b) => a.enStart - b.enStart || a.key.localeCompare(b.key));
         return all;
     }, [events.data, skins.data, showPast, today]);
@@ -245,4 +278,40 @@ export function balances(rows: IPlanRow[], state: IPlanState, clears: StageClear
         out.set(row.key, { income, expense, balance: running });
     }
     return out;
+}
+
+export const SANITY_PER_TOKEN = 1;
+
+export interface IShopBuyout {
+    total: number;
+    missions: number;
+    remaining: number;
+    sanity: number;
+    limitedGoods: number;
+}
+
+export function shopBuyout(row: IPlanRow): IShopBuyout | null {
+    if (!row.shop) return null;
+    const remaining = Math.max(0, row.shop.maxPrice - row.missionTokens);
+    return { total: row.shop.maxPrice, missions: row.missionTokens, remaining, sanity: remaining * SANITY_PER_TOKEN, limitedGoods: row.shop.goods.filter((g) => g.availCount > 0).length };
+}
+
+export const SHOP_KIND_LABEL: Record<ShopGoodKind, string> = { outfit: "Outfits", furniture: "Furniture", material: "Materials", currency: "LMD and supplies", exp: "EXP cards", ticket: "Tickets", other: "Other" };
+const SHOP_KIND_ORDER: ShopGoodKind[] = ["outfit", "ticket", "material", "exp", "currency", "furniture", "other"];
+
+export interface IShopGroup {
+    kind: ShopGoodKind;
+    goods: ShopGood[];
+    /** Tokens to clear the group's limited stock. */
+    tokens: number;
+}
+
+/** Limited goods by kind, priciest kind first within the fixed order; unlimited goods form their own trailing group. */
+export function shopGroups(shop: EventShop): { limited: IShopGroup[]; unlimited: ShopGood[] } {
+    const limited = SHOP_KIND_ORDER.map((kind) => {
+        const goods = shop.goods.filter((g) => g.kind === kind && g.availCount > 0).sort((a, b) => b.price - a.price || a.goodId.localeCompare(b.goodId));
+        return { kind, goods, tokens: goods.reduce((sum, g) => sum + g.price * g.availCount, 0) };
+    }).filter((g) => g.goods.length > 0);
+    const unlimited = shop.goods.filter((g) => g.availCount < 0).sort((a, b) => b.price - a.price);
+    return { limited, unlimited };
 }

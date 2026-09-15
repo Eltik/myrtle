@@ -6,6 +6,7 @@ use ts_rs::TS;
 use crate::core::gamedata::types::{
     GameData,
     shop::{ListingKind, SkinWindow},
+    skin::{Brand, Skin},
 };
 
 use super::{estimate::percentile, types::Resolution};
@@ -167,15 +168,69 @@ fn roman(mut n: u32) -> String {
     out
 }
 
+const UNICODE_ROMAN: &[(char, &str)] = &[
+    ('Ⅰ', "I"),
+    ('Ⅱ', "II"),
+    ('Ⅲ', "III"),
+    ('Ⅳ', "IV"),
+    ('Ⅴ', "V"),
+    ('Ⅵ', "VI"),
+    ('Ⅶ', "VII"),
+    ('Ⅷ', "VIII"),
+    ('Ⅸ', "IX"),
+    ('Ⅹ', "X"),
+    ('Ⅺ', "XI"),
+    ('Ⅻ', "XII"),
+];
+
+fn is_roman(s: &str) -> bool {
+    !s.is_empty() && s.chars().all(|c| "ivxlcdm".contains(c))
+}
+
 pub fn normalize_name(name: &str) -> String {
+    let mut name: String = name.trim().replace('™', "");
+    for (u, ascii) in UNICODE_ROMAN {
+        name = name.replace(*u, ascii);
+    }
     let name = name.trim();
     let normalized = match name.rsplit_once('/') {
         Some((head, tail)) if !tail.is_empty() && tail.bytes().all(|b| b.is_ascii_digit()) => {
-            format!("{head}/{}", roman(tail.parse().unwrap_or(0)))
+            format!("{}/{}", head.trim(), roman(tail.parse().unwrap_or(0)))
         }
-        _ => name.to_string(),
+        Some((head, tail)) => format!("{}/{}", head.trim(), tail.trim()),
+        None => {
+            let tail: String = name
+                .chars()
+                .rev()
+                .take_while(|c| "IVXLCDM".contains(*c))
+                .collect::<Vec<_>>()
+                .into_iter()
+                .rev()
+                .collect();
+            let head = name[..name.len() - tail.len()].trim();
+            if is_roman(&tail.to_lowercase())
+                && !head.is_empty()
+                && !head.ends_with(|c: char| c.is_ascii_alphabetic())
+            {
+                format!("{head}/{tail}")
+            } else {
+                name.to_string()
+            }
+        }
     };
     normalized.to_lowercase()
+}
+
+/// A listing's name, its group-one spelling and its bare spelling: brands
+/// name group one both ways (`斗争血脉/I` but `闪耀阶梯`).
+fn name_variants(key: &str) -> Vec<String> {
+    let mut out = vec![key.to_string()];
+    match key.rsplit_once('/') {
+        Some((head, "i")) => out.push(head.to_string()),
+        Some((_, tail)) if is_roman(tail) => {}
+        _ => out.push(format!("{key}/i")),
+    }
+    out
 }
 
 fn push_window(windows: &mut Vec<SaleWindow>, w: SaleWindow) {
@@ -217,10 +272,7 @@ pub fn group_histories(
         }
     }
     let mut group_brand: HashMap<String, String> = HashMap::new();
-    let mut brand_by_name: HashMap<String, String> = HashMap::new();
     for b in gd.skins.brand_list.values() {
-        brand_by_name.insert(normalize_name(&b.brand_name), b.brand_id.clone());
-        brand_by_name.insert(normalize_name(&b.brand_capital_name), b.brand_id.clone());
         for g in &b.group_list {
             group_brand.insert(g.skin_group_id.clone(), b.brand_id.clone());
         }
@@ -276,16 +328,6 @@ pub fn group_histories(
                     .collect();
                 if t.is_empty() {
                     let key = normalize_name(name);
-                    let brand_hit = brand_by_name.get(&key).or_else(|| {
-                        let head = key.split('/').next().unwrap_or("").trim();
-                        brand_by_name.get(head).or_else(|| {
-                            brand_by_name
-                                .iter()
-                                .filter(|(n, _)| n.len() >= 3 && key.contains(n.as_str()))
-                                .map(|(_, b)| b)
-                                .next()
-                        })
-                    });
                     if batch_families.contains(name_base(&key)) {
                         batches.push(Batch {
                             name: name.clone(),
@@ -293,21 +335,13 @@ pub fn group_histories(
                             start_time: l.start_time,
                             end_time: l.end_time,
                         });
-                    } else if let Some(gs) = group_by_name.get(&key) {
+                    } else if let Some(gs) = name_variants(&key)
+                        .iter()
+                        .find_map(|k| group_by_name.get(k))
+                    {
                         t.extend(gs.iter().cloned());
-                    } else if let Some(brand) = brand_hit {
-                        t.extend(
-                            groups
-                                .values()
-                                .filter(|g| {
-                                    g.brand_id.as_deref() == Some(brand)
-                                        && g.debut > 0
-                                        && g.debut <= l.start_time
-                                })
-                                .map(|g| g.skin_group_id.clone()),
-                        );
                     } else if !name.is_empty() {
-                        tracing::debug!(name, "skin listing matched no group, brand or batch");
+                        tracing::debug!(name, "skin listing matched no group or batch");
                     }
                 }
                 t.into_iter().collect()
@@ -399,6 +433,66 @@ pub fn anniversary_models(groups: &[GroupHistory], now: i64) -> Vec<AnniversaryS
 }
 
 pub const RERUN_MATCH_SECS: i64 = 31 * 86_400;
+pub const REVIEW_LAG_MIN_SECS: i64 = 90 * 86_400;
+pub const REVIEW_LAG_MAX_SECS: i64 = 270 * 86_400;
+/// How old an outfit is when a Fashion Review first stocks it. The review is
+/// cumulative: every edition adds the outfits that turned about two years old
+/// since the last one and keeps everything older. Measured against the
+/// twenty CN editions on record (2021-11 to 2026-07): the newest outfit each
+/// edition added was 723 to 821 days old, the oldest it left out 693 to 785,
+/// so a fixed two years is right to within one release batch per edition.
+pub const REVIEW_POOL_AGE_SECS: i64 = 730 * 86_400;
+/// Store outfits that were never in a review (Fang's Cross-Cantabile and
+/// Hibiscus's Nian) carry this tag despite their store obtain approach.
+const REVIEW_BARRED_TAG: &str = "活动获得";
+const CROSSOVER_BRAND: &str = "crossover";
+
+pub fn review_windows(gd: &GameData) -> Vec<(i64, i64)> {
+    let mut out: Vec<(i64, i64)> = gd
+        .skin_listings
+        .iter()
+        .filter(|l| l.kind == ListingKind::Review)
+        .map(|l| (l.start_time, l.end_time))
+        .collect();
+    out.sort_unstable();
+    out.dedup();
+    out
+}
+
+pub fn pair_reviews(cn: &[(i64, i64)], en: &[(i64, i64)]) -> Vec<Option<(i64, i64)>> {
+    let mut next = 0;
+    cn.iter()
+        .map(|&(cn_start, _)| {
+            let hit = en[next..].iter().position(|&(en_start, _)| {
+                (REVIEW_LAG_MIN_SECS..=REVIEW_LAG_MAX_SECS).contains(&(en_start - cn_start))
+            });
+            hit.map(|i| {
+                next += i + 1;
+                en[next - 1]
+            })
+        })
+        .collect()
+}
+
+/// The newest release date a review starting at `cn_start` stocks.
+pub const fn review_pool_cutoff(cn_start: i64) -> i64 {
+    cn_start - REVIEW_POOL_AGE_SECS
+}
+
+/// Whether an outfit ever enters the Fashion Review: a plain-price store
+/// outfit from a real brand. Crossover membership is the brand list's own
+/// group roster (`BrandList.crossover.GroupList`); the group id suffix names
+/// the partner, not the brand.
+pub fn review_eligible(skin: &Skin, brands: &HashMap<String, Brand>) -> bool {
+    let ds = &skin.display_skin;
+    super::prices::store_price(skin) == super::prices::STORE
+        && ds.display_tag_id.as_deref() != Some(REVIEW_BARRED_TAG)
+        && !brands.get(CROSSOVER_BRAND).is_some_and(|b| {
+            b.group_list
+                .iter()
+                .any(|g| g.skin_group_id == ds.skin_group_id)
+        })
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct CadenceModel {
@@ -500,6 +594,65 @@ pub fn match_en_listing(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn reviews_pair_in_order_within_the_lag_band() {
+        const D: i64 = 86_400;
+        let cn = [
+            (0, 27 * D),
+            (90 * D, 117 * D),
+            (180 * D, 207 * D),
+            (270 * D, 297 * D),
+        ];
+        let en = [(180 * D, 208 * D), (272 * D, 300 * D)];
+        let paired = super::pair_reviews(&cn, &en);
+        assert_eq!(paired[0], Some(en[0]), "180 d lag pairs");
+        assert_eq!(
+            paired[1],
+            Some(en[1]),
+            "182 d lag pairs with the next EN review"
+        );
+        assert_eq!(paired[2], None, "no EN review 90 to 270 d after it");
+        assert_eq!(paired[3], None);
+    }
+
+    #[test]
+    fn review_pool_is_plain_price_brand_outfits_two_years_old() {
+        let mut brands = HashMap::new();
+        brands.insert(
+            "crossover".to_owned(),
+            Brand {
+                brand_id: "crossover".into(),
+                group_list: vec![BrandGroup {
+                    skin_group_id: "2021#rainbow6".into(),
+                    publish_time: 0,
+                }],
+                ..Default::default()
+            },
+        );
+        let store = |group: &str, tag: Option<&str>| {
+            let mut s = skin("a@x#1", group, 100 * D);
+            s.display_skin.obtain_approach = Some("采购中心".into());
+            s.display_skin.display_tag_id = tag.map(str::to_owned);
+            s
+        };
+        assert!(review_eligible(&store("2021#epoque", None), &brands));
+        assert!(
+            !review_eligible(&store("2021#rainbow6", None), &brands),
+            "a crossover group named by the brand roster"
+        );
+        assert!(
+            !review_eligible(&store("2019#winter", Some("活动获得")), &brands),
+            "the event-tagged store outfits never entered a review"
+        );
+        let mut dynamic = store("2021#epoque", None);
+        dynamic.dyn_illust_id = Some("dyn".into());
+        assert!(
+            !review_eligible(&dynamic, &brands),
+            "21 OP outfits rerun on their own"
+        );
+        assert_eq!(review_pool_cutoff(1000 * D), 270 * D);
+    }
+
     use super::*;
     use crate::core::gamedata::types::{
         shop::SkinListing,
@@ -652,7 +805,7 @@ mod tests {
         let (gs, _) = group_histories(&game(), &HashSet::new());
         let g1 = gs.iter().find(|g| g.skin_group_id == "g1").unwrap();
         let g2 = gs.iter().find(|g| g.skin_group_id == "g2").unwrap();
-        let g3 = gs.iter().find(|g| g.skin_group_id == "g3").unwrap();
+        let g3 = gs.iter().find(|g| g.skin_group_id == "g3");
         let kinds = |g: &GroupHistory| {
             g.windows
                 .iter()
@@ -670,13 +823,10 @@ mod tests {
         );
         assert_eq!(
             kinds(g2),
-            vec![
-                (200, SaleKind::Listing),
-                (500, SaleKind::Review),
-                (1000, SaleKind::Listing)
-            ]
+            vec![(200, SaleKind::Listing), (500, SaleKind::Review)],
+            "a bare brand name is group one, not the whole brand"
         );
-        assert_eq!(kinds(g3), vec![(1000, SaleKind::Listing)]);
+        assert!(g3.is_none(), "never listed, so no history");
         assert_eq!(g1.last_seen(), Some(1000 * D));
     }
 }

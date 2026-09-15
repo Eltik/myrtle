@@ -1,4 +1,4 @@
-import { CalendarClock, CalendarDays, ChartGantt, ChevronRight, Dices, Palette, Shirt, Ticket } from "lucide-react";
+import { CalendarClock, CalendarDays, ChevronRight, Dices, Palette, Shirt, Ticket } from "lucide-react";
 import * as React from "react";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
@@ -11,9 +11,8 @@ import { PullsPlannerTab } from "./impl/components/PullsPlannerTab";
 import { SkinPopupProvider } from "./impl/components/SkinPopup";
 import { SkinsTab } from "./impl/components/SkinsTab";
 import { ToggleField } from "./impl/components/shared";
-import { TimelineTab } from "./impl/components/TimelineTab";
 
-type ReleaseView = "planner" | "pulls" | "events" | "skins" | "banners" | "timeline" | "calendar";
+type ReleaseView = "planner" | "pulls" | "events" | "skins" | "banners" | "calendar";
 
 export function ReleasePlanner(): React.ReactElement {
     const today = React.useMemo(() => new Date(), []);
@@ -30,10 +29,7 @@ export function ReleasePlanner(): React.ReactElement {
             <div className="flex flex-wrap items-end justify-between gap-3">
                 <div className="min-w-0 flex-1">
                     <h1 className="m-0 font-bold font-sans text-[24px] text-foreground leading-[1.1] tracking-tight sm:text-[30px]">Release Planner</h1>
-                    <p className="mt-1.5 max-w-2xl font-sans text-[13.5px] text-muted-foreground leading-normal">
-                        When CN content lands on EN. Confirmed rows come from EN game data, announced rows from a manual override, estimated rows from the trailing CN-to-EN lag with a band; outfits ship with the event they ran under on CN. The Skins planner budgets Originite Prime for outfits against event first
-                        clears.
-                    </p>
+                    <p className="mt-1.5 max-w-2xl font-sans text-[13.5px] text-muted-foreground leading-normal">When CN content lands on EN: confirmed from EN game data, announced from an override, estimated from the CN-to-EN lag.</p>
                 </div>
             </div>
 
@@ -67,10 +63,6 @@ export function ReleasePlanner(): React.ReactElement {
                                     <Ticket />
                                     Banners
                                 </TabsTrigger>
-                                <TabsTrigger value="timeline" className="max-sm:shrink-0">
-                                    <ChartGantt />
-                                    Timeline
-                                </TabsTrigger>
                                 <TabsTrigger value="calendar" className="max-sm:shrink-0">
                                     <CalendarDays />
                                     Calendar
@@ -91,9 +83,6 @@ export function ReleasePlanner(): React.ReactElement {
                         </TabsContent>
                         <TabsContent value="banners">
                             <BannersTab today={today} />
-                        </TabsContent>
-                        <TabsContent value="timeline">
-                            <TimelineTab today={today} />
                         </TabsContent>
                         <TabsContent value="calendar">
                             <CalendarTab today={today} />

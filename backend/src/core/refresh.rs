@@ -13,8 +13,8 @@
 
 use crate::app::state::AppState;
 use crate::core::{
-    gacha_detail_job, leaderboard_snapshot_job, medal_ownership_job, operator_ownership_job,
-    regrade_job, trending_job,
+    event_shop_job, gacha_detail_job, leaderboard_snapshot_job, medal_ownership_job,
+    operator_ownership_job, regrade_job, trending_job,
 };
 use std::future::Future;
 use std::pin::Pin;
@@ -79,6 +79,12 @@ pub const TASKS: &[RefreshTask] = &[
         about: "Gacha pool details for every configured server (makes network calls)",
         cost: Cost::Heavy,
         run: |state| Box::pin(gacha_detail_job::refresh_once(state)),
+    },
+    RefreshTask {
+        name: "event-shops",
+        about: "Event token shops for every configured server (makes network calls)",
+        cost: Cost::Heavy,
+        run: |state| Box::pin(event_shop_job::refresh_once(state)),
     },
     RefreshTask {
         name: "regrade",

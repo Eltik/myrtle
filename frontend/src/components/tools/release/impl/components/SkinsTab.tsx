@@ -11,13 +11,16 @@ import type { NewSkin } from "#/types/generated/NewSkin";
 import type { RerunBasis } from "#/types/generated/RerunBasis";
 import type { RerunForecast } from "#/types/generated/RerunForecast";
 import type { Resolution } from "#/types/generated/Resolution";
+import type { ReviewOutfit } from "#/types/generated/ReviewOutfit";
+import type { ReviewWindow } from "#/types/generated/ReviewWindow";
 import type { SkinGroupArt } from "#/types/generated/SkinGroupArt";
 import { daysFromToday, formatDate, formatDateRange, isPast, relativeDays, sortKey } from "../helpers";
+import { REVIEW_NAME_CN, REVIEW_NAME_EN, reviewOutfits } from "../reviews";
 import { ModelSummary } from "./ModelSummary";
 import { ResolutionBadge } from "./ResolutionBadge";
 import { AnchorCaption } from "./ScheduleShared";
 import { SkinTileView } from "./SkinPopup";
-import { buildOperatorLookup, CnName, type OperatorLookup, ReleaseEmpty, ReleaseError, ReleaseLoading, SectionTitle, ToggleField, useArt } from "./shared";
+import { buildOperatorLookup, CnName, ListRow, type OperatorLookup, ReleaseEmpty, ReleaseError, ReleaseLoading, SectionTitle, Tag, ToggleField, useArt } from "./shared";
 
 type GroupArtMap = { [key in string]?: SkinGroupArt };
 
@@ -58,12 +61,15 @@ export function SkinsTab({ today }: ISkinsTabProps): React.ReactElement {
     const skins = useQuery(releaseSkinsQueryOptions());
     const index = useQuery(operatorsIndexQueryOptions());
     const [showPast, setShowPast] = React.useState(false);
+    const [showReviews, setShowReviews] = React.useState(false);
 
     const lookup = React.useMemo(() => buildOperatorLookup(index.data), [index.data]);
     const model = skins.data?.model ?? null;
     const newSkins: NewSkin[] = skins.data?.newSkins ?? [];
     const reruns: RerunForecast[] = skins.data?.rerunForecasts ?? [];
     const groupArt: GroupArtMap = skins.data?.groupArt ?? {};
+    const reviews: ReviewWindow[] = skins.data?.reviews ?? [];
+    const reviewPool: ReviewOutfit[] = skins.data?.reviewPool ?? [];
 
     const visibleNew = React.useMemo(() => newSkins.filter((s) => showPast || !isPast(sortKey(s.resolution, s.cnGetTime, model), today)), [newSkins, showPast, model, today]);
     const groups = React.useMemo(() => groupNewSkins(visibleNew, model), [visibleNew, model]);
@@ -79,6 +85,7 @@ export function SkinsTab({ today }: ISkinsTabProps): React.ReactElement {
                 <ModelSummary model={model} yearly={skins.data?.yearly} />
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
                     <ToggleField id="skins-show-past" label="Show past" checked={showPast} onChange={setShowPast} />
+                    <ToggleField id="skins-show-reviews" label="Fashion Reviews" checked={showReviews} onChange={setShowReviews} />
                     <span className="font-medium font-mono text-[11px] text-muted-foreground">
                         {visibleNew.length} of {newSkins.length}
                     </span>
@@ -112,7 +119,61 @@ export function SkinsTab({ today }: ISkinsTabProps): React.ReactElement {
                     )}
                 </div>
             </section>
+
+            {showReviews && <ReviewsSection reviews={reviews} pool={reviewPool} lookup={lookup} today={today} />}
         </div>
+    );
+}
+
+function ReviewsSection({ reviews, pool, lookup, today }: { reviews: ReviewWindow[]; pool: ReviewOutfit[]; lookup: OperatorLookup; today: Date }): React.ReactElement {
+    const visible = [...reviews].reverse();
+    const last = reviews.at(-1);
+    const gaps = reviews.slice(1).map((r, i) => (r.cnStart - reviews[i].cnStart) / 86_400);
+    return (
+        <section className="flex flex-col gap-3">
+            <p className="m-0 font-sans text-[12.5px] text-muted-foreground leading-normal">
+                A Fashion Review puts every 18-prime brand outfit that is at least two years old back on sale for four weeks; each edition keeps the last one's stock and adds the outfits that came of age since
+                {gaps.length > 0 ? `, every ${Math.round(Math.min(...gaps))} to ${Math.round(Math.max(...gaps))} days on CN` : ""}
+                {last ? `; the newest CN listing opened ${formatDate(last.cnStart)}` : ""}. EN follows each one about six months later; an unmatched CN listing takes the lag estimate.
+            </p>
+            <div>
+                <SectionTitle count={visible.length}>Fashion Reviews</SectionTitle>
+                {visible.length === 0 ? (
+                    <ReleaseEmpty title="No Fashion Review listed" description="CN has listed none." />
+                ) : (
+                    <div className="rounded-xl border border-border bg-card px-3">
+                        {visible.map((r) => (
+                            <ReviewRow key={r.cnStart} review={r} outfits={reviewOutfits(r, pool)} lookup={lookup} today={today} />
+                        ))}
+                    </div>
+                )}
+            </div>
+        </section>
+    );
+}
+
+function ReviewRow({ review, outfits, lookup, today }: { review: ReviewWindow; outfits: ReviewOutfit[]; lookup: OperatorLookup; today: Date }): React.ReactElement {
+    const [open, setOpen] = React.useState(false);
+    return (
+        <ListRow visual={null} badge={<ResolutionBadge resolution={review.resolution} today={today} />}>
+            <CnName cn={REVIEW_NAME_CN} en={REVIEW_NAME_EN} auto={null} compact primaryClassName="font-sans font-semibold text-[13px] text-foreground">
+                <Tag className="text-teal-400">Fashion Review</Tag>
+            </CnName>
+            <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
+                <span className="mr-1 uppercase tracking-[0.06em]">CN</span>
+                {formatDateRange(review.cnStart, review.cnEnd)} · {outfits.length} outfits ·{" "}
+                <button type="button" onClick={() => setOpen((v) => !v)} className="cursor-pointer text-primary hover:underline">
+                    {open ? "hide" : "show"}
+                </button>
+            </span>
+            {open && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                    {[...outfits].reverse().map((o) => (
+                        <SkinTileView key={o.skinId} skinId={o.skinId} charId={o.charId} charName={o.charName} skinName={o.skinName} skinNameEn={o.skinName} skinNameAuto={null} portraitPath={o.portraitPath} lookup={lookup} />
+                    ))}
+                </div>
+            )}
+        </ListRow>
     );
 }
 
@@ -134,7 +195,7 @@ function RerunSummary({ batches, today }: { batches: BatchForecast[]; today: Dat
             ) : (
                 ". No rotation batch is pending"
             )}
-            . Fashion Reviews ended on EN in Jan 2026 and are recorded, not extrapolated.
+            . Fashion Reviews, the quarterly sale of every outfit two years old or more, sit behind their own toggle above.
         </p>
     );
 }
@@ -278,7 +339,7 @@ function RerunGroupCard({ forecast, art, lookup, today }: { forecast: RerunForec
                                 <>
                                     <span className="mr-1 uppercase tracking-[0.06em]">EN</span>
                                     {recent.map((w) => `${formatDateRange(w.startTime, w.endTime)}${w.kind === "review" ? " (review)" : ""}`).join(", ")}
-                                    <span className="ml-1 opacity-70" title="Every time this group was on sale on EN: its own listings (debut and reruns) and the Fashion Reviews in which every past outfit was sold">
+                                    <span className="ml-1 opacity-70" title="Every time this group was on sale on EN: its own listings (debut and reruns) and the Fashion Reviews it was old enough for">
                                         {forecast.windows.length === 1 ? "debut only" : `${forecast.windows.length - 1} rerun${forecast.windows.length === 2 ? "" : "s"}`}
                                         {reviews > 0 ? ` (${reviews} in reviews)` : ""}
                                     </span>

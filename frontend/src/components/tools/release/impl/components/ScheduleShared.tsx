@@ -13,14 +13,15 @@ import { ResolutionBadge } from "./ResolutionBadge";
 import { SkinTileView } from "./SkinPopup";
 import { CnName, type OperatorLookup, resolveName, Tag, ToggleField, useArt } from "./shared";
 
-export const KIND_STYLE: Record<ScheduleKind, { solid: string; estimated: string; dot: string; text: string }> = {
-    event: { solid: "bg-sky-600 text-white", estimated: "border border-sky-500/70 border-dashed bg-sky-500/25 text-sky-100", dot: "bg-sky-500", text: "text-sky-400" },
-    banner: { solid: "bg-amber-600 text-white", estimated: "border border-amber-500/70 border-dashed bg-amber-500/25 text-amber-100", dot: "bg-amber-500", text: "text-amber-400" },
-    skin: { solid: "bg-fuchsia-600 text-white", estimated: "border border-fuchsia-500/70 border-dashed bg-fuchsia-500/25 text-fuchsia-100", dot: "bg-fuchsia-500", text: "text-fuchsia-400" },
-    rerun: { solid: "bg-violet-600 text-white", estimated: "border border-violet-500/70 border-dashed bg-violet-500/25 text-violet-100", dot: "bg-violet-500", text: "text-violet-400" },
+export const KIND_STYLE: Record<ScheduleKind, { pill: string; dot: string; text: string }> = {
+    event: { pill: "bg-sky-500/12 text-sky-950 hover:bg-sky-500/20 dark:bg-sky-400/15 dark:text-sky-100 dark:hover:bg-sky-400/25", dot: "bg-sky-500", text: "text-sky-600 dark:text-sky-400" },
+    banner: { pill: "bg-yellow-400/20 text-yellow-950 hover:bg-yellow-400/30 dark:bg-yellow-300/15 dark:text-yellow-100 dark:hover:bg-yellow-300/25", dot: "bg-yellow-400", text: "text-yellow-600 dark:text-yellow-300" },
+    skin: { pill: "bg-pink-500/12 text-pink-950 hover:bg-pink-500/20 dark:bg-pink-400/15 dark:text-pink-100 dark:hover:bg-pink-400/25", dot: "bg-pink-500", text: "text-pink-600 dark:text-pink-400" },
+    rerun: { pill: "bg-violet-500/12 text-violet-950 hover:bg-violet-500/20 dark:bg-violet-400/15 dark:text-violet-100 dark:hover:bg-violet-400/25", dot: "bg-violet-500", text: "text-violet-600 dark:text-violet-400" },
+    review: { pill: "bg-teal-500/12 text-teal-950 hover:bg-teal-500/20 dark:bg-teal-400/15 dark:text-teal-100 dark:hover:bg-teal-400/25", dot: "bg-teal-500", text: "text-teal-600 dark:text-teal-400" },
 };
 
-export const ALL_KINDS: ScheduleKind[] = ["event", "banner", "skin", "rerun"];
+export const ALL_KINDS: ScheduleKind[] = ["event", "banner", "skin", "rerun", "review"];
 
 export function useItemName(item: IScheduleItem): string {
     const autoOn = useAutoTranslate();
@@ -37,10 +38,9 @@ interface IScheduleControlsProps {
     stageOnly: boolean;
     onStageOnlyChange: (v: boolean) => void;
     counts: Record<ScheduleKind, number>;
-    children?: React.ReactNode;
 }
 
-export function ScheduleControls({ kinds, onKindsChange, stageOnly, onStageOnlyChange, counts, children }: IScheduleControlsProps): React.ReactElement {
+export function ScheduleControls({ kinds, onKindsChange, stageOnly, onStageOnlyChange, counts }: IScheduleControlsProps): React.ReactElement {
     const toggle = (k: ScheduleKind) => {
         const next = new Set(kinds);
         if (next.has(k)) next.delete(k);
@@ -48,28 +48,19 @@ export function ScheduleControls({ kinds, onKindsChange, stageOnly, onStageOnlyC
         onKindsChange(next);
     };
     return (
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            <div className="flex flex-wrap items-center gap-1.5">
-                {ALL_KINDS.map((k) => {
-                    const on = kinds.has(k);
-                    return (
-                        <button
-                            key={k}
-                            type="button"
-                            onClick={() => toggle(k)}
-                            aria-pressed={on}
-                            className={cn("inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 font-medium font-sans text-[12px] transition-colors", on ? "border-border bg-muted text-foreground" : "border-transparent text-muted-foreground hover:text-foreground")}
-                        >
-                            <span className={cn("size-2 rounded-full", KIND_STYLE[k].dot, !on && "opacity-40")} />
-                            {KIND_LABEL[k]}
-                            <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{counts[k]}</span>
-                        </button>
-                    );
-                })}
-            </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {ALL_KINDS.map((k) => {
+                const on = kinds.has(k);
+                return (
+                    <button key={k} type="button" aria-pressed={on} onClick={() => toggle(k)} className={cn("inline-flex cursor-pointer items-center gap-1.5 font-sans text-[12.5px] transition-colors", on ? "text-foreground" : "text-muted-foreground")}>
+                        <span className={cn("size-3.5 rounded-sm border-2 transition-colors", on ? cn("border-transparent", KIND_STYLE[k].dot) : "border-muted-foreground/50")} />
+                        {KIND_LABEL[k]}
+                        <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{counts[k]}</span>
+                    </button>
+                );
+            })}
             <ToggleField id="schedule-stage-only" label="Stage events only" checked={stageOnly} onChange={onStageOnlyChange} />
-            {children}
-            <span className="font-sans text-[11px] text-muted-foreground">Solid: confirmed or announced. Dashed: estimated; select a bar for its band and details.</span>
+            <span className="font-sans text-[11px] text-muted-foreground">Filled dot: confirmed. Hollow dot: estimated.</span>
         </div>
     );
 }
@@ -98,7 +89,7 @@ export function ScheduleDetail({ item, lookup, today, onClose }: IScheduleDetail
     const art = useArt(item.imagePath);
     const name = useItemName(item);
     const style = KIND_STYLE[item.kind];
-    const isSkin = item.kind === "skin" || item.kind === "rerun";
+    const isSkin = item.kind === "skin" || item.kind === "rerun" || item.kind === "review";
     const cnLabel = item.kind === "rerun" ? "CN re-listed" : "CN";
     const showArt = art.src !== null && !isSkin;
     return (

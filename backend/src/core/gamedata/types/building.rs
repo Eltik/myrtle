@@ -94,6 +94,30 @@ pub struct BuildingDataFile {
     /// Base floorplans. The game keys them as a map.
     #[serde(deserialize_with = "deserialize_fb_map_or_default", default)]
     pub layouts: HashMap<String, LayoutDef>,
+
+    /// The furniture catalogue: names and icons for the furniture that event
+    /// shops sell.
+    #[serde(default)]
+    pub custom_data: BuildingCustomData,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct BuildingCustomData {
+    #[serde(deserialize_with = "deserialize_fb_map_or_default", default)]
+    pub furnitures: HashMap<String, Furniture>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct Furniture {
+    pub id: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub icon_id: String,
+    #[serde(default)]
+    pub rarity: i32,
 }
 
 // ─── Layout ──────────────────────────────────────────────────────────────────

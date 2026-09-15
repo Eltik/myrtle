@@ -138,6 +138,15 @@ impl ShopTableFile {
     }
 }
 
+/// The Fashion Review (every past outfit back on sale) ran under the plain
+/// listing template until 2023-11 and again from 2025-10; its name is the
+/// stable signal.
+const REVIEW_NAMES: &[&str] = &["风尚回顾", "Fashion Review"];
+
+pub fn is_review_name(tag_name: &str) -> bool {
+    REVIEW_NAMES.iter().any(|n| tag_name.contains(n))
+}
+
 impl ShopTableFile {
     pub fn into_skin_listings(&self) -> Vec<SkinListing> {
         let mut out: Vec<SkinListing> = self
@@ -153,7 +162,9 @@ impl ShopTableFile {
                 if !is_skin {
                     return None;
                 }
-                let kind = if r.template_type.as_deref() == Some("RETURNSKIN") {
+                let kind = if r.template_type.as_deref() == Some("RETURNSKIN")
+                    || is_review_name(&r.tag_name)
+                {
                     ListingKind::Review
                 } else {
                     let mut skin_ids: Vec<String> = r
@@ -214,6 +225,8 @@ mod tests {
                 {"StartDatetime": 300, "EndDatetime": 400, "TagName": "Rhodes Fashion Review", "TemplateType": "RETURNSKIN",
                  "TemplateParam": {"ReturnSkinParam": {"ShowStartTs": 300, "ShowEndTs": 400}},
                  "GroupList": [{"DataList": [{"Cmd": "SKINSHOP"}]}]},
+                {"StartDatetime": 450, "EndDatetime": 460, "TagName": "罗德岛风尚回顾", "TemplateType": "DEFAULT",
+                 "GroupList": [{"DataList": [{"Cmd": "SKINSHOP"}]}]},
                 {"StartDatetime": 500, "EndDatetime": 600, "TagName": "Test Collection/XIV", "TemplateType": "NORSKIN",
                  "TemplateParam": {"NormalSkinParam": {"SkinIds": ["char_b@sale#13"], "SkinGroupName": "Test Collection/XIV"}},
                  "GroupList": [{"DataList": [{"Cmd": "SKINSHOP"}]}]},
@@ -222,7 +235,7 @@ mod tests {
         });
         let file: ShopTableFile = serde_json::from_value(raw).unwrap();
         let l = file.into_skin_listings();
-        assert_eq!(l.len(), 3);
+        assert_eq!(l.len(), 4);
         assert_eq!(
             l[0].kind,
             ListingKind::Group {
@@ -234,6 +247,11 @@ mod tests {
         assert_eq!(l[1].kind, ListingKind::Review);
         assert_eq!(
             l[2].kind,
+            ListingKind::Review,
+            "named review under the plain template"
+        );
+        assert_eq!(
+            l[3].kind,
             ListingKind::Group {
                 name: "Test Collection/XIV".into(),
                 skin_ids: vec!["char_b@sale#13".into()],

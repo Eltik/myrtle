@@ -444,6 +444,7 @@ mod tests {
             id: id.to_string(),
             template: template.to_string(),
             param: param.iter().map(|s| (*s).to_string()).collect(),
+            rewards: Vec::new(),
         }
     }
 

@@ -4,7 +4,9 @@ import type { BatchForecast } from "./BatchForecast";
 import type { LagModel } from "./LagModel";
 import type { NewSkin } from "./NewSkin";
 import type { RerunForecast } from "./RerunForecast";
+import type { ReviewOutfit } from "./ReviewOutfit";
+import type { ReviewWindow } from "./ReviewWindow";
 import type { SkinGroupArt } from "./SkinGroupArt";
 import type { YearlyModel } from "./YearlyModel";
 
-export type SkinsResponse = { model: LagModel; yearly: YearlyModel; anniversaries: Array<AnniversaryStats>; batches: Array<BatchForecast>; newSkins: Array<NewSkin>; rerunForecasts: Array<RerunForecast>; groupArt: { [key in string]?: SkinGroupArt } };
+export type SkinsResponse = { model: LagModel; yearly: YearlyModel; anniversaries: Array<AnniversaryStats>; batches: Array<BatchForecast>; newSkins: Array<NewSkin>; rerunForecasts: Array<RerunForecast>; reviews: Array<ReviewWindow>; reviewPool: Array<ReviewOutfit>; groupArt: { [key in string]?: SkinGroupArt } };

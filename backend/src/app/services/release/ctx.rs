@@ -18,7 +18,7 @@ pub struct Ctx {
     pub en: Arc<GameData>,
     cn_assets: Arc<AssetIndex>,
     en_assets: Arc<AssetIndex>,
-    en_server: &'static str,
+    pub en_server: &'static str,
     brand_by_group: HashMap<String, String>,
 }
 
@@ -83,6 +83,37 @@ impl Ctx {
     pub fn banner_image(&self, en_pool: Option<&str>, cn_pool: &str) -> Option<String> {
         self.image("banner-image", en_pool, cn_pool, |idx, id| {
             idx.gacha_banner_path(id).is_some()
+        })
+    }
+
+    /// An inventory item's icon, by the item table's `icon_id`.
+    pub fn item_icon(&self, icon_id: &str, on_en: bool) -> Option<String> {
+        self.image("item-icon", on_en.then_some(icon_id), icon_id, |idx, id| {
+            idx.path(AssetKind::ItemIcon, id).is_some()
+        })
+    }
+
+    /// A skin's avatar tile, by the skin table's `avatar_id`.
+    pub fn avatar(&self, avatar_id: &str, on_en: bool) -> Option<String> {
+        self.image(
+            "avatar",
+            on_en.then_some(avatar_id),
+            avatar_id,
+            |idx, id| idx.path(AssetKind::Avatar, id).is_some(),
+        )
+    }
+
+    /// A furniture piece's catalogue icon, served straight from the texture
+    /// tree (there is no dedicated route).
+    pub fn furniture_icon(&self, icon_id: &str, on_en: bool) -> Option<String> {
+        let servers: [(&str, &AssetIndex); 2] = if on_en {
+            [(self.en_server, &self.en_assets), ("cn", &self.cn_assets)]
+        } else {
+            [("cn", &self.cn_assets), (self.en_server, &self.en_assets)]
+        };
+        servers.iter().find_map(|(server, idx)| {
+            idx.path(AssetKind::FurnitureIcon, icon_id)
+                .map(|rel| format!("/{server}/assets{rel}"))
         })
     }
 

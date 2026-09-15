@@ -11,7 +11,9 @@
 //! that documented protocol, not a copy of arkprts's source.
 //!
 //! [`send_sms_code`] and [`login_sms`] are NOT from arkprts (it has no SMS
-//! path at all) and are NOT confirmed against a real response. The actual
+//! path at all) and are NOT confirmed against a real response; probed
+//! 2026-09-15, `issue/sms_code/v3` answers 404, so the site's SMS login
+//! route does not work until the real endpoint is found. The actual
 //! Bilibili Arknights client does offer SMS-code login (this was checked;
 //! see the module's accompanying report), but no endpoint for it has
 //! surfaced anywhere in research. These two functions are a structural guess
@@ -152,10 +154,37 @@ fn sign_password(password: &str, cipher_key: &str, hash: &str) -> Result<String,
 
 use rsa::RsaPublicKey;
 
+/// The SDK's refusal shape: `{"code": 500002, "message": "PWD_INVALID", ...}`
+/// on a wrong password or unknown account (it does not distinguish the two).
+#[derive(Deserialize)]
+struct BilibiliError {
+    #[serde(default)]
+    code: i64,
+    #[serde(default)]
+    message: String,
+    #[serde(default)]
+    server_message: Option<String>,
+}
+
 #[derive(Deserialize)]
 pub struct BilibiliLoginResult {
+    /// The SDK sends this as a JSON number; the u8 exchange wants a string.
+    #[serde(deserialize_with = "string_or_integer")]
     pub uid: String,
     pub access_key: String,
+}
+
+fn string_or_integer<'de, D: serde::Deserializer<'de>>(d: D) -> Result<String, D::Error> {
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Raw {
+        Text(String),
+        Integer(i64),
+    }
+    Ok(match Raw::deserialize(d)? {
+        Raw::Text(s) => s,
+        Raw::Integer(n) => n.to_string(),
+    })
 }
 
 /// Logs into the `BiliGame` publisher SDK, yielding a channel `uid` +
@@ -202,11 +231,25 @@ pub async fn login(
         )));
     }
 
+    if let Ok(err) = serde_json::from_str::<BilibiliError>(&text)
+        && err.code != 0
+    {
+        return Err(FetchError::ParseError(format!(
+            "bilibili::login: upstream refused (code {}): {}{}",
+            err.code,
+            err.message,
+            match err.server_message.as_deref() {
+                Some(m) if !m.is_empty() => format!(" ({m})"),
+                _ => String::new(),
+            }
+        )));
+    }
     let data: BilibiliLoginResult = serde_json::from_str(&text).map_err(|e| {
         tracing::warn!(body = %redacted_body(&text), error = %e, "bilibili::login: failed to parse response");
-        FetchError::ParseError(
-            "bilibili::login: invalid upstream response, check credentials".into(),
-        )
+        FetchError::ParseError(format!(
+            "bilibili::login: invalid upstream response ({e}): {}",
+            redacted_body(&text)
+        ))
     })?;
 
     if data.uid.is_empty() || data.access_key.is_empty() {
@@ -307,4 +350,19 @@ pub async fn login_sms(
     }
 
     Ok(data)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn login_result_accepts_a_numeric_or_string_uid() {
+        let n: BilibiliLoginResult =
+            serde_json::from_str(r#"{"code":0,"uid":123456,"access_key":"k"}"#).unwrap();
+        assert_eq!((n.uid.as_str(), n.access_key.as_str()), ("123456", "k"));
+        let s: BilibiliLoginResult =
+            serde_json::from_str(r#"{"uid":"123456","access_key":"k"}"#).unwrap();
+        assert_eq!(s.uid, "123456");
+    }
 }

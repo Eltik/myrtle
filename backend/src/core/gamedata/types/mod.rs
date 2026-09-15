@@ -9,6 +9,7 @@ pub mod climb_tower;
 pub mod consts;
 pub mod enemy;
 pub mod enemy_stages;
+pub mod event_shop;
 pub mod gacha;
 pub mod gacha_detail;
 pub mod handbook;
@@ -84,6 +85,10 @@ pub struct GameData {
     pub activity_op_stages: HashMap<String, Vec<activity::OpStage>>,
     /// Activity id -> its farming stages and their drops, see [`activity::farm_stages_by_activity`].
     pub activity_farm_stages: HashMap<String, Vec<activity::FarmStage>>,
+    /// Activity id -> event currency its missions pay, see [`activity::mission_tokens_by_activity`].
+    pub activity_mission_tokens: HashMap<String, i32>,
+    /// Activity id -> its token shop as the game server serves it, see [`event_shop`].
+    pub event_shops: HashMap<String, event_shop::EventShopData>,
     pub retro_acts: HashMap<String, RetroAct>,
     /// Skin shop carousel windows (the promo layer), see [`shop`].
     pub skin_windows: Vec<SkinWindow>,

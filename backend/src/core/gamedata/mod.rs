@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{collections::HashMap, path::Path};
 
 use crate::core::gamedata::{
     assets::AssetIndex,
@@ -25,6 +25,7 @@ use crate::core::gamedata::{
         climb_tower::ClimbTowerTableFile,
         consts::GameDataConst,
         enemy::{EnemyDatabaseFile, EnemyHandbook, EnemyHandbookTableFile},
+        event_shop::{EventShopData, EventShopFile, event_shop_path},
         gacha::GachaTableFile,
         gacha_detail::{POOL_DETAIL_FILE_VERSION, PoolDetailFile, pool_detail_path},
         handbook::HandbookTableFile,
@@ -85,6 +86,30 @@ fn load_pool_details(assets_dir: &Path, warnings: &mut Vec<String>) -> Option<Po
         Err(e) => {
             warnings.push(format!("gacha_pool_details: {e}"));
             None
+        }
+    }
+}
+
+/// Load the optional event-shop sidecar written by [`super::event_shop_job`],
+/// keyed by activity id. Absent is normal (no service account); corrupt is a
+/// warning.
+fn load_event_shops(
+    assets_dir: &Path,
+    warnings: &mut Vec<String>,
+) -> HashMap<String, EventShopData> {
+    let path = event_shop_path(assets_dir);
+    if !path.exists() {
+        return HashMap::new();
+    }
+    match std::fs::read(&path)
+        .map_err(|e| e.to_string())
+        .and_then(|bytes| {
+            serde_json::from_slice::<EventShopFile>(&bytes).map_err(|e| e.to_string())
+        }) {
+        Ok(file) => file.shops,
+        Err(e) => {
+            warnings.push(format!("event-shops: {e}"));
+            HashMap::new()
         }
     }
 }
@@ -235,6 +260,12 @@ pub fn init_game_data(
             &item_file.items,
         ),
     );
+    let activity_mission_tokens =
+        crate::core::gamedata::types::activity::mission_tokens_by_activity(
+            &activity_file.mission_data,
+            &activity_file.activity_items,
+        );
+    let event_shops = load_event_shops(assets_dir, &mut warnings);
     let activity_skin_refs = std::fs::read_to_string(data_dir.join("activity_table.json"))
         .map(|raw| crate::core::gamedata::types::activity::scan_skin_refs(&raw))
         .unwrap_or_default();
@@ -411,6 +442,8 @@ pub fn init_game_data(
             retro_acts: retro_file.retro_act_list,
             activity_op_stages,
             activity_farm_stages,
+            activity_mission_tokens,
+            event_shops,
             activity_skin_refs,
             skin_listings: shop_file.into_skin_listings(),
             skin_windows: shop_file.into_skin_windows(),

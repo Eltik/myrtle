@@ -8,6 +8,7 @@ use backend::core::{
         types::{
             GameData,
             activity::ActivityTableFile,
+            event_shop::{EventShopFile, event_shop_path},
             gacha::GachaTableFile,
             gacha_detail::{PoolDetailFile, pool_detail_path},
             shop::ShopTableFile,
@@ -54,7 +55,31 @@ fn load(server: &str) -> Option<GameData> {
     let shop: ShopTableFile = load_table(&dir, "shop_client_table").ok()?;
     gd.skin_listings = shop.into_skin_listings();
     gd.skin_windows = shop.into_skin_windows();
+    gd.event_shops = std::fs::read(event_shop_path(&root))
+        .ok()
+        .and_then(|b| serde_json::from_slice::<EventShopFile>(&b).ok())
+        .map(|f| f.shops)
+        .unwrap_or_default();
     Some(gd)
+}
+
+/// Every activity that names a token shop and has started on the server,
+/// split by whether the sidecar holds that shop.
+fn shop_coverage(gd: &GameData, now: i64) -> (Vec<String>, Vec<String>) {
+    let mut with = Vec::new();
+    let mut without = Vec::new();
+    for a in gd.activities.values() {
+        if a.template_shop_id.is_none() || a.start_time <= 0 || a.start_time > now {
+            continue;
+        }
+        if gd.event_shops.contains_key(&a.id) {
+            with.push(a.id.clone());
+        } else {
+            without.push(a.id.clone());
+        }
+    }
+    without.sort();
+    (with, without)
 }
 
 #[test]
@@ -305,6 +330,86 @@ fn census_reproduces_on_the_live_extract() {
         );
     }
     assert!(!pending.is_empty());
+
+    let cn_reviews = skins::review_windows(&cn);
+    let en_reviews = skins::review_windows(&en);
+    let paired = skins::pair_reviews(&cn_reviews, &en_reviews);
+    let confirmed = paired.iter().filter(|p| p.is_some()).count();
+    let mut pool: Vec<i64> = cn
+        .skins
+        .char_skins
+        .values()
+        .filter(|s| s.display_skin.get_time > 0 && skins::review_eligible(s, &cn.skins.brand_list))
+        .map(|s| s.display_skin.get_time)
+        .collect();
+    pool.sort_unstable();
+    println!(
+        "fashion reviews: cn={} en={} paired={} pool={} last cn={}",
+        cn_reviews.len(),
+        en_reviews.len(),
+        confirmed,
+        pool.len(),
+        cn_reviews.last().map_or(0, |w| w.0)
+    );
+    // The review is cumulative: each edition stocks every eligible outfit
+    // released up to its cutoff, so the stocked count never shrinks and the
+    // newest editions hold the bulk of the catalogue that is old enough.
+    let mut previous = 0;
+    for &(start, _) in &cn_reviews {
+        let cutoff = skins::review_pool_cutoff(start);
+        let stocked = pool.partition_point(|&t| t <= cutoff);
+        let added = stocked - previous;
+        println!(
+            "  cn review {}: stocks {stocked} outfits released up to {} (+{added})",
+            chrono::DateTime::from_timestamp(start, 0)
+                .unwrap()
+                .date_naive(),
+            chrono::DateTime::from_timestamp(cutoff, 0)
+                .unwrap()
+                .date_naive(),
+        );
+        assert!(stocked >= previous, "the review never drops an outfit");
+        assert!(
+            (1..=25).contains(&added),
+            "each edition adds a quarter's worth of outfits"
+        );
+        previous = stocked;
+    }
+    assert!(
+        (190..=230).contains(&previous),
+        "the newest CN review stocks about 200 outfits, got {previous}"
+    );
+    assert!(cn_reviews.len() >= 20 && en_reviews.len() >= 18);
+
+    assert_eq!(
+        confirmed,
+        en_reviews.len(),
+        "every EN review pairs with a CN one"
+    );
+    assert!(
+        cn_reviews.len() - confirmed >= 2,
+        "the newest CN reviews are unmatched on EN"
+    );
+
+    for (label, gd) in [("cn", &cn), ("en", &en)] {
+        let (with, without) = shop_coverage(gd, now);
+        eprintln!(
+            "{label} event shops: {} cached, {} of {} listed shops covered, missing: {}",
+            gd.event_shops.len(),
+            with.len(),
+            with.len() + without.len(),
+            without.join(", ")
+        );
+        if gd.event_shops.is_empty() {
+            eprintln!("{label} event-shop sidecar not present, skipping coverage");
+            continue;
+        }
+        assert!(
+            without.is_empty(),
+            "{label}: {} listed shops the server did not answer: {without:?}",
+            without.len()
+        );
+    }
     let reviews = en
         .skin_listings
         .iter()
@@ -336,7 +441,7 @@ fn census_reproduces_on_the_live_extract() {
         seen_since_2025,
         stale
     );
-    assert_eq!(reviews, 8);
+    assert_eq!(reviews, 18);
 
     let memory = TranslationMemory::build(&cn, &en, &aligned);
     let cn_only_acts: Vec<_> = cn

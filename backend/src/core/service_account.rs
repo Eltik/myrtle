@@ -30,12 +30,12 @@ use std::{
 };
 
 use reqwest::{Client, StatusCode};
-use serde_json::Value;
+use serde_json::{Value, json};
 use tokio::sync::Mutex;
 
 use crate::core::hypergryph::{
     constants::{AuthSession, Server},
-    fetch::{FetchError, auth_request, parse_json},
+    fetch::{FetchError, REQUEST_TIMEOUT, auth_request_with_timeout, parse_json_tolerating},
     session::refresh_secret,
 };
 
@@ -45,6 +45,9 @@ const DEFAULT_SESSION_DIR: &str = "game_sessions";
 /// upstream lifetime is not published; short enough to rarely hit a 401, long
 /// enough that a burst of calls costs one refresh rather than many.
 const DEFAULT_SECRET_MAX_AGE_SECS: u64 = 30 * 60;
+/// `account/syncData` returns the whole player, megabytes for a developed
+/// account, and the CN hosts are far from most boxes.
+const SYNC_TIMEOUT: Duration = Duration::from_secs(60);
 
 fn secret_max_age() -> Duration {
     Duration::from_secs(
@@ -171,6 +174,32 @@ impl ServiceAccount {
         endpoint: &str,
         body: &Value,
     ) -> Result<Value, FetchError> {
+        self.request_with(client, endpoint, body, &[], REQUEST_TIMEOUT)
+            .await
+    }
+
+    /// [`Self::request`] where the envelope codes in `tolerated` are ordinary
+    /// answers for this caller: they still surface as
+    /// [`FetchError::Upstream`] but are logged at debug, not warn.
+    pub async fn request_tolerating(
+        &self,
+        client: &Client,
+        endpoint: &str,
+        body: &Value,
+        tolerated: &[i64],
+    ) -> Result<Value, FetchError> {
+        self.request_with(client, endpoint, body, tolerated, REQUEST_TIMEOUT)
+            .await
+    }
+
+    async fn request_with(
+        &self,
+        client: &Client,
+        endpoint: &str,
+        body: &Value,
+        tolerated: &[i64],
+        timeout: Duration,
+    ) -> Result<Value, FetchError> {
         let mut guard = self.inner.lock().await;
 
         if guard
@@ -180,12 +209,13 @@ impl ServiceAccount {
             self.refresh(client, &mut guard).await?;
         }
 
-        let response = auth_request(
+        let response = auth_request_with_timeout(
             client,
             endpoint,
             Some(body),
             &mut guard.session,
             self.server,
+            timeout,
         )
         .await?;
 
@@ -197,12 +227,13 @@ impl ServiceAccount {
             );
             self.refresh(client, &mut guard).await?;
 
-            let retried = auth_request(
+            let retried = auth_request_with_timeout(
                 client,
                 endpoint,
                 Some(body),
                 &mut guard.session,
                 self.server,
+                timeout,
             )
             .await?;
             if retried.status() == StatusCode::UNAUTHORIZED {
@@ -213,9 +244,29 @@ impl ServiceAccount {
             response
         };
 
-        let parsed = parse_json(response, endpoint).await;
+        let parsed = parse_json_tolerating(response, endpoint, tolerated).await;
         self.persist(&guard.session);
         parsed
+    }
+
+    /// Run `account/syncData`, the call the client makes right after login.
+    ///
+    /// `account/login` only mints a secret; the game server materialises the
+    /// player on the first `syncData` of a session, and until then the
+    /// endpoints that read player state answer as if nothing exists (every
+    /// `templateShop/getGoodList` came back `invalid shop id` on a fresh CN
+    /// account, and answered normally after one sync). The body is the whole
+    /// player and is discarded here.
+    pub async fn sync_player(&self, client: &Client) -> Result<(), FetchError> {
+        self.request_with(
+            client,
+            "account/syncData",
+            &json!({ "platform": 1 }),
+            &[],
+            SYNC_TIMEOUT,
+        )
+        .await
+        .map(drop)
     }
 
     async fn refresh(&self, client: &Client, inner: &mut Inner) -> Result<(), FetchError> {
@@ -250,9 +301,14 @@ pub struct ServiceAccounts {
 impl ServiceAccounts {
     /// Load an account for each of `servers` that has stored credentials.
     pub fn load(servers: &[Server]) -> Self {
-        let accounts = servers
-            .iter()
-            .filter_map(|&server| ServiceAccount::load(server).map(|a| (server, a)))
+        // The Bilibili channel is CN's data behind a different login; an
+        // account on it serves the CN cell, so it is tried whenever CN is.
+        let with_channels = servers.iter().copied().flat_map(|server| {
+            let channel = (server == Server::CN).then_some(Server::Bilibili);
+            std::iter::once(server).chain(channel)
+        });
+        let accounts = with_channels
+            .filter_map(|server| ServiceAccount::load(server).map(|a| (server, a)))
             .collect::<HashMap<_, _>>();
 
         if accounts.is_empty() {

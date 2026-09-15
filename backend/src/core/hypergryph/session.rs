@@ -6,7 +6,7 @@ use crate::core::hypergryph::{
     config::config,
     constants::{AuthSession, Domain, Server},
     crypto::generate_u8_sign,
-    fetch::{FetchError, FetchRequest, fetch_domain, parse_json},
+    fetch::{FetchError, FetchRequest, REQUEST_TIMEOUT, fetch_domain, parse_json},
     loaders, passport,
     yostar::{AccountPortalSession, account_portal_login, request_token, submit_auth},
 };
@@ -89,6 +89,7 @@ async fn get_secret(
             session: Some(&session),
             server,
             sign: true,
+            timeout: REQUEST_TIMEOUT,
         },
     )
     .await?;
@@ -177,6 +178,7 @@ async fn get_u8_token(
             session: None,
             server,
             sign: true,
+            timeout: REQUEST_TIMEOUT,
         },
     )
     .await?;

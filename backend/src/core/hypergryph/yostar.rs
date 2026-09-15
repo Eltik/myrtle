@@ -10,7 +10,10 @@ use tokio::time::sleep;
 
 use crate::core::hypergryph::{
     constants::{AuthSession, Server},
-    fetch::{FetchError, FetchRequest, auth_request, fetch, parse_json, read_body, upstream_code},
+    fetch::{
+        FetchError, FetchRequest, REQUEST_TIMEOUT, auth_request, fetch, parse_json, read_body,
+        upstream_code,
+    },
 };
 
 #[derive(Serialize)]
@@ -46,6 +49,7 @@ pub async fn send_code(
             session: None,
             server,
             sign: true,
+            timeout: REQUEST_TIMEOUT,
         },
     )
     .await?;
@@ -103,6 +107,7 @@ pub async fn submit_auth(
             session: None,
             server,
             sign: true,
+            timeout: REQUEST_TIMEOUT,
         },
     )
     .await?;
@@ -203,6 +208,7 @@ pub async fn request_token(
             session: None,
             server,
             sign: true,
+            timeout: REQUEST_TIMEOUT,
         },
     )
     .await?;

@@ -10,13 +10,16 @@ import type { ReleaseBanner } from "#/types/generated/ReleaseBanner";
 import type { ReleaseEvent } from "#/types/generated/ReleaseEvent";
 import type { RerunForecast } from "#/types/generated/RerunForecast";
 import type { Resolution } from "#/types/generated/Resolution";
+import type { ReviewOutfit } from "#/types/generated/ReviewOutfit";
+import type { ReviewWindow } from "#/types/generated/ReviewWindow";
 import { groupNewSkins, type INewSkinGroup } from "./components/SkinsTab";
 import { buildOperatorLookup, type OperatorLookup } from "./components/shared";
 import { resolvedEnStart } from "./helpers";
+import { REVIEW_NAME_CN, REVIEW_NAME_EN, reviewOutfits } from "./reviews";
 
 export const DAY_SECS = 86_400;
 
-export type ScheduleKind = "event" | "banner" | "skin" | "rerun";
+export type ScheduleKind = "event" | "banner" | "skin" | "rerun" | "review";
 
 export interface IScheduleItem {
     key: string;
@@ -49,7 +52,7 @@ export interface IScheduleSkin {
     portraitPath: string | null;
 }
 
-export const KIND_LABEL: Record<ScheduleKind, string> = { event: "Events", banner: "Banners", skin: "New skins", rerun: "Skin reruns" };
+export const KIND_LABEL: Record<ScheduleKind, string> = { event: "Events", banner: "Banners", skin: "New skins", rerun: "Skin reruns", review: "Fashion Reviews" };
 
 function cnLength(start: number, end: number | null | undefined): number | null {
     return end && end > start ? end - start : null;
@@ -200,6 +203,30 @@ export function rerunItem(r: RerunForecast, lookup: OperatorLookup): IScheduleIt
     };
 }
 
+export function reviewItem(r: ReviewWindow, pool: ReviewOutfit[]): IScheduleItem | null {
+    const w = window(r.resolution, r.cnStart, r.cnEnd);
+    if (!w) return null;
+    const outfits = reviewOutfits(r, pool);
+    return {
+        key: `skin:review:${r.cnStart}`,
+        kind: "review",
+        nameCn: REVIEW_NAME_CN,
+        nameEn: REVIEW_NAME_EN,
+        nameAuto: null,
+        tag: "FASHION REVIEW",
+        detail: `${outfits.length} outfits at least two years old, every brand`,
+        skins: outfits.map((o) => ({ skinId: o.skinId, charId: o.charId, skinName: o.skinName, skinNameEn: o.skinName, skinNameAuto: null, charName: o.charName, portraitPath: o.portraitPath })).reverse(),
+        imagePath: null,
+        start: w.start,
+        end: w.end,
+        cnStart: r.cnStart,
+        cnEnd: r.cnEnd,
+        resolution: r.resolution,
+        charIds: [],
+        estimated: isEstimated(r.resolution),
+    };
+}
+
 export interface ISchedule {
     items: IScheduleItem[];
     model: LagModel | null;
@@ -235,6 +262,10 @@ export function useSchedule(): ISchedule {
         }
         for (const r of skins.data?.rerunForecasts ?? []) {
             const it = rerunItem(r, lookup);
+            if (it) out.push(it);
+        }
+        for (const r of skins.data?.reviews ?? []) {
+            const it = reviewItem(r, skins.data?.reviewPool ?? []);
             if (it) out.push(it);
         }
         out.sort((a, b) => a.start - b.start || a.kind.localeCompare(b.kind));
