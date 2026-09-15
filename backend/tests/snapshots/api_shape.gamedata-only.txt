@@ -4777,6 +4777,7 @@ activities.0D5act.medalGroupId: string
 activities.0D5act.name: string
 activities.0D5act.rewardEndTime: number
 activities.0D5act.startTime: number
+activities.0D5act.templateShopId: null
 activities.0D5act.type: string
 activities.0D5act: object
 activities.1stact.endTime: number
@@ -4787,6 +4788,7 @@ activities.1stact.medalGroupId: string
 activities.1stact.name: string
 activities.1stact.rewardEndTime: number
 activities.1stact.startTime: number
+activities.1stact.templateShopId: null
 activities.1stact.type: string
 activities.1stact: object
 activities.act10d5.endTime: number
@@ -4797,6 +4799,7 @@ activities.act10d5.medalGroupId: string
 activities.act10d5.name: string
 activities.act10d5.rewardEndTime: number
 activities.act10d5.startTime: number
+activities.act10d5.templateShopId: string
 activities.act10d5.type: string
 activities.act10d5: object
 activities.act10d6.endTime: number
@@ -4807,6 +4810,7 @@ activities.act10d6.medalGroupId: string
 activities.act10d6.name: string
 activities.act10d6.rewardEndTime: number
 activities.act10d6.startTime: number
+activities.act10d6.templateShopId: null
 activities.act10d6.type: string
 activities.act10d6: object
 activities.act10login.endTime: number
@@ -4817,6 +4821,7 @@ activities.act10login.medalGroupId: string
 activities.act10login.name: string
 activities.act10login.rewardEndTime: number
 activities.act10login.startTime: number
+activities.act10login.templateShopId: null
 activities.act10login.type: string
 activities.act10login: object
 activities.act10mini.endTime: number
@@ -4827,6 +4832,7 @@ activities.act10mini.medalGroupId: string
 activities.act10mini.name: string
 activities.act10mini.rewardEndTime: number
 activities.act10mini.startTime: number
+activities.act10mini.templateShopId: string
 activities.act10mini.type: string
 activities.act10mini: object
 activities.act10pray.endTime: number
@@ -4837,6 +4843,7 @@ activities.act10pray.medalGroupId: string
 activities.act10pray.name: string
 activities.act10pray.rewardEndTime: number
 activities.act10pray.startTime: number
+activities.act10pray.templateShopId: null
 activities.act10pray.type: string
 activities.act10pray: object
 activities.act10sre.endTime: number
@@ -4847,6 +4854,7 @@ activities.act10sre.medalGroupId: string
 activities.act10sre.name: string
 activities.act10sre.rewardEndTime: number
 activities.act10sre.startTime: number
+activities.act10sre.templateShopId: string
 activities.act10sre.type: string
 activities.act10sre: object
 activities.act11d0.endTime: number
@@ -4857,6 +4865,7 @@ activities.act11d0.medalGroupId: string
 activities.act11d0.name: string
 activities.act11d0.rewardEndTime: number
 activities.act11d0.startTime: number
+activities.act11d0.templateShopId: string
 activities.act11d0.type: string
 activities.act11d0: object
 activities.act11d7.endTime: number
@@ -4867,6 +4876,7 @@ activities.act11d7.medalGroupId: string
 activities.act11d7.name: string
 activities.act11d7.rewardEndTime: number
 activities.act11d7.startTime: number
+activities.act11d7.templateShopId: null
 activities.act11d7.type: string
 activities.act11d7: object
 activities.act11mini.endTime: number
@@ -4877,6 +4887,7 @@ activities.act11mini.medalGroupId: string
 activities.act11mini.name: string
 activities.act11mini.rewardEndTime: number
 activities.act11mini.startTime: number
+activities.act11mini.templateShopId: string
 activities.act11mini.type: string
 activities.act11mini: object
 activities.act11pray.endTime: number
@@ -4887,6 +4898,7 @@ activities.act11pray.medalGroupId: string
 activities.act11pray.name: string
 activities.act11pray.rewardEndTime: number
 activities.act11pray.startTime: number
+activities.act11pray.templateShopId: null
 activities.act11pray.type: string
 activities.act11pray: object
 activities.act11sre.endTime: number
@@ -4897,6 +4909,7 @@ activities.act11sre.medalGroupId: string
 activities.act11sre.name: string
 activities.act11sre.rewardEndTime: number
 activities.act11sre.startTime: number
+activities.act11sre.templateShopId: string
 activities.act11sre.type: string
 activities.act11sre: object
 activities.act12d0.endTime: number
@@ -4907,6 +4920,7 @@ activities.act12d0.medalGroupId: string
 activities.act12d0.name: string
 activities.act12d0.rewardEndTime: number
 activities.act12d0.startTime: number
+activities.act12d0.templateShopId: string
 activities.act12d0.type: string
 activities.act12d0: object
 activities.act12d6.endTime: number
@@ -4917,6 +4931,7 @@ activities.act12d6.medalGroupId: string
 activities.act12d6.name: string
 activities.act12d6.rewardEndTime: number
 activities.act12d6.startTime: number
+activities.act12d6.templateShopId: null
 activities.act12d6.type: string
 activities.act12d6: object
 activities.act12login.endTime: number
@@ -4927,6 +4942,7 @@ activities.act12login.medalGroupId: string
 activities.act12login.name: string
 activities.act12login.rewardEndTime: number
 activities.act12login.startTime: number
+activities.act12login.templateShopId: null
 activities.act12login.type: string
 activities.act12login: object
 activities.act12mini.endTime: number
@@ -4937,6 +4953,7 @@ activities.act12mini.medalGroupId: string
 activities.act12mini.name: string
 activities.act12mini.rewardEndTime: number
 activities.act12mini.startTime: number
+activities.act12mini.templateShopId: string
 activities.act12mini.type: string
 activities.act12mini: object
 activities.act12pray.endTime: number
@@ -4947,6 +4964,7 @@ activities.act12pray.medalGroupId: string
 activities.act12pray.name: string
 activities.act12pray.rewardEndTime: number
 activities.act12pray.startTime: number
+activities.act12pray.templateShopId: null
 activities.act12pray.type: string
 activities.act12pray: object
 activities.act12side.endTime: number
@@ -4957,6 +4975,7 @@ activities.act12side.medalGroupId: string
 activities.act12side.name: string
 activities.act12side.rewardEndTime: number
 activities.act12side.startTime: number
+activities.act12side.templateShopId: string
 activities.act12side.type: string
 activities.act12side: object
 activities.act12sre.endTime: number
@@ -4967,6 +4986,7 @@ activities.act12sre.medalGroupId: string
 activities.act12sre.name: string
 activities.act12sre.rewardEndTime: number
 activities.act12sre.startTime: number
+activities.act12sre.templateShopId: string
 activities.act12sre.type: string
 activities.act12sre: object
 activities.act13d0.endTime: number
@@ -4977,6 +4997,7 @@ activities.act13d0.medalGroupId: string
 activities.act13d0.name: string
 activities.act13d0.rewardEndTime: number
 activities.act13d0.startTime: number
+activities.act13d0.templateShopId: string
 activities.act13d0.type: string
 activities.act13d0: object
 activities.act13d2.endTime: number
@@ -4987,6 +5008,7 @@ activities.act13d2.medalGroupId: string
 activities.act13d2.name: string
 activities.act13d2.rewardEndTime: number
 activities.act13d2.startTime: number
+activities.act13d2.templateShopId: string
 activities.act13d2.type: string
 activities.act13d2: object
 activities.act13d2d1.endTime: number
@@ -4997,6 +5019,7 @@ activities.act13d2d1.medalGroupId: string
 activities.act13d2d1.name: string
 activities.act13d2d1.rewardEndTime: number
 activities.act13d2d1.startTime: number
+activities.act13d2d1.templateShopId: null
 activities.act13d2d1.type: string
 activities.act13d2d1: object
 activities.act13d2d2.endTime: number
@@ -5007,6 +5030,7 @@ activities.act13d2d2.medalGroupId: string
 activities.act13d2d2.name: string
 activities.act13d2d2.rewardEndTime: number
 activities.act13d2d2.startTime: number
+activities.act13d2d2.templateShopId: null
 activities.act13d2d2.type: string
 activities.act13d2d2: object
 activities.act13d5.endTime: number
@@ -5017,6 +5041,7 @@ activities.act13d5.medalGroupId: string
 activities.act13d5.name: string
 activities.act13d5.rewardEndTime: number
 activities.act13d5.startTime: number
+activities.act13d5.templateShopId: string
 activities.act13d5.type: string
 activities.act13d5: object
 activities.act13login.endTime: number
@@ -5027,6 +5052,7 @@ activities.act13login.medalGroupId: string
 activities.act13login.name: string
 activities.act13login.rewardEndTime: number
 activities.act13login.startTime: number
+activities.act13login.templateShopId: null
 activities.act13login.type: string
 activities.act13login: object
 activities.act13mini.endTime: number
@@ -5037,6 +5063,7 @@ activities.act13mini.medalGroupId: string
 activities.act13mini.name: string
 activities.act13mini.rewardEndTime: number
 activities.act13mini.startTime: number
+activities.act13mini.templateShopId: string
 activities.act13mini.type: string
 activities.act13mini: object
 activities.act13pray.endTime: number
@@ -5047,6 +5074,7 @@ activities.act13pray.medalGroupId: string
 activities.act13pray.name: string
 activities.act13pray.rewardEndTime: number
 activities.act13pray.startTime: number
+activities.act13pray.templateShopId: null
 activities.act13pray.type: string
 activities.act13pray: object
 activities.act13side.endTime: number
@@ -5057,6 +5085,7 @@ activities.act13side.medalGroupId: string
 activities.act13side.name: string
 activities.act13side.rewardEndTime: number
 activities.act13side.startTime: number
+activities.act13side.templateShopId: string
 activities.act13side.type: string
 activities.act13side: object
 activities.act13sre.endTime: number
@@ -5067,6 +5096,7 @@ activities.act13sre.medalGroupId: string
 activities.act13sre.name: string
 activities.act13sre.rewardEndTime: number
 activities.act13sre.startTime: number
+activities.act13sre.templateShopId: string
 activities.act13sre.type: string
 activities.act13sre: object
 activities.act14d0d1.endTime: number
@@ -5077,6 +5107,7 @@ activities.act14d0d1.medalGroupId: string
 activities.act14d0d1.name: string
 activities.act14d0d1.rewardEndTime: number
 activities.act14d0d1.startTime: number
+activities.act14d0d1.templateShopId: null
 activities.act14d0d1.type: string
 activities.act14d0d1: object
 activities.act14d0d2.endTime: number
@@ -5087,6 +5118,7 @@ activities.act14d0d2.medalGroupId: string
 activities.act14d0d2.name: string
 activities.act14d0d2.rewardEndTime: number
 activities.act14d0d2.startTime: number
+activities.act14d0d2.templateShopId: null
 activities.act14d0d2.type: string
 activities.act14d0d2: object
 activities.act14d7.endTime: number
@@ -5097,6 +5129,7 @@ activities.act14d7.medalGroupId: string
 activities.act14d7.name: string
 activities.act14d7.rewardEndTime: number
 activities.act14d7.startTime: number
+activities.act14d7.templateShopId: null
 activities.act14d7.type: string
 activities.act14d7: object
 activities.act14login.endTime: number
@@ -5107,6 +5140,7 @@ activities.act14login.medalGroupId: string
 activities.act14login.name: string
 activities.act14login.rewardEndTime: number
 activities.act14login.startTime: number
+activities.act14login.templateShopId: null
 activities.act14login.type: string
 activities.act14login: object
 activities.act14mini.endTime: number
@@ -5117,6 +5151,7 @@ activities.act14mini.medalGroupId: string
 activities.act14mini.name: string
 activities.act14mini.rewardEndTime: number
 activities.act14mini.startTime: number
+activities.act14mini.templateShopId: string
 activities.act14mini.type: string
 activities.act14mini: object
 activities.act14pray.endTime: number
@@ -5127,6 +5162,7 @@ activities.act14pray.medalGroupId: string
 activities.act14pray.name: string
 activities.act14pray.rewardEndTime: number
 activities.act14pray.startTime: number
+activities.act14pray.templateShopId: null
 activities.act14pray.type: string
 activities.act14pray: object
 activities.act14side.endTime: number
@@ -5137,6 +5173,7 @@ activities.act14side.medalGroupId: string
 activities.act14side.name: string
 activities.act14side.rewardEndTime: number
 activities.act14side.startTime: number
+activities.act14side.templateShopId: string
 activities.act14side.type: string
 activities.act14side: object
 activities.act14sre.endTime: number
@@ -5147,6 +5184,7 @@ activities.act14sre.medalGroupId: string
 activities.act14sre.name: string
 activities.act14sre.rewardEndTime: number
 activities.act14sre.startTime: number
+activities.act14sre.templateShopId: string
 activities.act14sre.type: string
 activities.act14sre: object
 activities.act15d0.endTime: number
@@ -5157,6 +5195,7 @@ activities.act15d0.medalGroupId: string
 activities.act15d0.name: string
 activities.act15d0.rewardEndTime: number
 activities.act15d0.startTime: number
+activities.act15d0.templateShopId: string
 activities.act15d0.type: string
 activities.act15d0: object
 activities.act15d1.endTime: number
@@ -5167,6 +5206,7 @@ activities.act15d1.medalGroupId: string
 activities.act15d1.name: string
 activities.act15d1.rewardEndTime: number
 activities.act15d1.startTime: number
+activities.act15d1.templateShopId: null
 activities.act15d1.type: string
 activities.act15d1: object
 activities.act15d5.endTime: number
@@ -5177,6 +5217,7 @@ activities.act15d5.medalGroupId: string
 activities.act15d5.name: string
 activities.act15d5.rewardEndTime: number
 activities.act15d5.startTime: number
+activities.act15d5.templateShopId: string
 activities.act15d5.type: string
 activities.act15d5: object
 activities.act15login.endTime: number
@@ -5187,6 +5228,7 @@ activities.act15login.medalGroupId: string
 activities.act15login.name: string
 activities.act15login.rewardEndTime: number
 activities.act15login.startTime: number
+activities.act15login.templateShopId: null
 activities.act15login.type: string
 activities.act15login: object
 activities.act15mini.endTime: number
@@ -5197,6 +5239,7 @@ activities.act15mini.medalGroupId: string
 activities.act15mini.name: string
 activities.act15mini.rewardEndTime: number
 activities.act15mini.startTime: number
+activities.act15mini.templateShopId: string
 activities.act15mini.type: string
 activities.act15mini: object
 activities.act15side.endTime: number
@@ -5207,6 +5250,7 @@ activities.act15side.medalGroupId: string
 activities.act15side.name: string
 activities.act15side.rewardEndTime: number
 activities.act15side.startTime: number
+activities.act15side.templateShopId: string
 activities.act15side.type: string
 activities.act15side: object
 activities.act15sre.endTime: number
@@ -5217,6 +5261,7 @@ activities.act15sre.medalGroupId: string
 activities.act15sre.name: string
 activities.act15sre.rewardEndTime: number
 activities.act15sre.startTime: number
+activities.act15sre.templateShopId: string
 activities.act15sre.type: string
 activities.act15sre: object
 activities.act16d5.endTime: number
@@ -5227,6 +5272,7 @@ activities.act16d5.medalGroupId: string
 activities.act16d5.name: string
 activities.act16d5.rewardEndTime: number
 activities.act16d5.startTime: number
+activities.act16d5.templateShopId: string
 activities.act16d5.type: string
 activities.act16d5: object
 activities.act16d5d1.endTime: number
@@ -5237,6 +5283,7 @@ activities.act16d5d1.medalGroupId: string
 activities.act16d5d1.name: string
 activities.act16d5d1.rewardEndTime: number
 activities.act16d5d1.startTime: number
+activities.act16d5d1.templateShopId: null
 activities.act16d5d1.type: string
 activities.act16d5d1: object
 activities.act16d5d2.endTime: number
@@ -5247,6 +5294,7 @@ activities.act16d5d2.medalGroupId: string
 activities.act16d5d2.name: string
 activities.act16d5d2.rewardEndTime: number
 activities.act16d5d2.startTime: number
+activities.act16d5d2.templateShopId: null
 activities.act16d5d2.type: string
 activities.act16d5d2: object
 activities.act16d6.endTime: number
@@ -5257,6 +5305,7 @@ activities.act16d6.medalGroupId: string
 activities.act16d6.name: string
 activities.act16d6.rewardEndTime: number
 activities.act16d6.startTime: number
+activities.act16d6.templateShopId: null
 activities.act16d6.type: string
 activities.act16d6: object
 activities.act16login.endTime: number
@@ -5267,6 +5316,7 @@ activities.act16login.medalGroupId: string
 activities.act16login.name: string
 activities.act16login.rewardEndTime: number
 activities.act16login.startTime: number
+activities.act16login.templateShopId: null
 activities.act16login.type: string
 activities.act16login: object
 activities.act16mini.endTime: number
@@ -5277,6 +5327,7 @@ activities.act16mini.medalGroupId: string
 activities.act16mini.name: string
 activities.act16mini.rewardEndTime: number
 activities.act16mini.startTime: number
+activities.act16mini.templateShopId: string
 activities.act16mini.type: string
 activities.act16mini: object
 activities.act16side.endTime: number
@@ -5287,6 +5338,7 @@ activities.act16side.medalGroupId: string
 activities.act16side.name: string
 activities.act16side.rewardEndTime: number
 activities.act16side.startTime: number
+activities.act16side.templateShopId: string
 activities.act16side.type: string
 activities.act16side: object
 activities.act16sre.endTime: number
@@ -5297,6 +5349,7 @@ activities.act16sre.medalGroupId: string
 activities.act16sre.name: string
 activities.act16sre.rewardEndTime: number
 activities.act16sre.startTime: number
+activities.act16sre.templateShopId: string
 activities.act16sre.type: string
 activities.act16sre: object
 activities.act17d0.endTime: number
@@ -5307,6 +5360,7 @@ activities.act17d0.medalGroupId: string
 activities.act17d0.name: string
 activities.act17d0.rewardEndTime: number
 activities.act17d0.startTime: number
+activities.act17d0.templateShopId: string
 activities.act17d0.type: string
 activities.act17d0: object
 activities.act17d0d1.endTime: number
@@ -5317,6 +5371,7 @@ activities.act17d0d1.medalGroupId: string
 activities.act17d0d1.name: string
 activities.act17d0d1.rewardEndTime: number
 activities.act17d0d1.startTime: number
+activities.act17d0d1.templateShopId: null
 activities.act17d0d1.type: string
 activities.act17d0d1: object
 activities.act17d0d2.endTime: number
@@ -5327,6 +5382,7 @@ activities.act17d0d2.medalGroupId: string
 activities.act17d0d2.name: string
 activities.act17d0d2.rewardEndTime: number
 activities.act17d0d2.startTime: number
+activities.act17d0d2.templateShopId: null
 activities.act17d0d2.type: string
 activities.act17d0d2: object
 activities.act17d1.endTime: number
@@ -5337,6 +5393,7 @@ activities.act17d1.medalGroupId: string
 activities.act17d1.name: string
 activities.act17d1.rewardEndTime: number
 activities.act17d1.startTime: number
+activities.act17d1.templateShopId: null
 activities.act17d1.type: string
 activities.act17d1: object
 activities.act17d5.endTime: number
@@ -5347,6 +5404,7 @@ activities.act17d5.medalGroupId: string
 activities.act17d5.name: string
 activities.act17d5.rewardEndTime: number
 activities.act17d5.startTime: number
+activities.act17d5.templateShopId: string
 activities.act17d5.type: string
 activities.act17d5: object
 activities.act17d7.endTime: number
@@ -5357,6 +5415,7 @@ activities.act17d7.medalGroupId: string
 activities.act17d7.name: string
 activities.act17d7.rewardEndTime: number
 activities.act17d7.startTime: number
+activities.act17d7.templateShopId: null
 activities.act17d7.type: string
 activities.act17d7: object
 activities.act17mini.endTime: number
@@ -5367,6 +5426,7 @@ activities.act17mini.medalGroupId: string
 activities.act17mini.name: string
 activities.act17mini.rewardEndTime: number
 activities.act17mini.startTime: number
+activities.act17mini.templateShopId: string
 activities.act17mini.type: string
 activities.act17mini: object
 activities.act17side.endTime: number
@@ -5377,6 +5437,7 @@ activities.act17side.medalGroupId: string
 activities.act17side.name: string
 activities.act17side.rewardEndTime: number
 activities.act17side.startTime: number
+activities.act17side.templateShopId: string
 activities.act17side.type: string
 activities.act17side: object
 activities.act17sre.endTime: number
@@ -5387,6 +5448,7 @@ activities.act17sre.medalGroupId: string
 activities.act17sre.name: string
 activities.act17sre.rewardEndTime: number
 activities.act17sre.startTime: number
+activities.act17sre.templateShopId: string
 activities.act17sre.type: string
 activities.act17sre: object
 activities.act18d0.endTime: number
@@ -5397,6 +5459,7 @@ activities.act18d0.medalGroupId: string
 activities.act18d0.name: string
 activities.act18d0.rewardEndTime: number
 activities.act18d0.startTime: number
+activities.act18d0.templateShopId: string
 activities.act18d0.type: string
 activities.act18d0: object
 activities.act18d3.endTime: number
@@ -5407,6 +5470,7 @@ activities.act18d3.medalGroupId: string
 activities.act18d3.name: string
 activities.act18d3.rewardEndTime: number
 activities.act18d3.startTime: number
+activities.act18d3.templateShopId: string
 activities.act18d3.type: string
 activities.act18d3: object
 activities.act18d3d1.endTime: number
@@ -5417,6 +5481,7 @@ activities.act18d3d1.medalGroupId: string
 activities.act18d3d1.name: string
 activities.act18d3d1.rewardEndTime: number
 activities.act18d3d1.startTime: number
+activities.act18d3d1.templateShopId: null
 activities.act18d3d1.type: string
 activities.act18d3d1: object
 activities.act18d3d2.endTime: number
@@ -5427,6 +5492,7 @@ activities.act18d3d2.medalGroupId: string
 activities.act18d3d2.name: string
 activities.act18d3d2.rewardEndTime: number
 activities.act18d3d2.startTime: number
+activities.act18d3d2.templateShopId: null
 activities.act18d3d2.type: string
 activities.act18d3d2: object
 activities.act18d3d3.endTime: number
@@ -5437,6 +5503,7 @@ activities.act18d3d3.medalGroupId: string
 activities.act18d3d3.name: string
 activities.act18d3d3.rewardEndTime: number
 activities.act18d3d3.startTime: number
+activities.act18d3d3.templateShopId: null
 activities.act18d3d3.type: string
 activities.act18d3d3: object
 activities.act18login.endTime: number
@@ -5447,6 +5514,7 @@ activities.act18login.medalGroupId: string
 activities.act18login.name: string
 activities.act18login.rewardEndTime: number
 activities.act18login.startTime: number
+activities.act18login.templateShopId: null
 activities.act18login.type: string
 activities.act18login: object
 activities.act18mini.endTime: number
@@ -5457,6 +5525,7 @@ activities.act18mini.medalGroupId: string
 activities.act18mini.name: string
 activities.act18mini.rewardEndTime: number
 activities.act18mini.startTime: number
+activities.act18mini.templateShopId: string
 activities.act18mini.type: string
 activities.act18mini: object
 activities.act18side.endTime: number
@@ -5467,6 +5536,7 @@ activities.act18side.medalGroupId: string
 activities.act18side.name: string
 activities.act18side.rewardEndTime: number
 activities.act18side.startTime: number
+activities.act18side.templateShopId: string
 activities.act18side.type: string
 activities.act18side: object
 activities.act18sign.endTime: number
@@ -5477,6 +5547,7 @@ activities.act18sign.medalGroupId: string
 activities.act18sign.name: string
 activities.act18sign.rewardEndTime: number
 activities.act18sign.startTime: number
+activities.act18sign.templateShopId: null
 activities.act18sign.type: string
 activities.act18sign: object
 activities.act18sre.endTime: number
@@ -5487,6 +5558,7 @@ activities.act18sre.medalGroupId: string
 activities.act18sre.name: string
 activities.act18sre.rewardEndTime: number
 activities.act18sre.startTime: number
+activities.act18sre.templateShopId: string
 activities.act18sre.type: string
 activities.act18sre: object
 activities.act19login.endTime: number
@@ -5497,6 +5569,7 @@ activities.act19login.medalGroupId: string
 activities.act19login.name: string
 activities.act19login.rewardEndTime: number
 activities.act19login.startTime: number
+activities.act19login.templateShopId: null
 activities.act19login.type: string
 activities.act19login: object
 activities.act19mini.endTime: number
@@ -5507,6 +5580,7 @@ activities.act19mini.medalGroupId: string
 activities.act19mini.name: string
 activities.act19mini.rewardEndTime: number
 activities.act19mini.startTime: number
+activities.act19mini.templateShopId: string
 activities.act19mini.type: string
 activities.act19mini: object
 activities.act19side.endTime: number
@@ -5517,6 +5591,7 @@ activities.act19side.medalGroupId: string
 activities.act19side.name: string
 activities.act19side.rewardEndTime: number
 activities.act19side.startTime: number
+activities.act19side.templateShopId: string
 activities.act19side.type: string
 activities.act19side: object
 activities.act19sign.endTime: number
@@ -5527,6 +5602,7 @@ activities.act19sign.medalGroupId: string
 activities.act19sign.name: string
 activities.act19sign.rewardEndTime: number
 activities.act19sign.startTime: number
+activities.act19sign.templateShopId: null
 activities.act19sign.type: string
 activities.act19sign: object
 activities.act19sre.endTime: number
@@ -5537,6 +5613,7 @@ activities.act19sre.medalGroupId: string
 activities.act19sre.name: string
 activities.act19sre.rewardEndTime: number
 activities.act19sre.startTime: number
+activities.act19sre.templateShopId: string
 activities.act19sre.type: string
 activities.act19sre: object
 activities.act1access.endTime: number
@@ -5547,6 +5624,7 @@ activities.act1access.medalGroupId: string
 activities.act1access.name: string
 activities.act1access.rewardEndTime: number
 activities.act1access.startTime: number
+activities.act1access.templateShopId: null
 activities.act1access.type: string
 activities.act1access: object
 activities.act1arcade.endTime: number
@@ -5557,6 +5635,7 @@ activities.act1arcade.medalGroupId: string
 activities.act1arcade.name: string
 activities.act1arcade.rewardEndTime: number
 activities.act1arcade.startTime: number
+activities.act1arcade.templateShopId: null
 activities.act1arcade.type: string
 activities.act1arcade: object
 activities.act1autochess.endTime: number
@@ -5567,6 +5646,7 @@ activities.act1autochess.medalGroupId: string
 activities.act1autochess.name: string
 activities.act1autochess.rewardEndTime: number
 activities.act1autochess.startTime: number
+activities.act1autochess.templateShopId: null
 activities.act1autochess.type: string
 activities.act1autochess: object
 activities.act1blessing.endTime: number
@@ -5577,6 +5657,7 @@ activities.act1blessing.medalGroupId: string
 activities.act1blessing.name: string
 activities.act1blessing.rewardEndTime: number
 activities.act1blessing.startTime: number
+activities.act1blessing.templateShopId: null
 activities.act1blessing.type: string
 activities.act1blessing: object
 activities.act1bossrush.endTime: number
@@ -5587,6 +5668,7 @@ activities.act1bossrush.medalGroupId: string
 activities.act1bossrush.name: string
 activities.act1bossrush.rewardEndTime: number
 activities.act1bossrush.startTime: number
+activities.act1bossrush.templateShopId: null
 activities.act1bossrush.type: string
 activities.act1bossrush: object
 activities.act1break.endTime: number
@@ -5597,6 +5679,7 @@ activities.act1break.medalGroupId: string
 activities.act1break.name: string
 activities.act1break.rewardEndTime: number
 activities.act1break.startTime: number
+activities.act1break.templateShopId: null
 activities.act1break.type: string
 activities.act1break: object
 activities.act1checkin.endTime: number
@@ -5607,6 +5690,7 @@ activities.act1checkin.medalGroupId: string
 activities.act1checkin.name: string
 activities.act1checkin.rewardEndTime: number
 activities.act1checkin.startTime: number
+activities.act1checkin.templateShopId: null
 activities.act1checkin.type: string
 activities.act1checkin: object
 activities.act1collection.endTime: number
@@ -5617,6 +5701,7 @@ activities.act1collection.medalGroupId: string
 activities.act1collection.name: string
 activities.act1collection.rewardEndTime: number
 activities.act1collection.startTime: number
+activities.act1collection.templateShopId: null
 activities.act1collection.type: string
 activities.act1collection: object
 activities.act1d5.endTime: number
@@ -5627,6 +5712,7 @@ activities.act1d5.medalGroupId: string
 activities.act1d5.name: string
 activities.act1d5.rewardEndTime: number
 activities.act1d5.startTime: number
+activities.act1d5.templateShopId: null
 activities.act1d5.type: string
 activities.act1d5: object
 activities.act1enemyduel.endTime: number
@@ -5637,6 +5723,7 @@ activities.act1enemyduel.medalGroupId: string
 activities.act1enemyduel.name: string
 activities.act1enemyduel.rewardEndTime: number
 activities.act1enemyduel.startTime: number
+activities.act1enemyduel.templateShopId: null
 activities.act1enemyduel.type: string
 activities.act1enemyduel: object
 activities.act1flip.endTime: number
@@ -5647,6 +5734,7 @@ activities.act1flip.medalGroupId: string
 activities.act1flip.name: string
 activities.act1flip.rewardEndTime: number
 activities.act1flip.startTime: number
+activities.act1flip.templateShopId: null
 activities.act1flip.type: string
 activities.act1flip: object
 activities.act1float.endTime: number
@@ -5657,6 +5745,7 @@ activities.act1float.medalGroupId: string
 activities.act1float.name: string
 activities.act1float.rewardEndTime: number
 activities.act1float.startTime: number
+activities.act1float.templateShopId: null
 activities.act1float.type: string
 activities.act1float: object
 activities.act1lock.endTime: number
@@ -5667,6 +5756,7 @@ activities.act1lock.medalGroupId: string
 activities.act1lock.name: string
 activities.act1lock.rewardEndTime: number
 activities.act1lock.startTime: number
+activities.act1lock.templateShopId: null
 activities.act1lock.type: string
 activities.act1lock: object
 activities.act1mainbuff.endTime: number
@@ -5677,6 +5767,7 @@ activities.act1mainbuff.medalGroupId: string
 activities.act1mainbuff.name: string
 activities.act1mainbuff.rewardEndTime: number
 activities.act1mainbuff.startTime: number
+activities.act1mainbuff.templateShopId: null
 activities.act1mainbuff.type: string
 activities.act1mainbuff: object
 activities.act1mainlinebp.endTime: number
@@ -5687,6 +5778,7 @@ activities.act1mainlinebp.medalGroupId: string
 activities.act1mainlinebp.name: string
 activities.act1mainlinebp.rewardEndTime: number
 activities.act1mainlinebp.startTime: number
+activities.act1mainlinebp.templateShopId: null
 activities.act1mainlinebp.type: string
 activities.act1mainlinebp: object
 activities.act1mainss.endTime: number
@@ -5697,6 +5789,7 @@ activities.act1mainss.medalGroupId: string
 activities.act1mainss.name: string
 activities.act1mainss.rewardEndTime: number
 activities.act1mainss.startTime: number
+activities.act1mainss.templateShopId: string
 activities.act1mainss.type: string
 activities.act1mainss: object
 activities.act1multi.endTime: number
@@ -5707,6 +5800,7 @@ activities.act1multi.medalGroupId: string
 activities.act1multi.name: string
 activities.act1multi.rewardEndTime: number
 activities.act1multi.startTime: number
+activities.act1multi.templateShopId: null
 activities.act1multi.type: string
 activities.act1multi: object
 activities.act1r6sre.endTime: number
@@ -5717,6 +5811,7 @@ activities.act1r6sre.medalGroupId: string
 activities.act1r6sre.name: string
 activities.act1r6sre.rewardEndTime: number
 activities.act1r6sre.startTime: number
+activities.act1r6sre.templateShopId: string
 activities.act1r6sre.type: string
 activities.act1r6sre: object
 activities.act1recruit.endTime: number
@@ -5727,6 +5822,7 @@ activities.act1recruit.medalGroupId: string
 activities.act1recruit.name: string
 activities.act1recruit.rewardEndTime: number
 activities.act1recruit.startTime: number
+activities.act1recruit.templateShopId: null
 activities.act1recruit.type: string
 activities.act1recruit: object
 activities.act1sandbox.endTime: number
@@ -5737,6 +5833,7 @@ activities.act1sandbox.medalGroupId: string
 activities.act1sandbox.name: string
 activities.act1sandbox.rewardEndTime: number
 activities.act1sandbox.startTime: number
+activities.act1sandbox.templateShopId: null
 activities.act1sandbox.type: string
 activities.act1sandbox: object
 activities.act1signvs.endTime: number
@@ -5747,6 +5844,7 @@ activities.act1signvs.medalGroupId: string
 activities.act1signvs.name: string
 activities.act1signvs.rewardEndTime: number
 activities.act1signvs.startTime: number
+activities.act1signvs.templateShopId: null
 activities.act1signvs.type: string
 activities.act1signvs: object
 activities.act1teamquest.endTime: number
@@ -5757,6 +5855,7 @@ activities.act1teamquest.medalGroupId: string
 activities.act1teamquest.name: string
 activities.act1teamquest.rewardEndTime: number
 activities.act1teamquest.startTime: number
+activities.act1teamquest.templateShopId: null
 activities.act1teamquest.type: string
 activities.act1teamquest: object
 activities.act1unique.endTime: number
@@ -5767,6 +5866,7 @@ activities.act1unique.medalGroupId: string
 activities.act1unique.name: string
 activities.act1unique.rewardEndTime: number
 activities.act1unique.startTime: number
+activities.act1unique.templateShopId: null
 activities.act1unique.type: string
 activities.act1unique: object
 activities.act1vautochess.endTime: number
@@ -5777,6 +5877,7 @@ activities.act1vautochess.medalGroupId: string
 activities.act1vautochess.name: string
 activities.act1vautochess.rewardEndTime: number
 activities.act1vautochess.startTime: number
+activities.act1vautochess.templateShopId: null
 activities.act1vautochess.type: string
 activities.act1vautochess: object
 activities.act1vecb.endTime: number
@@ -5787,6 +5888,7 @@ activities.act1vecb.medalGroupId: string
 activities.act1vecb.name: string
 activities.act1vecb.rewardEndTime: number
 activities.act1vecb.startTime: number
+activities.act1vecb.templateShopId: null
 activities.act1vecb.type: string
 activities.act1vecb: object
 activities.act1vhalfidle.endTime: number
@@ -5797,6 +5899,7 @@ activities.act1vhalfidle.medalGroupId: string
 activities.act1vhalfidle.name: string
 activities.act1vhalfidle.rewardEndTime: number
 activities.act1vhalfidle.startTime: number
+activities.act1vhalfidle.templateShopId: null
 activities.act1vhalfidle.type: string
 activities.act1vhalfidle: object
 activities.act20login.endTime: number
@@ -5807,6 +5910,7 @@ activities.act20login.medalGroupId: string
 activities.act20login.name: string
 activities.act20login.rewardEndTime: number
 activities.act20login.startTime: number
+activities.act20login.templateShopId: null
 activities.act20login.type: string
 activities.act20login: object
 activities.act20mini.endTime: number
@@ -5817,6 +5921,7 @@ activities.act20mini.medalGroupId: string
 activities.act20mini.name: string
 activities.act20mini.rewardEndTime: number
 activities.act20mini.startTime: number
+activities.act20mini.templateShopId: string
 activities.act20mini.type: string
 activities.act20mini: object
 activities.act20side.endTime: number
@@ -5827,6 +5932,7 @@ activities.act20side.medalGroupId: string
 activities.act20side.name: string
 activities.act20side.rewardEndTime: number
 activities.act20side.startTime: number
+activities.act20side.templateShopId: string
 activities.act20side.type: string
 activities.act20side: object
 activities.act20sign.endTime: number
@@ -5837,6 +5943,7 @@ activities.act20sign.medalGroupId: string
 activities.act20sign.name: string
 activities.act20sign.rewardEndTime: number
 activities.act20sign.startTime: number
+activities.act20sign.templateShopId: null
 activities.act20sign.type: string
 activities.act20sign: object
 activities.act20sre.endTime: number
@@ -5847,6 +5954,7 @@ activities.act20sre.medalGroupId: string
 activities.act20sre.name: string
 activities.act20sre.rewardEndTime: number
 activities.act20sre.startTime: number
+activities.act20sre.templateShopId: string
 activities.act20sre.type: string
 activities.act20sre: object
 activities.act21login.endTime: number
@@ -5857,6 +5965,7 @@ activities.act21login.medalGroupId: string
 activities.act21login.name: string
 activities.act21login.rewardEndTime: number
 activities.act21login.startTime: number
+activities.act21login.templateShopId: null
 activities.act21login.type: string
 activities.act21login: object
 activities.act21side.endTime: number
@@ -5867,6 +5976,7 @@ activities.act21side.medalGroupId: string
 activities.act21side.name: string
 activities.act21side.rewardEndTime: number
 activities.act21side.startTime: number
+activities.act21side.templateShopId: string
 activities.act21side.type: string
 activities.act21side: object
 activities.act21sign.endTime: number
@@ -5877,6 +5987,7 @@ activities.act21sign.medalGroupId: string
 activities.act21sign.name: string
 activities.act21sign.rewardEndTime: number
 activities.act21sign.startTime: number
+activities.act21sign.templateShopId: null
 activities.act21sign.type: string
 activities.act21sign: object
 activities.act21sre.endTime: number
@@ -5887,6 +5998,7 @@ activities.act21sre.medalGroupId: string
 activities.act21sre.name: string
 activities.act21sre.rewardEndTime: number
 activities.act21sre.startTime: number
+activities.act21sre.templateShopId: string
 activities.act21sre.type: string
 activities.act21sre: object
 activities.act22login.endTime: number
@@ -5897,6 +6009,7 @@ activities.act22login.medalGroupId: string
 activities.act22login.name: string
 activities.act22login.rewardEndTime: number
 activities.act22login.startTime: number
+activities.act22login.templateShopId: null
 activities.act22login.type: string
 activities.act22login: object
 activities.act22side.endTime: number
@@ -5907,6 +6020,7 @@ activities.act22side.medalGroupId: string
 activities.act22side.name: string
 activities.act22side.rewardEndTime: number
 activities.act22side.startTime: number
+activities.act22side.templateShopId: string
 activities.act22side.type: string
 activities.act22side: object
 activities.act22sign.endTime: number
@@ -5917,6 +6031,7 @@ activities.act22sign.medalGroupId: string
 activities.act22sign.name: string
 activities.act22sign.rewardEndTime: number
 activities.act22sign.startTime: number
+activities.act22sign.templateShopId: null
 activities.act22sign.type: string
 activities.act22sign: object
 activities.act22sre.endTime: number
@@ -5927,6 +6042,7 @@ activities.act22sre.medalGroupId: string
 activities.act22sre.name: string
 activities.act22sre.rewardEndTime: number
 activities.act22sre.startTime: number
+activities.act22sre.templateShopId: string
 activities.act22sre.type: string
 activities.act22sre: object
 activities.act23login.endTime: number
@@ -5937,6 +6053,7 @@ activities.act23login.medalGroupId: string
 activities.act23login.name: string
 activities.act23login.rewardEndTime: number
 activities.act23login.startTime: number
+activities.act23login.templateShopId: null
 activities.act23login.type: string
 activities.act23login: object
 activities.act23side.endTime: number
@@ -5947,6 +6064,7 @@ activities.act23side.medalGroupId: string
 activities.act23side.name: string
 activities.act23side.rewardEndTime: number
 activities.act23side.startTime: number
+activities.act23side.templateShopId: string
 activities.act23side.type: string
 activities.act23side: object
 activities.act23sign.endTime: number
@@ -5957,6 +6075,7 @@ activities.act23sign.medalGroupId: string
 activities.act23sign.name: string
 activities.act23sign.rewardEndTime: number
 activities.act23sign.startTime: number
+activities.act23sign.templateShopId: null
 activities.act23sign.type: string
 activities.act23sign: object
 activities.act23sre.endTime: number
@@ -5967,6 +6086,7 @@ activities.act23sre.medalGroupId: string
 activities.act23sre.name: string
 activities.act23sre.rewardEndTime: number
 activities.act23sre.startTime: number
+activities.act23sre.templateShopId: string
 activities.act23sre.type: string
 activities.act23sre: object
 activities.act24login.endTime: number
@@ -5977,6 +6097,7 @@ activities.act24login.medalGroupId: string
 activities.act24login.name: string
 activities.act24login.rewardEndTime: number
 activities.act24login.startTime: number
+activities.act24login.templateShopId: null
 activities.act24login.type: string
 activities.act24login: object
 activities.act24side.endTime: number
@@ -5987,6 +6108,7 @@ activities.act24side.medalGroupId: string
 activities.act24side.name: string
 activities.act24side.rewardEndTime: number
 activities.act24side.startTime: number
+activities.act24side.templateShopId: null
 activities.act24side.type: string
 activities.act24side: object
 activities.act24sign.endTime: number
@@ -5997,6 +6119,7 @@ activities.act24sign.medalGroupId: string
 activities.act24sign.name: string
 activities.act24sign.rewardEndTime: number
 activities.act24sign.startTime: number
+activities.act24sign.templateShopId: null
 activities.act24sign.type: string
 activities.act24sign: object
 activities.act25side.endTime: number
@@ -6007,6 +6130,7 @@ activities.act25side.medalGroupId: string
 activities.act25side.name: string
 activities.act25side.rewardEndTime: number
 activities.act25side.startTime: number
+activities.act25side.templateShopId: string
 activities.act25side.type: string
 activities.act25side: object
 activities.act25sign.endTime: number
@@ -6017,6 +6141,7 @@ activities.act25sign.medalGroupId: string
 activities.act25sign.name: string
 activities.act25sign.rewardEndTime: number
 activities.act25sign.startTime: number
+activities.act25sign.templateShopId: null
 activities.act25sign.type: string
 activities.act25sign: object
 activities.act25sre.endTime: number
@@ -6027,6 +6152,7 @@ activities.act25sre.medalGroupId: string
 activities.act25sre.name: string
 activities.act25sre.rewardEndTime: number
 activities.act25sre.startTime: number
+activities.act25sre.templateShopId: string
 activities.act25sre.type: string
 activities.act25sre: object
 activities.act26login.endTime: number
@@ -6037,6 +6163,7 @@ activities.act26login.medalGroupId: string
 activities.act26login.name: string
 activities.act26login.rewardEndTime: number
 activities.act26login.startTime: number
+activities.act26login.templateShopId: null
 activities.act26login.type: string
 activities.act26login: object
 activities.act26side.endTime: number
@@ -6047,6 +6174,7 @@ activities.act26side.medalGroupId: string
 activities.act26side.name: string
 activities.act26side.rewardEndTime: number
 activities.act26side.startTime: number
+activities.act26side.templateShopId: string
 activities.act26side.type: string
 activities.act26side: object
 activities.act26sign.endTime: number
@@ -6057,6 +6185,7 @@ activities.act26sign.medalGroupId: string
 activities.act26sign.name: string
 activities.act26sign.rewardEndTime: number
 activities.act26sign.startTime: number
+activities.act26sign.templateShopId: null
 activities.act26sign.type: string
 activities.act26sign: object
 activities.act26sre.endTime: number
@@ -6067,6 +6196,7 @@ activities.act26sre.medalGroupId: string
 activities.act26sre.name: string
 activities.act26sre.rewardEndTime: number
 activities.act26sre.startTime: number
+activities.act26sre.templateShopId: string
 activities.act26sre.type: string
 activities.act26sre: object
 activities.act27login.endTime: number
@@ -6077,6 +6207,7 @@ activities.act27login.medalGroupId: string
 activities.act27login.name: string
 activities.act27login.rewardEndTime: number
 activities.act27login.startTime: number
+activities.act27login.templateShopId: null
 activities.act27login.type: string
 activities.act27login: object
 activities.act27side.endTime: number
@@ -6087,6 +6218,7 @@ activities.act27side.medalGroupId: string
 activities.act27side.name: string
 activities.act27side.rewardEndTime: number
 activities.act27side.startTime: number
+activities.act27side.templateShopId: string
 activities.act27side.type: string
 activities.act27side: object
 activities.act27sign.endTime: number
@@ -6097,6 +6229,7 @@ activities.act27sign.medalGroupId: string
 activities.act27sign.name: string
 activities.act27sign.rewardEndTime: number
 activities.act27sign.startTime: number
+activities.act27sign.templateShopId: null
 activities.act27sign.type: string
 activities.act27sign: object
 activities.act27sre.endTime: number
@@ -6107,6 +6240,7 @@ activities.act27sre.medalGroupId: string
 activities.act27sre.name: string
 activities.act27sre.rewardEndTime: number
 activities.act27sre.startTime: number
+activities.act27sre.templateShopId: string
 activities.act27sre.type: string
 activities.act27sre: object
 activities.act28side.endTime: number
@@ -6117,6 +6251,7 @@ activities.act28side.medalGroupId: string
 activities.act28side.name: string
 activities.act28side.rewardEndTime: number
 activities.act28side.startTime: number
+activities.act28side.templateShopId: string
 activities.act28side.type: string
 activities.act28side: object
 activities.act28sign.endTime: number
@@ -6127,6 +6262,7 @@ activities.act28sign.medalGroupId: string
 activities.act28sign.name: string
 activities.act28sign.rewardEndTime: number
 activities.act28sign.startTime: number
+activities.act28sign.templateShopId: null
 activities.act28sign.type: string
 activities.act28sign: object
 activities.act28sre.endTime: number
@@ -6137,6 +6273,7 @@ activities.act28sre.medalGroupId: string
 activities.act28sre.name: string
 activities.act28sre.rewardEndTime: number
 activities.act28sre.startTime: number
+activities.act28sre.templateShopId: string
 activities.act28sre.type: string
 activities.act28sre: object
 activities.act29side.endTime: number
@@ -6147,6 +6284,7 @@ activities.act29side.medalGroupId: string
 activities.act29side.name: string
 activities.act29side.rewardEndTime: number
 activities.act29side.startTime: number
+activities.act29side.templateShopId: string
 activities.act29side.type: string
 activities.act29side: object
 activities.act29sign.endTime: number
@@ -6157,6 +6295,7 @@ activities.act29sign.medalGroupId: string
 activities.act29sign.name: string
 activities.act29sign.rewardEndTime: number
 activities.act29sign.startTime: number
+activities.act29sign.templateShopId: null
 activities.act29sign.type: string
 activities.act29sign: object
 activities.act29sre.endTime: number
@@ -6167,6 +6306,7 @@ activities.act29sre.medalGroupId: string
 activities.act29sre.name: string
 activities.act29sre.rewardEndTime: number
 activities.act29sre.startTime: number
+activities.act29sre.templateShopId: string
 activities.act29sre.type: string
 activities.act29sre: object
 activities.act2access.endTime: number
@@ -6177,6 +6317,7 @@ activities.act2access.medalGroupId: string
 activities.act2access.name: string
 activities.act2access.rewardEndTime: number
 activities.act2access.startTime: number
+activities.act2access.templateShopId: null
 activities.act2access.type: string
 activities.act2access: object
 activities.act2autochess.endTime: number
@@ -6187,6 +6328,7 @@ activities.act2autochess.medalGroupId: string
 activities.act2autochess.name: string
 activities.act2autochess.rewardEndTime: number
 activities.act2autochess.startTime: number
+activities.act2autochess.templateShopId: null
 activities.act2autochess.type: string
 activities.act2autochess: object
 activities.act2blessing.endTime: number
@@ -6197,6 +6339,7 @@ activities.act2blessing.medalGroupId: string
 activities.act2blessing.name: string
 activities.act2blessing.rewardEndTime: number
 activities.act2blessing.startTime: number
+activities.act2blessing.templateShopId: null
 activities.act2blessing.type: string
 activities.act2blessing: object
 activities.act2bossrush.endTime: number
@@ -6207,6 +6350,7 @@ activities.act2bossrush.medalGroupId: string
 activities.act2bossrush.name: string
 activities.act2bossrush.rewardEndTime: number
 activities.act2bossrush.startTime: number
+activities.act2bossrush.templateShopId: null
 activities.act2bossrush.type: string
 activities.act2bossrush: object
 activities.act2break.endTime: number
@@ -6217,6 +6361,7 @@ activities.act2break.medalGroupId: string
 activities.act2break.name: string
 activities.act2break.rewardEndTime: number
 activities.act2break.startTime: number
+activities.act2break.templateShopId: null
 activities.act2break.type: string
 activities.act2break: object
 activities.act2collection.endTime: number
@@ -6227,6 +6372,7 @@ activities.act2collection.medalGroupId: string
 activities.act2collection.name: string
 activities.act2collection.rewardEndTime: number
 activities.act2collection.startTime: number
+activities.act2collection.templateShopId: null
 activities.act2collection.type: string
 activities.act2collection: object
 activities.act2d5.endTime: number
@@ -6237,6 +6383,7 @@ activities.act2d5.medalGroupId: string
 activities.act2d5.name: string
 activities.act2d5.rewardEndTime: number
 activities.act2d5.startTime: number
+activities.act2d5.templateShopId: null
 activities.act2d5.type: string
 activities.act2d5: object
 activities.act2d8.endTime: number
@@ -6247,6 +6394,7 @@ activities.act2d8.medalGroupId: string
 activities.act2d8.name: string
 activities.act2d8.rewardEndTime: number
 activities.act2d8.startTime: number
+activities.act2d8.templateShopId: null
 activities.act2d8.type: string
 activities.act2d8: object
 activities.act2enemyduel.endTime: number
@@ -6257,6 +6405,7 @@ activities.act2enemyduel.medalGroupId: string
 activities.act2enemyduel.name: string
 activities.act2enemyduel.rewardEndTime: number
 activities.act2enemyduel.startTime: number
+activities.act2enemyduel.templateShopId: null
 activities.act2enemyduel.type: string
 activities.act2enemyduel: object
 activities.act2float.endTime: number
@@ -6267,6 +6416,7 @@ activities.act2float.medalGroupId: string
 activities.act2float.name: string
 activities.act2float.rewardEndTime: number
 activities.act2float.startTime: number
+activities.act2float.templateShopId: null
 activities.act2float.type: string
 activities.act2float: object
 activities.act2mainss.endTime: number
@@ -6277,6 +6427,7 @@ activities.act2mainss.medalGroupId: string
 activities.act2mainss.name: string
 activities.act2mainss.rewardEndTime: number
 activities.act2mainss.startTime: number
+activities.act2mainss.templateShopId: string
 activities.act2mainss.type: string
 activities.act2mainss: object
 activities.act2mine.endTime: number
@@ -6287,6 +6438,7 @@ activities.act2mine.medalGroupId: string
 activities.act2mine.name: string
 activities.act2mine.rewardEndTime: number
 activities.act2mine.startTime: number
+activities.act2mine.templateShopId: null
 activities.act2mine.type: string
 activities.act2mine: object
 activities.act2multi.endTime: number
@@ -6297,6 +6449,7 @@ activities.act2multi.medalGroupId: string
 activities.act2multi.name: string
 activities.act2multi.rewardEndTime: number
 activities.act2multi.startTime: number
+activities.act2multi.templateShopId: null
 activities.act2multi.type: string
 activities.act2multi: object
 activities.act2pray.endTime: number
@@ -6307,6 +6460,7 @@ activities.act2pray.medalGroupId: string
 activities.act2pray.name: string
 activities.act2pray.rewardEndTime: number
 activities.act2pray.startTime: number
+activities.act2pray.templateShopId: null
 activities.act2pray.type: string
 activities.act2pray: object
 activities.act2recruit.endTime: number
@@ -6317,6 +6471,7 @@ activities.act2recruit.medalGroupId: string
 activities.act2recruit.name: string
 activities.act2recruit.rewardEndTime: number
 activities.act2recruit.startTime: number
+activities.act2recruit.templateShopId: null
 activities.act2recruit.type: string
 activities.act2recruit: object
 activities.act2signvs.endTime: number
@@ -6327,6 +6482,7 @@ activities.act2signvs.medalGroupId: string
 activities.act2signvs.name: string
 activities.act2signvs.rewardEndTime: number
 activities.act2signvs.startTime: number
+activities.act2signvs.templateShopId: null
 activities.act2signvs.type: string
 activities.act2signvs: object
 activities.act2switch.endTime: number
@@ -6337,6 +6493,7 @@ activities.act2switch.medalGroupId: string
 activities.act2switch.name: string
 activities.act2switch.rewardEndTime: number
 activities.act2switch.startTime: number
+activities.act2switch.templateShopId: null
 activities.act2switch.type: string
 activities.act2switch: object
 activities.act2unique.endTime: number
@@ -6347,6 +6504,7 @@ activities.act2unique.medalGroupId: string
 activities.act2unique.name: string
 activities.act2unique.rewardEndTime: number
 activities.act2unique.startTime: number
+activities.act2unique.templateShopId: null
 activities.act2unique.type: string
 activities.act2unique: object
 activities.act2vmulti.endTime: number
@@ -6357,6 +6515,7 @@ activities.act2vmulti.medalGroupId: string
 activities.act2vmulti.name: string
 activities.act2vmulti.rewardEndTime: number
 activities.act2vmulti.startTime: number
+activities.act2vmulti.templateShopId: null
 activities.act2vmulti.type: string
 activities.act2vmulti: object
 activities.act30side.endTime: number
@@ -6367,6 +6526,7 @@ activities.act30side.medalGroupId: string
 activities.act30side.name: string
 activities.act30side.rewardEndTime: number
 activities.act30side.startTime: number
+activities.act30side.templateShopId: string
 activities.act30side.type: string
 activities.act30side: object
 activities.act30sign.endTime: number
@@ -6377,6 +6537,7 @@ activities.act30sign.medalGroupId: string
 activities.act30sign.name: string
 activities.act30sign.rewardEndTime: number
 activities.act30sign.startTime: number
+activities.act30sign.templateShopId: null
 activities.act30sign.type: string
 activities.act30sign: object
 activities.act30sre.endTime: number
@@ -6387,6 +6548,7 @@ activities.act30sre.medalGroupId: string
 activities.act30sre.name: string
 activities.act30sre.rewardEndTime: number
 activities.act30sre.startTime: number
+activities.act30sre.templateShopId: string
 activities.act30sre.type: string
 activities.act30sre: object
 activities.act31side.endTime: number
@@ -6397,6 +6559,7 @@ activities.act31side.medalGroupId: string
 activities.act31side.name: string
 activities.act31side.rewardEndTime: number
 activities.act31side.startTime: number
+activities.act31side.templateShopId: string
 activities.act31side.type: string
 activities.act31side: object
 activities.act31sign.endTime: number
@@ -6407,6 +6570,7 @@ activities.act31sign.medalGroupId: string
 activities.act31sign.name: string
 activities.act31sign.rewardEndTime: number
 activities.act31sign.startTime: number
+activities.act31sign.templateShopId: null
 activities.act31sign.type: string
 activities.act31sign: object
 activities.act31sre.endTime: number
@@ -6417,6 +6581,7 @@ activities.act31sre.medalGroupId: string
 activities.act31sre.name: string
 activities.act31sre.rewardEndTime: number
 activities.act31sre.startTime: number
+activities.act31sre.templateShopId: string
 activities.act31sre.type: string
 activities.act31sre: object
 activities.act32side.endTime: number
@@ -6427,6 +6592,7 @@ activities.act32side.medalGroupId: string
 activities.act32side.name: string
 activities.act32side.rewardEndTime: number
 activities.act32side.startTime: number
+activities.act32side.templateShopId: string
 activities.act32side.type: string
 activities.act32side: object
 activities.act32sign.endTime: number
@@ -6437,6 +6603,7 @@ activities.act32sign.medalGroupId: string
 activities.act32sign.name: string
 activities.act32sign.rewardEndTime: number
 activities.act32sign.startTime: number
+activities.act32sign.templateShopId: null
 activities.act32sign.type: string
 activities.act32sign: object
 activities.act33side.endTime: number
@@ -6447,6 +6614,7 @@ activities.act33side.medalGroupId: string
 activities.act33side.name: string
 activities.act33side.rewardEndTime: number
 activities.act33side.startTime: number
+activities.act33side.templateShopId: string
 activities.act33side.type: string
 activities.act33side: object
 activities.act33sign.endTime: number
@@ -6457,6 +6625,7 @@ activities.act33sign.medalGroupId: string
 activities.act33sign.name: string
 activities.act33sign.rewardEndTime: number
 activities.act33sign.startTime: number
+activities.act33sign.templateShopId: null
 activities.act33sign.type: string
 activities.act33sign: object
 activities.act33sre.endTime: number
@@ -6467,6 +6636,7 @@ activities.act33sre.medalGroupId: string
 activities.act33sre.name: string
 activities.act33sre.rewardEndTime: number
 activities.act33sre.startTime: number
+activities.act33sre.templateShopId: string
 activities.act33sre.type: string
 activities.act33sre: object
 activities.act34side.endTime: number
@@ -6477,6 +6647,7 @@ activities.act34side.medalGroupId: string
 activities.act34side.name: string
 activities.act34side.rewardEndTime: number
 activities.act34side.startTime: number
+activities.act34side.templateShopId: string
 activities.act34side.type: string
 activities.act34side: object
 activities.act34sign.endTime: number
@@ -6487,6 +6658,7 @@ activities.act34sign.medalGroupId: string
 activities.act34sign.name: string
 activities.act34sign.rewardEndTime: number
 activities.act34sign.startTime: number
+activities.act34sign.templateShopId: null
 activities.act34sign.type: string
 activities.act34sign: object
 activities.act34sre.endTime: number
@@ -6497,6 +6669,7 @@ activities.act34sre.medalGroupId: string
 activities.act34sre.name: string
 activities.act34sre.rewardEndTime: number
 activities.act34sre.startTime: number
+activities.act34sre.templateShopId: string
 activities.act34sre.type: string
 activities.act34sre: object
 activities.act35side.endTime: number
@@ -6507,6 +6680,7 @@ activities.act35side.medalGroupId: string
 activities.act35side.name: string
 activities.act35side.rewardEndTime: number
 activities.act35side.startTime: number
+activities.act35side.templateShopId: string
 activities.act35side.type: string
 activities.act35side: object
 activities.act35sign.endTime: number
@@ -6517,6 +6691,7 @@ activities.act35sign.medalGroupId: string
 activities.act35sign.name: string
 activities.act35sign.rewardEndTime: number
 activities.act35sign.startTime: number
+activities.act35sign.templateShopId: null
 activities.act35sign.type: string
 activities.act35sign: object
 activities.act35sre.endTime: number
@@ -6527,6 +6702,7 @@ activities.act35sre.medalGroupId: string
 activities.act35sre.name: string
 activities.act35sre.rewardEndTime: number
 activities.act35sre.startTime: number
+activities.act35sre.templateShopId: string
 activities.act35sre.type: string
 activities.act35sre: object
 activities.act36side.endTime: number
@@ -6537,6 +6713,7 @@ activities.act36side.medalGroupId: string
 activities.act36side.name: string
 activities.act36side.rewardEndTime: number
 activities.act36side.startTime: number
+activities.act36side.templateShopId: string
 activities.act36side.type: string
 activities.act36side: object
 activities.act36sign.endTime: number
@@ -6547,6 +6724,7 @@ activities.act36sign.medalGroupId: string
 activities.act36sign.name: string
 activities.act36sign.rewardEndTime: number
 activities.act36sign.startTime: number
+activities.act36sign.templateShopId: null
 activities.act36sign.type: string
 activities.act36sign: object
 activities.act37side.endTime: number
@@ -6557,6 +6735,7 @@ activities.act37side.medalGroupId: string
 activities.act37side.name: string
 activities.act37side.rewardEndTime: number
 activities.act37side.startTime: number
+activities.act37side.templateShopId: string
 activities.act37side.type: string
 activities.act37side: object
 activities.act37sign.endTime: number
@@ -6567,6 +6746,7 @@ activities.act37sign.medalGroupId: string
 activities.act37sign.name: string
 activities.act37sign.rewardEndTime: number
 activities.act37sign.startTime: number
+activities.act37sign.templateShopId: null
 activities.act37sign.type: string
 activities.act37sign: object
 activities.act37sre.endTime: number
@@ -6577,6 +6757,7 @@ activities.act37sre.medalGroupId: string
 activities.act37sre.name: string
 activities.act37sre.rewardEndTime: number
 activities.act37sre.startTime: number
+activities.act37sre.templateShopId: string
 activities.act37sre.type: string
 activities.act37sre: object
 activities.act38d1.endTime: number
@@ -6587,6 +6768,7 @@ activities.act38d1.medalGroupId: string
 activities.act38d1.name: string
 activities.act38d1.rewardEndTime: number
 activities.act38d1.startTime: number
+activities.act38d1.templateShopId: string
 activities.act38d1.type: string
 activities.act38d1: object
 activities.act38side.endTime: number
@@ -6597,6 +6779,7 @@ activities.act38side.medalGroupId: string
 activities.act38side.name: string
 activities.act38side.rewardEndTime: number
 activities.act38side.startTime: number
+activities.act38side.templateShopId: string
 activities.act38side.type: string
 activities.act38side: object
 activities.act38sign.endTime: number
@@ -6607,6 +6790,7 @@ activities.act38sign.medalGroupId: string
 activities.act38sign.name: string
 activities.act38sign.rewardEndTime: number
 activities.act38sign.startTime: number
+activities.act38sign.templateShopId: null
 activities.act38sign.type: string
 activities.act38sign: object
 activities.act38sre.endTime: number
@@ -6617,6 +6801,7 @@ activities.act38sre.medalGroupId: string
 activities.act38sre.name: string
 activities.act38sre.rewardEndTime: number
 activities.act38sre.startTime: number
+activities.act38sre.templateShopId: string
 activities.act38sre.type: string
 activities.act38sre: object
 activities.act39side.endTime: number
@@ -6627,6 +6812,7 @@ activities.act39side.medalGroupId: string
 activities.act39side.name: string
 activities.act39side.rewardEndTime: number
 activities.act39side.startTime: number
+activities.act39side.templateShopId: string
 activities.act39side.type: string
 activities.act39side: object
 activities.act39sign.endTime: number
@@ -6637,6 +6823,7 @@ activities.act39sign.medalGroupId: string
 activities.act39sign.name: string
 activities.act39sign.rewardEndTime: number
 activities.act39sign.startTime: number
+activities.act39sign.templateShopId: null
 activities.act39sign.type: string
 activities.act39sign: object
 activities.act39sre.endTime: number
@@ -6647,6 +6834,7 @@ activities.act39sre.medalGroupId: string
 activities.act39sre.name: string
 activities.act39sre.rewardEndTime: number
 activities.act39sre.startTime: number
+activities.act39sre.templateShopId: string
 activities.act39sre.type: string
 activities.act39sre: object
 activities.act3blessing.endTime: number
@@ -6657,6 +6845,7 @@ activities.act3blessing.medalGroupId: string
 activities.act3blessing.name: string
 activities.act3blessing.rewardEndTime: number
 activities.act3blessing.startTime: number
+activities.act3blessing.templateShopId: null
 activities.act3blessing.type: string
 activities.act3blessing: object
 activities.act3bossrush.endTime: number
@@ -6667,6 +6856,7 @@ activities.act3bossrush.medalGroupId: string
 activities.act3bossrush.name: string
 activities.act3bossrush.rewardEndTime: number
 activities.act3bossrush.startTime: number
+activities.act3bossrush.templateShopId: null
 activities.act3bossrush.type: string
 activities.act3bossrush: object
 activities.act3collection.endTime: number
@@ -6677,6 +6867,7 @@ activities.act3collection.medalGroupId: string
 activities.act3collection.name: string
 activities.act3collection.rewardEndTime: number
 activities.act3collection.startTime: number
+activities.act3collection.templateShopId: null
 activities.act3collection.type: string
 activities.act3collection: object
 activities.act3d0.endTime: number
@@ -6687,6 +6878,7 @@ activities.act3d0.medalGroupId: string
 activities.act3d0.name: string
 activities.act3d0.rewardEndTime: number
 activities.act3d0.startTime: number
+activities.act3d0.templateShopId: null
 activities.act3d0.type: string
 activities.act3d0: object
 activities.act3d5.endTime: number
@@ -6697,6 +6889,7 @@ activities.act3d5.medalGroupId: string
 activities.act3d5.name: string
 activities.act3d5.rewardEndTime: number
 activities.act3d5.startTime: number
+activities.act3d5.templateShopId: null
 activities.act3d5.type: string
 activities.act3d5: object
 activities.act3d7.endTime: number
@@ -6707,6 +6900,7 @@ activities.act3d7.medalGroupId: string
 activities.act3d7.name: string
 activities.act3d7.rewardEndTime: number
 activities.act3d7.startTime: number
+activities.act3d7.templateShopId: null
 activities.act3d7.type: string
 activities.act3d7: object
 activities.act3fun.endTime: number
@@ -6717,6 +6911,7 @@ activities.act3fun.medalGroupId: string
 activities.act3fun.name: string
 activities.act3fun.rewardEndTime: number
 activities.act3fun.startTime: number
+activities.act3fun.templateShopId: null
 activities.act3fun.type: string
 activities.act3fun: object
 activities.act3mainss.endTime: number
@@ -6727,6 +6922,7 @@ activities.act3mainss.medalGroupId: string
 activities.act3mainss.name: string
 activities.act3mainss.rewardEndTime: number
 activities.act3mainss.startTime: number
+activities.act3mainss.templateShopId: string
 activities.act3mainss.type: string
 activities.act3mainss: object
 activities.act3mine.endTime: number
@@ -6737,6 +6933,7 @@ activities.act3mine.medalGroupId: string
 activities.act3mine.name: string
 activities.act3mine.rewardEndTime: number
 activities.act3mine.startTime: number
+activities.act3mine.templateShopId: null
 activities.act3mine.type: string
 activities.act3mine: object
 activities.act3pray.endTime: number
@@ -6747,6 +6944,7 @@ activities.act3pray.medalGroupId: string
 activities.act3pray.name: string
 activities.act3pray.rewardEndTime: number
 activities.act3pray.startTime: number
+activities.act3pray.templateShopId: null
 activities.act3pray.type: string
 activities.act3pray: object
 activities.act3signvs.endTime: number
@@ -6757,6 +6955,7 @@ activities.act3signvs.medalGroupId: string
 activities.act3signvs.name: string
 activities.act3signvs.rewardEndTime: number
 activities.act3signvs.startTime: number
+activities.act3signvs.templateShopId: null
 activities.act3signvs.type: string
 activities.act3signvs: object
 activities.act3switch.endTime: number
@@ -6767,6 +6966,7 @@ activities.act3switch.medalGroupId: string
 activities.act3switch.name: string
 activities.act3switch.rewardEndTime: number
 activities.act3switch.startTime: number
+activities.act3switch.templateShopId: null
 activities.act3switch.type: string
 activities.act3switch: object
 activities.act3unique.endTime: number
@@ -6777,6 +6977,7 @@ activities.act3unique.medalGroupId: string
 activities.act3unique.name: string
 activities.act3unique.rewardEndTime: number
 activities.act3unique.startTime: number
+activities.act3unique.templateShopId: null
 activities.act3unique.type: string
 activities.act3unique: object
 activities.act40side.endTime: number
@@ -6787,6 +6988,7 @@ activities.act40side.medalGroupId: string
 activities.act40side.name: string
 activities.act40side.rewardEndTime: number
 activities.act40side.startTime: number
+activities.act40side.templateShopId: string
 activities.act40side.type: string
 activities.act40side: object
 activities.act40sign.endTime: number
@@ -6797,6 +6999,7 @@ activities.act40sign.medalGroupId: string
 activities.act40sign.name: string
 activities.act40sign.rewardEndTime: number
 activities.act40sign.startTime: number
+activities.act40sign.templateShopId: null
 activities.act40sign.type: string
 activities.act40sign: object
 activities.act40sre.endTime: number
@@ -6807,6 +7010,7 @@ activities.act40sre.medalGroupId: string
 activities.act40sre.name: string
 activities.act40sre.rewardEndTime: number
 activities.act40sre.startTime: number
+activities.act40sre.templateShopId: string
 activities.act40sre.type: string
 activities.act40sre: object
 activities.act41side.endTime: number
@@ -6817,6 +7021,7 @@ activities.act41side.medalGroupId: string
 activities.act41side.name: string
 activities.act41side.rewardEndTime: number
 activities.act41side.startTime: number
+activities.act41side.templateShopId: string
 activities.act41side.type: string
 activities.act41side: object
 activities.act41sign.endTime: number
@@ -6827,6 +7032,7 @@ activities.act41sign.medalGroupId: string
 activities.act41sign.name: string
 activities.act41sign.rewardEndTime: number
 activities.act41sign.startTime: number
+activities.act41sign.templateShopId: null
 activities.act41sign.type: string
 activities.act41sign: object
 activities.act41sre.endTime: number
@@ -6837,6 +7043,7 @@ activities.act41sre.medalGroupId: string
 activities.act41sre.name: string
 activities.act41sre.rewardEndTime: number
 activities.act41sre.startTime: number
+activities.act41sre.templateShopId: string
 activities.act41sre.type: string
 activities.act41sre: object
 activities.act42d0.endTime: number
@@ -6847,6 +7054,7 @@ activities.act42d0.medalGroupId: string
 activities.act42d0.name: string
 activities.act42d0.rewardEndTime: number
 activities.act42d0.startTime: number
+activities.act42d0.templateShopId: null
 activities.act42d0.type: string
 activities.act42d0: object
 activities.act42side.endTime: number
@@ -6857,6 +7065,7 @@ activities.act42side.medalGroupId: string
 activities.act42side.name: string
 activities.act42side.rewardEndTime: number
 activities.act42side.startTime: number
+activities.act42side.templateShopId: string
 activities.act42side.type: string
 activities.act42side: object
 activities.act42sign.endTime: number
@@ -6867,6 +7076,7 @@ activities.act42sign.medalGroupId: string
 activities.act42sign.name: string
 activities.act42sign.rewardEndTime: number
 activities.act42sign.startTime: number
+activities.act42sign.templateShopId: null
 activities.act42sign.type: string
 activities.act42sign: object
 activities.act43side.endTime: number
@@ -6877,6 +7087,7 @@ activities.act43side.medalGroupId: string
 activities.act43side.name: string
 activities.act43side.rewardEndTime: number
 activities.act43side.startTime: number
+activities.act43side.templateShopId: string
 activities.act43side.type: string
 activities.act43side: object
 activities.act43sign.endTime: number
@@ -6887,6 +7098,7 @@ activities.act43sign.medalGroupId: string
 activities.act43sign.name: string
 activities.act43sign.rewardEndTime: number
 activities.act43sign.startTime: number
+activities.act43sign.templateShopId: null
 activities.act43sign.type: string
 activities.act43sign: object
 activities.act44side.endTime: number
@@ -6897,6 +7109,7 @@ activities.act44side.medalGroupId: string
 activities.act44side.name: string
 activities.act44side.rewardEndTime: number
 activities.act44side.startTime: number
+activities.act44side.templateShopId: string
 activities.act44side.type: string
 activities.act44side: object
 activities.act44sign.endTime: number
@@ -6907,6 +7120,7 @@ activities.act44sign.medalGroupId: string
 activities.act44sign.name: string
 activities.act44sign.rewardEndTime: number
 activities.act44sign.startTime: number
+activities.act44sign.templateShopId: null
 activities.act44sign.type: string
 activities.act44sign: object
 activities.act45side.endTime: number
@@ -6917,6 +7131,7 @@ activities.act45side.medalGroupId: string
 activities.act45side.name: string
 activities.act45side.rewardEndTime: number
 activities.act45side.startTime: number
+activities.act45side.templateShopId: string
 activities.act45side.type: string
 activities.act45side: object
 activities.act45sign.endTime: number
@@ -6927,6 +7142,7 @@ activities.act45sign.medalGroupId: string
 activities.act45sign.name: string
 activities.act45sign.rewardEndTime: number
 activities.act45sign.startTime: number
+activities.act45sign.templateShopId: null
 activities.act45sign.type: string
 activities.act45sign: object
 activities.act46side.endTime: number
@@ -6937,6 +7153,7 @@ activities.act46side.medalGroupId: string
 activities.act46side.name: string
 activities.act46side.rewardEndTime: number
 activities.act46side.startTime: number
+activities.act46side.templateShopId: string
 activities.act46side.type: string
 activities.act46side: object
 activities.act46sign.endTime: number
@@ -6947,6 +7164,7 @@ activities.act46sign.medalGroupId: string
 activities.act46sign.name: string
 activities.act46sign.rewardEndTime: number
 activities.act46sign.startTime: number
+activities.act46sign.templateShopId: null
 activities.act46sign.type: string
 activities.act46sign: object
 activities.act47side.endTime: number
@@ -6957,6 +7175,7 @@ activities.act47side.medalGroupId: string
 activities.act47side.name: string
 activities.act47side.rewardEndTime: number
 activities.act47side.startTime: number
+activities.act47side.templateShopId: string
 activities.act47side.type: string
 activities.act47side: object
 activities.act47sign.endTime: number
@@ -6967,6 +7186,7 @@ activities.act47sign.medalGroupId: string
 activities.act47sign.name: string
 activities.act47sign.rewardEndTime: number
 activities.act47sign.startTime: number
+activities.act47sign.templateShopId: null
 activities.act47sign.type: string
 activities.act47sign: object
 activities.act48side.endTime: number
@@ -6977,6 +7197,7 @@ activities.act48side.medalGroupId: string
 activities.act48side.name: string
 activities.act48side.rewardEndTime: number
 activities.act48side.startTime: number
+activities.act48side.templateShopId: string
 activities.act48side.type: string
 activities.act48side: object
 activities.act48sign.endTime: number
@@ -6987,6 +7208,7 @@ activities.act48sign.medalGroupId: string
 activities.act48sign.name: string
 activities.act48sign.rewardEndTime: number
 activities.act48sign.startTime: number
+activities.act48sign.templateShopId: null
 activities.act48sign.type: string
 activities.act48sign: object
 activities.act49side.endTime: number
@@ -6997,6 +7219,7 @@ activities.act49side.medalGroupId: string
 activities.act49side.name: string
 activities.act49side.rewardEndTime: number
 activities.act49side.startTime: number
+activities.act49side.templateShopId: string
 activities.act49side.type: string
 activities.act49side: object
 activities.act49sign.endTime: number
@@ -7007,6 +7230,7 @@ activities.act49sign.medalGroupId: string
 activities.act49sign.name: string
 activities.act49sign.rewardEndTime: number
 activities.act49sign.startTime: number
+activities.act49sign.templateShopId: null
 activities.act49sign.type: string
 activities.act49sign: object
 activities.act4bossrush.endTime: number
@@ -7017,6 +7241,7 @@ activities.act4bossrush.medalGroupId: string
 activities.act4bossrush.name: string
 activities.act4bossrush.rewardEndTime: number
 activities.act4bossrush.startTime: number
+activities.act4bossrush.templateShopId: null
 activities.act4bossrush.type: string
 activities.act4bossrush: object
 activities.act4collection.endTime: number
@@ -7027,6 +7252,7 @@ activities.act4collection.medalGroupId: string
 activities.act4collection.name: string
 activities.act4collection.rewardEndTime: number
 activities.act4collection.startTime: number
+activities.act4collection.templateShopId: null
 activities.act4collection.type: string
 activities.act4collection: object
 activities.act4d0.endTime: number
@@ -7037,6 +7263,7 @@ activities.act4d0.medalGroupId: string
 activities.act4d0.name: string
 activities.act4d0.rewardEndTime: number
 activities.act4d0.startTime: number
+activities.act4d0.templateShopId: null
 activities.act4d0.type: string
 activities.act4d0: object
 activities.act4d2.endTime: number
@@ -7047,6 +7274,7 @@ activities.act4d2.medalGroupId: string
 activities.act4d2.name: string
 activities.act4d2.rewardEndTime: number
 activities.act4d2.startTime: number
+activities.act4d2.templateShopId: null
 activities.act4d2.type: string
 activities.act4d2: object
 activities.act4fun.endTime: number
@@ -7057,6 +7285,7 @@ activities.act4fun.medalGroupId: string
 activities.act4fun.name: string
 activities.act4fun.rewardEndTime: number
 activities.act4fun.startTime: number
+activities.act4fun.templateShopId: null
 activities.act4fun.type: string
 activities.act4fun: object
 activities.act4mine.endTime: number
@@ -7067,6 +7296,7 @@ activities.act4mine.medalGroupId: string
 activities.act4mine.name: string
 activities.act4mine.rewardEndTime: number
 activities.act4mine.startTime: number
+activities.act4mine.templateShopId: null
 activities.act4mine.type: string
 activities.act4mine: object
 activities.act4pray.endTime: number
@@ -7077,6 +7307,7 @@ activities.act4pray.medalGroupId: string
 activities.act4pray.name: string
 activities.act4pray.rewardEndTime: number
 activities.act4pray.startTime: number
+activities.act4pray.templateShopId: null
 activities.act4pray.type: string
 activities.act4pray: object
 activities.act50sign.endTime: number
@@ -7087,6 +7318,7 @@ activities.act50sign.medalGroupId: string
 activities.act50sign.name: string
 activities.act50sign.rewardEndTime: number
 activities.act50sign.startTime: number
+activities.act50sign.templateShopId: null
 activities.act50sign.type: string
 activities.act50sign: object
 activities.act51sign.endTime: number
@@ -7097,6 +7329,7 @@ activities.act51sign.medalGroupId: string
 activities.act51sign.name: string
 activities.act51sign.rewardEndTime: number
 activities.act51sign.startTime: number
+activities.act51sign.templateShopId: null
 activities.act51sign.type: string
 activities.act51sign: object
 activities.act52sign.endTime: number
@@ -7107,6 +7340,7 @@ activities.act52sign.medalGroupId: string
 activities.act52sign.name: string
 activities.act52sign.rewardEndTime: number
 activities.act52sign.startTime: number
+activities.act52sign.templateShopId: null
 activities.act52sign.type: string
 activities.act52sign: object
 activities.act53sign.endTime: number
@@ -7117,6 +7351,7 @@ activities.act53sign.medalGroupId: string
 activities.act53sign.name: string
 activities.act53sign.rewardEndTime: number
 activities.act53sign.startTime: number
+activities.act53sign.templateShopId: null
 activities.act53sign.type: string
 activities.act53sign: object
 activities.act54sign.endTime: number
@@ -7127,6 +7362,7 @@ activities.act54sign.medalGroupId: string
 activities.act54sign.name: string
 activities.act54sign.rewardEndTime: number
 activities.act54sign.startTime: number
+activities.act54sign.templateShopId: null
 activities.act54sign.type: string
 activities.act54sign: object
 activities.act55sign.endTime: number
@@ -7137,6 +7373,7 @@ activities.act55sign.medalGroupId: string
 activities.act55sign.name: string
 activities.act55sign.rewardEndTime: number
 activities.act55sign.startTime: number
+activities.act55sign.templateShopId: null
 activities.act55sign.type: string
 activities.act55sign: object
 activities.act56sign.endTime: number
@@ -7147,6 +7384,7 @@ activities.act56sign.medalGroupId: string
 activities.act56sign.name: string
 activities.act56sign.rewardEndTime: number
 activities.act56sign.startTime: number
+activities.act56sign.templateShopId: null
 activities.act56sign.type: string
 activities.act56sign: object
 activities.act57sign.endTime: number
@@ -7157,6 +7395,7 @@ activities.act57sign.medalGroupId: string
 activities.act57sign.name: string
 activities.act57sign.rewardEndTime: number
 activities.act57sign.startTime: number
+activities.act57sign.templateShopId: null
 activities.act57sign.type: string
 activities.act57sign: object
 activities.act5bossrush.endTime: number
@@ -7167,6 +7406,7 @@ activities.act5bossrush.medalGroupId: string
 activities.act5bossrush.name: string
 activities.act5bossrush.rewardEndTime: number
 activities.act5bossrush.startTime: number
+activities.act5bossrush.templateShopId: null
 activities.act5bossrush.type: string
 activities.act5bossrush: object
 activities.act5collection.endTime: number
@@ -7177,6 +7417,7 @@ activities.act5collection.medalGroupId: string
 activities.act5collection.name: string
 activities.act5collection.rewardEndTime: number
 activities.act5collection.startTime: number
+activities.act5collection.templateShopId: null
 activities.act5collection.type: string
 activities.act5collection: object
 activities.act5d0.endTime: number
@@ -7187,6 +7428,7 @@ activities.act5d0.medalGroupId: string
 activities.act5d0.name: string
 activities.act5d0.rewardEndTime: number
 activities.act5d0.startTime: number
+activities.act5d0.templateShopId: null
 activities.act5d0.type: string
 activities.act5d0: object
 activities.act5d1.endTime: number
@@ -7197,6 +7439,7 @@ activities.act5d1.medalGroupId: string
 activities.act5d1.name: string
 activities.act5d1.rewardEndTime: number
 activities.act5d1.startTime: number
+activities.act5d1.templateShopId: null
 activities.act5d1.type: string
 activities.act5d1: object
 activities.act5fun.endTime: number
@@ -7207,6 +7450,7 @@ activities.act5fun.medalGroupId: string
 activities.act5fun.name: string
 activities.act5fun.rewardEndTime: number
 activities.act5fun.startTime: number
+activities.act5fun.templateShopId: null
 activities.act5fun.type: string
 activities.act5fun: object
 activities.act5mine.endTime: number
@@ -7217,6 +7461,7 @@ activities.act5mine.medalGroupId: string
 activities.act5mine.name: string
 activities.act5mine.rewardEndTime: number
 activities.act5mine.startTime: number
+activities.act5mine.templateShopId: null
 activities.act5mine.type: string
 activities.act5mine: object
 activities.act5pray.endTime: number
@@ -7227,6 +7472,7 @@ activities.act5pray.medalGroupId: string
 activities.act5pray.name: string
 activities.act5pray.rewardEndTime: number
 activities.act5pray.startTime: number
+activities.act5pray.templateShopId: null
 activities.act5pray.type: string
 activities.act5pray: object
 activities.act5sre.endTime: number
@@ -7237,6 +7483,7 @@ activities.act5sre.medalGroupId: string
 activities.act5sre.name: string
 activities.act5sre.rewardEndTime: number
 activities.act5sre.startTime: number
+activities.act5sre.templateShopId: string
 activities.act5sre.type: string
 activities.act5sre: object
 activities.act5switch.endTime: number
@@ -7247,6 +7494,7 @@ activities.act5switch.medalGroupId: string
 activities.act5switch.name: string
 activities.act5switch.rewardEndTime: number
 activities.act5switch.startTime: number
+activities.act5switch.templateShopId: null
 activities.act5switch.type: string
 activities.act5switch: object
 activities.act6bossrush.endTime: number
@@ -7257,6 +7505,7 @@ activities.act6bossrush.medalGroupId: string
 activities.act6bossrush.name: string
 activities.act6bossrush.rewardEndTime: number
 activities.act6bossrush.startTime: number
+activities.act6bossrush.templateShopId: null
 activities.act6bossrush.type: string
 activities.act6bossrush: object
 activities.act6collection.endTime: number
@@ -7267,6 +7516,7 @@ activities.act6collection.medalGroupId: string
 activities.act6collection.name: string
 activities.act6collection.rewardEndTime: number
 activities.act6collection.startTime: number
+activities.act6collection.templateShopId: null
 activities.act6collection.type: string
 activities.act6collection: object
 activities.act6d0.endTime: number
@@ -7277,6 +7527,7 @@ activities.act6d0.medalGroupId: string
 activities.act6d0.name: string
 activities.act6d0.rewardEndTime: number
 activities.act6d0.startTime: number
+activities.act6d0.templateShopId: null
 activities.act6d0.type: string
 activities.act6d0: object
 activities.act6d5.endTime: number
@@ -7287,6 +7538,7 @@ activities.act6d5.medalGroupId: string
 activities.act6d5.name: string
 activities.act6d5.rewardEndTime: number
 activities.act6d5.startTime: number
+activities.act6d5.templateShopId: null
 activities.act6d5.type: string
 activities.act6d5: object
 activities.act6d7.endTime: number
@@ -7297,6 +7549,7 @@ activities.act6d7.medalGroupId: string
 activities.act6d7.name: string
 activities.act6d7.rewardEndTime: number
 activities.act6d7.startTime: number
+activities.act6d7.templateShopId: null
 activities.act6d7.type: string
 activities.act6d7: object
 activities.act6d8.endTime: number
@@ -7307,6 +7560,7 @@ activities.act6d8.medalGroupId: string
 activities.act6d8.name: string
 activities.act6d8.rewardEndTime: number
 activities.act6d8.startTime: number
+activities.act6d8.templateShopId: null
 activities.act6d8.type: string
 activities.act6d8: object
 activities.act6fun.endTime: number
@@ -7317,6 +7571,7 @@ activities.act6fun.medalGroupId: string
 activities.act6fun.name: string
 activities.act6fun.rewardEndTime: number
 activities.act6fun.startTime: number
+activities.act6fun.templateShopId: null
 activities.act6fun.type: string
 activities.act6fun: object
 activities.act6login.endTime: number
@@ -7327,6 +7582,7 @@ activities.act6login.medalGroupId: string
 activities.act6login.name: string
 activities.act6login.rewardEndTime: number
 activities.act6login.startTime: number
+activities.act6login.templateShopId: null
 activities.act6login.type: string
 activities.act6login: object
 activities.act6pray.endTime: number
@@ -7337,6 +7593,7 @@ activities.act6pray.medalGroupId: string
 activities.act6pray.name: string
 activities.act6pray.rewardEndTime: number
 activities.act6pray.startTime: number
+activities.act6pray.templateShopId: null
 activities.act6pray.type: string
 activities.act6pray: object
 activities.act6sre.endTime: number
@@ -7347,6 +7604,7 @@ activities.act6sre.medalGroupId: string
 activities.act6sre.name: string
 activities.act6sre.rewardEndTime: number
 activities.act6sre.startTime: number
+activities.act6sre.templateShopId: string
 activities.act6sre.type: string
 activities.act6sre: object
 activities.act7collection.endTime: number
@@ -7357,6 +7615,7 @@ activities.act7collection.medalGroupId: string
 activities.act7collection.name: string
 activities.act7collection.rewardEndTime: number
 activities.act7collection.startTime: number
+activities.act7collection.templateShopId: null
 activities.act7collection.type: string
 activities.act7collection: object
 activities.act7d1.endTime: number
@@ -7367,6 +7626,7 @@ activities.act7d1.medalGroupId: string
 activities.act7d1.name: string
 activities.act7d1.rewardEndTime: number
 activities.act7d1.startTime: number
+activities.act7d1.templateShopId: null
 activities.act7d1.type: string
 activities.act7d1: object
 activities.act7d5.endTime: number
@@ -7377,6 +7637,7 @@ activities.act7d5.medalGroupId: string
 activities.act7d5.name: string
 activities.act7d5.rewardEndTime: number
 activities.act7d5.startTime: number
+activities.act7d5.templateShopId: null
 activities.act7d5.type: string
 activities.act7d5: object
 activities.act7login.endTime: number
@@ -7387,6 +7648,7 @@ activities.act7login.medalGroupId: string
 activities.act7login.name: string
 activities.act7login.rewardEndTime: number
 activities.act7login.startTime: number
+activities.act7login.templateShopId: null
 activities.act7login.type: string
 activities.act7login: object
 activities.act7mini.endTime: number
@@ -7397,6 +7659,7 @@ activities.act7mini.medalGroupId: string
 activities.act7mini.name: string
 activities.act7mini.rewardEndTime: number
 activities.act7mini.startTime: number
+activities.act7mini.templateShopId: string
 activities.act7mini.type: string
 activities.act7mini: object
 activities.act7pray.endTime: number
@@ -7407,6 +7670,7 @@ activities.act7pray.medalGroupId: string
 activities.act7pray.name: string
 activities.act7pray.rewardEndTime: number
 activities.act7pray.startTime: number
+activities.act7pray.templateShopId: null
 activities.act7pray.type: string
 activities.act7pray: object
 activities.act7sre.endTime: number
@@ -7417,6 +7681,7 @@ activities.act7sre.medalGroupId: string
 activities.act7sre.name: string
 activities.act7sre.rewardEndTime: number
 activities.act7sre.startTime: number
+activities.act7sre.templateShopId: string
 activities.act7sre.type: string
 activities.act7sre: object
 activities.act8login.endTime: number
@@ -7427,6 +7692,7 @@ activities.act8login.medalGroupId: string
 activities.act8login.name: string
 activities.act8login.rewardEndTime: number
 activities.act8login.startTime: number
+activities.act8login.templateShopId: null
 activities.act8login.type: string
 activities.act8login: object
 activities.act8mini.endTime: number
@@ -7437,6 +7703,7 @@ activities.act8mini.medalGroupId: string
 activities.act8mini.name: string
 activities.act8mini.rewardEndTime: number
 activities.act8mini.startTime: number
+activities.act8mini.templateShopId: string
 activities.act8mini.type: string
 activities.act8mini: object
 activities.act8pray.endTime: number
@@ -7447,6 +7714,7 @@ activities.act8pray.medalGroupId: string
 activities.act8pray.name: string
 activities.act8pray.rewardEndTime: number
 activities.act8pray.startTime: number
+activities.act8pray.templateShopId: null
 activities.act8pray.type: string
 activities.act8pray: object
 activities.act8sre.endTime: number
@@ -7457,6 +7725,7 @@ activities.act8sre.medalGroupId: string
 activities.act8sre.name: string
 activities.act8sre.rewardEndTime: number
 activities.act8sre.startTime: number
+activities.act8sre.templateShopId: string
 activities.act8sre.type: string
 activities.act8sre: object
 activities.act8switch.endTime: number
@@ -7467,6 +7736,7 @@ activities.act8switch.medalGroupId: string
 activities.act8switch.name: string
 activities.act8switch.rewardEndTime: number
 activities.act8switch.startTime: number
+activities.act8switch.templateShopId: null
 activities.act8switch.type: string
 activities.act8switch: object
 activities.act9d0.endTime: number
@@ -7477,6 +7747,7 @@ activities.act9d0.medalGroupId: string
 activities.act9d0.name: string
 activities.act9d0.rewardEndTime: number
 activities.act9d0.startTime: number
+activities.act9d0.templateShopId: string
 activities.act9d0.type: string
 activities.act9d0: object
 activities.act9d1d1.endTime: number
@@ -7487,6 +7758,7 @@ activities.act9d1d1.medalGroupId: string
 activities.act9d1d1.name: string
 activities.act9d1d1.rewardEndTime: number
 activities.act9d1d1.startTime: number
+activities.act9d1d1.templateShopId: null
 activities.act9d1d1.type: string
 activities.act9d1d1: object
 activities.act9d1d2.endTime: number
@@ -7497,6 +7769,7 @@ activities.act9d1d2.medalGroupId: string
 activities.act9d1d2.name: string
 activities.act9d1d2.rewardEndTime: number
 activities.act9d1d2.startTime: number
+activities.act9d1d2.templateShopId: null
 activities.act9d1d2.type: string
 activities.act9d1d2: object
 activities.act9d4.endTime: number
@@ -7507,6 +7780,7 @@ activities.act9d4.medalGroupId: string
 activities.act9d4.name: string
 activities.act9d4.rewardEndTime: number
 activities.act9d4.startTime: number
+activities.act9d4.templateShopId: null
 activities.act9d4.type: string
 activities.act9d4: object
 activities.act9login.endTime: number
@@ -7517,6 +7791,7 @@ activities.act9login.medalGroupId: string
 activities.act9login.name: string
 activities.act9login.rewardEndTime: number
 activities.act9login.startTime: number
+activities.act9login.templateShopId: null
 activities.act9login.type: string
 activities.act9login: object
 activities.act9mini.endTime: number
@@ -7527,6 +7802,7 @@ activities.act9mini.medalGroupId: string
 activities.act9mini.name: string
 activities.act9mini.rewardEndTime: number
 activities.act9mini.startTime: number
+activities.act9mini.templateShopId: string
 activities.act9mini.type: string
 activities.act9mini: object
 activities.act9pray.endTime: number
@@ -7537,6 +7813,7 @@ activities.act9pray.medalGroupId: string
 activities.act9pray.name: string
 activities.act9pray.rewardEndTime: number
 activities.act9pray.startTime: number
+activities.act9pray.templateShopId: null
 activities.act9pray.type: string
 activities.act9pray: object
 activities.act9sre.endTime: number
@@ -7547,6 +7824,7 @@ activities.act9sre.medalGroupId: string
 activities.act9sre.name: string
 activities.act9sre.rewardEndTime: number
 activities.act9sre.startTime: number
+activities.act9sre.templateShopId: string
 activities.act9sre.type: string
 activities.act9sre: object
 activities: object
