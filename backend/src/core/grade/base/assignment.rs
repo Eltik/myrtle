@@ -2594,19 +2594,25 @@ pub fn fill_remaining_slots(
             .iter()
             .filter(|op| !assigned.contains(&op.char_id))
             .min_by(|a, b| {
+                // A Control-Center bench seat goes to someone who brings the
+                // room SOMETHING (clue / HR / training speed, a morale aura)
+                // before a blank operator - a level-1 E0 with no skill
+                // anywhere costs nothing elsewhere but is worth nothing here
+                // either (user feedback 2026-09-15). Among the valued, the
+                // cheapest seat elsewhere, then the larger value.
                 let ka = other_room_skill_count(a, room_type, building_data);
                 let kb = other_room_skill_count(b, room_type, building_data);
-                // Among equally-spare candidates for a CONTROL seat, prefer the
-                // one whose non-production CC skills are worth the most - the
-                // seat is free either way, so clue/HR/training value rides along.
-                ka.cmp(&kb).then_with(|| {
-                    if room_type != "CONTROL" {
-                        return std::cmp::Ordering::Equal;
-                    }
-                    cc_spare_seat_value(b, building_data, registry)
-                        .partial_cmp(&cc_spare_seat_value(a, building_data, registry))
-                        .unwrap_or(std::cmp::Ordering::Equal)
-                })
+                if room_type != "CONTROL" {
+                    return ka.cmp(&kb);
+                }
+                let va = cc_spare_seat_value(a, building_data, registry)
+                    + cc_global_morale_recovery(a, registry, building_data);
+                let vb = cc_spare_seat_value(b, building_data, registry)
+                    + cc_global_morale_recovery(b, registry, building_data);
+                (va <= 0.0)
+                    .cmp(&(vb <= 0.0))
+                    .then_with(|| ka.cmp(&kb))
+                    .then_with(|| vb.partial_cmp(&va).unwrap_or(std::cmp::Ordering::Equal))
             });
         let Some(op) = pick else { break };
         assigned.insert(op.char_id.clone());

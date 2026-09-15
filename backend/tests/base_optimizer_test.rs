@@ -4692,6 +4692,29 @@ fn morgan_siege_proviso_with_delphine_read_ninety_five() {
     );
 }
 
+/// A Control-Center bench seat prefers an operator who brings the room
+/// something over a blank: Blaze the Igniting Spark (a +5% training skill
+/// in the Control Center, drone skills elsewhere) outranks a level-1 E0 Lee
+/// whose only skill needs Aak, even though Lee costs nothing elsewhere
+/// (user feedback 2026-09-15: "he is E0 so he is useless").
+#[test]
+fn bench_seat_prefers_a_valued_operator_over_a_blank() {
+    use backend::core::grade::base::assignment::fill_remaining_slots;
+    use std::collections::HashSet;
+    let gd = load_game_data();
+    let (registry, _) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const BLAZE2: &str = "char_1040_blaze2";
+    const LEE: &str = "char_322_lmlee";
+    let mut lee = profile(gd, LEE);
+    // E0 level 1: only his pair skill with Aak is unlocked.
+    lee.available_buffs.retain(|b| b.starts_with("control_allCost_condChar"));
+    let roster = vec![lee, profile(gd, BLAZE2)];
+    let mut slots: Vec<String> = Vec::new();
+    let mut assigned: HashSet<String> = HashSet::new();
+    let added = fill_remaining_slots(&mut slots, 1, "CONTROL", &roster, &gd.building, &registry, &mut assigned);
+    assert_eq!(added, vec![BLAZE2.to_string()], "the valued operator takes the seat: {added:?}");
+}
+
 #[test]
 fn viviana_synergy_flips_the_cc_to_a_block_aligned_with_her_knights() {
     // Viviana's CC buff ("all Knight Operators in Factories +7%") links her to the factory
