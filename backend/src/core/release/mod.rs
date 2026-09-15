@@ -2,6 +2,7 @@ pub mod align;
 pub mod art;
 pub mod estimate;
 pub mod ledger;
+pub mod prices;
 pub mod skins;
 pub mod types;
 

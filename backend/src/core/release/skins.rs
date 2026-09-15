@@ -8,7 +8,7 @@ use crate::core::gamedata::types::{
     shop::{ListingKind, SkinWindow},
 };
 
-use super::estimate::percentile;
+use super::{estimate::percentile, types::Resolution};
 
 const SECS_PER_DAY: f64 = 86_400.0;
 const SAME_WINDOW_SECS: i64 = 20 * 86_400;
@@ -99,10 +99,18 @@ pub struct AnniversaryStats {
     pub dev_p75_days: f64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 #[ts(export)]
 pub enum RerunBasis {
+    Cadence {
+        #[ts(type = "number")]
+        en_last: i64,
+        n: usize,
+        median_days: f64,
+        p25_days: f64,
+        p75_days: f64,
+    },
     CnListing {
         #[ts(type = "number")]
         cn_start: i64,
@@ -391,6 +399,55 @@ pub fn anniversary_models(groups: &[GroupHistory], now: i64) -> Vec<AnniversaryS
 }
 
 pub const RERUN_MATCH_SECS: i64 = 31 * 86_400;
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct CadenceModel {
+    pub n: usize,
+    pub median_days: f64,
+    pub p25_days: f64,
+    pub p75_days: f64,
+}
+
+pub fn cadence_model(groups: &[GroupHistory]) -> CadenceModel {
+    let mut gaps: Vec<f64> = Vec::new();
+    for g in groups {
+        let mut last: Option<i64> = None;
+        for w in g.listings() {
+            if let Some(prev) = last
+                && w.start_time - prev > SAME_WINDOW_SECS
+            {
+                gaps.push((w.start_time - prev) as f64 / SECS_PER_DAY);
+            }
+            if last.is_none_or(|prev| w.start_time - prev > SAME_WINDOW_SECS) {
+                last = Some(w.start_time);
+            }
+        }
+    }
+    gaps.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    if gaps.is_empty() {
+        return CadenceModel {
+            n: 0,
+            median_days: 0.0,
+            p25_days: 0.0,
+            p75_days: 0.0,
+        };
+    }
+    CadenceModel {
+        n: gaps.len(),
+        median_days: percentile(&gaps, 0.5),
+        p25_days: percentile(&gaps, 0.25),
+        p75_days: percentile(&gaps, 0.75),
+    }
+}
+
+pub fn next_by_cadence(en_last: i64, model: &CadenceModel) -> Resolution {
+    let shift = |d: f64| en_last + (d * SECS_PER_DAY).round() as i64;
+    Resolution::Estimated {
+        en_start: shift(model.median_days),
+        lo: shift(model.p25_days),
+        hi: shift(model.p75_days),
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PendingRerun<'a> {

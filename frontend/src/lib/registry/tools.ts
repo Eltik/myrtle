@@ -88,7 +88,7 @@ export const TOOLS: ITool[] = [
         desc: "When CN events, skins, and banners land on EN",
         icon: "calendar-clock",
         category: "calculator",
-        keywords: ["release", "upcoming", "events", "banners", "skins", "cn", "en", "schedule", "planner", "lag"],
+        keywords: ["release", "upcoming", "events", "banners", "skins", "cn", "en", "schedule", "planner", "lag", "originite", "prime", "op", "budget"],
     },
 ];
 

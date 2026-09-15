@@ -158,6 +158,7 @@ export function syntheticStageFromIndex(e: IStageIndexEntry): { stage: IStage; z
             dangerPoint: 0,
             expGain: 0,
             goldGain: 0,
+            diamondOnceDrop: 0,
             appearanceStyle: null,
             hardStagedId: null,
             mainStageId: null,

@@ -8,6 +8,7 @@ import { useAutoTranslate } from "../autoTranslate";
 import { formatDateRange, humanizeTag, isPast, sortKey } from "../helpers";
 import { ModelSummary } from "./ModelSummary";
 import { ResolutionBadge } from "./ResolutionBadge";
+import { FarmStages } from "./ScheduleShared";
 import { CnName, ListRow, ReleaseEmpty, ReleaseError, ReleaseLoading, RowImage, resolveName, Tag, ToggleField, useArt } from "./shared";
 
 interface IEventsTabProps {
@@ -70,6 +71,7 @@ function EventRow({ event, today }: { event: ReleaseEvent; today: Date }): React
                 <span className="mr-1 uppercase tracking-[0.06em]">CN</span>
                 {formatDateRange(event.cnStart, event.cnEnd)}
             </div>
+            <FarmStages stages={event.farmStages} compact />
         </ListRow>
     );
 }

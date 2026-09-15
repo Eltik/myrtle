@@ -1,0 +1,212 @@
+@property --planner-angle {
+    syntax: "<angle>";
+    inherits: false;
+    initial-value: 90deg;
+}
+
+.card {
+    --planner-angle: 90deg;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 177px;
+    height: 340px;
+    overflow: hidden;
+    border: 3px solid;
+    border-image: linear-gradient(var(--planner-angle), var(--planner-stops)) 1;
+    background-image: linear-gradient(180deg, var(--planner-stops)), var(--planner-sheet);
+    background-blend-mode: color, normal;
+    background-repeat: no-repeat;
+    background-size:
+        auto,
+        var(--planner-sheet-size) var(--planner-sheet-size);
+    background-position:
+        0 0,
+        var(--planner-sheet-pos);
+    background-color: #0d0d0d;
+    box-shadow: 6px 6px 4px rgba(0, 0, 0, 0.7);
+    cursor: pointer;
+    user-select: none;
+    transition:
+        transform 250ms ease,
+        box-shadow 800ms ease;
+}
+
+.card:hover,
+.card.selected {
+    animation: planner-spin 2.4s linear infinite;
+    box-shadow:
+        6px 6px 4px rgba(0, 0, 0, 0.7),
+        0 0 7px 1px var(--planner-c0);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.shine {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+    background: linear-gradient(var(--planner-angle), var(--planner-stops));
+    transition: opacity 400ms ease;
+}
+
+.card:hover .shine {
+    opacity: 0.12;
+}
+
+.portrait {
+    position: absolute;
+    inset: 0 0 32px 0;
+    width: 100%;
+    height: calc(100% - 32px);
+    object-fit: cover;
+    object-position: top;
+    transition:
+        transform 400ms ease,
+        filter 400ms ease;
+}
+
+.card:hover .portrait {
+    filter: drop-shadow(8px -8px 4px rgba(0, 0, 0, 0.8));
+    transform: translate(-3px, -5px);
+}
+
+.strip {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    border-top: 3px solid;
+    border-image: linear-gradient(90deg, var(--planner-stops)) 1;
+    background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.75)), linear-gradient(90deg, var(--planner-stops));
+    padding: 0 6px;
+    overflow: hidden;
+    color: #fff;
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    text-shadow:
+        0 1px 2px #000,
+        0 0 6px rgba(0, 0, 0, 0.8);
+}
+
+.price {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    width: 40px;
+    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
+}
+
+.priceNumber {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 36px;
+    background: var(--planner-c0);
+    color: #fff;
+    font-weight: 800;
+    font-size: 19px;
+    line-height: 1;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.priceLabel {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.priceClass {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    background: color-mix(in srgb, var(--planner-c0) 70%, transparent);
+}
+
+.priceClass img {
+    width: 28px;
+    height: 28px;
+    filter: brightness(0) invert(1) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
+}
+
+.stars {
+    position: absolute;
+    top: 6px;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    text-align: center;
+    color: #ffd84a;
+    font-size: 14px;
+    letter-spacing: -1px;
+    text-shadow: 0 1px 2px #000;
+    pointer-events: none;
+}
+
+.inspect {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    cursor: pointer;
+    transition: transform 300ms ease;
+}
+
+.inspect:hover {
+    transform: scale(1.1);
+}
+
+.overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-shadow: 0 2px 6px #000;
+    opacity: 0;
+    transition: opacity 300ms ease;
+    pointer-events: none;
+}
+
+.card.selected .overlay {
+    opacity: 1;
+}
+
+@keyframes planner-spin {
+    to {
+        --planner-angle: 450deg;
+    }
+}

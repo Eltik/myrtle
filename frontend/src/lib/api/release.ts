@@ -1,9 +1,12 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
+import { getCookie } from "@tanstack/react-start/server";
 import { backendFetch } from "#/lib/fetch";
 import type { BannersResponse } from "#/types/generated/BannersResponse";
 import type { EventsResponse } from "#/types/generated/EventsResponse";
 import type { LagResponse } from "#/types/generated/LagResponse";
+import type { PutReleasePlan } from "#/types/generated/PutReleasePlan";
+import type { ReleasePlan } from "#/types/generated/ReleasePlan";
 import type { SkinsResponse } from "#/types/generated/SkinsResponse";
 
 const STALE_MS = 60 * 60 * 1000;
@@ -66,5 +69,36 @@ export function releaseLagQueryOptions() {
         queryFn: () => getReleaseLagFn(),
         staleTime: STALE_MS,
         gcTime: GC_MS,
+    });
+}
+
+export const getReleasePlanFn = createServerFn({ method: "GET" }).handler(async () => {
+    const token = getCookie("site_token");
+    if (!token) return null;
+    const res = await backendFetch("/release/plan", { bearerToken: token });
+    if (!res.ok) {
+        if (res.status === 401 || res.status === 403) return null;
+        throw new Error(`Failed to load the release plan: ${res.status}`);
+    }
+    return (await res.json()) as ReleasePlan | null;
+});
+
+export const putReleasePlanFn = createServerFn({ method: "POST" })
+    .inputValidator((data: PutReleasePlan) => data)
+    .handler(async ({ data }) => {
+        const token = getCookie("site_token");
+        if (!token) throw new Error("Not signed in.");
+        const res = await backendFetch("/release/plan", { method: "PUT", bearerToken: token, body: JSON.stringify(data) });
+        if (!res.ok) throw new Error(`Failed to save the release plan: ${res.status}`);
+        return (await res.json()) as ReleasePlan;
+    });
+
+export function releasePlanQueryOptions(uid: string | null) {
+    return queryOptions({
+        queryKey: ["user", "release-plan", uid],
+        queryFn: () => getReleasePlanFn(),
+        enabled: !!uid,
+        staleTime: 60 * 1000,
+        gcTime: 10 * 60 * 1000,
     });
 }

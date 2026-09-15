@@ -24,6 +24,7 @@ export type Stage = {
     dangerPoint: number;
     expGain: number;
     goldGain: number;
+    diamondOnceDrop: number;
     appearanceStyle: AppearanceStyle | null;
     hardStagedId: string | null;
     mainStageId: string | null;

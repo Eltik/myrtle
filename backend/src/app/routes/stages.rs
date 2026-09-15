@@ -24,6 +24,9 @@ pub struct StageClearsParams {
 #[derive(Serialize)]
 pub struct StageClearDto {
     pub state: i16,
+    #[serde(rename = "stateMax")]
+    pub state_max: i16,
+    pub inferred: bool,
     #[serde(rename = "completeTimes")]
     pub complete_times: i32,
     #[serde(rename = "practiceTimes")]
@@ -67,6 +70,8 @@ pub async fn get_stage_clears(
                 id,
                 StageClearDto {
                     state: c.state,
+                    state_max: c.state_max,
+                    inferred: c.inferred,
                     complete_times: c.complete_times,
                     practice_times: c.practice_times,
                 },

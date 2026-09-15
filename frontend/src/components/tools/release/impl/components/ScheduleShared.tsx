@@ -1,9 +1,11 @@
 import { X } from "lucide-react";
 import type * as React from "react";
+import { itemIcon } from "#/components/operators/detail/impl/assets";
 import { Card } from "#/components/ui/card";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { cn } from "#/lib/utils";
 import type { EventAnchor } from "#/types/generated/EventAnchor";
+import type { FarmStage } from "#/types/generated/FarmStage";
 import { useAutoTranslate } from "../autoTranslate";
 import { formatDateRange, humanizeTag } from "../helpers";
 import { type IScheduleItem, KIND_LABEL, type ScheduleKind } from "../schedule";
@@ -145,5 +147,36 @@ export function ScheduleDetail({ item, lookup, today, onClose }: IScheduleDetail
                 </div>
             )}
         </Card>
+    );
+}
+
+const OCC_LABEL: Record<string, string> = { ALWAYS: "guaranteed", ALMOST: "almost always", USUAL: "usual", OFTEN: "often", SOMETIMES: "sometimes", RARELY: "rare" };
+
+export function FarmStages({ stages, compact = false }: { stages: FarmStage[]; compact?: boolean }): React.ReactElement | null {
+    if (stages.length === 0) return null;
+    return (
+        <div className={cn("flex flex-wrap", compact ? "gap-1.5" : "gap-2")}>
+            {stages.map((st) => (
+                <div key={st.stageId} className={cn("flex items-center gap-2 rounded-md border border-border/60 bg-muted/30", compact ? "px-1.5 py-1" : "px-2 py-1.5")} title={`${st.code}: ${st.apCost} sanity`}>
+                    <span className="flex flex-col leading-tight">
+                        <span className="font-mono font-semibold text-[11.5px] text-foreground">{st.code}</span>
+                        <span className="font-mono text-[10px] text-muted-foreground tabular-nums">{st.apCost} AP</span>
+                    </span>
+                    {st.drops.map((d) => (
+                        <span key={d.itemId} className="flex items-center gap-1" title={`${d.nameEn ?? d.name}: ${OCC_LABEL[d.occ] ?? d.occ.toLowerCase()}`}>
+                            <img src={itemIcon(d.itemId, d.iconId, null, d.nameEn ? undefined : "cn")} alt="" loading="lazy" className={cn("rounded-full bg-black/40 object-contain", compact ? "size-7" : "size-9")} />
+                            {!compact && (
+                                <span className="flex flex-col leading-tight">
+                                    <span className="max-w-36 truncate font-sans text-[11.5px] text-foreground" lang={d.nameEn ? undefined : "zh-CN"} translate={d.nameEn ? undefined : "yes"}>
+                                        {d.nameEn ?? d.name}
+                                    </span>
+                                    <span className="font-sans text-[10px] text-muted-foreground">{OCC_LABEL[d.occ] ?? d.occ.toLowerCase()}</span>
+                                </span>
+                            )}
+                        </span>
+                    ))}
+                </div>
+            ))}
+        </div>
     );
 }

@@ -3,8 +3,14 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::core::release::skins::{AnniversaryStats, RerunBasis, SaleWindow};
-use crate::core::translate::AutoName;
+use crate::core::release::{
+    prices::SkinPrice,
+    skins::{AnniversaryStats, RerunBasis, SaleWindow},
+};
+use crate::core::{
+    gamedata::types::activity::{FarmStage, OpStage},
+    translate::AutoName,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
 #[serde(
@@ -110,6 +116,8 @@ pub struct ReleaseEvent {
     pub cn_start: i64,
     #[ts(type = "number")]
     pub cn_end: i64,
+    pub op_stages: Vec<OpStage>,
+    pub farm_stages: Vec<FarmStage>,
     pub name_en_auto: Option<AutoName>,
     pub image_path: Option<String>,
     pub resolution: Resolution,
@@ -195,6 +203,8 @@ pub struct NewSkin {
     pub skin_group_name_auto: Option<AutoName>,
     pub char_name: Option<AutoName>,
     pub portrait_path: Option<String>,
+    pub colors: Vec<String>,
+    pub price: SkinPrice,
     pub anchor: Option<EventAnchor>,
     pub resolution: Resolution,
 }
@@ -209,6 +219,8 @@ pub struct EventAnchor {
     pub cn_start: i64,
     #[ts(type = "number")]
     pub cn_end: i64,
+    #[ts(type = "number")]
+    pub offset_secs: i64,
     pub name_en: Option<String>,
     pub name_en_auto: Option<AutoName>,
 }
@@ -222,6 +234,8 @@ pub struct SkinTile {
     pub skin_name: String,
     pub char_name: Option<AutoName>,
     pub portrait_path: Option<String>,
+    pub colors: Vec<String>,
+    pub price: SkinPrice,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
@@ -248,7 +262,7 @@ pub struct BatchForecast {
     pub resolution: Resolution,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct RerunForecast {
@@ -317,4 +331,26 @@ pub struct PutOverride {
     pub source: Option<String>,
     #[serde(default)]
     pub note: Option<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct ReleasePlan {
+    pub initial: i32,
+    pub initial_manual: bool,
+    pub picks: Vec<String>,
+    pub stages: HashMap<String, HashMap<String, bool>>,
+    #[ts(type = "number")]
+    pub updated_at: i64,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct PutReleasePlan {
+    pub initial: i32,
+    pub initial_manual: bool,
+    pub picks: Vec<String>,
+    pub stages: HashMap<String, HashMap<String, bool>>,
 }

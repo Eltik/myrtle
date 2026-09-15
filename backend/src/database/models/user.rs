@@ -55,6 +55,8 @@ pub struct UserProfile {
     #[ts(type = "number | null")]
     pub non_default_skin_count: Option<i64>,
     pub updated_at: DateTime<Utc>,
+    /// Originite Prime on the account (paid and free pools summed) as of the last sync.
+    pub originite: Option<i32>,
 }
 
 /// users table

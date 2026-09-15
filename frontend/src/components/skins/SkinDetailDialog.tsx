@@ -39,7 +39,7 @@ export function SkinDetailContent({ skin, opName, skinName, avatarURL, server, p
     const [dynActive, setDynActive] = useState(false);
 
     return (
-        <DialogContent bottomStickOnMobile={false} initialFocus={false} className="flex h-[92vh] max-h-[92vh] w-[min(960px,95vw)] max-w-[min(960px,95vw)] flex-col overflow-hidden p-0 sm:max-w-[min(960px,95vw)]" showCloseButton>
+        <DialogContent bottomStickOnMobile={false} initialFocus={false} className="flex h-[92vh] max-h-[92vh] w-full max-w-240 flex-col overflow-hidden p-0" showCloseButton>
             <DialogTitle className="sr-only">{`${opName} - ${skinName}`}</DialogTitle>
             <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[auto_minmax(0,1fr)] md:grid-cols-[5fr_4fr] md:grid-rows-1">
                 <div className="relative flex h-[min(56vh,100vw)] items-center justify-center overflow-hidden bg-linear-to-b from-muted/20 to-muted/60 md:h-auto md:border-border/60 md:border-r">

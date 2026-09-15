@@ -83,6 +83,19 @@ pub async fn sync_user_data(
     .bind(enemies)
     .execute(pool)
     .await?;
+    sqlx::query(
+        "UPDATE user_status SET originite = $3 WHERE user_id = (SELECT id FROM users WHERE uid = $1 AND server_id = $2)",
+    )
+    .bind(uid)
+    .bind(server_id)
+    .bind(
+        status
+            .get("originite")
+            .and_then(serde_json::Value::as_i64)
+            .map(|v| v as i32),
+    )
+    .execute(pool)
+    .await?;
     Ok(())
 }
 

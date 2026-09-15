@@ -61,6 +61,12 @@ impl TranslationMemory {
                     &a.display_skin.skin_group_name,
                     &b.display_skin.skin_group_name,
                 );
+                if let (Some(x), Some(y)) = (
+                    &a.display_skin.obtain_approach,
+                    &b.display_skin.obtain_approach,
+                ) {
+                    put(x, y);
+                }
             }
         }
         for (id, a) in &cn.skins.brand_list {

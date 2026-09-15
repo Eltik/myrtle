@@ -208,28 +208,92 @@ pub fn cn_day(ts: i64) -> Option<chrono::NaiveDate> {
     )
 }
 
-pub fn stage_starts_by_day(cn: &GameData) -> HashMap<chrono::NaiveDate, Vec<&ActivityBasicInfo>> {
-    let mut out: HashMap<chrono::NaiveDate, Vec<&ActivityBasicInfo>> = HashMap::new();
-    for a in cn.activities.values() {
-        if a.has_stage
-            && a.start_time > 0
-            && let Some(day) = cn_day(a.start_time)
-        {
-            out.entry(day).or_default().push(a);
-        }
-    }
-    for v in out.values_mut() {
-        v.sort_by(|a, b| a.start_time.cmp(&b.start_time).then(a.id.cmp(&b.id)));
-    }
-    out
+pub struct StageRuns<'a> {
+    by_day: HashMap<chrono::NaiveDate, Vec<&'a ActivityBasicInfo>>,
+    runs: Vec<&'a ActivityBasicInfo>,
 }
 
-pub fn stage_anchor<'a>(
-    by_day: &'a HashMap<chrono::NaiveDate, Vec<&'a ActivityBasicInfo>>,
-    ts: i64,
-) -> Option<&'a ActivityBasicInfo> {
-    let day = cn_day(ts)?;
-    by_day.get(&day).and_then(|v| v.first().copied())
+pub struct Anchored<'a> {
+    pub activity: &'a ActivityBasicInfo,
+    pub offset_secs: i64,
+}
+
+impl<'a> StageRuns<'a> {
+    pub fn build(cn: &'a GameData) -> Self {
+        let mut by_day: HashMap<chrono::NaiveDate, Vec<&ActivityBasicInfo>> = HashMap::new();
+        let mut runs: Vec<&ActivityBasicInfo> = Vec::new();
+        for a in cn.activities.values() {
+            if !a.has_stage || a.start_time <= 0 {
+                continue;
+            }
+            if let Some(day) = cn_day(a.start_time) {
+                by_day.entry(day).or_default().push(a);
+            }
+            runs.push(a);
+        }
+        for v in by_day.values_mut() {
+            v.sort_by(|a, b| a.start_time.cmp(&b.start_time).then(a.id.cmp(&b.id)));
+        }
+        runs.sort_by(|a, b| a.start_time.cmp(&b.start_time).then(a.id.cmp(&b.id)));
+        Self { by_day, runs }
+    }
+
+    pub fn anchor(&self, ts: i64) -> Option<Anchored<'a>> {
+        if let Some(a) = cn_day(ts)
+            .and_then(|day| self.by_day.get(&day))
+            .and_then(|v| v.first().copied())
+        {
+            return Some(Anchored {
+                activity: a,
+                offset_secs: 0,
+            });
+        }
+        self.runs
+            .iter()
+            .rev()
+            .find(|a| {
+                a.start_time < ts
+                    && ts <= a.end_time
+                    && ts - a.start_time <= super::align::ANCHOR_WINDOW_SECS
+            })
+            .map(|a| Anchored {
+                activity: a,
+                offset_secs: ts - a.start_time,
+            })
+    }
+}
+
+pub fn shift_resolution(r: Resolution, secs: i64) -> Resolution {
+    match r {
+        Resolution::Confirmed {
+            en_id,
+            en_start,
+            en_end,
+        } => Resolution::Confirmed {
+            en_id,
+            en_start: en_start + secs,
+            en_end: en_end + secs,
+        },
+        Resolution::Override {
+            en_id,
+            en_start,
+            en_end,
+            source,
+            note,
+        } => Resolution::Override {
+            en_id,
+            en_start: en_start + secs,
+            en_end: en_end.map(|e| e + secs),
+            source,
+            note,
+        },
+        Resolution::Estimated { en_start, lo, hi } => Resolution::Estimated {
+            en_start: en_start + secs,
+            lo: lo + secs,
+            hi: hi + secs,
+        },
+        other => other,
+    }
 }
 
 pub fn en_activity_index(en: &GameData) -> HashMap<&str, (i64, i64, &str)> {

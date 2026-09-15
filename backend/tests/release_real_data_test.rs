@@ -191,7 +191,7 @@ fn census_reproduces_on_the_live_extract() {
     println!("cn-only activities={cn_only_acts} unmodelled={unmodelled}");
     assert_eq!(unmodelled, 0);
 
-    let stage_days = estimate::stage_starts_by_day(&cn);
+    let runs = estimate::StageRuns::build(&cn);
     let en_acts = estimate::en_activity_index(&en);
     let (mut anchored, mut held, mut cn_only_anchored, mut cn_only) =
         (0usize, 0usize, 0usize, 0usize);
@@ -200,7 +200,10 @@ fn census_reproduces_on_the_live_extract() {
         if t <= 0 {
             continue;
         }
-        let anchor = estimate::stage_anchor(&stage_days, t);
+        let anchor = runs
+            .anchor(t)
+            .filter(|h| h.offset_secs == 0)
+            .map(|h| h.activity);
         match en.skins.char_skins.get(&s.skin_id) {
             Some(e) if e.display_skin.get_time > 0 => {
                 if let Some(a) = anchor {
@@ -253,9 +256,14 @@ fn census_reproduces_on_the_live_extract() {
     let mut consumed = std::collections::HashSet::new();
     let (mut anchored, mut confirmed, mut estimated) = (0usize, 0usize, 0usize);
     for p in &pending {
-        let anchor = estimate::stage_anchor(&stage_days, p.cn_window.start_time);
+        let anchor = runs.anchor(p.cn_window.start_time);
         let expected = anchor
-            .and_then(|a| en_acts.get(a.id.as_str()).map(|(s, _, _)| *s))
+            .as_ref()
+            .and_then(|h| {
+                en_acts
+                    .get(h.activity.id.as_str())
+                    .map(|(s, _, _)| *s + h.offset_secs)
+            })
             .unwrap_or_else(
                 || match estimate::estimate(&model, p.cn_window.start_time) {
                     Resolution::Estimated { en_start, .. } => en_start,
@@ -292,7 +300,8 @@ fn census_reproduces_on_the_live_extract() {
             chrono::DateTime::from_timestamp(p.cn_window.end_time, 0)
                 .unwrap()
                 .date_naive(),
-            estimate::stage_anchor(&stage_days, p.cn_window.start_time).map(|a| a.id.as_str())
+            runs.anchor(p.cn_window.start_time)
+                .map(|h| h.activity.id.as_str())
         );
     }
     assert!(!pending.is_empty());
@@ -409,15 +418,65 @@ fn census_reproduces_on_the_live_extract() {
     let en_idx = AssetIndex::build(&root("en"));
     let stages_cn: backend::core::gamedata::types::stage::StageTableFile =
         load_table(&root("cn").join("gamedata/excel"), "stage_table").expect("stage_table");
-    let pics = backend::core::gamedata::types::activity::loading_pics_by_activity(
+    let acts_cn: backend::core::gamedata::types::activity::ActivityTableFile =
+        load_table(&root("cn").join("gamedata/excel"), "activity_table").expect("activity_table");
+    let op = backend::core::gamedata::types::activity::op_stages_by_activity(
         &stages_cn.stages,
-        &cn.activities,
+        &acts_cn.zone_to_activity,
     );
+    let total = |id: &str| {
+        op.get(id)
+            .map_or(0, |v| v.iter().map(|s| s.op).sum::<i32>())
+    };
+    let with_op = cn_only_acts
+        .iter()
+        .filter(|a| a.has_stage && total(&a.id) > 0)
+        .count();
     println!(
-        "loading pics by activity (indexed, not used for event art): {} of {} stage activities",
-        pics.len(),
-        cn.activities.values().filter(|a| a.has_stage).count()
+        "op rewards by activity: {} activities, cn-only stage events with op {with_op}, act51side={} act53side={} act44side={}",
+        op.len(),
+        total("act51side"),
+        total("act53side"),
+        total("act44side")
     );
+    let item_file: backend::core::gamedata::types::material::ItemTableFile =
+        load_table(&root("cn").join("gamedata/excel"), "item_table").expect("item_table");
+    let farm = backend::core::gamedata::types::activity::farm_stages_by_activity(
+        &stages_cn.stages,
+        &acts_cn.zone_to_activity,
+        &item_file.items,
+    );
+    let pa: Vec<String> = farm
+        .get("act51side")
+        .map(|v| {
+            v.iter()
+                .map(|f| {
+                    format!(
+                        "{} {:?}",
+                        f.code,
+                        f.drops
+                            .iter()
+                            .map(|d| (&d.name, d.tier))
+                            .collect::<Vec<_>>()
+                    )
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    println!(
+        "farm stages: {} activities; act51side={pa:?}; act21mini={:?}",
+        farm.len(),
+        farm.get("act21mini").map(Vec::len)
+    );
+    assert_eq!(
+        farm.get("act51side")
+            .map(|v| v.iter().map(|f| f.code.as_str()).collect::<Vec<_>>()),
+        Some(vec!["PA-6", "PA-7", "PA-8"])
+    );
+    assert!(farm.get("act21mini").is_some_and(|v| v.len() <= 2));
+    assert_eq!(total("act51side"), 27);
+    assert_eq!(total("act53side"), 38);
+    assert_eq!(total("act44side"), 40);
     let art = |idx: &AssetIndex, id: &str| idx.event_banner_path(id).is_some();
     let with_rerun = |id: &str| {
         let side = id.strip_suffix("sre").map(|s| format!("{s}side"));

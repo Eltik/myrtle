@@ -1,6 +1,11 @@
 #[derive(Debug, Clone, Copy)]
 pub struct StageClear {
     pub state: i16,
+    /// Upper bound on `state` for a record inferred from surviving mission,
+    /// medal and unlock evidence (see `stage_evidence`); equals `state` for
+    /// a battle record.
+    pub state_max: i16,
+    pub inferred: bool,
     pub complete_times: i32,
     pub practice_times: i32,
 }

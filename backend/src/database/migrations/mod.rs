@@ -61,6 +61,11 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v018_release_override_rosters",
         include_str!("v018_release_override_rosters.sql"),
     ),
+    (
+        "v019_user_status_originite",
+        include_str!("v019_user_status_originite.sql"),
+    ),
+    ("v020_release_plans", include_str!("v020_release_plans.sql")),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

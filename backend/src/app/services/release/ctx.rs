@@ -86,13 +86,35 @@ impl Ctx {
         })
     }
 
-    pub fn skin_portrait(&self, portrait_id: &str, on_en: bool) -> Option<String> {
+    pub fn skin_portrait(&self, char_id: &str, portrait_id: &str, on_en: bool) -> Option<String> {
         self.image(
             "skin-portrait",
             on_en.then_some(portrait_id),
             portrait_id,
             |idx, id| idx.path(AssetKind::SkinPortrait, id).is_some(),
         )
+        .or_else(|| self.skin_art(char_id, portrait_id, on_en))
+    }
+
+    fn skin_art(&self, char_id: &str, portrait_id: &str, on_en: bool) -> Option<String> {
+        let thumb = format!("/textures/skinpack/{char_id}/{portrait_id}b.png");
+        let full = format!("/textures/skinpack/{char_id}/{portrait_id}.png");
+        let pick = |idx: &AssetIndex| {
+            let files = idx.skinpack_paths(char_id)?;
+            files
+                .iter()
+                .find(|f| **f == thumb)
+                .or_else(|| files.iter().find(|f| **f == full))
+                .cloned()
+        };
+        let servers: [(&str, &AssetIndex); 2] = if on_en {
+            [(self.en_server, &self.en_assets), ("cn", &self.cn_assets)]
+        } else {
+            [("cn", &self.cn_assets), (self.en_server, &self.en_assets)]
+        };
+        servers
+            .iter()
+            .find_map(|(server, idx)| pick(idx).map(|rel| format!("/{server}/assets{rel}")))
     }
 
     pub fn event_name_by_id(&self, cn_id: &str) -> Option<AutoName> {

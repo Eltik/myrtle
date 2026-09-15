@@ -26,6 +26,7 @@ pub mod shop;
 pub mod skill;
 pub mod skin;
 pub mod stage;
+pub mod stage_evidence;
 pub mod stage_index;
 pub mod stage_universe;
 pub mod trust;
@@ -79,9 +80,10 @@ pub struct GameData {
     /// Skin ids referenced by `activity_table` (event-reward skins), see
     /// [`activity::scan_skin_refs`].
     pub activity_skin_refs: HashSet<String>,
-    /// Activity id -> the loading illustration its stages use most, see
-    /// [`activity::loading_pics_by_activity`].
-    pub activity_loading_pics: HashMap<String, String>,
+    /// Activity id -> its Originite Prime stages, see [`activity::op_stages_by_activity`].
+    pub activity_op_stages: HashMap<String, Vec<activity::OpStage>>,
+    /// Activity id -> its farming stages and their drops, see [`activity::farm_stages_by_activity`].
+    pub activity_farm_stages: HashMap<String, Vec<activity::FarmStage>>,
     pub retro_acts: HashMap<String, RetroAct>,
     /// Skin shop carousel windows (the promo layer), see [`shop`].
     pub skin_windows: Vec<SkinWindow>,
@@ -95,6 +97,9 @@ pub struct GameData {
     pub mode_levels: HashMap<String, String>,
     pub building: BuildingDataFile,
     pub stage_universe: StageUniverse,
+    /// What a player's surviving mission, medal and unlock records prove about
+    /// stages the client no longer keeps battle records for, see [`stage_evidence`].
+    pub stage_evidence: stage_evidence::StageEvidenceIndex,
     pub sandbox_universe: SandboxUniverse,
     pub campaign_rotations: CampaignRotations,
     pub consts: GameDataConst,

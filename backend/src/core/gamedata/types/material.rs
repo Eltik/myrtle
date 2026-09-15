@@ -26,6 +26,19 @@ pub enum ItemRarity {
     Tier6,
 }
 
+impl ItemRarity {
+    pub const fn tier(&self) -> u8 {
+        match self {
+            Self::Tier1 => 1,
+            Self::Tier2 => 2,
+            Self::Tier3 => 3,
+            Self::Tier4 => 4,
+            Self::Tier5 => 5,
+            Self::Tier6 => 6,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS)]
 #[ts(export)]
 pub enum ItemClass {

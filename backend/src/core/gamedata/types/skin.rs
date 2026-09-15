@@ -175,6 +175,8 @@ pub struct Skin {
     pub tmpl_id: Option<String>,
     #[serde(alias = "VoiceId")]
     pub voice_id: Option<String>,
+    #[serde(alias = "SpDynIllustId")]
+    pub sp_dyn_illust_id: Option<String>,
     #[serde(alias = "VoiceType", default)]
     pub voice_type: String,
     #[serde(alias = "DisplaySkin", default)]

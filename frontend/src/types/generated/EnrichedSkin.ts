@@ -21,6 +21,7 @@ export type EnrichedSkin = {
     isBuySkin: boolean;
     tmplId: string | null;
     voiceId: string | null;
+    spDynIllustId: string | null;
     voiceType: string;
     displaySkin: DisplaySkin;
 };

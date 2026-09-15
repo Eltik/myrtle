@@ -173,6 +173,9 @@ pub struct Stage {
     #[serde(alias = "GoldGain", default)]
     pub gold_gain: i32,
 
+    #[serde(alias = "DiamondOnceDrop", default)]
+    pub diamond_once_drop: i32,
+
     #[serde(alias = "AppearanceStyle")]
     pub appearance_style: Option<AppearanceStyle>,
 

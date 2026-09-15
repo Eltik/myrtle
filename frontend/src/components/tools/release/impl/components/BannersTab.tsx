@@ -24,12 +24,12 @@ function IndependenceNote({ rules }: { rules: RuleIndependence[] }): React.React
     const list = independent.map((r) => `${r.ruleType.toLowerCase().replaceAll("_", " ")} (${Math.round(r.mismatchRate * 100)}% of ${r.events} events)`).join(", ");
     return (
         <p className="m-0 font-sans text-[12.5px] text-muted-foreground leading-normal" title="Measured per rule type: how often CN and EN run a different number of pools of that type under the same event. At half or more, the type is EN-scheduled and gets no estimate.">
-            EN schedules these on its own calendar: {list}. Their rows read "EN schedules separately" unless the rate-ups match a known EN pool.
+            EN schedules these itself: {list}. Their rows say so unless the rate-ups match a known EN pool.
         </p>
     );
 }
 
-const ROSTER_NOTE = "Standard banner rosters are not in CN client data; only limited, kernel and pick banners carry their rate-ups. Rows without operators are real banners with unknown rosters.";
+const ROSTER_NOTE = "Standard banners carry no roster in CN data; rows without operators are real banners with unknown rate-ups.";
 
 const ALIGN_LABEL: Record<AlignMethod, string | null> = {
     content: "matched by rate-ups",

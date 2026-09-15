@@ -153,6 +153,10 @@ pub fn router() -> Router<AppState> {
         .route("/release/skins", get(release::skins))
         .route("/release/lag", get(release::lag))
         .route(
+            "/release/plan",
+            get(release::get_plan).put(release::put_plan),
+        )
+        .route(
             "/release/overrides",
             get(release::list_overrides).put(release::put_override),
         )

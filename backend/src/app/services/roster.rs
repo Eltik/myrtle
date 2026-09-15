@@ -7,7 +7,10 @@ use crate::database::queries::users::find_by_uid;
 use crate::{
     app::{error::ApiError, services::game_session, state::AppState},
     core::{
-        gamedata::types::campaign::CampaignRotations,
+        gamedata::types::{
+            campaign::CampaignRotations,
+            stage_evidence::{self, StageEvidenceIndex},
+        },
         grade::calculate::calculate_user_grade,
         hypergryph::{constants::Server, yostar::sync_data_raw},
     },
@@ -253,7 +256,9 @@ pub async fn refresh(
     let modules = extract_modules(&user.troop);
     let items = extract_items(&user.inventory);
     let skins = extract_skins(&user.skin);
-    let status_json = extract_status(status);
+    let mut status_json = extract_status(status);
+    status_json["originite"] =
+        extract_originite(&raw).map_or(serde_json::Value::Null, |op| serde_json::json!(op));
     let supports = extract_supports(&user.troop, &user.social);
     let mut stages = user
         .dungeon
@@ -266,6 +271,7 @@ pub async fn refresh(
         &raw,
         &state.default_game_data().campaign_rotations,
     );
+    merge_inferred_clears(&mut stages, &raw, &state.game_data(server).stage_evidence);
     let roguelike = extract_roguelike(&user.roguelike);
     let sandbox = user.sandbox_perm.unwrap_or_default();
     let medals = extract_medals(&user.medal);
@@ -329,8 +335,25 @@ pub async fn refresh(
     }
 
     state.mark_ownership_dirty();
+    state
+        .cache
+        .invalidate(&crate::app::cache::keys::CacheKey::User { uid: user_id })
+        .await;
 
     Ok(raw)
+}
+
+/// Originite Prime is `status.payDiamond` + `status.freeDiamond`; absent
+/// when the payload carries neither.
+fn extract_originite(raw: &serde_json::Value) -> Option<i64> {
+    let number = |key: &str| {
+        raw.pointer(&format!("/user/status/{key}"))
+            .and_then(serde_json::Value::as_i64)
+    };
+    match (number("payDiamond"), number("freeDiamond")) {
+        (None, None) => None,
+        (pay, free) => Some(pay.unwrap_or(0) + free.unwrap_or(0)),
+    }
 }
 
 /// Pull `nickNumber` out of the raw syncData. Tolerates string,
@@ -749,6 +772,26 @@ fn merge_campaign_clears(
             }),
         );
     }
+}
+
+/// The client drops a closed event's battle records; fold in what the
+/// account's surviving mission, medal, story-flag and unlock records still
+/// prove about those stages (see `stage_evidence`).
+fn merge_inferred_clears(
+    stages: &mut serde_json::Value,
+    raw: &serde_json::Value,
+    evidence: &StageEvidenceIndex,
+) {
+    let Some(user) = raw.get("user") else {
+        return;
+    };
+    let bounds = evidence.infer(user);
+    let folded = stage_evidence::fold_into_records(stages, &bounds);
+    tracing::info!(
+        bounded = bounds.len(),
+        folded,
+        "sync: inferred clears folded into stage records"
+    );
 }
 
 fn extract_roguelike(rlv2: &Option<serde_json::Value>) -> serde_json::Value {

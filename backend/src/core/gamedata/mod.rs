@@ -223,9 +223,17 @@ pub fn init_game_data(
         load_table_or_warn(data_dir, "roguelike_topic_table", &mut warnings);
     let activity_file: ActivityTableFile =
         load_table_or_warn(data_dir, "activity_table", &mut warnings);
-    let activity_loading_pics = crate::core::gamedata::types::activity::loading_pics_by_activity(
+    let activity_op_stages = crate::core::gamedata::types::activity::op_stages_by_activity(
         &stage_file.stages,
-        &activity_file.basic_info,
+        &activity_file.zone_to_activity,
+    );
+    let activity_farm_stages = crate::core::gamedata::types::activity::merge_farm_archive(
+        data_dir,
+        crate::core::gamedata::types::activity::farm_stages_by_activity(
+            &stage_file.stages,
+            &activity_file.zone_to_activity,
+            &item_file.items,
+        ),
     );
     let activity_skin_refs = std::fs::read_to_string(data_dir.join("activity_table.json"))
         .map(|raw| crate::core::gamedata::types::activity::scan_skin_refs(&raw))
@@ -367,6 +375,12 @@ pub fn init_game_data(
         (enemies_by_stage, index, modes)
     };
 
+    let stage_evidence = crate::core::gamedata::types::stage_evidence::StageEvidenceIndex::build(
+        &activity_file.mission_data,
+        &medals.medals,
+        &stages,
+    );
+
     startup::step("chibis");
     let chibis = init_chibi_data(assets_dir);
     startup::step("enemy chibis");
@@ -395,7 +409,8 @@ pub fn init_game_data(
             stages,
             activities: activity_file.basic_info,
             retro_acts: retro_file.retro_act_list,
-            activity_loading_pics,
+            activity_op_stages,
+            activity_farm_stages,
             activity_skin_refs,
             skin_listings: shop_file.into_skin_listings(),
             skin_windows: shop_file.into_skin_windows(),
@@ -407,6 +422,7 @@ pub fn init_game_data(
             mode_levels,
             building: building_file,
             stage_universe,
+            stage_evidence,
             sandbox_universe,
             campaign_rotations,
             consts,

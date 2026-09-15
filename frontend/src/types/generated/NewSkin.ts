@@ -2,6 +2,7 @@
 import type { AutoName } from "./AutoName";
 import type { EventAnchor } from "./EventAnchor";
 import type { Resolution } from "./Resolution";
+import type { SkinPrice } from "./SkinPrice";
 
 export type NewSkin = {
     skinId: string;
@@ -16,6 +17,8 @@ export type NewSkin = {
     skinGroupNameAuto: AutoName | null;
     charName: AutoName | null;
     portraitPath: string | null;
+    colors: Array<string>;
+    price: SkinPrice;
     anchor: EventAnchor | null;
     resolution: Resolution;
 };

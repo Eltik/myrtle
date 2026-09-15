@@ -79,6 +79,16 @@ pub async fn get_user_stage_clears(
             .get("state")
             .and_then(serde_json::Value::as_i64)
             .unwrap_or(0) as i16;
+        // Records folded from mission, medal and unlock evidence at sync time
+        // (`stage_evidence`); rows synced before 2026-09-15 tag them with a
+        // string instead of `true`.
+        let inferred = entry
+            .get("inferred")
+            .is_some_and(|v| v.as_bool() == Some(true) || v.is_string());
+        let state_max = entry
+            .get("stateMax")
+            .and_then(serde_json::Value::as_i64)
+            .map_or(state, |v| v as i16);
         let complete_times = entry
             .get("completeTimes")
             .and_then(serde_json::Value::as_i64)
@@ -92,6 +102,8 @@ pub async fn get_user_stage_clears(
             stage_id.clone(),
             StageClear {
                 state,
+                state_max,
+                inferred,
                 complete_times,
                 practice_times,
             },

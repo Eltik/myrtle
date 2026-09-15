@@ -18,6 +18,7 @@ export type Skin = {
     isBuySkin: boolean;
     tmplId: string | null;
     voiceId: string | null;
+    spDynIllustId: string | null;
     voiceType: string;
     displaySkin: DisplaySkin;
 };

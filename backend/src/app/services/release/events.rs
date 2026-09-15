@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use crate::{
     app::{error::ApiError, state::AppState},
     core::{
+        gamedata::types::activity::FarmStage,
         release::{EventsResponse, LagResponse, ReleaseEvent, estimate},
         translate::TranslationMemory,
     },
@@ -11,6 +12,7 @@ use crate::{
 use super::{Names, Planner, cache_key, resolved_start};
 
 const BACKTEST_SINCE: i64 = 1_704_067_200;
+const MINI_EVENT_TYPE: &str = "MINISTORY";
 
 pub async fn get_lag(state: &AppState) -> Result<LagResponse, ApiError> {
     let key = cache_key("release:lag", estimate::window_from_env());
@@ -25,6 +27,28 @@ pub async fn get_lag(state: &AppState) -> Result<LagResponse, ApiError> {
     };
     state.cache.set(&key, &out).await;
     Ok(out)
+}
+
+fn farm_stages(p: &Planner, act_id: &str) -> Vec<FarmStage> {
+    let mut stages = p
+        .ctx
+        .cn
+        .activity_farm_stages
+        .get(act_id)
+        .cloned()
+        .unwrap_or_default();
+    for st in &mut stages {
+        for d in &mut st.drops {
+            d.name_en = p
+                .ctx
+                .en
+                .materials
+                .items
+                .get(&d.item_id)
+                .map(|i| i.name.clone());
+        }
+    }
+    stages
 }
 
 pub async fn get_events(state: &AppState) -> Result<EventsResponse, ApiError> {
@@ -55,6 +79,18 @@ pub async fn get_events(state: &AppState) -> Result<EventsResponse, ApiError> {
             has_stage: a.has_stage,
             cn_start: a.start_time,
             cn_end: a.end_time,
+            op_stages: p
+                .ctx
+                .cn
+                .activity_op_stages
+                .get(&a.id)
+                .cloned()
+                .unwrap_or_default(),
+            farm_stages: if a.activity_type == MINI_EVENT_TYPE {
+                Vec::new()
+            } else {
+                farm_stages(&p, &a.id)
+            },
             name_en_auto: p.event_name_auto(a, &names),
             image_path: p.ctx.event_image(&a.id),
             resolution: p.resolve_activity(a, &names),

@@ -161,3 +161,48 @@ pub async fn delete_override(pool: &PgPool, kind: &str, cn_id: &str) -> Result<b
         .await?;
     Ok(res.rows_affected() > 0)
 }
+
+#[derive(Debug, Clone, sqlx::FromRow)]
+pub struct PlanRow {
+    pub initial: i32,
+    pub initial_manual: bool,
+    pub picks: serde_json::Value,
+    pub stages: serde_json::Value,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+pub async fn get_plan(pool: &PgPool, user_id: Uuid) -> Result<Option<PlanRow>, sqlx::Error> {
+    sqlx::query_as::<_, PlanRow>(
+        "SELECT initial, initial_manual, picks, stages, updated_at FROM release_plans WHERE user_id = $1",
+    )
+    .bind(user_id)
+    .fetch_optional(pool)
+    .await
+}
+
+pub async fn put_plan(
+    pool: &PgPool,
+    user_id: Uuid,
+    initial: i32,
+    initial_manual: bool,
+    picks: &serde_json::Value,
+    stages: &serde_json::Value,
+) -> Result<PlanRow, sqlx::Error> {
+    sqlx::query_as::<_, PlanRow>(
+        r"
+        INSERT INTO release_plans (user_id, initial, initial_manual, picks, stages, updated_at)
+        VALUES ($1, $2, $3, $4, $5, now())
+        ON CONFLICT (user_id) DO UPDATE SET
+            initial = EXCLUDED.initial, initial_manual = EXCLUDED.initial_manual,
+            picks = EXCLUDED.picks, stages = EXCLUDED.stages, updated_at = now()
+        RETURNING initial, initial_manual, picks, stages, updated_at
+        ",
+    )
+    .bind(user_id)
+    .bind(initial)
+    .bind(initial_manual)
+    .bind(picks)
+    .bind(stages)
+    .fetch_one(pool)
+    .await
+}

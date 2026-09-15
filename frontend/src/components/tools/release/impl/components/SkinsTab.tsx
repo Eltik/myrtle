@@ -98,7 +98,7 @@ export function SkinsTab({ today }: ISkinsTabProps): React.ReactElement {
             </section>
 
             <section className="flex flex-col gap-3">
-                <RerunSummary anniversaries={skins.data?.anniversaries ?? []} batches={skins.data?.batches ?? []} today={today} />
+                <RerunSummary batches={skins.data?.batches ?? []} today={today} />
                 <div>
                     <SectionTitle count={reruns.length}>Reruns</SectionTitle>
                     {reruns.length === 0 ? (
@@ -117,24 +117,24 @@ export function SkinsTab({ today }: ISkinsTabProps): React.ReactElement {
 }
 
 export function rerunKey(r: RerunForecast): string {
-    return r.basis.kind === "cn_listing" ? `${r.skinGroupId}@${r.basis.cn_start}` : `${r.skinGroupId}@en${r.next.status === "confirmed" ? r.next.enStart : 0}`;
+    if (r.basis.kind === "cn_listing") return `${r.skinGroupId}@${r.basis.cn_start}`;
+    if (r.basis.kind === "cadence") return `${r.skinGroupId}@cadence${r.basis.en_last}`;
+    return `${r.skinGroupId}@en${r.next.status === "confirmed" ? r.next.enStart : 0}`;
 }
 
-function RerunSummary({ anniversaries, batches, today }: { anniversaries: AnniversaryStats[]; batches: BatchForecast[]; today: Date }): React.ReactElement | null {
+function RerunSummary({ batches, today }: { batches: BatchForecast[]; today: Date }): React.ReactElement | null {
     const next = batches[0];
-    const first = anniversaries.find((a) => a.year === 1);
     return (
         <p className="m-0 font-sans text-[12.5px] text-muted-foreground leading-normal">
-            How reruns work on EN: EN repeats CN's re-listings, with the event they ran under (129 of 139 within 7 d of that event's EN start) or at the lag (48 of 48 within 31 d). Each CN re-listing in the lookback is a row below, confirmed once EN gamedata lists the group near that date
-            {first && first.eligible > 0 ? ` (for the record, a group is re-listed by name near its first anniversary in ${first.observed} of ${first.eligible} EN groups; that is a consequence of CN's calendar, not the rule)` : ""}
+            Reruns follow CN's re-listings: EN repeats them under the same event (129 of 139 within 7 d of its EN start) or at the lag (48 of 48 within 31 d), confirmed once EN game data lists the group. One EN has already shown estimates its next by EN's own re-listing cadence
             {next ? (
                 <>
-                    . The rotation batches ("Multi-theme Outfit") hold groups not in game data; the next is <span className="font-medium text-foreground">{next.name}</span> <ResolutionInline resolution={next.resolution} today={today} />
+                    . The next rotation batch ("Multi-theme Outfit", groups not in game data) is <span className="font-medium text-foreground">{next.name}</span> <ResolutionInline resolution={next.resolution} today={today} />
                 </>
             ) : (
-                ". No rotation batch is pending on CN or EN"
+                ". No rotation batch is pending"
             )}
-            . Fashion Reviews (every past outfit, quarterly) ran until Jan 2026 on EN and are recorded, not extrapolated.
+            . Fashion Reviews ended on EN in Jan 2026 and are recorded, not extrapolated.
         </p>
     );
 }
@@ -151,7 +151,9 @@ function ResolutionInline({ resolution, today }: { resolution: RerunForecast["ne
 }
 
 function basisLine(b: RerunBasis): string | null {
-    return b.kind === "cn_listing" ? `CN re-listed ${formatDateRange(b.cn_start, b.cn_end)}` : null;
+    if (b.kind === "cn_listing") return `CN re-listed ${formatDateRange(b.cn_start, b.cn_end)}`;
+    if (b.kind === "cadence") return `next re-listing: last on EN ${formatDate(b.en_last)}; groups re-list every ${Math.round(b.median_days)} d (p25 ${Math.round(b.p25_days)}, p75 ${Math.round(b.p75_days)}, n=${b.n})`;
+    return null;
 }
 
 function StatBlock({ label, value, sub }: { label: string; value: string | number; sub: string }): React.ReactElement {

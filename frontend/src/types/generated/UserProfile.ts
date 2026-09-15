@@ -38,4 +38,8 @@ export type UserProfile = {
     skin_count: number | null;
     non_default_skin_count: number | null;
     updated_at: string;
+    /**
+     * Originite Prime on the account (paid and free pools summed) as of the last sync.
+     */
+    originite: number | null;
 };

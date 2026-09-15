@@ -55,7 +55,7 @@ function SkinPopup({ selection, lookup }: { selection: ISkinSelection; lookup: O
     if (!entry) {
         const pending = en.isPending || cn.isPending;
         return (
-            <DialogContent bottomStickOnMobile={false} className="w-[min(480px,95vw)] p-6" showCloseButton>
+            <DialogContent bottomStickOnMobile={false} className="w-full max-w-120 p-6" showCloseButton>
                 <DialogTitle className="font-heading font-semibold text-base">{selection.skinName}</DialogTitle>
                 <p className="font-sans text-[13px] text-muted-foreground">{pending ? "Loading the skin record" : "This skin is not in either client's skin table."}</p>
             </DialogContent>

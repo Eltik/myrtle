@@ -4,7 +4,11 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use ts_rs::TS;
 
-use super::serde_helpers::deserialize_fb_map;
+use super::{
+    material::Item,
+    serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default},
+    stage::{Stage, StageDifficulty},
+};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -88,7 +92,199 @@ impl ActivityBasicInfo {
 pub struct ActivityTableFile {
     #[serde(deserialize_with = "deserialize_fb_map")]
     pub basic_info: HashMap<String, ActivityBasicInfo>,
-    // Don't need rest of data
+    #[serde(default, deserialize_with = "deserialize_fb_map_or_default")]
+    pub zone_to_activity: HashMap<String, String>,
+    #[serde(default)]
+    pub mission_data: Vec<ActivityMission>,
+}
+
+/// One event mission (`MissionData`). Only the template and its parameters
+/// matter here: the stage-clear templates name a stage and the clear state
+/// the mission asks for, and a player's mission record outlives the event.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct ActivityMission {
+    pub id: String,
+    #[serde(default)]
+    pub template: String,
+    #[serde(default)]
+    pub param: Vec<String>,
+}
+
+/// One stage that awards Originite Prime on first clear.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct OpStage {
+    pub stage_id: String,
+    pub code: String,
+    pub op: i32,
+    pub challenge: bool,
+}
+
+/// The Originite Prime stages of each activity (`DiamondOnceDrop` over the
+/// zones `ZoneToActivity` maps to it), in stage-table order. A rerun takes
+/// over its original's zones, so an original with none borrows its `sre`
+/// twin's list.
+pub fn op_stages_by_activity(
+    stages: &HashMap<String, Stage>,
+    zone_to_activity: &HashMap<String, String>,
+) -> HashMap<String, Vec<OpStage>> {
+    let mut out: HashMap<String, Vec<OpStage>> = HashMap::new();
+    for st in stages_in_order(stages) {
+        if st.diamond_once_drop <= 0 {
+            continue;
+        }
+        if let Some(act) = zone_to_activity.get(&st.zone_id) {
+            out.entry(act.clone()).or_default().push(OpStage {
+                stage_id: st.stage_id.clone(),
+                code: st.code.clone(),
+                op: st.diamond_once_drop,
+                challenge: st.difficulty != StageDifficulty::Normal,
+            });
+        }
+    }
+    share_between_twins(&mut out);
+    out
+}
+
+fn stages_in_order(stages: &HashMap<String, Stage>) -> Vec<&Stage> {
+    let mut ordered: Vec<&Stage> = stages.values().collect();
+    ordered.sort_by(|a, b| a.stage_id.cmp(&b.stage_id));
+    ordered
+}
+
+/// A rerun (`actNNsre`) reuses its original's (`actNNside`) zones, so whichever
+/// of the pair the table describes lends its list to the other.
+fn share_between_twins<T: Clone>(map: &mut HashMap<String, Vec<T>>) {
+    let borrowed: Vec<(String, Vec<T>)> = map
+        .iter()
+        .filter(|(_, list)| !list.is_empty())
+        .filter_map(|(act, list)| {
+            let twin = act
+                .strip_suffix("side")
+                .map(|s| format!("{s}sre"))
+                .or_else(|| act.strip_suffix("sre").map(|s| format!("{s}side")))?;
+            (!map.contains_key(&twin)).then(|| (twin, list.clone()))
+        })
+        .collect();
+    map.extend(borrowed);
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct FarmDrop {
+    pub item_id: String,
+    pub name: String,
+    pub name_en: Option<String>,
+    pub icon_id: String,
+    pub tier: u8,
+    pub occ: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export)]
+pub struct FarmStage {
+    pub stage_id: String,
+    pub code: String,
+    pub ap_cost: i32,
+    pub drops: Vec<FarmDrop>,
+}
+
+pub const FARM_STAGES: usize = 3;
+pub const FARM_MIN_TIER: u8 = 3;
+
+/// The last `FARM_STAGES` normal stages of each activity whose regular
+/// drops include a material of tier `FARM_MIN_TIER` or better, with those
+/// drops, in stage order. Mini events drop tier 2 and below and get none.
+pub fn farm_stages_by_activity(
+    stages: &HashMap<String, Stage>,
+    zone_to_activity: &HashMap<String, String>,
+    items: &HashMap<String, Item>,
+) -> HashMap<String, Vec<FarmStage>> {
+    let mut out: HashMap<String, Vec<FarmStage>> = HashMap::new();
+    for st in stages_in_order(stages) {
+        if st.difficulty != StageDifficulty::Normal || st.is_story_only {
+            continue;
+        }
+        let Some(act) = zone_to_activity.get(&st.zone_id) else {
+            continue;
+        };
+        let Some(info) = st.stage_drop_info.as_ref() else {
+            continue;
+        };
+        let mut drops: Vec<FarmDrop> = info
+            .display_detail_rewards
+            .iter()
+            .filter(|r| r.drop_type == "NORMAL" && r.item_type == "MATERIAL")
+            .filter_map(|r| {
+                let item = items.get(&r.id)?;
+                Some(FarmDrop {
+                    item_id: r.id.clone(),
+                    name: item.name.clone(),
+                    name_en: None,
+                    icon_id: item.icon_id.clone(),
+                    tier: item.rarity.tier(),
+                    occ: r.occ_percent.clone(),
+                })
+            })
+            .collect();
+        if !drops.iter().any(|d| d.tier >= FARM_MIN_TIER) {
+            continue;
+        }
+        drops.sort_by(|a, b| b.tier.cmp(&a.tier).then(a.item_id.cmp(&b.item_id)));
+        drops.dedup_by(|a, b| a.item_id == b.item_id);
+        out.entry(act.clone()).or_default().push(FarmStage {
+            stage_id: st.stage_id.clone(),
+            code: st.code.clone(),
+            ap_cost: st.ap_cost,
+            drops,
+        });
+    }
+    for v in out.values_mut() {
+        if v.len() > FARM_STAGES {
+            v.drain(..v.len() - FARM_STAGES);
+        }
+    }
+    share_between_twins(&mut out);
+    out
+}
+
+pub const FARM_ARCHIVE: &str = "derived/farm-stages.json";
+
+/// The client strips a stage's drop table once its event closes, so the
+/// farming stages seen on any load are kept in `derived/farm-stages.json`
+/// next to the extract and read back for events the current table no
+/// longer describes; a live table always wins for the activities it has.
+pub fn merge_farm_archive(
+    data_dir: &std::path::Path,
+    live: HashMap<String, Vec<FarmStage>>,
+) -> HashMap<String, Vec<FarmStage>> {
+    let Some(root) = data_dir.parent().and_then(std::path::Path::parent) else {
+        return live;
+    };
+    let path = root.join(FARM_ARCHIVE);
+    let mut merged: HashMap<String, Vec<FarmStage>> = std::fs::read_to_string(&path)
+        .ok()
+        .and_then(|raw| serde_json::from_str(&raw).ok())
+        .unwrap_or_default();
+    let before = merged.len();
+    for (act, stages) in live {
+        if !stages.is_empty() {
+            merged.insert(act, stages);
+        }
+    }
+    share_between_twins(&mut merged);
+    if merged.len() != before
+        && let Ok(json) = serde_json::to_string(&merged)
+        && let Some(dir) = path.parent()
+    {
+        let _ = std::fs::create_dir_all(dir);
+        let _ = std::fs::write(&path, json);
+    }
+    merged
 }
 
 /// Skin ids mentioned anywhere in `activity_table` (event rewards, drop
@@ -99,45 +295,4 @@ pub fn scan_skin_refs(raw: &str) -> std::collections::HashSet<String> {
     let re =
         regex::Regex::new(r#""(char_\d+_[A-Za-z0-9]+@[A-Za-z0-9_]+#\d+)""#).expect("static regex");
     re.captures_iter(raw).map(|c| c[1].to_string()).collect()
-}
-
-/// The loading illustration each activity's stages point at, keyed by
-/// activity id (stage ids start with it: `act46side_01`). The generic screens
-/// (`loading1`..`loading4`, `loadingE2`, `loadingS`) are not event art and are
-/// skipped; among the rest the most-used picture wins. Measured 2026-09-14:
-/// 94 of 151 CN stage activities resolve.
-pub fn loading_pics_by_activity(
-    stages: &HashMap<String, super::stage::Stage>,
-    activities: &HashMap<String, ActivityBasicInfo>,
-) -> HashMap<String, String> {
-    let generic = |p: &str| {
-        let tail = p.strip_prefix("loading").unwrap_or(p);
-        tail.is_empty() || tail.chars().all(|c| c.is_ascii_digit()) || tail == "E2" || tail == "S"
-    };
-    let mut counts: HashMap<&str, HashMap<&str, usize>> = HashMap::new();
-    for (stage_id, st) in stages {
-        let Some(pic) = st
-            .loading_pic_id
-            .as_deref()
-            .filter(|p| !p.is_empty() && !generic(p))
-        else {
-            continue;
-        };
-        let Some(act) = stage_id
-            .split('_')
-            .next()
-            .filter(|a| activities.contains_key(*a))
-        else {
-            continue;
-        };
-        *counts.entry(act).or_default().entry(pic).or_default() += 1;
-    }
-    counts
-        .into_iter()
-        .filter_map(|(act, pics)| {
-            pics.into_iter()
-                .max_by_key(|(p, n)| (*n, std::cmp::Reverse((*p).to_string())))
-                .map(|(p, _)| (act.to_string(), p.to_string()))
-        })
-        .collect()
 }

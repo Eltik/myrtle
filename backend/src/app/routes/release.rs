@@ -11,8 +11,8 @@ use crate::{
     core::{
         auth::permissions::GlobalRole,
         release::{
-            BannersResponse, EventsResponse, LagResponse, PutOverride, ReleaseOverride,
-            SkinsResponse,
+            BannersResponse, EventsResponse, LagResponse, PutOverride, PutReleasePlan,
+            ReleaseOverride, ReleasePlan, SkinsResponse,
         },
     },
 };
@@ -65,4 +65,19 @@ pub async fn delete_override(
     require_super_admin(&auth)?;
     svc::delete_override(&state, &kind, &cn_id).await?;
     Ok(ok_status())
+}
+
+pub async fn get_plan(
+    State(state): State<AppState>,
+    auth: AuthUser,
+) -> Result<Json<Option<ReleasePlan>>, ApiError> {
+    Ok(Json(svc::get_plan(&state, auth.user_uuid()?).await?))
+}
+
+pub async fn put_plan(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Json(body): Json<PutReleasePlan>,
+) -> Result<Json<ReleasePlan>, ApiError> {
+    Ok(Json(svc::put_plan(&state, auth.user_uuid()?, body).await?))
 }
