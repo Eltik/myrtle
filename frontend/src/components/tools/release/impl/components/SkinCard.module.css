@@ -36,8 +36,8 @@
 .card.selected {
     animation: planner-spin 2.4s linear infinite;
     box-shadow:
-        6px 6px 4px rgba(0, 0, 0, 0.7),
-        0 0 7px 1px var(--planner-c0);
+        0 0 4px 1px var(--planner-c0),
+        6px 6px 4px rgba(0, 0, 0, 0.7);
 }
 
 .card:hover {
