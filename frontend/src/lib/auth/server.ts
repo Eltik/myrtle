@@ -75,18 +75,22 @@ function clearAuthCookies() {
 
 // Shared by every login method: each just gets a {token, uid} pair out of a
 // different backend endpoint, then finishes identically from there.
-const completeLogin = async (loginRes: Response): Promise<IUserProfile> => {
+const completeLogin = async (loginRes: Response): Promise<ISession> => {
     if (!loginRes.ok) throw new Error("Invalid credentials");
-    const { token, uid } = (await loginRes.json()) as { token: string; uid: string };
+    const { token } = (await loginRes.json()) as { token: string; uid: string };
 
     setAuthCookies(token);
 
     const refreshRes = await backendFetch("/refresh", { method: "POST", bearerToken: token });
     if (!refreshRes.ok) throw new Error("Sync failed");
 
-    const userRes = await backendFetch(`/get-user?uid=${encodeURIComponent(uid)}`);
-    if (!userRes.ok) throw new Error("Failed to fetch user data");
-    return (await userRes.json()) as IUserProfile;
+    // Build the session the same way a page load does, rather than fetching the
+    // profile directly: that is what carries the authorisation facts resolved
+    // server-side. Fetching the profile row here instead left a just-logged-in
+    // translator without `canAccessAdminPanel` until their next full page load.
+    const session = await getSession();
+    if (!session) throw new Error("Failed to fetch user data");
+    return session;
 };
 
 const login = async (data: LoginInput) =>
@@ -127,6 +131,15 @@ const loginCn = async (data: CnLoginInput) =>
         }),
     );
 
+/**
+ * What a signed-in session carries: the public profile row plus the two
+ * authorisation facts the server resolved. `canAccessAdminPanel` is a grant of
+ * entry only - every admin route still authorises its own request.
+ */
+export interface ISession extends IUserProfile {
+    canAccessAdminPanel: boolean;
+}
+
 const getSession = async () => {
     const token = getCookie("site_token");
     if (!token) return null;
@@ -136,7 +149,17 @@ const getSession = async () => {
         clearAuthCookies();
         return null;
     }
-    const { valid, uid } = (await verifyRes.json()) as { valid: boolean; uid?: string };
+    // `role` and `canAccessAdminPanel` come from `/auth/verify`, not from the
+    // profile below: verify resolves both server-side from the database and
+    // from `translation_permissions`, which is what every admin route checks.
+    // Reading the role off the profile row instead (what this did before) let
+    // the client gate and the server gate drift apart.
+    const { valid, uid, role, canAccessAdminPanel } = (await verifyRes.json()) as {
+        valid: boolean;
+        uid?: string;
+        role?: string;
+        canAccessAdminPanel?: boolean;
+    };
     if (!valid || !uid) {
         clearAuthCookies();
         return null;
@@ -144,7 +167,8 @@ const getSession = async () => {
 
     const userRes = await backendFetch(`/get-user?uid=${encodeURIComponent(uid)}`);
     if (!userRes.ok) return null;
-    return (await userRes.json()) as IUserProfile;
+    const profile = (await userRes.json()) as IUserProfile;
+    return { ...profile, role: role ?? profile.role, canAccessAdminPanel: canAccessAdminPanel === true } satisfies ISession;
 };
 
 const sendCode = async (data: { email: string; server: AKServer }) => {

@@ -5,16 +5,15 @@ import { Button } from "#/components/ui/button";
 import { GithubIcon } from "#/components/ui/github-icon";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "#/components/ui/menu";
 import { Spinner } from "#/components/ui/spinner";
-import { canAccessAdminPanel } from "#/lib/api/admin";
+import type { ISession } from "#/lib/auth/server";
 import { REPO_URL } from "#/lib/constants";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { getAvatarSkinId } from "#/lib/utils";
-import type { IUserProfile } from "#/types/user";
 import { AuthDialog } from "./AuthDialog";
 import type { messages } from "./UserMenu.messages";
 
-export default function UserMenu({ user, loading, logout }: { user: IUserProfile | null; loading: boolean; logout: () => Promise<void> }) {
+export default function UserMenu({ user, loading, logout }: { user: ISession | null; loading: boolean; logout: () => Promise<void> }) {
     const t: TypedT<typeof messages> = useT("nav");
 
     if (loading) {
@@ -74,7 +73,7 @@ export default function UserMenu({ user, loading, logout }: { user: IUserProfile
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    {canAccessAdminPanel(user.role) ? (
+                    {user.canAccessAdminPanel ? (
                         <DropdownMenuItem className="cursor-pointer">
                             <Link to="/admin" className="flex flex-row items-center gap-2">
                                 <ShieldIcon className="h-4 w-4 text-primary" />

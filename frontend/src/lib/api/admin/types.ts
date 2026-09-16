@@ -27,12 +27,3 @@ export function isAnyAdminRole(role: string | null | undefined): boolean {
 export function canAccessAdminPanel(role: string | null | undefined): boolean {
     return role != null && role !== "user";
 }
-
-/**
- * May write translations, subject to a per-locale grant in
- * `translation_permissions`. The role is the ticket into the feature; the
- * grant row says which locales. Mirrors the backend's `is_translator()`.
- */
-export function isTranslator(role: string | null | undefined): boolean {
-    return role === "translator" || role === "super_admin";
-}

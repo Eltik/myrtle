@@ -1,6 +1,6 @@
 import { Store } from "@tanstack/store";
 import type { AKServer } from "#/lib/auth/login";
-import type { IUserProfile } from "#/types/user";
+import type { ISession } from "#/lib/auth/server";
 
 interface ILoginFormState {
     email: string;
@@ -28,7 +28,7 @@ interface ILoginFormState {
 }
 
 interface IAuthState {
-    user: IUserProfile | null;
+    user: ISession | null;
     status: "idle" | "loading" | "ready";
     login: ILoginFormState;
     dialogOpen: boolean;
@@ -59,7 +59,7 @@ const initialLogin: ILoginFormState = {
 export const authStore = new Store<IAuthState>({ user: null, status: "idle", login: initialLogin, dialogOpen: false, postLoginRedirect: null });
 
 export const authActions = {
-    setUser: (user: IUserProfile | null) => authStore.setState((s) => ({ ...s, user, status: "ready" })),
+    setUser: (user: ISession | null) => authStore.setState((s) => ({ ...s, user, status: "ready" })),
     setLoading: () => authStore.setState((s) => ({ ...s, status: "loading" })),
     clear: () => authStore.setState((s) => ({ ...s, user: null, status: "ready", login: initialLogin, dialogOpen: false, postLoginRedirect: null })),
 

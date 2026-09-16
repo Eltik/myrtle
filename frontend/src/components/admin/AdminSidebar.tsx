@@ -3,7 +3,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { ActivityIcon, ChevronRightIcon, FileTextIcon, LanguagesIcon, LayoutDashboardIcon, ListOrderedIcon, type LucideIcon, SettingsIcon, ShieldIcon, UsersIcon, XIcon, ZapIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "#/hooks/use-auth";
-import { adminStatsQueryOptions, localesQueryOptions, translationProgressQueryOptions } from "#/lib/api/admin";
+import { adminStatsQueryOptions, isAnyAdminRole, localesQueryOptions, translationProgressQueryOptions } from "#/lib/api/admin";
 import { operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { browseTierListsQueryOptions } from "#/lib/api/tier-lists";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
@@ -73,9 +73,14 @@ export function AdminSidebar({ open, onClose }: IAdminSidebarProps): React.React
     const isActive = (to: string) => (to === "/admin" ? pathname === "/admin" : pathname.startsWith(to));
 
     // Live counts
-    const statsQuery = useQuery(adminStatsQueryOptions(isAuthenticated));
-    const tierListsQuery = useQuery(browseTierListsQueryOptions(useGamedataServer()));
-    const notesQuery = useQuery(operatorNotesListQueryOptions());
+    // `staff` gates the three counts that belong to screens a translator never
+    // sees: fetching them would 403 and fill their console for a badge that is
+    // not rendered. Locale and progress stay - those feed the one nav row they
+    // do get.
+    const staff = isAnyAdminRole(user?.role);
+    const statsQuery = useQuery({ ...adminStatsQueryOptions(isAuthenticated), enabled: isAuthenticated && staff });
+    const tierListsQuery = useQuery({ ...browseTierListsQueryOptions(useGamedataServer()), enabled: staff });
+    const notesQuery = useQuery({ ...operatorNotesListQueryOptions(), enabled: staff });
     const progressQuery = useQuery(translationProgressQueryOptions(isAuthenticated));
     const localesQuery = useQuery(localesQueryOptions(isAuthenticated));
 
@@ -92,20 +97,29 @@ export function AdminSidebar({ open, onClose }: IAdminSidebarProps): React.React
     const primaryProgress = progressQuery.data?.find((p) => p.locale !== sourceLocale) ?? progressQuery.data?.[0];
     const translationBacklog = primaryProgress ? primaryProgress.total - primaryProgress.translated + primaryProgress.stale : undefined;
 
-    const manage: INavItem[] = [
-        { to: "/admin", labelKey: "sidebar.nav.dashboard", icon: LayoutDashboardIcon },
-        { to: "/admin/users", labelKey: "sidebar.nav.users", icon: UsersIcon, count: totalUsers },
-        { to: "/admin/official-tier-lists", labelKey: "sidebar.nav.officialTierLists", icon: ListOrderedIcon, count: officialCount },
-        { to: "/admin/permissions", labelKey: "sidebar.nav.tierLists", icon: ShieldIcon, count: tierListCount },
-        { to: "/admin/operator-notes", labelKey: "sidebar.nav.operatorNotes", icon: FileTextIcon, count: notesCount },
-        { to: "/admin/translations", labelKey: "sidebar.nav.translations", icon: LanguagesIcon, count: translationBacklog },
-    ];
+    // A translator reaches the panel on a locale grant alone, and every screen
+    // but Translations would answer them 403. Show what they can use rather
+    // than a column of links that error on click. `isAnyAdminRole` is the same
+    // predicate the backend spells `is_any_admin_role` - deliberately excluding
+    // `translator` - so staff keep the full panel.
+    const manage: INavItem[] = staff
+        ? [
+              { to: "/admin", labelKey: "sidebar.nav.dashboard", icon: LayoutDashboardIcon },
+              { to: "/admin/users", labelKey: "sidebar.nav.users", icon: UsersIcon, count: totalUsers },
+              { to: "/admin/official-tier-lists", labelKey: "sidebar.nav.officialTierLists", icon: ListOrderedIcon, count: officialCount },
+              { to: "/admin/permissions", labelKey: "sidebar.nav.tierLists", icon: ShieldIcon, count: tierListCount },
+              { to: "/admin/operator-notes", labelKey: "sidebar.nav.operatorNotes", icon: FileTextIcon, count: notesCount },
+              { to: "/admin/translations", labelKey: "sidebar.nav.translations", icon: LanguagesIcon, count: translationBacklog },
+          ]
+        : [{ to: "/admin/translations", labelKey: "sidebar.nav.translations", icon: LanguagesIcon, count: translationBacklog }];
 
-    const operate: INavItem[] = [
-        { to: "/admin/health", labelKey: "sidebar.nav.health", icon: ZapIcon },
-        { to: "/admin/audit", labelKey: "sidebar.nav.audit", icon: ActivityIcon },
-        { to: "/admin/settings", labelKey: "sidebar.nav.settings", icon: SettingsIcon },
-    ];
+    const operate: INavItem[] = staff
+        ? [
+              { to: "/admin/health", labelKey: "sidebar.nav.health", icon: ZapIcon },
+              { to: "/admin/audit", labelKey: "sidebar.nav.audit", icon: ActivityIcon },
+              { to: "/admin/settings", labelKey: "sidebar.nav.settings", icon: SettingsIcon },
+          ]
+        : [];
 
     // Close the mobile drawer on Escape and lock body scroll while open.
     useEffect(() => {
@@ -157,7 +171,7 @@ export function AdminSidebar({ open, onClose }: IAdminSidebarProps): React.React
                     {manage.map((it) => (
                         <NavRow key={it.to} item={it} active={isActive(it.to)} onNavigate={onClose} />
                     ))}
-                    <div className="px-3 pt-3.5 pb-1.5 font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{t("sidebar.group.operate")}</div>
+                    {operate.length > 0 ? <div className="px-3 pt-3.5 pb-1.5 font-medium font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{t("sidebar.group.operate")}</div> : null}
                     {operate.map((it) => (
                         <NavRow key={it.to} item={it} active={isActive(it.to)} onNavigate={onClose} />
                     ))}
