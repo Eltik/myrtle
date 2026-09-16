@@ -9,6 +9,16 @@
 // fill in what the interactive prompts otherwise would. `cwd` must be the assets
 // dir so the bundled `binaries/`, `./ArkAssets/<region>` and `./output/<region>`
 // paths resolve (run.mjs joins the region onto the savedir/output itself).
+//
+// WS_THREADS and WS_START_DELAY_MIN are sized for the VPS, which is 3 cores and
+// 10 GiB against one disk holding a ~113 GB asset tree. Both watchers extracting
+// at -j 2 puts four extraction threads on three cores and, more to the point,
+// four write streams on one queue: that box has logged WRITE DMA timeouts with
+// the SATA link frozen, soft lockups in the writeback kworkers, and RCU stalls.
+// One thread each, half an interval apart on the clock, keeps at most one extract
+// running at a time under the scheduler. A manual force_update still bypasses the
+// phase, so two triggered by hand at once can still overlap.
+// Raise them on a box with more cores and faster storage.
 module.exports = {
     apps: [
         {
@@ -22,7 +32,9 @@ module.exports = {
                 WS_SERVER: "en",
                 WS_PORT: "9160",
                 WS_PROFILE: "full",
-                WS_THREADS: "2",
+                WS_THREADS: "1",
+                // EN holds the interval phase; CN is the one that moves.
+                WS_START_DELAY_MIN: "0",
             },
         },
         {
@@ -39,7 +51,13 @@ module.exports = {
                 // Release Planner serves for CN-only content; without it the
                 // CN preview has names and dates but no pictures.
                 WS_PROFILE: "operators,release",
-                WS_THREADS: "2",
+                WS_THREADS: "1",
+                // A PHASE offset, not a one-off delay: checks are anchored to
+                // the wall clock, so EN lands on :00 and :30 and CN on :15 and
+                // :45 no matter when either process last restarted. Half the 30
+                // minute interval is the furthest apart two regions can be.
+                // WS_ALIGN=0 falls back to offsetting from process start.
+                WS_START_DELAY_MIN: "15",
             },
         },
     ],

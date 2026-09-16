@@ -46,6 +46,36 @@ const UNPACKER_BUILD = join(
 	`unpacker${exe}`,
 );
 const DEFAULT_THREADS = 2;
+
+// WS_NO_TRUNCATION_CHECK=1 disables the post-extract file-count comparison in
+// `outputLooksTruncated`. It is an escape hatch for stopping a re-extract loop
+// while the cause is diagnosed, not a setting: with the check off a genuinely
+// truncated tree is undetectable again, which is the failure it exists to catch.
+// Compared against "1" rather than tested for truthiness, so that writing "0"
+// turns it OFF, which is what anyone setting it to "0" expects.
+const TRUNCATION_CHECK_OFF = process.env.WS_NO_TRUNCATION_CHECK === "1";
+
+// How often the truncation walk may actually run, per output tree, and when each
+// tree was last walked. A tree does not spontaneously lose files between two
+// 30-minute ticks: the things that truncate one are an OOM-killed unpacker or a
+// bad sweep, both of which happen during an extract, not while the watcher idles.
+// Walking every tick bought nothing and cost a full-tree traversal every 30
+// minutes per region. Throttled, the check still catches a truncated tree within
+// WS_TRUNCATION_CHECK_MIN of it happening, which is well inside the weeks that
+// went unnoticed before the check existed at all. Parsed like the backoff cap: an
+// empty or unusable value takes the default rather than becoming 0.
+const rawTruncMin = process.env.WS_TRUNCATION_CHECK_MIN;
+const parsedTruncMin =
+	rawTruncMin === undefined || rawTruncMin.trim() === ""
+		? 360
+		: Number(rawTruncMin);
+const TRUNCATION_WALK_EVERY_MS =
+	(Number.isFinite(parsedTruncMin) && parsedTruncMin >= 0
+		? parsedTruncMin
+		: 360) *
+	60 *
+	1000;
+const lastTruncationWalk = new Map();
 // Built via RegExp constructor to avoid a literal ESC control character in source
 const ANSI_RE = new RegExp(`${String.fromCharCode(0x1b)}\\[[0-9;]*m`, "g");
 
@@ -299,30 +329,141 @@ function outputMissingOrEmpty(outputDir) {
  * region sat for weeks missing thousands of textures and audio files with no
  * error anywhere.
  *
+ * `onDisk` is the baseline the check compares against; `exported` is kept for
+ * diagnostics only. They are NOT interchangeable, and the stamps that carried
+ * only `exported` are why. The unpacker's figure is a sum of its per-bundle
+ * "Exported N" lines, taken before `sweepOrphans` deletes anything, so it counts
+ * assets the exporter wrote and then removed, and it counts a path twice when two
+ * bundles write it under last-write-wins. It is biased HIGH against the tree it
+ * was compared to, permanently: a region whose sweep clears more than the 2%
+ * tolerance re-extracted on every check, having just succeeded.
+ *
  * @param {string} savedir
- * @param {number} [exported] files reported by the unpacker
+ * @param {number} [exported] assets the unpacker reported, PRE-sweep, diagnostic only
+ * @param {number} [onDisk] files counted under the output tree AFTER the orphan sweep
  */
-function touchExtractStamp(savedir, exported) {
+function touchExtractStamp(savedir, exported, onDisk) {
 	mkdirSync(savedir, { recursive: true });
-	const payload = { at: new Date().toISOString(), exported: exported ?? null };
+	const payload = {
+		at: new Date().toISOString(),
+		exported: exported ?? null,
+		onDisk: onDisk ?? null,
+	};
 	writeFileSync(join(savedir, ".last_extract"), JSON.stringify(payload), "utf-8");
+}
+
+/**
+ * Read the persisted backoff state, or a cleared state when there is none.
+ *
+ * The backoff HAS to outlive the process. pm2 restarts this watcher at
+ * max_memory_restart, and the OOM killer takes node itself when the box is under
+ * the memory pressure a runaway extract creates, so the process holding an
+ * in-memory counter is precisely the one that dies. Kept in memory only, three
+ * failures would arm a 2 hour wait, the fourth would kill node, and the restart
+ * would re-extract immediately with the counter back at zero: a box crash-looping
+ * every 40 minutes re-extracts MORE often than the 30 minute interval it had
+ * before the backoff existed.
+ *
+ * Every field is range-checked rather than trusted: a truncated or hand-edited
+ * `.backoff` must degrade to "no backoff", never to NaN, which would make
+ * `Date.now() < nextAttemptAt` false forever and silently disable the guard.
+ *
+ * @param {string} savedir
+ * @returns {{ consecutiveFailures: number, nextAttemptAt: number }}
+ */
+function readBackoffState(savedir) {
+	try {
+		const raw = JSON.parse(readFileSync(join(savedir, ".backoff"), "utf-8"));
+		const failures = Number(raw?.consecutiveFailures);
+		const until = Number(raw?.nextAttemptAt);
+		return {
+			consecutiveFailures:
+				Number.isFinite(failures) && failures > 0 ? Math.floor(failures) : 0,
+			nextAttemptAt: Number.isFinite(until) && until > 0 ? until : 0,
+		};
+	} catch {
+		return { consecutiveFailures: 0, nextAttemptAt: 0 };
+	}
+}
+
+/**
+ * Persist the backoff, or remove the file when the count is back to zero, so a
+ * healthy region leaves no state behind. Best effort: a watcher that cannot write
+ * this must keep working, and the in-memory copy still holds for this process.
+ *
+ * @param {string} savedir
+ * @param {number} consecutiveFailures
+ * @param {number} nextAttemptAt epoch ms
+ */
+function writeBackoffState(savedir, consecutiveFailures, nextAttemptAt) {
+	const path = join(savedir, ".backoff");
+	try {
+		if (consecutiveFailures <= 0) {
+			if (existsSync(path)) unlinkSync(path);
+			return;
+		}
+		mkdirSync(savedir, { recursive: true });
+		writeFileSync(
+			path,
+			JSON.stringify({
+				consecutiveFailures,
+				nextAttemptAt,
+				at: new Date().toISOString(),
+			}),
+			"utf-8",
+		);
+	} catch (err) {
+		console.log(
+			chalk.dim(`Could not persist backoff state: ${err.message}`),
+		);
+	}
+}
+
+/**
+ * True when a stamp exists but carries no baseline `outputLooksTruncated` can use,
+ * which is every stamp written before `onDisk` existed. The check is inert on
+ * those by design, and nothing re-arms it except a successful extract, which only
+ * happens if some OTHER trigger fires: on a region whose version is current and
+ * whose unpacker is unchanged, that can be weeks. So the condition is announced at
+ * startup rather than left to be discovered later by noticing missing textures.
+ *
+ * @param {string} savedir
+ * @returns {boolean}
+ */
+function stampBaselineMissing(savedir) {
+	const path = join(savedir, ".last_extract");
+	try {
+		const raw = JSON.parse(readFileSync(path, "utf-8"));
+		return typeof raw?.onDisk !== "number" || raw.onDisk <= 0;
+	} catch {
+		// Unparseable or the old plain-timestamp format. Missing entirely is not a
+		// warning: a first run has nothing to be inert about.
+		return existsSync(path);
+	}
 }
 
 /**
  * Count files actually present under `outputDir`, for comparison against the
  * `exported` figure recorded by the last successful unpack.
  *
+ * ASYNC because this walks the whole extracted tree, which on the VPS is ~113 GB
+ * and several hundred thousand files. Done with readdirSync it blocked the event
+ * loop for the length of the walk, so the WebSocket server answered nothing while
+ * it ran: no status, no pings, and a `force_update` a human had just sent sitting
+ * unread in the socket. On a box whose failure mode IS disk starvation that was a
+ * self-inflicted stall on the queue this whole change exists to unload.
+ *
  * @param {string} dir
- * @returns {number}
+ * @returns {Promise<number>}
  */
-function countFiles(dir) {
+async function countFiles(dir) {
 	let total = 0;
 	const stack = [dir];
 	while (stack.length > 0) {
 		const current = stack.pop();
 		let entries;
 		try {
-			entries = readdirSync(current, { withFileTypes: true });
+			entries = await readdir(current, { withFileTypes: true });
 		} catch {
 			continue;
 		}
@@ -341,19 +482,35 @@ function countFiles(dir) {
  *
  * @param {string} savedir
  * @param {string} outputDir
- * @returns {boolean}
+ * @returns {Promise<boolean>}
  */
-function outputLooksTruncated(savedir, outputDir) {
+async function outputLooksTruncated(savedir, outputDir) {
+	if (TRUNCATION_CHECK_OFF) return false;
+
 	let expected;
 	try {
 		const raw = JSON.parse(readFileSync(join(savedir, ".last_extract"), "utf-8"));
-		expected = typeof raw?.exported === "number" ? raw.exported : null;
+		expected = typeof raw?.onDisk === "number" ? raw.onDisk : null;
 	} catch {
 		return false; // no stamp, or the old plain-timestamp format
 	}
-	if (!expected) return false;
+	// A stamp with no `onDisk` predates the post-sweep count. Its `exported`
+	// baseline is biased high (see touchExtractStamp) and decides nothing, so the
+	// check stays INERT until the next successful unpack writes a comparable
+	// number. Tested against null and <= 0 rather than for truthiness: an onDisk of
+	// 0 is a real reading, and `outputMissingOrEmpty` already covers an empty tree.
+	if (expected === null || expected <= 0) return false;
 
-	const actual = countFiles(outputDir);
+	// Throttled here, after the cheap baseline checks and before the expensive
+	// walk, so a tick that is going to decide nothing costs nothing. Returning
+	// false when throttled errs toward NOT re-extracting, which is the safe
+	// direction: the cost of a late detection is stale files, the cost of a false
+	// positive is the ~113 GB re-extract this change exists to prevent.
+	const lastWalk = lastTruncationWalk.get(outputDir) ?? 0;
+	if (Date.now() - lastWalk < TRUNCATION_WALK_EVERY_MS) return false;
+
+	const actual = await countFiles(outputDir);
+	lastTruncationWalk.set(outputDir, Date.now());
 	const TOLERANCE = 0.98;
 	if (actual >= Math.floor(expected * TOLERANCE)) return false;
 
@@ -742,7 +899,11 @@ async function runUnpack(opts) {
 		console.log(chalk.dim(`[${new Date().toLocaleTimeString()}] ${msg}`));
 		opts.onNotice?.(msg);
 	}
-	return stats;
+	// Counted HERE, after the sweep, so the number written to the stamp and the
+	// number a later check measures are the same measurement of the same tree.
+	// Taken before the sweep it is a different quantity, and comparing the two is
+	// what made a successful extract look truncated.
+	return { ...stats, onDisk: await countFiles(opts.outputDir) };
 }
 
 // ─── Option 1: Setup ───────────────────────────────────────────────────────
@@ -1069,7 +1230,7 @@ async function runUpdate() {
 		assetsUpToDate &&
 		(unpackerIsNewer(savedir) ||
 			outputMissingOrEmpty(outputDir) ||
-			outputLooksTruncated(savedir, outputDir));
+			(await outputLooksTruncated(savedir, outputDir)));
 
 	if (assetsUpToDate && !needsReextract) {
 		console.log(
@@ -1205,7 +1366,7 @@ async function runUpdate() {
 	if (!assetsUpToDate) {
 		writeStoredVersion(savedir, serverVer.resVersion);
 	}
-	touchExtractStamp(savedir, upStats?.exported);
+	touchExtractStamp(savedir, upStats?.exported, upStats?.onDisk);
 
 	const msg = needsReextract
 		? `Re-extracted with updated unpacker (${serverVer.resVersion})`
@@ -1236,6 +1397,12 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 		profile: cliArgs.profile ?? process.env.WS_PROFILE ?? "full",
 		port: Number(cliArgs.port ?? process.env.WS_PORT ?? 9160),
 		intervalMin: Number(cliArgs.interval ?? process.env.WS_INTERVAL ?? 30),
+		// Minutes to wait before the FIRST check, and so the phase of every check
+		// after it. Two watchers on one box otherwise wake on the same boundary and
+		// their extracts overlap. Default 0 leaves the behaviour as it was.
+		startDelayMin: Number(
+			cliArgs["start-delay"] ?? process.env.WS_START_DELAY_MIN ?? 0,
+		),
 	};
 
 	const config = nonInteractive
@@ -1267,12 +1434,108 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 	config.savedir = join(config.savedir, config.serverKey);
 	config.outputDir = join(config.outputDir, config.serverKey);
 
-	const intervalMs = config.intervalMin * 60 * 1000;
+	// Clamped for exactly the reason the backoff cap is, and it matters more now
+	// that the backoff is a multiple of it. Number("30m") is NaN: setInterval
+	// coerces NaN to 1 ms, so the check loop spins, while `Date.now() < NaN` is
+	// always false, so the backoff guard can never hold. One typo'd WS_INTERVAL
+	// would reproduce the original incident and disable the fix for it in the same
+	// stroke. Number("") is 0, which is the same failure with a busier loop.
+	const rawIntervalMin = Number(config.intervalMin);
+	const effectiveIntervalMin =
+		Number.isFinite(rawIntervalMin) && rawIntervalMin > 0 ? rawIntervalMin : 30;
+	if (effectiveIntervalMin !== rawIntervalMin) {
+		console.log(
+			chalk.yellow(
+				`Check interval "${config.intervalMin}" is not a usable number of minutes; using ${effectiveIntervalMin}`,
+			),
+		);
+	}
+	config.intervalMin = effectiveIntervalMin;
+	const intervalMs = effectiveIntervalMin * 60 * 1000;
+	// NaN degrades to 0, which is the previous behaviour, so a garbled value cannot
+	// wedge the watcher in a delay it never leaves.
+	const startDelayMs = Number.isFinite(config.startDelayMin)
+		? config.startDelayMin * 60 * 1000
+		: 0;
+
+	// A failed update leaves every trigger that caused it STILL TRUE: `.version`
+	// and `.last_extract` are written only on success, so the next tick re-runs the
+	// same download and the same extract. With no backoff that is a full re-download
+	// and re-extract every intervalMin for as long as the failure lasts, which on a
+	// 3-core box against a ~113 GB tree is enough to keep the kernel in writeback
+	// and time out the disk.
+	//
+	// The cap is a TRADE, shipped knowingly, not a derived value: 6 hours is long
+	// enough that a wedged box stops driving the queue and short enough that a
+	// genuinely new resVersion still lands the same day. Ruled out on the way there:
+	// no backoff at all, which is the bug; and a hard attempt cap, which leaves a box
+	// stale with no retry once a human has fixed the cause.
+	//
+	// WS_MAX_BACKOFF_MIN=0 restores the previous behaviour EXACTLY: the delay becomes
+	// 0 ms and the `Date.now() < nextAttemptAt` guard can never hold. Parsed for
+	// finiteness rather than truthiness, because Number("") is 0 and Number("abc") is
+	// NaN, and NaN would silently disable the guard as well.
+	//
+	// An empty value takes the DEFAULT rather than 0. `process.env` holds strings,
+	// so a blanked pm2 entry or a bare `export WS_MAX_BACKOFF_MIN=` reaches
+	// Number("") === 0, which is finite and would turn the whole mechanism off with
+	// no log line saying so. A negative value is rejected the same way: it makes
+	// nextAttemptAt a time in the past, which is 0 wearing a disguise. Only an
+	// explicit "0" disables the backoff, and the resolved cap is logged at startup
+	// so an operator can read what actually took effect instead of inferring it.
+	const rawBackoffMin = process.env.WS_MAX_BACKOFF_MIN;
+	const parsedBackoffMin =
+		rawBackoffMin === undefined || rawBackoffMin.trim() === ""
+			? 360
+			: Number(rawBackoffMin);
+	const backoffCapMin =
+		Number.isFinite(parsedBackoffMin) && parsedBackoffMin >= 0
+			? parsedBackoffMin
+			: 360;
+	if (rawBackoffMin !== undefined && backoffCapMin !== parsedBackoffMin) {
+		console.log(
+			chalk.yellow(
+				`WS_MAX_BACKOFF_MIN="${rawBackoffMin}" is not a usable number of minutes; using ${backoffCapMin}`,
+			),
+		);
+	}
+	const maxBackoffMs = backoffCapMin * 60 * 1000;
+
+	/** Delay before the next attempt, after `failures` consecutive failures. */
+	const backoffMs = (failures) =>
+		Math.min(intervalMs * 2 ** Math.max(0, failures - 1), maxBackoffMs);
 
 	// State
 	let currentState = "idle";
 	let updating = false;
 	let currentVersion = readStoredVersion(config.savedir);
+	// Consecutive failed `performUpdate` runs, and the earliest time the next
+	// attempt may start. Loaded from disk so a pm2 or OOM restart does not clear a
+	// backoff that the restart itself is evidence for. Cleared by a run whose
+	// extract succeeds.
+	const persistedBackoff = readBackoffState(config.savedir);
+	let consecutiveFailures = persistedBackoff.consecutiveFailures;
+	// A stored wait further out than the cap can only come from a clock that moved,
+	// so it is trimmed rather than honoured. Left alone, one bad clock reading
+	// would park a region past any horizon a human would think to look at.
+	let nextAttemptAt = Math.min(
+		persistedBackoff.nextAttemptAt,
+		Date.now() + maxBackoffMs,
+	);
+	// When the scheduler will next call `checkAndUpdate`. Published so a client can
+	// tell a watcher that is between checks from one that has stopped checking.
+	let nextCheckAt = 0;
+	if (consecutiveFailures > 0) {
+		console.log(
+			chalk.yellow(
+				`Resuming backoff from disk: ${consecutiveFailures} consecutive failure(s), next attempt ${
+					nextAttemptAt > Date.now()
+						? `in ${Math.ceil((nextAttemptAt - Date.now()) / 60000)} minute(s)`
+						: "now"
+				}`,
+			),
+		);
+	}
 
 	// WebSocket server
 	const wss = new WebSocketServer({ port: config.port });
@@ -1312,11 +1575,23 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 		if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(msg));
 	}
 
+	// A watcher in a six-hour backoff was INDISTINGUISHABLE from a healthy one over
+	// this socket: the backoff guard returned before touching `currentState`, so a
+	// client connecting after the one-shot failure broadcast saw `state: "idle"`
+	// and a version read off disk, with no way to learn the watcher would not check
+	// again for hours. The only trace was a line in the pm2 log. For a mechanism
+	// whose whole purpose is to stop work for up to six hours, that state belongs
+	// here, or the first symptom anyone gets is stale assets and a green dashboard.
 	function statusMessage() {
 		return {
 			type: "status",
 			state: currentState,
 			version: { current: currentVersion ?? null },
+			nextCheckAt: nextCheckAt || null,
+			backoff: {
+				consecutiveFailures,
+				nextAttemptAt: nextAttemptAt || null,
+			},
 		};
 	}
 
@@ -1378,8 +1653,25 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 		});
 	}
 
-	// Perform download + unpack cycle
-	async function performUpdate() {
+	// Perform download + unpack cycle.
+	//
+	// `knownVer` is the version `checkAndUpdate` already fetched. Fetching it again
+	// after the work is what made a CDN blip expensive: the download can run for
+	// hours and the extract for hours more, and a 503 on a fresh version call at
+	// the END of that threw into the catch, so neither `.version` nor
+	// `.last_extract` was written and the next tick repeated the whole thing. The
+	// manual force_update path passes nothing and still fetches, which is fine: it
+	// has no earlier fetch to reuse.
+	//
+	// `manual` marks an operator-initiated force_update. Such a run DELIBERATELY
+	// ignores `nextAttemptAt`, because an escape hatch is what makes a six-hour cap
+	// tolerable, and its failures do not touch the counter. Sharing one counter
+	// meant an operator debugging a broken CDN pushed the automatic retry out with
+	// every click: five attempts reached backoffMs(5), pinning the scheduled
+	// watcher at the 6 hour cap because a human tried to help, with nothing in the
+	// logs connecting the two. A manual SUCCESS still clears the backoff, because
+	// what the counter counts is failed extracts and that extract did not fail.
+	async function performUpdate(knownVer, { manual = false } = {}) {
 		if (updating) return;
 		updating = true;
 
@@ -1445,14 +1737,44 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 					broadcast({ type: "status", state: "unpacking", message }),
 			});
 
+			// The extract SUCCEEDED at this point, and everything below is recording
+			// that. None of it may fall into the catch: doing so discards hours of
+			// completed work, leaves every trigger true, and re-runs the whole cycle on
+			// the next tick, which is the loop this whole change exists to close.
+			//
+			// The backoff clears first, before any call that can throw, because it
+			// counts failed extracts and this extract did not fail.
+			consecutiveFailures = 0;
+			nextAttemptAt = 0;
+			writeBackoffState(config.savedir, 0, 0);
+
 			// Update stored version and extraction timestamp
-			const serverVer = await fetchServerVersion(config.serverKey);
-			writeStoredVersion(config.savedir, serverVer.resVersion);
-			touchExtractStamp(config.savedir, upStats.exported);
-			currentVersion = serverVer.resVersion;
+			let serverVer = knownVer;
+			try {
+				if (!serverVer) serverVer = await fetchServerVersion(config.serverKey);
+				writeStoredVersion(config.savedir, serverVer.resVersion);
+				currentVersion = serverVer.resVersion;
+			} catch (err) {
+				console.log(
+					chalk.yellow(
+						`[${new Date().toLocaleTimeString()}] Extract succeeded but the version could not be recorded: ${err.message}. The next check will see a version mismatch and repeat the download.`,
+					),
+				);
+			}
+			// Written even when the version could not be: it records the tree that is
+			// now on disk, which is true regardless of what the CDN just said.
+			try {
+				touchExtractStamp(config.savedir, upStats.exported, upStats.onDisk);
+			} catch (err) {
+				console.log(
+					chalk.yellow(
+						`[${new Date().toLocaleTimeString()}] Extract succeeded but the stamp could not be written: ${err.message}`,
+					),
+				);
+			}
 
 			currentState = "idle";
-			console.log(chalk.green(`[${new Date().toLocaleTimeString()}] Update complete: v${currentVersion}, ${dlStats.downloaded} downloaded, ${upStats.exported} exported`));
+			console.log(chalk.green(`[${new Date().toLocaleTimeString()}] Update complete: v${currentVersion}, ${dlStats.downloaded} downloaded, ${upStats.exported} exported, ${upStats.onDisk} on disk`));
 			broadcast({
 				type: "update_complete",
 				version: currentVersion,
@@ -1464,7 +1786,29 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 		} catch (err) {
 			currentState = "idle";
 			console.log(chalk.red(`[${new Date().toLocaleTimeString()}] Update failed: ${err.message}`));
-			broadcast({ type: "error", message: `Update failed: ${err.message}` });
+			if (manual) {
+				console.log(
+					chalk.dim(
+						`[${new Date().toLocaleTimeString()}] Manual update, so the automatic backoff is unchanged (${consecutiveFailures} consecutive failure(s) on record)`,
+					),
+				);
+			} else {
+				consecutiveFailures += 1;
+				const wait = backoffMs(consecutiveFailures);
+				nextAttemptAt = Date.now() + wait;
+				writeBackoffState(config.savedir, consecutiveFailures, nextAttemptAt);
+				console.log(
+					chalk.dim(
+						`[${new Date().toLocaleTimeString()}] Failure ${consecutiveFailures}; next attempt in ${Math.round(wait / 60000)} minute(s)`,
+					),
+				);
+			}
+			broadcast({
+				type: "error",
+				message: `Update failed: ${err.message}`,
+				consecutiveFailures,
+				nextAttemptAt,
+			});
 			broadcast(statusMessage());
 		} finally {
 			updating = false;
@@ -1474,6 +1818,18 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 	// Check for updates and trigger download if needed
 	async function checkAndUpdate() {
 		if (updating) return;
+
+		if (Date.now() < nextAttemptAt) {
+			const mins = Math.ceil((nextAttemptAt - Date.now()) / 60000);
+			console.log(
+				chalk.dim(
+					`[${new Date().toLocaleTimeString()}] Backing off after ${consecutiveFailures} failed update(s); next attempt in ${mins} minute(s)`,
+				),
+			);
+			currentState = "backing_off";
+			broadcast(statusMessage());
+			return;
+		}
 
 		try {
 			currentState = "checking";
@@ -1488,7 +1844,7 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 			const needsReextract =
 				unpackerIsNewer(config.savedir) ||
 				outputMissingOrEmpty(config.outputDir) ||
-				outputLooksTruncated(config.savedir, config.outputDir);
+				(await outputLooksTruncated(config.savedir, config.outputDir));
 			if (storedVer === serverVer.resVersion && !needsReextract) {
 				console.log(chalk.dim(`[${new Date().toLocaleTimeString()}] Up to date (${storedVer})`));
 				broadcast(statusMessage());
@@ -1509,7 +1865,7 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 				clientVersion: serverVer.clientVersion,
 			});
 
-			await performUpdate();
+			await performUpdate(serverVer);
 		} catch (err) {
 			currentState = "idle";
 			console.log(chalk.red(`[${new Date().toLocaleTimeString()}] Version check failed: ${err.message}`));
@@ -1544,7 +1900,9 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 							message: "Update already in progress",
 						});
 					} else {
-						performUpdate();
+						// Deliberately not gated on `nextAttemptAt`: this is the hatch
+						// out of a long backoff, and a person is asking for it.
+						performUpdate(undefined, { manual: true });
 					}
 					break;
 
@@ -1566,9 +1924,6 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 		});
 		ws.on("error", () => clients.delete(ws));
 	});
-
-	// Start periodic checking
-	setInterval(checkAndUpdate, intervalMs);
 
 	console.log(
 		boxen(
@@ -1594,8 +1949,66 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 		),
 	);
 
-	// Initial check
-	await checkAndUpdate();
+	if (stampBaselineMissing(config.savedir)) {
+		console.log(
+			chalk.yellow(
+				`Truncation check is INERT for this region: .last_extract carries no onDisk baseline, so a truncated tree will not be detected. It re-arms on the next successful extract.`,
+			),
+		);
+	}
+
+	// WS_ALIGN=0 restores the previous scheduling exactly: sleep the stagger, arm
+	// the interval from that moment, check immediately.
+	const alignToClock = process.env.WS_ALIGN !== "0";
+
+	if (!alignToClock) {
+		if (startDelayMs > 0) {
+			console.log(
+				chalk.dim(
+					`[${new Date().toLocaleTimeString()}] Staggered start: waiting ${config.startDelayMin} minute(s) before the first check`,
+				),
+			);
+			await new Promise((resolve) => setTimeout(resolve, startDelayMs));
+		}
+		nextCheckAt = Date.now() + intervalMs;
+		setInterval(() => {
+			nextCheckAt = Date.now() + intervalMs;
+			void checkAndUpdate();
+		}, intervalMs);
+		await checkAndUpdate();
+		return;
+	}
+
+	// Anchored to the WALL clock rather than to process start. A relative offset
+	// only holds while both watchers keep the start times they happened to get:
+	// pm2 restarting one of them re-phases that one to its own restart moment, and
+	// the two drift back onto the same boundary with nothing left to separate
+	// them. Anchored to the clock, en fires at :00 and :30 and cn at :15 and :45
+	// whenever either process last came up, so a restart cannot collide them.
+	//
+	// The TRADE, shipped knowingly: there is no immediate check at startup any
+	// more, so a deploy can wait up to one interval before the new resVersion is
+	// noticed. force_update is how to say "go now" and WS_ALIGN=0 is the way back.
+	// Ruled out on the way here: checking immediately and then aligning, which
+	// reintroduces the collision on the first restart and so buys nothing.
+	const offsetMs = ((startDelayMs % intervalMs) + intervalMs) % intervalMs;
+	const scheduleNext = () => {
+		const now = Date.now();
+		// floor(..) + 1, not ceil(..): a slot landing exactly on `now` must schedule
+		// the NEXT one, or the zero-delay timer re-enters itself forever.
+		nextCheckAt =
+			(Math.floor((now - offsetMs) / intervalMs) + 1) * intervalMs + offsetMs;
+		setTimeout(() => {
+			scheduleNext();
+			void checkAndUpdate();
+		}, nextCheckAt - now);
+	};
+	scheduleNext();
+	console.log(
+		chalk.dim(
+			`[${new Date().toLocaleTimeString()}] Checks aligned to the clock: every ${config.intervalMin} min at offset ${offsetMs / 60000} min; first check at ${new Date(nextCheckAt).toLocaleTimeString()}`,
+		),
+	);
 }
 
 // ─── Global SIGINT ──────────────────────────────────────────────────────────
