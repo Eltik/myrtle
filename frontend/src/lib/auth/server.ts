@@ -88,7 +88,13 @@ const completeLogin = async (loginRes: Response): Promise<ISession> => {
     // profile directly: that is what carries the authorisation facts resolved
     // server-side. Fetching the profile row here instead left a just-logged-in
     // translator without `canAccessAdminPanel` until their next full page load.
-    const session = await getSession();
+    //
+    // Resolve it from the token we just received, NOT from the request cookie.
+    // `setAuthCookies` writes the response's Set-Cookie header; `getCookie`
+    // reads the incoming request, which on a fresh login carries no
+    // `site_token` yet. Reading the cookie here made every first login fail
+    // with "Failed to fetch user data" until the next page load re-sent it.
+    const session = await sessionForToken(token);
     if (!session) throw new Error("Failed to fetch user data");
     return session;
 };
@@ -143,7 +149,10 @@ export interface ISession extends IUserProfile {
 const getSession = async () => {
     const token = getCookie("site_token");
     if (!token) return null;
+    return sessionForToken(token);
+};
 
+const sessionForToken = async (token: string): Promise<ISession | null> => {
     const verifyRes = await backendFetch("/auth/verify", { bearerToken: token });
     if (!verifyRes.ok) {
         clearAuthCookies();
