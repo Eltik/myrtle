@@ -169,10 +169,13 @@ pub async fn assert_can_write(
     if auth.role.is_super_admin() {
         return Ok(user_id);
     }
-    if !auth.role.is_translator() {
-        return Err(ApiError::Forbidden);
-    }
 
+    // The grant row is the authority, not the global role. Requiring
+    // `is_translator()` first made a grant inert on its own: the role rides the
+    // JWT and is frozen at login, so a freshly granted translator was refused
+    // until they logged out and back in - and one left at `User` was refused
+    // forever, which is the state a locale grant alone used to produce.
+    // Grants are read per request, so one takes effect on the very next call.
     let grants = queries::list_permissions_for_user(&state.db, user_id).await?;
     let allowed = grants.iter().any(|g| {
         g.locale == locale
@@ -188,6 +191,25 @@ pub async fn assert_can_write(
     }
 }
 
+/// Whether this caller may load the admin panel's translation surface.
+///
+/// A staff role admits, and so does any single translation grant - otherwise a
+/// locale grant would be unusable, since its holder could not reach the screen
+/// that spends it. Resolved per request from the database, like the grants
+/// themselves.
+pub async fn can_access_admin_panel(
+    state: &AppState,
+    auth: &AuthUser,
+) -> Result<bool, ApiError> {
+    if auth.role.can_access_admin_panel() {
+        return Ok(true);
+    }
+    let Ok(user_id) = auth.user_uuid() else {
+        return Ok(false);
+    };
+    Ok(queries::has_any_permission(&state.db, user_id).await?)
+}
+
 /// The locales this caller may edit, for the admin UI's locale picker. A
 /// super-admin gets every locale; anyone else gets exactly their grants.
 pub async fn writable_locales(state: &AppState, auth: &AuthUser) -> Result<Vec<String>, ApiError> {
@@ -198,10 +220,13 @@ pub async fn writable_locales(state: &AppState, auth: &AuthUser) -> Result<Vec<S
             .map(|l| l.code)
             .collect());
     }
-    if !auth.role.is_translator() {
+    // No role precondition, for the same reason `assert_can_write` has none:
+    // the grants ARE the answer to "what may this caller edit", and gating the
+    // lookup on the JWT role handed a freshly granted translator an empty
+    // locale picker on a screen they were otherwise allowed to open.
+    let Ok(user_id) = auth.user_uuid() else {
         return Ok(Vec::new());
-    }
-    let user_id = auth.user_uuid()?;
+    };
     let mut codes: Vec<String> = queries::list_permissions_for_user(&state.db, user_id)
         .await?
         .into_iter()

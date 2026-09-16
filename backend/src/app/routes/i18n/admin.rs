@@ -14,9 +14,11 @@ use crate::database::models::i18n::{
 
 /// Reading the translation workspace. Open to any staff role rather than to
 /// translators alone, so a tier-list admin can see progress without being
-/// granted a locale. Writes are gated per locale in the service.
-const fn assert_can_read(auth: &AuthUser) -> Result<(), ApiError> {
-    if auth.role.can_access_admin_panel() {
+/// granted a locale - and to any grant holder whatever their global role, so a
+/// locale grant is usable by itself. Writes are gated per locale in the
+/// service.
+async fn assert_can_read(state: &AppState, auth: &AuthUser) -> Result<(), ApiError> {
+    if service::can_access_admin_panel(state, auth).await? {
         Ok(())
     } else {
         Err(ApiError::Forbidden)
@@ -29,7 +31,7 @@ pub async fn list_locales(
     State(state): State<AppState>,
     auth: AuthUser,
 ) -> Result<Json<Vec<Locale>>, ApiError> {
-    assert_can_read(&auth)?;
+    assert_can_read(&state, &auth).await?;
     Ok(Json(service::list_locales(&state, false).await?))
 }
 
@@ -38,7 +40,7 @@ pub async fn writable_locales(
     State(state): State<AppState>,
     auth: AuthUser,
 ) -> Result<Json<Vec<String>>, ApiError> {
-    assert_can_read(&auth)?;
+    assert_can_read(&state, &auth).await?;
     Ok(Json(service::writable_locales(&state, &auth).await?))
 }
 
@@ -102,7 +104,7 @@ pub async fn list_messages(
     auth: AuthUser,
     Query(params): Query<ListMessagesQuery>,
 ) -> Result<Json<service::TranslationListResponse>, ApiError> {
-    assert_can_read(&auth)?;
+    assert_can_read(&state, &auth).await?;
     let response = service::list_entries(
         &state,
         &service::ListParams {
@@ -164,7 +166,7 @@ pub async fn namespaces(
     State(state): State<AppState>,
     auth: AuthUser,
 ) -> Result<Json<Vec<String>>, ApiError> {
-    assert_can_read(&auth)?;
+    assert_can_read(&state, &auth).await?;
     Ok(Json(service::list_namespaces(&state).await?))
 }
 
@@ -172,7 +174,7 @@ pub async fn progress(
     State(state): State<AppState>,
     auth: AuthUser,
 ) -> Result<Json<Vec<service::LocaleProgress>>, ApiError> {
-    assert_can_read(&auth)?;
+    assert_can_read(&state, &auth).await?;
     Ok(Json(service::locale_progress(&state).await?))
 }
 
@@ -191,7 +193,7 @@ pub async fn audit_log(
     auth: AuthUser,
     Query(params): Query<AuditQuery>,
 ) -> Result<Json<service::TranslationAuditResponse>, ApiError> {
-    assert_can_read(&auth)?;
+    assert_can_read(&state, &auth).await?;
     let response = service::get_global_audit_log(
         &state,
         params.locale.as_deref(),
@@ -216,7 +218,7 @@ pub async fn entry_audit_log(
     auth: AuthUser,
     Query(params): Query<EntryAuditQuery>,
 ) -> Result<Json<Vec<UiMessageAuditEntry>>, ApiError> {
-    assert_can_read(&auth)?;
+    assert_can_read(&state, &auth).await?;
     Ok(Json(
         service::get_audit_log(&state, &params.key, &params.locale).await?,
     ))
@@ -257,7 +259,7 @@ pub async fn list_overrides(
     auth: AuthUser,
     Query(params): Query<OverridesQuery>,
 ) -> Result<Json<Vec<GamedataOverride>>, ApiError> {
-    assert_can_read(&auth)?;
+    assert_can_read(&state, &auth).await?;
     Ok(Json(service::list_overrides(&state, &params.locale).await?))
 }
 

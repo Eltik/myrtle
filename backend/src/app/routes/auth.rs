@@ -8,6 +8,8 @@ use crate::app::routes::ok_status;
 use crate::app::services;
 use crate::app::services::auth::parse_server;
 use crate::app::state::AppState;
+use crate::core::auth::permissions::GlobalRole;
+use crate::database::queries;
 
 #[derive(Deserialize)]
 pub struct SendCodeRequest {
@@ -141,12 +143,31 @@ pub async fn verify(
 
     let role = db_role.unwrap_or_else(|| auth.role.to_string());
 
+    // The same gate the `/admin` route tree uses, answered here so the two
+    // cannot disagree. It is computed from the DB role above - not the JWT
+    // claim, which freezes at login - OR from holding any translation grant,
+    // which is enough on its own: a locale grant would be unusable if its
+    // holder could not open the screen that spends it.
+    //
+    // Before this, the session was built from `/get-user` (live DB role) while
+    // every admin route read the JWT, so a freshly promoted user was let into
+    // the panel and then 403'd by everything inside it.
+    let can_access_admin_panel = role
+        .parse::<GlobalRole>()
+        .unwrap_or_default()
+        .can_access_admin_panel()
+        || match auth.user_uuid() {
+            Ok(id) => queries::i18n::has_any_permission(&state.db, id).await?,
+            Err(_) => false,
+        };
+
     Ok(Json(serde_json::json!({
         "valid": true,
         "userId": auth.user_id,
         "uid": auth.uid,
         "server": auth.server,
         "role": role,
+        "canAccessAdminPanel": can_access_admin_panel,
     })))
 }
 

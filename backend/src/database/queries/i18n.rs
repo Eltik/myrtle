@@ -485,6 +485,18 @@ pub async fn list_permissions_for_user(
     .await
 }
 
+/// Whether this user holds ANY translation grant, for the admin-panel gate.
+/// `EXISTS` rather than counting rows: the gate only asks yes/no, and it runs
+/// on every session verify.
+pub async fn has_any_permission(pool: &PgPool, user_id: Uuid) -> Result<bool, sqlx::Error> {
+    sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS (SELECT 1 FROM translation_permissions WHERE user_id = $1)",
+    )
+    .bind(user_id)
+    .fetch_one(pool)
+    .await
+}
+
 pub async fn grant_permission(
     pool: &PgPool,
     locale: &str,

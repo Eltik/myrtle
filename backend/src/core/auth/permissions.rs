@@ -98,13 +98,6 @@ impl GlobalRole {
         !matches!(self, Self::User)
     }
 
-    /// May write translations, subject to a per-locale grant in
-    /// `translation_permissions`. The role is the ticket into the building;
-    /// the grant row says which rooms. `SuperAdmin` skips the grant check.
-    pub const fn is_translator(self) -> bool {
-        matches!(self, Self::Translator | Self::SuperAdmin)
-    }
-
     /// May be granted a per-tier-list permission row. Enumerated rather than
     /// `!User` so that adding a non-tier-list role never silently widens it.
     pub const fn can_have_tier_permissions(self) -> bool {

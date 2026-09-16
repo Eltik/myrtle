@@ -35,7 +35,7 @@ pub async fn list(
     auth: AuthUser,
     Query(params): Query<ListQuery>,
 ) -> Result<Json<Vec<TranslationPermission>>, ApiError> {
-    if !auth.role.can_access_admin_panel() {
+    if !service::can_access_admin_panel(&state, &auth).await? {
         return Err(ApiError::Forbidden);
     }
     Ok(Json(
