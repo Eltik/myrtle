@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-16T04:00:13.359Z",
+    "generatedAt": "2026-09-16T04:16:31.260Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -25892,6 +25892,13 @@
             "placeholders": []
         },
         {
+            "key": "tools.release.planner.hideOwned",
+            "namespace": "tools",
+            "source_text": "Hide owned",
+            "description": "Switch label: drop outfits the signed-in account already owns from every event's outfit list.",
+            "placeholders": []
+        },
+        {
             "key": "tools.release.planner.initial",
             "namespace": "tools",
             "source_text": "Initial primes",
@@ -25911,6 +25918,15 @@
             "source_text": "not synced yet: ",
             "description": "Lead-in before the link that pulls the balance from the player's account. Keep the trailing space.",
             "placeholders": []
+        },
+        {
+            "key": "tools.release.planner.ownedHidden",
+            "namespace": "tools",
+            "source_text": "{count, plural, one {# outfit you already own is hidden.} other {# outfits you already own are hidden.}}",
+            "description": "Note under an event's outfits when the hide-owned switch has removed some; also the whole outfit section when it removed all of them.",
+            "placeholders": [
+                "count"
+            ]
         },
         {
             "key": "tools.release.planner.reset",

@@ -6,6 +6,7 @@ import { Input } from "#/components/ui/input";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { useAuth } from "#/hooks/use-auth";
 import { refreshRosterFn } from "#/lib/api/auth";
+import { userSkinsQueryOptions } from "#/lib/api/skins";
 import { userStageClearsQueryOptions } from "#/lib/api/stages";
 import { userQueryOptions } from "#/lib/api/user";
 import { useFormatters, useLocale, useT } from "#/lib/i18n";
@@ -32,10 +33,15 @@ interface IPlannerTabProps {
     today: Date;
 }
 
+/** Shared empty set so a signed-out or toggled-off planner never re-renders on a fresh `new Set()`. */
+const NO_HIDDEN: ReadonlySet<string> = new Set<string>();
+
 export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
     const t: PlannerT = useT("tools");
     const locale = useLocale();
     const [showPast, setShowPast] = React.useState(false);
+    // On by default: a signed-in planner opens with the outfits you already own filtered out.
+    const [hideOwned, setHideOwned] = React.useState(true);
     const { user } = useAuth();
     const uid = user?.uid ?? null;
     const [state, setState, sync] = useStoredState(uid);
@@ -46,6 +52,8 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
     const profile = useQuery({ ...userQueryOptions(uid ?? ""), enabled: !!uid });
     const clearsQuery = useQuery(userStageClearsQueryOptions(uid));
     const clears: StageClears = uid ? (clearsQuery.data ?? null) : null;
+    const ownedQuery = useQuery({ ...userSkinsQueryOptions(uid ?? ""), enabled: !!uid && hideOwned });
+    const hidden = React.useMemo<ReadonlySet<string>>(() => (hideOwned && ownedQuery.data ? new Set(ownedQuery.data.map((s) => s.skin_id)) : NO_HIDDEN), [hideOwned, ownedQuery.data]);
     const accountPrimes = profile.data?.originite ?? null;
     const queryClient = useQueryClient();
     const resync = useMutation({
@@ -87,6 +95,7 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
         <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
                 <ToggleField id="planner-show-past" label={t("release.planner.showPast")} checked={showPast} onChange={setShowPast} />
+                {uid && <ToggleField id="planner-hide-owned" label={t("release.planner.hideOwned")} checked={hideOwned} onChange={setHideOwned} />}
                 <span className="font-sans text-[11px] text-muted-foreground">
                     {t("release.planner.blurb")} {uid ? (sync.saving ? t("release.planner.saving") : sync.savedAt ? t("release.planner.saved", { date: formatDate(sync.savedAt, locale) }) : t("release.planner.autosave")) : t("release.planner.signedOut")}
                 </span>
@@ -145,7 +154,7 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
                                 {summary ? t("release.planner.showSummary") : t("release.planner.showSelected")}
                             </Button>
                             {data.rows.map((row) => (
-                                <EventCard key={row.key} row={row} total={totals.get(row.key)} state={state} active={!summary && current?.key === row.key} onOpen={() => open(row.key)} t={t} locale={locale} />
+                                <EventCard key={row.key} row={row} total={totals.get(row.key)} state={state} hidden={hidden} active={!summary && current?.key === row.key} onOpen={() => open(row.key)} t={t} locale={locale} />
                             ))}
                         </div>
                     </div>
@@ -156,7 +165,7 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
                         {summary ? (
                             <Summary rows={data.rows} state={state} clears={clears} totals={totals} lookup={data.lookup} onRemove={(skin) => pickSkin(skin, false)} t={t} locale={locale} />
                         ) : current ? (
-                            <EventDetail row={current} state={state} clears={clears} total={totals.get(current.key)} today={today} lookup={data.lookup} onPick={pickSkin} onStage={setStage} onAllStages={setAllStages} onResetStages={resetStages} t={t} locale={locale} />
+                            <EventDetail row={current} state={state} clears={clears} hidden={hidden} total={totals.get(current.key)} today={today} lookup={data.lookup} onPick={pickSkin} onStage={setStage} onAllStages={setAllStages} onResetStages={resetStages} t={t} locale={locale} />
                         ) : null}
                     </div>
                 </div>
@@ -171,9 +180,10 @@ function rowTag(row: IPlanRow, t: PlannerT): string {
     return row.rerun ? t("release.planner.tag.rerun") : t("release.planner.tag.event");
 }
 
-function EventCard({ row, total, state, active, onOpen, t, locale }: { row: IPlanRow; total: IRowBalance | undefined; state: IPlanState; active: boolean; onOpen: () => void; t: PlannerT; locale: string }): React.ReactElement {
+function EventCard({ row, total, state, hidden, active, onOpen, t, locale }: { row: IPlanRow; total: IRowBalance | undefined; state: IPlanState; hidden: ReadonlySet<string>; active: boolean; onOpen: () => void; t: PlannerT; locale: string }): React.ReactElement {
     const art = useArt(row.imagePath);
     const picked = row.skins.filter((s) => state.picks[s.skinId]).length;
+    const outfits = row.skins.filter((s) => !hidden.has(s.skinId)).length;
     return (
         <button type="button" onClick={onOpen} className={cn("grid w-full cursor-pointer gap-x-3 gap-y-2 rounded-xl border p-2.5 text-left transition-all hover:border-primary/50 sm:grid-cols-[minmax(0,1fr)_auto]", active ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border/60 bg-card")}>
             <div className="flex min-w-0 flex-col gap-1">
@@ -183,7 +193,7 @@ function EventCard({ row, total, state, active, onOpen, t, locale }: { row: IPla
                 <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
                     {formatDate(row.enStart, locale)}
                     {row.resolution.status === "estimated" ? t("release.planner.card.estimated") : ""}
-                    {row.skins.length > 0 ? t("release.planner.card.outfits", { count: row.skins.length }) : ""}
+                    {outfits > 0 ? t("release.planner.card.outfits", { count: outfits }) : ""}
                     {picked > 0 ? t("release.planner.card.picked", { count: picked }) : ""}
                 </span>
                 {art.src && <img src={art.src} alt="" loading="lazy" onError={art.onError} className="mt-1 aspect-video w-full rounded-md bg-muted object-cover" />}
@@ -197,6 +207,7 @@ interface IEventDetailProps {
     row: IPlanRow;
     state: IPlanState;
     clears: StageClears;
+    hidden: ReadonlySet<string>;
     total: IRowBalance | undefined;
     today: Date;
     lookup: OperatorLookup;
@@ -215,7 +226,7 @@ const STATUS_TITLE_KEYS: Record<StageStatus, (keyof typeof messages & string) | 
     unknown: undefined,
 };
 
-function EventDetail({ row, state, clears, total, today, lookup, onPick, onStage, onAllStages, onResetStages, t, locale }: IEventDetailProps): React.ReactElement {
+function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick, onStage, onAllStages, onResetStages, t, locale }: IEventDetailProps): React.ReactElement {
     const art = useArt(row.imagePath);
     const income = rowIncome(row, state, clears);
     const potential = rowPotential(row);
@@ -230,13 +241,15 @@ function EventDetail({ row, state, clears, total, today, lookup, onPick, onStage
     const groups = React.useMemo(() => {
         const map = new Map<string, { name: string; rerun: boolean; skins: IPlanSkin[] }>();
         for (const s of row.skins) {
+            if (hidden.has(s.skinId)) continue;
             const key = `${s.groupName}|${s.rerun ? "r" : "n"}`;
             const g = map.get(key) ?? { name: s.groupName, rerun: s.rerun, skins: [] };
             g.skins.push(s);
             map.set(key, g);
         }
         return [...map.values()];
-    }, [row.skins]);
+    }, [row.skins, hidden]);
+    const ownedHidden = row.skins.reduce((n, s) => n + (hidden.has(s.skinId) ? 1 : 0), 0);
     return (
         <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
             <div className={cn("grid gap-x-4 gap-y-2 sm:items-start", art.src ? "grid-cols-[112px_minmax(0,1fr)] sm:grid-cols-[200px_minmax(0,1fr)_auto]" : "grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto]")}>
@@ -320,7 +333,7 @@ function EventDetail({ row, state, clears, total, today, lookup, onPick, onStage
             )}
             {row.farmStages.length === 0 && row.kind === "event" && row.opStages.length > 0 && <p className="m-0 border-border/40 border-t pt-3 font-sans text-[11.5px] text-muted-foreground">{t("release.planner.farming.none")}</p>}
             {groups.length === 0 ? (
-                <p className="m-0 border-border/40 border-t pt-3 font-sans text-[12.5px] text-muted-foreground">{t("release.planner.noOutfit")}</p>
+                <p className="m-0 border-border/40 border-t pt-3 font-sans text-[12.5px] text-muted-foreground">{ownedHidden > 0 ? t("release.planner.ownedHidden", { count: ownedHidden }) : t("release.planner.noOutfit")}</p>
             ) : (
                 groups.map((g) => (
                     <div key={`${g.name}|${g.rerun}`} className="flex flex-col gap-2 border-border/40 border-t pt-3">
@@ -336,6 +349,7 @@ function EventDetail({ row, state, clears, total, today, lookup, onPick, onStage
                     </div>
                 ))
             )}
+            {groups.length > 0 && ownedHidden > 0 && <p className="m-0 font-sans text-[11.5px] text-muted-foreground">{t("release.planner.ownedHidden", { count: ownedHidden })}</p>}
         </div>
     );
 }

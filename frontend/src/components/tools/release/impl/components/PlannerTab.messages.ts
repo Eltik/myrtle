@@ -7,6 +7,14 @@ export const messages = {
         text: "Show past",
         description: "Switch label: also list events and sales that have already happened.",
     },
+    "release.planner.hideOwned": {
+        text: "Hide owned",
+        description: "Switch label: drop outfits the signed-in account already owns from every event's outfit list.",
+    },
+    "release.planner.ownedHidden": {
+        text: "{count, plural, one {# outfit you already own is hidden.} other {# outfits you already own are hidden.}}",
+        description: "Note under an event's outfits when the hide-owned switch has removed some; also the whole outfit section when it removed all of them.",
+    },
     "release.planner.blurb": {
         text: "First-clear Originite Prime in, the outfits you pick out; stage defaults follow your account, outfit prices the game data.",
         description: "Note above the planner. 'First-clear' is the one-off reward for three-starring a stage; 'Originite Prime' is the game's premium currency.",
