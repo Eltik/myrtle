@@ -236,8 +236,8 @@ export const messages = {
         description: "Note after 'Buy everything' saying how many goods have a stock limit. Keep the leading middle dot.",
     },
     "release.planner.shop.missions": {
-        text: "Missions",
-        description: "Row label for the shop tokens the event's missions hand out.",
+        text: "Points awarded by clearing missions",
+        description: "Row label for the shop tokens the event's missions hand out; the row is subtracted from the buyout cost.",
     },
     "release.planner.shop.missionsValue": {
         text: "-{count}",

@@ -31,7 +31,7 @@ export function CommitItem({ commit }: { commit: IChangelogCommit }) {
             {/* Timeline rail */}
             <div className="relative flex justify-center">
                 <span aria-hidden="true" className="absolute top-4 -bottom-5 w-px bg-linear-to-b from-border to-border/50 group-last/item:hidden" />
-                <span className="relative z-1 mt-1 size-3.5 rounded-full bg-background ring-[3px] ring-background">
+                <span className="relative z-1 mt-1 size-3.5 rounded-full bg-background ring-3 ring-background">
                     <span className={cn("block size-full rounded-full ring-2 ring-background", style.dotClass)} />
                 </span>
             </div>

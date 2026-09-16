@@ -500,7 +500,7 @@ function Summary({ rows, state, clears, totals, lookup, onRemove, t, locale }: I
                                         {picked.map((s) => {
                                             const op = lookup.get(s.charId);
                                             return (
-                                                <li key={s.skinId} className="flex items-center gap-2 border-[2px] py-1 pr-1 pl-1" style={{ ...cardVars(s.colors, 220), borderImage: `linear-gradient(90deg, ${stopsOf(s.colors.length > 0 ? s.colors : [FALLBACK_COLOR])}) 1`, background: "rgba(0,0,0,0.5)" }}>
+                                                <li key={s.skinId} className="flex items-center gap-2 border-2 py-1 pr-1 pl-1" style={{ ...cardVars(s.colors, 220), borderImage: `linear-gradient(90deg, ${stopsOf(s.colors.length > 0 ? s.colors : [FALLBACK_COLOR])}) 1`, background: "rgba(0,0,0,0.5)" }}>
                                                     <span className="size-7 shrink-0 overflow-hidden rounded-sm">
                                                         <OperatorAvatar charId={s.charId} name={op?.name ?? s.charId} server={op ? undefined : "cn"} />
                                                     </span>

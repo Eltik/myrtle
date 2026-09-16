@@ -3512,7 +3512,7 @@
     "tools.release.planner.shop.hide": "Hide goods",
     "tools.release.planner.shop.limitedGoods": "· {count} limited goods",
     "tools.release.planner.shop.meta": " · {name} · {server} {dates}",
-    "tools.release.planner.shop.missions": "Missions",
+    "tools.release.planner.shop.missions": "Points awarded by clearing missions",
     "tools.release.planner.shop.missionsValue": "-{count}",
     "tools.release.planner.shop.noShop": "Missions pay {count} tokens. The shop is fetched from the game server once it opens on a server this site has an account on.",
     "tools.release.planner.shop.sanityNote": "{perToken} sanity per token, from the game server's shop. First-clear token rewards are not in the data, so the sanity figure is an upper bound.",

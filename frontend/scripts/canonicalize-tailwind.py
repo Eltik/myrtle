@@ -20,6 +20,11 @@ Handled rewrites:
   * Named border-radius: rounded-[2px]       -> rounded-xs
                          rounded-t-[8px]     -> rounded-t-lg
   * Z-index unwrap:      z-[55]              -> z-55
+  * Px-width utilities (bare integer px):
+      border-[2px]   -> border-2       ring-[3px]        -> ring-3
+      border-t-[3px] -> border-t-3     outline-[2px]     -> outline-2
+      divide-x-[2px] -> divide-x-2     ring-offset-[2px] -> ring-offset-2
+      border-[1px]   -> border         (1px is the default width)
   * Named line-height:   leading-[1.5]       -> leading-normal
   * Named easing:        ease-[cubic-bezier(0.4,0,0.2,1)] -> ease-in-out
   * Literal renames:     break-words         -> wrap-break-word
@@ -62,7 +67,7 @@ SPACING_PREFIXES = [
     "translate", "translate-x", "translate-y", "translate-z",
     "scroll-p", "scroll-px", "scroll-py", "scroll-pt", "scroll-pr", "scroll-pb", "scroll-pl", "scroll-ps", "scroll-pe",
     "scroll-m", "scroll-mx", "scroll-my", "scroll-mt", "scroll-mr", "scroll-mb", "scroll-ml", "scroll-ms", "scroll-me",
-    "indent", "outline-offset", "ring-offset",
+    "indent",
 ]
 SPACING_PREFIXES.sort(key=len, reverse=True)
 SPACING_GROUP = "|".join(re.escape(p) for p in SPACING_PREFIXES)
@@ -271,6 +276,43 @@ def rewrite_z(text: str, edits: list[tuple[str, str]]) -> str:
         return m.group("boundary") + canonical
 
     return Z_RE.sub(sub, text)
+
+
+# ---------------------------------------------------------------------------
+# Px-width utilities — `<utility>-<number>` is a bare px value in Tailwind 4
+# (not on the spacing scale), so any integer px unwraps. 1px collapses to the
+# bare utility (`border`, `ring`, `divide-x`) for the ones that have a 1px
+# default; the offsets keep their number (`ring-offset-1`). Fractional px
+# (`border-[1.5px]`) has no bare form and is left alone.
+# ---------------------------------------------------------------------------
+BORDER_SIDES = ["x", "y", "t", "r", "b", "l", "s", "e"]
+PX_WIDTH_PREFIXES = (
+    ["border"]
+    + [f"border-{s}" for s in BORDER_SIDES]
+    + ["divide-x", "divide-y", "ring", "inset-ring", "outline", "ring-offset", "outline-offset"]
+)
+PX_WIDTH_BARE_AT_1PX = {p for p in PX_WIDTH_PREFIXES if not p.endswith("-offset")}
+PX_WIDTH_PREFIXES.sort(key=len, reverse=True)
+PX_WIDTH_RE = re.compile(
+    r"(?P<boundary>(?:^|[\s\"'`{(:]))"
+    r"(?P<prefix>" + "|".join(re.escape(p) for p in PX_WIDTH_PREFIXES) + r")"
+    r"-\[(?P<value>\d+)px\]"
+)
+
+
+def rewrite_px_widths(text: str, edits: list[tuple[str, str]]) -> str:
+    def sub(m: re.Match[str]) -> str:
+        prefix = m.group("prefix")
+        n = int(m.group("value"))
+        original = f"{prefix}-[{m.group('value')}px]"
+        if n == 1 and prefix in PX_WIDTH_BARE_AT_1PX:
+            canonical = prefix
+        else:
+            canonical = f"{prefix}-{n}"
+        edits.append((original, canonical))
+        return m.group("boundary") + canonical
+
+    return PX_WIDTH_RE.sub(sub, text)
 
 
 # ---------------------------------------------------------------------------
@@ -519,6 +561,7 @@ def rewrite_text(text: str) -> tuple[str, list[tuple[str, str]]]:
     text = rewrite_tracking(text, edits)
     text = rewrite_rounded(text, edits)
     text = rewrite_z(text, edits)
+    text = rewrite_px_widths(text, edits)
     text = rewrite_leading(text, edits)
     text = rewrite_ease(text, edits)
     text = rewrite_literals(text, edits)

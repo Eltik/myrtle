@@ -90,7 +90,7 @@ export function MarkdownEditor({ id, name, value, onChange, placeholder, maxLeng
         <div
             className={cn(
                 "flex w-full min-w-0 flex-col rounded-lg border border-input bg-background not-dark:bg-clip-padding shadow-xs/5 transition-shadow",
-                "focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/24",
+                "focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/24",
                 ariaInvalid && "border-destructive/36 focus-within:border-destructive/64 focus-within:ring-destructive/16",
                 disabled && "opacity-64",
                 "dark:bg-input/32",

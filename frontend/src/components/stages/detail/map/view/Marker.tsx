@@ -12,7 +12,7 @@ export function Marker({ operator }: { operator: IMapOperator }) {
 
     return (
         <div className="transform-3d relative flex h-full w-full flex-col items-center justify-center">
-            <div className={cx("translate-z-px absolute overflow-hidden rounded-full border-[3px] border-transparent [transition:border_0.8s_ease]", !isToken && FLOAT_BORDER[dir])}>
+            <div className={cx("translate-z-px absolute overflow-hidden rounded-full border-3 border-transparent [transition:border_0.8s_ease]", !isToken && FLOAT_BORDER[dir])}>
                 <img src={operator.icon || ICON} alt={operator.char_key || ""} style={{ width: "40px", height: "40px" }} />
             </div>
             {!isToken && (

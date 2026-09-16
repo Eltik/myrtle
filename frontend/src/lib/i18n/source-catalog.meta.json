@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-15T23:31:56.818Z",
+    "generatedAt": "2026-09-16T04:00:13.359Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -25997,8 +25997,8 @@
         {
             "key": "tools.release.planner.shop.missions",
             "namespace": "tools",
-            "source_text": "Missions",
-            "description": "Row label for the shop tokens the event's missions hand out.",
+            "source_text": "Points awarded by clearing missions",
+            "description": "Row label for the shop tokens the event's missions hand out; the row is subtracted from the buyout cost.",
             "placeholders": []
         },
         {
