@@ -13,6 +13,7 @@ import { Skeleton } from "#/components/ui/skeleton";
 import { Textarea } from "#/components/ui/textarea";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
+import { useDebounce } from "#/hooks/use-debounce";
 import {
     clearTranslationFn,
     grantTranslationPermissionFn,
@@ -758,7 +759,10 @@ function GrantDialog({ locale, onClose }: { locale: string; onClose: () => void 
     const [q, setQ] = useState("");
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
     const [permission, setPermission] = useState<TierListPermissionLevel>("edit");
-    const searchQuery = useQuery({ ...searchUsersQueryOptions({ q, limit: 8 }), enabled: q.length >= 2 });
+    // One trimmed character is a real query: the backend trims and ILIKEs anything non-empty,
+    // and a CJK nickname prefix is a single code unit. Debounce instead of gating on length.
+    const term = useDebounce(q.trim(), 350);
+    const searchQuery = useQuery({ ...searchUsersQueryOptions({ q: term, limit: 8 }), enabled: term.length > 0 });
 
     const grant = useMutation({
         mutationFn: (input: IGrantTranslationPermissionInput) => grantTranslationPermissionFn({ data: input }),
@@ -799,8 +803,8 @@ function GrantDialog({ locale, onClose }: { locale: string; onClose: () => void 
                                     }}
                                 />
                             </InputGroup>
-                            {q.length >= 2 ? (
-                                searchQuery.isPending ? (
+                            {q.trim().length > 0 ? (
+                                term !== q.trim() || searchQuery.isPending ? (
                                     <Skeleton className="h-12 w-full" />
                                 ) : results.length === 0 ? (
                                     <div className="text-[12.5px] text-muted-foreground">{t("i18n.grant.noMatches")}</div>

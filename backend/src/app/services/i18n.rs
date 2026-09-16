@@ -197,10 +197,7 @@ pub async fn assert_can_write(
 /// locale grant would be unusable, since its holder could not reach the screen
 /// that spends it. Resolved per request from the database, like the grants
 /// themselves.
-pub async fn can_access_admin_panel(
-    state: &AppState,
-    auth: &AuthUser,
-) -> Result<bool, ApiError> {
+pub async fn can_access_admin_panel(state: &AppState, auth: &AuthUser) -> Result<bool, ApiError> {
     if auth.role.can_access_admin_panel() {
         return Ok(true);
     }
