@@ -20,6 +20,10 @@ import type { messages } from "./LanguageToggle.messages";
  * find is worse than a tight row, and the hamburger drawer carries the same
  * choice as a second path.
  *
+ * The room for it comes from the wordmark, which `Header` hides below `sm` -
+ * see the comment there. If you add another button to this cluster, take the
+ * space from something else rather than from this one.
+ *
  * Renders nothing below two enabled locales, so a single-language deployment
  * pays no pixels for it.
  */

@@ -97,8 +97,12 @@ export function MobileNav({ items }: IMobileNavProps) {
                             </DrawerMenuItem>
                         </DrawerMenuGroup>
 
-                        {/* The header's globe button is hidden below `sm`, so
-                            this is the language control on a phone. */}
+                        {/* A second path to the same choice, not the only
+                            one: the header's globe is visible at every width.
+                            Kept because the drawer is where a phone visitor
+                            looks for settings, and it can spell the group out
+                            ("Language") where the bar only has room for an
+                            icon. */}
                         {available.length > 1 ? (
                             <>
                                 <DrawerMenuSeparator />

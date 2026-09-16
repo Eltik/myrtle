@@ -63,15 +63,24 @@ export default function Header() {
             <div className="flex h-14 items-center gap-2 px-3 sm:h-16 sm:gap-3.5 sm:px-4">
                 <div className="flex flex-1 items-center gap-2 sm:gap-4">
                     <MobileNav items={navItems} />
-                    <Link to="/" className="flex shrink-0 items-center gap-2 text-foreground no-underline">
+                    <Link to="/" className="flex min-w-0 shrink items-center gap-2 text-foreground no-underline">
                         <img src="/logo/bust_transparent.png" alt="" width={28} height={28} className="h-7 w-7 shrink-0 object-contain" />
-                        <span className="hidden font-semibold text-[15px] tracking-tight min-[340px]:inline">myrtle.moe</span>
+                        {/* The wordmark yields below `sm`, not any control.
+                            The action cluster is five tap targets on a phone
+                            (search, language, theme, what's new, account) and
+                            a signed-out visitor's "Login" is a text button,
+                            which together overran a 390px bar and pushed Login
+                            off-screen. This span is ~82px of the ~40px deficit
+                            and the only element whose loss costs no function:
+                            the bust stays as the brand mark, and the drawer
+                            header still carries the full wordmark. */}
+                        <span className="hidden font-semibold text-[15px] tracking-tight sm:inline">myrtle.moe</span>
                         <span className="hidden rounded-[5px] border border-border bg-muted/60 px-1.5 py-0.75 font-medium font-mono text-[10.5px] text-muted-foreground leading-none sm:inline-block">v3</span>
                     </Link>
 
                     <MainNav items={navItems} onOpenCommand={openCmd} />
 
-                    <div className="ml-auto flex items-center gap-1 sm:gap-1.5">
+                    <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-1.5">
                         <button type="button" className={`${styles.headerSearch} hidden! xl:inline-flex!`} onClick={openCmd} aria-label={t("header.searchOperators")}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                 <circle cx="11" cy="11" r="8" />
