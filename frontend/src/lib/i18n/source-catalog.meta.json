@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-16T04:16:31.260Z",
+    "generatedAt": "2026-09-17T02:05:59.501Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -26434,18 +26434,1077 @@
             "placeholders": []
         },
         {
-            "key": "tools.release.pulls.desc",
+            "key": "tools.release.pulls.a11y.chartOdds",
             "namespace": "tools",
-            "source_text": "This will be a feature very soon!",
-            "description": "Placeholder body on the unfinished Pulls planner tab.",
+            "source_text": "Chance of the rate-up operator against the number of pulls, from 0 to {max} pulls.",
+            "description": "Screen-reader description of the odds curve.",
+            "placeholders": [
+                "max"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.a11y.chartSim",
+            "namespace": "tools",
+            "source_text": "How many pulls each simulated run needed. Median {median}, 90th percentile {p90}.",
+            "description": "Screen-reader description of the simulated distribution chart.",
+            "placeholders": [
+                "median",
+                "p90"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.a11y.horizon",
+            "namespace": "tools",
+            "source_text": "Projection horizon",
+            "description": "Accessible name for the control choosing how far ahead to project.",
             "placeholders": []
         },
         {
-            "key": "tools.release.pulls.title",
+            "key": "tools.release.pulls.banner.ATTAIN",
             "namespace": "tools",
-            "source_text": "Pulls planner is not built yet.",
-            "description": "Placeholder heading on the unfinished Pulls planner tab. A 'pull' is one gacha draw.",
+            "source_text": "Special Headhunting",
+            "description": "Banner type: the in-game name for the banner whose first 6-star is an operator you do not own.",
             "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.banner.CLASSIC",
+            "namespace": "tools",
+            "source_text": "Kernel Locating",
+            "description": "Banner type: the in-game name for the older-operator rerun banner.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.banner.DOUBLE",
+            "namespace": "tools",
+            "source_text": "Standard, two rate-ups",
+            "description": "Banner type: rotating Standard Headhunting with two featured 6-stars.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.banner.LIMITED",
+            "namespace": "tools",
+            "source_text": "Limited",
+            "description": "Banner type: the paid Limited/Celebration banner featuring a new limited operator.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.banner.LINKAGE",
+            "namespace": "tools",
+            "source_text": "Joint Operation, collab",
+            "description": "Banner type: a crossover/collaboration banner. 'Joint Operation' is the in-game name.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.banner.NORMAL",
+            "namespace": "tools",
+            "source_text": "Standard",
+            "description": "Banner type: the general Standard Headhunting pool.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.banner.SINGLE",
+            "namespace": "tools",
+            "source_text": "Standard, one rate-up",
+            "description": "Banner type: rotating Standard Headhunting with a single featured 6-star.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.banners.empty",
+            "namespace": "tools",
+            "source_text": "No upcoming banner has a resolved EN date yet.",
+            "description": "Empty state for the banner table. 'EN' is the English game server.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.banners.inferred",
+            "namespace": "tools",
+            "source_text": "Rate-up split inferred from the banner type; this pool has no published detail yet.",
+            "description": "Caveat shown when a banner's exact rate-up share was not available and was derived from its type.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.banners.sparkMet",
+            "namespace": "tools",
+            "source_text": "Clears the {spark}-pull guarantee",
+            "description": "Note that the projected budget reaches a Limited banner's outright exchange.",
+            "placeholders": [
+                "spark"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.chart.aria",
+            "namespace": "tools",
+            "source_text": "Projected pulls from today through {date}.",
+            "description": "Screen-reader description of the projection chart.",
+            "placeholders": [
+                "date"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.chart.ariaPlanned",
+            "namespace": "tools",
+            "source_text": "Projected pulls from today through {date}, and the balance left after the {count, plural, one {# banner} other {# banners}} your plan commits to.",
+            "description": "Screen-reader description of the projection chart once the plan spends on at least one banner.",
+            "placeholders": [
+                "count",
+                "date"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.chart.net",
+            "namespace": "tools",
+            "source_text": "After your plan",
+            "description": "Chart series name for the balance left once the plan's commitments are taken out.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.chart.pulls",
+            "namespace": "tools",
+            "source_text": "Pulls",
+            "description": "Chart series name for pulls excluding Originite Prime.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.chart.title",
+            "namespace": "tools",
+            "source_text": "Pulls over time",
+            "description": "Heading for the line chart of projected pulls.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.chart.withOriginite",
+            "namespace": "tools",
+            "source_text": "With Originite Prime",
+            "description": "Chart series name for pulls including converted Originite Prime.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.annihilation",
+            "namespace": "tools",
+            "source_text": "Annihilation per week",
+            "description": "Label for the weekly Annihilation Orundum cap, which rises with campaign progress.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.extra",
+            "namespace": "tools",
+            "source_text": "Extra per day",
+            "description": "Input label for Orundum per day the model does not itself cover.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.extraHint",
+            "namespace": "tools",
+            "source_text": "Event rewards, mail and anything else. This project's release data carries Originite Prime for event stages but no event Orundum, so it is not guessed at here.",
+            "description": "Hint under the Extra per day input, explaining why event Orundum must be entered by hand.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.freePulls",
+            "namespace": "tools",
+            "source_text": "Count banner free pulls",
+            "description": "Switch label: include the free pulls a Limited or collab banner hands out.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.freePullsHint",
+            "namespace": "tools",
+            "source_text": "A Limited banner gives a free ten-roll plus one free pull a day, which is 24 over a 14-day run. A collab gives two ten-rolls. These expire with the banner, so they are counted on it rather than banked.",
+            "description": "Hint explaining where banner free pulls come from and why they are not savings.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.goldCertHint",
+            "namespace": "tools",
+            "source_text": "The monthly ladder is 38 permits for 258 certs, bought cheapest rung first. There is no official earn rate, so this is your own estimate; 1.5 a day suits a year-old account.",
+            "description": "Hint under the gold certificate inputs, explaining the shop ladder and why the rate is user-supplied.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.goldCertShop",
+            "namespace": "tools",
+            "source_text": "Buy permits with gold certs",
+            "description": "Switch label: spend Distinction Certificates on the monthly Headhunting Permit bundles.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.goldCerts",
+            "namespace": "tools",
+            "source_text": "Gold certs per day",
+            "description": "Input label for Distinction Certificates earned per day. 'Distinction Certificate' is the in-game name; players call them gold certs.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.greenCertHint",
+            "namespace": "tools",
+            "source_text": "Phase 1 sells 2 permits at 240 certs each and 600 Orundum at 240 certs, which are worth exactly the same. Phase 2 adds 2 permits at 450 each, but only opens after phase 1 is bought out entirely at 1490 certs, so weekly missions alone will not reach it.",
+            "description": "Hint under the green certificate inputs, explaining the phase gate and the equal value of the two phase 1 rows.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.greenCertShop",
+            "namespace": "tools",
+            "source_text": "Green cert shop",
+            "description": "Label for how deep into the monthly Commendation Certificate shop the player buys.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.greenCerts",
+            "namespace": "tools",
+            "source_text": "Green certs per week",
+            "description": "Input label for Commendation Certificates earned per week. 'Commendation Certificate' is the in-game name; players call them green certs.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.greenShop.off",
+            "namespace": "tools",
+            "source_text": "Not buying",
+            "description": "Option: do not spend Commendation Certificates on pulls at all.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.greenShop.phase1",
+            "namespace": "tools",
+            "source_text": "Phase 1 only",
+            "description": "Option: buy only from the first phase of the monthly Commendation Certificate shop.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.greenShop.phase2",
+            "namespace": "tools",
+            "source_text": "Phase 1 and 2",
+            "description": "Option: buy through both phases of the monthly Commendation Certificate shop.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.horizon",
+            "namespace": "tools",
+            "source_text": "Project ahead",
+            "description": "Label for how far into the future the projection runs.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.horizonDays",
+            "namespace": "tools",
+            "source_text": "{count, plural, one {# day} other {# days}}",
+            "description": "Option in the projection-horizon picker.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.income.monthlyCard",
+            "namespace": "tools",
+            "source_text": "Monthly card",
+            "description": "Switch label for the paid monthly subscription, which pays 200 Orundum a day.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.originiteContested",
+            "namespace": "tools",
+            "source_text": "Converting Originite Prime spends all of it on pulls, leaving nothing for the {needed} your outfit picks need.",
+            "description": "Warning that the pull plan and the outfit plan are claiming the same Originite Prime.",
+            "placeholders": [
+                "needed"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.income.originiteShort",
+            "namespace": "tools",
+            "source_text": "Your outfit picks need {needed} Originite Prime and you will only have {available}.",
+            "description": "Warning that the outfit picks alone cost more Originite Prime than the player will hold.",
+            "placeholders": [
+                "available",
+                "needed"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.income.skinOriginiteHint",
+            "namespace": "tools",
+            "source_text": "{count, plural, =0 {No outfits picked in the Planner tab.} one {# outfit picked in the Planner tab costs {op} Originite Prime.} other {# outfits picked in the Planner tab cost {op} Originite Prime.}}",
+            "description": "Hint showing what the skins planner has committed. 'Planner tab' names the sibling tab, so keep it matching.",
+            "placeholders": [
+                "count",
+                "op"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.income.skinUnpriced",
+            "namespace": "tools",
+            "source_text": "{count, plural, one {# pick has no price yet, so this is an underestimate.} other {# picks have no price yet, so this is an underestimate.}}",
+            "description": "Caveat when some picked outfits have no known price.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.income.spendOriginite",
+            "namespace": "tools",
+            "source_text": "Convert Originite Prime",
+            "description": "Switch label: whether to count Originite Prime as pulls at 180 Orundum each.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.store",
+            "namespace": "tools",
+            "source_text": "Monthly store",
+            "description": "Switch label for the monthly certificate-shop Orundum and permits.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.title",
+            "namespace": "tools",
+            "source_text": "What you earn",
+            "description": "Section heading above the recurring-income settings.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.weekly",
+            "namespace": "tools",
+            "source_text": "{count, plural, one {# pull} other {# pulls}} per week",
+            "description": "Summary of recurring income expressed as pulls per week.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.modelNote",
+            "namespace": "tools",
+            "source_text": "Rates come from the game's own banner data: a 2% base 6★ rate, +2% per roll after 50 without one, and the rate-up split declared for each banner type. Recurring income is modelled; one-off event Orundum is not, so add it under Extra per day.",
+            "description": "Explains where the numbers come from and what the model leaves out. '6★' means a six-star operator; 'rate-up' is the boosted-chance operator on a banner.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.odds.any",
+            "namespace": "tools",
+            "source_text": "Any rate-up",
+            "description": "Result label: chance of at least one featured operator of any kind.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.odds.atPulls",
+            "namespace": "tools",
+            "source_text": "{count, plural, one {# pull} other {# pulls}}",
+            "description": "Tooltip heading on the odds curve, naming the number of draws at that point.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.odds.banner",
+            "namespace": "tools",
+            "source_text": "Banner type",
+            "description": "Picker label for which kind of banner to compute odds against.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.odds.both",
+            "namespace": "tools",
+            "source_text": "Both rate-ups",
+            "description": "Result label: chance of getting both featured operators.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.odds.copies",
+            "namespace": "tools",
+            "source_text": "Copies of one rate-up",
+            "description": "Heading for the distribution of how many duplicates you end up with.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.odds.copiesRow",
+            "namespace": "tools",
+            "source_text": "{count, plural, =0 {None} one {# copy} other {# copies}}",
+            "description": "Row label in the copy-count distribution.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.odds.copiesTail",
+            "namespace": "tools",
+            "source_text": "{count, plural, other {# or more}}",
+            "description": "Label for the last row of the copy-count chart, which collects every higher count.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.odds.expectedSix",
+            "namespace": "tools",
+            "source_text": "Expected 6★",
+            "description": "Result label: the average number of six-star operators these pulls yield.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.odds.fromBudget",
+            "namespace": "tools",
+            "source_text": "Use my projection",
+            "description": "Button that sets the pull count from the budget projection.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.odds.method",
+            "namespace": "tools",
+            "source_text": "Exact, not simulated: the full distribution over pity states is carried forward one roll at a time.",
+            "description": "Note explaining that the odds are computed exactly rather than sampled. 'Pity' is the rising-chance mechanic.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.odds.pulls",
+            "namespace": "tools",
+            "source_text": "Pulls",
+            "description": "Input label for how many draws to compute the odds over.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.odds.specific",
+            "namespace": "tools",
+            "source_text": "A specific rate-up",
+            "description": "Result label: chance of at least one copy of one named featured operator.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.odds.title",
+            "namespace": "tools",
+            "source_text": "Odds calculator",
+            "description": "Heading for the panel that computes exact pull probabilities.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.allocate",
+            "namespace": "tools",
+            "source_text": "Pulls to spend",
+            "description": "Input label for how many pulls to commit to a banner.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.availableHere",
+            "namespace": "tools",
+            "source_text": "available",
+            "description": "Unit beside the headline figure on a banner row: the pulls the player has to spend on it.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.clear",
+            "namespace": "tools",
+            "source_text": "Clear",
+            "description": "Button removing this banner's commitment.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.committed",
+            "namespace": "tools",
+            "source_text": "Committed",
+            "description": "Stat label for the total pulls the plan spends.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.estimated",
+            "namespace": "tools",
+            "source_text": "Estimated",
+            "description": "Column heading for how many pulls this banner is expected to need for its rate-up operator.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.estimatedDetail",
+            "namespace": "tools",
+            "source_text": "{mean} on average, {p90} if unlucky",
+            "description": "Secondary detail under the estimate: the mean and the 90th-percentile pull count.",
+            "placeholders": [
+                "mean",
+                "p90"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.estimatedDetailOpen",
+            "namespace": "tools",
+            "source_text": "{mean}+ on average, more than {horizon} if unlucky",
+            "description": "Secondary detail under the estimate when nine runs in ten do not finish inside the horizon, so there is no 90th-percentile figure to give and the mean is a floor.",
+            "placeholders": [
+                "horizon",
+                "mean"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.estimatedTail",
+            "namespace": "tools",
+            "source_text": "{percent} of runs need more than {horizon}",
+            "description": "Caveat that some simulated runs do not get the operator within the estimate's horizon.",
+            "placeholders": [
+                "horizon",
+                "percent"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.export",
+            "namespace": "tools",
+            "source_text": "Export CSV",
+            "description": "Button downloading the plan as a spreadsheet file.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.freeOnBanner",
+            "namespace": "tools",
+            "source_text": "+{count} free",
+            "description": "Compact note that a banner hands out this many free pulls of its own.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.goal.any",
+            "namespace": "tools",
+            "source_text": "Either one",
+            "description": "Row label in the estimate: reaching whichever of the two rate-up operators comes first.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.goal.both",
+            "namespace": "tools",
+            "source_text": "Both",
+            "description": "Row label in the estimate: reaching both rate-up operators.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.goal.maxPot",
+            "namespace": "tools",
+            "source_text": "Max pot",
+            "description": "Row label in the estimate: taking the operator to maximum potential, which is six copies.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.goal.specific",
+            "namespace": "tools",
+            "source_text": "This operator",
+            "description": "Row label in the estimate: reaching one named rate-up operator.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.goalPick",
+            "namespace": "tools",
+            "source_text": "Set pulls to {count} for {goal}",
+            "description": "Accessible name for an estimate row, which fills in that many pulls when clicked.",
+            "placeholders": [
+                "count",
+                "goal"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.goalValue",
+            "namespace": "tools",
+            "source_text": "~{count}",
+            "description": "A pull count in the estimate rows. The tilde marks it as an estimate.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.guarantee",
+            "namespace": "tools",
+            "source_text": "Guarantee {count}",
+            "description": "Button committing exactly the pulls at which a forced rate-up binds.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.inferredCount",
+            "namespace": "tools",
+            "source_text": "{count, plural, one {# banner has} other {# banners have}} no published rate-up detail yet, so the split is inferred from the banner type.",
+            "description": "Caveat shown once above the list, counting the banners whose rate-up share was inferred.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.intro",
+            "namespace": "tools",
+            "source_text": "Commit pulls to the banners you want. Everything you spend comes out of the same pool, so a banner you save for is one you can still afford later.",
+            "description": "Explains that allocating pulls to one banner reduces what is left for the others.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.max",
+            "namespace": "tools",
+            "source_text": "Spend everything",
+            "description": "Accessible name for the control committing every remaining pull to this banner. The visible control shows the number alone.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.overrun",
+            "namespace": "tools",
+            "source_text": "{count, plural, one {# banner} other {# banners}} over budget",
+            "description": "Warning summarising how many banners the plan cannot pay for in full.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.pickHint",
+            "namespace": "tools",
+            "source_text": "Set the potential you want on each operator, and the pulls follow. P6 is maximum potential.",
+            "description": "Hint shown once above the banner list. 'Potential' is the in-game term for duplicate upgrades, P1 through P6.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.planFits",
+            "namespace": "tools",
+            "source_text": "{available} available",
+            "description": "Clause beside a banner row's headline when the bank covers what was committed.",
+            "placeholders": [
+                "available"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.planShort",
+            "namespace": "tools",
+            "source_text": "{short} short, you will only have {available}",
+            "description": "Clause beside a banner row's headline when the commitment overran the bank.",
+            "placeholders": [
+                "available",
+                "short"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.plannedHere",
+            "namespace": "tools",
+            "source_text": "planned",
+            "description": "Unit beside the headline figure on a banner row once a pull count has been committed: it echoes the number in the input below.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.potLess",
+            "namespace": "tools",
+            "source_text": "One fewer copy of {operator}",
+            "description": "Accessible name for the control lowering how many copies of an operator to pull for.",
+            "placeholders": [
+                "operator"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.potMore",
+            "namespace": "tools",
+            "source_text": "One more copy of {operator}",
+            "description": "Accessible name for the control raising how many copies of an operator to pull for.",
+            "placeholders": [
+                "operator"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.potNone",
+            "namespace": "tools",
+            "source_text": "None",
+            "description": "Shown on the potential stepper when the user is not pulling for that operator.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.potValue",
+            "namespace": "tools",
+            "source_text": "P{count}",
+            "description": "An operator's wanted potential, shown on the stepper. P6 is maximum potential. 'P' abbreviates Potential, the in-game term for duplicate upgrades.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.remaining",
+            "namespace": "tools",
+            "source_text": "Left over",
+            "description": "Stat label for pulls unspent at the end of the plan.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.reset",
+            "namespace": "tools",
+            "source_text": "Clear plan",
+            "description": "Button removing every banner commitment at once.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.setTo",
+            "namespace": "tools",
+            "source_text": "Set to",
+            "description": "Label before the buttons that fill in a preset number of pulls.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.spark",
+            "namespace": "tools",
+            "source_text": "Spark {count}",
+            "description": "Button committing exactly the pulls needed for a Limited banner's outright exchange.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.sumCovers",
+            "namespace": "tools",
+            "source_text": "{total} covers ~{goal}",
+            "description": "Verdict under the estimates: what will be thrown at this banner reaches the highlighted goal.",
+            "placeholders": [
+                "goal",
+                "total"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.sumFreeCovers",
+            "namespace": "tools",
+            "source_text": "{spent} + {free} free = {total}, covers ~{goal}",
+            "description": "Verdict under the estimates when the banner hands out free pulls, showing the sum rather than counting them silently.",
+            "placeholders": [
+                "free",
+                "goal",
+                "spent",
+                "total"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.sumFreeGap",
+            "namespace": "tools",
+            "source_text": "{spent} + {free} free = {total}, {gap} under ~{goal}",
+            "description": "Verdict under the estimates when the banner hands out free pulls and the total still falls short.",
+            "placeholders": [
+                "free",
+                "gap",
+                "goal",
+                "spent",
+                "total"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.sumGap",
+            "namespace": "tools",
+            "source_text": "{total}, {gap} under ~{goal}",
+            "description": "Verdict under the estimates: what will be thrown at this banner falls short of the highlighted goal.",
+            "placeholders": [
+                "gap",
+                "goal",
+                "total"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.title",
+            "namespace": "tools",
+            "source_text": "Your plan",
+            "description": "Heading for the table where the user commits pulls to upcoming banners.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.untouched",
+            "namespace": "tools",
+            "source_text": "Nothing committed yet. Use Max or Spark on a banner to start planning.",
+            "description": "Hint shown when the plan is empty.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.yourGoal",
+            "namespace": "tools",
+            "source_text": "Your goal",
+            "description": "Row label for the estimate of exactly what the user asked for on this banner.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.resources.originite",
+            "namespace": "tools",
+            "source_text": "Originite Prime",
+            "description": "Input label. Originite Prime is the premium currency; do not translate.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.resources.orundum",
+            "namespace": "tools",
+            "source_text": "Orundum",
+            "description": "Input label. Orundum is the game's headhunting currency; do not translate.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.resources.permits",
+            "namespace": "tools",
+            "source_text": "Permits",
+            "description": "Input label for single Headhunting Permits, each worth one pull.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.resources.pity",
+            "namespace": "tools",
+            "source_text": "Pulls since last 6★",
+            "description": "Input label for the pity counter: how many draws since the last six-star operator.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.resources.pityHint",
+            "namespace": "tools",
+            "source_text": "Counts on Standard and Kernel banners, which share a counter. Limited and collab banners always start you at zero.",
+            "description": "Hint under the pity input. 'Standard', 'Kernel', 'Limited' and collab are Arknights banner families.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.resources.signedOut",
+            "namespace": "tools",
+            "source_text": "Sign in to fill these from your account.",
+            "description": "Note shown to signed-out visitors next to the resource inputs.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.resources.sync",
+            "namespace": "tools",
+            "source_text": "Use my account",
+            "description": "Button that fills the resource inputs from the signed-in player's synced account.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.resources.synced",
+            "namespace": "tools",
+            "source_text": "Filled from your last sync.",
+            "description": "Note shown when the resource inputs came from the account rather than being typed.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.resources.tenPermits",
+            "namespace": "tools",
+            "source_text": "Ten-roll permits",
+            "description": "Input label for Ten-roll Headhunting Permits, each worth ten pulls.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.resources.title",
+            "namespace": "tools",
+            "source_text": "What you have",
+            "description": "Section heading above the starting-resource inputs.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.rule.carry",
+            "namespace": "tools",
+            "source_text": "Shares a pity counter with other {scope} banners",
+            "description": "Note that pity carries across a banner family. 'scope' is Standard or Kernel.",
+            "placeholders": [
+                "scope"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.rule.guarantee.attain",
+            "namespace": "tools",
+            "source_text": "The first 6★ is an operator you do not own",
+            "description": "Describes the Special Headhunting guarantee.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.rule.guarantee.linkage",
+            "namespace": "tools",
+            "source_text": "The collab operator is handed over on pull {at, number}",
+            "description": "Describes the collaboration banner's hard guarantee.",
+            "placeholders": [
+                "at"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.rule.guarantee.selection",
+            "namespace": "tools",
+            "source_text": "Past {first, plural, one {# pull} other {# pulls}} the next 6★ is forced on-rate, and past {second} it is the other one",
+            "description": "Describes the Standard Selection guarantee on two-rate-up banners.",
+            "placeholders": [
+                "first",
+                "second"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.rule.isolated",
+            "namespace": "tools",
+            "source_text": "Pity starts at zero and is cleared when the banner ends",
+            "description": "Note that a banner tracks pity on its own.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.rule.scope.kernel",
+            "namespace": "tools",
+            "source_text": "Kernel",
+            "description": "Name of the Kernel Locating banner family for older operators.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.rule.scope.standard",
+            "namespace": "tools",
+            "source_text": "Standard",
+            "description": "Name of the rotating Standard Headhunting banner family.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.rule.share",
+            "namespace": "tools",
+            "source_text": "{percent}% of 6★ pulls go to {count, plural, one {the rate-up} other {the # rate-ups}}",
+            "description": "Describes how much of the six-star rate a banner's featured operators take.",
+            "placeholders": [
+                "count",
+                "percent"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.rule.spark",
+            "namespace": "tools",
+            "source_text": "{count, plural, one {# pull exchanges} other {# pulls exchange}} for the featured operator outright",
+            "description": "Describes the Limited banner's certificate exchange.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.sim.cost",
+            "namespace": "tools",
+            "source_text": "{count} Orundum",
+            "description": "What the current simulator run would have cost.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.sim.desc",
+            "namespace": "tools",
+            "source_text": "Roll against the same model, with pity and guarantees carrying between clicks exactly as they do in game.",
+            "description": "Subheading for the simulator panel.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.sim.distribution",
+            "namespace": "tools",
+            "source_text": "Across {runs} runs",
+            "description": "Heading for the sampled distribution of pulls needed.",
+            "placeholders": [
+                "runs"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.sim.got",
+            "namespace": "tools",
+            "source_text": "Rate-up copies",
+            "description": "Stat label for how many featured operators the run has produced.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.sim.guaranteed",
+            "namespace": "tools",
+            "source_text": "Guaranteed",
+            "description": "Badge on a simulated pull that a banner guarantee decided rather than chance.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.sim.median",
+            "namespace": "tools",
+            "source_text": "Median",
+            "description": "Stat label for the 50th percentile of pulls needed.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.sim.p90",
+            "namespace": "tools",
+            "source_text": "Unlucky (90th)",
+            "description": "Stat label for the 90th percentile of pulls needed, i.e. a bad run.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.sim.pityNow",
+            "namespace": "tools",
+            "source_text": "Since last 6★",
+            "description": "Stat label for the simulator's current pity counter.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.sim.pullOne",
+            "namespace": "tools",
+            "source_text": "Pull",
+            "description": "Button that draws a single pull in the simulator.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.sim.pullTen",
+            "namespace": "tools",
+            "source_text": "Pull 10",
+            "description": "Button that draws ten pulls in the simulator.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.sim.rateUpChip",
+            "namespace": "tools",
+            "source_text": "Rate-up",
+            "description": "Label marking a simulated pull that produced a featured operator.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.sim.reset",
+            "namespace": "tools",
+            "source_text": "Reset",
+            "description": "Button that clears the simulator back to a fresh account state.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.sim.spent",
+            "namespace": "tools",
+            "source_text": "Pulls spent",
+            "description": "Stat label for how many draws the current simulator run has used.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.sim.target",
+            "namespace": "tools",
+            "source_text": "Copies wanted",
+            "description": "Input label for how many copies of the featured operator to pull for.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.sim.title",
+            "namespace": "tools",
+            "source_text": "Pull simulator",
+            "description": "Heading for the panel that rolls the banner for real.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.sim.withinBudget",
+            "namespace": "tools",
+            "source_text": "Within your {count, plural, one {# pull} other {# pulls}}",
+            "description": "Stat label for the share of runs that succeed inside the projected budget.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.summary.free",
+            "namespace": "tools",
+            "source_text": "Free on banners",
+            "description": "Stat label for pulls the banners give away, which cannot be saved.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.summary.horizon",
+            "namespace": "tools",
+            "source_text": "By {date}",
+            "description": "Stat label: pulls affordable by the end of the projection, with the date.",
+            "placeholders": [
+                "date"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.summary.now",
+            "namespace": "tools",
+            "source_text": "Pulls now",
+            "description": "Stat label: pulls affordable with current resources.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.summary.perWeek",
+            "namespace": "tools",
+            "source_text": "Earned per week",
+            "description": "Stat label for recurring weekly Orundum income.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.summary.withOriginite",
+            "namespace": "tools",
+            "source_text": "{count} with Originite Prime",
+            "description": "Sub-label showing the higher pull count once Originite Prime is converted.",
+            "placeholders": [
+                "count"
+            ]
         },
         {
             "key": "tools.release.rel.daysAgo",

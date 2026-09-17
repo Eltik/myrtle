@@ -77,7 +77,7 @@ export function ReleasePlanner(): React.ReactElement {
                             <PlannerTab today={today} />
                         </TabsContent>
                         <TabsContent value="pulls">
-                            <PullsPlannerTab />
+                            <PullsPlannerTab today={today} />
                         </TabsContent>
                         <TabsContent value="events">
                             <EventsTab today={today} />

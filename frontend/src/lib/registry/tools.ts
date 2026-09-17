@@ -96,7 +96,7 @@ export const TOOLS: ITool[] = [
         descKey: "tool.release.desc",
         icon: "calendar-clock",
         category: "calculator",
-        keywords: ["release", "upcoming", "events", "banners", "skins", "cn", "en", "schedule", "planner", "lag", "originite", "prime", "op", "budget"],
+        keywords: ["release", "upcoming", "events", "banners", "skins", "cn", "en", "schedule", "planner", "lag", "originite", "prime", "op", "budget", "pulls", "orundum", "headhunting", "gacha", "pity", "rates", "odds"],
     },
 ];
 
