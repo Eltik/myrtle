@@ -92,19 +92,27 @@ impl CacheStore {
     }
 
     pub async fn set_raw(&self, key: &CacheKey<'_>, value: String) {
+        self.set_rendered(&key.to_key_string(), key.ttl(), value)
+            .await;
+    }
+
+    /// Store under an already-rendered key with an explicit TTL - for a
+    /// detached build that outlives the borrowed `CacheKey` it was started
+    /// with (see `cached_json_detached`).
+    pub async fn set_rendered(&self, key_str: &str, ttl: std::time::Duration, value: String) {
         match self {
             Self::Redis(conn) => {
                 let _: Result<(), _> = conn
                     .clone()
-                    .set_ex(key.to_key_string(), value, key.ttl().as_secs())
+                    .set_ex(key_str, value, ttl.as_secs())
                     .await
                     .inspect_err(|e| {
-                        tracing::debug!(key = %key.to_key_string(), error = %e, "cache set failed");
+                        tracing::debug!(key = %key_str, error = %e, "cache set failed");
                     });
             }
             Self::Memory { entries } => {
-                let expires_at = Instant::now() + key.ttl();
-                entries.insert(key.to_key_string(), (value, expires_at));
+                let expires_at = Instant::now() + ttl;
+                entries.insert(key_str.to_owned(), (value, expires_at));
             }
         }
     }

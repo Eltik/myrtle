@@ -9,6 +9,7 @@ use arc_swap::ArcSwap;
 use reqwest::Client;
 use sqlx::PgPool;
 
+use crate::app::cache::Inflight;
 use crate::app::cache::store::CacheStore;
 use crate::core::auth::credentials::CredentialKey;
 use crate::core::gamedata::{assets::AssetIndex, types::GameData};
@@ -54,6 +55,8 @@ pub struct AppStateInner {
     pub config: Arc<AppConfig>,
     pub http_client: Client,
     pub service_accounts: ServiceAccounts,
+    /// Detached cache builds in flight (see `cache::cached_json_detached`).
+    pub inflight: Inflight,
     /// Set when a roster sync changes rows the operator ownership aggregate is
     /// computed from; cleared by `core::operator_ownership_job` once it has
     /// recomputed. See [`AppState::mark_ownership_dirty`].
@@ -79,6 +82,7 @@ impl AppState {
                 config: Arc::new(config),
                 http_client: client,
                 service_accounts,
+                inflight: Inflight::default(),
                 ownership_dirty: AtomicBool::new(false),
             }),
         }

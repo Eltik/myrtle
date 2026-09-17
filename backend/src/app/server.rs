@@ -71,14 +71,35 @@ pub async fn run(state: AppState) -> Result<()> {
         cpu_permits = cpu::permits(),
         "listening; metrics on /metrics"
     );
-    axum::serve(
+    // The graceful drain waits for open connections; a request parked on a
+    // running base search (tens of seconds in a debug build) held the process
+    // for its whole duration after Ctrl+C. The drain gets a bounded grace
+    // period past the signal, then the process leaves - `main` bounds the
+    // runtime's own wait on blocking threads the same way.
+    let (signalled_tx, signalled_rx) = tokio::sync::oneshot::channel::<()>();
+    let server = axum::serve(
         listener,
         app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
     )
-    .with_graceful_shutdown(shutdown_signal())
-    .await?;
+    .with_graceful_shutdown(async move {
+        shutdown_signal().await;
+        let _ = signalled_tx.send(());
+    });
+    tokio::select! {
+        result = server => result?,
+        () = async {
+            let _ = signalled_rx.await;
+            tokio::time::sleep(SHUTDOWN_GRACE).await;
+        } => tracing::warn!(
+            grace_secs = SHUTDOWN_GRACE.as_secs(),
+            "shutdown grace period elapsed; abandoning in-flight requests"
+        ),
+    }
     Ok(())
 }
+
+/// How long the graceful drain may run past the shutdown signal.
+const SHUTDOWN_GRACE: std::time::Duration = std::time::Duration::from_secs(5);
 
 async fn shutdown_signal() {
     let ctrl_c = async {

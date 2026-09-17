@@ -70,6 +70,11 @@ pub enum CacheKey<'a> {
         uid: &'a str,
         request_hash: u64,
     },
+    /// The planner's optimize search, keyed like the rotation.
+    BaseOptimize {
+        uid: &'a str,
+        request_hash: u64,
+    },
     /// One memoised simulation. `kind` separates dps from hps, which share a
     /// request type but not a result type.
     /// One user's improvements body, keyed on the sync generation that produced
@@ -176,6 +181,9 @@ impl CacheKey<'_> {
             CacheKey::BaseRotation { uid, request_hash } => {
                 format!("base:rotation:{uid}:{request_hash}")
             }
+            CacheKey::BaseOptimize { uid, request_hash } => {
+                format!("base:optimize:{uid}:{request_hash}")
+            }
             CacheKey::UserImprovements { uid, version } => {
                 format!("improvements:{uid}:{version}")
             }
@@ -213,6 +221,7 @@ impl CacheKey<'_> {
             CacheKey::OperatorBuildStats { .. } => Duration::from_hours(1),
             CacheKey::CommunityEnemyAverage => Duration::from_mins(30),
             CacheKey::BaseRotation { .. } => Duration::from_mins(5),
+            CacheKey::BaseOptimize { .. } => Duration::from_mins(5),
             // Same hour as the list it belongs to. A simulation is a pure
             // function of the body and the game data, so the only thing that can
             // invalidate it is a reload, and `asset_watcher` clears the whole

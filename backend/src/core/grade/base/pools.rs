@@ -508,7 +508,7 @@ mod tests {
 // phantom value, and stays at zero until joint-seating economics land.
 
 /// A solved economy plan for the optimal search.
-#[derive(Debug, Default)]
+#[derive(Debug, Default, PartialEq)]
 pub struct EconomyPlan {
     /// `buff_id -> solved productivity %` - consumer buffs to override with
     /// [`BuffResolutionStrategy::PoolPayoff`].
@@ -1357,5 +1357,15 @@ pub fn candidate_bundles(
             });
         }
     }
-    bundles
+    // Two generators can propose the same seats (an office pin from both a
+    // facility count and a base count; the Ling/Dusk pair alone and again
+    // inside a wider bundle): an identical plan is an identical trial, and a
+    // trial is a full optimizer run.
+    let mut unique: Vec<EconomyPlan> = Vec::with_capacity(bundles.len());
+    for bundle in bundles {
+        if !unique.contains(&bundle) {
+            unique.push(bundle);
+        }
+    }
+    unique
 }

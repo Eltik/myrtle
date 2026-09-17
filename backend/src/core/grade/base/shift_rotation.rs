@@ -509,6 +509,9 @@ fn rotation_core(
     // Control Center Squad 1 (with its global bonuses / faction conditions) and the
     // balanced production teams, re-selecting the CC when one of its operators turns
     // out dead weight against the teams actually chosen.
+    // One enumeration memo for this run: registry, facility counts and
+    // drains are fixed here, so identical inputs mean identical teams.
+    let memo = super::team_select::EnumerationMemo::default();
     let (cc_plan, mut groups) = rotation_cc_plan(
         operators,
         building,
@@ -530,6 +533,7 @@ fn rotation_core(
                 cc_conditions,
                 morale_drains,
                 &HashMap::new(),
+                &memo,
             )
         },
     );
@@ -599,6 +603,7 @@ fn rotation_core(
                         &cc_plan.conditions,
                         morale_drains,
                         &reserved,
+                        &memo,
                     );
                     let unseated = tiled_objective(&pinned_plan, &cc_plan.global_bonuses);
                     seat_pinned_operator(
@@ -703,6 +708,7 @@ fn rotation_core(
             &cc_plan.conditions,
             morale_drains,
             &reserved,
+            &memo,
         );
     }
 

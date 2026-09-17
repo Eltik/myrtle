@@ -194,6 +194,28 @@ where
 ///
 /// Records elapsed time on drop, so the metric is correct whether the handler
 /// returned, errored, or was cancelled.
+/// Runs a CPU-bound section on the blocking pool for a service that ALREADY
+/// holds an [`Admission`] and cannot hand its whole body to [`run`] because it
+/// loads first and computes after.
+///
+/// This is the second half of the load-then-compute split the module doc asks
+/// for. The point is not throughput but isolation: a search that runs inline
+/// on an async worker blocks that worker for its whole duration, and every
+/// future parked there - another request's database lookups included - waits
+/// it out. Measured before this existed: a 0.2 s planner request took 33 s
+/// while an improvements search ran on the worker it had landed on. No permit
+/// is taken here; the caller's admission already bounds concurrency.
+pub async fn offload<F, T>(kind: &'static str, work: F) -> Result<T, ApiError>
+where
+    F: FnOnce() -> T + Send + 'static,
+    T: Send + 'static,
+{
+    tokio::task::spawn_blocking(work).await.map_err(|e| {
+        tracing::error!(kind, error = %e, "CPU task panicked");
+        ApiError::Internal(anyhow::anyhow!("{kind} task failed: {e}"))
+    })
+}
+
 pub struct Admission {
     kind: &'static str,
     started: Instant,

@@ -27,12 +27,24 @@ static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 #[unsafe(export_name = "_rjem_malloc_conf")]
 pub static MALLOC_CONF: &[u8] = b"background_thread:true,dirty_decay_ms:5000,muzzy_decay_ms:5000\0";
 
-#[tokio::main]
+/// Runtime shutdown is bounded: dropping a tokio runtime waits for every
+/// blocking-pool thread, and a base search parked there (40 s in a debug
+/// build) kept Ctrl+C hanging for its whole duration. `server::run` drains
+/// connections under a grace period first; this bounds the rest.
+fn main() {
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .expect("tokio runtime");
+    runtime.block_on(async_main());
+    runtime.shutdown_timeout(std::time::Duration::from_secs(2));
+}
+
 // Startup wiring is inherently a long, linear sequence of `.await`s; splitting it into
 // helpers would not make it more readable. Matches the crate-wide allow in `lib.rs`,
 // which does not cover this binary's separate crate root.
 #[allow(clippy::too_many_lines)]
-async fn main() {
+async fn async_main() {
     dotenv().ok();
 
     // The writer clears the boot progress bars before a line lands, so startup

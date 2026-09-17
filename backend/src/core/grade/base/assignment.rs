@@ -2804,6 +2804,26 @@ pub(crate) fn cc_token_matches(op: &OperatorBaseProfile, token: &str) -> bool {
 }
 
 impl CcCondition {
+    /// A stable text form of everything the room scorer reads from this
+    /// condition - the key material for an enumeration memo.
+    pub(crate) fn fingerprint(&self) -> String {
+        let formulas: Vec<String> = self
+            .formula_bonuses
+            .iter()
+            .map(|(f, pct)| format!("{f}={}", pct.to_bits()))
+            .collect();
+        format!(
+            "{}|{}|{}|{}|{}|{}|{}",
+            self.target_room,
+            self.faction_token,
+            self.required_count,
+            self.per_operator,
+            self.bonus_pct.to_bits(),
+            self.order_limit.to_bits(),
+            formulas.join(",")
+        )
+    }
+
     /// The percentage this condition grants in a room running `formula`: the
     /// flat bonus, or the product-split entry for that formula (an
     /// unconfigured or unlisted product earns 0 - never a guess).
@@ -4248,6 +4268,38 @@ fn best_team_for_room(
 /// facility-count productivity survives), so enumerating them yields pure automation
 /// teams AND automation + facility-count-scaler pairings (Weedy + Purestream, whose
 /// per-Trading-Post gold buff survives the nullify) as ordinary candidates.
+/// The operators a room's team search may draw from: not yet assigned,
+/// carrying a buff that applies to the room, automation admitted or not,
+/// and (for rotation teams) able to work a 24h block. Factored out so a
+/// memo can key an enumeration on exactly this list.
+#[allow(clippy::too_many_arguments)]
+pub(crate) fn candidate_pool<'a>(
+    room_type: &str,
+    formula_type: Option<&str>,
+    operators: &'a [OperatorBaseProfile],
+    already_assigned: &HashSet<String>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+    morale_drains: &HashMap<String, f64>,
+    include_automation: bool,
+    require_24h_sustain: bool,
+) -> Vec<&'a OperatorBaseProfile> {
+    operators
+        .iter()
+        .filter(|op| !already_assigned.contains(&op.char_id))
+        .filter(|op| {
+            op.available_buffs.iter().any(|b| {
+                building_data
+                    .buffs
+                    .get(b)
+                    .is_some_and(|buff| buff_applies(buff, room_type, formula_type))
+            })
+        })
+        .filter(|op| include_automation || !has_automation_buff(op, registry))
+        .filter(|op| !require_24h_sustain || sustains_24h_block(op, morale_drains))
+        .collect()
+}
+
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn enumerate_candidate_teams(
     room_type: &str,
@@ -4278,20 +4330,17 @@ pub(crate) fn enumerate_candidate_teams(
     // Candidate pool: operators with at least one applicable buff. Automation
     // operators (nullify-others) are excluded unless the caller wants automation
     // teams enumerated too.
-    let candidates: Vec<&OperatorBaseProfile> = operators
-        .iter()
-        .filter(|op| !already_assigned.contains(&op.char_id))
-        .filter(|op| {
-            op.available_buffs.iter().any(|b| {
-                building_data
-                    .buffs
-                    .get(b)
-                    .is_some_and(|buff| buff_applies(buff, room_type, formula_type))
-            })
-        })
-        .filter(|op| include_automation || !has_automation_buff(op, registry))
-        .filter(|op| !require_24h_sustain || sustains_24h_block(op, morale_drains))
-        .collect();
+    let candidates = candidate_pool(
+        room_type,
+        formula_type,
+        operators,
+        already_assigned,
+        registry,
+        building_data,
+        morale_drains,
+        include_automation,
+        require_24h_sustain,
+    );
 
     if candidates.is_empty() {
         return Vec::new();

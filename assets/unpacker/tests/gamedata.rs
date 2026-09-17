@@ -26,8 +26,9 @@ fn test_export_gamedata() {
         .expect("gamedata thread panicked");
 
     match result {
-        Ok(count) => {
-            assert!(count > 0, "should export at least one gamedata file");
+        Ok((exported, failed)) => {
+            assert!(exported > 0, "should export at least one gamedata file");
+            assert_eq!(failed, 0, "{failed} gamedata files failed to write");
         }
         Err(e) => panic!("export_gamedata failed: {e}"),
     }

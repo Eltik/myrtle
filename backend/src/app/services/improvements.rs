@@ -1,12 +1,13 @@
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 use serde::Serialize;
 use sqlx::PgPool;
 use ts_rs::TS;
 use uuid::Uuid;
 
+use crate::app::cache::CachedJson;
 use crate::app::cache::keys::CacheKey;
-use crate::app::cache::{CachedJson, cached_json};
 use crate::app::cpu;
 use crate::app::error::ApiError;
 use crate::app::services::roster::is_medal_earned;
@@ -761,8 +762,11 @@ pub async fn get_improvements(state: &AppState, uid: &str) -> Result<CachedJson,
         uid,
         version: user.updated_at.timestamp_millis(),
     };
-    cached_json(state, &key, || async move {
-        let body = build_improvements(state, user).await?;
+    // Detached: the search outlives a dropped request (client gone, handler
+    // timeout) and lands in the cache either way; concurrent callers join it.
+    let owner = state.clone();
+    crate::app::cache::cached_json_detached(state, &key, move || async move {
+        let body = build_improvements(&owner, user).await?;
         serde_json::to_string(&body)
             .map_err(|e| ApiError::Internal(anyhow::anyhow!("improvements serialize: {e}")))
     })
@@ -809,7 +813,7 @@ async fn build_improvements(
             &game_data,
             &owned_operators,
         ),
-        build_base_improvements(&state.db, user_id, &roster, &game_data),
+        build_base_improvements(&state.db, user_id, &roster, Arc::clone(&game_data)),
     )?;
 
     // The permit covers ONLY this line, which is the only synchronous work in the
@@ -1462,16 +1466,53 @@ async fn build_base_improvements(
     pool: &PgPool,
     user_id: Uuid,
     roster: &[RosterEntry],
-    game_data: &GameData,
+    game_data: Arc<GameData>,
 ) -> Result<BaseImprovements, ApiError> {
     let building_json = get_building(pool, user_id).await?;
     let Some(building_json) = building_json else {
         return Ok(BaseImprovements::default());
     };
 
-    let user_building = UserBuilding::from_json(&building_json);
+    // The owner's saved account facts (recruit slots etc.) re-price the same
+    // skills here as in the interactive planner - the two surfaces must never
+    // disagree on a number.
+    let open_recruit_slots: Option<u32> =
+        match crate::database::queries::users::get_base_facts(pool, user_id).await {
+            Ok(Some(value)) => value
+                .get("open_recruit_slots")
+                .and_then(serde_json::Value::as_u64)
+                .filter(|&n| n > 0)
+                .map(|n| {
+                    #[allow(clippy::cast_possible_truncation)]
+                    let slots = n.min(3) as u32;
+                    slots
+                }),
+            _ => None,
+        };
+
+    // Everything past the reads is a CPU-bound search - seconds in release,
+    // tens of seconds in a debug build. Inline on an async worker it stalled
+    // every future parked on that worker for its whole duration (a 0.2 s
+    // planner request waited 33 s behind it), so it runs on the blocking pool;
+    // the handler's CPU admission still bounds how many run at once.
+    let roster = roster.to_vec();
+    cpu::offload("user_improvements", move || {
+        compute_base_improvements(&roster, &game_data, &building_json, open_recruit_slots)
+    })
+    .await
+}
+
+/// The base-improvements search proper: from a synced building and a roster
+/// to the report. Pure compute, no I/O - see `build_base_improvements`.
+fn compute_base_improvements(
+    roster: &[RosterEntry],
+    game_data: &GameData,
+    building_json: &serde_json::Value,
+    open_recruit_slots: Option<u32>,
+) -> BaseImprovements {
+    let user_building = UserBuilding::from_json(building_json);
     if user_building.is_empty() {
-        return Ok(BaseImprovements::default());
+        return BaseImprovements::default();
     }
 
     // Roster → base-skill profiles, buff registry, morale drains. Shared with
@@ -1482,17 +1523,7 @@ async fn build_base_improvements(
         morale_drains,
     } = BaseContext::build(roster, game_data, false);
 
-    // The owner's saved account facts (recruit slots etc.) re-price the same
-    // skills here as in the interactive planner - the two surfaces must never
-    // disagree on a number.
-    if let Ok(Some(value)) = crate::database::queries::users::get_base_facts(pool, user_id).await
-        && let Some(slots) = value
-            .get("open_recruit_slots")
-            .and_then(serde_json::Value::as_u64)
-            .filter(|&n| n > 0)
-    {
-        #[allow(clippy::cast_possible_truncation)]
-        let slots = (slots.min(3)) as u32;
+    if let Some(slots) = open_recruit_slots {
         registry = crate::core::grade::base::buff_registry::resolve_account_facts(
             &registry,
             &game_data.building.buffs,
@@ -1549,7 +1580,7 @@ async fn build_base_improvements(
     }
     optimal_pins.extend(native_economies.pins.iter().cloned());
 
-    let live_morale = crate::core::grade::base::sustain_sim::synced_live_morale(&building_json);
+    let live_morale = crate::core::grade::base::sustain_sim::synced_live_morale(building_json);
     let current = compute_live_assignment(
         &profiles,
         &user_building,
@@ -1696,7 +1727,7 @@ async fn build_base_improvements(
         &morale_drains,
         None,
     );
-    Ok(BaseImprovements {
+    BaseImprovements {
         current: Some(current_dto),
         optimal: Some(optimal_dto),
         rotation: Some(rotation_dto),
@@ -1705,7 +1736,7 @@ async fn build_base_improvements(
         perception,
         claim,
         unrotated,
-    })
+    }
 }
 
 /// Build the resource-economy plan DTO from the COMMITTED plan itself: every

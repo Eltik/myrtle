@@ -16,6 +16,7 @@ use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+use crate::app::cpu;
 use crate::app::error::ApiError;
 use crate::app::services::improvements::{
     BaseAssignmentDto, ShiftRotationDto, base_assignment_to_dto, shift_rotation_to_dto,
@@ -122,7 +123,7 @@ pub struct DraftRoomDto {
     pub comfort: i32,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct OptimizeRequest {
     pub layout: Vec<DraftRoom>,
     /// Slot ids the optimizer may restaff. Empty = every room in the layout.
@@ -1119,25 +1120,32 @@ pub async fn optimize(
             .map(DraftRoom::into_user_room)
             .collect(),
     };
-    let baseline = compute_current_assignment(
-        &ctx.profiles,
-        &building,
-        &game_data.building,
-        &ctx.registry,
-        &ctx.morale_drains,
-        None,
-    );
-
     let pins = build_pins(&req.layout, &req.scope, &req.locked);
     let candidates = ctx.profiles_excluding(&req.excluded);
-    let proposal = compute_optimal_assignment_with_pins(
-        &candidates,
-        &building,
-        &game_data.building,
-        &ctx.registry,
-        &ctx.morale_drains,
-        &pins,
-    );
+    // The two searches are CPU-bound; on the blocking pool they cannot stall
+    // the async worker's other futures (see `cpu::offload`). The context and
+    // the building move in and come back, so nothing is cloned.
+    let gd = std::sync::Arc::clone(&game_data);
+    let (ctx, building, baseline, proposal) = cpu::offload("base_optimize", move || {
+        let baseline = compute_current_assignment(
+            &ctx.profiles,
+            &building,
+            &gd.building,
+            &ctx.registry,
+            &ctx.morale_drains,
+            None,
+        );
+        let proposal = compute_optimal_assignment_with_pins(
+            &candidates,
+            &building,
+            &gd.building,
+            &ctx.registry,
+            &ctx.morale_drains,
+            &pins,
+        );
+        (ctx, building, baseline, proposal)
+    })
+    .await?;
 
     let room_diffs = diff_rooms(&req.layout, &baseline, &proposal);
 
@@ -1199,14 +1207,21 @@ pub async fn rotation(
     {
         pins.push(pin);
     }
-    let plan = recommend_shift_rotation(
-        &candidates,
-        &building,
-        &game_data.building,
-        &ctx.registry,
-        &ctx.morale_drains,
-        &pins,
-    );
+    // The rotation search is the planner's heaviest step (about a second in
+    // release, ten in a debug build): on the blocking pool, see `cpu::offload`.
+    let gd = std::sync::Arc::clone(&game_data);
+    let (ctx, building, candidates, plan) = cpu::offload("base_rotation", move || {
+        let plan = recommend_shift_rotation(
+            &candidates,
+            &building,
+            &gd.building,
+            &ctx.registry,
+            &ctx.morale_drains,
+            &pins,
+        );
+        (ctx, building, candidates, plan)
+    })
+    .await?;
 
     Ok(RotationResponse {
         rotation: shift_rotation_to_dto(

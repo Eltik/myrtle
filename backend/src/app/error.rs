@@ -30,6 +30,26 @@ pub enum ApiError {
     ServiceUnavailable,
 }
 
+impl ApiError {
+    /// An equivalent error for a second caller of the same work: the same
+    /// status and message. `Internal` carries an `anyhow::Error`, which cannot
+    /// be cloned, so its chain is flattened into the message.
+    #[must_use]
+    pub fn shared_copy(&self) -> Self {
+        match self {
+            Self::BadRequest(m) => Self::BadRequest(m.clone()),
+            Self::Unauthorized => Self::Unauthorized,
+            Self::Forbidden => Self::Forbidden,
+            Self::NotFound => Self::NotFound,
+            Self::RateLimited => Self::RateLimited,
+            Self::Conflict(m) => Self::Conflict(m.clone()),
+            Self::ValidationFailed(errors) => Self::ValidationFailed(errors.clone()),
+            Self::Internal(e) => Self::Internal(anyhow::anyhow!("{e:#}")),
+            Self::ServiceUnavailable => Self::ServiceUnavailable,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct FieldError {
     pub field: String,

@@ -12,14 +12,15 @@
 //! generics to whichever product values them most. Whole candidate TEAMS are the
 //! packing unit, so superadditive pairs (Texas + Lappland) stay intact.
 
+use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 
 use crate::core::gamedata::types::building::BuildingDataFile;
 
 use super::assignment::{
-    CandidateTeam, CcCondition, assignment_value, build_op_index, compute_team_efficiency,
-    enumerate_candidate_teams, has_automation_buff, op_is_nullifier, padding_cost,
-    room_search_score,
+    CandidateTeam, CcCondition, assignment_value, build_op_index, candidate_pool,
+    compute_team_efficiency, enumerate_candidate_teams, has_automation_buff, op_is_nullifier,
+    padding_cost, room_search_score,
 };
 use super::buff_registry::BuffResolutionStrategy;
 use super::shift_rotation::SHIFT_COUNT;
@@ -138,6 +139,95 @@ fn ordinal_weights(n_rooms: usize) -> Vec<usize> {
     w
 }
 
+/// Everything `enumerate_candidate_teams` reads that varies within one
+/// core-planner run: the room shape, the enumeration flags, the
+/// Control-Center conditions in force and the FILTERED candidate ids.
+/// Registry, building data, facility counts and morale drains are fixed for
+/// the run, which is why an [`EnumerationMemo`] must not outlive it.
+#[derive(Hash, PartialEq, Eq)]
+struct MemoKey {
+    room_type: String,
+    formula: Option<String>,
+    level: i32,
+    capacity: i32,
+    pool: usize,
+    include_automation: bool,
+    require_24h: bool,
+    cc: Vec<String>,
+    candidates: Vec<String>,
+}
+
+/// Memo for `enumerate_candidate_teams` over one core-planner run.
+///
+/// The Fiammetta 24/7-seat oracle re-plans the whole base once per trading
+/// candidate, and the rotation runs twice (two passes): on a full base the
+/// same four-factory enumeration came back from identical inputs twenty
+/// times in one planner request (0.4 s each in a debug build). The candidate
+/// a trial excludes is a trader with no factory skill, so the factory pools -
+/// and therefore the enumerations - are the same. The key holds the filtered
+/// ids, so a hit means the enumeration would have read exactly the same
+/// inputs; the result is the same by construction.
+#[derive(Default)]
+pub struct EnumerationMemo(RefCell<HashMap<MemoKey, Vec<CandidateTeam>>>);
+
+impl EnumerationMemo {
+    #[allow(clippy::too_many_arguments)]
+    fn key(
+        room_type: &str,
+        level: i32,
+        formula: Option<&str>,
+        operators: &[OperatorBaseProfile],
+        assigned: &HashSet<String>,
+        registry: &HashMap<String, BuffResolutionStrategy>,
+        building_data: &BuildingDataFile,
+        morale_drains: &HashMap<String, f64>,
+        capacity: i32,
+        pool: usize,
+        include_automation: bool,
+        require_24h: bool,
+        cc_conditions: &[CcCondition],
+    ) -> MemoKey {
+        MemoKey {
+            room_type: room_type.to_string(),
+            formula: formula.map(str::to_string),
+            level,
+            capacity,
+            pool,
+            include_automation,
+            require_24h,
+            cc: cc_conditions.iter().map(CcCondition::fingerprint).collect(),
+            candidates: candidate_pool(
+                room_type,
+                formula,
+                operators,
+                assigned,
+                registry,
+                building_data,
+                morale_drains,
+                include_automation,
+                require_24h,
+            )
+            .iter()
+            .map(|op| op.char_id.clone())
+            .collect(),
+        }
+    }
+
+    fn get_or_enumerate(
+        &self,
+        key: MemoKey,
+        enumerate: impl FnOnce() -> Vec<CandidateTeam>,
+    ) -> Vec<CandidateTeam> {
+        let hit = self.0.borrow().get(&key).cloned();
+        if let Some(teams) = hit {
+            return teams;
+        }
+        let teams = enumerate();
+        self.0.borrow_mut().insert(key, teams.clone());
+        teams
+    }
+}
+
 /// Select the balanced team sets for every production group and pick the best
 /// gold/EXP split, returning the planned groups (teams padded to capacity, ordinal
 /// order strongest-first with the weakest team on any trailing 1-cell block).
@@ -154,6 +244,7 @@ pub fn plan_production_groups(
     cc_conditions: &[CcCondition],
     morale_drains: &HashMap<String, f64>,
     reserved: &HashMap<String, usize>,
+    memo: &EnumerationMemo,
 ) -> Vec<PlannedGroup> {
     let mut factory_rooms: Vec<&&UserRoom> = production_rooms
         .iter()
@@ -226,6 +317,7 @@ pub fn plan_production_groups(
             total_dorm_levels,
             cc_conditions,
             morale_drains,
+            memo,
         );
         pad_teams(
             &mut planned,
@@ -297,6 +389,7 @@ fn select_balanced_teams(
     total_dorm_levels: i32,
     cc_conditions: &[CcCondition],
     morale_drains: &HashMap<String, f64>,
+    memo: &EnumerationMemo,
 ) -> Vec<PlannedGroup> {
     // Phase A: enumerate candidate teams per group (once per group - this replaces
     // the old per-room searches). Team size is bounded by the group's SMALLEST room
@@ -308,7 +401,7 @@ fn select_balanced_teams(
             let teams_needed = teams_for_rooms(spec.rooms.len());
             let min_level = spec.rooms.iter().map(|(_, l)| *l).min().unwrap_or(1);
             let pool = BASE_POOL + POOL_PER_EXTRA_TEAM * teams_needed.saturating_sub(1);
-            let mut teams = enumerate_candidate_teams(
+            let key = EnumerationMemo::key(
                 &spec.room_type,
                 min_level,
                 spec.formula_type.as_deref(),
@@ -316,19 +409,36 @@ fn select_balanced_teams(
                 assigned,
                 registry,
                 building_data,
-                facility_counts,
-                total_dorm_levels,
-                capacity as i32,
-                cc_conditions,
                 morale_drains,
-                false,
+                capacity as i32,
                 pool,
-                // Factories can run automation teams (Weedy + facility-count scalers
-                // like Purestream); enumerate them as ordinary candidates.
                 spec.room_type == "MANUFACTURE",
-                // Rotation teams work 24h blocks - heavy-drainers can't finish one.
                 true,
+                cc_conditions,
             );
+            let mut teams = memo.get_or_enumerate(key, || {
+                enumerate_candidate_teams(
+                    &spec.room_type,
+                    min_level,
+                    spec.formula_type.as_deref(),
+                    operators,
+                    assigned,
+                    registry,
+                    building_data,
+                    facility_counts,
+                    total_dorm_levels,
+                    capacity as i32,
+                    cc_conditions,
+                    morale_drains,
+                    false,
+                    pool,
+                    // Factories can run automation teams (Weedy + facility-count scalers
+                    // like Purestream); enumerate them as ordinary candidates.
+                    spec.room_type == "MANUFACTURE",
+                    // Rotation teams work 24h blocks - heavy-drainers can't finish one.
+                    true,
+                )
+            });
             teams.truncate(CANDIDATES_PER_GROUP);
             teams
         })
@@ -584,6 +694,7 @@ fn select_balanced_teams(
         total_dorm_levels,
         cc_conditions,
         morale_drains,
+        memo,
     );
     groups
 }
@@ -616,6 +727,7 @@ fn backfill_empty_teams(
     total_dorm_levels: i32,
     cc_conditions: &[CcCondition],
     morale_drains: &HashMap<String, f64>,
+    memo: &EnumerationMemo,
 ) {
     if !groups
         .iter()
@@ -649,7 +761,7 @@ fn backfill_empty_teams(
             if !g.teams[ordinal].ops.is_empty() {
                 continue;
             }
-            let relaxed = enumerate_candidate_teams(
+            let key = EnumerationMemo::key(
                 &g.room_type,
                 min_level,
                 g.formula_type.as_deref(),
@@ -657,18 +769,35 @@ fn backfill_empty_teams(
                 &used,
                 registry,
                 building_data,
-                facility_counts,
-                total_dorm_levels,
-                capacity,
-                cc_conditions,
                 morale_drains,
-                false,
+                capacity,
                 BASE_POOL,
                 g.room_type == "MANUFACTURE",
-                // The whole point of the pass: consider the operators the strict
-                // rotation pool threw away.
                 false,
+                cc_conditions,
             );
+            let relaxed = memo.get_or_enumerate(key, || {
+                enumerate_candidate_teams(
+                    &g.room_type,
+                    min_level,
+                    g.formula_type.as_deref(),
+                    operators,
+                    &used,
+                    registry,
+                    building_data,
+                    facility_counts,
+                    total_dorm_levels,
+                    capacity,
+                    cc_conditions,
+                    morale_drains,
+                    false,
+                    BASE_POOL,
+                    g.room_type == "MANUFACTURE",
+                    // The whole point of the pass: consider the operators the strict
+                    // rotation pool threw away.
+                    false,
+                )
+            });
             let Some(team) = relaxed.into_iter().find(|t| !t.ops.is_empty()) else {
                 // Genuinely nobody left with an applicable skill - resting the
                 // room really is all that's on offer.
