@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { deleteCookie, getCookie, setCookie } from "@tanstack/react-start/server";
 import { env } from "#/env";
-import { parseError } from "#/lib/api/_shared";
+import { APIError, parseError } from "#/lib/api/_shared";
 import type { IUserProfile } from "#/types/user";
 import { backendFetch } from "../fetch";
 import { type AKServer, type BilibiliLoginInput, type BilibiliSmsLoginInput, bilibiliLoginSchema, bilibiliSmsLoginSchema, type CnLoginInput, cnLoginSchema, type LoginInput, loginSchema } from "./login";
@@ -75,14 +75,25 @@ function clearAuthCookies() {
 
 // Shared by every login method: each just gets a {token, uid} pair out of a
 // different backend endpoint, then finishes identically from there.
+//
+// Failures propagate as `APIError` (status + the backend's own message and
+// code) or `BackendUnreachableError` from `backendFetch`, so the dialog can say
+// WHICH thing failed. This used to throw a bare "Invalid credentials" for every
+// non-2xx login response, which hid a backend outage (503), a rate limit (429)
+// and Yostar's own reason for rejecting a code (400) behind the same words.
 const completeLogin = async (loginRes: Response): Promise<ISession> => {
-    if (!loginRes.ok) throw new Error("Invalid credentials");
+    if (!loginRes.ok) throw await parseError(loginRes);
     const { token } = (await loginRes.json()) as { token: string; uid: string };
 
     setAuthCookies(token);
 
+    // The account IS signed in at this point (cookies are set), only the
+    // first roster pull failed; a page reload lands the user signed in.
     const refreshRes = await backendFetch("/refresh", { method: "POST", bearerToken: token });
-    if (!refreshRes.ok) throw new Error("Sync failed");
+    if (!refreshRes.ok) {
+        const err = await parseError(refreshRes);
+        throw new APIError(err.status, `Signed in, but the first roster sync failed: ${err.message}`, "SYNC_FAILED");
+    }
 
     // Build the session the same way a page load does, rather than fetching the
     // profile directly: that is what carries the authorisation facts resolved

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
+import { useErrorMessage } from "#/components/ui/error-message";
 import { Input } from "#/components/ui/input";
 import { InputGroup, InputGroupAddon } from "#/components/ui/input-group";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "#/components/ui/menu";
@@ -238,6 +239,7 @@ function TierListRow({ tl, active, onSelect, onSetFlair, onDelete }: { tl: ITier
 
 function PermissionDetail({ list, onGrant, authed, lookup }: { list: ITierListBrowseItem; onGrant: () => void; authed: boolean; lookup: Map<string, IUserProfile> | undefined }): React.ReactElement {
     const t: PermsT = useT("admin");
+    const describeError = useErrorMessage();
     const rt: PermsRichT = useRichT("admin");
     const fmt = useFormatters();
     const queryClient = useQueryClient();
@@ -249,7 +251,7 @@ function PermissionDetail({ list, onGrant, authed, lookup }: { list: ITierListBr
             void queryClient.invalidateQueries({ queryKey: ["admin", "tier-lists", "permissions", list.slug] });
             toastManager.add({ id: `perm-grant-${Date.now()}`, title: t("perms.toast.updated"), description: t("perms.toast.updated.desc", { slug: list.slug }), type: "success" });
         },
-        onError: (err: unknown) => toastManager.add({ id: `perm-grant-err-${Date.now()}`, title: t("perms.toast.updateFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `perm-grant-err-${Date.now()}`, title: t("perms.toast.updateFailed"), description: describeError(err), type: "error" }),
     });
 
     const revoke = useMutation({
@@ -258,7 +260,7 @@ function PermissionDetail({ list, onGrant, authed, lookup }: { list: ITierListBr
             void queryClient.invalidateQueries({ queryKey: ["admin", "tier-lists", "permissions", list.slug] });
             toastManager.add({ id: `perm-revoke-${Date.now()}`, title: t("perms.toast.revoked"), description: t("perms.toast.revoked.desc", { slug: list.slug }), type: "success" });
         },
-        onError: (err: unknown) => toastManager.add({ id: `perm-revoke-err-${Date.now()}`, title: t("perms.toast.revokeFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `perm-revoke-err-${Date.now()}`, title: t("perms.toast.revokeFailed"), description: describeError(err), type: "error" }),
     });
 
     const perms = permsQuery.data ?? [];
@@ -329,6 +331,7 @@ function PermissionDetail({ list, onGrant, authed, lookup }: { list: ITierListBr
 
 function GrantDialog({ slug, onClose }: { slug: string; onClose: () => void }): React.ReactElement {
     const t: PermsT = useT("admin");
+    const describeError = useErrorMessage();
     const queryClient = useQueryClient();
     const [q, setQ] = useState("");
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -345,7 +348,7 @@ function GrantDialog({ slug, onClose }: { slug: string; onClose: () => void }): 
             toastManager.add({ id: `perm-create-${Date.now()}`, title: t("perms.toast.grantCreated"), description: t("perms.toast.grantCreated.desc", { level: levelLabel(t, permission), slug }), type: "success" });
             onClose();
         },
-        onError: (err: unknown) => toastManager.add({ id: `perm-create-err-${Date.now()}`, title: t("perms.toast.grantFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `perm-create-err-${Date.now()}`, title: t("perms.toast.grantFailed"), description: describeError(err), type: "error" }),
     });
 
     const results = searchQuery.data?.entries ?? [];
@@ -428,6 +431,7 @@ function GrantDialog({ slug, onClose }: { slug: string; onClose: () => void }): 
 
 function FlairDialog({ list, flairs, onClose }: { list: ITierListBrowseItem; flairs: { id: number; code: string; label: string; color: string | null }[]; onClose: () => void }): React.ReactElement {
     const t: PermsT = useT("admin");
+    const describeError = useErrorMessage();
     const queryClient = useQueryClient();
     const [selected, setSelected] = useState<number | null>(null);
 
@@ -438,7 +442,7 @@ function FlairDialog({ list, flairs, onClose }: { list: ITierListBrowseItem; fla
             toastManager.add({ id: `flair-${Date.now()}`, title: t("perms.toast.flair"), description: t("perms.toast.flair.desc", { slug: list.slug }), type: "success" });
             onClose();
         },
-        onError: (err: unknown) => toastManager.add({ id: `flair-err-${Date.now()}`, title: t("perms.toast.flairFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `flair-err-${Date.now()}`, title: t("perms.toast.flairFailed"), description: describeError(err), type: "error" }),
     });
 
     return (
@@ -486,6 +490,7 @@ function FlairDialog({ list, flairs, onClose }: { list: ITierListBrowseItem; fla
 
 function DeleteDialog({ list, onClose, onDeleted }: { list: ITierListBrowseItem; onClose: () => void; onDeleted: () => void }): React.ReactElement {
     const t: PermsT = useT("admin");
+    const describeError = useErrorMessage();
     const rt: PermsRichT = useRichT("admin");
     const queryClient = useQueryClient();
     const del = useMutation({
@@ -495,7 +500,7 @@ function DeleteDialog({ list, onClose, onDeleted }: { list: ITierListBrowseItem;
             toastManager.add({ id: `tl-del-${Date.now()}`, title: t("perms.toast.deleted"), description: t("perms.toast.deleted.desc", { slug: list.slug }), type: "success" });
             onDeleted();
         },
-        onError: (err: unknown) => toastManager.add({ id: `tl-del-err-${Date.now()}`, title: t("perms.toast.deleteFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `tl-del-err-${Date.now()}`, title: t("perms.toast.deleteFailed"), description: describeError(err), type: "error" }),
     });
     return (
         <>

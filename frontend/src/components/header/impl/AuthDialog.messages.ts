@@ -147,6 +147,10 @@ export const messages = {
         text: "Login failed",
         description: "Error toast title when signing in was rejected.",
     },
+    "authDialog.toast.loginRejected": {
+        text: "Check the code and try again, or request a new one.\n{detail}",
+        description: "Error toast body when the login server turned the credentials down. {detail} is the server's own reason, on its own line.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

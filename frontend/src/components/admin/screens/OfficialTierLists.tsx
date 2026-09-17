@@ -4,6 +4,7 @@ import { CheckIcon, EditIcon, ExternalLinkIcon, MoreHorizontalIcon, PlusIcon, Se
 import { useMemo, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
+import { useErrorMessage } from "#/components/ui/error-message";
 import { Input } from "#/components/ui/input";
 import { InputGroup, InputGroupAddon } from "#/components/ui/input-group";
 import { MarkdownEditor } from "#/components/ui/markdown-editor";
@@ -218,6 +219,7 @@ function OfficialRow({ list, onSetFlair, onDelete, onPublish }: { list: ITierLis
 
 function FlairDialog({ list, flairs, onClose }: { list: ITierListBrowseItem; flairs: ITierListFlair[]; onClose: () => void }): React.ReactElement {
     const t: OfficialT = useT("admin");
+    const describeError = useErrorMessage();
     const queryClient = useQueryClient();
     const [selected, setSelected] = useState<number | null>(null);
 
@@ -228,7 +230,7 @@ function FlairDialog({ list, flairs, onClose }: { list: ITierListBrowseItem; fla
             toastManager.add({ id: `flair-${Date.now()}`, title: t("official.toast.flair"), description: t("official.toast.flair.desc", { slug: list.slug }), type: "success" });
             onClose();
         },
-        onError: (err: unknown) => toastManager.add({ id: `flair-err-${Date.now()}`, title: t("official.toast.flairFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `flair-err-${Date.now()}`, title: t("official.toast.flairFailed"), description: describeError(err), type: "error" }),
     });
 
     return (
@@ -276,6 +278,7 @@ function FlairDialog({ list, flairs, onClose }: { list: ITierListBrowseItem; fla
 
 function DeleteDialog({ list, onClose }: { list: ITierListBrowseItem; onClose: () => void }): React.ReactElement {
     const t: OfficialT = useT("admin");
+    const describeError = useErrorMessage();
     const rt: OfficialRichT = useRichT("admin");
     const queryClient = useQueryClient();
     const del = useMutation({
@@ -285,7 +288,7 @@ function DeleteDialog({ list, onClose }: { list: ITierListBrowseItem; onClose: (
             toastManager.add({ id: `tl-del-${Date.now()}`, title: t("official.toast.deleted"), description: t("official.toast.deleted.desc", { slug: list.slug }), type: "success" });
             onClose();
         },
-        onError: (err: unknown) => toastManager.add({ id: `tl-del-err-${Date.now()}`, title: t("official.toast.deleteFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `tl-del-err-${Date.now()}`, title: t("official.toast.deleteFailed"), description: describeError(err), type: "error" }),
     });
     return (
         <>
@@ -313,6 +316,7 @@ function DeleteDialog({ list, onClose }: { list: ITierListBrowseItem; onClose: (
 
 function PublishDialog({ list, onClose }: { list: ITierListBrowseItem; onClose: () => void }): React.ReactElement {
     const t: OfficialT = useT("admin");
+    const describeError = useErrorMessage();
     const queryClient = useQueryClient();
     const [changelog, setChangelog] = useState("");
     const publish = useMutation({
@@ -322,7 +326,7 @@ function PublishDialog({ list, onClose }: { list: ITierListBrowseItem; onClose: 
             toastManager.add({ id: `tl-pub-${Date.now()}`, title: t("official.toast.published"), description: t("official.toast.published.desc", { slug: list.slug }), type: "success" });
             onClose();
         },
-        onError: (err: unknown) => toastManager.add({ id: `tl-pub-err-${Date.now()}`, title: t("official.toast.publishFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `tl-pub-err-${Date.now()}`, title: t("official.toast.publishFailed"), description: describeError(err), type: "error" }),
     });
     return (
         <>
@@ -356,6 +360,7 @@ function PublishDialog({ list, onClose }: { list: ITierListBrowseItem; onClose: 
 
 function NewListDialog({ onClose }: { onClose: () => void }): React.ReactElement {
     const t: OfficialT = useT("admin");
+    const describeError = useErrorMessage();
     const rt: OfficialRichT = useRichT("admin");
     const queryClient = useQueryClient();
     const flairsQuery = useQuery(tierListFlairsQueryOptions());
@@ -370,7 +375,7 @@ function NewListDialog({ onClose }: { onClose: () => void }): React.ReactElement
             toastManager.add({ id: `tl-create-${Date.now()}`, title: t("official.toast.created"), description: t("official.toast.created.desc", { slug: data.slug }), type: "success" });
             onClose();
         },
-        onError: (err: unknown) => toastManager.add({ id: `tl-create-err-${Date.now()}`, title: t("official.toast.createFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `tl-create-err-${Date.now()}`, title: t("official.toast.createFailed"), description: describeError(err), type: "error" }),
     });
 
     return (

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
+import { useErrorMessage } from "#/components/ui/error-message";
 import { Field, FieldLabel } from "#/components/ui/field";
 import { Form } from "#/components/ui/form";
 import { Input } from "#/components/ui/input";
@@ -14,6 +15,7 @@ import { Spinner } from "#/components/ui/spinner";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "#/components/ui/tabs";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
+import { classifyFailure } from "#/lib/api/_shared";
 import { type AKServer, formatServerForPicker, SERVERS } from "#/lib/auth/login";
 import { sendBiliSmsFn, sendCodeCnFn, sendCodeFn } from "#/lib/auth/server";
 import { authActions, authStore } from "#/lib/auth/store";
@@ -41,6 +43,7 @@ interface IAuthDialogProps {
 export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialogProps) {
     const { login, loginBilibili, loginBilibiliSms, loginCn } = useAuth();
     const t: TypedT<typeof messages> = useT("nav");
+    const describeError = useErrorMessage();
     const [internalOpen, setInternalOpen] = useState(false);
     const isOpen = openProp !== undefined ? openProp : internalOpen;
     const setOpen = onOpenChange !== undefined ? onOpenChange : setInternalOpen;
@@ -129,7 +132,7 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
             toastManager.add({
                 id: "otp-error",
                 title: t("authDialog.toast.error"),
-                description: t("authDialog.toast.otpError", { error: err.message }),
+                description: t("authDialog.toast.otpError", { error: describeError(err) }),
                 type: "error",
             }),
     });
@@ -149,7 +152,7 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
             toastManager.add({
                 id: "cn-otp-error",
                 title: t("authDialog.toast.error"),
-                description: t("authDialog.toast.codeError", { error: err.message }),
+                description: t("authDialog.toast.codeError", { error: describeError(err) }),
                 type: "error",
             }),
     });
@@ -169,7 +172,7 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
             toastManager.add({
                 id: "bili-otp-error",
                 title: t("authDialog.toast.error"),
-                description: t("authDialog.toast.codeError", { error: err.message }),
+                description: t("authDialog.toast.codeError", { error: describeError(err) }),
                 type: "error",
             }),
     });
@@ -183,13 +186,22 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
         setOpen(false);
         authActions.resetLoginForm();
     };
-    const onLoginError = (err: Error) =>
+    // A 400 from a login endpoint is the credentials being turned down: the
+    // backend forwards the publisher's reason when it can read one and says
+    // "invalid upstream response" when it cannot (a wrong Yostar code today,
+    // see backend core::hypergryph::fetch::parse_json). Either way the action
+    // for the visitor is the same, so lead with that and keep the detail under.
+    // Everything else (server down, rate limited, 5xx) reads as itself.
+    const onLoginError = (err: unknown) => {
+        const failure = classifyFailure(err);
+        const detail = describeError(err);
         toastManager.add({
             id: "login-error",
             title: t("authDialog.toast.loginFailed"),
-            description: err.message,
+            description: failure.kind === "http" && failure.status === 400 ? t("authDialog.toast.loginRejected", { detail }) : detail,
             type: "error",
         });
+    };
 
     const loginMut = useMutation({
         mutationFn: (vars: { email: string; code: string; server: AKServer; saveCredentials: boolean }) => login(vars),

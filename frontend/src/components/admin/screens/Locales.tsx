@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
+import { useErrorMessage } from "#/components/ui/error-message";
 import { Input } from "#/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Skeleton } from "#/components/ui/skeleton";
@@ -278,6 +279,7 @@ function LocaleRow({ locale, progress, canWrite, onEdit }: { locale: Locale; pro
 
 function LocaleDialog({ locale, locales, nextSortOrder, onClose }: { locale: Locale | null; locales: Locale[]; nextSortOrder: number; onClose: () => void }): React.ReactElement {
     const t: LocalesT = useT("admin");
+    const describeError = useErrorMessage();
     const rt: LocalesRichT = useRichT("admin");
     const queryClient = useQueryClient();
     const serverLabel = serverLabels(t);
@@ -310,7 +312,7 @@ function LocaleDialog({ locale, locales, nextSortOrder, onClose }: { locale: Loc
             toastManager.add({ id: `locale-save-${Date.now()}`, title: isNew ? t("locales.toast.created") : t("locales.toast.saved"), description: t("locales.toast.saved.desc", { code: saved.code, name: saved.native_name }), type: "success" });
             onClose();
         },
-        onError: (err: unknown) => toastManager.add({ id: `locale-save-err-${Date.now()}`, title: t("locales.toast.failed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `locale-save-err-${Date.now()}`, title: t("locales.toast.failed"), description: describeError(err), type: "error" }),
     });
 
     const submit = () => {

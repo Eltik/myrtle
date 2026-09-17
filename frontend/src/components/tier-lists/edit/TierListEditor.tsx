@@ -2,9 +2,9 @@ import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tansta
 import { Link } from "@tanstack/react-router";
 import { useCallback, useMemo, useReducer, useState } from "react";
 import { Button } from "#/components/ui/button";
+import { useErrorMessage } from "#/components/ui/error-message";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
-import { APIError } from "#/lib/api/_shared";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { type ITierListDetail, type ITierOperator, publishTierListVersionFn, setTierListFlairFn, setTierListVisibilityFn, tierListDetailQueryOptions, tierListFlairsQueryOptions, tierListVersionsQueryOptions } from "#/lib/api/tier-lists";
 import { useGamedataServer, useT } from "#/lib/i18n";
@@ -61,6 +61,7 @@ interface IEditorContentProps {
 
 function EditorContent({ slug, detail, operators, queryClient }: IEditorContentProps) {
     const t: EditorT = useT("tierLists");
+    const describeError = useErrorMessage();
     // Same server the parent read the detail with, so the optimistic
     // `setQueryData` below targets the entry the page is actually rendering.
     const gamedataServer = useGamedataServer();
@@ -155,7 +156,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
         },
         onError: (err: unknown) => {
             setSaveProgress(null);
-            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : t("edit.toast.saveFailedBody");
+            const message = describeError(err);
             setSaveError(message);
             toastManager.add({
                 id: `tl-edit-save-err-${Date.now()}`,
@@ -185,7 +186,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
             });
         },
         onError: (err: unknown) => {
-            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : t("edit.toast.flairFailedBody");
+            const message = describeError(err);
             toastManager.add({ id: `tl-flair-err-${Date.now()}`, title: t("edit.toast.flairFailedTitle"), description: message, type: "error" });
         },
     });
@@ -203,7 +204,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
             });
         },
         onError: (err: unknown) => {
-            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : t("edit.toast.visibilityFailedBody");
+            const message = describeError(err);
             toastManager.add({ id: `tl-visibility-err-${Date.now()}`, title: t("edit.toast.visibilityFailedTitle"), description: message, type: "error" });
         },
     });
@@ -222,7 +223,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
             });
         },
         onError: (err: unknown) => {
-            const message = err instanceof APIError ? err.message : err instanceof Error ? err.message : t("edit.publishFailed");
+            const message = describeError(err);
             setPublishError(message);
         },
     });

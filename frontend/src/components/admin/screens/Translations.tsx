@@ -5,6 +5,7 @@ import { Pagination } from "#/components/operators/list/impl/components/Paginati
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
+import { useErrorMessage } from "#/components/ui/error-message";
 import { FilterChip } from "#/components/ui/filter-chip";
 import { Input } from "#/components/ui/input";
 import { InputGroup, InputGroupAddon } from "#/components/ui/input-group";
@@ -429,6 +430,7 @@ function MessageRow({ entry, active, onOpen }: { entry: TranslationEntry; active
 
 function MessageEditor({ locale, entry, canWrite, onClose, onOpenHistory }: { locale: string; entry: TranslationEntry; canWrite: boolean; onClose: () => void; onOpenHistory: () => void }): React.ReactElement {
     const t: TranslationsT = useT("admin");
+    const describeError = useErrorMessage();
     const fmt = useFormatters();
     const queryClient = useQueryClient();
     const [value, setValue] = useState<string>(entry.value ?? "");
@@ -457,7 +459,7 @@ function MessageEditor({ locale, entry, canWrite, onClose, onOpenHistory }: { lo
             invalidate();
             toastManager.add({ id: `i18n-save-${Date.now()}`, title: t("i18n.toast.saved"), description: t("i18n.toast.saved.desc", { key: entry.key, locale }), type: "success" });
         },
-        onError: (err: unknown) => toastManager.add({ id: `i18n-save-err-${Date.now()}`, title: t("i18n.toast.saveFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `i18n-save-err-${Date.now()}`, title: t("i18n.toast.saveFailed"), description: describeError(err), type: "error" }),
     });
 
     const clear = useMutation({
@@ -469,7 +471,7 @@ function MessageEditor({ locale, entry, canWrite, onClose, onOpenHistory }: { lo
             invalidate();
             toastManager.add({ id: `i18n-clear-${Date.now()}`, title: t("i18n.toast.cleared"), description: t("i18n.toast.cleared.desc", { key: entry.key }), type: "success" });
         },
-        onError: (err: unknown) => toastManager.add({ id: `i18n-clear-err-${Date.now()}`, title: t("i18n.toast.clearFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `i18n-clear-err-${Date.now()}`, title: t("i18n.toast.clearFailed"), description: describeError(err), type: "error" }),
     });
 
     const invalid = fieldErrors.length > 0;
@@ -598,6 +600,7 @@ function MessageEditor({ locale, entry, canWrite, onClose, onOpenHistory }: { lo
 
 function HistoryDrawer({ locale, messageKey, canWrite, authed, onClose }: { locale: string; messageKey: string; canWrite: boolean; authed: boolean; onClose: () => void }): React.ReactElement {
     const t: TranslationsT = useT("admin");
+    const describeError = useErrorMessage();
     const rt: TranslationsRichT = useRichT("admin");
     const fmt = useFormatters();
     const queryClient = useQueryClient();
@@ -615,7 +618,7 @@ function HistoryDrawer({ locale, messageKey, canWrite, authed, onClose }: { loca
             void queryClient.invalidateQueries({ queryKey: ["admin", "i18n", "audit"] });
             toastManager.add({ id: `i18n-revert-${Date.now()}`, title: t("i18n.toast.reverted"), description: t("i18n.toast.reverted.desc", { key: messageKey }), type: "success" });
         },
-        onError: (err: unknown) => toastManager.add({ id: `i18n-revert-err-${Date.now()}`, title: t("i18n.toast.revertFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `i18n-revert-err-${Date.now()}`, title: t("i18n.toast.revertFailed"), description: describeError(err), type: "error" }),
     });
 
     const revisions = auditQuery.data ?? [];
@@ -673,6 +676,7 @@ function HistoryDrawer({ locale, messageKey, canWrite, authed, onClose }: { loca
 
 function GrantsSection({ locale, userId, role, authed, onGrant }: { locale: string; userId: string | null; role: string | null; authed: boolean; onGrant: () => void }): React.ReactElement | null {
     const t: TranslationsT = useT("admin");
+    const describeError = useErrorMessage();
     const rt: TranslationsRichT = useRichT("admin");
     const fmt = useFormatters();
     const queryClient = useQueryClient();
@@ -691,7 +695,7 @@ function GrantsSection({ locale, userId, role, authed, onGrant }: { locale: stri
             void queryClient.invalidateQueries({ queryKey: ["admin", "i18n", "writable-locales"] });
             toastManager.add({ id: `i18n-perm-revoke-${Date.now()}`, title: t("i18n.toast.grantRevoked"), description: t("i18n.toast.grantRevoked.desc", { locale }), type: "success" });
         },
-        onError: (err: unknown) => toastManager.add({ id: `i18n-perm-revoke-err-${Date.now()}`, title: t("i18n.toast.revokeFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `i18n-perm-revoke-err-${Date.now()}`, title: t("i18n.toast.revokeFailed"), description: describeError(err), type: "error" }),
     });
 
     if (!canManage) return null;
@@ -755,6 +759,7 @@ function GrantsSection({ locale, userId, role, authed, onGrant }: { locale: stri
 
 function GrantDialog({ locale, onClose }: { locale: string; onClose: () => void }): React.ReactElement {
     const t: TranslationsT = useT("admin");
+    const describeError = useErrorMessage();
     const queryClient = useQueryClient();
     const [q, setQ] = useState("");
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -772,7 +777,7 @@ function GrantDialog({ locale, onClose }: { locale: string; onClose: () => void 
             toastManager.add({ id: `i18n-perm-create-${Date.now()}`, title: t("i18n.toast.grantCreated"), description: t("i18n.toast.grantCreated.desc", { level: levelLabel(t, permission), locale }), type: "success" });
             onClose();
         },
-        onError: (err: unknown) => toastManager.add({ id: `i18n-perm-create-err-${Date.now()}`, title: t("i18n.toast.grantFailed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `i18n-perm-create-err-${Date.now()}`, title: t("i18n.toast.grantFailed"), description: describeError(err), type: "error" }),
     });
 
     const results = searchQuery.data?.entries ?? [];

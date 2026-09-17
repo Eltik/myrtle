@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-17T04:16:48.649Z",
+    "generatedAt": "2026-09-17T05:04:28.418Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -4679,6 +4679,91 @@
             "namespace": "common",
             "source_text": "Selected",
             "description": "Accessible name of the checkmark drawn beside the chosen drawer menu radio item. A state, not a verb.",
+            "placeholders": []
+        },
+        {
+            "key": "common.errorMessage.offline",
+            "namespace": "common",
+            "source_text": "You're offline. Check your connection and try again.",
+            "description": "Error toast body when the browser reports no network connection.",
+            "placeholders": []
+        },
+        {
+            "key": "common.errorMessage.rateLimited",
+            "namespace": "common",
+            "source_text": "Too many attempts. Wait a minute and try again.",
+            "description": "Error toast body when the server refused the request for being sent too often (HTTP 429).",
+            "placeholders": []
+        },
+        {
+            "key": "common.errorMessage.rejected",
+            "namespace": "common",
+            "source_text": "The request was rejected ({status}).",
+            "description": "Error toast body when the server refused the request and gave no readable reason. {status} is the HTTP status number.",
+            "placeholders": [
+                "status"
+            ]
+        },
+        {
+            "key": "common.errorMessage.serverError",
+            "namespace": "common",
+            "source_text": "The server ran into a problem ({status}). Try again in a minute.",
+            "description": "Error toast body for an unexpected error on the server (HTTP 5xx). {status} is the number.",
+            "placeholders": [
+                "status"
+            ]
+        },
+        {
+            "key": "common.errorMessage.syncFailed",
+            "namespace": "common",
+            "source_text": "Signed in, but the first roster sync failed ({status}). Reload the page: your account is connected, and you can sync again from your profile.",
+            "description": "Error toast body after a successful sign-in whose immediate roster download failed. {status} is the HTTP status number.",
+            "placeholders": [
+                "status"
+            ]
+        },
+        {
+            "key": "common.errorMessage.timeout",
+            "namespace": "common",
+            "source_text": "The server took too long to respond. Try again in a moment.",
+            "description": "Error toast body when the request timed out waiting for the server.",
+            "placeholders": []
+        },
+        {
+            "key": "common.errorMessage.unauthorized",
+            "namespace": "common",
+            "source_text": "You're not allowed to do that ({status}). If you were signed in, your session may have expired.",
+            "description": "Error toast body when the server rejected the request as unauthorized or forbidden (HTTP 401 or 403). {status} is the number.",
+            "placeholders": []
+        },
+        {
+            "key": "common.errorMessage.unavailable",
+            "namespace": "common",
+            "source_text": "The server is temporarily unavailable ({status}). Try again in a minute.",
+            "description": "Error toast body when the server is up but cannot serve requests right now (HTTP 503). {status} is the number.",
+            "placeholders": [
+                "status"
+            ]
+        },
+        {
+            "key": "common.errorMessage.unknown",
+            "namespace": "common",
+            "source_text": "Something went wrong.",
+            "description": "Error toast body when the failure carried no message at all.",
+            "placeholders": []
+        },
+        {
+            "key": "common.errorMessage.unreachable",
+            "namespace": "common",
+            "source_text": "The server couldn't be reached. It may be down or restarting; try again in a minute.",
+            "description": "Error toast body when the request got no answer from the server at all.",
+            "placeholders": []
+        },
+        {
+            "key": "common.errorMessage.unreachableWithCode",
+            "namespace": "common",
+            "source_text": "The server couldn't be reached ({code}). It may be down or restarting; try again in a minute.",
+            "description": "Same as errorMessage.unreachable, with the low-level network code in parentheses. {code} is a technical identifier such as ECONNREFUSED and stays as-is.",
             "placeholders": []
         },
         {
@@ -10435,6 +10520,15 @@
             "source_text": "Login failed",
             "description": "Error toast title when signing in was rejected.",
             "placeholders": []
+        },
+        {
+            "key": "nav.authDialog.toast.loginRejected",
+            "namespace": "nav",
+            "source_text": "Check the code and try again, or request a new one.\n{detail}",
+            "description": "Error toast body when the login server turned the credentials down. {detail} is the server's own reason, on its own line.",
+            "placeholders": [
+                "detail"
+            ]
         },
         {
             "key": "nav.authDialog.toast.otpError",
@@ -19072,13 +19166,6 @@
             "placeholders": []
         },
         {
-            "key": "tierLists.edit.publishFailed",
-            "namespace": "tierLists",
-            "source_text": "Couldn't publish version.",
-            "description": "Stand-in message when publishing failed and the server sent none of its own.",
-            "placeholders": []
-        },
-        {
             "key": "tierLists.edit.publishing.flair",
             "namespace": "tierLists",
             "source_text": "Flair",
@@ -19444,13 +19531,6 @@
             "placeholders": []
         },
         {
-            "key": "tierLists.edit.toast.flairFailedBody",
-            "namespace": "tierLists",
-            "source_text": "Couldn't update flair.",
-            "description": "Stand-in message when changing the topic tag failed and the server sent none of its own.",
-            "placeholders": []
-        },
-        {
             "key": "tierLists.edit.toast.flairFailedTitle",
             "namespace": "tierLists",
             "source_text": "Flair failed",
@@ -19525,13 +19605,6 @@
             "placeholders": []
         },
         {
-            "key": "tierLists.edit.toast.saveFailedBody",
-            "namespace": "tierLists",
-            "source_text": "Couldn't save changes.",
-            "description": "Stand-in message when the save failed and the server sent none of its own.",
-            "placeholders": []
-        },
-        {
             "key": "tierLists.edit.toast.saveFailedTitle",
             "namespace": "tierLists",
             "source_text": "Save failed",
@@ -19550,13 +19623,6 @@
             "namespace": "tierLists",
             "source_text": "Saved",
             "description": "Toast title after the editor's pending changes were written.",
-            "placeholders": []
-        },
-        {
-            "key": "tierLists.edit.toast.visibilityFailedBody",
-            "namespace": "tierLists",
-            "source_text": "Couldn't update visibility.",
-            "description": "Stand-in message when changing visibility failed and the server sent none of its own.",
             "placeholders": []
         },
         {

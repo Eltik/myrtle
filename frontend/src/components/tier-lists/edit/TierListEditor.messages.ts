@@ -31,10 +31,6 @@ export const messages = {
         text: "Save failed",
         description: "Toast title when writing the editor's changes failed.",
     },
-    "edit.toast.saveFailedBody": {
-        text: "Couldn't save changes.",
-        description: "Stand-in message when the save failed and the server sent none of its own.",
-    },
     "edit.toast.flairSetTitle": {
         text: "Flair updated",
         description: "Toast title after the list's topic tag was changed.",
@@ -54,10 +50,6 @@ export const messages = {
     "edit.toast.flairFailedTitle": {
         text: "Flair failed",
         description: "Toast title when changing the topic tag failed.",
-    },
-    "edit.toast.flairFailedBody": {
-        text: "Couldn't update flair.",
-        description: "Stand-in message when changing the topic tag failed and the server sent none of its own.",
     },
     "edit.toast.publicTitle": {
         text: "Now public",
@@ -79,10 +71,6 @@ export const messages = {
         text: "Visibility failed",
         description: "Toast title when changing the list's visibility failed.",
     },
-    "edit.toast.visibilityFailedBody": {
-        text: "Couldn't update visibility.",
-        description: "Stand-in message when changing visibility failed and the server sent none of its own.",
-    },
     "edit.toast.publishedTitle": {
         text: "Published v{version}",
         description: "Toast title after a version was published, naming it. Keep the 'v' before the number.",
@@ -94,10 +82,6 @@ export const messages = {
     "edit.toast.publishedNoChangelog": {
         text: "Snapshot saved.",
         description: "Toast body after publishing a version with no changelog.",
-    },
-    "edit.publishFailed": {
-        text: "Couldn't publish version.",
-        description: "Stand-in message when publishing failed and the server sent none of its own.",
     },
     "edit.publishBlocked": {
         text: "Save your changes before publishing a version.",

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "#/components/ui/card";
+import { useErrorMessage } from "#/components/ui/error-message";
 import { Input } from "#/components/ui/input";
 import { InputGroup, InputGroupAddon } from "#/components/ui/input-group";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "#/components/ui/menu";
@@ -36,10 +37,10 @@ function fromRoleCell(e: React.SyntheticEvent): boolean {
  * super-admin demote themselves out of the panel, so the message is worth
  * rewriting into something actionable.
  */
-function roleErrorMessage(err: unknown, t: UsersT): string {
+function roleErrorMessage(err: unknown, t: UsersT, describeError: (err: unknown) => string): string {
     const raw = err instanceof Error ? err.message : String(err);
     if (raw.toLowerCase().includes("your own role")) return t("users.roleError.self");
-    return raw;
+    return describeError(err);
 }
 
 const SERVERS = ["all", "EN", "JP", "KR", "CN"] as const;
@@ -275,6 +276,7 @@ function UserDetailDrawer({ user, canAssign, isSelf, onClose }: { user: IUserPro
  */
 function RoleControl({ user, canAssign, isSelf }: { user: IUserProfile; canAssign: boolean; isSelf: boolean }): React.ReactElement {
     const t: UsersT = useT("admin");
+    const describeError = useErrorMessage();
     const queryClient = useQueryClient();
 
     const setRole = useMutation({
@@ -284,7 +286,7 @@ function RoleControl({ user, canAssign, isSelf }: { user: IUserProfile; canAssig
             void queryClient.invalidateQueries({ queryKey: ["admin", "stats"] });
             toastManager.add({ id: `role-set-${Date.now()}`, title: t("users.toast.roleUpdated"), description: t("users.toast.roleUpdated.desc", { name: user.nickname ?? user.uid, role: input.role }), type: "success" });
         },
-        onError: (err: unknown) => toastManager.add({ id: `role-set-err-${Date.now()}`, title: t("users.toast.roleFailed"), description: roleErrorMessage(err, t), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `role-set-err-${Date.now()}`, title: t("users.toast.roleFailed"), description: roleErrorMessage(err, t, describeError), type: "error" }),
     });
 
     if (!canAssign) return <RoleBadge role={user.role} />;

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardAction, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
+import { useErrorMessage } from "#/components/ui/error-message";
 import { Input } from "#/components/ui/input";
 import { InputGroup, InputGroupAddon } from "#/components/ui/input-group";
 import { MarkdownEditor } from "#/components/ui/markdown-editor";
@@ -241,6 +242,7 @@ function NoteRow({ op, note, onOpen }: { op: IOperatorIndexEntry; note: IOperato
 
 function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () => void }): React.ReactElement {
     const t: NotesT = useT("admin");
+    const describeError = useErrorMessage();
     const rt: NotesRichT = useRichT("admin");
     const f = useFormatters();
     const queryClient = useQueryClient();
@@ -293,7 +295,7 @@ function NoteEditor({ operatorId, onClose }: { operatorId: string; onClose: () =
             setDirtyBaseline(JSON.stringify({ summary: data.summary ?? "", notes: data.notes ?? "", pros: data.pros ?? "", cons: data.cons ?? "", trivia: data.trivia ?? "", tags: data.tags ?? [] }));
             toastManager.add({ id: `note-save-${Date.now()}`, title: t("notes.toast.saved"), description: t("notes.toast.saved.desc", { name: op?.name ?? operatorId }), type: "success" });
         },
-        onError: (err: unknown) => toastManager.add({ id: `note-save-err-${Date.now()}`, title: t("notes.toast.failed"), description: err instanceof Error ? err.message : String(err), type: "error" }),
+        onError: (err: unknown) => toastManager.add({ id: `note-save-err-${Date.now()}`, title: t("notes.toast.failed"), description: describeError(err), type: "error" }),
     });
 
     if (noteQuery.isPending || opsQuery.isPending) {
