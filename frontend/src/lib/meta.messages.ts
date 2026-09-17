@@ -124,11 +124,11 @@ export const messages = {
 
     // ----------------------------------------------------------------- user
     "user.fallbackTitle": {
-        text: "Doctor",
+        text: "Player",
         description: "Document title of a player profile whose data failed to load. `Doctor` is what Arknights calls the player.",
     },
     "user.description": {
-        text: "{hasLevel, select, yes {{hasGrade, select, yes {Doctor profile • Lv {level} • {grade}} other {Doctor profile • Lv {level}}}} other {{hasGrade, select, yes {Doctor profile • {grade}} other {Doctor profile}}}}",
+        text: "{hasLevel, select, yes {{hasGrade, select, yes {Player profile • Lv {level} • {grade}} other {Player profile • Lv {level}}}} other {{hasGrade, select, yes {Player profile • {grade}} other {Player profile}}}}",
         description: "Meta description of a player profile that has no resume text. `{hasLevel}` and `{hasGrade}` are `yes` or `no` and say which of the two optional fragments the profile has; `{level}` is the account level and `{grade}` the account grade.",
     },
     "userLeaderboard.title": {
@@ -136,11 +136,11 @@ export const messages = {
         description: "Document title of the player leaderboard.",
     },
     "userLeaderboard.description": {
-        text: "Top Doctors ranked by score across servers.",
+        text: "Top players ranked by score across servers.",
         description: "Meta description of the player leaderboard. `Doctors` is what Arknights calls its players.",
     },
     "userSearch.title": {
-        text: "Search Doctors",
+        text: "Search Players",
         description: "Document title of player search. `Doctors` is what Arknights calls its players.",
     },
     "userSearch.description": {

@@ -324,8 +324,8 @@ export const messages = {
         description: "Heading of the locale grant dialog; {locale} is the locale code.",
     },
     "i18n.grant.findDoctor": {
-        text: "Find a Doctor",
-        description: "Label over the account search in the grant dialog. 'Doctor' is what Arknights calls the player.",
+        text: "Find a player",
+        description: "Label over the account search in the grant dialog. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "i18n.grant.searchPlaceholder": {
         text: "Search by nickname…",

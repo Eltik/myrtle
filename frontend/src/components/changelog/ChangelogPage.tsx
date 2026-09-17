@@ -113,7 +113,7 @@ export function ChangelogPage() {
     return (
         <main className="relative overflow-x-clip">
             <div className={styles.pageAmbient} aria-hidden="true" />
-            <div className="mx-auto w-[min(820px,calc(100%-2rem))] py-12 sm:py-14">
+            <div className="page-gutter py-12 [--page-max:820px] sm:py-14">
                 {/* Hero */}
                 <header className="relative mb-8">
                     <div className={styles.heroGlow} aria-hidden="true" />

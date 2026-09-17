@@ -42,7 +42,7 @@ function DpsErrorComponent({ error, reset }: { error: unknown; reset: () => void
                     <EmptyMedia variant="icon">
                         <AlertTriangle className="text-destructive" />
                     </EmptyMedia>
-                    <EmptyTitle>DPS calculator failed to load</EmptyTitle>
+                    <EmptyTitle>DPS Calculator failed to load</EmptyTitle>
                     <EmptyDescription>{message || "An unexpected error occurred while loading the DPS engine. Try again, or check the browser console for details."}</EmptyDescription>
                 </EmptyHeader>
                 <Button onClick={reset} variant="outline">

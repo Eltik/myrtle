@@ -116,7 +116,7 @@ function Th({ children, align, sorted }: { children: React.ReactNode; align?: "r
 
 function DesktopRow({ entry, sort, intervalKey }: { entry: LeaderboardEntry; sort: LeaderboardSort; intervalKey?: LeaderboardMessageKey }) {
     const t: TableT = useT("user");
-    const nickname = entry.nickname ?? `Doctor ${entry.uid}`;
+    const nickname = entry.nickname ?? `Player ${entry.uid}`;
     const initials = nickname.slice(0, 2).toUpperCase();
     const avatarSrc = getAvatarById(entry.avatar_id ?? DEFAULT_AVATAR_ID);
     const score = entry[sort];
@@ -166,7 +166,7 @@ function DesktopRow({ entry, sort, intervalKey }: { entry: LeaderboardEntry; sor
 
 function MobileRow({ entry, sort, intervalKey }: { entry: LeaderboardEntry; sort: LeaderboardSort; intervalKey?: LeaderboardMessageKey }) {
     const t: TableT = useT("user");
-    const nickname = entry.nickname ?? `Doctor ${entry.uid}`;
+    const nickname = entry.nickname ?? `Player ${entry.uid}`;
     const initials = nickname.slice(0, 2).toUpperCase();
     const avatarSrc = getAvatarById(entry.avatar_id ?? DEFAULT_AVATAR_ID);
 

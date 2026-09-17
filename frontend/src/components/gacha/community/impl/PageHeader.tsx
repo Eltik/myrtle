@@ -1,4 +1,4 @@
-import { Kicker } from "#/components/ui/kicker";
+import { PageHeader as BasePageHeader } from "#/components/ui/page-header";
 import type { IGachaEnhancedStats } from "#/lib/api/gacha";
 import { type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -21,18 +21,19 @@ export function PageHeader({ data, isLoading }: IPageHeaderProps) {
     const cached = data?.cached;
 
     return (
-        <div className="flex flex-col gap-3.5 pt-1.5">
-            <div className="flex max-w-180 flex-col items-start">
-                <Kicker>{t("community.header.kicker")}</Kicker>
-                <h1 className="m-0 mb-3 text-balance font-bold font-sans text-[32px] text-foreground leading-[1.05] tracking-[-0.03em] sm:text-[38px] sm:leading-[1.03] sm:tracking-[-0.035em] lg:text-[44px] lg:leading-[1.02]">
-                    {rt("community.header.title", { emphasis: <em className="text-primary not-italic">{t("community.header.titleEmphasis")}</em> })}
-                </h1>
-                <p className="m-0 max-w-[60ch] font-sans text-muted-foreground">
-                    {rt("community.header.blurb", {
-                        doctors: <strong className="font-semibold text-foreground">{isLoading || totalUsers == null ? "-" : t("community.header.blurbUsers", { count: f.number(totalUsers) })}</strong>,
-                    })}
-                </p>
-            </div>
+        <div className="flex flex-col gap-3.5">
+            {/* The page ran its own 32/38/44px hero title behind a kicker while
+                every other page ran the shared 24/30px header, which is the
+                inconsistency raised in #ui-ux. It uses the shared
+                with-description design now; the freshness chips stay below. */}
+            <BasePageHeader
+                breadcrumbLabel={t("community.breadcrumb.label")}
+                breadcrumb={[t("community.breadcrumb.gacha"), t("community.breadcrumb.current")]}
+                title={rt("community.header.title", { emphasis: <em className="text-primary not-italic">{t("community.header.titleEmphasis")}</em> })}
+                description={rt("community.header.blurb", {
+                    doctors: <strong className="font-semibold text-foreground">{isLoading || totalUsers == null ? "-" : t("community.header.blurbUsers", { count: f.number(totalUsers) })}</strong>,
+                })}
+            />
             <div className="flex flex-wrap gap-2">
                 <span className="inline-flex h-6 items-center gap-1.5 rounded-md border border-border bg-card/80 px-2.5 font-sans text-[11.5px] text-muted-foreground">
                     <span className={styles.dotPulse} aria-hidden />

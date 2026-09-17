@@ -104,10 +104,10 @@ export function useArt(path: string | null | undefined): { src: string | null; o
     return { src: failed ? null : assetUrl(path ?? null), onError };
 }
 
-export function ToggleField({ id, label, checked, onChange }: { id: string; label: string; checked: boolean; onChange: (v: boolean) => void }): React.ReactElement {
+export function ToggleField({ id, label, ariaLabel, checked, onChange }: { id: string; label: React.ReactNode; ariaLabel?: string; checked: boolean; onChange: (v: boolean) => void }): React.ReactElement {
     return (
-        <Label htmlFor={id} className="cursor-pointer gap-2 font-sans text-[12.5px] text-muted-foreground">
-            <Switch id={id} checked={checked} onCheckedChange={onChange} />
+        <Label htmlFor={id} className="cursor-pointer gap-2 font-medium font-sans text-[12.5px] text-muted-foreground">
+            <Switch id={id} checked={checked} onCheckedChange={onChange} aria-label={ariaLabel} />
             {label}
         </Label>
     );

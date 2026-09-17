@@ -68,12 +68,12 @@ export const messages = {
         description: "Heading of the card listing the newest accounts.",
     },
     "dash.recent.desc": {
-        text: "Last {count} Doctors to authenticate. From {endpoint}.",
+        text: "Last {count} players to authenticate. From {endpoint}.",
         description: "Caption under the Recently signed-up users heading. {endpoint} is a backend endpoint path, shown in monospace. 'Doctor' is what Arknights calls the player, and the wording stays plural at any count.",
     },
     "dash.th.doctor": {
-        text: "Doctor",
-        description: "Table column header for the account. 'Doctor' is what Arknights calls the player. Rendered uppercase.",
+        text: "Player",
+        description: "Table column header for the account. 'Player' is the site's term; the game itself says 'Doctor'. Rendered uppercase.",
     },
     "dash.th.server": {
         text: "Server",

@@ -302,7 +302,7 @@ const userHandler = defineOgHandler<IUserOgData>({
         const hasRarityCounts = Object.values(rarityCounts).some((n) => n > 0);
 
         return {
-            nickname: u.nickname ?? "Doctor",
+            nickname: u.nickname ?? "Player",
             nickNumber: u.nick_number,
             uid: u.uid ?? uid,
             level: u.level,

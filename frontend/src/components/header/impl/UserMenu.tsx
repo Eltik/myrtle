@@ -24,12 +24,12 @@ export default function UserMenu({ user, loading, logout }: { user: ISession | n
         return (
             <DropdownMenu>
                 <div className="flex h-8 min-w-0 shrink-0 items-center rounded-md border border-border bg-transparent text-foreground text-sm">
-                    <Link to="/user/$id" params={{ id: user.uid }} aria-label={user.nickname ?? "Doctor"} className="flex h-full min-w-0 items-center gap-2 rounded-l-md px-1.5 transition-colors hover:bg-secondary sm:px-2">
+                    <Link to="/user/$id" params={{ id: user.uid }} aria-label={user.nickname ?? "Player"} className="flex h-full min-w-0 items-center gap-2 rounded-l-md px-1.5 transition-colors hover:bg-secondary sm:px-2">
                         <Avatar className="h-5 w-5">
                             <AvatarImage alt={t("userMenu.userAvatar")} src={getAvatarSkinId(user)} />
-                            <AvatarFallback className="text-[0.625rem]">{(user.nickname ?? "Doctor").slice(0, 1) ?? "E"}</AvatarFallback>
+                            <AvatarFallback className="text-[0.625rem]">{(user.nickname ?? "Player").slice(0, 1) ?? "E"}</AvatarFallback>
                         </Avatar>
-                        <span className="hidden max-w-24 truncate font-medium sm:inline-block">{user.nickname ?? "Doctor"}</span>
+                        <span className="hidden max-w-24 truncate font-medium sm:inline-block">{user.nickname ?? "Player"}</span>
                     </Link>
                     <DropdownMenuTrigger
                         render={(triggerProps) => (
@@ -42,7 +42,7 @@ export default function UserMenu({ user, loading, logout }: { user: ISession | n
                 <DropdownMenuContent align="end" className="w-48">
                     <div className="px-2 pb-1.5">
                         <Link className="block font-medium text-sm hover:underline" to="/user/$id" params={{ id: user.uid }}>
-                            {user.nickname ?? "Doctor"}
+                            {user.nickname ?? "Player"}
                         </Link>
                         <p className="text-muted-foreground text-xs">{t("userMenu.level", { level: user.level })}</p>
                     </div>
@@ -56,8 +56,13 @@ export default function UserMenu({ user, loading, logout }: { user: ISession | n
                         {t("userMenu.settings")}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
+                    {/* Below `lg` the mobile drawer already carries a GitHub
+                        link under "External", so showing it here as well put
+                        the same destination twice on one screen. The drawer
+                        trigger is `lg:hidden`, so at `lg` and up this menu is
+                        the only place the repo link lives and it stays. */}
                     {/* biome-ignore lint/a11y/useAnchorContent: anchor children are slotted in by DropdownMenuItem via the render prop */}
-                    <DropdownMenuItem className="cursor-pointer" render={<a href={REPO_URL} target="_blank" rel="noreferrer" />}>
+                    <DropdownMenuItem className="cursor-pointer max-lg:hidden" render={<a href={REPO_URL} target="_blank" rel="noreferrer" />}>
                         <GithubIcon className="h-4 w-4 text-muted-foreground" />
                         {t("userMenu.github")}
                     </DropdownMenuItem>

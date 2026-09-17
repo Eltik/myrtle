@@ -32,16 +32,16 @@ export const messages = {
         description: "Profile tab: tools that suggest improvements to the account.",
     },
     "profile.notFound.eyebrow": {
-        text: "Doctor",
-        description: "Small uppercase label above the 'profile not found' heading. 'Doctor' is what Arknights calls the player.",
+        text: "Player",
+        description: "Small uppercase label above the 'profile not found' heading. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "profile.notFound.title": {
         text: "Profile not found",
         description: "Heading shown when the requested profile does not exist or is private.",
     },
     "profile.notFound.desc": {
-        text: "No Doctor with ID {id} exists, or their profile is private.",
-        description: "Body of the 'profile not found' page. {id} is the account ID, rendered in monospace, and may move wherever the sentence needs it. 'Doctor' is what Arknights calls the player.",
+        text: "No player with ID {id} exists, or their profile is private.",
+        description: "Body of the 'profile not found' page. {id} is the account ID, rendered in monospace, and may move wherever the sentence needs it. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
 } satisfies MessageMap;
 

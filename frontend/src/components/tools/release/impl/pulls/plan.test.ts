@@ -7,7 +7,7 @@ function carriedPity(dist: Float64Array | null): number {
     return dist === null ? 0 : meanPity(dist);
 }
 
-import { buildPlan, type IPlanInput, maxPotFor, planToCsv } from "./plan";
+import { buildPlan, goalEstimateFor, type IPlanInput, maxPotFor, planTargets, planToCsv } from "./plan";
 import { bannerModel, freePullsFor } from "./rates";
 
 const DAY = 86_400;
@@ -404,5 +404,54 @@ describe("free pulls a banner gives away", () => {
         const { totals } = plan({ countFreePulls: true });
         expect(totals.freePulls).toBeGreaterThan(0);
         expect(totals.spent).toBe(0);
+    });
+});
+
+describe("the one-click presets", () => {
+    it("asks for the spark less what the banner gives away", () => {
+        // The ledger above already settles the arithmetic: 276 committed plus this
+        // banner's own 24 free rolls is the 300 the exchange wants. The preset used to
+        // offer a flat 300 and so bought 24 rolls of nothing.
+        const rich = plan({ countFreePulls: true }, 200_000);
+        const limited = rich.rows[0];
+        expect(limited.freePulls).toBe(24);
+        expect(planTargets(limited).spark).toBe(276);
+
+        // With the free rolls switched off there is nothing to subtract.
+        const plain = plan({ countFreePulls: false }, 200_000);
+        expect(plain.rows[0].freePulls).toBe(0);
+        expect(planTargets(plain.rows[0]).spark).toBe(300);
+    });
+
+    it("never asks for a negative commitment", () => {
+        const rich = plan({ countFreePulls: true }, 200_000);
+        for (const row of rich.rows) {
+            const { spark, guarantee } = planTargets(row);
+            if (spark !== null) expect(spark).toBeGreaterThanOrEqual(0);
+            if (guarantee !== null) expect(guarantee).toBeGreaterThanOrEqual(0);
+        }
+    });
+
+    it("offers the whole bank as `max`", () => {
+        const p = plan();
+        expect(planTargets(p.rows[0]).max).toBe(p.rows[0].available);
+    });
+});
+
+describe("the memoised goal estimate", () => {
+    it("answers the same question with the same figure, whichever array carries the counter", () => {
+        const model = bannerModel({ ruleType: "LIMITED", featuredCount: 2, poolId: "A" });
+        const request = { copiesA: 2, copiesB: 1 };
+        // Two DIFFERENT arrays holding the same distribution: the cache is keyed on the
+        // content, because a rebuild hands back an equal-but-new array and identity
+        // would call that a different question and pay for the walk twice.
+        const first = pityAt(17);
+        const second = pityAt(17);
+        expect(first).not.toBe(second);
+        expect(goalEstimateFor(model, request, first)).toEqual(goalEstimateFor(model, request, second));
+
+        // And a genuinely different counter is a different answer.
+        const deep = goalEstimateFor(model, request, pityAt(60));
+        expect(deep.p50).toBeLessThan(goalEstimateFor(model, request, first).p50);
     });
 });

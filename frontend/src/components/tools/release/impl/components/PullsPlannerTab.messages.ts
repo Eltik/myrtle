@@ -42,11 +42,23 @@ export const messages = {
     },
     "release.pulls.resources.pityHint": {
         text: "Counts on Standard and Kernel banners, which share a counter. Limited and collab banners always start you at zero.",
-        description: "Hint under the pity input. 'Standard', 'Kernel', 'Limited' and collab are Arknights banner families.",
+        description: "Explanation in the info popover beside the pity input. 'Standard', 'Kernel', 'Limited' and collab are Arknights banner families.",
+    },
+    "release.pulls.resources.pityHint.aria": {
+        text: "About the pity counter",
+        description: "Accessible name of the info button beside the pity input that opens the explanation.",
+    },
+    "release.pulls.resources.pityManual": {
+        text: "Type this one in yourself: the game does not report it, so it is the one figure your account cannot fill.",
+        description: "Note under the resource inputs saying the pity counter is not synced from the account, unlike the boxes beside it.",
     },
     "release.pulls.resources.sync": {
-        text: "Use my account",
-        description: "Button that fills the resource inputs from the signed-in player's synced account.",
+        text: "Use my account's data",
+        description: "Button that fills the resource inputs from the signed-in player's synced account. Says 'data' rather than 'account' because it copies figures in; it does not switch account.",
+    },
+    "release.pulls.resources.resync": {
+        text: "Re-read my account from the game",
+        description: "Accessible name and tooltip of the circular-arrow button, which fetches the player's account again rather than reusing the last sync.",
     },
     "release.pulls.resources.synced": {
         text: "Filled from your last sync.",
@@ -73,6 +85,14 @@ export const messages = {
         text: "Monthly store",
         description: "Switch label for the monthly certificate-shop Orundum and permits.",
     },
+    "release.pulls.income.store.hint": {
+        text: "The certificate shop restocks every month with Orundum and a Headhunting Permit bought with Distinction Certificates. Counted at full monthly value.",
+        description: "Explanation in the info popover beside the Monthly store switch, saying what the shop is and what is counted. Distinction Certificates are the gold currency.",
+    },
+    "release.pulls.income.store.hint.aria": {
+        text: "About the monthly store",
+        description: "Accessible name of the info button beside the Monthly store switch.",
+    },
     "release.pulls.income.annihilation": {
         text: "Annihilation per week",
         description: "Label for the weekly Annihilation Orundum cap, which rises with campaign progress.",
@@ -87,7 +107,19 @@ export const messages = {
     },
     "release.pulls.income.goldCertShop": {
         text: "Buy permits with gold certs",
-        description: "Switch label: spend Distinction Certificates on the monthly Headhunting Permit bundles.",
+        description: "Accessible name of the switch that spends Distinction Certificates on the monthly Headhunting Permit bundles. The visible label is assembled from goldCertShop.rich.",
+    },
+    "release.pulls.income.goldCertShop.rich": {
+        text: "Buy {permits} with {certs}",
+        description: "Visible label of that switch. {permits} and {certs} are the two nouns below, each shown with the game's icon in front of it.",
+    },
+    "release.pulls.income.goldCertShop.permits": {
+        text: "permits",
+        description: "The noun substituted into goldCertShop.rich as {permits}: Headhunting Permits, the item a pull costs.",
+    },
+    "release.pulls.income.goldCertShop.certs": {
+        text: "gold certs",
+        description: "The noun substituted into goldCertShop.rich as {certs}: Distinction Certificates, the game's gold-coloured currency.",
     },
     "release.pulls.income.goldCertHint": {
         text: "The monthly ladder is 38 permits for 258 certs, bought cheapest rung first. There is no official earn rate, so this is your own estimate; 1.5 a day suits a year-old account.",
@@ -118,8 +150,8 @@ export const messages = {
         description: "Hint under the green certificate inputs, explaining the phase gate and the equal value of the two phase 1 rows.",
     },
     "release.pulls.income.freePulls": {
-        text: "Count banner free pulls",
-        description: "Switch label: include the free pulls a Limited or collab banner hands out.",
+        text: "Include free pulls from banners",
+        description: "Switch label: count the free pulls a Limited or collab banner hands out toward that banner. 'Count banner free pulls' read as a noun stack and was flagged in #ui-ux.",
     },
     "release.pulls.income.freePullsHint": {
         text: "A Limited banner gives a free ten-roll plus one free pull a day, which is 24 over a 14-day run. A collab gives two ten-rolls. These expire with the banner, so they are counted on it rather than banked.",
@@ -141,9 +173,17 @@ export const messages = {
         text: "Free on banners",
         description: "Stat label for pulls the banners give away, which cannot be saved.",
     },
+    "release.pulls.summary.free.hint": {
+        text: "Pulls the banners in this window hand out: a Limited banner's free ten-roll plus one a day, a collab's two ten-rolls. They expire with their banner, so they are counted on it rather than added to your bank.",
+        description: "Explanation in the info popover beside the Free on banners figure, saying where those pulls come from and why they are not savings.",
+    },
+    "release.pulls.summary.free.hint.aria": {
+        text: "About free pulls on banners",
+        description: "Accessible name of the info button beside the Free on banners figure.",
+    },
     "release.pulls.income.extraHint": {
-        text: "Event rewards, mail and anything else. This project's release data carries Originite Prime for event stages but no event Orundum, so it is not guessed at here.",
-        description: "Hint under the Extra per day input, explaining why event Orundum must be entered by hand.",
+        text: "Anything not already counted above: event rewards, mail, login bonuses. Events hand out Orundum, but this site has no data for how much, so nothing is assumed and you add it here yourself.",
+        description: "Hint under the Extra per day input. It says why event Orundum is the visitor's own figure to enter. The earlier wording named the project's data pipeline and was flagged as unclear in #ui-ux.",
     },
     "release.pulls.income.weekly": {
         text: "{count, plural, one {# pull} other {# pulls}} per week",
@@ -214,7 +254,7 @@ export const messages = {
     },
     "release.pulls.plan.max": {
         text: "Spend everything",
-        description: "Accessible name for the control committing every remaining pull to this banner. The visible control shows the number alone.",
+        description: "Accessible name for the control committing every remaining pull to this banner.",
     },
     "release.pulls.plan.potMore": {
         text: "One more copy of {operator}",
@@ -248,9 +288,37 @@ export const messages = {
         text: "+{count} free",
         description: "Compact note that a banner hands out this many free pulls of its own.",
     },
+    "release.pulls.plan.maxLabel": {
+        text: "All {count}",
+        description: "Preset button committing every pull the plan still has banked when this banner opens. {count} is that number.",
+    },
+    "release.pulls.plan.maxTitle": {
+        text: "Commit every pull banked when this banner opens: {count}.",
+        description: "Tooltip on the All preset, saying where its number comes from.",
+    },
+    "release.pulls.plan.sparkTitle": {
+        text: "Commit enough to reach the {spark}-pull exchange. This banner gives {free} free pulls, so {count} of your own get you there.",
+        description: "Tooltip on the Spark preset when the banner hands out free pulls. The exchange trades a fixed number of pulls for the operator outright.",
+    },
+    "release.pulls.plan.sparkTitlePlain": {
+        text: "Commit enough to reach the {spark}-pull exchange.",
+        description: "Tooltip on the Spark preset when the banner hands out no free pulls.",
+    },
+    "release.pulls.plan.guaranteeTitle": {
+        text: "Commit enough to reach the {at}-pull guarantee. This banner gives {free} free pulls, so {count} of your own get you there.",
+        description: "Tooltip on the Guarantee preset when the banner hands out free pulls. The guarantee forces a rate-up result once that many pulls have been made.",
+    },
+    "release.pulls.plan.guaranteeTitlePlain": {
+        text: "Commit enough to reach the {at}-pull guarantee.",
+        description: "Tooltip on the Guarantee preset when the banner hands out no free pulls.",
+    },
+    "release.pulls.plan.clearTitle": {
+        text: "Clear this banner: the committed pulls and the potentials picked on it.",
+        description: "Tooltip on the per-banner Clear button, naming both things it removes.",
+    },
     "release.pulls.plan.setTo": {
-        text: "Set to",
-        description: "Label before the buttons that fill in a preset number of pulls.",
+        text: "Presets",
+        description: "Kicker over the one-click commitment buttons beside a banner's pull input.",
     },
     "release.pulls.plan.availableHere": {
         text: "available",
@@ -270,7 +338,7 @@ export const messages = {
     },
     "release.pulls.plan.clear": {
         text: "Clear",
-        description: "Button removing this banner's commitment.",
+        description: "Button removing this banner's commitment and the potentials picked on it.",
     },
     "release.pulls.plan.spark": {
         text: "Spark {count}",
@@ -281,8 +349,8 @@ export const messages = {
         description: "Button committing exactly the pulls at which a forced rate-up binds.",
     },
     "release.pulls.plan.estimated": {
-        text: "Estimated",
-        description: "Column heading for how many pulls this banner is expected to need for its rate-up operator.",
+        text: "Pull targets",
+        description: "Heading over the list of goals for this banner. Each row is a goal and the pulls it is expected to take; clicking one commits that many.",
     },
     "release.pulls.plan.estimatedDetailOpen": {
         text: "{mean}+ on average, more than {horizon} if unlucky",
@@ -293,20 +361,24 @@ export const messages = {
         description: "Secondary detail under the estimate: the mean and the 90th-percentile pull count.",
     },
     "release.pulls.plan.goal.specific": {
-        text: "This operator",
-        description: "Row label in the estimate: reaching one named rate-up operator.",
+        text: "A specific rate-up",
+        description: "Goal row: one copy of one named rate-up operator. Worded the same as the Odds calculator's own label for the same quantity.",
     },
     "release.pulls.plan.goal.any": {
-        text: "Either one",
-        description: "Row label in the estimate: reaching whichever of the two rate-up operators comes first.",
+        text: "Any rate-up",
+        description: "Goal row: one copy of whichever rate-up operator arrives first, whatever the banner's rate-up count.",
     },
     "release.pulls.plan.goal.both": {
-        text: "Both",
-        description: "Row label in the estimate: reaching both rate-up operators.",
+        text: "Both rate-ups",
+        description: "Goal row on a banner with exactly two rate-ups: one copy of each.",
+    },
+    "release.pulls.plan.goal.bothMulti": {
+        text: "One specific, plus any other",
+        description: "Goal row on a banner with more than two rate-ups: one copy of the named operator and one of any other featured one. Not 'all rate-ups' - the model tracks the named operator against the rest as a group, so it cannot price every one of them.",
     },
     "release.pulls.plan.goal.maxPot": {
-        text: "Max pot",
-        description: "Row label in the estimate: taking the operator to maximum potential, which is six copies.",
+        text: "Six of a specific rate-up",
+        description: "Goal row: six copies of one named rate-up operator, which is maximum potential.",
     },
     "release.pulls.plan.goalPick": {
         text: "Set pulls to {count} for {goal}",

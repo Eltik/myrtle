@@ -169,7 +169,7 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                             <span className="text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("profile.roster.card.level")}</span>
                         </div>
                         <div className="flex flex-col items-center justify-center gap-1 rounded-lg bg-muted/40 px-2 py-2">
-                            <img alt={t("profile.roster.card.potentialAlt", { rank: entry.potential + 1 })} className="h-6 w-6 object-contain" decoding="async" src={potentialIcon(entry.potential)} />
+                            <img alt={t("profile.roster.card.potentialAlt", { rank: entry.potential + 1 })} className="icon-theme-aware h-6 w-6 object-contain" decoding="async" src={potentialIcon(entry.potential)} />
                             <span className="text-[0.625rem] text-muted-foreground uppercase tracking-wide">{t("profile.roster.card.potential")}</span>
                         </div>
                         <div className="flex flex-col items-center justify-center gap-1 rounded-lg bg-muted/40 px-2 py-2">
@@ -229,7 +229,7 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                                             </div>
                                             <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
                                                 <span className="tabular-nums">{t("profile.roster.card.skillLevel", { level: entry.skill_level })}</span>
-                                                {mastery > 0 && <img alt={t("profile.roster.card.masteryAlt", { mastery })} className="h-4 w-4" decoding="async" src={specializedIcon(mastery)} />}
+                                                {mastery > 0 && <img alt={t("profile.roster.card.masteryAlt", { mastery })} className="icon-theme-aware h-4 w-4" decoding="async" src={specializedIcon(mastery)} />}
                                             </div>
                                         </div>
                                     );

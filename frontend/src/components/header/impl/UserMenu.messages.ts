@@ -32,7 +32,7 @@ export const messages = {
         description: "Menu item linking to the donation page. 'Support' here means financially supporting the site.",
     },
     "userMenu.adminPanel": {
-        text: "Admin panel",
+        text: "Admin Panel",
         description: "Menu item shown only to staff, linking to the moderation and translation tools.",
     },
     "userMenu.logout": {

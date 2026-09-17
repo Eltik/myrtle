@@ -1,11 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, ChevronRight, Lock, Pencil, Plus, Trash } from "lucide-react";
+import { ChevronDown, Lock, Pencil, Plus, Trash } from "lucide-react";
 import * as React from "react";
 
 import { eliteIcon, moduleIconURL, skillIconURL } from "#/components/operators/detail/impl/assets";
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { PageHeader } from "#/components/ui/page-header";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { useAuth } from "#/hooks/use-auth";
@@ -15,7 +16,6 @@ import { authActions } from "#/lib/auth/store";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, formatSubProfession, rarityToNumber } from "#/lib/utils";
-
 import { DeletePlansDialog, type IDeletePlansTarget } from "./DeletePlansDialog";
 import type { messages } from "./OperatorPlanner.messages";
 import { OperatorPlannerDialog } from "./OperatorPlannerDialog";
@@ -382,24 +382,21 @@ export function OperatorPlanner(): React.ReactElement {
     };
 
     return (
-        <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-1.5rem))] py-4 pb-24 sm:w-[min(1400px,calc(100%-2rem))] sm:py-5 sm:pb-20">
-            <nav aria-label="breadcrumb" className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none">
-                <span>{t("planner.breadcrumb.tools")}</span>
-                <ChevronRight className="size-2.5" />
-                <span className="text-foreground">{t("planner.title")}</span>
-            </nav>
-            <div className="flex flex-wrap items-end justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                    <h1 className="m-0 font-bold font-sans text-[24px] text-foreground leading-[1.1] tracking-tight sm:text-[30px]">{t("planner.title")}</h1>
-                    <p className="mt-1.5 max-w-2xl font-sans text-[13px] text-muted-foreground leading-normal sm:text-[13.5px]">{t("planner.intro")}</p>
-                </div>
-                {isAuthenticated && plans.length > 0 && (
-                    <Button onClick={() => setOpen(true)} size="sm">
-                        <Plus className="mr-1.5 size-4" />
-                        {t("planner.createPlan")}
-                    </Button>
-                )}
-            </div>
+        <div className="page-shell [--page-max:1400px]">
+            <PageHeader
+                breadcrumbLabel="breadcrumb"
+                breadcrumb={[t("planner.breadcrumb.tools"), t("planner.title")]}
+                title={t("planner.title")}
+                description={t("planner.intro")}
+                actions={
+                    isAuthenticated && plans.length > 0 ? (
+                        <Button onClick={() => setOpen(true)} size="sm">
+                            <Plus className="mr-1.5 size-4" />
+                            {t("planner.createPlan")}
+                        </Button>
+                    ) : null
+                }
+            />
 
             {!isAuthenticated ? (
                 <UnauthenticatedState />

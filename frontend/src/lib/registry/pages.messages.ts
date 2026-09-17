@@ -29,11 +29,11 @@ export const messages = {
         description: "Blurb under the Tier Lists palette entry.",
     },
     "page.playersSearch.label": {
-        text: "Search Doctors",
-        description: "Palette entry for the player search. 'Doctor' is what Arknights calls the player, so keep the game's own term for the region.",
+        text: "Search Players",
+        description: "Palette entry for the player search. The site says 'player' throughout; Arknights itself calls them Doctors, so a region may prefer the game's term.",
     },
     "page.playersSearch.desc": {
-        text: "Find Doctor profiles by nickname or UID",
+        text: "Find player profiles by nickname or UID",
         description: "Blurb under the Search Doctors palette entry. UID is the in-game account number.",
     },
     "page.playersLeaderboard.label": {
@@ -41,8 +41,8 @@ export const messages = {
         description: "Palette entry for the player leaderboard.",
     },
     "page.playersLeaderboard.desc": {
-        text: "Top Doctors ranked by score",
-        description: "Blurb under the Leaderboard palette entry. 'Doctor' is the game's word for the player.",
+        text: "Top players ranked by score",
+        description: "Blurb under the Leaderboard palette entry. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "page.gachaCommunity.label": {
         text: "Gacha Community",

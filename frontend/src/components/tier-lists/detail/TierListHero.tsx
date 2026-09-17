@@ -25,7 +25,7 @@ export function TierListHero({ detail }: ITierListHeroProps) {
 
     return (
         <header className="border-border/60 border-b bg-linear-to-b from-card/40 to-transparent">
-            <div className="mx-auto w-[min(1080px,calc(100%-1.5rem))] pt-5 pb-6 sm:w-[min(1080px,calc(100%-2rem))] sm:pt-10 sm:pb-9">
+            <div className="page-gutter pt-5 pb-6 [--page-max:1080px] sm:pt-10 sm:pb-9">
                 <Breadcrumb className="mb-3">
                     <BreadcrumbList className="text-xs">
                         <BreadcrumbItem>

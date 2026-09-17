@@ -49,8 +49,8 @@ export function MyToolbar({ sort, type, view, query, resultCount, totalCount, ha
     const isFiltered = query.length > 0 || type !== "all";
 
     return (
-        <div className="sticky top-14 z-30 -mx-3 border-border border-y bg-background/80 px-3 backdrop-blur-md backdrop-saturate-150 sm:top-16 sm:-mx-4 sm:px-4">
-            <div className="mx-auto w-[min(1080px,100%)] py-3">
+        <div className="page-bleed sticky top-14 z-30 border-border border-y bg-background/80 px-[var(--page-gutter)] backdrop-blur-md backdrop-saturate-150 sm:top-16">
+            <div className="page-gutter py-3 [--page-max:1080px]">
                 <div className="flex flex-wrap items-center gap-2.5">
                     {hasOfficial && (
                         <div role="tablist" aria-label={t("my.type.label")} className="inline-flex shrink-0 gap-0.5 rounded-[10px] border border-border bg-muted p-0.75">

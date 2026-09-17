@@ -8,8 +8,8 @@ export const messages = {
         description: "Small uppercase label above the leaderboard heading, naming the section.",
     },
     "leaderboard.hero.title": {
-        text: "Top Doctors",
-        description: "Leaderboard page heading. 'Doctor' is what Arknights calls the player.",
+        text: "Top Players",
+        description: "Leaderboard page heading. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "leaderboard.hero.allTime": {
         text: "All-time",
@@ -20,7 +20,7 @@ export const messages = {
         description: "Paragraph under the leaderboard heading explaining what the ranking measures.",
     },
     "leaderboard.hero.stat.ranked": {
-        text: "Doctors ranked",
+        text: "Players ranked",
         description: "Label under the count of players on the leaderboard. Fits a narrow tile, so keep it short.",
     },
     "leaderboard.hero.stat.topScore": {

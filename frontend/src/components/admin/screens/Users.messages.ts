@@ -12,8 +12,8 @@ export const messages = {
         description: "Title of the admin screen listing every account.",
     },
     "users.sub": {
-        text: "Doctors with synced profiles. Pulled from {search}. Roles write to the {table} table via {endpoint} and only take effect for the target once their token refreshes.",
-        description: "Sentence under the Users title: the person whose role changed keeps their old access until their sign-in token is renewed. {search} and {endpoint} are endpoint paths and {table} a database table name, all shown in monospace. 'Doctor' is what Arknights calls the player.",
+        text: "Players with synced profiles. Pulled from {search}. Roles write to the {table} table via {endpoint} and only take effect for the target once their token refreshes.",
+        description: "Sentence under the Users title: the person whose role changed keeps their old access until their sign-in token is renewed. {search} and {endpoint} are endpoint paths and {table} a database table name, all shown in monospace. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "users.refresh": {
         text: "Refresh",
@@ -40,8 +40,8 @@ export const messages = {
         description: "Empty state when the search matched no accounts.",
     },
     "users.th.doctor": {
-        text: "Doctor",
-        description: "User table column header for the account. 'Doctor' is what Arknights calls the player. Rendered uppercase.",
+        text: "Player",
+        description: "User table column header for the account. 'Player' is the site's term; the game itself says 'Doctor'. Rendered uppercase.",
     },
     "users.th.server": {
         text: "Server",

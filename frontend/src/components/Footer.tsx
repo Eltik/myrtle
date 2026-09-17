@@ -9,7 +9,7 @@ export default function Footer() {
 
     return (
         <footer className="border-border border-t bg-[color-mix(in_srgb,var(--background)_84%,transparent)] py-7">
-            <div className="mx-auto flex w-[min(1080px,calc(100%-2rem))] flex-col gap-2.5">
+            <div className="page-gutter flex flex-col gap-2.5 [--page-max:1080px]">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="inline-flex items-center gap-2.5 font-sans font-semibold text-foreground text-sm leading-none">
                         <img src="/logo/bust_transparent.png" alt="" width={22} height={22} className="h-5.5 w-5.5 shrink-0 object-contain" />

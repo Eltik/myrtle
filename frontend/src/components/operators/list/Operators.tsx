@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowDown, ArrowUp, ChevronRight, Download, LayoutGrid, LayoutList, Rows3, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Download, LayoutGrid, LayoutList, Rows3, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ExportDialog } from "#/components/export/ExportDialog";
+import { PageHeader } from "#/components/ui/page-header";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { useOperatorName } from "#/hooks/use-operator-name";
 import { noteHasContent, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
@@ -252,16 +253,8 @@ export function OperatorsList() {
     const exportPageRows = useMemo(() => (exportOpen ? paginated.map(toExportRow) : EMPTY_EXPORT_ROWS), [exportOpen, paginated, toExportRow]);
 
     return (
-        <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-2rem))] pb-20">
-            <div className="pt-7 pb-1.5">
-                <nav className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label={t("list.breadcrumb.aria")}>
-                    <span>{t("list.breadcrumb.collection")}</span>
-                    <ChevronRight className="h-2.5 w-2.5" aria-hidden="true" />
-                    <span className="text-foreground">{t("list.breadcrumb.operators")}</span>
-                </nav>
-                <h1 className="m-0 font-bold font-sans text-[30px] text-foreground leading-[1.1] tracking-tight">{t("list.title")}</h1>
-                <p className="mt-1.5 font-sans text-[13.5px] text-muted-foreground leading-normal">{rt("list.viewAll", { count: <strong className="text-foreground">{operators.length}</strong> })}</p>
-            </div>
+        <div className="page-shell [--page-max:1400px]">
+            <PageHeader className="pb-1.5" breadcrumbLabel={t("list.breadcrumb.aria")} breadcrumb={[t("list.breadcrumb.collection"), t("list.breadcrumb.operators")]} title={t("list.title")} description={rt("list.viewAll", { count: <strong className="text-foreground">{operators.length}</strong> })} />
             <div className="relative flex items-start pt-5">
                 <OperatorFilters
                     selectedClasses={filters.classes}

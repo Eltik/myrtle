@@ -1,11 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { ChevronRight, Search, Trophy, Users, X } from "lucide-react";
+import { Search, Trophy, Users, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Pagination } from "#/components/operators/list/impl/components/Pagination";
 import { Button } from "#/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/input-group";
+import { PageHeader } from "#/components/ui/page-header";
 import { useDebounce } from "#/hooks/use-debounce";
 import { searchUsersQueryOptions } from "#/lib/api/user";
 import { isEditableTarget, isPlainKey } from "#/lib/hotkeys";
@@ -84,16 +85,8 @@ export function UserSearch() {
     };
 
     return (
-        <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-2rem))] pb-20">
-            <div className="pt-7 pb-1.5">
-                <nav className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label={t("search.breadcrumb.label")}>
-                    <span>{t("search.breadcrumb.doctors")}</span>
-                    <ChevronRight className="h-2.5 w-2.5" aria-hidden="true" />
-                    <span className="text-foreground">{t("search.breadcrumb.current")}</span>
-                </nav>
-                <h1 className="m-0 font-bold font-sans text-[30px] text-foreground leading-[1.1] tracking-tight">{t("search.title")}</h1>
-                <p className="mt-1.5 font-sans text-[13.5px] text-muted-foreground leading-normal">{t("search.subtitle")}</p>
-            </div>
+        <div className="page-shell [--page-max:1400px]">
+            <PageHeader className="pb-1.5" breadcrumbLabel={t("search.breadcrumb.label")} breadcrumb={[t("search.breadcrumb.doctors"), t("search.breadcrumb.current")]} title={t("search.title")} description={t("search.subtitle")} />
 
             <div className="flex flex-col gap-4 pt-5">
                 <InputGroup className="max-w-xl">

@@ -34,8 +34,8 @@ export function EnemyDetail() {
     }
 
     return (
-        <div className="relative z-1 mx-auto w-[min(1100px,calc(100%-2rem))] pb-20">
-            <nav className="pt-7 pb-3.5 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label={t("detail.breadcrumb")}>
+        <div className="page-shell [--page-max:1100px]">
+            <nav className="pb-3.5 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label={t("detail.breadcrumb")}>
                 <ol className="flex items-center gap-1.5">
                     <li>{t("detail.breadcrumb.collection")}</li>
                     <ChevronRight className="h-2.5 w-2.5" aria-hidden="true" />

@@ -25,7 +25,7 @@ export function SettingsShell({ nav, active, onChange, children }: ISettingsShel
     const t: TypedT<typeof messages> = useT("settings");
 
     return (
-        <main className="relative mx-auto w-[min(1100px,calc(100%-2rem))] py-8 sm:py-14">
+        <main className="page-gutter relative py-8 [--page-max:1100px] sm:py-14">
             <div className="mb-6 sm:mb-8">
                 <Kicker className="mb-2">{t("shell.kicker")}</Kicker>
                 <h1 className="m-0 font-(--font-heading) font-bold text-[26px] text-foreground leading-[1.15] tracking-[-0.02em] sm:text-[36px]">{t("shell.title")}</h1>
@@ -65,7 +65,7 @@ function SettingsNav({ nav, active, onChange }: { nav: ISettingsNavItem[]; activ
         <nav
             aria-label={t("shell.sectionsNav")}
             className={cn(
-                "-mx-4 sm:mx-0",
+                "page-bleed sm:mx-0",
                 "sticky top-14 z-20 border-border border-b bg-background/85 backdrop-blur-md backdrop-saturate-150 supports-[backdrop-filter]:bg-background/65",
                 "sm:top-20 sm:z-0 sm:self-start sm:rounded-2xl sm:border sm:border-sidebar-border sm:bg-sidebar/60 sm:p-2 sm:backdrop-blur-none sm:backdrop-saturate-100",
             )}

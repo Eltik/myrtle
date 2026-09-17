@@ -46,9 +46,9 @@ export function OperatorTabs({ operator, activeTab, onTabChange }: IOperatorTabs
         <TooltipProvider>
             <div className="flex min-w-0 flex-col lg:flex-row lg:gap-8">
                 <nav aria-label={t("tabs.aria")} className="min-w-0 shrink-0 lg:w-56">
-                    <Tabs className="sticky top-14 z-30 -mx-3 mb-4 border-border/50 border-b bg-background/80 backdrop-blur-xl sm:top-16 sm:-mx-4 lg:hidden" onValueChange={handleValueChange} value={activeTab}>
+                    <Tabs className="page-bleed sticky top-14 z-30 mb-4 border-border/50 border-b bg-background/80 backdrop-blur-xl sm:top-16 lg:hidden" onValueChange={handleValueChange} value={activeTab}>
                         <ScrollArea className="w-full" scrollFade>
-                            <TabsList className={cn("w-max gap-1 rounded-none bg-transparent px-3 py-2.5 sm:px-4", "**:data-[slot=tab-indicator]:rounded-full **:data-[slot=tab-indicator]:bg-primary! **:data-[slot=tab-indicator]:shadow-sm")}>
+                            <TabsList className={cn("w-max gap-1 rounded-none bg-transparent px-[var(--page-gutter)] py-2.5", "**:data-[slot=tab-indicator]:rounded-full **:data-[slot=tab-indicator]:bg-primary! **:data-[slot=tab-indicator]:shadow-sm")}>
                                 {filteredTabs.map((tab) => {
                                     const Icon = tab.icon;
                                     return (

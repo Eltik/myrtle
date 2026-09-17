@@ -294,7 +294,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                                         onClick={() => setPotentialRank(idx)}
                                                         className={cn("flex h-8 w-8 items-center justify-center rounded-md border transition-colors", potentialRank === idx ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50")}
                                                     >
-                                                        <img alt={t("info.potential.alt", { rank: idx })} className="h-5 w-5 object-contain" decoding="async" loading="lazy" src={potentialIcon(idx, operator.server)} />
+                                                        <img alt={t("info.potential.alt", { rank: idx })} className="icon-theme-aware h-5 w-5 object-contain" decoding="async" loading="lazy" src={potentialIcon(idx, operator.server)} />
                                                     </button>
                                                 )}
                                             />
@@ -700,7 +700,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                                                 <h4 className="font-medium text-foreground text-sm">{talent.name ?? t("info.talents.unnamed")}</h4>
                                                 {talent.requiredPotentialRank > 0 && (
                                                     <Tooltip>
-                                                        <TooltipTrigger render={(props) => <img alt={t("info.potential.alt", { rank: talent.requiredPotentialRank })} className="h-4 w-4" decoding="async" loading="lazy" src={potentialIcon(talent.requiredPotentialRank, operator.server)} {...props} />} />
+                                                        <TooltipTrigger render={(props) => <img alt={t("info.potential.alt", { rank: talent.requiredPotentialRank })} className="icon-theme-aware h-4 w-4" decoding="async" loading="lazy" src={potentialIcon(talent.requiredPotentialRank, operator.server)} {...props} />} />
                                                         <TooltipPopup>{t("info.talents.requiresPotential", { rank: talent.requiredPotentialRank })}</TooltipPopup>
                                                     </Tooltip>
                                                 )}

@@ -72,7 +72,7 @@ export function FilterToolbar({ type, sort, query, selectedFlairs, flairOptions,
 
     return (
         <div className="sticky top-14 z-30 mx-[calc(50%-50vw)] w-screen border-border border-y bg-card/85 backdrop-blur-md backdrop-saturate-150 sm:top-16" style={{ maskImage: FADE_MASK, WebkitMaskImage: FADE_MASK }}>
-            <div className="mx-auto w-[min(1080px,calc(100%-2rem))] py-3">
+            <div className="page-gutter py-3 [--page-max:1080px]">
                 <div className="flex flex-wrap items-center gap-2.5">
                     <div role="tablist" aria-label={t("browse.type.label")} className="inline-flex shrink-0 gap-0.5 rounded-[10px] border border-border bg-muted p-0.75">
                         {typeTabs.map((tab) => {

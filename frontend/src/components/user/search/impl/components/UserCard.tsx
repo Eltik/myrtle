@@ -13,7 +13,7 @@ import type { messages } from "./UserCard.messages";
 export function UserCard({ user }: { user: DisplayUser }) {
     const t: TypedT<typeof messages> = useT("user");
     const f = useFormatters();
-    const nickname = user.nickname ?? `Doctor ${user.uid}`;
+    const nickname = user.nickname ?? `Player ${user.uid}`;
     const initials = (user.nickname ?? user.uid).slice(0, 2).toUpperCase();
     const avatarSrc = getAvatarById(user.avatar_id ?? DEFAULT_AVATAR_ID);
 

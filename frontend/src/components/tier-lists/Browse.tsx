@@ -155,7 +155,7 @@ export function Browse() {
                 />
             )}
 
-            <div id="tier-lists-grid" className="mx-auto mt-8 w-[min(1080px,calc(100%-2rem))] scroll-mt-32">
+            <div id="tier-lists-grid" className="page-gutter mt-8 scroll-mt-32 [--page-max:1080px]">
                 <FilterToolbar
                     type={search.type}
                     sort={search.sort}

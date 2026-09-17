@@ -8,19 +8,19 @@ export const messages = {
         description: "Accessible name of the breadcrumb <nav> above the user-search heading.",
     },
     "search.breadcrumb.doctors": {
-        text: "Doctors",
-        description: "First breadcrumb crumb, the section that lists players. 'Doctor' is what Arknights calls the player.",
+        text: "Players",
+        description: "First breadcrumb crumb, the section that lists players. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "search.breadcrumb.current": {
         text: "Search",
         description: "Last breadcrumb crumb, naming the current page.",
     },
     "search.title": {
-        text: "Search Doctors",
+        text: "Search Players",
         description: "Page heading of the user-search page.",
     },
     "search.subtitle": {
-        text: "Find Doctor profiles by nickname or browse public profiles ranked by score.",
+        text: "Find player profiles by nickname or browse public profiles ranked by score.",
         description: "Paragraph under the user-search page heading.",
     },
     "search.input.placeholder": {
@@ -64,7 +64,7 @@ export const messages = {
         description: "Empty-state title when nobody has made a profile public.",
     },
     "search.empty.none.desc": {
-        text: "Public Doctor profiles will appear here as players opt in.",
+        text: "Public profiles will appear here as players opt in.",
         description: "Empty-state description when nobody has made a profile public.",
     },
 } satisfies MessageMap;

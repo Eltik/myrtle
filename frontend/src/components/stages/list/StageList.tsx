@@ -2,6 +2,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ChevronDown, ChevronRight, Info, Maximize2, Search, Skull } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { PageHeader } from "#/components/ui/page-header";
 import { useWindowVirtualRows } from "#/hooks/use-window-virtual-rows";
 import { stageIndexQueryOptions } from "#/lib/api/stages";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
@@ -52,30 +53,20 @@ export function StageList() {
     const empty = visibleGroups.length === 0;
 
     return (
-        <div className="relative z-1 mx-auto w-[min(1200px,calc(100%-2rem))] pb-28">
-            {/* Breadcrumb */}
-            <nav className="pt-7 pb-0 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label={t("list.breadcrumb")}>
-                <ol className="flex items-center gap-1.5">
-                    <li>{t("list.breadcrumb.collection")}</li>
-                    <ChevronRight className="h-2.5 w-2.5" aria-hidden="true" />
-                    <li className="text-foreground">{t("list.breadcrumb.stages")}</li>
-                </ol>
-            </nav>
-
-            <div className="mt-6 mb-6 flex flex-col gap-5 border-border border-b pb-6 sm:mb-7 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
-                <div>
-                    <div className="mb-3 flex items-center gap-2.5">
-                        <span className="h-px w-5" style={{ background: "var(--primary)" }} />
-                        <span className="font-mono font-semibold text-[10.5px] text-primary uppercase tracking-[0.24em]">{t("list.kicker")}</span>
+        <div className="page-shell [--page-max:1200px]">
+            <PageHeader
+                className="mb-6 border-border border-b pb-6 sm:mb-7"
+                breadcrumbLabel={t("list.breadcrumb")}
+                breadcrumb={[t("list.breadcrumb.collection"), t("list.breadcrumb.stages")]}
+                title={t("list.title")}
+                description={t("list.blurb")}
+                actions={
+                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 sm:block sm:text-right">
+                        <div className="font-light font-mono text-[26px] text-primary leading-none tracking-[-0.02em] sm:text-[34px]">{f.number(tree.totalStages)}</div>
+                        <div className="font-mono text-[10px] text-muted-foreground tracking-[0.12em] sm:mt-1.5">{t("list.counts", { zones: tree.totalZones, categories: tree.groups.length })}</div>
                     </div>
-                    <h1 className="m-0 text-balance font-bold font-sans text-[27px] text-foreground leading-[0.98] tracking-[-0.035em] sm:text-[34px]">{t("list.title")}</h1>
-                    <p className="mt-3 max-w-140 text-pretty font-sans text-[13px] text-muted-foreground leading-[1.55]">{t("list.blurb")}</p>
-                </div>
-                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 lg:block lg:text-right">
-                    <div className="font-light font-mono text-[26px] text-primary leading-none tracking-[-0.02em] lg:text-[34px]">{f.number(tree.totalStages)}</div>
-                    <div className="font-mono text-[10px] text-muted-foreground tracking-[0.12em] lg:mt-1.5">{t("list.counts", { zones: tree.totalZones, categories: tree.groups.length })}</div>
-                </div>
-            </div>
+                }
+            />
 
             {/* Featured hero */}
             {!searching && tree.featured && (filter === "all" || filter === tree.featured.group) && (

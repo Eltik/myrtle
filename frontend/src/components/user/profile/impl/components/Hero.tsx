@@ -48,8 +48,8 @@ export function Hero({ profile }: IHeroProps) {
 
     const handleCopyUid = () => copyToClipboard(profile.uid, t("profile.hero.uid.copied.title"), t("profile.hero.copied.desc", { value: profile.uid }), t("profile.hero.uid.failed.title"), copyFailed);
 
-    // The "Doctor" fallback is the game's own name for the player and stays literal.
-    const displayNickname = profile.nickname ?? `Doctor ${profile.uid}`;
+    // The site says "player" throughout (settled in #ui-ux); the game itself calls them Doctors.
+    const displayNickname = profile.nickname ?? `Player ${profile.uid}`;
     const usernameWithDiscriminator = profile.nick_number ? `${displayNickname}#${profile.nick_number}` : displayNickname;
     const handleCopyUsername = () => copyToClipboard(usernameWithDiscriminator, t("profile.hero.username.copied.title"), t("profile.hero.copied.desc", { value: usernameWithDiscriminator }), t("profile.hero.username.failed.title"), copyFailed);
 

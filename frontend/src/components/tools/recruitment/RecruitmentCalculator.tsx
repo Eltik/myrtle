@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { ChevronRight } from "lucide-react";
 import * as React from "react";
 import { Card, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
+import { PageHeader } from "#/components/ui/page-header";
 import { recruitmentDataQueryOptions } from "#/lib/api/recruitment";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -103,18 +103,8 @@ export function RecruitmentCalculator(): React.ReactElement {
     const maxReached = selectedIds.length >= MAX_SELECTED_TAGS;
 
     return (
-        <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-1.5rem))] py-4 pb-24 sm:w-[min(1400px,calc(100%-2rem))] sm:py-5 sm:pb-20">
-            <nav aria-label="breadcrumb" className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none">
-                <span>{t("recruit.breadcrumb.tools")}</span>
-                <ChevronRight className="size-2.5" />
-                <span className="text-foreground">{t("recruit.title")}</span>
-            </nav>
-            <div className="flex flex-wrap items-end justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                    <h1 className="m-0 font-bold font-sans text-[24px] text-foreground leading-[1.1] tracking-tight sm:text-[30px]">{t("recruit.title")}</h1>
-                    <p className="mt-1.5 max-w-2xl font-sans text-[13px] text-muted-foreground leading-normal sm:text-[13.5px]">{t("recruit.intro", { max: MAX_SELECTED_TAGS })}</p>
-                </div>
-            </div>
+        <div className="page-shell [--page-max:1400px]">
+            <PageHeader breadcrumbLabel="breadcrumb" breadcrumb={[t("recruit.breadcrumb.tools"), t("recruit.title")]} title={t("recruit.title")} description={t("recruit.intro", { max: MAX_SELECTED_TAGS })} />
 
             <div className="mt-5 grid grid-cols-1 items-start gap-3 sm:mt-6 sm:gap-4 lg:grid-cols-[330px_1fr] xl:grid-cols-[400px_1fr]">
                 <aside className="flex min-w-0 flex-col gap-3 sm:gap-4">

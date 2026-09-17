@@ -86,7 +86,7 @@ export const messages = {
     },
 
     "og.userSearch.title": {
-        text: "Search Doctors",
+        text: "Search Players",
         description: "Headline on the player search social card. `Doctors` is what Arknights calls its players.",
     },
     "og.userSearch.subtitle": {
@@ -95,11 +95,11 @@ export const messages = {
     },
 
     "og.userLeaderboard.title": {
-        text: "Doctor Leaderboard",
+        text: "Player Leaderboard",
         description: "Headline on the player leaderboard social card.",
     },
     "og.userLeaderboard.subtitle": {
-        text: "Top Doctors ranked by score across servers.",
+        text: "Top players ranked by score across servers.",
         description: "Subtitle on the player leaderboard social card.",
     },
 

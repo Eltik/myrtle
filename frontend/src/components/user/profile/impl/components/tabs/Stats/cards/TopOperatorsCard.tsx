@@ -102,7 +102,7 @@ function TopOperatorTile({ ranked, rank }: { ranked: IRanked; rank: number }) {
                         </div>
                     </div>
 
-                    {hasMasteries && <div className="flex gap-1">{entry.masteries.map((m) => (m.mastery > 0 ? <img alt={`M${m.mastery}`} className="h-4 w-4 opacity-90" key={m.index} src={specializedIcon(m.mastery)} /> : <div className="h-4 w-4 rounded-sm bg-muted/40" key={m.index} />))}</div>}
+                    {hasMasteries && <div className="flex gap-1">{entry.masteries.map((m) => (m.mastery > 0 ? <img alt={`M${m.mastery}`} className="icon-theme-aware h-4 w-4 opacity-90" key={m.index} src={specializedIcon(m.mastery)} /> : <div className="h-4 w-4 rounded-sm bg-muted/40" key={m.index} />))}</div>}
 
                     <div className="mt-auto flex items-center gap-2 pt-0.5">
                         <div aria-label={t("profile.stats.top.completeAria", { pct: completenessPct })} aria-valuemax={100} aria-valuemin={0} aria-valuenow={completenessPct} className="h-1 flex-1 overflow-hidden rounded-full bg-muted/40" role="progressbar">

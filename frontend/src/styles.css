@@ -395,3 +395,58 @@ pre code {
 .msv-scroll::-webkit-scrollbar-track {
     background: transparent;
 }
+
+/* Page shell.
+
+   Every routed page hung its own geometry off its outermost div, so the side
+   gutter ran 12px, 16px or 32px depending on which page you were on and the
+   bottom ran 60px, 80px or 112px.
+
+   `--page-gutter` is that gutter, declared ONCE. It is the HEADER's own padding
+   (`px-3` below `sm`, `px-4` at `sm` and up), so page content lines up with the
+   logo and the account controls directly above it. Anything that needs to know
+   where the page's content edge is READS THIS VARIABLE rather than restating
+   the number. Three sticky bars restated it as a flat `-mx-4`, and the moment
+   the gutter became 0.75rem each one hung 4px off both sides of the viewport
+   and put a horizontal scrollbar on the whole page.
+
+   A page varies exactly one thing, `--page-max`, its content width; the gutter
+   and the vertical rhythm are not a page's to choose.
+
+   These live in `components`, not `utilities`, so an ordinary Tailwind utility
+   on the same element still wins: `sm:mx-0` has to be able to switch
+   `page-bleed` off, and a page has to be able to override the rhythm. */
+:root {
+    --page-gutter: 0.75rem;
+}
+
+@media (width >= 40rem) {
+    :root {
+        --page-gutter: 1rem;
+    }
+}
+
+@layer components {
+    .page-shell {
+        position: relative;
+        z-index: 1;
+        margin-inline: auto;
+        width: min(var(--page-max, 1400px), calc(100% - 2 * var(--page-gutter)));
+        padding-block: 1.75rem 5rem;
+    }
+
+    /* Same gutter and width, no vertical rhythm: for a page whose first child
+       is a full-bleed hero that owns its own top padding. */
+    .page-gutter {
+        margin-inline: auto;
+        width: min(var(--page-max, 1400px), calc(100% - 2 * var(--page-gutter)));
+    }
+
+    /* Pulls an element out to the page's content edges, so a sticky bar or a
+       horizontal scroll rail runs edge to edge. Pair it with
+       `px-[var(--page-gutter)]` where the element pads its own content back in,
+       and add `sm:mx-0` where the bleed should stop above `sm`. */
+    .page-bleed {
+        margin-inline: calc(-1 * var(--page-gutter));
+    }
+}

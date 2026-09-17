@@ -20,7 +20,7 @@ export const messages = {
         description: "Empty-state title when the handbook cannot be read.",
     },
     "profile.enemies.unavailable.body": {
-        text: "This Doctor's enemy handbook is private, or their profile could not be found.",
+        text: "This player's enemy handbook is private, or their profile could not be found.",
         description: "Empty-state body when the handbook cannot be read. 'Doctor' is what Arknights calls the player; keep the apostrophe.",
     },
     "profile.enemies.noMatch.title": {

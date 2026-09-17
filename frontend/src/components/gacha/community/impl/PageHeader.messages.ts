@@ -3,9 +3,17 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "gacha";
 
 export const messages = {
-    "community.header.kicker": {
-        text: "Live · community statistics",
-        description: "Small uppercase label above the community gacha heading. Keep the middle dot.",
+    "community.breadcrumb.label": {
+        text: "breadcrumb",
+        description: "Accessible name of the breadcrumb trail above the community gacha heading.",
+    },
+    "community.breadcrumb.gacha": {
+        text: "Gacha",
+        description: "First breadcrumb crumb, naming the section this page lives in. 'Gacha' is the game's random-draw system and stays as-is.",
+    },
+    "community.breadcrumb.current": {
+        text: "Community",
+        description: "Last breadcrumb crumb: this page.",
     },
     "community.header.title": {
         text: "What everyone’s {emphasis}.",
@@ -17,7 +25,7 @@ export const messages = {
     },
     "community.header.blurbUsers": {
         text: "{count} doctors",
-        description: "The bold count in the sentence under the community gacha heading. 'Doctor' is what Arknights calls the player.",
+        description: "The bold count in the sentence under the community gacha heading. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "community.header.blurb": {
         text: "Aggregated across {doctors} who opted into anonymous sharing. Rates are observational, not official.",

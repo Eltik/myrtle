@@ -16,7 +16,6 @@ import type { IGoalEstimate } from "../pulls/odds";
 import { MAX_POT_COPIES } from "../pulls/odds";
 import type { IPlanRow, IPlanTotals } from "../pulls/plan";
 import { planTargets } from "../pulls/plan";
-import { cnDay } from "../schedule";
 import { type PullsT, Stat, usePct } from "./PullsShared";
 import { ResolutionBadge } from "./ResolutionBadge";
 import { AutoTag, CnName, type OperatorLookup, operatorLabel, ReleaseEmpty, resolveName, SectionTitle, Tag, useArt } from "./shared";
@@ -31,12 +30,16 @@ interface IPullsBannersProps {
     charNames: { [key in string]?: AutoName };
     today: Date;
     onAllocate: (key: string, pulls: number) => void;
+    /** Commits a preset count AND drops the banner's potential picks, so the panel that set the count is the one describing it. */
+    onPreset: (key: string, pulls: number) => void;
     onSetTarget: (key: string, charId: string, copies: number) => void;
+    /** Clears one banner: its committed pulls and its potential picks. */
+    onClearRow: (key: string) => void;
     onReset: () => void;
     onExport: () => void;
 }
 
-export function PullsBanners({ rows, totals, lookup, charNames, today, onAllocate, onSetTarget, onReset, onExport }: IPullsBannersProps): React.ReactElement {
+export function PullsBanners({ rows, totals, lookup, charNames, today, onAllocate, onPreset, onSetTarget, onClearRow, onReset, onExport }: IPullsBannersProps): React.ReactElement {
     const t: PullsT = useT("tools");
     const f = useFormatters();
     const events = useQuery(releaseEventsQueryOptions());
@@ -52,13 +55,6 @@ export function PullsBanners({ rows, totals, lookup, charNames, today, onAllocat
         for (const e of events.data?.events ?? []) map.set(e.cnId, { cn: e.nameCn, en: e.nameEn, auto: e.nameEnAuto, imagePath: e.imagePath });
         return map;
     }, [events.data]);
-    const eventsByDay = React.useMemo(() => {
-        const map = new Map<string, string>();
-        for (const e of events.data?.events ?? []) {
-            if (e.hasStage && e.imagePath && !map.has(cnDay(e.cnStart))) map.set(cnDay(e.cnStart), e.cnId);
-        }
-        return map;
-    }, [events.data]);
 
     return (
         <Card className="flex flex-col gap-3 p-4">
@@ -66,8 +62,8 @@ export function PullsBanners({ rows, totals, lookup, charNames, today, onAllocat
                 <div className="flex min-w-0 flex-col gap-1">
                     <SectionTitle count={rows.length}>{t("release.pulls.plan.title")}</SectionTitle>
                     <p className="m-0 max-w-2xl font-sans text-[12px] text-muted-foreground leading-normal">{t("release.pulls.plan.intro")}</p>
-                    <p className="m-0 max-w-2xl font-sans text-[11.5px] text-muted-foreground leading-normal">{t("release.pulls.plan.pickHint")}</p>
-                    {inferred > 0 && <p className="m-0 max-w-2xl font-sans text-[11.5px] text-amber-500/90 leading-normal">{t("release.pulls.plan.inferredCount", { count: inferred })}</p>}
+                    <p className="m-0 max-w-2xl font-sans text-[12px] text-muted-foreground leading-normal">{t("release.pulls.plan.pickHint")}</p>
+                    {inferred > 0 && <p className="m-0 max-w-2xl font-sans text-[12px] text-amber-500/90 leading-normal">{t("release.pulls.plan.inferredCount", { count: inferred })}</p>}
                 </div>
                 <div className="flex flex-none items-center gap-2">
                     <Button size="sm" variant="outline" onClick={onExport} disabled={rows.length === 0}>
@@ -83,7 +79,7 @@ export function PullsBanners({ rows, totals, lookup, charNames, today, onAllocat
                 <Stat label={t("release.pulls.plan.committed")} value={f.number(totals.spent)} />
                 <Stat label={t("release.pulls.plan.remaining")} value={f.number(totals.remaining)} />
                 {totals.shortBanners > 0 && <Stat label={t("release.pulls.plan.overrun", { count: totals.shortBanners })} value={f.number(totals.shortfall)} className="text-amber-500" />}
-                {!planned && <p className="m-0 self-center font-sans text-[11.5px] text-muted-foreground">{t("release.pulls.plan.untouched")}</p>}
+                {!planned && <p className="m-0 self-center font-sans text-[12px] text-muted-foreground">{t("release.pulls.plan.untouched")}</p>}
             </div>
 
             {rows.length === 0 ? (
@@ -91,7 +87,7 @@ export function PullsBanners({ rows, totals, lookup, charNames, today, onAllocat
             ) : (
                 <div className="flex flex-col">
                     {rows.map((row) => (
-                        <PlanRow key={row.key} row={row} lookup={lookup} charNames={charNames} today={today} t={t} onAllocate={onAllocate} onSetTarget={onSetTarget} eventArt={eventArt} eventsByDay={eventsByDay} />
+                        <PlanRow key={row.key} row={row} lookup={lookup} charNames={charNames} today={today} t={t} onAllocate={onAllocate} onPreset={onPreset} onSetTarget={onSetTarget} onClearRow={onClearRow} eventArt={eventArt} />
                     ))}
                 </div>
             )}
@@ -110,20 +106,31 @@ export function PullsBanners({ rows, totals, lookup, charNames, today, onAllocat
  * Each row is a button that fills the pull count in, so the estimates are the control
  * rather than a readout you have to copy by hand.
  */
-function Estimated({ row, t, onAllocate }: { row: IPlanRow; t: PullsT; onAllocate: (key: string, pulls: number) => void }): React.ReactElement {
+function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT; onPreset: (key: string, pulls: number) => void; onAllocate: (key: string, pulls: number) => void }): React.ReactElement {
     const f = useFormatters();
     const pct = usePct();
     const { estimate, maxPot, goalEstimate } = row;
     const worstTail = Math.max(estimate.specific.unresolved, estimate.both?.unresolved ?? 0, maxPot.unresolved, goalEstimate?.unresolved ?? 0);
 
+    /**
+     * What each row actually measures, said in the row's own words.
+     *
+     * "Either one / This operator / Both / Max pot" was written for a two-rate-up
+     * banner and read as nonsense on an Orienteering pool of six: "Either one" of six,
+     * and a "Both" that sat 9 rolls above "This operator" when reaching six operators
+     * cannot be 9 rolls dearer than reaching one. The figures were never wrong; the
+     * labels were describing a different banner. `odds.ts` tracks the NAMED operator
+     * against the rest of the rate-up pool as a group, so `both` is "the named one and
+     * at least one other", which is what it says here on a pool of more than two, and
+     * `maxPot` is six copies of the named one rather than of every one.
+     */
     const goals: { key: string; label: string; value: number }[] = [];
     if (goalEstimate) goals.push({ key: "yours", label: t("release.pulls.plan.yourGoal"), value: goalEstimate.p50 });
+    // On a single-rate-up pool `any` IS `specific`, so only the one row.
+    if (estimate.both !== null) goals.push({ key: "any", label: t("release.pulls.plan.goal.any"), value: estimate.any.p50 });
+    goals.push({ key: "specific", label: t("release.pulls.plan.goal.specific"), value: estimate.specific.p50 });
     if (estimate.both !== null) {
-        goals.push({ key: "any", label: t("release.pulls.plan.goal.any"), value: estimate.any.p50 });
-        goals.push({ key: "specific", label: t("release.pulls.plan.goal.specific"), value: estimate.specific.p50 });
-        goals.push({ key: "both", label: t("release.pulls.plan.goal.both"), value: estimate.both.p50 });
-    } else {
-        goals.push({ key: "specific", label: t("release.pulls.plan.goal.specific"), value: estimate.specific.p50 });
+        goals.push({ key: "both", label: row.model.featuredCount > 2 ? t("release.pulls.plan.goal.bothMulti") : t("release.pulls.plan.goal.both"), value: estimate.both.p50 });
     }
     goals.push({ key: "maxPot", label: t("release.pulls.plan.goal.maxPot"), value: maxPot.p50 });
 
@@ -157,7 +164,7 @@ function Estimated({ row, t, onAllocate }: { row: IPlanRow; t: PullsT; onAllocat
 
     return (
         <div className="flex w-full min-w-0 flex-col gap-1 rounded-lg border border-border bg-muted/20 px-2.5 py-2">
-            <span className="font-sans text-[10.5px] text-muted-foreground uppercase tracking-[0.06em]">{t("release.pulls.plan.estimated")}</span>
+            <span className="font-sans text-[11.5px] text-muted-foreground uppercase tracking-[0.06em]">{t("release.pulls.plan.estimated")}</span>
 
             <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
                 {goals.map((g) => (
@@ -166,7 +173,14 @@ function Estimated({ row, t, onAllocate }: { row: IPlanRow; t: PullsT; onAllocat
                             type="button"
                             aria-pressed={g.key === activeKey}
                             aria-label={t("release.pulls.plan.goalPick", { count: f.number(g.value), goal: g.label })}
-                            onClick={() => onAllocate(row.key, g.value)}
+                            /* A preset DROPS the potential picks. Before this, pressing
+                               "Six of a specific rate-up" set the count and left the picks
+                               standing, so "Your goal" stayed in the list, still describing
+                               the operators, while the count beside it described something
+                               else. Whichever panel sets the count is the one that gets to
+                               say what the count is for. "Your goal" is the picks' own row
+                               and is the one preset that keeps them. */
+                            onClick={() => (g.key === "yours" ? onAllocate(row.key, g.value) : onPreset(row.key, g.value))}
                             className={cn(
                                 "flex w-full cursor-pointer items-baseline justify-between gap-3 rounded border px-2 py-1 text-left transition-colors hover:bg-accent/50",
                                 // A border on every row, not just on hover: these ARE the
@@ -175,8 +189,8 @@ function Estimated({ row, t, onAllocate }: { row: IPlanRow; t: PullsT; onAllocat
                                 g.key === activeKey ? "border-primary/50 bg-primary/10" : "border-border/50",
                             )}
                         >
-                            <span className={cn("min-w-0 truncate font-sans text-[11.5px]", g.key === activeKey ? "text-foreground" : "text-muted-foreground")}>{g.label}</span>
-                            <span className={cn("shrink-0 font-mono text-[11.5px] tabular-nums", g.key === activeKey ? "font-bold text-foreground" : "text-muted-foreground")}>{t("release.pulls.plan.goalValue", { count: f.number(g.value) })}</span>
+                            <span className={cn("min-w-0 truncate font-sans text-[12px]", g.key === activeKey ? "text-foreground" : "text-muted-foreground")}>{g.label}</span>
+                            <span className={cn("shrink-0 font-mono text-[12px] tabular-nums", g.key === activeKey ? "font-bold text-foreground" : "text-muted-foreground")}>{t("release.pulls.plan.goalValue", { count: f.number(g.value) })}</span>
                         </button>
                     </li>
                 ))}
@@ -187,10 +201,10 @@ function Estimated({ row, t, onAllocate }: { row: IPlanRow; t: PullsT; onAllocat
                 "358 on average, 0 if unlucky", which reads as the unlucky case being
                 free. The mean is truncated at the same horizon and so is a floor, which
                 is what the plus marks. */}
-            <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
+            <span className="font-mono text-[12px] text-muted-foreground tabular-nums">
                 {active.p90 > 0 ? t("release.pulls.plan.estimatedDetail", { mean: f.number(Math.round(active.mean)), p90: f.number(active.p90) }) : t("release.pulls.plan.estimatedDetailOpen", { mean: f.number(Math.round(active.mean)), horizon: f.number(estimate.horizon) })}
             </span>
-            {worstTail >= 0.005 && <span className="font-sans text-[11px] text-muted-foreground">{t("release.pulls.plan.estimatedTail", { percent: pct(worstTail, 1), horizon: f.number(estimate.horizon) })}</span>}
+            {worstTail >= 0.005 && <span className="font-sans text-[12px] text-muted-foreground">{t("release.pulls.plan.estimatedTail", { percent: pct(worstTail, 1), horizon: f.number(estimate.horizon) })}</span>}
             {/* The arithmetic is shown rather than performed silently. This line counts
                 the banner's own free rolls, the budget line above it cannot (free rolls
                 never enter the pool), so the two used to print different numbers for
@@ -198,7 +212,7 @@ function Estimated({ row, t, onAllocate }: { row: IPlanRow; t: PullsT; onAllocat
                 Spelling out 30 + 24 free = 54 makes them two facts instead of a
                 contradiction. */}
             {row.totalPulls > 0 && (
-                <span className={cn("font-mono text-[11px] tabular-nums", gap > 0 ? "text-amber-500" : "text-emerald-500")}>
+                <span className={cn("font-mono text-[12px] tabular-nums", gap > 0 ? "text-amber-500" : "text-emerald-500")}>
                     {row.freePulls > 0
                         ? gap > 0
                             ? t("release.pulls.plan.sumFreeGap", { spent: f.number(row.spent), free: f.number(row.freePulls), total: f.number(row.totalPulls), gap: f.number(gap), goal: f.number(active.p50) })
@@ -231,13 +245,13 @@ function OperatorPot({ id, lookup, name, copies, onSet, t }: { id: string; looku
     const active = copies > 0;
     return (
         <div className={cn("inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-md border py-0.5 pr-1 pl-0.5 font-medium font-sans text-[12px] transition-colors", active ? "border-primary bg-primary/15 text-foreground" : "border-border/60 bg-secondary/40 text-muted-foreground")}>
-            <span className={cn("inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded font-bold font-sans text-[10px]", rarity === null && "bg-muted text-muted-foreground")} style={rarity === null ? undefined : { backgroundColor: `var(--rarity-${rarity})` }}>
+            <span className={cn("inline-flex size-5 shrink-0 items-center justify-center overflow-hidden rounded font-bold font-sans text-[11px]", rarity === null && "bg-muted text-muted-foreground")} style={rarity === null ? undefined : { backgroundColor: `var(--rarity-${rarity})` }}>
                 <OperatorAvatar charId={id} name={label.text} server={entry ? undefined : "cn"} />
             </span>
             <span className="min-w-0 truncate" title={entry?.name ?? id}>
                 {label.text}
             </span>
-            {rarity !== null && <span className="hidden shrink-0 font-mono text-[11px] text-muted-foreground xl:inline">{rarity}★</span>}
+            {rarity !== null && <span className="hidden shrink-0 font-mono text-[12px] text-muted-foreground xl:inline">{rarity}★</span>}
             {/* The provenance tag is the first thing to go when space is tight, and it
                 comes back at xl rather than sm: sm is where the row is TIGHTEST, not
                 widest, so revealing anything there is backwards. */}
@@ -250,7 +264,7 @@ function OperatorPot({ id, lookup, name, copies, onSet, t }: { id: string; looku
                 <button type="button" onClick={() => onSet(copies - 1)} disabled={copies <= 0} aria-label={t("release.pulls.plan.potLess", { operator: label.text })} className="inline-flex size-6 cursor-pointer items-center justify-center rounded hover:bg-accent disabled:cursor-default disabled:opacity-40">
                     <Minus className="size-3" />
                 </button>
-                <span className={cn("min-w-8 text-center font-mono text-[11.5px] tabular-nums", active ? "font-bold text-foreground" : "text-muted-foreground")}>{active ? t("release.pulls.plan.potValue", { count: copies }) : t("release.pulls.plan.potNone")}</span>
+                <span className={cn("min-w-8 text-center font-mono text-[12px] tabular-nums", active ? "font-bold text-foreground" : "text-muted-foreground")}>{active ? t("release.pulls.plan.potValue", { count: copies }) : t("release.pulls.plan.potNone")}</span>
                 <button
                     type="button"
                     onClick={() => onSet(copies + 1)}
@@ -272,9 +286,10 @@ interface IPlanRowProps {
     today: Date;
     t: PullsT;
     onAllocate: (key: string, pulls: number) => void;
+    onPreset: (key: string, pulls: number) => void;
     onSetTarget: (key: string, charId: string, copies: number) => void;
+    onClearRow: (key: string) => void;
     eventArt: EventArt;
-    eventsByDay: Map<string, string>;
 }
 
 /**
@@ -287,24 +302,37 @@ interface IPlanRowProps {
  * either a control or a muted supporting line, and the two sentences that used to
  * repeat on every row now appear once above the list.
  */
-function PlanRow({ row, lookup, charNames, today, t, onAllocate, onSetTarget, eventArt, eventsByDay }: IPlanRowProps): React.ReactElement {
+function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSetTarget, onClearRow, eventArt }: IPlanRowProps): React.ReactElement {
     const locale = useLocale();
     const f = useFormatters();
     const autoOn = useAutoTranslate();
     const { banner, model } = row;
 
+    /**
+     * The banner's own art, or the art of the event it is ANCHORED to. Nothing else.
+     *
+     * A third source used to sit here: any event opening on the same CN day that had
+     * a stage and a picture. That is a coincidence of the calendar, not a relation,
+     * and it put another event's key art on banners it had nothing to do with, which
+     * is the wrong image reported in #ui-ux. A banner with no art of its own and no
+     * anchor now shows its operators instead, which is at least about this banner.
+     */
     const anchor = banner.anchorActivity ? eventArt.get(banner.anchorActivity) : undefined;
-    const sameDay = !banner.imagePath && !anchor?.imagePath ? eventArt.get(eventsByDay.get(cnDay(banner.cnOpen)) ?? "") : undefined;
-    const borrowed = anchor?.imagePath ? anchor : sameDay?.imagePath ? sameDay : undefined;
-    const art = useArt(banner.imagePath ?? borrowed?.imagePath ?? null);
+    const art = useArt(banner.imagePath ?? anchor?.imagePath ?? null);
     const alt = resolveName(banner.nameCn, null, banner.nameEnAuto, autoOn).text;
-    const faces = art.src ? [] : row.featured.slice(0, 3);
+    // Every rate-up operator, not the first three. An Orienteering pool features six
+    // and the strip silently dropped half of them.
+    const faces = art.src ? [] : row.featured;
     // On a phone the art is a wide thin strip rather than a square that would eat
     // half the row; it carries no information the name does not.
     const visual = art.src ? <img src={art.src} alt={alt} loading="lazy" onError={art.onError} className="aspect-[5/2] w-full rounded-md bg-muted object-cover" /> : faces.length > 0 ? <FaceStrip ids={faces} lookup={lookup} /> : null;
 
     const tagLabel = useReleaseTagLabel();
     const targets = planTargets(row);
+    // The threshold itself, for the tooltip: `targets.guarantee` is what the player
+    // must commit to reach it, which is lower whenever the banner gives free pulls.
+    const g = model.guarantee;
+    const rawGuarantee = g.kind === "linkage" ? (g.at ?? null) : g.kind === "selection" ? (g.first ?? null) : null;
     const inputId = `plan-alloc-${row.key}`;
     const step = (delta: number) => onAllocate(row.key, Math.max(0, row.allocated + delta));
 
@@ -335,7 +363,7 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onSetTarget, ev
                     <CnName cn={banner.nameCn} auto={banner.nameEnAuto} primaryClassName="font-sans font-semibold text-[13px] text-foreground" compact>
                         <Tag>{tagLabel(banner.ruleType)}</Tag>
                     </CnName>
-                    <span className="font-mono text-[11.5px] text-muted-foreground tabular-nums">{formatDate(row.enStart, locale)}</span>
+                    <span className="font-mono text-[12px] text-muted-foreground tabular-nums">{formatDate(row.enStart, locale)}</span>
                     <ResolutionBadge resolution={banner.resolution} today={today} />
                 </div>
 
@@ -361,17 +389,17 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onSetTarget, ev
                     {row.allocated > 0 ? (
                         <>
                             <span className={cn("font-bold font-mono text-[28px] tabular-nums leading-none", row.shortfall > 0 ? "text-amber-500" : "text-foreground")}>{f.number(row.allocated)}</span>
-                            <span className="font-sans text-[11.5px] text-muted-foreground">{t("release.pulls.plan.plannedHere")}</span>
+                            <span className="font-sans text-[12px] text-muted-foreground">{t("release.pulls.plan.plannedHere")}</span>
                             {row.shortfall > 0 ? (
-                                <span className="font-sans text-[11.5px] text-amber-500">{t("release.pulls.plan.planShort", { short: f.number(row.shortfall), available: f.number(row.available) })}</span>
+                                <span className="font-sans text-[12px] text-amber-500">{t("release.pulls.plan.planShort", { short: f.number(row.shortfall), available: f.number(row.available) })}</span>
                             ) : (
-                                <span className="font-sans text-[11.5px] text-muted-foreground">{t("release.pulls.plan.planFits", { available: f.number(row.available) })}</span>
+                                <span className="font-sans text-[12px] text-muted-foreground">{t("release.pulls.plan.planFits", { available: f.number(row.available) })}</span>
                             )}
                         </>
                     ) : (
                         <>
                             <span className="font-bold font-mono text-[28px] text-foreground tabular-nums leading-none">{f.number(row.available)}</span>
-                            <span className="font-sans text-[11.5px] text-muted-foreground">{t("release.pulls.plan.availableHere")}</span>
+                            <span className="font-sans text-[12px] text-muted-foreground">{t("release.pulls.plan.availableHere")}</span>
                         </>
                     )}
                 </div>
@@ -379,7 +407,7 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onSetTarget, ev
                 {/* Only rendered when it has something to say. An always-present empty
                 line still costs the column's `gap-2` and pushed every row apart. */}
                 {(row.freePulls > 0 || (row.sparkMet && model.spark !== null)) && (
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 font-mono text-[11.5px] text-muted-foreground tabular-nums">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 font-mono text-[12px] text-muted-foreground tabular-nums">
                         {row.freePulls > 0 && <span>{t("release.pulls.plan.freeOnBanner", { count: row.freePulls })}</span>}
                         {row.sparkMet && model.spark !== null && <span>{t("release.pulls.banners.sparkMet", { spark: model.spark })}</span>}
                     </div>
@@ -426,24 +454,43 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onSetTarget, ev
                         {/* Label and first button travel together: as siblings in a wrap
                         container they separate at narrow widths, leaving a bare number
                         that reads as another statistic. */}
+                        {/* Each preset says what it IS, not just what it equals. Three bare
+                            numbers under a "SET TO" kicker read as three unexplained figures,
+                            which is how they were reported: "the numbers seem random". They
+                            are the bank, the exchange and the guarantee, so they say so. */}
                         <span className="inline-flex items-center gap-1">
-                            <span className="font-sans text-[10.5px] text-muted-foreground uppercase tracking-[0.06em]">{t("release.pulls.plan.setTo")}</span>
-                            <Button size="sm" variant="outline" className="h-7 px-2 font-mono text-[11.5px]" onClick={() => onAllocate(row.key, targets.max)} disabled={targets.max === 0} aria-label={t("release.pulls.plan.max")}>
-                                {f.number(targets.max)}
+                            <span className="font-sans text-[11.5px] text-muted-foreground uppercase tracking-[0.06em]">{t("release.pulls.plan.setTo")}</span>
+                            <Button size="sm" variant="outline" className="h-7 px-2 font-mono text-[12px]" onClick={() => onPreset(row.key, targets.max)} disabled={targets.max === 0} aria-label={t("release.pulls.plan.max")} title={t("release.pulls.plan.maxTitle", { count: f.number(targets.max) })}>
+                                {t("release.pulls.plan.maxLabel", { count: f.number(targets.max) })}
                             </Button>
                         </span>
-                        {targets.spark !== null && (
-                            <Button size="sm" variant="outline" className="h-7 px-2 font-mono text-[11.5px]" onClick={() => onAllocate(row.key, targets.spark ?? 0)}>
+                        {targets.spark !== null && model.spark !== null && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2 font-mono text-[12px]"
+                                onClick={() => onPreset(row.key, targets.spark ?? 0)}
+                                title={row.freePulls > 0 ? t("release.pulls.plan.sparkTitle", { spark: f.number(model.spark), free: f.number(row.freePulls), count: f.number(targets.spark) }) : t("release.pulls.plan.sparkTitlePlain", { spark: f.number(model.spark) })}
+                            >
                                 {t("release.pulls.plan.spark", { count: targets.spark })}
                             </Button>
                         )}
-                        {targets.guarantee !== null && (
-                            <Button size="sm" variant="outline" className="h-7 px-2 font-mono text-[11.5px]" onClick={() => onAllocate(row.key, targets.guarantee ?? 0)}>
+                        {targets.guarantee !== null && rawGuarantee !== null && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2 font-mono text-[12px]"
+                                onClick={() => onPreset(row.key, targets.guarantee ?? 0)}
+                                title={row.freePulls > 0 ? t("release.pulls.plan.guaranteeTitle", { at: f.number(rawGuarantee), free: f.number(row.freePulls), count: f.number(targets.guarantee) }) : t("release.pulls.plan.guaranteeTitlePlain", { at: f.number(rawGuarantee) })}
+                            >
                                 {t("release.pulls.plan.guarantee", { count: targets.guarantee })}
                             </Button>
                         )}
-                        {row.allocated > 0 && (
-                            <Button size="sm" variant="ghost" className="h-7 px-2 font-mono text-[11.5px]" onClick={() => onAllocate(row.key, 0)}>
+                        {/* Clears the potential picks too. Clearing only the count left the
+                            operators still marked P6 with nothing committed to them, and the
+                            next rebuild priced that goal and put the count straight back. */}
+                        {(row.allocated > 0 || row.totalCopies > 0) && (
+                            <Button size="sm" variant="ghost" className="h-7 px-2 font-mono text-[12px]" onClick={() => onClearRow(row.key)} title={t("release.pulls.plan.clearTitle")}>
                                 {t("release.pulls.plan.clear")}
                             </Button>
                         )}
@@ -451,24 +498,33 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onSetTarget, ev
                 </div>
             </div>
             <div className="min-w-0 md:col-span-2 xl:col-span-1">
-                <Estimated row={row} t={t} onAllocate={onAllocate} />
+                <Estimated row={row} t={t} onPreset={onPreset} onAllocate={onAllocate} />
             </div>
         </div>
     );
 }
 
+/**
+ * The banner's rate-up operators, for a banner with no art to show.
+ *
+ * Four and up letterbox rather than crop. An Orienteering pool features six and the
+ * strip used to take the first three and drop the rest, which read as a banner with
+ * half its roster missing; at six a cropping square shows a sliver of each face, so
+ * past three the faces keep their whole width and share the strip instead.
+ */
 function FaceStrip({ ids, lookup }: { ids: string[]; lookup: OperatorLookup }): React.ReactElement {
+    const many = ids.length > 3;
     return (
         <div className="flex aspect-[5/2] w-full items-center justify-center gap-1 overflow-hidden rounded-md bg-linear-to-br from-zinc-800 to-zinc-950 p-1 sm:p-1.5">
             {ids.map((id) => (
-                <Face key={id} id={id} onEn={lookup.has(id)} tight={ids.length > 2} />
+                <Face key={id} id={id} onEn={lookup.has(id)} many={many} />
             ))}
         </div>
     );
 }
 
-function Face({ id, onEn, tight }: { id: string; onEn: boolean; tight: boolean }): React.ReactElement | null {
+function Face({ id, onEn, many }: { id: string; onEn: boolean; many: boolean }): React.ReactElement | null {
     const [failed, setFailed] = React.useState(false);
     if (failed) return null;
-    return <img src={getAvatarById(id, onEn ? undefined : "cn")} alt="" loading="lazy" onError={() => setFailed(true)} className={cn("h-full rounded-sm object-cover", tight ? "min-w-0 flex-1" : "aspect-square flex-none")} />;
+    return <img src={getAvatarById(id, onEn ? undefined : "cn")} alt="" loading="lazy" onError={() => setFailed(true)} className={cn("h-full rounded-sm", many ? "min-w-0 flex-1 object-contain" : "aspect-square flex-none object-cover")} />;
 }

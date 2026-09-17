@@ -8,7 +8,7 @@ import type { IUserProfile } from "#/types/user";
 
 function buildOgData(user: IUserProfile) {
     return {
-        nickname: user.nickname ?? "Doctor",
+        nickname: user.nickname ?? "Player",
         level: user.level,
         grade: user.grade,
         totalScore: user.total_score,

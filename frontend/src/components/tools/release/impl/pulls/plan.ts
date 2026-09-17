@@ -99,6 +99,57 @@ export interface IPlanRow {
  */
 const MAX_POT_CACHE = new Map<string, IGoalEstimate>();
 
+/**
+ * A pity distribution's CONTENT, as a string.
+ *
+ * The goal walk is the dearest thing on this tab, up to 297 ms for six copies of
+ * each, and it was being run twice for every press of a potential stepper: once in
+ * the click handler to price the new goal, then again by the rebuild that followed.
+ * Nothing could be cached across the two because the walk's third input is a
+ * `Float64Array` that the rebuild hands back as an equal-but-NEW object, so identity
+ * said "different question" where the content said "same question". Hashing the bytes
+ * costs ~800 imuls against a walk of 297 ms, and the `WeakMap` means each array is
+ * hashed once however many goals are priced against it.
+ */
+const DIST_KEYS = new WeakMap<Float64Array, string>();
+
+function distKey(dist: Float64Array | null): string {
+    if (!dist) return "cold";
+    const hit = DIST_KEYS.get(dist);
+    if (hit !== undefined) return hit;
+    const bytes = new Uint8Array(dist.buffer, dist.byteOffset, dist.byteLength);
+    let h1 = 0x811c9dc5;
+    let h2 = 0x01000193;
+    for (let i = 0; i < bytes.length; i++) {
+        h1 = Math.imul(h1 ^ bytes[i], 0x01000193);
+        h2 = Math.imul(h2 + bytes[i] + i, 0x85ebca6b);
+    }
+    const key = `${(h1 >>> 0).toString(36)}.${(h2 >>> 0).toString(36)}.${dist.length}`;
+    DIST_KEYS.set(dist, key);
+    return key;
+}
+
+const GOAL_CACHE = new Map<string, IGoalEstimate>();
+/** Forty rows times a handful of distinct goals each; the bound is slack, not tight. */
+const GOAL_CACHE_MAX = 512;
+
+/**
+ * Rolls to reach a specific pair of copy counts, memoised on (model, request, start).
+ *
+ * Both the click handler and the rebuild go through here, so stepping a potential
+ * from 2 to 3 and back to 2 costs one walk rather than four.
+ */
+export function goalEstimateFor(model: IBannerModel, request: { copiesA: number; copiesB: number }, dist: Float64Array | null): IGoalEstimate {
+    const key = `${model.ruleType}|${model.featuredCount}|${model.shareEach}|${model.guarantee.kind}|${model.spark ?? ""}|${request.copiesA}|${request.copiesB}|${distKey(dist)}`;
+    let hit = GOAL_CACHE.get(key);
+    if (hit === undefined) {
+        hit = pullsToGoal(model, request, { startPityDist: dist, startPity: 0 });
+        if (GOAL_CACHE.size >= GOAL_CACHE_MAX) GOAL_CACHE.clear();
+        GOAL_CACHE.set(key, hit);
+    }
+    return hit;
+}
+
 export function maxPotFor(model: IBannerModel): IGoalEstimate {
     const key = `${model.ruleType}|${model.featuredCount}|${model.shareEach}|${model.guarantee.kind}|${model.spark ?? ""}`;
     let hit = MAX_POT_CACHE.get(key);
@@ -211,23 +262,6 @@ export function buildPlan({ banners, days, model, today, pity, allocations, targ
         return `d${id}`;
     };
 
-    /**
-     * The custom goal is the dearest walk the tab can be asked for: six copies of
-     * each operator measures 297 ms. It depends only on the banner model, the two
-     * counts and the counter it starts from, so the same question asked by two rows
-     * is answered once.
-     */
-    const goals = new Map<string, IGoalEstimate>();
-    const goalCached = (bm: IBannerModel, request: { copiesA: number; copiesB: number }, dist: Float64Array | null, distKey: string): IGoalEstimate => {
-        const key = `${bm.ruleType}|${bm.featuredCount}|${bm.shareEach}|${request.copiesA}|${request.copiesB}|${distKey}`;
-        let hit = goals.get(key);
-        if (hit === undefined) {
-            hit = pullsToGoal(bm, request, { startPityDist: dist, startPity: 0 });
-            goals.set(key, hit);
-        }
-        return hit;
-    };
-
     let committed = 0;
     const rows: IPlanRow[] = [];
     let totalAllocated = 0;
@@ -300,7 +334,7 @@ export function buildPlan({ banners, days, model, today, pity, allocations, targ
             goalEstimate:
                 totalCopies === 0
                     ? null
-                    : goalCached(
+                    : goalEstimateFor(
                           bm,
                           {
                               // Slot A is the banner's first featured operator and slot B
@@ -309,7 +343,6 @@ export function buildPlan({ banners, days, model, today, pity, allocations, targ
                               copiesB: featured.length > 1 ? (picked[featured[1]] ?? 0) : 0,
                           },
                           shared,
-                          idOf(shared),
                       ),
             pityDist: shared,
             // The spark counts every roll made on the banner, free ones included.
@@ -336,11 +369,19 @@ export function buildPlan({ banners, days, model, today, pity, allocations, targ
  * The sensible commitments for a banner, offered as one-click targets.
  * `spark` is the outright exchange where one exists, `guarantee` the roll at which a
  * forced rate-up binds, and `max` everything still in the bank.
+ *
+ * Both thresholds count every roll made on the banner, free ones included: `sparkMet`
+ * above tests `spent + freePulls >= spark`, and the odds are read at `totalPulls`.
+ * The presets did NOT, so a LIMITED banner handing out 24 free rolls offered "Spark
+ * 300" and then reported 300 + 24 free = 324 against a 300-roll exchange, 24 rolls of
+ * Orundum spent on nothing. What the player has to COMMIT is the threshold less what
+ * the banner gives them, which is what these are now.
  */
 export function planTargets(row: IPlanRow): { spark: number | null; guarantee: number | null; max: number } {
     const g = row.model.guarantee;
-    const guarantee = g.kind === "linkage" ? (g.at ?? null) : g.kind === "selection" ? (g.first ?? null) : null;
-    return { spark: row.model.spark, guarantee, max: row.available };
+    const rawGuarantee = g.kind === "linkage" ? (g.at ?? null) : g.kind === "selection" ? (g.first ?? null) : null;
+    const commit = (threshold: number | null): number | null => (threshold === null ? null : Math.max(0, threshold - row.freePulls));
+    return { spark: commit(row.model.spark), guarantee: commit(rawGuarantee), max: row.available };
 }
 
 /** The plan as CSV, one row per banner, for taking the numbers elsewhere. */

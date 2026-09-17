@@ -716,7 +716,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                                                                         title={isMastery ? t("planner.dialog.mastery", { mastery: val - 7 }) : t("planner.dialog.skillLevel", { level: val })}
                                                                                                     >
                                                                                                         {isMastery ? (
-                                                                                                            <img src={specializedIcon(val - 7)} alt={t("planner.dialog.mastery", { mastery: val - 7 })} className="size-5 object-contain sm:size-6" />
+                                                                                                            <img src={specializedIcon(val - 7)} alt={t("planner.dialog.mastery", { mastery: val - 7 })} className="icon-theme-aware size-5 object-contain sm:size-6" />
                                                                                                         ) : (
                                                                                                             <span className="font-semibold text-xs sm:text-[13px]">{val}</span>
                                                                                                         )}
@@ -740,7 +740,11 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                                                     )}
                                                                                     title={isMastery ? t("planner.dialog.mastery", { mastery: val - 7 }) : t("planner.dialog.skillLevel", { level: val })}
                                                                                 >
-                                                                                    {isMastery ? <img src={specializedIcon(val - 7)} alt={t("planner.dialog.mastery", { mastery: val - 7 })} className="size-5 object-contain sm:size-6" /> : <span className="font-semibold text-xs sm:text-[13px]">{val}</span>}
+                                                                                    {isMastery ? (
+                                                                                        <img src={specializedIcon(val - 7)} alt={t("planner.dialog.mastery", { mastery: val - 7 })} className="icon-theme-aware size-5 object-contain sm:size-6" />
+                                                                                    ) : (
+                                                                                        <span className="font-semibold text-xs sm:text-[13px]">{val}</span>
+                                                                                    )}
                                                                                 </button>
                                                                             );
                                                                         })}

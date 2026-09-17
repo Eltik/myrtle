@@ -11,6 +11,54 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-09-18.title": {
+        text: "Improved: Readability and pull planner",
+        description: "Title of the 2026-09-18 release note, covering interface readability and changes to the pull planner.",
+    },
+    "note.2026-09-18.lead": {
+        text: "The roster fits more operators per row at every width, and its promotion, potential and mastery badges are legible on the light theme again. The pull planner's goals say what they measure, its currencies carry the game's own icons, and setting a potential no longer stalls before the numbers move. Margins and page headings are now shared across the site.",
+        description: "Lead paragraph of the 2026-09-18 release note, rendered as Markdown. 'Roster' is a player's collection of operators; promotion, potential and mastery are in-game upgrade systems; a 'pull' is one gacha roll and a 'goal' here is a target number of copies.",
+    },
+    "note.2026-09-18.hrefLabel": {
+        text: "Open the pull planner",
+        description: "Label of the 2026-09-18 release note's call to action, which opens the release planner on its Pulls tab.",
+    },
+    "note.2026-09-18.item.1": {
+        text: "The roster fits more operators per row at every width, and three per row on any phone rather than two on some and three on others.",
+        description: "Bullet in the 2026-09-18 release note, filed under 'Improved'. 'Roster' is a player's collection of operators.",
+    },
+    "note.2026-09-18.item.2": {
+        text: "Orundum, Originite Prime, permits and certificates carry their own icons in the pull planner, and its smallest labels have been enlarged.",
+        description: "Bullet in the 2026-09-18 release note, filed under 'Improved'. Orundum, Originite Prime, Headhunting Permits and certificates are in-game currencies and keep the game's names.",
+    },
+    "note.2026-09-18.item.3": {
+        text: "The pull planner's goals say what they measure: a specific rate-up, any rate-up, six copies of one. On a banner with more than two rate-ups the old wording claimed something the estimate never covered.",
+        description: "Bullet in the 2026-09-18 release note, filed under 'Improved'. A 'rate-up' is an operator with raised odds on a banner; a banner is a time-limited gacha pool.",
+    },
+    "note.2026-09-18.item.4": {
+        text: "The Spark and Guarantee buttons ask for what you actually have to spend, with the banner's own free pulls already subtracted.",
+        description: "Bullet in the 2026-09-18 release note, filed under 'Improved'. A 'spark' is the pity exchange that trades a fixed number of pulls for an operator outright.",
+    },
+    "note.2026-09-18.item.5": {
+        text: "Margins, page headings and the wording for players are consistent across the site; the leaderboard, search and profiles all say 'players' now.",
+        description: "Bullet in the 2026-09-18 release note, filed under 'Improved'. The site previously alternated between 'Doctors', the game's own word for the player, and 'Players'.",
+    },
+    "note.2026-09-18.item.6": {
+        text: "Promotion ranks, potential ranks and mastery badges were nearly invisible on the light theme. They are legible again, and larger on phones.",
+        description: "Bullet in the 2026-09-18 release note, filed under 'Fixed'. Promotion, potential and mastery are in-game operator upgrade systems.",
+    },
+    "note.2026-09-18.item.7": {
+        text: "Stepping an operator's potential in the pull planner no longer stalls for about a second before the numbers move.",
+        description: "Bullet in the 2026-09-18 release note, filed under 'Fixed'. 'Potential' is the in-game upgrade earned from duplicate copies of an operator.",
+    },
+    "note.2026-09-18.item.8": {
+        text: "A banner's Clear button now clears the operators picked on it as well as the pulls, and a banner with no art of its own no longer borrows an unrelated event's picture or hides half its rate-up operators.",
+        description: "Bullet in the 2026-09-18 release note, filed under 'Fixed'. A 'rate-up' is an operator with raised odds on a banner.",
+    },
+    "note.2026-09-18.item.9": {
+        text: "Profile, settings and tier-list pages no longer scroll sideways by a few pixels on a phone.",
+        description: "Bullet in the 2026-09-18 release note, filed under 'Fixed'.",
+    },
     "note.2026-09-17-3.title": {
         text: "Latin names for CN-only operators",
         description: "Title of the third 2026-09-17 release note. 'CN' is the Chinese game server's short name and stays as-is.",

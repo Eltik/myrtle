@@ -130,7 +130,7 @@ export function PullsSimulator({ budget, pity }: IPullsSimulatorProps): React.Re
 
             <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
                 <div className="flex flex-col gap-1">
-                    <span className="font-sans text-[11.5px] text-muted-foreground">{t("release.pulls.odds.banner")}</span>
+                    <span className="font-sans text-[12px] text-muted-foreground">{t("release.pulls.odds.banner")}</span>
                     <Select value={ruleType} onValueChange={(v) => v !== null && setRuleType(v as BannerArchetype)}>
                         <SelectTrigger size="sm" className="w-44" aria-label={t("release.pulls.odds.banner")}>
                             <SelectValue>{() => bannerLabel(ruleType)}</SelectValue>
@@ -145,7 +145,7 @@ export function PullsSimulator({ budget, pity }: IPullsSimulatorProps): React.Re
                     </Select>
                 </div>
                 <div className="flex flex-col gap-1">
-                    <span className="font-sans text-[11.5px] text-muted-foreground">{t("release.pulls.sim.target")}</span>
+                    <span className="font-sans text-[12px] text-muted-foreground">{t("release.pulls.sim.target")}</span>
                     <Select value={String(copies)} onValueChange={(v) => v !== null && setCopies(Number(v))}>
                         <SelectTrigger size="sm" className="w-24 font-mono tabular-nums" aria-label={t("release.pulls.sim.target")}>
                             <SelectValue>{() => f.number(copies)}</SelectValue>
@@ -189,7 +189,7 @@ export function PullsSimulator({ budget, pity }: IPullsSimulatorProps): React.Re
                             <span
                                 key={o.index}
                                 className={cn(
-                                    "relative inline-flex size-6 items-center justify-center rounded font-mono text-[10px] tabular-nums",
+                                    "relative inline-flex size-6 items-center justify-center rounded font-mono text-[11px] tabular-nums",
                                     o.rarity >= 5 ? "font-bold text-zinc-950" : "text-zinc-950/70",
                                     // A rate-up is marked with a shape, not only a
                                     // colour: the ring alone carried the whole

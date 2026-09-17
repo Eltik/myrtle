@@ -15,10 +15,6 @@ export const messages = {
         text: "Stages",
         description: "Last breadcrumb crumb: this page.",
     },
-    "list.kicker": {
-        text: "The Stage Record",
-        description: "Small uppercase kicker over the page heading. This site's own name for the stage archive.",
-    },
     "list.title": {
         text: "Every operation, catalogued.",
         description: "Page heading of the stage list. 'Operation' is the game's word for a stage.",

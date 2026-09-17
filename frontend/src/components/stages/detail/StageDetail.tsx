@@ -50,8 +50,8 @@ export function StageDetail({ stage, zone, level, enemyData, materials }: { stag
     }
 
     return (
-        <div className="relative z-1 mx-auto w-[min(1600px,calc(100%-2rem))] pb-16">
-            <nav className="pt-7 pb-3.5 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label={t("detail.breadcrumb")}>
+        <div className="page-shell [--page-max:1600px]">
+            <nav className="pb-3.5 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label={t("detail.breadcrumb")}>
                 <ol className="flex items-center gap-1.5">
                     <li>
                         <Link to="/stages" className="transition-colors hover:text-foreground">

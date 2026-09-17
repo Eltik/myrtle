@@ -112,8 +112,8 @@ export function Leaderboard() {
     };
 
     return (
-        <div className="relative z-1 mx-auto w-[min(1280px,calc(100%-2rem))] pb-20">
-            <div className="pt-7 pb-2.5">
+        <div className="page-shell [--page-max:1280px]">
+            <div className="pb-2.5">
                 <nav aria-label={t("leaderboard.breadcrumb.label")} className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none">
                     <span>{t("leaderboard.breadcrumb.doctors")}</span>
                     <ChevronRight className="h-2.5 w-2.5" aria-hidden />

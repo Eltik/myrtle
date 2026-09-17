@@ -303,7 +303,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
                     saveProgress={saveProgress}
                 />
 
-                <div className="mx-auto mt-4 grid w-[min(1280px,calc(100%-1.5rem))] gap-4 sm:mt-6 sm:w-[min(1280px,calc(100%-2rem))] sm:gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+                <div className="page-gutter mt-4 grid gap-4 [--page-max:1280px] sm:mt-6 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
                     <div className="min-w-0">
                         <section className={styles.board} aria-label={t("edit.board.label", { title: state.title })}>
                             {state.tiers.map((tier, idx) => (

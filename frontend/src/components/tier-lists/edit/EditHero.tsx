@@ -38,7 +38,7 @@ export function EditHero({ slug, title, description, onTitleChange, onDescriptio
 
     return (
         <header className="border-border/60 border-b bg-linear-to-b from-card/40 to-transparent">
-            <div className="mx-auto w-[min(1280px,calc(100%-1.5rem))] pt-5 pb-6 sm:w-[min(1280px,calc(100%-2rem))] sm:pt-8 sm:pb-7">
+            <div className="page-gutter pt-5 pb-6 [--page-max:1280px] sm:pt-8 sm:pb-7">
                 <Breadcrumb className="mb-3">
                     <BreadcrumbList className="text-xs">
                         <BreadcrumbItem>

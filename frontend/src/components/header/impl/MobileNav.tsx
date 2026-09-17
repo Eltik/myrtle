@@ -136,10 +136,10 @@ export function MobileNav({ items }: IMobileNavProps) {
                                     <div className="mb-2 flex items-center gap-3 px-2 py-2">
                                         <Avatar className="h-8 w-8">
                                             <AvatarImage alt={t("mobileNav.userAvatar")} src={getAvatarSkinId(user)} />
-                                            <AvatarFallback className="text-[0.625rem]">{(user.nickname ?? "Doctor").slice(0, 1)}</AvatarFallback>
+                                            <AvatarFallback className="text-[0.625rem]">{(user.nickname ?? "Player").slice(0, 1)}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex flex-col">
-                                            <span className="font-medium text-sm">{user.nickname ?? "Doctor"}</span>
+                                            <span className="font-medium text-sm">{user.nickname ?? "Player"}</span>
                                             <span className="text-muted-foreground text-xs">{t("mobileNav.level", { level: user.level })}</span>
                                         </div>
                                     </div>

@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-17T10:49:54.663Z",
+    "generatedAt": "2026-09-17T22:41:57.987Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -379,7 +379,7 @@
         {
             "key": "admin.dash.recent.desc",
             "namespace": "admin",
-            "source_text": "Last {count} Doctors to authenticate. From {endpoint}.",
+            "source_text": "Last {count} players to authenticate. From {endpoint}.",
             "description": "Caption under the Recently signed-up users heading. {endpoint} is a backend endpoint path, shown in monospace. 'Doctor' is what Arknights calls the player, and the wording stays plural at any count.",
             "placeholders": [
                 "count",
@@ -473,8 +473,8 @@
         {
             "key": "admin.dash.th.doctor",
             "namespace": "admin",
-            "source_text": "Doctor",
-            "description": "Table column header for the account. 'Doctor' is what Arknights calls the player. Rendered uppercase.",
+            "source_text": "Player",
+            "description": "Table column header for the account. 'Player' is the site's term; the game itself says 'Doctor'. Rendered uppercase.",
             "placeholders": []
         },
         {
@@ -944,8 +944,8 @@
         {
             "key": "admin.i18n.grant.findDoctor",
             "namespace": "admin",
-            "source_text": "Find a Doctor",
-            "description": "Label over the account search in the grant dialog. 'Doctor' is what Arknights calls the player.",
+            "source_text": "Find a player",
+            "description": "Label over the account search in the grant dialog. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -2955,8 +2955,8 @@
         {
             "key": "admin.perms.grant.findDoctor",
             "namespace": "admin",
-            "source_text": "Find a Doctor",
-            "description": "Label over the account search in the grant dialog. 'Doctor' is what Arknights calls the player.",
+            "source_text": "Find a player",
+            "description": "Label over the account search in the grant dialog. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -3158,8 +3158,8 @@
         {
             "key": "admin.perms.th.doctor",
             "namespace": "admin",
-            "source_text": "Doctor",
-            "description": "Permission table column header for who holds the grant. 'Doctor' is what Arknights calls the player. Rendered uppercase.",
+            "source_text": "Player",
+            "description": "Permission table column header for who holds the grant. 'Player' is the site's term; the game itself says 'Doctor'. Rendered uppercase.",
             "placeholders": []
         },
         {
@@ -3960,8 +3960,8 @@
         {
             "key": "admin.users.sub",
             "namespace": "admin",
-            "source_text": "Doctors with synced profiles. Pulled from {search}. Roles write to the {table} table via {endpoint} and only take effect for the target once their token refreshes.",
-            "description": "Sentence under the Users title: the person whose role changed keeps their old access until their sign-in token is renewed. {search} and {endpoint} are endpoint paths and {table} a database table name, all shown in monospace. 'Doctor' is what Arknights calls the player.",
+            "source_text": "Players with synced profiles. Pulled from {search}. Roles write to the {table} table via {endpoint} and only take effect for the target once their token refreshes.",
+            "description": "Sentence under the Users title: the person whose role changed keeps their old access until their sign-in token is renewed. {search} and {endpoint} are endpoint paths and {table} a database table name, all shown in monospace. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": [
                 "endpoint",
                 "search",
@@ -3971,8 +3971,8 @@
         {
             "key": "admin.users.th.doctor",
             "namespace": "admin",
-            "source_text": "Doctor",
-            "description": "User table column header for the account. 'Doctor' is what Arknights calls the player. Rendered uppercase.",
+            "source_text": "Player",
+            "description": "User table column header for the account. 'Player' is the site's term; the game itself says 'Doctor'. Rendered uppercase.",
             "placeholders": []
         },
         {
@@ -4540,6 +4540,90 @@
             "namespace": "changelog",
             "source_text": "Pull planner",
             "description": "Title of the 2026-09-17 release note. 'Pull' is the community's word for a single gacha roll.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-18.hrefLabel",
+            "namespace": "changelog",
+            "source_text": "Open the pull planner",
+            "description": "Label of the 2026-09-18 release note's call to action, which opens the release planner on its Pulls tab.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-18.item.1",
+            "namespace": "changelog",
+            "source_text": "The roster fits more operators per row at every width, and three per row on any phone rather than two on some and three on others.",
+            "description": "Bullet in the 2026-09-18 release note, filed under 'Improved'. 'Roster' is a player's collection of operators.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-18.item.2",
+            "namespace": "changelog",
+            "source_text": "Orundum, Originite Prime, permits and certificates carry their own icons in the pull planner, and its smallest labels have been enlarged.",
+            "description": "Bullet in the 2026-09-18 release note, filed under 'Improved'. Orundum, Originite Prime, Headhunting Permits and certificates are in-game currencies and keep the game's names.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-18.item.3",
+            "namespace": "changelog",
+            "source_text": "The pull planner's goals say what they measure: a specific rate-up, any rate-up, six copies of one. On a banner with more than two rate-ups the old wording claimed something the estimate never covered.",
+            "description": "Bullet in the 2026-09-18 release note, filed under 'Improved'. A 'rate-up' is an operator with raised odds on a banner; a banner is a time-limited gacha pool.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-18.item.4",
+            "namespace": "changelog",
+            "source_text": "The Spark and Guarantee buttons ask for what you actually have to spend, with the banner's own free pulls already subtracted.",
+            "description": "Bullet in the 2026-09-18 release note, filed under 'Improved'. A 'spark' is the pity exchange that trades a fixed number of pulls for an operator outright.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-18.item.5",
+            "namespace": "changelog",
+            "source_text": "Margins, page headings and the wording for players are consistent across the site; the leaderboard, search and profiles all say 'players' now.",
+            "description": "Bullet in the 2026-09-18 release note, filed under 'Improved'. The site previously alternated between 'Doctors', the game's own word for the player, and 'Players'.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-18.item.6",
+            "namespace": "changelog",
+            "source_text": "Promotion ranks, potential ranks and mastery badges were nearly invisible on the light theme. They are legible again, and larger on phones.",
+            "description": "Bullet in the 2026-09-18 release note, filed under 'Fixed'. Promotion, potential and mastery are in-game operator upgrade systems.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-18.item.7",
+            "namespace": "changelog",
+            "source_text": "Stepping an operator's potential in the pull planner no longer stalls for about a second before the numbers move.",
+            "description": "Bullet in the 2026-09-18 release note, filed under 'Fixed'. 'Potential' is the in-game upgrade earned from duplicate copies of an operator.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-18.item.8",
+            "namespace": "changelog",
+            "source_text": "A banner's Clear button now clears the operators picked on it as well as the pulls, and a banner with no art of its own no longer borrows an unrelated event's picture or hides half its rate-up operators.",
+            "description": "Bullet in the 2026-09-18 release note, filed under 'Fixed'. A 'rate-up' is an operator with raised odds on a banner.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-18.item.9",
+            "namespace": "changelog",
+            "source_text": "Profile, settings and tier-list pages no longer scroll sideways by a few pixels on a phone.",
+            "description": "Bullet in the 2026-09-18 release note, filed under 'Fixed'.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-18.lead",
+            "namespace": "changelog",
+            "source_text": "The roster fits more operators per row at every width, and its promotion, potential and mastery badges are legible on the light theme again. The pull planner's goals say what they measure, its currencies carry the game's own icons, and setting a potential no longer stalls before the numbers move. Margins and page headings are now shared across the site.",
+            "description": "Lead paragraph of the 2026-09-18 release note, rendered as Markdown. 'Roster' is a player's collection of operators; promotion, potential and mastery are in-game upgrade systems; a 'pull' is one gacha roll and a 'goal' here is a target number of copies.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-18.title",
+            "namespace": "changelog",
+            "source_text": "Improved: Readability and pull planner",
+            "description": "Title of the 2026-09-18 release note, covering interface readability and changes to the pull planner.",
             "placeholders": []
         },
         {
@@ -6491,6 +6575,27 @@
             "placeholders": []
         },
         {
+            "key": "gacha.community.breadcrumb.current",
+            "namespace": "gacha",
+            "source_text": "Community",
+            "description": "Last breadcrumb crumb: this page.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.community.breadcrumb.gacha",
+            "namespace": "gacha",
+            "source_text": "Gacha",
+            "description": "First breadcrumb crumb, naming the section this page lives in. 'Gacha' is the game's random-draw system and stays as-is.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.community.breadcrumb.label",
+            "namespace": "gacha",
+            "source_text": "breadcrumb",
+            "description": "Accessible name of the breadcrumb trail above the community gacha heading.",
+            "placeholders": []
+        },
+        {
             "key": "gacha.community.compare.deviation",
             "namespace": "gacha",
             "source_text": "{direction, select, above {above by {percent}%} other {below by {percent}%}}",
@@ -6552,7 +6657,7 @@
             "key": "gacha.community.header.blurbUsers",
             "namespace": "gacha",
             "source_text": "{count} doctors",
-            "description": "The bold count in the sentence under the community gacha heading. 'Doctor' is what Arknights calls the player.",
+            "description": "The bold count in the sentence under the community gacha heading. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": [
                 "count"
             ]
@@ -6562,13 +6667,6 @@
             "namespace": "gacha",
             "source_text": "cached",
             "description": "Chip shown when the figures came from the server's cache rather than a fresh computation. Rendered in uppercase by the style.",
-            "placeholders": []
-        },
-        {
-            "key": "gacha.community.header.kicker",
-            "namespace": "gacha",
-            "source_text": "Live · community statistics",
-            "description": "Small uppercase label above the community gacha heading. Keep the middle dot.",
             "placeholders": []
         },
         {
@@ -6656,7 +6754,7 @@
             "key": "gacha.community.kpi.totalPulls.meta",
             "namespace": "gacha",
             "source_text": "{count} contributing doctors",
-            "description": "Under the total pull count: how many players shared their records. 'Doctor' is what Arknights calls the player.",
+            "description": "Under the total pull count: how many players shared their records. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": [
                 "count"
             ]
@@ -6884,7 +6982,7 @@
             "key": "gacha.community.runs.contributors",
             "namespace": "gacha",
             "source_text": "{count} contributing doctors",
-            "description": "Tooltip on a banner card's player count. 'Doctor' is what Arknights calls the player.",
+            "description": "Tooltip on a banner card's player count. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": [
                 "count"
             ]
@@ -6962,7 +7060,7 @@
             "key": "gacha.community.runs.metric.popularity",
             "namespace": "gacha",
             "source_text": "contributing doctors",
-            "description": "Names the metric a card was ranked by, inside the rank tooltip: 'Ranked #3 by contributing doctors'. 'Doctor' is what Arknights calls the player.",
+            "description": "Names the metric a card was ranked by, inside the rank tooltip: 'Ranked #3 by contributing doctors'. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -10156,14 +10254,14 @@
         {
             "key": "meta.og.userLeaderboard.subtitle",
             "namespace": "meta",
-            "source_text": "Top Doctors ranked by score across servers.",
+            "source_text": "Top players ranked by score across servers.",
             "description": "Subtitle on the player leaderboard social card.",
             "placeholders": []
         },
         {
             "key": "meta.og.userLeaderboard.title",
             "namespace": "meta",
-            "source_text": "Doctor Leaderboard",
+            "source_text": "Player Leaderboard",
             "description": "Headline on the player leaderboard social card.",
             "placeholders": []
         },
@@ -10177,7 +10275,7 @@
         {
             "key": "meta.og.userSearch.title",
             "namespace": "meta",
-            "source_text": "Search Doctors",
+            "source_text": "Search Players",
             "description": "Headline on the player search social card. `Doctors` is what Arknights calls its players.",
             "placeholders": []
         },
@@ -10436,7 +10534,7 @@
         {
             "key": "meta.user.description",
             "namespace": "meta",
-            "source_text": "{hasLevel, select, yes {{hasGrade, select, yes {Doctor profile • Lv {level} • {grade}} other {Doctor profile • Lv {level}}}} other {{hasGrade, select, yes {Doctor profile • {grade}} other {Doctor profile}}}}",
+            "source_text": "{hasLevel, select, yes {{hasGrade, select, yes {Player profile • Lv {level} • {grade}} other {Player profile • Lv {level}}}} other {{hasGrade, select, yes {Player profile • {grade}} other {Player profile}}}}",
             "description": "Meta description of a player profile that has no resume text. `{hasLevel}` and `{hasGrade}` are `yes` or `no` and say which of the two optional fragments the profile has; `{level}` is the account level and `{grade}` the account grade.",
             "placeholders": [
                 "grade",
@@ -10448,14 +10546,14 @@
         {
             "key": "meta.user.fallbackTitle",
             "namespace": "meta",
-            "source_text": "Doctor",
+            "source_text": "Player",
             "description": "Document title of a player profile whose data failed to load. `Doctor` is what Arknights calls the player.",
             "placeholders": []
         },
         {
             "key": "meta.userLeaderboard.description",
             "namespace": "meta",
-            "source_text": "Top Doctors ranked by score across servers.",
+            "source_text": "Top players ranked by score across servers.",
             "description": "Meta description of the player leaderboard. `Doctors` is what Arknights calls its players.",
             "placeholders": []
         },
@@ -10476,7 +10574,7 @@
         {
             "key": "meta.userSearch.title",
             "namespace": "meta",
-            "source_text": "Search Doctors",
+            "source_text": "Search Players",
             "description": "Document title of player search. `Doctors` is what Arknights calls its players.",
             "placeholders": []
         },
@@ -10810,7 +10908,7 @@
             "key": "nav.header.gacha.community.desc",
             "namespace": "nav",
             "source_text": "Pull rates, top operators, and timing across opted-in doctors",
-            "description": "Blurb under the Community entry in the Gacha menu. A 'pull' is one random draw; 'doctor' is the game's word for a player.",
+            "description": "Blurb under the Community entry in the Gacha menu. A 'pull' is one random draw; 'player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -10851,8 +10949,8 @@
         {
             "key": "nav.header.players.leaderboard.desc",
             "namespace": "nav",
-            "source_text": "Top Doctors ranked by score",
-            "description": "Blurb under the Leaderboard entry in the Players menu. 'Doctor' is the game's word for a player.",
+            "source_text": "Top players ranked by score",
+            "description": "Blurb under the Leaderboard entry in the Players menu. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -11109,8 +11207,8 @@
         {
             "key": "nav.page.playersLeaderboard.desc",
             "namespace": "nav",
-            "source_text": "Top Doctors ranked by score",
-            "description": "Blurb under the Leaderboard palette entry. 'Doctor' is the game's word for the player.",
+            "source_text": "Top players ranked by score",
+            "description": "Blurb under the Leaderboard palette entry. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -11123,15 +11221,15 @@
         {
             "key": "nav.page.playersSearch.desc",
             "namespace": "nav",
-            "source_text": "Find Doctor profiles by nickname or UID",
+            "source_text": "Find player profiles by nickname or UID",
             "description": "Blurb under the Search Doctors palette entry. UID is the in-game account number.",
             "placeholders": []
         },
         {
             "key": "nav.page.playersSearch.label",
             "namespace": "nav",
-            "source_text": "Search Doctors",
-            "description": "Palette entry for the player search. 'Doctor' is what Arknights calls the player, so keep the game's own term for the region.",
+            "source_text": "Search Players",
+            "description": "Palette entry for the player search. The site says 'player' throughout; Arknights itself calls them Doctors, so a region may prefer the game's term.",
             "placeholders": []
         },
         {
@@ -11361,13 +11459,13 @@
             "key": "nav.tool.dps.desc",
             "namespace": "nav",
             "source_text": "Interactive damage curves per skill",
-            "description": "One-line blurb under the DPS charts tool.",
+            "description": "One-line blurb under the DPS Charts tool.",
             "placeholders": []
         },
         {
             "key": "nav.tool.dps.label",
             "namespace": "nav",
-            "source_text": "DPS charts",
+            "source_text": "DPS Charts",
             "description": "Name of the damage-per-second chart tool. 'DPS' is the usual abbreviation and stays as-is.",
             "placeholders": []
         },
@@ -11375,13 +11473,13 @@
             "key": "nav.tool.hps.desc",
             "namespace": "nav",
             "source_text": "Interactive healing curves per skill",
-            "description": "One-line blurb under the HPS charts tool.",
+            "description": "One-line blurb under the HPS Charts tool.",
             "placeholders": []
         },
         {
             "key": "nav.tool.hps.label",
             "namespace": "nav",
-            "source_text": "HPS charts",
+            "source_text": "HPS Charts",
             "description": "Name of the healing-per-second chart tool. 'HPS' is the usual abbreviation and stays as-is.",
             "placeholders": []
         },
@@ -11395,7 +11493,7 @@
         {
             "key": "nav.tool.planner.label",
             "namespace": "nav",
-            "source_text": "Operator planner",
+            "source_text": "Operator Planner",
             "description": "Name of the tool for planning what to invest in an operator.",
             "placeholders": []
         },
@@ -11423,7 +11521,7 @@
         {
             "key": "nav.tool.recruitment.label",
             "namespace": "nav",
-            "source_text": "Recruitment calculator",
+            "source_text": "Recruitment Calculator",
             "description": "Name of the tool that works out which operators a set of recruitment tags can guarantee. 'Recruitment' is the in-game screen's name.",
             "placeholders": []
         },
@@ -11458,7 +11556,7 @@
         {
             "key": "nav.userMenu.adminPanel",
             "namespace": "nav",
-            "source_text": "Admin panel",
+            "source_text": "Admin Panel",
             "description": "Menu item shown only to staff, linking to the moderation and translation tools.",
             "placeholders": []
         },
@@ -15329,7 +15427,7 @@
         {
             "key": "settings.profile.level.desc",
             "namespace": "settings",
-            "source_text": "Doctor level from the in-game profile.",
+            "source_text": "Player level from the in-game profile.",
             "description": "Caption under the account-level field. 'Doctor' is what the game calls the player.",
             "placeholders": []
         },
@@ -16559,13 +16657,6 @@
             "placeholders": [
                 "count"
             ]
-        },
-        {
-            "key": "stages.list.kicker",
-            "namespace": "stages",
-            "source_text": "The Stage Record",
-            "description": "Small uppercase kicker over the page heading. This site's own name for the stage archive.",
-            "placeholders": []
         },
         {
             "key": "stages.list.search.aria",
@@ -18185,8 +18276,8 @@
         {
             "key": "tierLists.detail.hero.authorFallback",
             "namespace": "tierLists",
-            "source_text": "Doctor",
-            "description": "Stand-in for an author who has set no nickname. 'Doctor' is what Arknights calls the player.",
+            "source_text": "Player",
+            "description": "Stand-in for an author who has set no nickname. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -26898,15 +26989,15 @@
         {
             "key": "tools.release.pulls.income.extraHint",
             "namespace": "tools",
-            "source_text": "Event rewards, mail and anything else. This project's release data carries Originite Prime for event stages but no event Orundum, so it is not guessed at here.",
-            "description": "Hint under the Extra per day input, explaining why event Orundum must be entered by hand.",
+            "source_text": "Anything not already counted above: event rewards, mail, login bonuses. Events hand out Orundum, but this site has no data for how much, so nothing is assumed and you add it here yourself.",
+            "description": "Hint under the Extra per day input. It says why event Orundum is the visitor's own figure to enter. The earlier wording named the project's data pipeline and was flagged as unclear in #ui-ux.",
             "placeholders": []
         },
         {
             "key": "tools.release.pulls.income.freePulls",
             "namespace": "tools",
-            "source_text": "Count banner free pulls",
-            "description": "Switch label: include the free pulls a Limited or collab banner hands out.",
+            "source_text": "Include free pulls from banners",
+            "description": "Switch label: count the free pulls a Limited or collab banner hands out toward that banner. 'Count banner free pulls' read as a noun stack and was flagged in #ui-ux.",
             "placeholders": []
         },
         {
@@ -26927,8 +27018,32 @@
             "key": "tools.release.pulls.income.goldCertShop",
             "namespace": "tools",
             "source_text": "Buy permits with gold certs",
-            "description": "Switch label: spend Distinction Certificates on the monthly Headhunting Permit bundles.",
+            "description": "Accessible name of the switch that spends Distinction Certificates on the monthly Headhunting Permit bundles. The visible label is assembled from goldCertShop.rich.",
             "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.goldCertShop.certs",
+            "namespace": "tools",
+            "source_text": "gold certs",
+            "description": "The noun substituted into goldCertShop.rich as {certs}: Distinction Certificates, the game's gold-coloured currency.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.goldCertShop.permits",
+            "namespace": "tools",
+            "source_text": "permits",
+            "description": "The noun substituted into goldCertShop.rich as {permits}: Headhunting Permits, the item a pull costs.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.goldCertShop.rich",
+            "namespace": "tools",
+            "source_text": "Buy {permits} with {certs}",
+            "description": "Visible label of that switch. {permits} and {certs} are the two nouns below, each shown with the game's icon in front of it.",
+            "placeholders": [
+                "certs",
+                "permits"
+            ]
         },
         {
             "key": "tools.release.pulls.income.goldCerts",
@@ -27043,6 +27158,20 @@
             "namespace": "tools",
             "source_text": "Monthly store",
             "description": "Switch label for the monthly certificate-shop Orundum and permits.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.store.hint",
+            "namespace": "tools",
+            "source_text": "The certificate shop restocks every month with Orundum and a Headhunting Permit bought with Distinction Certificates. Counted at full monthly value.",
+            "description": "Explanation in the info popover beside the Monthly store switch, saying what the shop is and what is counted. Distinction Certificates are the gold currency.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.income.store.hint.aria",
+            "namespace": "tools",
+            "source_text": "About the monthly store",
+            "description": "Accessible name of the info button beside the Monthly store switch.",
             "placeholders": []
         },
         {
@@ -27183,7 +27312,14 @@
             "key": "tools.release.pulls.plan.clear",
             "namespace": "tools",
             "source_text": "Clear",
-            "description": "Button removing this banner's commitment.",
+            "description": "Button removing this banner's commitment and the potentials picked on it.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.clearTitle",
+            "namespace": "tools",
+            "source_text": "Clear this banner: the committed pulls and the potentials picked on it.",
+            "description": "Tooltip on the per-banner Clear button, naming both things it removes.",
             "placeholders": []
         },
         {
@@ -27196,8 +27332,8 @@
         {
             "key": "tools.release.pulls.plan.estimated",
             "namespace": "tools",
-            "source_text": "Estimated",
-            "description": "Column heading for how many pulls this banner is expected to need for its rate-up operator.",
+            "source_text": "Pull targets",
+            "description": "Heading over the list of goals for this banner. Each row is a goal and the pulls it is expected to take; clicking one commits that many.",
             "placeholders": []
         },
         {
@@ -27249,29 +27385,36 @@
         {
             "key": "tools.release.pulls.plan.goal.any",
             "namespace": "tools",
-            "source_text": "Either one",
-            "description": "Row label in the estimate: reaching whichever of the two rate-up operators comes first.",
+            "source_text": "Any rate-up",
+            "description": "Goal row: one copy of whichever rate-up operator arrives first, whatever the banner's rate-up count.",
             "placeholders": []
         },
         {
             "key": "tools.release.pulls.plan.goal.both",
             "namespace": "tools",
-            "source_text": "Both",
-            "description": "Row label in the estimate: reaching both rate-up operators.",
+            "source_text": "Both rate-ups",
+            "description": "Goal row on a banner with exactly two rate-ups: one copy of each.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.goal.bothMulti",
+            "namespace": "tools",
+            "source_text": "One specific, plus any other",
+            "description": "Goal row on a banner with more than two rate-ups: one copy of the named operator and one of any other featured one. Not 'all rate-ups' - the model tracks the named operator against the rest as a group, so it cannot price every one of them.",
             "placeholders": []
         },
         {
             "key": "tools.release.pulls.plan.goal.maxPot",
             "namespace": "tools",
-            "source_text": "Max pot",
-            "description": "Row label in the estimate: taking the operator to maximum potential, which is six copies.",
+            "source_text": "Six of a specific rate-up",
+            "description": "Goal row: six copies of one named rate-up operator, which is maximum potential.",
             "placeholders": []
         },
         {
             "key": "tools.release.pulls.plan.goal.specific",
             "namespace": "tools",
-            "source_text": "This operator",
-            "description": "Row label in the estimate: reaching one named rate-up operator.",
+            "source_text": "A specific rate-up",
+            "description": "Goal row: one copy of one named rate-up operator. Worded the same as the Odds calculator's own label for the same quantity.",
             "placeholders": []
         },
         {
@@ -27303,6 +27446,26 @@
             ]
         },
         {
+            "key": "tools.release.pulls.plan.guaranteeTitle",
+            "namespace": "tools",
+            "source_text": "Commit enough to reach the {at}-pull guarantee. This banner gives {free} free pulls, so {count} of your own get you there.",
+            "description": "Tooltip on the Guarantee preset when the banner hands out free pulls. The guarantee forces a rate-up result once that many pulls have been made.",
+            "placeholders": [
+                "at",
+                "count",
+                "free"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.guaranteeTitlePlain",
+            "namespace": "tools",
+            "source_text": "Commit enough to reach the {at}-pull guarantee.",
+            "description": "Tooltip on the Guarantee preset when the banner hands out no free pulls.",
+            "placeholders": [
+                "at"
+            ]
+        },
+        {
             "key": "tools.release.pulls.plan.inferredCount",
             "namespace": "tools",
             "source_text": "{count, plural, one {# banner has} other {# banners have}} no published rate-up detail yet, so the split is inferred from the banner type.",
@@ -27322,8 +27485,26 @@
             "key": "tools.release.pulls.plan.max",
             "namespace": "tools",
             "source_text": "Spend everything",
-            "description": "Accessible name for the control committing every remaining pull to this banner. The visible control shows the number alone.",
+            "description": "Accessible name for the control committing every remaining pull to this banner.",
             "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.plan.maxLabel",
+            "namespace": "tools",
+            "source_text": "All {count}",
+            "description": "Preset button committing every pull the plan still has banked when this banner opens. {count} is that number.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.maxTitle",
+            "namespace": "tools",
+            "source_text": "Commit every pull banked when this banner opens: {count}.",
+            "description": "Tooltip on the All preset, saying where its number comes from.",
+            "placeholders": [
+                "count"
+            ]
         },
         {
             "key": "tools.release.pulls.plan.overrun",
@@ -27418,8 +27599,8 @@
         {
             "key": "tools.release.pulls.plan.setTo",
             "namespace": "tools",
-            "source_text": "Set to",
-            "description": "Label before the buttons that fill in a preset number of pulls.",
+            "source_text": "Presets",
+            "description": "Kicker over the one-click commitment buttons beside a banner's pull input.",
             "placeholders": []
         },
         {
@@ -27429,6 +27610,26 @@
             "description": "Button committing exactly the pulls needed for a Limited banner's outright exchange.",
             "placeholders": [
                 "count"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.sparkTitle",
+            "namespace": "tools",
+            "source_text": "Commit enough to reach the {spark}-pull exchange. This banner gives {free} free pulls, so {count} of your own get you there.",
+            "description": "Tooltip on the Spark preset when the banner hands out free pulls. The exchange trades a fixed number of pulls for the operator outright.",
+            "placeholders": [
+                "count",
+                "free",
+                "spark"
+            ]
+        },
+        {
+            "key": "tools.release.pulls.plan.sparkTitlePlain",
+            "namespace": "tools",
+            "source_text": "Commit enough to reach the {spark}-pull exchange.",
+            "description": "Tooltip on the Spark preset when the banner hands out no free pulls.",
+            "placeholders": [
+                "spark"
             ]
         },
         {
@@ -27530,7 +27731,28 @@
             "key": "tools.release.pulls.resources.pityHint",
             "namespace": "tools",
             "source_text": "Counts on Standard and Kernel banners, which share a counter. Limited and collab banners always start you at zero.",
-            "description": "Hint under the pity input. 'Standard', 'Kernel', 'Limited' and collab are Arknights banner families.",
+            "description": "Explanation in the info popover beside the pity input. 'Standard', 'Kernel', 'Limited' and collab are Arknights banner families.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.resources.pityHint.aria",
+            "namespace": "tools",
+            "source_text": "About the pity counter",
+            "description": "Accessible name of the info button beside the pity input that opens the explanation.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.resources.pityManual",
+            "namespace": "tools",
+            "source_text": "Type this one in yourself: the game does not report it, so it is the one figure your account cannot fill.",
+            "description": "Note under the resource inputs saying the pity counter is not synced from the account, unlike the boxes beside it.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.resources.resync",
+            "namespace": "tools",
+            "source_text": "Re-read my account from the game",
+            "description": "Accessible name and tooltip of the circular-arrow button, which fetches the player's account again rather than reusing the last sync.",
             "placeholders": []
         },
         {
@@ -27543,8 +27765,8 @@
         {
             "key": "tools.release.pulls.resources.sync",
             "namespace": "tools",
-            "source_text": "Use my account",
-            "description": "Button that fills the resource inputs from the signed-in player's synced account.",
+            "source_text": "Use my account's data",
+            "description": "Button that fills the resource inputs from the signed-in player's synced account. Says 'data' rather than 'account' because it copies figures in; it does not switch account.",
             "placeholders": []
         },
         {
@@ -27766,6 +27988,20 @@
             "namespace": "tools",
             "source_text": "Free on banners",
             "description": "Stat label for pulls the banners give away, which cannot be saved.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.summary.free.hint",
+            "namespace": "tools",
+            "source_text": "Pulls the banners in this window hand out: a Limited banner's free ten-roll plus one a day, a collab's two ten-rolls. They expire with their banner, so they are counted on it rather than added to your bank.",
+            "description": "Explanation in the info popover beside the Free on banners figure, saying where those pulls come from and why they are not savings.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.pulls.summary.free.hint.aria",
+            "namespace": "tools",
+            "source_text": "About free pulls on banners",
+            "description": "Accessible name of the info button beside the Free on banners figure.",
             "placeholders": []
         },
         {
@@ -28624,8 +28860,8 @@
         {
             "key": "user.leaderboard.breadcrumb.doctors",
             "namespace": "user",
-            "source_text": "Doctors",
-            "description": "First breadcrumb crumb, the section that lists players. 'Doctor' is what Arknights calls the player.",
+            "source_text": "Players",
+            "description": "First breadcrumb crumb, the section that lists players. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -28700,7 +28936,7 @@
         {
             "key": "user.leaderboard.hero.stat.ranked",
             "namespace": "user",
-            "source_text": "Doctors ranked",
+            "source_text": "Players ranked",
             "description": "Label under the count of players on the leaderboard. Fits a narrow tile, so keep it short.",
             "placeholders": []
         },
@@ -28721,8 +28957,8 @@
         {
             "key": "user.leaderboard.hero.title",
             "namespace": "user",
-            "source_text": "Top Doctors",
-            "description": "Leaderboard page heading. 'Doctor' is what Arknights calls the player.",
+            "source_text": "Top Players",
+            "description": "Leaderboard page heading. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -28869,7 +29105,7 @@
         {
             "key": "user.leaderboard.showing",
             "namespace": "user",
-            "source_text": "Showing {start}-{end} of {count, number} {count, plural, one {Doctor} other {Doctors}}",
+            "source_text": "Showing {start}-{end} of {count, number} {count, plural, one {player} other {players}}",
             "description": "Range summary in the table footer. {start} and {end} are the first and last row numbers on this page, {count} the number of Doctors matching the filters.",
             "placeholders": [
                 "count",
@@ -28936,7 +29172,7 @@
         {
             "key": "user.leaderboard.table.empty",
             "namespace": "user",
-            "source_text": "No Doctors match these filters.",
+            "source_text": "No players match these filters.",
             "description": "Shown in place of the leaderboard rows when the filters exclude everyone.",
             "placeholders": []
         },
@@ -28995,8 +29231,8 @@
         {
             "key": "user.leaderboard.table.th.doctor",
             "namespace": "user",
-            "source_text": "Doctor",
-            "description": "Column header over the player's avatar, nickname and UID. 'Doctor' is what Arknights calls the player.",
+            "source_text": "Player",
+            "description": "Column header over the player's avatar, nickname and UID. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -29081,14 +29317,14 @@
         {
             "key": "user.leaderboard.toolbar.movementOnly.off",
             "namespace": "user",
-            "source_text": "Show only Doctors with movement",
+            "source_text": "Show only players with movement",
             "description": "Tooltip on the movement-only toggle while it is off, describing what clicking will do.",
             "placeholders": []
         },
         {
             "key": "user.leaderboard.toolbar.movementOnly.on",
             "namespace": "user",
-            "source_text": "Showing only Doctors with movement",
+            "source_text": "Showing only players with movement",
             "description": "Tooltip on the movement-only toggle while it is on, describing the current state.",
             "placeholders": []
         },
@@ -29123,7 +29359,7 @@
         {
             "key": "user.leaderboard.toolbar.search.placeholder",
             "namespace": "user",
-            "source_text": "Search Doctor name or UID…",
+            "source_text": "Search player name or UID…",
             "description": "Placeholder in the leaderboard's filter box. 'UID' is the in-game account number. Keep the single-character ellipsis.",
             "placeholders": []
         },
@@ -30910,7 +31146,7 @@
         {
             "key": "user.profile.enemies.unavailable.body",
             "namespace": "user",
-            "source_text": "This Doctor's enemy handbook is private, or their profile could not be found.",
+            "source_text": "This player's enemy handbook is private, or their profile could not be found.",
             "description": "Empty-state body when the handbook cannot be read. 'Doctor' is what Arknights calls the player; keep the apostrophe.",
             "placeholders": []
         },
@@ -31306,7 +31542,7 @@
         {
             "key": "user.profile.items.empty.none.desc",
             "namespace": "user",
-            "source_text": "This Doctor's inventory is empty.",
+            "source_text": "This player's inventory is empty.",
             "description": "Empty-state body when the account has no inventory on file. 'Doctor' is what Arknights calls the player; keep the apostrophe.",
             "placeholders": []
         },
@@ -31532,8 +31768,8 @@
         {
             "key": "user.profile.notFound.desc",
             "namespace": "user",
-            "source_text": "No Doctor with ID {id} exists, or their profile is private.",
-            "description": "Body of the 'profile not found' page. {id} is the account ID, rendered in monospace, and may move wherever the sentence needs it. 'Doctor' is what Arknights calls the player.",
+            "source_text": "No player with ID {id} exists, or their profile is private.",
+            "description": "Body of the 'profile not found' page. {id} is the account ID, rendered in monospace, and may move wherever the sentence needs it. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": [
                 "id"
             ]
@@ -31541,8 +31777,8 @@
         {
             "key": "user.profile.notFound.eyebrow",
             "namespace": "user",
-            "source_text": "Doctor",
-            "description": "Small uppercase label above the 'profile not found' heading. 'Doctor' is what Arknights calls the player.",
+            "source_text": "Player",
+            "description": "Small uppercase label above the 'profile not found' heading. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -31615,7 +31851,7 @@
         {
             "key": "user.profile.plans.empty.desc",
             "namespace": "user",
-            "source_text": "This Doctor hasn't pinned any plans to their profile yet.",
+            "source_text": "This player hasn't pinned any plans to their profile yet.",
             "description": "Empty-state body of the plans tab. 'Doctor' is what Arknights calls the player; keep the apostrophe.",
             "placeholders": []
         },
@@ -33295,7 +33531,7 @@
         {
             "key": "user.score.empty.desc",
             "namespace": "user",
-            "source_text": "This Doctor's grade hasn't been calculated. Scores are computed periodically once enough data is on file.",
+            "source_text": "This player's grade hasn't been calculated. Scores are computed periodically once enough data is on file.",
             "description": "Empty-state body on the Score tab. 'Doctor' is what Arknights calls the player; keep the apostrophes.",
             "placeholders": []
         },
@@ -34469,8 +34705,8 @@
         {
             "key": "user.search.breadcrumb.doctors",
             "namespace": "user",
-            "source_text": "Doctors",
-            "description": "First breadcrumb crumb, the section that lists players. 'Doctor' is what Arknights calls the player.",
+            "source_text": "Players",
+            "description": "First breadcrumb crumb, the section that lists players. 'Player' is the site's term; the game itself says 'Doctor'.",
             "placeholders": []
         },
         {
@@ -34552,7 +34788,7 @@
         {
             "key": "user.search.empty.none.desc",
             "namespace": "user",
-            "source_text": "Public Doctor profiles will appear here as players opt in.",
+            "source_text": "Public profiles will appear here as players opt in.",
             "description": "Empty-state description when nobody has made a profile public.",
             "placeholders": []
         },
@@ -34596,14 +34832,14 @@
         {
             "key": "user.search.subtitle",
             "namespace": "user",
-            "source_text": "Find Doctor profiles by nickname or browse public profiles ranked by score.",
+            "source_text": "Find player profiles by nickname or browse public profiles ranked by score.",
             "description": "Paragraph under the user-search page heading.",
             "placeholders": []
         },
         {
             "key": "user.search.title",
             "namespace": "user",
-            "source_text": "Search Doctors",
+            "source_text": "Search Players",
             "description": "Page heading of the user-search page.",
             "placeholders": []
         }

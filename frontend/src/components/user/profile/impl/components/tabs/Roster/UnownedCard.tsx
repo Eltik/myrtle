@@ -22,7 +22,13 @@ interface IUnownedCardProps {
 }
 
 export function UnownedCard({ entry, viewMode, lastRef }: IUnownedCardProps) {
-    return <div ref={lastRef ?? undefined}>{viewMode === "detailed" ? <UnownedDetailed entry={entry} /> : <UnownedCompact entry={entry} />}</div>;
+    // Compact reserves the same badge overhang `CompactCard` does, so an owned and
+    // an unowned card occupy identical space in the same track.
+    return (
+        <div ref={lastRef ?? undefined} className={viewMode === "detailed" ? undefined : "pt-0.5 pr-2.5 pb-2.5 pl-2.5"}>
+            {viewMode === "detailed" ? <UnownedDetailed entry={entry} /> : <UnownedCompact entry={entry} />}
+        </div>
+    );
 }
 
 function UnownedCompact({ entry }: { entry: IUnownedEntry }) {
@@ -32,21 +38,20 @@ function UnownedCompact({ entry }: { entry: IUnownedEntry }) {
 
     return (
         <div
-            className="fade-in slide-in-from-bottom-2 relative flex h-min w-min animate-in flex-col rounded bg-card opacity-60 grayscale"
+            className="fade-in slide-in-from-bottom-2 relative flex h-min w-full animate-in flex-col rounded bg-card opacity-60 grayscale"
             style={{
-                padding: "4px 8px 4px 6px",
-                margin: "2px 4px 4px 10px",
+                padding: "4px 6px",
                 boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
             }}
         >
-            <div className="ml-px flex h-4.25 flex-col justify-center text-left sm:h-5">
-                {subtitle && <span className="z-10 text-[0.4375rem] text-foreground leading-normal sm:text-[0.5625rem] sm:leading-loose">{subtitle}</span>}
-                <span className="z-10 text-foreground" style={{ fontSize: nameIsLong ? "9px" : "12px", lineHeight: nameIsLong ? "9px" : "17px" }}>
+            <div className="ml-px flex h-4.25 min-w-0 flex-col justify-center overflow-hidden text-left sm:h-5">
+                {subtitle && <span className="z-10 truncate text-[0.4375rem] text-foreground leading-normal sm:text-[0.5625rem] sm:leading-loose">{subtitle}</span>}
+                <span className="z-10 truncate text-foreground" style={{ fontSize: nameIsLong ? "9px" : "12px", lineHeight: nameIsLong ? "9px" : "17px" }}>
                     {displayName}
                 </span>
             </div>
 
-            <div className="relative box-content aspect-square h-20 sm:h-30" style={{ borderBottom: `4px solid ${rarityColor}` }}>
+            <div className="relative box-content aspect-square w-full" style={{ borderBottom: `4px solid ${rarityColor}` }}>
                 <img alt={entry.name} className="h-full w-full object-contain" decoding="async" height={120} loading="lazy" src={getAvatarById(entry.operator_id)} width={120} />
             </div>
         </div>

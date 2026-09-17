@@ -42,7 +42,7 @@ export function AccountPanel({ user, onResync, syncing, onSignOut, signingOut, o
     // two panels this one replaces; the keys are unchanged so no translation is
     // invalidated by the merge.
     const t: TypedT<typeof profileMessages & typeof dataMessages> = useT("settings");
-    const display = user.nickname ?? "Doctor";
+    const display = user.nickname ?? "Player";
     const nickNum = user.nick_number ? `#${user.nick_number}` : "";
 
     return (

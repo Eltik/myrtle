@@ -84,8 +84,8 @@ export const messages = {
         description: "Empty state in a tier list's permission table. Keep the hyphen.",
     },
     "perms.th.doctor": {
-        text: "Doctor",
-        description: "Permission table column header for who holds the grant. 'Doctor' is what Arknights calls the player. Rendered uppercase.",
+        text: "Player",
+        description: "Permission table column header for who holds the grant. 'Player' is the site's term; the game itself says 'Doctor'. Rendered uppercase.",
     },
     "perms.th.level": {
         text: "Level",
@@ -140,8 +140,8 @@ export const messages = {
         description: "Heading of the grant dialog; {slug} is the tier list's URL name. Keep the leading slash.",
     },
     "perms.grant.findDoctor": {
-        text: "Find a Doctor",
-        description: "Label over the account search in the grant dialog. 'Doctor' is what Arknights calls the player.",
+        text: "Find a player",
+        description: "Label over the account search in the grant dialog. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "perms.grant.searchPlaceholder": {
         text: "Search by nickname…",

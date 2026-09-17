@@ -8,13 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#
 import { useAuth } from "#/hooks/use-auth";
 import { refreshRosterFn } from "#/lib/api/auth";
 import { userQueryOptions } from "#/lib/api/user";
-import { useFormatters, useLocale, useT } from "#/lib/i18n";
+import { type TypedRichT, useFormatters, useLocale, useRichT, useT } from "#/lib/i18n";
+import { cn } from "#/lib/utils";
 import { formatDate } from "../helpers";
 import { ANNIHILATION_CAPS, DAILY_MISSION_ORUNDUM, dayAt, type GreenCertShop, type IProjectedDay, MONTHLY_CARD_ORUNDUM, originiteWarning, WEEKLY_MISSION_ORUNDUM } from "../pulls/income";
 import { ORUNDUM_PER_PULL } from "../pulls/rates";
 import type { ISkinCommitment } from "../pulls/skins";
 import type { IPullsSettings } from "../pulls/store";
-import { PullsNumber, type PullsT, Stat } from "./PullsShared";
+import type { messages } from "./PullsPlannerTab.messages";
+import { CurrencyIcon, CurrencyLabel, FIELD_LABEL, HINT_TEXT, InfoHint, PullsNumber, type PullsT, Stat } from "./PullsShared";
 import { SectionTitle, ToggleField } from "./shared";
 
 const HORIZONS = [30, 90, 180, 365] as const;
@@ -24,14 +26,25 @@ const CHART_ORIGINITE = "oklch(0.85 0.18 80)";
 const CHART_NET = "oklch(0.72 0.14 160)";
 
 /** One entry in the chart's key: the series' own stroke, drawn small, plus its name. */
-function ChartKey({ color, label, dashed }: { color: string; label: string; dashed?: boolean }): React.ReactElement {
+function ChartKey({ color, label, icon, dashed }: { color: string; label: string; icon?: "originite"; dashed?: boolean }): React.ReactElement {
     return (
-        <span className="inline-flex items-center gap-1.5 font-sans text-[11px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5 font-sans text-[12px] text-muted-foreground">
             <svg width="14" height="2" aria-hidden="true" className="shrink-0">
                 <title>{label}</title>
                 <line x1="0" y1="1" x2="14" y2="1" stroke={color} strokeWidth="2" strokeDasharray={dashed ? "4 3" : undefined} />
             </svg>
+            {icon && <CurrencyIcon name={icon} className="size-4" />}
             {label}
+        </span>
+    );
+}
+
+/** The "N with Originite Prime" line under a pull figure, with the currency's own icon. */
+function OriginiteSub({ children }: { children: React.ReactNode }): React.ReactElement {
+    return (
+        <span className="inline-flex items-center gap-1">
+            <CurrencyIcon name="originite" className="size-3.5" />
+            {children}
         </span>
     );
 }
@@ -59,6 +72,7 @@ interface IPullsBudgetProps {
 
 export function PullsBudget({ settings, setSettings, days, committed, freePulls, spend, skins }: IPullsBudgetProps): React.ReactElement {
     const t: PullsT = useT("tools");
+    const rt: TypedRichT<typeof messages> = useRichT("tools");
     const f = useFormatters();
     const locale = useLocale();
     const { user } = useAuth();
@@ -89,9 +103,25 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
     const weekly = (DAILY_MISSION_ORUNDUM + settings.extraPerDay + (settings.monthlyCard ? MONTHLY_CARD_ORUNDUM : 0)) * 7 + WEEKLY_MISSION_ORUNDUM + settings.annihilation;
 
     const canSync = !!uid && (profile.data?.orundum ?? null) !== null;
+    /**
+     * Which boxes the fill writes, shown rather than described.
+     *
+     * Reported in #ui-ux: it was not obvious that "Pulls since last 6*" is NOT filled
+     * from the account, so a player who pressed the button read a stale zero there as
+     * their real counter. The four boxes it does write ring for a moment on the press,
+     * which leaves the fifth visibly untouched.
+     */
+    const [flash, setFlash] = React.useState(false);
+    React.useEffect(() => {
+        if (!flash) return;
+        const timer = window.setTimeout(() => setFlash(false), 1400);
+        return () => window.clearTimeout(timer);
+    }, [flash]);
+
     const fillFromAccount = () => {
         const p = profile.data;
         if (!p) return;
+        setFlash(true);
         setSettings((s) => ({
             ...s,
             orundum: p.orundum ?? 0,
@@ -150,39 +180,67 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
                     <SectionTitle>{t("release.pulls.resources.title")}</SectionTitle>
                     {uid ? (
                         <div className="flex items-center gap-2">
-                            <span className="font-sans text-[11px] text-muted-foreground">{settings.manual ? "" : t("release.pulls.resources.synced")}</span>
+                            <span className={HINT_TEXT}>{settings.manual ? "" : t("release.pulls.resources.synced")}</span>
                             <Button size="sm" variant="outline" disabled={!canSync} onClick={fillFromAccount}>
                                 {t("release.pulls.resources.sync")}
                             </Button>
-                            <Button size="sm" variant="ghost" disabled={resync.isPending} onClick={() => resync.mutate()} aria-label={t("release.pulls.resources.sync")}>
+                            {/* An unlabelled circular arrow beside a labelled button is a
+                                second unexplained control; it re-reads the account from the
+                                game rather than re-reading the page's copy of it. */}
+                            <Button size="sm" variant="ghost" disabled={resync.isPending} onClick={() => resync.mutate()} aria-label={t("release.pulls.resources.resync")} title={t("release.pulls.resources.resync")}>
                                 <RefreshCw className={resync.isPending ? "size-4 animate-spin" : "size-4"} />
                             </Button>
                         </div>
                     ) : (
-                        <span className="font-sans text-[11px] text-muted-foreground">{t("release.pulls.resources.signedOut")}</span>
+                        <span className={HINT_TEXT}>{t("release.pulls.resources.signedOut")}</span>
                     )}
                 </div>
 
                 <div className="flex flex-wrap gap-x-4 gap-y-3">
-                    <PullsNumber id="pulls-orundum" label={t("release.pulls.resources.orundum")} value={settings.orundum} onChange={(v) => setSettings((s) => ({ ...s, orundum: v, manual: true }))} step={600} />
-                    <PullsNumber id="pulls-permits" label={t("release.pulls.resources.permits")} value={settings.permits} onChange={(v) => setSettings((s) => ({ ...s, permits: v, manual: true }))} className="w-20" />
-                    <PullsNumber id="pulls-ten" label={t("release.pulls.resources.tenPermits")} value={settings.tenPermits} onChange={(v) => setSettings((s) => ({ ...s, tenPermits: v, manual: true }))} className="w-20" />
-                    <PullsNumber id="pulls-op" label={t("release.pulls.resources.originite")} value={settings.originite} onChange={(v) => setSettings((s) => ({ ...s, originite: v, manual: true }))} className="w-24" />
-                    <PullsNumber id="pulls-pity" label={t("release.pulls.resources.pity")} value={settings.pity} onChange={(v) => set("pity", v)} max={98} className="w-20" />
+                    <PullsNumber id="pulls-orundum" label={<CurrencyLabel name="orundum">{t("release.pulls.resources.orundum")}</CurrencyLabel>} flash={flash} value={settings.orundum} onChange={(v) => setSettings((s) => ({ ...s, orundum: v, manual: true }))} step={600} />
+                    <PullsNumber id="pulls-permits" label={<CurrencyLabel name="permit">{t("release.pulls.resources.permits")}</CurrencyLabel>} flash={flash} value={settings.permits} onChange={(v) => setSettings((s) => ({ ...s, permits: v, manual: true }))} className="w-20" />
+                    <PullsNumber id="pulls-ten" label={<CurrencyLabel name="tenPermit">{t("release.pulls.resources.tenPermits")}</CurrencyLabel>} flash={flash} value={settings.tenPermits} onChange={(v) => setSettings((s) => ({ ...s, tenPermits: v, manual: true }))} className="w-20" />
+                    <PullsNumber id="pulls-op" label={<CurrencyLabel name="originite">{t("release.pulls.resources.originite")}</CurrencyLabel>} flash={flash} value={settings.originite} onChange={(v) => setSettings((s) => ({ ...s, originite: v, manual: true }))} className="w-24" />
+                    {/* The note that used to sit at the bottom of this card hangs off the
+                        field it is about. It was read as a note about the whole card. */}
+                    <PullsNumber
+                        id="pulls-pity"
+                        label={
+                            <span className="inline-flex items-center gap-1.5">
+                                {t("release.pulls.resources.pity")}
+                                <InfoHint label={t("release.pulls.resources.pityHint.aria")}>{t("release.pulls.resources.pityHint")}</InfoHint>
+                            </span>
+                        }
+                        value={settings.pity}
+                        onChange={(v) => set("pity", v)}
+                        max={98}
+                        className="w-20"
+                    />
                 </div>
-                <p className="m-0 font-sans text-[11.5px] text-muted-foreground leading-normal">{t("release.pulls.resources.pityHint")}</p>
+                <p className={cn("m-0", HINT_TEXT)}>{t("release.pulls.resources.pityManual")}</p>
             </Card>
 
             <Card className="flex flex-col gap-4 p-4">
                 <SectionTitle>{t("release.pulls.income.title")}</SectionTitle>
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-                    <ToggleField id="pulls-card" label={t("release.pulls.income.monthlyCard")} checked={settings.monthlyCard} onChange={(v) => set("monthlyCard", v)} />
-                    <ToggleField id="pulls-op-spend" label={t("release.pulls.income.spendOriginite")} checked={settings.spendOriginite} onChange={(v) => set("spendOriginite", v)} />
-                    <ToggleField id="pulls-store" label={t("release.pulls.income.store")} checked={settings.store} onChange={(v) => set("store", v)} />
+                    <ToggleField id="pulls-card" label={<CurrencyLabel name="monthlyCard">{t("release.pulls.income.monthlyCard")}</CurrencyLabel>} checked={settings.monthlyCard} onChange={(v) => set("monthlyCard", v)} />
+                    <ToggleField id="pulls-op-spend" label={<CurrencyLabel name="originite">{t("release.pulls.income.spendOriginite")}</CurrencyLabel>} checked={settings.spendOriginite} onChange={(v) => set("spendOriginite", v)} />
+                    <ToggleField
+                        id="pulls-store"
+                        label={
+                            <span className="inline-flex items-center gap-1.5">
+                                <CurrencyLabel name="orundum">{t("release.pulls.income.store")}</CurrencyLabel>
+                                <InfoHint label={t("release.pulls.income.store.hint.aria")}>{t("release.pulls.income.store.hint")}</InfoHint>
+                            </span>
+                        }
+                        ariaLabel={t("release.pulls.income.store")}
+                        checked={settings.store}
+                        onChange={(v) => set("store", v)}
+                    />
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
                     <div className="flex flex-col gap-1">
-                        <span className="font-sans text-[11.5px] text-muted-foreground">{t("release.pulls.income.annihilation")}</span>
+                        <span className={FIELD_LABEL}>{t("release.pulls.income.annihilation")}</span>
                         <Select value={String(settings.annihilation)} onValueChange={(v) => v !== null && set("annihilation", Number(v))}>
                             <SelectTrigger size="sm" className="w-28 font-mono tabular-nums" aria-label={t("release.pulls.income.annihilation")}>
                                 <SelectValue>{() => f.number(settings.annihilation)}</SelectValue>
@@ -198,7 +256,7 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
                     </div>
                     <PullsNumber id="pulls-extra" label={t("release.pulls.income.extra")} value={settings.extraPerDay} onChange={(v) => set("extraPerDay", v)} step={50} className="w-24" />
                     <div className="flex flex-col gap-1">
-                        <span className="font-sans text-[11.5px] text-muted-foreground">{t("release.pulls.income.horizon")}</span>
+                        <span className={FIELD_LABEL}>{t("release.pulls.income.horizon")}</span>
                         <Select value={String(settings.horizonDays)} onValueChange={(v) => v !== null && set("horizonDays", Number(v))}>
                             <SelectTrigger size="sm" className="w-28 font-mono tabular-nums" aria-label={t("release.pulls.a11y.horizon")}>
                                 <SelectValue>{() => t("release.pulls.income.horizonDays", { count: settings.horizonDays })}</SelectValue>
@@ -213,23 +271,36 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
                         </Select>
                     </div>
                 </div>
-                <p className="m-0 font-sans text-[11.5px] text-muted-foreground leading-normal">{t("release.pulls.income.extraHint")}</p>
+                <p className={cn("m-0", HINT_TEXT)}>{t("release.pulls.income.extraHint")}</p>
 
                 <div className="flex flex-col gap-2 border-border border-t pt-3">
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-                        <PullsNumber id="pulls-gold-certs" label={t("release.pulls.income.goldCerts")} value={settings.goldCertsPerDay} onChange={(v) => set("goldCertsPerDay", v)} step={0.1} max={500} className="w-24" />
+                        <PullsNumber id="pulls-gold-certs" label={<CurrencyLabel name="goldCert">{t("release.pulls.income.goldCerts")}</CurrencyLabel>} value={settings.goldCertsPerDay} onChange={(v) => set("goldCertsPerDay", v)} step={0.1} max={500} className="w-24" />
                         {/* A hand-tuned offset faking baseline alignment desynchronises
                             the moment a neighbouring label wraps, which it does below sm. */}
-                        <ToggleField id="pulls-gold-shop" label={t("release.pulls.income.goldCertShop")} checked={settings.goldCertShop} onChange={(v) => set("goldCertShop", v)} />
+                        {/* "buy <hh permit icon> with <gold cert icon>", as asked for in #ui-ux:
+                            the two nouns are things the player recognises by their picture. */}
+                        <ToggleField
+                            id="pulls-gold-shop"
+                            label={rt("release.pulls.income.goldCertShop.rich", {
+                                permits: <CurrencyLabel name="permit">{t("release.pulls.income.goldCertShop.permits")}</CurrencyLabel>,
+                                certs: <CurrencyLabel name="goldCert">{t("release.pulls.income.goldCertShop.certs")}</CurrencyLabel>,
+                            })}
+                            ariaLabel={t("release.pulls.income.goldCertShop")}
+                            checked={settings.goldCertShop}
+                            onChange={(v) => set("goldCertShop", v)}
+                        />
                     </div>
-                    <p className="m-0 font-sans text-[11.5px] text-muted-foreground leading-normal">{t("release.pulls.income.goldCertHint")}</p>
+                    <p className={cn("m-0", HINT_TEXT)}>{t("release.pulls.income.goldCertHint")}</p>
                 </div>
 
                 <div className="flex flex-col gap-2 border-border border-t pt-3">
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-                        <PullsNumber id="pulls-green-certs" label={t("release.pulls.income.greenCerts")} value={settings.greenCertsPerWeek} onChange={(v) => set("greenCertsPerWeek", v)} step={5} max={5000} className="w-24" />
+                        <PullsNumber id="pulls-green-certs" label={<CurrencyLabel name="greenCert">{t("release.pulls.income.greenCerts")}</CurrencyLabel>} value={settings.greenCertsPerWeek} onChange={(v) => set("greenCertsPerWeek", v)} step={5} max={5000} className="w-24" />
                         <div className="flex flex-col gap-1">
-                            <span className="font-sans text-[11.5px] text-muted-foreground">{t("release.pulls.income.greenCertShop")}</span>
+                            <span className={FIELD_LABEL}>
+                                <CurrencyLabel name="greenCert">{t("release.pulls.income.greenCertShop")}</CurrencyLabel>
+                            </span>
                             <Select value={settings.greenCertShop} onValueChange={(v) => v !== null && set("greenCertShop", v as GreenCertShop)}>
                                 <SelectTrigger size="sm" className="w-40" aria-label={t("release.pulls.income.greenCertShop")}>
                                     <SelectValue>{() => greenShopLabel}</SelectValue>
@@ -242,40 +313,47 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
                             </Select>
                         </div>
                     </div>
-                    <p className="m-0 font-sans text-[11.5px] text-muted-foreground leading-normal">{t("release.pulls.income.greenCertHint")}</p>
+                    <p className={cn("m-0", HINT_TEXT)}>{t("release.pulls.income.greenCertHint")}</p>
                 </div>
 
                 <div className="flex flex-col gap-2 border-border border-t pt-3">
                     <ToggleField id="pulls-free" label={t("release.pulls.income.freePulls")} checked={settings.countFreePulls} onChange={(v) => set("countFreePulls", v)} />
-                    <p className="m-0 font-sans text-[11.5px] text-muted-foreground leading-normal">{t("release.pulls.income.freePullsHint")}</p>
-                    <p className="m-0 font-sans text-[11.5px] text-muted-foreground leading-normal">
+                    <p className={cn("m-0", HINT_TEXT)}>{t("release.pulls.income.freePullsHint")}</p>
+                    <p className={cn("m-0", HINT_TEXT)}>
                         {t("release.pulls.income.skinOriginiteHint", { count: skins.count, op: f.number(skins.originite) })}
                         {skins.unpriced > 0 && ` ${t("release.pulls.income.skinUnpriced", { count: skins.unpriced })}`}
                     </p>
-                    {warning && <output className="m-0 block rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 font-sans text-[11.5px] text-amber-500 leading-normal">{t("release.pulls.income.originiteShort", { needed: f.number(warning.needed), available: f.number(warning.available) })}</output>}
+                    {warning && <output className="m-0 block rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 font-sans text-[12px] text-amber-500 leading-normal">{t("release.pulls.income.originiteShort", { needed: f.number(warning.needed), available: f.number(warning.available) })}</output>}
                 </div>
             </Card>
 
             <Card className="flex flex-col gap-4 p-4">
                 <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
-                    <Stat label={t("release.pulls.summary.now")} value={f.number(first?.pulls ?? 0)} sub={settings.spendOriginite && (first?.pullsWithOriginite ?? 0) > (first?.pulls ?? 0) ? t("release.pulls.summary.withOriginite", { count: f.number(first?.pullsWithOriginite ?? 0) }) : undefined} />
+                    {/* The "with Originite Prime" sub-lines and the weekly Orundum figure
+                        were marked for icons; the currency sits in front of the number it
+                        belongs to rather than being spelled out again in words. */}
+                    <Stat
+                        label={t("release.pulls.summary.now")}
+                        value={f.number(first?.pulls ?? 0)}
+                        sub={settings.spendOriginite && (first?.pullsWithOriginite ?? 0) > (first?.pulls ?? 0) ? <OriginiteSub>{t("release.pulls.summary.withOriginite", { count: f.number(first?.pullsWithOriginite ?? 0) })}</OriginiteSub> : undefined}
+                    />
                     <Stat
                         label={t("release.pulls.summary.horizon", { date: last ? formatDate(last.at, locale) : "" })}
                         value={f.number(Math.max(0, (last?.pulls ?? 0) - committed))}
-                        sub={settings.spendOriginite && (last?.pullsWithOriginite ?? 0) > (last?.pulls ?? 0) ? t("release.pulls.summary.withOriginite", { count: f.number(Math.max(0, (last?.pullsWithOriginite ?? 0) - committed)) }) : undefined}
+                        sub={settings.spendOriginite && (last?.pullsWithOriginite ?? 0) > (last?.pulls ?? 0) ? <OriginiteSub>{t("release.pulls.summary.withOriginite", { count: f.number(Math.max(0, (last?.pullsWithOriginite ?? 0) - committed)) })}</OriginiteSub> : undefined}
                     />
-                    <Stat label={t("release.pulls.summary.perWeek")} value={f.number(weekly)} sub={t("release.pulls.income.weekly", { count: Math.floor(weekly / ORUNDUM_PER_PULL) })} />
-                    {freePulls > 0 && <Stat label={t("release.pulls.summary.free")} value={f.number(freePulls)} />}
+                    <Stat label={t("release.pulls.summary.perWeek")} value={f.number(weekly)} icon="orundum" sub={t("release.pulls.income.weekly", { count: Math.floor(weekly / ORUNDUM_PER_PULL) })} />
+                    {freePulls > 0 && <Stat label={t("release.pulls.summary.free")} value={f.number(freePulls)} hint={<InfoHint label={t("release.pulls.summary.free.hint.aria")}>{t("release.pulls.summary.free.hint")}</InfoHint>} />}
                 </div>
 
                 <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                    <span className="font-sans font-semibold text-[12px] text-foreground">{t("release.pulls.chart.title")}</span>
+                    <span className="font-sans font-semibold text-[13px] text-foreground">{t("release.pulls.chart.title")}</span>
                     {/* Three unlabelled lines are a puzzle. Recharts' own legend brings
                         its own type scale and its own spacing; this is the same key in
                         the type the rest of the card uses. */}
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                         <ChartKey color={CHART_PULLS} label={t("release.pulls.chart.pulls")} />
-                        {settings.spendOriginite && <ChartKey color={CHART_ORIGINITE} label={t("release.pulls.chart.withOriginite")} dashed />}
+                        {settings.spendOriginite && <ChartKey color={CHART_ORIGINITE} label={t("release.pulls.chart.withOriginite")} icon="originite" dashed />}
                         {planned && <ChartKey color={CHART_NET} label={t("release.pulls.chart.net")} />}
                     </div>
                 </div>

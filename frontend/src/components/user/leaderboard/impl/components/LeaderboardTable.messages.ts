@@ -4,7 +4,7 @@ export const namespace = "user";
 
 export const messages = {
     "leaderboard.table.empty": {
-        text: "No Doctors match these filters.",
+        text: "No players match these filters.",
         description: "Shown in place of the leaderboard rows when the filters exclude everyone.",
     },
     "leaderboard.table.th.rank": {
@@ -12,8 +12,8 @@ export const messages = {
         description: "Column header over the global rank number.",
     },
     "leaderboard.table.th.doctor": {
-        text: "Doctor",
-        description: "Column header over the player's avatar, nickname and UID. 'Doctor' is what Arknights calls the player.",
+        text: "Player",
+        description: "Column header over the player's avatar, nickname and UID. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "leaderboard.table.th.server": {
         text: "Server",

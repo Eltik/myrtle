@@ -8,7 +8,7 @@ export const messages = {
         description: "Empty-state title on the Score tab when this account has never been graded.",
     },
     "score.empty.desc": {
-        text: "This Doctor's grade hasn't been calculated. Scores are computed periodically once enough data is on file.",
+        text: "This player's grade hasn't been calculated. Scores are computed periodically once enough data is on file.",
         description: "Empty-state body on the Score tab. 'Doctor' is what Arknights calls the player; keep the apostrophes.",
     },
 } satisfies MessageMap;

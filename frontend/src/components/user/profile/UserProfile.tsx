@@ -98,7 +98,7 @@ export function UserProfile() {
 
     if (isLoading) {
         return (
-            <main className="m-[0_auto] flex w-[min(1440px,calc(100%-2rem))] flex-1 flex-col gap-7 p-[24px_0_64px]">
+            <main className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
                 <div className="relative h-48 w-full overflow-hidden rounded-3xl border border-border/50 bg-card/40">
                     <Skeleton className="absolute inset-0 rounded-3xl opacity-60" />
                     <div className="relative flex h-full items-center gap-6 p-6">
@@ -163,7 +163,7 @@ export function UserProfile() {
     }
     if (!data) {
         return (
-            <main className="m-[0_auto] flex w-[min(1440px,calc(100%-2rem))] flex-1 flex-col gap-7 p-[24px_0_64px]">
+            <main className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
                 <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-card px-8 py-16 text-center">
                     <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">{t("profile.notFound.eyebrow")}</span>
                     <h1 className="font-bold text-2xl tracking-tight">{t("profile.notFound.title")}</h1>
@@ -175,7 +175,7 @@ export function UserProfile() {
 
     return (
         <DynamicArtProvider server={data.server}>
-            <main className="m-[0_auto] flex w-[min(1440px,calc(100%-2rem))] flex-1 flex-col gap-7 p-[24px_0_64px]">
+            <main className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
                 <Hero profile={data} />
                 <StatStrip profile={data} rosterCount={roster?.length} />
                 <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />

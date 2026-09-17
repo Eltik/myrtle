@@ -24,8 +24,8 @@ export const messages = {
         description: "Small uppercase label above the list's title.",
     },
     "detail.hero.authorFallback": {
-        text: "Doctor",
-        description: "Stand-in for an author who has set no nickname. 'Doctor' is what Arknights calls the player.",
+        text: "Player",
+        description: "Stand-in for an author who has set no nickname. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "detail.hero.authorUnknown": {
         text: "Unknown author",

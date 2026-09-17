@@ -12,7 +12,7 @@ export const messages = {
         description: "Empty-state title when the account has pinned no plans to its profile.",
     },
     "profile.plans.empty.desc": {
-        text: "This Doctor hasn't pinned any plans to their profile yet.",
+        text: "This player hasn't pinned any plans to their profile yet.",
         description: "Empty-state body of the plans tab. 'Doctor' is what Arknights calls the player; keep the apostrophe.",
     },
     "profile.plans.aria": {

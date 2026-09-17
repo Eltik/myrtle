@@ -40,7 +40,7 @@ export const messages = {
         description: "Field label for the in-game account level.",
     },
     "profile.level.desc": {
-        text: "Doctor level from the in-game profile.",
+        text: "Player level from the in-game profile.",
         description: "Caption under the account-level field. 'Doctor' is what the game calls the player.",
     },
     "profile.level.value": {

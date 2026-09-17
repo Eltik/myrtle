@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight } from "lucide-react";
 import * as React from "react";
+import { PageHeader } from "#/components/ui/page-header";
 import { useAuth } from "#/hooks/use-auth";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
@@ -164,12 +164,8 @@ export function Randomizer(): React.ReactElement {
     }, []);
 
     return (
-        <div className="relative z-1 mx-auto w-[min(1320px,calc(100%-2rem))] py-5 pb-20">
-            <nav aria-label="breadcrumb" className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none">
-                <span>{t("randomizer.breadcrumb.tools")}</span>
-                <ChevronRight className="size-2.5" />
-                <span className="text-foreground">{t("randomizer.breadcrumb.title")}</span>
-            </nav>
+        <div className="page-shell [--page-max:1320px]">
+            <PageHeader breadcrumbLabel="breadcrumb" breadcrumb={[t("randomizer.breadcrumb.tools"), t("randomizer.breadcrumb.title")]} title={t("randomizer.breadcrumb.title")} className="mb-5" />
 
             <BriefingHero operatorsAvailable={availableOperators.length} operatorsRoster={effectiveRosterSet.size} stagesAvailable={availableStages.length} hasResult={hasResult} canRoll={canRoll} onRollAll={rollAll} onReset={reset} onOpenSettings={() => setSettingsOpen(true)} />
 

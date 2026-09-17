@@ -6,8 +6,8 @@ import { releaseBannersQueryOptions } from "#/lib/api/release";
 import { useGamedataServer, useLocale, useT } from "#/lib/i18n";
 import { formatDate } from "../helpers";
 import { projectIncome } from "../pulls/income";
-import { MAX_POT_COPIES, pullsToGoal } from "../pulls/odds";
-import { buildPlan, planToCsv } from "../pulls/plan";
+import { MAX_POT_COPIES } from "../pulls/odds";
+import { buildPlan, goalEstimateFor, planToCsv } from "../pulls/plan";
 import { useSkinCommitment } from "../pulls/skins";
 import { usePullsSettings } from "../pulls/store";
 import { PullsBanners } from "./PullsBanners";
@@ -95,37 +95,87 @@ export function PullsPlannerTab({ today }: IPullsPlannerTabProps): React.ReactEl
      * it once on the click leaves every other way of setting the count alone.
      */
     const setTarget = React.useCallback(
-        (key: string, charId: string, copies: number) =>
-            setSettings((s) => {
-                const clamped = Math.max(0, Math.min(MAX_POT_COPIES, Math.floor(copies)));
-                const current = { ...(s.targets[key] ?? {}) };
-                if (clamped > 0) current[charId] = clamped;
-                else delete current[charId];
+        (key: string, charId: string, copies: number) => {
+            const row = plan.rows.find((r) => r.key === key);
+            const clamped = Math.max(0, Math.min(MAX_POT_COPIES, Math.floor(copies)));
+            // From the LIVE settings, not from `row`, which is built off the deferred
+            // copy: two quick presses would both read the pre-first-press picks and
+            // the second would write P1 where P2 was asked for.
+            const current = { ...(settings.targets[key] ?? {}) };
+            if (clamped > 0) current[charId] = clamped;
+            else delete current[charId];
 
+            /**
+             * The walk runs HERE, before the state update, not inside the updater.
+             * React may call an updater more than once for one dispatch, and this walk
+             * is up to 297 ms, which is the delay reported between pressing a plus and
+             * seeing the number move. It is also memoised now, so the rebuild that
+             * follows asks the same question and gets the cached answer rather than
+             * paying for the same walk a second time.
+             */
+            const wanted = Object.keys(current).length > 0;
+            const priced =
+                wanted && row
+                    ? goalEstimateFor(
+                          row.model,
+                          {
+                              copiesA: current[row.featured[0]] ?? 0,
+                              copiesB: row.featured.length > 1 ? (current[row.featured[1]] ?? 0) : 0,
+                          },
+                          row.pityDist,
+                      ).p50
+                    : null;
+
+            setSettings((s) => {
                 const targets = { ...s.targets };
                 const allocations = { ...s.allocations };
-                const row = plan.rows.find((r) => r.key === key);
-
-                if (Object.keys(current).length > 0) {
+                if (wanted) {
                     targets[key] = current;
-                    if (row) {
-                        const featured = row.featured;
-                        allocations[key] = pullsToGoal(
-                            row.model,
-                            {
-                                copiesA: current[featured[0]] ?? 0,
-                                copiesB: featured.length > 1 ? (current[featured[1]] ?? 0) : 0,
-                            },
-                            { startPityDist: row.pityDist, startPity: 0 },
-                        ).p50;
-                    }
+                    if (priced !== null) allocations[key] = priced;
                 } else {
                     delete targets[key];
                     delete allocations[key];
                 }
                 return { ...s, targets, allocations };
+            });
+        },
+        [setSettings, plan.rows, settings.targets],
+    );
+
+    /**
+     * A preset from the goal list or the Set-to row: commit that many pulls AND drop
+     * this banner's potential picks.
+     *
+     * Clearing them is the point. A pick sets the count through `setTarget`, so a
+     * banner carrying picks has a count that MEANS those picks; committing a different
+     * figure on top of them left the row claiming two different goals at once, and the
+     * "Your goal" line went on describing the operators while every other line
+     * described the new count.
+     */
+    const preset = React.useCallback(
+        (key: string, pulls: number) =>
+            setSettings((s) => {
+                const allocations = { ...s.allocations };
+                const targets = { ...s.targets };
+                if (pulls > 0) allocations[key] = pulls;
+                else delete allocations[key];
+                delete targets[key];
+                return { ...s, allocations, targets };
             }),
-        [setSettings, plan.rows],
+        [setSettings],
+    );
+
+    /** One banner back to untouched: the committed pulls and the potentials both go. */
+    const clearRow = React.useCallback(
+        (key: string) =>
+            setSettings((s) => {
+                const allocations = { ...s.allocations };
+                const targets = { ...s.targets };
+                delete allocations[key];
+                delete targets[key];
+                return { ...s, allocations, targets };
+            }),
+        [setSettings],
     );
 
     const resetPlan = React.useCallback(() => setSettings((s) => ({ ...s, allocations: {}, targets: {} })), [setSettings]);
@@ -161,7 +211,7 @@ export function PullsPlannerTab({ today }: IPullsPlannerTabProps): React.ReactEl
 
             <PullsBudget settings={settings} setSettings={setSettings} days={days} committed={plan.totals.spent} freePulls={plan.totals.freePulls} spend={spend} skins={skins} />
 
-            {banners.isPending ? <ReleaseLoading /> : <PullsBanners rows={plan.rows} totals={plan.totals} lookup={lookup} charNames={banners.data?.charNames ?? {}} today={today} onAllocate={allocate} onSetTarget={setTarget} onReset={resetPlan} onExport={exportPlan} />}
+            {banners.isPending ? <ReleaseLoading /> : <PullsBanners rows={plan.rows} totals={plan.totals} lookup={lookup} charNames={banners.data?.charNames ?? {}} today={today} onAllocate={allocate} onPreset={preset} onSetTarget={setTarget} onClearRow={clearRow} onReset={resetPlan} onExport={exportPlan} />}
 
             <div className="grid grid-cols-1 gap-3 xl:grid-cols-2 xl:items-start">
                 <PullsOdds budget={uncommitted} pity={deferred.pity} />

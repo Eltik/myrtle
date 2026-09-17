@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Calculator, ChevronRight, ChevronsDownUp, ChevronsUpDown, Download, HelpCircle, RefreshCw } from "lucide-react";
+import { Calculator, ChevronsDownUp, ChevronsUpDown, Download, HelpCircle, RefreshCw } from "lucide-react";
 import * as React from "react";
 import { AxisControls } from "#/components/tools/shared/AxisControls";
 import { CalcChart } from "#/components/tools/shared/CalcChart";
@@ -13,6 +13,7 @@ import type { messages as detailMessages } from "#/components/tools/shared/useOp
 import { AlertDialog, AlertDialogClose, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogPopup, AlertDialogTitle, AlertDialogTrigger } from "#/components/ui/alert-dialog";
 import { Button } from "#/components/ui/button";
 import { Card, CardHeader, CardPanel, CardTitle } from "#/components/ui/card";
+import { PageHeader } from "#/components/ui/page-header";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { dpsOperatorsQueryOptions } from "#/lib/api/dps";
@@ -125,44 +126,40 @@ export function DpsCalculator(): React.ReactElement {
     }, [latestOps, state.instances, dispatch]);
 
     return (
-        <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-2rem))] py-5 pb-20">
-            <nav aria-label="breadcrumb" className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none">
-                <span>{t("dps.breadcrumb.tools")}</span>
-                <ChevronRight className="size-2.5" />
-                <span className="text-foreground">{t("dps.title")}</span>
-            </nav>
-            <div className="flex flex-wrap items-end justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                        <h1 className="m-0 font-bold font-sans text-[24px] text-foreground leading-[1.1] tracking-tight sm:text-[30px]">{t("dps.title")}</h1>
-                        <Popover>
-                            <PopoverTrigger
-                                render={(p) => (
-                                    <Button {...p} aria-label={t("dps.help.open")} variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground">
-                                        <HelpCircle />
-                                    </Button>
-                                )}
-                            />
-                            <PopoverPopup className="w-[min(380px,calc(100vw-2rem))]">
-                                <h2 className="mb-2 font-semibold text-[14px] text-foreground">{t("dps.help.title")}</h2>
-                                <ul className="space-y-1.5 text-[12.5px] text-muted-foreground leading-relaxed">
-                                    <li>
-                                        <span className="font-medium text-foreground">{t("dps.help.skillDps.term")}</span> {t("dps.help.skillDps.desc")}
-                                    </li>
-                                    <li>
-                                        <span className="font-medium text-foreground">{t("dps.help.averageDps.term")}</span> {t("dps.help.averageDps.desc")}
-                                    </li>
-                                    <li>
-                                        <span className="font-medium text-foreground">{t("dps.help.totalDamage.term")}</span> {t("dps.help.totalDamage.desc")}
-                                    </li>
-                                    <li>{t("dps.help.sweep")}</li>
-                                </ul>
-                            </PopoverPopup>
-                        </Popover>
-                    </div>
-                    <p className="mt-1.5 font-sans text-[13.5px] text-muted-foreground leading-normal">{t("dps.intro")}</p>
-                    <p className="max-w-xl font-sans text-[13.5px] text-muted-foreground leading-normal">
-                        <b>{t("dps.note.label")}</b>{" "}
+        <div className="page-shell [--page-max:1400px]">
+            <PageHeader
+                breadcrumbLabel="breadcrumb"
+                breadcrumb={[t("dps.breadcrumb.tools"), t("dps.title")]}
+                title={t("dps.title")}
+                titleAdornment={
+                    <Popover>
+                        <PopoverTrigger
+                            render={(p) => (
+                                <Button {...p} aria-label={t("dps.help.open")} variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-foreground">
+                                    <HelpCircle />
+                                </Button>
+                            )}
+                        />
+                        <PopoverPopup className="w-[min(380px,calc(100vw-2rem))]">
+                            <h2 className="mb-2 font-semibold text-[14px] text-foreground">{t("dps.help.title")}</h2>
+                            <ul className="space-y-1.5 text-[12.5px] text-muted-foreground leading-relaxed">
+                                <li>
+                                    <span className="font-medium text-foreground">{t("dps.help.skillDps.term")}</span> {t("dps.help.skillDps.desc")}
+                                </li>
+                                <li>
+                                    <span className="font-medium text-foreground">{t("dps.help.averageDps.term")}</span> {t("dps.help.averageDps.desc")}
+                                </li>
+                                <li>
+                                    <span className="font-medium text-foreground">{t("dps.help.totalDamage.term")}</span> {t("dps.help.totalDamage.desc")}
+                                </li>
+                                <li>{t("dps.help.sweep")}</li>
+                            </ul>
+                        </PopoverPopup>
+                    </Popover>
+                }
+                description={
+                    <>
+                        {t("dps.intro")} <b>{t("dps.note.label")}</b>{" "}
                         {rt("dps.note.credit", {
                             link: (
                                 <a className="text-blue-500 hover:underline" href="https://github.com/WhoAteMyCQQkie/ArknightsDpsCompare" target="_blank" rel="noopener">
@@ -170,31 +167,33 @@ export function DpsCalculator(): React.ReactElement {
                                 </a>
                             ),
                         })}
-                    </p>
-                </div>
-                {hasInstances && (
-                    <AlertDialog>
-                        <AlertDialogTrigger
-                            render={(p) => (
-                                <Button {...p} variant="outline" size="sm">
-                                    <RefreshCw />
-                                    {t("dps.clearAll")}
-                                </Button>
-                            )}
-                        />
-                        <AlertDialogPopup>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>{t("dps.clearAll.title")}</AlertDialogTitle>
-                                <AlertDialogDescription>{t("dps.clearAll.desc", { count: state.instances.length })}</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogClose render={(p) => <Button {...p} variant="outline" />}>{t("dps.cancel")}</AlertDialogClose>
-                                <AlertDialogClose render={(p) => <Button {...p} variant="destructive" onClick={onResetAll} />}>{t("dps.clearAll")}</AlertDialogClose>
-                            </AlertDialogFooter>
-                        </AlertDialogPopup>
-                    </AlertDialog>
-                )}
-            </div>
+                    </>
+                }
+                actions={
+                    hasInstances ? (
+                        <AlertDialog>
+                            <AlertDialogTrigger
+                                render={(p) => (
+                                    <Button {...p} variant="outline" size="sm">
+                                        <RefreshCw />
+                                        {t("dps.clearAll")}
+                                    </Button>
+                                )}
+                            />
+                            <AlertDialogPopup>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>{t("dps.clearAll.title")}</AlertDialogTitle>
+                                    <AlertDialogDescription>{t("dps.clearAll.desc", { count: state.instances.length })}</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogClose render={(p) => <Button {...p} variant="outline" />}>{t("dps.cancel")}</AlertDialogClose>
+                                    <AlertDialogClose render={(p) => <Button {...p} variant="destructive" onClick={onResetAll} />}>{t("dps.clearAll")}</AlertDialogClose>
+                                </AlertDialogFooter>
+                            </AlertDialogPopup>
+                        </AlertDialog>
+                    ) : null
+                }
+            />
 
             <div className="mt-6 grid grid-cols-1 items-start gap-4 xl:grid-cols-[420px_1fr]">
                 <aside className="flex min-w-0 flex-col gap-4 xl:col-start-1 xl:row-start-1">

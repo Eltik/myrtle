@@ -24,7 +24,7 @@ export function YouCard({ standing, rankedDoctors }: IYouCardProps) {
 
     if (!standing) return null;
     const player: ILeaderboardEntry = standing.player;
-    const nickname = player.nickname ?? `Doctor ${player.uid}`;
+    const nickname = player.nickname ?? `Player ${player.uid}`;
     const initials = nickname.slice(0, 2).toUpperCase();
     const avatarSrc = getAvatarById(player.avatar_id ?? DEFAULT_AVATAR_ID);
     const rank = player.rank_global ?? null;

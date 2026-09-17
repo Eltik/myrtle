@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { ArrowDown, ArrowUp, ChevronRight, Download, LayoutGrid, LayoutList, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Download, LayoutGrid, LayoutList, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ExportDialog } from "#/components/export/ExportDialog";
+import { PageHeader } from "#/components/ui/page-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
@@ -151,16 +152,8 @@ export function EnemiesList() {
     const [exportOpen, setExportOpen] = useState(false);
 
     return (
-        <div className="relative z-1 mx-auto w-[min(1400px,calc(100%-2rem))] pb-20">
-            <div className="pt-7 pb-1.5">
-                <nav className="mb-2.5 flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground leading-none" aria-label={t("list.breadcrumb")}>
-                    <span>{t("list.breadcrumb.collection")}</span>
-                    <ChevronRight className="h-2.5 w-2.5" aria-hidden="true" />
-                    <span className="text-foreground">{t("list.breadcrumb.enemies")}</span>
-                </nav>
-                <h1 className="m-0 font-bold font-sans text-[30px] text-foreground leading-[1.1] tracking-tight">{t("list.title")}</h1>
-                <p className="mt-1.5 font-sans text-[13.5px] text-muted-foreground leading-normal">{rt("list.blurb", { count: <strong className="text-foreground">{visibleCount}</strong> })}</p>
-            </div>
+        <div className="page-shell [--page-max:1400px]">
+            <PageHeader className="pb-1.5" breadcrumbLabel={t("list.breadcrumb")} breadcrumb={[t("list.breadcrumb.collection"), t("list.breadcrumb.enemies")]} title={t("list.title")} description={rt("list.blurb", { count: <strong className="text-foreground">{visibleCount}</strong> })} />
 
             <main className="flex min-w-0 flex-col gap-5.5 pt-5" aria-label={t("list.results.aria")}>
                 <EnemyFilterChips filters={filters} setLevels={setLevels} setDamageTypes={setDamageTypes} setAttackTypes={setAttackTypes} setRaces={setRaces} races={availableRaces} />

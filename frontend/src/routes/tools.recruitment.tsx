@@ -68,7 +68,7 @@ function RecruitmentErrorComponent({ error, reset }: { error: unknown; reset: ()
                     <EmptyMedia variant="icon">
                         <AlertTriangle className="text-destructive" />
                     </EmptyMedia>
-                    <EmptyTitle>Recruitment calculator failed to load</EmptyTitle>
+                    <EmptyTitle>Recruitment Calculator failed to load</EmptyTitle>
                     <EmptyDescription>{message || "An unexpected error occurred while loading recruitment data. Try again, or check the browser console for details."}</EmptyDescription>
                 </EmptyHeader>
                 <Button onClick={reset} variant="outline">

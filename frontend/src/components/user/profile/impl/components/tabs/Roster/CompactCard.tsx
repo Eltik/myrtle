@@ -41,21 +41,29 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
         : [];
 
     return (
-        <div ref={lastRef ?? undefined}>
+        /* The badges hang off the card's edges by design. They used to hang into
+           an asymmetric MARGIN on a `w-min` card, which left the card floating at
+           the left of a `1fr` track with the rest of the track empty: at a 700px
+           roster that was four cards where five fit. The overhang is reserved here,
+           on the grid item, so the card itself can be `w-full` and the track sets
+           the card size rather than the card ignoring the track. */
+        <div ref={lastRef ?? undefined} className="pt-0.5 pr-2.5 pb-2.5 pl-2.5">
             <Dialog>
-                <DialogTrigger render={<button type="button" className="block text-left" />}>
+                {/* `w-full`: a `display: block` button still sizes to its content, so the
+                    card's own `w-full` was resolving against a shrink-to-fit box and the
+                    portrait came out 65px in a 132px track. */}
+                <DialogTrigger render={<button type="button" className="block w-full text-left" />}>
                     <div
-                        className="fade-in slide-in-from-bottom-2 relative flex h-min w-min animate-in cursor-pointer flex-col rounded bg-card transition-transform hover:scale-102"
+                        className="fade-in slide-in-from-bottom-2 relative flex h-min w-full animate-in cursor-pointer flex-col rounded bg-card transition-transform hover:scale-102"
                         style={{
-                            padding: "4px 8px 4px 6px",
-                            margin: "2px 4px 4px 10px",
+                            padding: "4px 6px",
                             boxShadow: maxed ? `0 0 10px ${rarityColor}, 0 0 20px ${rarityColor}80` : "0 1px 3px 0 rgb(0 0 0 / 0.1)",
                         }}
                     >
-                        <div className="ml-px flex h-4.25 flex-col justify-center text-left sm:h-5">
-                            {subtitle && <span className="z-10 text-[0.4375rem] text-foreground leading-normal sm:text-[0.5625rem] sm:leading-loose">{subtitle}</span>}
+                        <div className="ml-px flex h-4.25 min-w-0 flex-col justify-center overflow-hidden text-left sm:h-5">
+                            {subtitle && <span className="z-10 truncate text-[0.4375rem] text-foreground leading-normal sm:text-[0.5625rem] sm:leading-loose">{subtitle}</span>}
                             <span
-                                className="z-10 text-foreground"
+                                className="z-10 truncate text-foreground"
                                 style={{
                                     fontSize: nameIsLong ? "9px" : "12px",
                                     lineHeight: nameIsLong ? "9px" : "17px",
@@ -66,7 +74,12 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
                         </div>
 
                         <div
-                            className="relative box-content aspect-square h-20 sm:h-30"
+                            /* The portrait follows the TRACK, which follows the grid. A fixed
+                               80px (then 120px at `sm`) portrait set the card's width and left
+                               every track partly empty, and needed a viewport calc to fit three
+                               on a phone. The grid decides the density now and the card fills
+                               whatever it is given. */
+                            className="relative box-content aspect-square w-full"
                             style={{
                                 borderBottom: `4px solid ${rarityColor}`,
                                 filter: maxed ? "drop-shadow(0px 0px 8px rgba(255,255,255,0.3))" : undefined,
@@ -82,15 +95,15 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
                         </div>
 
                         {!maxed && (
-                            <div className="absolute -bottom-2 -left-3 z-10 flex flex-col gap-0.5">
+                            <div className="absolute -bottom-2 -left-2.5 z-10 flex flex-col gap-0.5">
                                 {entry.potential > 0 && (
-                                    <div className="relative mb-0.5 ml-1 h-4 w-3 sm:mb-2 sm:h-6 sm:w-5">
-                                        <img alt={t("profile.roster.card.potentialAlt", { rank: entry.potential + 1 })} className="h-full w-full object-contain" decoding="async" height={24} loading="lazy" src={potentialIcon(entry.potential)} width={20} />
+                                    <div className="relative mb-0.5 ml-1 h-5 w-4 sm:mb-2 sm:h-6 sm:w-5">
+                                        <img alt={t("profile.roster.card.potentialAlt", { rank: entry.potential + 1 })} className="icon-theme-aware h-full w-full object-contain" decoding="async" height={24} loading="lazy" src={potentialIcon(entry.potential)} width={20} />
                                     </div>
                                 )}
 
                                 {entry.elite > 0 && (
-                                    <div className="mb-0 h-5 w-5 sm:mb-1 sm:h-8 sm:w-8">
+                                    <div className="mb-0 h-6.5 w-6.5 sm:mb-1 sm:h-8 sm:w-8">
                                         <img alt={t("profile.roster.card.eliteAlt", { elite: entry.elite })} className="icon-theme-aware h-full w-full object-contain" decoding="async" height={32} loading="lazy" src={eliteIcon(entry.elite)} width={32} />
                                     </div>
                                 )}
@@ -99,7 +112,7 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
                                     <div
                                         className="flex aspect-square h-8 flex-col items-center justify-center rounded-full border-2 bg-secondary text-lg leading-none sm:h-12 sm:text-2xl"
                                         style={{
-                                            borderColor: isAtMaxLevel ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+                                            borderColor: isAtMaxLevel ? "var(--primary)" : "var(--muted-foreground)",
                                         }}
                                     >
                                         <abbr className="hidden text-[0.5625rem] leading-none no-underline sm:flex" title={t("profile.roster.card.level")}>
@@ -112,22 +125,22 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
                         )}
 
                         {!maxed && entry.skill_level > 1 && skillCount > 0 && (
-                            <div className="absolute top-8 right-0 z-10 flex flex-col gap-0.5 sm:-right-3">
+                            <div className="absolute top-8 right-0 z-10 flex flex-col gap-0.5 sm:-right-2.5">
                                 {Array.from({ length: skillCount }).map((_, idx) => {
                                     const mastery = entry.masteries.find((m) => m.index === idx)?.mastery ?? 0;
                                     const hasM = mastery > 0;
                                     return (
                                         <div
-                                            className="relative flex h-4 w-4 items-center justify-center sm:h-6 sm:w-6"
+                                            className="relative flex h-5 w-5 items-center justify-center sm:h-6 sm:w-6"
                                             // biome-ignore lint/suspicious/noArrayIndexKey: skill slots are positional and stable
                                             key={idx}
                                             style={{ marginLeft: `${idx * 4}px` }}
                                             title={hasM ? t("profile.roster.compact.skillMastery", { n: idx + 1, mastery }) : t("profile.roster.compact.skillLevel", { n: idx + 1, level: entry.skill_level })}
                                         >
                                             {hasM ? (
-                                                <img alt={t("profile.roster.card.masteryAlt", { mastery })} className="h-full w-full object-contain" decoding="async" height={24} loading="lazy" src={specializedIcon(mastery)} width={24} />
+                                                <img alt={t("profile.roster.card.masteryAlt", { mastery })} className="icon-theme-aware h-full w-full object-contain" decoding="async" height={24} loading="lazy" src={specializedIcon(mastery)} width={24} />
                                             ) : (
-                                                <div className="flex h-full w-full items-center justify-center rounded bg-secondary font-bold text-[0.625rem] text-secondary-foreground sm:text-xs">{entry.skill_level}</div>
+                                                <div className="flex h-full w-full items-center justify-center rounded bg-secondary font-bold text-[0.6875rem] text-secondary-foreground sm:text-xs">{entry.skill_level}</div>
                                             )}
                                         </div>
                                     );
@@ -136,7 +149,7 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
                         )}
 
                         {!maxed && unlockedModules.length > 0 && (
-                            <div className="absolute -right-2 -bottom-3 z-10 flex flex-row-reverse gap-1">
+                            <div className="absolute -right-2 -bottom-2.5 z-10 flex flex-row-reverse gap-1">
                                 {unlockedModules.map((module) => {
                                     const rosterMod = entry.modules.find((m) => m.id === module.uniEquipId);
                                     const moduleLevel = rosterMod?.level ?? 0;

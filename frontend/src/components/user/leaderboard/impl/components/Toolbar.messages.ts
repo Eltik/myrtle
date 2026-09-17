@@ -44,15 +44,15 @@ export const messages = {
         description: "Label of the toggle that hides players whose rank has not changed.",
     },
     "leaderboard.toolbar.movementOnly.on": {
-        text: "Showing only Doctors with movement",
+        text: "Showing only players with movement",
         description: "Tooltip on the movement-only toggle while it is on, describing the current state.",
     },
     "leaderboard.toolbar.movementOnly.off": {
-        text: "Show only Doctors with movement",
+        text: "Show only players with movement",
         description: "Tooltip on the movement-only toggle while it is off, describing what clicking will do.",
     },
     "leaderboard.toolbar.search.placeholder": {
-        text: "Search Doctor name or UID…",
+        text: "Search player name or UID…",
         description: "Placeholder in the leaderboard's filter box. 'UID' is the in-game account number. Keep the single-character ellipsis.",
     },
     "leaderboard.toolbar.search.label": {

@@ -32,7 +32,7 @@ export function MoversCard({ movers, isLoading, intervalKey = "leaderboard.inter
 }
 
 function MoverRow({ mover }: { mover: ILeaderboardMover }) {
-    const nickname = mover.nickname ?? `Doctor ${mover.uid}`;
+    const nickname = mover.nickname ?? `Player ${mover.uid}`;
     const initials = nickname.slice(0, 2).toUpperCase();
     const avatarSrc = getAvatarById(mover.avatar_id ?? DEFAULT_AVATAR_ID);
     const delta = mover.rank_delta;

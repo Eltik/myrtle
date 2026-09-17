@@ -33,7 +33,7 @@ export const messages = {
     },
     "community.runs.contributors": {
         text: "{count} contributing doctors",
-        description: "Tooltip on a banner card's player count. 'Doctor' is what Arknights calls the player.",
+        description: "Tooltip on a banner card's player count. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "community.runs.people": {
         text: "{count} ppl",
@@ -89,7 +89,7 @@ export const messages = {
     },
     "community.runs.metric.popularity": {
         text: "contributing doctors",
-        description: "Names the metric a card was ranked by, inside the rank tooltip: 'Ranked #3 by contributing doctors'. 'Doctor' is what Arknights calls the player.",
+        description: "Names the metric a card was ranked by, inside the rank tooltip: 'Ranked #3 by contributing doctors'. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "community.runs.rankTitle": {
         text: "Ranked #{rank} by {metric}",

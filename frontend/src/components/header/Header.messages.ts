@@ -58,7 +58,7 @@ export const messages = {
     },
     "header.gacha.community.desc": {
         text: "Pull rates, top operators, and timing across opted-in doctors",
-        description: "Blurb under the Community entry in the Gacha menu. A 'pull' is one random draw; 'doctor' is the game's word for a player.",
+        description: "Blurb under the Community entry in the Gacha menu. A 'pull' is one random draw; 'player' is the site's term; the game itself says 'Doctor'.",
     },
     "header.gacha.history.label": {
         text: "History",
@@ -89,8 +89,8 @@ export const messages = {
         description: "Players menu entry for the score leaderboard.",
     },
     "header.players.leaderboard.desc": {
-        text: "Top Doctors ranked by score",
-        description: "Blurb under the Leaderboard entry in the Players menu. 'Doctor' is the game's word for a player.",
+        text: "Top players ranked by score",
+        description: "Blurb under the Leaderboard entry in the Players menu. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
     "header.searchOperators": {
         text: "Search operators",

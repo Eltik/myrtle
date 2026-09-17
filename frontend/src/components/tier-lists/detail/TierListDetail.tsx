@@ -82,7 +82,7 @@ export function TierListDetail() {
 
             <VersionsBar slug={detail.slug} versions={versions} selectedVersion={selectedVersion} isLatestView={isLatestView} />
 
-            <div className="mx-auto mt-4 grid w-[min(1200px,calc(100%-1.5rem))] gap-4 sm:mt-6 sm:w-[min(1200px,calc(100%-2rem))] sm:gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start lg:gap-8">
+            <div className="page-gutter mt-4 grid gap-4 [--page-max:1200px] sm:mt-6 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start lg:gap-8">
                 <div className="min-w-0">
                     <TierListBoard detail={boardDetail} />
                 </div>

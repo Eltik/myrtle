@@ -109,7 +109,7 @@ export const messages = {
         description: "Empty-state title when the account has no inventory on file.",
     },
     "profile.items.empty.none.desc": {
-        text: "This Doctor's inventory is empty.",
+        text: "This player's inventory is empty.",
         description: "Empty-state body when the account has no inventory on file. 'Doctor' is what Arknights calls the player; keep the apostrophe.",
     },
 } satisfies MessageMap;

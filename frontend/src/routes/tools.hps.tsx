@@ -42,7 +42,7 @@ function HpsErrorComponent({ error, reset }: { error: unknown; reset: () => void
                     <EmptyMedia variant="icon">
                         <AlertTriangle className="text-destructive" />
                     </EmptyMedia>
-                    <EmptyTitle>HPS calculator failed to load</EmptyTitle>
+                    <EmptyTitle>HPS Calculator failed to load</EmptyTitle>
                     <EmptyDescription>{message || "An unexpected error occurred while loading the HPS engine. Try again, or check the browser console for details."}</EmptyDescription>
                 </EmptyHeader>
                 <Button onClick={reset} variant="outline">

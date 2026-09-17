@@ -15,7 +15,7 @@ export function Hero({ total, canCreate }: IHeroProps) {
     const f = useFormatters();
 
     return (
-        <section className="mx-auto w-[min(1080px,calc(100%-2rem))] pt-10 pb-6 sm:pt-14 sm:pb-8">
+        <section className="page-gutter pt-10 pb-6 [--page-max:1080px] sm:pt-14 sm:pb-8">
             <div className="flex flex-wrap items-end justify-between gap-4">
                 <div className="min-w-0">
                     <Kicker>{t("browse.hero.kicker")}</Kicker>

@@ -47,6 +47,26 @@ export interface IReleaseNote {
 
 const ENTRIES: IReleaseNote[] = [
     {
+        id: "2026-09-18",
+        date: "2026-09-18",
+        titleKey: "note.2026-09-18.title",
+        announce: true,
+        leadKey: "note.2026-09-18.lead",
+        href: "/tools/release",
+        hrefLabelKey: "note.2026-09-18.hrefLabel",
+        items: [
+            { kind: "improved", textKey: "note.2026-09-18.item.1" },
+            { kind: "improved", textKey: "note.2026-09-18.item.2" },
+            { kind: "improved", textKey: "note.2026-09-18.item.3" },
+            { kind: "improved", textKey: "note.2026-09-18.item.4" },
+            { kind: "improved", textKey: "note.2026-09-18.item.5" },
+            { kind: "fixed", textKey: "note.2026-09-18.item.6" },
+            { kind: "fixed", textKey: "note.2026-09-18.item.7" },
+            { kind: "fixed", textKey: "note.2026-09-18.item.8" },
+            { kind: "fixed", textKey: "note.2026-09-18.item.9" },
+        ],
+    },
+    {
         id: "2026-09-17-3",
         date: "2026-09-17",
         titleKey: "note.2026-09-17-3.title",

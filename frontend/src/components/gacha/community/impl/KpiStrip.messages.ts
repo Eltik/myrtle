@@ -33,7 +33,7 @@ export const messages = {
     },
     "community.kpi.totalPulls.meta": {
         text: "{count} contributing doctors",
-        description: "Under the total pull count: how many players shared their records. 'Doctor' is what Arknights calls the player.",
+        description: "Under the total pull count: how many players shared their records. 'Player' is the site's term; the game itself says 'Doctor'.",
     },
 } satisfies MessageMap;
 

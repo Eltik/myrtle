@@ -70,7 +70,7 @@ export function CommunityPage() {
     return (
         <>
             <div className={styles.pageAmbient} aria-hidden />
-            <section className="mx-auto flex w-full max-w-330 flex-col gap-6 px-8 pt-7 pb-15 max-[760px]:px-4 max-[760px]:pt-5 max-[760px]:pb-10">
+            <section className="page-shell flex flex-col gap-6 [--page-max:1320px]">
                 <PageHeader data={data} isLoading={isLoading} />
 
                 {enhanced.isError ? (

@@ -196,7 +196,7 @@ export function MyTierLists({ initialSort, initialType, initialView, initialQuer
         <main className="min-h-dvh pb-24">
             <MyHero total={allLists.length} communityCount={communityCount} communityQuota={COMMUNITY_QUOTA} officialCount={officialCount} totalViews={totalViews} totalFavorites={totalFavorites} onCreate={handleOpenCreate} />
 
-            <div id="my-tier-lists-grid" className="mx-auto mt-2 w-[min(1080px,calc(100%-2rem))] scroll-mt-32">
+            <div id="my-tier-lists-grid" className="page-gutter mt-2 scroll-mt-32 [--page-max:1080px]">
                 <MyToolbar sort={sort} type={type} view={view} query={inputQuery} resultCount={sorted.length} totalCount={allLists.length} hasOfficial={hasOfficial} onSortChange={setSort} onTypeChange={setType} onViewChange={setView} onQueryChange={setInputQuery} />
 
                 <div className="mt-5">

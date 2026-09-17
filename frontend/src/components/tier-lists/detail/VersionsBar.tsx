@@ -66,7 +66,7 @@ export function VersionsBar({ slug, versions, selectedVersion, isLatestView }: I
     const triggerHint = isLatestView ? t("detail.versions.latestHint") : selectedVersion?.publishedAt ? f.relative(selectedVersion.publishedAt) : null;
 
     return (
-        <section aria-label={t("detail.versions.sectionLabel")} className="mx-auto mt-4 w-[min(1200px,calc(100%-1.5rem))] sm:mt-6 sm:w-[min(1200px,calc(100%-2rem))]">
+        <section aria-label={t("detail.versions.sectionLabel")} className="page-gutter mt-4 [--page-max:1200px] sm:mt-6">
             <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-card/60 px-3 py-2 backdrop-blur-sm">
                 <span className="inline-flex items-center gap-1.5 font-bold font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">
                     <HistoryIcon className="h-3.5 w-3.5" aria-hidden="true" />

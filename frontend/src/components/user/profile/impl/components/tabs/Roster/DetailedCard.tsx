@@ -172,7 +172,7 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                                         <div className="flex items-center justify-between py-1">
                                             <span className="text-sm">{t("profile.roster.detailed.currentPotential")}</span>
                                             <div className="flex items-center gap-1">
-                                                <img alt={t("profile.roster.card.potentialAlt", { rank: entry.potential + 1 })} className="h-6 w-6" decoding="async" height={24} loading="lazy" src={potentialIcon(entry.potential)} width={24} />
+                                                <img alt={t("profile.roster.card.potentialAlt", { rank: entry.potential + 1 })} className="icon-theme-aware h-6 w-6" decoding="async" height={24} loading="lazy" src={potentialIcon(entry.potential)} width={24} />
                                                 <span className="text-muted-foreground text-sm">+{entry.potential}</span>
                                             </div>
                                         </div>
@@ -238,7 +238,7 @@ function SkillRow({ skill, index, mastery, isDefault, skillLevel }: { skill: IEn
             </span>
             <div className="flex items-center gap-1 text-muted-foreground text-xs">
                 <span>{t("profile.roster.card.skillLevel", { level: skillLevel })}</span>
-                {mastery > 0 && <img alt={t("profile.roster.card.masteryAlt", { mastery })} className="h-4 w-4" decoding="async" height={16} loading="lazy" src={specializedIcon(mastery)} width={16} />}
+                {mastery > 0 && <img alt={t("profile.roster.card.masteryAlt", { mastery })} className="icon-theme-aware h-4 w-4" decoding="async" height={16} loading="lazy" src={specializedIcon(mastery)} width={16} />}
             </div>
         </div>
     );

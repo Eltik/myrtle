@@ -117,7 +117,18 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic, voices }: I
                         </ToggleGroup>
                     </div>
                     <ActiveFilterChips chips={activeChips} onClearAll={clearFilters} />
-                    <div className={viewMode === "detailed" ? "grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-6" : "grid grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] gap-3 sm:grid-cols-[repeat(auto-fill,minmax(9rem,1fr))]"}>
+                    {/* Compact below `sm` is THREE fixed columns, not auto-fill. `minmax(6.5rem, 1fr)`
+                        needed ~336px of content width for its third track, so a 360px phone (328px of
+                        content) got two columns while a 412px one got three: the same page, two
+                        different densities, reported in #ui-ux from both ends.
+
+                        Past 440px the row takes as many as fit, because three fixed columns on a
+                        600px tablet is the same wasted space in a different shape. The minimum is
+                        7.5rem from `sm` up, rather than the old 9rem, because the card FILLS its
+                        track now: at 9rem the track stretched to ~162px around a card that stayed
+                        134px wide whatever happened, so every row carried a column's worth of dead
+                        space. A 700px roster holds five cards where it held four. */}
+                    <div className={viewMode === "detailed" ? "grid grid-cols-[repeat(auto-fill,minmax(min(100%,280px),1fr))] gap-6" : "grid grid-cols-3 gap-2 sm:grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] sm:gap-3 min-[440px]:grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))]"}>
                         {visible.map((entry, i) => {
                             const ref = i === visible.length - 1 ? lastRef : null;
                             const key = entry.isOwned ? entry.operator_id : `unowned-${entry.operator_id}`;

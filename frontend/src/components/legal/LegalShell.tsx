@@ -22,7 +22,7 @@ export function LegalContainer({ children, ambient }: ILegalContainerProps) {
                     <div className={styles.heroGrid} aria-hidden="true" />
                 </>
             ) : null}
-            <article className="relative z-1 mx-auto w-[min(880px,calc(100%-2rem))] py-14 sm:py-16">{children}</article>
+            <article className="page-gutter relative z-1 py-14 [--page-max:880px] sm:py-16">{children}</article>
         </main>
     );
 }

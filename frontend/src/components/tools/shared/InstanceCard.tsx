@@ -150,7 +150,7 @@ export function InstanceCard({ inst, index, isFirst, isLast, onUpdate, onToggleC
                                                     config.potential === p ? "border-primary bg-primary/10 ring-1 ring-primary/30" : "border-border hover:border-primary/50",
                                                 )}
                                             >
-                                                <img alt="" aria-hidden="true" className="size-5 object-contain" decoding="async" loading="lazy" src={potentialIcon(p - 1)} />
+                                                <img alt="" aria-hidden="true" className="icon-theme-aware size-5 object-contain" decoding="async" loading="lazy" src={potentialIcon(p - 1)} />
                                             </button>
                                         )}
                                     />
@@ -365,7 +365,7 @@ function RankChip({ rank, selected, lockReason, onSelect, t }: IRankChipProps): 
                             selected ? "border-primary bg-primary/10 ring-1 ring-primary/30" : !locked && "border-border hover:border-primary/50",
                         )}
                     >
-                        {mastery ? <img alt="" aria-hidden="true" className="size-5 object-contain" decoding="async" loading="lazy" src={specializedIcon(rank - 7)} /> : <span className="font-medium font-mono text-[12px]">{rank}</span>}
+                        {mastery ? <img alt="" aria-hidden="true" className="icon-theme-aware size-5 object-contain" decoding="async" loading="lazy" src={specializedIcon(rank - 7)} /> : <span className="font-medium font-mono text-[12px]">{rank}</span>}
                     </button>
                 )}
             />
