@@ -10,7 +10,8 @@ import { useFormatters, useLocale, useT } from "#/lib/i18n";
 import { cn, getAvatarById, rarityToNumber } from "#/lib/utils";
 import type { AutoName } from "#/types/generated/AutoName";
 import { useAutoTranslate } from "../autoTranslate";
-import { formatDate, humanizeTag } from "../helpers";
+import { formatDate } from "../helpers";
+import { useReleaseTagLabel } from "../labels";
 import type { IGoalEstimate } from "../pulls/odds";
 import { MAX_POT_COPIES } from "../pulls/odds";
 import type { IPlanRow, IPlanTotals } from "../pulls/plan";
@@ -302,6 +303,7 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onSetTarget, ev
     // half the row; it carries no information the name does not.
     const visual = art.src ? <img src={art.src} alt={alt} loading="lazy" onError={art.onError} className="aspect-[5/2] w-full rounded-md bg-muted object-cover" /> : faces.length > 0 ? <FaceStrip ids={faces} lookup={lookup} /> : null;
 
+    const tagLabel = useReleaseTagLabel();
     const targets = planTargets(row);
     const inputId = `plan-alloc-${row.key}`;
     const step = (delta: number) => onAllocate(row.key, Math.max(0, row.allocated + delta));
@@ -331,7 +333,7 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onSetTarget, ev
                 badge's second line hangs below, which is what it is. */}
                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                     <CnName cn={banner.nameCn} auto={banner.nameEnAuto} primaryClassName="font-sans font-semibold text-[13px] text-foreground" compact>
-                        <Tag>{humanizeTag(banner.ruleType)}</Tag>
+                        <Tag>{tagLabel(banner.ruleType)}</Tag>
                     </CnName>
                     <span className="font-mono text-[11.5px] text-muted-foreground tabular-nums">{formatDate(row.enStart, locale)}</span>
                     <ResolutionBadge resolution={banner.resolution} today={today} />

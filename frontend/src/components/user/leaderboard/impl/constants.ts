@@ -21,7 +21,25 @@ export const LEADERBOARD_SORTS = [
     { value: "sandbox_score", labelKey: "leaderboard.sort.sandbox" },
     { value: "medal_score", labelKey: "leaderboard.sort.medals" },
     { value: "base_score", labelKey: "leaderboard.sort.base" },
-    { value: "skin_score", labelKey: "leaderboard.sort.skins" },
+    // "Skins" is NOT listed, and the omission is the fix, not an oversight.
+    // `user_scores.skin_score` is written as the literal 0.0 at both sites that
+    // persist a score (`backend/src/core/regrade_job.rs` `regrade_one` and
+    // `backend/src/bin/regrade_users.rs` `regrade_one`); there is no
+    // `grade_skins` module and `UserGrade` has no skin field to source one
+    // from. The column, the view, the generated type and this option all
+    // existed end to end, so the sort ran and ranked every single player at
+    // 0.0%. Offering a sort that cannot discriminate is worse than not
+    // offering it.
+    //
+    // To restore it: add a skin section to `core::grade`, give `UserGrade` the
+    // field, write it at both `regrade_one` sites, regrade, then re-add the
+    // line below.
+    //   { value: "skin_score", labelKey: "leaderboard.sort.skins" },
+    //
+    // The real owned-skin numbers already exist, but on `v_user_profile`
+    // (`skin_count`, `non_default_skin_count`), not on `v_leaderboard` - a
+    // count-based sort would need those columns added to that view and the
+    // bindings regenerated.
 ] as const satisfies ReadonlyArray<{ value: string; labelKey: LeaderboardMessageKey }>;
 export type LeaderboardSort = (typeof LEADERBOARD_SORTS)[number]["value"];
 

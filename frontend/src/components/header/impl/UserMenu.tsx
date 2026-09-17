@@ -41,48 +41,39 @@ export default function UserMenu({ user, loading, logout }: { user: ISession | n
                 </div>
                 <DropdownMenuContent align="end" className="w-48">
                     <div className="px-2 pb-1.5">
-                        <Link className="font-medium text-sm hover:underline" to="/user/$id" params={{ id: user.uid }}>
+                        <Link className="block font-medium text-sm hover:underline" to="/user/$id" params={{ id: user.uid }}>
                             {user.nickname ?? "Doctor"}
                         </Link>
                         <p className="text-muted-foreground text-xs">{t("userMenu.level", { level: user.level })}</p>
                     </div>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="cursor-pointer">
-                        <Link to="/tier-lists/my" search={{ sort: "recent", type: "all", view: "grid", q: "" }} className="flex flex-row items-center gap-2">
-                            <LayoutList className="h-4 w-4 text-muted-foreground" />
-                            {t("userMenu.myTierLists")}
-                        </Link>
+                    <DropdownMenuItem className="cursor-pointer" render={<Link to="/tier-lists/my" search={{ sort: "recent", type: "all", view: "grid", q: "" }} />}>
+                        <LayoutList className="h-4 w-4 text-muted-foreground" />
+                        {t("userMenu.myTierLists")}
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer">
-                        <Link to="/settings" className="flex flex-row items-center gap-2">
-                            <Cog className="h-4 w-4 text-muted-foreground" />
-                            {t("userMenu.settings")}
-                        </Link>
+                    <DropdownMenuItem className="cursor-pointer" render={<Link to="/settings" />}>
+                        <Cog className="h-4 w-4 text-muted-foreground" />
+                        {t("userMenu.settings")}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="cursor-pointer">
-                        <a href={REPO_URL} target="_blank" rel="noreferrer" className="flex flex-row items-center gap-2">
-                            <GithubIcon className="h-4 w-4 text-muted-foreground" />
-                            {t("userMenu.github")}
-                        </a>
+                    {/* biome-ignore lint/a11y/useAnchorContent: anchor children are slotted in by DropdownMenuItem via the render prop */}
+                    <DropdownMenuItem className="cursor-pointer" render={<a href={REPO_URL} target="_blank" rel="noreferrer" />}>
+                        <GithubIcon className="h-4 w-4 text-muted-foreground" />
+                        {t("userMenu.github")}
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer">
-                        <Link to="/donate" target="_blank" className="flex flex-row items-center gap-2">
-                            <Heart className="h-4 w-4 text-muted-foreground" />
-                            {t("userMenu.support")}
-                        </Link>
+                    <DropdownMenuItem className="cursor-pointer" render={<Link to="/donate" target="_blank" />}>
+                        <Heart className="h-4 w-4 text-muted-foreground" />
+                        {t("userMenu.support")}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     {user.canAccessAdminPanel ? (
-                        <DropdownMenuItem className="cursor-pointer">
-                            <Link to="/admin" className="flex flex-row items-center gap-2">
-                                <ShieldIcon className="h-4 w-4 text-primary" />
-                                {t("userMenu.adminPanel")}
-                            </Link>
+                        <DropdownMenuItem className="cursor-pointer" render={<Link to="/admin" />}>
+                            <ShieldIcon className="h-4 w-4 text-primary" />
+                            {t("userMenu.adminPanel")}
                         </DropdownMenuItem>
                     ) : null}
-                    <DropdownMenuItem className="cursor-pointer pl-3 text-primary transition-colors focus:text-primary/80" onClick={logout}>
-                        <LogOut className="mr-2 h-4 w-4" />
+                    <DropdownMenuItem className="cursor-pointer text-primary transition-colors focus:text-primary/80" onClick={logout}>
+                        <LogOut className="h-4 w-4" />
                         {t("userMenu.logout")}
                     </DropdownMenuItem>
                 </DropdownMenuContent>

@@ -504,8 +504,8 @@ export const messages = {
         description: "Banner type: the general Standard Headhunting pool.",
     },
     "release.pulls.banner.LINKAGE": {
-        text: "Joint Operation, collab",
-        description: "Banner type: a crossover/collaboration banner. 'Joint Operation' is the in-game name.",
+        text: "Collaboration",
+        description: "Banner type: a crossover banner. 'Collaboration' is the in-game name.",
     },
     "release.pulls.banner.CLASSIC": {
         text: "Kernel Locating",

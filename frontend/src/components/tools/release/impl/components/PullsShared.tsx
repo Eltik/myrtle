@@ -75,7 +75,7 @@ export function PullsNumber({ id, label, value, onChange, min = 0, max, step = 1
 /**
  * The player-facing name of a banner archetype. `humanizeTag` title-cases the raw
  * gamedata enum, which is fine for a debug tag and wrong for a picker: the game calls
- * LINKAGE "Joint Operation" and ATTAIN "Special Headhunting", and neither spelling is
+ * LINKAGE "Collaboration" and ATTAIN "Special Headhunting", and neither spelling is
  * a string a translator can reach.
  */
 export type BannerArchetype = "LIMITED" | "SINGLE" | "DOUBLE" | "NORMAL" | "LINKAGE" | "CLASSIC" | "ATTAIN";

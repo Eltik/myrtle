@@ -20,6 +20,10 @@ export const messages = {
         text: "Sort by",
         description: "Shown in the sort select before anything is chosen.",
     },
+    "profile.roster.sort.investment": {
+        text: "Sort by Investment",
+        description: "Sort option: how far each operator is along its own ceiling (promotion, level, skill, masteries, modules, potential), so a finished lower-rarity operator outranks an untouched higher-rarity one.",
+    },
     "profile.roster.sort.level": {
         text: "Sort by Level",
         description: "Sort option: by operator level.",

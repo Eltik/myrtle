@@ -24,11 +24,17 @@ const PAGE_SIZE: Record<ViewMode, number> = { detailed: 24, compact: 48 };
 export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndexEntry[], operatorsStatic: IOperatorListItem[], voices: IVoices | undefined) {
     // This key predates classes and subclasses, so the merge prevents missing arrays
     // from throwing when returning visitors use the new filters.
+    // `hadStoredViewMode` records whether the visitor has ever chosen a view
+    // mode, so the responsive default below can tell "never picked one" from
+    // "picked compact". It is a ref rather than state: it must be readable by
+    // the init effect on the same tick the parse ran, and it never re-renders.
+    const hadStoredViewMode = useRef(false);
     const [filters, setFilters] = useLocalStorageState<IRosterFilterState>("user:roster:filters", INITIAL, {
         parse: (raw) => {
             const stored = JSON.parse(raw) as Partial<IRosterFilterState> & { rarity?: unknown };
             // Returning visitors carry this deprecated key, so it must not leak into the typed state.
             delete stored.rarity;
+            if (stored.viewMode === "detailed" || stored.viewMode === "compact") hadStoredViewMode.current = true;
             return { ...INITIAL, ...stored };
         },
     });
@@ -39,10 +45,16 @@ export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndex
     const toggleFilters = () => setFiltersVisible((v) => !v);
     const isDesktop = useMediaQuery("(min-width: 768px)");
 
+    // The responsive default is a FIRST-VISIT default, not a reset. This ran on
+    // every mount and overwrote the stored `viewMode` unconditionally, so any
+    // visitor who chose icons got full art back the moment they left the tab
+    // and came back (roster -> stats -> roster remounts this hook). It now only
+    // fires when localStorage carried no view mode at all.
     const didInit = useRef(false);
     useEffect(() => {
         if (didInit.current) return;
         didInit.current = true;
+        if (hadStoredViewMode.current) return;
         setFilters((p) => ({ ...p, viewMode: isDesktop ? "detailed" : "compact" }));
     }, [isDesktop, setFilters]);
 

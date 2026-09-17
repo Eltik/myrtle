@@ -1,16 +1,19 @@
 import { Link } from "@tanstack/react-router";
-import { CheckIcon, KeyRoundIcon, Link2OffIcon, LogOutIcon, MailIcon, RefreshCwIcon } from "lucide-react";
+import { CheckIcon, KeyRoundIcon, Link2OffIcon, LogOutIcon, MailIcon, RefreshCwIcon, UserRoundIcon } from "lucide-react";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
+import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { formatServerWithPublisher } from "#/lib/auth/login";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { formatRelativeShort } from "#/lib/utils";
 import type { IUserProfile } from "#/types/user";
-import type { messages } from "./DataPanel.messages";
+import type { messages as dataMessages } from "./DataPanel.messages";
 import type { messages as profileMessages } from "./ProfilePanel.messages";
 import { SettingRow } from "./SettingsShell";
 
-interface IDataPanelProps {
+interface IAccountPanelProps {
     user: IUserProfile;
     onResync: () => void;
     syncing: boolean;
@@ -20,12 +23,65 @@ interface IDataPanelProps {
     disconnecting: boolean;
 }
 
-export function DataPanel({ user, onResync, syncing, onSignOut, signingOut, onDisconnect, disconnecting }: IDataPanelProps) {
-    // The re-sync button is shared with ProfilePanel, which declares its two labels.
-    const t: TypedT<typeof messages & typeof profileMessages> = useT("settings");
+/**
+ * The single account section, replacing the old "Profile" and "Account & data"
+ * pair.
+ *
+ * Both of those carried a re-sync button wired to the same mutation, and
+ * "Profile" restated in read-only text boxes what the identity header one card
+ * above it already showed - nickname, level and server, with server appearing
+ * twice on the SAME panel. None of those boxes was editable; they were `<Input
+ * readOnly>` with no `onChange`, which reads as "type here" and does nothing.
+ *
+ * What survives is the identity header (with level now a badge rather than a
+ * text box), ONE re-sync, the assistant operator (the one game-synced fact the
+ * public profile does not show), and the data and linked-account cards.
+ */
+export function AccountPanel({ user, onResync, syncing, onSignOut, signingOut, onDisconnect, disconnecting }: IAccountPanelProps) {
+    // The re-sync labels and the data/linked-account copy are declared by the
+    // two panels this one replaces; the keys are unchanged so no translation is
+    // invalidated by the merge.
+    const t: TypedT<typeof profileMessages & typeof dataMessages> = useT("settings");
+    const display = user.nickname ?? "Doctor";
+    const nickNum = user.nick_number ? `#${user.nick_number}` : "";
 
     return (
         <div className="flex flex-col gap-4">
+            <Card>
+                <div className="flex flex-col gap-4 p-4 sm:grid sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-5 sm:p-6">
+                    <div className="flex items-center gap-4 sm:contents">
+                        <div className="relative size-14 shrink-0 overflow-hidden rounded-full border-2 border-primary/30 bg-linear-to-br from-primary to-primary/60 text-primary-foreground sm:size-16">
+                            <span className="absolute inset-0 flex items-center justify-center font-bold text-[20px] sm:text-[22px]">
+                                <OperatorAvatar charId={user.secretary_skin_id ?? user.secretary} name={display} />
+                            </span>
+                        </div>
+                        <div className="flex min-w-0 flex-col gap-1.5">
+                            <div className="flex min-w-0 items-baseline gap-1.5">
+                                <span className="truncate font-semibold text-[17px] text-foreground leading-tight tracking-[-0.01em] sm:text-[18px]">{display}</span>
+                                {nickNum ? <span className="font-mono text-[12px] text-muted-foreground">{nickNum}</span> : null}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                                <Badge variant="outline" size="sm">
+                                    {t("profile.uid", { uid: user.uid })}
+                                </Badge>
+                                {user.level != null ? (
+                                    <Badge variant="outline" size="sm">
+                                        {t("profile.level.value", { level: user.level })}
+                                    </Badge>
+                                ) : null}
+                                <Badge variant="outline" size="sm">
+                                    {formatServerWithPublisher(user.server)}
+                                </Badge>
+                                <Badge variant="success" size="sm">
+                                    <CheckIcon className="size-3" />
+                                    {t("profile.synced", { when: formatRelativeShort(user.updated_at) })}
+                                </Badge>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </Card>
+
             <Card>
                 <CardHeader>
                     <CardTitle>{t("data.sync.title")}</CardTitle>
@@ -40,6 +96,18 @@ export function DataPanel({ user, onResync, syncing, onSignOut, signingOut, onDi
                                 <RefreshCwIcon className="size-3.5" />
                                 {syncing ? t("resync.pending") : t("resync.now")}
                             </Button>
+                        }
+                    />
+                    <SettingRow
+                        title={t("profile.assistant.title")}
+                        description={t("profile.assistant.desc")}
+                        control={
+                            <div className="flex items-center gap-2.5">
+                                <div className="inline-flex size-9 items-center justify-center overflow-hidden rounded-lg border border-border bg-[color-mix(in_srgb,var(--primary)_14%,var(--card))] text-muted-foreground">
+                                    {user.secretary ? <OperatorAvatar charId={user.secretary_skin_id ?? user.secretary} name={display} /> : <UserRoundIcon className="size-4" />}
+                                </div>
+                                <span className="font-mono text-[13px] text-muted-foreground">{user.secretary ?? "-"}</span>
+                            </div>
                         }
                     />
                 </CardContent>

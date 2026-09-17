@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { DatabaseIcon, PaletteIcon, ShieldIcon, TriangleAlertIcon, UserRoundIcon } from "lucide-react";
+import { PaletteIcon, ShieldIcon, TriangleAlertIcon, UserRoundIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
@@ -8,11 +8,10 @@ import { disconnectGameAccountFn, type IUpdateUserSettingsInput, refreshRosterFn
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { IUserProfile } from "#/types/user";
+import { AccountPanel } from "./AccountPanel";
 import { AppearancePanel } from "./AppearancePanel";
 import { DangerPanel } from "./DangerPanel";
-import { DataPanel } from "./DataPanel";
 import { PrivacyPanel } from "./PrivacyPanel";
-import { ProfilePanel } from "./ProfilePanel";
 import type { messages } from "./SettingsPage.messages";
 import { type SettingsSectionId, SettingsShell } from "./SettingsShell";
 
@@ -21,10 +20,12 @@ import { type SettingsSectionId, SettingsShell } from "./SettingsShell";
  * this table can stay a module constant; `SettingsPage` resolves them.
  */
 const NAV = [
-    { id: "profile" as const, labelKey: "nav.profile" as const, Icon: UserRoundIcon },
+    // "Profile" and "Account & data" were one section split in two: both carried
+    // the same re-sync button, and "Profile" restated the identity header's own
+    // nickname, level and server underneath it. Merged, first, and the default.
+    { id: "account" as const, labelKey: "nav.account" as const, Icon: UserRoundIcon },
     { id: "appearance" as const, labelKey: "nav.appearance" as const, Icon: PaletteIcon },
     { id: "privacy" as const, labelKey: "nav.privacy" as const, Icon: ShieldIcon },
-    { id: "data" as const, labelKey: "nav.data" as const, Icon: DatabaseIcon },
     { id: "danger" as const, labelKey: "nav.danger" as const, Icon: TriangleAlertIcon },
 ];
 
@@ -46,7 +47,7 @@ export function SettingsPage({ user }: { user: IUserProfile | null }) {
     // is available to everyone; the account sections require signing in.
     const nav = useMemo(() => (user ? NAV : NAV.filter((n) => n.id === "appearance")).map(({ id, labelKey, Icon }) => ({ id, label: t(labelKey), Icon })), [t, user]);
 
-    const [active, setActive] = useState<SettingsSectionId>(user ? "profile" : "appearance");
+    const [active, setActive] = useState<SettingsSectionId>(user ? "account" : "appearance");
     const [settings, setSettings] = useState<IUpdateUserSettingsInput>(() => initialSettings(user));
     const [signingOut, setSigningOut] = useState(false);
 
@@ -138,10 +139,9 @@ export function SettingsPage({ user }: { user: IUserProfile | null }) {
 
     return (
         <SettingsShell nav={nav} active={active} onChange={setActive}>
-            {user && active === "profile" && <ProfilePanel user={user} onResync={() => resyncMutation.mutate()} syncing={resyncMutation.isPending} />}
+            {user && active === "account" && <AccountPanel user={user} onResync={() => resyncMutation.mutate()} syncing={resyncMutation.isPending} onSignOut={handleSignOut} signingOut={signingOut} onDisconnect={() => disconnectMutation.mutate()} disconnecting={disconnectMutation.isPending} />}
             {active === "appearance" && <AppearancePanel />}
             {user && active === "privacy" && <PrivacyPanel settings={settings} onChange={handleSettingsChange} saving={settingsMutation.isPending} />}
-            {user && active === "data" && <DataPanel user={user} onResync={() => resyncMutation.mutate()} syncing={resyncMutation.isPending} onSignOut={handleSignOut} signingOut={signingOut} onDisconnect={() => disconnectMutation.mutate()} disconnecting={disconnectMutation.isPending} />}
             {user && active === "danger" && <DangerPanel />}
         </SettingsShell>
     );

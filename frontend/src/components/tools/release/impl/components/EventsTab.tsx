@@ -7,8 +7,9 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { ReleaseEvent } from "#/types/generated/ReleaseEvent";
 import { useAutoTranslate } from "../autoTranslate";
-import { formatDateRange, humanizeTag, isPast, sortKey } from "../helpers";
+import { formatDateRange, isPast, sortKey } from "../helpers";
 import type { messages as helperMessages } from "../helpers.messages";
+import { useReleaseTagLabel } from "../labels";
 import type { messages } from "./EventsTab.messages";
 import { ModelSummary } from "./ModelSummary";
 import { ResolutionBadge } from "./ResolutionBadge";
@@ -66,13 +67,14 @@ export function EventsTab({ today }: IEventsTabProps): React.ReactElement {
 
 function EventRow({ event, today, t }: { event: ReleaseEvent; today: Date; t: EventsT }): React.ReactElement {
     const locale = useLocale();
+    const tagLabel = useReleaseTagLabel();
     const autoOn = useAutoTranslate();
     const art = useArt(event.imagePath);
     const alt = resolveName(event.nameCn, event.nameEn, event.nameEnAuto, autoOn).text;
     return (
         <ListRow visual={art.src && <RowImage src={art.src} alt={alt} onError={art.onError} />} badge={<ResolutionBadge resolution={event.resolution} today={today} />}>
             <CnName cn={event.nameCn} en={event.nameEn} auto={event.nameEnAuto} primaryClassName={cn("font-sans text-[13.5px]", event.hasStage ? "font-semibold text-foreground" : "font-medium text-muted-foreground")}>
-                <Tag>{humanizeTag(event.activityType)}</Tag>
+                <Tag>{tagLabel(event.activityType)}</Tag>
             </CnName>
             <div className="font-mono text-[11.5px] text-muted-foreground tabular-nums">
                 <span className="mr-1 uppercase tracking-[0.06em]">{t("release.events.cn")}</span>

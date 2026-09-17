@@ -11,6 +11,14 @@ use crate::app::state::AppState;
 use crate::core::auth::permissions::GlobalRole;
 use crate::database::queries;
 
+/// `save_credentials` is the player's answer to "remember this login".
+/// Defaults to true so an older client, or any caller that omits it, keeps the
+/// behaviour it had. False means store nothing and clear anything a previous
+/// login left; see `services::auth::persist_credentials`.
+const fn default_true() -> bool {
+    true
+}
+
 #[derive(Deserialize)]
 pub struct SendCodeRequest {
     pub email: String,
@@ -31,6 +39,9 @@ pub struct LoginRequest {
     pub email: String,
     pub code: String,
     pub server: String,
+    /// See the module note on `save_credentials`.
+    #[serde(default = "default_true")]
+    pub save_credentials: bool,
 }
 
 pub async fn login(
@@ -38,7 +49,14 @@ pub async fn login(
     Json(body): Json<LoginRequest>,
 ) -> Result<Json<services::auth::LoginResponse>, ApiError> {
     let server = parse_server(&body.server)?;
-    let result = services::auth::login(&state, &body.email, &body.code, server).await?;
+    let result = services::auth::login(
+        &state,
+        &body.email,
+        &body.code,
+        server,
+        body.save_credentials,
+    )
+    .await?;
     Ok(Json(result))
 }
 
@@ -46,13 +64,22 @@ pub async fn login(
 pub struct BilibiliLoginRequest {
     pub username: String,
     pub password: String,
+    /// See the module note on `save_credentials`.
+    #[serde(default = "default_true")]
+    pub save_credentials: bool,
 }
 
 pub async fn login_bilibili(
     State(state): State<AppState>,
     Json(body): Json<BilibiliLoginRequest>,
 ) -> Result<Json<services::auth::LoginResponse>, ApiError> {
-    let result = services::auth::login_bilibili(&state, &body.username, &body.password).await?;
+    let result = services::auth::login_bilibili(
+        &state,
+        &body.username,
+        &body.password,
+        body.save_credentials,
+    )
+    .await?;
     Ok(Json(result))
 }
 
@@ -73,6 +100,9 @@ pub async fn send_bilibili_sms(
 pub struct BilibiliSmsLoginRequest {
     pub phone: String,
     pub code: String,
+    /// See the module note on `save_credentials`.
+    #[serde(default = "default_true")]
+    pub save_credentials: bool,
 }
 
 /// Experimental: see `core::hypergryph::bilibili` module docs. The SMS
@@ -82,7 +112,9 @@ pub async fn login_bilibili_sms(
     State(state): State<AppState>,
     Json(body): Json<BilibiliSmsLoginRequest>,
 ) -> Result<Json<services::auth::LoginResponse>, ApiError> {
-    let result = services::auth::login_bilibili_sms(&state, &body.phone, &body.code).await?;
+    let result =
+        services::auth::login_bilibili_sms(&state, &body.phone, &body.code, body.save_credentials)
+            .await?;
     Ok(Json(result))
 }
 
@@ -106,6 +138,9 @@ pub struct CnLoginRequest {
     pub password: Option<String>,
     #[serde(default)]
     pub code: Option<String>,
+    /// See the module note on `save_credentials`.
+    #[serde(default = "default_true")]
+    pub save_credentials: bool,
 }
 
 /// Experimental: see `core::hypergryph::passport` module docs. Expected to
@@ -119,6 +154,7 @@ pub async fn login_cn(
         &body.phone,
         body.password.as_deref(),
         body.code.as_deref(),
+        body.save_credentials,
     )
     .await?;
     Ok(Json(result))

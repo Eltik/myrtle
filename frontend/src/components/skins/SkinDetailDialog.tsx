@@ -48,8 +48,16 @@ export function SkinDetailContent({ skin, opName, skinName, avatarURL, server, p
             <DialogTitle className="sr-only">{t("detail.srTitle", { op: opName, skin: skinName })}</DialogTitle>
             <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[auto_minmax(0,1fr)] md:grid-cols-[5fr_4fr] md:grid-rows-1">
                 <div className="relative flex h-[min(56vh,100vw)] items-center justify-center overflow-hidden bg-linear-to-b from-muted/20 to-muted/60 md:h-auto md:border-border/60 md:border-r">
-                    <img alt={t("detail.heroAlt", { op: opName, skin: skinName })} className={cn("h-full w-full object-contain object-bottom transition-opacity duration-500", dynActive && "opacity-0")} decoding="async" loading="lazy" onError={(e) => ((e.target as HTMLImageElement).src = avatarURL)} src={heroURL} />
-                    <DynamicArtOverlay operatorCode={skin.charId} skinId={skin.skinId} framing="authored" surface="panel" backdrop={heroURL} onActiveChange={setDynActive} />
+                    {/* `object-top`, not `object-bottom`: skin art is portrait and the
+                        panel is taller than the art once `contain` letterboxes it, so
+                        anchoring to the bottom pushed the whole illustration down and
+                        collected the empty space above the character's head. Top is what
+                        every other art panel in the app uses (see Roster's
+                        `OperatorDialog`), and `fit` hands the same framing to the
+                        animated overlay, which had no `fit` at all and so could not
+                        agree with the static image it composites over. */}
+                    <img alt={t("detail.heroAlt", { op: opName, skin: skinName })} className={cn("h-full w-full object-contain object-top transition-opacity duration-500", dynActive && "opacity-0")} decoding="async" loading="lazy" onError={(e) => ((e.target as HTMLImageElement).src = avatarURL)} src={heroURL} />
+                    <DynamicArtOverlay operatorCode={skin.charId} skinId={skin.skinId} fit={{ mode: "contain", align: "top" }} framing="authored" surface="panel" backdrop={heroURL} onActiveChange={setDynActive} />
                     {corner && <span className="absolute top-3 left-3">{corner}</span>}
                 </div>
                 <ScrollArea className="min-h-0">

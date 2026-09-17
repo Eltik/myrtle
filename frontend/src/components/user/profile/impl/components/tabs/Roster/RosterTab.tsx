@@ -31,6 +31,7 @@ interface IRosterTabProps {
 type MessageKey = keyof typeof messages & string;
 
 const SORT_LABELS: Record<SortKey, MessageKey> = {
+    investment: "profile.roster.sort.investment",
     level: "profile.roster.sort.level",
     rarity: "profile.roster.sort.rarity",
     obtained: "profile.roster.sort.obtained",
@@ -72,6 +73,9 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic, voices }: I
                                 <SelectValue placeholder={t("profile.roster.sort.placeholder")}>{(value) => (SORT_LABELS[value as SortKey] ? t(SORT_LABELS[value as SortKey]) : value)}</SelectValue>
                             </SelectTrigger>
                             <SelectContent>
+                                <SelectItem disabled={ownership === "unowned"} value="investment">
+                                    {t("profile.roster.sort.investment")}
+                                </SelectItem>
                                 <SelectItem disabled={ownership === "unowned"} value="level">
                                     {t("profile.roster.sort.level")}
                                 </SelectItem>

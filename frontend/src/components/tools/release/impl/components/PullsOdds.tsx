@@ -116,6 +116,7 @@ export function PullsOdds({ budget, pity }: IPullsOddsProps): React.ReactElement
             <div className="flex flex-col gap-1.5">
                 <span className="font-sans font-semibold text-[12px] text-foreground">{t("release.pulls.odds.copies")}</span>
                 {result.copies.map((p, k) => (
+                    // biome-ignore lint/suspicious/noArrayIndexKey: index k is the copy count, which is the row's identity
                     <div key={`copies-${k}`} className="flex items-center gap-2">
                         <span className="w-20 flex-none font-sans text-[11.5px] text-muted-foreground">{k === result.copies.length - 1 ? t("release.pulls.odds.copiesTail", { count: k }) : t("release.pulls.odds.copiesRow", { count: k })}</span>
                         <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">

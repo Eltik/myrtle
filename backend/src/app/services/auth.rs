@@ -52,10 +52,45 @@ pub struct LoginResponse {
 /// gap between the two is a forced re-login, which is what users hit when they
 /// pressed "Re-sync" the next day.
 ///
+/// `save` is the player's own answer to "remember this login", sent per login
+/// (see `LoginRequest::save_credentials`). When it is false this stores
+/// nothing AND removes anything an earlier login left behind, so opting out is
+/// a withdrawal and not merely a skip. The cached session still works for the
+/// hour it lives, which is what makes the opt-out usable rather than a forced
+/// immediate re-login.
+///
 /// Best-effort on purpose: a database that will not take the credential costs
 /// the user a re-login later, and failing the login in front of them now would
-/// be the worse trade. It is logged either way.
-async fn persist_credentials(state: &AppState, user_id: Uuid, uid: &str, session: &AuthSession) {
+/// be the worse trade. It is logged either way. The DELETE half is not
+/// best-effort in the same way: a failure there leaves a credential the user
+/// asked us to drop, so it is logged at warn with its own message.
+async fn persist_credentials(
+    state: &AppState,
+    user_id: Uuid,
+    uid: &str,
+    session: &AuthSession,
+    save: bool,
+) {
+    if !save {
+        match game_credentials::delete(&state.db, user_id).await {
+            Ok(removed) => {
+                tracing::info!(
+                    uid = %uid,
+                    removed,
+                    "login opted out of storing game credentials"
+                );
+            }
+            Err(e) => {
+                tracing::warn!(
+                    uid = %uid,
+                    error = ?e,
+                    "login opted out of storing game credentials, but clearing the previous one failed"
+                );
+            }
+        }
+        return;
+    }
+
     if let Err(e) = game_credentials::store(
         &state.db,
         &state.config.game_credential_key,
@@ -77,6 +112,7 @@ pub async fn login(
     email: &str,
     code: &str,
     server: Server,
+    save_credentials: bool,
 ) -> Result<LoginResponse, ApiError> {
     let result = match session::login(&state.http_client, email, code, server).await {
         Ok(r) => r,
@@ -113,7 +149,7 @@ pub async fn login(
         None => create_user(&state.db, uid, server.index() as i16).await?,
     };
 
-    persist_credentials(state, user.id, uid, &result.session).await;
+    persist_credentials(state, user.id, uid, &result.session, save_credentials).await;
 
     let token = create_token(
         &state.config.jwt_secret,
@@ -135,6 +171,7 @@ pub async fn login_bilibili(
     state: &AppState,
     username: &str,
     password: &str,
+    save_credentials: bool,
 ) -> Result<LoginResponse, ApiError> {
     let server = Server::Bilibili;
 
@@ -160,7 +197,7 @@ pub async fn login_bilibili(
         None => create_user(&state.db, uid, server.index() as i16).await?,
     };
 
-    persist_credentials(state, user.id, uid, &auth_session).await;
+    persist_credentials(state, user.id, uid, &auth_session, save_credentials).await;
 
     let token = create_token(
         &state.config.jwt_secret,
@@ -190,6 +227,7 @@ pub async fn login_bilibili_sms(
     state: &AppState,
     phone: &str,
     sms_code: &str,
+    save_credentials: bool,
 ) -> Result<LoginResponse, ApiError> {
     let server = Server::Bilibili;
 
@@ -216,7 +254,7 @@ pub async fn login_bilibili_sms(
         None => create_user(&state.db, uid, server.index() as i16).await?,
     };
 
-    persist_credentials(state, user.id, uid, &auth_session).await;
+    persist_credentials(state, user.id, uid, &auth_session, save_credentials).await;
 
     let token = create_token(
         &state.config.jwt_secret,
@@ -253,6 +291,7 @@ pub async fn login_cn(
     phone: &str,
     password: Option<&str>,
     sms_code: Option<&str>,
+    save_credentials: bool,
 ) -> Result<LoginResponse, ApiError> {
     use crate::core::hypergryph::passport::PassportCredential;
 
@@ -290,7 +329,7 @@ pub async fn login_cn(
         None => create_user(&state.db, uid, server.index() as i16).await?,
     };
 
-    persist_credentials(state, user.id, uid, &auth_session).await;
+    persist_credentials(state, user.id, uid, &auth_session, save_credentials).await;
 
     let token = create_token(
         &state.config.jwt_secret,

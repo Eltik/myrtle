@@ -3,9 +3,9 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "settings";
 
 export const messages = {
-    "nav.profile": {
-        text: "Profile",
-        description: "Settings section for the visitor's game-synced account details.",
+    "nav.account": {
+        text: "Account",
+        description: "Settings section for the visitor's game-synced account details, syncing, exporting and disconnecting. Replaces the former separate Profile and Account & data sections.",
     },
     "nav.appearance": {
         text: "Appearance",
@@ -14,10 +14,6 @@ export const messages = {
     "nav.privacy": {
         text: "Privacy",
         description: "Settings section for profile visibility and leaderboard opt-in.",
-    },
-    "nav.data": {
-        text: "Account & data",
-        description: "Settings section for syncing, exporting and disconnecting. The ampersand is literal.",
     },
     "nav.danger": {
         text: "Danger zone",

@@ -99,11 +99,15 @@ const completeLogin = async (loginRes: Response): Promise<ISession> => {
     return session;
 };
 
+// The backend field is `save_credentials`; `withSaveFlag` renames it at the
+// boundary rather than making every client-side schema carry snake_case.
+const withSaveFlag = <T extends { saveCredentials: boolean }>({ saveCredentials, ...rest }: T) => ({ ...rest, save_credentials: saveCredentials });
+
 const login = async (data: LoginInput) =>
     completeLogin(
         await backendFetch("/login", {
             method: "POST",
-            body: JSON.stringify(data),
+            body: JSON.stringify(withSaveFlag(data)),
         }),
     );
 
@@ -111,7 +115,7 @@ const loginBilibili = async (data: BilibiliLoginInput) =>
     completeLogin(
         await backendFetch("/login/bilibili", {
             method: "POST",
-            body: JSON.stringify(data),
+            body: JSON.stringify(withSaveFlag(data)),
         }),
     );
 
@@ -122,7 +126,7 @@ const loginBilibiliSms = async (data: BilibiliSmsLoginInput) =>
     completeLogin(
         await backendFetch("/login/bilibili/sms", {
             method: "POST",
-            body: JSON.stringify(data),
+            body: JSON.stringify(withSaveFlag(data)),
         }),
     );
 
@@ -133,7 +137,7 @@ const loginCn = async (data: CnLoginInput) =>
     completeLogin(
         await backendFetch("/login/cn", {
             method: "POST",
-            body: JSON.stringify(data),
+            body: JSON.stringify(withSaveFlag(data)),
         }),
     );
 
@@ -174,7 +178,15 @@ const sessionForToken = async (token: string): Promise<ISession | null> => {
         return null;
     }
 
-    const userRes = await backendFetch(`/get-user?uid=${encodeURIComponent(uid)}`);
+    // Send the token. `/get-user` runs the shared privacy gate, which only
+    // skips the `public_profile` check when it can see that the caller IS the
+    // profile's owner. Unauthenticated, that check is decided entirely by
+    // `public_profile = true`, which is NULL on a freshly created account until
+    // `sp_sync_user_data` backfills `user_settings`, and stays false forever for
+    // anyone who set their profile private. Both cases resolved the session to
+    // null and surfaced as "Failed to fetch user data" on login, and as a
+    // silent sign-out on a later page load.
+    const userRes = await backendFetch(`/get-user?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
     if (!userRes.ok) return null;
     const profile = (await userRes.json()) as IUserProfile;
     return { ...profile, role: role ?? profile.role, canAccessAdminPanel: canAccessAdminPanel === true } satisfies ISession;

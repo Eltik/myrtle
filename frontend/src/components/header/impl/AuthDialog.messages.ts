@@ -135,6 +135,14 @@ export const messages = {
         text: "Logged in successfully.",
         description: "Success toast title after signing in.",
     },
+    "authDialog.saveCredentials": {
+        text: "Keep me synced",
+        description: "Label of the checkbox in the login dialog that decides whether the site may store the player's GAME credentials. It does not affect the myrtle.moe session itself, which lasts a week either way, so the wording must not promise to keep the player signed in.",
+    },
+    "authDialog.saveCredentials.hint": {
+        text: "Re-syncing keeps working without a new email code. Revoke any time in Settings.",
+        description: "Caption under that checkbox. 'Settings' is this site's settings page, where the stored game credentials can be disconnected.",
+    },
     "authDialog.toast.loginFailed": {
         text: "Login failed",
         description: "Error toast title when signing in was rejected.",

@@ -18,6 +18,20 @@ type CalendarT = TypedT<typeof messages & typeof helperMessages>;
 const DAY_HEADER_PX = 26;
 const LANE_PX = 22;
 const MIN_WEEK_PX = DAY_HEADER_PX + 3 * LANE_PX;
+/**
+ * The calendar card's own height, as it always was: at least its content, and
+ * at least the viewport minus a nominal clearance.
+ *
+ * RULED OUT BY MEASUREMENT: shrinking this card to the space actually left
+ * below the page chrome. It does fit, and it empties the grid. `useVisibleLanes`
+ * below derives each week's lane budget from its rendered height, so at a
+ * 1001px viewport a fitted card gives each of five weeks about 70px,
+ * `floor((70 - 26 - 2) / 22) = 1` visible lane, and `shownLanes = 1 - 1 = 0`.
+ * Every pill disappears and nothing renders in their place. The card overflowing
+ * is the cost of showing three lanes a week; what was actually wrong is that the
+ * month switcher scrolled away with it, and that is fixed by pinning the header
+ * rather than by resizing the grid.
+ */
 const NAV_CLEARANCE_REM = 5.5;
 
 interface ICalendarTabProps {
@@ -63,23 +77,33 @@ export function CalendarTab({ today }: ICalendarTabProps): React.ReactElement {
     const month = f.date(cursor, { month: "long" });
     return (
         <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-                <h3 className="m-0 font-sans text-[22px] text-foreground leading-none">
-                    <span className="font-bold">{month}</span> {cursor.getFullYear()}
-                </h3>
-                <div className="flex items-center gap-1">
-                    <Button size="sm" variant="ghost" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))} aria-label={t("release.calendar.prev")}>
-                        <ChevronLeft />
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setCursor(new Date(today.getFullYear(), today.getMonth(), 1))}>
-                        {t("release.calendar.today")}
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))} aria-label={t("release.calendar.next")}>
-                        <ChevronRight />
-                    </Button>
+            {/* Pinned below the site header (64px, itself `sticky top-0`). The
+                calendar card is deliberately taller than the viewport, so without
+                this the month name and its prev/today/next controls scrolled out
+                of sight and pressing them appeared to do nothing.
+                OPAQUE, not `backdrop-blur` like the other sticky bars here: the
+                calendar grid scrolling under a translucent bar reads as smeared
+                colour, and the bar sits directly under the site header's own
+                blur, so a second one buys nothing. */}
+            <div className="sticky top-16 z-20 -mx-1 flex flex-col gap-3 bg-background px-1 py-2">
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                    <h3 className="m-0 font-sans text-[22px] text-foreground leading-none">
+                        <span className="font-bold">{month}</span> {cursor.getFullYear()}
+                    </h3>
+                    <div className="flex items-center gap-1">
+                        <Button size="sm" variant="ghost" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))} aria-label={t("release.calendar.prev")}>
+                            <ChevronLeft />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => setCursor(new Date(today.getFullYear(), today.getMonth(), 1))}>
+                            {t("release.calendar.today")}
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))} aria-label={t("release.calendar.next")}>
+                            <ChevronRight />
+                        </Button>
+                    </div>
                 </div>
+                <ScheduleControls kinds={kinds} onKindsChange={setKinds} stageOnly={stageOnly} onStageOnlyChange={setStageOnly} counts={counts} />
             </div>
-            <ScheduleControls kinds={kinds} onKindsChange={setKinds} stageOnly={stageOnly} onStageOnlyChange={setStageOnly} counts={counts} />
             {selectedItem && <ScheduleDetail item={selectedItem} lookup={schedule.lookup} today={today} onClose={() => setSelected(null)} />}
             {schedule.items.length === 0 ? (
                 <ReleaseEmpty title={t("release.calendar.empty.title")} description={t("release.calendar.empty.desc")} />

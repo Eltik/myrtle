@@ -2,7 +2,7 @@ import type { ISharedFilters } from "#/components/operators/list/impl/types";
 import type { IRosterEntry } from "#/lib/api/user";
 import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
 
-export type SortKey = "level" | "rarity" | "obtained" | "potential" | "trust" | "maxed";
+export type SortKey = "investment" | "level" | "rarity" | "obtained" | "potential" | "trust" | "maxed";
 export type SortOrder = "asc" | "desc";
 export type OwnershipFilter = "all" | "owned" | "unowned";
 export type ViewMode = "detailed" | "compact";
@@ -36,4 +36,4 @@ export interface IRosterFilterState extends ISharedFilters {
     viewMode: ViewMode;
 }
 
-export const OWNED_ONLY_SORTS: ReadonlySet<SortKey> = new Set(["level", "obtained", "potential", "trust", "maxed"]);
+export const OWNED_ONLY_SORTS: ReadonlySet<SortKey> = new Set(["investment", "level", "obtained", "potential", "trust", "maxed"]);

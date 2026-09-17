@@ -72,7 +72,7 @@ function RootComponent() {
     const { user } = Route.useRouteContext();
 
     useEffect(() => {
-        authActions.setUser(user ?? null);
+        authActions.setUserFromRoute(user ?? null);
     }, [user]);
 
     return (

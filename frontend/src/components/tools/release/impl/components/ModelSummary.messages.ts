@@ -3,6 +3,10 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "tools";
 
 export const messages = {
+    "release.model.disclosure": {
+        text: "How are these estimates calculated?",
+        description: "Label on the collapsed control that reveals the methodology paragraph. Phrased as the reader's own question.",
+    },
     "release.model.empty": {
         text: "Lag model: no EN releases in the window yet, so nothing is estimated.",
         description: "Shown instead of the model summary when there is nothing to fit. 'Lag' is how far behind the English server runs; 'EN' is the English game server.",

@@ -9,6 +9,7 @@ README-prompt.md
 docs/
 vps-update.sh
 vps-info.sh
+vps-start.sh
 backend/.dps-updater-state.json
 .playwright-mcp
 # IL2CPP recovery working dir (APKs, dumps, frida-server) — see assets/il2cpp-recover.sh

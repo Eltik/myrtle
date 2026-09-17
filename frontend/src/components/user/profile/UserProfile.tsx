@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Skeleton } from "#/components/ui/skeleton";
+import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
 import { publicPlansQueryOptions } from "#/lib/api/planner";
 import { userEncounteredEnemiesQueryOptions, userImprovementsQueryOptions, userInventoryQueryOptions, userQueryOptions, userRosterQueryOptions, userScoreQueryOptions } from "#/lib/api/user";
@@ -19,7 +20,7 @@ import { RosterTab } from "./impl/components/tabs/Roster/RosterTab";
 import { ScoreTab } from "./impl/components/tabs/Score/ScoreTab";
 import { StatsTab } from "./impl/components/tabs/Stats/StatsTab";
 import { DynamicArtProvider } from "./impl/dynamic-art";
-import type { TabId } from "./impl/types";
+import { isTabId, type TabId } from "./impl/types";
 import type { messages } from "./UserProfile.messages";
 
 const SKELETON_TAG_WIDTHS = [
@@ -39,7 +40,14 @@ export function UserProfile() {
     const t: TypedT<typeof messages> = useT("user");
     const rt: TypedRichT<typeof messages> = useRichT("user");
     const { id } = useParams({ from: "/user/$id" });
-    const [activeTab, setActiveTab] = useState<TabId>("stats");
+    // The tab a visitor is on survives leaving the page. Tabs used to reset to
+    // Stats on every mount, so anyone who navigated away from Roster and back
+    // landed somewhere they did not choose. Stored per browser, not per
+    // profile: the tab is a way of reading a profile, not a fact about one.
+    const [activeTab, setActiveTab] = useLocalStorageState<TabId>("user:profile:tab", "stats", {
+        parse: (raw) => (isTabId(raw) ? raw : undefined),
+        serialize: (v) => v,
+    });
 
     // Genuinely-global data: the profile record + roster power the hero, stat
     // strip, and several tab counts, and the full operator table feeds the

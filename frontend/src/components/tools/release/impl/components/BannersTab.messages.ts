@@ -85,7 +85,11 @@ export const messages = {
     },
     "release.banners.with": {
         text: "with {event}",
-        description: "Names the event a banner runs under, e.g. 'with Ideal City'. {event} is that event's name and may move wherever the phrase needs it.",
+        description: "Names the event a banner runs under, e.g. 'with Ideal City'. {event} is that event's name and may move wherever the phrase needs it. Used only when the match was made from the banner's rate-ups, which is a certainty.",
+    },
+    "release.banners.probablyWith": {
+        text: "probably with {event}",
+        description: "Same as the phrase above, but for a banner matched to an event only by the dates lining up, which can name the wrong event. Must read as a guess. {event} is the event's name and may move wherever the phrase needs it.",
     },
 } satisfies MessageMap;
 

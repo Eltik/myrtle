@@ -15,7 +15,7 @@ use crate::core::hypergryph::{
 #[serde(rename_all = "camelCase")]
 struct GetSecretBody<'a> {
     platform: u32,
-    network_version: &'static str,
+    network_version: &'a str,
     assets_version: &'a str,
     client_version: &'a str,
     token: &'a str,
@@ -25,14 +25,49 @@ struct GetSecretBody<'a> {
     device_id3: &'a str,
 }
 
+/// `uid` and `secret` are ONLY present on success. A rejected login answers
+/// `{"result":4}` and nothing else, so requiring them made serde fail first and
+/// the `result` check below unreachable: every game-server rejection surfaced as
+/// `missing field \`uid\``, which named neither the real failure nor its code.
 #[derive(Deserialize)]
 #[allow(dead_code)]
 struct GetSecretResponse {
     result: i32,
+    #[serde(default)]
     uid: String,
+    #[serde(default)]
     secret: String,
 }
 
+/// The `networkVersion` sent to `account/login`, overridable per run.
+///
+/// Yostar has moved this before and a wrong value is rejected with a bare
+/// `result` code that says nothing about why. The default is unchanged; set
+/// `AK_NETWORK_VERSION` to probe another value without a rebuild.
+fn network_version_for(server: Server) -> Result<String, FetchError> {
+    if let Ok(v) = std::env::var("AK_NETWORK_VERSION")
+        && !v.is_empty()
+    {
+        return Ok(v);
+    }
+    Ok(match server {
+        Server::CN | Server::Bilibili => "5",
+        Server::EN | Server::JP | Server::KR => "1",
+        Server::TW => return Err(FetchError::ParseError("TW server not supported".into())),
+    }
+    .to_owned())
+}
+
+/// Mints the game-server `secret` for a u8 session.
+///
+/// Retries ONCE after refreshing the version config when the game server
+/// answers a non-zero result. A stale `clientVersion`/`resVersion` is the one
+/// cause of that this process can fix by itself: the versions are read at
+/// startup and then cached for the process lifetime, so a client update shipped
+/// while the backend is up rejects every login until it restarts. The retry is
+/// bounded to one attempt and does nothing when the versions are already
+/// current, so a login that fails for any other reason costs one extra request
+/// and reports the same error it would have.
 async fn get_secret(
     client: &Client,
     uid: &str,
@@ -47,11 +82,52 @@ async fn get_secret(
         }
     }
 
-    let network_version = match server {
-        Server::CN | Server::Bilibili => "5",
-        Server::EN | Server::JP | Server::KR => "1",
-        Server::TW => return Err(FetchError::ParseError("TW server not supported".into())),
-    };
+    match get_secret_once(client, uid, u8_token, server).await {
+        Ok(secret) => Ok(secret),
+        Err(first) => {
+            let (before_res, before_client) = {
+                let cfg = config().read().await;
+                let v = cfg.version(server);
+                (v.res_version.clone(), v.client_version.clone())
+            };
+            loaders::version::load_version_config(client).await;
+            let (after_res, after_client) = {
+                let cfg = config().read().await;
+                let v = cfg.version(server);
+                (v.res_version.clone(), v.client_version.clone())
+            };
+
+            if after_res == before_res && after_client == before_client {
+                tracing::warn!(
+                    uid = %uid,
+                    server = server.as_str(),
+                    res_version = %after_res,
+                    client_version = %after_client,
+                    error = ?first,
+                    "game-server login rejected and the version config was already current, so this is not a stale-version failure"
+                );
+                return Err(first);
+            }
+
+            tracing::info!(
+                uid = %uid,
+                server = server.as_str(),
+                from_client_version = %before_client,
+                to_client_version = %after_client,
+                "game-server login rejected with a stale version config; refreshed and retrying once"
+            );
+            get_secret_once(client, uid, u8_token, server).await
+        }
+    }
+}
+
+async fn get_secret_once(
+    client: &Client,
+    uid: &str,
+    u8_token: &str,
+    server: Server,
+) -> Result<String, FetchError> {
+    let network_version = network_version_for(server)?;
 
     let (res_version, client_version, device_ids) = {
         let cfg = config().read().await;
@@ -65,7 +141,7 @@ async fn get_secret(
 
     let body = GetSecretBody {
         platform: 1,
-        network_version,
+        network_version: &network_version,
         assets_version: &res_version,
         client_version: &client_version,
         token: u8_token,
@@ -97,20 +173,37 @@ async fn get_secret(
     let data: GetSecretResponse = parse_json(response, "get_secret").await?;
 
     if data.result != 0 {
+        // Everything the next person needs to tell a stale client apart from a
+        // rejected account, on the one line they will actually see.
         return Err(FetchError::ParseError(format!(
-            "getSecret failed: result={} uid={}",
-            data.result, uid
+            "getSecret failed: result={} uid={} server={} networkVersion={} clientVersion={} resVersion={}",
+            data.result,
+            uid,
+            server.as_str(),
+            network_version,
+            client_version,
+            res_version
+        )));
+    }
+
+    if data.secret.is_empty() {
+        return Err(FetchError::ParseError(format!(
+            "getSecret returned result=0 with no secret (uid={uid})"
         )));
     }
 
     Ok(data.secret)
 }
 
+/// Same shape as `GetSecretResponse`: `uid` and `token` are success-only, so
+/// they default rather than failing the parse ahead of the `result` check.
 #[derive(Deserialize)]
 #[allow(dead_code)]
 struct U8TokenResponse {
     result: i32,
+    #[serde(default)]
     uid: String,
+    #[serde(default)]
     token: String,
 }
 
@@ -183,7 +276,16 @@ async fn get_u8_token(
     )
     .await?;
 
-    parse_json(response, "get_u8_token").await
+    let data: U8TokenResponse = parse_json(response, "get_u8_token").await?;
+    if data.result != 0 || data.uid.is_empty() || data.token.is_empty() {
+        return Err(FetchError::ParseError(format!(
+            "getToken failed: result={} server={} channelId={}",
+            data.result,
+            server.as_str(),
+            channel_id
+        )));
+    }
+    Ok(data)
 }
 
 /// Logs into the Bilibili channel (`BiliGame` publisher SDK) and runs it

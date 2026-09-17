@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-17T02:05:59.501Z",
+    "generatedAt": "2026-09-17T04:16:48.649Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -10358,6 +10358,20 @@
             ]
         },
         {
+            "key": "nav.authDialog.saveCredentials",
+            "namespace": "nav",
+            "source_text": "Keep me synced",
+            "description": "Label of the checkbox in the login dialog that decides whether the site may store the player's GAME credentials. It does not affect the myrtle.moe session itself, which lasts a week either way, so the wording must not promise to keep the player signed in.",
+            "placeholders": []
+        },
+        {
+            "key": "nav.authDialog.saveCredentials.hint",
+            "namespace": "nav",
+            "source_text": "Re-syncing keeps working without a new email code. Revoke any time in Settings.",
+            "description": "Caption under that checkbox. 'Settings' is this site's settings page, where the stored game credentials can be disconnected.",
+            "placeholders": []
+        },
+        {
             "key": "nav.authDialog.selectServer",
             "namespace": "nav",
             "source_text": "Select server",
@@ -14852,6 +14866,13 @@
             "placeholders": []
         },
         {
+            "key": "settings.nav.account",
+            "namespace": "settings",
+            "source_text": "Account",
+            "description": "Settings section for the visitor's game-synced account details, syncing, exporting and disconnecting. Replaces the former separate Profile and Account & data sections.",
+            "placeholders": []
+        },
+        {
             "key": "settings.nav.appearance",
             "namespace": "settings",
             "source_text": "Appearance",
@@ -14866,24 +14887,10 @@
             "placeholders": []
         },
         {
-            "key": "settings.nav.data",
-            "namespace": "settings",
-            "source_text": "Account & data",
-            "description": "Settings section for syncing, exporting and disconnecting. The ampersand is literal.",
-            "placeholders": []
-        },
-        {
             "key": "settings.nav.privacy",
             "namespace": "settings",
             "source_text": "Privacy",
             "description": "Settings section for profile visibility and leaderboard opt-in.",
-            "placeholders": []
-        },
-        {
-            "key": "settings.nav.profile",
-            "namespace": "settings",
-            "source_text": "Profile",
-            "description": "Settings section for the visitor's game-synced account details.",
             "placeholders": []
         },
         {
@@ -25241,6 +25248,15 @@
             "placeholders": []
         },
         {
+            "key": "tools.release.banners.probablyWith",
+            "namespace": "tools",
+            "source_text": "probably with {event}",
+            "description": "Same as the phrase above, but for a banner matched to an event only by the dates lining up, which can name the wrong event. Must read as a guess. {event} is the event's name and may move wherever the phrase needs it.",
+            "placeholders": [
+                "event"
+            ]
+        },
+        {
             "key": "tools.release.banners.roster.debut",
             "namespace": "tools",
             "source_text": "Debut, from the ledger",
@@ -25302,7 +25318,7 @@
             "key": "tools.release.banners.with",
             "namespace": "tools",
             "source_text": "with {event}",
-            "description": "Names the event a banner runs under, e.g. 'with Ideal City'. {event} is that event's name and may move wherever the phrase needs it.",
+            "description": "Names the event a banner runs under, e.g. 'with Ideal City'. {event} is that event's name and may move wherever the phrase needs it. Used only when the match was made from the banner's rate-ups, which is a certainty.",
             "placeholders": [
                 "event"
             ]
@@ -25707,6 +25723,13 @@
             "placeholders": [
                 "days"
             ]
+        },
+        {
+            "key": "tools.release.model.disclosure",
+            "namespace": "tools",
+            "source_text": "How are these estimates calculated?",
+            "description": "Label on the collapsed control that reveals the methodology paragraph. Phrased as the reader's own question.",
+            "placeholders": []
         },
         {
             "key": "tools.release.model.empty",
@@ -26490,8 +26513,8 @@
         {
             "key": "tools.release.pulls.banner.LINKAGE",
             "namespace": "tools",
-            "source_text": "Joint Operation, collab",
-            "description": "Banner type: a crossover/collaboration banner. 'Joint Operation' is the in-game name.",
+            "source_text": "Collaboration",
+            "description": "Banner type: a crossover banner. 'Collaboration' is the in-game name.",
             "placeholders": []
         },
         {
@@ -28108,6 +28131,209 @@
             "placeholders": []
         },
         {
+            "key": "tools.release.tag.arcade",
+            "namespace": "tools",
+            "source_text": "Arcade",
+            "description": "Event category: a one-off minigame mode.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.autoChess",
+            "namespace": "tools",
+            "source_text": "Auto-chess",
+            "description": "Event category: a one-off auto-battler mode.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.banner.attain",
+            "namespace": "tools",
+            "source_text": "Special Headhunting",
+            "description": "Banner category: a guaranteed-pick banner. The game's own English name for ATTAIN.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.banner.classic",
+            "namespace": "tools",
+            "source_text": "Kernel",
+            "description": "Banner category: the older-operator pool. The game's own English name for CLASSIC.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.banner.classicAttain",
+            "namespace": "tools",
+            "source_text": "Kernel Special Headhunting",
+            "description": "Banner category: a guaranteed-pick banner drawn from the older-operator pool.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.banner.double",
+            "namespace": "tools",
+            "source_text": "Double rate-up",
+            "description": "Banner category: two boosted 6-stars.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.banner.fesClassic",
+            "namespace": "tools",
+            "source_text": "Anniversary Kernel",
+            "description": "Banner category: the anniversary run of the older-operator pool.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.banner.limited",
+            "namespace": "tools",
+            "source_text": "Limited",
+            "description": "Banner category: a limited headhunting banner.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.banner.linkage",
+            "namespace": "tools",
+            "source_text": "Collaboration",
+            "description": "Banner category: a crossover banner. The game's own English name for LINKAGE.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.banner.normal",
+            "namespace": "tools",
+            "source_text": "Standard",
+            "description": "Banner category: the permanent headhunting pool.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.banner.single",
+            "namespace": "tools",
+            "source_text": "Single rate-up",
+            "description": "Banner category: one boosted 6-star. 'Rate-up' is the game's term for a boosted pull chance.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.bossRush",
+            "namespace": "tools",
+            "source_text": "Boss Rush",
+            "description": "Event category: a one-off boss-gauntlet mode. Its official English name.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.campaign",
+            "namespace": "tools",
+            "source_text": "Campaign",
+            "description": "Event category: a login/anniversary style campaign with no stages.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.collection",
+            "namespace": "tools",
+            "source_text": "Collection",
+            "description": "Event category: a collection/gallery event.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.contingency",
+            "namespace": "tools",
+            "source_text": "Contingency Contract",
+            "description": "Event category: the game's competitive risk-modifier mode. Its official English name.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.enemyDuel",
+            "namespace": "tools",
+            "source_text": "Enemy Duel",
+            "description": "Event category: a one-off competitive mode. Its official English name.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.fashionReview",
+            "namespace": "tools",
+            "source_text": "Fashion review",
+            "description": "Calendar tag for the in-game skin-showcase segment. The game's own term.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.intermezzi",
+            "namespace": "tools",
+            "source_text": "Intermezzi",
+            "description": "Event category: a story event tied to the main plot. The game's own term; leave untranslated where the game does.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.mainStory",
+            "namespace": "tools",
+            "source_text": "Main story",
+            "description": "Event category: a main-plot chapter.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.miniStory",
+            "namespace": "tools",
+            "source_text": "Mini story",
+            "description": "Event category: a short story event, smaller than a side story. The game's own term.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.minigame",
+            "namespace": "tools",
+            "source_text": "Minigame",
+            "description": "Event category: a one-off minigame not covered by a more specific name.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.newSkins",
+            "namespace": "tools",
+            "source_text": "New skins",
+            "description": "Calendar tag on a day that introduces new operator outfits.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.rerun",
+            "namespace": "tools",
+            "source_text": "Rerun",
+            "description": "Event category: a rebroadcast of an event that already ran.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.rogueLike",
+            "namespace": "tools",
+            "source_text": "Integrated Strategies",
+            "description": "Event category: the game's roguelike mode. Its official English name.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.sandbox",
+            "namespace": "tools",
+            "source_text": "Reclamation Algorithm",
+            "description": "Event category: the game's survival/sandbox mode. Its official English name.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.sideStory",
+            "namespace": "tools",
+            "source_text": "Side story",
+            "description": "Event category: a self-contained story event. The game's own term.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.signIn",
+            "namespace": "tools",
+            "source_text": "Sign-in",
+            "description": "Event category: a daily login-reward campaign.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.vectorBreak",
+            "namespace": "tools",
+            "source_text": "Vector Breakthrough",
+            "description": "Event category: a one-off competitive mode. Its official English name.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.tag.vignette",
+            "namespace": "tools",
+            "source_text": "Vignette",
+            "description": "Event category: a very short story event. The game's own term.",
+            "placeholders": []
+        },
+        {
             "key": "tools.release.title",
             "namespace": "tools",
             "source_text": "Release Planner",
@@ -28140,6 +28366,24 @@
             "namespace": "user",
             "source_text": "Δ Rank",
             "description": "Label over a change in rank, in the movers card and on the standing card. The delta sign is a symbol and stays as-is.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.grade.tooltip",
+            "namespace": "user",
+            "source_text": "Grade {grade}: composite score {from}-{to}%, weighted across operators, base, Integrated Strategies, medals, stages and sandbox.",
+            "description": "Hover explanation on a grade badge. {grade} is the letter (S+, S, A, B, C, D, F); {from} and {to} are the percentage bounds of that band, already formatted. 'Integrated Strategies' and 'sandbox' are in-game modes.",
+            "placeholders": [
+                "from",
+                "grade",
+                "to"
+            ]
+        },
+        {
+            "key": "user.leaderboard.grade.unknown",
+            "namespace": "user",
+            "source_text": "Not graded yet - this account has not been scored.",
+            "description": "Hover explanation on the placeholder shown in place of a grade badge when a user has no grade.",
             "placeholders": []
         },
         {
@@ -31603,6 +31847,13 @@
             "namespace": "user",
             "source_text": "Desc",
             "description": "Label on the sort-direction button while the order is largest-first. Abbreviated from 'descending'; little room.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.roster.sort.investment",
+            "namespace": "user",
+            "source_text": "Sort by Investment",
+            "description": "Sort option: how far each operator is along its own ceiling (promotion, level, skill, masteries, modules, potential), so a finished lower-rarity operator outranks an untouched higher-rarity one.",
             "placeholders": []
         },
         {

@@ -11,7 +11,8 @@ import type { AutoName } from "#/types/generated/AutoName";
 import type { ReleaseBanner } from "#/types/generated/ReleaseBanner";
 import type { RuleIndependence } from "#/types/generated/RuleIndependence";
 import { useAutoTranslate } from "../autoTranslate";
-import { formatDate, humanizeTag, isPast, sortKey } from "../helpers";
+import { formatDate, isPast, sortKey } from "../helpers";
+import { useReleaseTagLabel } from "../labels";
 import { cnDay } from "../schedule";
 import type { messages } from "./BannersTab.messages";
 import { ModelSummary } from "./ModelSummary";
@@ -119,6 +120,7 @@ function BannerRow({ banner, lookup, charNames, eventNames, eventsByDay, eventTi
     const rt: BannersRichT = useRichT("tools");
     const locale = useLocale();
     const autoOn = useAutoTranslate();
+    const tagLabel = useReleaseTagLabel();
     const anchor = banner.anchorActivity ? eventNames.get(banner.anchorActivity) : undefined;
     const anchorName = anchor ? resolveName(anchor.cn, anchor.en, anchor.auto, autoOn).text : banner.anchorActivity;
     const sameDay = eventTied && !banner.imagePath && !anchor?.imagePath ? eventNames.get(eventsByDay.get(cnDay(banner.cnOpen)) ?? "") : undefined;
@@ -143,7 +145,7 @@ function BannerRow({ banner, lookup, charNames, eventNames, eventsByDay, eventTi
     return (
         <ListRow visual={visual} wide badge={<ResolutionBadge resolution={banner.resolution} today={today} standing={banner.standing} />}>
             <CnName cn={banner.nameCn} auto={banner.nameEnAuto} primaryClassName="font-sans font-semibold text-[13.5px] text-foreground">
-                <Tag>{humanizeTag(banner.ruleType)}</Tag>
+                <Tag>{tagLabel(banner.ruleType)}</Tag>
                 <span className="font-mono text-[11.5px] text-muted-foreground tabular-nums">
                     <span className="mr-1 uppercase tracking-[0.06em]">{t("release.banners.cn")}</span>
                     {banner.standing ? t("release.banners.since", { date: formatDate(banner.cnOpen, locale) }) : formatDate(banner.cnOpen, locale)}
@@ -164,7 +166,18 @@ function BannerRow({ banner, lookup, charNames, eventNames, eventsByDay, eventTi
             {(align || banner.anchorActivity) && (
                 <div className="flex flex-wrap items-center gap-x-2 font-sans text-[11px] text-muted-foreground">
                     {align && <span>{align}</span>}
-                    {banner.anchorActivity && <span title={banner.anchorActivity}>{rt("release.banners.with", { event: <span className={anchor ? "text-foreground/80" : "font-mono"}>{anchorName}</span> })}</span>}
+                    {/* `anchor` alignment is the 21-day-window heuristic in
+                        `backend/src/core/release/align.rs`: it takes the most recent CN
+                        activity that started within 21 days before the pool opened, with
+                        no check that the two are related. When it misfires it names a
+                        real but unrelated event, and "with X" asserted that as fact. The
+                        heuristic case now says it is a guess in the phrase itself rather
+                        than only in a separate label beside it. */}
+                    {banner.anchorActivity && (
+                        <span title={banner.anchorActivity}>
+                            {banner.alignment.method === "anchor" ? rt("release.banners.probablyWith", { event: <span className={anchor ? "text-foreground/80" : "font-mono"}>{anchorName}</span> }) : rt("release.banners.with", { event: <span className={anchor ? "text-foreground/80" : "font-mono"}>{anchorName}</span> })}
+                        </span>
+                    )}
                 </div>
             )}
         </ListRow>

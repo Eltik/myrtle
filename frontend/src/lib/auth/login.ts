@@ -46,6 +46,17 @@ export function formatServerForPicker(code: AKServer): string {
     return `${meta.region} (${meta.code.toUpperCase()})`;
 }
 
+/**
+ * Whether the login may keep the player's game credentials on the server.
+ *
+ * Defaults to true, which is the behaviour every login had before this existed.
+ * False means the backend stores nothing and clears anything an earlier login
+ * left behind: the cached game session still works for the hour it lives, but a
+ * re-sync after that needs a fresh code. The backend defaults the field too, so
+ * an omitted value is not a silent opt-out.
+ */
+const saveCredentials = z.boolean().default(true);
+
 export const loginSchema = z.object({
     email: z.email("Invalid email format").min(1, "Email is required").max(254, "Email too long"),
     code: z.union([z.string(), z.number()]).transform((val) => {
@@ -54,6 +65,7 @@ export const loginSchema = z.object({
         return str.padStart(6, "0");
     }),
     server: AKServerSchema.default("en"),
+    saveCredentials,
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;
@@ -61,6 +73,7 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export const bilibiliLoginSchema = z.object({
     username: z.string().min(1, "Username is required").max(254, "Username too long"),
     password: z.string().min(1, "Password is required").max(254, "Password too long"),
+    saveCredentials,
 });
 export type BilibiliLoginInput = z.infer<typeof bilibiliLoginSchema>;
 
@@ -72,6 +85,7 @@ export type BilibiliLoginInput = z.infer<typeof bilibiliLoginSchema>;
 export const bilibiliSmsLoginSchema = z.object({
     phone: z.string().min(1, "Phone number is required").max(32, "Phone number too long"),
     code: z.string().min(1, "Code is required").max(16, "Code too long"),
+    saveCredentials,
 });
 export type BilibiliSmsLoginInput = z.infer<typeof bilibiliSmsLoginSchema>;
 
@@ -84,6 +98,7 @@ export const cnLoginSchema = z
         phone: z.string().min(1, "Phone number is required").max(32, "Phone number too long"),
         password: z.string().min(1).max(254).optional(),
         code: z.string().min(1).max(16).optional(),
+        saveCredentials,
     })
     .refine((data) => Boolean(data.password) || Boolean(data.code), {
         message: "Provide either a password or a code",

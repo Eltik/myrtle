@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useStore } from "@tanstack/react-store";
 import { useEffect, useState } from "react";
 import { Button } from "#/components/ui/button";
+import { Checkbox } from "#/components/ui/checkbox";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle, DialogTrigger } from "#/components/ui/dialog";
 import { Field, FieldLabel } from "#/components/ui/field";
 import { Form } from "#/components/ui/form";
@@ -49,6 +50,14 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
     const server = useStore(authStore, (s) => s.login.server);
     const isOTPSent = useStore(authStore, (s) => s.login.isOTPSent);
     const cooldownUntil = useStore(authStore, (s) => s.login.cooldownUntil);
+    const saveCredentials = useStore(authStore, (s) => s.login.saveCredentials);
+
+    // The remembered answer lives in localStorage, which is not readable during
+    // SSR or the first client render, so it is applied in an effect the same way
+    // `useLocalStorageState` does it.
+    useEffect(() => {
+        authActions.hydrateSaveCredentials();
+    }, []);
 
     const biliUsername = useStore(authStore, (s) => s.login.biliUsername);
     const biliPassword = useStore(authStore, (s) => s.login.biliPassword);
@@ -183,25 +192,25 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
         });
 
     const loginMut = useMutation({
-        mutationFn: (vars: { email: string; code: string; server: AKServer }) => login(vars),
+        mutationFn: (vars: { email: string; code: string; server: AKServer; saveCredentials: boolean }) => login(vars),
         onSuccess: onLoginSuccess,
         onError: onLoginError,
     });
 
     const loginBiliMut = useMutation({
-        mutationFn: (vars: { username: string; password: string }) => loginBilibili(vars),
+        mutationFn: (vars: { username: string; password: string; saveCredentials: boolean }) => loginBilibili(vars),
         onSuccess: onLoginSuccess,
         onError: onLoginError,
     });
 
     const loginBiliSmsMut = useMutation({
-        mutationFn: (vars: { phone: string; code: string }) => loginBilibiliSms(vars),
+        mutationFn: (vars: { phone: string; code: string; saveCredentials: boolean }) => loginBilibiliSms(vars),
         onSuccess: onLoginSuccess,
         onError: onLoginError,
     });
 
     const loginCnMut = useMutation({
-        mutationFn: (vars: { phone: string; password?: string; code?: string }) => loginCn(vars),
+        mutationFn: (vars: { phone: string; password?: string; code?: string; saveCredentials: boolean }) => loginCn(vars),
         onSuccess: onLoginSuccess,
         onError: onLoginError,
     });
@@ -257,29 +266,29 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
                         if (isBili) {
                             if (biliUseSms) {
                                 if (isBiliCodeSent) {
-                                    loginBiliSmsMut.mutate({ phone: biliPhone, code: biliSmsCode });
+                                    loginBiliSmsMut.mutate({ phone: biliPhone, code: biliSmsCode, saveCredentials });
                                 } else {
                                     sendBiliSms.mutate({ phone: biliPhone });
                                 }
                             } else {
-                                loginBiliMut.mutate({ username: biliUsername, password: biliPassword });
+                                loginBiliMut.mutate({ username: biliUsername, password: biliPassword, saveCredentials });
                             }
                             return;
                         }
                         if (isCn) {
                             if (cnUseSms) {
                                 if (isCnCodeSent) {
-                                    loginCnMut.mutate({ phone: cnPhone, code: cnSmsCode });
+                                    loginCnMut.mutate({ phone: cnPhone, code: cnSmsCode, saveCredentials });
                                 } else {
                                     sendCnSms.mutate({ phone: cnPhone });
                                 }
                             } else {
-                                loginCnMut.mutate({ phone: cnPhone, password: cnPassword });
+                                loginCnMut.mutate({ phone: cnPhone, password: cnPassword, saveCredentials });
                             }
                             return;
                         }
                         if (isOTPSent) {
-                            loginMut.mutate({ email, code: otp, server });
+                            loginMut.mutate({ email, code: otp, server, saveCredentials });
                         } else {
                             sendOTP.mutate({ email, server });
                         }
@@ -402,6 +411,17 @@ export function AuthDialog({ trigger, onOpenChange, open: openProp }: IAuthDialo
                                 </SelectPopup>
                             </Select>
                         </Field>
+                        {/* Offered on every login, for every method, and the answer is
+                            remembered. Unticking it means the backend stores nothing and
+                            drops anything a previous login left, so re-syncing after the
+                            cached session expires asks for a fresh code. */}
+                        <label className="flex cursor-pointer items-start gap-2.5" htmlFor="auth-save-credentials">
+                            <Checkbox id="auth-save-credentials" checked={saveCredentials} onCheckedChange={(checked) => authActions.setSaveCredentials(checked === true)} className="mt-0.5" />
+                            <span className="flex flex-col gap-0.5">
+                                <span className="font-sans text-[13px] text-foreground leading-tight">{t("authDialog.saveCredentials")}</span>
+                                <span className="font-sans text-[11.5px] text-muted-foreground leading-snug">{t("authDialog.saveCredentials.hint")}</span>
+                            </span>
+                        </label>
                     </DialogPanel>
                     <DialogFooter>
                         <DialogClose render={<Button variant="ghost" />}>{t("authDialog.cancel")}</DialogClose>
