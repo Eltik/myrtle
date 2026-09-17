@@ -160,6 +160,7 @@ fn trading_lmd(gd: &GameData, roster: &[OperatorBaseProfile]) -> f64 {
                 r.total_efficiency,
                 r.order_value,
                 r.operators.len(),
+                r.order_limit,
             )
             .lmd_per_day
         })
@@ -663,12 +664,14 @@ fn proviso_value_does_not_survive_shamare() {
     );
 }
 
+/// Jaye beside Texas and Lappland reads the game's figure: Feud +65 (with
+/// Lappland), Lappland's Hidden Purpose β +4 order limit (with Texas); Basic
+/// Needs cuts the limit by 1 per 10% the others provide (6), so the post
+/// holds 10 + 4 - 6 = 8 orders and Jaye's two riders pay 4% each of them:
+/// 65 + 32 = 97. Eight orders between collections is more than the post
+/// fills, so the optimizer keeps him.
 #[test]
 fn jaye_order_limit_efficiency_is_counted() {
-    // Jaye's "+X% per order-limit difference" is an EFFICIENCY skill (its id
-    // contains "_limit", but it must not be treated as capacity-only). It still
-    // lifts the Texas+Lappland+Jaye team meaningfully above Texas's +65% alone
-    // TIME-AVERAGED diff bonus over a shift (~20%, not the empty-post peak).
     let gd = load_game_data();
     let team = vec![
         profile(gd, TEXAS),
@@ -677,28 +680,54 @@ fn jaye_order_limit_efficiency_is_counted() {
     ];
     let eff = trading_efficiency(gd, &team);
     assert!(
-        eff > 75.0 && eff < 95.0,
-        "Texas+Lappland+Jaye should read above Texas's +65% by Jaye's shift-averaged diff bonus (~+85%), got +{eff:.1}%"
+        (eff - 97.0).abs() < 0.01,
+        "Texas+Lappland+Jaye should read +97% (65 + 4 x 8), got +{eff:.1}%"
     );
 }
 
+/// Jaye's cut is what bounds him: beside Exusiai (+35) and Lemuen (+20, +25
+/// more with Exusiai) he cuts the limit by 8 and the post holds 2 orders, so
+/// the displayed figure is 80 + 4 x 2 = 88 - and a 2-order buffer sells four
+/// orders a day, so the optimizer benches him and runs the pair.
 #[test]
-fn jaye_diff_skill_is_bounded_by_the_order_limit() {
-    // Jaye's "Street Economics" scales with the order DIFFERENCE, which is bounded
-    // by the post's order limit. Teammates like Exusiai/Lemuen add lots of
-    // efficiency but NO order limit, so they must NOT pump Jaye past his ceiling:
-    // a Jaye/Exusiai/Lemuen post reads ~+120% (Jaye ≈ 40, not the ~60 an
-    // un-bounded efficiency-mirror gave, which inflated the post to ~140%).
+fn jaye_is_benched_when_his_cut_starves_the_order_buffer() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    const JAYE: &str = "char_272_strong";
+    const LEMUEN: &str = "char_4193_lemuen";
     let gd = load_game_data();
-    let team = vec![
-        profile(gd, "char_272_strong"), // Jaye
-        profile(gd, EXUSIAI),
-        profile(gd, "char_4193_lemuen"),
-    ];
-    let eff = trading_efficiency(gd, &team);
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let roster = vec![profile(gd, JAYE), profile(gd, EXUSIAI), profile(gd, LEMUEN)];
+    let mut building = trading_post(3);
+    for r in &mut building.rooms {
+        if r.room_type == "TRADING" {
+            r.current_operators = vec![JAYE.into(), EXUSIAI.into(), LEMUEN.into()];
+        }
+    }
+    let seated =
+        compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+    let tp = seated
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "TRADING")
+        .unwrap();
     assert!(
-        (eff - 100.0).abs() < 6.0,
-        "Jaye/Exusiai/Lemuen should read ~+100% (Jaye shift-averaged ≈ 20), got +{eff:.1}%"
+        (tp.total_efficiency - 88.0).abs() < 0.01,
+        "Jaye/Exusiai/Lemuen read +88% (80 + 4 x 2), got +{:.1}%",
+        tp.total_efficiency
+    );
+    assert_eq!(tp.order_limit, Some(2), "10 - floor(80 / 10)");
+    let opt = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+    let otp = opt.rooms.iter().find(|r| r.room_type == "TRADING").unwrap();
+    assert!(
+        !otp.operators.iter().any(|o| o == JAYE),
+        "a 2-order buffer benches Jaye, got {:?}",
+        otp.operators
+    );
+    assert_eq!(
+        otp.operators.len(),
+        2,
+        "the pair runs the post: {:?}",
+        otp.operators
     );
 }
 
@@ -1569,6 +1598,7 @@ fn current_assignment_reflects_live_base() {
                 r.order_gold,
                 r.order_value,
                 r.operators.len(),
+                r.order_limit,
             );
         }
         flows.total_value()
@@ -4543,14 +4573,14 @@ fn whisperain_fragments_follow_the_office_level() {
 fn daily_lmd_matches_the_feedback_sheets_squads() {
     use backend::core::grade::base::yield_model::room_yield;
     // Shamare 90 + innate 3 + CC 7 = 100 displayed; value 24.1 (Tailoring β + Tequila β).
-    let y = room_yield("TRADING", None, 3, 97.0, 24.1025, 3);
+    let y = room_yield("TRADING", None, 3, 97.0, 24.1025, 3, None);
     assert!(
         (y.lmd_per_day - 25479.0).abs() < 60.0,
         "Shamare squad: {}",
         y.lmd_per_day
     );
     // Proviso 55.2 value; Archetto 40 + Vigil 40 + CC 7 = 87 displayed.
-    let y = room_yield("TRADING", None, 3, 87.0, 55.2, 3);
+    let y = room_yield("TRADING", None, 3, 87.0, 55.2, 3, None);
     assert!(
         (y.lmd_per_day - 30265.0).abs() < 300.0,
         "Proviso squad: {}",
@@ -4725,6 +4755,104 @@ fn bench_seat_prefers_a_valued_operator_over_a_blank() {
         added,
         vec![BLAZE2.to_string()],
         "the valued operator takes the seat: {added:?}"
+    );
+}
+
+/// The Kjerag/Gnosis trading-post arithmetic: six level-3 posts measured
+/// in-game (community sheet, Annex 1). SilverAsh +20% / +4; Degenbrecher
+/// +25% / -6 plus +25% per 5 limit points provided by others (max 100); Swire
+/// the Elegant Wit +20% plus +4% per limit point provided by others; Jaye -1
+/// limit per 10% the others provide and +4% per order of the FINAL limit
+/// (Street Economics per empty slot, Basic Needs per filled order); Gnosis in
+/// the Control Center gives Kjerag traders -15% and +6. The readers resolve in
+/// stages - Degenbrecher on the fixed limits, Jaye's cut on the efficiency so
+/// far, Swire on the limit after the cut. A mutual fixed point would read 104
+/// and 113 for the two Jaye+Gnosis posts, not 121 and 129. The "(minimum 1)"
+/// floors the ROOM limit, never a single skill.
+#[test]
+fn kjerag_posts_read_the_games_six_measured_figures() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    const SWIRE2: &str = "char_1033_swire2";
+    const SA: &str = "char_172_svrash";
+    const DEGEN: &str = "char_4116_blkkgt";
+    const JAYE: &str = "char_272_strong";
+    const GNOSIS: &str = "char_206_gnosis";
+    // (crew, Gnosis in the CC, efficiency %, final order limit)
+    let cases: Vec<(&str, Vec<&str>, bool, f64, i32)> = vec![
+        ("Swire/SA/Degen", vec![SWIRE2, SA, DEGEN], false, 65.0, 8),
+        (
+            "Swire/SA/Degen +Gnosis",
+            vec![SWIRE2, SA, DEGEN],
+            true,
+            125.0,
+            20,
+        ),
+        ("Jaye/Swire/SA", vec![JAYE, SWIRE2, SA], false, 80.0, 10),
+        (
+            "Jaye/Swire/SA +Gnosis",
+            vec![JAYE, SWIRE2, SA],
+            true,
+            129.0,
+            18,
+        ),
+        ("Jaye/SA/Degen", vec![JAYE, SA, DEGEN], false, 61.0, 4),
+        (
+            "Jaye/SA/Degen +Gnosis",
+            vec![JAYE, SA, DEGEN],
+            true,
+            121.0,
+            14,
+        ),
+    ];
+    for (label, crew, gnosis, expect, limit) in cases {
+        let mut ids = crew.clone();
+        if gnosis {
+            ids.push(GNOSIS);
+        }
+        let roster: Vec<_> = ids.iter().map(|id| profile(gd, id)).collect();
+        let mut rooms = vec![room("tp", "TRADING", 3), room("cc", "CONTROL", 5)];
+        rooms[0].current_operators = crew.iter().map(|s| (*s).to_string()).collect();
+        if gnosis {
+            rooms[1].current_operators = vec![GNOSIS.into()];
+        }
+        let building = UserBuilding { rooms };
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        let tp = asn.rooms.iter().find(|r| r.slot_id == "tp").unwrap();
+        assert!(
+            (tp.total_efficiency - expect).abs() < 0.01,
+            "{label}: ours {:.2} expected {expect}",
+            tp.total_efficiency
+        );
+        assert_eq!(tp.order_limit, Some(limit), "{label}: order limit");
+    }
+    // The parses behind the figures.
+    assert!(
+        matches!(
+            registry.get("control_tra_limit&spd[000]"),
+            Some(BuffResolutionStrategy::ConditionalGlobalEffect {
+                bonus_pct,
+                order_limit: 6,
+                per_operator: true,
+                ..
+            }) if (*bonus_pct + 15.0).abs() < 1e-9
+        ),
+        "Gnosis: {:?}",
+        registry.get("control_tra_limit&spd[000]")
+    );
+    assert!(
+        matches!(
+            registry.get("trade_ord_limit_count[000]"),
+            Some(BuffResolutionStrategy::LimitCutPerPeerEfficiency {
+                pct_per_cut,
+                cut: -1,
+                per_order_pct,
+            }) if (*pct_per_cut - 10.0).abs() < 1e-9 && (*per_order_pct - 4.0).abs() < 1e-9
+        ),
+        "Jaye E1: {:?}",
+        registry.get("trade_ord_limit_count[000]")
     );
 }
 
@@ -6718,52 +6846,67 @@ fn power_drone_recovery_is_priced_in_the_objective() {
     assert!(((both - without) - 2175.0).abs() < 1e-9);
 }
 
-/// The trading-post ORDER LIMIT baseline scales with the post's level (6/8/10 for
-/// L1-L3, gamedata `TradingData.Phases`), so a capacity-slashing operator is
-/// throttled against the REAL buffer, not a level-blind constant. Degenbrecher
-/// (-6 order limit) on an L3 post leaves 4 of 10 orders (factor 0.4); on an L1
-/// post she hits the floor of 1 of 6. The level-blind model scored the L3 case
-/// at ~0.17 - over-penalizing her on exactly the posts endgame players run.
+/// A trading post sells what its order buffer holds between collections. The
+/// buffer is the level's base limit (6/8/10 for L1-L3, gamedata
+/// `TradingData.Phases`) plus the crew's deltas, floored at 1 for the ROOM: so
+/// Degenbrecher's -6 leaves an L3 post 4 orders and an L1 post its floor of 1.
+/// The displayed efficiency (+25%) is the game's, untouched by the limit; the
+/// cost lands in the yield, and a limit-bound post's output no longer depends
+/// on its speed.
 #[test]
 fn trading_order_cap_scales_with_post_level() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    use backend::core::grade::base::yield_model::room_yield;
     const DEGENBRECHER: &str = "char_4116_blkkgt";
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
-    let ops = vec![profile(gd, DEGENBRECHER)];
-    let team = vec![DEGENBRECHER.to_string()];
-
-    let value_at = |level: i32| {
-        let building = UserBuilding {
+    let roster = vec![profile(gd, DEGENBRECHER)];
+    let post_at = |level: i32| {
+        let mut building = UserBuilding {
             rooms: vec![room("tp0", "TRADING", level)],
         };
-        team_value(
-            &team,
-            "TRADING",
-            None,
-            &ops,
-            &building,
-            &gd.building,
-            &registry,
-            &drains,
-        )
+        building.rooms[0].current_operators = vec![DEGENBRECHER.to_string()];
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms
+            .into_iter()
+            .find(|r| r.room_type == "TRADING")
+            .expect("a trading post")
     };
-
-    // L3: +25% efficiency x (10-6)/10 capacity = 1.25 x 0.4 = 0.5 objective.
-    let l3 = value_at(3);
+    let l3 = post_at(3);
+    let l1 = post_at(1);
     assert!(
-        (l3 - 0.5).abs() < 0.02,
-        "L3 post: Degenbrecher throttles to 4/10 of the level's base cap, got {l3:.4}"
+        (l3.total_efficiency - 25.0).abs() < 1e-6,
+        "the displayed figure is the game's +25%, got {}",
+        l3.total_efficiency
     );
-    // L1: 6-6 clamps to the floor of 1 -> 1/6 capacity. Strictly worse than L3.
-    let l1 = value_at(1);
+    assert_eq!(l3.order_limit, Some(4), "L3: 10 - 6");
+    assert_eq!(
+        l1.order_limit,
+        Some(1),
+        "L1: 6 - 6 floors at the room minimum of 1"
+    );
+    let lmd = |level: i32, speed: f64, limit: Option<i32>| {
+        room_yield("TRADING", None, level, speed, 0.0, 1, limit).lmd_per_day
+    };
+    let l3_capped = lmd(3, l3.total_efficiency, l3.order_limit);
+    let l1_capped = lmd(1, l1.total_efficiency, l1.order_limit);
     assert!(
-        (l1 - 1.25 / 6.0).abs() < 0.02,
-        "L1 post: the -6 clamps to the 1-order floor of a 6-cap post, got {l1:.4}"
+        l3_capped <= lmd(3, l3.total_efficiency, None),
+        "a 4-order buffer never sells more than the free rate"
     );
     assert!(
-        l3 > l1,
-        "a bigger buffer absorbs the slash better: {l3:.4} vs {l1:.4}"
+        lmd(3, 200.0, Some(4)) < lmd(3, 200.0, None),
+        "at +200% four orders between collections throttle an L3 post"
+    );
+    assert!(
+        l1_capped < l3_capped,
+        "the 1-order floor is stricter still: {l1_capped} vs {l3_capped}"
+    );
+    assert!(
+        (lmd(1, 1000.0, Some(1)) - l1_capped).abs() < 1e-6,
+        "a limit-bound post sells its buffer whatever its speed"
     );
 }
 
@@ -8095,8 +8238,8 @@ fn planner_probe() {
 }
 
 /// The deep-dive skill ledger: marginals by ablation, with coupled skills
-/// (Feud + Jaye's mirroring), pair riders, CC globals and capacity-only lines
-/// all classified honestly.
+/// (Feud + Jaye's limit cut), pair riders, CC globals and capacity lines all
+/// classified honestly.
 #[test]
 fn skill_ledger_reports_marginals_and_dispositions() {
     use backend::core::grade::base::assignment::compute_current_assignment;
@@ -8135,24 +8278,34 @@ fn skill_ledger_reports_marginals_and_dispositions() {
             .unwrap_or_else(|| panic!("no ledger line for {op} {buff}"))
     };
     use backend::core::grade::base::skill_ledger::LineDisposition;
-    // Texas' Feud fires with Lappland present. Its marginal EXCEEDS its face
-    // +65 because removing it also collapses Jaye's teammate-mirroring - the
-    // ledger reports what the room actually loses.
+    // Texas' Feud fires with Lappland present. Its marginal is BELOW its face
+    // +65: its efficiency is what Jaye's Basic Needs cuts the limit by (6 of
+    // the post's 10 + 4), and Jaye pays 4% per order of the final limit, so
+    // the ledger reports what the room actually loses (65 - 6 x 4 = 41).
     let feud = line("char_102_texas", "trade_ord_spd&cost_P[000]");
     assert_eq!(feud.disposition, LineDisposition::Contributes);
     assert!(
-        feud.speed_pct >= 65.0 - 1e-6,
-        "Feud marginal {} >= 65",
+        (feud.speed_pct - 41.0).abs() < 1e-6,
+        "Feud marginal {} = 65 - 24",
         feud.speed_pct
     );
-    // Jaye's own mirroring line contributes.
+    // Jaye's Street Economics pays per empty slot of the final limit (8).
     let jaye = line("char_272_strong", "trade_ord_limit_diff[000]");
     assert_eq!(jaye.disposition, LineDisposition::Contributes);
-    assert!(jaye.speed_pct > 0.0);
-    // Lappland's Texas-gated order-limit skill: zero efficiency marginal, but
-    // the gate is met and it moves capacity - "capacity", not "inactive".
+    assert!(
+        (jaye.speed_pct - 16.0).abs() < 1e-6,
+        "Street Economics {} = 2 x 8",
+        jaye.speed_pct
+    );
+    // Lappland's Texas-gated +4 order limit is what Jaye's riders read: it
+    // moves efficiency through him (4 x 4 = 16), not only capacity.
     let lapp = line("char_140_whitew", "trade_ord_limit&cost_P[001]");
-    assert_eq!(lapp.disposition, LineDisposition::CapacityOnly);
+    assert_eq!(lapp.disposition, LineDisposition::Contributes);
+    assert!(
+        (lapp.speed_pct - 16.0).abs() < 1e-6,
+        "Hidden Purpose marginal {} = 4 x 4",
+        lapp.speed_pct
+    );
     // Ascalon's CC-wide +7% shows on the post as a Control-Center line.
     let cc_line = line("char_4132_ascln", "control_tra_spd[030]");
     assert!(cc_line.from_control_center);

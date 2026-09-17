@@ -335,6 +335,9 @@ pub struct RoomAssignment {
     /// post's): Proviso's bonus bars come from stock, Tequila's LMD rider
     /// moves none. The yield model bounds the former by the factories' gold.
     pub order_gold: f64,
+    /// A trading post's final order limit after every skill (`None` for other
+    /// rooms) - the buffer the yield model prices.
+    pub order_limit: Option<i32>,
     /// True when this is a FIXED synergy squad - its operators depend on each
     /// other (e.g. Shamare + Tequila + Bibeak, or Texas + Lappland) and can't be
     /// swapped without breaking the combo. False = a flexible team of independent

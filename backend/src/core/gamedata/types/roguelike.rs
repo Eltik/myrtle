@@ -24,12 +24,27 @@ pub struct RoguelikeThemeGameData {
     pub theme_name: String,
     /// Total unique endings available
     pub max_endings: i32,
-    /// Total relics available
+    /// Total relics available (`relic_ids.len()`)
     pub max_relics: i32,
-    /// Total capsules available (only `rogue_1` has these)
+    /// Total capsules available (only `rogue_1` has these; `capsule_ids.len()`)
     pub max_capsules: i32,
-    /// Total bands available
+    /// Total bands available (`band_ids.len()`)
     pub max_bands: i32,
+    /// Archive relic ids (`ArchiveComp.Relic.Relic`). This is the in-game
+    /// collectible archive, and it is NOT the same set as the keys the client
+    /// writes to `collect.relic`: the archive lists the tool items
+    /// (`*_active_tool_N`, `*_explore_tool_N`) which the client stores in other
+    /// buckets, and `collect.relic` carries upgrade variants
+    /// (`*_relic_legacy_N_a/_b/_c`) which the archive does not list. Counts must
+    /// therefore iterate THIS list and look ids up, never count bucket keys.
+    /// See [`RoguelikeThemeGameData::count_collected`].
+    pub relic_ids: Vec<String>,
+    /// Archive capsule ids (`ArchiveComp.Capsule.Capsule`)
+    pub capsule_ids: Vec<String>,
+    /// Band item ids: `Items` entries typed `BAND`. `BandRef` is the band
+    /// upgrade-ref table, not the band list (empty for `rogue_1`/`rogue_3`, and
+    /// only `band_11..22` for `rogue_2`), so it is the wrong denominator.
+    pub band_ids: Vec<String>,
     /// Total challenge stages available
     pub max_challenges: i32,
     /// Total monthly squads available
@@ -81,7 +96,8 @@ impl RoguelikeGameData {
             let max_challenges = get_kv_array_len(detail, &["Challenges", "challenges"]);
             let max_bp_levels = get_array_len(detail, &["Milestones", "milestones"]);
             let max_monthly_squads = get_kv_array_len(detail, &["MonthSquad", "monthSquad"]);
-            let max_bands = get_kv_array_len(detail, &["BandRef", "bandRef"]);
+            let band_ids = band_item_ids(detail);
+            let max_bands = band_ids.len() as i32;
 
             let max_difficulty_grade = get_array(detail, &["Difficulties", "difficulties"])
                 .iter()
@@ -93,8 +109,10 @@ impl RoguelikeGameData {
                 .max()
                 .unwrap_or(0) as i32;
 
-            let (max_relics, max_capsules, max_theme_collectibles, max_endbook_items, max_buffs) =
+            let (relic_ids, capsule_ids, max_theme_collectibles, max_endbook_items, max_buffs) =
                 parse_archive_comp(detail);
+            let max_relics = relic_ids.len() as i32;
+            let max_capsules = capsule_ids.len() as i32;
 
             data.themes.insert(
                 theme_id.clone(),
@@ -112,6 +130,9 @@ impl RoguelikeGameData {
                     max_theme_collectibles,
                     max_endbook_items,
                     max_buffs,
+                    relic_ids,
+                    capsule_ids,
+                    band_ids,
                 },
             );
         }
@@ -148,16 +169,114 @@ impl RoguelikeGameData {
     }
 }
 
-/// Extracts collectible max counts from `ArchiveComp`.
+/// Collected counts for one theme, measured against the archive id lists.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct CollectedCounts {
+    pub relics: usize,
+    pub capsules: usize,
+    pub bands: usize,
+}
+
+impl RoguelikeThemeGameData {
+    /// Count how many archive relics/capsules/bands a player's theme progress
+    /// has unlocked (`state >= 1`).
+    ///
+    /// Each count iterates the archive id list and looks the id up, so an id
+    /// that lives outside the bucket named after it is still found and an id
+    /// in the bucket that the archive does not list is never counted. Measured
+    /// on 2,630 real accounts (2026-09-17), counting `collect.relic` keys
+    /// instead gave 256/262 as the ceiling on `rogue_2` (the six active tools
+    /// are in `collect.activeTool`) and 333/294 on `rogue_5` (45 `_a/_b/_c`
+    /// upgrade variants), which the old `.min(max)` cap then hid as "complete"
+    /// for 1,441 accounts.
+    ///
+    /// Relic ids are read from `collect.relic`, then `collect.activeTool`, then
+    /// `challenge.collect.exploreTool` (`rogue_3` only). Every bucket has the
+    /// same `{id: {state, progress}}` shape.
+    pub fn count_collected(&self, progress: &serde_json::Value) -> CollectedCounts {
+        let collect = progress.get("collect");
+        let relic_buckets = [
+            collect.and_then(|c| c.get("relic")),
+            collect.and_then(|c| c.get("activeTool")),
+            progress
+                .get("challenge")
+                .and_then(|c| c.get("collect"))
+                .and_then(|c| c.get("exploreTool")),
+        ];
+        let capsule_buckets = [collect.and_then(|c| c.get("capsule"))];
+        let band_buckets = [collect.and_then(|c| c.get("band"))];
+
+        CollectedCounts {
+            relics: count_in_buckets(&self.relic_ids, &relic_buckets),
+            capsules: count_in_buckets(&self.capsule_ids, &capsule_buckets),
+            bands: count_in_buckets(&self.band_ids, &band_buckets),
+        }
+    }
+}
+
+/// Number of `ids` whose entry in any of `buckets` has `state >= 1`.
+fn count_in_buckets(ids: &[String], buckets: &[Option<&serde_json::Value>]) -> usize {
+    ids.iter()
+        .filter(|id| {
+            buckets.iter().flatten().any(|bucket| {
+                bucket
+                    .get(id.as_str())
+                    .and_then(|e| e.get("state"))
+                    .and_then(serde_json::Value::as_i64)
+                    .unwrap_or(0)
+                    >= 1
+            })
+        })
+        .count()
+}
+
+/// Ids of `Items` entries typed `BAND`.
+///
+/// `FlatBuffer` export: `Items: [{key, value: {Type_: "BAND", ...}}]` (the
+/// exporter renames `type` to `Type_`). CN-gamedata: `items: {id: {type: "BAND"}}`.
+fn band_item_ids(detail: &serde_json::Value) -> Vec<String> {
+    let items = detail
+        .get("Items")
+        .or_else(|| detail.get("items"))
+        .map(kv_to_map)
+        .unwrap_or_default();
+    let mut ids: Vec<String> = items
+        .into_iter()
+        .filter(|(_, v)| get_str(v, &["Type_", "Type", "type"]).as_deref() == Some("BAND"))
+        .map(|(k, _)| k)
+        .collect();
+    ids.sort();
+    ids
+}
+
+/// Extracts collectible ids and max counts from `ArchiveComp`.
 ///
 /// `FlatBuffer` format: `{ "Relic": { "Relic": [{key, value}, ...] }, ... }`
 /// CN-gamedata format: `{ "relic": { "relic": { id: ... } }, ... }`
-fn parse_archive_comp(detail: &serde_json::Value) -> (i32, i32, i32, i32, i32) {
+///
+/// Returns `(relic_ids, capsule_ids, max_theme_collectibles, max_endbook_items, max_buffs)`.
+fn parse_archive_comp(detail: &serde_json::Value) -> (Vec<String>, Vec<String>, i32, i32, i32) {
     let Some(archive) = detail
         .get("ArchiveComp")
         .or_else(|| detail.get("archiveComp"))
     else {
-        return (0, 0, 0, 0, 0);
+        return (Vec::new(), Vec::new(), 0, 0, 0);
+    };
+
+    // Ids of every inner entry of a category, e.g. `Relic.Relic[*].key`.
+    let ids_inner = |category_variants: &[&str]| -> Vec<String> {
+        let Some(cat_val) = category_variants.iter().find_map(|c| archive.get(*c)) else {
+            return Vec::new();
+        };
+        let Some(obj) = cat_val.as_object() else {
+            return Vec::new();
+        };
+        let mut ids: Vec<String> = obj
+            .values()
+            .flat_map(|v| kv_to_map(v).into_keys())
+            .collect();
+        ids.sort();
+        ids
     };
 
     let count_inner = |category_variants: &[&str]| -> i32 {
@@ -184,8 +303,8 @@ fn parse_archive_comp(detail: &serde_json::Value) -> (i32, i32, i32, i32, i32) {
         }
     };
 
-    let max_relics = count_inner(&["Relic", "relic"]);
-    let max_capsules = count_inner(&["Capsule", "capsule"]);
+    let relic_ids = ids_inner(&["Relic", "relic"]);
+    let capsule_ids = ids_inner(&["Capsule", "capsule"]);
     let max_endbook_items = count_inner(&["Endbook", "endbook"]);
     let max_buffs = count_inner(&["Buff", "buff"]);
 
@@ -203,8 +322,8 @@ fn parse_archive_comp(detail: &serde_json::Value) -> (i32, i32, i32, i32, i32) {
         .sum();
 
     (
-        max_relics,
-        max_capsules,
+        relic_ids,
+        capsule_ids,
         max_theme_collectibles,
         max_endbook_items,
         max_buffs,

@@ -46,7 +46,9 @@ export function PullsPlannerTab({ today }: IPullsPlannerTabProps): React.ReactEl
         return end;
     }, [today, deferred.horizonDays]);
 
-    const days = React.useMemo(() => projectIncome(deferred, today, horizon), [deferred, today, horizon]);
+    // The outfit picks from the Planner tab are reserved out of the Originite balance
+    // before any of it is converted, so a pick there is a step down in pulls here.
+    const days = React.useMemo(() => projectIncome(deferred, today, horizon, skins.originite), [deferred, today, horizon, skins.originite]);
 
     const plan = React.useMemo(
         () =>

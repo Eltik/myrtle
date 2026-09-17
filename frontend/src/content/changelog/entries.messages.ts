@@ -11,6 +11,26 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-09-17-2.title": {
+        text: "Integrated Strategies regrade",
+        description: "Title of the second 2026-09-17 release note. 'Integrated Strategies' is an in-game mode name and is never translated. A grade is this site's own letter rating of a player.",
+    },
+    "note.2026-09-17-2.lead": {
+        text: "A bug in how Integrated Strategies runs were scored has been found and fixed. Every account has been regraded with the corrected scoring, so your Roguelike subscore, composite score and grade may differ from what you saw before.",
+        description: "Lead paragraph of the second 2026-09-17 release note, rendered as Markdown. 'Integrated Strategies' is an in-game mode name and is never translated; 'Roguelike' is the label this site's leaderboard and profile give that mode's subscore. Composite score and grade are the site's own player rating.",
+    },
+    "note.2026-09-17-2.hrefLabel": {
+        text: "See the leaderboard",
+        description: "Label of the second 2026-09-17 release note's call to action, which opens the player leaderboard where grades and the Roguelike sort are shown.",
+    },
+    "note.2026-09-17-2.item.1": {
+        text: "Integrated Strategies scoring counted some runs incorrectly; the scoring is now correct.",
+        description: "Bullet in the second 2026-09-17 release note, filed under 'Fixed'. 'Integrated Strategies' is an in-game mode name and is never translated.",
+    },
+    "note.2026-09-17-2.item.2": {
+        text: "All users have been regraded. Grades and leaderboard positions have been recomputed from the corrected scores.",
+        description: "Bullet in the second 2026-09-17 release note, filed under 'Fixed'. A grade is this site's own letter rating of a player.",
+    },
     "note.2026-09-17.title": {
         text: "Pull planner",
         description: "Title of the 2026-09-17 release note. 'Pull' is the community's word for a single gacha roll.",

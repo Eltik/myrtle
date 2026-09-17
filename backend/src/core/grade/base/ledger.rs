@@ -67,6 +67,10 @@ struct PeerItem {
     basis_metric: Metric,
     include_self: bool,
     step: f64,
+    /// Evaluation stage: see `ClauseKind::ScalingPeerMetric`.
+    stage: u8,
+    /// Floor the basis by `step` and ignore a negative total.
+    quantized: bool,
     value: f64,
     cap: Option<f64>,
     emitted: f64,
@@ -113,6 +117,27 @@ pub struct RoomTotals {
     /// Order gold THROUGHPUT: Pure Gold per hour over a bare post's, minus
     /// one (percent) - the part of the value that draws bars from stock.
     pub order_gold_pct: f64,
+    /// Net capacity-limit delta of the room: crew capacity skills, per-
+    /// operator and post-level Control-Center grants, peer-scaled cuts.
+    pub capacity_delta: f64,
+    /// A trading post's final order limit (the level's base plus
+    /// `capacity_delta`, floored at 1); `None` for every other room type.
+    pub order_limit: Option<i32>,
+}
+
+/// The order limit a trading post's level grants before any skill (6/8/10 for
+/// L1-L3, gamedata `TradingData.Phases`), resolved through the
+/// `TRADING_MIN_LEVEL` synthetic so search and display always agree.
+pub(crate) fn trading_base_limit(
+    building_data: &BuildingDataFile,
+    facility_counts: &HashMap<String, usize>,
+) -> i32 {
+    let phases = &building_data.trading_data.phases;
+    facility_counts
+        .get(super::assignment::TRADING_MIN_LEVEL)
+        .and_then(|lv| phases.get(lv.saturating_sub(1)))
+        .or_else(|| phases.last())
+        .map_or(FALLBACK_TRADING_ORDER_LIMIT, |p| p.order_limit)
 }
 
 /// Score one room's team: the clause walk (P0-P1), pool settlement (P2), peer
@@ -215,8 +240,8 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
         .collect();
 
     // Per-member own capacity-limit total (Self + resolved room-scoped gates):
-    // the basis for capacity-tier subjects, order-limit peer scaling, and the
-    // trading throughput factor. Matches the legacy `compute_order_limit`.
+    // the basis for capacity-tier subjects (Bubble's per-point tiers). The
+    // room's final limit is read off the ledger entries after peer scaling.
     let own_capacity: Vec<f64> = members
         .iter()
         .enumerate()
@@ -295,6 +320,8 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
     let mut peers: Vec<PeerItem> = Vec::new();
     let mut suppressors: Vec<SuppressItem> = Vec::new();
     let mut order_items: Vec<OrderItem> = Vec::new();
+    // Per-order riders on the room's FINAL limit: (entity, metric, per order).
+    let mut limit_items: Vec<(usize, Metric, f64)> = Vec::new();
 
     for (i, _op) in members.iter().enumerate() {
         for (clause, from_facility) in &member_clauses[i] {
@@ -469,16 +496,23 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                     metric,
                     include_self,
                     step,
+                    stage,
+                    quantized,
                 } => peers.push(PeerItem {
                     entity: i,
                     metric_out: clause.metric.clone(),
                     basis_metric: metric.clone(),
                     include_self: *include_self,
                     step: *step,
+                    stage: *stage,
+                    quantized: *quantized,
                     value: clause.value * factor,
                     cap: clause.cap,
                     emitted: 0.0,
                 }),
+                ClauseKind::ScalingRoomOrderLimit => {
+                    limit_items.push((i, clause.metric.clone(), clause.value * factor));
+                }
                 // The exempt marker on automation clauses is honored via the
                 // wipe's source check, not per-suppressor state.
                 ClauseKind::SuppressesOthers { metrics, .. } => {
@@ -509,49 +543,6 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
         }
     }
 
-    // ── P3: peer scaling by deltas ───────────────────────────────────────────
-    // (P2, pool settlement, is assignment-scoped; nothing to do per room until
-    // the perception seam feeds pools - see `settle_pools`.)
-    for _ in 0..MAX_PEER_ROUNDS {
-        let mut max_delta = 0.0f64;
-        let mut emissions: Vec<Entry> = Vec::new();
-        for item in &mut peers {
-            // The reference-pure basis: the FULL metric total the roommates are
-            // contributing right now - facility-scaled, count-scaled and
-            // pool-drained entries included. Two mirrors reading each other is
-            // the genuinely-circular case the delta relaxation exists for.
-            let basis_total: f64 = entries
-                .iter()
-                .filter(|e| e.metric == item.basis_metric)
-                .filter(|e| item.include_self || e.entity != item.entity)
-                .map(|e| e.amount)
-                .sum();
-            // A capacity basis ("per 5 CAP") counts only positive headroom and
-            // quantizes by the step; a percentage mirror is continuous.
-            let scaled = if item.basis_metric == Metric::CapacityLimit {
-                (basis_total.max(0.0) / item.step).floor() * item.value
-            } else {
-                basis_total / item.step * item.value
-            };
-            let target = item.cap.map_or(scaled, |cap| scaled.min(cap));
-            let delta = target - item.emitted;
-            if delta.abs() > 0.0 {
-                emissions.push(Entry {
-                    entity: item.entity,
-                    metric: item.metric_out.clone(),
-                    amount: delta,
-                    source: Source::PeerScaled,
-                });
-                item.emitted = target;
-            }
-            max_delta = max_delta.max(delta.abs());
-        }
-        entries.extend(emissions);
-        if max_delta < PEER_EPS {
-            break;
-        }
-    }
-
     // ── Per-operator Control-Center grants ──────────────────────────────────
     // Umiri-style conditionals ("all Siracusa Operators assigned to Trading
     // Posts gain +5%") buff the OPERATORS, so they enter the ledger as
@@ -559,7 +550,10 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
     // cancels everything not sourced from herself) exactly like any other
     // teammate contribution. Threshold conditionals ("...with 3 Kjerag
     // Operators") buff the POST and stay CC-sourced (added in P5, immune to
-    // suppression, like the unconditional globals).
+    // suppression, like the unconditional globals). They land BEFORE peer
+    // scaling: Gnosis's "-15% efficiency and +6 order limit" on each Kjerag
+    // trader is what Degenbrecher's and Swire's per-limit readers count and
+    // what Jaye's cut reads.
     {
         let speed_metric = Metric::speed_for_room(ev.room_type);
         for cond in ev.cc_conditions {
@@ -568,15 +562,110 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
             }
             let amount = cond.bonus_for(ev.formula_type);
             for (i, m) in members.iter().enumerate() {
-                if super::assignment::cc_token_matches(m, &cond.faction_token) {
+                if !super::assignment::cc_token_matches(m, &cond.faction_token) {
+                    continue;
+                }
+                entries.push(Entry {
+                    entity: i,
+                    metric: speed_metric.clone(),
+                    amount,
+                    source: Source::Granted,
+                });
+                if cond.order_limit != 0.0 {
                     entries.push(Entry {
                         entity: i,
-                        metric: speed_metric.clone(),
-                        amount,
+                        metric: Metric::CapacityLimit,
+                        amount: cond.order_limit,
                         source: Source::Granted,
                     });
                 }
             }
+        }
+    }
+
+    // ── P3: peer scaling by deltas, stage by stage ───────────────────────────
+    // (P2, pool settlement, is assignment-scoped; nothing to do per room until
+    // the perception seam feeds pools - see `settle_pools`.)
+    // A reader sees everything settled before its stage; readers sharing a
+    // stage relax to a fixed point (two mirrors reading each other).
+    let last_stage = peers.iter().map(|p| p.stage).max().unwrap_or(0);
+    for stage in 0..=last_stage {
+        for _ in 0..MAX_PEER_ROUNDS {
+            let mut max_delta = 0.0f64;
+            let mut emissions: Vec<Entry> = Vec::new();
+            for item in peers.iter_mut().filter(|p| p.stage == stage) {
+                // The reference-pure basis: the FULL metric total the roommates
+                // are contributing right now - facility-scaled, count-scaled,
+                // granted and pool-drained entries included.
+                let basis_total: f64 = entries
+                    .iter()
+                    .filter(|e| e.metric == item.basis_metric)
+                    .filter(|e| item.include_self || e.entity != item.entity)
+                    .map(|e| e.amount)
+                    .sum();
+                // A quantized reader ("per 5 CAP", "-1 per 10%") counts only
+                // positive headroom and floors by the step; a percentage
+                // mirror is continuous.
+                let scaled = if item.quantized {
+                    (basis_total.max(0.0) / item.step).floor() * item.value
+                } else {
+                    basis_total / item.step * item.value
+                };
+                let target = item.cap.map_or(scaled, |cap| scaled.min(cap));
+                let delta = target - item.emitted;
+                if delta.abs() > 0.0 {
+                    emissions.push(Entry {
+                        entity: item.entity,
+                        metric: item.metric_out.clone(),
+                        amount: delta,
+                        source: Source::PeerScaled,
+                    });
+                    item.emitted = target;
+                }
+                max_delta = max_delta.max(delta.abs());
+            }
+            entries.extend(emissions);
+            if max_delta < PEER_EPS {
+                break;
+            }
+        }
+    }
+
+    // ── Order limit: the room's capacity after every delta ──────────────────
+    // Crew capacity skills, per-operator CC grants and peer-scaled cuts are
+    // CapacityLimit entries by now; post-level CC grants (Wiš'adel's "that
+    // Trading Post's order limit +2" while Hoederer is seated) add on top.
+    // Capacity is not a metric a nullifier targets, so this is final. The
+    // game's "(minimum 1)" is a floor on the ROOM total, never per skill.
+    let cc_room_capacity: f64 = ev
+        .cc_conditions
+        .iter()
+        .filter(|c| !c.per_operator)
+        .map(|c| c.capacity_contribution(ev.room_type, &members))
+        .sum();
+    let capacity_delta: f64 = entries
+        .iter()
+        .filter(|e| e.metric == Metric::CapacityLimit)
+        .map(|e| e.amount)
+        .sum::<f64>()
+        + cc_room_capacity;
+    let order_limit: Option<i32> = (ev.room_type == "TRADING").then(|| {
+        #[allow(clippy::cast_possible_truncation)]
+        let delta = capacity_delta.round() as i32;
+        (trading_base_limit(ev.building_data, ev.facility_counts) + delta)
+            .max(MIN_TRADING_ORDER_LIMIT)
+    });
+    // Jaye's per-order riders pay on the FINAL limit, base included. From
+    // here on they are ordinary speed contributions: a nullifier kills them
+    // like any other roommate's speed.
+    if let Some(limit) = order_limit {
+        for (entity, metric, value) in &limit_items {
+            entries.push(Entry {
+                entity: *entity,
+                metric: metric.clone(),
+                amount: value * f64::from(limit),
+                source: Source::Direct,
+            });
         }
     }
 
@@ -661,38 +750,12 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
         .map(|c| c.contribution(ev.room_type, &members, ev.formula_type))
         .sum::<f64>();
 
-    // Trading throughput is bounded by the order buffer: a slashed limit
-    // throttles the post no matter how fast it acquires orders; surplus limit
-    // is not rewarded. The BASE limit scales with the post's level (6/8/10 for
-    // L1-L3, gamedata `TradingData`), resolved through the `TRADING_MIN_LEVEL`
-    // synthetic so search and display always agree.
-    if ev.room_type == "TRADING" {
-        let phases = &ev.building_data.trading_data.phases;
-        let base_limit = ev
-            .facility_counts
-            .get(super::assignment::TRADING_MIN_LEVEL)
-            .and_then(|lv| phases.get(lv.saturating_sub(1)))
-            .or_else(|| phases.last())
-            .map_or(FALLBACK_TRADING_ORDER_LIMIT, |p| p.order_limit);
-        // Named-operator CC grants ("that Trading Post's order limit +2"
-        // while Hoederer is seated here) add to the same pool as the crew's
-        // own capacity skills. CC-sourced, so no suppressor touches them.
-        let cc_capacity: f64 = ev
-            .cc_conditions
-            .iter()
-            .map(|c| c.capacity_contribution(ev.room_type, &members))
-            .sum();
-        let net_limit: f64 = own_capacity.iter().sum::<f64>() + cc_capacity;
-        #[allow(clippy::cast_possible_truncation)]
-        let effective = (base_limit + net_limit.round() as i32).max(MIN_TRADING_ORDER_LIMIT);
-        let capacity = (f64::from(effective) / f64::from(base_limit)).min(1.0);
-        speed = ((1.0 + speed / 100.0) * capacity - 1.0) * 100.0;
-    }
-
     RoomTotals {
         speed_pct: speed,
         order_value_pct: order_value,
         order_gold_pct: order_gold,
+        capacity_delta,
+        order_limit,
     }
 }
 
@@ -878,6 +941,12 @@ pub fn op_optimistic_bound(
                     // A mirror's best case is its cap.
                     c.cap.unwrap_or(0.0)
                 }
+            }
+            // Jaye's per-order riders: the level's base limit is what a post
+            // holds before peers add and his own cut subtracts - optimistic
+            // at the base.
+            ClauseKind::ScalingRoomOrderLimit => {
+                v * f64::from(trading_base_limit(building_data, facility_counts))
             }
             _ => 0.0,
         };

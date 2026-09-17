@@ -615,6 +615,9 @@ pub fn simulate_rotation_from(
                 room.efficiency.unwrap_or(0.0),
                 0.0,
                 room.recommended.len(),
+                // The rotation's cells carry no order limit; the sustained
+                // sim prices the rate, the assignment objective the buffer.
+                None,
             );
             let day_frac = SHIFT_HOURS / 24.0 * crew_frac;
             acc.lmd += y.lmd_per_day * day_frac;

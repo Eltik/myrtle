@@ -170,7 +170,10 @@ export interface IProjectedDay {
     originite: number;
     /** Rolls affordable without touching Originite Prime. */
     pulls: number;
-    /** Rolls affordable once Originite Prime is converted. */
+    /**
+     * Rolls affordable once Originite Prime is converted, after the outfit picks
+     * have taken theirs. Reserved Originite is never converted.
+     */
     pullsWithOriginite: number;
 }
 
@@ -189,8 +192,15 @@ function pullsFrom(orundum: number, permits: number, tenPermits: number, origini
  * The first day accrues nothing: it is the user's balance as entered, so income is
  * booked from the following reset onward rather than handing them a day they have
  * already claimed.
+ *
+ * `reservedOriginite` is what the outfit picks in the Planner tab cost. It has first
+ * claim on the Originite balance from day one: only what is left over is converted
+ * into rolls, so a pick made in the other tab shows up here as fewer pulls rather
+ * than as a warning. The reservation is booked up front rather than on each outfit's
+ * sale day because the picks carry no date, and earmarking early is the conservative
+ * reading. `originite` on each day is the raw balance, before the reservation.
  */
-export function projectIncome(settings: IIncomeSettings, from: Date, to: Date): IProjectedDay[] {
+export function projectIncome(settings: IIncomeSettings, from: Date, to: Date, reservedOriginite = 0): IProjectedDay[] {
     const startMs = startOfDayUTC(from);
     const endMs = startOfDayUTC(to);
     if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs < startMs) return [];
@@ -199,6 +209,7 @@ export function projectIncome(settings: IIncomeSettings, from: Date, to: Date): 
     let permits = Math.max(0, settings.permits);
     const tenPermits = Math.max(0, settings.tenPermits);
     let originite = Math.max(0, settings.originite);
+    const reserved = Math.max(0, reservedOriginite);
     let goldCerts = 0;
     let greenCerts = 0;
     const days: IProjectedDay[] = [];
@@ -234,7 +245,7 @@ export function projectIncome(settings: IIncomeSettings, from: Date, to: Date): 
             permits,
             originite,
             pulls: pullsFrom(orundum, permits, tenPermits, 0, false),
-            pullsWithOriginite: pullsFrom(orundum, permits, tenPermits, originite, settings.spendOriginite),
+            pullsWithOriginite: pullsFrom(orundum, permits, tenPermits, Math.max(0, originite - reserved), settings.spendOriginite),
         });
     }
     return days;
@@ -259,26 +270,23 @@ export interface IOriginiteWarning {
     needed: number;
     /** Originite Prime that will be on hand at the end of the projection. */
     available: number;
-    /** How far short the two plans leave the player, or 0 when they both fit. */
+    /** How far short the outfit picks leave the player. Always positive. */
     short: number;
-    /** True when pulls are also claiming the same Originite Prime. */
-    contested: boolean;
 }
 
 /**
- * Whether the outfit plan and the pull plan can both be paid for.
+ * Whether the outfit picks can be paid for at all.
  *
- * The two tabs spend the same currency and neither knows about the other, so the
- * honest thing is to say when they collide rather than to silently take the money
- * off one of them. Converting Originite Prime into pulls spends ALL of it, so any
- * outfit commitment at all is contested in that case; with conversion off, the
- * outfits only fall short if they cost more than the player will hold.
+ * The pull projection already reserves the outfit cost before converting anything
+ * (`projectIncome`), so pulls and outfits no longer compete: the only thing left to
+ * say is when the outfits alone cost more Originite Prime than the player will ever
+ * hold over the horizon, in which case no amount of not-pulling fixes it.
  */
-export function originiteWarning(committed: number, availableAtHorizon: number, spendOnPulls: boolean): IOriginiteWarning | null {
+export function originiteWarning(committed: number, availableAtHorizon: number): IOriginiteWarning | null {
     const needed = Math.max(0, committed);
     if (needed === 0) return null;
     const available = Math.max(0, availableAtHorizon);
-    const short = spendOnPulls ? needed : Math.max(0, needed - available);
+    const short = Math.max(0, needed - available);
     if (short === 0) return null;
-    return { needed, available, short, contested: spendOnPulls };
+    return { needed, available, short };
 }

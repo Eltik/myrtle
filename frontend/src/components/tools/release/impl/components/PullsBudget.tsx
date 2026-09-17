@@ -72,12 +72,12 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
 
     const first = days[0];
     const last = days[days.length - 1];
-    // The two tabs spend the same Originite Prime and neither knows about the other,
-    // so say when they collide rather than quietly taking it off one of them.
     // Base UI renders the raw value unless SelectValue is given a render function,
     // so every label the trigger shows is resolved here.
     const greenShopLabel = settings.greenCertShop === "phase1" ? t("release.pulls.income.greenShop.phase1") : settings.greenCertShop === "phase2" ? t("release.pulls.income.greenShop.phase2") : t("release.pulls.income.greenShop.off");
-    const warning = originiteWarning(skins.originite, last?.originite ?? 0, settings.spendOriginite);
+    // The projection already holds the outfit cost back from conversion, so the only
+    // warning left is the outfits costing more than the player will hold at all.
+    const warning = originiteWarning(skins.originite, last?.originite ?? 0);
     const set = <K extends keyof IPullsSettings>(key: K, value: IPullsSettings[K]) => setSettings((s) => ({ ...s, [key]: value }));
 
     /**
@@ -252,11 +252,7 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
                         {t("release.pulls.income.skinOriginiteHint", { count: skins.count, op: f.number(skins.originite) })}
                         {skins.unpriced > 0 && ` ${t("release.pulls.income.skinUnpriced", { count: skins.unpriced })}`}
                     </p>
-                    {warning && (
-                        <output className="m-0 block rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 font-sans text-[11.5px] text-amber-500 leading-normal">
-                            {warning.contested ? t("release.pulls.income.originiteContested", { needed: f.number(warning.needed) }) : t("release.pulls.income.originiteShort", { needed: f.number(warning.needed), available: f.number(warning.available) })}
-                        </output>
-                    )}
+                    {warning && <output className="m-0 block rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 font-sans text-[11.5px] text-amber-500 leading-normal">{t("release.pulls.income.originiteShort", { needed: f.number(warning.needed), available: f.number(warning.available) })}</output>}
                 </div>
             </Card>
 

@@ -48,16 +48,13 @@ struct Record {
 }
 
 /// progress.collect
+///
+/// Relics, capsules and bands are counted by
+/// [`RoguelikeThemeGameData::count_collected`] on the raw JSON, against the
+/// archive id lists, so they are not modelled here.
 #[derive(Debug, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 struct Collect {
-    /// {`relic_id`: {state: 0/1/2/, progress: ...}}
-    #[serde(default)]
-    relic: Option<HashMap<String, CollectEntry>>,
-    #[serde(default)]
-    capsule: Option<HashMap<String, CollectEntry>>,
-    #[serde(default)]
-    band: Option<HashMap<String, CollectEntry>>,
     /// {MODE: {`grade_str`: {state: 0/2, progress: ...}}}
     #[serde(default)]
     mode_grade: Option<HashMap<String, HashMap<String, CollectEntry>>>,
@@ -105,7 +102,7 @@ pub fn grade_roguelike(
 
         let progress = ThemeProgress::deserialize(progress_json).unwrap_or_default();
 
-        let score = grade_theme(&progress, theme_data);
+        let score = grade_theme(&progress, progress_json, theme_data);
         let w = theme_weight(theme_id);
 
         weighted_sum += score * w;
@@ -119,7 +116,11 @@ pub fn grade_roguelike(
     }
 }
 
-fn grade_theme(progress: &ThemeProgress, theme: &RoguelikeThemeGameData) -> f64 {
+fn grade_theme(
+    progress: &ThemeProgress,
+    progress_json: &serde_json::Value,
+    theme: &RoguelikeThemeGameData,
+) -> f64 {
     let mut dimensions: Vec<Dimension> = vec![];
 
     // 1. Endings (30%)
@@ -148,18 +149,12 @@ fn grade_theme(progress: &ThemeProgress, theme: &RoguelikeThemeGameData) -> f64 
     }
 
     // 3. Collectibles (20%) - relics + capsules + bands
-    //    Cap per-category: user data includes non-catalog items (event relics, etc.)
-    //    that exceed archiveComp max. Cap each so overflow in one category
-    //    doesn't compensate for missing items in another.
+    //    Counted against the archive id lists (see `count_collected`), so each
+    //    category is bounded by its max by construction; no cap needed.
     let max_collectibles = theme.max_relics + theme.max_capsules + theme.max_bands;
     if max_collectibles > 0 {
-        let relics = count_unlocked(&progress.collect.as_ref().and_then(|c| c.relic.clone()))
-            .min(theme.max_relics as usize);
-        let capsules = count_unlocked(&progress.collect.as_ref().and_then(|c| c.capsule.clone()))
-            .min(theme.max_capsules as usize);
-        let bands = count_unlocked(&progress.collect.as_ref().and_then(|c| c.band.clone()))
-            .min(theme.max_bands as usize);
-        let total = relics + capsules + bands;
+        let collected = theme.count_collected(progress_json);
+        let total = collected.relics + collected.capsules + collected.bands;
         let score = total as f64 / f64::from(max_collectibles);
 
         let weight = if theme.max_challenges == 0 {
@@ -227,12 +222,6 @@ fn difficulty_milestone_score(progress: &ThemeProgress, theme: &RoguelikeThemeGa
         r if r >= 0.50 => 0.50, // 50%+ of max
         _ => 0.25,              // Any clear at all
     }
-}
-
-fn count_unlocked(items: &Option<HashMap<String, CollectEntry>>) -> usize {
-    items
-        .as_ref()
-        .map_or(0, |m| m.values().filter(|e| e.state >= 1).count())
 }
 
 fn log_curve_ratio(t: f64) -> f64 {

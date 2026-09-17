@@ -1039,6 +1039,7 @@ pub(crate) fn assign_auxiliary_rooms(
                 total_efficiency: eff,
                 order_value: 0.0,
                 order_gold: 0.0,
+                order_limit: None,
                 locked: false,
                 ledger: Vec::new(),
                 fill: None,
@@ -1165,6 +1166,7 @@ fn append_support_rooms(
                 total_efficiency: figure,
                 order_value: 0.0,
                 order_gold: 0.0,
+                order_limit: None,
                 locked: false,
                 ledger: Vec::new(),
                 fill: None,
@@ -2177,36 +2179,12 @@ pub fn compute_live_assignment(
             &global_bonuses,
             &cc_conditions,
         );
-        // Output-buffer model: crew capacity skills widen the buffer, and the
-        // room's own speed (incl. CC globals) sets how fast it fills.
-        let present: HashSet<String> = ops.iter().cloned().collect();
-        // Named-operator CC grants widen the buffer too ("that Trading Post's
-        // order limit +2" while Hoederer is seated here).
-        let member_profiles: Vec<&OperatorBaseProfile> = ops
-            .iter()
-            .filter_map(|id| op_index.get(id.as_str()).copied())
-            .collect();
+        // Output-buffer model: the ledger's net capacity delta (crew
+        // capacity skills, CC grants, peer-scaled cuts) widens or narrows the
+        // buffer, and the room's own speed (incl. CC globals) sets how fast
+        // it fills.
         #[allow(clippy::cast_possible_truncation)]
-        let cc_capacity: i32 = cc_conditions
-            .iter()
-            .map(|c| c.capacity_contribution(&room.room_type, &member_profiles))
-            .sum::<f64>()
-            .round() as i32;
-        let capacity_bonus: i32 = ops
-            .iter()
-            .filter_map(|id| op_index.get(id.as_str()))
-            .map(|op| {
-                compute_order_limit(
-                    op,
-                    &room.room_type,
-                    formula.as_deref(),
-                    registry,
-                    building_data,
-                    &present,
-                )
-            })
-            .sum::<i32>()
-            + cc_capacity;
+        let capacity_bonus: i32 = totals.capacity_delta.round() as i32;
         let fill = super::yield_model::room_fill(
             &room.room_type,
             formula.as_deref(),
@@ -2224,6 +2202,7 @@ pub fn compute_live_assignment(
             total_efficiency: eff,
             order_value: value,
             order_gold: gold,
+            order_limit: totals.order_limit,
             locked,
             ledger,
             fill,
@@ -2862,7 +2841,8 @@ impl CcCondition {
 
     /// The order-limit points this condition grants a `room_type` room staffed
     /// by `team` - the capacity payload of a named-operator gate ("that
-    /// Trading Post's order limit +2" while Hoederer is seated there).
+    /// Trading Post's order limit +2" while Hoederer is seated there), or of a
+    /// per-operator grant (Gnosis's "+6 order limit" on each Kjerag trader).
     pub(crate) fn capacity_contribution(
         &self,
         room_type: &str,
@@ -2875,7 +2855,9 @@ impl CcCondition {
             .iter()
             .filter(|op| cc_token_matches(op, &self.faction_token))
             .count();
-        if count >= self.required_count {
+        if self.per_operator {
+            self.order_limit * count as f64
+        } else if count >= self.required_count {
             self.order_limit
         } else {
             0.0
@@ -3007,12 +2989,15 @@ pub(crate) fn cc_bonus_for(
             required_count,
             per_operator,
             bonus_pct,
+            order_limit,
             formula_bonuses,
         }) => Some(CcBonus {
             room: target_room.clone(),
             family: buff_id.split('[').next().unwrap_or(buff_id).to_string(),
             // Selection weight: discounted since the gate may not be met. The
-            // real value is granted per-room via `conditional`.
+            // real value is granted per-room via `conditional`. A capacity
+            // grant (Gnosis) carries no weight of its own here - its worth is
+            // what the readers in the post make of it, priced when he sits.
             bonus: bonus_pct * 0.5,
             stacks: false,
             conditional: Some(CcCondition {
@@ -3021,7 +3006,7 @@ pub(crate) fn cc_bonus_for(
                 required_count: *required_count,
                 per_operator: *per_operator,
                 bonus_pct: *bonus_pct,
-                order_limit: 0.0,
+                order_limit: f64::from(*order_limit),
                 formula_bonuses: formula_bonuses.clone(),
             }),
         }),
@@ -3675,6 +3660,7 @@ fn reallocate_across_formulas(
             total_efficiency: totals.speed_pct + global,
             order_value: totals.order_value_pct,
             order_gold: totals.order_gold_pct,
+            order_limit: totals.order_limit,
             ..tpl.clone()
         }
     };
@@ -3806,17 +3792,27 @@ fn pad_production_rooms(
             });
             while (room.operators.len() as i32) < max_slots {
                 // The seat may stay empty: a filler is only worth adding if it does
-                // not LOWER the room's output. Degenbrecher (+25% speed but -6 order
-                // limit) tanks a trading post, so she must never be padded in.
+                // not LOWER the room's output - scored with the order buffer, so
+                // Degenbrecher's -6 (a 4-order post beside limit-less traders) or
+                // Jaye's cut beside +80% of roommates is priced by what the post
+                // actually sells, not by the raw figure.
                 let current_score = room_search_score(
                     &room.room_type,
                     room.total_efficiency - global,
                     room.order_value,
+                ) * super::yield_model::trading_cap_factor(
+                    &room.room_type,
+                    room.level,
+                    room.total_efficiency - global,
+                    room.operators.len(),
+                    room.order_limit,
                 );
                 let mut best_id: Option<String> = None;
                 let mut best_score = f64::NEG_INFINITY;
                 let mut best_speed = 0.0;
                 let mut best_value = 0.0;
+                let mut best_gold = 0.0;
+                let mut best_limit: Option<i32> = None;
                 let mut best_cost = usize::MAX;
                 for op in operators {
                     if assigned.contains(&op.char_id) {
@@ -3838,7 +3834,7 @@ fn pad_production_rooms(
                     }
                     let mut trial = room.operators.clone();
                     trial.push(op.char_id.clone());
-                    let (speed, value) = compute_team_efficiency(
+                    let totals = compute_team_totals(
                         &trial,
                         &room.room_type,
                         room.formula_type.as_deref(),
@@ -3850,7 +3846,15 @@ fn pad_production_rooms(
                         morale_drains,
                         cc_conditions,
                     );
-                    let score = room_search_score(&room.room_type, speed, value);
+                    let (speed, value) = (totals.speed_pct, totals.order_value_pct);
+                    let score = room_search_score(&room.room_type, speed, value)
+                        * super::yield_model::trading_cap_factor(
+                            &room.room_type,
+                            room.level,
+                            speed,
+                            trial.len(),
+                            totals.order_limit,
+                        );
                     let cost = padding_cost(
                         op,
                         &room.room_type,
@@ -3867,6 +3871,8 @@ fn pad_production_rooms(
                         best_score = score;
                         best_speed = speed;
                         best_value = value;
+                        best_gold = totals.order_gold_pct;
+                        best_limit = totals.order_limit;
                         best_cost = cost;
                         best_id = Some(op.char_id.clone());
                     }
@@ -3879,6 +3885,8 @@ fn pad_production_rooms(
                         room.operators.push(id);
                         room.total_efficiency = best_speed + global;
                         room.order_value = best_value;
+                        room.order_gold = best_gold;
+                        room.order_limit = best_limit;
                     }
                     _ => break, // roster exhausted, or no non-harmful filler remains
                 }
@@ -3906,7 +3914,7 @@ fn assign_single_room(
     let global = *global_bonuses.get(&room.room_type).unwrap_or(&0.0);
 
     // Mode 1: best normal team (exhaustive search over top candidate combinations)
-    let (normal_ops, normal_speed, normal_value, normal_gold) = best_team_for_room(
+    let (normal_ops, normal_speed, normal_value, normal_gold, normal_limit) = best_team_for_room(
         room,
         formula_type,
         operators,
@@ -3942,11 +3950,18 @@ fn assign_single_room(
     // Pick the mode by realized value (order value multiplies trading LMD).
     let normal_score = room_search_score(&room.room_type, normal_speed, normal_value);
     let auto_score = room_search_score(&room.room_type, auto_speed, 0.0);
-    let (room_ops, speed, value, gold) = if auto_score > normal_score && !auto_ops.is_empty() {
-        (auto_ops, auto_speed, 0.0, 0.0)
-    } else {
-        (normal_ops, normal_speed, normal_value, normal_gold)
-    };
+    let (room_ops, speed, value, gold, order_limit) =
+        if auto_score > normal_score && !auto_ops.is_empty() {
+            (auto_ops, auto_speed, 0.0, 0.0, None)
+        } else {
+            (
+                normal_ops,
+                normal_speed,
+                normal_value,
+                normal_gold,
+                normal_limit,
+            )
+        };
 
     for id in &room_ops {
         assigned.insert(id.clone());
@@ -3968,6 +3983,7 @@ fn assign_single_room(
         total_efficiency: speed + global,
         order_value: value,
         order_gold: gold,
+        order_limit,
         locked,
         ledger: Vec::new(),
         fill: None,
@@ -4166,6 +4182,8 @@ pub(crate) struct CandidateTeam {
     pub(crate) value: f64,
     /// The gold-throughput part of `value` (see `RoomAssignment::order_gold`).
     pub(crate) gold: f64,
+    /// A trading post's final order limit with this team (`None` elsewhere).
+    pub(crate) order_limit: Option<i32>,
     pub(crate) score: f64,
 }
 
@@ -4190,7 +4208,7 @@ fn best_team_for_room(
     cc_conditions: &[CcCondition],
     morale_drains: &HashMap<String, f64>,
     cap_aware: bool,
-) -> (Vec<String>, f64, f64, f64) {
+) -> (Vec<String>, f64, f64, f64, Option<i32>) {
     // The best team is the head of the full enumeration; a top score of 0 means
     // no combination beats an empty room (the old `score > 0` replacement rule).
     enumerate_candidate_teams(
@@ -4213,8 +4231,8 @@ fn best_team_for_room(
     )
     .into_iter()
     .find(|c| c.score > 0.0)
-    .map_or((Vec::new(), 0.0, 0.0, 0.0), |c| {
-        (c.ops, c.speed, c.value, c.gold)
+    .map_or((Vec::new(), 0.0, 0.0, 0.0, None), |c| {
+        (c.ops, c.speed, c.value, c.gold, c.order_limit)
     })
 }
 
@@ -4444,6 +4462,18 @@ pub(crate) fn enumerate_candidate_teams(
                 }
             }
             let mut score = room_search_score(room_type, speed, value);
+            // A trading post sells what its order buffer holds between
+            // collections: a team that slashes the limit (Jaye's cut beside
+            // +80% of roommates, Degenbrecher without a limit-adder) is
+            // ranked by the orders it actually moves - the same cap the
+            // yield objective applies.
+            score *= super::yield_model::trading_cap_factor(
+                room_type,
+                room_level,
+                speed,
+                combo.len(),
+                totals.order_limit,
+            );
             // Sustained objective: throttle a gold factory by its AFK buffer stall, so a
             // high-capacity team (Vermeil) that keeps producing across long AFK beats a
             // denser team that overflows.
@@ -4463,6 +4493,7 @@ pub(crate) fn enumerate_candidate_teams(
                 speed,
                 value,
                 gold,
+                order_limit: totals.order_limit,
                 score,
             });
         }
@@ -4879,6 +4910,7 @@ pub fn assignment_value(rooms: &[RoomAssignment]) -> f64 {
             r.order_gold,
             r.order_value,
             r.operators.len(),
+            r.order_limit,
         );
     }
     flows.total_value()

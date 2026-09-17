@@ -272,6 +272,7 @@ pub fn tiled_objective(groups: &[PlannedGroup], global_bonuses: &HashMap<String,
                                 total_efficiency: team.speed + global,
                                 order_value: team.value,
                                 order_gold: team.gold,
+                                order_limit: team.order_limit,
                                 ..Default::default()
                             })
                         })
@@ -554,6 +555,7 @@ fn select_balanced_teams(
                     speed: 0.0,
                     value: 0.0,
                     gold: 0.0,
+                    order_limit: None,
                     score: 0.0,
                 })
                 .collect();

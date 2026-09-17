@@ -990,26 +990,11 @@ async fn build_roguelike_improvements(
                     .unwrap_or(-1)
             });
 
-        let count_unlocked = |bucket: &str| -> usize {
-            progress
-                .and_then(|p| p.get("collect"))
-                .and_then(|c| c.get(bucket))
-                .and_then(|b| b.as_object())
-                .map_or(0, |obj| {
-                    obj.values()
-                        .filter(|v| {
-                            v.get("state")
-                                .and_then(serde_json::Value::as_i64)
-                                .unwrap_or(0)
-                                >= 1
-                        })
-                        .count()
-                })
-        };
-
-        let relics_unlocked = count_unlocked("relic");
-        let capsules_unlocked = count_unlocked("capsule");
-        let bands_unlocked = count_unlocked("band");
+        // Counted against the archive id lists, not bucket keys: the six
+        // `*_active_tool_N` relics live in `collect.activeTool` and the
+        // `_a/_b/_c` upgrade variants in `collect.relic` are not archive
+        // entries. See `RoguelikeThemeGameData::count_collected`.
+        let collected = progress.map_or_else(Default::default, |p| theme.count_collected(p));
 
         let bp_level = progress
             .and_then(|p| p.get("bp"))
@@ -1036,15 +1021,15 @@ async fn build_roguelike_improvements(
             },
             collectibles: RoguelikeCollectibles {
                 relics: ProgressPair {
-                    current: relics_unlocked.min(theme.max_relics as usize),
+                    current: collected.relics,
                     max: theme.max_relics as usize,
                 },
                 capsules: ProgressPair {
-                    current: capsules_unlocked.min(theme.max_capsules as usize),
+                    current: collected.capsules,
                     max: theme.max_capsules as usize,
                 },
                 bands: ProgressPair {
-                    current: bands_unlocked.min(theme.max_bands as usize),
+                    current: collected.bands,
                     max: theme.max_bands as usize,
                 },
             },
@@ -2408,6 +2393,7 @@ pub(crate) fn base_assignment_to_dto(
             r.order_gold,
             r.order_value,
             r.operators.len(),
+            r.order_limit,
         );
     }
 
@@ -2508,6 +2494,7 @@ fn room_assignment_to_dto(
         room.total_efficiency,
         room.order_value,
         room.operators.len(),
+        room.order_limit,
     );
     let non_production = if room.room_type == "CONTROL" {
         cc_non_production_effects(&room.operators, profiles, registry, sibling_rooms)

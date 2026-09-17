@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-17T08:53:48.587Z",
+    "generatedAt": "2026-09-17T10:17:49.989Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -4386,6 +4386,41 @@
             "namespace": "changelog",
             "source_text": "Release & event planner",
             "description": "Title of the 2026-09-16 release note. The planner forecasts when CN content (operators, events, skins) reaches the global server.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-17-2.hrefLabel",
+            "namespace": "changelog",
+            "source_text": "See the leaderboard",
+            "description": "Label of the second 2026-09-17 release note's call to action, which opens the player leaderboard where grades and the Roguelike sort are shown.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-17-2.item.1",
+            "namespace": "changelog",
+            "source_text": "Integrated Strategies scoring counted some runs incorrectly; the scoring is now correct.",
+            "description": "Bullet in the second 2026-09-17 release note, filed under 'Fixed'. 'Integrated Strategies' is an in-game mode name and is never translated.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-17-2.item.2",
+            "namespace": "changelog",
+            "source_text": "All users have been regraded. Grades and leaderboard positions have been recomputed from the corrected scores.",
+            "description": "Bullet in the second 2026-09-17 release note, filed under 'Fixed'. A grade is this site's own letter rating of a player.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-17-2.lead",
+            "namespace": "changelog",
+            "source_text": "A bug in how Integrated Strategies runs were scored has been found and fixed. Every account has been regraded with the corrected scoring, so your Roguelike subscore, composite score and grade may differ from what you saw before.",
+            "description": "Lead paragraph of the second 2026-09-17 release note, rendered as Markdown. 'Integrated Strategies' is an in-game mode name and is never translated; 'Roguelike' is the label this site's leaderboard and profile give that mode's subscore. Composite score and grade are the site's own player rating.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-17-2.title",
+            "namespace": "changelog",
+            "source_text": "Integrated Strategies regrade",
+            "description": "Title of the second 2026-09-17 release note. 'Integrated Strategies' is an in-game mode name and is never translated. A grade is this site's own letter rating of a player.",
             "placeholders": []
         },
         {
@@ -26898,15 +26933,6 @@
             "placeholders": []
         },
         {
-            "key": "tools.release.pulls.income.originiteContested",
-            "namespace": "tools",
-            "source_text": "Converting Originite Prime spends all of it on pulls, leaving nothing for the {needed} your outfit picks need.",
-            "description": "Warning that the pull plan and the outfit plan are claiming the same Originite Prime.",
-            "placeholders": [
-                "needed"
-            ]
-        },
-        {
             "key": "tools.release.pulls.income.originiteShort",
             "namespace": "tools",
             "source_text": "Your outfit picks need {needed} Originite Prime and you will only have {available}.",
@@ -26919,8 +26945,8 @@
         {
             "key": "tools.release.pulls.income.skinOriginiteHint",
             "namespace": "tools",
-            "source_text": "{count, plural, =0 {No outfits picked in the Planner tab.} one {# outfit picked in the Planner tab costs {op} Originite Prime.} other {# outfits picked in the Planner tab cost {op} Originite Prime.}}",
-            "description": "Hint showing what the skins planner has committed. 'Planner tab' names the sibling tab, so keep it matching.",
+            "source_text": "{count, plural, =0 {No outfits picked in the Planner tab.} one {# outfit picked in the Planner tab costs {op} Originite Prime, which is set aside before any is converted to pulls.} other {# outfits picked in the Planner tab cost {op} Originite Prime, which is set aside before any is converted to pulls.}}",
+            "description": "Hint showing what the skins planner has committed and that the projection reserves it. 'Planner tab' names the sibling tab, so keep it matching.",
             "placeholders": [
                 "count",
                 "op"

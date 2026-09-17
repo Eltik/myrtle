@@ -126,12 +126,8 @@ export const messages = {
         description: "Hint explaining where banner free pulls come from and why they are not savings.",
     },
     "release.pulls.income.skinOriginiteHint": {
-        text: "{count, plural, =0 {No outfits picked in the Planner tab.} one {# outfit picked in the Planner tab costs {op} Originite Prime.} other {# outfits picked in the Planner tab cost {op} Originite Prime.}}",
-        description: "Hint showing what the skins planner has committed. 'Planner tab' names the sibling tab, so keep it matching.",
-    },
-    "release.pulls.income.originiteContested": {
-        text: "Converting Originite Prime spends all of it on pulls, leaving nothing for the {needed} your outfit picks need.",
-        description: "Warning that the pull plan and the outfit plan are claiming the same Originite Prime.",
+        text: "{count, plural, =0 {No outfits picked in the Planner tab.} one {# outfit picked in the Planner tab costs {op} Originite Prime, which is set aside before any is converted to pulls.} other {# outfits picked in the Planner tab cost {op} Originite Prime, which is set aside before any is converted to pulls.}}",
+        description: "Hint showing what the skins planner has committed and that the projection reserves it. 'Planner tab' names the sibling tab, so keep it matching.",
     },
     "release.pulls.income.originiteShort": {
         text: "Your outfit picks need {needed} Originite Prime and you will only have {available}.",

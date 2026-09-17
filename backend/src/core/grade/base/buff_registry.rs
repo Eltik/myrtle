@@ -6,6 +6,7 @@ use regex::Regex;
 use crate::core::gamedata::types::building::Buff;
 use crate::core::gamedata::types::operator::Operator;
 
+use super::clause::{PEER_STAGE_FIXED_LIMIT, PEER_STAGE_NET_LIMIT};
 use super::pools::ROBOTS_IN_POWER;
 
 /// Build a lowercased operator-name → `char_id` lookup, used to resolve
@@ -80,6 +81,11 @@ pub fn build_faction_map(operators: &HashMap<String, Operator>) -> HashMap<Strin
 
 static RE_FIRST_PCT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)%</>").unwrap());
+
+/// The first percentage with its sign, up or down: a Control-Center grant
+/// can be a malus (Gnosis's "order acquisition efficiency <vdown>-15%</>").
+static RE_FIRST_SIGNED_PCT: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"<@cc\.(?:vup|vdown)>([+-]?[\d.]+)%</>").unwrap());
 
 static RE_FIRST_FLOAT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)</>").unwrap());
@@ -470,7 +476,7 @@ static RE_ORDER_LIMIT_POS: LazyLock<Regex> = LazyLock::new(|| {
 
 static RE_ORDER_LIMIT_NEG: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
-        r"(?:order|capacity) limit(?: is (?:reduced|decreased) by)?\s*<@cc\.vdown>-?(\d+)</>",
+        r"(?:order|capacity) limit(?: is (?:reduced|decreased) by| by)?\s*<@cc\.vdown>-?(\d+)</>",
     )
     .unwrap()
 });
@@ -629,14 +635,33 @@ pub enum BuffResolutionStrategy {
         bonus_efficiency: f64,
     },
 
+    /// Jaye's Street Economics: "+X% for every difference of 1 order between
+    /// the current number of orders and the maximum" - pays per EMPTY order
+    /// slot of the post's final limit.
+    OrderDifferenceScaling { per_order_pct: f64 },
+
+    /// Jaye's Basic Needs (`trade_ord_limit_count`): "reduces the order limit
+    /// by 1 for every 10% order acquisition efficiency provided by all other
+    /// Operators (to a minimum of 1); furthermore +4% for every 1 order". The
+    /// cut reads the roommates' settled efficiency; the rider pays per FILLED
+    /// order.
+    LimitCutPerPeerEfficiency {
+        pct_per_cut: f64,
+        cut: i32,
+        per_order_pct: f64,
+    },
+
     /// Scales with total order limit contributions from teammates.
     /// e.g. Degenbrecher E2: "+25% per 5 CAP from teammates, max +100%"
-    /// e.g. Jaye E0+1: "+4% per 1 order limit increase from others"
+    /// e.g. Swire the Elegant Wit: "+4% per 1 order limit increase from others"
     /// e.g. Vermeil E1: "+2% per capacity limit in the factory" (her OWN +8 counts too)
     OrderLimitScaling {
         per_cap_threshold: f64,   // every N CAP
         bonus_per_threshold: f64, // gives this much %
         cap_pct: f64,             // max bonus
+        /// Evaluation stage (`clause::PEER_STAGE_*`): Degenbrecher and Vermeil
+        /// read the FIXED limits, Swire reads the limit after Jaye's cut.
+        stage: u8,
         /// True when the operator's OWN capacity counts toward the total it scales on
         /// (Vermeil scales on the whole factory's capacity, including her own +8). False for
         /// "from others/teammates" skills (Jaye, Degenbrecher - whose own -6 must not self-reduce).
@@ -807,6 +832,9 @@ pub enum BuffResolutionStrategy {
         required_count: usize,
         per_operator: bool,
         bonus_pct: f64,
+        /// Order-limit delta granted to each matching operator (Gnosis's "+6
+        /// order limit" on Kjerag traders); 0 for pure speed conditionals.
+        order_limit: i32,
         /// Product-split bonuses (`formula -> pct`, Flametail's +10% on Battle
         /// Records / -10% on Precious Metals). Empty = `bonus_pct` on every
         /// product; non-empty = only the listed formulas, 0 elsewhere.
@@ -1412,6 +1440,7 @@ pub fn build_registry(
                             required_count: 1,
                             per_operator: true,
                             bonus_pct: bonus,
+                            order_limit: 0,
                             formula_bonuses,
                         }
                     } else {
@@ -1461,7 +1490,11 @@ pub fn build_registry(
                     } else {
                         "TRADING"
                     };
-                    let bonus = parse_first_pct(&buff.description).unwrap_or(0.0);
+                    // Signed: Gnosis's Kjerag traders take "-15%" alongside
+                    // "+6 order limit" (the only CONTROL conditional whose
+                    // first percentage is a vdown, audited 2026-09-17).
+                    let bonus = parse_first_signed_pct(&buff.description).unwrap_or(0.0);
+                    let order_limit = parse_order_limit(&buff.description).unwrap_or(0);
                     // Faction-gated global bonuses ("all <Siracusa> Operators…",
                     // "all Trading Posts with 3 <Kjerag> Operators…") must NOT be
                     // credited flat to every room - they depend on each room's team.
@@ -1496,6 +1529,7 @@ pub fn build_registry(
                             required_count: required_count.unwrap_or(1),
                             per_operator: required_count.is_none(),
                             bonus_pct: bonus,
+                            order_limit,
                             formula_bonuses: Vec::new(),
                         }
                     } else {
@@ -1814,29 +1848,33 @@ pub fn build_registry(
                 {
                     BuffResolutionStrategy::OrderValue { effect, pure_gold }
                 }
-                // Jaye-style: efficiency scales with the order-limit difference
-                // that teammates' efficiency creates ("increases order acquisition
-                // efficiency by +X% for every difference of 1 order"). Teammates'
-                // efficiency drives the order limit down, so model it as mirroring
-                // their output - Texas's +65% pushes Jaye to ~+50%. (This buff has
-                // "_limit" in its id but is an EFFICIENCY skill, so it must be
-                // caught before the capacity-only check below.)
+                // Jaye's Basic Needs (E1 slot, `trade_ord_limit_count`): "-1
+                // order limit for every 10% efficiency provided by all other
+                // Operators (minimum 1); furthermore +4% for every 1 order".
+                // Its id carries "_limit", so it is caught before the
+                // capacity-only branch; the minimum applies to the ROOM total.
+                else if prefix.contains("_limit_count") {
+                    let pct_per_cut = parse_nth_pct(&buff.description, 0).unwrap_or(10.0);
+                    let cut = parse_order_limit(&buff.description).unwrap_or(-1);
+                    let per_order_pct = parse_nth_pct(&buff.description, 1).unwrap_or(4.0);
+                    BuffResolutionStrategy::LimitCutPerPeerEfficiency {
+                        pct_per_cut,
+                        cut,
+                        per_order_pct,
+                    }
+                }
+                // Jaye's Street Economics (E0 slot): "+X% for every difference
+                // of 1 order between the current number of orders and the
+                // maximum" - paid per empty slot of the post's FINAL limit.
+                // (Its id carries "_limit" but it is an EFFICIENCY skill, so it
+                // must be caught before the capacity-only check below.)
                 else if prefix.contains("_limit_diff")
                     || (buff.room_type == "TRADING"
                         && buff.description.contains("order acquisition efficiency")
                         && buff.description.contains("difference"))
                 {
-                    let per = parse_first_pct(&buff.description).unwrap_or(4.0);
-                    // Jaye's bonus tracks the order-limit DIFFERENCE (how empty the
-                    // post is): it peaks right after a collection and decays toward 0
-                    // as orders accumulate. Recommend his TIME-AVERAGED value over a
-                    // ~12h shift (the post fills from empty toward full), which is
-                    // about half the empty-post peak - so the cap is the order-limit-
-                    // bounded ~40% peak halved to ~20%.
-                    const SHIFT_AVERAGE: f64 = 0.5;
-                    BuffResolutionStrategy::TeammateOutputMirroring {
-                        ratio: (per / 5.0) * SHIFT_AVERAGE,
-                        cap_pct: 40.0 * SHIFT_AVERAGE,
+                    BuffResolutionStrategy::OrderDifferenceScaling {
+                        per_order_pct: parse_first_pct(&buff.description).unwrap_or(4.0),
                     }
                 }
                 // Capacity-only: true order-limit skills with no speed component.
@@ -1922,9 +1960,13 @@ pub fn build_registry(
                         bonus_per_threshold: bonus,
                         cap_pct: cap,
                         includes_self: false, // "from teammates" - excludes Degenbrecher's own -6
+                        stage: PEER_STAGE_FIXED_LIMIT,
                     }
                 }
-                // Jaye's "Investment Solicitations": "+4% per order limit increase from others"
+                // Swire the Elegant Wit's "Investment Solicitations": "+4% per
+                // order limit increase provided by all other Operators" - read
+                // AFTER Jaye's cut (in-game: Jaye/Swire/SilverAsh under Gnosis
+                // reads 129, i.e. 4% x (10 - 2), not 4% x 10).
                 else if prefix == "trade_ord_spd_variable" {
                     let per = parse_first_pct(&buff.description).unwrap_or(4.0);
                     BuffResolutionStrategy::OrderLimitScaling {
@@ -1932,6 +1974,7 @@ pub fn build_registry(
                         bonus_per_threshold: per,
                         cap_pct: f64::MAX,
                         includes_self: false, // "from others"
+                        stage: PEER_STAGE_NET_LIMIT,
                     }
                 }
                 // Vermeil-type: factory productivity scales with the team's capacity-limit
@@ -1945,6 +1988,7 @@ pub fn build_registry(
                         bonus_per_threshold: per,
                         cap_pct: f64::MAX,
                         includes_self: true,
+                        stage: PEER_STAGE_FIXED_LIMIT,
                     }
                 }
                 // Bubble E1: per-operator capacity tiers - each operator in the factory gains
@@ -2623,6 +2667,14 @@ fn parse_per_hour_pct(desc: &str) -> Option<f64> {
             .or_else(|| c.get(2))
             .and_then(|m| m.as_str().parse().ok())
     })
+}
+
+/// Parse the first signed percentage, up or down (`-15` from
+/// `<@cc.vdown>-15%</>`, `20` from `<@cc.vup>+20%</>`).
+fn parse_first_signed_pct(desc: &str) -> Option<f64> {
+    RE_FIRST_SIGNED_PCT
+        .captures(desc)
+        .and_then(|c| c[1].parse().ok())
 }
 
 /// Parse order limit from description.

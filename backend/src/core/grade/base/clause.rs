@@ -213,6 +213,22 @@ pub enum ResourceOp {
     Consume { resource: String },
 }
 
+/// Peer-scaling stages, see [`ClauseKind::ScalingPeerMetric`]. Mirrors of a
+/// roommate's output read the settled room (stage 0); limit readers read the
+/// fixed capacity; Jaye's cut reads the efficiency those produce; the
+/// net-limit reader sees the cut.
+pub const PEER_STAGE_MIRROR: u8 = 0;
+pub const PEER_STAGE_FIXED_LIMIT: u8 = 1;
+pub const PEER_STAGE_LIMIT_CUT: u8 = 2;
+pub const PEER_STAGE_NET_LIMIT: u8 = 3;
+
+/// Jaye's two per-order riders average over a shift: Street Economics pays
+/// per EMPTY order slot and Basic Needs per FILLED order, and a post fills
+/// from empty toward full between collections, so each is worth half the
+/// limit on average - and together (E1+) exactly the full limit, the figure
+/// the game shows. A documented model for the E0 half, exact for E1+.
+const SHIFT_FILL_AVERAGE: f64 = 0.5;
+
 /// The fixed shape taxonomy. Everything the scorer knows how to do lives here.
 #[derive(Clone, Debug, PartialEq)]
 pub enum ClauseKind {
@@ -264,13 +280,28 @@ pub enum ClauseKind {
         exempt: SuppressExempt,
     },
     /// The owner's bonus scales off a total that roommates are already
-    /// contributing - resolved by delta-relaxation because it can be circular.
-    /// `step` quantizes the basis ("per 5 CAP" -> floor(total/5)).
+    /// contributing. A `quantized` reader floors the basis by `step` and
+    /// ignores a negative total ("per 5 CAP" -> floor(max(0, total) / 5)); a
+    /// continuous mirror divides by it. `stage` orders the readers: a clause
+    /// sees only contributions settled in EARLIER stages (fixed values and
+    /// Control-Center grants are stage 0), so a chain of readers resolves the
+    /// way the game does instead of to a mutual fixed point. Measured in-game
+    /// (six Kjerag/Gnosis posts, community sheet Annex 1): Degenbrecher's
+    /// per-5 reads the fixed limits (stage 1), Jaye's cut then reads every
+    /// efficiency so far (stage 2), Swire's per-point reads the limit after
+    /// Jaye (stage 3). Readers sharing a stage relax to a fixed point - the
+    /// genuinely circular case.
     ScalingPeerMetric {
         metric: Metric,
         include_self: bool,
         step: f64,
+        stage: u8,
+        quantized: bool,
     },
+    /// `value` applies once per order of the room's FINAL order limit - the
+    /// level's base plus every capacity delta in the room (crew skills,
+    /// Control-Center grants, peer-scaled cuts), floored at 1. Trading only.
+    ScalingRoomOrderLimit,
     /// While the owner is present, occupants matching a `from` tag also carry
     /// the `to` tag (Highmore's skill-type conversion). Affects other clauses'
     /// subject resolution; contributes no value itself.
@@ -434,11 +465,55 @@ pub fn clauses_from_strategy(
                     metric: speed(),
                     include_self: false,
                     step: 1.0,
+                    stage: PEER_STAGE_MIRROR,
+                    quantized: false,
                 },
                 *ratio,
             );
             c.cap = Some(*cap_pct);
             out.push(c);
+        }
+
+        // Jaye's Street Economics: +X% per empty order slot of the FINAL
+        // limit, shift-averaged (see `SHIFT_FILL_AVERAGE`).
+        S::OrderDifferenceScaling { per_order_pct } => {
+            out.push(Clause::base(
+                buff_id,
+                buff,
+                speed(),
+                ClauseKind::ScalingRoomOrderLimit,
+                per_order_pct * SHIFT_FILL_AVERAGE,
+            ));
+        }
+
+        // Jaye's Basic Needs: the limit cut reads the roommates' settled
+        // efficiency (Gnosis's malus and Degenbrecher's scaled part included),
+        // floored per 10%; the rider pays per filled order, shift-averaged.
+        S::LimitCutPerPeerEfficiency {
+            pct_per_cut,
+            cut,
+            per_order_pct,
+        } => {
+            out.push(Clause::base(
+                buff_id,
+                buff,
+                Metric::CapacityLimit,
+                ClauseKind::ScalingPeerMetric {
+                    metric: speed(),
+                    include_self: false,
+                    step: *pct_per_cut,
+                    stage: PEER_STAGE_LIMIT_CUT,
+                    quantized: true,
+                },
+                f64::from(*cut),
+            ));
+            out.push(Clause::base(
+                buff_id,
+                buff,
+                speed(),
+                ClauseKind::ScalingRoomOrderLimit,
+                per_order_pct * SHIFT_FILL_AVERAGE,
+            ));
         }
 
         S::EfficiencyWithOrderLimit {
@@ -586,6 +661,7 @@ pub fn clauses_from_strategy(
             bonus_per_threshold,
             cap_pct,
             includes_self,
+            stage,
         } => {
             let mut c = Clause::base(
                 buff_id,
@@ -595,6 +671,8 @@ pub fn clauses_from_strategy(
                     metric: Metric::CapacityLimit,
                     include_self: *includes_self,
                     step: *per_cap_threshold,
+                    stage: *stage,
+                    quantized: true,
                 },
                 *bonus_per_threshold,
             );
@@ -840,24 +918,40 @@ pub fn clauses_from_strategy(
             required_count,
             per_operator,
             bonus_pct,
+            order_limit,
             ..
         } => {
+            let gate = Gate {
+                tag: faction_token.clone(),
+                required_count: *required_count,
+                per_operator: *per_operator,
+            };
             let mut c = Clause::base(
                 buff_id,
                 buff,
                 Metric::speed_for_room(target_room),
                 ClauseKind::RoomTypeGlobal {
                     target_room: target_room.clone(),
-                    gate: Some(Gate {
-                        tag: faction_token.clone(),
-                        required_count: *required_count,
-                        per_operator: *per_operator,
-                    }),
+                    gate: Some(gate.clone()),
                 },
                 *bonus_pct,
             );
             c.non_stacking_family = cc_non_stacking_family(buff_id, buff);
             out.push(c);
+            // The capacity payload (Gnosis's "+6 order limit" on each Kjerag
+            // trader) rides the same gate.
+            if *order_limit != 0 {
+                out.push(Clause::base(
+                    buff_id,
+                    buff,
+                    Metric::CapacityLimit,
+                    ClauseKind::RoomTypeGlobal {
+                        target_room: target_room.clone(),
+                        gate: Some(gate),
+                    },
+                    f64::from(*order_limit),
+                ));
+            }
         }
 
         // Resolved by registry rewrite before scoring (`resolve_layout_branches`,

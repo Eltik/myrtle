@@ -542,33 +542,60 @@ describe("certificate shops", () => {
     });
 });
 
-describe("the Originite Prime clash between the two tabs", () => {
+describe("the Originite Prime the outfit picks reserve", () => {
+    const from = new Date(Date.UTC(2026, 8, 16));
+
+    it("converts only what the outfits leave over", () => {
+        // 840 OP is 252 rolls; 66 reserved leaves 774 OP, which is 232 rolls (774 * 180 / 600 = 232.2).
+        const days = projectIncome({ ...base(), originite: 840, spendOriginite: true }, from, from, 66);
+        expect(days[0].pullsWithOriginite).toBe(232);
+        // The raw balance is still reported, for the warning to compare against.
+        expect(days[0].originite).toBe(840);
+    });
+
+    it("reserves nothing when nothing is picked, bit for bit", () => {
+        const plain = projectIncome({ ...base(), originite: 840, spendOriginite: true }, from, new Date(Date.UTC(2026, 9, 2)));
+        const zero = projectIncome({ ...base(), originite: 840, spendOriginite: true }, from, new Date(Date.UTC(2026, 9, 2)), 0);
+        expect(zero).toEqual(plain);
+    });
+
+    it("never converts a balance the outfits already exceed", () => {
+        const days = projectIncome({ ...base(), orundum: 6000, originite: 40, spendOriginite: true }, from, from, 66);
+        expect(days[0].pullsWithOriginite).toBe(days[0].pulls);
+    });
+
+    it("lets the monthly card's Originite grow back past the reservation", () => {
+        // 2026-10-01 pays 6 OP on the card; with 40 held and 42 reserved, that is the
+        // first day any of it converts: 46 - 42 = 4 OP = 720 orundum = 1 roll.
+        const days = projectIncome({ ...base(), originite: 40, spendOriginite: true, monthlyCard: true }, from, new Date(Date.UTC(2026, 9, 1)), 42);
+        const before = days[days.length - 2];
+        const first = days[days.length - 1];
+        expect(before.pullsWithOriginite).toBe(before.pulls);
+        expect(first.pullsWithOriginite - first.pulls).toBe(1);
+    });
+
+    it("does not touch the no-conversion series", () => {
+        const days = projectIncome({ ...base(), orundum: 6000, originite: 840, spendOriginite: false }, from, from, 66);
+        expect(days[0].pulls).toBe(10);
+        expect(days[0].pullsWithOriginite).toBe(10);
+    });
+});
+
+describe("the Originite Prime warning", () => {
     it("says nothing when no outfits are picked", () => {
-        expect(originiteWarning(0, 100, true)).toBeNull();
-        expect(originiteWarning(0, 0, false)).toBeNull();
+        expect(originiteWarning(0, 100)).toBeNull();
+        expect(originiteWarning(0, 0)).toBeNull();
     });
 
-    it("stays quiet when the outfits fit and pulls are not competing", () => {
-        expect(originiteWarning(40, 60, false)).toBeNull();
+    it("stays quiet when the outfits fit, whether or not pulls convert the rest", () => {
+        expect(originiteWarning(40, 60)).toBeNull();
+        expect(originiteWarning(40, 10_000)).toBeNull();
     });
 
-    it("warns when the outfits alone cost more than will be held", () => {
-        const w = originiteWarning(80, 60, false);
+    it("warns only when the outfits alone cost more than will be held", () => {
+        const w = originiteWarning(80, 60);
         expect(w).not.toBeNull();
         expect(w?.short).toBe(20);
-        expect(w?.contested).toBe(false);
-    });
-
-    it("warns for the whole outfit cost when pulls are eating the same currency", () => {
-        // Converting spends ALL of it, so even a large balance leaves nothing over.
-        const w = originiteWarning(40, 10_000, true);
-        expect(w).not.toBeNull();
-        expect(w?.contested).toBe(true);
-        expect(w?.short).toBe(40);
-    });
-
-    it("reports the figures it was given, for the message to quote", () => {
-        const w = originiteWarning(80, 60, false);
         expect(w?.needed).toBe(80);
         expect(w?.available).toBe(60);
     });

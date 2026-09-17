@@ -1292,6 +1292,7 @@ fn diff_rooms(
                 r.total_efficiency,
                 r.order_value,
                 r.operators.len(),
+                r.order_limit,
             )
         });
         let y_after = room_yield(
@@ -1301,6 +1302,7 @@ fn diff_rooms(
             after.total_efficiency,
             after.order_value,
             after.operators.len(),
+            after.order_limit,
         );
         diffs.push(RoomDiffDto {
             slot_id: after.slot_id.clone(),

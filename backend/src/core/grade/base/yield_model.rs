@@ -69,6 +69,51 @@ fn trading_bars_per_day(level: i32) -> f64 {
     super::order_mix::bars_per_day(level.clamp(1, 3) as usize)
 }
 
+/// Collections per day a trading buffer is emptied at: the community sheet's
+/// 12-hour convention (the rotation's shift changes come at least this
+/// often). An order limit only costs output when the post fills faster.
+const TRADING_COLLECTIONS_PER_DAY: f64 = 2.0;
+
+/// Average Pure Gold per order at a post level (the level's order mix).
+fn trading_avg_gold_per_order(level: i32) -> f64 {
+    #[allow(clippy::cast_sign_loss)]
+    super::order_mix::avg_gold_per_order(level.clamp(1, 3) as usize)
+}
+
+/// Orders a post moves per day at productivity `mult`, capped by its order
+/// limit emptied `TRADING_COLLECTIONS_PER_DAY` times - a post that fills its
+/// buffer between two collections stalls until it is emptied. `None` (no
+/// limit known) is the uncapped rate.
+fn trading_orders_per_day(level: i32, mult: f64, order_limit: Option<i32>) -> f64 {
+    let rate = trading_bars_per_day(level) * mult / trading_avg_gold_per_order(level);
+    order_limit.map_or(rate, |limit| {
+        rate.min(f64::from(limit.max(1)) * TRADING_COLLECTIONS_PER_DAY)
+    })
+}
+
+/// Fraction of a trading post's peak output that survives its order buffer
+/// (<= 1.0): the search-score twin of `add_room`'s cap, so a team that cuts
+/// the limit below what it fills between collections (Jaye beside +80% of
+/// roommates, Degenbrecher without a limit-adder) ranks by what it actually
+/// sells. 1.0 for non-trading rooms and unknown limits.
+pub fn trading_cap_factor(
+    room_type: &str,
+    level: i32,
+    speed_pct: f64,
+    crew: usize,
+    order_limit: Option<i32>,
+) -> f64 {
+    if room_type != "TRADING" {
+        return 1.0;
+    }
+    let mult = productivity_mult(speed_pct + innate_pct(crew));
+    let rate = trading_orders_per_day(level, mult, None);
+    if rate <= 0.0 {
+        return 1.0;
+    }
+    trading_orders_per_day(level, mult, order_limit) / rate
+}
+
 /// The base resource flows produced by a set of rooms (before the gold→LMD
 /// coupling is applied).
 #[derive(Debug, Clone, Default)]
@@ -99,6 +144,8 @@ impl BaseFlows {
     /// `speed_pct` is order/production speed; `value_pct` is order VALUE (LMD
     /// per hour over a bare post's) and `gold_pct` its gold-throughput part
     /// (Pure Gold per hour over a bare post's) - see `order_mix`.
+    /// `order_limit` is a trading post's final order limit (the ledger's
+    /// `RoomTotals::order_limit`); `None` prices the uncapped rate.
     #[allow(clippy::too_many_arguments)]
     pub fn add_room(
         &mut self,
@@ -109,17 +156,21 @@ impl BaseFlows {
         gold_pct: f64,
         value_pct: f64,
         crew: usize,
+        order_limit: Option<i32>,
     ) {
         let mult = productivity_mult(speed_pct + innate_pct(crew));
         match (room_type, formula) {
             ("TRADING", _) => {
-                // More speed -> more orders. Order value splits: the gold
+                // More speed -> more orders, bounded by the order buffer
+                // (`trading_orders_per_day`). Order value splits: the gold
                 // part is more bars per order in the same time, drawn from
                 // stock (Proviso: a defaulted 2-gold order trades 4 bars) -
                 // it widens the sell capacity and is bounded by the gold the
                 // factories make; the rest is more LMD per bar (Tequila's
                 // rider) and pays even when the base is gold-starved.
-                let bars = trading_bars_per_day(level) * mult * productivity_mult(gold_pct);
+                let bars = trading_orders_per_day(level, mult, order_limit)
+                    * trading_avg_gold_per_order(level)
+                    * productivity_mult(gold_pct);
                 self.gold_sell_capacity += bars;
                 self.gold_sell_lmd_weight +=
                     bars * productivity_mult(value_pct) / productivity_mult(gold_pct);
@@ -271,12 +322,13 @@ pub fn room_yield(
     speed_pct: f64,
     value_pct: f64,
     crew: usize,
+    order_limit: Option<i32>,
 ) -> RoomYield {
     let mult = productivity_mult(speed_pct + innate_pct(crew));
     match (room_type, formula) {
         ("TRADING", _) => RoomYield {
-            lmd_per_day: trading_bars_per_day(level)
-                * mult
+            lmd_per_day: trading_orders_per_day(level, mult, order_limit)
+                * trading_avg_gold_per_order(level)
                 * productivity_mult(value_pct)
                 * GOLD_BAR_LMD,
             ..Default::default()
@@ -298,15 +350,33 @@ mod tests {
     use super::*;
 
     #[test]
+    fn a_slashed_order_limit_caps_a_post_at_its_collections() {
+        // A level-1 post at +100% sells 40 bars/day uncapped. A buffer of one
+        // order emptied twice a day moves two orders; a buffer the post can't
+        // fill between collections costs nothing.
+        let rate = trading_bars_per_day(1) * productivity_mult(100.0);
+        let mut free = BaseFlows::default();
+        free.add_room("TRADING", None, 1, 100.0, 0.0, 0.0, 0, None);
+        assert!((free.gold_sell_capacity - rate).abs() < 1e-9);
+        let mut capped = BaseFlows::default();
+        capped.add_room("TRADING", None, 1, 100.0, 0.0, 0.0, 0, Some(1));
+        let expect = TRADING_COLLECTIONS_PER_DAY * trading_avg_gold_per_order(1);
+        assert!((capped.gold_sell_capacity - expect).abs() < 1e-9);
+        let mut roomy = BaseFlows::default();
+        roomy.add_room("TRADING", None, 1, 100.0, 0.0, 0.0, 0, Some(100));
+        assert!((roomy.gold_sell_capacity - rate).abs() < 1e-9);
+    }
+
+    #[test]
     fn posts_without_any_gold_factory_sell_from_stock() {
         // No gold factory at all: the coupling can't bind, the post sells at
         // capacity. One gold factory making nothing: the post sells nothing.
         let mut stock = BaseFlows::default();
-        stock.add_room("TRADING", None, 1, 100.0, 0.0, 0.0, 0);
+        stock.add_room("TRADING", None, 1, 100.0, 0.0, 0.0, 0, None);
         assert!((stock.realized_lmd() - 40.0 * GOLD_BAR_LMD).abs() < 1e-6);
         let mut idle = BaseFlows::default();
-        idle.add_room("TRADING", None, 1, 100.0, 0.0, 0.0, 0);
-        idle.add_room("MANUFACTURE", Some("F_GOLD"), 3, -100.0, 0.0, 0.0, 0);
+        idle.add_room("TRADING", None, 1, 100.0, 0.0, 0.0, 0, None);
+        idle.add_room("MANUFACTURE", Some("F_GOLD"), 3, -100.0, 0.0, 0.0, 0, None);
         assert!(idle.realized_lmd().abs() < 1e-6);
     }
 
@@ -317,19 +387,19 @@ mod tests {
         // each - her bonus bars come from stock (base expert, 2026-09-08).
         // One gold factory at +120% makes 44 bars/day.
         let mut starved = BaseFlows::default();
-        starved.add_room("MANUFACTURE", Some("F_GOLD"), 3, 120.0, 0.0, 0.0, 0);
-        starved.add_room("TRADING", None, 1, 200.0, 55.0, 55.0, 0);
+        starved.add_room("MANUFACTURE", Some("F_GOLD"), 3, 120.0, 0.0, 0.0, 0, None);
+        starved.add_room("TRADING", None, 1, 200.0, 55.0, 55.0, 0, None);
         assert!((starved.realized_lmd() - 44.0 * GOLD_BAR_LMD).abs() < 1e-6);
         let mut rich = BaseFlows::default();
-        rich.add_room("MANUFACTURE", Some("F_GOLD"), 3, 4900.0, 0.0, 0.0, 0);
-        rich.add_room("TRADING", None, 1, 200.0, 55.0, 55.0, 0);
+        rich.add_room("MANUFACTURE", Some("F_GOLD"), 3, 4900.0, 0.0, 0.0, 0, None);
+        rich.add_room("TRADING", None, 1, 200.0, 55.0, 55.0, 0, None);
         assert!((rich.realized_lmd() - 60.0 * 1.55 * GOLD_BAR_LMD).abs() < 1e-6);
 
         // Tequila-class value (+24% LMD, +0% gold): the same 44 bars pay 24%
         // more - the rider is LMD, not gold, so starvation doesn't touch it.
         let mut tequila = BaseFlows::default();
-        tequila.add_room("MANUFACTURE", Some("F_GOLD"), 3, 120.0, 0.0, 0.0, 0);
-        tequila.add_room("TRADING", None, 1, 200.0, 0.0, 24.0, 0);
+        tequila.add_room("MANUFACTURE", Some("F_GOLD"), 3, 120.0, 0.0, 0.0, 0, None);
+        tequila.add_room("TRADING", None, 1, 200.0, 0.0, 24.0, 0, None);
         assert!((tequila.realized_lmd() - 44.0 * 1.24 * GOLD_BAR_LMD).abs() < 1e-6);
     }
 }

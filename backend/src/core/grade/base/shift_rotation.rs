@@ -165,6 +165,7 @@ fn seat_pinned_operator(
                 speed: totals.speed_pct,
                 value: totals.order_value_pct,
                 gold: totals.order_gold_pct,
+                order_limit: totals.order_limit,
                 score,
             });
             g.cells[ri][shift] = g.teams.len() - 1;

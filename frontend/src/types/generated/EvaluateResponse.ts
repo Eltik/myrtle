@@ -4,8 +4,8 @@ import type { ClaimDto } from "./ClaimDto";
 import type { DormsDto } from "./DormsDto";
 import type { DronesDto } from "./DronesDto";
 import type { PowerDto } from "./PowerDto";
-import type { SustainabilityDto } from "./SustainabilityDto";
 import type { SustainEntryDto } from "./SustainEntryDto";
+import type { SustainabilityDto } from "./SustainabilityDto";
 import type { TrainerHintDto } from "./TrainerHintDto";
 
 export type EvaluateResponse = {
