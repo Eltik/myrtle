@@ -10,11 +10,18 @@ interface IThemeState {
     accent: Accent | null;
     /** Play animated L2D (dynamic) operator art site-wide. On by default; users can opt out. */
     dynamicArtwork: boolean;
+    /**
+     * Show operators that only exist on the CN server under their Latin
+     * appellation instead of the Han name. On by default: the site is read in
+     * English, and nobody types 予愿安洁莉娜 to find Angelina.
+     */
+    latinNames: boolean;
     hydrated: boolean;
 }
 
 const THEME_MODE_STORAGE_KEY = "theme";
 const DYNAMIC_ART_STORAGE_KEY = "myrtle-dynamic-art";
+const LATIN_NAMES_STORAGE_KEY = "myrtle-latin-names";
 
 function getInitialMode(): ThemeMode {
     if (typeof window === "undefined") return "auto";
@@ -27,6 +34,13 @@ function getInitialDynamicArtwork(): boolean {
     // On by default; only an explicit opt-out ("false") disables it.
     if (typeof window === "undefined") return true;
     const stored = window.localStorage.getItem(DYNAMIC_ART_STORAGE_KEY);
+    return stored === null ? true : stored === "true";
+}
+
+function getInitialLatinNames(): boolean {
+    // On by default; only an explicit opt-out ("false") disables it.
+    if (typeof window === "undefined") return true;
+    const stored = window.localStorage.getItem(LATIN_NAMES_STORAGE_KEY);
     return stored === null ? true : stored === "true";
 }
 
@@ -44,6 +58,7 @@ export const themeStore = new Store<IThemeState>({
     resolved: "dark",
     accent: null,
     dynamicArtwork: true,
+    latinNames: true,
     hydrated: false,
 });
 
@@ -75,7 +90,7 @@ export function hydrateTheme(): void {
     const accent = getStoredAccent();
     const resolved = applyMode(mode);
     applyAccent(accent, resolved);
-    themeStore.setState(() => ({ mode, resolved, accent, dynamicArtwork: getInitialDynamicArtwork(), hydrated: true }));
+    themeStore.setState(() => ({ mode, resolved, accent, dynamicArtwork: getInitialDynamicArtwork(), latinNames: getInitialLatinNames(), hydrated: true }));
 }
 
 let systemMediaQuery: MediaQueryList | null = null;
@@ -132,6 +147,12 @@ export const themeActions = {
         themeStore.setState((s) => ({ ...s, dynamicArtwork: enabled }));
         if (typeof window !== "undefined") {
             window.localStorage.setItem(DYNAMIC_ART_STORAGE_KEY, String(enabled));
+        }
+    },
+    setLatinNames(enabled: boolean): void {
+        themeStore.setState((s) => ({ ...s, latinNames: enabled }));
+        if (typeof window !== "undefined") {
+            window.localStorage.setItem(LATIN_NAMES_STORAGE_KEY, String(enabled));
         }
     },
 };

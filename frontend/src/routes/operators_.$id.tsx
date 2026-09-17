@@ -3,6 +3,7 @@ import { OperatorDetail } from "#/components/operators/detail/Operators";
 import { operatorBuildStatsQueryOptions, operatorQueryOptions, operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { metaT } from "#/lib/meta";
 import { ogURL, warmOg } from "#/lib/og/impl/url";
+import { operatorDisplayName } from "#/lib/operators/display-name";
 import { seo } from "#/lib/seo";
 import { formatProfession, formatSubProfession } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
@@ -48,7 +49,11 @@ export const Route = createFileRoute("/operators_/$id")({
         if (!loaderData) return seo({ title: metaT(match.context.i18n)("operator.fallbackTitle"), path: `/operators/${params.id}`, locale });
         const ogData = buildOgData(loaderData);
         return seo({
-            title: loaderData.name,
+            // The tab title and share card are rendered on the server, where
+            // the Latin-names preference (a localStorage setting) is unknown,
+            // so they take the preference's DEFAULT: a CN-only operator is
+            // titled by appellation even for a reader who turned it off.
+            title: operatorDisplayName(loaderData, true),
             // Every word here is Arknights vocabulary - the operator's name,
             // profession and archetype - which the game data layer translates
             // per region. Nothing in it belongs to this catalog.

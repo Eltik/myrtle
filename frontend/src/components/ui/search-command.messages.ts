@@ -28,6 +28,10 @@ export const messages = {
         text: "Failed to load operators. Try reopening the palette.",
         description: "Shown in place of the operator list when its request failed.",
     },
+    "searchCommand.cnOnly": {
+        text: "CN only",
+        description: "Suffix on an operator row for an operator that exists only on the Chinese server so far. 'CN' is the server's short name and stays as-is.",
+    },
     "searchCommand.noOperatorMatch": {
         text: 'No operators match "{query}".',
         description: "Shown when the operator index loaded but nothing in it matches. {query} is the text the visitor typed, quoted.",

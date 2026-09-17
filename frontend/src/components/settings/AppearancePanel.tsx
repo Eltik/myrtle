@@ -15,7 +15,7 @@ import type { messages } from "./AppearancePanel.messages";
 import { SectionLabel, SettingRow } from "./SettingsShell";
 
 export function AppearancePanel() {
-    const { mode, resolved, accent, isDefaultAccent, dynamicArtwork, setMode, setPresetHue, setCustomHex, resetAccent, setDynamicArtwork } = useTheme();
+    const { mode, resolved, accent, isDefaultAccent, dynamicArtwork, latinNames, setMode, setPresetHue, setCustomHex, resetAccent, setDynamicArtwork, setLatinNames } = useTheme();
     const customInputId = useId();
     const t: TypedT<typeof messages> = useT("settings");
 
@@ -88,6 +88,16 @@ export function AppearancePanel() {
                 </CardHeader>
                 <CardContent className="pt-0">
                     <SettingRow layout="inline" title={t("appearance.dynamicArt.rowTitle")} description={t("appearance.dynamicArt.rowDesc")} control={<Switch checked={dynamicArtwork} onCheckedChange={setDynamicArtwork} aria-label={t("appearance.dynamicArt.rowTitle")} />} />
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>{t("appearance.latinNames.title")}</CardTitle>
+                    <CardDescription>{t("appearance.latinNames.desc")}</CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0">
+                    <SettingRow layout="inline" title={t("appearance.latinNames.rowTitle")} description={t("appearance.latinNames.rowDesc")} control={<Switch checked={latinNames} onCheckedChange={setLatinNames} aria-label={t("appearance.latinNames.rowTitle")} />} />
                 </CardContent>
             </Card>
 

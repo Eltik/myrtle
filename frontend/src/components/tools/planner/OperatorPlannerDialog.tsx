@@ -14,6 +14,7 @@ import { Slider } from "#/components/ui/slider";
 import { Switch } from "#/components/ui/switch";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useAuth } from "#/hooks/use-auth";
+import { useOperatorName } from "#/hooks/use-operator-name";
 import { operatorQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
 import { deleteGroupFn, plansQueryOptions, upsertGroupFn, upsertPlanFn } from "#/lib/api/planner";
 import { upcomingQueryOptions } from "#/lib/api/upcoming";
@@ -94,6 +95,8 @@ interface IOperatorPlannerDialogProps {
 interface IOperatorSelectionItem {
     id: string;
     name: string;
+    /** `name` under the Latin-names preference; what the list shows and sorts by. */
+    displayName: string;
     appellation: string;
     rarity: number;
     profession: OperatorProfession;
@@ -169,6 +172,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
     const hasRosterData = !user?.uid || isRosterLoaded;
 
     const [searchQuery, setSearchQuery] = React.useState("");
+    const operatorName = useOperatorName();
 
     const sortedOperators = React.useMemo(() => {
         const mappedUpcoming = upcoming
@@ -176,6 +180,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
             .map((op) => ({
                 id: op.id,
                 name: op.name,
+                displayName: operatorName(op),
                 appellation: op.appellation,
                 rarity: op.rarity,
                 profession: op.profession,
@@ -190,6 +195,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
             .map((op) => ({
                 id: op.id ?? "",
                 name: op.name,
+                displayName: operatorName(op),
                 appellation: op.appellation,
                 rarity: rarityToNumber(op.rarity),
                 profession: op.profession,
@@ -204,17 +210,18 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                 return a.isUpcoming ? -1 : 1;
             }
             if (b.rarity !== a.rarity) return b.rarity - a.rarity;
-            return a.name.localeCompare(b.name);
+            return a.displayName.localeCompare(b.displayName);
         });
-    }, [operators, upcoming]);
+    }, [operators, upcoming, operatorName]);
 
     const filteredAndSortedOperators = React.useMemo(() => {
         if (!searchQuery.trim()) {
             return sortedOperators;
         }
         const results = searchAndRank(searchQuery, sortedOperators, (op) => ({
-            name: op.name,
-            extra: `${op.appellation} ${professionLabel(op.profession)} ${op.subProfessionId} ${op.rarity}★ ${(op.tagList ?? []).join(" ")} ${op.nationId}`,
+            name: op.displayName,
+            aliases: [op.name, op.appellation],
+            extra: `${professionLabel(op.profession)} ${op.subProfessionId} ${op.rarity}★ ${(op.tagList ?? []).join(" ")} ${op.nationId}`,
         }));
         return results.map((r) => r.item);
     }, [searchQuery, sortedOperators]);
@@ -528,7 +535,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
             <DialogPopup bottomStickOnMobile={false} className="flex h-[min(840px,calc(100vh-4rem))] w-full max-w-[min(1152px,calc(100vw-2rem))] flex-col overflow-hidden p-0">
                 <DialogHeader>
                     <DialogTitle>{isEditMode ? t("planner.dialog.editTitle") : t("planner.dialog.createTitle")}</DialogTitle>
-                    <DialogDescription>{isEditMode ? t("planner.dialog.editDesc", { operator: selectedOperator?.name ?? t("planner.dialog.editDesc.fallback") }) : t("planner.dialog.createDesc")}</DialogDescription>
+                    <DialogDescription>{isEditMode ? t("planner.dialog.editDesc", { operator: (selectedOperator ? operatorName(selectedOperator) : null) ?? t("planner.dialog.editDesc.fallback") }) : t("planner.dialog.createDesc")}</DialogDescription>
                 </DialogHeader>
 
                 <DialogPanel className="min-h-0 flex-1">
@@ -543,7 +550,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                 onValueChange={(item) => setSelectedOperatorId(item?.id ?? null)}
                                 filter={null}
                                 onInputValueChange={setSearchQuery}
-                                itemToStringLabel={(op) => op?.name ?? ""}
+                                itemToStringLabel={(op) => op?.displayName ?? ""}
                                 itemToStringValue={(op) => op?.id ?? ""}
                             >
                                 <ComboboxInput id="operator-selector" placeholder={isLoading ? t("planner.dialog.loadingOperators") : t("planner.dialog.searchOperators")} />
@@ -556,9 +563,9 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                                 <ComboboxItem key={op.id} value={op}>
                                                     <span className="flex w-full items-center gap-3">
                                                         <span aria-hidden="true" className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/50">
-                                                            <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" server={op.isUpcoming ? "cn" : undefined} />
+                                                            <OperatorAvatar charId={op.id} name={op.displayName} className="block h-full w-full object-cover" server={op.isUpcoming ? "cn" : undefined} />
                                                         </span>
-                                                        <span className="flex-1 font-medium text-foreground text-sm">{op.name}</span>
+                                                        <span className="flex-1 font-medium text-foreground text-sm">{op.displayName}</span>
                                                         <span className="font-normal text-muted-foreground text-xs">{t("planner.dialog.rarityClass", { rarity, class: professionLabel(op.profession) })}</span>
                                                     </span>
                                                 </ComboboxItem>
@@ -581,10 +588,10 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                 <div className="rounded-xl border border-border bg-card p-4">
                                     <div className="flex items-center gap-4">
                                         <span aria-hidden="true" className="relative flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/70">
-                                            <OperatorAvatar charId={selectedOperator.id} name={selectedOperator.name} className="block h-full w-full object-cover" server={selectedOperator.server} />
+                                            <OperatorAvatar charId={selectedOperator.id} name={operatorName(selectedOperator)} className="block h-full w-full object-cover" server={selectedOperator.server} />
                                         </span>
                                         <div>
-                                            <h3 className="font-bold text-foreground text-lg">{selectedOperator.name}</h3>
+                                            <h3 className="font-bold text-foreground text-lg">{operatorName(selectedOperator)}</h3>
                                             <p className="text-muted-foreground text-xs">{t("planner.dialog.rarityArchetype", { rarity: rarityToNumber(selectedOperator.rarity), archetype: formatSubProfession(selectedOperator.subProfessionId) })}</p>
                                         </div>
                                     </div>

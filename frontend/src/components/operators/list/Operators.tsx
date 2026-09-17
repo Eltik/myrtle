@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, ChevronRight, Download, LayoutGrid, LayoutList, Row
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ExportDialog } from "#/components/export/ExportDialog";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
+import { useOperatorName } from "#/hooks/use-operator-name";
 import { noteHasContent, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { operatorOwnershipQueryOptions, operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
 import { upcomingQueryOptions } from "#/lib/api/upcoming";
@@ -101,6 +102,7 @@ export function OperatorsList() {
     } = useOperatorFilters(enriched);
 
     const { data: upcoming = [], isLoading: upcomingLoading } = useQuery(upcomingQueryOptions(server));
+    const operatorName = useOperatorName();
     const isUpcoming = filters.availability === "upcoming";
 
     const upcomingFiltered = useMemo(() => {
@@ -118,8 +120,8 @@ export function OperatorsList() {
                 if (nations.size && !nations.has(op.nationId)) return false;
                 return true;
             })
-            .sort((a, b) => b.rarity - a.rarity || a.name.localeCompare(b.name));
-    }, [upcoming, filters.searchQuery, filters.classes, filters.subclasses, filters.rarities, filters.nations]);
+            .sort((a, b) => b.rarity - a.rarity || operatorName(a).localeCompare(operatorName(b)));
+    }, [upcoming, filters.searchQuery, filters.classes, filters.subclasses, filters.rarities, filters.nations, operatorName]);
 
     const [viewMode, setViewMode] = useLocalStorageState<ViewMode>(VIEW_MODE_KEY, "grid", {
         parse: (raw) => (VIEW_MODES.has(raw as ViewMode) ? (raw as ViewMode) : undefined),

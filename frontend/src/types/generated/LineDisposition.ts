@@ -4,6 +4,6 @@
  * How a zero-marginal line should be read.
  *
  * Serialized straight into `SkillLineDto`, so the generated TS binding is a
- * union rather than a bare `string` — the frontend switches on these values.
+ * union rather than a bare `string` - the frontend switches on these values.
  */
 export type LineDisposition = "contributes" | "inactive" | "covered" | "per_room" | "morale" | "capacity" | "non_production" | "unmodeled";

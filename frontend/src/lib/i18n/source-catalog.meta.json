@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-17T10:17:49.989Z",
+    "generatedAt": "2026-09-17T10:49:54.663Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -4424,6 +4424,41 @@
             "placeholders": []
         },
         {
+            "key": "changelog.note.2026-09-17-3.hrefLabel",
+            "namespace": "changelog",
+            "source_text": "Open appearance settings",
+            "description": "Label of the third 2026-09-17 release note's call to action, which opens the settings page where the switch lives.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-17-3.item.1",
+            "namespace": "changelog",
+            "source_text": "Appearance setting: show Latin names for CN-only operators. Applies to the operator list, operator pages, the planner and the search palette.",
+            "description": "Bullet in the third 2026-09-17 release note, filed under 'New'. 'CN' is the Chinese game server's short name and stays as-is.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-17-3.item.2",
+            "namespace": "changelog",
+            "source_text": "The search palette now includes CN-only operators and matches their Latin name as strongly as any other name.",
+            "description": "Bullet in the third 2026-09-17 release note, filed under 'Improved'. 'CN' is the Chinese game server's short name and stays as-is.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-17-3.lead",
+            "namespace": "changelog",
+            "source_text": "Operators that have not reached the global server yet now show under the Latin-script name the game gives them, so 予愿安洁莉娜 reads as Angelina the Mellow Wish. It is an appearance setting, on by default, and search finds these operators by either name.",
+            "description": "Lead paragraph of the third 2026-09-17 release note, rendered as Markdown. The Chinese example and its Latin name are game data and stay as-is. 'Global server' is the English-language game server.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-17-3.title",
+            "namespace": "changelog",
+            "source_text": "Latin names for CN-only operators",
+            "description": "Title of the third 2026-09-17 release note. 'CN' is the Chinese game server's short name and stays as-is.",
+            "placeholders": []
+        },
+        {
             "key": "changelog.note.2026-09-17.hrefLabel",
             "namespace": "changelog",
             "source_text": "Open the pull planner",
@@ -5106,6 +5141,13 @@
             "namespace": "common",
             "source_text": "Go to previous page",
             "description": "Accessible name of the previous-page control, which shows only an arrow on small screens.",
+            "placeholders": []
+        },
+        {
+            "key": "common.searchCommand.cnOnly",
+            "namespace": "common",
+            "source_text": "CN only",
+            "description": "Suffix on an operator row for an operator that exists only on the Chinese server so far. 'CN' is the server's short name and stays as-is.",
             "placeholders": []
         },
         {
@@ -14861,6 +14903,34 @@
             "placeholders": [
                 "language"
             ]
+        },
+        {
+            "key": "settings.appearance.latinNames.desc",
+            "namespace": "settings",
+            "source_text": "Operators that have not reached the global server yet only have a Chinese name. The game also gives each one a Latin-script name, which is usually the name they release under.",
+            "description": "Card description under the Operator names title. 'Global server' is the English-language game server.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.appearance.latinNames.rowDesc",
+            "namespace": "settings",
+            "source_text": "予愿安洁莉娜 becomes Angelina the Mellow Wish. Search matches either name whichever one is shown. On by default.",
+            "description": "Caption under the Latin-names switch. The Chinese example and its Latin name are game data and stay as-is.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.appearance.latinNames.rowTitle",
+            "namespace": "settings",
+            "source_text": "Show Latin names for CN-only operators",
+            "description": "Label of the switch that shows CN-only operators under their Latin-script name, and the switch's accessible name. 'CN' is the Chinese game server's short name and stays as-is.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.appearance.latinNames.title",
+            "namespace": "settings",
+            "source_text": "Operator names",
+            "description": "Card title over the option that shows CN-only operators under their Latin-script name.",
+            "placeholders": []
         },
         {
             "key": "settings.appearance.mode.auto",

@@ -77,10 +77,15 @@ export type IRosterEntry = Refine<RosterEntry, { masteries: IRosterMastery[]; mo
 
 export type IUserScore = UserScore;
 
+// The profile, score and check-in endpoints sit behind the backend's privacy
+// gate (own profile or public one, 403 otherwise), and "own" is decided from
+// the bearer token alone. Send the site token like the roster fetch does, or a
+// private profile 403s its OWNER too.
 export const getUserFn = createServerFn({ method: "GET" })
-    .inputValidator((uid: string) => uid)
-    .handler(async ({ data: uid }) => {
-        const res = await backendFetch(`/get-user?uid=${encodeURIComponent(uid)}`);
+    .inputValidator((data: { uid: string; bearerToken?: string }) => data)
+    .handler(async ({ data: { uid, bearerToken } }) => {
+        const token = bearerToken ?? optionalSiteToken();
+        const res = await backendFetch(`/get-user?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
         if (!res.ok) {
             if (res.status === 404) return null;
             throw new Error(`Failed to load user: ${res.status}`);
@@ -88,10 +93,10 @@ export const getUserFn = createServerFn({ method: "GET" })
         return (await res.json()) as IUserProfile;
     });
 
-export function userQueryOptions(uid: string) {
+export function userQueryOptions(uid: string, bearerToken?: string) {
     return queryOptions({
-        queryKey: ["user", "profile", uid],
-        queryFn: () => getUserFn({ data: uid }),
+        queryKey: ["user", "profile", uid, bearerToken ? "auth" : "anon"],
+        queryFn: () => getUserFn({ data: { uid, bearerToken } }),
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
     });
@@ -188,9 +193,10 @@ export function userEncounteredEnemiesQueryOptions(uid: string, bearerToken?: st
 }
 
 export const getUserScoreFn = createServerFn({ method: "GET" })
-    .inputValidator((uid: string) => uid)
-    .handler(async ({ data: uid }) => {
-        const res = await backendFetch(`/get-user-score?uid=${encodeURIComponent(uid)}`);
+    .inputValidator((data: { uid: string; bearerToken?: string }) => data)
+    .handler(async ({ data: { uid, bearerToken } }) => {
+        const token = bearerToken ?? optionalSiteToken();
+        const res = await backendFetch(`/get-user-score?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
         if (!res.ok) {
             if (res.status === 404) return null;
             throw new Error(`Failed to load user score: ${res.status}`);
@@ -198,19 +204,20 @@ export const getUserScoreFn = createServerFn({ method: "GET" })
         return (await res.json()) as IUserScore | null;
     });
 
-export function userScoreQueryOptions(uid: string) {
+export function userScoreQueryOptions(uid: string, bearerToken?: string) {
     return queryOptions({
-        queryKey: ["user", "score", uid],
-        queryFn: () => getUserScoreFn({ data: uid }),
+        queryKey: ["user", "score", uid, bearerToken ? "auth" : "anon"],
+        queryFn: () => getUserScoreFn({ data: { uid, bearerToken } }),
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
     });
 }
 
 export const getUserCheckinFn = createServerFn({ method: "GET" })
-    .inputValidator((uid: string) => uid)
-    .handler(async ({ data: uid }) => {
-        const res = await backendFetch(`/get-user-checkin?uid=${encodeURIComponent(uid)}`);
+    .inputValidator((data: { uid: string; bearerToken?: string }) => data)
+    .handler(async ({ data: { uid, bearerToken } }) => {
+        const token = bearerToken ?? optionalSiteToken();
+        const res = await backendFetch(`/get-user-checkin?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
         if (!res.ok) {
             if (res.status === 404) return null;
             throw new Error(`Failed to load user check-in: ${res.status}`);
@@ -218,10 +225,10 @@ export const getUserCheckinFn = createServerFn({ method: "GET" })
         return (await res.json()) as IUserCheckin | null;
     });
 
-export function userCheckinQueryOptions(uid: string) {
+export function userCheckinQueryOptions(uid: string, bearerToken?: string) {
     return queryOptions({
-        queryKey: ["user", "checkin", uid],
-        queryFn: () => getUserCheckinFn({ data: uid }),
+        queryKey: ["user", "checkin", uid, bearerToken ? "auth" : "anon"],
+        queryFn: () => getUserCheckinFn({ data: { uid, bearerToken } }),
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
     });

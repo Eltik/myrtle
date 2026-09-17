@@ -7,6 +7,7 @@ export function useTheme() {
     const resolved = useSelector(themeStore, (s) => s.resolved);
     const accent = useSelector(themeStore, (s) => s.accent);
     const dynamicArtwork = useSelector(themeStore, (s) => s.dynamicArtwork);
+    const latinNames = useSelector(themeStore, (s) => s.latinNames);
     const hydrated = useSelector(themeStore, (s) => s.hydrated);
 
     useEffect(() => {
@@ -19,12 +20,14 @@ export function useTheme() {
         resolved,
         accent,
         dynamicArtwork,
+        latinNames,
         hydrated,
         setMode: themeActions.setMode,
         setPresetHue: themeActions.setPresetHue,
         setCustomHex: themeActions.setCustomHex,
         resetAccent: themeActions.resetAccent,
         setDynamicArtwork: themeActions.setDynamicArtwork,
+        setLatinNames: themeActions.setLatinNames,
         isDefaultAccent: accent === null,
     };
 }

@@ -7,7 +7,9 @@ import { Command, CommandDialog, CommandDialogPopup, CommandEmpty, CommandFooter
 import { Kbd } from "#/components/ui/kbd";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { Skeleton } from "#/components/ui/skeleton";
+import { useOperatorName } from "#/hooks/use-operator-name";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { upcomingQueryOptions } from "#/lib/api/upcoming";
 import { hasMod, isEditableTarget } from "#/lib/hotkeys";
 import { type TFunction, useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -27,6 +29,12 @@ interface ISearchCommandProps {
 const MAX_PAGES = 6;
 const MAX_TOOLS = 6;
 const MAX_OPERATORS = 8;
+
+interface ISearchOperator {
+    op: IOperatorIndexEntry;
+    /** CN-only: the avatar comes from the CN tree and the row says so. */
+    upcoming: boolean;
+}
 
 export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): React.ReactElement {
     const [query, setQuery] = React.useState("");
@@ -60,11 +68,24 @@ export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): Reac
         if (!open) setQuery("");
     }, [open]);
 
+    const gamedataServer = useGamedataServer();
     const operatorsQuery = useQuery({
-        ...operatorsIndexQueryOptions(useGamedataServer()),
+        ...operatorsIndexQueryOptions(gamedataServer),
         enabled: open,
     });
-    const operators = operatorsQuery.data;
+    // CN-only operators live in a separate list. They are appended so that a
+    // released operator always wins a tie, and searched by appellation too,
+    // since nobody types the Han name to find one.
+    const upcomingQuery = useQuery({
+        ...upcomingQueryOptions(gamedataServer),
+        enabled: open,
+    });
+    const operators = React.useMemo<ISearchOperator[] | undefined>(() => {
+        if (!operatorsQuery.data) return undefined;
+        const released: ISearchOperator[] = operatorsQuery.data.map((op) => ({ op, upcoming: false }));
+        const upcoming: ISearchOperator[] = (upcomingQuery.data ?? []).map((op) => ({ op, upcoming: true }));
+        return released.concat(upcoming);
+    }, [operatorsQuery.data, upcomingQuery.data]);
 
     const pageResults = React.useMemo(
         () =>
@@ -99,9 +120,10 @@ export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): Reac
         return searchAndRank(
             query,
             operators,
-            (op) => ({
+            ({ op }) => ({
                 name: op.name,
-                extra: `${op.appellation} ${professionLabel(op.profession)} ${op.subProfessionId} ${op.rarity}★ ${op.tagList.join(" ")} ${op.nationId}`,
+                aliases: [op.appellation],
+                extra: `${professionLabel(op.profession)} ${op.subProfessionId} ${op.rarity}★ ${op.tagList.join(" ")} ${op.nationId}`,
             }),
             MAX_OPERATORS,
         );
@@ -135,7 +157,7 @@ export function SearchCommand({ open, onOpenChange }: ISearchCommandProps): Reac
                                         <div className="px-2 py-3 text-muted-foreground text-xs">{t("searchCommand.noOperatorMatch", { query })}</div>
                                     ) : null
                                 ) : (
-                                    operatorResults.map(({ item: op }) => <OperatorRow key={op.id} op={op} onClick={() => closeAndGo(`/operators/${op.id}`)} />)
+                                    operatorResults.map(({ item: { op, upcoming } }) => <OperatorRow key={op.id} op={op} upcoming={upcoming} onClick={() => closeAndGo(`/operators/${op.id}`)} />)
                                 )}
                             </CommandGroup>
 
@@ -203,16 +225,20 @@ function ToolRow({ tool, onClick }: { tool: ITool; onClick: () => void }): React
     );
 }
 
-function OperatorRow({ op, onClick }: { op: IOperatorIndexEntry; onClick: () => void }): React.ReactElement {
+function OperatorRow({ op, upcoming, onClick }: { op: IOperatorIndexEntry; upcoming: boolean; onClick: () => void }): React.ReactElement {
+    const t: TypedT<typeof messages> = useT("common");
+    const operatorName = useOperatorName();
     const cls = professionClass(op.profession);
+    const name = operatorName(op);
     return (
         <CommandItem value={`operator:${op.id}`} onClick={onClick} className="flex cursor-pointer flex-row gap-2">
             <span className={`op-chip ${cls}`} aria-hidden="true">
-                <OperatorAvatar charId={op.id} name={op.name} />
+                <OperatorAvatar charId={op.id} name={name} server={upcoming ? "cn" : undefined} />
             </span>
-            <span className="flex-1 font-medium">{op.name}</span>
+            <span className="flex-1 font-medium">{name}</span>
             <span className="text-muted-foreground text-xs">
                 {op.rarity}★ · {professionLabel(op.profession)}
+                {upcoming ? ` · ${t("searchCommand.cnOnly")}` : null}
             </span>
         </CommandItem>
     );

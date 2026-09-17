@@ -1,13 +1,17 @@
 /**
  * Fuzzy scorer tuned for short search-palette items.
  *
- * Each candidate exposes a primary `name` (shown to the user, matched strongest)
- * and an auxiliary `extra` string that concatenates every other searchable field
- * (tags, keywords, profession, appellation, etc.) for secondary matches.
+ * Each candidate exposes a primary `name` (shown to the user, matched strongest),
+ * optional `aliases` that are other names for the same thing and score on the
+ * same tiers as `name` (an operator's appellation: `予愿安洁莉娜` is also
+ * `Angelina the Mellow Wish`), and an auxiliary `extra` string that
+ * concatenates every other searchable field (tags, keywords, profession, etc.)
+ * for secondary matches.
  */
 
 export interface IScoreTarget {
     name: string;
+    aliases?: readonly string[];
     extra?: string;
 }
 
@@ -74,23 +78,17 @@ export function scoreMatch(query: string, target: IScoreTarget): number {
     const q = normalizeForSearch(query.trim());
     if (q.length === 0) return 1;
 
-    const name = normalizeForSearch(target.name);
+    const qc = q.replace(/\s+/g, "");
     const extra = normalizeForSearch(target.extra ?? "");
 
-    if (name === q) return SCORE_NAME_EXACT + lengthBonus(name);
-    if (name.startsWith(q)) return SCORE_NAME_PREFIX + lengthBonus(name);
-
-    const wordIdx = findWordPrefix(name, q);
-    if (wordIdx >= 0) return SCORE_NAME_WORD_PREFIX - wordIdx + lengthBonus(name);
-
-    const nameIdx = name.indexOf(q);
-    if (nameIdx >= 0) return SCORE_NAME_CONTAINS - nameIdx + lengthBonus(name);
-
-    const qc = q.replace(/\s+/g, "");
-    const ncIdx = name.replace(/\s+/g, "").indexOf(qc);
-    if (ncIdx >= 0) return SCORE_NAME_CONTAINS - ncIdx + lengthBonus(name);
-
-    if (isSubsequence(q, name)) return SCORE_NAME_SUBSEQUENCE + lengthBonus(name);
+    // Best of the name and its aliases: an alias is another spelling of the
+    // same name, so it earns the same tiers, and the strongest one wins.
+    let best = scoreName(q, qc, normalizeForSearch(target.name));
+    for (const alias of target.aliases ?? []) {
+        if (alias.trim().length === 0) continue;
+        best = Math.max(best, scoreName(q, qc, normalizeForSearch(alias)));
+    }
+    if (best > 0) return best;
 
     // `extra` gets contiguous-substring matching only. Subsequence matching is
     // reserved for `name`: `extra` concatenates unrelated fields, so a
@@ -101,6 +99,23 @@ export function scoreMatch(query: string, target: IScoreTarget): number {
         if (extra.replace(/\s+/g, "").includes(qc)) return SCORE_EXTRA_CONTAINS;
     }
 
+    return 0;
+}
+
+function scoreName(q: string, qc: string, name: string): number {
+    if (name === q) return SCORE_NAME_EXACT + lengthBonus(name);
+    if (name.startsWith(q)) return SCORE_NAME_PREFIX + lengthBonus(name);
+
+    const wordIdx = findWordPrefix(name, q);
+    if (wordIdx >= 0) return SCORE_NAME_WORD_PREFIX - wordIdx + lengthBonus(name);
+
+    const nameIdx = name.indexOf(q);
+    if (nameIdx >= 0) return SCORE_NAME_CONTAINS - nameIdx + lengthBonus(name);
+
+    const ncIdx = name.replace(/\s+/g, "").indexOf(qc);
+    if (ncIdx >= 0) return SCORE_NAME_CONTAINS - ncIdx + lengthBonus(name);
+
+    if (isSubsequence(q, name)) return SCORE_NAME_SUBSEQUENCE + lengthBonus(name);
     return 0;
 }
 

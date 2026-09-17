@@ -3,6 +3,7 @@ import { ArrowUpRight, Box, ChevronDown, ChevronsUp, Sigma, Sparkles, Star, Tren
 import { memo, useMemo, useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
+import { useOperatorName } from "#/hooks/use-operator-name";
 import { operatorGamedataServer } from "#/lib/api/gamedata";
 import { type IMaterials, materialsQueryOptions } from "#/lib/api/materials";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
@@ -115,6 +116,7 @@ function Section({ icon, title, subtitle, children, className }: { icon: React.R
 
 export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelUpContentProps) {
     const t: LevelUpT = useT("operators");
+    const operatorName = useOperatorName();
     const [activeSkill, setActiveSkill] = useState(0);
     const localeServer = useGamedataServer();
     const { data: materials } = useQuery(materialsQueryOptions(operatorGamedataServer(operator.server, localeServer)));
@@ -152,7 +154,7 @@ export const LevelUpContent = memo(function LevelUpContent({ operator }: ILevelU
                         </div>
                         <div>
                             <h3 className="font-semibold text-foreground text-sm">{t("levelup.empty.title")}</h3>
-                            <p className="mt-1 text-muted-foreground text-xs">{t("levelup.empty.body", { name: operator.name })}</p>
+                            <p className="mt-1 text-muted-foreground text-xs">{t("levelup.empty.body", { name: operatorName(operator) })}</p>
                         </div>
                     </div>
                 </section>

@@ -2263,6 +2263,8 @@ pub fn compute_live_assignment(
                 from_cc,
             ),
         };
+        // A crew of depleted operators sums to a negative zero; show a plain 0.
+        let eff = if eff == 0.0 { 0.0 } else { eff };
         rooms.push(RoomAssignment {
             slot_id: room.slot_id.clone(),
             room_type: room.room_type.clone(),

@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Badge } from "#/components/ui/badge";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "#/components/ui/breadcrumb";
+import { useOperatorName } from "#/hooks/use-operator-name";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, formatNationId, formatProfession, formatSubProfession, rarityToNumber } from "#/lib/utils";
@@ -18,6 +19,7 @@ interface IOperatorHeroProps {
 export function OperatorHero({ operator }: IOperatorHeroProps) {
     const t: TypedT<typeof messages> = useT("operators");
     const ref = useParallaxProgress<HTMLDivElement>();
+    const name = useOperatorName()(operator);
 
     const rarityNum = rarityToNumber(operator.rarity);
     const rarityColor = RARITY_COLORS[operator.rarity] ?? RARITY_COLORS.TIER_1;
@@ -34,7 +36,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                     <div aria-hidden className={cn("backface-hidden absolute inset-x-0 top-0 will-change-transform contain-paint", styles["parallax-image"])}>
                         <div className="flex items-start justify-center pt-0">
                             <div className="relative h-120 w-[85vw] max-w-95 sm:h-135 sm:w-110 sm:max-w-none">
-                                <img alt={operator.name} className={cn("h-full w-full object-contain object-top", rarityGlow)} decoding="async" loading="eager" src={img} />
+                                <img alt={name} className={cn("h-full w-full object-contain object-top", rarityGlow)} decoding="async" loading="eager" src={img} />
                             </div>
                         </div>
                     </div>
@@ -47,13 +49,13 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator />
                                 <BreadcrumbItem>
-                                    <BreadcrumbPage className="font-medium">{operator.name}</BreadcrumbPage>
+                                    <BreadcrumbPage className="font-medium">{name}</BreadcrumbPage>
                                 </BreadcrumbItem>
                             </BreadcrumbList>
                         </Breadcrumb>
 
                         <div>
-                            <h1 className="font-bold text-2xl text-foreground tracking-tight sm:text-3xl">{operator.name}</h1>
+                            <h1 className="font-bold text-2xl text-foreground tracking-tight sm:text-3xl">{name}</h1>
                             <div className="mt-1.5 flex items-center gap-2">
                                 <span className={cn("font-semibold text-base tracking-wider", rarityColor)}>{"★".repeat(rarityNum)}</span>
                                 <span className="text-muted-foreground/50">|</span>
@@ -83,7 +85,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                     <div aria-hidden className={cn("backface-hidden absolute inset-x-0 top-0 will-change-transform contain-paint", styles["parallax-image"])}>
                         <div className="flex items-start justify-end pr-[5%] lg:pr-[10%]">
                             <div className="relative h-155 w-130 lg:h-180 lg:w-150">
-                                <img alt={operator.name} className={cn("h-full w-full object-contain object-top", rarityGlow)} decoding="async" loading="eager" src={img} />
+                                <img alt={name} className={cn("h-full w-full object-contain object-top", rarityGlow)} decoding="async" loading="eager" src={img} />
                             </div>
                         </div>
                     </div>
@@ -96,7 +98,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator />
                                 <BreadcrumbItem>
-                                    <BreadcrumbPage className="font-medium">{operator.name}</BreadcrumbPage>
+                                    <BreadcrumbPage className="font-medium">{name}</BreadcrumbPage>
                                 </BreadcrumbItem>
                             </BreadcrumbList>
                         </Breadcrumb>
@@ -104,7 +106,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                         <div className="flex flex-row items-end justify-between gap-4">
                             <div className="flex flex-col gap-2">
                                 <div>
-                                    <h1 className="font-bold text-4xl text-foreground tracking-tight lg:text-5xl">{operator.name}</h1>
+                                    <h1 className="font-bold text-4xl text-foreground tracking-tight lg:text-5xl">{name}</h1>
                                     <div className="mt-1.5 flex items-center gap-3">
                                         <span className={cn("font-semibold text-lg tracking-wider", rarityColor)}>{"★".repeat(rarityNum)}</span>
                                         <span className="text-muted-foreground/50">|</span>

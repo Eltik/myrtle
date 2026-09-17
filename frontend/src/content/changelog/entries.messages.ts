@@ -11,6 +11,26 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-09-17-3.title": {
+        text: "Latin names for CN-only operators",
+        description: "Title of the third 2026-09-17 release note. 'CN' is the Chinese game server's short name and stays as-is.",
+    },
+    "note.2026-09-17-3.lead": {
+        text: "Operators that have not reached the global server yet now show under the Latin-script name the game gives them, so 予愿安洁莉娜 reads as Angelina the Mellow Wish. It is an appearance setting, on by default, and search finds these operators by either name.",
+        description: "Lead paragraph of the third 2026-09-17 release note, rendered as Markdown. The Chinese example and its Latin name are game data and stay as-is. 'Global server' is the English-language game server.",
+    },
+    "note.2026-09-17-3.hrefLabel": {
+        text: "Open appearance settings",
+        description: "Label of the third 2026-09-17 release note's call to action, which opens the settings page where the switch lives.",
+    },
+    "note.2026-09-17-3.item.1": {
+        text: "Appearance setting: show Latin names for CN-only operators. Applies to the operator list, operator pages, the planner and the search palette.",
+        description: "Bullet in the third 2026-09-17 release note, filed under 'New'. 'CN' is the Chinese game server's short name and stays as-is.",
+    },
+    "note.2026-09-17-3.item.2": {
+        text: "The search palette now includes CN-only operators and matches their Latin name as strongly as any other name.",
+        description: "Bullet in the third 2026-09-17 release note, filed under 'Improved'. 'CN' is the Chinese game server's short name and stays as-is.",
+    },
     "note.2026-09-17-2.title": {
         text: "Integrated Strategies regrade",
         description: "Title of the second 2026-09-17 release note. 'Integrated Strategies' is an in-game mode name and is never translated. A grade is this site's own letter rating of a player.",

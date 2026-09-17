@@ -87,6 +87,22 @@ export const messages = {
         text: "Plays multi-megabyte Spine animations in place of static art. On by default; turn it off to save bandwidth.",
         description: "Caption under the animated-artwork switch. 'Spine' is the animation runtime's name and stays as-is.",
     },
+    "appearance.latinNames.title": {
+        text: "Operator names",
+        description: "Card title over the option that shows CN-only operators under their Latin-script name.",
+    },
+    "appearance.latinNames.desc": {
+        text: "Operators that have not reached the global server yet only have a Chinese name. The game also gives each one a Latin-script name, which is usually the name they release under.",
+        description: "Card description under the Operator names title. 'Global server' is the English-language game server.",
+    },
+    "appearance.latinNames.rowTitle": {
+        text: "Show Latin names for CN-only operators",
+        description: "Label of the switch that shows CN-only operators under their Latin-script name, and the switch's accessible name. 'CN' is the Chinese game server's short name and stays as-is.",
+    },
+    "appearance.latinNames.rowDesc": {
+        text: "予愿安洁莉娜 becomes Angelina the Mellow Wish. Search matches either name whichever one is shown. On by default.",
+        description: "Caption under the Latin-names switch. The Chinese example and its Latin name are game data and stay as-is.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });
