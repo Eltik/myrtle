@@ -11,9 +11,13 @@ pub fn export_gamedata(
     bundle_dir: &Path,
     idx_path: &Path,
     output_dir: &Path,
-) -> Result<usize, io::Error> {
+) -> Result<(usize, usize), io::Error> {
     let manifest = ResourceManifest::load(idx_path)?;
     let mut exported = 0;
+    // Counted, not just printed. The caller has to be able to fail the run: a
+    // partial gamedata export is followed by an orphan sweep that deletes every
+    // table this run did not write, so "some tables failed" cannot be a log line.
+    let mut failed = 0;
 
     for entry in WalkDir::new(bundle_dir)
         .into_iter()
@@ -101,10 +105,11 @@ pub fn export_gamedata(
                 Ok(()) => exported += 1,
                 Err(e) => {
                     eprintln!("  error exporting {name}: {e}");
+                    failed += 1;
                 }
             }
         }
     }
 
-    Ok(exported)
+    Ok((exported, failed))
 }

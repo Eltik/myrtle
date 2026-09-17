@@ -233,6 +233,23 @@ function pruneOrphans(savedir, hotList) {
 	}
 	const keepIdx = new Set([hotList.manifestName].filter(Boolean));
 
+	// An EMPTY keep-set is not an instruction to delete everything, it is evidence
+	// that the hot-update list did not parse into what we expected. `fetchHotUpdateList`
+	// only checks the HTTP status, so a 200 carrying an error page, a truncated body
+	// or a changed schema all arrive here as an object with no `abInfos`, and the two
+	// loops below would then unlink every bundle in the cache and every .idx at the
+	// root. The next run re-downloads tens of GB onto a disk that may be the reason
+	// the response was bad in the first place. There is no legitimate resVersion with
+	// zero bundles, so treat it as a refusal rather than a sweep.
+	if (keepBin.size === 0) {
+		console.warn(
+			chalk.yellow(
+				`  prune: hot-update list yielded 0 bundles to keep; refusing to prune (would have deleted the whole cache)`,
+			),
+		);
+		return { deleted: 0, freedBytes: 0 };
+	}
+
 	let deleted = 0;
 	let freedBytes = 0;
 
@@ -1320,6 +1337,16 @@ async function runUpdate() {
 			dlBar.succeed(
 				`Download complete: ${dlStats.downloaded} files, ${dlStats.failed} failed, ${formatBytes(dlStats.totalBytes)}`,
 			);
+			// Same refusal as the watcher path: an incomplete bundle set must not be
+			// unpacked, because the sweep afterwards deletes what this run did not write.
+			if (dlStats.failed > 0 && process.env.WS_ALLOW_PARTIAL_DOWNLOAD !== "1") {
+				console.log(
+					chalk.red(
+						`  ${dlStats.failed} bundle(s) failed to download. Refusing to unpack an incomplete set; the existing output is left alone. Re-run, or set WS_ALLOW_PARTIAL_DOWNLOAD=1 to override.`,
+					),
+				);
+				return;
+			}
 		} catch (err) {
 			dlBar.fail(`Download failed: ${err.message}`);
 			return;
@@ -1692,6 +1719,20 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 			});
 
 			console.log(chalk.blue(`[${new Date().toLocaleTimeString()}] Download complete: ${dlStats.downloaded} files, ${dlStats.failed} failed, ${formatBytes(dlStats.totalBytes)}`));
+
+			// A partial download must NOT reach the unpacker. The downloader exits 0
+			// whatever its failure count, so this was the only thing standing between a
+			// stalled disk and an extract built from an incomplete bundle set, whose
+			// orphan sweep then deletes every previously-good output the short run did
+			// not re-produce, and whose result is recorded as the new baseline.
+			// Throwing here routes into the existing catch: no unpack, no sweep, no
+			// stamp, and the backoff arms. WS_ALLOW_PARTIAL_DOWNLOAD=1 is the escape
+			// hatch for a region where some bundles are permanently 404.
+			if (dlStats.failed > 0 && process.env.WS_ALLOW_PARTIAL_DOWNLOAD !== "1") {
+				throw new Error(
+					`${dlStats.failed} bundle(s) failed to download; refusing to unpack an incomplete set (WS_ALLOW_PARTIAL_DOWNLOAD=1 to override)`,
+				);
+			}
 			broadcast({
 				type: "download_complete",
 				downloaded: dlStats.downloaded,

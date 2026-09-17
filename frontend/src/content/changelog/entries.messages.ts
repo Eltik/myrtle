@@ -11,6 +11,54 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-09-17.title": {
+        text: "Pull planner",
+        description: "Title of the 2026-09-17 release note. 'Pull' is the community's word for a single gacha roll.",
+    },
+    "note.2026-09-17.lead": {
+        text: "The planner's Pulls tab is live. It holds one ledger of your rolls across every upcoming banner, prices each goal against the pity you will actually be carrying when that banner lands, and shows what committing early to one banner costs you at the next. Login, roster and settings fixes from Discord feedback ship alongside it.",
+        description: "Lead paragraph of the 2026-09-17 release note, rendered as Markdown. 'Pity' is the game's guarantee counter that improves the odds as rolls go without a top-rarity result; 'banner' is a time-limited gacha pool.",
+    },
+    "note.2026-09-17.hrefLabel": {
+        text: "Open the pull planner",
+        description: "Label of the 2026-09-17 release note's call to action, which opens the release planner on its Pulls tab.",
+    },
+    "note.2026-09-17.item.1": {
+        text: "Added a pull planner: budget one pool of rolls across upcoming banners and see which goals you can actually afford.",
+        description: "Bullet in the 2026-09-17 release note, filed under 'New'. 'Rolls' and 'banners' are gacha terms.",
+    },
+    "note.2026-09-17.item.2": {
+        text: "Pull odds are computed exactly, and cover every guarantee the game ships: soft and hard pity, rate-up guarantees, and the Limited spark.",
+        description: "Bullet in the 2026-09-17 release note, filed under 'New'. 'Soft pity' is the rising-rate window, 'hard pity' the forced result, and 'spark' the exchange after a set number of rolls on a Limited banner. Keep the game's own terms.",
+    },
+    "note.2026-09-17.item.3": {
+        text: "Rosters can be sorted by investment, scoring each operator against its own ceiling rather than against the roster.",
+        description: "Bullet in the 2026-09-17 release note, filed under 'New'. 'Investment' means how far an operator has been levelled and upgraded.",
+    },
+    "note.2026-09-17.item.4": {
+        text: "Signing in now asks whether to keep your game credentials with a \"Keep me synced\" choice, and declining deletes anything an earlier sign-in stored.",
+        description: "Bullet in the 2026-09-17 release note, filed under 'New'. 'Keep me synced' is the control's own label and should be translated as a label.",
+    },
+    "note.2026-09-17.item.5": {
+        text: "Settings now has a single Account section in place of separate Profile and Account & data panels.",
+        description: "Bullet in the 2026-09-17 release note, filed under 'Improved'. 'Account', 'Profile' and 'Account & data' are settings panel names.",
+    },
+    "note.2026-09-17.item.6": {
+        text: "Planner events read as their in-game names instead of raw tags, a banner matched only by date says so, and the calendar keeps its month header and legend in view while you scroll.",
+        description: "Bullet in the 2026-09-17 release note, filed under 'Improved'.",
+    },
+    "note.2026-09-17.item.7": {
+        text: "First sign-in no longer fails with \"Failed to fetch user data\", and signing in on mobile no longer signs you straight back out.",
+        description: "Bullet in the 2026-09-17 release note, filed under 'Fixed'. The quoted string is an error message the user saw in English; keep it recognisable.",
+    },
+    "note.2026-09-17.item.8": {
+        text: "The roster's view mode and your chosen profile tab stay where you left them.",
+        description: "Bullet in the 2026-09-17 release note, filed under 'Fixed'. 'View mode' is the roster's icons-or-list toggle.",
+    },
+    "note.2026-09-17.item.9": {
+        text: "Removed the leaderboard's Skins sort, which ranked every player at 0.0%.",
+        description: "Bullet in the 2026-09-17 release note, filed under 'Fixed'. 'Skins' are operator outfits.",
+    },
     "note.2026-09-16.title": {
         text: "Release & event planner",
         description: "Title of the 2026-09-16 release note. The planner forecasts when CN content (operators, events, skins) reaches the global server.",

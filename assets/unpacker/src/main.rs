@@ -90,9 +90,26 @@ fn cmd_extract(args: &cli::ExtractArgs) {
         };
         if !idx_path.as_os_str().is_empty() {
             std::fs::create_dir_all(&args.output).unwrap();
+            // Exit status is load-bearing here. run.mjs treats exit 0 as a clean
+            // extract and then runs sweepOrphans, which deletes every file in a
+            // touched subtree that this run did not rewrite. Reporting success
+            // after failing to write N tables is therefore an instruction to
+            // delete those N tables, having just proved the disk cannot be
+            // written. Fail instead: the watcher keeps the old output, records no
+            // new stamp, and arms its backoff.
             match export::gamedata::export_gamedata(&args.input, &idx_path, &args.output) {
-                Ok(count) => println!("Exported {count} gamedata files"),
-                Err(e) => eprintln!("error: {e}"),
+                Ok((count, 0)) => println!("Exported {count} gamedata files"),
+                Ok((count, failed)) => {
+                    eprintln!(
+                        "error: exported {count} gamedata files but {failed} failed to write; \
+                         refusing to report success (the output tree still holds the previous copies)"
+                    );
+                    std::process::exit(1);
+                }
+                Err(e) => {
+                    eprintln!("error: {e}");
+                    std::process::exit(1);
+                }
             }
         }
         if !args.extract_all()

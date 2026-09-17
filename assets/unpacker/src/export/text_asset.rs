@@ -3,9 +3,41 @@ use base64::Engine;
 use cbc::Decryptor;
 use cipher::{BlockDecryptMut, KeyIvInit, block_padding::Pkcs7};
 use serde_json::Value;
-use std::{fs, io, path::Path};
+use std::{
+    fs, io,
+    path::{Path, PathBuf},
+};
 
 type Aes128CbcDec = Decryptor<Aes128>;
+
+/// Write a file so a failed or torn write cannot destroy the previous good copy.
+///
+/// `fs::write` is `File::create` + `write_all`: it TRUNCATES the existing file at
+/// open time and only then starts writing, so an I/O error partway leaves a
+/// zero-length or half-written table where a correct one used to be. That matters
+/// twice over on this deployment. The table is gone, and the watcher's orphan
+/// sweep afterwards judges files by mtime, so the truncated file survives the
+/// sweep while the untouched good files around it are deleted as stale.
+///
+/// Temp-then-rename makes the swap atomic within the directory: a reader sees
+/// either the old file or the complete new one, never a prefix of the new one. It
+/// deliberately does NOT fsync, so a crash can still lose the new contents; the
+/// guarantee is "never torn", not "durable". The temp file is removed on a failed
+/// rename so a stalling disk cannot litter the output tree.
+fn write_atomic(path: &Path, bytes: &[u8]) -> io::Result<()> {
+    let mut tmp_name = path.as_os_str().to_os_string();
+    tmp_name.push(".tmp");
+    let tmp = PathBuf::from(tmp_name);
+    if let Err(e) = fs::write(&tmp, bytes) {
+        let _ = fs::remove_file(&tmp);
+        return Err(e);
+    }
+    if let Err(e) = fs::rename(&tmp, path) {
+        let _ = fs::remove_file(&tmp);
+        return Err(e);
+    }
+    Ok(())
+}
 
 /// Arknights AES-CBC mask (`chat_mask` v2)
 const MASK: &[u8; 32] = b"UITpAi82pHAWwnzqHRMCwPonJLIB3WCl";
@@ -128,7 +160,7 @@ pub fn export_text_asset(
 
     if let Some(json) = try_structured_decode(&raw, decrypted.as_deref(), name) {
         let path = output_dir.join(format!("{name}.json"));
-        fs::write(
+        write_atomic(
             &path,
             serde_json::to_string_pretty(&json).unwrap().as_bytes(),
         )?;
@@ -147,10 +179,10 @@ pub fn export_text_asset(
         } else {
             output_dir.join(format!("{name}.txt"))
         };
-        fs::write(&path, text)?;
+        write_atomic(&path, text.as_bytes())?;
     } else {
         let path = output_dir.join(format!("{name}.bytes"));
-        fs::write(&path, bytes)?;
+        write_atomic(&path, bytes)?;
     }
 
     Ok(())

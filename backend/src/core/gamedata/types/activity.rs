@@ -294,6 +294,26 @@ pub fn farm_stages_by_activity(
 
 pub const FARM_ARCHIVE: &str = "derived/farm-stages.json";
 
+/// Write `bytes` to `path` without ever truncating the existing file in place.
+///
+/// The farm archive is irreplaceable, so a torn write is worse than no write. The
+/// temp file is removed if either step fails, and the caller logs. No fsync: this
+/// guarantees "never a half-written archive", not durability across a crash.
+fn write_atomic_archive(path: &std::path::Path, bytes: &[u8]) -> std::io::Result<()> {
+    let mut tmp_name = path.as_os_str().to_os_string();
+    tmp_name.push(".tmp");
+    let tmp = std::path::PathBuf::from(tmp_name);
+    if let Err(e) = std::fs::write(&tmp, bytes) {
+        let _ = std::fs::remove_file(&tmp);
+        return Err(e);
+    }
+    if let Err(e) = std::fs::rename(&tmp, path) {
+        let _ = std::fs::remove_file(&tmp);
+        return Err(e);
+    }
+    Ok(())
+}
+
 /// The client strips a stage's drop table once its event closes, so the
 /// farming stages seen on any load are kept in `derived/farm-stages.json`
 /// next to the extract and read back for events the current table no
@@ -306,10 +326,39 @@ pub fn merge_farm_archive(
         return live;
     };
     let path = root.join(FARM_ARCHIVE);
-    let mut merged: HashMap<String, Vec<FarmStage>> = std::fs::read_to_string(&path)
-        .ok()
-        .and_then(|raw| serde_json::from_str(&raw).ok())
-        .unwrap_or_default();
+
+    // "No archive yet" and "could not read the archive" are NOT the same thing, and
+    // collapsing them with .ok()/.unwrap_or_default() is what made one failed read
+    // destructive: an empty map means `before` is 0, every live activity counts as
+    // new, and the write below then replaces an archive of closed events with only
+    // the handful currently open. This file is the only copy of drop tables the
+    // client has already stripped, so that loss cannot be re-derived from anywhere.
+    //
+    // On any read or parse failure, keep the file and serve degraded: the caller
+    // gets the live activities alone for this load, and the next successful load
+    // restores the merge.
+    let mut merged: HashMap<String, Vec<FarmStage>> = match std::fs::read_to_string(&path) {
+        Ok(raw) => match serde_json::from_str(&raw) {
+            Ok(parsed) => parsed,
+            Err(e) => {
+                tracing::error!(
+                    path = %path.display(),
+                    error = %e,
+                    "farm archive did not parse; keeping it and serving live activities only"
+                );
+                return live;
+            }
+        },
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => HashMap::new(),
+        Err(e) => {
+            tracing::error!(
+                path = %path.display(),
+                error = %e,
+                "farm archive could not be read; keeping it and serving live activities only"
+            );
+            return live;
+        }
+    };
     let before = merged.len();
     for (act, stages) in live {
         if !stages.is_empty() {
@@ -321,8 +370,20 @@ pub fn merge_farm_archive(
         && let Ok(json) = serde_json::to_string(&merged)
         && let Some(dir) = path.parent()
     {
-        let _ = std::fs::create_dir_all(dir);
-        let _ = std::fs::write(&path, json);
+        // Temp-then-rename, and the result is checked. `std::fs::write` truncates
+        // at open, so a stalled write here leaves a zero-length archive that the
+        // NEXT load reads as "no events" and overwrites again, turning one bad
+        // write into permanent loss. Discarding the error also meant the operator
+        // had no way to know the archive had stopped being written.
+        if let Err(e) = std::fs::create_dir_all(dir)
+            .and_then(|()| write_atomic_archive(&path, json.as_bytes()))
+        {
+            tracing::error!(
+                path = %path.display(),
+                error = %e,
+                "failed to persist the farm archive; the previous copy is intact"
+            );
+        }
     }
     merged
 }
