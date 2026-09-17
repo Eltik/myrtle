@@ -28,7 +28,7 @@ struct GetSecretBody<'a> {
 /// `uid` and `secret` are ONLY present on success. A rejected login answers
 /// `{"result":4}` and nothing else, so requiring them made serde fail first and
 /// the `result` check below unreachable: every game-server rejection surfaced as
-/// `missing field \`uid\``, which named neither the real failure nor its code.
+/// serde's `missing field` error for `uid`, which named neither the real failure nor its code.
 #[derive(Deserialize)]
 #[allow(dead_code)]
 struct GetSecretResponse {
@@ -85,24 +85,18 @@ async fn get_secret(
     match get_secret_once(client, uid, u8_token, server).await {
         Ok(secret) => Ok(secret),
         Err(first) => {
-            let (before_res, before_client) = {
-                let cfg = config().read().await;
-                let v = cfg.version(server);
-                (v.res_version.clone(), v.client_version.clone())
-            };
+            let before = config().read().await.version(server).clone();
             loaders::version::load_version_config(client).await;
-            let (after_res, after_client) = {
-                let cfg = config().read().await;
-                let v = cfg.version(server);
-                (v.res_version.clone(), v.client_version.clone())
-            };
+            let after = config().read().await.version(server).clone();
 
-            if after_res == before_res && after_client == before_client {
+            if after.res_version == before.res_version
+                && after.client_version == before.client_version
+            {
                 tracing::warn!(
                     uid = %uid,
                     server = server.as_str(),
-                    res_version = %after_res,
-                    client_version = %after_client,
+                    res_version = %after.res_version,
+                    client_version = %after.client_version,
                     error = ?first,
                     "game-server login rejected and the version config was already current, so this is not a stale-version failure"
                 );
@@ -112,8 +106,8 @@ async fn get_secret(
             tracing::info!(
                 uid = %uid,
                 server = server.as_str(),
-                from_client_version = %before_client,
-                to_client_version = %after_client,
+                from_client_version = %before.client_version,
+                to_client_version = %after.client_version,
                 "game-server login rejected with a stale version config; refreshed and retrying once"
             );
             get_secret_once(client, uid, u8_token, server).await

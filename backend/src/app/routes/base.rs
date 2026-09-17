@@ -56,7 +56,7 @@ pub async fn evaluate_layout(
 ) -> Result<Json<EvaluateResponse>, ApiError> {
     let uid = resolve_uid(&state, &auth, params.uid.as_deref()).await?;
     let viewer = viewer_id(&state, &auth).await;
-    let _admission = cpu::admit("base_evaluate")?;
+    let _admission = cpu::admit("base_evaluate").await?;
     Ok(Json(evaluate(&state, &uid, viewer, body).await?))
 }
 
@@ -72,7 +72,7 @@ pub async fn optimize_layout(
     // its search with awaited database reads, so it cannot be handed over as an
     // owned closure until it is split into load-then-compute. This caps how
     // many async workers the search can occupy at once.
-    let _admission = cpu::admit("base_optimize")?;
+    let _admission = cpu::admit("base_optimize").await?;
     Ok(Json(optimize(&state, &uid, viewer, body).await?))
 }
 
@@ -110,7 +110,7 @@ pub async fn rotation_plan(
     }
     // After the cache read, so a hit does not consume a permit. Only the miss,
     // which runs the search, is admission-controlled.
-    let _admission = cpu::admit("base_rotation")?;
+    let _admission = cpu::admit("base_rotation").await?;
     let resp = rotation(&state, &uid, viewer, body).await?;
     let json = serde_json::to_string(&resp)
         .map_err(|e| ApiError::Internal(anyhow::anyhow!("serialize rotation: {e}")))?;

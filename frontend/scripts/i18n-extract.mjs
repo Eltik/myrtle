@@ -79,13 +79,30 @@ function scanNodes(src, start, nested, out) {
         const ch = src[i];
 
         if (ch === "'") {
-            // ICU quoting: '{' is a literal brace and declares no argument.
+            // ICU 4.8 "real literal" quoting, matching `format.ts` and the
+            // backend validator:
+            //
+            //   ''            -> a literal apostrophe
+            //   '{ '} '# '|   -> opens a quoted run, closed by the next '
+            //   ' anywhere else -> a plain apostrophe, not a quote
+            //
+            // The last clause is the one this file was missing. Skipping to
+            // the next quote on ANY apostrophe walked straight past the
+            // argument in strings like "Couldn't load permissions for {slug}."
+            // and "You've reached the cap ({max})", so those keys were
+            // published declaring NO placeholders - and the backend then
+            // rejected any translation that kept them, including the English
+            // source pasted verbatim. 14 keys were untranslatable this way.
             if (src[i + 1] === "'") {
                 i += 2;
                 continue;
             }
-            const close = src.indexOf("'", i + 1);
-            i = close === -1 ? src.length : close + 1;
+            if (src[i + 1] === "{" || src[i + 1] === "}" || src[i + 1] === "#" || src[i + 1] === "|") {
+                const close = src.indexOf("'", i + 2);
+                i = close === -1 ? src.length : close + 1;
+                continue;
+            }
+            i += 1;
             continue;
         }
 

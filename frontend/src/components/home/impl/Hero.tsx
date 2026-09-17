@@ -47,7 +47,7 @@ export default function Hero({ onOpenCommand }: { onOpenCommand: () => void }) {
                         </a>
                     </div>
 
-                    <h1 className="m-0 mb-4.5 max-w-[14ch] font-bold font-sans text-[42px] text-foreground leading-[1.04] tracking-[-0.03em] md:text-[62px]">{rt("hero.title", { game: <span className="text-primary [text-shadow:0_0_30px_var(--glow-primary)]">Arknights</span> })}</h1>
+                    <h1 className="m-0 mb-4.5 max-w-[14ch] font-bold font-sans text-[42px] text-foreground leading-[1.04] tracking-[-0.03em] md:text-[62px]">{rt("hero.title", { game: <span className="text-primary [text-shadow:0_0_30px_var(--glow-primary)]">{t("hero.game")}</span> })}</h1>
 
                     <p className="m-0 mb-7 flex max-w-[48ch] flex-wrap items-center gap-1 font-sans text-[17px] text-muted-foreground leading-[1.55]">
                         {t("hero.blurb")}

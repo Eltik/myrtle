@@ -15,7 +15,7 @@ const RETRY: Duration = Duration::from_hours(1);
 /// 62.531 ms over 619,706 rows, so the worst case of 1,440 passes a day is 90
 /// seconds of database time. At ten times the data that is 900 seconds a day
 /// and still comfortable; widen this when it stops being.
-const TICK: Duration = Duration::from_secs(60);
+const TICK: Duration = Duration::from_mins(1);
 
 /// How long to wait before the first refresh, derived from the persisted time
 /// so a restart soon after a refresh does not recompute. Consulted only at

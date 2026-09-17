@@ -339,6 +339,14 @@ pub async fn refresh(
         .cache
         .invalidate(&crate::app::cache::keys::CacheKey::User { uid: user_id })
         .await;
+    // Improvements bodies are keyed on this user's sync generation, so the sync
+    // that just happened already lands on a new key and cannot serve a stale
+    // body. This clears the superseded ones rather than leaving them to age out,
+    // which matters because they run to hundreds of kilobytes each.
+    state
+        .cache
+        .invalidate_by_prefix(&format!("improvements:{user_id}:"))
+        .await;
 
     Ok(raw)
 }

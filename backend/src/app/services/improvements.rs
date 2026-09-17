@@ -5,6 +5,9 @@ use sqlx::PgPool;
 use ts_rs::TS;
 use uuid::Uuid;
 
+use crate::app::cache::keys::CacheKey;
+use crate::app::cache::{CachedJson, cached_json};
+use crate::app::cpu;
 use crate::app::error::ApiError;
 use crate::app::services::roster::is_medal_earned;
 use crate::app::state::AppState;
@@ -737,13 +740,39 @@ pub struct RoomLayoutEntry {
     pub levels: Vec<i32>,
 }
 
-pub async fn get_improvements(
-    state: &AppState,
-    uid: &str,
-) -> Result<ImprovementsResponse, ApiError> {
+/// Serve one user's improvements, memoised on the sync generation.
+///
+/// The user row is fetched here rather than inside the builder so the key can be
+/// derived before any of the expensive work: `users.updated_at` moves on every
+/// sync, so a rebuilt roster lands on a new key and the previous body simply ages
+/// out. The body is cached PRE-SERIALIZED with its `ETag`, because it runs to
+/// hundreds of kilobytes on a large account and a hit should neither re-serialize
+/// it nor re-hash it, and an `If-None-Match` revalidation can then answer 304
+/// without sending it at all.
+///
+/// Access control is NOT here. The handler gates on the target's `public_profile`
+/// ahead of this call, which is what keeps a cache hit from leaking a private
+/// profile.
+pub async fn get_improvements(state: &AppState, uid: &str) -> Result<CachedJson, ApiError> {
     let user = find_by_uid(&state.db, uid)
         .await?
         .ok_or(ApiError::NotFound)?;
+    let key = CacheKey::UserImprovements {
+        uid,
+        version: user.updated_at.timestamp_millis(),
+    };
+    cached_json(state, &key, || async move {
+        let body = build_improvements(state, user).await?;
+        serde_json::to_string(&body)
+            .map_err(|e| ApiError::Internal(anyhow::anyhow!("improvements serialize: {e}")))
+    })
+    .await
+}
+
+async fn build_improvements(
+    state: &AppState,
+    user: crate::database::models::user::UserProfile,
+) -> Result<ImprovementsResponse, ApiError> {
     let user_id = user.id;
     let game_data = state.default_game_data();
 
@@ -754,19 +783,47 @@ pub async fn get_improvements(
     let support_ids: HashSet<&str> = supports.iter().map(|s| s.operator_id.as_str()).collect();
     let owned_operators: HashSet<&str> = roster.iter().map(|e| e.operator_id.as_str()).collect();
 
-    let stages = build_stage_improvements(&state.db, user_id, &game_data).await?;
-    let roguelike = build_roguelike_improvements(&state.db, user_id, &game_data).await?;
-    let sandbox = build_sandbox_improvements(&state.db, user_id, &game_data).await?;
-    let medals = build_medal_improvements(
-        &state.db,
-        user_id,
-        &user.server,
-        &game_data,
-        &owned_operators,
-    )
-    .await?;
-    let operators = build_operator_improvements(&roster, &game_data, &support_ids);
-    let base = build_base_improvements(&state.db, user_id, &roster, &game_data).await?;
+    // Concurrently, not one after another. None of these five consumes another's
+    // output: three need only the pool and the user id, medals needs
+    // `owned_operators` and base needs `roster`, both already in hand. Run
+    // sequentially they cost five database round-trips end to end, which was the
+    // bulk of this endpoint's latency and the reason a CPU permit was held for
+    // whole seconds while the CPU did nothing. The pattern is the one used for
+    // roster and supports a few lines above.
+    //
+    // The TRADE: an in-flight request now holds up to five pool connections at
+    // once instead of one, so the pool (40 by default) is what bounds concurrency
+    // here rather than the CPU semaphore. That is the right place for the limit,
+    // because the work really is database-bound, but it does mean roughly eight
+    // simultaneous callers can saturate the pool, after which `acquire` sheds at
+    // its 5 second timeout. Raise DATABASE_MAX_CONNECTIONS if that shows up,
+    // remembering Postgres's own max_connections has to exceed it.
+    let (stages, roguelike, sandbox, medals, base) = tokio::try_join!(
+        build_stage_improvements(&state.db, user_id, &game_data),
+        build_roguelike_improvements(&state.db, user_id, &game_data),
+        build_sandbox_improvements(&state.db, user_id, &game_data),
+        build_medal_improvements(
+            &state.db,
+            user_id,
+            &user.server,
+            &game_data,
+            &owned_operators,
+        ),
+        build_base_improvements(&state.db, user_id, &roster, &game_data),
+    )?;
+
+    // The permit covers ONLY this line, which is the only synchronous work in the
+    // function: one pass over the roster doing table lookups and arithmetic.
+    // Previously the whole handler ran under a permit, so a permit was occupied
+    // for the length of five database round-trips with the CPU idle, and two
+    // permits therefore capped the endpoint at two concurrent callers for a
+    // reason that was mostly not CPU. Held this tightly, the queue in `cpu`
+    // should essentially never engage for this route, and remains a real floor
+    // under the base optimizer and DPS, which it was written for.
+    let operators = {
+        let _admission = cpu::admit("user_improvements").await?;
+        build_operator_improvements(&roster, &game_data, &support_ids)
+    };
 
     Ok(ImprovementsResponse {
         uid: user.uid,

@@ -214,7 +214,14 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server, res_version
             }
 
             if is_default {
-                state.cache.invalidate_by_prefix("dps:list:").await;
+                // The whole `dps:` subtree, not just the list: memoised
+                // simulations are keyed on the request body alone, so a game data
+                // reload is the only thing that can make one wrong.
+                state.cache.invalidate_by_prefix("dps:").await;
+                // Improvements is built against `default_game_data()`, so a
+                // default-server reload can change which events are open and which
+                // medals are still earnable under an unchanged sync generation.
+                state.cache.invalidate_by_prefix("improvements:").await;
                 reload(&http_client).await;
 
                 let state = state.clone();

@@ -375,8 +375,8 @@ pub fn merge_farm_archive(
         // NEXT load reads as "no events" and overwrites again, turning one bad
         // write into permanent loss. Discarding the error also meant the operator
         // had no way to know the archive had stopped being written.
-        if let Err(e) = std::fs::create_dir_all(dir)
-            .and_then(|()| write_atomic_archive(&path, json.as_bytes()))
+        if let Err(e) =
+            std::fs::create_dir_all(dir).and_then(|()| write_atomic_archive(&path, json.as_bytes()))
         {
             tracing::error!(
                 path = %path.display(),

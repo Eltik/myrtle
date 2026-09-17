@@ -241,14 +241,55 @@ pub async fn writable_locales(state: &AppState, auth: &AuthUser) -> Result<Vec<S
 
 // ---------------------------------------------------------------- validation
 
-/// Collect the placeholder names a message references: the identifier after
-/// every `{`. This covers plain `{name}` and the ICU forms
-/// (`{count, plural, ...}`, `{gender, select, ...}`) alike, because in both the
-/// argument name is the first token inside the brace.
+/// Collect the placeholder names a message references.
+///
+/// This has to be structural rather than a brace scan. In ICU the braces
+/// inside a `plural`/`select` argument delimit BRANCH BODIES, and a branch
+/// body is a message, not an argument: in
+/// `{count, plural, one {tier} other {tiers}}` the only placeholder is
+/// `count`, while `tier` and `tiers` are literal text.
+///
+/// Reading the first token after every `{` collected those too, so a message
+/// whose branch body opens with a word was rejected against its own declared
+/// placeholders - 42 catalogue entries could not be translated at all,
+/// because even pasting the English source verbatim came back as "unknown
+/// placeholder(s)". The old scan tracked brace depth but never consulted it,
+/// which is what hid this: `{# operator}` is fine, `{tier}` is not, and every
+/// test case happened to start with `#`.
+///
+/// Mirrors the parse `format.ts` performs on the client, so the validator and
+/// the renderer agree about what a message references.
 fn referenced_placeholders(message: &str) -> Result<HashSet<String>, String> {
-    let mut found = HashSet::new();
-    let mut depth = 0i32;
+    /// What the next `{` opens.
+    enum Ctx {
+        /// Inside a message: `{` opens an argument.
+        Message,
+        /// Inside a `plural`/`select` argument's branch list: `{` opens a
+        /// branch body, and the token before it is a branch key (`one`, `=0`,
+        /// `other`) rather than a placeholder.
+        Branches,
+    }
+
+    /// Argument types whose body is a branch list instead of a format style.
+    const SELECTORS: [&str; 3] = ["plural", "selectordinal", "select"];
+
+    const fn skip_ws(chars: &[char], mut j: usize) -> usize {
+        while j < chars.len() && chars[j].is_whitespace() {
+            j += 1;
+        }
+        j
+    }
+
+    fn ident_end(chars: &[char], mut j: usize) -> usize {
+        while j < chars.len() && (chars[j].is_alphanumeric() || chars[j] == '_') {
+            j += 1;
+        }
+        j
+    }
+
     let chars: Vec<char> = message.chars().collect();
+    let mut found = HashSet::new();
+    let mut stack = vec![Ctx::Message];
     let mut i = 0;
 
     while i < chars.len() {
@@ -275,23 +316,41 @@ fn referenced_placeholders(message: &str) -> Result<HashSet<String>, String> {
                 }
             }
             '{' => {
-                depth += 1;
-                let mut j = i + 1;
-                while j < chars.len() && chars[j].is_whitespace() {
-                    j += 1;
+                if matches!(stack.last(), Some(Ctx::Branches)) {
+                    stack.push(Ctx::Message);
+                } else {
+                    let start = skip_ws(&chars, i + 1);
+                    let end = ident_end(&chars, start);
+                    if end > start {
+                        found.insert(chars[start..end].iter().collect::<String>());
+                    }
+
+                    let after = skip_ws(&chars, end);
+                    if chars.get(after) == Some(&',') {
+                        let kind_start = skip_ws(&chars, after + 1);
+                        let mut kind_end = kind_start;
+                        while kind_end < chars.len() && chars[kind_end].is_alphabetic() {
+                            kind_end += 1;
+                        }
+                        let kind: String = chars[kind_start..kind_end].iter().collect();
+                        if SELECTORS.contains(&kind.as_str()) {
+                            stack.push(Ctx::Branches);
+                            i = kind_end;
+                            continue;
+                        }
+                    }
+
+                    // A plain `{name}`, or a formatted argument such as
+                    // `{n, number}` / `{ts, date, short}`. Neither holds a
+                    // nested brace, so it closes at the next `}`.
+                    stack.push(Ctx::Message);
+                    i = end;
+                    continue;
                 }
-                let start = j;
-                while j < chars.len() && (chars[j].is_alphanumeric() || chars[j] == '_') {
-                    j += 1;
-                }
-                if j > start {
-                    found.insert(chars[start..j].iter().collect::<String>());
-                }
-                i = j.saturating_sub(1);
             }
             '}' => {
-                depth -= 1;
-                if depth < 0 {
+                stack.pop();
+                if stack.is_empty() {
                     return Err("unbalanced '}' in message".to_owned());
                 }
             }
@@ -300,7 +359,7 @@ fn referenced_placeholders(message: &str) -> Result<HashSet<String>, String> {
         i += 1;
     }
 
-    if depth != 0 {
+    if stack.len() != 1 {
         return Err("unbalanced '{' in message".to_owned());
     }
     Ok(found)
@@ -811,6 +870,83 @@ mod tests {
     fn accepts_a_translation_using_exactly_the_declared_placeholders() {
         assert!(validate_message("{count} operators", &declared(&["count"])).is_ok());
         assert!(validate_message("No operators", &declared(&[])).is_ok());
+    }
+
+    /// The regression that made 42 catalogue entries untranslatable: a branch
+    /// body opening with a word was read as a placeholder, so the English
+    /// source failed validation against its own declared placeholders.
+    #[test]
+    fn a_branch_body_is_text_not_a_placeholder() {
+        let found =
+            referenced_placeholders("+ {names}{extra} {count, plural, one {tier} other {tiers}}")
+                .expect("balanced");
+        assert_eq!(
+            found,
+            ["names", "extra", "count"]
+                .iter()
+                .map(|s| (*s).to_owned())
+                .collect::<HashSet<String>>()
+        );
+
+        // The shape that reported it, end to end: pasting the source verbatim
+        // has to validate against the source's own declaration.
+        assert!(
+            validate_message(
+                "+ {names}{extra} {count, plural, one {tier} other {tiers}}",
+                &declared(&["count", "extra", "names"]),
+            )
+            .is_ok()
+        );
+    }
+
+    #[test]
+    fn branch_bodies_of_every_selector_are_text() {
+        for message in [
+            "{count, plural, one {Delete plan?} other {Delete # plans?}}",
+            "{names} and {count, plural, one {its} other {their}} goals are removed.",
+            "{scale, select, day {Previous day} week {Previous week} other {Previous month}}",
+            "{count, plural, =0 {None} one {# copy} other {# copies}}",
+            "{noun, select, healer {Add a healer} other {Add an operator}}",
+            "{n, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+        ] {
+            let found = referenced_placeholders(message).expect("balanced");
+            for phantom in [
+                "Delete", "its", "their", "Previous", "None", "Add", "day", "week",
+            ] {
+                assert!(
+                    !found.contains(phantom),
+                    "{message:?} leaked branch text {phantom:?}"
+                );
+            }
+        }
+    }
+
+    /// A nested argument inside a branch body is still an argument - the fix
+    /// must not skip those.
+    #[test]
+    fn a_nested_argument_inside_a_branch_is_still_collected() {
+        let found = referenced_placeholders(
+            "{count, plural, one {# of {total}} other {# of {total}, {extra}}}",
+        )
+        .expect("balanced");
+        assert!(found.contains("count"));
+        assert!(found.contains("total"));
+        assert!(found.contains("extra"));
+    }
+
+    /// A format style is not a branch list, so its argument name still counts
+    /// and its style tokens are not placeholders.
+    #[test]
+    fn formatted_arguments_keep_their_name_only() {
+        for (message, name) in [
+            ("{n, number}", "n"),
+            ("{ts, date, short}", "ts"),
+            ("{ts, time}", "ts"),
+        ] {
+            let found = referenced_placeholders(message).expect("balanced");
+            assert_eq!(found.len(), 1, "{message:?}");
+            assert!(found.contains(name), "{message:?}");
+        }
     }
 
     #[test]

@@ -9,7 +9,11 @@ export const messages = {
     },
     "hero.title": {
         text: "The {game} companion.",
-        description: "Hero headline. {game} is the styled game name 'Arknights', which is never translated; move it wherever the sentence needs it.",
+        description: "Hero headline. {game} is the game's title from `hero.game`, rendered in the accent colour; move it wherever the sentence needs it, and translate the title itself under that key rather than here.",
+    },
+    "hero.game": {
+        text: "Arknights",
+        description: "The game's own title, shown inside the hero headline in the accent colour. Use the name the game is published under in this language - 明日方舟 in Chinese, アークナイツ in Japanese, 명일방주 in Korean - or leave it as 'Arknights' where players use the English title.",
     },
     "hero.blurb": {
         text: "400+ operators, complete stats, community tier lists, and live roster sync.",

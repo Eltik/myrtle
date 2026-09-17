@@ -162,7 +162,7 @@ pub async fn list_healers_json(state: &AppState) -> Result<CachedJson, ApiError>
     list_json(state, "healers", supported_healers()).await
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RequestConditionals {
     pub trait_damage: Option<bool>,
@@ -172,7 +172,7 @@ pub struct RequestConditionals {
     pub module_damage: Option<bool>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CalculateRequest {
     pub operator_id: String,
@@ -201,7 +201,7 @@ pub struct CalculateRequest {
     pub all_cond: Option<bool>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RequestBuffs {
     pub atk: Option<f32>,
@@ -210,7 +210,7 @@ pub struct RequestBuffs {
     pub fragile: Option<f32>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RequestShred {
     pub def: Option<i32>,

@@ -47,7 +47,7 @@ const DEFAULT_SESSION_DIR: &str = "game_sessions";
 const DEFAULT_SECRET_MAX_AGE_SECS: u64 = 30 * 60;
 /// `account/syncData` returns the whole player, megabytes for a developed
 /// account, and the CN hosts are far from most boxes.
-const SYNC_TIMEOUT: Duration = Duration::from_secs(60);
+const SYNC_TIMEOUT: Duration = Duration::from_mins(1);
 
 fn secret_max_age() -> Duration {
     Duration::from_secs(

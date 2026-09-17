@@ -36,7 +36,7 @@ export const messages = {
         description: "Bullet in the 2026-09-17 release note, filed under 'New'. 'Investment' means how far an operator has been levelled and upgraded.",
     },
     "note.2026-09-17.item.4": {
-        text: "Signing in now asks whether to keep your game credentials with a \"Keep me synced\" choice, and declining deletes anything an earlier sign-in stored.",
+        text: 'Signing in now asks whether to keep your game credentials with a "Keep me synced" choice, and declining deletes anything an earlier sign-in stored.',
         description: "Bullet in the 2026-09-17 release note, filed under 'New'. 'Keep me synced' is the control's own label and should be translated as a label.",
     },
     "note.2026-09-17.item.5": {
@@ -48,7 +48,7 @@ export const messages = {
         description: "Bullet in the 2026-09-17 release note, filed under 'Improved'.",
     },
     "note.2026-09-17.item.7": {
-        text: "First sign-in no longer fails with \"Failed to fetch user data\", and signing in on mobile no longer signs you straight back out.",
+        text: 'First sign-in no longer fails with "Failed to fetch user data", and signing in on mobile no longer signs you straight back out.',
         description: "Bullet in the 2026-09-17 release note, filed under 'Fixed'. The quoted string is an error message the user saw in English; keep it recognisable.",
     },
     "note.2026-09-17.item.8": {

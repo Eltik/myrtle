@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-17T07:33:04.901Z",
+    "generatedAt": "2026-09-17T08:53:48.587Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -3048,7 +3048,9 @@
             "namespace": "admin",
             "source_text": "Couldn't load permissions for {slug}.",
             "description": "Error line in the detail pane. {slug} is the tier list's URL name, shown in monospace.",
-            "placeholders": []
+            "placeholders": [
+                "slug"
+            ]
         },
         {
             "key": "admin.perms.menu.changeFlair",
@@ -4818,7 +4820,9 @@
             "namespace": "common",
             "source_text": "You're not allowed to do that ({status}). If you were signed in, your session may have expired.",
             "description": "Error toast body when the server rejected the request as unauthorized or forbidden (HTTP 401 or 403). {status} is the number.",
-            "placeholders": []
+            "placeholders": [
+                "status"
+            ]
         },
         {
             "key": "common.errorMessage.unavailable",
@@ -4848,7 +4852,9 @@
             "namespace": "common",
             "source_text": "The server couldn't be reached ({code}). It may be down or restarting; try again in a minute.",
             "description": "Same as errorMessage.unreachable, with the low-level network code in parentheses. {code} is a technical identifier such as ECONNREFUSED and stays as-is.",
-            "placeholders": []
+            "placeholders": [
+                "code"
+            ]
         },
         {
             "key": "common.footer.builtOn",
@@ -6114,7 +6120,9 @@
             "source_text": "This enemy transforms across {forms} forms in-fight, but Hypergryph's data ships {count, plural, one {a single stat block} other {# stat blocks}}. Subsequent forms modify behavior through skill triggers rather than swapping the base HP/ATK/DEF - see {traits} for the form descriptions.",
             "description": "Note explaining why an enemy with several narrative forms has fewer stat blocks. {forms} is the bold form count and {traits} the bold pointer labelled by stats.forms.note.traits; both may move wherever the sentence needs them. 'Hypergryph' is the game's developer; keep the name.",
             "placeholders": [
-                "forms"
+                "count",
+                "forms",
+                "traits"
             ]
         },
         {
@@ -7907,6 +7915,13 @@
             "placeholders": []
         },
         {
+            "key": "home.hero.game",
+            "namespace": "home",
+            "source_text": "Arknights",
+            "description": "The game's own title, shown inside the hero headline in the accent colour. Use the name the game is published under in this language - 明日方舟 in Chinese, アークナイツ in Japanese, 명일방주 in Korean - or leave it as 'Arknights' where players use the English title.",
+            "placeholders": []
+        },
+        {
             "key": "home.hero.hint",
             "namespace": "home",
             "source_text": "Hit {keys} to jump anywhere.",
@@ -7961,7 +7976,7 @@
             "key": "home.hero.title",
             "namespace": "home",
             "source_text": "The {game} companion.",
-            "description": "Hero headline. {game} is the styled game name 'Arknights', which is never translated; move it wherever the sentence needs it.",
+            "description": "Hero headline. {game} is the game's title from `hero.game`, rendered in the accent colour; move it wherever the sentence needs it, and translate the title itself under that key rather than here.",
             "placeholders": [
                 "game"
             ]
@@ -14866,7 +14881,9 @@
             "namespace": "settings",
             "source_text": "Self-serve deletion isn't exposed via the API yet. Email {email} from the address linked to your Yostar account and we'll process it within 30 days, per the privacy policy.",
             "description": "Note under the deletion button. {email} is the deletion address, shown in monospace; move it wherever the sentence needs it.",
-            "placeholders": []
+            "placeholders": [
+                "email"
+            ]
         },
         {
             "key": "settings.danger.delete.noteEmail",
@@ -20079,7 +20096,9 @@
             "namespace": "tierLists",
             "source_text": "You've reached the community list cap ({max})",
             "description": "Tooltip on the disabled create button, saying how many community lists one player may keep.",
-            "placeholders": []
+            "placeholders": [
+                "max"
+            ]
         },
         {
             "key": "tierLists.my.hero.stat.favorites",
@@ -21794,7 +21813,9 @@
             "namespace": "tools",
             "source_text": "Couldn't export chart: {error}",
             "description": "Browser alert when saving the chart image failed. {error} is the underlying message and is not translated.",
-            "placeholders": []
+            "placeholders": [
+                "error"
+            ]
         },
         {
             "key": "tools.dps.export.moduleSummary",
@@ -22338,7 +22359,9 @@
             "namespace": "tools",
             "source_text": "Couldn't export chart: {error}",
             "description": "Browser alert when saving the chart image failed. {error} is the underlying message and is not translated.",
-            "placeholders": []
+            "placeholders": [
+                "error"
+            ]
         },
         {
             "key": "tools.hps.export.moduleSummary",
@@ -26552,7 +26575,9 @@
             "namespace": "tools",
             "source_text": "use my account's {count}",
             "description": "Link that replaces a hand-typed balance with the one from the player's account.",
-            "placeholders": []
+            "placeholders": [
+                "count"
+            ]
         },
         {
             "key": "tools.release.popup.close",
@@ -28026,7 +28051,10 @@
             "namespace": "tools",
             "source_text": "A Fashion Review puts every 18-prime brand outfit that is at least two years old back on sale for four weeks; each edition keeps the last one's stock and adds the outfits that came of age since{cadence}{latest}. EN follows each one about six months later; an unmatched CN listing takes the lag estimate.",
             "description": "The Fashion Review explanation. {cadence} and {latest} are the optional clauses release.skins.reviews.intro.cadence and .latest, each empty when the figure is unknown; both may move wherever the sentence needs them. '18-prime' is the price in Originite Prime; 'brand' is the game's own grouping of outfits.",
-            "placeholders": []
+            "placeholders": [
+                "cadence",
+                "latest"
+            ]
         },
         {
             "key": "tools.release.skins.reviews.intro.cadence",
@@ -32778,7 +32806,8 @@
             "source_text": "{cardDays} of this month's {claimed} claims came with the monthly card",
             "description": "Tooltip on the days-behind row. The 'monthly card' is the game's paid subscription item.",
             "placeholders": [
-                "cardDays"
+                "cardDays",
+                "claimed"
             ]
         },
         {
@@ -33567,6 +33596,8 @@
             "source_text": "{label}: worth {share}% of this section. You've completed {completion}% of that, earning {earned}%.",
             "description": "Native tooltip on one investment-axis row, for an axis with no explanatory line.",
             "placeholders": [
+                "completion",
+                "earned",
                 "label",
                 "share"
             ]
@@ -33577,7 +33608,9 @@
             "source_text": "{label} - {detail}: worth {share}% of this section. You've completed {completion}% of that, earning {earned}%.",
             "description": "Native tooltip on one investment-axis row. {detail} is the axis's lowercase explanation.",
             "placeholders": [
+                "completion",
                 "detail",
+                "earned",
                 "label",
                 "share"
             ]
@@ -33630,7 +33663,9 @@
             "source_text": "The header's {gain} is what finishing every upgrade here would add to your headline score. The per-tag, per-rarity, and per-operator figures below are {unit} (the percentage shown at the top of the card) - there's +{room}% of room left here to climb toward 100%. ELITE includes a full re-level at the new phase, so it overlaps MAX_LEVEL; the per-op total deduplicates the pair.",
             "description": "Footnote under the operator list, explaining the units. {gain} is the highlighted figure quoted back from the heading (score.improvements.operator.footnote.headerGain) and {unit} the highlighted unit (score.improvements.operator.footnote.sectionUnit); both may move. ELITE and MAX_LEVEL are raw API tag codes and stay as-is; 'per-op' is short for per-operator.",
             "placeholders": [
-                "room"
+                "gain",
+                "room",
+                "unit"
             ]
         },
         {

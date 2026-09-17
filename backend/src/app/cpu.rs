@@ -14,12 +14,22 @@
 //!   many async workers such a service can occupy at once. Splitting a service
 //!   into load-then-compute is what lets it move to [`run`].
 //!
-//! Both shed rather than queue: over the limit is an immediate 503, not a
-//! backlog of requests whose callers have already given up.
+//! Over the limit, a request WAITS a bounded time for a permit and is refused
+//! only if none frees up, or if too many are already waiting. Refusing instantly
+//! was the previous behaviour and it is wrong for a user-facing page: on a 3 core
+//! box the permit formula below yields ONE, so a second reader of
+//! `/api/user/improvements` got a 503 while the first was still computing. A
+//! reader will happily wait a few hundred milliseconds; they will not accept an
+//! error. The queue is bounded in both directions, by time and by depth, so this
+//! is still shedding rather than an unbounded backlog of callers who have gone
+//! away. Waiting on a semaphore yields, so a waiter does not hold an async
+//! worker; it holds its connection and its request state, which is what the
+//! depth cap protects.
 
 use std::num::NonZero;
 use std::sync::LazyLock;
-use std::time::Instant;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::{Duration, Instant};
 
 use tokio::sync::{Semaphore, SemaphorePermit};
 
@@ -43,28 +53,119 @@ static PERMITS: LazyLock<usize> = LazyLock::new(|| {
 
 static CPU: LazyLock<Semaphore> = LazyLock::new(|| Semaphore::new(*PERMITS));
 
+/// How long a request may wait for a permit before it is refused.
+///
+/// Sized against how long the work actually takes: `/admin/stats` reports
+/// `sum_micros` and `started` per kind, and their quotient is the mean hold time.
+/// The wait wants to be a small multiple of that, so a burst drains instead of
+/// shedding, while a genuinely saturated box still sheds rather than queueing
+/// past the 30s handler timeout in `middleware`.
+///
+/// `CPU_TASK_WAIT_MS=0` restores the previous behaviour EXACTLY: no wait, refuse
+/// the moment no permit is free.
+static WAIT: LazyLock<Duration> = LazyLock::new(|| {
+    let ms = std::env::var("CPU_TASK_WAIT_MS")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok())
+        .unwrap_or(2_500);
+    Duration::from_millis(ms)
+});
+
+/// How many requests may be waiting for a permit at once.
+///
+/// Without a ceiling, a slow spell converts into a queue that grows for as long
+/// as traffic arrives, every entry holding a connection and its request state,
+/// and the whole queue then times out together. Eight per permit is a TRADE, not
+/// a derived number: deep enough to absorb the bursts this endpoint actually
+/// sees, shallow enough that the memory is bounded and the tail waiter still has
+/// a realistic chance of being served inside WAIT.
+static QUEUE_DEPTH: LazyLock<usize> = LazyLock::new(|| {
+    std::env::var("CPU_TASK_QUEUE")
+        .ok()
+        .and_then(|v| v.parse::<usize>().ok())
+        .unwrap_or_else(|| *PERMITS * 8)
+});
+
+/// Requests currently waiting for a permit.
+static WAITING: AtomicUsize = AtomicUsize::new(0);
+
+/// Keeps `WAITING` honest when a waiter goes away.
+///
+/// Axum drops the handler future when the client disconnects or the handler
+/// timeout fires, so a plain decrement after the await would be skipped on
+/// exactly the paths that matter, and the counter would climb until the depth
+/// cap refused everything forever.
+struct Waiter;
+
+impl Drop for Waiter {
+    fn drop(&mut self) {
+        WAITING.fetch_sub(1, Ordering::Relaxed);
+    }
+}
+
+/// How many requests are waiting for a CPU permit right now.
+pub fn waiting() -> usize {
+    WAITING.load(Ordering::Relaxed)
+}
+
+/// The bounded wait, in milliseconds, this process will spend on a permit.
+pub fn wait_ms() -> u64 {
+    WAIT.as_millis() as u64
+}
+
 /// How many concurrent CPU-bound requests this process admits.
 pub fn permits() -> usize {
     *PERMITS
 }
 
-/// Take a permit or refuse the request outright.
-fn acquire(kind: &'static str) -> Result<SemaphorePermit<'static>, ApiError> {
-    CPU.try_acquire().map_or_else(
-        |_| {
-            METRICS.cpu_rejected(kind);
-            tracing::warn!(
-                kind,
-                permits = *PERMITS,
-                "CPU admission refused; shedding request"
-            );
-            Err(ApiError::ServiceUnavailable)
-        },
-        |permit| {
+/// Refuse one request, with the reason, and account for it.
+fn refuse(kind: &'static str, why: &'static str) -> ApiError {
+    METRICS.cpu_rejected(kind);
+    tracing::warn!(
+        kind,
+        why,
+        permits = *PERMITS,
+        waiting = waiting(),
+        wait_ms = wait_ms(),
+        "CPU admission refused; shedding request"
+    );
+    ApiError::ServiceUnavailable
+}
+
+/// Take a permit, waiting a bounded time for one, or refuse.
+///
+/// Three outcomes, in order of how common they should be: a permit is free and
+/// the caller proceeds immediately; none is free so the caller queues and is
+/// served when one returns; or the box is saturated, by depth or by time, and
+/// the caller is refused. Tokio's semaphore is FIFO, so waiters are served in
+/// arrival order and a steady stream of new requests cannot starve one that has
+/// been waiting.
+async fn acquire(kind: &'static str) -> Result<SemaphorePermit<'static>, ApiError> {
+    if let Ok(permit) = CPU.try_acquire() {
+        METRICS.cpu_started(kind);
+        return Ok(permit);
+    }
+
+    if WAIT.is_zero() {
+        return Err(refuse(kind, "no permit free and waiting is disabled"));
+    }
+
+    // Counted BEFORE the check so two racing arrivals cannot both see room for
+    // one slot, and dropped by the guard on every exit including cancellation.
+    let depth = WAITING.fetch_add(1, Ordering::Relaxed) + 1;
+    let _waiter = Waiter;
+    if depth > *QUEUE_DEPTH {
+        return Err(refuse(kind, "wait queue is full"));
+    }
+
+    match tokio::time::timeout(*WAIT, CPU.acquire()).await {
+        Ok(Ok(permit)) => {
             METRICS.cpu_started(kind);
             Ok(permit)
-        },
-    )
+        }
+        Ok(Err(_)) => Err(refuse(kind, "permit pool closed")),
+        Err(_) => Err(refuse(kind, "timed out waiting for a permit")),
+    }
 }
 
 /// Run synchronous CPU-bound work on the blocking pool, under admission
@@ -75,7 +176,7 @@ where
     F: FnOnce() -> T + Send + 'static,
     T: Send + 'static,
 {
-    let permit = acquire(kind)?;
+    let permit = acquire(kind).await?;
     let started = Instant::now();
 
     let outcome = tokio::task::spawn_blocking(work).await;
@@ -107,17 +208,19 @@ impl Drop for Admission {
 
 /// Bound the concurrency of an async service that computes on the async worker.
 /// Hold the returned guard for as long as the work runs.
-pub fn admit(kind: &'static str) -> Result<Admission, ApiError> {
+pub async fn admit(kind: &'static str) -> Result<Admission, ApiError> {
+    let permit = acquire(kind).await?;
     Ok(Admission {
         kind,
         started: Instant::now(),
-        _permit: acquire(kind)?,
+        _permit: permit,
     })
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{admit, permits, run};
+    use super::{admit, permits, run, waiting};
+    use std::time::Duration;
 
     /// The pool is one process-wide semaphore and the test harness runs tests
     /// on parallel threads, so two tests that take permits at once see each
@@ -142,17 +245,60 @@ mod tests {
         }
     }
 
+    /// The behaviour this module exists to provide now: over the limit, a caller
+    /// WAITS and is served when a permit comes back, rather than taking a 503
+    /// while the box still has work capacity a moment later.
     #[tokio::test]
-    async fn saturation_sheds_instead_of_queueing() {
+    async fn a_waiter_is_served_when_a_permit_returns() {
         let _pool = POOL.lock().await;
-        let held: Vec<_> = (0..permits())
-            .map(|_| admit("test").expect("under the limit"))
-            .collect();
-        assert!(
-            admit("test").is_err(),
-            "over the limit must refuse, not block"
-        );
+        let mut held = Vec::new();
+        for _ in 0..permits() {
+            held.push(admit("test").await.expect("under the limit"));
+        }
+
+        let queued = tokio::spawn(async { admit("test").await.map(|a| drop(a)) });
+        // Let it reach the wait before anything is released, so this proves the
+        // permit was handed over rather than taken on the fast path.
+        tokio::time::sleep(Duration::from_millis(50)).await;
+        assert_eq!(waiting(), 1, "the caller should be queued, not refused");
+
         drop(held);
-        assert!(admit("test").is_ok(), "permits return when guards drop");
+        assert!(
+            queued.await.expect("task joined").is_ok(),
+            "a queued caller must be served once a permit frees"
+        );
+        assert_eq!(waiting(), 0, "the queue must drain");
+    }
+
+    /// Axum drops the handler future on client disconnect and on the handler
+    /// timeout, which is exactly when a decrement placed after the await would be
+    /// skipped. A leaked count is permanent: it climbs until the depth cap
+    /// refuses every request forever, so this guards the `Waiter` Drop impl.
+    #[tokio::test]
+    async fn the_waiting_count_survives_a_cancelled_waiter() {
+        let _pool = POOL.lock().await;
+        let mut held = Vec::new();
+        for _ in 0..permits() {
+            held.push(admit("test").await.expect("under the limit"));
+        }
+
+        let abandoned = tokio::spawn(async { admit("test").await.map(|a| drop(a)) });
+        tokio::time::sleep(Duration::from_millis(50)).await;
+        assert_eq!(waiting(), 1);
+
+        abandoned.abort();
+        let _ = abandoned.await;
+        tokio::time::sleep(Duration::from_millis(50)).await;
+        assert_eq!(
+            waiting(),
+            0,
+            "a cancelled waiter must release its slot, or the cap wedges shut"
+        );
+
+        drop(held);
+        assert!(
+            admit("test").await.is_ok(),
+            "permits return when guards drop"
+        );
     }
 }
