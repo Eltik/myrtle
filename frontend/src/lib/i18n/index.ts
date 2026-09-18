@@ -1,6 +1,6 @@
 export { ALL_NAMESPACES, type Catalog, type IBootstrap } from "./catalog";
 export { I18nProvider, type TFunction, useGamedataServer, useI18n, useLocale, useT } from "./context";
-export { formatMessage, type MessageValues } from "./format";
+export { describeMessage, formatMessage, type IMessageArgument, type IPluralExample, type MessageValues, pluralCategoriesFor, pluralExamples } from "./format";
 export { type IFormatters, useFormatters } from "./formatters";
 export {
     basepathForLocale,

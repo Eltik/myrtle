@@ -37,7 +37,7 @@ export function ItemDialog({ item }: IItemDialogProps) {
                     <ItemIcon item={item} size={96} />
                 </div>
                 <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">
+                    <div className="kicker flex flex-wrap items-center gap-x-2 gap-y-1">
                         <span>{t(CATEGORY_ITEM_LABELS[item.category])}</span>
                         <span aria-hidden className="opacity-40">
                             ·
@@ -69,7 +69,7 @@ export function ItemDialog({ item }: IItemDialogProps) {
 
                 {recipes.length > 0 && (
                     <section className="flex flex-col gap-2.5">
-                        <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("profile.items.dialog.craftedIn")}</span>
+                        <span className="kicker">{t("profile.items.dialog.craftedIn")}</span>
                         <div className="flex flex-wrap gap-1.5">
                             {recipes.map((r) => (
                                 <Badge key={`${r.roomType}-${r.formulaId}`} variant="outline" size="lg" className="gap-1.5 font-normal">
@@ -83,7 +83,7 @@ export function ItemDialog({ item }: IItemDialogProps) {
 
                 {vouchers.length > 0 && (
                     <section className="flex flex-col gap-2.5">
-                        <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("profile.items.dialog.voucherExchange")}</span>
+                        <span className="kicker">{t("profile.items.dialog.voucherExchange")}</span>
                         <div className="flex flex-wrap gap-1.5">
                             {vouchers.map((v) => (
                                 <Badge key={v.voucherId} variant="outline" className="font-normal">
@@ -96,7 +96,7 @@ export function ItemDialog({ item }: IItemDialogProps) {
 
                 {obtain.length > 0 && (
                     <section className="flex items-center justify-between gap-3">
-                        <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("profile.items.dialog.obtainChannels")}</span>
+                        <span className="kicker">{t("profile.items.dialog.obtainChannels")}</span>
                         <div className="flex flex-wrap justify-end gap-1.5">
                             {obtain.map((s) => (
                                 <Badge key={s} variant="secondary" className="font-normal">
@@ -114,7 +114,7 @@ export function ItemDialog({ item }: IItemDialogProps) {
 function DialogStat({ kicker, value, valueColor, subtle }: { kicker: string; value: string; valueColor?: string; subtle?: boolean }) {
     return (
         <div className="flex flex-col gap-1.5 rounded-lg border border-border bg-muted/50 p-3">
-            <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{kicker}</span>
+            <span className="kicker">{kicker}</span>
             <div className="font-bold tabular-nums leading-none" style={{ fontSize: subtle ? "14px" : "18px", color: valueColor ?? "var(--foreground)" }}>
                 {value}
             </div>

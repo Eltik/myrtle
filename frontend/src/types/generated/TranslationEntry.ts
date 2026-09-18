@@ -8,5 +8,22 @@ import type { JsonValue } from "./serde_json/JsonValue";
  * `is_stale` is computed in SQL rather than stored - it is true when a
  * translation exists but was written against an older English source, which
  * is the only staleness this system has.
+ *
+ * `translated_source_text` is the English that was on screen when the value
+ * was saved. It is what turns `is_stale` from a badge into a diff, and it is
+ * `None` for rows saved before the snapshot column existed.
  */
-export type TranslationEntry = { key: string; namespace: string; source_text: string; source_hash: string; description: string | null; placeholders: JsonValue; value: string | null; translated_hash: string | null; is_stale: boolean; updated_at: string | null; updated_by: string | null };
+export type TranslationEntry = {
+    key: string;
+    namespace: string;
+    source_text: string;
+    source_hash: string;
+    description: string | null;
+    placeholders: JsonValue;
+    value: string | null;
+    translated_hash: string | null;
+    translated_source_text: string | null;
+    is_stale: boolean;
+    updated_at: string | null;
+    updated_by: string | null;
+};

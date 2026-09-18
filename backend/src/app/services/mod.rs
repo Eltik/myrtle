@@ -7,6 +7,7 @@ pub mod i18n;
 pub mod improvements;
 pub mod leaderboard;
 pub mod level;
+pub mod max_level;
 pub mod operator_notes;
 pub mod operators;
 pub mod planner;

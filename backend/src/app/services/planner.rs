@@ -171,7 +171,7 @@ fn resolve_requirement_item(
     }
 }
 
-fn calculate_leveling_costs(
+pub(crate) fn calculate_leveling_costs(
     operator: &Operator,
     gamedata: &GameData,
     current_elite: i16,

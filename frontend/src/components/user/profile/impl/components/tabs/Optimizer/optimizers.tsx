@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import type { IRosterEntry } from "#/lib/api/user";
 import type { IOperatorListItem } from "#/types/operators";
+import { AccountOptimizer } from "./account/AccountOptimizer";
 import { BaseOptimizer } from "./base/BaseOptimizer";
 import type { messages as optimizerMessages } from "./optimizers.messages";
 
@@ -31,5 +32,6 @@ export const OPTIMIZERS: IOptimizerDef[] = [
         id: "account",
         labelKey: "profile.optimizer.account.label",
         blurbKey: "profile.optimizer.account.blurb",
+        Component: AccountOptimizer,
     },
 ];

@@ -126,7 +126,7 @@ export function ItemsTab({ inventory }: IItemsTabProps) {
                         <Grid3x3 />
                     </ToggleGroupItem>
                 </ToggleGroup>
-                <div className="hidden items-center gap-3 font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em] sm:ml-auto md:flex">
+                <div className="kicker hidden items-center gap-3 sm:ml-auto md:flex">
                     <span>
                         <span className="text-foreground tabular-nums">{sorted.length}</span> {t("profile.items.count.items")}
                     </span>
@@ -221,7 +221,7 @@ function EmptyItems({ hasInventory }: { hasInventory: boolean }) {
     const t: TypedT<typeof messages> = useT("user");
     return (
         <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-card px-8 py-16 text-center">
-            <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("profile.items.empty.kicker")}</span>
+            <span className="kicker">{t("profile.items.empty.kicker")}</span>
             <h3 className="font-semibold text-lg tracking-tight">{hasInventory ? t("profile.items.empty.filtered.title") : t("profile.items.empty.none.title")}</h3>
             <p className="max-w-sm text-muted-foreground text-sm">{hasInventory ? t("profile.items.empty.filtered.desc") : t("profile.items.empty.none.desc")}</p>
         </div>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatMessage } from "./format";
+import { describeMessage, formatMessage, pluralCategoriesFor, pluralExamples } from "./format";
 
 const en = (message: string, values?: Parameters<typeof formatMessage>[2]) => formatMessage(message, "en", values);
 
@@ -81,5 +81,79 @@ describe("formatMessage", () => {
 
     it("renders an absent argument as empty rather than 'undefined'", () => {
         expect(en("Hello {name}")).toBe("Hello ");
+    });
+});
+
+describe("describeMessage", () => {
+    it("reports a plain argument", () => {
+        const [arg] = describeMessage("Hello {name}");
+        expect(arg).toEqual({ branchText: {}, branches: [], name: "name", offset: null, type: "plain" });
+    });
+
+    it("reports a plural's branches and their wording", () => {
+        const [arg] = describeMessage("Showing {start}-{end} of {count, number} {count, plural, one {player} other {players}}");
+        expect(arg.name).toBe("start");
+        const count = describeMessage("Showing {start}-{end} of {count, number} {count, plural, one {player} other {players}}").find((a) => a.name === "count");
+        // The plural occurrence outranks the bare `{count, number}` one that comes first.
+        expect(count?.type).toBe("plural");
+        expect(count?.branches).toEqual(["one", "other"]);
+        expect(count?.branchText).toEqual({ one: "player", other: "players" });
+    });
+
+    it("keeps `#` and nested arguments readable in a branch", () => {
+        const [arg] = describeMessage("{count, plural, one {# of {total}} other {# of {total}}}");
+        expect(arg.branchText.one).toBe("# of {total}");
+    });
+
+    it("carries an exact branch and an offset", () => {
+        const [arg] = describeMessage("{n, plural, offset:1 =0 {nobody} one {you and # other} other {you and # others}}");
+        expect(arg.offset).toBe(1);
+        expect(arg.branches).toContain("=0");
+    });
+
+    it("returns nothing for a message with no arguments", () => {
+        expect(describeMessage("Next")).toEqual([]);
+    });
+});
+
+describe("plural categories", () => {
+    it("gives English two forms and Russian four", () => {
+        expect(pluralCategoriesFor("en")).toEqual(["one", "other"]);
+        expect(pluralCategoriesFor("ru")).toEqual(["one", "few", "many", "other"]);
+    });
+
+    it("gives Japanese one form", () => {
+        expect(pluralCategoriesFor("ja")).toEqual(["other"]);
+    });
+
+    it("always ends on `other`, which is the required fallback", () => {
+        for (const locale of ["en", "ru", "pl", "ar", "ja", "fr"]) {
+            expect(pluralCategoriesFor(locale).at(-1)).toBe("other");
+        }
+    });
+
+    it("computes a locale's rules once, so the editor can call it per keystroke", () => {
+        // Identity, not equality: this is what stops the argument panel from
+        // re-running 121 `Intl.PluralRules.select` calls on every keystroke.
+        expect(pluralExamples("ru")).toBe(pluralExamples("ru"));
+        expect(pluralCategoriesFor("ru")).toBe(pluralCategoriesFor("ru"));
+        expect(pluralExamples("ru")).not.toBe(pluralExamples("pl"));
+    });
+
+    it("falls back to `other` alone for an unusable tag", () => {
+        expect(pluralCategoriesFor("not a locale")).toEqual(["other"]);
+    });
+
+    it("names the numbers each Russian form claims", () => {
+        const byCategory = new Map(pluralExamples("ru").map((e) => [e.category, e.examples]));
+        expect(byCategory.get("one")).toEqual([1, 21, 31, 41]);
+        expect(byCategory.get("few")).toEqual([2, 3, 4, 22]);
+        expect(byCategory.get("many")).toEqual([0, 5, 6, 7]);
+    });
+
+    it("names the numbers each English form claims", () => {
+        const byCategory = new Map(pluralExamples("en").map((e) => [e.category, e.examples]));
+        expect(byCategory.get("one")).toEqual([1]);
+        expect(byCategory.get("other")).toEqual([0, 2, 3, 4]);
     });
 });

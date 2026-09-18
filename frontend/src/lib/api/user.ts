@@ -16,6 +16,7 @@ import type { ItemEntry } from "#/types/generated/ItemEntry";
 import type { LeaderboardEntry } from "#/types/generated/LeaderboardEntry";
 import type { LeaderboardMover } from "#/types/generated/LeaderboardMover";
 import type { LeaderboardPage } from "#/types/generated/LeaderboardPage";
+import type { MaxLevelCostResponse } from "#/types/generated/MaxLevelCostResponse";
 import type { MedalGap } from "#/types/generated/MedalGap";
 import type { MedalImprovements } from "#/types/generated/MedalImprovements";
 import type { MedalOperatorLock } from "#/types/generated/MedalOperatorLock";
@@ -537,6 +538,29 @@ export function playerStandingQueryOptions(input: IPlayerStandingInput) {
     return queryOptions({
         queryKey: ["user", "leaderboard", "standing", input.uid, input.server, input.window ?? null, input.interval ?? null],
         queryFn: () => getPlayerStandingFn({ data: input }),
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
+export type IMaxLevelCost = MaxLevelCostResponse;
+
+/** The EXP and LMD still needed to bring every owned operator to its cap. */
+export const getMaxLevelCostFn = createServerFn({ method: "GET" })
+    .inputValidator((data: { uid: string; bearerToken?: string }) => data)
+    .handler(async ({ data: { uid, bearerToken } }) => {
+        const token = bearerToken ?? optionalSiteToken();
+        const res = await backendFetch(`/user/max-level-cost?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
+        if (!res.ok) {
+            throw new Error(`Failed to load max-level cost: ${res.status}`);
+        }
+        return (await res.json()) as IMaxLevelCost;
+    });
+
+export function maxLevelCostQueryOptions(uid: string, bearerToken?: string) {
+    return queryOptions({
+        queryKey: ["user", "max-level-cost", uid, bearerToken ? "auth" : "anon"],
+        queryFn: () => getMaxLevelCostFn({ data: { uid, bearerToken } }),
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
     });

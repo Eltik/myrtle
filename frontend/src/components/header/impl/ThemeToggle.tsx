@@ -41,10 +41,17 @@ export default function ThemeToggle() {
                         <SunIcon className="h-3.5 w-3.5" />
                         <span>{t("themeToggle.appearance")}</span>
                     </div>
-                    <div className="grid grid-cols-3 gap-1">
-                        <ModeButton active={mode === "light"} icon={<SunIcon className="h-3.5 w-3.5" />} label={t("themeToggle.light")} onClick={() => setMode("light")} />
-                        <ModeButton active={mode === "dark"} icon={<MoonIcon className="h-3.5 w-3.5" />} label={t("themeToggle.dark")} onClick={() => setMode("dark")} />
-                        <ModeButton active={mode === "auto"} icon={<MonitorIcon className="h-3.5 w-3.5" />} label={t("themeToggle.auto")} onClick={() => setMode("auto")} />
+                    {/* Three equal columns gave each button a third of the popover
+                        whatever its label needed, so a word wider than the cell
+                        broke inside the fixed h-8 box and spilled out of it:
+                        French "Sombre" rendered as "Sombr" over "e". The row is
+                        now content-sized with the slack shared out, so each
+                        button is at least as wide as its own word and the labels
+                        never wrap. */}
+                    <div className="flex gap-1">
+                        <ModeButton active={mode === "light"} icon={<SunIcon className="h-3.5 w-3.5 shrink-0" />} label={t("themeToggle.light")} onClick={() => setMode("light")} />
+                        <ModeButton active={mode === "dark"} icon={<MoonIcon className="h-3.5 w-3.5 shrink-0" />} label={t("themeToggle.dark")} onClick={() => setMode("dark")} />
+                        <ModeButton active={mode === "auto"} icon={<MonitorIcon className="h-3.5 w-3.5 shrink-0" />} label={t("themeToggle.auto")} onClick={() => setMode("auto")} />
                     </div>
 
                     <div className="-mx-1 h-px bg-border" />
@@ -115,10 +122,16 @@ function ModeButton({ active, icon, label, lang, onClick }: { active: boolean; i
             onClick={onClick}
             aria-pressed={active}
             lang={lang}
-            className={cn("inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 font-medium text-foreground text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", active ? "border-border bg-accent" : "hover:bg-accent/60")}
+            className={cn(
+                "inline-flex h-8 min-w-0 grow items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 font-medium text-foreground text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                active ? "border-border bg-accent" : "hover:bg-accent/60",
+            )}
         >
             {icon}
-            {label}
+            {/* A language whose three words genuinely cannot fit clips with an
+                ellipsis, which is still readable; wrapping inside a fixed-height
+                button is not. */}
+            <span className="truncate">{label}</span>
         </button>
     );
 }

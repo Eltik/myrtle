@@ -205,6 +205,7 @@ const ENTRY_SELECT: &str = r"
            k.placeholders,
            CASE WHEN COALESCE(l.is_source, false) THEN COALESCE(m.value, k.source_text) ELSE m.value END AS value,
            m.source_hash AS translated_hash,
+           m.source_text AS translated_source_text,
            (NOT COALESCE(l.is_source, false)
             AND m.source_hash IS NOT NULL
             AND m.source_hash <> k.source_hash) AS is_stale,
@@ -304,15 +305,17 @@ pub async fn upsert_message(
     locale: &str,
     value: &str,
     source_hash: &str,
+    source_text: &str,
     updated_by: Uuid,
 ) -> Result<(), sqlx::Error> {
     sqlx::query(
         r"
-        INSERT INTO ui_messages (key, locale, value, source_hash, updated_by, updated_at)
-        VALUES ($1, $2, $3, $4, $5, now())
+        INSERT INTO ui_messages (key, locale, value, source_hash, source_text, updated_by, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, now())
         ON CONFLICT (key, locale) DO UPDATE SET
             value = EXCLUDED.value,
             source_hash = EXCLUDED.source_hash,
+            source_text = EXCLUDED.source_text,
             updated_by = EXCLUDED.updated_by,
             updated_at = now()
         ",
@@ -321,6 +324,7 @@ pub async fn upsert_message(
     .bind(locale)
     .bind(value)
     .bind(source_hash)
+    .bind(source_text)
     .bind(updated_by)
     .execute(pool)
     .await?;

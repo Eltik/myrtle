@@ -8,10 +8,19 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, monospace;
-  --font-display: "Fraunces", Georgia, serif;
+  /* Inter and Geist Mono cover Latin, Greek and Cyrillic and no CJK at all, so
+     before these fallbacks a Korean nickname or heading dropped straight to the
+     browser's generic `sans-serif` / `monospace`. On the mono stack that meant
+     Hangul rendered in a system monospace face next to Latin set in Geist, and
+     the mismatch is what the Korean profile screenshots were showing. The CJK
+     faces below are the ones already installed on macOS, iOS, Windows and
+     Android, so this costs no download: Latin and digits still come from the
+     webfont, and only the CJK glyphs fall through. */
+  --font-cjk: "Pretendard Variable", "Apple SD Gothic Neo", "Hiragino Sans", "Yu Gothic UI", "PingFang SC", "Microsoft YaHei UI", "Noto Sans KR", "Noto Sans JP", "Noto Sans SC", "Malgun Gothic";
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, var(--font-cjk), sans-serif;
+  --font-heading: "Inter Variable", ui-sans-serif, system-ui, var(--font-cjk), sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, var(--font-cjk), monospace;
+  --font-display: "Fraunces", Georgia, var(--font-cjk), serif;
   /* Squared-off technical numerals - RIIC readouts, not body copy. */
   --font-techno: "Orbitron Variable", var(--font-mono);
 }
@@ -141,9 +150,12 @@ pre code {
   --animate-toast-success-even: toast-success-even 0.32s cubic-bezier(0.5, 1, 0.89, 1);
   --animate-toast-error-odd: toast-error-odd 0.28s cubic-bezier(0.5, 1, 0.89, 1);
   --animate-toast-error-even: toast-error-even 0.28s cubic-bezier(0.5, 1, 0.89, 1);
-  --font-heading: "Inter Variable", sans-serif;
-  --font-mono: "Geist Mono Variable", monospace;
-  --font-sans: "Inter Variable", sans-serif;
+  /* The three font stacks used to be redeclared here as well. `@theme inline`
+     is for values that resolve through another variable (the --color-* map
+     below); a font stack is a literal, and having it in both places meant this
+     copy quietly won and the @theme block's ui-sans-serif, system-ui,
+     ui-monospace and SFMono-Regular fallbacks never applied. One declaration,
+     at the top of the file. */
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -449,4 +461,48 @@ pre code {
     .page-bleed {
         margin-inline: calc(-1 * var(--page-gutter));
     }
+}
+
+/* The small uppercase label over a card ("OPERATOR COLLECTION", "ELITE
+   PROMOTION"). Lives here rather than as a utility string so the script
+   override below has something to hang off.
+
+   Uppercase and 0.12em tracking are Latin typographic devices. Hangul, kana
+   and Han are syllable blocks: `text-transform` does nothing to them, and the
+   tracking pushes the blocks apart into something that reads as broken rather
+   than as styled - which is what the Korean profile screenshot showed. Those
+   locales get the sans face at a heavier weight, which is the same emphasis
+   the tracking was buying in Latin. */
+@layer components {
+    .kicker {
+        font-family: var(--font-mono);
+        font-weight: 600;
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted-foreground);
+    }
+}
+
+/* Positive tracking on small uppercase labels is a Latin device, and this app
+   leans on it everywhere: 352 class strings across 139 components, at thirteen
+   different values. Hangul, kana, Han and Thai are not built from letterforms
+   that want pulling apart, and at 10px the extra space reads as broken rather
+   than as styled, which is what the Korean profile screenshots showed.
+
+   One rule rather than 352 hand edits, and UNLAYERED on purpose: layer order
+   beats specificity, so nothing inside `@layer components` could ever win
+   against the `tracking-*` utility sitting on the same element. The three
+   selectors cover the three ways an element gets tracking here: a utility
+   class, the `.kicker` component class, and an uppercase label whose tracking
+   comes from somewhere else.
+
+   The trade: a short Latin token that happens to carry `uppercase` or a
+   tracking utility (a server badge, a rarity chip) also loses its tracking on
+   a Korean, Japanese, Chinese or Thai page. That is a small, uniform change
+   confined to those locales, against every eyebrow in the app rendering
+   correctly in them. Cyrillic and Greek are deliberately not listed: they are
+   cased alphabets where the device works as intended. */
+:is(:lang(ko), :lang(ja), :lang(zh), :lang(th)) :is([class*="tracking-"], .uppercase, .kicker) {
+    letter-spacing: normal;
 }

@@ -39,6 +39,9 @@ pub struct UiMessageKey {
 }
 
 /// `ui_messages` table - the rendered text for one key in one locale.
+///
+/// `source_text` is the English this value was written against, snapshotted at
+/// save time; it is `None` on rows written before that column existed.
 #[derive(TS)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
@@ -47,6 +50,7 @@ pub struct UiMessage {
     pub locale: String,
     pub value: String,
     pub source_hash: String,
+    pub source_text: Option<String>,
     pub updated_by: Option<Uuid>,
     pub updated_at: DateTime<Utc>,
 }
@@ -57,6 +61,10 @@ pub struct UiMessage {
 /// `is_stale` is computed in SQL rather than stored - it is true when a
 /// translation exists but was written against an older English source, which
 /// is the only staleness this system has.
+///
+/// `translated_source_text` is the English that was on screen when the value
+/// was saved. It is what turns `is_stale` from a badge into a diff, and it is
+/// `None` for rows saved before the snapshot column existed.
 #[derive(TS)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
@@ -69,6 +77,7 @@ pub struct TranslationEntry {
     pub placeholders: serde_json::Value,
     pub value: Option<String>,
     pub translated_hash: Option<String>,
+    pub translated_source_text: Option<String>,
     pub is_stale: bool,
     pub updated_at: Option<DateTime<Utc>>,
     pub updated_by: Option<Uuid>,

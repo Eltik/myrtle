@@ -16,7 +16,7 @@ export const messages = {
         description: "Title of the 2026-09-18 release note, covering interface readability and changes to the pull planner.",
     },
     "note.2026-09-18.lead": {
-        text: "The roster fits more operators per row at every width, and its promotion, potential and mastery badges are legible on the light theme again. The pull planner's goals say what they measure, its currencies carry the game's own icons, and setting a potential no longer stalls before the numbers move. Margins and page headings are now shared across the site.",
+        text: "The roster fits more operators per row at every width, and its promotion, potential and mastery badges are legible on the light theme again. The pull planner's goals say what they measure, its currencies carry the game's own icons, and setting a potential no longer stalls before the numbers move. Margins and page headings are now shared across the site. Korean, Japanese and Chinese render in a matching typeface throughout, labels that used to break mid-word hold together, and the translation editor now explains a message's plural forms and shows what changed when its English moves.",
         description: "Lead paragraph of the 2026-09-18 release note, rendered as Markdown. 'Roster' is a player's collection of operators; promotion, potential and mastery are in-game upgrade systems; a 'pull' is one gacha roll and a 'goal' here is a target number of copies.",
     },
     "note.2026-09-18.hrefLabel": {
@@ -58,6 +58,26 @@ export const messages = {
     "note.2026-09-18.item.9": {
         text: "Profile, settings and tier-list pages no longer scroll sideways by a few pixels on a phone.",
         description: "Bullet in the 2026-09-18 release note, filed under 'Fixed'.",
+    },
+    "note.2026-09-18.item.10": {
+        text: "When a message's English is edited, its translation now shows the old and new wording word by word, instead of only being marked out of date.",
+        description: "Bullet in the 2026-09-18 release note, filed under 'Improved'. It describes the translation editor in the admin panel, which volunteer translators use.",
+    },
+    "note.2026-09-18.item.11": {
+        text: "The translation editor explains a message's placeholders: which plural forms your language needs, which numbers each one covers, and the English wording for each.",
+        description: "Bullet in the 2026-09-18 release note, filed under 'Improved'. A 'placeholder' is a slot in a message that is filled with a value; a 'plural form' is one of the wordings a language selects between by number, such as one/few/many/other in Russian.",
+    },
+    "note.2026-09-18.item.12": {
+        text: "Korean, Japanese and Chinese fell back to a mismatched typeface in small headings, and carried letter-spacing meant for the Latin alphabet that pushed the characters apart.",
+        description: "Bullet in the 2026-09-18 release note, filed under 'Fixed'. 'Letter-spacing' is the extra space set between characters.",
+    },
+    "note.2026-09-18.item.13": {
+        text: "The appearance switch's labels no longer break mid-word in a language whose word for 'Dark' is wider than the button.",
+        description: "Bullet in the 2026-09-18 release note, filed under 'Fixed'. The 'appearance switch' is the light/dark/auto control in the site header.",
+    },
+    "note.2026-09-18.item.14": {
+        text: "The leaderboard's Top movers heading no longer runs into the column label beside it when it is translated into something longer.",
+        description: "Bullet in the 2026-09-18 release note, filed under 'Fixed'. 'Top movers' is the card listing the players whose rank changed most.",
     },
     "note.2026-09-17-3.title": {
         text: "Latin names for CN-only operators",

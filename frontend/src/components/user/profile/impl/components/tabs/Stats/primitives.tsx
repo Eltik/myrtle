@@ -10,7 +10,9 @@ import { cn } from "#/lib/utils";
 import type { IOperatorGapItem } from "./helpers";
 import type { messages } from "./primitives.messages";
 
-export const KICKER_TEXT = "font-mono font-semibold text-[10.5px] uppercase tracking-[0.12em] text-muted-foreground";
+/** The card eyebrow. Defined in `styles.css` because its treatment changes by
+ *  script: see the `.kicker` rule and its CJK override there. */
+export const KICKER_TEXT = "kicker";
 export const CARD_PADDING = "p-4 sm:p-5";
 
 function barGradient(color: string): string {

@@ -14,9 +14,15 @@ export function MoversCard({ movers, isLoading, intervalKey = "leaderboard.inter
 
     return (
         <aside className="rounded-xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
-            <div className="mb-2.5 flex items-center justify-between">
-                <span className="font-sans font-semibold text-[13.5px] text-foreground leading-tight tracking-tight">{t("leaderboard.movers.title", { interval: t(intervalKey) })}</span>
-                <span className="font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{t("leaderboard.deltaRank")}</span>
+            {/* A flex item will not shrink below its content by default, so in a
+                language whose heading is longer than "Top movers · today" the
+                title ran straight into the column label instead of wrapping -
+                Russian's "Наибольшие изменения · сегодня" overlapped "ПОЗИЦИЯ".
+                min-w-0 lets the heading wrap, shrink-0 keeps the label whole,
+                and the gap stops them touching at the width where they just fit. */}
+            <div className="mb-2.5 flex items-baseline justify-between gap-2">
+                <span className="min-w-0 font-sans font-semibold text-[13.5px] text-foreground leading-tight tracking-tight">{t("leaderboard.movers.title", { interval: t(intervalKey) })}</span>
+                <span className="shrink-0 font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{t("leaderboard.deltaRank")}</span>
             </div>
             <div className="flex flex-col gap-2.5">
                 {isLoading && movers.length === 0 ? (

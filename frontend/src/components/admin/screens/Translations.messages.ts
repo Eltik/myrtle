@@ -191,6 +191,90 @@ export const messages = {
         text: "None - this message takes no arguments.",
         description: "Shown under the Placeholders heading when the message has none. Keep the hyphen.",
     },
+    "i18n.args.help": {
+        text: "Anything in braces is replaced with a real value when the page renders. Translate the words around them and leave the names in English.",
+        description: "Helper line under the Placeholders heading, explaining to a translator what a {token} is and why it appears in the text they are given.",
+    },
+    "i18n.args.kind.plain": {
+        text: "text",
+        description: "Label on a placeholder whose value is dropped in as-is, such as a name. Lowercase, shown on a small chip.",
+    },
+    "i18n.args.kind.number": {
+        text: "number",
+        description: "Label on a placeholder holding a number, formatted for the reader's locale. Lowercase, shown on a small chip.",
+    },
+    "i18n.args.kind.date": {
+        text: "date",
+        description: "Label on a placeholder holding a date. Lowercase, shown on a small chip.",
+    },
+    "i18n.args.kind.time": {
+        text: "time",
+        description: "Label on a placeholder holding a time of day. Lowercase, shown on a small chip.",
+    },
+    "i18n.args.kind.plural": {
+        text: "plural",
+        description: "Label on a placeholder that picks a wording by how many there are. Lowercase, shown on a small chip.",
+    },
+    "i18n.args.kind.selectordinal": {
+        text: "ordinal",
+        description: "Label on a placeholder that picks a wording by rank - 1st, 2nd, 3rd. Lowercase, shown on a small chip.",
+    },
+    "i18n.args.kind.select": {
+        text: "choice",
+        description: "Label on a placeholder that picks a wording from a fixed set of named cases. Lowercase, shown on a small chip.",
+    },
+    "i18n.args.pluralIntro": {
+        text: "The site picks one of these wordings by the number. {locale} uses {count}.",
+        description: "Explains the form table under a plural placeholder. {locale} is the language name, {count} is an already-worded count such as '4 forms'.",
+    },
+    "i18n.args.pluralCount": {
+        text: "{count, plural, one {# form} other {# forms}}",
+        description: "The {count} written into the sentence above it. Use your language's own plural forms here.",
+    },
+    "i18n.args.selectIntro": {
+        text: "The site picks one of these wordings by which case applies. Keep every case the English has.",
+        description: "Explains the form table under a choice placeholder, where the cases are named rather than counted.",
+    },
+    "i18n.args.colForm": {
+        text: "Form",
+        description: "Column heading over the names of a placeholder's wordings - one, few, other. Rendered uppercase.",
+    },
+    "i18n.args.colApplies": {
+        text: "Applies to",
+        description: "Column heading over the numbers that select each wording. Rendered uppercase.",
+    },
+    "i18n.args.colEnglish": {
+        text: "English",
+        description: "Column heading over the English wording for each form. Rendered uppercase.",
+    },
+    "i18n.args.exact": {
+        text: "exactly {value}",
+        description: "What an '=0' style form applies to. {value} is the number it matches exactly.",
+    },
+    "i18n.args.anythingElse": {
+        text: "anything else",
+        description: "What the 'other' form applies to: every number no earlier form claimed.",
+    },
+    "i18n.args.formMissing": {
+        text: "Missing",
+        description: "Badge on a form the English has but the translation does not, which makes the site fall back to 'other'.",
+    },
+    "i18n.args.unused": {
+        text: "not used in your translation yet",
+        description: "Note on a placeholder the translation has not mentioned. The save will be rejected while it is missing.",
+    },
+    "i18n.sourceChanged": {
+        text: "What changed",
+        description: "Heading over the comparison of the English this translation was written against with the English there now. Rendered uppercase.",
+    },
+    "i18n.sourceChanged.note": {
+        text: "Struck-through text was removed, underlined text was added. Saving re-stamps this translation against the English above.",
+        description: "Caption under the comparison, explaining how it is marked up and what saving does.",
+    },
+    "i18n.sourceChanged.unknown": {
+        text: "The English this was written against predates change tracking, so there is nothing to compare it with. Re-read the source above and save.",
+        description: "Shown in place of the comparison for a stale message saved before the old English started being recorded.",
+    },
     "i18n.sourceHash": {
         text: "Source hash",
         description: "Heading over the fingerprint of the English text this translation was made from. Rendered uppercase.",

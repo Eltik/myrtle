@@ -7,6 +7,10 @@
 //!       `MainlineActivity` is treated as permanent because in the data it covers chapters that
 //!       are permanent campaign content (e.g. ch.15/16); the matching `MainlineRetro` zones are
 //!       currently empty, so the gameplay stages still live under the activity ID.
+//!       A stage whose `StageType` is `Activity` is NOT permanent even when its zone is:
+//!       the three 2020 vignettes (`act4d0` SW-EV, `act6d5` AF, `act7d5` SA; 19 stages) hang
+//!       their nodes off `main_1..main_6` in the data, but they were one-time events that
+//!       never entered `retro_table`, so they route to the event pool below.
 //!     - event: Activity zones (subject to recency decay).
 //!       One-time competitive activity types (Contingency Contract, Boss Rush, Vector
 //!       Breakthrough, etc. - see `ActivityBasicInfo::is_one_time_competitive`) are dropped
@@ -101,14 +105,17 @@ impl StageUniverse {
                 continue;
             }
 
-            if is_permanent(&stage.zone_id, &zone.zone_type) {
+            if is_permanent(&stage.zone_id, &zone.zone_type, &stage.stage_type) {
                 permanent.push(UniverseEntry {
                     stage_id: stage.stage_id.clone(),
                     weight,
                 });
             } else {
                 // Activity zones - event pool
-                let activity = resolve_activity(&stage.zone_id, &sorted_activities);
+                // Vignette stages in a mainline zone only carry the activity id on the
+                // stage id, so fall back to it when the zone resolves nothing.
+                let activity = resolve_activity(&stage.zone_id, &sorted_activities)
+                    .or_else(|| resolve_activity(&stage.stage_id, &sorted_activities));
 
                 if let Some(act) = activity
                     && act.is_one_time_competitive()
@@ -173,9 +180,13 @@ fn include_stage(stage: &Stage) -> bool {
     true
 }
 
-fn is_permanent(zone_id: &str, zone_type: &ZoneType) -> bool {
+fn is_permanent(zone_id: &str, zone_type: &ZoneType, stage_type: &StageType) -> bool {
     if zone_id.starts_with("permanent_sidestory") {
         return true;
+    }
+    // Event stages mounted on a mainline map (the 2020 vignettes) are still events.
+    if *stage_type == StageType::Activity {
+        return false;
     }
     matches!(
         zone_type,

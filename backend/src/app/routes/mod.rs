@@ -83,6 +83,7 @@ pub(crate) async fn resolve_uid(
         .uid)
 }
 
+pub mod account;
 pub mod assets;
 pub mod auth;
 pub mod base;
@@ -189,6 +190,7 @@ pub fn router() -> Router<AppState> {
             "/user/improvements",
             get(improvements::get_user_improvements),
         )
+        .route("/user/max-level-cost", get(account::get_max_level_cost))
         .route("/base/catalog", get(base::get_catalog))
         .route("/base/layout", get(base::get_layout))
         .route("/base/evaluate", post(base::evaluate_layout))

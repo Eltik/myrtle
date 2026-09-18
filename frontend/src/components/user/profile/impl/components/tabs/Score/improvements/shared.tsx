@@ -15,7 +15,8 @@ export const PANEL_PADDING = "px-4 pb-4 sm:px-5 sm:pb-5";
 /** XS mono - tiny chips, level/state indicators, badges. */
 export const TEXT_BADGE = "font-mono text-[10px] tabular-nums";
 /** XS uppercase kicker - section headers, button labels, tag captions. */
-export const TEXT_KICKER = "font-mono text-[10.5px] font-semibold uppercase tracking-[0.12em]";
+/** The same eyebrow as the Stats cards; see the `.kicker` rule in `styles.css`. */
+export const TEXT_KICKER = "kicker";
 /** SM - secondary descriptive text, subtitles. */
 export const TEXT_META = "text-[10.5px] leading-snug";
 /** Body - list rows, descriptions, default content size. */

@@ -58,9 +58,9 @@ export function YouCard({ standing, rankedDoctors }: IYouCardProps) {
     return (
         <aside className="relative overflow-hidden rounded-xl border border-border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)]">
             <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse 80% 60% at 50% 0%, color-mix(in srgb, var(--primary) 8%, transparent), transparent 60%)" }} />
-            <div className="relative mb-3 flex items-center justify-between font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.16em]">
-                <span>{t("leaderboard.you.title")}</span>
-                <span className="rounded-full border border-border bg-card px-2 py-0.5 text-foreground tabular-nums">#{rank ?? "-"}</span>
+            <div className="relative mb-3 flex items-center justify-between gap-2 font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.16em]">
+                <span className="min-w-0 truncate">{t("leaderboard.you.title")}</span>
+                <span className="shrink-0 rounded-full border border-border bg-card px-2 py-0.5 text-foreground tabular-nums">#{rank ?? "-"}</span>
             </div>
             <div className="relative flex items-center gap-3">
                 <Avatar className="size-12 rounded-2xl">

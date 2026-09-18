@@ -48,7 +48,7 @@ export function DetailedCard({ item }: IDetailedCardProps) {
                         <Badge size="sm" variant="outline" className="font-mono tabular-nums" style={{ background: `${color}25`, color, borderColor: `${color}66` }}>
                             {item.rarityNum}★
                         </Badge>
-                        <span className="truncate font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{t(CATEGORY_ITEM_LABELS[item.category])}</span>
+                        <span className="kicker truncate">{t(CATEGORY_ITEM_LABELS[item.category])}</span>
                     </div>
                     {(stageCount > 0 || recipeCount > 0) && (
                         <span className="inline-flex shrink-0 items-center gap-2 font-mono text-[10.5px] text-muted-foreground tabular-nums">
@@ -72,7 +72,7 @@ export function DetailedCard({ item }: IDetailedCardProps) {
                 <div className="relative flex items-center gap-3.5 px-4 pb-3">
                     <ItemIcon item={item} size={64} />
                     <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                        <span className="font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("profile.items.card.quantity")}</span>
+                        <span className="kicker">{t("profile.items.card.quantity")}</span>
                         <span className="font-bold tabular-nums leading-none" style={{ fontSize: "1.875rem", letterSpacing: "-0.02em" }}>
                             {f.number(item.quantity)}
                         </span>
@@ -82,7 +82,7 @@ export function DetailedCard({ item }: IDetailedCardProps) {
 
                 {obtain.length > 0 && (
                     <div className="relative flex items-center gap-2 border-border border-t px-4 py-2.5">
-                        <span className="shrink-0 font-mono font-semibold text-[10.5px] text-muted-foreground uppercase tracking-[0.12em]">{t("profile.items.card.obtain")}</span>
+                        <span className="kicker shrink-0">{t("profile.items.card.obtain")}</span>
                         <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
                             {obtain.slice(0, 2).map((c) => (
                                 <Badge key={c} size="sm" variant="secondary" className="truncate font-normal">

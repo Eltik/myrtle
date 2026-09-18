@@ -2,5 +2,8 @@
 
 /**
  * `ui_messages` table - the rendered text for one key in one locale.
+ *
+ * `source_text` is the English this value was written against, snapshotted at
+ * save time; it is `None` on rows written before that column existed.
  */
-export type UiMessage = { key: string; locale: string; value: string; source_hash: string; updated_by: string | null; updated_at: string };
+export type UiMessage = { key: string; locale: string; value: string; source_hash: string; source_text: string | null; updated_by: string | null; updated_at: string };

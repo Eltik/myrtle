@@ -54,8 +54,8 @@ export function LeaderboardTable({ entries, sort, onSort, isLoading, intervalKey
                 </ul>
             </div>
             <div className="block p-3 md:hidden">
-                <div className="flex items-center justify-between px-1 pb-2">
-                    <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.16em]">{t("leaderboard.table.sortHeading")}</span>
+                <div className="flex items-center justify-between gap-2 px-1 pb-2">
+                    <span className="min-w-0 truncate font-medium font-mono text-[11px] text-muted-foreground uppercase leading-none tracking-[0.16em]">{t("leaderboard.table.sortHeading")}</span>
                     <SortHeader sort={sort} onSort={onSort} />
                 </div>
                 <div className="flex flex-col gap-2">
@@ -73,7 +73,7 @@ function SortHeader({ sort, onSort }: { sort: LeaderboardSort; onSort: (next: Le
     const activeLabelKey = LEADERBOARD_SORTS.find((s) => s.value === sort)?.labelKey ?? "leaderboard.sort.total";
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger className="inline-flex cursor-pointer items-center gap-1 whitespace-nowrap font-medium font-mono text-[11px] text-foreground uppercase leading-none tracking-[0.16em] transition-colors hover:text-primary" aria-label={t("leaderboard.table.sortLabel")}>
+            <DropdownMenuTrigger className="inline-flex shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap font-medium font-mono text-[11px] text-foreground uppercase leading-none tracking-[0.16em] transition-colors hover:text-primary" aria-label={t("leaderboard.table.sortLabel")}>
                 {t(activeLabelKey)}
                 <ChevronDown className="size-3 opacity-70" />
             </DropdownMenuTrigger>

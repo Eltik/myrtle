@@ -51,3 +51,62 @@ fn core_tables_are_populated() {
         "charword_table produced no voice lines"
     );
 }
+
+/// The 2020 vignettes (`act4d0` SW-EV, `act6d5` AF, `act7d5` SA) mount their
+/// stage nodes on `main_1..main_6`, so a zone-type rule alone files them as
+/// permanent and the Score tab lists a one-time 2020 event as a permanent gap.
+/// They are `StageType::Activity`; that must route them to the event pool with
+/// the activity's own window, where a closed limited event is not gradeable.
+#[test]
+fn vignette_stages_in_mainline_zones_are_events_not_permanent() {
+    use backend::core::gamedata::types::stage::StageType;
+    use backend::core::grade::stages::event::event_is_gradeable;
+
+    let gd = common::load_game_data();
+    let universe = &gd.stage_universe;
+
+    let activity_typed_permanent: Vec<&str> = universe
+        .permanent
+        .iter()
+        .filter(|e| gd.stages.get(&e.stage_id).map(|s| &s.stage_type) == Some(&StageType::Activity))
+        .map(|e| e.stage_id.as_str())
+        .collect();
+    assert!(
+        activity_typed_permanent.is_empty(),
+        "ACTIVITY-typed stages in the permanent pool: {activity_typed_permanent:?}"
+    );
+
+    let vignettes: Vec<_> = universe
+        .event
+        .iter()
+        .filter(|e| {
+            ["act4d0_", "act6d5_", "act7d5_"]
+                .iter()
+                .any(|p| e.stage_id.starts_with(p))
+        })
+        .collect();
+    assert_eq!(
+        vignettes.len(),
+        19,
+        "expected the 19 vignette stages in the event pool"
+    );
+
+    let now = 1_789_000_000; // 2026-09
+    for entry in vignettes {
+        assert!(
+            !entry.is_permanent,
+            "{} must not be a permanent event",
+            entry.stage_id
+        );
+        assert!(
+            entry.start_time.is_some() && entry.end_time.is_some(),
+            "{} must carry its activity window",
+            entry.stage_id
+        );
+        assert!(
+            !event_is_gradeable(entry, now, None, None),
+            "{} is a closed one-time event and must not be gradeable",
+            entry.stage_id
+        );
+    }
+}

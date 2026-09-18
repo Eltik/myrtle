@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-17T22:41:57.987Z",
+    "generatedAt": "2026-09-18T00:46:32.823Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -786,6 +786,139 @@
             "placeholders": []
         },
         {
+            "key": "admin.i18n.args.anythingElse",
+            "namespace": "admin",
+            "source_text": "anything else",
+            "description": "What the 'other' form applies to: every number no earlier form claimed.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.i18n.args.colApplies",
+            "namespace": "admin",
+            "source_text": "Applies to",
+            "description": "Column heading over the numbers that select each wording. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.i18n.args.colEnglish",
+            "namespace": "admin",
+            "source_text": "English",
+            "description": "Column heading over the English wording for each form. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.i18n.args.colForm",
+            "namespace": "admin",
+            "source_text": "Form",
+            "description": "Column heading over the names of a placeholder's wordings - one, few, other. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.i18n.args.exact",
+            "namespace": "admin",
+            "source_text": "exactly {value}",
+            "description": "What an '=0' style form applies to. {value} is the number it matches exactly.",
+            "placeholders": [
+                "value"
+            ]
+        },
+        {
+            "key": "admin.i18n.args.formMissing",
+            "namespace": "admin",
+            "source_text": "Missing",
+            "description": "Badge on a form the English has but the translation does not, which makes the site fall back to 'other'.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.i18n.args.help",
+            "namespace": "admin",
+            "source_text": "Anything in braces is replaced with a real value when the page renders. Translate the words around them and leave the names in English.",
+            "description": "Helper line under the Placeholders heading, explaining to a translator what a {token} is and why it appears in the text they are given.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.i18n.args.kind.date",
+            "namespace": "admin",
+            "source_text": "date",
+            "description": "Label on a placeholder holding a date. Lowercase, shown on a small chip.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.i18n.args.kind.number",
+            "namespace": "admin",
+            "source_text": "number",
+            "description": "Label on a placeholder holding a number, formatted for the reader's locale. Lowercase, shown on a small chip.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.i18n.args.kind.plain",
+            "namespace": "admin",
+            "source_text": "text",
+            "description": "Label on a placeholder whose value is dropped in as-is, such as a name. Lowercase, shown on a small chip.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.i18n.args.kind.plural",
+            "namespace": "admin",
+            "source_text": "plural",
+            "description": "Label on a placeholder that picks a wording by how many there are. Lowercase, shown on a small chip.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.i18n.args.kind.select",
+            "namespace": "admin",
+            "source_text": "choice",
+            "description": "Label on a placeholder that picks a wording from a fixed set of named cases. Lowercase, shown on a small chip.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.i18n.args.kind.selectordinal",
+            "namespace": "admin",
+            "source_text": "ordinal",
+            "description": "Label on a placeholder that picks a wording by rank - 1st, 2nd, 3rd. Lowercase, shown on a small chip.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.i18n.args.kind.time",
+            "namespace": "admin",
+            "source_text": "time",
+            "description": "Label on a placeholder holding a time of day. Lowercase, shown on a small chip.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.i18n.args.pluralCount",
+            "namespace": "admin",
+            "source_text": "{count, plural, one {# form} other {# forms}}",
+            "description": "The {count} written into the sentence above it. Use your language's own plural forms here.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "admin.i18n.args.pluralIntro",
+            "namespace": "admin",
+            "source_text": "The site picks one of these wordings by the number. {locale} uses {count}.",
+            "description": "Explains the form table under a plural placeholder. {locale} is the language name, {count} is an already-worded count such as '4 forms'.",
+            "placeholders": [
+                "count",
+                "locale"
+            ]
+        },
+        {
+            "key": "admin.i18n.args.selectIntro",
+            "namespace": "admin",
+            "source_text": "The site picks one of these wordings by which case applies. Keep every case the English has.",
+            "description": "Explains the form table under a choice placeholder, where the cases are named rather than counted.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.i18n.args.unused",
+            "namespace": "admin",
+            "source_text": "not used in your translation yet",
+            "description": "Note on a placeholder the translation has not mentioned. The save will be rejected while it is missing.",
+            "placeholders": []
+        },
+        {
             "key": "admin.i18n.badge.stale",
             "namespace": "admin",
             "source_text": "stale",
@@ -1263,6 +1396,27 @@
             "namespace": "admin",
             "source_text": "Search key, English source, or translation…",
             "description": "Prompt in the message search box. A 'key' is the message's identifier. Keep the ellipsis character.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.i18n.sourceChanged",
+            "namespace": "admin",
+            "source_text": "What changed",
+            "description": "Heading over the comparison of the English this translation was written against with the English there now. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.i18n.sourceChanged.note",
+            "namespace": "admin",
+            "source_text": "Struck-through text was removed, underlined text was added. Saving re-stamps this translation against the English above.",
+            "description": "Caption under the comparison, explaining how it is marked up and what saving does.",
+            "placeholders": []
+        },
+        {
+            "key": "admin.i18n.sourceChanged.unknown",
+            "namespace": "admin",
+            "source_text": "The English this was written against predates change tracking, so there is nothing to compare it with. Re-read the source above and save.",
+            "description": "Shown in place of the comparison for a stale message saved before the old English started being recorded.",
             "placeholders": []
         },
         {
@@ -4557,6 +4711,41 @@
             "placeholders": []
         },
         {
+            "key": "changelog.note.2026-09-18.item.10",
+            "namespace": "changelog",
+            "source_text": "When a message's English is edited, its translation now shows the old and new wording word by word, instead of only being marked out of date.",
+            "description": "Bullet in the 2026-09-18 release note, filed under 'Improved'. It describes the translation editor in the admin panel, which volunteer translators use.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-18.item.11",
+            "namespace": "changelog",
+            "source_text": "The translation editor explains a message's placeholders: which plural forms your language needs, which numbers each one covers, and the English wording for each.",
+            "description": "Bullet in the 2026-09-18 release note, filed under 'Improved'. A 'placeholder' is a slot in a message that is filled with a value; a 'plural form' is one of the wordings a language selects between by number, such as one/few/many/other in Russian.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-18.item.12",
+            "namespace": "changelog",
+            "source_text": "Korean, Japanese and Chinese fell back to a mismatched typeface in small headings, and carried letter-spacing meant for the Latin alphabet that pushed the characters apart.",
+            "description": "Bullet in the 2026-09-18 release note, filed under 'Fixed'. 'Letter-spacing' is the extra space set between characters.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-18.item.13",
+            "namespace": "changelog",
+            "source_text": "The appearance switch's labels no longer break mid-word in a language whose word for 'Dark' is wider than the button.",
+            "description": "Bullet in the 2026-09-18 release note, filed under 'Fixed'. The 'appearance switch' is the light/dark/auto control in the site header.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-18.item.14",
+            "namespace": "changelog",
+            "source_text": "The leaderboard's Top movers heading no longer runs into the column label beside it when it is translated into something longer.",
+            "description": "Bullet in the 2026-09-18 release note, filed under 'Fixed'. 'Top movers' is the card listing the players whose rank changed most.",
+            "placeholders": []
+        },
+        {
             "key": "changelog.note.2026-09-18.item.2",
             "namespace": "changelog",
             "source_text": "Orundum, Originite Prime, permits and certificates carry their own icons in the pull planner, and its smallest labels have been enlarged.",
@@ -4615,7 +4804,7 @@
         {
             "key": "changelog.note.2026-09-18.lead",
             "namespace": "changelog",
-            "source_text": "The roster fits more operators per row at every width, and its promotion, potential and mastery badges are legible on the light theme again. The pull planner's goals say what they measure, its currencies carry the game's own icons, and setting a potential no longer stalls before the numbers move. Margins and page headings are now shared across the site.",
+            "source_text": "The roster fits more operators per row at every width, and its promotion, potential and mastery badges are legible on the light theme again. The pull planner's goals say what they measure, its currencies carry the game's own icons, and setting a potential no longer stalls before the numbers move. Margins and page headings are now shared across the site. Korean, Japanese and Chinese render in a matching typeface throughout, labels that used to break mid-word hold together, and the translation editor now explains a message's plural forms and shows what changed when its English moves.",
             "description": "Lead paragraph of the 2026-09-18 release note, rendered as Markdown. 'Roster' is a player's collection of operators; promotion, potential and mastery are in-game upgrade systems; a 'pull' is one gacha roll and a 'goal' here is a target number of copies.",
             "placeholders": []
         },
@@ -29452,6 +29641,177 @@
             "namespace": "user",
             "source_text": "View profile",
             "description": "Button that opens the signed-in player's own profile page.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.allMaxed",
+            "namespace": "user",
+            "source_text": "Every operator you own is already at its cap.",
+            "description": "Shown when no operator is left to level.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.blurb",
+            "namespace": "user",
+            "source_text": "The EXP and LMD still needed to take every operator you own to its final promotion and level cap, against what you hold.",
+            "description": "One-line explanation under the max-level cost card title. Promotion is the game's elite upgrade; LMD is the game's currency.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.calculate",
+            "namespace": "user",
+            "source_text": "Calculate",
+            "description": "Button that runs the max-level cost calculation.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.calculating",
+            "namespace": "user",
+            "source_text": "Calculating…",
+            "description": "Button label while the calculation runs.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.col.exp",
+            "namespace": "user",
+            "source_text": "EXP",
+            "description": "Table column header: EXP still needed for this operator.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.col.lmd",
+            "namespace": "user",
+            "source_text": "LMD",
+            "description": "Table column header: LMD still needed for this operator (levels plus promotions).",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.col.now",
+            "namespace": "user",
+            "source_text": "Now",
+            "description": "Table column header: the operator's current promotion and level.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.col.operator",
+            "namespace": "user",
+            "source_text": "Operator",
+            "description": "Table column header: the operator.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.col.target",
+            "namespace": "user",
+            "source_text": "Cap",
+            "description": "Table column header: the operator's final promotion and level.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.elite",
+            "namespace": "user",
+            "source_text": "E{elite} Lv{level}",
+            "description": "An operator's promotion and level, e.g. 'E2 Lv90'. {elite} is 0-2, {level} the level.",
+            "placeholders": [
+                "elite",
+                "level"
+            ]
+        },
+        {
+            "key": "user.profile.account.maxLevel.error",
+            "namespace": "user",
+            "source_text": "The calculation failed. Try again.",
+            "description": "Shown when the max-level cost request fails.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.expMissing",
+            "namespace": "user",
+            "source_text": "EXP short",
+            "description": "Label over the EXP still missing after what the account holds.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.expNeeded",
+            "namespace": "user",
+            "source_text": "EXP needed",
+            "description": "Label over the total EXP still needed.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.lmdMissing",
+            "namespace": "user",
+            "source_text": "LMD short",
+            "description": "Label over the LMD still missing after what the account holds.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.lmdNeeded",
+            "namespace": "user",
+            "source_text": "LMD needed",
+            "description": "Label over the total LMD still needed (levels plus promotions).",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.lmdSplit",
+            "namespace": "user",
+            "source_text": "{levels} for levels · {promotions} for promotions",
+            "description": "Hint under the LMD total splitting it into level-ups and promotions. {levels} and {promotions} are formatted numbers.",
+            "placeholders": [
+                "levels",
+                "promotions"
+            ]
+        },
+        {
+            "key": "user.profile.account.maxLevel.owned",
+            "namespace": "user",
+            "source_text": "{owned} owned",
+            "description": "Hint under a total showing what the account currently holds. {owned} is a formatted number.",
+            "placeholders": [
+                "owned"
+            ]
+        },
+        {
+            "key": "user.profile.account.maxLevel.recalculate",
+            "namespace": "user",
+            "source_text": "Recalculate",
+            "description": "Button label once a result is shown; runs the calculation again.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.remaining",
+            "namespace": "user",
+            "source_text": "Operators left",
+            "description": "Label over the count of operators not yet at their cap, shown as 'left / total'.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.showAll",
+            "namespace": "user",
+            "source_text": "Show all {count}",
+            "description": "Button that expands the operator list. {count} is the number of operators.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "user.profile.account.maxLevel.showFewer",
+            "namespace": "user",
+            "source_text": "Show fewer",
+            "description": "Button that collapses the operator list back to the first few.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.title",
+            "namespace": "user",
+            "source_text": "Max-level cost",
+            "description": "Title of the card that totals what it takes to bring every operator to its level cap.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.rest",
+            "namespace": "user",
+            "source_text": "Promotion, mastery and module rankings are not built yet.",
+            "description": "Note under the max-level cost card: the rest of the Account Optimizer is still to come.",
             "placeholders": []
         },
         {

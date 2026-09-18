@@ -36,7 +36,7 @@ import {
     writableLocalesQueryOptions,
 } from "#/lib/api/admin";
 import { searchUsersQueryOptions } from "#/lib/api/user";
-import { type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
+import { describeMessage, type IMessageArgument, pluralCategoriesFor, pluralExamples, type TypedRichT, useFormatters, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, getSecretaryAvatarURL } from "#/lib/utils";
 import type { JsonValue } from "#/types/generated/serde_json/JsonValue";
@@ -45,6 +45,7 @@ import { HCode, PageHead } from "../AdminShell";
 import { MonoSection } from "../Primitives";
 import type { messages as primitivesMessages } from "../Primitives.messages";
 import { LocalesSection } from "./Locales";
+import { diffWords } from "./sourceDiff";
 import type { messages } from "./Translations.messages";
 
 /** The grant rung names are the ones `LevelBadge` declares. */
@@ -328,7 +329,7 @@ export function Translations(): React.ReactElement {
                 ) : null}
             </div>
 
-            {selected ? <MessageEditor key={`${locale}:${selected.key}`} locale={locale} entry={selected} canWrite={canWrite} onClose={() => setSelectedKey(null)} onOpenHistory={() => setHistoryKey(selected.key)} /> : null}
+            {selected ? <MessageEditor key={`${locale}:${selected.key}`} locale={locale} localeName={localeMeta?.native_name ?? locale} entry={selected} canWrite={canWrite} onClose={() => setSelectedKey(null)} onOpenHistory={() => setHistoryKey(selected.key)} /> : null}
 
             <div className="h-4" />
 
@@ -428,7 +429,7 @@ function MessageRow({ entry, active, onOpen }: { entry: TranslationEntry; active
 
 // ---------------------------------------------------------------- editor
 
-function MessageEditor({ locale, entry, canWrite, onClose, onOpenHistory }: { locale: string; entry: TranslationEntry; canWrite: boolean; onClose: () => void; onOpenHistory: () => void }): React.ReactElement {
+function MessageEditor({ locale, localeName, entry, canWrite, onClose, onOpenHistory }: { locale: string; localeName: string; entry: TranslationEntry; canWrite: boolean; onClose: () => void; onOpenHistory: () => void }): React.ReactElement {
     const t: TranslationsT = useT("admin");
     const describeError = useErrorMessage();
     const fmt = useFormatters();
@@ -440,6 +441,12 @@ function MessageEditor({ locale, entry, canWrite, onClose, onOpenHistory }: { lo
     const placeholders = useMemo(() => placeholderNames(entry.placeholders), [entry.placeholders]);
     const dirty = value !== baseline;
     const state = entryState(entry);
+
+    // The declared list is what the backend validates against; the parsed list
+    // is what can be explained. Merging them keeps a declared-but-unparseable
+    // name visible instead of dropping it off the panel.
+    const args = useMemo(() => mergeArguments(describeMessage(entry.source_text), placeholders), [entry.source_text, placeholders]);
+    const written = useMemo(() => new Map(describeMessage(value).map((a) => [a.name, a])), [value]);
 
     const invalidate = () => {
         void queryClient.invalidateQueries({ queryKey: ["admin", "i18n", "messages"] });
@@ -558,6 +565,8 @@ function MessageEditor({ locale, entry, canWrite, onClose, onOpenHistory }: { lo
                     <MonoSection>{t("i18n.englishSource")}</MonoSection>
                     <p className="mt-1.5 whitespace-pre-line rounded-lg border border-border bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)] p-2.5 text-[13px] leading-[1.55]">{entry.source_text}</p>
 
+                    {state === "stale" ? <SourceChange before={entry.translated_source_text} after={entry.source_text} /> : null}
+
                     {entry.description ? (
                         <>
                             <div className="mt-3.5">
@@ -570,20 +579,17 @@ function MessageEditor({ locale, entry, canWrite, onClose, onOpenHistory }: { lo
                     <div className="mt-3.5">
                         <MonoSection>{t("i18n.placeholders")}</MonoSection>
                     </div>
-                    {placeholders.length === 0 ? (
+                    {args.length === 0 ? (
                         <p className="mt-1.5 text-[12px] text-muted-foreground italic">{t("i18n.placeholders.none")}</p>
                     ) : (
-                        <div className="mt-1.5 flex flex-wrap gap-1.5">
-                            {placeholders.map((name) => {
-                                const present = value.includes(`{${name}`);
-                                return (
-                                    <span key={name} className={cn("inline-flex h-5 items-center gap-1 rounded-sm border px-1.5 font-mono text-[11px] leading-none", present ? "border-success/32 bg-success/8 text-success-foreground" : "border-border bg-muted text-muted-foreground")}>
-                                        <span className="size-1.25 rounded-full" style={{ background: present ? "var(--success-foreground)" : "var(--muted-foreground)" }} />
-                                        {`{${name}}`}
-                                    </span>
-                                );
-                            })}
-                        </div>
+                        <>
+                            <p className="mt-1.5 text-[11.5px] text-muted-foreground leading-normal">{t("i18n.args.help")}</p>
+                            <div className="mt-2 flex flex-col gap-2.5">
+                                {args.map((arg) => (
+                                    <ArgumentCard key={arg.name} arg={arg} written={written.get(arg.name) ?? null} started={value.trim().length > 0} locale={locale} localeName={localeName} />
+                                ))}
+                            </div>
+                        </>
                     )}
 
                     <div className="mt-3.5">
@@ -593,6 +599,174 @@ function MessageEditor({ locale, entry, canWrite, onClose, onOpenHistory }: { lo
                 </div>
             </div>
         </Card>
+    );
+}
+
+// ---------------------------------------------------------------- source change
+
+/**
+ * What the English used to say, against what it says now.
+ *
+ * `translated_source_text` is `null` for any row written before the snapshot
+ * column existed, and that is worth saying out loud rather than rendering an
+ * empty comparison: the difference between "nothing changed" and "we never
+ * recorded it" is the difference between a glance and a re-read.
+ */
+function SourceChange({ before, after }: { before: string | null; after: string }): React.ReactElement {
+    const t: TranslationsT = useT("admin");
+    const spans = useMemo(() => (before === null ? [] : diffWords(before, after)), [before, after]);
+
+    return (
+        <>
+            <div className="mt-3.5">
+                <MonoSection>{t("i18n.sourceChanged")}</MonoSection>
+            </div>
+            {before === null ? (
+                <p className="mt-1.5 text-[12px] text-muted-foreground leading-normal">{t("i18n.sourceChanged.unknown")}</p>
+            ) : (
+                <>
+                    <p className="mt-1.5 whitespace-pre-line rounded-lg border border-warning/32 bg-warning/8 p-2.5 text-[13px] leading-[1.55]">
+                        {spans.map((span, i) => (
+                            // Spans have no identity of their own and the list is rebuilt whole on every source change, so the index is the key.
+                            // biome-ignore lint/suspicious/noArrayIndexKey: see above
+                            <span key={i} className={cn(span.op === "removed" && "text-destructive-foreground line-through decoration-destructive-foreground/60", span.op === "added" && "text-success-foreground underline decoration-success-foreground/60 underline-offset-2")}>
+                                {span.text}
+                            </span>
+                        ))}
+                    </p>
+                    <p className="mt-1.5 text-[11.5px] text-muted-foreground leading-normal">{t("i18n.sourceChanged.note")}</p>
+                </>
+            )}
+        </>
+    );
+}
+
+// ---------------------------------------------------------------- arguments
+
+/**
+ * The literal `t()` calls matter: the extractor only sees keys written out in
+ * full, so a table lookup here would have these seven fall out of the catalog
+ * as "defined but never used" and be pruned on the next sync. The sibling
+ * `filterLabel` and `levelLabel` take the same shape for the same reason.
+ */
+function kindLabel(t: TranslationsT, type: IMessageArgument["type"]): string {
+    switch (type) {
+        case "plain":
+            return t("i18n.args.kind.plain");
+        case "number":
+            return t("i18n.args.kind.number");
+        case "date":
+            return t("i18n.args.kind.date");
+        case "time":
+            return t("i18n.args.kind.time");
+        case "plural":
+            return t("i18n.args.kind.plural");
+        case "selectordinal":
+            return t("i18n.args.kind.selectordinal");
+        case "select":
+            return t("i18n.args.kind.select");
+    }
+}
+
+/**
+ * Declared placeholders that the parser did not reach still belong on the
+ * panel: the backend rejects a save that omits one, so hiding it would make
+ * the rejection unexplainable.
+ */
+function mergeArguments(parsed: IMessageArgument[], declared: string[]): IMessageArgument[] {
+    const seen = new Set(parsed.map((a) => a.name));
+    const extra = declared.filter((name) => !seen.has(name)).map((name): IMessageArgument => ({ branchText: {}, branches: [], name, offset: null, type: "plain" }));
+    return [...parsed, ...extra];
+}
+
+type FormStatus = "written" | "missing" | "unused";
+
+interface IFormRow {
+    key: string;
+    applies: string;
+    english: string;
+    status: FormStatus;
+}
+
+/**
+ * One row per wording the translator has to think about.
+ *
+ * The required set comes from the TARGET locale rather than from English,
+ * which is the whole point: English declares `one` and `other`, Russian needs
+ * `one`, `few`, `many` and `other`, and a Russian translation that stops at
+ * two forms is silently wrong in a way the old chip row could not express.
+ */
+function formRows(arg: IMessageArgument, written: IMessageArgument | null, locale: string, started: boolean): IFormRow[] {
+    const numeric = arg.type === "plural" || arg.type === "selectordinal";
+    const writtenKeys = new Set(written?.branches ?? []);
+
+    const exact = [...new Set([...arg.branches, ...(written?.branches ?? [])])].filter((k) => k.startsWith("=")).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+    const named = numeric ? pluralCategoriesFor(locale, arg.type === "selectordinal" ? "selectordinal" : "plural") : arg.branches.filter((k) => !k.startsWith("="));
+    const spare = [...writtenKeys, ...arg.branches].filter((k) => !k.startsWith("=") && !named.includes(k));
+    const order = [...exact, ...named, ...[...new Set(spare)]];
+
+    const required = new Set<string>(numeric ? [...named, ...arg.branches.filter((k) => k.startsWith("="))] : arg.branches);
+    const examples = new Map(numeric ? pluralExamples(locale, arg.type === "selectordinal" ? "selectordinal" : "plural").map((e) => [e.category, e.examples]) : []);
+
+    return order.map((key) => ({
+        applies: key.startsWith("=") ? key.slice(1) : key === "other" ? "" : (examples.get(key) ?? []).join(", "),
+        english: arg.branchText[key] ?? "",
+        key,
+        status: writtenKeys.has(key) ? "written" : started && required.has(key) ? "missing" : "unused",
+    }));
+}
+
+function ArgumentCard({ arg, written, started, locale, localeName }: { arg: IMessageArgument; written: IMessageArgument | null; started: boolean; locale: string; localeName: string }): React.ReactElement {
+    const t: TranslationsT = useT("admin");
+    const numeric = arg.type === "plural" || arg.type === "selectordinal";
+    const branching = numeric || arg.type === "select";
+    const rows = useMemo(() => (branching ? formRows(arg, started ? written : null, locale, started) : []), [arg, branching, written, started, locale]);
+    const forms = numeric ? pluralCategoriesFor(locale, arg.type === "selectordinal" ? "selectordinal" : "plural").length : 0;
+    // An empty box is missing every argument, which is not news. The warning is
+    // only earned once there is a translation for it to be wrong about.
+    const missing = started && written === null;
+
+    return (
+        <div className={cn("rounded-lg border p-2.5", missing ? "border-warning/32 bg-warning/8" : "border-border bg-[color-mix(in_srgb,var(--card),oklch(0_0_0)_2%)]")}>
+            <div className="flex flex-wrap items-center gap-1.5">
+                <span className="font-mono text-[11.5px]">{`{${arg.name}}`}</span>
+                <Badge variant="outline">{kindLabel(t, arg.type)}</Badge>
+                {missing ? <span className="text-[11px] text-muted-foreground">{t("i18n.args.unused")}</span> : null}
+            </div>
+
+            {branching ? (
+                <>
+                    <p className="mt-1.5 text-[11.5px] text-muted-foreground leading-normal">{numeric ? t("i18n.args.pluralIntro", { count: t("i18n.args.pluralCount", { count: forms }), locale: localeName }) : t("i18n.args.selectIntro")}</p>
+                    <table className="mt-2 w-full table-auto border-collapse text-left">
+                        <thead>
+                            <tr className="font-medium font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.08em]">
+                                <th className="py-0.5 pr-2 font-medium">{t("i18n.args.colForm")}</th>
+                                <th className="py-0.5 pr-2 font-medium">{t("i18n.args.colApplies")}</th>
+                                <th className="py-0.5 font-medium">{t("i18n.args.colEnglish")}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {rows.map((row) => (
+                                <tr key={row.key} className="border-border/60 border-t align-baseline">
+                                    <td className="whitespace-nowrap py-1 pr-2 font-mono text-[11px]">
+                                        <span className={cn(row.status === "missing" && "text-warning-foreground")}>{row.key}</span>
+                                    </td>
+                                    <td className="py-1 pr-2 text-[11px] text-muted-foreground tabular-nums">{row.key === "other" ? t("i18n.args.anythingElse") : row.key.startsWith("=") ? t("i18n.args.exact", { value: row.applies }) : row.applies}</td>
+                                    <td className="py-1 text-[11.5px] leading-snug">
+                                        <span className="text-muted-foreground">{row.english}</span>
+                                        {row.status === "missing" ? (
+                                            <Badge variant="warning" className="ml-1.5 align-middle">
+                                                {t("i18n.args.formMissing")}
+                                            </Badge>
+                                        ) : null}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </>
+            ) : null}
+        </div>
     );
 }
 

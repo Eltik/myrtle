@@ -635,12 +635,15 @@ pub async fn update_message(
     // no-op save on a stale row is still meaningful and must go through.
     let changed = existing.value.as_deref() != Some(value);
 
+    // The snapshot is the source that was on screen for this save, which is
+    // the key's current source_text - the same text the hash is taken over.
     queries::upsert_message(
         &state.db,
         key,
         locale,
         value,
         &existing.source_hash,
+        &existing.source_text,
         changed_by,
     )
     .await?;
