@@ -35,11 +35,15 @@ export default function ThemeToggle() {
                     </Button>
                 }
             />
-            <PopoverContent align="end" sideOffset={8} className="w-64">
+            {/* w-72 rather than w-64: at 256px the three mode labels came to 222px in
+                Russian against 222px of content box, so every one of them ellipsised by
+                a character. 288px leaves 32px of slack there, and the truncate on the
+                labels is the floor for a language that still does not fit. */}
+            <PopoverContent align="end" sideOffset={8} className="w-72">
                 <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-1.5 font-medium text-muted-foreground text-xs">
-                        <SunIcon className="h-3.5 w-3.5" />
-                        <span>{t("themeToggle.appearance")}</span>
+                        <SunIcon className="h-3.5 w-3.5 shrink-0" />
+                        <span className="min-w-0">{t("themeToggle.appearance")}</span>
                     </div>
                     {/* Three equal columns gave each button a third of the popover
                         whatever its label needed, so a word wider than the cell
@@ -56,14 +60,18 @@ export default function ThemeToggle() {
 
                     <div className="-mx-1 h-px bg-border" />
 
-                    <div className="flex items-center justify-between font-medium text-muted-foreground text-xs">
-                        <span className="flex items-center gap-1.5">
-                            <PaletteIcon className="h-3.5 w-3.5" />
+                    {/* Same shape as the mode row above: the heading is a phrase and
+                        may wrap, the button is one word and may not. Without
+                        shrink-0 the two squeezed each other and French broke
+                        "Reinitialiser" across two lines inside the button. */}
+                    <div className="flex items-center justify-between gap-2 font-medium text-muted-foreground text-xs">
+                        <span className="flex min-w-0 items-center gap-1.5">
+                            <PaletteIcon className="h-3.5 w-3.5 shrink-0" />
                             {t("themeToggle.accent")}
                         </span>
                         {!isDefaultAccent && (
-                            <button type="button" onClick={resetAccent} className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" aria-label={t("themeToggle.resetAccentAria")}>
-                                <RotateCcwIcon className="h-3 w-3" />
+                            <button type="button" onClick={resetAccent} className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded px-1.5 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground" aria-label={t("themeToggle.resetAccentAria")}>
+                                <RotateCcwIcon className="h-3 w-3 shrink-0" />
                                 {t("themeToggle.reset")}
                             </button>
                         )}
@@ -89,24 +97,24 @@ export default function ThemeToggle() {
                     </div>
 
                     <label htmlFor={customInputId} className={cn("group flex cursor-pointer items-center justify-between rounded-md border bg-popover px-2 py-1.5 text-xs transition-colors hover:bg-accent/40", accent?.type === "custom" ? "border-foreground/40" : "border-border")}>
-                        <span className="flex items-center gap-2 text-foreground">
-                            <span className="relative inline-block size-5 overflow-hidden rounded-full border border-border" aria-hidden="true">
+                        <span className="flex min-w-0 items-center gap-2 text-foreground">
+                            <span className="relative inline-block size-5 shrink-0 overflow-hidden rounded-full border border-border" aria-hidden="true">
                                 <span className="absolute inset-0" style={{ backgroundColor: renderedHex }} />
                             </span>
                             {t("themeToggle.customColor")}
                         </span>
-                        <span className="font-mono text-[10px] text-muted-foreground/70 tabular-nums">{customLabel}</span>
+                        <span className="shrink-0 font-mono text-[10px] text-muted-foreground/70 tabular-nums">{customLabel}</span>
                         <input id={customInputId} type="color" value={renderedHex} onChange={onPickCustom} className="sr-only" aria-label={t("themeToggle.chooseCustomColor")} />
                     </label>
 
                     <div className="-mx-1 h-px bg-border" />
 
                     <label htmlFor={dynamicArtId} className="flex cursor-pointer items-center justify-between gap-2">
-                        <span className="flex items-center gap-1.5 font-medium text-muted-foreground text-xs">
-                            <SparklesIcon className="h-3.5 w-3.5" />
+                        <span className="flex min-w-0 items-center gap-1.5 font-medium text-muted-foreground text-xs">
+                            <SparklesIcon className="h-3.5 w-3.5 shrink-0" />
                             {t("themeToggle.dynamicArt")}
                         </span>
-                        <Switch id={dynamicArtId} checked={dynamicArtwork} onCheckedChange={setDynamicArtwork} aria-label={t("themeToggle.dynamicArtAria")} />
+                        <Switch id={dynamicArtId} checked={dynamicArtwork} onCheckedChange={setDynamicArtwork} aria-label={t("themeToggle.dynamicArtAria")} className="shrink-0" />
                     </label>
                     <p className="text-[10px] text-muted-foreground/70 leading-snug">{t("themeToggle.dynamicArtNote")}</p>
                 </div>

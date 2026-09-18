@@ -6353,12 +6353,23 @@ pub(crate) fn encode_png(rgba: &[u8], w: u32, h: u32) -> Option<Vec<u8>> {
 }
 
 /// Write one texture into the skin's pool and return its path relative to the skin
-/// directory. A file that already exists under the same content hash is not rewritten.
+/// directory. A file that already exists under the same content hash is not rewritten,
+/// but its mtime IS bumped to now: the pipeline's orphan sweep (`assets/orphans.mjs`)
+/// deletes every file in a written subtree whose mtime predates the run, and a pool file
+/// the previous extract wrote and this one merely reused is exactly that. Left untouched,
+/// the second extract after the pool went live swept every `tex/` on the VPS while the
+/// JSONs it rewrote still pointed there (CN whirlwind#11: 9 of 9 scene textures 404,
+/// 2026-09-18). A touch that fails falls back to rewriting the bytes.
 pub(crate) fn pool_write_png(spine_dir: &Path, rgba: &[u8], w: u32, h: u32) -> Option<String> {
     let bytes = encode_png(rgba, w, h)?;
     let rel = format!("tex/{:016x}.png", fnv1a64(&bytes));
     let path = spine_dir.join(&rel);
-    if !path.exists() {
+    let reused = std::fs::OpenOptions::new()
+        .write(true)
+        .open(&path)
+        .and_then(|f| f.set_modified(std::time::SystemTime::now()))
+        .is_ok();
+    if !reused {
         std::fs::create_dir_all(path.parent()?).ok()?;
         std::fs::write(&path, &bytes).ok()?;
     }
@@ -7966,5 +7977,51 @@ mod atlas_page_tests {
                 texture_unreconcilable: false,
             }
         );
+    }
+}
+
+#[cfg(test)]
+mod tex_pool_tests {
+    use super::pool_write_png;
+    use std::time::{Duration, SystemTime};
+
+    /// A pool file the previous extract wrote is reused, not rewritten, by the next one.
+    /// The pipeline's orphan sweep keeps only files whose mtime is at or after the run
+    /// started, so a reused file must be touched or the sweep deletes it from under the
+    /// JSON that names it. That is the regression this test exists for.
+    #[test]
+    fn reused_pool_file_is_touched_and_unchanged() {
+        let dir = std::env::temp_dir().join(format!("myrtle_tex_pool_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let rgba = [0u8, 128, 255, 200, 10, 20, 30, 40];
+
+        let rel = pool_write_png(&dir, &rgba, 2, 1).unwrap();
+        assert!(rel.starts_with("tex/"), "{rel}");
+        let path = dir.join(&rel);
+        let first = std::fs::read(&path).unwrap();
+
+        let stale = SystemTime::now() - Duration::from_secs(3600);
+        std::fs::File::options()
+            .write(true)
+            .open(&path)
+            .unwrap()
+            .set_modified(stale)
+            .unwrap();
+        let run_start = SystemTime::now();
+
+        let rel2 = pool_write_png(&dir, &rgba, 2, 1).unwrap();
+        assert_eq!(rel, rel2);
+        assert_eq!(
+            std::fs::read(&path).unwrap(),
+            first,
+            "reuse must not change the bytes"
+        );
+        let mtime = std::fs::metadata(&path).unwrap().modified().unwrap();
+        assert!(
+            mtime + Duration::from_secs(2) >= run_start,
+            "reused pool file kept a stale mtime ({mtime:?} < run start {run_start:?}); the orphan sweep would delete it"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
