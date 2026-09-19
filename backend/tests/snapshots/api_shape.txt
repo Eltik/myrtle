@@ -8113,6 +8113,7 @@ gacha.gachaPoolClient[*].lmtgsid: null
 gacha.gachaPoolClient[*].lmtgsid: string
 gacha.gachaPoolClient[*].openTime: number
 gacha.gachaPoolClient[*].pickup6: array
+gacha.gachaPoolClient[*].pickup6[*]: string
 gacha.gachaPoolClient[*].weightUp: array
 gacha.gachaPoolClient[*].weightUp[*].charId: string
 gacha.gachaPoolClient[*].weightUp[*].rarityRank: number
@@ -8367,6 +8368,7 @@ banners[*].lmtgsid: null
 banners[*].lmtgsid: string
 banners[*].openTime: number
 banners[*].pickup6: array
+banners[*].pickup6[*]: string
 banners[*].weightUp: array
 banners[*].weightUp[*].charId: string
 banners[*].weightUp[*].rarityRank: number
