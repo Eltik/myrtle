@@ -51,7 +51,7 @@ export function stagePreviewCandidates(stage: IStage): string[] {
 
 /**
  * Strips the per-stage sub-index from a stageId, leaving the zone/episode family.
- * `main_14-06` → `main_14`, `act29side_ex01` → `act29side`, `a001_01` → `a001`.
+ * `main_14-06` -> `main_14`, `act29side_ex01` -> `act29side`, `a001_01` -> `a001`.
  */
 function stageFamily(stageId: string): string {
     const dashIdx = stageId.indexOf("-");

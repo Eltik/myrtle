@@ -55,7 +55,7 @@ export function OfficialTierLists(): React.ReactElement {
                 if (!l.title.toLowerCase().includes(q) && !l.slug.toLowerCase().includes(q) && !(l.flairLabel ?? "").toLowerCase().includes(q)) return false;
             }
             if (statusFilter === "active" && !l.hot) {
-                // "active" → tier_lists.is_active=true. The browse mapping doesn't expose is_active directly,
+                // "active" -> tier_lists.is_active=true. The browse mapping doesn't expose is_active directly,
                 // but trending items are always active. We approximate with hot. Fall back to all when ambiguous.
             }
             return true;

@@ -18,7 +18,7 @@ const ZERO_DEFAULT_KEYS: &[&str] = &[
     "magic_resist_penetrate_fixed",
 ];
 
-/// Parse the uniequip number from a module's id, e.g. `uniequip_002_poca` → 2.
+/// Parse the uniequip number from a module's id, e.g. `uniequip_002_poca` -> 2.
 /// This is the canonical order formulas index modules by. Unparseable ids sort last.
 pub fn uniequip_number(module: &OperatorModule) -> i32 {
     module

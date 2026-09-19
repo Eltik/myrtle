@@ -636,8 +636,8 @@ function classifyChannel(tagId: string | null | undefined): SectionChannel {
 }
 
 // Strip the iteration suffix from a skin group name so all iterations of the
-// same brand fold into a single section. "Witch Feast/V" → "Witch Feast",
-// "Coral Coast/XX" → "Coral Coast", but a one-word brand like "Sanrio
+// same brand fold into a single section. "Witch Feast/V" -> "Witch Feast",
+// "Coral Coast/XX" -> "Coral Coast", but a one-word brand like "Sanrio
 // characters" is left untouched (it has no iteration roman numeral).
 const ITERATION_SUFFIX_RE = /\/[IVXLCDM]+$/i;
 
@@ -721,7 +721,7 @@ function buildSections(filtered: ICardData[], mode: SortMode, popularity: Map<st
  *  Lookup order in `getSkinPrice`:
  *    1. exact `skinId` match
  *    2. `skinGroupId` match
- *    3. no entry → generic "Store" chip (no OP number) so we don't lie. */
+ *    3. no entry -> generic "Store" chip (no OP number) so we don't lie. */
 const SKIN_PRICE_OVERRIDES: Record<string, number> = {
     // Examples (uncomment and fill in verified values):
     // "char_002_amiya@witch#1": 21,

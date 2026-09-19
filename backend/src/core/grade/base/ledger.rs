@@ -1162,10 +1162,10 @@ pub fn op_power_rank_value(
 pub const UNCONFIGURED_OUTPUT_FACTOR: f64 = 0.5;
 
 /// The three-tier configuration discount:
-/// - generic clause, or configured room whose formula the clause targets → 1.0
-/// - configured room whose formula the clause does NOT target → 0.0 - a
+/// - generic clause, or configured room whose formula the clause targets -> 1.0
+/// - configured room whose formula the clause does NOT target -> 0.0 - a
 ///   mechanical fact, never discounted
-/// - unconfigured room → [`UNCONFIGURED_OUTPUT_FACTOR`] - real but unproven,
+/// - unconfigured room -> [`UNCONFIGURED_OUTPUT_FACTOR`] - real but unproven,
 ///   never zeroed. A clause covering both Gold and EXP serves any factory
 ///   equally, so it counts as generic.
 fn config_factor(clause: &Clause, formula_type: Option<&str>) -> f64 {

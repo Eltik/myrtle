@@ -362,7 +362,7 @@ async fn toggle_visibility(pool: &PgPool) -> Result<()> {
 
     let next = !is_listed;
     print!(
-        "Flip '{}' listed = {} → {}? (y/n): ",
+        "Flip '{}' listed = {} -> {}? (y/n): ",
         name,
         yesno(is_listed),
         yesno(next)

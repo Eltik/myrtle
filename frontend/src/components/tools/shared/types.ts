@@ -93,7 +93,7 @@ export interface ISweepRange {
 
 export interface ICurvePoint {
     x: number;
-    /** Map of instance uid → metric value at this X (null while loading). */
+    /** Map of instance uid -> metric value at this X (null while loading). */
     [uid: string]: number | null;
 }
 

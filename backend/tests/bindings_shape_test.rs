@@ -7,13 +7,13 @@
 //!
 //! * ts-rs maps `i64`/`u64` to `bigint`, but `serde_json` writes them as plain
 //!   JSON numbers, so `JSON.parse` yields `number`. A `bigint` in the bindings
-//!   is a type the runtime can never produce — arithmetic against it fails to
+//!   is a type the runtime can never produce: arithmetic against it fails to
 //!   compile in correct frontend code. Fix by annotating the Rust field with
 //!   `#[ts(type = "number")]` (or `"number | null"` / `"Record<string, number>"`).
 //! * A bare `any` disables checking on everything downstream of it. It should
 //!   never appear: `serde_json::Value` resolves to ts-rs's recursive `JsonValue`
 //!   via the `serde-json-impl` feature. Note that `unknown` is NOT a valid
-//!   substitute here — `TanStack` Start's `createServerFn` rejects it as
+//!   substitute here: `TanStack` Start's `createServerFn` rejects it as
 //!   unserializable, so a hand-written `#[ts(type = "unknown")]` breaks the
 //!   frontend build at every server-fn boundary the type crosses.
 //!
@@ -89,7 +89,7 @@ fn bindings_contain_no_impossible_wire_types() {
                 ),
                 (
                     "any",
-                    "a serde_json::Value field lost its JsonValue binding — check the serde-json-impl feature",
+                    "a serde_json::Value field lost its JsonValue binding: check the serde-json-impl feature",
                 ),
             ] {
                 if line.match_indices(token).any(|(at, _)| {
@@ -100,7 +100,7 @@ fn bindings_contain_no_impossible_wire_types() {
                     };
                     boundary(before) && boundary(after)
                 }) {
-                    offenders.push(format!("{name}: `{token}` — {hint}"));
+                    offenders.push(format!("{name}: `{token}` ({hint})"));
                     break;
                 }
             }

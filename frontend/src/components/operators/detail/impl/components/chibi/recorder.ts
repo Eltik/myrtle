@@ -288,9 +288,9 @@ export async function recordAsGif(options: IRecordingOptions): Promise<IRecordin
 /**
  * Pick the lowest AVC level that fits the given resolution.
  * Browsers reject configures whose level is below the frame size.
- *   3.1 → ≤ 1280×720
- *   4.0 → ≤ 2048×1024
- *   5.1 → ≤ 4096×2048
+ *   3.1 -> ≤ 1280×720
+ *   4.0 -> ≤ 2048×1024
+ *   5.1 -> ≤ 4096×2048
  */
 function pickAvcLevel(width: number, height: number): string {
     const pixels = width * height;

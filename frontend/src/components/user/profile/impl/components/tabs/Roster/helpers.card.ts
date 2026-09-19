@@ -38,8 +38,8 @@ export function rarityIcon(starCount: number): string {
 
 /**
  * Short label for the module-stage badge on operator cards.
- * Special cases: ISW → IS, RA → RA (Reclamation Algorithm),
- * typeName2 "D" → Δ (Delta module). Otherwise uses typeName2
+ * Special cases: ISW -> IS, RA -> RA (Reclamation Algorithm),
+ * typeName2 "D" -> Δ (Delta module). Otherwise uses typeName2
  * (the X/Y/Z designator) and falls back to typeName1.
  */
 export function moduleBadgeLetter(mod: Pick<IModule, "typeName1" | "typeName2">): string {

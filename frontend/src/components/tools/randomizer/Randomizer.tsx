@@ -77,7 +77,7 @@ export function Randomizer(): React.ReactElement {
     const settings = React.useMemo(() => migrateSettings(persisted), [persisted]);
     const updateSettings = React.useCallback((next: Partial<IRandomizerSettings>) => setPersisted((prev) => ({ ...migrateSettings(prev), ...next, _version: SETTINGS_VERSION })), [setPersisted]);
 
-    // Roster selection: `null` means "user hasn't pruned the roster yet" → treat as all
+    // Roster selection: `null` means "user hasn't pruned the roster yet" -> treat as all
     // operators. Any array (even empty) is an explicit choice the user made.
     const [rosterStored, setRosterStored] = useLocalStorageState<string[] | null>(ROSTER_STORAGE_KEY, null, {
         parse: (raw) => {

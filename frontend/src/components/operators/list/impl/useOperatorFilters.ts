@@ -73,7 +73,7 @@ export function useOperatorFilters(data: IOperatorView[]): IUseOperatorFiltersRe
     const filteredOperators = useMemo(() => {
         const { sortBy, sortOrder } = filters;
         const dir = sortOrder === "asc" ? 1 : -1;
-        // Primary sort honors `dir`; name tiebreaker is always A→Z so listings stay readable in either direction.
+        // Primary sort honors `dir`; name tiebreaker is always A->Z so listings stay readable in either direction.
         const nameTiebreak = (a: IOperatorView, b: IOperatorView) => a.name.localeCompare(b.name);
         /** 1 when an operator has a real E2 conversion rate, 0 when it has
          *  none to report. Applied before the direction multiplier so the

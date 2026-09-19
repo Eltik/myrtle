@@ -26,7 +26,7 @@ import type { Spine } from "pixi-spine";
  * Safe by construction:
  *  - Gated to DynIllust skeletons (see caller) - battle/dorm chibis untouched.
  *  - An IK is only dropped when ALL its posed bones are rotation-keyed by the
- *    CURRENT animation, i.e. FK already defines them → dropping is LOSSLESS for
+ *    CURRENT animation, i.e. FK already defines them -> dropping is LOSSLESS for
  *    correctly-solved rigs and only ever removes a wrong override.
  *  - IK that genuinely drives unkeyed bones (target-driven limbs), or has a
  *    genuinely varying authored mix, is kept.

@@ -187,7 +187,7 @@ export type IOperatorListItem = Camelize<Operator> & {
     audio: IOperatorAudio[];
     /** Small portrait image (headshot). */
     portrait: string | null;
-    /** Full character art; null → use portrait as fallback. */
+    /** Full character art; null -> use portrait as fallback. */
     skin: string | null;
     /** Template group ids for operators with alternate forms (Amiya). */
     tmplIds?: string[];

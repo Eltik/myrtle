@@ -3,8 +3,8 @@
 //! `load_table_or_warn` catches a deserialization error, logs one line, and
 //! substitutes `T::default()`. The service then serves an empty table as if it
 //! were real data: no error, a passing health check, a passing smoke test. In
-//! September 2026 six CN items carrying `ClassifyType: "MEMENTO"` — a value the
-//! `ItemClass` enum did not name — failed the whole `item_table`, so all 1,556
+//! September 2026 six CN items carrying `ClassifyType: "MEMENTO"` (a value the
+//! `ItemClass` enum did not name) failed the whole `item_table`, so all 1,556
 //! CN items lost their names and icons. It was found by a user noticing a broken
 //! image, not by anything in CI.
 //!
@@ -17,7 +17,7 @@ mod common;
 /// No table may fall back to its default.
 ///
 /// A failure here names the table and the serde error, which is normally enough
-/// to spot the culprit — most often an enum missing a variant. The fix is
+/// to spot the culprit: most often an enum missing a variant. The fix is
 /// usually `#[serde(other)] Unknown` on that enum rather than adding the one new
 /// variant, since the next unnamed value would break it again.
 #[test]

@@ -22,7 +22,7 @@ pub async fn insert_batch(
 ///
 /// All history queries order ties on `batch_index ASC, id ASC`: a multi-pull
 /// shares one `pull_timestamp`, and the in-game Headhunting History lists the
-/// batch `batch_index` 0→9 top-to-bottom in its newest-first view. Without the
+/// batch `batch_index` 0->9 top-to-bottom in its newest-first view. Without the
 /// tiebreaker Postgres returns tied rows in undefined order, which mis-numbers
 /// pulls and corrupts pity distances downstream.
 pub async fn get_history(

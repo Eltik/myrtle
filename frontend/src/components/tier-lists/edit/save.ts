@@ -51,7 +51,7 @@ interface IExistingChange {
  *   4. Create new tiers at their final `display_order`
  *   5. Settle parked tiers back into their final `display_order`
  *   6. Field-only updates for existing tiers whose order is unchanged
- *   7. Reconcile placements (remove → move → add). Draft tier ids are
+ *   7. Reconcile placements (remove -> move -> add). Draft tier ids are
  *      resolved as tiers are created so placement calls target real ids.
  */
 export async function saveEdits({ slug, original, current, t, onProgress }: ISaveContext): Promise<void> {

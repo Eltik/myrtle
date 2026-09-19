@@ -9,7 +9,7 @@ use crate::core::gamedata::types::operator::Operator;
 use super::clause::{PEER_STAGE_FIXED_LIMIT, PEER_STAGE_NET_LIMIT};
 use super::pools::ROBOTS_IN_POWER;
 
-/// Build a lowercased operator-name → `char_id` lookup, used to resolve
+/// Build a lowercased operator-name -> `char_id` lookup, used to resolve
 /// named-teammate conditional buffs (the buff text references operators by
 /// display name, e.g. "...the same Trading Post as Lappland").
 pub fn build_name_to_char(operators: &HashMap<String, Operator>) -> HashMap<String, String> {
@@ -720,10 +720,10 @@ pub enum BuffResolutionStrategy {
     /// buff names for itself. The keyword is parsed straight from the buff text
     /// ("for each <kw>…"), so this one strategy covers every faction- and
     /// skill-type synergy without hardcoding any faction or operator name:
-    ///   - Dorothy: "+5% per Rhine Tech-type skill"      → token "rhine"
-    ///   - Mizuki:  "+5% per Standardization Skill"       → token "standardization"
-    ///   - Bryophyta:"+5% per Metalwork-type skill"       → token "metalwork"
-    ///   - Morgan:  "+20% per Glasgow Gang Operator"      → token "glasgow"
+    ///   - Dorothy: "+5% per Rhine Tech-type skill"      -> token "rhine"
+    ///   - Mizuki:  "+5% per Standardization Skill"       -> token "standardization"
+    ///   - Bryophyta:"+5% per Metalwork-type skill"       -> token "metalwork"
+    ///   - Morgan:  "+20% per Glasgow Gang Operator"      -> token "glasgow"
     ///
     /// A teammate matches when the token equals one of its faction ids
     /// (group/nation/team) or the leading word of one of its skill names.
@@ -819,10 +819,10 @@ pub enum BuffResolutionStrategy {
     /// Control Center buff that boosts a production room ONLY when its team
     /// matches a faction condition - so it is NOT credited flat to every room.
     ///   - per-operator (Umiri): "all <Siracusa> Operators in Trading Posts gain
-    ///     +5%" → each matching op adds `bonus_pct` (`faction_token` "siracusa",
+    ///     +5%" -> each matching op adds `bonus_pct` (`faction_token` "siracusa",
     ///     `per_operator` = true, `required_count` = 1).
     ///   - count-gated (SilverAsh): "all Trading Posts with 3 <Kjerag> Operators
-    ///     gain +10%" → the whole post gains `bonus_pct` once it holds
+    ///     gain +10%" -> the whole post gains `bonus_pct` once it holds
     ///     `required_count` of that faction (`per_operator` = false, required 3).
     ///
     /// `faction_token` is matched against teammates' `match_tags`.
@@ -1071,7 +1071,7 @@ pub fn build_registry(
     let defaulted_below = defaulted_trade_threshold(buffs);
 
     for (buff_id, buff) in buffs {
-        // Strip the tier suffix: "manu_prod_spd&power[000]" → "manu_prod_spd&power".
+        // Strip the tier suffix: "manu_prod_spd&power[000]" -> "manu_prod_spd&power".
         let prefix = buff_id.split('[').next().unwrap_or(buff_id);
 
         // Morale-drain extraction runs FIRST, before any parse branch can
@@ -1498,7 +1498,7 @@ pub fn build_registry(
                     // Faction-gated global bonuses ("all <Siracusa> Operators…",
                     // "all Trading Posts with 3 <Kjerag> Operators…") must NOT be
                     // credited flat to every room - they depend on each room's team.
-                    // The faction token comes from the displayed keyword (Kjerag →
+                    // The faction token comes from the displayed keyword (Kjerag ->
                     // "kjerag", matching operators' nation tag), not the internal
                     // group marker. A "with <N>" clause means the WHOLE post is
                     // gated on holding N of that faction; otherwise it's a per-
@@ -1762,7 +1762,7 @@ pub fn build_registry(
                     let cap_pct = parse_scaling_cap(&buff.description);
                     // Optional named-teammate rider (Morgan "Gang Compass": +35%
                     // more "when in the same Trading Post as Siege"). Credited only
-                    // when that operator is present; absent → (None, 0).
+                    // when that operator is present; absent -> (None, 0).
                     let (bonus_char_id, bonus_pct) = buff
                         .description
                         .contains("same")
@@ -1895,7 +1895,7 @@ pub fn build_registry(
                     // Over a full shift, avg morale difference = 12
                     // (morale goes from 24 to 0, difference goes from 0 to 24, avg = 12)
                     let peak = f64::from(buff.efficiency);
-                    // Parse: "every <@cc.kw>4</> points" → 4, and "-5%" → 5
+                    // Parse: "every <@cc.kw>4</> points" -> 4, and "-5%" -> 5
                     let interval = parse_kw_number(&buff.description).unwrap_or(4.0);
                     let penalty_pct = parse_first_vdown_pct(&buff.description).unwrap_or(5.0);
                     let avg_penalty = (12.0 / interval) * penalty_pct;
@@ -2204,8 +2204,8 @@ pub fn build_registry(
 
 /// The match token of a "for each/every <keyword>" count-scaling buff, or `None`
 /// if the buff doesn't scale per teammate. The token is the leading word of the
-/// keyword, lowercased (e.g. "Rhine Tech-type skill" → "rhine", "Glasgow Gang
-/// Operator" → "glasgow"). Numeric keywords ("for each 4 gold bars") are
+/// keyword, lowercased (e.g. "Rhine Tech-type skill" -> "rhine", "Glasgow Gang
+/// Operator" -> "glasgow"). Numeric keywords ("for each 4 gold bars") are
 /// resource mechanics, not teammate counts, and return `None`.
 fn parse_count_keyword(desc: &str) -> Option<String> {
     let cap = RE_COUNT_KEYWORD.captures(desc)?;
@@ -2215,7 +2215,7 @@ fn parse_count_keyword(desc: &str) -> Option<String> {
 }
 
 /// Parse a skill-type converter: "all <X> and <Y> skills are considered <Z>
-/// skills" → (from = [x, y], to = z). The last keyword is the target type; the
+/// skills" -> (from = [x, y], to = z). The last keyword is the target type; the
 /// earlier ones are the source types. Returns `None` if not a converter.
 fn parse_skill_conversion(desc: &str) -> Option<(Vec<String>, String)> {
     if !(desc.contains("considered") && desc.contains("skill")) {
@@ -2306,7 +2306,7 @@ fn order_value_shape(desc: &str, defaulted_below: Option<u32>) -> Option<(OrderE
     }
 }
 
-/// Leading word of a keyword phrase, lowercased ("Rhine Tech-type" → "rhine").
+/// Leading word of a keyword phrase, lowercased ("Rhine Tech-type" -> "rhine").
 fn first_token(s: &str) -> String {
     s.trim()
         .split([' ', '-'])
@@ -2578,7 +2578,7 @@ fn find_faction_token(desc: &str) -> Option<(String, usize)> {
 }
 
 /// The `(percent, units)` of a per-capacity rate: "+1% Drone recovery rate for every
-/// 10 max Drone capacity" → `(1.0, 10.0)`.
+/// 10 max Drone capacity" -> `(1.0, 10.0)`.
 fn parse_per_capacity_rate(desc: &str) -> Option<(f64, f64)> {
     static RE_PER_CAPACITY: LazyLock<Regex> = LazyLock::new(|| {
         Regex::new(r"for every\s*(?:<[^>]+>)?\s*(\d+)\s*(?:</>)?\s*max Drone capacity").unwrap()

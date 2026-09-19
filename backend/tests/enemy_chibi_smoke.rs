@@ -23,7 +23,7 @@ fn enemy_chibi_data_loads_from_local_assets() {
     );
 
     // `_N`-suffixed ids are distinct handbook enemies (Hound / Hound Pro /
-    // Rabid Hound Pro), each its own character with a single default skin —
+    // Rabid Hound Pro), each its own character with a single default skin,
     // even though they share one directory on disk.
     for id in [
         "enemy_1000_gopro",

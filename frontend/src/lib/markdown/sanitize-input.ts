@@ -59,8 +59,8 @@ export interface ISanitizeOptions {
 /**
  * Sanitize text destined for storage as markdown.
  *
- * - null / undefined → null (unchanged sentinel)
- * - Normalizes CRLF → LF
+ * - null / undefined -> null (unchanged sentinel)
+ * - Normalizes CRLF -> LF
  * - Strips control characters (except `\n`, `\t`)
  * - Strips HTML tags, comments, CDATA blocks, processing instructions
  * - Replaces dangerous URL schemes in `[text](url)` links with `#`

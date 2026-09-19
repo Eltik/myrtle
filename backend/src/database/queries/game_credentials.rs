@@ -1,4 +1,4 @@
-//! Durable Yostar credentials — the half of a game session that cannot be
+//! Durable Yostar credentials: the half of a game session that cannot be
 //! re-derived without an email code.
 //!
 //! See `migrations/v012_game_credentials.sql` for why this is a table rather
@@ -13,7 +13,7 @@ use crate::core::hypergryph::constants::AuthSession;
 
 /// The durable half of an `AuthSession`: exactly what `refresh_secret` needs to
 /// mint a live session, and nothing else. The short-lived `secret` / `token`
-/// pair is deliberately absent — it is re-derivable, so persisting it would
+/// pair is deliberately absent: it is re-derivable, so persisting it would
 /// widen the blast radius of a database leak for no gain.
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct DurableCredential {

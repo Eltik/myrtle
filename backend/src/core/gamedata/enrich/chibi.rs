@@ -174,9 +174,9 @@ fn get_or_create_skin<'a>(
 }
 
 /// Extract `char_id` and skin name from a directory name.
-/// "`char_002_amiya`" → ("`char_002_amiya`", "default")
-/// "`char_002_amiya_epoque#4`" → ("`char_002_amiya`", "epoque#4")
-/// "`char_003_kalts_sale#14`" → ("`char_003_kalts`", "sale#14")
+/// "`char_002_amiya`" -> ("`char_002_amiya`", "default")
+/// "`char_002_amiya_epoque#4`" -> ("`char_002_amiya`", "epoque#4")
+/// "`char_003_kalts_sale#14`" -> ("`char_003_kalts`", "sale#14")
 /// Names that don't begin with "char_" (e.g. "token_*") are treated as a
 /// single opaque `char_id` with a "default" skin.
 fn parse_skin_identity(dir_name: &str) -> (String, String) {

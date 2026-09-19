@@ -30,7 +30,7 @@ interface ICurvePoint {
 
 /** Unity `MinMaxGradient`. `twoColors` is `RandomBetweenTwoColors`: each particle
  *  draws ONE colour uniformly between the two authored endpoints at birth (Skadi2
- *  iteration's `xian` threads are authored red→cyan; taking only the "max" side
+ *  iteration's `xian` threads are authored red->cyan; taking only the "max" side
  *  locked every thread cyan). Constant/gradient states are unchanged. */
 export type MMColor = { mode: "color"; r: number; g: number; b: number; a: number } | { mode: "twoColors"; min: IRGBA; max: IRGBA } | { mode: "gradient"; stops: IColorStop[] };
 
@@ -134,7 +134,7 @@ export interface IParticleSystemData {
     /** Faithful screen-space (Y-up) cone emission direction for camera-facing (tilted)
      *  emitters whose flat `rot` is degenerate. Exported ONLY for such cones (Skadi2's
      *  `xiaoyu`/`guang` red streaks); when present the cone aims along it instead of the
-     *  `rot`-derived "local +Y" direction. Absent → byte-identical legacy path. */
+     *  `rot`-derived "local +Y" direction. Absent -> byte-identical legacy path. */
     emitDir?: [number, number] | null;
     /** Screen images (Y-up px per local unit, scale stripped) of a LOCAL-aligned mesh
      *  emitter's x and y axes, `[bx.x, bx.y, by.x, by.y]`, exported only when the emitter is
@@ -143,9 +143,9 @@ export interface IParticleSystemData {
     meshBasis?: [number, number, number, number] | null;
     /** Unity `StretchedBillboard` renderer scales (`renderMode:"stretch"` only). The quad is
      *  elongated along the particle's screen velocity to `|lengthScale|·size + velocityScale·speed`
-     *  px (the px unit cancels, so no world→screen conversion). `lengthScale` is the size-proportional
+     *  px (the px unit cancels, so no world->screen conversion). `lengthScale` is the size-proportional
      *  stretch (the dominant term for nearly every system - rain, embers), `velocityScale` the
-     *  speed-proportional one (only Angelina's skin uses it). Absent → Unity defaults (lengthScale 2,
+     *  speed-proportional one (only Angelina's skin uses it). Absent -> Unity defaults (lengthScale 2,
      *  velocityScale 0). This replaces a single invented speed factor that over-stretched fast,
      *  tiny specks into long foreground streaks. */
     stretch?: { lengthScale: number; velocityScale: number; cameraVelocityScale: number } | null;
@@ -186,14 +186,14 @@ export interface IParticleSystemData {
      *  without a Texture Sheet module. Ignoring it draws the whole atlas as one
      *  giant sprite (Hoshiguma the Breacher's wave "plumes"). See {@link cropByMainST}. */
     mainST?: [number, number, number, number];
-    /** Ancestor GameObject-name chain (nearest→root) from the Unity prefab. When
+    /** Ancestor GameObject-name chain (nearest->root) from the Unity prefab. When
      *  one of these names is a real spine bone, the emitter is parented under that
      *  bone (spine-unity's `SkeletonUtilityBone`, named after the bone) and its
      *  effect drifts with the character's idle sway in-game - see {@link driftWithBone}. */
     boneChain?: string[];
     /** Explicit spine-bone attachment from a serialized spine-unity `BoneFollower`
      *  on the effect rig's clone root (the director-instantiated `_effects`, e.g.
-     *  Virtuosa's entrance `start_apple_01(Clone)` → `L_C_Apple_F`). The rig's
+     *  Virtuosa's entrance `start_apple_01(Clone)` -> `L_C_Apple_F`). The rig's
      *  baked `pos` is only an editor pose the follower overrides at runtime - the
      *  emitter's true position is `bone(t) + followOffset`. Only used when the
      *  `boneChain` heuristic can't attach (no ancestor names a real bone); see
@@ -214,7 +214,7 @@ export interface IParticleSystemData {
     ram?: IRamData;
     /** Per-particle Ram DISSOLVE-amount curve over normalized lifetime, from the
      *  `CustomDataModule`'s Vector stream (shader vs_TEXCOORD2.x, added to `_Amount`).
-     *  Virtuosa's entrance apples crumble away with it (−0.12 → 1 by ~30% of life). */
+     *  Virtuosa's entrance apples crumble away with it (−0.12 -> 1 by ~30% of life). */
     ramDissolveCurve?: ICurvePoint[] | null;
     /** Per-particle DISSOLVE-UV offset over normalized lifetime as `[t, u, v]` triples, from the
      *  CustomData floats that land in `in_TEXCOORD1.xy`. Absent when nothing authors it. */
@@ -232,7 +232,7 @@ export interface IParticleSystemData {
     colorCurve?: [number, number, number, number, number][] | null;
     /** The `_Start` cinematic's animated SCALE FACTOR on an effect-host ancestor
      *  (multiplier of the baked resting pose, keyed in absolute cinematic seconds).
-     *  Virtuosa "Diversity in Oneness": the crown host scales 1.0→0.28 over 9.4–12.43s
+     *  Virtuosa "Diversity in Oneness": the crown host scales 1.0->0.28 over 9.4–12.43s
      *  - a big golden halo shrinking into the small crown. Applied about {@link
      *  scalePivot} on the emitter container, COMPOSED with any bone-follow delta. */
     scaleCurve?: ICurvePoint[] | null;
@@ -319,7 +319,7 @@ interface ITrail {
     tex: number | null;
     /** Unity `ParticleSystemTrailMode`. `perParticle` drags a ribbon behind EACH
      *  particle; `ribbon` threads ONE polyline through the system's live particles
-     *  ordered by age (see {@link RibbonTrail}). Absent in older exports → perParticle. */
+     *  ordered by age (see {@link RibbonTrail}). Absent in older exports -> perParticle. */
     mode?: "perParticle" | "ribbon";
     /** Interleaved ribbon count (ribbon mode): particle `i` belongs to ribbon `i % n`. */
     ribbonCount?: number;
@@ -542,8 +542,8 @@ function ramDisturb(): { bias: number; gain: number } {
  *
  *  Scene layers already set REPEAT for the same reason (see `loadTexture` in `sceneMesh.ts`).
  *
- *  ⚠️ Blanket REPEAT is NOT the answer and was measured: cet 32.138 → 31.784 and
- *  mly 17.974 → 17.957, but **cel 17.630 → 17.762**. These bundles genuinely author both modes
+ *  ⚠️ Blanket REPEAT is NOT the answer and was measured: cet 32.138 -> 31.784 and
+ *  mly 17.974 -> 17.957, but **cel 17.630 -> 17.762**. These bundles genuinely author both modes
  *  (Civilight Eterna's `bg_window_01_1` is Clamp while her background sheets are Repeat), so the
  *  authored value is what ships. Applied only to RAM slots - sprite paths keep their UVs inside
  *  [0, 1], where the mode cannot matter. `?ptclwrap=0` restores Pixi's default CLAMP. */
@@ -1216,9 +1216,9 @@ function backdropDemoteEnabled(): boolean {
  *  DISTURB-UV (payload 7,8) offsets from the CustomData payload.
  *
  *  The positional decode itself is proven - the DISSOLVE offset at payload 3,4 is what fixed
- *  Wiš'adel's ending stroke (12.643 → 6.779). These two siblings are decoded the same way and are
+ *  Wiš'adel's ending stroke (12.643 -> 6.779). These two siblings are decoded the same way and are
  *  exported, but applying them MEASURED WORSE on both references that author them
- *  (cel 18.006 → 18.018, cet 18.059 → 18.082; the other six bit-identical), and the only skins
+ *  (cel 18.006 -> 18.018, cet 18.059 -> 18.082; the other six bit-identical), and the only skins
  *  authoring the disturb pair have no capture at all, so nothing can validate them. Kept off by
  *  default for the same reason as `DYNCHAR_UVSCROLL_ALL`: shader-correct is necessary evidence,
  *  never sufficient. Turn on only alongside a corpus render of the affected skins. */
@@ -1327,7 +1327,7 @@ function emissionRate(d: IParticleSystemData, constRate: number, time: number): 
  *  Unity's `velocityOverLifetime` here is a CONSTANT push we integrate over the
  *  particle's lifetime. Over a LONG lifetime that's a huge straight-line fly-off the
  *  in-game archive never shows (Hoshiguma the Breacher's `fire_p` systems: lifetime
- *  5–6s, ~100px/s → a 500–600px sweep across the frame; that particular system has no
+ *  5–6s, ~100px/s -> a 500–600px sweep across the frame; that particular system has no
  *  `ClampVelocityModule` to arrest it - one that DOES (e.g. Mlynar's star glint) is now
  *  modeled via {@link IParticleSystemData.velocityClamp}). So a plain BILLBOARD without a
  *  clamp keeps a short-lifetime gate - its ambient flame
@@ -1484,7 +1484,7 @@ function driftWithBone(container: PIXI.Container, chain: string[] | undefined, p
             const dax = art ? art.x - m.tx : 0;
             const day = art ? art.y - m.ty : 0;
             m.tx = pos[0] - off[0] - dax;
-            m.ty = -pos[1] + off[1] - day; // Y-up export offsets → Y-down container space
+            m.ty = -pos[1] + off[1] - day; // Y-up export offsets -> Y-down container space
             st.boneName = follow.bone;
             st.ref = m;
             st.transOnly = !follow.rot;
@@ -1688,7 +1688,7 @@ class Emitter {
     private readonly volWorld: { x: number; y: number } | null;
     /** Per-lifetime velocityOverLifetime vector (px/s, world-aligned), when the exporter
      *  couldn't represent the authored curves as one constant - see
-     *  {@link IParticleSystemData.velocityOverLife}. Null → the constant `volWorld` is used,
+     *  {@link IParticleSystemData.velocityOverLife}. Null -> the constant `volWorld` is used,
      *  exactly as before. Gated on `volWorld` so the same short-life/streak rules apply. */
     private readonly volCurve: { t: number; x: number; y: number }[] | null;
     /** Bone-follow state so the effect drifts with its parent bone (see {@link driftWithBone}). */
@@ -1837,7 +1837,7 @@ class Emitter {
             // (px; see IParticleSystemData.stretch). lengthScale carries the stretch for nearly
             // every system (a fixed multiple of the sprite, speed-independent - so fast rain stays
             // a short streak, not a long one); velocityScale adds a speed term only where authored.
-            // Gated to renderMode "stretch"; no per-skin value. Absent → Unity defaults (2, 0).
+            // Gated to renderMode "stretch"; no per-skin value. Absent -> Unity defaults (2, 0).
             const st = this.data.stretch;
             const lenScale = st ? Math.abs(st.lengthScale) : 2;
             const velScale = st ? st.velocityScale : 0;
@@ -1846,7 +1846,7 @@ class Emitter {
             const spd = Math.hypot(vx, vyScreen);
             const len = lenScale * sz + velScale * spd;
             if (spd > 1 && len > sz) {
-                s.rotation = Math.atan2(vyScreen, vx) - Math.PI / 2; // sprite local +Y → velocity
+                s.rotation = Math.atan2(vyScreen, vx) - Math.PI / 2; // sprite local +Y -> velocity
                 s.scale.set(base, (len / sz) * base);
             } else {
                 s.scale.set(base, baseY);
@@ -1983,7 +1983,7 @@ class Emitter {
             const margin = 0.05 * Math.max(box.width, box.height) + size / 2;
             const sx = wx;
             const sy = -wy;
-            // Trajectory-aware: test the whole spawn→death SEGMENT against the box, not just
+            // Trajectory-aware: test the whole spawn->death SEGMENT against the box, not just
             // the spawn point. A stationary particle (speed 0, no vol) degenerates to the exact
             // same point test as before (Mlynar's static rain discs: unchanged, still culled at
             // the widened edge). A particle that DRIFTS toward the box - via its initial velocity
@@ -2263,7 +2263,7 @@ class Emitter {
             // excess can be moved into the float alpha with no change to the product
             // (`rgb /= max`, `alpha *= max`, applied only where `a × max` still fits so the
             // trade stays an identity). It works exactly as intended and is still WRONG:
-            // recovering that energy costs Mlynar 17.525 → 17.687. The clamp is not what stops
+            // recovering that energy costs Mlynar 17.525 -> 17.687. The clamp is not what stops
             // his lights glaring - the game simply does not show the extra energy, which is the
             // same over-saturation these glare items keep showing. Don't re-derive it.
             const hex = rgbToHex(col);
@@ -2646,7 +2646,7 @@ const RETIRE_BEFORE_EMIT = retireBeforeEmit();
  *
  *  DEFAULT OFF, opt in with `?trailcol=1`. The mechanism is right and the restored ribbon is
  *  real content the game shows - but it currently lands ~70 rows BELOW the game's beam, so
- *  enabling it measures WORSE (mly 30.816→30.826, ska 13.795→13.830) by adding correct content
+ *  enabling it measures WORSE (mly 30.816->30.826, ska 13.795->13.830) by adding correct content
  *  in the wrong place. It should become the default once the streak's position/tilt is fixed;
  *  until then this stays off rather than trading a visible defect for a measured regression. */
 const TRAIL_START_COLOR = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("trailcol") === "1";
@@ -2677,7 +2677,7 @@ export function ensureAdditiveSpriteBoost(): void {
 /**
  * Unity Trails in **Ribbon** mode: not one ribbon per particle, but ONE polyline
  * threaded through all of the system's live particles ordered by age, `ribbonCount`
- * of them interleaved (particle `i` → ribbon `i % ribbonCount`). The emitter becomes
+ * of them interleaved (particle `i` -> ribbon `i % ribbonCount`). The emitter becomes
  * a way of laying down a moving LINE rather than a spray of sprites - which is why
  * such a system is usually paired with `RenderMode.None`: the particles themselves
  * are invisible control points and the ribbon is the entire visible effect.
@@ -2866,7 +2866,7 @@ class MeshEmitter extends Emitter {
         this.rotOffsetDeg = rotOffsetDeg;
         this.basis = MESH_BASIS_ON && Array.isArray(data.meshBasis) && data.meshBasis.length === 4 ? data.meshBasis : null;
         // Build the shared geometry ONCE: mesh-local positions with Y negated and
-        // UV V-flipped (authored Y-up / Unity-V → Pixi), exactly like the scene-mesh
+        // UV V-flipped (authored Y-up / Unity-V -> Pixi), exactly like the scene-mesh
         // layers (sceneMesh.buildLayerMesh), plus the per-vertex RGBA edge mask.
         const m = data.mesh ?? { pos: [], uv: [], idx: [] };
         const n = m.pos.length / 2;
@@ -2927,7 +2927,7 @@ class MeshEmitter extends Emitter {
         } else {
             m.position.set(p.x, -p.y);
             // The geometry is raw mesh-local; Unity scales the mesh by the particle
-            // size, and startSize is already emitter-scaled to px → finalPx = local × sz.
+            // size, and startSize is already emitter-scaled to px -> finalPx = local × sz.
             m.scale.set(sz);
             m.rotation = (this.rotOffsetDeg - p.rot) * DEG;
         }
@@ -3479,7 +3479,7 @@ class RamEmitter {
             uDisturbScroll: [0, 0],
         });
         this.mesh = new PIXI.Mesh(geometry, this.shader);
-        // Premultiplied output → ADD (One,One) for additive, NORMAL (over) for
+        // Premultiplied output -> ADD (One,One) for additive, NORMAL (over) for
         // alpha-blend materials (the shader's _DstBlend: 1=Add, 10=AlphaBlend).
         this.mesh.blendMode = this.blend === "additive" ? PIXI.BLEND_MODES.ADD : PIXI.BLEND_MODES.NORMAL;
         this.container.addChild(this.mesh);
@@ -3575,7 +3575,7 @@ class RamEmitter {
             const margin = 0.05 * Math.max(box.width, box.height) + size / 2;
             const sx = wx;
             const sy = -wy;
-            // See the Emitter.spawn() twin of this check: test the whole spawn→death segment,
+            // See the Emitter.spawn() twin of this check: test the whole spawn->death segment,
             // so stationary particles retain the previous point-cull behavior while particles
             // that drift toward the box (via startSpeed AND/OR `velocityOverLife`, `this.volWorld`)
             // survive if their trajectory crosses into it. Screen Y is negated from world Y-up,
@@ -4123,7 +4123,7 @@ interface ILoadedTex {
      *  `x*a` there; 19 of the corpus's 156 particle lookup maps do. See maskTextureOf. */
     maskBase: PIXI.BaseTexture;
     /** Ram MAIN-slot texture: for opaque glow textures, alpha = luminance (dark
-     *  field → 0) but with NO border vignette / radial falloff, so a bright fill
+     *  field -> 0) but with NO border vignette / radial falloff, so a bright fill
      *  (SilverAsh's reticle stripes, shaped by a dissolve mask) is preserved while
      *  a dark starfield/bokeh field (Logos, Nian) drops out instead of boxing.
      *  Equals `rawBase` for real-alpha sprites (nothing to drop). */
@@ -4299,7 +4299,7 @@ function processGlowTexture(img: DecodedImage): ILoadedTex {
         }
         const covFrac = n ? cov / n : 0;
         const darkOrb = cov > 0 && covFrac >= 0.4 && lumS / cov < 90 && satS / cov < 0.2;
-        // Filled + desaturated (regardless of brightness) → a flow/distortion panel
+        // Filled + desaturated (regardless of brightness) -> a flow/distortion panel
         // (gates normal-blend MESH; see ILoadedTex.desatPanel). Thin coloured effects
         // (lightning/ice-flame) and thin white sparks fall below covFrac and pass.
         // ...but ONLY when the panel actually FILLS its rectangle. A flow/distortion input is a
@@ -4612,7 +4612,7 @@ function additivePileGain(sys: IParticleSystemData): number {
     // move apart, so their brightness does not stack at a point.
     const vol = sys.velocityOverLife;
     const volSpeed = vol ? Math.hypot(vol.x ?? 0, vol.y ?? 0) : 0;
-    if (scalarMax(sys.startSpeed) > STATIONARY_SPEED || volSpeed > STATIONARY_SPEED) return 1; // moving → spreads, no pile
+    if (scalarMax(sys.startSpeed) > STATIONARY_SPEED || volSpeed > STATIONARY_SPEED) return 1; // moving -> spreads, no pile
     const rate = sys.emission.rate ? scalarMax(sys.emission.rate) : 0;
     // Expected concurrent particles at the point - but the pile can NEVER exceed the system's
     // `maxParticles`, so cap by it. Virtuosa's warm ambient glows are `rate=1000` but
@@ -4622,7 +4622,7 @@ function additivePileGain(sys: IParticleSystemData): number {
     // so its `maxParticles` is high and the cap leaves it untouched.
     const maxP = sys.maxParticles && sys.maxParticles > 0 ? sys.maxParticles : Number.POSITIVE_INFINITY;
     const density = Math.min(rate * scalarMax(sys.lifetime), maxP); // concurrent particles at the point
-    if (density <= TARGET_STACK) return 1; // burst/sparse/single → no meaningful pile
+    if (density <= TARGET_STACK) return 1; // burst/sparse/single -> no meaningful pile
     return Math.max(MIN_GAIN, TARGET_STACK / density);
 }
 
@@ -4643,7 +4643,7 @@ function addSkipAll(): boolean {
     return new URLSearchParams(window.location.search).get("addskip") === "1";
 }
 
-/** DIAGNOSTIC (`?ramdropgate=0`): apply the Ram MAIN luminance→alpha drop to EVERY opaque
+/** DIAGNOSTIC (`?ramdropgate=0`): apply the Ram MAIN luminance->alpha drop to EVERY opaque
  *  texture, i.e. revert the dark-field gate. ON by default - see ILoadedTex.darkDropBase. */
 function ramDropGate(): boolean {
     if (typeof window === "undefined") return true;
@@ -4777,7 +4777,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         const b = i != null ? bases[i] : null;
         if (!b) return null;
         // DIAGNOSTIC (`?rammainraw=1`): sample the RAW `_MainTex` for the Ram main slot instead of
-        // the dark-drop base. `darkDropBase` applies luminance→alpha, a border fade, AND - for a
+        // the dark-drop base. `darkDropBase` applies luminance->alpha, a border fade, AND - for a
         // "uniform-bright fill", which a flow map is by construction - a full RADIAL FALLOFF. That
         // is a sprite correction, and the Ram shader does not consume `_MainTex` as a sprite: the
         // decompiled fragment reads it flat and multiplies the ramp into it. On Civilight Eterna's
@@ -4902,7 +4902,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
                 // whose own 45°/s spin puts them at 22.5°/0°/67.5° - 41.9°/-19.4°/25.6° once
                 // the emitter angle is folded in, which is what the capture shows). Passed
                 // only here: applying it to the TEXTURED mesh emitters as well measured worse
-                // (Virtuosa t=2 32.19 → 34.75, her `window_bg_01` backdrop panel carries a
+                // (Virtuosa t=2 32.19 -> 34.75, her `window_bg_01` backdrop panel carries a
                 // 180° emitter angle the game plainly does not draw it with).
                 const emitter = new MeshEmitter(sys, PIXI.Texture.WHITE, sys.blend, budget, untexMeshGain(), sys.rot ?? 0);
                 (emitter as { sysIndex?: number }).sysIndex = sysIndex;
@@ -5158,7 +5158,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
                 // path gates it below. NORMAL-blend meshes alpha-composite (they don't accumulate
                 // brightness, so there's no pile to correct); dimming them clamps a full-frame
                 // effect panel to ~2% and it vanishes (Virtuosa's mirror-world/chevron overlay was
-                // invisible through the whole reform because of this). Normal-blend → full alpha.
+                // invisible through the whole reform because of this). Normal-blend -> full alpha.
                 emitter.container.alpha = (meshBlend === "additive" ? additivePileGain(sys) : 1) * (bigGlow ? 0.4 : 1);
                 applyPsDiag(data, sys, emitter.container);
                 sheetTarget().addChild(emitter.container);

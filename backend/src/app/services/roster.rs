@@ -179,13 +179,13 @@ pub struct MedalStore {
 pub struct CheckIn {
     /// One flag per sign-in **claimed** this month, in claim order: `1` if the
     /// monthly-subscription Daily Supply came with that claim, `0` if not.
-    /// Despite the name it is not a dated calendar — a missed day adds no
+    /// Despite the name it is not a dated calendar: a missed day adds no
     /// entry, so its length is the claim count and its values say nothing
     /// about which days were claimed. The raw key is `checkInHistory`; the
     /// bare `history` key does not exist on this object.
     #[serde(rename = "checkInHistory")]
     pub history: Option<Vec<i16>>,
-    /// Lifetime cumulative sign-in days — the "X / 1000 total days of sign-ins"
+    /// Lifetime cumulative sign-in days, the "X / 1000 total days of sign-ins"
     /// counter shown on the daily sign-in carousel's milestone page. Distinct
     /// from `history`, which is only the current month's calendar.
     #[serde(rename = "showCount")]
@@ -604,7 +604,7 @@ fn extract_status(status: Option<&PlayerStatus>) -> serde_json::Value {
 /// stores in `user_checkin`: the month's per-claim monthly-card flags plus the
 /// lifetime sign-in counter and the active monthly series' progress. The
 /// `history` key is kept verbatim from the game (see [`CheckIn::history`] for
-/// what it does and does not encode) — the API layer renames it.
+/// what it does and does not encode). The API layer renames it.
 fn extract_checkin(checkin: &Option<CheckIn>) -> serde_json::Value {
     let Some(c) = checkin else {
         return serde_json::json!({ "history": [] });
@@ -731,7 +731,7 @@ fn extract_supports(troop: &Option<Troop>, social: &Option<Social>) -> serde_jso
 /// Annihilation progress lives at `user.campaignsV2.instances` (top level of
 /// the save, not under `user.dungeon`) and is kill-count based - there is no
 /// `state` flag like normal stages. Merge it into the stages object with a
-/// synthesized `state` (kill target reached → 3, partial kills → 2) so every
+/// synthesized `state` (kill target reached -> 3, partial kills -> 2) so every
 /// downstream stage-clear consumer treats Annihilation like any other stage.
 fn merge_campaign_clears(
     stages: &mut serde_json::Value,

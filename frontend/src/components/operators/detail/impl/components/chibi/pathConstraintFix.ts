@@ -12,7 +12,7 @@
  * block is skipped and `r` stays 0: the path-constrained bones never rotate to
  * follow their path. Weighted meshes bound to those bones then collapse into
  * horizontal smears - e.g. Zuo Le "Youthful Journey" loses his legs, which are
- * driven by Chain-mode path constraints (`ZL_Pelvis*` → `ZL_*_Leg_A_Path`).
+ * driven by Chain-mode path constraints (`ZL_Pelvis*` -> `ZL_*_Leg_A_Path`).
  * runtime-4.1 ships the correct code, so this only touches the 3.8 class.
  *
  * We patch the prototype of the ACTUAL class the loaded skeleton uses (grabbed

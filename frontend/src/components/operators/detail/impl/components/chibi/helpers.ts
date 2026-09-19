@@ -133,7 +133,7 @@ function buildPageTexture(img: DecodedImage, declaredW: number, declaredH: numbe
 }
 
 /**
- * Parse atlas text and return a map of page filename → declared size.
+ * Parse atlas text and return a map of page filename -> declared size.
  */
 function parseAtlasPages(atlasText: string): Map<string, { declaredW: number; declaredH: number }> {
     const pages = new Map<string, { declaredW: number; declaredH: number }>();

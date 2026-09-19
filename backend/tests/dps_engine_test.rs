@@ -121,7 +121,7 @@ struct KnownEngineDefect {
 
 // Empty since the Wiš'adel shadow fix (custom/init.rs). The 2026-09-14 entry
 // read: "Walter, all skills, shadow damage missing: OperatorUnit::shadows is
-// never populated" — 92 of 192 cases diverged by exactly n*drone_atk/4.25.
+// never populated": 92 of 192 cases diverged by exactly n*drone_atk/4.25.
 const KNOWN_ENGINE_DEFECTS: &[KnownEngineDefect] = &[];
 
 fn known_engine_defect(class_name: &str, skill: i32) -> Option<usize> {
@@ -476,7 +476,7 @@ fn test_unavailable_module_returns_none() {
                 continue;
             }
 
-            // Missing module → must return None at E2/maxed (where modules apply).
+            // Missing module -> must return None at E2/maxed (where modules apply).
             let missing_params = OperatorParams {
                 promotion: Some(2),
                 module_index: Some(module_idx),

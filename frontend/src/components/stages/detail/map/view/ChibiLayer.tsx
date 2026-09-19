@@ -23,7 +23,7 @@ export interface IChibiWalker {
 const SPRITE_W = TILE_SIZE * 2.4;
 const SPRITE_H = TILE_SIZE * 2.6;
 /**
- * Global spine→board scale. A single constant (rather than normalizing every
+ * Global spine->board scale. A single constant (rather than normalizing every
  * chibi to one height) preserves each enemy's authored relative size, so small
  * enemies like Originium Slugs stay small and bosses stay large.
  */

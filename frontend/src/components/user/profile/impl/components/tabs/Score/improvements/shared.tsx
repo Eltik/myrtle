@@ -25,7 +25,7 @@ export const TEXT_BODY = "text-[11.5px] leading-tight";
 // ─── Color palette ──────────────────────────────────────────────────────────
 // Shared rarity scheme so the Operator and Medal panels read with the same
 // visual language. Hue picks roughly match Arknights' in-game color tiers
-// (gold → purple → blue → gray).
+// (gold -> purple -> blue -> gray).
 
 const RARITY_HUE = {
     /** Highest tier - gold. */
@@ -49,7 +49,7 @@ export function operatorRarityColor(rarity: number): string {
     return RARITY_HUE.muted;
 }
 
-/** Medal rarity (T1 → T3D5). */
+/** Medal rarity (T1 -> T3D5). */
 export function medalRarityColor(rarity: string): string {
     switch (rarity) {
         case "T3D5":

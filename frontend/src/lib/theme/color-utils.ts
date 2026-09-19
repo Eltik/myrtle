@@ -88,7 +88,7 @@ function pickForeground(hex: string): string {
     const rgb = hexToRgb(hex);
     if (!rgb) return LIGHT_FG;
     const lum = relativeLuminance(rgb.r, rgb.g, rgb.b);
-    // Above ~0.55 relative luminance the accent reads as a light surface → dark text.
+    // Above ~0.55 relative luminance the accent reads as a light surface -> dark text.
     return lum > 0.55 ? DARK_FG : LIGHT_FG;
 }
 

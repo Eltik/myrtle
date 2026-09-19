@@ -27,7 +27,7 @@ export interface IUserSupportUnit {
 
 export interface IUserOgData {
     nickname: string;
-    /** In-game discriminator (`Eltik#1234` → "1234"). Rendered as a small mono suffix. */
+    /** In-game discriminator (`Eltik#1234` -> "1234"). Rendered as a small mono suffix. */
     nickNumber?: string | null;
     uid?: string;
     level: number | null;

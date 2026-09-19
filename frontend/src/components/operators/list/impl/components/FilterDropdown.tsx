@@ -18,7 +18,7 @@ interface IFilterDropdownProps {
     options: string[];
     selected: string[];
     onChange: (values: string[]) => void;
-    /** Pretty-print an option (e.g. lowercase id → display name). */
+    /** Pretty-print an option (e.g. lowercase id -> display name). */
     formatOption?: (value: string) => string;
     /** When provided, items are bucketed by the returned group key and rendered with headers + dividers. */
     groupBy?: (value: string) => string;

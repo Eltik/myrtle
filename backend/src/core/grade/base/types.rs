@@ -139,7 +139,7 @@ impl UserBuilding {
             .unwrap_or_default();
 
         // slot_id -> planned rotation shifts, from `rooms.<type>[slot].presetQueue`
-        // (a list of shifts, each a list of stationed instIds → char_ids).
+        // (a list of shifts, each a list of stationed instIds -> char_ids).
         let mut presets_by_slot: HashMap<String, Vec<Vec<String>>> = HashMap::new();
         if let Some(rooms_obj) = data.get("rooms").and_then(|v| v.as_object()) {
             for room_type_slots in rooms_obj.values() {

@@ -176,7 +176,7 @@ function measureVisibleBounds(renderer: PIXI.IRenderer, spine: import("pixi-spin
         let sx = 0;
         let sy = 0;
         let sw = 0;
-        const rowMass = new Float64Array(rh); // total alpha per pixel row → solid-body profile
+        const rowMass = new Float64Array(rh); // total alpha per pixel row -> solid-body profile
         for (let y = 0; y < rh; y++) {
             let rowSum = 0;
             for (let x = 0; x < rw; x++) {
@@ -537,7 +537,7 @@ function frameBoxParam(): IAnimationBounds | null {
  *  **Why this exists: it is the only uncontaminated reference we can obtain.** Every parity number
  *  to date is measured against a salvaged CRF36 recording whose encode damage is 40-57% of the
  *  score ([[dynchar-degradation-floor-real-headroom]]), and no renderer-side change can reach past
- *  that floor. The game's skin preview (FLOT Lookbook → skin → magnifier) can be captured at
+ *  that floor. The game's skin preview (FLOT Lookbook -> skin -> magnifier) can be captured at
  *  2340x1080 / 100 Mbps for ANY skin including unowned ones, so it is clean - but it is NOT the
  *  entrance, and pointing the entrance renderer at it would be comparing two different shots.
  *
@@ -1032,7 +1032,7 @@ interface IComposite {
     entranceViewRatio: number | null;
     /** ENTRANCE (`_Start`) timing from the scene gamedata (seconds): total `duration`
      *  and the `transform` reform beat. Non-null only for a "_Start" entrance composite;
-     *  drives the tight→wide camera dolly length and the hand-off time. */
+     *  drives the tight->wide camera dolly length and the hand-off time. */
     entranceDuration: number | null;
     /** Where the end-of-entrance fade finishes ramping - `min(duration, clipStop)`.
      *  See {@link entranceFadeEnd}. */
@@ -1100,7 +1100,7 @@ interface IComposite {
      *  at this clock. `null` = the spine animation is the longer one (fire on
      *  `complete` as usual). Entrance-only. */
     entranceSceneEnd: number | null;
-    /** Idempotent trigger for the entrance→main handoff (see entranceSceneEnd). */
+    /** Idempotent trigger for the entrance->main handoff (see entranceSceneEnd). */
     requestEntranceEnd: (() => void) | null;
     particles: ILoadedParticles | null;
     /** Setup-pose bone matrices for bone-following particle emitters (scene only). */
@@ -1245,7 +1245,7 @@ function fadeParam(name: string, dflt: number): number {
 /** Seconds spent ramping INTO the fade colour, ending at {@link entranceFadeEnd} − HOLD.
  *
  *  **0.20 is Executor's own MEASURED ramp** (0.183 s, taken off her capture at 60 fps as the
- *  10 %→90 % crossing toward white). It was 0.85, a value measured on Virtuosa alone, and the
+ *  10 %->90 % crossing toward white). It was 0.85, a value measured on Virtuosa alone, and the
  *  cost of shortening it used to be prohibitive - Executor went +13.3 - because her ramp END was
  *  0.4 s late. Anchoring the fade to the camera clip's stop fixed the end, and with the end right
  *  she is now **completely insensitive** to this constant (11.018 at 0.85, 0.60, 0.45, 0.30 and
@@ -1578,14 +1578,14 @@ function makeBackdropSprite(backdrop: ILoadedBackdrop, frame: ISceneFrame, spine
  *  CORRECTED 2026-07-28: the level was `#232324` (35,35,36), taken from "every uncovered
  *  corner reads 32–39". Those corners were not uncovered. At almost every beat the art reaches
  *  the frame edge - sampled across all three captures, the margins are strongly coloured and
- *  vary 43→208 with the camera, i.e. they are painted scenery, and a dark corner of scenery
+ *  vary 43->208 with the camera, i.e. they are painted scenery, and a dark corner of scenery
  *  reads ~35 exactly like a dark fill. The fill is genuinely exposed only at Mlynar's widest
  *  entrance framing, and there it is unambiguous: flat, neutral, and 76–83 down the FULL height
  *  of both margins and in all four corners. Sampling only the pre-flash window matters - from
- *  t≈13.2 his white transition flash ramps those same margins 79 → 125 → 202 → 255, so a
+ *  t≈13.2 his white transition flash ramps those same margins 79 -> 125 -> 202 -> 255, so a
  *  sample taken a few frames later reads the flash, not the fill.
  *
- *  Measured over the frame INTERIOR this is a clean win with no cost anywhere: Mlynar 20.878 →
+ *  Measured over the frame INTERIOR this is a clean win with no cost anywhere: Mlynar 20.878 ->
  *  19.733 (t=13 −5.57, t=12.4 −3.41, every other beat flat to ±0.02) and Skadi bit-identical,
  *  since his fill is never exposed. Virtuosa is untouched - she takes the `dark` branch.
  *
@@ -1984,7 +1984,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
          *  horizontal centre at the settle-open box centre (`cx0`), KEEP the rig's vertical motion
          *  re-based so it lands on `cy0` at the rig's end (`cy0 + (rigY − rigEndY)` - needed so the
          *  tight t=0 frame catches the reforming head), and let the ortho zoom pull out to full body
-         *  uncapped (the wide→tight idle handoff hides behind the white flash - same settle centre).
+         *  uncapped (the wide->tight idle handoff hides behind the white flash - same settle centre).
          *  Null = pure rig camera (cello, skadi2). */
         centerBlend: { cx0: number; cy0: number; rigEndY: number } | null;
         /** The live rig camera's `camCenter` sample at track-time 0, captured once at build
@@ -2019,7 +2019,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
     // are measured, not guessed. Virtuosa is the one reference where the fade is unconfounded -
     // Mlynar's own white-transition plane already holds the frame white from t=15.0, and Skadi
     // reaches white through her authored fade LAYERS - and her recording runs
-    // 134 → 146 → 178 → 211 → 240 → 254 over `duration - 1.0s` → `duration - 0.2s`.
+    // 134 -> 146 -> 178 -> 211 -> 240 -> 254 over `duration - 1.0s` -> `duration - 0.2s`.
     /** Gap-fill sprite + the layers CAPABLE of covering the frame. Whether one actually covers is
      *  re-evaluated every entrance frame from its clip window and animated alpha, so a transition
      *  flash cannot suppress the backdrop for a whole cinematic. */
@@ -2531,7 +2531,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 // ortho zoom widen the shot - pulling out to a near-FULL-BODY frame (feet + campfire)
                 // by t≈12-13, then the post-flash idle settles back tighter. So we:
                 //  - FOLLOW the rig's horizontal curve RAW (`cx = rigX`). Measured against the
-                //    recording at nine beats spanning t=7→14, the game's horizontal framing tracks
+                //    recording at nine beats spanning t=7->14, the game's horizontal framing tracks
                 //    the baked curve exactly: converting each frame's best-fit shift back into mesh
                 //    px reproduces `rigX` to within ~5 % over offsets from 441 px down to 39 px
                 //    (t=7 predicts 441, measures 450; t=9.5 predicts 89, measures 85; t=13 predicts
@@ -2545,7 +2545,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 //    (the rig lifts the frame to catch the pose, which sits higher than the idle rest).
                 //    Y is NOT raw: raw `rigY` mispredicts by ~250 px where the re-based form is
                 //    within ~20;
-                //  - follow the ortho zoom-out to full body (NO size cap) - the wide→tight step at the
+                //  - follow the ortho zoom-out to full body (NO size cap) - the wide->tight step at the
                 //    idle handoff lands behind the white flash (both frames share the settle centre, so
                 //    it is a pure scale change) + the 0.45s crossfade, matching the game.
                 // All gamedata-derived, no magic constant. Skins WITH an authored transform beat (cello,
@@ -2558,12 +2558,12 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 // by a CONSTANT +273 authored px because his `_Start` pins `Dummy002`'s SCALE to
                 // (1, 0, 1) - collapsing the axis that carries his Main Camera's local +2.9947 Y -
                 // and `entrance_camera_track` never sampled clip SCALE curves at all. With that
-                // fixed the re-base is a measured NO-OP for him (17.192 → 17.191).
+                // fixed the re-base is a measured NO-OP for him (17.192 -> 17.191).
                 //
                 // Keeping it was NOT free: because it depends only on the curve's SHAPE relative
                 // to its end, it CANCELS any constant correction to the exported centre - which is
                 // exactly what hid Chongyue's remaining vertical error. Retiring it is worth
-                // −28.7 on her (78.825 → 50.158, r −0.019 → 0.606) and 0.000 everywhere else.
+                // −28.7 on her (78.825 -> 50.158, r −0.019 -> 0.606) and 0.000 everywhere else.
                 const cbOn = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("centerblend") === "1";
                 const cb = cbOn ? ef.centerBlend : null;
                 if (cb) {
@@ -2843,8 +2843,8 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                             }
                         }
                         // Material-colour replay: the `_Start` clip animates some layers'
-                        // material colour (Mlynar's white flash alpha ramps 0→0.671 over
-                        // 13→15s); sample the exported curve at the track time and re-tint.
+                        // material colour (Mlynar's white flash alpha ramps 0->0.671 over
+                        // 13->15s); sample the exported curve at the track time and re-tint.
                         // DIAGNOSTIC (?matlead=<s>): sample the material curves at `tt + s`
                         // instead of `tt`. These curves are authored on the CAMERA's clip
                         // (`probe_bind`: the entrance clip's 28 bindings are 20 MeshRenderer
@@ -3008,7 +3008,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 layoutSpine(ez.container, sw, sh, b, ez.fit ?? fitRef.current);
                 if (t >= 1) entranceZoomRef.current = null;
             }
-            // Entrance→main crossfade: ramp the main IN and the dissolved entrance OUT, then
+            // Entrance->main crossfade: ramp the main IN and the dissolved entrance OUT, then
             // detach the main (so it survives), free the entrance, and point HDR back at the main.
             const cf = crossfadeRef.current;
             if (cf) {
@@ -3157,7 +3157,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
         // but NOT yet attached to the stage or started - the orchestrator below decides
         // attach + playback so a special "_Start" ENTRANCE composite can play first and
         // hand off to the settled main L2D. Returns "unsupported" when the MAIN set has
-        // no resting frame (entrance-only skeleton → keep the static charart), or null
+        // no resting frame (entrance-only skeleton -> keep the static charart), or null
         // when the load is superseded/aborted or an optional entrance set is absent.
         const buildComposite = async (cSkel: string, cAtlas: string, opts: { mode: "main" | "entrance"; framingOverride?: IAnimationBounds | null; onEntranceEnd?: () => void }): Promise<IComposite | "unsupported" | null> => {
             let spine: import("pixi-spine").Spine;
@@ -3370,7 +3370,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                             return null;
                         }
                     } catch {
-                        backdropFrame = null; // backdrop failed → spine-only
+                        backdropFrame = null; // backdrop failed -> spine-only
                     }
                 }
             }
@@ -3435,13 +3435,13 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 const sceneLayerCount = scene ? (scene.background?.children?.length ?? 0) + (scene.foreground?.children?.length ?? 0) : 0;
                 const useStatic = hasBackdrop && !!backdropData && !!backdropFrame && !!vis && sceneLayerCount === 0;
 
-                // Draw order (bottom → top) follows the game's true sort scale: every scene
+                // Draw order (bottom -> top) follows the game's true sort scale: every scene
                 // layer and particle system carries its Unity `m_SortingOrder` (`sort`), and
                 // the character spine sits at `characterSort`. Anything with sort <
                 // characterSort is BEHIND the character, anything above is IN FRONT. The
                 // loaders pre-split each source into `background`/`foreground` on that pivot,
-                // so we render: backdrop layers → behind-particles → SPINE → foreground
-                // layers → front-particles. When the static art stands in for the background
+                // so we render: backdrop layers -> behind-particles -> SPINE -> foreground
+                // layers -> front-particles. When the static art stands in for the background
                 // we DROP the scene's background layers so the two don't double/dim.
                 // An ENTRANCE composite's scene meshes must not clutter the cinematic's early
                 // phases (the settled scene - Virtuosa's crystal throne - is exported identical
@@ -4657,7 +4657,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 // Virtuosa smaller and lower, Skadi2 near-full-body), NOT at a constant character
                 // height. `RCAL` is a SINGLE global pipeline constant (not per-skin) that converts
                 // the game's authored `_adjustes` px into the render/vis space the mesh + spine are
-                // measured in. It was RE-CALIBRATED (0.606 → 0.78) against the Mlynar/Virtuosa/Skadi2
+                // measured in. It was RE-CALIBRATED (0.606 -> 0.78) against the Mlynar/Virtuosa/Skadi2
                 // settle recordings: the old value framed ~1.3× too tight (Mlynar cropped to the
                 // waist, Virtuosa waist-up), so the character now reads at the game's wider,
                 // pillar-boxed size (Mlynar knees-up, Virtuosa full-ish body low in the frame, the
@@ -4714,8 +4714,8 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 //     vbias    0.1805   0.1810   0.1815   0.1820   0.1825   0.184
                 //     MADC     20.649   19.863   19.352   19.387   19.902   22.226
                 //
-                // 0.1815 is the optimum and drops the residual shift +1.08 px → +0.18 px
-                // (per-beat +1.2,+1.3,+1.1,+1.1,+1.1,+0.7 → +0.2,+0.2,+0.2,+0.2,+0.2,+0.1).
+                // 0.1815 is the optimum and drops the residual shift +1.08 px -> +0.18 px
+                // (per-beat +1.2,+1.3,+1.1,+1.1,+1.1,+0.7 -> +0.2,+0.2,+0.2,+0.2,+0.2,+0.1).
                 // Virtuosa and Skadi2 are BIT-IDENTICAL across the change (29.904 / 18.671 at both
                 // values) - they carry an authored transform beat, so they keep the pure rig camera
                 // and never enter the `centerBlend` branch this constant feeds.
@@ -4970,7 +4970,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                         : entranceOrtho0 && entranceSkelScale
                           ? (2 * entranceOrtho0) / entranceSkelScale
                           : ((authoredFrame?.entranceViewPx as number | undefined) ?? (authoredFrame?.viewPx2 as number | undefined) ?? null);
-                // Authored SCENE-timeline end: when the entrance→idle handoff (pose swap +
+                // Authored SCENE-timeline end: when the entrance->idle handoff (pose swap +
                 // pull-out dolly) fires, relative to the entrance track clock.
                 //
                 // Skins with an authored `entranceTransform` beat (the exported reform/
@@ -5007,7 +5007,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                         // letting it push the scene end out holds a peaked reveal-overlay opaque past the
                         // cinematic. (Skadi2: its white cover-overlay peaks at 22.43s, but two invisible
                         // fade-to-0 layers ran to 23.67s - the opaque white then held through the handoff
-                        // seam and BLANKED the frame. Mlynar/cello curves all end visible → unaffected.)
+                        // seam and BLANKED the frame. Mlynar/cello curves all end visible -> unaffected.)
                         if (cc?.length && cc[cc.length - 1][4] > 0.02) end = Math.max(end, cc[cc.length - 1][0]);
                     }
                     if (xform != null) {
@@ -5019,7 +5019,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                         // transform (12.0) snaps ~6s early and cuts the line. Fold it into the
                         // max as a floor. No-op where a later term already dominates: Skadi2's
                         // visible colour curve ends at 22.43, past its own entranceDuration
-                        // (22.33), so its end is unchanged. (Mlynar has no transform → the else
+                        // (22.33), so its end is unchanged. (Mlynar has no transform -> the else
                         // branch below, untouched.)
                         end = Math.max(end, scene.data.entranceDuration ?? 0);
                         // Data-derived beat - fire the tick-driven handoff at this track time
@@ -5040,7 +5040,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                         // her `end` runs to 20.93, deferred +0.93s by an ordinary sort-1 layer
                         // sitting at alpha 0.69, and we held pure white until 21.08 where the game
                         // was live at 20.35. Every other benchmark already lands within 0.1s of
-                        // `duration` (Mlynar 16.50, Virtuosa 18.00, Skadi 2 22.43 → 22.33), so
+                        // `duration` (Mlynar 16.50, Virtuosa 18.00, Skadi 2 22.43 -> 22.33), so
                         // this is a no-op for them.
                         //
                         // 🔑 2026-08-25, read the two lines together: the floor above raises `end`
@@ -5330,7 +5330,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
         const load = async () => {
             try {
                 // The in-game L2D viewer PERFORMS the skin's `_Start` cinematic as its entrance
-                // (verified against game recordings: seated form → transform → dissolve, then the
+                // (verified against game recordings: seated form -> transform -> dissolve, then the
                 // standing idle). Play it ONCE on open over the bright env-bg, then hand off to the
                 // standing idle + dolly. Probe by string-replacing the skel/atlas path; skins with
                 // no `_Start` fall straight through to the plain open. The hand-off is DEFERRED out
@@ -5479,7 +5479,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     // screen box of what it actually draws. Civilight Eterna's aperture EDGES are
                     // painted by the skeleton's own background attachments (ablating the spine
                     // flattens them; ablating scene or particles does not), and they go dark for
-                    // exactly the 6→12 s window her side strips are empty - so "which slot stopped
+                    // exactly the 6->12 s window her side strips are empty - so "which slot stopped
                     // drawing, and was it the alpha or the attachment" is the question this answers.
                     const w3 = window as unknown as { __dynSlots?: () => unknown };
                     w3.__dynSlots = () => {
@@ -5951,7 +5951,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
 
                 // When we arrive from the `_Start` cinematic, the settled idle continues the
                 // camera move: the game HELD the tight close-up through the whole transform
-                // (seated → apple → reform) and only pulls back to the wide throne AFTERWARD.
+                // (seated -> apple -> reform) and only pulls back to the wide throne AFTERWARD.
                 // So the idle OPENS on the same tight close-up the entrance ended on - the wide
                 // frame scaled by the entrance camera's ratio (`entranceViewRatio`) - and dollies
                 // OUT to the wide throne over the POST-reform entrance time (`duration−transform`).
@@ -6013,7 +6013,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     // Plain archive open (no `_Start` cinematic, so not an entrance hand-off) with no
                     // authored pull-out: the skin has NO camera move at all, so it must open STATIC at
                     // the settled game frame. The former fallback dollied `openTight` (`_adjustes[1]`)
-                    // → `gameFrame` (`_adjustes[0]`) over an invented 2s, which read as an unwanted pan
+                    // -> `gameFrame` (`_adjustes[0]`) over an invented 2s, which read as an unwanted pan
                     // on skins that never had an entrance. A dolly is only performed for a genuine
                     // entrance hand-off (`fromEntrance`) or a data-authored pull-out (`entrancePullOut`).
                     if (!opts?.fromEntrance && !entrancePullOut) {
@@ -6234,7 +6234,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     }
                     // The game HOLDS the entrance shot steadily through the whole transform and only
                     // pulls back to the wide frame AFTERWARD, on the settled idle (see
-                    // `entrancePullOut` → `openStandingIdle`). Measured against the reference
+                    // `entrancePullOut` -> `openStandingIdle`). Measured against the reference
                     // recording, the entrance holds the `_Start` camera's OWN close-up - the ANIMATED
                     // t=0 ortho view (`entranceFrameSize`, Virtuosa 374px: a tight head-and-shoulders
                     // shot) - TIGHTER than both the `_adjustes[1]` stop (1246px, the settled idle's
@@ -6400,7 +6400,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                             // HOLD the horizontal centre on the settle-open box (dropping the rig's
                             // right-swinging X excursion), keep the rig's vertical motion re-based onto
                             // the settle centre, and follow the ortho zoom-out to full body uncapped.
-                            // Skins WITH a transform (cello, skadi2) keep the pure rig camera → null.
+                            // Skins WITH a transform (cello, skadi2) keep the pure rig camera -> null.
                             let centerBlend: { cx0: number; cy0: number; rigEndY: number } | null = null;
                             const settleOpen = main.authoredTightBounds ?? main.authoredDisplayBounds;
                             const rigEnd = built.entranceCamCenterCurve[built.entranceCamCenterCurve.length - 1];
@@ -6428,7 +6428,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     // The "Start" clip plays STRAIGHT THROUGH to its own end - the reform, the voice
                     // beat and the settle all live inside the clip, and the live-follow camera
                     // (entranceFollowRef) keeps the reformed standing form in frame - so no early
-                    // cut: the hand-off fires from the spine's own `complete` (onEntranceEnd →
+                    // cut: the hand-off fires from the spine's own `complete` (onEntranceEnd ->
                     // doSwapRef).
                 } else {
                     // No `_Start` set: open straight on the standing idle + dolly.

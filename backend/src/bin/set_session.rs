@@ -1,8 +1,8 @@
 //! Establish a service account session for one server.
 //!
 //! The game server has no anonymous mode, so impersonal reads still need a
-//! logged-in account. This bin performs the one interactive step — a Yostar
-//! email code — and writes a durable session that the backend then renews by
+//! logged-in account. This bin performs the one interactive step, a Yostar
+//! email code, and writes a durable session that the backend then renews by
 //! itself. Run it once per server you want covered.
 //!
 //! Point it at a **dedicated account**. Only one `secret` is live per account,

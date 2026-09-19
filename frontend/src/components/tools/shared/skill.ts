@@ -4,9 +4,9 @@
  * A single 1-10 `skillRank` encodes both pre-mastery skill levels (1-7) and
  * masteries (8/9/10 = M1/M2/M3). Promotion gates the reachable range, mirroring
  * the backend's `MAX_SKILL_LEVELS = [4, 7, 10]`:
- *   - E0 → ranks 1-4
- *   - E1 → ranks 1-7
- *   - E2 → ranks 1-10 (masteries unlocked)
+ *   - E0 -> ranks 1-4
+ *   - E1 -> ranks 1-7
+ *   - E2 -> ranks 1-10 (masteries unlocked)
  */
 
 import { DEFAULT_LOCALE, formatMessage, sourceMessage } from "#/lib/i18n";
@@ -61,8 +61,8 @@ export function rankLockReason(rank: number, elite: number, t: SkillT = sourceT)
 }
 
 /**
- * Map a unified rank to backend request fields: masteries (8-10) → `masteryLevel`
- * (M1/M2/M3), skill levels (1-7) → the explicit `skillLevel`.
+ * Map a unified rank to backend request fields: masteries (8-10) -> `masteryLevel`
+ * (M1/M2/M3), skill levels (1-7) -> the explicit `skillLevel`.
  */
 export function rankToRequest(rank: number): { skillLevel?: number; masteryLevel?: number } {
     return isMasteryRank(rank) ? { masteryLevel: rank - 7 } : { skillLevel: rank, masteryLevel: 0 };

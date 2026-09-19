@@ -132,7 +132,7 @@ impl SandboxUniverse {
     }
 
     /// Strip a trailing `_<digits>` variant suffix so randomized layouts of the
-    /// same region collapse to one group. `sandbox_1_hunt_normal_7` →
+    /// same region collapse to one group. `sandbox_1_hunt_normal_7` ->
     /// `sandbox_1_hunt_normal`; ids without a numeric suffix are returned as-is.
     fn base_layout_group(key: &str) -> String {
         match key.rsplit_once('_') {

@@ -14,7 +14,7 @@ import type { GachaHistoryEnvelopeDto } from "#/types/generated/GachaHistoryEnve
 import type { GachaItemDto } from "#/types/generated/GachaItemDto";
 import type { GachaPaginationInfoDto } from "#/types/generated/GachaPaginationInfoDto";
 /**
- * Banner metadata sourced from the static `gacha_table.json` → `GachaPoolClient`.
+ * Banner metadata sourced from the static `gacha_table.json` -> `GachaPoolClient`.
  *
  * Generated from `backend/src/core/gamedata/types/gacha.rs`. Times are **unix
  * seconds** (not ms); pull records, by contrast, use unix ms.

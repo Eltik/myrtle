@@ -595,7 +595,7 @@ fn classify_expire_times(times: &[ExpireTime], is_grouped: bool, now: i64) -> Ob
         return Obtainability::Permanent;
     }
 
-    // TEMP-only with all windows closed → past event.
+    // TEMP-only with all windows closed -> past event.
     let last_end = times
         .iter()
         .filter(|e| e.expire_type == "TEMP")

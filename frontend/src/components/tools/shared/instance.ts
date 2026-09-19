@@ -161,7 +161,7 @@ export function migrateInstance(raw: unknown): IInstance | null {
     if (!inst.op || !inst.config) return null;
     const cfg = inst.config;
     if (cfg.skillRank === undefined && cfg.masteryLevel !== undefined) {
-        // Old encoding: masteryLevel 0=L7, 1/2/3=M1/M2/M3 → ranks 7/8/9/10.
+        // Old encoding: masteryLevel 0=L7, 1/2/3=M1/M2/M3 -> ranks 7/8/9/10.
         cfg.skillRank = cfg.masteryLevel <= 0 ? 7 : 7 + cfg.masteryLevel;
     }
     if (cfg.skillRank === undefined) cfg.skillRank = MAX_SKILL_RANK;

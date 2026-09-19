@@ -36,7 +36,7 @@ void main() {
 }
 `;
 
-// The scene is rendered PREMULTIPLIED over a transparent (→ page-dark) canvas, so
+// The scene is rendered PREMULTIPLIED over a transparent (-> page-dark) canvas, so
 // `rgb` is the actual light contribution. Compress only the highlight TAIL: below
 // `uKnee` it's identity (LDR base untouched); above, scale rgb by `tone(m)/m` where
 // `m` is the max channel, so the whole colour dims together (hue preserved) and the
@@ -317,9 +317,9 @@ const GAMMA_CAL: readonly (readonly [number, number])[] = [
  * WHAT IT CORRECTS. We render the midtones brighter than the game does. The error is a
  * clean power law on the encoded value, not an offset or a multiply - pooling FLAT patches
  * (no edges, so no registration or filtering component) across Skadi the Corrupting Heart's
- * scored beats, the ratio `game/ours` rises 0.902 → 0.939 → 0.961 → 0.994 with level, where
+ * scored beats, the ratio `game/ours` rises 0.902 -> 0.939 -> 0.961 -> 0.994 with level, where
  * a multiply would hold it constant. A mid-grey we draw at 117 the game draws at 106.
- * Correcting it is worth 38% of her total error (MADC 12.04 → 7.44).
+ * Correcting it is worth 38% of her total error (MADC 12.04 -> 7.44).
  *
  * WHY cameraSizePx. The needed exponent is NOT global - it differs per skin - and no other
  * scene quantity predicts it. Layer count, drawn-layer count, coverage-weighted overdraw,
@@ -337,7 +337,7 @@ const GAMMA_CAL: readonly (readonly [number, number])[] = [
  * HONEST STATUS - read this before extending, and do not restore the mechanistic reading.
  * Three points and two parameters is an INTERPOLATION, and camera size has since been
  * **FALSIFIED as the driver**. The entrance dollies, so each skin's LIVE camera size sweeps a
- * far wider range than the between-skin spread does (Skadi 1.38→3.48, ~2.5×, against 10.0→11.11
+ * far wider range than the between-skin spread does (Skadi 1.38->3.48, ~2.5×, against 10.0->11.11
  * = 1.11× between skins). If the exponent were driven by camera size it would have to track
  * that sweep with this slope. It does not, and it fails in BOTH directions:
  *
@@ -368,8 +368,8 @@ const GAMMA_CAL: readonly (readonly [number, number])[] = [
  * span and takes an endpoint value.
  *
  * CLAMP VERIFIED on the two corpus extremes, for which no capture exists so only the bound
- * could be checked: Nian #7 (1800 → 1.02) shifts by at most 2 code values, Texas the
- * Omertosa (889 → 1.12) by at most 11. Neither degenerates.
+ * could be checked: Nian #7 (1800 -> 1.02) shifts by at most 2 code values, Texas the
+ * Omertosa (889 -> 1.12) by at most 11. Neither degenerates.
  *
  * 2026-08-09 - FIVE MORE CAPTURES ARRIVED, and they say two things.
  *
@@ -391,7 +391,7 @@ const GAMMA_CAL: readonly (readonly [number, number])[] = [
  *
  * Muelsyse is added as a measured point rather than smoothed over: she is the ONLY capture at
  * 1100, and the alternative is to keep predicting a value her own reference refutes. That makes
- * the final segment a cliff (1100 → 1111 is 1.02 → 0.93), which is honest about the fit being a
+ * the final segment a cliff (1100 -> 1111 is 1.02 -> 0.93), which is honest about the fit being a
  * lookup rather than a law. No corpus scene falls strictly between those two keys.
  *
  * TO REPLACE THIS: a driver, not more points. The five new captures have now shown the key is

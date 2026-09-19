@@ -4,24 +4,24 @@
 //!
 //! Grounding (all from `building_data.json` + the in-game economy):
 //!   - Factory productivity: `BasicSpeedBuff = 0.01` points per percentage-point
-//!     per second ⇒ at total productivity P% the factory accrues `P% × 864`
+//!     per second -> at total productivity P% the factory accrues `P% × 864`
 //!     points/day. Base (operators only) = 100%, buffs add on top.
-//!   - Gold bar (item 3003) costs 4320 points ⇒ `20 × (1 + eff/100)` bars/day,
+//!   - Gold bar (item 3003) costs 4320 points -> `20 × (1 + eff/100)` bars/day,
 //!     and is worth a flat **500 LMD** when sold in a Trading Post.
 //!   - EXP records cost 2700 / 4800 / 10800 points (L1/L2/L3) for 200 / 400 /
-//!     1000 EXP ⇒ 6400 / 7200 / 8000 EXP/day at base.
+//!     1000 EXP -> 6400 / 7200 / 8000 EXP/day at base.
 //!   - Trading post: an L3 post at base sells ≈ the gold one factory makes
 //!     (~20 bars/day), so the famous "match gold factories to trading posts".
-//!   - EXP ↔ LMD: LS-5 (≈247 EXP/sanity) vs CE-5 (≈250 LMD/sanity) ⇒ **1 EXP ≈
+//!   - EXP to LMD: LS-5 (≈247 EXP/sanity) vs CE-5 (≈250 LMD/sanity) -> **1 EXP ≈
 //!     1 LMD**. Used to put EXP and LMD on one scale.
 //!
-//! The LMD yield of the gold→trade loop is `min(gold produced, gold sellable) ×
+//! The LMD yield of the gold->trade loop is `min(gold produced, gold sellable) ×
 //! 500` - counting it once and letting the optimizer balance gold factories
 //! against trading-post throughput (excess gold factories are better as EXP).
 
 /// LMD per Pure Gold bar (fixed by the game).
 pub const GOLD_BAR_LMD: f64 = 500.0;
-/// EXP→LMD conversion (sanity-equivalence of LS-5 vs CE-5).
+/// EXP->LMD conversion (sanity-equivalence of LS-5 vs CE-5).
 pub const EXP_TO_LMD: f64 = 1.0;
 /// Gold bars/day a factory produces at 100% productivity (no buffs).
 const FACTORY_GOLD_PER_DAY_BASE: f64 = 20.0;
@@ -114,7 +114,7 @@ pub fn trading_cap_factor(
     trading_orders_per_day(level, mult, order_limit) / rate
 }
 
-/// The base resource flows produced by a set of rooms (before the gold→LMD
+/// The base resource flows produced by a set of rooms (before the gold->LMD
 /// coupling is applied).
 #[derive(Debug, Clone, Default)]
 pub struct BaseFlows {

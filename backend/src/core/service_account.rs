@@ -1,8 +1,8 @@
 //! Service accounts: game accounts owned by the backend rather than by a user.
 //!
 //! Every `Domain::GS` route authenticates on the `uid` / `secret` / `seqnum`
-//! headers; there is no anonymous mode. Impersonal reads — banner metadata and
-//! the like — therefore still need a logged-in account, so the backend keeps
+//! headers; there is no anonymous mode. Impersonal reads, banner metadata and
+//! the like, therefore still need a logged-in account, so the backend keeps
 //! its own, one per server.
 //!
 //! # Invariants
@@ -86,8 +86,8 @@ pub fn read_session_file(path: &Path) -> Option<AuthSession> {
 
 /// Persist a session atomically (temp file + rename), `0600` on unix.
 ///
-/// The contents are credential material — a live game `secret` and a durable
-/// account token — not a cache.
+/// The contents are credential material, a live game `secret` and a durable
+/// account token, not a cache.
 pub fn write_session_file(path: &Path, session: &AuthSession) -> std::io::Result<()> {
     if let Some(parent) = path.parent()
         && !parent.as_os_str().is_empty()

@@ -2,15 +2,15 @@
 //!
 //! Motivation: the frontend hand-writes ~300 interfaces describing these
 //! payloads and casts responses with `as IWhatever`, so a field renamed on one
-//! side and not the other is invisible to both compilers. `voice_url` →
+//! side and not the other is invisible to both compilers. `voice_url` ->
 //! `voiceURL` was renamed in the TS type alone and silently killed every voice
 //! line on both servers; nothing failed, nothing logged.
 //!
 //! This test pins the BACKEND half: any rename, removal, or type change in a
 //! serialized field shows up as a snapshot diff at the moment it is made,
 //! covering all 257 `Serialize` types automatically rather than a hand-picked
-//! few. It does not, and cannot, catch a rename made only in the TypeScript —
-//! for that the TS types have to be generated from these structs rather than
+//! few. It does not, and cannot, catch a rename made only in the TypeScript.
+//! For that the TS types have to be generated from these structs rather than
 //! written by hand. The snapshot is the input that makes that generation
 //! possible later.
 //!
@@ -20,7 +20,7 @@
 //! (`AttributesKeyFrames`, `MaxHp`, `Type_`) to camelCase before any consumer
 //! sees them. So a `PascalCase` path in this snapshot is correct and expected for
 //! the structs that mirror `character_table`; do not "fix" it by renaming the
-//! Rust fields. Endpoints WITHOUT that normalization — voices, materials — are
+//! Rust fields. Endpoints WITHOUT that normalization (voices, materials) are
 //! the ones where this snapshot and the TS types must agree key-for-key.
 //!
 //! The shape is a function of the Rust types AND of which assets are on disk:
@@ -48,7 +48,7 @@
 //! ```
 //!
 //! (`gh run download <assets-ci run id> -n game-data -D <artifact>/gamedata`
-//! fetches the artifact) and review both diffs as part of the PR — a line
+//! fetches the artifact) and review both diffs as part of the PR. A line
 //! disappearing from either is a breaking change for every consumer of that
 //! field.
 
@@ -87,7 +87,7 @@ const fn type_name(v: &Value) -> &'static str {
 /// Record every reachable key path and the set of JSON types seen at it.
 ///
 /// Map keys and array indices collapse to `*`, so the snapshot describes the
-/// schema and stays stable when the game data itself changes — a new operator
+/// schema and stays stable when the game data itself changes. A new operator
 /// must not churn this file.
 fn walk(path: &str, value: &Value, out: &mut BTreeSet<String>) {
     match value {
@@ -118,7 +118,7 @@ fn walk(path: &str, value: &Value, out: &mut BTreeSet<String>) {
 }
 
 /// Names of every resource `serialize_resource` in `app/services/static_data.rs`
-/// serves. Keep in step with that match — a resource missing here is unpinned.
+/// serves. Keep in step with that match: a resource missing here is unpinned.
 const RESOURCES: &[&str] = &[
     "operators",
     "skills",

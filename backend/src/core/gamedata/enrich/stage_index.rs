@@ -72,7 +72,7 @@ fn zone_order(
 /// `stage_table` stages (retired "Story mode" `easy_*` chapters, brand-new
 /// events whose levels aren't extracted yet) have a `level_id` but no file, so
 /// the map viewer 404s. The viewer resolves through `stage_table`, so those are
-/// not viewable — the frontend uses this to prefer a playable duplicate and to
+/// not viewable: the frontend uses this to prefer a playable duplicate and to
 /// avoid linking to a dead detail page.
 fn level_exists(levels_dir: &Path, level_id: Option<&str>) -> bool {
     let Some(level_id) = level_id else {
@@ -341,7 +341,7 @@ fn entry_from_mode_level(
 ) -> StageIndexEntry {
     let id = mode_stage_id(rel);
     // IS per-node previews are keyed by the topic-table node id (`ro1_n_4_5`),
-    // not the level filename — resolve that first, then fall through.
+    // not the level filename. Resolve that first, then fall through.
     let preview = art
         .is_node_ids
         .get(rel)
@@ -412,7 +412,7 @@ pub fn build_stage_index(
             continue;
         };
         if classifier.stage_for_level(&rel).is_some() {
-            continue; // has a stage_table stage — already emitted above.
+            continue; // has a stage_table stage, already emitted above.
         }
         let info = classifier.classify_level(&rel);
         if info.category != "modes" {

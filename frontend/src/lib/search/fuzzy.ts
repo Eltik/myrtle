@@ -56,7 +56,7 @@ export function normalizeForSearch(input: string): string {
 
 /**
  * Whitespace-insensitive variant of {@link normalizeForSearch}: collapses all
- * spacing too, so `miss christine` matches `Miss.Christine` (→ `misschristine`)
+ * spacing too, so `miss christine` matches `Miss.Christine` (-> `misschristine`)
  * regardless of how the user spaces or punctuates the query.
  */
 export function compactForSearch(input: string): string {

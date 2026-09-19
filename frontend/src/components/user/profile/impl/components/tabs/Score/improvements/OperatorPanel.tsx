@@ -314,7 +314,7 @@ const OperatorRow = memo(function OperatorRow({ op, color, accent }: { op: IOper
     const t: TypedT<typeof messages> = useT("user");
     const sortedTags = TAG_ORDER.filter((t) => op.missing.includes(t));
 
-    // Map tag → delta so the tag chip can show the projected gain inline. The
+    // Map tag -> delta so the tag chip can show the projected gain inline. The
     // backend guarantees one delta per tag in `missing`, but build the lookup
     // defensively in case of mismatch.
     const deltaByTag = useMemo(() => {

@@ -12,7 +12,7 @@ struct LangInfo {
 ///
 /// `LangType::Unknown` is the `#[serde(other)]` fallback: HG shipped a voice
 /// language this build doesn't name. There is no correct directory to guess, so
-/// the caller omits the URL rather than emitting one that 404s — every other
+/// the caller omits the URL rather than emitting one that 404s. Every other
 /// language on that character still resolves.
 const fn lang_info(lang: &LangType) -> Option<LangInfo> {
     Some(match lang {

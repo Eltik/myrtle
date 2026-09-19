@@ -19,13 +19,13 @@ function avatarBase(): string {
 
 // Skin IDs from game data look like `char_002_amiya@winter#1`.
 // Backend asset stems use `_` where game data uses `@`, and keep `#`.
-// encodeURIComponent handles `#` → `%23` so it survives the URL path.
+// encodeURIComponent handles `#` -> `%23` so it survives the URL path.
 export function toAvatarStem(id: string): string {
     if (id.includes("@")) {
-        // Skin: char_X@winter#1 → char_X_winter#1
+        // Skin: char_X@winter#1 -> char_X_winter#1
         return encodeURIComponent(id.replaceAll("@", "_"));
     }
-    // Base art: char_X#1 → char_X, char_X#2 → char_X_2
+    // Base art: char_X#1 -> char_X, char_X#2 -> char_X_2
     const stem = id.endsWith("#1") ? id.slice(0, -2) : id.replace(/#(\d+)$/, "_$1");
     return encodeURIComponent(stem);
 }
@@ -63,7 +63,7 @@ export function rarityToNumber(rarity: OperatorRarityTier | OperatorRarity | str
 
 const NAME_SPLIT_REGEX = /( the )|\(/gi;
 
-/** "Reed (the Flame Shadow)" → { displayName: "Reed", subtitle: "the Flame Shadow" }. */
+/** "Reed (the Flame Shadow)" -> { displayName: "Reed", subtitle: "the Flame Shadow" }. */
 export function parseOperatorName(name: string): { displayName: string; subtitle: string | null } {
     const parts = name.replace(/\)$/, "").split(NAME_SPLIT_REGEX);
     return { displayName: parts[0] ?? name, subtitle: parts[2] ?? null };

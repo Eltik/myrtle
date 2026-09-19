@@ -73,7 +73,7 @@ export function FootRow({ path = siteHost(), version = `v${OG_CONFIG.designVersi
     );
 }
 
-/** Bottom accent - single-color gradient that fades transparent → solid → transparent. */
+/** Bottom accent - single-color gradient that fades transparent -> solid -> transparent. */
 export function AccentStrip({ color = "#ec6f5d" }: { color?: string } = {}) {
     return (
         <div

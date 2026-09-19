@@ -112,7 +112,7 @@ pub struct PlannedGroup {
 ///
 /// For 2 rooms this is the login rhythm the player runs by hand:
 /// `room0 = [T0, T0, T1]`, `room1 = [T1, T2, T2]` - every team works 24h straight
-/// (T1's block wraps shift 3 → shift 1), rests 12h, and exactly one team per group
+/// (T1's block wraps shift 3 -> shift 1), rests 12h, and exactly one team per group
 /// swaps out at each login.
 pub fn tile_group(n_rooms: usize) -> Vec<[usize; SHIFT_COUNT]> {
     let mut cells = vec![[0usize; SHIFT_COUNT]; n_rooms];
@@ -444,7 +444,7 @@ fn select_balanced_teams(
         })
         .collect();
 
-    // Operator universe → bit indices for the disjointness masks. The universe is
+    // Operator universe -> bit indices for the disjointness masks. The universe is
     // the UNION across every group's candidate pool, which on a full base
     // (gold + EXP + trading, each up to `BASE_POOL + 8×extra` operators) runs to
     // ~200 - so [`OpMask`] is sized to hold it rather than dropping the overflow.

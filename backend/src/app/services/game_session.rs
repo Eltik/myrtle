@@ -32,9 +32,9 @@ pub async fn load(state: &AppState, user_id: &str) -> Result<AuthSession, ApiErr
 /// Persist a game session, renewing its TTL.
 ///
 /// Cache-only, and deliberately so. The durable `yostar_uid` / `yostar_token`
-/// pair inside the session is fixed at login and never mutates afterwards —
+/// pair inside the session is fixed at login and never mutates afterwards:
 /// `refresh_secret` rewrites the uid, token, secret and seqnum but not those
-/// two — so there is nothing here for the database to learn. Writing the
+/// two, so there is nothing here for the database to learn. Writing the
 /// durable pair is [`crate::app::services::auth`]'s job, once per login.
 pub async fn save(state: &AppState, user_id: &str, session: &AuthSession) {
     if let Ok(json) = serde_json::to_string(session) {
@@ -73,7 +73,7 @@ async fn restore(state: &AppState, uid: &str, server: Server) -> Result<AuthSess
 ///
 /// The cache is an optimisation here, not the source of truth. A miss, an
 /// eviction, a backend restart, or a cached value that no longer parses all
-/// land on the same path — rebuild from `user_game_credentials` — so a user
+/// land on the same path: rebuild from `user_game_credentials`, so a user
 /// only sees `NEEDS_LOGIN` when we genuinely hold nothing for them.
 pub async fn ensure_fresh(
     state: &AppState,
@@ -94,7 +94,7 @@ pub async fn ensure_fresh(
 /// durable credentials behind it.
 ///
 /// This is the user-facing "disconnect" action. Afterwards we cannot reach the
-/// account again without a fresh email code, which is the point — it is the
+/// account again without a fresh email code, which is the point: it is the
 /// self-serve revocation that account deletion used to be the only route to.
 /// Their already-synced data is untouched.
 pub async fn disconnect(state: &AppState, uid: &str, user_id: Uuid) -> Result<bool, ApiError> {

@@ -96,7 +96,7 @@ function Die({ ftx, fty, top, left, right, color }: IDieProps): React.ReactEleme
     const rb: [number, number] = [ftx + ax, fty - ay + h];
     const lb: [number, number] = [ftx - ax, fty - ay + h];
 
-    // Face-local (u, v) ∈ [0,1]² → screen (x, y) for pip placement.
+    // Face-local (u, v) ∈ [0,1]² -> screen (x, y) for pip placement.
     const topMat: Matrix = [ax, -ay, -ax, -ay, ftx, fty];
     const leftMat: Matrix = [-ax, -ay, 0, h, ftx, fty];
     const rightMat: Matrix = [ax, -ay, 0, h, ftx, fty];

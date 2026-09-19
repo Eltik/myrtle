@@ -184,7 +184,7 @@ const FILTERS: ReadonlyArray<{ key: "all" | "active" | "limited" | "linkage" | "
 type Filter = (typeof FILTERS)[number]["key"];
 
 const SORTS: ReadonlyArray<{ key: "timeline" | "pulls" | "popularity"; labelKey: RunsMessageKey }> = [
-    // Default: status-grouped chronological order (active → upcoming → recently ended).
+    // Default: status-grouped chronological order (active -> upcoming -> recently ended).
     { key: "timeline", labelKey: "community.runs.sort.timeline" },
     // Metric sorts rank by shared community data, highest first.
     { key: "pulls", labelKey: "community.runs.sort.pulls" },

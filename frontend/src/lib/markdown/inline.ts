@@ -20,7 +20,7 @@ export function parseInline(src: string): InlineNode[] {
     while (i < src.length) {
         const c = src.charAt(i);
 
-        // Escape: \X → literal X (only escapes a punctuation set; backslash otherwise literal)
+        // Escape: \X -> literal X (only escapes a punctuation set; backslash otherwise literal)
         if (c === "\\" && isEscapable(src.charAt(i + 1))) {
             buf += src.charAt(i + 1);
             i += 2;

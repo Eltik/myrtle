@@ -29,9 +29,9 @@ mod platform {
     use std::sync::atomic::{AtomicI32, Ordering};
 
     // Sentinel values stored in GETRANDOM_STATE:
-    //   UNCHECKED (-1) → haven't probed yet
-    //   UNAVAILABLE (0) → getrandom syscall not present, fall back to /dev/urandom
-    //   AVAILABLE  (1) → use getrandom
+    //   UNCHECKED (-1) -> haven't probed yet
+    //   UNAVAILABLE (0) -> getrandom syscall not present, fall back to /dev/urandom
+    //   AVAILABLE  (1) -> use getrandom
     const UNCHECKED: i32 = -1;
     const UNAVAILABLE: i32 = 0;
     const AVAILABLE: i32 = 1;

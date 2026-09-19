@@ -10,11 +10,11 @@
 //! Usage:
 //!   cargo run --bin generate-dps                          # Run all DPS steps (default)
 //!   cargo run --bin generate-dps -- --formulas            # Only regen `operator_formulas.json`
-//!   cargo run --bin generate-dps -- --transpile           # Only transpile DPS Python → Rust
+//!   cargo run --bin generate-dps -- --transpile           # Only transpile DPS Python -> Rust
 //!   cargo run --bin generate-dps -- --expected            # Only regen `expected_dps.json`
 //!   cargo run --bin generate-dps -- --healing             # Run all HPS steps (formulas+transpile)
 //!   cargo run --bin generate-dps -- --healing-formulas    # Only regen `heal_formulas.json`
-//!   cargo run --bin generate-dps -- --healing-transpile   # Only transpile HPS Python → Rust
+//!   cargo run --bin generate-dps -- --healing-transpile   # Only transpile HPS Python -> Rust
 //!   cargo run --bin generate-dps -- --repo <path>         # Custom `ArknightsDpsCompare` path
 
 // This binary is a code generator/transpiler: large emit functions, intentional
@@ -396,7 +396,7 @@ fn parse_operators(
 
         let init_body = extract_init_method(class_body);
         let (name, skills, modules, def_skill, def_pot, def_mod) = parse_super_init(&init_body);
-        // Look up by display name first (handles cases like Hibiscus → HibiscusAlter),
+        // Look up by display name first (handles cases like Hibiscus -> HibiscusAlter),
         // then fall back to class name
         let char_id = id_dict
             .get(&name)
@@ -965,11 +965,11 @@ json.dump(results, sys.stdout)
     let _ = fs::remove_file(&tmp_script);
 }
 
-// ── Step 2: Transpile Python → Rust ─────────────────────────────────────
+// ── Step 2: Transpile Python -> Rust ─────────────────────────────────────
 
 fn transpile_all(mode: Mode, py_src: &str, formulas: &HashMap<String, OperatorFormula>) {
     println!(
-        "\n=== Transpiling Python → Rust ({}) ===",
+        "\n=== Transpiling Python -> Rust ({}) ===",
         mode.human_label()
     );
 
@@ -1489,7 +1489,7 @@ fn extract_and_transpile_init_mutations(init_body: &str) -> InitMutations {
                     && !rl.contains("attack_speed -=")
                     && (!rl.trim().starts_with("ammo = 1;") || rl.contains("if "));
                 if valid {
-                    // Use the main coercion function to handle integer→float conversion
+                    // Use the main coercion function to handle integer->float conversion
                     let fixed = coerce_arithmetic_literals(&rl);
                     modified_fields.insert(rust_field.to_string());
                     mutations.push(format!("    {}", fixed.trim()));
@@ -1617,7 +1617,7 @@ fn transpile_init_expr(py_expr: &str) -> String {
     s = s.replace(" and ", " && ");
     s = s.replace(" or ", " || ");
     s = s.replace("not ", "!");
-    // Python `in [N,M]` → manual expansion (no regex)
+    // Python `in [N,M]` -> manual expansion (no regex)
     if s.contains(" in [")
         && let Some(start) = s.find(" in [")
     {
@@ -1677,8 +1677,8 @@ fn transpile_skill_dps(
     }
 
     // Detect if the Python body mutates self.atk_interval (field write vs local assignment)
-    // If yes: map self.atk_interval → atk_interval (the local shadow)
-    // If no: map self.atk_interval → unit.attack_interval as f64 (immutable field read)
+    // If yes: map self.atk_interval -> atk_interval (the local shadow)
+    // If no: map self.atk_interval -> unit.attack_interval as f64 (immutable field read)
     let _mutates_atk_interval =
         py_body.contains("self.atk_interval =") || py_body.contains("self.atk_interval=");
 
@@ -1870,7 +1870,7 @@ fn transpile_skill_dps(
         let rust_line = coerce_arithmetic_literals(&raw_line);
 
         // Merge an inline else/elif onto a preceding inline if:
-        //   "if COND { STMT; }" + "} else { STMT; }" → "if COND { STMT; } else { STMT; }"
+        //   "if COND { STMT; }" + "} else { STMT; }" -> "if COND { STMT; } else { STMT; }"
         // Skipped when the `else:` closed an outer block-if, otherwise it would
         // hijack that else and break the outer structure.
         if !else_consumed_outer_block
@@ -1930,13 +1930,13 @@ fn transpile_skill_dps(
     }
     lines.push(String::new());
 
-    // Two-phase assembly: declarations are untouched, body gets unit.X → shadow replacements
+    // Two-phase assembly: declarations are untouched, body gets unit.X -> shadow replacements
     let decl_section = lines[..decl_end_idx].join("\n");
     let body_section = lines[decl_end_idx..].join("\n");
 
     let mut processed_body = body_section;
 
-    // Apply unit.X → shadow var replacements ONLY to the body (not declarations)
+    // Apply unit.X -> shadow var replacements ONLY to the body (not declarations)
     // Order: longer/more-specific first to avoid substring collisions
     for field in &init_mutations.modified_fields {
         match field.as_str() {
@@ -2039,59 +2039,59 @@ fn coerce_arithmetic_literals(line: &str) -> String {
 
     // Step 2: Revert contexts where integers are needed
 
-    // .get(N.0) → .get(N)
+    // .get(N.0) -> .get(N)
     s = RE.get_fix.replace_all(&s, ".get($1)").to_string();
 
-    // [N.0] → [N] (array indexing)
+    // [N.0] -> [N] (array indexing)
     s = RE.idx_fix.replace_all(&s, "[$1]").to_string();
 
-    // .len() - N.0 → .len() - N (usize arithmetic)
+    // .len() - N.0 -> .len() - N (usize arithmetic)
     s = RE.len_sub.replace_all(&s, ".len() - $1").to_string();
 
-    // Slice N.0: → N: (inside brackets)
+    // Slice N.0: -> N: (inside brackets)
     s = RE.slice_fix.replace_all(&s, "[$1..]").to_string();
     s = RE.slice_fix2.replace_all(&s, "[..$1]").to_string();
 
-    // skillf in comparisons → skill (i32 comparison)
+    // skillf in comparisons -> skill (i32 comparison)
     s = RE.skillf_cmp.replace_all(&s, "skill $1 ").to_string();
     s = s.replace("if skillf ", "if skill ");
 
-    // i32 fields: comparisons with floats → revert to bare integer
+    // i32 fields: comparisons with floats -> revert to bare integer
     // NOTE: unit.ammo is f64, not i32 - do NOT include it here
     s = RE.i32_float_cmp.replace_all(&s, "$1 $2 $3").to_string();
 
-    // Casted comparisons: "(unit.X as f64) > N.0" → "unit.X > N"
+    // Casted comparisons: "(unit.X as f64) > N.0" -> "unit.X > N"
     s = RE.cast_cmp.replace_all(&s, "unit.$1 $2 $3").to_string();
 
-    // .max(N.0) → .max(N.0_f64) - disambiguate for type inference
+    // .max(N.0) -> .max(N.0_f64) - disambiguate for type inference
     s = RE.max_float.replace_all(&s, ".max(${1}_f64)").to_string();
     s = RE.min_float.replace_all(&s, ".min(${1}_f64)").to_string();
 
-    // Ambiguous float RECEIVER: "(N.0).max(" → "(N.0_f64).max("
+    // Ambiguous float RECEIVER: "(N.0).max(" -> "(N.0_f64).max("
     s = RE.recv_max.replace_all(&s, "(${1}_f64).max(").to_string();
     s = RE.recv_min.replace_all(&s, "(${1}_f64).min(").to_string();
 
-    // Ranges: N.0..N.0 → N..N
+    // Ranges: N.0..N.0 -> N..N
     s = RE.range_fix.replace_all(&s, "$1..$2").to_string();
     s = RE.range_fix2.replace_all(&s, "$1..").to_string();
     s = RE.range_fix3.replace_all(&s, "..$1$2").to_string();
 
-    // .trunc().0 → .trunc()
+    // .trunc().0 -> .trunc()
     s = s.replace(".trunc().0", ".trunc()");
-    // as f64.0 → as f64
+    // as f64.0 -> as f64
     s = s.replace("as f64.0", "as f64");
-    // as i32.0 → as i32
+    // as i32.0 -> as i32
     s = s.replace("as i32.0", "as i32");
-    // as usize.0 → as usize
+    // as usize.0 -> as usize
     s = s.replace("as usize.0", "as usize");
-    // as i64.0 → as i64
+    // as i64.0 -> as i64
     s = s.replace("as i64.0", "as i64");
 
-    // Double float: N.0.0 → N.0
+    // Double float: N.0.0 -> N.0
     s = RE.double_float.replace_all(&s, "$1.0").to_string();
     s = s.replace(".0.0)", ".0)");
 
-    // Augmented assignments with integers: "*= N;" → "*= N.0;"
+    // Augmented assignments with integers: "*= N;" -> "*= N.0;"
     s = RE.aug_int.replace_all(&s, "$1 $2.0;").to_string();
 
     // Leftover skillf in comparison context
@@ -2146,7 +2146,7 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
         line = line.trim_start_matches("try:").trim().to_string();
     }
 
-    // Handle "if COND: return EXPR" → "if COND { return Some(EXPR); }"
+    // Handle "if COND: return EXPR" -> "if COND { return Some(EXPR); }"
     if let Some(cap) = RE.if_return_re.captures(&line) {
         let cond = transpile_expressions(&cap[1], declared);
         let val = transpile_expressions(&cap[2], declared);
@@ -2246,7 +2246,7 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
         return format!("if {cond} {{ {var} {op} {val}; }}");
     }
 
-    // Inline elif: "elif COND: STMT" → close previous block, open new if
+    // Inline elif: "elif COND: STMT" -> close previous block, open new if
     if let Some(cap) = RE.inline_elif_re.captures(&line)
         && !cap[2].trim().is_empty()
         && !cap[2].trim().starts_with('#')
@@ -2256,7 +2256,7 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
         return format!("}} else if {cond} {{ {stmt}; }}");
     }
 
-    // Python for-range loop: for i in range(N) → for _i in 0..(N as i32) { let i = _i as f64;
+    // Python for-range loop: for i in range(N) -> for _i in 0..(N as i32) { let i = _i as f64;
     if let Some(cap) = RE.for_range_re.captures(&line) {
         let var = &cap[1];
         let n = transpile_expressions(&cap[2], declared);
@@ -2282,7 +2282,7 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
         if line.starts_with("elif ") {
             line = format!("}} else if {}", &line[5..]);
         }
-        // Strip outer parens from if(COND) → if COND
+        // Strip outer parens from if(COND) -> if COND
         if line.starts_with("if(") && line.ends_with(')') {
             line = format!("if {}", &line[3..line.len() - 1]);
         }
@@ -2325,7 +2325,7 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
         && !t.ends_with(';')
     {
         // Inline if-else expressions ending with } need semicolons:
-        // "let mut x = if COND { A } else { B }" → needs ";"
+        // "let mut x = if COND { A } else { B }" -> needs ";"
         line.push(';');
     }
 
@@ -2358,7 +2358,7 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
         .replace_all(&s, "($1 as f64).powf($2 as f64)")
         .to_string();
 
-    // X in [A,B,C] → (X == A || X == B || X == C)
+    // X in [A,B,C] -> (X == A || X == B || X == C)
     s = RE
         .in_list_re
         .replace_all(&s, |caps: &regex::Captures| {
@@ -2370,10 +2370,10 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
             format!("({})", items.join(" || "))
         })
         .to_string();
-    // Also handle self.skill → skill for the above
+    // Also handle self.skill -> skill for the above
     s = s.replace("self.skill ==", "skill ==");
 
-    // int(x) → truncate toward zero (stays f64) - uses balanced paren matching
+    // int(x) -> truncate toward zero (stays f64) - uses balanced paren matching
     {
         let mut search_from = 0;
         while let Some(m) = RE.int_pat.find(&s[search_from..]) {
@@ -2403,7 +2403,7 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
         }
     }
 
-    // Negative indexing: params[-N] → params[params.len() - N]
+    // Negative indexing: params[-N] -> params[params.len() - N]
     s = RE
         .neg_idx_re
         .replace_all(&s, |caps: &regex::Captures| {
@@ -2529,7 +2529,7 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     s = s.replace("self.base_name", "\"\"");
     s = s.replace("self.no_kill", "!unit.skill_damage");
     s = s.replace("self.hits", "unit.ammo");
-    // Standalone self.skill_params (no index) → unit.skill_parameters
+    // Standalone self.skill_params (no index) -> unit.skill_parameters
     if s.contains("self.skill_params") && !s.contains("self.skill_params[") {
         s = s.replace("self.skill_params", "unit.skill_parameters");
     }
@@ -2547,7 +2547,7 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     s = s.replace("self.cloned_op.ranged", "unit.clone_is_ranged");
     s = s.replace("self.cloned_op.physical", "unit.clone_is_physical");
 
-    // self.X → unit.X field mappings
+    // self.X -> unit.X field mappings
     s = s.replace("self.drone_atk_interval", "unit.drone_atk_interval as f64");
     s = s.replace("self.atk_interval", "atk_interval");
     s = s.replace("self.drone_atk", "unit.drone_atk");
@@ -2617,12 +2617,12 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     s = s.replace("self.sp_cost", "unit.skill_cost as f64");
     s = s.replace("self.shadows", "unit.targets as f64");
 
-    // self.shreds[N] → unit.shreds[N]
+    // self.shreds[N] -> unit.shreds[N]
     s = RE.shreds_re.replace_all(&s, "unit.shreds[$1]").to_string();
 
-    // User-defined array indexing: VARNAME[expr] → VARNAME[(expr) as usize]
+    // User-defined array indexing: VARNAME[expr] -> VARNAME[(expr) as usize]
     // Only for user variables (lowercase start), NOT unit.X or self.X
-    // User-defined array indexing: arr[expr] → arr[(expr) as usize]
+    // User-defined array indexing: arr[expr] -> arr[(expr) as usize]
     // Skip: unit.X[N], self.X[N], vec![N], range indices [N..M]
     s = RE
         .user_arr_idx_re
@@ -2650,11 +2650,11 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     // and/or/not
     s = s.replace(" and ", " && ");
     s = s.replace(" or ", " || ");
-    // "not X == Y" → "X != Y" / "not X" → "!X"
+    // "not X == Y" -> "X != Y" / "not X" -> "!X"
     s = RE.not_eq_re.replace_all(&s, "$1 != $2").to_string();
     s = RE.not_re.replace_all(&s, "!").to_string();
 
-    // // → floor division (approximate)
+    // // -> floor division (approximate)
     s = s.replace("//", "/ ");
 
     // Standalone ternary (not assignment): "EXPR if COND else ALT" in expression
@@ -2676,7 +2676,7 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
         }
     }
 
-    // np.fmax(a, b) → (a).max(b), np.fmin(a, b) → (a).min(b)
+    // np.fmax(a, b) -> (a).max(b), np.fmin(a, b) -> (a).min(b)
     // Use balanced paren matching to handle nested expressions
     for func in &["np.fmax", "np.fmin"] {
         let method = if *func == "np.fmax" { "max" } else { "min" };
@@ -2729,7 +2729,7 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
         }
     }
 
-    // Python min/max two-arg: min(a, b) → (a).min(b)
+    // Python min/max two-arg: min(a, b) -> (a).min(b)
     // Use balanced paren matching to handle nested expressions
     for func in &["min", "max"] {
         let method = *func;
@@ -2809,7 +2809,7 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
         s = format!("{indent}{var} {op} if {cond} {{ {true_val} }} else {{ {false_val} }}");
     }
 
-    // Fix double assignment: "x = x = expr" → "x = expr" (Python idiom)
+    // Fix double assignment: "x = x = expr" -> "x = expr" (Python idiom)
     if let Some(cap) = RE.double_assign.captures(&s.clone())
         && cap[2] == cap[3]
     {
@@ -2914,7 +2914,7 @@ fn to_snake_case(name: &str) -> String {
     let mut result = String::new();
     for (i, c) in name.chars().enumerate() {
         if c.is_uppercase() && i > 0 {
-            // Don't add underscore between consecutive uppercase (e.g., "DPS" → "dps")
+            // Don't add underscore between consecutive uppercase (e.g., "DPS" -> "dps")
             let prev = name.chars().nth(i - 1).unwrap_or('_');
             let next = name.chars().nth(i + 1);
             if prev.is_lowercase() || (next.is_some() && next.unwrap().is_lowercase()) {
@@ -2923,7 +2923,7 @@ fn to_snake_case(name: &str) -> String {
         }
         result.push(c.to_ascii_lowercase());
     }
-    // Handle names starting with numbers (e.g., "12F" → "op_12f")
+    // Handle names starting with numbers (e.g., "12F" -> "op_12f")
     if result.starts_with(|c: char| c.is_ascii_digit()) {
         result = format!("op_{result}");
     }

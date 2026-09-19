@@ -1,4 +1,4 @@
-//! Stage **level** data — the tile map, enemy routes, and wave/spawn schedule
+//! Stage **level** data: the tile map, enemy routes, and wave/spawn schedule
 //! that drive the Stage Viewer's pathing simulator.
 //!
 //! The raw `level_*.json` files (`PascalCase`, ~50-300 KB each) live under
@@ -216,7 +216,7 @@ pub struct TileCell {
 pub struct RouteOut {
     /// `WALK`, `FLY`, or `OTHER`.
     pub motion: String,
-    /// Polyline in screen space: spawn → checkpoints → goal.
+    /// Polyline in screen space: spawn -> checkpoints -> goal.
     pub points: Vec<Point>,
 }
 
@@ -273,7 +273,7 @@ pub struct HiddenRoute {
     pub points: Vec<Point>,
 }
 
-/// A stage-wide modifier (from `Runes`) — CC/IS-style buffs. Frontend renders
+/// A stage-wide modifier (from `Runes`): CC/IS-style buffs. Frontend renders
 /// `key` as the effect, `difficulty`/`profession` as scope, blackboard as data.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -380,7 +380,7 @@ pub fn parse_stage_map(
         })
         .collect();
 
-    // ── Routes → screen-space polylines ───────────────────────────────────
+    // ── Routes -> screen-space polylines ───────────────────────────────────
     let to_point = |p: RawPos| Point {
         x: f64::from(p.col),
         y: f64::from((rows as i32 - 1).max(0) - p.row),

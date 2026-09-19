@@ -158,7 +158,7 @@ export function addDays(date: Date, days: number): Date {
 
 export function addMonths(date: Date, months: number): Date {
     const next = new Date(date);
-    next.setDate(1); // avoid month-end overflow (e.g. Jan 31 → Mar)
+    next.setDate(1); // avoid month-end overflow (e.g. Jan 31 -> Mar)
     next.setMonth(next.getMonth() + months);
     return next;
 }

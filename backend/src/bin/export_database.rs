@@ -133,7 +133,7 @@ async fn main() -> Result<()> {
     serde_json::to_writer_pretty(BufWriter::new(f), &json!(manifest))?;
 
     println!(
-        "\nExported {} tables, {} rows in {:.2}s → {}",
+        "\nExported {} tables, {} rows in {:.2}s -> {}",
         TABLES.len(),
         total_rows,
         total_start.elapsed().as_secs_f64(),

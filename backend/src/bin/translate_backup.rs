@@ -29,7 +29,7 @@
 //!   - the giant raw `data` blob beyond what we extract (v3 reconstructs from
 //!     normalized tables on demand)
 
-// CLI tool: a long top-level fn, an intentional cast, and explicit token→id match arms
+// CLI tool: a long top-level fn, an intentional cast, and explicit token->id match arms
 // (kept verbose for clarity) are expected here.
 #![allow(
     clippy::too_many_lines,
@@ -234,7 +234,7 @@ fn main() -> Result<()> {
 
     // ── operator_notes ─────────────────────────────────────────────────────
     let op_notes: Vec<Value> = read_array(&args.in_dir.join("operator_notes.json"))?;
-    // old PK was operator_id-UUID per row; build operator_id→note_id map so
+    // old PK was operator_id-UUID per row; build operator_id->note_id map so
     // the audit log can resolve note_id from the old operator_id-keyed rows.
     let mut note_id_by_op: HashMap<String, String> = HashMap::new();
     {
@@ -381,7 +381,7 @@ fn main() -> Result<()> {
                     continue;
                 };
                 if !seen_ops.insert(char_id.to_string()) {
-                    continue; // dupe across instIds → keep first
+                    continue; // dupe across instIds -> keep first
                 }
                 tables.get_mut("user_operators").unwrap().write(&json!({
                     "user_id": id,
@@ -610,13 +610,13 @@ fn main() -> Result<()> {
         user_start.elapsed().as_secs_f64()
     );
 
-    // ── user_gacha_settings → fold into user_settings overrides ────────────
+    // ── user_gacha_settings -> fold into user_settings overrides ────────────
     // (already wrote one settings row per user above with defaults - overwrite
     //  by reading user_gacha_settings and rewriting only changed flags. Simpler
     //  to do this as a post-pass: read what we already wrote, patch, rewrite.)
     let gacha_settings: Vec<Value> = read_array(&args.in_dir.join("user_gacha_settings.json"))?;
     if !gacha_settings.is_empty() {
-        // map user_id → (store_gacha, share_stats) from gacha settings
+        // map user_id -> (store_gacha, share_stats) from gacha settings
         let overrides: HashMap<String, (bool, bool)> = gacha_settings
             .iter()
             .filter_map(|r| {

@@ -9,7 +9,7 @@
 //!   cargo run --release --bin set-tier-list-official -- <slug> --community
 //!   cargo run --release --bin set-tier-list-official -- <slug> --official --yes   # skip confirm
 //!
-//! `--community` is the "remove official" action — it returns the list to a
+//! `--community` is the "remove official" action: it returns the list to a
 //! community list. Reads `DATABASE_URL` from the environment (or `.env`).
 
 use anyhow::{Context, Result, bail};

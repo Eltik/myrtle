@@ -14,7 +14,7 @@
  *    before this module existed.
  * 2. {@link gamedataKey} contributes the server to every game-data query key -
  *    and contributes *nothing* for the default server, so English cache entries
- *    keep the keys they already had while `ja` (→ `jp`) can never be served out
+ *    keep the keys they already had while `ja` (-> `jp`) can never be served out
  *    of them.
  */
 
@@ -49,8 +49,8 @@ export function resolveGamedataServer(value: string | null | undefined): Gamedat
 /**
  * The backend path for one game-data resource on one server.
  *
- * `gamedataPath("en", "/operators/index")` → `/operators/index`
- * `gamedataPath("jp", "/operators/index")` → `/jp/operators/index`
+ * `gamedataPath("en", "/operators/index")` -> `/operators/index`
+ * `gamedataPath("jp", "/operators/index")` -> `/jp/operators/index`
  */
 export function gamedataPath(server: string | null | undefined, path: string): string {
     const resolved = resolveGamedataServer(server);

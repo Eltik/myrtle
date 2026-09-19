@@ -96,11 +96,11 @@ fn requirement_sort_key(id: &str, name: &str, rarity: i16) -> (i8, i8) {
 /// Chips -> 2 Defender Chips). Converting chips is a waste and never the intended
 /// way to acquire them, so the planner treats chips as obtain-only. Dualchip
 /// factory recipes carry the same `F_ASC` type but live in `manufact_formulas`
-/// and stay craftable — combining chip packs with a catalyst *is* the intended
+/// and stay craftable: combining chip packs with a catalyst *is* the intended
 /// way to obtain dualchips.
 const CHIP_CONVERSION_FORMULA_TYPE: &str = "F_ASC";
 const CHIP_CRAFT_REASON: &str =
-    "Chip conversion isn't recommended — obtain chips from stages, the store, or events";
+    "Chip conversion isn't recommended: obtain chips from stages, the store, or events";
 
 /// Read-only inputs shared by the whole requirement computation.
 struct PlannerCtx<'a> {
@@ -323,8 +323,8 @@ fn unmet_recipe_requirements(ctx: &PlannerCtx, view: &RecipeView) -> Vec<String>
     unmet_reqs
 }
 
-/// Builds the requirement node for one item, allocating units out of `pool` — the
-/// shared ledger of not-yet-claimed inventory — so the same unit is never counted
+/// Builds the requirement node for one item, allocating units out of `pool`, the
+/// shared ledger of not-yet-claimed inventory, so the same unit is never counted
 /// toward two requirements. Inventory is claimed first; only the remaining
 /// shortfall is (recursively) crafted, with ingredient claims drawn from the same
 /// ledger. `craftable_count` is therefore plan-scoped: the units that will
@@ -378,7 +378,7 @@ fn build_requirement_tree(
         };
 
         // A gated recipe is still shown, but nothing will actually be crafted, so
-        // expand it against a scratch copy — it must not consume pool units that
+        // expand it against a scratch copy: it must not consume pool units that
         // other requirements can still use.
         let mut scratch;
         let child_pool: &mut HashMap<String, i32> = if gates_met {

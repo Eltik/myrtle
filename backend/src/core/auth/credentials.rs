@@ -3,14 +3,14 @@
 //! A user's `AuthSession` carries two kinds of secret. The `secret` / `token`
 //! pair is short-lived and re-derivable: [`refresh_secret`] mints a new one on
 //! demand, and losing it costs one round-trip. The `yostar_uid` /
-//! `yostar_token` pair is durable and NOT re-derivable — losing it costs the
+//! `yostar_token` pair is durable and NOT re-derivable: losing it costs the
 //! user a full email-code login. That pair is what `user_game_credentials`
 //! persists, and it is credential material rather than cache, so it does not
 //! reach the database in the clear.
 //!
 //! XChaCha20-Poly1305 with a fresh random 24-byte nonce per write. The owning
 //! row's `user_id` is passed as additional authenticated data, so a ciphertext
-//! lifted from one row fails to open under another — a row swap at the database
+//! lifted from one row fails to open under another: a row swap at the database
 //! level cannot hand one account's credentials to a different account.
 //!
 //! [`refresh_secret`]: crate::core::hypergryph::session::refresh_secret

@@ -113,7 +113,7 @@ function asGroupKey(g: string): StageGroupKey {
     return KNOWN_GROUPS.has(g as StageGroupKey) ? (g as StageGroupKey) : "other";
 }
 
-/** Fallback title for zones without a display name: "guide_1" → "Guide 1". */
+/** Fallback title for zones without a display name: "guide_1" -> "Guide 1". */
 function humanizeZoneId(id: string): string {
     return id
         .replace(/[_-]+/g, " ")
@@ -131,7 +131,7 @@ interface IZoneAccum {
 }
 
 /**
- * Build the category → event(zone) → stage tree from the backend's authoritative
+ * Build the category -> event(zone) -> stage tree from the backend's authoritative
  * stage index. Grouping/labelling comes straight from the index; the frontend
  * only dedupes CM variants, orders, and formats.
  */
@@ -213,7 +213,7 @@ export function buildStageTree(entries: IStageIndexEntry[]): IStageTree {
     let totalStages = 0;
     let totalZones = 0;
     for (const [key, events] of eventsByGroup) {
-        // Story reads oldest→newest by episode; everything else newest first.
+        // Story reads oldest->newest by episode; everything else newest first.
         if (key === "story") events.sort((a, b) => a.order - b.order || naturalCompare(a.zoneId, b.zoneId));
         else events.sort((a, b) => b.order - a.order || naturalCompare(b.zoneId, a.zoneId));
         const stageCount = events.reduce((n, e) => n + e.stageCount, 0);

@@ -36,7 +36,7 @@ export function readableTextColor(color: string | null | undefined): ReadableTex
 }
 
 function relativeLuminance(r: number, g: number, b: number): number {
-    // sRGB → linear, then WCAG luminance.
+    // sRGB -> linear, then WCAG luminance.
     const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
     return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
 }

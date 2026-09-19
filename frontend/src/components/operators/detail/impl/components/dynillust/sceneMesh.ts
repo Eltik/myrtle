@@ -147,7 +147,7 @@ export interface ISceneLayer {
     rootRevealFrom?: number | null;
     /** ENTRANCE material-colour animation: `[t, r, g, b, a]` samples of the `_Start`
      *  clip's animated material colour, resolved onto the static tint by the exporter
-     *  (e.g. Mlynar's white flash `_TintColor` alpha ramping 0→0.671 over 13→15s).
+     *  (e.g. Mlynar's white flash `_TintColor` alpha ramping 0->0.671 over 13->15s).
      *  Replayed each frame at the entrance track time, REPLACING `tint`. Absent = the
      *  material colour is static. Only `_Start` scenes carry it. */
     colorCurve?: [number, number, number, number, number][] | null;
@@ -267,7 +267,7 @@ export interface ISceneData {
     entranceClearColor?: [number, number, number] | null;
     /** ENTRANCE transform/reform beat in seconds (the dominant late `_delayTime` cluster) -
      *  the camera has dollied to the wide stop and the character has reformed by here, so it's
-     *  the entrance→idle hand-off point AND the target time of the tight→wide camera dolly. */
+     *  the entrance->idle hand-off point AND the target time of the tight->wide camera dolly. */
     entranceTransform?: number | null;
     /** ENTRANCE close-up view in authored px (`2·ortho/skeletonScale`) - the tight frame the
      *  cinematic opens on (Virtuosa 598 vs the 1929 wide stop). `_Start` scenes only. */
@@ -279,7 +279,7 @@ export interface ISceneData {
     entranceCamOffsetPx?: [number, number] | null;
     /** ENTRANCE camera dolly ZOOM - the game's actual data-driven camera motion, extracted from
      *  the `_Start` clip that animates the Main Camera's orthographic size: `[t_seconds, ortho]`
-     *  keyframes (Virtuosa 1.87 hold → 1.50 zoom-in on the transform → 1.91 out). There is NO
+     *  keyframes (Virtuosa 1.87 hold -> 1.50 zoom-in on the transform -> 1.91 out). There is NO
      *  positional pan. The frontend replays it as a RELATIVE zoom (ratio to the t=0 value) on the
      *  entrance frame, so no world↔authored unit conversion is needed. `_Start` scenes only. */
     /** ENTRANCE post-process: the `pp` PostProcessVolume's effect, its intensity, and the
@@ -310,7 +310,7 @@ export interface ISceneData {
     /** ENTRANCE camera ROLL about the view axis, `[t_s, degrees]`. Present only when the rig is
      *  actually rolled: 12 of the 13 entrance skins have an exactly axis-aligned camera basis
      *  (right = +X, up = +Y, roll 0.000°) and ship `null`. Wiš'adel's rig rolls
-     *  −11.34° → −29.56° over her first 2.4 s. */
+     *  −11.34° -> −29.56° over her first 2.4 s. */
     entranceCamRollCurve?: [number, number][] | null;
     /** ENTRANCE LETTERBOX window `[x0, y0, x1, y1]` in authored px, in the same space as
      *  {@link entranceCamCenterCurve}. Present only when the prefab paints one - Civilight Eterna
@@ -402,8 +402,8 @@ interface ISceneTex {
      *  grey field drops out instead of stamping a grey rectangle. Equals `raw`
      *  when the texture already has real transparency. */
     glow: PIXI.BaseTexture;
-    /** Alpha-weighted "whiteness" in [0,1]: bright AND desaturated → ~1 (a white
-     *  paint/flash veil), coloured (e.g. red halftones) → ~0. Used to attenuate
+    /** Alpha-weighted "whiteness" in [0,1]: bright AND desaturated -> ~1 (a white
+     *  paint/flash veil), coloured (e.g. red halftones) -> ~0. Used to attenuate
      *  face-veiling foreground overlays without touching coloured foreground fx. */
     whiteness: number;
     /** Fraction of sampled texels that are near-fully-opaque (alpha > 0.9). ~1 means
@@ -507,8 +507,8 @@ function darkDropGlow(img: DecodedImage): PIXI.BaseTexture | null {
 }
 
 /** Sample a texture once: alpha-weighted `whiteness` in [0,1] (`brightness ×
- *  (1 - saturation)` - a bright desaturated veil → ~1, a saturated red halftone →
- *  ~0) and `opaqueFrac` (fraction of texels with alpha > 0.9 → ~1 for a solid
+ *  (1 - saturation)` - a bright desaturated veil -> ~1, a saturated red halftone ->
+ *  ~0) and `opaqueFrac` (fraction of texels with alpha > 0.9 -> ~1 for a solid
  *  painted backdrop). Both default to 0 on any canvas failure. */
 function analyzeTexture(img: DecodedImage): { whiteness: number; opaqueFrac: number; sat: number } {
     try {
@@ -758,11 +758,11 @@ const EFFECT_TEX_MAX = 512;
  *
  *  The rule's stated intent is "a SMALL texture STRETCHED over a large mesh", but the test
  *  keys on texture size ALONE, so a modest texture drawn near native scale is tamed like a
- *  caustic. The stretch values do look bimodal with a gap at 2.94 → 3.99:
+ *  caustic. The stretch values do look bimodal with a gap at 2.94 -> 3.99:
  *      genuine caustics   3.99, 4.87, 5.65, 5.94, 6.73, 6.78, 7.62, 7.94, 8.12, 11.25, 21.50
  *      near-native panels 1.42, 1.69 (Virtuosa's starfield sheet), 1.80, 2.94
  *  but gating on it is a NET LOSS. Applied to the gain decision alone (interior MADC):
- *      stretchmin 0 → 3.5 :  mly 15.839 → 17.105   cel 20.405 → 20.130   ska 12.056 → 12.056
+ *      stretchmin 0 -> 3.5 :  mly 15.839 -> 17.105   cel 20.405 -> 20.130   ska 12.056 -> 12.056
  *  Virtuosa gains 0.275, Mlynar loses 1.266. The populations cannot be separated by stretch
  *  either: her starfield sheet sits at 1.69 while a Mlynar layer that genuinely NEEDS taming
  *  sits at 1.42, so any threshold that exempts hers also exempts his. Separating them would
@@ -896,7 +896,7 @@ function layerStretch(layer: ISceneLayer, effRect: { w: number; h: number }): nu
  *  ground plane (opaqueFrac 0.81, sat 0.85, whiteness 0.05) from the game's indigo to a
  *  flat grey. Across the 82 shipped skins these two bounds isolate 15 layers in 7 skins,
  *  all saturated painted surfaces, and the opacity cut sits in a real gap in the data
- *  (0.81 → 0.67 with nothing between). White flash/veil panels (sat ≈ 0, a 4×4 white quad
+ *  (0.81 -> 0.67 with nothing between). White flash/veil panels (sat ≈ 0, a 4×4 white quad
  *  stretched over the frame) stay attenuated, as do translucent coloured caustics. */
 const SURFACE_OPAQUE_MIN = 0.75;
 const SURFACE_SAT_MIN = 0.4;
@@ -915,7 +915,7 @@ const VEIL_WHITENESS_MIN = 0.65;
  *  every threshold in 0.70-0.85 selects exactly the same set. */
 const VEIL_FRAME_COVER = 0.8;
 /** Min alpha-weighted saturation for a foreground effect to count as glowing energy
- *  (→ additive over the character). White veils (~0) and pale panels fall below it. */
+ *  (-> additive over the character). White veils (~0) and pale panels fall below it. */
 const GLOW_SAT_MIN = 0.4;
 
 /** On-screen extent of a layer's quad along one axis (0 = x, 1 = y), in scene px. */
@@ -1008,7 +1008,7 @@ const LIGHT_GLOW_OPAQUE_MAX = 0.6;
 
 /** Whiteness threshold separating a self-lit DARK painted backdrop from a bright studio
  *  wall. Derived from the studio environment gradient (see `createEnvironmentBgTexture`
- *  in SceneIllust): its darker stop is `#bfc0c4` → luminance ≈ 0xbf/0xff ≈ 0.749. An opaque
+ *  in SceneIllust): its darker stop is `#bfc0c4` -> luminance ≈ 0xbf/0xff ≈ 0.749. An opaque
  *  backdrop whose whiteness falls BELOW this is darker than the studio gradient itself, so
  *  the gradient composited behind it would only lift/wash it (a bug); one at or above it is
  *  a bright environment the gradient can't wash. Property-derived, not per-skin. */
@@ -1294,7 +1294,7 @@ export function applySceneLayerSt(mesh: PIXI.DisplayObject, tt: number, clock: n
 // Per-vertex-colour mesh shader for layers that carry `col`, and for OVER-BRIGHT
 // layers (see {@link isOverbrightLayer}). PIXI's built-in MeshMaterial only applies
 // a uniform tint, so a light sheet whose SHAPE is authored as a vertex-alpha gradient
-// (opaque core → transparent edges over a flat-white texture) renders as a hard opaque
+// (opaque core -> transparent edges over a flat-white texture) renders as a hard opaque
 // block (e.g. Blaze "Wildfire"'s white light wedge stamped a solid triangle) - and its
 // `tint` is an 8-bit RGB word, so a colour above 1.0 is silently truncated to white.
 // This program multiplies the (premultiplied) texture by the premultiplied per-layer
@@ -1553,7 +1553,7 @@ void main() {
 `;
 
 /** A Mesh on a CUSTOM shader: PIXI only folds `worldAlpha` into `MeshMaterial`, so a
- *  custom-shader layer would ignore every container fade above it (the entrance→idle
+ *  custom-shader layer would ignore every container fade above it (the entrance->idle
  *  cross-dissolve ramps the whole entrance root's alpha to 0). Feed it to the shader
  *  instead. Premultiplied throughout, so a scalar multiply IS the fade. */
 class VColorMesh extends PIXI.Mesh<PIXI.Shader> {
@@ -1649,7 +1649,7 @@ function buildVColorMesh(layer: ISceneLayer, base: PIXI.BaseTexture, rgb: [numbe
 /** True when the layer's exported colour leaves the 0..1 LDR range. The Ram /
  *  `Particles-L2D` compositors sample `2 × _MainColor × tex`, so the exporter bakes
  *  that ×2 into the tint/colour curve - Mlynar's `bg01` entrance backdrop ramps
- *  0.824 → 1.176. `MeshMaterial.tint` is an 8-bit RGB word and truncates anything
+ *  0.824 -> 1.176. `MeshMaterial.tint` is an 8-bit RGB word and truncates anything
  *  above 1.0, which flattens that whole ramp onto white; such a layer has to take the
  *  float-uniform shader path so the over-bright energy survives into the half-float
  *  HDR target (see `hdrTonemap.ts`). Purely value-driven: an LDR layer never matches. */
@@ -1661,7 +1661,7 @@ function isOverbrightLayer(layer: ISceneLayer): boolean {
 /** Pixel footprint of just THIS layer's sampled sub-rect of its (possibly shared/atlas)
  *  texture. A layer packed into a large shared atlas page samples only a small UV sub-rect;
  *  the raw texture dimensions then mis-describe it as a big backdrop. Provably a no-op for a
- *  layer that samples its texture's full extent (uv spans [0,1] → returns the raw dims). */
+ *  layer that samples its texture's full extent (uv spans [0,1] -> returns the raw dims). */
 function layerUvRectPx(layer: ISceneLayer, tex: ISceneTex): { w: number; h: number } {
     let uMin = Infinity;
     let uMax = -Infinity;
@@ -1677,8 +1677,8 @@ function layerUvRectPx(layer: ISceneLayer, tex: ISceneTex): { w: number; h: numb
 }
 
 /**
- * Build a Pixi mesh for one layer. Y is flipped (authored Y-up → Pixi Y-down)
- * and V is flipped (Unity → Pixi UV), matching the exporter's coordinate note.
+ * Build a Pixi mesh for one layer. Y is flipped (authored Y-up -> Pixi Y-down)
+ * and V is flipped (Unity -> Pixi UV), matching the exporter's coordinate note.
  */
 /** Authored XY bounds `[minX, minY, maxX, maxY]` of a layer's mesh, from its flat
  *  `[x0,y0,x1,y1,…]` position array. Used to tell whether a demoted layer actually
@@ -1701,7 +1701,7 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
     const vertexCount = layer.pos.length / 2;
     if (vertexCount < 3 || layer.idx.length < 3) return null;
     const additive = layer.additive || forceAdditive;
-    // Dark-field-dropped texture (`tex.glow`: opaque texel → alpha=luminance, so a
+    // Dark-field-dropped texture (`tex.glow`: opaque texel -> alpha=luminance, so a
     // black/dark field drops out) is ONLY valid for ADDITIVE blending, where black
     // adds nothing and the drop just spares the grey rectangle. For NORMAL-blend
     // surfaces a texel's dark colour is REAL paint, not "nothing": dark-dropping a
@@ -2460,7 +2460,7 @@ export async function loadSceneMeshes(sceneURL: string, textureBaseURL: string, 
             cxMax = Math.max(cxMax, layer.pos[i]);
         }
         const overCharacter = Math.abs((cxMin + cxMax) / 2) < CHAR_COLUMN_HALF;
-        // Bright desaturated non-solid light-glow sheets → additive (un-darken the
+        // Bright desaturated non-solid light-glow sheets -> additive (un-darken the
         // high-key mirror-world backdrop). Applies wherever they sit (fg or demoted bg),
         // since additive light brightens from any depth. See LIGHT_GLOW_* above.
         const isLightGlowSheet = !layer.additive && isEffect && base.whiteness >= LIGHT_GLOW_WHITENESS && base.sat <= LIGHT_GLOW_SAT_MAX && base.opaqueFrac <= LIGHT_GLOW_OPAQUE_MAX;

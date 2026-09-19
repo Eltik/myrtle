@@ -25,7 +25,7 @@ use crate::core::{
 /// so 16 covers realistic optima while keeping C(16,3) combinations cheap.
 const CANDIDATE_LIMIT: usize = 16;
 
-/// Build a `char_id` → profile index for O(1) lookups in the hot inner loops.
+/// Build a `char_id` -> profile index for O(1) lookups in the hot inner loops.
 pub(crate) fn build_op_index(
     operators: &[OperatorBaseProfile],
 ) -> HashMap<&str, &OperatorBaseProfile> {
@@ -520,7 +520,7 @@ fn optimal_inner(
                 &pinned_seats,
             );
     if pass2_registry == pass1_registry && counts_unchanged {
-        return pass1; // nothing unlocked → pass 1 is already correct
+        return pass1; // nothing unlocked -> pass 1 is already correct
     }
     optimal_inner_core(
         operators,
@@ -5125,7 +5125,7 @@ fn team_capacity_bonus(
 
 /// Total realized daily output of a production assignment, as a single
 /// LMD-equivalent value. Each room's efficiency is soft-capped (per-room
-/// throughput ceiling) and converted to its resource yield; the gold→trade loop
+/// throughput ceiling) and converted to its resource yield; the gold->trade loop
 /// is then coupled so LMD = min(gold made, gold sold) × 500 and EXP adds at 1:1.
 pub fn assignment_value(rooms: &[RoomAssignment]) -> f64 {
     let mut flows = BaseFlows::default();

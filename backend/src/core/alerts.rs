@@ -2,7 +2,7 @@
 //!
 //! The motivating case: `load_table_or_warn` catches a deserialization error,
 //! logs one `tracing::warn!` line, and substitutes `T::default()`. The service
-//! then serves an empty table as if it were real data — no error, no failing
+//! then serves an empty table as if it were real data: no error, no failing
 //! health check, and a smoke test that passes. A single unrecognised enum value
 //! in `item_table` is enough to blank every item name and icon on a server.
 //!

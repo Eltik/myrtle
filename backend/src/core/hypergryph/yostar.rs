@@ -639,8 +639,8 @@ pub async fn sync_data(
 /// real replay from [`get_battle_replay`]; everything else returns code 5516.
 ///
 /// Source of truth per `OpenBachelorS` / `DoctoratePy` server reimpls:
-/// - `user.dungeon.stages[*].hasBattleReplay == 1`          → `battle_type = "quest"`
-/// - `user.campaignsV2.instances[*].hasBattleReplay == 1`   → `battle_type = "campaignV2"`
+/// - `user.dungeon.stages[*].hasBattleReplay == 1`          -> `battle_type = "quest"`
+/// - `user.campaignsV2.instances[*].hasBattleReplay == 1`   -> `battle_type = "campaignV2"`
 ///
 /// Note `campaignsV2` sits at the top level of `user`, not under `dungeon`.
 pub fn saved_replay_targets(sync: &serde_json::Value) -> Vec<(String, String)> {
@@ -669,7 +669,7 @@ fn collect_replay_flags(
     }));
 }
 
-/// One per-player pipeline: discover via syncData → harvest only the stages
+/// One per-player pipeline: discover via syncData -> harvest only the stages
 /// that actually have a saved replay. This is the safe-by-construction path -
 /// no 5516 misses, traffic shape matches the live client.
 ///
