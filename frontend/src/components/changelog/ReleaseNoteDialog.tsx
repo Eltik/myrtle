@@ -39,7 +39,8 @@ export function ReleaseNoteDialog(): React.ReactElement | null {
     return (
         <Dialog open={open} onOpenChange={setReleaseNoteDialogOpen}>
             <DialogPopup className="sm:max-w-lg" closeProps={note.media ? { className: "absolute end-2 top-2 bg-background/70 backdrop-blur-sm" } : undefined}>
-                {note.media && <img src={note.media.src} alt={t(note.media.altKey)} className="aspect-video w-full shrink-0 rounded-t-2xl border-b object-cover max-sm:rounded-none" />}
+                {/* 16:9 costs 211px of a 375px phone before a word of the note is read. */}
+                {note.media && <img src={note.media.src} alt={t(note.media.altKey)} className="aspect-[2/1] w-full shrink-0 rounded-t-2xl border-b object-cover max-sm:aspect-[5/2] max-sm:rounded-none" />}
 
                 <DialogHeader>
                     <span className="font-medium text-[0.69rem] text-muted-foreground uppercase tracking-[0.18em]">{formatNoteDate(note.date, locale)}</span>
@@ -49,8 +50,13 @@ export function ReleaseNoteDialog(): React.ReactElement | null {
                     </DialogDescription>
                 </DialogHeader>
 
+                {/* The sheet is capped at the viewport, so on a phone the item list
+                    was whatever was left after the media, the lead and the footer,
+                    which was a few rows. It gets a real share of the screen and its
+                    own scroll, rather than being the thing that absorbs every other
+                    element's height. */}
                 {note.items && note.items.length > 0 && (
-                    <DialogPanel>
+                    <DialogPanel className="min-h-0 max-sm:max-h-[48vh] max-sm:overflow-y-auto max-sm:overscroll-contain">
                         <p className="mb-3 font-medium text-[0.69rem] text-muted-foreground uppercase tracking-[0.18em]">{t("dialog.alsoInUpdate")}</p>
                         <ReleaseNoteItems items={note.items} />
                     </DialogPanel>

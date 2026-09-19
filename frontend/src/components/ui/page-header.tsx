@@ -43,15 +43,22 @@ export function PageHeader({ breadcrumb, breadcrumbLabel, title, description, ti
                     ))}
                 </nav>
             ) : null}
+            {/* `flex-1` is `flex: 1 1 0%`, and with `min-w-0` that lets the title
+                block shrink to nothing rather than pushing the actions onto the
+                next line: on a phone the Stages header collapsed to zero width
+                and set its title one character per line. A basis gives the row
+                something to fail against, so `flex-wrap` does its job and the
+                actions drop below instead. `wrap-break-word` is the floor under
+                that, for a single word longer than the column in any language. */}
             <div className="flex flex-wrap items-end justify-between gap-3">
-                <div className="min-w-0 flex-1">
+                <div className="min-w-0 flex-1 basis-64">
                     <div className="flex items-center gap-2">
-                        <h1 className="m-0 font-bold font-sans text-[24px] text-foreground leading-[1.1] tracking-tight sm:text-[30px]">{title}</h1>
+                        <h1 className="wrap-break-word m-0 font-bold font-sans text-[24px] text-foreground leading-[1.1] tracking-tight sm:text-[30px]">{title}</h1>
                         {titleAdornment}
                     </div>
                     {description ? <p className="mt-1.5 max-w-2xl font-sans text-[13px] text-muted-foreground leading-normal sm:text-[13.5px]">{description}</p> : null}
                 </div>
-                {actions}
+                {actions ? <div className="min-w-0 shrink-0">{actions}</div> : null}
             </div>
         </div>
     );

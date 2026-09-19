@@ -1,6 +1,7 @@
 use crate::app::error::ApiError;
 
-pub const TIER_NAME_MAX: usize = 24;
+// Ceiling is the `tiers.name varchar(40)` column (v001 baseline); raising past 40 needs a migration.
+pub const TIER_NAME_MAX: usize = 40;
 pub const TIER_DESCRIPTION_MAX: usize = 1000;
 pub const LIST_NAME_MAX: usize = 80;
 pub const LIST_DESCRIPTION_MAX: usize = 4000;

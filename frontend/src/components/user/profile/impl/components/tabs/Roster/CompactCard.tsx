@@ -60,13 +60,21 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
                             boxShadow: maxed ? `0 0 10px ${rarityColor}, 0 0 20px ${rarityColor}80` : "0 1px 3px 0 rgb(0 0 0 / 0.1)",
                         }}
                     >
-                        <div className="ml-px flex h-4.25 min-w-0 flex-col justify-center overflow-hidden text-left sm:h-5">
-                            {subtitle && <span className="z-10 truncate text-[0.4375rem] text-foreground leading-normal sm:text-[0.5625rem] sm:leading-loose">{subtitle}</span>}
+                        {/* The box reserved 17px (20px at `sm`) for two lines that ask for
+                            25px and 27px: `leading-loose` alone gives the subtitle 18px at
+                            9px type. With `overflow-hidden` and `justify-center` that ate
+                            the top of the alternate name on every operator that has one,
+                            which is what "not enough vertical space" was. The height is
+                            the sum of the two line boxes now, and stays fixed so cards in
+                            a row keep their portraits on one line whether or not the
+                            operator has an alternate name. */}
+                        <div className="ml-px flex h-6.25 min-w-0 flex-col justify-center overflow-hidden text-left sm:h-6.75">
+                            {subtitle && <span className="z-10 truncate text-[0.4375rem] text-foreground leading-[10px] sm:text-[0.5625rem] sm:leading-[12px]">{subtitle}</span>}
                             <span
                                 className="z-10 truncate text-foreground"
                                 style={{
                                     fontSize: nameIsLong ? "9px" : "12px",
-                                    lineHeight: nameIsLong ? "9px" : "17px",
+                                    lineHeight: nameIsLong ? "11px" : "15px",
                                 }}
                             >
                                 {displayName}
@@ -124,8 +132,12 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
                             </div>
                         )}
 
+                        {/* `top-8` put the bottom of a three-skill column into the module
+                            row in the corner below it. The portrait's top right is empty,
+                            so the column starts there and clears the modules at every
+                            card size the grid produces. */}
                         {!maxed && entry.skill_level > 1 && skillCount > 0 && (
-                            <div className="absolute top-8 right-0 z-10 flex flex-col gap-0.5 sm:-right-2.5">
+                            <div className="absolute top-1 right-0 z-10 flex flex-col gap-0.5 sm:-right-2.5">
                                 {Array.from({ length: skillCount }).map((_, idx) => {
                                     const mastery = entry.masteries.find((m) => m.index === idx)?.mastery ?? 0;
                                     const hasM = mastery > 0;
@@ -138,7 +150,18 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
                                             title={hasM ? t("profile.roster.compact.skillMastery", { n: idx + 1, mastery }) : t("profile.roster.compact.skillLevel", { n: idx + 1, level: entry.skill_level })}
                                         >
                                             {hasM ? (
-                                                <img alt={t("profile.roster.card.masteryAlt", { mastery })} className="icon-theme-aware h-full w-full object-contain" decoding="async" height={24} loading="lazy" src={specializedIcon(mastery)} width={24} />
+                                                /* NOT `icon-theme-aware`. That filter is `invert(1)
+                                                   hue-rotate(180deg)`, which is right for the white line
+                                                   art of the potential and promotion sprites and wrong
+                                                   here: the mastery sprite's filled triangles are gold,
+                                                   and inverting gold gives the black-with-pink-corners
+                                                   that got reported. The sprite sits on the same
+                                                   `bg-secondary` chip its own skill-level sibling and the
+                                                   module badges use, which is what makes it readable on
+                                                   the light theme without touching its hue. */
+                                                <div className="flex h-full w-full items-center justify-center rounded bg-secondary">
+                                                    <img alt={t("profile.roster.card.masteryAlt", { mastery })} className="h-[86%] w-[86%] object-contain" decoding="async" height={24} loading="lazy" src={specializedIcon(mastery)} width={24} />
+                                                </div>
                                             ) : (
                                                 <div className="flex h-full w-full items-center justify-center rounded bg-secondary font-bold text-[0.6875rem] text-secondary-foreground sm:text-xs">{entry.skill_level}</div>
                                             )}

@@ -55,10 +55,11 @@ describe("LanguageToggle", () => {
         expect(container.firstChild).toBeNull();
     });
 
-    it("renders a globe trigger naming the active language when two are enabled", () => {
+    it("shows the active language's code and names it for a screen reader", () => {
         mount(TWO, <LanguageToggle />);
         const trigger = screen.getByRole("button", { name: "Language: English. Choose a language." });
         expect(trigger.getAttribute("title")).toBe("Language: English");
+        expect(trigger.textContent).toBe("en");
     });
 
     it("lists every enabled locale in the menu", async () => {

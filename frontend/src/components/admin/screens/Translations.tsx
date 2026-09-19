@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, EraserIcon, HistoryIcon, LanguagesIcon, PlusIcon, RefreshCwIcon, RotateCcwIcon, SearchIcon, Trash2Icon, XIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Pagination } from "#/components/operators/list/impl/components/Pagination";
 import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
@@ -118,6 +118,7 @@ export function Translations(): React.ReactElement {
     const [searchInput, setSearchInput] = useState<string>("");
     const [search, setSearch] = useState<string>("");
     const [page, setPage] = useState(1);
+    const listRef = useRef<HTMLDivElement | null>(null);
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
     const [historyKey, setHistoryKey] = useState<string | null>(null);
     const [showGrant, setShowGrant] = useState(false);
@@ -151,6 +152,17 @@ export function Translations(): React.ReactElement {
         setPage(1);
         setSelectedKey(null);
     }, [locale, filter, namespace, search]);
+
+    // Turning a page leaves the reader wherever they were, but the page under
+    // them has changed height: the rows are a different size and the open editor
+    // unmounts, because `selected` is resolved out of the rows now on screen. The
+    // result is landing in the middle of the new page, or past the end of it.
+    // Paging puts the top of the list back under the reader, the way the
+    // leaderboard and user search already do.
+    useEffect(() => {
+        if (page === 1) return;
+        listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, [page]);
 
     const listInput: IListTranslationsInput = {
         locale,
@@ -212,7 +224,10 @@ export function Translations(): React.ReactElement {
 
             <div className="h-4" />
 
-            <div className="relative mb-4 overflow-hidden rounded-2xl border border-border bg-card shadow-xs/5 before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]">
+            <div
+                ref={listRef}
+                className="relative mb-4 scroll-mt-4 overflow-hidden rounded-2xl border border-border bg-card shadow-xs/5 before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]"
+            >
                 <div className="flex flex-wrap items-center gap-2.5 border-border border-b p-3.5">
                     <DropdownMenu>
                         <DropdownMenuTrigger
@@ -485,15 +500,18 @@ function MessageEditor({ locale, localeName, entry, canWrite, onClose, onOpenHis
 
     return (
         <Card>
-            <CardHeader>
+            {/* Below `sm` the three action buttons and a 40-character key cannot share a
+                row, so the action drops to its own row rather than squeezing the key
+                down to one character per line. */}
+            <CardHeader className="has-data-[slot=card-action]:grid-cols-1 sm:has-data-[slot=card-action]:grid-cols-[minmax(0,1fr)_auto]">
                 <CardTitle className="flex min-w-0 flex-wrap items-center gap-2 text-sm">
-                    <span className="truncate font-mono text-[12.5px]">{entry.key}</span>
-                    <span className="inline-flex h-4.5 items-center rounded-sm border border-border bg-muted px-1.5 font-mono text-[10.5px] text-muted-foreground leading-none">{entry.namespace}</span>
+                    <span className="min-w-0 font-mono text-[12.5px] [overflow-wrap:anywhere]">{entry.key}</span>
+                    <span className="inline-flex h-4.5 shrink-0 items-center rounded-sm border border-border bg-muted px-1.5 font-mono text-[10.5px] text-muted-foreground leading-none">{entry.namespace}</span>
                     {state === "stale" ? <Badge variant="warning">{t("i18n.badge.stale")}</Badge> : null}
                 </CardTitle>
-                <CardDescription className="text-xs">{state === "stale" ? t("i18n.editor.staleNote") : entry.updated_at ? t("i18n.editor.lastSaved", { when: fmt.relativeShort(entry.updated_at) }) : t("i18n.editor.never")}</CardDescription>
-                <CardAction>
-                    <div className="flex items-center gap-2">
+                <CardDescription className="min-w-0 text-xs">{state === "stale" ? t("i18n.editor.staleNote") : entry.updated_at ? t("i18n.editor.lastSaved", { when: fmt.relativeShort(entry.updated_at) }) : t("i18n.editor.never")}</CardDescription>
+                <CardAction className="col-start-1 row-start-3 justify-self-start sm:col-start-2 sm:row-span-2 sm:row-start-1 sm:justify-self-end">
+                    <div className="flex flex-wrap items-center gap-2">
                         <Button variant="ghost" size="sm" onClick={onOpenHistory}>
                             <HistoryIcon />
                             {t("i18n.history")}

@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { LocaleSwitcher } from "#/components/LocaleSwitcher";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./Footer.messages";
@@ -36,9 +35,11 @@ export default function Footer() {
                     </nav>
                 </div>
                 <span className="max-w-130 font-sans text-muted-foreground text-xs leading-normal">{t("footer.disclaimer")}</span>
+                {/* No language picker here. It was the third copy of one control,
+                    after the header trigger and the mobile drawer, and the footer is
+                    the least likely of the three to be where anyone looks for it. */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <span className="font-medium font-mono text-[11px] text-muted-foreground leading-none tracking-wide opacity-70">{t("footer.builtOn")}</span>
-                    <LocaleSwitcher />
                 </div>
             </div>
         </footer>

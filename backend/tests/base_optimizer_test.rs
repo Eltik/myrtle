@@ -4348,7 +4348,7 @@ fn base_count_bundle_pins_durins_into_the_dormitories() {
             .iter()
             .any(|(id, r)| id == "char_4164_tecno" && r == "DORMITORY")
     });
-    let pins = durin_bundle.map(|b| b.pins.len()).unwrap_or(0);
+    let pins = durin_bundle.map_or(0, |b| b.pins.len());
     assert_eq!(
         pins,
         3,
@@ -4759,7 +4759,7 @@ fn bench_seat_prefers_a_valued_operator_over_a_blank() {
 }
 
 /// The Kjerag/Gnosis trading-post arithmetic: six level-3 posts measured
-/// in-game (community sheet, Annex 1). SilverAsh +20% / +4; Degenbrecher
+/// in-game (community sheet, Annex 1). `SilverAsh` +20% / +4; Degenbrecher
 /// +25% / -6 plus +25% per 5 limit points provided by others (max 100); Swire
 /// the Elegant Wit +20% plus +4% per limit point provided by others; Jaye -1
 /// limit per 10% the others provide and +4% per order of the FINAL limit
@@ -4943,7 +4943,7 @@ fn a_covered_strongest_only_clue_skill_buys_no_bench_seat() {
         "covered by an equal or stronger clue skill, Lee adds nothing"
     );
     // Lee himself seated sets the bar his own kind of skill is measured against.
-    let seated = cc_seated_coverage(&[LEE.to_string()], &[lee.clone()], &gd.building, &registry);
+    let seated = cc_seated_coverage(&[LEE.to_string()], std::slice::from_ref(&lee), &gd.building, &registry);
     assert!(
         seated
             .get(&NonProdKind::ClueSearch)
@@ -8540,7 +8540,7 @@ fn facts_probe_registry_peek() {
 }
 
 /// Dorm ambience: a maxed-furniture dorm (comfort 5000) recovers +2.0/hr on
-/// top of its level rate, per the game's ComfortManpowerRecoverFactor.
+/// top of its level rate, per the game's `ComfortManpowerRecoverFactor`.
 #[test]
 fn dorm_comfort_adds_recovery() {
     use backend::core::grade::base::dorms::dorm_list;
@@ -9065,8 +9065,8 @@ fn pudding_overclock_needs_two_robots_in_power_plants() {
     );
 }
 
-/// Secondary affiliations: a SubPower NATION counts (Texas is Siracusa for
-/// Umiri, community-verified) but a SubPower GROUP does not (Vina Victoria
+/// Secondary affiliations: a `SubPower` NATION counts (Texas is Siracusa for
+/// Umiri, community-verified) but a `SubPower` GROUP does not (Vina Victoria
 /// carries {glasgow} there, and the game's "Glasgow Gang Operator" checks
 /// don't count her - verified in-game 2026-09-07).
 #[test]

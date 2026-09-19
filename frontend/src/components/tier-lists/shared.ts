@@ -7,7 +7,7 @@ import type { IOperatorIndexEntry } from "#/types/operators";
 
 export const LIST_NAME_MAX = 80;
 export const LIST_DESCRIPTION_MAX = 4000;
-export const TIER_NAME_MAX = 24;
+export const TIER_NAME_MAX = 40; // mirrors backend TIER_NAME_MAX and the tiers.name varchar(40) column
 export const TIER_DESCRIPTION_MAX = 1000;
 export const PLACEMENT_DESCRIPTION_MAX = 1000;
 export const DESCRIPTION_CLAMP_THRESHOLD = 280;

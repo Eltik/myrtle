@@ -104,7 +104,12 @@ export function CardFrameFooter({ className, render, ...props }: useRender.Compo
 
 export function CardHeader({ className, render, ...props }: useRender.ComponentProps<"div">): React.ReactElement {
     const defaultProps = {
-        className: cn("grid auto-rows-min grid-rows-[auto_auto] items-start gap-1.5 p-6 in-[[data-slot=card]:has(>[data-slot=card-panel])]:pb-4 has-data-[slot=card-action]:grid-cols-[1fr_auto]", className),
+        // `minmax(0,1fr)` rather than `1fr`: a grid item's automatic minimum size is
+        // its min-content width, so a `1fr` track refuses to go narrower than the
+        // longest unbreakable thing in it. With a long key in the title and three
+        // buttons in the action, that pushed the title column to nothing and the
+        // text came down one character per line on a phone.
+        className: cn("grid auto-rows-min grid-rows-[auto_auto] items-start gap-1.5 p-6 in-[[data-slot=card]:has(>[data-slot=card-panel])]:pb-4 has-data-[slot=card-action]:grid-cols-[minmax(0,1fr)_auto]", className),
         "data-slot": "card-header",
     };
 

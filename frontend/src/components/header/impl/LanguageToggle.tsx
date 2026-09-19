@@ -1,5 +1,3 @@
-import { GlobeIcon } from "lucide-react";
-
 import { useLocaleSwitch } from "#/components/LocaleSwitcher";
 import type { messages as localeSwitcherMessages } from "#/components/LocaleSwitcher.messages";
 import { Button } from "#/components/ui/button";
@@ -11,10 +9,11 @@ import type { messages } from "./LanguageToggle.messages";
 /**
  * The language control in the header.
  *
- * A globe in the top bar, not a row inside the appearance popover: language is
- * the one setting people actively hunt for, and a globe is the affordance they
- * hunt for it with. Burying it behind a theme icon tests whether the visitor
- * can guess our information architecture.
+ * The active language's code in the top bar, not a row inside the appearance
+ * popover: language is the one setting people actively hunt for, and burying it
+ * behind a theme icon tests whether the visitor can guess our information
+ * architecture. It was a globe, which announces that language lives here but
+ * not which language you are reading; the code does both for the same width.
  *
  * Visible at every width. The bar is busy on a phone, but a control nobody can
  * find is worse than a tight row, and the hamburger drawer carries the same
@@ -37,13 +36,21 @@ export default function LanguageToggle(): React.ReactElement | null {
 
     const active = available.find((entry) => entry.code === locale);
     const triggerLabel = t("languageToggle.trigger", { language: active?.nativeName ?? locale });
+    // `zh-CN` reads as `ZH` here; the full tag is in the label and the tooltip.
+    const shortCode = locale.split("-")[0];
 
     return (
         <DropdownMenu>
             <DropdownMenuTrigger
                 render={
                     <Button variant="ghost" size="icon" aria-label={t("languageToggle.triggerAria", { label: triggerLabel })} title={triggerLabel}>
-                        <GlobeIcon className="h-4 w-4" />
+                        {/* The code, not a globe: the globe says "language lives here",
+                            which you only need once, while the code also says WHICH
+                            language you are reading, which was the actual request. It
+                            costs about the same width as the icon did. Not a flag: a
+                            language is not a country, and Русский, 日本語 and Tagalog
+                            have no single correct one. */}
+                        <span className="font-mono font-semibold text-[11px] uppercase leading-none tracking-[0.04em]">{shortCode}</span>
                     </Button>
                 }
             />

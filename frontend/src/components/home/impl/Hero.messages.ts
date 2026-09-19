@@ -15,6 +15,10 @@ export const messages = {
         text: "Arknights",
         description: "The game's own title, shown inside the hero headline in the accent colour. Use the name the game is published under in this language - 明日方舟 in Chinese, アークナイツ in Japanese, 명일방주 in Korean - or leave it as 'Arknights' where players use the English title.",
     },
+    "hero.gameNickname": {
+        text: "Arknights",
+        description: "Easter egg. A community nickname for the game, shown as a hover tooltip on the game title in the hero headline. Vietnamese players call it 'Hòm bia ngày mai' (the grave of tomorrow). Leave it identical to `hero.game` where there is none; no tooltip is rendered then.",
+    },
     "hero.blurb": {
         text: "400+ operators, complete stats, community tier lists, and live roster sync.",
         description: "Landing-page subheading. 'Operators' are the game's playable characters.",
