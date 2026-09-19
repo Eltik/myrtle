@@ -5,11 +5,13 @@ import { type IChibiCharacter, type IChibiSkin, type IChibiSpineFiles, isComplet
 import { type DecodedImage, decodedSize, loadDecoded, uploadSource } from "#/lib/utils";
 import { patchBakedIkRedundancy } from "./bakedIkFix";
 import { CHIBI_OFFSET_X, CHIBI_OFFSET_Y, CHIBI_SCALE, DYNAMIC_FIT_MARGIN, EXPORT_HEIGHT, EXPORT_PADDING, EXPORT_WIDTH, MAX_EXPORT_DIM, type ViewType } from "./constants";
+import { patchSpine38NoScaleUnderFlattenedParent } from "./noScaleFix";
 import { patchSpine38PathConstraint } from "./pathConstraintFix";
 
 let spineModulesPromise: Promise<{
     Spine: typeof import("pixi-spine").Spine;
     TextureAtlas: typeof import("pixi-spine").TextureAtlas;
+    settings: typeof import("pixi-spine").settings;
     AtlasAttachmentLoader: typeof import("@pixi-spine/runtime-3.8").AtlasAttachmentLoader;
     SkeletonBinary: typeof import("@pixi-spine/runtime-3.8").SkeletonBinary;
     SkeletonJson: typeof import("@pixi-spine/runtime-3.8").SkeletonJson;
@@ -20,6 +22,7 @@ function loadSpineModules() {
         spineModulesPromise = Promise.all([import("pixi-spine"), import("@pixi-spine/runtime-3.8")]).then(([spine, runtime]) => ({
             Spine: spine.Spine,
             TextureAtlas: spine.TextureAtlas,
+            settings: spine.settings,
             AtlasAttachmentLoader: runtime.AtlasAttachmentLoader,
             SkeletonBinary: runtime.SkeletonBinary,
             SkeletonJson: runtime.SkeletonJson,
@@ -162,7 +165,7 @@ export async function loadSpineWithEncodedURLs(skelPath: string, atlasPath: stri
     // to the wrong pixels (garbage). No-op in prod.
     const bust = import.meta.env.DEV ? `?v=${Date.now()}` : "";
 
-    const [{ Spine, TextureAtlas, AtlasAttachmentLoader, SkeletonBinary, SkeletonJson }, skelResponse, atlasResponse] = await Promise.all([loadSpineModules(), fetch(skelURL + bust, { signal }), fetch(atlasURL + bust, { signal })]);
+    const [{ Spine, TextureAtlas, AtlasAttachmentLoader, SkeletonBinary, SkeletonJson, settings }, skelResponse, atlasResponse] = await Promise.all([loadSpineModules(), fetch(skelURL + bust, { signal }), fetch(atlasURL + bust, { signal })]);
 
     if (!skelResponse.ok) throw new Error(`Failed to load skeleton: ${skelResponse.status}`);
     if (!atlasResponse.ok) throw new Error(`Failed to load atlas: ${atlasResponse.status}`);
@@ -218,6 +221,9 @@ export async function loadSpineWithEncodedURLs(skelPath: string, atlasPath: stri
     // Repair the runtime-3.8 PathConstraint rotation bug (see pathConstraintFix)
     // so Chain-mode path-constrained meshes (e.g. Zuo Le's legs) don't smear.
     patchSpine38PathConstraint(spine);
+    // Repair the runtime-3.8 NoScale handedness flip under a zero-scale parent (see noScaleFix):
+    // Angelina "Mellow Wish" head-turn rig, her face folded over her eyes and mouth.
+    patchSpine38NoScaleUnderFlattenedParent(spine, settings.yDown);
     // Dynamic-illustration L2D only: their animations are fully baked, so redundant
     // IK constraints that pixi-spine mis-solves (Archetto's arms) must yield to the
     // authoritative FK. Gated to DynIllust so battle/dorm chibis (IK-driven) are

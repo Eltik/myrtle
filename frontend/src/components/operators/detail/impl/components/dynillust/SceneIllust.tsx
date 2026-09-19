@@ -4008,6 +4008,8 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                         }
                         return null;
                     };
+                    // DIAGNOSTIC (2026-09-19, aglna2 blank face): the live Spine, so a probe can hide one slot at a time.
+                    (window as unknown as Record<string, unknown>)[`__dynSpine_${opts.mode}`] = spine;
                     dumpHost[`__dumpSlots_${opts.mode}`] = () => {
                         const sk = (spine as unknown as { skeleton: { slots: unknown[] } }).skeleton;
                         // Children of the Spine container that are NOT slot containers (separator
