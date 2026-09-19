@@ -11,6 +11,63 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-09-19.title": {
+        text: "Fixed: Base planning and upgrade advice",
+        description: "Title of the 2026-09-19 release note. 'Base' is the player's RIIC facility; 'upgrade advice' is the panel that ranks what to invest in next.",
+    },
+    "note.2026-09-19.lead": {
+        text: "The Base Optimizer now plans with the same economy the Score tab grades you on, so the staffing it shows is the staffing you are scored against. Trading posts are valued at their own level and crewed by what they actually earn. The Operators below milestone card lists only operators you have really invested in, so the gain it advertises is one you can reach. No score, breakdown or weight has moved.",
+        description:
+            "Lead paragraph of the 2026-09-19 release note, rendered as Markdown. The Base Optimizer and the Score tab are sections of a player profile; 'Operators below milestone' is a card inside the Score tab and should match its translation there; a 'trading post' is an RIIC room and keeps the game's name.",
+    },
+    "note.2026-09-19.item.1": {
+        text: "The Base Optimizer and the Score tab now solve the same base, so the plan you are shown is the plan you are graded on. It seats combinations the planner used to miss.",
+        description: "Bullet in the 2026-09-19 release note, filed under 'Improved'. The Base Optimizer and the Score tab are sections of a player profile.",
+    },
+    "note.2026-09-19.item.2": {
+        text: "Promotion, potential and mastery badges on the roster are readable on the light theme again, and no longer sit on top of the module icons beside them.",
+        description: "Bullet in the 2026-09-19 release note, filed under 'Improved'. Promotion, potential, mastery and modules are in-game operator upgrade systems.",
+    },
+    "note.2026-09-19.item.3": {
+        text: "The language picker is in two places instead of three, and the header now shows which language you are reading rather than a globe.",
+        description: "Bullet in the 2026-09-19 release note, filed under 'Improved'. The header shows the language's own code, such as EN or RU.",
+    },
+    "note.2026-09-19.item.4": {
+        text: "In the Account Optimizer, EXP and LMD each read the same way: what is needed, what is short, and what you hold.",
+        description: "Bullet in the 2026-09-19 release note, filed under 'Improved'. The Account Optimizer is a section of a player profile; EXP and LMD are in-game currencies and keep the game's names.",
+    },
+    "note.2026-09-19.item.5": {
+        text: "A trading post is valued at its own level. A level 2 post standing next to a level 3 one made both of them count as level 2, which understated the order limit and order rarity of the better room.",
+        description: "Bullet in the 2026-09-19 release note, filed under 'Fixed'. A trading post is an RIIC room; 'orders' are the deliveries it produces and keep the game's name.",
+    },
+    "note.2026-09-19.item.6": {
+        text: "A trading post's crew is chosen by what the post actually earns beside the factories feeding it. A gold-starved base cannot sell bonus bars, so the squad that earns more per bar wins there, while the bonus-bar squad still wins when supply is spare.",
+        description: "Bullet in the 2026-09-19 release note, filed under 'Fixed'. A 'bar' is a gold bar produced by an RIIC factory and sold at a trading post.",
+    },
+    "note.2026-09-19.item.7": {
+        text: "The Control Center no longer seats an operator for a clue, HR or training bonus that a stronger operator already sitting there covers.",
+        description: "Bullet in the 2026-09-19 release note, filed under 'Fixed'. The Control Center is an RIIC room; clues, HR and training are the kinds of bonus its base skills give and keep the game's names.",
+    },
+    "note.2026-09-19.item.8": {
+        text: "Operators below milestone listed operators you had never promoted or levelled, and priced them as though you had. One section advertised a gain of 25.2 where only 13.8 was available. Your score, its breakdown and every weight are unchanged.",
+        description: "Bullet in the 2026-09-19 release note, filed under 'Fixed'. 'Operators below milestone' is a card inside the Score tab and should match its translation there. The two numbers are grade points and are not formatted per locale.",
+    },
+    "note.2026-09-19.item.9": {
+        text: "Page titles no longer collapse into a column of single letters on a phone, on the Stages page and anywhere else a heading shares a row with a counter.",
+        description: "Bullet in the 2026-09-19 release note, filed under 'Fixed'.",
+    },
+    "note.2026-09-19.item.10": {
+        text: "Roster cards show an operator's alternate name in full instead of cutting off its top.",
+        description: "Bullet in the 2026-09-19 release note, filed under 'Fixed'. An 'alternate name' is the second name a variant operator carries, shown above the operator's own.",
+    },
+    "note.2026-09-19.item.11": {
+        text: "In the translation editor, the message key no longer breaks into single characters on a phone, and turning a page returns you to the top of the list.",
+        description: "Bullet in the 2026-09-19 release note, filed under 'Fixed'. The translation editor is the admin screen volunteer translators work in; a 'message key' is a string's identifier.",
+    },
+    "note.2026-09-19.item.12": {
+        text: "The release note panel gets a real share of the screen on a phone rather than whatever was left over.",
+        description: "Bullet in the 2026-09-19 release note, filed under 'Fixed'. The 'release note panel' is the list of secondary changes in this very dialog.",
+    },
     "note.2026-09-18.title": {
         text: "Improved: Readability and pull planner",
         description: "Title of the 2026-09-18 release note, covering interface readability and changes to the pull planner.",
