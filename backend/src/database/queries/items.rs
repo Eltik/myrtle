@@ -3,7 +3,7 @@ use ts_rs::TS;
 use uuid::Uuid;
 
 /// Simple key-value pair for inventory
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, serde::Serialize, sqlx::FromRow)]
 pub struct ItemEntry {

@@ -5,7 +5,7 @@ use sqlx::types::{
 };
 use ts_rs::TS;
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct OperatorNote {
@@ -21,7 +21,7 @@ pub struct OperatorNote {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct OperatorNoteAuditEntry {
@@ -38,7 +38,7 @@ pub struct OperatorNoteAuditEntry {
 /// Audit entry enriched with the actor's display info, so clients don't have to
 /// fan out N user lookups per page. `actor_uid` is the game UID (used in
 /// `/user/{uid}` routes); `actor_user_id` is the internal DB UUID.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct OperatorNoteAuditEntryWithContext {

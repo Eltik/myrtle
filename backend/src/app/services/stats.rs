@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use ts_rs::TS;
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -18,7 +18,7 @@ pub struct StatsResponse {
     pub computed_at: String,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -34,7 +34,7 @@ pub struct UserStats {
     pub public_profiles: i64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -53,7 +53,7 @@ pub struct ServerBreakdown {
     pub tw: i64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -70,7 +70,7 @@ pub struct GachaPublicStats {
     pub four_star_count: i64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -84,7 +84,7 @@ pub struct GameDataStats {
     pub enemies: usize,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[ts(rename = "TierListSiteStats")]
 #[derive(Serialize, Deserialize)]
@@ -100,7 +100,7 @@ pub struct TierListStats {
     pub total_placements: i64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -262,7 +262,7 @@ struct TierListStatsRow {
     total_placements: i64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -273,7 +273,7 @@ pub struct AdminStatsResponse {
     pub recent_users: Vec<RecentUser>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -290,7 +290,7 @@ pub struct RoleBreakdown {
     pub super_admin: i64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

@@ -42,7 +42,7 @@ pub struct RawSound {
 /// frontend can group an operator's clips without parsing bank names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum AudioCategory {
     /// `ON_UNIT_BORN` - deployment / spawn sound.
@@ -63,7 +63,7 @@ pub enum AudioCategory {
 /// on-disk files (weighted random variations, e.g. `b_char_kong`, `_1`, `_2`).
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct AudioSound {
     /// Original logical asset path from `audio_data.json`.
@@ -75,7 +75,7 @@ pub struct AudioSound {
 /// A single operator-linked `SoundFX` bank, resolved to playable URLs.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct OperatorAudio {
     /// Full bank name, e.g. `battle.ON_UNIT_BORN.char_101_sora`.

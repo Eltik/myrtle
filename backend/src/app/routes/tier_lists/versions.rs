@@ -15,6 +15,23 @@ use crate::database::queries::tier_lists::create_version;
 use crate::database::queries::tier_lists::get_versions;
 use crate::database::queries::tier_lists::latest_version;
 
+/// Published snapshots of a tier list, newest first.
+#[utoipa::path(
+    get,
+    path = "/tier-lists/{slug}/versions",
+    operation_id = "tier_list_versions_list",
+    tag = "tier-lists",
+    params(
+        ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
+    ),
+    responses(
+        (status = 200, description = "Published versions.", body = Vec<TierListVersion>),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn list(
     State(state): State<AppState>,
     Path(slug): Path<String>,
@@ -24,11 +41,34 @@ pub async fn list(
     Ok(Json(versions))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 pub struct PublishRequest {
     pub changelog: Option<String>,
 }
 
+/// Freeze the list's current contents as a new published version.
+/// Needs edit rights on the list: its owner, or a grant from
+/// `/tier-lists/{slug}/permissions`.
+#[utoipa::path(
+    post,
+    path = "/tier-lists/{slug}/publish",
+    tag = "tier-lists",
+    params(
+        ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
+    ),
+    request_body = PublishRequest,
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "The published version.", body = TierListVersion),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn publish(
     State(state): State<AppState>,
     auth: AuthUser,

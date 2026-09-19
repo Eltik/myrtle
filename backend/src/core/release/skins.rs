@@ -14,7 +14,7 @@ use super::{estimate::percentile, types::Resolution};
 const SECS_PER_DAY: f64 = 86_400.0;
 const SAME_WINDOW_SECS: i64 = 20 * 86_400;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 #[ts(export)]
 pub enum SaleKind {
@@ -22,7 +22,7 @@ pub enum SaleKind {
     Review,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct SaleWindow {
@@ -88,7 +88,7 @@ pub struct Batch {
     pub end_time: i64,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct AnniversaryStats {
@@ -100,7 +100,7 @@ pub struct AnniversaryStats {
     pub dev_p75_days: f64,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 #[ts(export)]
 pub enum RerunBasis {

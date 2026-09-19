@@ -10,7 +10,7 @@ use crate::{
     database::models::user::UserProfile,
 };
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize)]
 pub struct SearchPage {

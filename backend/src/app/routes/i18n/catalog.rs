@@ -49,6 +49,25 @@ fn etag_response(cached: CachedJson, cache_control: &str, headers: &HeaderMap) -
 /// `GET /i18n/manifest` - enabled locales and the current content hash of each
 /// namespace. Short TTL: this is the only read that has to go stale fast,
 /// because publishing a new hash here is what makes a saved edit visible.
+/// The locales on offer and the content hash of each namespace.
+///
+/// A client reads this first, then fetches the catalogs it needs at the hashes
+/// named here. Public and unauthenticated.
+#[utoipa::path(
+    get,
+    path = "/i18n/manifest",
+    tag = "i18n",
+    params(
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the body.")
+    ),
+    responses(
+        (status = 200, description = "Locales and per-namespace hashes.", content_type = "application/json"),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn manifest(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -62,6 +81,29 @@ pub async fn manifest(
 /// `hash` comes from the manifest and exists to make the URL change when the
 /// content does. Pass `latest` to fetch the current catalog without consulting
 /// the manifest first (useful in development; never cached hard).
+/// One namespace of one locale, at one content hash.
+///
+/// The hash is in the path so the response is immutable: a changed catalog is a
+/// different URL, which is what lets this be cached indefinitely.
+#[utoipa::path(
+    get,
+    path = "/i18n/{locale}/{namespace}/{hash}",
+    tag = "i18n",
+    params(
+        ("locale" = String, Path, description = "Locale code, e.g. `en` or `ja`."),
+        ("namespace" = String, Path, description = "Namespace name."),
+        ("hash" = String, Path, description = "Content hash from `/i18n/manifest`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the body.")
+    ),
+    responses(
+        (status = 200, description = "The message catalog.", content_type = "application/json"),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn catalog(
     State(state): State<AppState>,
     headers: HeaderMap,

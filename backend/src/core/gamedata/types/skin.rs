@@ -10,7 +10,7 @@ use super::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct TokenSkinMapEntry {
     #[serde(alias = "TokenId")]
@@ -21,7 +21,7 @@ pub struct TokenSkinMapEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct BattleSkin {
     #[serde(alias = "OverwritePrefab", default)]
@@ -32,7 +32,7 @@ pub struct BattleSkin {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct DisplaySkin {
     #[serde(alias = "SkinName")]
@@ -78,7 +78,7 @@ pub struct DisplaySkin {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct BrandGroup {
     #[serde(alias = "SkinGroupId")]
@@ -90,7 +90,7 @@ pub struct BrandGroup {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct BrandKvImg {
     #[serde(alias = "KvImgId")]
@@ -101,7 +101,7 @@ pub struct BrandKvImg {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Brand {
     #[serde(alias = "BrandId")]
@@ -125,7 +125,7 @@ pub struct Brand {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct SpecialSkinInfo {
     #[serde(alias = "SkinId")]
@@ -144,7 +144,7 @@ pub struct SpecialSkinInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Skin {
     #[serde(alias = "SkinId", default)]
@@ -189,7 +189,7 @@ pub struct Skin {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct SkinData {
     pub char_skins: HashMap<String, Skin>,
@@ -204,7 +204,7 @@ pub struct SkinData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct SkinImages {
     pub avatar: String,
@@ -214,7 +214,7 @@ pub struct SkinImages {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct EnrichedSkin {
     pub id: String,

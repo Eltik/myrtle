@@ -21,7 +21,7 @@ use crate::database::queries::{
 };
 
 /// One operator still short of its cap, with what closing the gap costs.
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct MaxLevelOperatorDto {
     pub operator_id: String,
@@ -42,7 +42,7 @@ pub struct MaxLevelOperatorDto {
     pub promotion_lmd: i64,
 }
 
-#[derive(Debug, Clone, Serialize, TS)]
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct MaxLevelCostResponse {
     /// Owned operators the game data knows.

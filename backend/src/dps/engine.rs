@@ -11,6 +11,7 @@ use super::custom::dispatch;
 use super::custom::dispatch_hps;
 use super::formulas::apply_shreds;
 use super::operator_unit::{EnemyStats, OperatorUnit};
+use utoipa::ToSchema;
 
 const FORMULAS_JSON: &str = include_str!("config/operator_formulas.json");
 const HEAL_FORMULAS_JSON: &str = include_str!("config/heal_formulas.json");
@@ -23,14 +24,14 @@ pub fn load_heal_formulas() -> HashMap<String, OperatorFormula> {
     serde_json::from_str(HEAL_FORMULAS_JSON).expect("Invalid heal_formulas.json")
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct DpsResult {
     pub skill_dps: f64,
     pub total_damage: f64,
     pub average_dps: f64,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize, ToSchema)]
 pub struct HpsResult {
     /// Heal-per-second while the active skill is up.
     pub skill_hps: f64,

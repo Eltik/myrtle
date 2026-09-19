@@ -18,7 +18,7 @@ use ts_rs::TS;
 /// One browsable stage in the Stage List.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct StageIndexEntry {
     /// `stage_table` id when this stage has one; otherwise the level file's

@@ -8,40 +8,29 @@ pub mod admin;
 pub mod catalog;
 pub mod permissions;
 
-use axum::{
-    Router,
-    routing::{get, post, put},
-};
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::routes;
 
 use crate::app::state::AppState;
 
-pub fn router() -> Router<AppState> {
-    Router::new()
+pub fn router() -> OpenApiRouter<AppState> {
+    OpenApiRouter::new()
         // Public: the catalog a browser renders from.
-        .route("/i18n/manifest", get(catalog::manifest))
-        .route("/i18n/{locale}/{namespace}/{hash}", get(catalog::catalog))
+        .routes(routes!(catalog::manifest))
+        .routes(routes!(catalog::catalog))
         // Admin: the translation workspace.
-        .route(
-            "/admin/i18n/locales",
-            get(admin::list_locales).put(admin::upsert_locale),
-        )
-        .route("/admin/i18n/writable-locales", get(admin::writable_locales))
-        .route("/admin/i18n/messages", get(admin::list_messages))
-        .route("/admin/i18n/message", put(admin::update_message))
-        .route("/admin/i18n/message/clear", post(admin::clear_message))
-        .route("/admin/i18n/namespaces", get(admin::namespaces))
-        .route("/admin/i18n/progress", get(admin::progress))
-        .route("/admin/i18n/audit", get(admin::audit_log))
-        .route("/admin/i18n/audit/entry", get(admin::entry_audit_log))
-        .route("/admin/i18n/sync", post(admin::sync))
-        .route(
-            "/admin/i18n/overrides",
-            get(admin::list_overrides).put(admin::put_override),
-        )
-        .route("/admin/i18n/overrides/delete", post(admin::delete_override))
-        .route(
-            "/admin/i18n/permissions",
-            get(permissions::list).post(permissions::grant),
-        )
-        .route("/admin/i18n/permissions/revoke", post(permissions::revoke))
+        .routes(routes!(admin::list_locales, admin::upsert_locale))
+        .routes(routes!(admin::writable_locales))
+        .routes(routes!(admin::list_messages))
+        .routes(routes!(admin::update_message))
+        .routes(routes!(admin::clear_message))
+        .routes(routes!(admin::namespaces))
+        .routes(routes!(admin::progress))
+        .routes(routes!(admin::audit_log))
+        .routes(routes!(admin::entry_audit_log))
+        .routes(routes!(admin::sync))
+        .routes(routes!(admin::list_overrides, admin::put_override))
+        .routes(routes!(admin::delete_override))
+        .routes(routes!(permissions::list, permissions::grant))
+        .routes(routes!(permissions::revoke))
 }

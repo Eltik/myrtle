@@ -5,8 +5,9 @@ use axum::{
 use serde::Deserialize;
 
 use crate::app::extractors::auth::{AuthUser, MaybeAuthUser};
-use crate::app::routes::resolve_uid;
+use crate::app::routes::{StatusOk, resolve_uid};
 use crate::app::{error::ApiError, services, state::AppState};
+use crate::database::models::score::UserScore;
 use crate::database::models::user::{UserCheckin, UserProfile};
 use crate::database::queries::score::get_score_by_uid;
 use crate::database::queries::users::{find_by_id, get_checkin_by_uid, update_role};
@@ -20,6 +21,26 @@ pub struct GetUserParams {
 /// expiry, last-online time and the account's role, so the `uid` goes through
 /// the shared privacy gate: the caller's own profile or a public one, 403
 /// otherwise.
+/// A player's public profile.
+/// Runs the shared privacy gate: another player's data is readable only when
+/// their profile is public, and a player always sees their own.
+#[utoipa::path(
+    get,
+    path = "/get-user",
+    tag = "player",
+    params(
+        ("uid" = String, Query, description = "Player to read.")
+    ),
+    security(("bearer_auth" = []), ()),
+    responses(
+        (status = 200, description = "The profile.", body = UserProfile),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn get_user(
     State(state): State<AppState>,
     auth: MaybeAuthUser,
@@ -30,22 +51,66 @@ pub async fn get_user(
     Ok(Json(profile))
 }
 
+/// A player's graded score across every dimension.
+/// Runs the shared privacy gate: another player's data is readable only when
+/// their profile is public, and a player always sees their own.
+#[utoipa::path(
+    get,
+    path = "/get-user-score",
+    tag = "player",
+    params(
+        ("uid" = String, Query, description = "Player to read.")
+    ),
+    security(("bearer_auth" = []), ()),
+    responses(
+        (status = 200, description = "The stored score row, or null when the player has never been graded.", body = Option<crate::database::models::score::UserScore>),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn get_user_score(
     State(state): State<AppState>,
     auth: MaybeAuthUser,
     Query(params): Query<GetUserParams>,
-) -> Result<Json<serde_json::Value>, ApiError> {
-    // Return the full user_scores row (all category scores + grade + timestamp)
-    // for the Score tab's detailed breakdown.
+) -> Result<Json<Option<UserScore>>, ApiError> {
+    // The full `user_scores` row (every category score, the grade, the
+    // timestamp) for the Score tab's detailed breakdown.
+    //
+    // Returned as the row type rather than round-tripped through
+    // `serde_json::Value`. The wire format is identical, since that round trip
+    // was serializing this same struct, but the type is now the documented
+    // schema and the generated TypeScript, and the infallible-serialization
+    // error branch goes away with it.
     let uid = resolve_uid(&state, &auth, Some(&params.uid)).await?;
     let score = get_score_by_uid(&state.db, &uid).await?;
-    let body = match score {
-        Some(s) => serde_json::to_value(&s).map_err(|e| ApiError::Internal(e.into()))?,
-        None => serde_json::Value::Null,
-    };
-    Ok(Json(body))
+    Ok(Json(score))
 }
 
+/// A player's monthly sign-in state.
+///
+/// Null when the player has no stored check-in row.
+/// Runs the shared privacy gate: another player's data is readable only when
+/// their profile is public, and a player always sees their own.
+#[utoipa::path(
+    get,
+    path = "/get-user-checkin",
+    tag = "player",
+    params(
+        ("uid" = String, Query, description = "Player to read.")
+    ),
+    security(("bearer_auth" = []), ()),
+    responses(
+        (status = 200, description = "The sign-in state, or null.", body = Option<UserCheckin>),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn get_user_checkin(
     State(state): State<AppState>,
     auth: MaybeAuthUser,
@@ -59,7 +124,7 @@ pub async fn get_user_checkin(
     Ok(Json(checkin))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 pub struct SetRoleRequest {
     pub role: String,
 }
@@ -78,12 +143,33 @@ pub struct SetRoleRequest {
 /// their old privileges until their token refreshes. Per-locale translation
 /// grants deliberately do not work this way - they are read from the database
 /// per request and take effect immediately.
+/// Change another account's global role.
+#[utoipa::path(
+    put,
+    path = "/admin/users/{user_id}/role",
+    tag = "admin",
+    params(
+        ("user_id" = String, Path, description = "Target account id (UUID).")
+    ),
+    request_body = SetRoleRequest,
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "The role was set.", body = StatusOk),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn set_user_role(
     State(state): State<AppState>,
     auth: AuthUser,
     axum::extract::Path(user_id): axum::extract::Path<uuid::Uuid>,
     Json(body): Json<SetRoleRequest>,
-) -> Result<Json<serde_json::Value>, ApiError> {
+) -> Result<Json<StatusOk>, ApiError> {
     if !auth.role.is_super_admin() {
         return Err(ApiError::Forbidden);
     }

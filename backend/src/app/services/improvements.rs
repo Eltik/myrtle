@@ -57,7 +57,7 @@ use crate::database::queries::stages::get_known_stage_ids_for_server;
 use crate::database::queries::stages::get_user_stage_clears;
 use crate::database::queries::users::find_by_uid;
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct ImprovementsResponse {
@@ -70,7 +70,7 @@ pub struct ImprovementsResponse {
     pub base: BaseImprovements,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct StageImprovements {
@@ -78,7 +78,7 @@ pub struct StageImprovements {
     pub event: StagePoolImprovements,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct StagePoolImprovements {
@@ -92,7 +92,7 @@ pub struct StagePoolImprovements {
     pub not_three_starred: Vec<StageGap>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct StageGap {
@@ -110,7 +110,7 @@ pub struct StageGap {
     pub rotation: Option<RotationInfo>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -123,7 +123,7 @@ pub struct RotationInfo {
     pub end_ts: i64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RoguelikeThemeImprovement {
@@ -136,7 +136,7 @@ pub struct RoguelikeThemeImprovement {
     pub challenges: ProgressPair,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Default, Serialize)]
 pub struct ProgressPair {
@@ -144,7 +144,7 @@ pub struct ProgressPair {
     pub max: usize,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RoguelikeDifficulty {
@@ -152,7 +152,7 @@ pub struct RoguelikeDifficulty {
     pub max: i32,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RoguelikeCollectibles {
@@ -161,7 +161,7 @@ pub struct RoguelikeCollectibles {
     pub bands: ProgressPair,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct SandboxImprovements {
@@ -174,7 +174,7 @@ pub struct SandboxImprovements {
     pub categories: Vec<SandboxCategory>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct SandboxCategory {
@@ -188,7 +188,7 @@ pub struct SandboxCategory {
     pub parts: Vec<SandboxPart>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct SandboxPart {
@@ -197,7 +197,7 @@ pub struct SandboxPart {
     pub max: usize,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct MedalImprovements {
@@ -220,7 +220,7 @@ pub struct MedalImprovements {
     pub unobtainable_missing: Vec<MedalGap>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct MedalGap {
@@ -245,7 +245,7 @@ pub struct MedalGap {
     pub owned_pct: Option<f64>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -256,7 +256,7 @@ pub struct MedalOperatorLock {
     pub reason: &'static str,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct OperatorImprovements {
@@ -268,7 +268,7 @@ pub struct OperatorImprovements {
     pub below_milestone: Vec<OperatorGap>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct OperatorGap {
@@ -307,7 +307,7 @@ pub struct OperatorGap {
     pub total_potential_gain: f64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Default)]
 pub struct BaseImprovements {
@@ -343,7 +343,7 @@ pub struct BaseImprovements {
 
 /// The base-wide resource economy plan: which support operators to station (and where) to
 /// feed the shared resource pool, and which production operators the economy boosts.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct PerceptionPlanDto {
@@ -359,7 +359,7 @@ pub struct PerceptionPlanDto {
     pub needs_rotation_manager: bool,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct PerceptionSupportDto {
@@ -367,7 +367,7 @@ pub struct PerceptionSupportDto {
     pub room_type: String,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct PerceptionConsumerDto {
@@ -379,13 +379,13 @@ pub struct PerceptionConsumerDto {
     pub sustained_pct: f64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct BaseAssignmentDto {
     pub rooms: Vec<RoomAssignmentDto>,
     pub total_production_efficiency: f64,
-    /// Realized daily output (the gold→trade loop is coupled: LMD = min(gold
+    /// Realized daily output (the gold->trade loop is coupled: LMD = min(gold
     /// made, gold sold) × 500). This is the value the optimizer maximizes - the
     /// per-room efficiency %s are just for display.
     pub yield_lmd_per_day: f64,
@@ -394,7 +394,7 @@ pub struct BaseAssignmentDto {
     pub yield_total_value: f64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RotationDto {
@@ -411,14 +411,14 @@ pub struct RotationDto {
     pub sustained_efficiency: f64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RotationSetDto {
     pub rooms: Vec<RotationSetRoomDto>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RotationSetRoomDto {
@@ -430,7 +430,7 @@ pub struct RotationSetRoomDto {
     pub resting: Option<AssignedOperator>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RoomRotationDto {
@@ -442,7 +442,7 @@ pub struct RoomRotationDto {
     pub backup: Option<AssignedOperator>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RotationMemberDto {
@@ -451,7 +451,7 @@ pub struct RotationMemberDto {
     pub lasts_hours: f64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RoomAssignmentDto {
@@ -492,7 +492,7 @@ pub struct RoomAssignmentDto {
     pub fill_hours: Option<f64>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct NonProdEffectDto {
@@ -507,7 +507,7 @@ pub struct NonProdEffectDto {
 /// calculated"). Values are MARGINALS in this exact crew - what the room's
 /// number loses if this one skill is removed - so pair riders, non-stacking
 /// rules and faction gates are already folded in.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct SkillLineDto {
@@ -567,7 +567,7 @@ fn skill_line_dto(
     }
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct AssignedOperator {
@@ -583,7 +583,7 @@ pub struct AssignedOperator {
 }
 
 /// An operator leaving a cell for another room in the SAME shift.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct MovedOperator {
@@ -596,7 +596,7 @@ pub struct MovedOperator {
 
 /// A recommended 3-shift rotation alongside the player's saved presets, for the
 /// preset-vs-recommended comparison.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct ShiftRotationDto {
@@ -611,7 +611,7 @@ pub struct ShiftRotationDto {
 /// The rotation validated by a time-stepped morale simulation (game-true drain
 /// and dorm-recovery rates): honest evidence the plan survives its own rhythm,
 /// instead of an unchecked recommendation.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct SustainabilityDto {
@@ -632,7 +632,7 @@ pub struct SustainabilityDto {
     pub facilities: Vec<FacilityOutputDto>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct FacilityOutputDto {
@@ -648,7 +648,7 @@ pub struct FacilityOutputDto {
     pub idle_hours: f64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct MoraleTimelineDto {
@@ -663,7 +663,7 @@ pub struct MoraleTimelineDto {
     pub end: f64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct DepletedOperatorDto {
@@ -672,7 +672,7 @@ pub struct DepletedOperatorDto {
     pub room_type: String,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct ShiftDto {
@@ -681,7 +681,7 @@ pub struct ShiftDto {
     pub rooms: Vec<ShiftRoomDto>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct ShiftRoomDto {
@@ -730,7 +730,7 @@ pub struct ShiftRoomDto {
 /// good enough to keep, with the small gap surfaced as a note instead of a swap nag.
 const EQUIVALENT_LENIENCY: f64 = 0.05;
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RoomLayoutEntry {
@@ -1523,7 +1523,7 @@ fn compute_base_improvements(
         return BaseImprovements::default();
     }
 
-    // Roster → base-skill profiles, buff registry, morale drains. Shared with
+    // Roster -> base-skill profiles, buff registry, morale drains. Shared with
     // the interactive planner endpoints so both read a roster the same way.
     let BaseContext {
         profiles,
@@ -2338,7 +2338,7 @@ pub(crate) fn base_assignment_to_dto(
 ) -> BaseAssignmentDto {
     use crate::core::grade::base::yield_model::BaseFlows;
 
-    // Realized output with the gold→trade coupling (LMD = min(made, sold) × 500).
+    // Realized output with the gold->trade coupling (LMD = min(made, sold) × 500).
     let mut flows = BaseFlows::default();
     for r in &asn.rooms {
         flows.add_room(

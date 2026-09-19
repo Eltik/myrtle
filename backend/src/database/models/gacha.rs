@@ -5,7 +5,7 @@ use sqlx::types::{
 };
 use ts_rs::TS;
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct GachaRecord {
@@ -24,7 +24,7 @@ pub struct GachaRecord {
 }
 
 /// `v_gacha_stats` view
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct GachaStats {

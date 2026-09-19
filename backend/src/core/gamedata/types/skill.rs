@@ -10,7 +10,7 @@ use super::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct SkillBlackboard {
     #[serde(alias = "Key", alias = "key")]
@@ -23,7 +23,7 @@ pub struct SkillBlackboard {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct SkillSpData {
     #[serde(alias = "SpType", default)]
@@ -42,7 +42,7 @@ pub struct SkillSpData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct SkillLevel {
     #[serde(alias = "Name", default)]
@@ -71,7 +71,7 @@ pub struct SkillLevel {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct RawSkill {
     #[serde(alias = "SkillId")]
@@ -90,7 +90,7 @@ pub struct RawSkill {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Skill {
     pub id: Option<String>,

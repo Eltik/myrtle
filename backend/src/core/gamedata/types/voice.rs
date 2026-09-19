@@ -10,7 +10,7 @@ use super::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[derive(Default, TS)]
+#[derive(Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum PlaceType {
     #[default]
@@ -56,7 +56,7 @@ pub enum PlaceType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[derive(Default, TS)]
+#[derive(Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum LangType {
     #[default]
@@ -78,7 +78,7 @@ pub enum LangType {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum VoiceType {
     #[serde(rename = "ENUM")]
@@ -95,7 +95,7 @@ pub enum VoiceType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
-#[derive(Default, TS)]
+#[derive(Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum UnlockType {
     #[default]
@@ -115,7 +115,7 @@ pub enum UnlockType {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct UnlockParam {
     #[serde(alias = "ValueStr")]
@@ -126,7 +126,7 @@ pub struct UnlockParam {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct VoiceData {
     pub voice_url: Option<String>,
@@ -136,7 +136,7 @@ pub struct VoiceData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct CharExtraWord {
     #[serde(alias = "WordKey")]
@@ -151,7 +151,7 @@ pub struct CharExtraWord {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct VoiceLangTypeInfo {
     pub name: String,
@@ -160,7 +160,7 @@ pub struct VoiceLangTypeInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct VoiceLangGroupType {
     pub name: String,
@@ -169,7 +169,7 @@ pub struct VoiceLangGroupType {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct StartTimeWithType {
     #[ts(type = "number")]
@@ -179,7 +179,7 @@ pub struct StartTimeWithType {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct FesTimeInterval {
     #[ts(type = "number")]
@@ -190,7 +190,7 @@ pub struct FesTimeInterval {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct FesTimeData {
     pub time_type: String,
@@ -199,7 +199,7 @@ pub struct FesTimeData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct FesVoiceData {
     pub show_type: PlaceType,
@@ -208,7 +208,7 @@ pub struct FesVoiceData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct FesVoiceWeight {
     pub show_type: PlaceType,
@@ -217,7 +217,7 @@ pub struct FesVoiceWeight {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ExtraVoiceConfigData {
     pub voice_id: String,
@@ -226,7 +226,7 @@ pub struct ExtraVoiceConfigData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct VoiceLangDictEntry {
     #[serde(alias = "Wordkey")]
@@ -241,7 +241,7 @@ pub struct VoiceLangDictEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct VoiceLang {
     #[serde(alias = "Wordkeys")]
@@ -258,7 +258,7 @@ pub struct VoiceLang {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct RawVoice {
     #[serde(alias = "CharWordId")]
@@ -295,7 +295,7 @@ pub struct RawVoice {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Voice {
     pub char_word_id: String,
@@ -323,7 +323,7 @@ pub struct Voice {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Voices {
     pub char_words: HashMap<String, Voice>,
@@ -345,7 +345,7 @@ pub struct Voices {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct RawVoices {
     pub char_words: HashMap<String, RawVoice>,
@@ -367,7 +367,7 @@ pub struct RawVoices {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct VoicesTableFile {
     #[serde(deserialize_with = "deserialize_fb_map")]

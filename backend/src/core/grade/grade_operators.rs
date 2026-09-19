@@ -168,8 +168,8 @@ fn average_dimensions(dims: &[(DimensionKind, Dimension)]) -> f64 {
 }
 
 /// The investment axes an operator is scored on. Which axes apply varies per
-/// operator (no advanced modules → no `Module` dimension, etc.).
-#[derive(TS)]
+/// operator (no advanced modules -> no `Module` dimension, etc.).
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -258,7 +258,7 @@ fn build_dimensions(
 /// One row of the roster-wide operator score breakdown: how much of the
 /// Operators subscore a dimension is worth, and how much of that worth the
 /// user has earned.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct ScoreDimension {
@@ -390,7 +390,7 @@ fn cumulative_level_progress_at(static_op: &Operator, elite: i16, level: i16) ->
 /// Returns 0.0-1.0 based on mastery milestones.
 ///
 /// Without any M3, partial credit is capped at `PARTIAL_CAP` (0.30).
-/// With M3 skills: 1 → 0.50, 2 → 0.75, plus partial bonus. Every skill at M3
+/// With M3 skills: 1 -> 0.50, 2 -> 0.75, plus partial bonus. Every skill at M3
 /// is always 1.00, whether the operator has one, two or three of them.
 fn mastery_milestone_score(roster: &RosterEntry, num_skills: usize) -> f64 {
     let masteries = parse_masteries(&roster.masteries);
@@ -444,7 +444,7 @@ fn mastery_milestone_from_levels(levels: &[i16], num_skills: usize) -> f64 {
 /// Returns 0.0-1.0 based on module milestones.
 ///
 /// Without any Mod3, partial credit is capped at `PARTIAL_CAP` (0.30).
-/// With Mod3: first → 0.50, second → 0.80, all → 1.00, plus partial bonus.
+/// With Mod3: first -> 0.50, second -> 0.80, all -> 1.00, plus partial bonus.
 fn module_milestone_score(roster: &RosterEntry, advanced_modules: &[&OperatorModule]) -> f64 {
     let user_advanced = advanced_module_levels(&roster.modules, advanced_modules);
     module_milestone_from_levels(&user_advanced, advanced_modules.len())
@@ -551,7 +551,7 @@ fn log_curve_ratio(t: f64) -> f64 {
 /// All deltas are reported as non-negative - if simulating the milestone would
 /// somehow not improve the score (shouldn't happen with the current model,
 /// but defensive), the delta is clamped to 0.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct UpgradeDelta {
@@ -575,7 +575,7 @@ pub struct UpgradeDelta {
 /// "what if you completed this milestone" score against the current state.
 ///
 /// `rarity_weight` and `total_roster_weight` are the inputs from
-/// `grade_operators` used to translate per-op delta → `operator_grade` delta.
+/// `grade_operators` used to translate per-op delta -> `operator_grade` delta.
 pub fn operator_upgrade_deltas(
     roster: &RosterEntry,
     static_op: &Operator,
@@ -617,7 +617,7 @@ pub fn operator_upgrade_deltas(
 /// filtered, but cheap to recheck).
 ///
 /// A dimension exists on the operator exactly when the tag applies (no
-/// advanced modules → no `Module` dimension → MOD3 not applicable), so
+/// advanced modules -> no `Module` dimension -> MOD3 not applicable), so
 /// "replace by kind" doubles as the applicability check.
 fn simulate_score_for_tag(
     roster: &RosterEntry,
@@ -671,7 +671,7 @@ fn simulate_score_for_tag(
                 mastery_milestone_from_levels(&simulated, num_skills),
             )
         }
-        // Skill level → 7 (the dimension's max).
+        // Skill level -> 7 (the dimension's max).
         "SL7" => set(&mut dims, DimensionKind::SkillLevel, 1.0),
         // First advanced module to L3 (same "promote highest non-Mod3" model
         // as M3 above).

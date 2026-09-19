@@ -8,7 +8,7 @@ use super::serde_helpers::deserialize_fb_map_or_default;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct RetroAct {
     #[serde(alias = "RetroId")]

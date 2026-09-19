@@ -6,7 +6,7 @@ use sqlx::types::{
 use ts_rs::TS;
 
 /// `v_user_profile` view
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct UserProfile {
@@ -60,7 +60,7 @@ pub struct UserProfile {
 }
 
 /// users table
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct User {
@@ -80,7 +80,7 @@ pub struct User {
 }
 
 /// `user_settings` table
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct UserSettings {
@@ -91,15 +91,15 @@ pub struct UserSettings {
     pub updated_at: DateTime<Utc>,
 }
 
-/// `user_checkin` table — daily sign-in state from the game's `checkIn` section,
+/// `user_checkin` table: daily sign-in state from the game's `checkIn` section,
 /// joined with the timestamps needed to render it as a calendar.
 ///
 /// The game's monthly sign-in is a *sequential list of reward slots*, not a
 /// dated calendar: missing a day leaves you one slot behind, it never forfeits
 /// the slot. Nothing in this payload maps a claim to the date it happened on,
-/// so no consumer can say "the 4th was missed" — only "N of the month's slots
+/// so no consumer can say "the 4th was missed", only "N of the month's slots
 /// are claimed, D days have elapsed".
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct UserCheckin {
@@ -107,7 +107,7 @@ pub struct UserCheckin {
     /// monthly-subscription Daily Supply came with that claim, `0` if not.
     ///
     /// This is the game's raw `checkInHistory`, and it is **not** a per-day
-    /// calendar — a missed day produces no entry at all. Reading `flags[d - 1]`
+    /// calendar: a missed day produces no entry at all. Reading `flags[d - 1]`
     /// as "day `d` was claimed" is wrong, and counting the `1`s counts monthly
     /// card days, not sign-ins. (Verified against `user_status.monthly_sub_end`
     /// over the whole user table: the final flag agrees with subscription state
@@ -115,7 +115,7 @@ pub struct UserCheckin {
     /// the sign-in count.
     #[sqlx(rename = "history")]
     pub monthly_card_flags: Vec<i16>,
-    /// Sign-ins claimed in the current month's series — the length of
+    /// Sign-ins claimed in the current month's series: the length of
     /// `monthly_card_flags`, derived in SQL so no client re-derives it.
     pub claimed_this_month: i32,
     /// Lifetime cumulative sign-in days (the "total days of sign-ins" counter).
@@ -125,19 +125,19 @@ pub struct UserCheckin {
     /// The game's raw `checkInRewardIndex`: a 0-based pointer into the month's
     /// reward slots. It equals `claimed_this_month` while a claim is pending
     /// and `claimed_this_month - 1` just after one, and a handful of rows carry
-    /// a stale `0` across a series rollover — prefer `claimed_this_month`.
+    /// a stale `0` across a series rollover. Prefer `claimed_this_month`.
     pub reward_index: i16,
     /// Whether a daily sign-in is claimable right now (as of the last sync).
     pub can_check_in: bool,
-    /// Account creation time (Unix seconds) — for "days since joining".
+    /// Account creation time (Unix seconds), for "days since joining".
     #[ts(type = "number | null")]
     pub register_ts: Option<i64>,
-    /// Player's last in-game online time (Unix seconds) — distinct from the DB
+    /// Player's last in-game online time (Unix seconds), distinct from the DB
     /// sync time below.
     #[ts(type = "number | null")]
     pub last_online_ts: Option<i64>,
     /// When this row was last synced to our DB. Every field above is a snapshot
-    /// as of this moment, which may be days/weeks before "now" — so the month
+    /// as of this moment, which may be days/weeks before "now", so the month
     /// the calendar belongs to is this timestamp's month, not today's.
     pub updated_at: DateTime<Utc>,
 }

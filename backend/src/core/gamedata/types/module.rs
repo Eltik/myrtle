@@ -12,7 +12,7 @@ use super::serde_helpers::{deserialize_fb_map, deserialize_fb_map_option};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
-#[derive(Default, TS)]
+#[derive(Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum ModuleType {
     #[default]
@@ -27,7 +27,7 @@ pub enum ModuleType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[derive(Default, TS)]
+#[derive(Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum ModuleTarget {
     #[default]
@@ -48,7 +48,7 @@ pub enum ModuleTarget {
 /// Raw module item cost from game data (uses lowercase field names)
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct RawModuleItemCost {
     #[serde(alias = "Id")]
@@ -62,7 +62,7 @@ pub struct RawModuleItemCost {
 /// Processed module item cost with additional fields
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ModuleItemCost {
     #[serde(alias = "Id")]
@@ -79,7 +79,7 @@ pub struct ModuleItemCost {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct SubProfession {
     #[serde(alias = "SubProfessionId")]
@@ -92,7 +92,7 @@ pub struct SubProfession {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct EquipTrackItem {
     #[serde(alias = "CharId")]
@@ -103,7 +103,7 @@ pub struct EquipTrackItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct EquipTrack {
     #[serde(alias = "Timestamp")]
@@ -115,7 +115,7 @@ pub struct EquipTrack {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Mission {
     #[serde(alias = "Template")]
@@ -136,7 +136,7 @@ pub struct Mission {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ModuleBlackboard {
     #[serde(alias = "Key", alias = "key", default)]
@@ -152,7 +152,7 @@ pub struct ModuleBlackboard {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ModuleUnlockCondition {
     #[serde(alias = "Phase", default)]
@@ -163,7 +163,7 @@ pub struct ModuleUnlockCondition {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct AddModuleCandidates {
     #[serde(alias = "DisplayRangeId", default)]
@@ -194,7 +194,7 @@ pub struct AddModuleCandidates {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ModuleCandidates {
     #[serde(alias = "AdditionalDescription", default)]
@@ -215,7 +215,7 @@ pub struct ModuleCandidates {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct AddOrOverrideTalentDataBundle {
     #[serde(alias = "Candidates")]
@@ -224,7 +224,7 @@ pub struct AddOrOverrideTalentDataBundle {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct OverrideTraitDataBundle {
     #[serde(alias = "Candidates")]
@@ -233,7 +233,7 @@ pub struct OverrideTraitDataBundle {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ModulePart {
     #[serde(alias = "ResKey")]
@@ -250,7 +250,7 @@ pub struct ModulePart {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ModulePhase {
     #[serde(alias = "EquipLevel")]
@@ -265,7 +265,7 @@ pub struct ModulePhase {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ModuleData {
     #[serde(alias = "Phases")]
@@ -274,7 +274,7 @@ pub struct ModuleData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct RawModule {
     #[serde(alias = "UniEquipId")]
@@ -326,7 +326,7 @@ pub struct RawModule {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Module {
     pub id: Option<String>,
@@ -361,7 +361,7 @@ pub struct Module {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Modules {
     pub equip_dict: HashMap<String, Module>,
@@ -375,7 +375,7 @@ pub struct Modules {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct RawModules {
     pub equip_dict: HashMap<String, RawModule>,

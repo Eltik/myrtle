@@ -5,7 +5,7 @@ use sqlx::types::{
 };
 use ts_rs::TS;
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierList {
@@ -22,7 +22,7 @@ pub struct TierList {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierListFlair {
@@ -36,7 +36,7 @@ pub struct TierListFlair {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierListStats {
@@ -55,7 +55,7 @@ pub struct TierListStats {
     pub stats_updated_at: DateTime<Utc>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierListFavorite {
@@ -64,7 +64,7 @@ pub struct TierListFavorite {
     pub favorited_at: DateTime<Utc>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Tier {
@@ -76,7 +76,7 @@ pub struct Tier {
     pub description: Option<String>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierPlacement {
@@ -87,7 +87,7 @@ pub struct TierPlacement {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierListVersion {
@@ -100,7 +100,7 @@ pub struct TierListVersion {
     pub published_at: DateTime<Utc>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierListPermission {

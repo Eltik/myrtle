@@ -7,7 +7,7 @@ export type SkinPopularityResponse = {
      */
     totalUsers: number;
     /**
-     * Map of `skin_id` → number of owners. Only non-default skins (`skin_id`
+     * Map of `skin_id` -> number of owners. Only non-default skins (`skin_id`
      * containing `@`) are included; absent IDs imply zero owners.
      */
     counts: Record<string, number>;

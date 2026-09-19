@@ -18,7 +18,7 @@ use crate::database::queries::operator_ownership;
 
 /// Compact operator record for client-side search palettes and autocompletes.
 /// Order of fields matches the JSON contract - keep stable.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorIndexEntry {
     pub id: String,
@@ -59,7 +59,7 @@ pub struct OperatorIndexEntry {
 }
 
 /// Flattened final-phase base stats for the operators list sorters.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct OperatorIndexStats {
     pub hp: i32,
@@ -171,7 +171,7 @@ pub async fn get_index(
 /// One operator's community counts. Struct-valued rather than a bare owner
 /// tally so the next statistic is a field here instead of a fourth map
 /// travelling alongside in the response.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -192,7 +192,7 @@ pub struct OperatorOwnershipCounts {
 /// the denominator. Only operators with at least one owner are listed; a missing
 /// id implies zero owners. `totalUsers` is the eligible population on this
 /// server (players who imported a roster and opted into stat sharing).
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -205,7 +205,7 @@ pub struct OperatorOwnershipResponse {
 
 /// One option in a community default distribution, with the count that put it
 /// there. Ordered most-picked first by the query.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -224,7 +224,7 @@ pub struct BuildChoice {
 }
 
 /// One bucket of an investment histogram.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -238,7 +238,7 @@ pub struct LevelBucket {
 }
 
 /// How far E2 owners take one skill's mastery.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -255,7 +255,7 @@ pub struct SkillMasteryStats {
 }
 
 /// How far E2 owners take one module's level.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -275,7 +275,7 @@ pub struct ModuleLevelStats {
 /// informative as the leader. `skillTotal` and `moduleTotal` are the
 /// denominators, and they differ: skills count E2 owners, modules count only
 /// owners with an ADVANCED module actually equipped, which is 13.63% of rows.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

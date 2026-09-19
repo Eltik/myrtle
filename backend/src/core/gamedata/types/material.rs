@@ -8,7 +8,7 @@ use super::serde_helpers::deserialize_fb_map;
 // Enums
 // ============================================================================
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum ItemRarity {
     #[serde(rename = "TIER_1")]
@@ -39,7 +39,7 @@ impl ItemRarity {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum ItemClass {
     #[serde(rename = "MATERIAL")]
@@ -62,7 +62,7 @@ pub enum ItemClass {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[derive(Default, TS)]
+#[derive(Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum ItemType {
     Gold,
@@ -138,7 +138,7 @@ pub enum ItemType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
-#[derive(Default, TS)]
+#[derive(Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum ItemOccPer {
     #[default]
@@ -156,7 +156,7 @@ pub enum ItemOccPer {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
-#[derive(Default, TS)]
+#[derive(Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum BuildingRoomType {
     #[default]
@@ -171,7 +171,7 @@ pub enum BuildingRoomType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[derive(Default, TS)]
+#[derive(Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum VoucherItemType {
     #[default]
@@ -186,7 +186,7 @@ pub enum VoucherItemType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
-#[derive(Default, TS)]
+#[derive(Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum VoucherDisplayType {
     #[default]
@@ -205,7 +205,7 @@ pub enum VoucherDisplayType {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct StageDrop {
     #[serde(alias = "StageId")]
@@ -216,7 +216,7 @@ pub struct StageDrop {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct BuildingProduct {
     #[serde(alias = "RoomType")]
@@ -227,7 +227,7 @@ pub struct BuildingProduct {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct VoucherRelate {
     #[serde(alias = "VoucherId")]
@@ -238,7 +238,7 @@ pub struct VoucherRelate {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct UniqueItem {
     #[serde(alias = "Id")]
@@ -251,7 +251,7 @@ pub struct UniqueItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct UniCollectionInfo {
     #[serde(alias = "UniCollectionItemId")]
@@ -262,7 +262,7 @@ pub struct UniCollectionInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ItemPackContent {
     #[serde(alias = "Id")]
@@ -275,7 +275,7 @@ pub struct ItemPackContent {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ItemPackInfo {
     #[serde(alias = "PackId")]
@@ -286,7 +286,7 @@ pub struct ItemPackInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct FullPotentialCharacter {
     #[serde(alias = "ItemId")]
@@ -298,7 +298,7 @@ pub struct FullPotentialCharacter {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ActivityPotentialCharacter {
     #[serde(alias = "CharId")]
@@ -307,7 +307,7 @@ pub struct ActivityPotentialCharacter {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct FavorCharacter {
     #[serde(alias = "ItemId")]
@@ -320,7 +320,7 @@ pub struct FavorCharacter {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ExpItem {
     #[serde(alias = "Id")]
@@ -331,7 +331,7 @@ pub struct ExpItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ApSupply {
     #[serde(alias = "Id")]
@@ -344,7 +344,7 @@ pub struct ApSupply {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct CharVoucherItem {
     #[serde(alias = "Id")]
@@ -359,7 +359,7 @@ pub struct CharVoucherItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Item {
     #[serde(alias = "ItemId", default)]
@@ -402,7 +402,7 @@ pub struct Item {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Materials {
     pub items: HashMap<String, Item>,

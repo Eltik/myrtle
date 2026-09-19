@@ -7,7 +7,7 @@ use super::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct GachaPoolClient {
     #[serde(alias = "GachaPoolId")]
@@ -86,7 +86,7 @@ pub struct GachaPoolClient {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct NewbeeGachaPoolClient {
     #[serde(alias = "GachaPoolId")]
@@ -107,7 +107,7 @@ pub struct NewbeeGachaPoolClient {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct GachaTag {
     #[serde(alias = "TagId")]
@@ -120,7 +120,7 @@ pub struct GachaTag {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct RecruitTimeEntry {
     #[serde(alias = "RecruitPrice")]
@@ -129,7 +129,7 @@ pub struct RecruitTimeEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct RecruitPool {
     #[serde(alias = "RecruitTimeTable")]
@@ -139,7 +139,7 @@ pub struct RecruitPool {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct RecruitRarityEntry {
     #[serde(alias = "RarityStart")]
@@ -150,7 +150,7 @@ pub struct RecruitRarityEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct GachaData {
     pub gacha_pool_client: Vec<GachaPoolClient>,
@@ -179,7 +179,7 @@ pub struct GachaData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct FesGachaPoolRelateEntry {
     #[serde(alias = "RarityRank5ItemId")]

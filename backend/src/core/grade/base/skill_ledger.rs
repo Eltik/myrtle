@@ -1,18 +1,18 @@
-//! Per-skill contribution ledger — the "how this room's number is calculated"
+//! Per-skill contribution ledger: the "how this room's number is calculated"
 //! breakdown behind the deep-dive UI.
 //!
 //! Every line is a MARGINAL measured by ablation: remove exactly one buff from
 //! one operator, re-score the room with everything else unchanged, and report
-//! the delta. That definition survives every mechanism the engine models —
+//! the delta. That definition survives every mechanism the engine models:
 //! pair riders (Lemuen loses her +25 if Exusiai leaves), non-stacking families
-//! (a second +7% global shows 0), faction gates, recipe-type scaling — because
+//! (a second +7% global shows 0), faction gates, recipe-type scaling, because
 //! it asks the scorer itself rather than re-deriving the rules.
 //!
 //! Lines that measure 0 are classified rather than hidden: a priced strategy
 //! whose gate isn't met here reads "inactive", a morale/drain skill reads
 //! "morale" (it moves the sustain sim, not efficiency), a capacity skill reads
 //! "capacity", and a buff the engine deliberately doesn't price (never-guess)
-//! reads "unmodeled" — three honest states where a ✓/✗ ledger has two.
+//! reads "unmodeled": three honest states where a ✓/✗ ledger has two.
 
 use std::collections::HashMap;
 
@@ -27,10 +27,10 @@ use super::types::{OperatorBaseProfile, compute_match_tags};
 /// How a zero-marginal line should be read.
 ///
 /// Serialized straight into `SkillLineDto`, so the generated TS binding is a
-/// union rather than a bare `string` — the frontend switches on these values.
+/// union rather than a bare `string`: the frontend switches on these values.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum LineDisposition {
     /// Non-zero marginal: this line is part of the room's number.
@@ -51,7 +51,7 @@ pub enum LineDisposition {
     /// Moves the order/stock capacity, not the speed number shown.
     #[serde(rename = "capacity")]
     CapacityOnly,
-    /// Non-production Control-Center value (clue/training/HR) — reported in
+    /// Non-production Control-Center value (clue/training/HR), reported in
     /// the room's `non_production` block, not its efficiency.
     NonProduction,
     /// The engine deliberately prices this at zero (never-guess).
@@ -80,7 +80,7 @@ pub struct LedgerLine {
 const EPS: f64 = 1e-6;
 
 /// A profile identical to `op` with one buff removed. Match tags are
-/// recomputed — some derive from the buff set, and a stale tag would keep a
+/// recomputed: some derive from the buff set, and a stale tag would keep a
 /// faction gate satisfied that the ablation should break.
 fn ablated(
     op: &OperatorBaseProfile,

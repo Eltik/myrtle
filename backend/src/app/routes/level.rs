@@ -8,6 +8,23 @@ use crate::core::hypergryph::constants::Server;
 
 /// `GET /level/{stage_id}` - raw Arknights level (camelCased keys, 2D map grid)
 /// for the default (EN) server. Powers the Stage Viewer map + pathing renderer.
+/// A stage's level data: the tile map, enemy routes and wave schedule that
+/// drive the stage viewer's pathing simulation.
+#[utoipa::path(
+    get,
+    path = "/level/{stage_id}",
+    tag = "gamedata",
+    params(
+        ("stage_id" = String, Path, description = "Stage id, e.g. `main_01-07`.")
+    ),
+    responses(
+        (status = 200, description = "The level data, with `Cache-Control` set for long reuse.", content_type = "application/json"),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn get_level_map(
     State(state): State<AppState>,
     Path(stage_id): Path<String>,
@@ -26,6 +43,25 @@ pub async fn get_level_map(
 }
 
 /// `GET /{server}/level/{stage_id}` - per-server variant of the raw level.
+/// A stage's level data for one server.///
+/// The `/{server}` form reads that server's game data; the bare form reads the
+/// default server.
+#[utoipa::path(
+    get,
+    path = "/{server}/level/{stage_id}",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("stage_id" = String, Path, description = "Stage id, e.g. `main_01-07`.")
+    ),
+    responses(
+        (status = 200, description = "The level data, with `Cache-Control` set for long reuse.", content_type = "application/json"),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn get_level_map_srv(
     State(state): State<AppState>,
     Path((server, stage_id)): Path<(Server, String)>,

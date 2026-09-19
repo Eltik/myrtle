@@ -11,7 +11,7 @@ use crate::database::queries::operator_notes::get_audit_log_global;
 use crate::database::queries::operator_notes::insert_audit;
 use crate::database::queries::operator_notes::upsert;
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Serialize)]
 pub struct AuditLogActor {
@@ -22,7 +22,7 @@ pub struct AuditLogActor {
     pub secretary_skin_id: Option<String>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[ts(rename = "OperatorNoteAuditLogEntry")]
 #[derive(Debug, Serialize)]
@@ -38,7 +38,7 @@ pub struct AuditLogEntry {
     pub actor: AuditLogActor,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Serialize)]
 pub struct GlobalAuditLogResponse {

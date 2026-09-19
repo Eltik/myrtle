@@ -25,7 +25,7 @@ use std::str::FromStr;
 use ts_rs::TS;
 use uuid::Uuid;
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize)]
 pub struct TierListDetail {
@@ -37,7 +37,7 @@ pub struct TierListDetail {
     pub author: Option<TierListAuthor>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct TierListAuthor {
@@ -47,7 +47,7 @@ pub struct TierListAuthor {
     pub avatar_id: Option<String>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize)]
 pub struct TierDetail {

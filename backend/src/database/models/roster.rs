@@ -3,7 +3,7 @@ use sqlx::types::Uuid;
 use ts_rs::TS;
 
 /// One entry in a Doctor's published support roster (slot 0..2).
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct SupportUnit {
@@ -24,7 +24,7 @@ pub struct SupportUnit {
 }
 
 /// `v_user_roster` view
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct RosterEntry {

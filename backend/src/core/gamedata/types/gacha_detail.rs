@@ -2,7 +2,7 @@
 //! sidecar that caches it.
 //!
 //! `gacha_table.json` only carries a *subset* of each banner's featured
-//! operators — the base64-BSON blobs in `LimitParam` / `DynMeta` (see
+//! operators: the base64-BSON blobs in `LimitParam` / `DynMeta` (see
 //! [`super::super::enrich::gacha`]). The client fills the rest in from
 //! a second request, `POST {gs}/gacha/getPoolDetail` with `{"poolId": "..."}`.
 //!
@@ -55,7 +55,7 @@ pub const POOL_DETAIL_REL_PATH: &str = "derived/gacha_pool_details.json";
 /// the refresh job has to write this file.
 ///
 /// In the override case the file is named after the final component of
-/// `assets_dir`, which is the server code by construction — assets dirs are
+/// `assets_dir`, which is the server code by construction: assets dirs are
 /// built as `{ASSETS_DIR}/{server}`. Loader and job both call this with the same
 /// `assets_dir`, so they cannot disagree.
 pub fn pool_detail_path(assets_dir: &Path) -> PathBuf {
@@ -103,7 +103,7 @@ pub struct DetailInfo {
     #[serde(default)]
     pub up_char_info: Option<UpCharInfo>,
     /// Soft rate-boosted units ("5x rate up"). A *different* thing from a
-    /// rate-up — these keep the base 6★ pool rate but take a larger share of it.
+    /// rate-up: these keep the base 6★ pool rate but take a larger share of it.
     #[serde(default)]
     pub weight_up_char_info_list: Option<Vec<WeightUpChar>>,
     #[serde(default)]
@@ -139,7 +139,7 @@ pub struct PerCharEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct WeightUpChar {
     #[serde(default)]
@@ -202,7 +202,7 @@ pub struct GachaObjGroup {
 /// Per-rarity headline rate for a banner, flattened for the API.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct RarityRate {
     pub rarity_rank: i32,

@@ -11,6 +11,8 @@ use crate::database::queries::users::create_user;
 use crate::database::queries::users::find_raw_by_uid;
 use crate::utils::redact::mask_identifier;
 use serde::Serialize;
+use ts_rs::TS;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 pub fn parse_server(s: &str) -> Result<Server, ApiError> {
@@ -38,7 +40,8 @@ pub async fn send_code(state: &AppState, email: &str, server: Server) -> Result<
     Ok(())
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, TS, ToSchema)]
+#[ts(export)]
 pub struct LoginResponse {
     pub token: String,
     pub uid: String,

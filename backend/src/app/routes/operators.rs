@@ -17,6 +17,18 @@ use crate::core::gamedata::types::voice::Voices;
 use crate::core::hypergryph::constants::Server;
 
 /// `GET /operators/index` - default (EN) operator index.
+/// Every operator, in the compact form the roster and list screens use.
+#[utoipa::path(
+    get,
+    path = "/operators/index",
+    tag = "gamedata",
+    responses(
+        (status = 200, description = "The operator index.", body = Vec<OperatorIndexEntry>),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn index(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<OperatorIndexEntry>>, ApiError> {
@@ -24,6 +36,23 @@ pub async fn index(
 }
 
 /// `GET /{server}/operators/index` - per-server operator index.
+/// Every operator, in the compact form the roster and list screens use.///
+/// The `/{server}` form reads that server's game data; the bare form reads the
+/// default server.
+#[utoipa::path(
+    get,
+    path = "/{server}/operators/index",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`.")
+    ),
+    responses(
+        (status = 200, description = "The operator index.", body = Vec<OperatorIndexEntry>),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn index_srv(
     State(state): State<AppState>,
     Path(server): Path<Server>,
@@ -32,6 +61,18 @@ pub async fn index_srv(
 }
 
 /// `GET /operators/ownership` - default-server operator ownership rates.
+/// How many tracked players own each operator.
+#[utoipa::path(
+    get,
+    path = "/operators/ownership",
+    tag = "gamedata",
+    responses(
+        (status = 200, description = "Ownership counts by operator id.", body = OperatorOwnershipResponse),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn ownership(
     State(state): State<AppState>,
 ) -> Result<Json<OperatorOwnershipResponse>, ApiError> {
@@ -39,6 +80,23 @@ pub async fn ownership(
 }
 
 /// `GET /{server}/operators/ownership` - per-server operator ownership rates.
+/// How many tracked players own each operator.///
+/// The `/{server}` form reads that server's game data; the bare form reads the
+/// default server.
+#[utoipa::path(
+    get,
+    path = "/{server}/operators/ownership",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`.")
+    ),
+    responses(
+        (status = 200, description = "Ownership counts by operator id.", body = OperatorOwnershipResponse),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn ownership_srv(
     State(state): State<AppState>,
     Path(server): Path<Server>,
@@ -47,6 +105,23 @@ pub async fn ownership_srv(
 }
 
 /// `GET /operators/{id}/build-stats` - default-server community defaults.
+/// How tracked players actually build one operator: skill, mastery and module
+/// choices, as proportions.
+#[utoipa::path(
+    get,
+    path = "/operators/{id}/build-stats",
+    tag = "gamedata",
+    params(
+        ("id" = String, Path, description = "Operator id, e.g. `char_002_amiya`.")
+    ),
+    responses(
+        (status = 200, description = "Aggregate build choices.", body = OperatorBuildStatsResponse),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn build_stats(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -57,6 +132,26 @@ pub async fn build_stats(
 }
 
 /// `GET /{server}/operators/{id}/build-stats` - per-server community defaults.
+/// How tracked players actually build one operator: skill, mastery and module
+/// choices, as proportions.///
+/// The `/{server}` form reads that server's game data; the bare form reads the
+/// default server.
+#[utoipa::path(
+    get,
+    path = "/{server}/operators/{id}/build-stats",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("id" = String, Path, description = "Operator id, e.g. `char_002_amiya`.")
+    ),
+    responses(
+        (status = 200, description = "Aggregate build choices.", body = OperatorBuildStatsResponse),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn build_stats_srv(
     State(state): State<AppState>,
     Path((server, id)): Path<(Server, String)>,
@@ -65,6 +160,18 @@ pub async fn build_stats_srv(
 }
 
 /// `GET /upcoming` - operators on CN not yet on the default (EN) server.
+/// Operators released on CN but not yet on this server.
+#[utoipa::path(
+    get,
+    path = "/upcoming",
+    tag = "gamedata",
+    responses(
+        (status = 200, description = "Operators still to arrive, soonest first.", body = Vec<OperatorIndexEntry>),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn upcoming(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<OperatorIndexEntry>>, ApiError> {
@@ -72,6 +179,23 @@ pub async fn upcoming(
 }
 
 /// `GET /{server}/upcoming` - operators on `{server}` not yet on the default server.
+/// Operators released on CN but not yet on this server.///
+/// The `/{server}` form reads that server's game data; the bare form reads the
+/// default server.
+#[utoipa::path(
+    get,
+    path = "/{server}/upcoming",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`.")
+    ),
+    responses(
+        (status = 200, description = "Operators still to arrive, soonest first.", body = Vec<OperatorIndexEntry>),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn upcoming_srv(
     State(state): State<AppState>,
     Path(server): Path<Server>,
@@ -82,6 +206,24 @@ pub async fn upcoming_srv(
 /// `GET /operators/{id}` - one enriched operator. Resolves across loaded servers
 /// (default first, then CN/others) and tags the response with the `server` it was
 /// found on, so the client fetches once for both global and upcoming operators.
+/// One operator's full record: stats, talents, skills, modules and handbook.
+#[utoipa::path(
+    get,
+    path = "/operators/{id}",
+    tag = "gamedata",
+    params(
+        ("id" = String, Path, description = "Operator id."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the body.")
+    ),
+    responses(
+        (status = 200, description = "The operator. Served from cache with an `ETag` and `Cache-Control: public, max-age=300`.", content_type = "application/json"),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn detail(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -92,6 +234,27 @@ pub async fn detail(
 }
 
 /// `GET /{server}/operators/{id}` - one enriched operator from `{server}`.
+/// One operator's full record: stats, talents, skills, modules and handbook.///
+/// The `/{server}` form reads that server's game data; the bare form reads the
+/// default server.
+#[utoipa::path(
+    get,
+    path = "/{server}/operators/{id}",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("id" = String, Path, description = "Operator id."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the body.")
+    ),
+    responses(
+        (status = 200, description = "The operator. Served from cache with an `ETag` and `Cache-Control: public, max-age=300`.", content_type = "application/json"),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn detail_srv(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -102,6 +265,22 @@ pub async fn detail_srv(
 }
 
 /// `GET /voices/{id}` - one operator's voice lines (default server).
+/// An operator's voice lines, with the audio URLs for each language.
+#[utoipa::path(
+    get,
+    path = "/voices/{id}",
+    tag = "gamedata",
+    params(
+        ("id" = String, Path, description = "Operator id.")
+    ),
+    responses(
+        (status = 200, description = "Voice lines by language.", body = Voices),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn voices_detail(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -112,6 +291,25 @@ pub async fn voices_detail(
 }
 
 /// `GET /{server}/voices/{id}` - one operator's voice lines from `{server}`.
+/// An operator's voice lines, with the audio URLs for each language.///
+/// The `/{server}` form reads that server's game data; the bare form reads the
+/// default server.
+#[utoipa::path(
+    get,
+    path = "/{server}/voices/{id}",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("id" = String, Path, description = "Operator id.")
+    ),
+    responses(
+        (status = 200, description = "Voice lines by language.", body = Voices),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn voices_detail_srv(
     State(state): State<AppState>,
     Path((server, id)): Path<(Server, String)>,
@@ -120,6 +318,22 @@ pub async fn voices_detail_srv(
 }
 
 /// `GET /skins/{id}` - one operator's skins (default server).
+/// One operator's skins.
+#[utoipa::path(
+    get,
+    path = "/skins/{id}",
+    tag = "gamedata",
+    params(
+        ("id" = String, Path, description = "Operator id.")
+    ),
+    responses(
+        (status = 200, description = "The operator's skins.", body = SkinData),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn skins_detail(
     State(state): State<AppState>,
     Path(id): Path<String>,
@@ -130,6 +344,25 @@ pub async fn skins_detail(
 }
 
 /// `GET /{server}/skins/{id}` - one operator's skins from `{server}`.
+/// One operator's skins.///
+/// The `/{server}` form reads that server's game data; the bare form reads the
+/// default server.
+#[utoipa::path(
+    get,
+    path = "/{server}/skins/{id}",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("id" = String, Path, description = "Operator id.")
+    ),
+    responses(
+        (status = 200, description = "The operator's skins.", body = SkinData),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn skins_detail_srv(
     State(state): State<AppState>,
     Path((server, id)): Path<(Server, String)>,

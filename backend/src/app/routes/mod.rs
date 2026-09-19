@@ -1,7 +1,7 @@
-use axum::{
-    Json, Router,
-    routing::{delete, get, post, put},
-};
+use axum::Json;
+use ts_rs::TS;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_axum::routes;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
@@ -10,9 +10,24 @@ use crate::app::state::AppState;
 use crate::database::models::user::UserProfile;
 use crate::database::queries::users::{find_by_id, find_by_uid};
 
-/// The standard `{"status":"ok"}` success body for endpoints that return no payload.
-pub fn ok_status() -> Json<serde_json::Value> {
-    Json(serde_json::json!({ "status": "ok" }))
+/// The `{"status":"ok"}` success body for endpoints that return no payload.
+///
+/// The type IS the documented schema and the serialized body, so there is no
+/// second declaration to keep in agreement. It reached the wire as an untyped
+/// `serde_json::json!` before, which meant the `OpenAPI` document described it
+/// from a hand-written copy.
+#[derive(serde::Serialize, TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct StatusOk {
+    #[schema(example = "ok")]
+    pub status: String,
+}
+
+/// The standard success body for endpoints that return no payload.
+pub fn ok_status() -> Json<StatusOk> {
+    Json(StatusOk {
+        status: "ok".to_owned(),
+    })
 }
 
 /// The privacy gate for a `uid` naming someone other than the caller.
@@ -111,193 +126,153 @@ pub mod stats;
 pub mod tier_lists;
 pub mod user;
 
-pub fn router() -> Router<AppState> {
-    Router::new()
-        .route("/health", get(health::health))
-        .route("/get-user", get(user::get_user))
-        .route("/get-user-score", get(user::get_user_score))
-        .route("/get-user-checkin", get(user::get_user_checkin))
-        .route("/leaderboard", get(leaderboard::leaderboard))
-        .route("/leaderboard/movers", get(leaderboard::top_movers))
-        .route("/leaderboard/distribution", get(leaderboard::distribution))
-        .route("/leaderboard/standing", get(leaderboard::standing))
-        .route("/leaderboard/history", get(leaderboard::score_history))
-        .route("/search", get(search::search))
-        .route("/static/{resource}", get(static_data::get_static))
-        .route("/level/{stage_id}", get(level::get_level_map))
-        .route("/avatar/{id}", get(assets::avatar))
-        .route("/portrait/{id}", get(assets::portrait))
-        .route("/skill-icon/{id}", get(assets::skill_icon))
-        .route("/module-icon/{id}", get(assets::module_icon))
-        .route("/module-big/{id}", get(assets::module_big))
-        .route("/enemy-icon/{id}", get(assets::enemy_icon))
-        .route("/item-icon/{id}", get(assets::item_icon))
-        .route("/medal-icon/{id}", get(assets::medal_icon))
-        .route("/charart/{id}", get(assets::charart))
-        .route("/skin-portrait/{id}", get(assets::skin_portrait))
-        .route("/banner-image/{id}", get(assets::banner_image))
-        .route("/event-image/{id}", get(assets::event_image))
-        .route("/brand-kv/{id}", get(assets::brand_kv))
-        .route("/brand-logo/{id}", get(assets::brand_logo))
-        .route("/assets/{*path}", get(assets::generic))
-        .route("/login/send-code", post(auth::send_code))
-        .route("/login", post(auth::login))
-        .route("/login/bilibili", post(auth::login_bilibili))
-        .route("/login/bilibili/send-code", post(auth::send_bilibili_sms))
-        .route("/login/bilibili/sms", post(auth::login_bilibili_sms))
-        .route("/login/cn/send-code", post(auth::send_code_cn))
-        .route("/login/cn", post(auth::login_cn))
-        .route("/auth/verify", get(auth::verify))
-        .route("/auth/update-settings", post(auth::update_settings))
-        .route("/auth/disconnect", post(auth::disconnect))
-        .route("/release/events", get(release::events))
-        .route("/release/banners", get(release::banners))
-        .route("/release/skins", get(release::skins))
-        .route("/release/lag", get(release::lag))
-        .route(
-            "/release/plan",
-            get(release::get_plan).put(release::put_plan),
-        )
-        .route(
-            "/release/overrides",
-            get(release::list_overrides).put(release::put_override),
-        )
-        .route(
-            "/release/overrides/{kind}/{cn_id}",
-            delete(release::delete_override),
-        )
-        .route("/gacha/history", get(gacha::history))
-        .route("/gacha/history/{char_id}", get(gacha::history_by_char))
-        .route("/gacha/stored-records", get(gacha::stored_records))
-        .route("/gacha/stats", get(gacha::stats))
-        .route(
-            "/gacha/settings",
-            get(gacha::get_settings).post(gacha::update_settings),
-        )
-        .route("/refresh", post(auth::refresh))
-        .route("/roster", get(roster::get_roster))
-        .route("/roster/{operator_id}", get(roster::get_operator))
-        .route("/stage-clears", get(stages::get_stage_clears))
-        .route(
-            "/encountered-enemies",
-            get(enemies::get_encountered_enemies),
-        )
-        .route(
-            "/encountered-enemies/community-average",
-            get(enemies::get_community_average),
-        )
-        .route(
-            "/user/improvements",
-            get(improvements::get_user_improvements),
-        )
-        .route("/user/max-level-cost", get(account::get_max_level_cost))
-        .route("/base/catalog", get(base::get_catalog))
-        .route("/base/layout", get(base::get_layout))
-        .route("/base/evaluate", post(base::evaluate_layout))
-        .route("/base/optimize", post(base::optimize_layout))
-        .route("/base/rotation", post(base::rotation_plan))
-        .route("/base/facts", put(base::put_facts))
-        .route("/get-user-supports", get(roster::get_supports))
-        .route("/inventory", get(inventory::get_inventory))
-        .route("/user-skins", get(skins::get_owned_skins))
-        .route("/skins/popularity", get(skins::get_skin_popularity))
-        .route("/gacha/fetch", post(gacha::fetch))
-        .route("/gacha/global-stats", get(gacha::global_stats))
-        .route("/gacha/stats/enhanced", get(gacha::enhanced_stats))
-        .route("/gacha/stats/per-banner", get(gacha::per_banner_stats))
-        .route("/stats", get(stats::stats))
-        .route("/admin/stats", get(stats::admin_stats))
-        .route("/admin/users/{user_id}/role", put(user::set_user_role))
-        .route("/operators/index", get(operators::index))
-        .route("/operators/ownership", get(operators::ownership))
-        .route("/stages/{stage_id}/detail", get(stages::stage_detail))
-        .route("/enemies/{id}", get(enemies::enemy_detail))
-        .route("/enemies/{id}/stages", get(enemies::enemy_stages))
-        .route("/chibis/{operator_id}", get(chibis::chibi_detail))
-        .route("/skins/index", get(skins::skins_index))
-        .route("/dps/operators", get(dps::operators))
-        .route("/dps/calculate", post(dps::calculate))
-        .route("/hps/operators", get(dps::healers))
-        .route("/hps/calculate", post(dps::calculate_hps))
-        .route("/operator-notes", get(operator_notes::list))
-        .route("/operator-notes/{operator_id}", get(operator_notes::get))
-        .route("/operator-notes/{operator_id}", put(operator_notes::update))
-        .route(
-            "/operator-notes/{operator_id}/audit",
-            get(operator_notes::audit_log),
-        )
-        .route(
-            "/admin/operator-notes/audit",
-            get(operator_notes::global_audit_log),
-        )
-        .route("/friends", get(social::get_friends))
-        .route("/players/search", get(social::search_players))
-        .route("/plans", get(planner::list))
-        .route("/plans/public", get(planner::list_public))
-        .route(
-            "/plan/{operator_id}",
-            post(planner::upsert).delete(planner::delete),
-        )
-        .route("/plan/group", post(planner::create_group))
-        .route(
-            "/plan/group/{group_name}",
-            put(planner::update_group).delete(planner::delete_group),
-        )
-        .route("/upcoming", get(operators::upcoming))
-        .route("/{server}/upcoming", get(operators::upcoming_srv))
-        .route("/operators/{id}", get(operators::detail))
-        .route("/operators/{id}/build-stats", get(operators::build_stats))
-        .route("/voices/{id}", get(operators::voices_detail))
-        .route("/{server}/voices/{id}", get(operators::voices_detail_srv))
-        .route("/skins/{id}", get(operators::skins_detail))
-        .route("/{server}/skins/{id}", get(operators::skins_detail_srv))
-        .route("/{server}/operators/index", get(operators::index_srv))
-        .route(
-            "/{server}/operators/ownership",
-            get(operators::ownership_srv),
-        )
-        .route("/{server}/operators/{id}", get(operators::detail_srv))
-        .route(
-            "/{server}/operators/{id}/build-stats",
-            get(operators::build_stats_srv),
-        )
-        .route(
-            "/{server}/stages/{stage_id}/detail",
-            get(stages::stage_detail_srv),
-        )
-        .route("/{server}/enemies/{id}", get(enemies::enemy_detail_srv))
-        .route(
-            "/{server}/enemies/{id}/stages",
-            get(enemies::enemy_stages_srv),
-        )
-        .route(
-            "/{server}/chibis/{operator_id}",
-            get(chibis::chibi_detail_srv),
-        )
-        .route("/{server}/skins/index", get(skins::skins_index_srv))
-        .route(
-            "/{server}/static/{resource}",
-            get(static_data::get_static_srv),
-        )
-        .route("/{server}/level/{stage_id}", get(level::get_level_map_srv))
-        .route("/{server}/avatar/{id}", get(assets::avatar_srv))
-        .route("/{server}/portrait/{id}", get(assets::portrait_srv))
-        .route("/{server}/skill-icon/{id}", get(assets::skill_icon_srv))
-        .route("/{server}/module-icon/{id}", get(assets::module_icon_srv))
-        .route("/{server}/module-big/{id}", get(assets::module_big_srv))
-        .route("/{server}/enemy-icon/{id}", get(assets::enemy_icon_srv))
-        .route("/{server}/item-icon/{id}", get(assets::item_icon_srv))
-        .route("/{server}/medal-icon/{id}", get(assets::medal_icon_srv))
-        .route("/{server}/charart/{id}", get(assets::charart_srv))
-        .route(
-            "/{server}/skin-portrait/{id}",
-            get(assets::skin_portrait_srv),
-        )
-        .route("/{server}/banner-image/{id}", get(assets::banner_image_srv))
-        .route("/{server}/event-image/{id}", get(assets::event_image_srv))
-        .route("/{server}/brand-kv/{id}", get(assets::brand_kv_srv))
-        .route("/{server}/brand-logo/{id}", get(assets::brand_logo_srv))
-        .route("/{server}/assets/{*path}", get(assets::generic_srv))
+/// The `/api` route tree.
+///
+/// Every handler here is reached through `.routes(routes!(..))` and carries a
+/// `#[utoipa::path]` annotation: the path and method come from that
+/// annotation, so the route and its documentation are one declaration rather
+/// than two that have to be kept in agreement.
+///
+/// `.route(..)` still works and would still serve, but a route added that way
+/// is invisible to the `OpenAPI` document, so `tests/openapi_snapshot_test.rs`
+/// fails on it. See [`crate::app::openapi`] for what to write instead.
+///
+/// The builder chain keeps one `OpenApiRouter` temporary per `.routes(..)` call
+/// live in a debug frame (~700 KB); it runs once at startup, on the main
+/// thread's 8 MB stack, so the frame is not a risk.
+#[allow(clippy::large_stack_frames)]
+pub fn router() -> OpenApiRouter<AppState> {
+    OpenApiRouter::new()
+        .routes(routes!(health::health))
+        .routes(routes!(user::get_user))
+        .routes(routes!(user::get_user_score))
+        .routes(routes!(user::get_user_checkin))
+        .routes(routes!(leaderboard::leaderboard))
+        .routes(routes!(leaderboard::top_movers))
+        .routes(routes!(leaderboard::distribution))
+        .routes(routes!(leaderboard::standing))
+        .routes(routes!(leaderboard::score_history))
+        .routes(routes!(search::search))
+        .routes(routes!(static_data::get_static))
+        .routes(routes!(level::get_level_map))
+        .routes(routes!(assets::avatar))
+        .routes(routes!(assets::portrait))
+        .routes(routes!(assets::skill_icon))
+        .routes(routes!(assets::module_icon))
+        .routes(routes!(assets::module_big))
+        .routes(routes!(assets::enemy_icon))
+        .routes(routes!(assets::item_icon))
+        .routes(routes!(assets::medal_icon))
+        .routes(routes!(assets::charart))
+        .routes(routes!(assets::skin_portrait))
+        .routes(routes!(assets::banner_image))
+        .routes(routes!(assets::event_image))
+        .routes(routes!(assets::brand_kv))
+        .routes(routes!(assets::brand_logo))
+        .routes(routes!(assets::generic))
+        .routes(routes!(auth::send_code))
+        .routes(routes!(auth::login))
+        .routes(routes!(auth::login_bilibili))
+        .routes(routes!(auth::send_bilibili_sms))
+        .routes(routes!(auth::login_bilibili_sms))
+        .routes(routes!(auth::send_code_cn))
+        .routes(routes!(auth::login_cn))
+        .routes(routes!(auth::verify))
+        .routes(routes!(auth::update_settings))
+        .routes(routes!(auth::disconnect))
+        .routes(routes!(release::events))
+        .routes(routes!(release::banners))
+        .routes(routes!(release::skins))
+        .routes(routes!(release::lag))
+        .routes(routes!(release::get_plan, release::put_plan))
+        .routes(routes!(release::list_overrides, release::put_override))
+        .routes(routes!(release::delete_override))
+        .routes(routes!(gacha::history))
+        .routes(routes!(gacha::history_by_char))
+        .routes(routes!(gacha::stored_records))
+        .routes(routes!(gacha::stats))
+        .routes(routes!(gacha::get_settings, gacha::update_settings))
+        .routes(routes!(auth::refresh))
+        .routes(routes!(roster::get_roster))
+        .routes(routes!(roster::get_operator))
+        .routes(routes!(stages::get_stage_clears))
+        .routes(routes!(enemies::get_encountered_enemies))
+        .routes(routes!(enemies::get_community_average))
+        .routes(routes!(improvements::get_user_improvements))
+        .routes(routes!(account::get_max_level_cost))
+        .routes(routes!(base::get_catalog))
+        .routes(routes!(base::get_layout))
+        .routes(routes!(base::evaluate_layout))
+        .routes(routes!(base::optimize_layout))
+        .routes(routes!(base::rotation_plan))
+        .routes(routes!(base::put_facts))
+        .routes(routes!(roster::get_supports))
+        .routes(routes!(inventory::get_inventory))
+        .routes(routes!(skins::get_owned_skins))
+        .routes(routes!(skins::get_skin_popularity))
+        .routes(routes!(gacha::fetch))
+        .routes(routes!(gacha::global_stats))
+        .routes(routes!(gacha::enhanced_stats))
+        .routes(routes!(gacha::per_banner_stats))
+        .routes(routes!(stats::stats))
+        .routes(routes!(stats::admin_stats))
+        .routes(routes!(user::set_user_role))
+        .routes(routes!(operators::index))
+        .routes(routes!(operators::ownership))
+        .routes(routes!(stages::stage_detail))
+        .routes(routes!(enemies::enemy_detail))
+        .routes(routes!(enemies::enemy_stages))
+        .routes(routes!(chibis::chibi_detail))
+        .routes(routes!(skins::skins_index))
+        .routes(routes!(dps::operators))
+        .routes(routes!(dps::calculate))
+        .routes(routes!(dps::healers))
+        .routes(routes!(dps::calculate_hps))
+        .routes(routes!(operator_notes::list))
+        .routes(routes!(operator_notes::get, operator_notes::update))
+        .routes(routes!(operator_notes::audit_log))
+        .routes(routes!(operator_notes::global_audit_log))
+        .routes(routes!(social::get_friends))
+        .routes(routes!(social::search_players))
+        .routes(routes!(planner::list))
+        .routes(routes!(planner::list_public))
+        .routes(routes!(planner::upsert, planner::delete))
+        .routes(routes!(planner::create_group))
+        .routes(routes!(planner::update_group, planner::delete_group))
+        .routes(routes!(operators::upcoming))
+        .routes(routes!(operators::upcoming_srv))
+        .routes(routes!(operators::detail))
+        .routes(routes!(operators::build_stats))
+        .routes(routes!(operators::voices_detail))
+        .routes(routes!(operators::voices_detail_srv))
+        .routes(routes!(operators::skins_detail))
+        .routes(routes!(operators::skins_detail_srv))
+        .routes(routes!(operators::index_srv))
+        .routes(routes!(operators::ownership_srv))
+        .routes(routes!(operators::detail_srv))
+        .routes(routes!(operators::build_stats_srv))
+        .routes(routes!(stages::stage_detail_srv))
+        .routes(routes!(enemies::enemy_detail_srv))
+        .routes(routes!(enemies::enemy_stages_srv))
+        .routes(routes!(chibis::chibi_detail_srv))
+        .routes(routes!(skins::skins_index_srv))
+        .routes(routes!(static_data::get_static_srv))
+        .routes(routes!(level::get_level_map_srv))
+        .routes(routes!(assets::avatar_srv))
+        .routes(routes!(assets::portrait_srv))
+        .routes(routes!(assets::skill_icon_srv))
+        .routes(routes!(assets::module_icon_srv))
+        .routes(routes!(assets::module_big_srv))
+        .routes(routes!(assets::enemy_icon_srv))
+        .routes(routes!(assets::item_icon_srv))
+        .routes(routes!(assets::medal_icon_srv))
+        .routes(routes!(assets::charart_srv))
+        .routes(routes!(assets::skin_portrait_srv))
+        .routes(routes!(assets::banner_image_srv))
+        .routes(routes!(assets::event_image_srv))
+        .routes(routes!(assets::brand_kv_srv))
+        .routes(routes!(assets::brand_logo_srv))
+        .routes(routes!(assets::generic_srv))
         .merge(tier_lists::router())
         .merge(i18n::router())
 }

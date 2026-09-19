@@ -8,9 +8,27 @@ use crate::app::cpu;
 use crate::app::error::ApiError;
 use crate::app::routes::static_data::json_response;
 use crate::app::services;
+use crate::app::services::dps::CalculateRequest;
 use crate::app::state::AppState;
 use crate::dps::engine::{DpsResult, HpsResult};
 
+/// Every operator the damage simulator supports, with the configuration
+/// options each one accepts.
+#[utoipa::path(
+    get,
+    path = "/dps/operators",
+    tag = "dps",
+    params(
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the body.")
+    ),
+    responses(
+        (status = 200, description = "The supported operator list. Served from cache with an `ETag` and `Cache-Control: public, max-age=300`.", content_type = "application/json"),
+        (status = 304, description = "The caller's `If-None-Match` matched the current `ETag`; no body is sent."),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn operators(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -46,6 +64,20 @@ fn body_hash(body: &services::dps::CalculateRequest) -> u64 {
 /// Validation stays AHEAD of the cache read so an out-of-range body is rejected
 /// rather than keyed, and the cache read sits ahead of `cpu::run` so a hit never
 /// consumes a permit.
+#[utoipa::path(
+    post,
+    path = "/dps/calculate",
+    tag = "dps",
+    request_body = CalculateRequest,
+    responses(
+        (status = 200, description = "Skill-window DPS, total damage over the window, and the cycle average.", body = DpsResult),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 422, response = crate::app::openapi::responses::ValidationFailed),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, description = "The CPU admission queue is full. Retry shortly.")
+    )
+)]
 pub async fn calculate(
     State(state): State<AppState>,
     Json(body): Json<services::dps::CalculateRequest>,
@@ -70,6 +102,22 @@ pub async fn calculate(
     Ok(Json(result))
 }
 
+/// Every operator the healing simulator supports.
+#[utoipa::path(
+    get,
+    path = "/hps/operators",
+    tag = "dps",
+    params(
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the body.")
+    ),
+    responses(
+        (status = 200, description = "The supported healer list. Served from cache with an `ETag` and `Cache-Control: public, max-age=300`.", content_type = "application/json"),
+        (status = 304, description = "The caller's `If-None-Match` matched the current `ETag`; no body is sent."),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn healers(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -78,6 +126,23 @@ pub async fn healers(
     Ok(json_response(cached, &headers))
 }
 
+/// Simulate healing per second for one operator configuration.
+///
+/// Same admission control and memoisation as `/dps/calculate`.
+#[utoipa::path(
+    post,
+    path = "/hps/calculate",
+    tag = "dps",
+    request_body = CalculateRequest,
+    responses(
+        (status = 200, description = "Skill-window HPS, charge-phase HPS, and the cycle average.", body = HpsResult),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 422, response = crate::app::openapi::responses::ValidationFailed),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, description = "The CPU admission queue is full. Retry shortly.")
+    )
+)]
 pub async fn calculate_hps(
     State(state): State<AppState>,
     Json(body): Json<services::dps::CalculateRequest>,

@@ -1,13 +1,18 @@
 use anyhow::Result;
 use axum::Router;
+use axum::body::Bytes;
 use axum::extract::State;
-use axum::http::HeaderName;
+use axum::http::{HeaderName, header};
 use axum::routing::get;
 use tower_http::compression::predicate::{DefaultPredicate, NotForContentType, Predicate};
 use tower_http::compression::{CompressionLayer, CompressionLevel};
 use tower_http::cors::CorsLayer;
+use utoipa::OpenApi;
+use utoipa_axum::router::OpenApiRouter;
+use utoipa_scalar::{Scalar, Servable};
 
 use crate::app::metrics::METRICS;
+use crate::app::openapi::ApiDoc;
 use crate::app::routes::router;
 use crate::app::state::AppState;
 use crate::app::{cpu, middleware};
@@ -18,6 +23,21 @@ use crate::app::{cpu, middleware};
 /// public API.
 async fn metrics_handler(State(state): State<AppState>) -> String {
     METRICS.render(Some(&state.db))
+}
+
+/// The `/api` route tree paired with the `OpenAPI` document describing it.
+///
+/// Building the tree is what produces the document: both come from the same
+/// `#[utoipa::path]` annotations, so `api` describes the routes this process
+/// actually serves rather than a file kept in step with them by hand.
+///
+/// Lives here, called from both [`run`] and `tests/openapi_snapshot_test.rs`,
+/// so the document the test pins is the document the server serves. Composing
+/// it separately in the test would pin a second, parallel API.
+pub fn api_parts() -> (Router<AppState>, utoipa::openapi::OpenApi) {
+    OpenApiRouter::with_openapi(ApiDoc::openapi())
+        .nest("/api", router())
+        .split_for_parts()
 }
 
 pub async fn run(state: AppState) -> Result<()> {
@@ -41,6 +61,12 @@ pub async fn run(state: AppState) -> Result<()> {
     // HIT from one page and MISS from another). An empty `Vary` is the truthful one.
     let cors = CorsLayer::permissive().vary::<[HeaderName; 0]>([]);
 
+    let (api_router, api) = api_parts();
+
+    // Serialized once at startup. `Bytes` clones by refcount, so each request
+    // for the spec hands out the same buffer rather than re-rendering it.
+    let spec_body = Bytes::from(api.to_json()?);
+
     // Layer order, outermost first. `.layer` wraps what came before it, so this
     // list reads bottom-up against the builder below:
     //
@@ -48,14 +74,26 @@ pub async fn run(state: AppState) -> Result<()> {
     //               and the latency it records covers compression.
     //   cors     -> answers preflights.
     //   compress -> encodes the body.
-    //   limit    -> innermost of the four, where the matched route is known.
-    let app = Router::new()
-        .nest("/api", router())
+    //   limit    -> innermost, where the matched route is known.
+    //
+    // The docs and the spec are added AFTER the rate-limit layer and so sit
+    // outside it: `.layer` wraps only the routes already on the builder.
+    // Reading the documentation should not spend the caller's API budget, and
+    // a docs page pulling its own spec must not cost them two requests either.
+    let app = api_router
         .route("/metrics", get(metrics_handler))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             middleware::rate_limit,
         ))
+        .merge(Scalar::with_url("/docs", api))
+        .route(
+            "/api/openapi.json",
+            get(move || {
+                let body = spec_body.clone();
+                async move { ([(header::CONTENT_TYPE, "application/json")], body) }
+            }),
+        )
         .layer(compression)
         .layer(cors)
         .layer(axum::middleware::from_fn(middleware::observe))
@@ -69,7 +107,7 @@ pub async fn run(state: AppState) -> Result<()> {
     tracing::info!(
         port,
         cpu_permits = cpu::permits(),
-        "listening; metrics on /metrics"
+        "listening; metrics on /metrics, docs on /docs"
     );
     // The graceful drain waits for open connections; a request parked on a
     // running base search (tens of seconds in a debug build) held the process

@@ -14,6 +14,27 @@ pub struct RosterParams {
     pub uid: Option<String>,
 }
 
+/// Every operator a player owns, with level, promotion, skills and modules.
+/// Runs the shared privacy gate: another player's data is readable only when
+/// their profile is public, and a player always sees their own.
+#[utoipa::path(
+    get,
+    path = "/roster",
+    tag = "player",
+    params(
+        ("uid" = Option<String>, Query, description = "Player to read. Omitted means the caller's own account, which then requires a token.")
+    ),
+    security(("bearer_auth" = []), ()),
+    responses(
+        (status = 200, description = "The player's owned operators.", body = Vec<RosterEntry>),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn get_roster(
     State(state): State<AppState>,
     auth: MaybeAuthUser,
@@ -24,6 +45,28 @@ pub async fn get_roster(
     Ok(Json(entries))
 }
 
+/// One owned operator from a player's roster.
+/// Runs the shared privacy gate: another player's data is readable only when
+/// their profile is public, and a player always sees their own.
+#[utoipa::path(
+    get,
+    path = "/roster/{operator_id}",
+    tag = "player",
+    params(
+        ("operator_id" = String, Path, description = "Operator id, e.g. `char_002_amiya`."),
+        ("uid" = Option<String>, Query, description = "Player to read. Omitted means the caller's own account, which then requires a token.")
+    ),
+    security(("bearer_auth" = []), ()),
+    responses(
+        (status = 200, description = "The player's copy of that operator.", body = RosterEntry),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn get_operator(
     State(state): State<AppState>,
     auth: MaybeAuthUser,
@@ -37,6 +80,27 @@ pub async fn get_operator(
     Ok(Json(entry))
 }
 
+/// The player's support units, as other players would borrow them.
+/// Runs the shared privacy gate: another player's data is readable only when
+/// their profile is public, and a player always sees their own.
+#[utoipa::path(
+    get,
+    path = "/get-user-supports",
+    tag = "player",
+    params(
+        ("uid" = Option<String>, Query, description = "Player to read. Omitted means the caller's own account, which then requires a token.")
+    ),
+    security(("bearer_auth" = []), ()),
+    responses(
+        (status = 200, description = "The configured support slots.", body = Vec<SupportUnit>),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn get_supports(
     State(state): State<AppState>,
     auth: MaybeAuthUser,

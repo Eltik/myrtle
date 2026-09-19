@@ -2,6 +2,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 use thiserror::Error;
+use utoipa::ToSchema;
 
 use crate::core::hypergryph::fetch::FetchError;
 
@@ -50,23 +51,36 @@ impl ApiError {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+/// One field-level failure inside a `VALIDATION_FAILED` response.
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct FieldError {
+    /// The offending field, as named in the request body.
+    #[schema(example = "email")]
     pub field: String,
+    #[schema(example = "must be a valid email address")]
     pub message: String,
 }
 
-#[derive(Serialize)]
-struct ErrorBody {
-    error: ErrorDetail,
+/// The single error envelope every failing endpoint returns.
+///
+/// Public because it is the documented error schema: `openapi.rs` registers it
+/// as a component and handlers reference it from their `responses(...)` lists.
+#[derive(Serialize, ToSchema)]
+pub struct ErrorBody {
+    pub error: ErrorDetail,
 }
 
-#[derive(Serialize)]
-struct ErrorDetail {
-    code: &'static str,
-    message: String,
+#[derive(Serialize, ToSchema)]
+pub struct ErrorDetail {
+    /// Stable machine-readable code. Clients should branch on this, not on
+    /// `message`, which is prose and may change.
+    #[schema(value_type = String, example = "NOT_FOUND")]
+    pub code: &'static str,
+    #[schema(example = "not found")]
+    pub message: String,
+    /// Present only on `VALIDATION_FAILED` (422).
     #[serde(skip_serializing_if = "Option::is_none")]
-    details: Option<Vec<FieldError>>,
+    pub details: Option<Vec<FieldError>>,
 }
 
 impl IntoResponse for ApiError {

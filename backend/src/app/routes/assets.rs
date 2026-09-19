@@ -82,6 +82,25 @@ async fn portrait_impl(
     .await
 }
 
+/// Operator portrait art.
+#[utoipa::path(
+    get,
+    path = "/portrait/{id}",
+    tag = "assets",
+    params(
+        ("id" = String, Path, description = "Operator id, e.g. `char_002_amiya`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn portrait(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -90,6 +109,27 @@ pub async fn portrait(
     portrait_impl(&state, state.default_server, &char_id, &headers).await
 }
 
+/// Operator portrait art. Served from `server`, falling back to the
+/// default server when that server has no entry for the id.
+#[utoipa::path(
+    get,
+    path = "/{server}/portrait/{id}",
+    tag = "assets",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("id" = String, Path, description = "Operator id, e.g. `char_002_amiya`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn portrait_srv(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -116,6 +156,25 @@ async fn avatar_impl(
     .await
 }
 
+/// Small square operator avatar.
+#[utoipa::path(
+    get,
+    path = "/avatar/{id}",
+    tag = "assets",
+    params(
+        ("id" = String, Path, description = "Operator or skin id."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn avatar(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -124,6 +183,27 @@ pub async fn avatar(
     avatar_impl(&state, state.default_server, &avatar_id, &headers).await
 }
 
+/// Small square operator avatar. Served from `server`, falling back to the
+/// default server when that server has no entry for the id.
+#[utoipa::path(
+    get,
+    path = "/{server}/avatar/{id}",
+    tag = "assets",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("id" = String, Path, description = "Operator or skin id."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn avatar_srv(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -145,6 +225,25 @@ async fn skill_icon_impl(
     .await
 }
 
+/// Skill icon.
+#[utoipa::path(
+    get,
+    path = "/skill-icon/{id}",
+    tag = "assets",
+    params(
+        ("id" = String, Path, description = "Skill icon id from `skill_table`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn skill_icon(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -153,6 +252,27 @@ pub async fn skill_icon(
     skill_icon_impl(&state, state.default_server, &skill_id, &headers).await
 }
 
+/// Skill icon. Served from `server`, falling back to the
+/// default server when that server has no entry for the id.
+#[utoipa::path(
+    get,
+    path = "/{server}/skill-icon/{id}",
+    tag = "assets",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("id" = String, Path, description = "Skill icon id from `skill_table`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn skill_icon_srv(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -174,6 +294,25 @@ async fn module_icon_impl(
     .await
 }
 
+/// Small module icon.
+#[utoipa::path(
+    get,
+    path = "/module-icon/{id}",
+    tag = "assets",
+    params(
+        ("id" = String, Path, description = "Module (equip) id."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn module_icon(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -182,6 +321,27 @@ pub async fn module_icon(
     module_icon_impl(&state, state.default_server, &equip_id, &headers).await
 }
 
+/// Small module icon. Served from `server`, falling back to the
+/// default server when that server has no entry for the id.
+#[utoipa::path(
+    get,
+    path = "/{server}/module-icon/{id}",
+    tag = "assets",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("id" = String, Path, description = "Module (equip) id."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn module_icon_srv(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -203,6 +363,25 @@ async fn module_big_impl(
     .await
 }
 
+/// Full-size module art.
+#[utoipa::path(
+    get,
+    path = "/module-big/{id}",
+    tag = "assets",
+    params(
+        ("id" = String, Path, description = "Module (equip) id."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn module_big(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -211,6 +390,27 @@ pub async fn module_big(
     module_big_impl(&state, state.default_server, &equip_id, &headers).await
 }
 
+/// Full-size module art. Served from `server`, falling back to the
+/// default server when that server has no entry for the id.
+#[utoipa::path(
+    get,
+    path = "/{server}/module-big/{id}",
+    tag = "assets",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("id" = String, Path, description = "Module (equip) id."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn module_big_srv(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -232,6 +432,25 @@ async fn enemy_icon_impl(
     .await
 }
 
+/// Enemy icon.
+#[utoipa::path(
+    get,
+    path = "/enemy-icon/{id}",
+    tag = "assets",
+    params(
+        ("id" = String, Path, description = "Enemy id from `enemy_database`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn enemy_icon(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -240,6 +459,27 @@ pub async fn enemy_icon(
     enemy_icon_impl(&state, state.default_server, &enemy_id, &headers).await
 }
 
+/// Enemy icon. Served from `server`, falling back to the
+/// default server when that server has no entry for the id.
+#[utoipa::path(
+    get,
+    path = "/{server}/enemy-icon/{id}",
+    tag = "assets",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("id" = String, Path, description = "Enemy id from `enemy_database`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn enemy_icon_srv(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -261,6 +501,25 @@ async fn item_icon_impl(
     .await
 }
 
+/// Inventory item icon.
+#[utoipa::path(
+    get,
+    path = "/item-icon/{id}",
+    tag = "assets",
+    params(
+        ("id" = String, Path, description = "Item id from `item_table`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn item_icon(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -269,6 +528,27 @@ pub async fn item_icon(
     item_icon_impl(&state, state.default_server, &item_id, &headers).await
 }
 
+/// Inventory item icon. Served from `server`, falling back to the
+/// default server when that server has no entry for the id.
+#[utoipa::path(
+    get,
+    path = "/{server}/item-icon/{id}",
+    tag = "assets",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("id" = String, Path, description = "Item id from `item_table`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn item_icon_srv(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -290,6 +570,25 @@ async fn medal_icon_impl(
     .await
 }
 
+/// Medal icon.
+#[utoipa::path(
+    get,
+    path = "/medal-icon/{id}",
+    tag = "assets",
+    params(
+        ("id" = String, Path, description = "Medal id."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn medal_icon(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -298,6 +597,27 @@ pub async fn medal_icon(
     medal_icon_impl(&state, state.default_server, &medal_id, &headers).await
 }
 
+/// Medal icon. Served from `server`, falling back to the
+/// default server when that server has no entry for the id.
+#[utoipa::path(
+    get,
+    path = "/{server}/medal-icon/{id}",
+    tag = "assets",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("id" = String, Path, description = "Medal id."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn medal_icon_srv(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -319,6 +639,25 @@ async fn skin_portrait_impl(
     .await
 }
 
+/// Skin portrait art.
+#[utoipa::path(
+    get,
+    path = "/skin-portrait/{id}",
+    tag = "assets",
+    params(
+        ("id" = String, Path, description = "Skin id from `skin_table`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn skin_portrait(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -327,6 +666,27 @@ pub async fn skin_portrait(
     skin_portrait_impl(&state, state.default_server, &skin_id, &headers).await
 }
 
+/// Skin portrait art. Served from `server`, falling back to the
+/// default server when that server has no entry for the id.
+#[utoipa::path(
+    get,
+    path = "/{server}/skin-portrait/{id}",
+    tag = "assets",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("id" = String, Path, description = "Skin id from `skin_table`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn skin_portrait_srv(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -335,8 +695,15 @@ pub async fn skin_portrait_srv(
     skin_portrait_impl(&state, server, &skin_id, &headers).await
 }
 
+/// Defines one asset endpoint pair, plain and per-server, plus the `OpenAPI`
+/// operation for each.
+///
+/// The paths are passed in rather than derived so the `#[utoipa::path]`
+/// annotation and the route carry the SAME literal: `routes!()` reads the path
+/// off the annotation, so a path written here is the path that gets served and
+/// the path that gets documented, with no third place to keep in agreement.
 macro_rules! indexed_asset_routes {
-    ($impl_name:ident, $plain:ident, $srv:ident, $resolver:ident) => {
+    ($impl_name:ident, $plain:ident, $srv:ident, $resolver:ident, $path:literal, $srv_path:literal, $id:literal, $what:literal) => {
         async fn $impl_name(
             state: &AppState,
             server: Server,
@@ -349,6 +716,25 @@ macro_rules! indexed_asset_routes {
             .await
         }
 
+        #[doc = $what]
+        #[utoipa::path(
+            get,
+            path = $path,
+            tag = "assets",
+            params(
+                ($id = String, Path, description = "Asset id."),
+                ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+                ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+            ),
+            responses(
+                (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+                (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+                (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+                (status = 404, response = crate::app::openapi::responses::NotFound),
+                (status = 429, response = crate::app::openapi::responses::RateLimited),
+                (status = 500, response = crate::app::openapi::responses::InternalError)
+            )
+        )]
         pub async fn $plain(
             State(state): State<AppState>,
             headers: HeaderMap,
@@ -357,6 +743,26 @@ macro_rules! indexed_asset_routes {
             $impl_name(&state, state.default_server, &id, &headers).await
         }
 
+        #[doc = $what]
+        #[utoipa::path(
+            get,
+            path = $srv_path,
+            tag = "assets",
+            params(
+                ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+                ($id = String, Path, description = "Asset id."),
+                ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+                ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+            ),
+            responses(
+                (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+                (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+                (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+                (status = 404, response = crate::app::openapi::responses::NotFound),
+                (status = 429, response = crate::app::openapi::responses::RateLimited),
+                (status = 500, response = crate::app::openapi::responses::InternalError)
+            )
+        )]
         pub async fn $srv(
             State(state): State<AppState>,
             headers: HeaderMap,
@@ -372,19 +778,45 @@ indexed_asset_routes!(
     banner_image_impl,
     banner_image,
     banner_image_srv,
-    gacha_banner_path
+    gacha_banner_path,
+    "/banner-image/{pool_id}",
+    "/{server}/banner-image/{pool_id}",
+    "pool_id",
+    " Gacha banner art, by gacha pool id."
 );
 // `/event-image/{act_id}`: event art by activity id.
 indexed_asset_routes!(
     event_image_impl,
     event_image,
     event_image_srv,
-    event_banner_path
+    event_banner_path,
+    "/event-image/{act_id}",
+    "/{server}/event-image/{act_id}",
+    "act_id",
+    " Event art, by activity id."
 );
 // `/brand-kv/{kv_id}`: skin brand key visual.
-indexed_asset_routes!(brand_kv_impl, brand_kv, brand_kv_srv, brand_kv_path);
+indexed_asset_routes!(
+    brand_kv_impl,
+    brand_kv,
+    brand_kv_srv,
+    brand_kv_path,
+    "/brand-kv/{kv_id}",
+    "/{server}/brand-kv/{kv_id}",
+    "kv_id",
+    " Skin brand key visual."
+);
 // `/brand-logo/{brand_id}`: skin brand logo.
-indexed_asset_routes!(brand_logo_impl, brand_logo, brand_logo_srv, brand_logo_path);
+indexed_asset_routes!(
+    brand_logo_impl,
+    brand_logo,
+    brand_logo_srv,
+    brand_logo_path,
+    "/brand-logo/{brand_id}",
+    "/{server}/brand-logo/{brand_id}",
+    "brand_id",
+    " Skin brand logo."
+);
 
 async fn charart_impl(
     state: &AppState,
@@ -395,6 +827,25 @@ async fn charart_impl(
     serve_resolved(state, server, headers, |idx| idx.charart_path(char_id)).await
 }
 
+/// Full character illustration.
+#[utoipa::path(
+    get,
+    path = "/charart/{id}",
+    tag = "assets",
+    params(
+        ("id" = String, Path, description = "Operator id."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn charart(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -403,6 +854,27 @@ pub async fn charart(
     charart_impl(&state, state.default_server, &char_id, &headers).await
 }
 
+/// Full character illustration. Served from `server`, falling back to the
+/// default server when that server has no entry for the id.
+#[utoipa::path(
+    get,
+    path = "/{server}/charart/{id}",
+    tag = "assets",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("id" = String, Path, description = "Operator id."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn charart_srv(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -430,6 +902,29 @@ async fn generic_impl(
     Err(ApiError::NotFound)
 }
 
+/// Any asset by its path under the server's assets directory.
+///
+/// The path is validated against directory traversal and restricted to a
+/// fixed extension allowlist; anything else is a 400.
+#[utoipa::path(
+    get,
+    path = "/assets/{path}",
+    tag = "assets",
+    params(
+        ("path" = String, Path, description = "Asset path relative to the server's assets root."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn generic(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -438,6 +933,30 @@ pub async fn generic(
     generic_impl(&state, state.default_server, &asset_path, &headers).await
 }
 
+/// Any asset by its path under the server's assets directory.
+///
+/// The path is validated against directory traversal and restricted to a
+/// fixed extension allowlist; anything else is a 400.
+#[utoipa::path(
+    get,
+    path = "/{server}/assets/{path}",
+    tag = "assets",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("path" = String, Path, description = "Asset path relative to the server's assets root."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes."),
+        ("Range" = Option<String>, Header, description = "Byte range. Honoured for the large media assets, answered with 206.")
+    ),
+    responses(
+        (status = 200, description = "The asset bytes, with an `ETag` and `Cache-Control: public, max-age=604800`."),
+        (status = 206, description = "Partial content, when the request carried a satisfiable `Range`."),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
 pub async fn generic_srv(
     State(state): State<AppState>,
     headers: HeaderMap,

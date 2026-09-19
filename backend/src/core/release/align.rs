@@ -7,7 +7,9 @@ use super::{
     types::AlignMethod,
 };
 
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, ts_rs::TS)]
+#[derive(
+    Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, ts_rs::TS, utoipa::ToSchema,
+)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct RuleIndependence {

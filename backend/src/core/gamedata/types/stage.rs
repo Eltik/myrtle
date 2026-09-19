@@ -14,7 +14,7 @@ use super::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum StageType {
     #[default]
@@ -32,7 +32,7 @@ pub enum StageType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum StageDifficulty {
     #[default]
@@ -45,7 +45,7 @@ pub enum StageDifficulty {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum AppearanceStyle {
     #[default]
@@ -66,7 +66,7 @@ pub enum AppearanceStyle {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[ts(rename = "StageUnlockCondition")]
 pub struct UnlockCondition {
@@ -85,7 +85,7 @@ pub struct UnlockCondition {
 /// for forward-compatibility with new game-data values.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct DisplayDetailReward {
     #[serde(alias = "DropType")]
@@ -103,7 +103,7 @@ pub struct DisplayDetailReward {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct StageDropInfo {
     #[serde(alias = "DisplayDetailRewards", default)]
@@ -116,7 +116,7 @@ pub struct StageDropInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Stage {
     #[serde(alias = "StageId")]
@@ -205,7 +205,7 @@ pub struct Stage {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct StageData {
     pub stages: HashMap<String, Stage>,

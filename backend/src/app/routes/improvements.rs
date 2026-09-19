@@ -15,6 +15,29 @@ pub struct ImprovementsParams {
     pub uid: Option<String>,
 }
 
+/// Ranked suggestions for what would raise this player's score most.
+/// Runs the shared privacy gate: another player's data is readable only when
+/// their profile is public, and a player always sees their own.
+#[utoipa::path(
+    get,
+    path = "/user/improvements",
+    tag = "player",
+    params(
+        ("uid" = Option<String>, Query, description = "Player to read. Omitted means the caller's own account, which then requires a token."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the body.")
+    ),
+    security(("bearer_auth" = []), ()),
+    responses(
+        (status = 200, description = "Suggestions, served from cache with an `ETag` and `Cache-Control: public, max-age=300`.", content_type = "application/json"),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn get_user_improvements(
     State(state): State<AppState>,
     auth: MaybeAuthUser,

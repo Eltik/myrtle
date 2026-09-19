@@ -2,6 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { deleteCookie, getCookie, setCookie } from "@tanstack/react-start/server";
 import { env } from "#/env";
 import { APIError, parseError } from "#/lib/api/_shared";
+import type { LoginResponse } from "#/types/generated/LoginResponse";
+import type { StatusOk } from "#/types/generated/StatusOk";
+import type { VerifySession } from "#/types/generated/VerifySession";
 import type { IUserProfile } from "#/types/user";
 import { backendFetch } from "../fetch";
 import { type AKServer, type BilibiliLoginInput, type BilibiliSmsLoginInput, bilibiliLoginSchema, bilibiliSmsLoginSchema, type CnLoginInput, cnLoginSchema, type LoginInput, loginSchema } from "./login";
@@ -83,7 +86,7 @@ function clearAuthCookies() {
 // and Yostar's own reason for rejecting a code (400) behind the same words.
 const completeLogin = async (loginRes: Response): Promise<ISession> => {
     if (!loginRes.ok) throw await parseError(loginRes);
-    const { token } = (await loginRes.json()) as { token: string; uid: string };
+    const { token } = (await loginRes.json()) as LoginResponse;
 
     setAuthCookies(token);
 
@@ -178,12 +181,7 @@ const sessionForToken = async (token: string): Promise<ISession | null> => {
     // from `translation_permissions`, which is what every admin route checks.
     // Reading the role off the profile row instead (what this did before) let
     // the client gate and the server gate drift apart.
-    const { valid, uid, role, canAccessAdminPanel } = (await verifyRes.json()) as {
-        valid: boolean;
-        uid?: string;
-        role?: string;
-        canAccessAdminPanel?: boolean;
-    };
+    const { valid, uid, role, canAccessAdminPanel } = (await verifyRes.json()) as VerifySession;
     if (!valid || !uid) {
         clearAuthCookies();
         return null;
@@ -214,7 +212,7 @@ const sendCode = async (data: { email: string; server: AKServer }) => {
 
     if (!req.ok) throw await parseError(req);
 
-    return (await req.json()) as { status: string };
+    return (await req.json()) as StatusOk;
 };
 
 const sendCodeCn = async (data: { phone: string }) => {
@@ -225,7 +223,7 @@ const sendCodeCn = async (data: { phone: string }) => {
 
     if (!req.ok) throw await parseError(req);
 
-    return (await req.json()) as { status: string };
+    return (await req.json()) as StatusOk;
 };
 
 const sendBiliSms = async (data: { phone: string }) => {
@@ -236,5 +234,5 @@ const sendBiliSms = async (data: { phone: string }) => {
 
     if (!req.ok) throw await parseError(req);
 
-    return (await req.json()) as { status: string };
+    return (await req.json()) as StatusOk;
 };

@@ -99,7 +99,7 @@ impl GachaApiItem {
     }
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -108,7 +108,7 @@ pub struct FetchResult {
     pub new_records: usize,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -278,7 +278,7 @@ pub async fn get_global_stats(state: &AppState) -> Result<GlobalGachaStats, ApiE
 // Enhanced global stats (port from old backend)
 // ============================================
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -302,7 +302,7 @@ pub struct CollectiveStats {
     pub first_pull_at: Option<i64>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -311,7 +311,7 @@ pub struct PullRates {
     pub five_star_rate: f64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -324,7 +324,7 @@ pub struct OperatorPopularity {
     pub percentage: f64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -335,7 +335,7 @@ pub struct HourlyPullData {
     pub percentage: f64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -347,7 +347,7 @@ pub struct DayOfWeekPullData {
     pub percentage: f64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -357,7 +357,7 @@ pub struct DatePullData {
     pub pull_count: i64,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -369,7 +369,7 @@ pub struct PullTimingData {
     pub by_date: Option<Vec<DatePullData>>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -629,7 +629,7 @@ pub async fn get_enhanced_stats(
     Ok(result)
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -724,7 +724,7 @@ pub async fn get_stats(state: &AppState, user_id: Uuid) -> Result<GachaStats, Ap
 // Port: GachaRecords (grouped) + history envelope + settings
 // ============================================
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Clone)]
 pub struct GachaRecordEntryDto {
@@ -764,7 +764,7 @@ impl From<GachaRecord> for GachaRecordEntryDto {
 }
 
 /// `GachaItem` shape expected by the frontend (camelCase/star-as-string).
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Clone)]
 pub struct GachaItemDto {
@@ -803,7 +803,7 @@ impl From<&GachaRecord> for GachaItemDto {
     }
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize)]
 pub struct GachaTypeRecordsDto {
@@ -812,7 +812,7 @@ pub struct GachaTypeRecordsDto {
     pub total: usize,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize)]
 pub struct GachaRecordsDto {
@@ -868,7 +868,7 @@ pub async fn get_stored_records(
     })
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize)]
 pub struct GachaPaginationInfoDto {
@@ -880,7 +880,7 @@ pub struct GachaPaginationInfoDto {
     pub has_more: bool,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize)]
 pub struct HistoryFiltersAppliedDto {
@@ -893,7 +893,7 @@ pub struct HistoryFiltersAppliedDto {
     pub date_range: Option<DateRangeDto>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize)]
 pub struct DateRangeDto {
@@ -903,7 +903,7 @@ pub struct DateRangeDto {
     pub to: Option<i64>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize)]
 pub struct GachaHistoryEnvelopeDto {
@@ -982,7 +982,7 @@ pub async fn get_history_for_char(
 // Settings
 // ============================================
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize)]
 pub struct GachaSettingsDto {

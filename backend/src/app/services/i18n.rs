@@ -34,7 +34,7 @@ fn source_hash(text: &str) -> String {
 
 // ---------------------------------------------------------------- manifest
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct I18nManifestLocale {
@@ -47,7 +47,7 @@ pub struct I18nManifestLocale {
     pub namespaces: BTreeMap<String, String>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct I18nManifest {
@@ -448,7 +448,7 @@ pub async fn list_locales(state: &AppState, enabled_only: bool) -> Result<Vec<Lo
         .map_err(std::convert::Into::into)
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Serialize)]
 pub struct TranslationListResponse {
@@ -495,7 +495,7 @@ pub async fn list_entries(
     Ok(TranslationListResponse { entries, total })
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Serialize)]
 pub struct LocaleProgress {
@@ -544,7 +544,7 @@ pub async fn get_audit_log(
         .map_err(std::convert::Into::into)
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Serialize)]
 pub struct TranslationAuditActor {
@@ -555,7 +555,7 @@ pub struct TranslationAuditActor {
     pub secretary_skin_id: Option<String>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Serialize)]
 pub struct TranslationAuditEntry {
@@ -569,7 +569,7 @@ pub struct TranslationAuditEntry {
     pub actor: TranslationAuditActor,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Serialize)]
 pub struct TranslationAuditResponse {
@@ -700,7 +700,7 @@ pub async fn clear_message(
 
 // ---------------------------------------------------------------- key sync
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct SourceEntry {
     pub key: String,
     pub namespace: String,
@@ -711,7 +711,7 @@ pub struct SourceEntry {
     pub placeholders: Vec<String>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Serialize)]
 pub struct SyncResult {

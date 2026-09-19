@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { backendFetch } from "#/lib/fetch";
+import type { DisconnectResult } from "#/types/generated/DisconnectResult";
+import type { StatusOk } from "#/types/generated/StatusOk";
 
 export interface IUpdateUserSettingsInput {
     public_profile: boolean;
@@ -22,7 +24,7 @@ export const updateUserSettingsFn = createServerFn({ method: "POST" })
             const text = await res.text().catch(() => "");
             throw new Error(text || `Failed to update settings: ${res.status}`);
         }
-        return (await res.json()) as { status: string };
+        return (await res.json()) as StatusOk;
     });
 
 /**
@@ -42,8 +44,10 @@ export const disconnectGameAccountFn = createServerFn({ method: "POST" }).handle
         const text = await res.text().catch(() => "");
         throw new Error(text || `Failed to disconnect: ${res.status}`);
     }
-    const body = (await res.json()) as { status: string; removed?: boolean };
-    return { removed: body.removed ?? false };
+    // `removed` is required on the generated type, so the `?? false` this used
+    // to carry is gone: the backend always sends it.
+    const body = (await res.json()) as DisconnectResult;
+    return { removed: body.removed };
 });
 
 export const refreshRosterFn = createServerFn({ method: "POST" }).handler(async (): Promise<{ status: string }> => {

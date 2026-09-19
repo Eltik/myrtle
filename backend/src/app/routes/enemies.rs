@@ -22,7 +22,7 @@ pub struct EncounteredEnemiesParams {
     pub uid: Option<String>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -35,7 +35,7 @@ pub struct EncounteredEnemy {
     pub sort_id: Option<i32>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -52,6 +52,24 @@ pub struct EncounteredEnemiesResponse {
 /// `GET /enemies/{id}` - one enemy handbook record plus the race lookup table
 /// (default server). Replaces the enemy-detail page's full `/static/enemies`
 /// fetch.
+/// One enemy's handbook record and stats.
+#[utoipa::path(
+    get,
+    path = "/enemies/{id}",
+    tag = "gamedata",
+    params(
+        ("id" = String, Path, description = "Enemy id from `enemy_database`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the body.")
+    ),
+    responses(
+        (status = 200, description = "The enemy. Served from cache with an `ETag` and `Cache-Control: public, max-age=300`.", content_type = "application/json"),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn enemy_detail(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -62,6 +80,27 @@ pub async fn enemy_detail(
 }
 
 /// `GET /{server}/enemies/{id}` - per-server variant.
+/// One enemy's handbook record and stats.///
+/// The `/{server}` form reads that server's game data; the bare form reads the
+/// default server.
+#[utoipa::path(
+    get,
+    path = "/{server}/enemies/{id}",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("id" = String, Path, description = "Enemy id from `enemy_database`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the body.")
+    ),
+    responses(
+        (status = 200, description = "The enemy. Served from cache with an `ETag` and `Cache-Control: public, max-age=300`.", content_type = "application/json"),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn enemy_detail_srv(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -73,6 +112,24 @@ pub async fn enemy_detail_srv(
 
 /// `GET /enemies/{id}/stages` - the "Appears In" list for one enemy (default
 /// server). Replaces the full `/static/enemy-stages` map fetch.
+/// Every stage this enemy appears in.
+#[utoipa::path(
+    get,
+    path = "/enemies/{id}/stages",
+    tag = "gamedata",
+    params(
+        ("id" = String, Path, description = "Enemy id from `enemy_database`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the body.")
+    ),
+    responses(
+        (status = 200, description = "The stage list. Served from cache with an `ETag` and `Cache-Control: public, max-age=300`.", content_type = "application/json"),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn enemy_stages(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -83,6 +140,27 @@ pub async fn enemy_stages(
 }
 
 /// `GET /{server}/enemies/{id}/stages` - per-server variant.
+/// Every stage this enemy appears in.///
+/// The `/{server}` form reads that server's game data; the bare form reads the
+/// default server.
+#[utoipa::path(
+    get,
+    path = "/{server}/enemies/{id}/stages",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("id" = String, Path, description = "Enemy id from `enemy_database`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the body.")
+    ),
+    responses(
+        (status = 200, description = "The stage list. Served from cache with an `ETag` and `Cache-Control: public, max-age=300`.", content_type = "application/json"),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn enemy_stages_srv(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -92,6 +170,27 @@ pub async fn enemy_stages_srv(
     Ok(json_response(body, &headers))
 }
 
+/// Enemies a player has met, derived from their stage clears.
+/// Runs the shared privacy gate: another player's data is readable only when
+/// their profile is public, and a player always sees their own.
+#[utoipa::path(
+    get,
+    path = "/encountered-enemies",
+    tag = "player",
+    params(
+        ("uid" = Option<String>, Query, description = "Player to read. Omitted means the caller's own account, which then requires a token.")
+    ),
+    security(("bearer_auth" = []), ()),
+    responses(
+        (status = 200, description = "Encountered enemies.", body = EncounteredEnemiesResponse),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn get_encountered_enemies(
     State(state): State<AppState>,
     auth: MaybeAuthUser,
@@ -133,7 +232,7 @@ pub async fn get_encountered_enemies(
     }))
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -150,6 +249,18 @@ pub struct CommunityEnemyAverageResponse {
 
 /// Community-wide average enemies-encountered figure, used to draw the
 /// "community average" marker on a user's enemy-handbook progress bar.
+/// The community-wide average for enemy encounters, as a comparison baseline.
+#[utoipa::path(
+    get,
+    path = "/encountered-enemies/community-average",
+    tag = "gamedata",
+    responses(
+        (status = 200, description = "Community averages.", body = CommunityEnemyAverageResponse),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn get_community_average(
     State(state): State<AppState>,
 ) -> Result<Json<CommunityEnemyAverageResponse>, ApiError> {

@@ -10,7 +10,7 @@ use ts_rs::TS;
 /// Animation types for different views/poses
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum AnimationType {
     Front,
@@ -37,7 +37,7 @@ impl AnimationType {
 /// Spine files for an animation type
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct SpineFiles {
     pub atlas: Option<String>,
@@ -54,7 +54,7 @@ impl SpineFiles {
 /// Character skin with different animation types
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ChibiSkin {
     pub name: String,
@@ -66,7 +66,7 @@ pub struct ChibiSkin {
 /// Processed character data for frontend
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ChibiCharacter {
     pub operator_code: String,
@@ -134,7 +134,7 @@ pub struct CachedChibiData {
 /// Uses Arc<ChibiCharacter> to share data between Vec and `HashMap` without cloning
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ChibiData {
     /// Raw repo items from crawling

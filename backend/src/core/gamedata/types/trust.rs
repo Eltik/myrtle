@@ -7,7 +7,7 @@ use ts_rs::TS;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct FavorFrameData {
     #[serde(alias = "FavorPoint")]
@@ -20,7 +20,7 @@ pub struct FavorFrameData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct FavorFrame {
     #[serde(alias = "Level")]
@@ -35,7 +35,7 @@ pub struct FavorFrame {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Favor {
     #[serde(alias = "MaxFavor")]

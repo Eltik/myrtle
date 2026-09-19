@@ -6,7 +6,7 @@ use ts_rs::TS;
 use crate::core::gamedata::types::GameData;
 use crate::core::release::align::PoolPair;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 #[ts(export)]
 pub enum AutoNameSource {
@@ -15,7 +15,7 @@ pub enum AutoNameSource {
     Override,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct AutoName {

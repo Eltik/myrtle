@@ -13,7 +13,7 @@ use ts_rs::TS;
 /// A single appearance of an enemy in a stage.
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct EnemyStageRef {
     pub stage_id: String,

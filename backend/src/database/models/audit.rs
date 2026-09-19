@@ -5,7 +5,7 @@ use sqlx::types::{
 };
 use ts_rs::TS;
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct AuditLogEntry {

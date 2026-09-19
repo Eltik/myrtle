@@ -2,6 +2,6 @@
 
 /**
  * The investment axes an operator is scored on. Which axes apply varies per
- * operator (no advanced modules → no `Module` dimension, etc.).
+ * operator (no advanced modules -> no `Module` dimension, etc.).
  */
 export type DimensionKind = "elite" | "level" | "skill_level" | "mastery" | "module" | "potential" | "trust";

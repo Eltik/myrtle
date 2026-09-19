@@ -15,7 +15,7 @@ use uuid::Uuid;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::AuthUser;
 use crate::app::extractors::auth::MaybeAuthUser;
-use crate::app::routes::ok_status;
+use crate::app::routes::{StatusOk, ok_status};
 use crate::app::services::tier_list::check_permission;
 use crate::app::services::tier_list::invalidate_detail;
 use crate::app::state::AppState;
@@ -26,6 +26,7 @@ use crate::database::queries::tier_lists as queries;
 use crate::database::queries::tier_lists::add_favorite;
 use crate::database::queries::tier_lists::is_favorited;
 use crate::database::queries::tier_lists::remove_favorite;
+use ts_rs::TS;
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -92,12 +93,58 @@ fn check_view_rate(ip: &str) -> bool {
     }
 }
 
+/// Whether a `POST /tier-lists/{slug}/view` counted as a new view.
+///
+/// Serialized directly by the handler, so this declaration is the wire format,
+/// the `OpenAPI` schema and the generated TypeScript at once.
+#[derive(serde::Serialize, TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct ViewRecorded {
+    /// False when the same user or session already counted for this list.
+    pub unique: bool,
+}
+
+/// Whether the caller has this tier list favourited.
+#[derive(serde::Serialize, TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct FavoriteState {
+    pub favorited: bool,
+}
+
+/// Whether a tier list appears in the public index.
+///
+/// Hiding a list does not make it private: a direct link still resolves.
+#[derive(serde::Serialize, TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct VisibilityState {
+    pub is_listed: bool,
+}
+
+/// Count one view of a tier list.
+///
+/// Deduplicated server-side, so a client may call it on every page load.
+#[utoipa::path(
+    post,
+    path = "/tier-lists/{slug}/view",
+    tag = "tier-lists",
+    params(
+        ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
+    ),
+    security(("bearer_auth" = []), ()),
+    responses(
+        (status = 200, description = "Whether this call counted as a new view.", body = ViewRecorded),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn record_view(
     State(state): State<AppState>,
     auth: MaybeAuthUser,
     headers: HeaderMap,
     Path(slug): Path<String>,
-) -> Result<Json<serde_json::Value>, ApiError> {
+) -> Result<Json<ViewRecorded>, ApiError> {
     let list = super::load_tier_list(&state, &slug).await?;
     let user_id = auth
         .0
@@ -120,9 +167,25 @@ pub async fn record_view(
     // stale view count in the cached detail is an acceptable trade for not
     // churning the cache on every page load.
     let unique = queries::record_view(&state.db, list.id, user_id, session_hash.as_deref()).await?;
-    Ok(Json(serde_json::json!({ "unique": unique })))
+    Ok(Json(ViewRecorded { unique }))
 }
 
+/// View and favourite counts for a tier list.
+#[utoipa::path(
+    get,
+    path = "/tier-lists/{slug}/stats",
+    tag = "tier-lists",
+    params(
+        ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
+    ),
+    responses(
+        (status = 200, description = "Engagement counters.", body = TierListStats),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn get_stats(
     State(state): State<AppState>,
     Path(slug): Path<String>,
@@ -134,11 +197,29 @@ pub async fn get_stats(
     Ok(Json(stats))
 }
 
+/// Favourite or unfavourite a tier list.
+#[utoipa::path(
+    post,
+    path = "/tier-lists/{slug}/favorite",
+    tag = "tier-lists",
+    params(
+        ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
+    ),
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "The favourite state after the toggle.", body = FavoriteState),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn toggle_favorite(
     State(state): State<AppState>,
     auth: AuthUser,
     Path(slug): Path<String>,
-) -> Result<Json<serde_json::Value>, ApiError> {
+) -> Result<Json<FavoriteState>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
     let list = super::load_tier_list(&state, &slug).await?;
     let favorited = if is_favorited(&state.db, list.id, user_id).await? {
@@ -149,31 +230,70 @@ pub async fn toggle_favorite(
         true
     };
     invalidate_detail(&state, &slug).await;
-    Ok(Json(serde_json::json!({ "favorited": favorited })))
+    Ok(Json(FavoriteState { favorited }))
 }
 
+/// Whether the caller has favourited this list.
+#[utoipa::path(
+    get,
+    path = "/tier-lists/{slug}/favorite",
+    tag = "tier-lists",
+    params(
+        ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
+    ),
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "The caller's favourite state.", body = FavoriteState),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn get_favorite(
     State(state): State<AppState>,
     auth: AuthUser,
     Path(slug): Path<String>,
-) -> Result<Json<serde_json::Value>, ApiError> {
+) -> Result<Json<FavoriteState>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
     let list = super::load_tier_list(&state, &slug).await?;
     let favorited = is_favorited(&state.db, list.id, user_id).await?;
-    Ok(Json(serde_json::json!({ "favorited": favorited })))
+    Ok(Json(FavoriteState { favorited }))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 pub struct SetFlairRequest {
     pub flair_id: Option<i16>,
 }
 
+/// Attach a flair to a tier list, or clear it with a null id.
+#[utoipa::path(
+    put,
+    path = "/tier-lists/{slug}/flair",
+    tag = "tier-lists",
+    params(
+        ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
+    ),
+    request_body = SetFlairRequest,
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "The flair was set.", body = crate::app::routes::StatusOk),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn set_flair(
     State(state): State<AppState>,
     auth: AuthUser,
     Path(slug): Path<String>,
     Json(body): Json<SetFlairRequest>,
-) -> Result<Json<serde_json::Value>, ApiError> {
+) -> Result<Json<StatusOk>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
     let list = super::load_tier_list(&state, &slug).await?;
     check_permission(&state, &list, user_id, auth.role, Permission::Edit).await?;
@@ -182,32 +302,69 @@ pub async fn set_flair(
     Ok(ok_status())
 }
 
+/// Every flair a tier list can carry.
+#[utoipa::path(
+    get,
+    path = "/tier-list-flairs",
+    tag = "tier-lists",
+    responses(
+        (status = 200, description = "The flair catalog.", body = Vec<TierListFlair>),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn list_flairs(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<TierListFlair>>, ApiError> {
     Ok(Json(queries::list_flairs(&state.db, true).await?))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 pub struct SetVisibilityRequest {
     pub is_listed: bool,
 }
 
+/// Show or hide a tier list in the public index.
+///
+/// Hiding does not make it private; a direct link still resolves.
+#[utoipa::path(
+    put,
+    path = "/tier-lists/{slug}/visibility",
+    tag = "tier-lists",
+    params(
+        ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
+    ),
+    request_body = SetVisibilityRequest,
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "The visibility as stored.", body = VisibilityState),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn set_visibility(
     State(state): State<AppState>,
     auth: AuthUser,
     Path(slug): Path<String>,
     Json(body): Json<SetVisibilityRequest>,
-) -> Result<Json<serde_json::Value>, ApiError> {
+) -> Result<Json<VisibilityState>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
     let list = super::load_tier_list(&state, &slug).await?;
     check_permission(&state, &list, user_id, auth.role, Permission::Edit).await?;
     queries::set_visibility(&state.db, list.id, body.is_listed).await?;
     invalidate_detail(&state, &slug).await;
-    Ok(Json(serde_json::json!({ "is_listed": body.is_listed })))
+    Ok(Json(VisibilityState {
+        is_listed: body.is_listed,
+    }))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 pub struct CreateFlairRequest {
     pub code: String,
     pub label: String,
@@ -215,6 +372,24 @@ pub struct CreateFlairRequest {
     pub display_order: Option<i16>,
 }
 
+/// Add a flair to the catalog.
+#[utoipa::path(
+    post,
+    path = "/tier-list-flairs",
+    tag = "tier-lists",
+    request_body = CreateFlairRequest,
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "The created flair.", body = TierListFlair),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 409, response = crate::app::openapi::responses::Conflict),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn create_flair(
     State(state): State<AppState>,
     auth: AuthUser,

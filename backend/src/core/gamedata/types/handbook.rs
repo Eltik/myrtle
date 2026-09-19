@@ -9,7 +9,7 @@ use super::serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default};
 // Enums
 // ============================================================================
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum OperatorGender {
     #[default]
@@ -21,7 +21,7 @@ pub enum OperatorGender {
     Conviction,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum OperatorBirthPlace {
     #[default]
@@ -66,7 +66,7 @@ pub enum OperatorBirthPlace {
     FarEast,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum OperatorRace {
     Undisclosed,
@@ -124,7 +124,7 @@ pub enum OperatorRace {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct BasicInfo {
     #[serde(alias = "CodeName")]
@@ -147,7 +147,7 @@ pub struct BasicInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct PhysicalExam {
     #[serde(alias = "PhysicalStrength")]
@@ -166,7 +166,7 @@ pub struct PhysicalExam {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct OperatorProfile {
     #[serde(alias = "BasicInfo")]
@@ -177,7 +177,7 @@ pub struct OperatorProfile {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct HandbookRewardItem {
     #[serde(alias = "Id")]
@@ -190,7 +190,7 @@ pub struct HandbookRewardItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct TeamMission {
     #[serde(alias = "Id")]
@@ -209,7 +209,7 @@ pub struct TeamMission {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct HandbookDisplayCondition {
     #[serde(alias = "CharId")]
@@ -222,7 +222,7 @@ pub struct HandbookDisplayCondition {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct HandbookStageTime {
     #[serde(alias = "Timestamp")]
@@ -234,7 +234,7 @@ pub struct HandbookStageTime {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct HandbookStory {
     #[serde(alias = "StoryText")]
@@ -251,7 +251,7 @@ pub struct HandbookStory {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct HandbookStoryTextAudio {
     #[serde(alias = "Stories")]
@@ -264,7 +264,7 @@ pub struct HandbookStoryTextAudio {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct HandbookUnlockParam {
     #[serde(alias = "UnlockType")]
@@ -279,7 +279,7 @@ pub struct HandbookUnlockParam {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct HandbookAvgEntry {
     #[serde(alias = "StoryId")]
@@ -300,7 +300,7 @@ pub struct HandbookAvgEntry {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct HandbookAvgList {
     #[serde(alias = "StorySetId")]
@@ -324,7 +324,7 @@ pub struct HandbookAvgList {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct HandbookItem {
     #[serde(rename = "charID", alias = "CharID")]
@@ -341,7 +341,7 @@ pub struct HandbookItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct NPCUnlockInfo {
     #[serde(alias = "UnLockType")]
@@ -354,7 +354,7 @@ pub struct NPCUnlockInfo {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct HandbookNPCItem {
     #[serde(alias = "NpcId")]
@@ -393,7 +393,7 @@ pub struct HandbookNPCItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct HandbookStageData {
     #[serde(alias = "CharId", default)]
@@ -433,7 +433,7 @@ pub struct HandbookStageData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Handbook {
     pub handbook_dict: HashMap<String, HandbookItem>,

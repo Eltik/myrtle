@@ -6,7 +6,7 @@ use sqlx::types::{
 use ts_rs::TS;
 
 /// `v_leaderboard` view
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct LeaderboardEntry {
@@ -41,7 +41,7 @@ pub struct LeaderboardEntry {
 }
 
 /// `user_scores` table
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct UserScore {
@@ -65,7 +65,7 @@ pub struct UserScore {
     pub calculated_at: DateTime<Utc>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct LeaderboardMover {
@@ -84,7 +84,7 @@ pub struct LeaderboardMover {
     pub score_delta: Option<f64>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct ServerShare {
@@ -94,7 +94,7 @@ pub struct ServerShare {
 }
 
 /// One point of a user's leaderboard history - a snapshot they appeared in.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct ScoreHistoryPoint {
@@ -104,7 +104,7 @@ pub struct ScoreHistoryPoint {
     pub rank_server: i32,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Serialize)]
 pub struct PlayerStanding {

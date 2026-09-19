@@ -5,7 +5,7 @@ export type BaseAssignmentDto = {
     rooms: Array<RoomAssignmentDto>;
     total_production_efficiency: number;
     /**
-     * Realized daily output (the gold→trade loop is coupled: LMD = min(gold
+     * Realized daily output (the gold->trade loop is coupled: LMD = min(gold
      * made, gold sold) × 500). This is the value the optimizer maximizes - the
      * per-room efficiency %s are just for display.
      */

@@ -12,7 +12,7 @@ use crate::core::{
     translate::AutoName,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(
     tag = "status",
     rename_all = "snake_case",
@@ -48,7 +48,7 @@ pub enum Resolution {
     Independent,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct LagSample {
@@ -61,7 +61,7 @@ pub struct LagSample {
     pub lag_days: f64,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct LagModel {
@@ -73,7 +73,7 @@ pub struct LagModel {
     pub samples: Vec<LagSample>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct YearlyModel {
@@ -81,7 +81,7 @@ pub struct YearlyModel {
     pub model: LagModel,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct Backtest {
@@ -94,7 +94,7 @@ pub struct Backtest {
     pub band_hit_rate: f64,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct LagResponse {
@@ -105,7 +105,7 @@ pub struct LagResponse {
 
 /// What a shop good is, for grouping; the server's `item_type` is kept beside
 /// it for anything finer.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "lowercase")]
 #[ts(export)]
 pub enum ShopGoodKind {
@@ -134,7 +134,7 @@ impl ShopGoodKind {
 
 /// An item as the shop names it: the client table's name and icon, EN when
 /// the item exists there.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ShopItem {
@@ -145,7 +145,7 @@ pub struct ShopItem {
     pub rarity: i32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ShopGood {
@@ -162,7 +162,7 @@ pub struct ShopGood {
 /// An event's token shop as the planner shows it: the game server's goods
 /// (see `gamedata::types::event_shop`) with the names and icons the client
 /// tables give them.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct EventShop {
@@ -180,7 +180,7 @@ pub struct EventShop {
     pub goods: Vec<ShopGood>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ReleaseEvent {
@@ -202,7 +202,7 @@ pub struct ReleaseEvent {
     pub resolution: Resolution,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct EventsResponse {
@@ -211,7 +211,7 @@ pub struct EventsResponse {
     pub events: Vec<ReleaseEvent>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 #[ts(export)]
 pub enum AlignMethod {
@@ -220,7 +220,7 @@ pub enum AlignMethod {
     None,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct PoolAlignment {
@@ -230,7 +230,7 @@ pub struct PoolAlignment {
 
 pub const STANDING_POOL_SECS: i64 = 365 * 86_400;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ReleaseBanner {
@@ -254,7 +254,7 @@ pub struct ReleaseBanner {
     pub resolution: Resolution,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct BannersResponse {
@@ -265,7 +265,7 @@ pub struct BannersResponse {
     pub rule_independence: Vec<crate::core::release::align::RuleIndependence>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct NewSkin {
@@ -288,7 +288,7 @@ pub struct NewSkin {
     pub resolution: Resolution,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct EventAnchor {
@@ -304,7 +304,7 @@ pub struct EventAnchor {
     pub name_en_auto: Option<AutoName>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct SkinTile {
@@ -317,7 +317,7 @@ pub struct SkinTile {
     pub price: SkinPrice,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct SkinGroupArt {
@@ -328,7 +328,7 @@ pub struct SkinGroupArt {
     pub logo_path: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct BatchForecast {
@@ -341,7 +341,7 @@ pub struct BatchForecast {
     pub resolution: Resolution,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct RerunForecast {
@@ -356,7 +356,7 @@ pub struct RerunForecast {
     pub basis: RerunBasis,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ReviewWindow {
@@ -371,7 +371,7 @@ pub struct ReviewWindow {
     pub resolution: Resolution,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ReviewOutfit {
@@ -384,7 +384,7 @@ pub struct ReviewOutfit {
     pub en_get_time: Option<i64>,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct SkinsResponse {
@@ -399,7 +399,7 @@ pub struct SkinsResponse {
     pub group_art: HashMap<String, SkinGroupArt>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ReleaseOverride {
@@ -418,7 +418,7 @@ pub struct ReleaseOverride {
     pub updated_at: i64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct PutOverride {
@@ -442,7 +442,7 @@ pub struct PutOverride {
     pub note: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct ReleasePlan {
@@ -454,7 +454,7 @@ pub struct ReleasePlan {
     pub updated_at: i64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct PutReleasePlan {

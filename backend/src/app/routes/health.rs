@@ -5,7 +5,7 @@ use std::time::{Duration, Instant};
 
 use crate::app::state::AppState;
 
-#[derive(Serialize)]
+#[derive(Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct HealthResponse {
     status: &'static str,
@@ -16,10 +16,12 @@ pub struct HealthResponse {
     response_time_ms: f64,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 struct CacheHealth {
+    #[schema(value_type = String)]
     backend: &'static str,
+    #[schema(value_type = String)]
     status: &'static str,
     response_time_ms: f64,
 }
@@ -29,7 +31,7 @@ struct CacheHealth {
 /// Deliberately does NOT flip the top-level `status`: a degraded table is a data
 /// problem, not an availability one, and paging an uptime monitor for a cosmetic
 /// table would train everyone to ignore it. Report it, don't alarm on it.
-#[derive(Serialize)]
+#[derive(Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 struct GameDataHealth {
     degraded: bool,
@@ -37,9 +39,10 @@ struct GameDataHealth {
     tables: std::collections::BTreeMap<String, Vec<String>>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 struct DatabaseHealth {
+    #[schema(value_type = String)]
     status: &'static str,
     response_time_ms: f64,
 }
@@ -48,6 +51,21 @@ fn elapsed_ms(d: Duration) -> f64 {
     d.as_secs_f64() * 1000.0
 }
 
+/// Liveness and build information.
+///
+/// Unauthenticated and never rate-limited into uselessness; this is the probe
+/// a monitor should poll.
+#[utoipa::path(
+    get,
+    path = "/health",
+    tag = "meta",
+    responses(
+        (status = 200, description = "The service is up.", body = HealthResponse),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
     let start = Instant::now();
 

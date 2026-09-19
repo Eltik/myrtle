@@ -12,7 +12,7 @@ use super::{
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ActivityBasicInfo {
     #[serde(alias = "Id")]
@@ -152,7 +152,7 @@ pub fn mission_tokens_by_activity(
 }
 
 /// One stage that awards Originite Prime on first clear.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct OpStage {
@@ -211,7 +211,7 @@ fn share_between_twins<T: Clone>(map: &mut HashMap<String, Vec<T>>) {
     map.extend(borrowed);
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct FarmDrop {
@@ -223,7 +223,7 @@ pub struct FarmDrop {
     pub occ: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
 #[ts(export)]
 pub struct FarmStage {

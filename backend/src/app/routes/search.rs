@@ -17,6 +17,23 @@ pub struct SearchParams {
     pub pagination: Pagination,
 }
 
+/// Search operators, stages and players in one call.
+#[utoipa::path(
+    get,
+    path = "/search",
+    tag = "search",
+    params(
+        ("q" = Option<String>, Query, description = "Query text. An empty or missing value returns an empty page."),
+        ("limit" = Option<u32>, Query, description = "Page size. Defaults to 20, capped at 100."),
+        ("offset" = Option<u32>, Query, description = "Rows to skip. Defaults to 0.")
+    ),
+    responses(
+        (status = 200, description = "One page of mixed results.", body = SearchPage),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn search(
     State(state): State<AppState>,
     Query(params): Query<SearchParams>,

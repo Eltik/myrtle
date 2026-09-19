@@ -44,6 +44,24 @@ pub struct HistoryParams {
     pub pagination: Pagination,
 }
 
+/// Pull the caller's newest gacha records from the game servers and store them.
+///
+/// Needs stored game credentials, so a player who has disconnected must log in
+/// again first.
+#[utoipa::path(
+    post,
+    path = "/gacha/fetch",
+    tag = "gacha",
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "What the sync found and stored.", body = crate::app::services::gacha::FetchResult),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn fetch(
     State(state): State<AppState>,
     auth: AuthUser,
@@ -53,6 +71,18 @@ pub async fn fetch(
     Ok(Json(result))
 }
 
+/// Pull statistics across every player who opted into sharing.
+#[utoipa::path(
+    get,
+    path = "/gacha/global-stats",
+    tag = "gacha",
+    responses(
+        (status = 200, description = "Community-wide pull statistics.", body = crate::app::services::gacha::GlobalGachaStats),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn global_stats(
     State(state): State<AppState>,
 ) -> Result<Json<services::gacha::GlobalGachaStats>, ApiError> {
@@ -68,6 +98,22 @@ pub struct EnhancedStatsParams {
     pub include_timing: Option<bool>,
 }
 
+/// Community pull statistics with per-operator detail.
+#[utoipa::path(
+    get,
+    path = "/gacha/stats/enhanced",
+    tag = "gacha",
+    params(
+        ("top_n" = Option<u32>, Query, description = "How many operators to include. Also accepted as `topN`."),
+        ("include_timing" = Option<bool>, Query, description = "Include pull-timing breakdowns. Also accepted as `includeTiming`.")
+    ),
+    responses(
+        (status = 200, description = "Enhanced community statistics.", body = crate::app::services::gacha::GachaEnhancedStats),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn enhanced_stats(
     State(state): State<AppState>,
     Query(params): Query<EnhancedStatsParams>,
@@ -78,6 +124,18 @@ pub async fn enhanced_stats(
     Ok(Json(stats))
 }
 
+/// Community pull statistics broken down by banner.
+#[utoipa::path(
+    get,
+    path = "/gacha/stats/per-banner",
+    tag = "gacha",
+    responses(
+        (status = 200, description = "One entry per banner.", body = Vec<crate::app::services::gacha::BannerPullStat>),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn per_banner_stats(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<services::gacha::BannerPullStat>>, ApiError> {
@@ -85,6 +143,30 @@ pub async fn per_banner_stats(
     Ok(Json(stats))
 }
 
+/// The caller's own pull history, filtered and paged.
+#[utoipa::path(
+    get,
+    path = "/gacha/history",
+    tag = "gacha",
+    params(
+        ("rarity" = Option<i16>, Query, description = "Keep only pulls of this rarity, 0 to 5 (a 6-star is rarity 5)."),
+        ("gachaType" = Option<String>, Query, description = "Keep only this banner type. Also accepted as `gacha_type`."),
+        ("charId" = Option<String>, Query, description = "Keep only pulls of this operator. Also accepted as `char_id`."),
+        ("from" = Option<i64>, Query, description = "Unix seconds; keep pulls at or after this time."),
+        ("to" = Option<i64>, Query, description = "Unix seconds; keep pulls at or before this time."),
+        ("order" = Option<String>, Query, description = "`asc` or `desc` by pull time."),
+        ("limit" = Option<u32>, Query, description = "Page size. Defaults to 20, capped at 100."),
+        ("offset" = Option<u32>, Query, description = "Rows to skip. Defaults to 0.")
+    ),
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "One page of pulls, plus the totals for the filter.", body = crate::app::services::gacha::GachaHistoryEnvelopeDto),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn history(
     State(state): State<AppState>,
     auth: AuthUser,
@@ -108,6 +190,23 @@ pub async fn history(
     Ok(Json(envelope))
 }
 
+/// Every one of the caller's pulls of a single operator.
+#[utoipa::path(
+    get,
+    path = "/gacha/history/{char_id}",
+    tag = "gacha",
+    params(
+        ("char_id" = String, Path, description = "Operator id.")
+    ),
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "The caller's pulls of that operator.", body = Vec<crate::app::services::gacha::GachaRecordEntryDto>),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn history_by_char(
     State(state): State<AppState>,
     auth: AuthUser,
@@ -118,6 +217,20 @@ pub async fn history_by_char(
     Ok(Json(rows))
 }
 
+/// The caller's raw stored pull records.
+#[utoipa::path(
+    get,
+    path = "/gacha/stored-records",
+    tag = "gacha",
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "Stored records.", body = crate::app::services::gacha::GachaRecordsDto),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn stored_records(
     State(state): State<AppState>,
     auth: AuthUser,
@@ -127,6 +240,21 @@ pub async fn stored_records(
     Ok(Json(records))
 }
 
+/// The caller's own pull statistics: pity, rates and totals.
+#[utoipa::path(
+    get,
+    path = "/gacha/stats",
+    operation_id = "gacha_stats",
+    tag = "gacha",
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "The caller's statistics.", body = GachaStats),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn stats(
     State(state): State<AppState>,
     auth: AuthUser,
@@ -136,6 +264,20 @@ pub async fn stats(
     Ok(Json(stats))
 }
 
+/// Whether the caller stores pull records and shares anonymous statistics.
+#[utoipa::path(
+    get,
+    path = "/gacha/settings",
+    tag = "gacha",
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "Current settings.", body = crate::app::services::gacha::GachaSettingsDto),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn get_settings(
     State(state): State<AppState>,
     auth: AuthUser,
@@ -145,13 +287,30 @@ pub async fn get_settings(
     Ok(Json(settings))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct UpdateSettingsBody {
     pub store_records: Option<bool>,
     pub share_anonymous_stats: Option<bool>,
 }
 
+/// Change the caller's gacha storage and sharing settings.
+#[utoipa::path(
+    post,
+    path = "/gacha/settings",
+    operation_id = "gacha_update_settings",
+    tag = "gacha",
+    request_body = UpdateSettingsBody,
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "The settings as stored.", body = crate::app::services::gacha::GachaSettingsDto),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
 pub async fn update_settings(
     State(state): State<AppState>,
     auth: AuthUser,

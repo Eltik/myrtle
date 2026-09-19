@@ -10,7 +10,7 @@ use super::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
-#[derive(Default, TS)]
+#[derive(Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum EnemyLevel {
     #[default]
@@ -21,7 +21,7 @@ pub enum EnemyLevel {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[derive(Default, TS)]
+#[derive(Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum DamageType {
     #[default]
@@ -33,7 +33,7 @@ pub enum DamageType {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum EnemyApplyWay {
     #[default]
@@ -46,7 +46,7 @@ pub enum EnemyApplyWay {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum EnemyMotion {
     #[default]
@@ -62,7 +62,7 @@ pub enum EnemyMotion {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct StatRange {
     #[serde(alias = "Min")]
@@ -73,7 +73,7 @@ pub struct StatRange {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct EnemyInfoList {
     #[serde(alias = "ClassLevel")]
@@ -98,7 +98,7 @@ pub struct EnemyInfoList {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct RaceData {
     #[serde(alias = "Id")]
@@ -111,7 +111,7 @@ pub struct RaceData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct AbilityInfo {
     #[serde(alias = "Text")]
@@ -175,7 +175,7 @@ pub struct RawEnemyAttributes {
 /// Skill blackboard entry
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct SkillBlackboardEntry {
     #[serde(default)]
@@ -247,7 +247,7 @@ pub struct EnemyDatabaseFile {
 /// Processed enemy attributes for API output
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct EnemyAttributes {
     pub max_hp: i32,
@@ -269,7 +269,7 @@ pub struct EnemyAttributes {
 /// Processed enemy skill for API output
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct EnemySkill {
     pub prefab_key: String,
@@ -283,7 +283,7 @@ pub struct EnemySkill {
 /// Per-level stats for an enemy
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct EnemyLevelStats {
     pub level: i32,
@@ -298,7 +298,7 @@ pub struct EnemyLevelStats {
 /// All stats for an enemy (all levels)
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct EnemyStats {
     pub levels: Vec<EnemyLevelStats>,
@@ -310,7 +310,7 @@ pub struct EnemyStats {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Enemy {
     #[serde(alias = "EnemyId")]
@@ -361,7 +361,7 @@ pub struct Enemy {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct EnemyHandbook {
     pub level_info_list: Vec<EnemyInfoList>,

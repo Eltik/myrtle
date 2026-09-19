@@ -17,7 +17,7 @@ use super::skill::SkillLevel;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
-#[derive(Default, TS)]
+#[derive(Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum OperatorPosition {
     Ranged,
@@ -32,7 +32,7 @@ pub enum OperatorPosition {
     Unknown,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum OperatorPhase {
     #[serde(rename = "PHASE_0")]
@@ -44,7 +44,7 @@ pub enum OperatorPhase {
     Elite2,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum OperatorRarity {
     #[serde(rename = "TIER_6")]
@@ -75,7 +75,7 @@ impl OperatorRarity {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum OperatorProfession {
     #[serde(rename = "MEDIC")]
@@ -130,7 +130,7 @@ impl OperatorProfession {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct UnlockCondition {
     pub phase: OperatorPhase,
@@ -139,7 +139,7 @@ pub struct UnlockCondition {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Blackboard {
     #[serde(alias = "key")]
@@ -152,7 +152,7 @@ pub struct Blackboard {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct TraitCandidate {
     pub unlock_condition: UnlockCondition,
@@ -165,7 +165,7 @@ pub struct TraitCandidate {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Trait {
     pub candidates: Vec<TraitCandidate>,
@@ -173,7 +173,7 @@ pub struct Trait {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct AttributeData {
     pub max_hp: i32,
@@ -203,7 +203,7 @@ pub struct AttributeData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct AttributeKeyFrame {
     pub level: i32,
@@ -212,7 +212,7 @@ pub struct AttributeKeyFrame {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct EvolveCost {
     pub id: String,
@@ -227,7 +227,7 @@ pub struct EvolveCost {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Phase {
     pub character_prefab_key: String,
@@ -244,7 +244,7 @@ pub struct Phase {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct LevelUpCostItem {
     pub id: String,
@@ -259,7 +259,7 @@ pub struct LevelUpCostItem {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct LevelUpCostCond {
     pub unlock_cond: UnlockCondition,
@@ -270,11 +270,14 @@ pub struct LevelUpCostCond {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct SpData {
     pub sp_type: String,
-    pub level_up_cost: Vec<()>, // Empty array in source
+    /// Always empty in the game data. The element type is therefore unknown,
+    /// so the schema says "array of anything" rather than inventing one.
+    #[schema(value_type = Vec<serde_json::Value>)]
+    pub level_up_cost: Vec<()>,
     pub max_charge_time: i32,
     pub sp_cost: i32,
     pub init_sp: i32,
@@ -283,7 +286,7 @@ pub struct SpData {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct SkillStatic {
     pub levels: Vec<SkillLevel>,
@@ -295,7 +298,7 @@ pub struct SkillStatic {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct OperatorSkillRef {
     #[serde(default)]
@@ -312,7 +315,7 @@ pub struct OperatorSkillRef {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct TalentCandidate {
     pub unlock_condition: UnlockCondition,
@@ -336,7 +339,7 @@ pub struct TalentCandidate {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Talent {
     #[serde(default)]
@@ -345,7 +348,7 @@ pub struct Talent {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct AttributeModifier {
     pub attribute_type: String,
@@ -358,7 +361,7 @@ pub struct AttributeModifier {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct PotentialBuffAttributes {
     pub abnormal_flags: Option<()>,
@@ -371,7 +374,7 @@ pub struct PotentialBuffAttributes {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct PotentialBuff {
     pub attributes: PotentialBuffAttributes,
@@ -379,7 +382,7 @@ pub struct PotentialBuff {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct PotentialRank {
     #[serde(rename = "Type_")]
@@ -391,7 +394,7 @@ pub struct PotentialRank {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct AllSkillLevelUp {
     pub unlock_cond: UnlockCondition,
@@ -507,7 +510,7 @@ pub struct RawOperator {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct OperatorModule {
     #[serde(flatten)]
@@ -517,7 +520,7 @@ pub struct OperatorModule {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct EnrichedSkill {
     pub skill_id: String,
@@ -533,7 +536,7 @@ pub struct EnrichedSkill {
 /// operators file, so every field aliases both casings.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct PowerAffiliation {
     #[serde(default, alias = "NationId")]
@@ -546,7 +549,7 @@ pub struct PowerAffiliation {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Operator {
     pub id: Option<String>,
@@ -682,7 +685,7 @@ impl Operator {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum Elite {
     E0,
@@ -692,7 +695,7 @@ pub enum Elite {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct EliteCostItem {
     pub quantity: i32,
@@ -701,7 +704,7 @@ pub struct EliteCostItem {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct LevelCost {
     pub level: i32,
@@ -711,7 +714,7 @@ pub struct LevelCost {
 
 pub type LevelUpCost = Vec<LevelCost>;
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum MasteryLevel {
     M1,
@@ -721,7 +724,7 @@ pub enum MasteryLevel {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct SkillCostItem {
     pub quantity: i32,
@@ -730,7 +733,7 @@ pub struct SkillCostItem {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct SkillCost {
     pub unlock_condition: UnlockCondition,
@@ -741,7 +744,7 @@ pub struct SkillCost {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct SkillLevelCost {
     pub skill_id: String,
@@ -752,7 +755,7 @@ pub type SkillLevelUpCost = Vec<SkillLevelCost>;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct OperatorBaseSkill {
     pub buff_id: String,
@@ -783,7 +786,7 @@ pub struct OperatorBaseSkill {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct Drone {
     pub id: Option<String>,

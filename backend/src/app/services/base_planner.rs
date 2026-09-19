@@ -41,7 +41,7 @@ use crate::database::queries::users::find_by_uid;
 
 /// One room of a client-drafted layout. Mirrors `UserRoom` minus the bits only
 /// the live game data can supply (preset queues).
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct DraftRoom {
@@ -62,7 +62,7 @@ pub struct DraftRoom {
     pub comfort: i32,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, utoipa::ToSchema)]
 pub struct EvaluateRequest {
     pub layout: Vec<DraftRoom>,
     /// Extra check-in cadence (hours) to price alongside the 6/12/24 presets.
@@ -85,7 +85,7 @@ pub struct EvaluateRequest {
 /// dormitories, power plants and every support facility - which then breaks the
 /// power balance AND the scoring, since dorm levels and facility counts feed
 /// the clause engine.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct LayoutResponse {
@@ -100,7 +100,7 @@ pub struct LayoutResponse {
 }
 
 /// One slot's saved rotation: the crew the player has queued for each shift.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct SlotPresetsDto {
@@ -110,7 +110,7 @@ pub struct SlotPresetsDto {
 
 /// The serialized twin of [`DraftRoom`] - what the client sends back on every
 /// evaluate/optimize call.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct DraftRoomDto {
@@ -122,7 +122,7 @@ pub struct DraftRoomDto {
     pub comfort: i32,
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, utoipa::ToSchema)]
 pub struct OptimizeRequest {
     pub layout: Vec<DraftRoom>,
     /// Slot ids the optimizer may restaff. Empty = every room in the layout.
@@ -145,7 +145,7 @@ pub struct OptimizeRequest {
     pub facts: AccountFactsReq,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct EvaluateResponse {
@@ -184,7 +184,7 @@ pub struct EvaluateResponse {
 }
 
 /// One trainer suggestion for the declared training class.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct TrainerHintDto {
@@ -194,7 +194,7 @@ pub struct TrainerHintDto {
 }
 
 /// The drone (Labor) buffer, projected to now from the synced snapshot.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct DronesDto {
@@ -206,7 +206,7 @@ pub struct DronesDto {
     pub full_in_hours: Option<f64>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct ClaimDto {
@@ -217,7 +217,7 @@ pub struct ClaimDto {
     pub intervals: Vec<ClaimIntervalDto>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct ClaimIntervalDto {
@@ -231,7 +231,7 @@ pub struct ClaimIntervalDto {
 /// a `BaseAssignment` - but they set how fast workers recover and how many can
 /// rest at once, which is what decides whether a staffing survives its own
 /// rhythm. Surfaced separately so "no yield" doesn't read as "not accounted for".
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct DormsDto {
@@ -247,7 +247,7 @@ pub struct DormsDto {
     pub per_dorm: Vec<DormDto>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct DormDto {
@@ -274,7 +274,7 @@ pub struct DormDto {
 /// One operator's endurance in the room the draft puts them in. Drain is the
 /// game's own per-hour figure (including the operator's own morale-cost riders),
 /// not a per-room approximation.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct SustainEntryDto {
@@ -294,7 +294,7 @@ pub struct SustainEntryDto {
     pub morale: Option<f64>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct PowerDto {
@@ -305,7 +305,7 @@ pub struct PowerDto {
 
 /// A rotation is whole-base by construction (a shift covers every room at
 /// once), so unlike optimize there is no `scope` - only who must stay put.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct RotationRequest {
@@ -326,7 +326,7 @@ pub struct RotationRequest {
 /// Player-declared account state the sync cannot read (the "account facts"
 /// prompt). With no declaration the never-guess default stands: the dependent
 /// skills price 0.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct AccountFactsReq {
@@ -454,7 +454,7 @@ pub async fn save_facts(
     Ok(facts)
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RotationResponse {
@@ -465,7 +465,7 @@ pub struct RotationResponse {
     pub shift_count: usize,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct OptimizeResponse {
@@ -480,7 +480,7 @@ pub struct OptimizeResponse {
     pub power: PowerDto,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct RoomDiffDto {
@@ -497,7 +497,7 @@ pub struct RoomDiffDto {
 /// The facility catalogue, straight out of `building_data`. The client renders
 /// capacities, power draw and level caps from this instead of carrying its own
 /// copy of numbers the game already publishes.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct CatalogResponse {
@@ -518,7 +518,7 @@ pub struct CatalogResponse {
 /// grid tracks: how a half-tile becomes a column is the board's decision, and
 /// the elevator shafts (1 unit wide where every room is 2) only make sense at
 /// this scale.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct CatalogSlotDto {
@@ -534,7 +534,7 @@ pub struct CatalogSlotDto {
     pub size_row: i32,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct CatalogStoreyDto {
@@ -543,7 +543,7 @@ pub struct CatalogStoreyDto {
     pub unlock_control_level: i32,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct CatalogRoomDto {
@@ -558,7 +558,7 @@ pub struct CatalogRoomDto {
     pub phases: Vec<CatalogPhaseDto>,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct CatalogPhaseDto {
@@ -569,7 +569,7 @@ pub struct CatalogPhaseDto {
     pub manpower_cost: i32,
 }
 
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]
 pub struct CatalogFormulaDto {
@@ -923,7 +923,7 @@ pub async fn evaluate(
 /// per room: claiming every `T` hours realizes `min(fill, T) / T` of the
 /// room's rate; the rest is produced into a full buffer and lost. Losses are
 /// per RESOURCE (trading LMD, factory gold, factory EXP) so the coupled
-/// gold→trade chain isn't double-counted into one number.
+/// gold->trade chain isn't double-counted into one number.
 pub(crate) fn claim_of(
     assignment: &BaseAssignmentDto,
     custom_hours: Option<f64>,

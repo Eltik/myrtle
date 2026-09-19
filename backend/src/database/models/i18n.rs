@@ -7,7 +7,7 @@ use ts_rs::TS;
 
 /// `locales` table. `gamedata_server` names the Arknights client whose text
 /// serves this locale's operator/skill/stage strings.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Locale {
@@ -25,7 +25,7 @@ pub struct Locale {
 
 /// `ui_message_keys` table - one row per translatable string in the frontend
 /// source, written by the extractor's sync and never by a translator.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct UiMessageKey {
@@ -42,7 +42,7 @@ pub struct UiMessageKey {
 ///
 /// `source_text` is the English this value was written against, snapshotted at
 /// save time; it is `None` on rows written before that column existed.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct UiMessage {
@@ -65,7 +65,7 @@ pub struct UiMessage {
 /// `translated_source_text` is the English that was on screen when the value
 /// was saved. It is what turns `is_stale` from a badge into a diff, and it is
 /// `None` for rows saved before the snapshot column existed.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct TranslationEntry {
@@ -85,7 +85,7 @@ pub struct TranslationEntry {
 
 /// Per-key/locale history. `old_value` is what makes revert a write rather
 /// than a restore.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct UiMessageAuditEntry {
@@ -102,7 +102,7 @@ pub struct UiMessageAuditEntry {
 /// Audit entry enriched with the actor's display info, so the global feed
 /// doesn't fan out N user lookups per page. Mirrors
 /// `OperatorNoteAuditEntryWithContext`.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct UiMessageAuditEntryWithContext {
@@ -121,7 +121,7 @@ pub struct UiMessageAuditEntryWithContext {
 }
 
 /// `translation_permissions` row. Shape-identical to a tier-list permission.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct TranslationPermission {
@@ -134,7 +134,7 @@ pub struct TranslationPermission {
 
 /// `gamedata_overrides` row - a hand-entered replacement for one field of one
 /// game-data entity in one locale.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct GamedataOverride {
@@ -147,7 +147,7 @@ pub struct GamedataOverride {
 }
 
 /// `ui_documents` row - long-form prose translated as a whole document.
-#[derive(TS)]
+#[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct UiDocument {
