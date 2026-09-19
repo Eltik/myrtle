@@ -278,7 +278,7 @@ mod tests {
             held.push(admit("test").await.expect("under the limit"));
         }
 
-        let queued = tokio::spawn(async { admit("test").await.map(|a| drop(a)) });
+        let queued = tokio::spawn(async { admit("test").await.map(drop) });
         // Let it reach the wait before anything is released, so this proves the
         // permit was handed over rather than taken on the fast path.
         tokio::time::sleep(Duration::from_millis(50)).await;
@@ -304,7 +304,7 @@ mod tests {
             held.push(admit("test").await.expect("under the limit"));
         }
 
-        let abandoned = tokio::spawn(async { admit("test").await.map(|a| drop(a)) });
+        let abandoned = tokio::spawn(async { admit("test").await.map(drop) });
         tokio::time::sleep(Duration::from_millis(50)).await;
         assert_eq!(waiting(), 1);
 

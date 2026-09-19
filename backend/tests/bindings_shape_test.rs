@@ -13,7 +13,7 @@
 //! * A bare `any` disables checking on everything downstream of it. It should
 //!   never appear: `serde_json::Value` resolves to ts-rs's recursive `JsonValue`
 //!   via the `serde-json-impl` feature. Note that `unknown` is NOT a valid
-//!   substitute here — TanStack Start's `createServerFn` rejects it as
+//!   substitute here — `TanStack` Start's `createServerFn` rejects it as
 //!   unserializable, so a hand-written `#[ts(type = "unknown")]` breaks the
 //!   frontend build at every server-fn boundary the type crosses.
 //!
@@ -69,18 +69,15 @@ fn bindings_contain_no_impossible_wire_types() {
         let mut code = String::with_capacity(src.len());
         let mut rest = src.as_str();
         loop {
-            match rest.find("/*") {
-                Some(start) => {
-                    code.push_str(&rest[..start]);
-                    match rest[start..].find("*/") {
-                        Some(end) => rest = &rest[start + end + 2..],
-                        None => break,
-                    }
+            if let Some(start) = rest.find("/*") {
+                code.push_str(&rest[..start]);
+                match rest[start..].find("*/") {
+                    Some(end) => rest = &rest[start + end + 2..],
+                    None => break,
                 }
-                None => {
-                    code.push_str(rest);
-                    break;
-                }
+            } else {
+                code.push_str(rest);
+                break;
             }
         }
         for line in code.lines() {

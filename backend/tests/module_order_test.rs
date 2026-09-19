@@ -18,7 +18,7 @@ use common::load_game_data;
 
 /// Key the list is required to be in. The uniequip number, not
 /// `char_equip_order`: the latter reads [0, 2, 1] on 17 operators and would put
-/// uniequip_003 ahead of _002. `uni_equip_id` breaks ties so the order is total.
+/// `uniequip_003` ahead of _002. `uni_equip_id` breaks ties so the order is total.
 fn order_key(m: &backend::core::gamedata::types::operator::OperatorModule) -> (i32, &str) {
     let id = m.module.uni_equip_id.as_str();
     let n = id

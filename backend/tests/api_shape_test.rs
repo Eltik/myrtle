@@ -16,9 +16,9 @@
 //!
 //! IMPORTANT: this pins the WIRE format, which is not what the frontend's types
 //! describe. `frontend/src/lib/api/operators.ts` runs `deepCamelize` over the
-//! operator payloads, converting PascalCase and trailing-underscore keys
+//! operator payloads, converting `PascalCase` and trailing-underscore keys
 //! (`AttributesKeyFrames`, `MaxHp`, `Type_`) to camelCase before any consumer
-//! sees them. So a PascalCase path in this snapshot is correct and expected for
+//! sees them. So a `PascalCase` path in this snapshot is correct and expected for
 //! the structs that mirror `character_table`; do not "fix" it by renaming the
 //! Rust fields. Endpoints WITHOUT that normalization — voices, materials — are
 //! the ones where this snapshot and the TS types must agree key-for-key.
@@ -73,7 +73,7 @@ use serde_json::Value;
 // thousand entries) to memory, since resources are built and dropped one at a
 // time. Determinism is worth more than the seconds.
 
-fn type_name(v: &Value) -> &'static str {
+const fn type_name(v: &Value) -> &'static str {
     match v {
         Value::Null => "null",
         Value::Bool(_) => "bool",

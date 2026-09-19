@@ -872,7 +872,7 @@ mod tests {
 
     #[test]
     fn measured_steps_become_the_next_boots_estimate() {
-        let _serial = SERIAL.lock().unwrap_or_else(|e| e.into_inner());
+        let _serial = SERIAL.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         let path = temp_path("measured");
 
         let first = Boot::start_with_timings(plan(), path.clone());
@@ -908,7 +908,7 @@ mod tests {
     /// boot; it must not break the bar.
     #[test]
     fn an_undeclared_step_is_appended() {
-        let _serial = SERIAL.lock().unwrap_or_else(|e| e.into_inner());
+        let _serial = SERIAL.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         let path = temp_path("undeclared");
 
         let boot = Boot::start_with_timings(plan(), path.clone());
@@ -934,7 +934,7 @@ mod tests {
     /// over it rather than sit behind work that will never run.
     #[test]
     fn skipped_steps_are_credited() {
-        let _serial = SERIAL.lock().unwrap_or_else(|e| e.into_inner());
+        let _serial = SERIAL.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         let path = temp_path("skipped");
 
         let boot = Boot::start_with_timings(plan(), path.clone());
@@ -959,7 +959,7 @@ mod tests {
     /// hot-reload watcher all run, none of which install a boot.
     #[test]
     fn reporting_with_no_boot_is_inert() {
-        let _serial = SERIAL.lock().unwrap_or_else(|e| e.into_inner());
+        let _serial = SERIAL.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
         assert!(ACTIVE.load().is_none());
         step("unheard");
         step_progress(3, 7);
