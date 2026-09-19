@@ -11,6 +11,58 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-09-19-2.title": {
+        text: "New: API docs, and more accurate base scoring",
+        description: "Title of the second 2026-09-19 release note. 'Base' is the player's RIIC facility.",
+    },
+    "note.2026-09-19-2.lead": {
+        text: "Every route of the API is now documented at /docs. Three scoring bugs in the base are fixed, and unlike this morning's update these ones do move numbers: two trading posts were crewed one after the other against a single gold supply, two mirror skills read five times the room they sit in, and a shift that rested an operator still claimed his facility bonus. 58 outfits the store sells at 15 Originium Prime were priced at 18.",
+        description: "Lead paragraph of the second 2026-09-19 release note, rendered as Markdown. A 'trading post' is an RIIC room and a 'mirror skill' is a base skill that copies what an operator's roommates provide; Originium Prime is the game's paid currency and keeps its name. Keep /docs as written.",
+    },
+    "note.2026-09-19-2.item.1": {
+        text: "Every route of the API is documented at /docs, and the document itself is at /api/openapi.json: 166 paths and 183 operations. Both sit outside the rate limiter, so reading the docs costs you none of your request budget.",
+        description: "Bullet in the second 2026-09-19 release note, filed under 'New'. Keep the two paths as written. The 'rate limiter' caps how many API requests a caller may make.",
+    },
+    "note.2026-09-19-2.item.2": {
+        text: "Pull targets in the release planner fold away, so a banner row can be read without its full list of goals.",
+        description: "Bullet in the second 2026-09-19 release note, filed under 'Improved'. 'Pull targets' is the panel heading inside a banner row and should match its translation there.",
+    },
+    "note.2026-09-19-2.item.3": {
+        text: "Skin previews in the release planner are sized to match the rest of the site, and the note explaining where auto-translated names come from moved into the toggle's tooltip.",
+        description: "Bullet in the second 2026-09-19 release note, filed under 'Improved'. A 'skin' is an operator outfit.",
+    },
+    "note.2026-09-19-2.item.4": {
+        text: "Two trading posts were crewed one after the other against a single gold supply, so the first took the strongest squad and the second was left selling bars nobody was making. They are crewed as a pair now, judged on what the pair actually earns. On one measured account that is 42.9k LMD a day against 39.5k.",
+        description: "Bullet in the second 2026-09-19 release note, filed under 'Fixed'. A 'bar' is a gold bar made in an RIIC factory and sold at a trading post; LMD is the game's main currency and keeps its name.",
+    },
+    "note.2026-09-19-2.item.5": {
+        text: "Waai Fu's Cooperative Will and Snowsant's Heavenly Reward read five times the room they sit in and so always hit their own cap. They now pay per full step of what their roommates' own skills provide. One room the game shows at 72 was being read as 77.",
+        description: "Bullet in the second 2026-09-19 release note, filed under 'Fixed'. The two skill names are the game's own and keep their English wording. A 'room' here is an RIIC facility and the numbers are its efficiency percentage.",
+    },
+    "note.2026-09-19-2.item.6": {
+        text: "A shift that rests an operator no longer claims the facility bonus that operator provides, so a rotation is priced against the operators actually seated in it.",
+        description: "Bullet in the second 2026-09-19 release note, filed under 'Fixed'. A 'shift' is one block of the base rotation the optimizer plans.",
+    },
+    "note.2026-09-19-2.item.7": {
+        text: "58 outfits the store sells at 15 Originium Prime were priced at 18, so a plan that picked several of them overstated its cost by 3 each. Outfit prices now match the wiki on 484 of 488.",
+        description: "Bullet in the second 2026-09-19 release note, filed under 'Fixed'. Originium Prime is the game's paid currency and keeps its name.",
+    },
+    "note.2026-09-19-2.item.8": {
+        text: "Angelina's the Mellow Wish no longer renders her Elite 2 art with a flat sheet across the eyes and mouth.",
+        description: "Bullet in the second 2026-09-19 release note, filed under 'Fixed'. 'the Mellow Wish' is the outfit's own name and Elite 2 is the operator's second promotion; both keep the game's wording.",
+    },
+    "note.2026-09-19-2.item.9": {
+        text: "The release note panel no longer cuts a line of text in half on a phone, and it shows a shadow at its edge while there is more to scroll to.",
+        description: "Bullet in the second 2026-09-19 release note, filed under 'Fixed'. The 'release note panel' is the list of changes in this very dialog.",
+    },
+    "note.2026-09-19-2.item.10": {
+        text: "A banner row in the pull planner printed its start date twice on the same line.",
+        description: "Bullet in the second 2026-09-19 release note, filed under 'Fixed'. A 'banner' is a time-limited gacha pool.",
+    },
+    "note.2026-09-19-2.item.11": {
+        text: "In the release planner, the event list and the detail panel beside it scroll on their own instead of moving the whole page, and the list now runs to the bottom of the screen rather than stopping short.",
+        description: "Bullet in the second 2026-09-19 release note, filed under 'Fixed'.",
+    },
     "note.2026-09-19.title": {
         text: "Fixed: Base planning and upgrade advice",
         description: "Title of the 2026-09-19 release note. 'Base' is the player's RIIC facility; 'upgrade advice' is the panel that ranks what to invest in next.",
