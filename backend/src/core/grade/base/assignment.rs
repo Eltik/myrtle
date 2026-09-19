@@ -2598,14 +2598,25 @@ pub fn fill_remaining_slots(
                 if room_type != "CONTROL" {
                     return ka.cmp(&kb);
                 }
-                let va = cc_spare_seat_value(a, building_data, registry, &coverage)
-                    + cc_global_morale_recovery(a, registry, building_data);
-                let vb = cc_spare_seat_value(b, building_data, registry, &coverage)
-                    + cc_global_morale_recovery(b, registry, building_data);
+                // A base-wide morale aura lifts every worker's sustain and
+                // ranks ahead of any facility-speed skill; HR and training
+                // speed next; clue speed last, whatever its size - a
+                // reception room fills its board either way, so Lee's +25%
+                // is not worth a seat over a smaller HR or morale skill
+                // (user feedback 2026-09-19).
+                let ma = cc_global_morale_recovery(a, registry, building_data);
+                let mb = cc_global_morale_recovery(b, registry, building_data);
+                let (fa, ca) = cc_spare_seat_split(a, building_data, registry, &coverage);
+                let (fb, cb) = cc_spare_seat_split(b, building_data, registry, &coverage);
+                let va = fa + ca + ma;
+                let vb = fb + cb + mb;
+                let desc = |x: f64, y: f64| y.partial_cmp(&x).unwrap_or(std::cmp::Ordering::Equal);
                 (va <= 0.0)
                     .cmp(&(vb <= 0.0))
                     .then_with(|| ka.cmp(&kb))
-                    .then_with(|| vb.partial_cmp(&va).unwrap_or(std::cmp::Ordering::Equal))
+                    .then_with(|| desc(ma, mb))
+                    .then_with(|| desc(fa, fb))
+                    .then_with(|| desc(ca, cb))
             });
         let Some(op) = pick else { break };
         assigned.insert(op.char_id.clone());
@@ -2727,6 +2738,20 @@ pub fn cc_spare_seat_value(
     registry: &HashMap<String, BuffResolutionStrategy>,
     coverage: &HashMap<crate::core::grade::base::clause::NonProdKind, f64>,
 ) -> f64 {
+    let (facility, clue) = cc_spare_seat_split(op, building_data, registry, coverage);
+    facility + clue
+}
+
+/// [`cc_spare_seat_value`] in two parts: `(HR and training speed, clue
+/// speed)`, each the best of the operator's Control-Center skills. The bench
+/// ranks the first ahead of the second whatever the sizes (see
+/// `fill_remaining_slots`).
+pub fn cc_spare_seat_split(
+    op: &OperatorBaseProfile,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    coverage: &HashMap<crate::core::grade::base::clause::NonProdKind, f64>,
+) -> (f64, f64) {
     use crate::core::grade::base::clause::{ClauseKind, Metric, NonProdKind};
     op.available_buffs
         .iter()
@@ -2739,9 +2764,9 @@ pub fn cc_spare_seat_value(
                 clauses_from_strategy(b, buff, strategy)
                     .iter()
                     .filter(|c| matches!(c.kind, ClauseKind::SelfValue))
-                    .map(|c| {
+                    .fold((0.0_f64, 0.0_f64), |(facility, clue), c| {
                         let Metric::NonProduction(kind) = &c.metric else {
-                            return 0.0;
+                            return (facility, clue);
                         };
                         // A strongest-only effect pays only beyond the crew's best of its kind.
                         let value = if stacks {
@@ -2750,16 +2775,20 @@ pub fn cc_spare_seat_value(
                             (c.value - coverage.get(kind).copied().unwrap_or(0.0)).max(0.0)
                         };
                         match kind {
-                            NonProdKind::ClueSearch => value * 3.0,
-                            NonProdKind::HrContact => value * 2.0,
-                            NonProdKind::Training => value,
-                            _ => 0.0,
+                            NonProdKind::HrContact => (facility + value * 2.0, clue),
+                            NonProdKind::Training => (facility + value, clue),
+                            NonProdKind::ClueSearch => (facility, clue + value),
+                            _ => (facility, clue),
                         }
-                    })
-                    .sum::<f64>(),
+                    }),
             )
         })
-        .fold(0.0, f64::max)
+        .fold(
+            (0.0, 0.0),
+            |(bf, bc), (f, c)| {
+                if f + c > bf + bc { (f, c) } else { (bf, bc) }
+            },
+        )
 }
 
 /// Opportunity cost of parking `op` in a room as a FILLER. Counts the other room
@@ -4103,28 +4132,55 @@ fn assign_trading_rooms_by_yield(
         .collect()
 }
 
+/// Post combinations whose coupled value is within this fraction of the best
+/// are a tie, broken by the posts' own (uncoupled) LMD. On a gold-starved
+/// base every post sells more than the factories make, so the coupled value
+/// cannot tell Proviso at the level-2 post from Proviso at the level-3 one
+/// (her bonus bars are unsold either way); her "+2 gold on orders below 4"
+/// pays on every order a level-2 post draws and only on some of a level-3
+/// post's, so the posts' own value seats her at the lower post, where the
+/// community runs her (31010962: the three arrangements were within 0.7%).
+const POST_TIE_BAND: f64 = 0.01;
+
 /// For each post, the index of its crew in the combination of disjoint
 /// candidates that realizes the most value beside `context`; `None` where a
 /// post has no candidate that fits. The product is small: a base has at
-/// most two posts and each offers `YIELD_PICK_WIDTH` teams.
+/// most two posts and each offers `YIELD_PICK_WIDTH` teams. Combinations
+/// within `POST_TIE_BAND` of the best coupled value are ranked by the posts'
+/// own LMD, so a value shape lands on the post level where it pays most.
 fn best_post_combination(
     options: &[Vec<RoomAssignment>],
     context: &[RoomAssignment],
 ) -> Vec<Option<usize>> {
     struct Search<'a> {
         options: &'a [Vec<RoomAssignment>],
+        context_len: usize,
         trial: Vec<RoomAssignment>,
         used: HashSet<String>,
         chosen: Vec<Option<usize>>,
-        best: Option<(Vec<Option<usize>>, f64)>,
+        /// Every complete combination: its picks, coupled value, posts' LMD.
+        complete: Vec<(Vec<Option<usize>>, f64, f64)>,
     }
     impl Search<'_> {
         fn go(&mut self, idx: usize) {
             if idx == self.options.len() {
                 let value = assignment_value(&self.trial);
-                if self.best.as_ref().is_none_or(|(_, v)| value > *v + 1e-9) {
-                    self.best = Some((self.chosen.clone(), value));
-                }
+                let posts_lmd: f64 = self.trial[self.context_len..]
+                    .iter()
+                    .map(|r| {
+                        super::yield_model::room_yield(
+                            &r.room_type,
+                            r.formula_type.as_deref(),
+                            r.level,
+                            r.total_efficiency,
+                            r.order_value,
+                            r.operators.len(),
+                            r.order_limit,
+                        )
+                        .lmd_per_day
+                    })
+                    .sum();
+                self.complete.push((self.chosen.clone(), value, posts_lmd));
                 return;
             }
             let mut any = false;
@@ -4156,14 +4212,33 @@ fn best_post_combination(
     }
     let mut search = Search {
         options,
+        context_len: context.len(),
         trial: context.to_vec(),
         used: HashSet::new(),
         chosen: Vec::new(),
-        best: None,
+        complete: Vec::new(),
     };
     search.go(0);
+    let top = search
+        .complete
+        .iter()
+        .map(|(_, v, _)| *v)
+        .fold(f64::NEG_INFINITY, f64::max);
+    let floor = top - top.abs() * POST_TIE_BAND;
     search
-        .best
+        .complete
+        .into_iter()
+        .filter(|(_, v, _)| *v >= floor - 1e-9)
+        .fold(
+            None::<(Vec<Option<usize>>, f64)>,
+            |best, (chosen, _, lmd)| {
+                if best.as_ref().is_none_or(|(_, l)| lmd > *l + 1e-9) {
+                    Some((chosen, lmd))
+                } else {
+                    best
+                }
+            },
+        )
         .map_or_else(|| vec![None; options.len()], |(chosen, _)| chosen)
 }
 
@@ -4614,6 +4689,53 @@ pub(crate) fn enumerate_candidate_teams(
         }
     }
 
+    // A capacity converter (Vermeil's Recycling: 2% productivity per capacity
+    // point in the factory) turns teammates' capacity skills into speed, but
+    // the bound counts speed only, so Scene ranked at her averaged ramp (24.0)
+    // behind every flat 25 and the comp Vermeil/Scene/Pallas (105) was never
+    // enumerated: a 22-candidate pool fielded 95 (2026-09-19). With a converter
+    // among the candidates, credit each candidate's OWN capacity points at the
+    // best converter's rate, so the bound stays above what the scorer reads
+    // for them beside the converter.
+    let capacity_rate = {
+        use crate::core::grade::base::clause::{ClauseKind, Metric};
+        let speed_metric = Metric::speed_for_room(room_type);
+        candidates
+            .iter()
+            .flat_map(|op| op.available_buffs.iter())
+            .filter_map(|b| {
+                let buff = building_data.buffs.get(b)?;
+                (buff.room_type == room_type).then_some(())?;
+                let strategy = registry.get(b)?;
+                Some(clauses_from_strategy(b, buff, strategy))
+            })
+            .flatten()
+            .filter_map(|c| match c.kind {
+                ClauseKind::ScalingPeerMetric {
+                    metric: Metric::CapacityLimit,
+                    step,
+                    ..
+                } if c.metric == speed_metric && step > 0.0 => Some(c.value / step),
+                _ => None,
+            })
+            .fold(0.0_f64, f64::max)
+    };
+    let capacity_boost = |op: &OperatorBaseProfile| -> f64 {
+        if capacity_rate <= 0.0 {
+            return 0.0;
+        }
+        let alone: HashSet<String> = HashSet::from([op.char_id.clone()]);
+        capacity_rate
+            * f64::from(compute_order_limit(
+                op,
+                room_type,
+                formula_type,
+                registry,
+                building_data,
+                &alone,
+            ))
+    };
+
     // A nullifier (Shamare) zeroes teammates' SPEED and gains efficiency per
     // teammate, so its only worthwhile partners are operators whose order VALUE
     // survives the nullify (Tequila's flat LMD, Bibeak's Precious Metal) - every
@@ -4692,6 +4814,7 @@ pub(crate) fn enumerate_candidate_teams(
                     max_slots,
                     &companions,
                 ) + enabler_boost.get(&op.char_id).copied().unwrap_or(0.0)
+                    + capacity_boost(op)
                     + value_boost;
                 let specialist =
                     op_is_formula_specialist(op, room_type, formula_type, building_data);

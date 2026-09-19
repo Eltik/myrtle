@@ -748,8 +748,39 @@ fn rotation_core(
             .collect()
     };
     let mut assigned = used.clone();
-    let aux1 = aux_squads(&mut assigned, true);
-    let aux2 = aux_squads(&mut assigned, false);
+    let mut aux1 = aux_squads(&mut assigned, true);
+    let mut aux2 = aux_squads(&mut assigned, false);
+
+    // An economy pin into an Office or Reception Room (Mulberry's per-slot
+    // Worldly Plight, Whisperain's Memory Fragments) works that room in
+    // EVERY shift, as a Control-Center pin joins both squads: the consumers
+    // planned around those points (Mr. Nothing, Rosmontis) need them
+    // whenever they work. Reserved from the pools above, such a pin never
+    // reached a squad: the optimal view seated Whisperain in the Office
+    // while every shift showed Haruka/Penance (55699327), and a Worldly
+    // Plight team's Office went to Provence over Mulberry.
+    for (id, room_type) in pins.iter().filter(|(id, _)| pinned_ids.contains(id)) {
+        if !matches!(room_type.as_str(), "HIRE" | "MEETING") {
+            continue;
+        }
+        let Some(room) = building.rooms.iter().find(|r| &r.room_type == room_type) else {
+            continue;
+        };
+        #[allow(clippy::cast_sign_loss)]
+        let capacity = max_stationed_at_level(building_data, room_type, room.level).max(1) as usize;
+        for squads in [&mut aux1, &mut aux2] {
+            let (_, ops) = squads
+                .entry(room.slot_id.clone())
+                .or_insert_with(|| (room_type.clone(), Vec::new()));
+            if ops.iter().any(|o| o == id) {
+                continue;
+            }
+            if ops.len() >= capacity {
+                ops.truncate(capacity - 1);
+            }
+            ops.insert(0, id.clone());
+        }
+    }
 
     // Control Center Squad 2: the best global-bonus fill from the leftovers, so the
     // CC keeps granting bonuses while Squad 1 rests. It sees every production team
@@ -1123,8 +1154,6 @@ fn rotation_core(
                 .is_none_or(|op| super::sustain_sim::sustains_24h_block(op, morale_drains))
         })
     };
-    let mut aux1 = aux1;
-    let mut aux2 = aux2;
     for (slot, (_, squad1)) in &mut aux1 {
         if let Some((_, squad2)) = aux2.get_mut(slot)
             && flip_better(slot, squad1, squad2)

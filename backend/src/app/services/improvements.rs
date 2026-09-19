@@ -2023,24 +2023,58 @@ pub fn shift_rotation_to_dto(
     // Per-shift skill ledgers: ablation marginals against the crew that
     // actually works each shift, with that shift's own Control-Center grants.
     let op_index_ledger = crate::core::grade::base::assignment::build_op_index(profiles);
-    let facility_counts = crate::core::grade::base::assignment::effective_facility_counts(
+    // Layout-counted branches (Wang) read the layout alone; the deployment
+    // gates below read each shift's seats.
+    let layout_registry = crate::core::grade::base::assignment::resolve_layout_branches(
+        registry,
         building,
-        profiles,
-        registry,
         &game_data.building,
-        &crate::core::grade::base::assignment::stationed_seats(building, None),
     );
-    let ledger_ctx = crate::core::grade::base::skill_ledger::LedgerCtx {
-        op_index: &op_index_ledger,
-        registry,
-        building_data: &game_data.building,
-        facility_counts: &facility_counts,
-        total_dorm_levels: building.total_dorm_levels(),
-        morale_drains,
-    };
 
     let mut shift_dtos = Vec::with_capacity(rotation.shifts.len());
     for shift in &rotation.shifts {
+        // The ledger prices a shift against the seats THAT SHIFT recommends:
+        // base-wide counts (Nasti's "for each Rhine Lab Operator in the
+        // Base"), work-area gates (Hoederer's Ines) and facility enablers
+        // (Greyy's plant) all resolve on who works then. Priced against the
+        // bare registry and the player's current seats, Nasti's Costly
+        // Construction read INACTIVE in every shift while the stationed view
+        // priced it (28425x, 31010962).
+        let shift_seats: HashMap<String, String> = shift
+            .rooms
+            .iter()
+            .filter(|r| r.active)
+            .flat_map(|r| {
+                r.recommended
+                    .iter()
+                    .map(move |op| (op.clone(), r.room_type.clone()))
+            })
+            .collect();
+        let working: HashSet<String> = shift_seats
+            .iter()
+            .filter(|(_, rt)| *rt != "DORMITORY")
+            .map(|(op, _)| op.clone())
+            .collect();
+        let shift_registry = crate::core::grade::base::assignment::resolve_room_presence(
+            &crate::core::grade::base::assignment::resolve_base_wide(&layout_registry, &working),
+            &shift_seats,
+            profiles,
+        );
+        let facility_counts = crate::core::grade::base::assignment::effective_facility_counts(
+            building,
+            profiles,
+            &shift_registry,
+            &game_data.building,
+            &shift_seats,
+        );
+        let ledger_ctx = crate::core::grade::base::skill_ledger::LedgerCtx {
+            op_index: &op_index_ledger,
+            registry: &shift_registry,
+            building_data: &game_data.building,
+            facility_counts: &facility_counts,
+            total_dorm_levels: building.total_dorm_levels(),
+            morale_drains,
+        };
         let shift_cc: Vec<String> = shift
             .rooms
             .iter()

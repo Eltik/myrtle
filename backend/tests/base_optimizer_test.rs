@@ -9739,14 +9739,17 @@ fn two_posts_on_one_gold_supply_are_crewed_together() {
     const TEQUILA: &str = "char_486_takila";
     const BIBEAK: &str = "char_252_bibeak";
     const PROVISO: &str = "char_4032_provs";
-    const EXUSIAI: &str = "char_103_angel";
-    const LEMUEN: &str = "char_4193_lemuen";
-    const HOEDERER: &str = "char_4088_hodrer";
-    const QUARTZ: &str = "char_4063_quartz";
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
     let mut roster: Vec<_> = [
-        SHAMARE, TEQUILA, BIBEAK, PROVISO, EXUSIAI, LEMUEN, HOEDERER, QUARTZ,
+        SHAMARE,
+        TEQUILA,
+        BIBEAK,
+        PROVISO,
+        "char_103_angel",
+        "char_4193_lemuen",
+        "char_4088_hodrer",
+        "char_4063_quartz",
     ]
     .iter()
     .filter(|id| gd.building.chars.contains_key(**id))
@@ -9757,18 +9760,27 @@ fn two_posts_on_one_gold_supply_are_crewed_together() {
         "the traders are in the game data: {}",
         roster.len()
     );
-    for id in [
+    // Six plain factory hands for the six factory seats, so no trader is
+    // padded into a factory before the posts are picked.
+    let hands: Vec<_> = [
         "char_123_fang",
         "char_133_mm",
         "char_502_nblade",
-        "char_36_forget",
+        "char_124_kroos",
+        "char_211_adnach",
+        "char_212_ansel",
+        "char_210_stward",
         "char_120_hibisc",
         "char_121_lava",
-    ] {
-        if gd.building.chars.contains_key(id) {
-            roster.push(profile(gd, id));
-        }
-    }
+        "char_36_forget",
+    ]
+    .iter()
+    .filter(|id| gd.building.chars.contains_key(**id))
+    .take(6)
+    .map(|id| profile(gd, id))
+    .collect();
+    assert_eq!(hands.len(), 6, "six plain hands exist in the game data");
+    roster.extend(hands);
     let mut rooms = vec![room("tp3", "TRADING", 3), room("tp2", "TRADING", 2)];
     for i in 0..2 {
         let mut r = room(&format!("mf{i}"), "MANUFACTURE", 3);
@@ -9806,10 +9818,18 @@ fn two_posts_on_one_gold_supply_are_crewed_together() {
         l3.operators
     );
     assert!(
-        l2.operators.len() == 2
-            && l2.operators.iter().all(|o| o != SHAMARE && o != TEQUILA)
-            && l2.operators.iter().any(|o| o == EXUSIAI || o == LEMUEN),
-        "the level-2 post is fully crewed from the rest, Laterano first, got {:?}",
+        l2.operators.len() == 2 && l2.operators.iter().all(|o| o != SHAMARE && o != TEQUILA),
+        "the level-2 post is fully crewed from the rest, got {:?}",
+        l2.operators
+    );
+    // Proviso's "+2 gold on orders below 4" pays on every order a level-2
+    // post draws and only on some of a level-3 post's: when the coupled
+    // value cannot tell the two apart (both posts outsell the factories),
+    // she takes the lower post.
+    assert!(
+        l2.operators.iter().any(|o| o == PROVISO),
+        "Proviso sells at the level-2 post, got L3 {:?} / L2 {:?}",
+        l3.operators,
         l2.operators
     );
 }
@@ -9893,5 +9913,244 @@ fn a_rested_facility_enabler_is_not_counted_in_that_shift() {
     assert!(
         (with - without - 30.0).abs() < 1e-6,
         "four plants with Greyy, three without: 30 apart, got {with} vs {without}"
+    );
+}
+
+/// When a Worldly Plight team is recommended, the Office seat goes to
+/// Mulberry ("for every Recruit slot, Worldly Plight +10": +20 at a level-3
+/// Office), not to a plain HR-speed operator: the points feed Mr. Nothing's
+/// +1% per point and Shu's +1% per 3, which outweigh Provence's HR speed.
+#[test]
+fn a_worldly_plight_team_seats_mulberry_in_the_office() {
+    const NOTHING: &str = "char_455_nothin";
+    const SHU: &str = "char_2025_shu";
+    const JIEYUN: &str = "char_4078_bdhkgt";
+    const MULBERRY: &str = "char_473_mberry";
+    const PROVENCE: &str = "char_145_prove";
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let mut roster: Vec<_> = [NOTHING, SHU, JIEYUN, MULBERRY, PROVENCE, "char_2024_chyue"]
+        .iter()
+        .filter(|id| gd.building.chars.contains_key(**id))
+        .map(|id| profile(gd, id))
+        .collect();
+    for id in [
+        "char_123_fang",
+        "char_133_mm",
+        "char_502_nblade",
+        "char_124_kroos",
+        "char_120_hibisc",
+        "char_211_adnach",
+        "char_212_ansel",
+        "char_36_forget",
+        "char_121_lava",
+        "char_210_stward",
+    ] {
+        if gd.building.chars.contains_key(id) {
+            roster.push(profile(gd, id));
+        }
+    }
+    let mut rooms = vec![
+        room("cc", "CONTROL", 5),
+        room("tp", "TRADING", 3),
+        room("hr", "HIRE", 3),
+    ];
+    rooms.extend((0..2).map(|i| {
+        let mut r = room(&format!("mf{i}"), "MANUFACTURE", 3);
+        r.current_formula = Some("F_GOLD".into());
+        r
+    }));
+    rooms.extend((0..2).map(|i| room(&format!("d{i}"), "DORMITORY", 3)));
+    let building = UserBuilding { rooms };
+    let economy = backend::core::grade::base::pools::search_economy(
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+    );
+    let accepted = backend::core::grade::base::pools::optimal_with_bundles(
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+        &economy.registry,
+        &drains,
+        &economy.pins,
+    );
+    let seated = |id: &str| {
+        accepted
+            .optimal
+            .rooms
+            .iter()
+            .any(|r| r.operators.iter().any(|o| o == id))
+    };
+    assert!(seated(NOTHING), "Mr. Nothing sells at the post");
+    let office = accepted
+        .optimal
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "HIRE")
+        .expect("the Office is staffed");
+    assert_eq!(
+        office.operators,
+        vec![MULBERRY.to_string()],
+        "Mulberry feeds the Worldly Plight team from the Office"
+    );
+}
+
+/// A spare Control-Center seat goes to a base-wide morale aura first, then
+/// HR or training speed, and to clue speed last whatever its size: Lee's
+/// +25% clue collection is worth less than Umiri's +10% HR contact, and a
+/// morale aura ranks ahead of both (user feedback 2026-09-19).
+#[test]
+fn a_spare_cc_seat_ranks_morale_and_hr_ahead_of_clue_speed() {
+    use backend::core::grade::base::assignment::fill_remaining_slots;
+    const LEE: &str = "char_322_lmlee";
+    const UMIRI: &str = "char_4210_yumiri";
+    const CHONGYUE: &str = "char_2024_chyue";
+    let gd = load_game_data();
+    let (registry, _) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let umiri = gd
+        .operators
+        .iter()
+        .find(|(_, o)| o.name == "Umiri Yahata")
+        .map(|(id, _)| id.clone())
+        .unwrap_or_else(|| UMIRI.to_string());
+    let roster: Vec<_> = [LEE, umiri.as_str(), CHONGYUE]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+    let mut slots = Vec::new();
+    let mut assigned = std::collections::HashSet::new();
+    fill_remaining_slots(
+        &mut slots,
+        2,
+        "CONTROL",
+        &roster,
+        &gd.building,
+        &registry,
+        &mut assigned,
+    );
+    assert_eq!(
+        slots,
+        vec![CHONGYUE.to_string(), umiri.clone()],
+        "morale aura, then HR speed; Lee's clue speed waits"
+    );
+}
+
+/// A Battle Records factory with Vermeil's capacity comp on the roster
+/// (Vermeil Recycling 2% per capacity point, Scene Editing α +12, Pallas
+/// Domain of Wisdom +8, Junkman +8: 56 + Time-Lapse 24 + Plan to Victory 25
+/// = 105) beside a deep pool of flat +25/+30 hands must field the comp. The
+/// candidate cut ranks by optimistic bound and the bound counts speed only,
+/// so Scene ranked at her averaged ramp (24.0) behind every flat 25 and the
+/// comp was never enumerated: a reporter's optimizer fielded
+/// Mizuki/Jessica/Vanilla (90) over Vermeil/Scene/Pallas (105) on 2026-09-19.
+#[test]
+fn vermeil_capacity_comp_survives_a_deep_flat_pool() {
+    const VERMEIL: &str = "char_190_clour";
+    const SCENE: &str = "char_336_folivo";
+    const PALLAS: &str = "char_485_pallas";
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let roster: Vec<_> = [
+        VERMEIL,
+        SCENE,
+        PALLAS,
+        "char_437_mizuki",
+        "char_235_jesica",
+        "char_240_wyvern",
+        "char_242_otter",
+        "char_4141_marcil",
+        "char_1031_slent2",
+        "char_496_wildmn",
+        "char_484_robrta",
+        "char_431_ashlok",
+        "char_430_fartth",
+        "char_4212_nasti",
+        "char_4066_highmo",
+        "char_4048_doroth",
+        "char_210_stward",
+        "char_181_flower",
+        "char_135_halo",
+        "char_128_plosis",
+        "char_108_silent",
+        "char_1047_halo2",
+    ]
+    .iter()
+    .filter(|id| gd.building.chars.contains_key(**id))
+    .map(|id| profile(gd, id))
+    .collect();
+    assert!(
+        roster.len() >= 20,
+        "the pool is in the game data: {}",
+        roster.len()
+    );
+    let mut building = single_room("MANUFACTURE", 3);
+    building.rooms[0].current_formula = Some("F_EXP".into());
+    let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+    let factory = asn
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "MANUFACTURE")
+        .expect("the factory is staffed");
+    let mut crew = factory.operators.clone();
+    crew.sort();
+    let mut want = vec![VERMEIL.to_string(), SCENE.to_string(), PALLAS.to_string()];
+    want.sort();
+    assert_eq!(
+        crew, want,
+        "Vermeil/Scene/Pallas at 105 beats every flat crew; fielded {crew:?} at {:.1}",
+        factory.total_efficiency
+    );
+}
+
+/// Control for the golden above: the same comp with a pool shallow enough
+/// that nobody is cut, and the comp alone. Both must read the comp at its
+/// ledger value, which isolates the candidate cut as the cause.
+#[test]
+fn vermeil_capacity_comp_control_shallow_pool_and_alone() {
+    const VERMEIL: &str = "char_190_clour";
+    const SCENE: &str = "char_336_folivo";
+    const PALLAS: &str = "char_485_pallas";
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let run = |ids: &[&str]| {
+        let roster: Vec<_> = ids.iter().map(|id| profile(gd, id)).collect();
+        let mut building = single_room("MANUFACTURE", 3);
+        building.rooms[0].current_formula = Some("F_EXP".into());
+        let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+        let f = asn
+            .rooms
+            .iter()
+            .find(|r| r.room_type == "MANUFACTURE")
+            .unwrap();
+        let mut crew = f.operators.clone();
+        crew.sort();
+        (crew, f.total_efficiency)
+    };
+    let (alone, alone_eff) = run(&[VERMEIL, SCENE, PALLAS]);
+    eprintln!("ALONE {alone:?} {alone_eff:.1}");
+    let (shallow, shallow_eff) = run(&[
+        VERMEIL,
+        SCENE,
+        PALLAS,
+        "char_437_mizuki",
+        "char_235_jesica",
+        "char_240_wyvern",
+        "char_242_otter",
+        "char_4141_marcil",
+        "char_1031_slent2",
+        "char_4048_doroth",
+        "char_484_robrta",
+        "char_431_ashlok",
+        "char_430_fartth",
+    ]);
+    eprintln!("SHALLOW {shallow:?} {shallow_eff:.1}");
+    let mut want = vec![VERMEIL.to_string(), SCENE.to_string(), PALLAS.to_string()];
+    want.sort();
+    assert_eq!(
+        shallow, want,
+        "with nobody cut the comp is found at {shallow_eff:.1}"
     );
 }
