@@ -9,8 +9,12 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    width: 177px;
-    height: 340px;
+    /* Every measurement below is the fraction of a 177px card it was drawn at,
+       so the card scales as one object from this single variable. It was a flat
+       177x340 and read as an object from a different site beside 13px body text. */
+    --planner-card-w: 177px;
+    width: var(--planner-card-w);
+    height: calc(var(--planner-card-w) * 340 / 177);
     overflow: hidden;
     border: 3px solid;
     border-image: linear-gradient(var(--planner-angle), var(--planner-stops)) 1;
@@ -60,9 +64,9 @@
 
 .portrait {
     position: absolute;
-    inset: 0 0 32px 0;
+    inset: 0 0 calc(var(--planner-card-w) * 32 / 177) 0;
     width: 100%;
-    height: calc(100% - 32px);
+    height: calc(100% - var(--planner-card-w) * 32 / 177);
     object-fit: cover;
     object-position: top;
     transition:
@@ -84,15 +88,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 32px;
+    height: calc(var(--planner-card-w) * 32 / 177);
     border-top: 3px solid;
     border-image: linear-gradient(90deg, var(--planner-stops)) 1;
     background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.75)), linear-gradient(90deg, var(--planner-stops));
-    padding: 0 6px;
+    padding: 0 calc(var(--planner-card-w) * 6 / 177);
     overflow: hidden;
     color: #fff;
     font-weight: 800;
-    font-size: 16px;
+    font-size: calc(var(--planner-card-w) * 16 / 177);
     letter-spacing: 0.02em;
     line-height: 1;
     white-space: nowrap;
@@ -110,7 +114,7 @@
     z-index: 2;
     display: flex;
     flex-direction: column;
-    width: 40px;
+    width: calc(var(--planner-card-w) * 40 / 177);
     box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
 }
 
@@ -118,17 +122,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 36px;
+    height: calc(var(--planner-card-w) * 36 / 177);
     background: var(--planner-c0);
     color: #fff;
     font-weight: 800;
-    font-size: 19px;
+    font-size: calc(var(--planner-card-w) * 19 / 177);
     line-height: 1;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .priceLabel {
-    font-size: 11px;
+    font-size: calc(var(--planner-card-w) * 11 / 177);
     font-weight: 700;
     letter-spacing: 0.02em;
     text-transform: uppercase;
@@ -138,25 +142,25 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 40px;
+    height: calc(var(--planner-card-w) * 40 / 177);
     background: color-mix(in srgb, var(--planner-c0) 70%, transparent);
 }
 
 .priceClass img {
-    width: 28px;
-    height: 28px;
+    width: calc(var(--planner-card-w) * 28 / 177);
+    height: calc(var(--planner-card-w) * 28 / 177);
     filter: brightness(0) invert(1) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.8));
 }
 
 .stars {
     position: absolute;
-    top: 6px;
+    top: calc(var(--planner-card-w) * 6 / 177);
     left: 0;
     right: 0;
     z-index: 2;
     text-align: center;
     color: #ffd84a;
-    font-size: 14px;
+    font-size: calc(var(--planner-card-w) * 14 / 177);
     letter-spacing: -1px;
     text-shadow: 0 1px 2px #000;
     pointer-events: none;
@@ -170,8 +174,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: calc(var(--planner-card-w) * 40 / 177);
+    height: calc(var(--planner-card-w) * 40 / 177);
     background: rgba(0, 0, 0, 0.75);
     color: #fff;
     cursor: pointer;
@@ -192,7 +196,7 @@
     background: rgba(0, 0, 0, 0.55);
     color: #fff;
     font-weight: 800;
-    font-size: 22px;
+    font-size: calc(var(--planner-card-w) * 22 / 177);
     letter-spacing: 0.08em;
     text-transform: uppercase;
     text-shadow: 0 2px 6px #000;

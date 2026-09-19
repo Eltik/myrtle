@@ -52,11 +52,13 @@ export function ReleaseNoteDialog(): React.ReactElement | null {
 
                 {/* The sheet is capped at the viewport, so on a phone the item list
                     was whatever was left after the media, the lead and the footer,
-                    which was a few rows. It gets a real share of the screen and its
-                    own scroll, rather than being the thing that absorbs every other
-                    element's height. */}
+                    which was a few rows. `min-h-0` makes it the one child that
+                    shrinks, so it takes the real leftover space instead of the 48vh
+                    I guessed at first, and `.scroll-shadows` says it scrolls: the
+                    guess both wasted room and sliced a line through the middle with
+                    nothing to show the rest was below. */}
                 {note.items && note.items.length > 0 && (
-                    <DialogPanel className="min-h-0 max-sm:max-h-[48vh] max-sm:overflow-y-auto max-sm:overscroll-contain">
+                    <DialogPanel className="scroll-shadows min-h-0 max-sm:overflow-y-auto max-sm:overscroll-contain">
                         <p className="mb-3 font-medium text-[0.69rem] text-muted-foreground uppercase tracking-[0.18em]">{t("dialog.alsoInUpdate")}</p>
                         <ReleaseNoteItems items={note.items} />
                     </DialogPanel>

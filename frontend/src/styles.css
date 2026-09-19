@@ -506,3 +506,41 @@ pre code {
 :is(:lang(ko), :lang(ja), :lang(zh), :lang(th)) :is([class*="tracking-"], .uppercase, .kicker) {
     letter-spacing: normal;
 }
+
+/* A scroll area that says so.
+   Two shadows painted as backgrounds: the pair attached to the SCROLLER stay
+   pinned to its top and bottom edges, the pair attached to the CONTENT scroll
+   with it and cover the pinned ones at the extremes. The result is a shadow at
+   an edge only while there is something past it, with no JavaScript and no
+   scroll listener.
+
+   This exists because the release-note sheet capped its item list on a phone
+   and the last visible line was sliced through the middle of its glyphs, which
+   reads as broken text rather than as "there is more below". The cut is
+   unavoidable in any scroller; the missing part was the affordance.
+
+   `--scroll-shadow-bg` must match the surface the scroller sits on, or the
+   covering gradients will not cover. */
+@layer components {
+    .scroll-shadows {
+        --scroll-shadow-bg: var(--popover);
+        background-image:
+            linear-gradient(to bottom, var(--scroll-shadow-bg), transparent),
+            linear-gradient(to top, var(--scroll-shadow-bg), transparent),
+            linear-gradient(to bottom, oklch(0 0 0 / 0.12), transparent),
+            linear-gradient(to top, oklch(0 0 0 / 0.12), transparent);
+        background-position:
+            0 0,
+            0 100%,
+            0 0,
+            0 100%;
+        background-size:
+            100% 1.25rem,
+            100% 1.25rem,
+            100% 0.5rem,
+            100% 0.5rem;
+        background-repeat: no-repeat;
+        /* The first two scroll with the content, the last two stay put. */
+        background-attachment: local, local, scroll, scroll;
+    }
+}

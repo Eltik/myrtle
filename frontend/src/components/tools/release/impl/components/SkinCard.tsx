@@ -17,7 +17,8 @@ type CardT = TypedT<typeof messages>;
 
 const CARD_SHEET = asset("/textures/arts/ui/[uc]classicgachapool/classic_gacha%230.png");
 const CARD_CROP = { x: 19, y: 389, w: 276, h: 608, sheet: 1024 };
-const CARD_WIDTH = 177;
+/** The card's one size knob. The CSS derives every other measurement from it. */
+const CARD_WIDTH = 140;
 export const FALLBACK_COLOR = "#4b5563";
 
 /** The obtain methods the game data spells out, mapped to a badge-sized label. */
@@ -48,6 +49,7 @@ export function cardVars(colors: string[], width = CARD_WIDTH): React.CSSPropert
     const k = width / CARD_CROP.w;
     const palette = colors.length > 0 ? colors : [FALLBACK_COLOR];
     return {
+        "--planner-card-w": `${width}px`,
         "--planner-stops": stopsOf(palette),
         "--planner-c0": palette[0],
         "--planner-sheet": `url("${CARD_SHEET}")`,

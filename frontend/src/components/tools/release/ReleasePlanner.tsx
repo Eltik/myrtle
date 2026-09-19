@@ -28,9 +28,14 @@ export function ReleasePlanner(): React.ReactElement {
         <div className="page-shell [--page-max:1200px]" translate="no">
             <PageHeader breadcrumbLabel="breadcrumb" breadcrumb={[t("release.breadcrumb.tools"), t("release.title")]} title={t("release.title")} description={t("release.intro")} />
 
+            {/* The explanation of where the names come from was a permanent
+                paragraph under a one-word toggle, on a page already dense enough
+                that readers called it too much. It is the toggle's tooltip now:
+                the same sentence, reachable, not occupying the page every visit. */}
             <div className="mt-5 flex flex-col gap-1.5">
-                <ToggleField id="release-auto-translate" label={t("release.autoTranslate")} checked={autoTranslate} onChange={setAutoTranslate} />
-                <p className="m-0 font-sans text-[12px] text-muted-foreground leading-normal">{t("release.autoTranslate.desc")}</p>
+                <span title={t("release.autoTranslate.desc")}>
+                    <ToggleField id="release-auto-translate" label={t("release.autoTranslate")} checked={autoTranslate} onChange={setAutoTranslate} />
+                </span>
             </div>
 
             <AutoTranslateProvider value={autoTranslate}>

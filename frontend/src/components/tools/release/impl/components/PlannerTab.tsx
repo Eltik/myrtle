@@ -103,8 +103,20 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
             {data.rows.length === 0 ? (
                 <ReleaseEmpty title={t("release.planner.empty.title")} description={t("release.planner.empty.desc")} />
             ) : (
+                /* Two panes, each ONE scroll region from `md` up. Before this the page
+                   was a single scroll, so reading down the detail pane dragged the event
+                   list off the top of the screen.
+
+                   The left column is a fixed-height sticky box that does not scroll
+                   itself; the list inside it takes whatever the controls above leave
+                   (`flex-1` against `min-h-0`) and scrolls that. The list used to guess
+                   at `calc(100vh - 14rem)`, which is why it stopped short of the bottom
+                   of the screen: 14rem was a stand-in for the chrome above it and the
+                   chrome is not 14rem. Nothing subtracts a guessed height now, and there
+                   is one scroller per pane rather than one nested in another.
+                   `items-start` above is what lets them stick at all. */
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-[340px_minmax(0,1fr)] md:items-start">
-                    <div className={cn("flex flex-col gap-2", pane !== "events" && "max-md:hidden")}>
+                    <div className={cn("flex flex-col gap-2 md:sticky md:top-4 md:h-[calc(100svh-2rem)] md:overflow-hidden", pane !== "events" && "max-md:hidden")}>
                         <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3">
                             <div className="flex items-center gap-2">
                                 <Button
@@ -149,7 +161,7 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
                                 )}
                             </div>
                         </div>
-                        <div className="flex flex-col gap-2 md:max-h-[calc(100vh-14rem)] md:overflow-y-auto md:pr-1">
+                        <div className="flex flex-col gap-2 md:min-h-0 md:flex-1 md:overflow-y-auto md:overscroll-contain md:pr-1">
                             <Button size="sm" variant="outline" className="sticky top-16 z-10 w-full bg-background/90 backdrop-blur md:hidden" onClick={() => setPane("detail")}>
                                 {summary ? t("release.planner.showSummary") : t("release.planner.showSelected")}
                             </Button>
@@ -158,7 +170,7 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
                             ))}
                         </div>
                     </div>
-                    <div className={cn("min-w-0", pane !== "detail" && "max-md:hidden")}>
+                    <div className={cn("min-w-0 md:sticky md:top-4 md:max-h-[calc(100svh-2rem)] md:overflow-y-auto md:overscroll-contain", pane !== "detail" && "max-md:hidden")}>
                         <Button size="sm" variant="outline" className="sticky top-16 z-10 mb-3 w-full bg-background/90 backdrop-blur md:hidden" onClick={() => setPane("events")}>
                             {t("release.planner.showEvents")}
                         </Button>

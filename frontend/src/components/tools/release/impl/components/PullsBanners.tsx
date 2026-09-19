@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { Minus, Plus, RotateCcw } from "lucide-react";
+import { ChevronDown, Minus, Plus, RotateCcw } from "lucide-react";
 import * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Card } from "#/components/ui/card";
+import { Collapsible, CollapsiblePanel, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Input } from "#/components/ui/input";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { releaseEventsQueryOptions } from "#/lib/api/release";
@@ -153,6 +154,8 @@ function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT;
     ]);
     const activeKey = row.allocated > 0 ? (goals.find((g) => g.value === row.allocated)?.key ?? null) : null;
     const active = (activeKey && byGoal.get(activeKey)) || goalEstimate || estimate.specific;
+    /** `active` is an ESTIMATE; the collapsed heading needs the goal row's own wording. */
+    const activeLabel = goals.find((g) => g.key === activeKey)?.label ?? null;
     /**
      * Measured against what will actually be thrown at the banner, not against what
      * was typed. Typing 397 into a row the bank can only pay 339 of used to print
@@ -162,39 +165,51 @@ function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT;
      */
     const gap = active.p50 - row.totalPulls;
 
+    /* The goal list folds away. Open by default: it is this panel's own control, and
+       hiding a tool's primary affordance for everyone is a bigger change than the
+       report asked for. The heading carries the active goal while closed, so a folded
+       panel still answers the question it is there to answer. */
     return (
-        <div className="flex w-full min-w-0 flex-col gap-1 rounded-lg border border-border bg-muted/20 px-2.5 py-2">
-            <span className="font-sans text-[11.5px] text-muted-foreground uppercase tracking-[0.06em]">{t("release.pulls.plan.estimated")}</span>
+        <Collapsible defaultOpen className="flex w-full min-w-0 flex-col gap-1 rounded-lg border border-border bg-muted/20 px-2.5 py-2">
+            <CollapsibleTrigger className="group flex w-full items-baseline justify-between gap-3 text-left">
+                <span className="font-sans text-[11.5px] text-muted-foreground uppercase tracking-[0.06em]">{t("release.pulls.plan.estimated")}</span>
+                <span className="flex min-w-0 items-baseline gap-1.5">
+                    {activeLabel ? <span className="min-w-0 truncate font-sans text-[11.5px] text-muted-foreground group-data-[panel-open]:hidden">{activeLabel}</span> : null}
+                    <ChevronDown className="size-3.5 shrink-0 text-muted-foreground transition-transform group-data-[panel-open]:rotate-180" aria-hidden="true" />
+                </span>
+            </CollapsibleTrigger>
 
-            <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
-                {goals.map((g) => (
-                    <li key={g.key}>
-                        <button
-                            type="button"
-                            aria-pressed={g.key === activeKey}
-                            aria-label={t("release.pulls.plan.goalPick", { count: f.number(g.value), goal: g.label })}
-                            /* A preset DROPS the potential picks. Before this, pressing
+            <CollapsiblePanel>
+                <ul className="m-0 flex list-none flex-col gap-0.5 p-0">
+                    {goals.map((g) => (
+                        <li key={g.key}>
+                            <button
+                                type="button"
+                                aria-pressed={g.key === activeKey}
+                                aria-label={t("release.pulls.plan.goalPick", { count: f.number(g.value), goal: g.label })}
+                                /* A preset DROPS the potential picks. Before this, pressing
                                "Six of a specific rate-up" set the count and left the picks
                                standing, so "Your goal" stayed in the list, still describing
                                the operators, while the count beside it described something
                                else. Whichever panel sets the count is the one that gets to
                                say what the count is for. "Your goal" is the picks' own row
                                and is the one preset that keeps them. */
-                            onClick={() => (g.key === "yours" ? onAllocate(row.key, g.value) : onPreset(row.key, g.value))}
-                            className={cn(
-                                "flex w-full cursor-pointer items-baseline justify-between gap-3 rounded border px-2 py-1 text-left transition-colors hover:bg-accent/50",
-                                // A border on every row, not just on hover: these ARE the
-                                // panel's control, and on touch there is no hover to
-                                // reveal that. Without it they read as a definition list.
-                                g.key === activeKey ? "border-primary/50 bg-primary/10" : "border-border/50",
-                            )}
-                        >
-                            <span className={cn("min-w-0 truncate font-sans text-[12px]", g.key === activeKey ? "text-foreground" : "text-muted-foreground")}>{g.label}</span>
-                            <span className={cn("shrink-0 font-mono text-[12px] tabular-nums", g.key === activeKey ? "font-bold text-foreground" : "text-muted-foreground")}>{t("release.pulls.plan.goalValue", { count: f.number(g.value) })}</span>
-                        </button>
-                    </li>
-                ))}
-            </ul>
+                                onClick={() => (g.key === "yours" ? onAllocate(row.key, g.value) : onPreset(row.key, g.value))}
+                                className={cn(
+                                    "flex w-full cursor-pointer items-baseline justify-between gap-3 rounded border px-2 py-1 text-left transition-colors hover:bg-accent/50",
+                                    // A border on every row, not just on hover: these ARE the
+                                    // panel's control, and on touch there is no hover to
+                                    // reveal that. Without it they read as a definition list.
+                                    g.key === activeKey ? "border-primary/50 bg-primary/10" : "border-border/50",
+                                )}
+                            >
+                                <span className={cn("min-w-0 truncate font-sans text-[12px]", g.key === activeKey ? "text-foreground" : "text-muted-foreground")}>{g.label}</span>
+                                <span className={cn("shrink-0 font-mono text-[12px] tabular-nums", g.key === activeKey ? "font-bold text-foreground" : "text-muted-foreground")}>{t("release.pulls.plan.goalValue", { count: f.number(g.value) })}</span>
+                            </button>
+                        </li>
+                    ))}
+                </ul>
+            </CollapsiblePanel>
 
             {/* A p90 of zero is a SENTINEL, not a pull count: it means the curve never
                 reached nine runs in ten inside the horizon. Printed raw it came out as
@@ -222,7 +237,7 @@ function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT;
                           : t("release.pulls.plan.sumCovers", { total: f.number(row.totalPulls), goal: f.number(active.p50) })}
                 </span>
             )}
-        </div>
+        </Collapsible>
     );
 }
 
@@ -363,7 +378,11 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
                     <CnName cn={banner.nameCn} auto={banner.nameEnAuto} primaryClassName="font-sans font-semibold text-[13px] text-foreground" compact>
                         <Tag>{tagLabel(banner.ruleType)}</Tag>
                     </CnName>
-                    <span className="font-mono text-[12px] text-muted-foreground tabular-nums">{formatDate(row.enStart, locale)}</span>
+                    {/* The badge prints the start date itself for every status that has
+                        one, so this printed "Dec 16, 2026" immediately before the badge
+                        printed "Dec 16, 2026" again. It stays only for the two statuses
+                        whose badge is a bare chip with no date in it. */}
+                    {banner.resolution.status === "unmodelled" || banner.resolution.status === "independent" ? <span className="font-mono text-[12px] text-muted-foreground tabular-nums">{formatDate(row.enStart, locale)}</span> : null}
                     <ResolutionBadge resolution={banner.resolution} today={today} />
                 </div>
 
