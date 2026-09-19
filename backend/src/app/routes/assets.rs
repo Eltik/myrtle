@@ -908,7 +908,7 @@ async fn generic_impl(
 /// fixed extension allowlist; anything else is a 400.
 #[utoipa::path(
     get,
-    path = "/assets/{path}",
+    path = "/assets/{*path}",
     tag = "assets",
     params(
         ("path" = String, Path, description = "Asset path relative to the server's assets root."),
@@ -939,7 +939,7 @@ pub async fn generic(
 /// fixed extension allowlist; anything else is a 400.
 #[utoipa::path(
     get,
-    path = "/{server}/assets/{path}",
+    path = "/{server}/assets/{*path}",
     tag = "assets",
     params(
         ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),

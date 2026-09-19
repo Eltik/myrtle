@@ -1220,7 +1220,7 @@
         ]
       }
     },
-    "/api/assets/{path}": {
+    "/api/assets/{*path}": {
       "get": {
         "tags": [
           "assets"
@@ -8587,7 +8587,7 @@
         }
       }
     },
-    "/api/{server}/assets/{path}": {
+    "/api/{server}/assets/{*path}": {
       "get": {
         "tags": [
           "assets"
