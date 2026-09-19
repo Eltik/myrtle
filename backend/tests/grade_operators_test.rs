@@ -156,3 +156,76 @@ fn every_skill_at_m3_completes_the_mastery_dimension() {
         );
     }
 }
+
+/// The "operators below milestone" card must price gains the score can pay.
+/// Only operators inside `grade_operators`' average may be listed, and the
+/// advertised gains, summed, must fit inside the subscore's remaining headroom.
+/// An unraised pull priced against the invested-only weight used to advertise
+/// a positive ELITE gain when promoting it would lower the average.
+#[test]
+fn below_milestone_lists_only_graded_operators_and_fits_the_headroom() {
+    use backend::app::services::improvements::build_operator_improvements;
+
+    let game_data = common::load_game_data();
+
+    let mut kaltsit = entry("char_003_kalts", 2, 60);
+    kaltsit.skill_level = 7;
+    kaltsit.favor_point = 18000;
+    kaltsit.masteries = serde_json::json!([{ "mastery": 3 }, { "mastery": 1 }, { "mastery": 0 }]);
+    kaltsit.modules = serde_json::json!([{ "id": "uniequip_002_kalts", "level": 2 }]);
+    let mut ptilopsis = entry("char_128_plosis", 1, 40);
+    ptilopsis.skill_level = 6;
+    // A 6★ still at its pull state: owned, uninvested, outside the average.
+    let unraised = entry("char_010_chen", 0, 1);
+    let roster: Vec<RosterEntry> = vec![kaltsit, ptilopsis, unraised]
+        .into_iter()
+        .filter(|e| game_data.operators.contains_key(&e.operator_id))
+        .collect();
+    assert_eq!(
+        roster.len(),
+        3,
+        "expected the fixture operators to exist in gamedata"
+    );
+
+    let support_ids: HashSet<&str> = HashSet::new();
+    let grade = grade_operators(&roster, game_data, &support_ids);
+    let improvements = build_operator_improvements(&roster, game_data, &support_ids);
+
+    let listed: Vec<&str> = improvements
+        .below_milestone
+        .iter()
+        .map(|g| g.operator_id.as_str())
+        .collect();
+    assert!(
+        !listed.contains(&"char_010_chen"),
+        "an E0 L1 pull is not in the grade's denominator and must not be priced: {listed:?}"
+    );
+    assert!(
+        listed.contains(&"char_003_kalts") && listed.contains(&"char_128_plosis"),
+        "invested operators with open milestones must be listed: {listed:?}"
+    );
+
+    let headroom = 1.0 - grade;
+    let advertised: f64 = improvements
+        .below_milestone
+        .iter()
+        .map(|g| g.subscore_potential_gain)
+        .sum();
+    assert!(
+        advertised <= headroom + 1e-12,
+        "advertised gain {advertised} exceeds the subscore headroom {headroom}"
+    );
+    // Per-tag sums are what the card prints per upgrade type; each must fit too.
+    let mut per_tag: std::collections::HashMap<&str, f64> = std::collections::HashMap::new();
+    for gap in &improvements.below_milestone {
+        for d in &gap.deltas {
+            *per_tag.entry(d.tag).or_default() += d.operator_grade_delta;
+        }
+    }
+    for (tag, sum) in per_tag {
+        assert!(
+            sum <= headroom + 1e-12,
+            "tag {tag} advertises {sum} on {headroom} of headroom"
+        );
+    }
+}

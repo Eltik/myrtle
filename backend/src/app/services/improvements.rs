@@ -37,8 +37,8 @@ use crate::core::grade::base::yield_model::room_yield;
 use crate::core::grade::grade_medals::rarity_weight;
 use crate::core::grade::grade_operators::{
     ScoreDimension, TRUST_MILESTONE_PCT, UpgradeDelta, advanced_module_levels, advanced_modules,
-    operator_score_breakdown, operator_upgrade_deltas, potential_matters, rarity_to_weight,
-    total_roster_weight,
+    has_investment, operator_score_breakdown, operator_upgrade_deltas, potential_matters,
+    rarity_to_weight, total_roster_weight,
 };
 use crate::core::grade::sandbox::grade_sandbox_detail;
 use crate::core::grade::sandbox::score::{
@@ -1303,7 +1303,7 @@ const MODULE_MILESTONE: i16 = 3;
 /// Potential is 0-indexed, so index 5 is pot 6 - full potential (the "POT6" milestone).
 const POTENTIAL_MILESTONE_INDEX: i16 = 5;
 
-fn build_operator_improvements(
+pub fn build_operator_improvements(
     roster: &[RosterEntry],
     game_data: &GameData,
     support_ids: &HashSet<&str>,
@@ -1321,6 +1321,16 @@ fn build_operator_improvements(
             OperatorProfession::Token | OperatorProfession::Trap
         ) || static_op.is_not_obtainable
         {
+            continue;
+        }
+        // Only operators the grade averages belong here. An E0 L1 pull is not
+        // in `grade_operators`' denominator, so pricing its ELITE delta against
+        // `total_weight` claims a gain the score cannot pay: promoting it adds
+        // a ~0.5 operator to the average and LOWERS the subscore. Before this
+        // filter, 72.9% of all ELITE gaps on the local data (288,379 of
+        // 395,666) were unraised pulls, and a section with 13.8 points of
+        // headroom advertised +25.2 from E↑ alone.
+        if !has_investment(entry) {
             continue;
         }
 
