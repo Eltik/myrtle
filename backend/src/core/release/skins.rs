@@ -479,13 +479,14 @@ pub const fn review_pool_cutoff(cn_start: i64) -> i64 {
     cn_start - REVIEW_POOL_AGE_SECS
 }
 
-/// Whether an outfit ever enters the Fashion Review: a plain-price store
-/// outfit from a real brand. Crossover membership is the brand list's own
-/// group roster (`BrandList.crossover.GroupList`); the group id suffix names
-/// the partner, not the brand.
+/// Whether an outfit ever enters the Fashion Review: a store outfit at its
+/// base tier (18, or 15 for the early list) from a real brand. Crossover
+/// membership is the brand list's own group roster
+/// (`BrandList.crossover.GroupList`); the group id suffix names the partner,
+/// not the brand.
 pub fn review_eligible(skin: &Skin, brands: &HashMap<String, Brand>) -> bool {
     let ds = &skin.display_skin;
-    super::prices::store_price(skin) == super::prices::STORE
+    super::prices::plain_store(skin)
         && ds.display_tag_id.as_deref() != Some(REVIEW_BARRED_TAG)
         && !brands.get(CROSSOVER_BRAND).is_some_and(|b| {
             b.group_list
