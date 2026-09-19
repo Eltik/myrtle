@@ -4943,7 +4943,12 @@ fn a_covered_strongest_only_clue_skill_buys_no_bench_seat() {
         "covered by an equal or stronger clue skill, Lee adds nothing"
     );
     // Lee himself seated sets the bar his own kind of skill is measured against.
-    let seated = cc_seated_coverage(&[LEE.to_string()], std::slice::from_ref(&lee), &gd.building, &registry);
+    let seated = cc_seated_coverage(
+        &[LEE.to_string()],
+        std::slice::from_ref(&lee),
+        &gd.building,
+        &registry,
+    );
     assert!(
         seated
             .get(&NonProdKind::ClueSearch)

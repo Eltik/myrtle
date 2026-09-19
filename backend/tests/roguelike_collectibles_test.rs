@@ -148,7 +148,12 @@ async fn real_data_before_after() {
             .and_then(|b| b.as_object())
             .map_or(0, |o| {
                 o.values()
-                    .filter(|v| v.get("state").and_then(serde_json::Value::as_i64).unwrap_or(0) >= 1)
+                    .filter(|v| {
+                        v.get("state")
+                            .and_then(serde_json::Value::as_i64)
+                            .unwrap_or(0)
+                            >= 1
+                    })
                     .count()
             })
     };
