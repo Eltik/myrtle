@@ -9535,3 +9535,78 @@ fn umiri_stacks_with_amiya_and_labels_per_room() {
         .expect("amiya survives shamare");
     assert!((amiya_tp.speed_pct - 7.0).abs() < 1e-6);
 }
+
+/// A gold-starved base sells what its factories make, so a post is worth
+/// what it earns PER BAR: beside one gold factory the Shamare/Tequila/Bibeak
+/// squad (speed plus Tequila's LMD rider) out-earns Proviso's squad, whose
+/// bonus bars come from stock the base does not have. Beside three gold
+/// factories the supply is there and Proviso's squad wins. The search score
+/// (speed x value) alone always picked Proviso.
+#[test]
+fn a_gold_starved_post_prefers_the_squad_paid_per_bar() {
+    const SHAMARE: &str = "char_254_vodfox";
+    const TEQUILA: &str = "char_486_takila";
+    const BIBEAK: &str = "char_252_bibeak";
+    const PROVISO: &str = "char_4032_provs";
+    const ARCHETTO: &str = "char_332_archet";
+    const VIGIL: &str = "char_427_vigil";
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let mut roster: Vec<_> = [SHAMARE, TEQUILA, BIBEAK, PROVISO, ARCHETTO, VIGIL]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+    // Plain factory hands, three per factory.
+    for id in [
+        "char_123_fang",
+        "char_133_mm",
+        "char_502_nblade",
+        "char_36_forget",
+        "char_120_hibisc",
+        "char_121_lava",
+        "char_124_kroos",
+        "char_211_adnach",
+        "char_212_ansel",
+    ] {
+        if gd.building.chars.contains_key(id) {
+            roster.push(profile(gd, id));
+        }
+    }
+    let post_crew = |gold_factories: usize| -> Vec<String> {
+        let mut rooms = vec![room("tp", "TRADING", 3)];
+        rooms.extend((0..gold_factories).map(|i| {
+            let mut r = room(&format!("mf{i}"), "MANUFACTURE", 3);
+            r.current_formula = Some("F_GOLD".into());
+            r
+        }));
+        let building = UserBuilding { rooms };
+        let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+        asn.rooms
+            .into_iter()
+            .find(|r| r.room_type == "TRADING")
+            .map(|r| r.operators)
+            .unwrap_or_default()
+    };
+    let starved = post_crew(1);
+    assert!(
+        starved.iter().any(|o| o == SHAMARE) && starved.iter().any(|o| o == TEQUILA),
+        "one gold factory: the per-bar squad, got {starved:?}"
+    );
+    // Rich: no gold factory at all - the post sells from stock, so every
+    // bonus bar Proviso draws is supplied, and her squad earns more.
+    let rich = {
+        let building = UserBuilding {
+            rooms: vec![room("tp", "TRADING", 3)],
+        };
+        let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+        asn.rooms
+            .into_iter()
+            .find(|r| r.room_type == "TRADING")
+            .map(|r| r.operators)
+            .unwrap_or_default()
+    };
+    assert!(
+        rich.iter().any(|o| o == PROVISO),
+        "gold-rich: Proviso's bonus bars have supply, got {rich:?}"
+    );
+}
