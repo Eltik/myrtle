@@ -3625,23 +3625,21 @@ fn assign_production_rooms(
         // placed: the search score ranks a post by speed x order value, but a
         // gold-starved base cannot sell Proviso's bonus bars, and there the
         // Shamare/Tequila/Bibeak squad (speed plus LMD per bar) earns more.
-        for tp in &trading_rooms {
-            let room_assignment = assign_trading_room_by_yield(
-                tp,
-                operators,
-                &mut trial_assigned,
-                registry,
-                building_data,
-                facility_counts,
-                total_dorm_levels,
-                global_bonuses,
-                cc_conditions,
-                morale_drains,
-                cap_aware,
-                &trial_rooms,
-            );
-            trial_rooms.push(room_assignment);
-        }
+        let posts = assign_trading_rooms_by_yield(
+            &trading_rooms,
+            operators,
+            &mut trial_assigned,
+            registry,
+            building_data,
+            facility_counts,
+            total_dorm_levels,
+            global_bonuses,
+            cc_conditions,
+            morale_drains,
+            cap_aware,
+            &trial_rooms,
+        );
+        trial_rooms.extend(posts);
 
         // Balance operators across same-type/formula rooms (diminishing-returns
         // aware), then score this split by the soft-capped objective so stacking
@@ -3988,15 +3986,27 @@ fn pad_production_rooms(
 /// How many top search candidates a trading post's yield pick compares.
 const YIELD_PICK_WIDTH: usize = 8;
 
-/// A trading post's crew chosen by the realized yield of `context` (the rooms
-/// already placed in this split) plus the candidate, among the best
-/// `YIELD_PICK_WIDTH` teams by search score. The search score is speed x
-/// order value; the coupled yield knows the base's gold supply, so Proviso's
-/// bonus bars stop paying once the factories cannot make them, and a squad
-/// paid per bar (Shamare, Tequila, Bibeak) wins the starved post.
+/// The trading posts' crews chosen TOGETHER by the realized yield of
+/// `context` (the factories already placed in this split) plus every post:
+/// each post offers its best `YIELD_PICK_WIDTH` teams by search score and the
+/// best disjoint combination is kept. The search score is speed x order
+/// value; the coupled yield knows the base's gold supply, so Proviso's bonus
+/// bars stop paying once the factories cannot make them, and a squad paid
+/// per bar (Shamare, Tequila, Bibeak) wins the starved post.
+///
+/// The posts share that one supply, so a post's best crew depends on what
+/// the other sells. Picked one post at a time, the first post took Proviso
+/// against the whole supply and the second was left with bars nobody makes:
+/// on 31010962 (two L3 factories of gold, posts L3 + L2) that gave
+/// Proviso/Exusiai/Lemuen + Hoederer/Quartz at 39.5k LMD/day where
+/// Proviso/Shamare/Tequila + Exusiai/Lemuen realizes 42.8k.
+///
+/// A post whose candidates all collide with the others' picks (or that has
+/// none) takes the ordinary single-room path afterwards, which also yields
+/// the empty room when nothing beats it.
 #[allow(clippy::too_many_arguments)]
-fn assign_trading_room_by_yield(
-    room: &UserRoom,
+fn assign_trading_rooms_by_yield(
+    rooms: &[&&UserRoom],
     operators: &[OperatorBaseProfile],
     assigned: &mut HashSet<String>,
     registry: &HashMap<String, BuffResolutionStrategy>,
@@ -4008,85 +4018,153 @@ fn assign_trading_room_by_yield(
     morale_drains: &HashMap<String, f64>,
     cap_aware: bool,
     context: &[RoomAssignment],
-) -> RoomAssignment {
-    let max_slots = max_stationed_at_level(building_data, &room.room_type, room.level);
-    let global = *global_bonuses.get(&room.room_type).unwrap_or(&0.0);
-    let candidates = enumerate_candidate_teams(
-        &room.room_type,
-        room.level,
-        None,
-        operators,
-        assigned,
-        registry,
-        building_data,
-        facility_counts,
-        total_dorm_levels,
-        max_slots,
-        cc_conditions,
-        morale_drains,
-        cap_aware,
-        CANDIDATE_LIMIT,
-        false,
-        false,
-    );
-    let mut best: Option<(RoomAssignment, f64)> = None;
-    for team in candidates
-        .into_iter()
-        .filter(|c| c.score > 0.0)
-        .take(YIELD_PICK_WIDTH)
-    {
-        let candidate = RoomAssignment {
-            slot_id: room.slot_id.clone(),
-            room_type: room.room_type.clone(),
-            level: room.level,
-            formula_type: None,
-            operators: team.ops,
-            total_efficiency: team.speed + global,
-            order_value: team.value,
-            order_gold: team.gold,
-            order_limit: team.order_limit,
-            locked: false,
-            ledger: Vec::new(),
-            fill: None,
-        };
-        let mut trial: Vec<RoomAssignment> = context.to_vec();
-        trial.push(candidate.clone());
-        let value = assignment_value(&trial);
-        if best.as_ref().is_none_or(|(_, v)| value > *v + 1e-9) {
-            best = Some((candidate, value));
-        }
-    }
-    match best {
-        Some((mut chosen, _)) => {
-            chosen.locked = team_is_locked(
-                &chosen.operators,
+) -> Vec<RoomAssignment> {
+    let options: Vec<Vec<RoomAssignment>> = rooms
+        .iter()
+        .map(|room| {
+            let max_slots = max_stationed_at_level(building_data, &room.room_type, room.level);
+            let global = *global_bonuses.get(&room.room_type).unwrap_or(&0.0);
+            enumerate_candidate_teams(
                 &room.room_type,
+                room.level,
                 None,
+                operators,
+                assigned,
                 registry,
                 building_data,
-            );
-            for id in &chosen.operators {
-                assigned.insert(id.clone());
-            }
-            chosen
-        }
-        // No candidate beats an empty post: the ordinary path (which also
-        // yields the empty room) keeps the two in step.
-        None => assign_single_room(
-            room,
+                facility_counts,
+                total_dorm_levels,
+                max_slots,
+                cc_conditions,
+                morale_drains,
+                cap_aware,
+                CANDIDATE_LIMIT,
+                false,
+                false,
+            )
+            .into_iter()
+            .filter(|c| c.score > 0.0)
+            .take(YIELD_PICK_WIDTH)
+            .map(|team| RoomAssignment {
+                slot_id: room.slot_id.clone(),
+                room_type: room.room_type.clone(),
+                level: room.level,
+                formula_type: None,
+                operators: team.ops,
+                total_efficiency: team.speed + global,
+                order_value: team.value,
+                order_gold: team.gold,
+                order_limit: team.order_limit,
+                locked: false,
+                ledger: Vec::new(),
+                fill: None,
+            })
+            .collect()
+        })
+        .collect();
+
+    let chosen = best_post_combination(&options, context);
+    let mut out: Vec<Option<RoomAssignment>> = vec![None; rooms.len()];
+    for (i, pick) in chosen.iter().enumerate() {
+        let Some(k) = pick else { continue };
+        let mut post = options[i][*k].clone();
+        post.locked = team_is_locked(
+            &post.operators,
+            &post.room_type,
             None,
-            operators,
-            assigned,
             registry,
             building_data,
-            facility_counts,
-            total_dorm_levels,
-            global_bonuses,
-            cc_conditions,
-            morale_drains,
-            cap_aware,
-        ),
+        );
+        for id in &post.operators {
+            assigned.insert(id.clone());
+        }
+        out[i] = Some(post);
     }
+    out.into_iter()
+        .enumerate()
+        .map(|(i, post)| {
+            post.unwrap_or_else(|| {
+                assign_single_room(
+                    rooms[i],
+                    None,
+                    operators,
+                    assigned,
+                    registry,
+                    building_data,
+                    facility_counts,
+                    total_dorm_levels,
+                    global_bonuses,
+                    cc_conditions,
+                    morale_drains,
+                    cap_aware,
+                )
+            })
+        })
+        .collect()
+}
+
+/// For each post, the index of its crew in the combination of disjoint
+/// candidates that realizes the most value beside `context`; `None` where a
+/// post has no candidate that fits. The product is small: a base has at
+/// most two posts and each offers `YIELD_PICK_WIDTH` teams.
+fn best_post_combination(
+    options: &[Vec<RoomAssignment>],
+    context: &[RoomAssignment],
+) -> Vec<Option<usize>> {
+    struct Search<'a> {
+        options: &'a [Vec<RoomAssignment>],
+        trial: Vec<RoomAssignment>,
+        used: HashSet<String>,
+        chosen: Vec<Option<usize>>,
+        best: Option<(Vec<Option<usize>>, f64)>,
+    }
+    impl Search<'_> {
+        fn go(&mut self, idx: usize) {
+            if idx == self.options.len() {
+                let value = assignment_value(&self.trial);
+                if self.best.as_ref().is_none_or(|(_, v)| value > *v + 1e-9) {
+                    self.best = Some((self.chosen.clone(), value));
+                }
+                return;
+            }
+            let mut any = false;
+            for k in 0..self.options[idx].len() {
+                let cand = &self.options[idx][k];
+                if cand.operators.iter().any(|o| self.used.contains(o)) {
+                    continue;
+                }
+                any = true;
+                let cand = cand.clone();
+                for o in &cand.operators {
+                    self.used.insert(o.clone());
+                }
+                self.trial.push(cand.clone());
+                self.chosen.push(Some(k));
+                self.go(idx + 1);
+                self.chosen.pop();
+                self.trial.pop();
+                for o in &cand.operators {
+                    self.used.remove(o);
+                }
+            }
+            if !any {
+                self.chosen.push(None);
+                self.go(idx + 1);
+                self.chosen.pop();
+            }
+        }
+    }
+    let mut search = Search {
+        options,
+        trial: context.to_vec(),
+        used: HashSet::new(),
+        chosen: Vec::new(),
+        best: None,
+    };
+    search.go(0);
+    search
+        .best
+        .map_or_else(|| vec![None; options.len()], |(chosen, _)| chosen)
 }
 
 #[allow(clippy::too_many_arguments)]

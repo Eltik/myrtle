@@ -1357,6 +1357,55 @@ fn rotation_core(
             });
         }
 
+        // A facility-count enabler counts only in the shifts it works: Greyy
+        // the Lightningbearer's "+1 Power Plant" is gone from a shift that
+        // rests him, and Weedy's and Eunectes' per-plant productivity with
+        // it. The teams were chosen against the optimal seats' counts (the
+        // enabler is there whenever the plan can afford him); the DISPLAYED
+        // figure is re-priced against this shift's seats so a shift without
+        // him does not claim his plant (44947595: Weedy/Eunectes read 136 in
+        // both shifts, one of them with three plain plants).
+        let shift_seats: HashMap<String, String> = rooms
+            .iter()
+            .flat_map(|r| {
+                r.recommended
+                    .iter()
+                    .map(move |op| (op.clone(), r.room_type.clone()))
+            })
+            .collect();
+        let shift_counts =
+            effective_facility_counts(building, operators, registry, building_data, &shift_seats);
+        if shift_counts != facility_counts {
+            for r in &mut rooms {
+                if r.efficiency.is_none()
+                    || !(is_production_room(&r.room_type) || r.room_type == "POWER")
+                {
+                    continue;
+                }
+                let (speed, _) = compute_team_efficiency(
+                    &r.recommended,
+                    &r.room_type,
+                    r.formula_type.as_deref(),
+                    None,
+                    &op_index,
+                    registry,
+                    building_data,
+                    &shift_counts,
+                    total_dorm_levels,
+                    morale_drains,
+                    &cc_plan.conditions,
+                );
+                r.efficiency = Some(
+                    speed
+                        + cc_plan
+                            .global_bonuses
+                            .get(&r.room_type)
+                            .copied()
+                            .unwrap_or(0.0),
+                );
+            }
+        }
+
         shifts.push(Shift {
             index: k + 1,
             rooms,

@@ -1507,6 +1507,12 @@ pub fn optimal_with_bundles(
         }
         let mut trial_pins = optimal_pins.clone();
         trial_pins.extend(bundle.pins.iter().cloned());
+        // Pins are seats: a bundle that, with the pins already accepted, needs
+        // more seats of a room type than the base has cannot be run (the
+        // Mujica five plus Dusk and Ling made a seven-seat Control Center).
+        if !pins_fit(building, building_data, &trial_pins) {
+            continue;
+        }
         let trial = compute_optimal_assignment_with_pins(
             profiles,
             building,
@@ -1526,4 +1532,32 @@ pub fn optimal_with_bundles(
         pins: optimal_pins,
         optimal,
     }
+}
+
+/// Whether `pins` fit the base: per room type, no more pinned operators than
+/// the rooms of that type seat in total.
+fn pins_fit(
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    pins: &[(String, String)],
+) -> bool {
+    let mut wanted: HashMap<&str, usize> = HashMap::new();
+    let mut seen: std::collections::HashSet<&str> = std::collections::HashSet::new();
+    for (id, room_type) in pins {
+        if seen.insert(id.as_str()) {
+            *wanted.entry(room_type.as_str()).or_insert(0) += 1;
+        }
+    }
+    wanted.iter().all(|(room_type, &n)| {
+        let seats: usize = building
+            .rooms
+            .iter()
+            .filter(|r| r.room_type == *room_type)
+            .map(|r| {
+                super::util::max_stationed_at_level(building_data, room_type, r.level).max(0)
+                    as usize
+            })
+            .sum();
+        n <= seats
+    })
 }

@@ -337,7 +337,7 @@ fn shamare_nullifies_teammate_output() {
 
     assert!(
         (strong - bodies).abs() < 1.0,
-        "Shamare should zero teammates → identical output regardless of who they are \
+        "Shamare should zero teammates -> identical output regardless of who they are \
          (strong={strong:.1}, bodies={bodies:.1})"
     );
     // And it must NOT be the naive sum (Exusiai 35 + Heidi 35 + Shamare ~90).
@@ -404,7 +404,7 @@ fn highmore_converts_rhine_skills_for_standardization_scaler() {
     // skills into Standardization, so Mizuki should then count Silence.
     let gd = load_game_data();
     const MIZUKI: &str = "char_437_mizuki"; // +5% per Standardization skill
-    const HIGHMORE: &str = "char_4066_highmo"; // converts Rhine/Pinus → Standardization
+    const HIGHMORE: &str = "char_4066_highmo"; // converts Rhine/Pinus -> Standardization
     const SILENCE: &str = "char_108_silent"; // Rhine Tech skill
 
     let fac = |ids: &[&str]| {
@@ -911,9 +911,9 @@ fn morgan_reads_higher_with_siege_in_the_post() {
 #[test]
 fn faction_gated_cc_buffs_are_conditional_not_flat_global() {
     // Control Center trading buffs split three ways:
-    //   - Amiya "all Trading Posts +7%"          → unconditional GlobalEffect
-    //   - Umiri "all Siracusa Operators +5%"      → per-operator ConditionalGlobalEffect
-    //   - SilverAsh "posts w/ 3 Kjerag ops +10%"  → count-gated ConditionalGlobalEffect
+    //   - Amiya "all Trading Posts +7%"          -> unconditional GlobalEffect
+    //   - Umiri "all Siracusa Operators +5%"      -> per-operator ConditionalGlobalEffect
+    //   - SilverAsh "posts w/ 3 Kjerag ops +10%"  -> count-gated ConditionalGlobalEffect
     // Only the first may be credited flat to every post.
 
     let gd = load_game_data();
@@ -7104,7 +7104,7 @@ fn shift_rotation_supports_252_layout() {
 
     // Factory split: two L3 posts sell roughly two factories' worth of bars, so
     // the marginal 5th factory goes to EXP (unsold gold is worthless under the
-    // coupled gold→trade yield) - the objective picks 2 gold / 3 EXP.
+    // coupled gold->trade yield) - the objective picks 2 gold / 3 EXP.
     for shift in 0..3 {
         let mut gold = 0;
         let mut exp = 0;
@@ -9613,5 +9613,285 @@ fn a_gold_starved_post_prefers_the_squad_paid_per_bar() {
     assert!(
         rich.iter().any(|o| o == PROVISO),
         "gold-rich: Proviso's bonus bars have supply, got {rich:?}"
+    );
+}
+
+/// Pins are seats: the Mujica five (a Passion bundle) plus Dusk and Ling (a
+/// perception bundle) are seven Control-Center pins for a five-seat room. A
+/// bundle that cannot be seated is not tried, so the optimal never overfills
+/// the Control Center (it used to propose seven, which the planner's draft
+/// validation then rejected).
+#[test]
+fn accepted_bundles_never_overfill_the_control_center() {
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let mut roster: Vec<_> = [
+        "char_2015_dusk",
+        "char_2023_ling",
+        "char_391_rosmon",
+        "char_4186_tmoris",
+        "char_4185_amoris",
+        "char_4184_dolris",
+        "char_4183_mortis",
+        "char_4182_oblvns",
+        "char_400_weedy",
+        "char_416_zumama",
+        "char_472_pasngr",
+        "char_190_clour",
+        "char_381_bubble",
+        "char_485_pallas",
+        "char_4032_provs",
+        "char_332_archet",
+        "char_427_vigil",
+        "char_123_fang",
+        "char_133_mm",
+        "char_502_nblade",
+    ]
+    .iter()
+    .filter(|id| gd.building.chars.contains_key(**id))
+    .map(|id| profile(gd, id))
+    .collect();
+    roster.dedup_by(|a, b| a.char_id == b.char_id);
+    let mut rooms = vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)];
+    rooms.extend((0..3).map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3)));
+    rooms.extend((0..2).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
+    let building = UserBuilding { rooms };
+    let economy = backend::core::grade::base::pools::search_economy(
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+    );
+    let accepted = backend::core::grade::base::pools::optimal_with_bundles(
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+        &economy.registry,
+        &drains,
+        &economy.pins,
+    );
+    let cc = accepted
+        .optimal
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "CONTROL")
+        .expect("a CC");
+    assert!(
+        cc.operators.len() <= 5,
+        "a level-5 Control Center seats 5, the plan seats {}: {:?}",
+        cc.operators.len(),
+        cc.operators
+    );
+    let cc_pins = accepted
+        .pins
+        .iter()
+        .filter(|(_, rt)| rt == "CONTROL")
+        .count();
+    assert!(
+        cc_pins <= 5,
+        "accepted Control-Center pins {cc_pins} exceed the seats: {:?}",
+        accepted.pins
+    );
+}
+
+/// Waai Fu's Cooperative Will pays +5% per FULL 5% her roommates' own
+/// skills add, up to 40%. Beside Tragodia (Battle Records +35%) that is 35,
+/// so the room reads 70. Priced per point of the room total it read the cap
+/// (40) and, with a Control Center adding 2, a room the game shows at 72
+/// came out at 77 (31010962).
+#[test]
+fn waai_fu_mirrors_her_roommates_per_full_five_percent() {
+    const TRAGODIA: &str = "char_1042_phatm2";
+    const WAAIFU: &str = "char_243_waaifu";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, _) = build_registry(&gd.building.buffs, &name_to_char);
+    let mirror = registry.get("manu_prod_spd_variable2[000]");
+    assert!(
+        matches!(
+            mirror,
+            Some(BuffResolutionStrategy::TeammateOutputMirroring { ratio, step, cap_pct })
+                if (*ratio - 5.0).abs() < 1e-9 && (*step - 5.0).abs() < 1e-9 && (*cap_pct - 40.0).abs() < 1e-9
+        ),
+        "Cooperative Will parses as 5 per 5 up to 40, got {mirror:?}"
+    );
+    let tragodia = profile(gd, TRAGODIA);
+    assert_eq!(tragodia.char_id, TRAGODIA, "Tragodia is in the game data");
+    let roster = vec![tragodia, profile(gd, WAAIFU)];
+    let eff = factory_efficiency(gd, &roster);
+    assert!(
+        (eff - 70.0).abs() < 1e-6,
+        "Tragodia 35 + Waai Fu's mirror of it 35 = 70, got {eff}"
+    );
+}
+
+/// Two posts share one gold supply, so their crews are chosen together.
+/// Picked one post at a time, the first post took Proviso against the
+/// whole supply and the second was left selling bars nobody makes
+/// (31010962: Proviso/Exusiai/Lemuen + Hoederer/Quartz realized 39.5k
+/// LMD/day where Proviso/Shamare/Tequila + Exusiai/Lemuen makes 42.8k).
+/// The joint pick must realize at least what every sequential order of the
+/// same candidates would, and on a starved base it seats the per-bar squad.
+#[test]
+fn two_posts_on_one_gold_supply_are_crewed_together() {
+    const SHAMARE: &str = "char_254_vodfox";
+    const TEQUILA: &str = "char_486_takila";
+    const BIBEAK: &str = "char_252_bibeak";
+    const PROVISO: &str = "char_4032_provs";
+    const EXUSIAI: &str = "char_103_angel";
+    const LEMUEN: &str = "char_4193_lemuen";
+    const HOEDERER: &str = "char_4088_hodrer";
+    const QUARTZ: &str = "char_4063_quartz";
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let mut roster: Vec<_> = [
+        SHAMARE, TEQUILA, BIBEAK, PROVISO, EXUSIAI, LEMUEN, HOEDERER, QUARTZ,
+    ]
+    .iter()
+    .filter(|id| gd.building.chars.contains_key(**id))
+    .map(|id| profile(gd, id))
+    .collect();
+    assert!(
+        roster.len() >= 7,
+        "the traders are in the game data: {}",
+        roster.len()
+    );
+    for id in [
+        "char_123_fang",
+        "char_133_mm",
+        "char_502_nblade",
+        "char_36_forget",
+        "char_120_hibisc",
+        "char_121_lava",
+    ] {
+        if gd.building.chars.contains_key(id) {
+            roster.push(profile(gd, id));
+        }
+    }
+    let mut rooms = vec![room("tp3", "TRADING", 3), room("tp2", "TRADING", 2)];
+    for i in 0..2 {
+        let mut r = room(&format!("mf{i}"), "MANUFACTURE", 3);
+        r.current_formula = Some("F_GOLD".into());
+        rooms.push(r);
+    }
+    let building = UserBuilding { rooms };
+    let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+    let posts: Vec<&_> = asn
+        .rooms
+        .iter()
+        .filter(|r| r.room_type == "TRADING")
+        .collect();
+    assert_eq!(posts.len(), 2, "both posts staffed");
+    let seated = |id: &str| posts.iter().any(|p| p.operators.iter().any(|o| o == id));
+    assert!(
+        seated(SHAMARE) && seated(TEQUILA),
+        "the per-bar squad sells on the starved base, got {:?}",
+        posts
+            .iter()
+            .map(|p| (&p.slot_id, &p.operators))
+            .collect::<Vec<_>>()
+    );
+    let l3 = posts
+        .iter()
+        .find(|p| p.slot_id == "tp3")
+        .expect("the level-3 post");
+    let l2 = posts
+        .iter()
+        .find(|p| p.slot_id == "tp2")
+        .expect("the level-2 post");
+    assert!(
+        l3.operators.iter().any(|o| o == SHAMARE) && l3.operators.iter().any(|o| o == TEQUILA),
+        "the squad takes the level-3 post, got {:?}",
+        l3.operators
+    );
+    assert!(
+        l2.operators.len() == 2
+            && l2.operators.iter().all(|o| o != SHAMARE && o != TEQUILA)
+            && l2.operators.iter().any(|o| o == EXUSIAI || o == LEMUEN),
+        "the level-2 post is fully crewed from the rest, Laterano first, got {:?}",
+        l2.operators
+    );
+}
+
+/// Greyy the Lightningbearer's "+1 Power Plant (only affects facility
+/// quantity)" counts only in the shifts he works a plant: Weedy (+15% per
+/// plant), Eunectes (+10%) and Passenger (+5%) read 30 less in the shift
+/// that rests him. The rotation priced every shift against the optimal
+/// seats' counts, so a shift with three plain plants still claimed his
+/// fourth (44947595: Weedy/Eunectes at 136 in both shifts).
+#[test]
+fn a_rested_facility_enabler_is_not_counted_in_that_shift() {
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    const WEEDY: &str = "char_400_weedy";
+    const EUNECTES: &str = "char_416_zumama";
+    const GREYY2: &str = "char_1027_greyy2";
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let mut roster: Vec<_> = [
+        WEEDY,
+        EUNECTES,
+        GREYY2,
+        "char_1011_lava2",
+        "char_377_gdglow",
+        "char_253_greyy",
+        "char_107_liskam",
+        "char_472_pasngr",
+        "char_1040_blaze2",
+    ]
+    .iter()
+    .map(|id| profile(gd, id))
+    .collect();
+    // Enough plain hands that the factory's rest team never borrows Greyy
+    // as a filler before the power plan can seat him.
+    for id in [
+        "char_123_fang",
+        "char_133_mm",
+        "char_502_nblade",
+        "char_124_kroos",
+        "char_120_hibisc",
+        "char_211_adnach",
+        "char_212_ansel",
+        "char_36_forget",
+    ] {
+        if gd.building.chars.contains_key(id) {
+            roster.push(profile(gd, id));
+        }
+    }
+    let mut rooms = vec![room("mf0", "MANUFACTURE", 3)];
+    rooms[0].current_formula = Some("F_GOLD".into());
+    rooms.extend((0..3).map(|i| room(&format!("pp{i}"), "POWER", 3)));
+    rooms.extend((0..2).map(|i| room(&format!("d{i}"), "DORMITORY", 3)));
+    let building = UserBuilding { rooms };
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
+    let weedy_shifts: Vec<(bool, f64)> = rot
+        .shifts
+        .iter()
+        .filter_map(|s| {
+            let factory = s.rooms.iter().find(|r| {
+                r.room_type == "MANUFACTURE" && r.recommended.iter().any(|o| o == WEEDY)
+            })?;
+            let greyy_working = s.rooms.iter().any(|r| {
+                r.room_type == "POWER" && r.active && r.recommended.iter().any(|o| o == GREYY2)
+            });
+            Some((greyy_working, factory.efficiency.unwrap_or(0.0)))
+        })
+        .collect();
+    let with = weedy_shifts
+        .iter()
+        .filter(|(g, _)| *g)
+        .map(|(_, e)| *e)
+        .next();
+    let without = weedy_shifts
+        .iter()
+        .filter(|(g, _)| !*g)
+        .map(|(_, e)| *e)
+        .next();
+    let (Some(with), Some(without)) = (with, without) else {
+        panic!("Weedy's factory runs both with and without Greyy in a plant, got {weedy_shifts:?}");
+    };
+    assert!(
+        (with - without - 30.0).abs() < 1e-6,
+        "four plants with Greyy, three without: 30 apart, got {with} vs {without}"
     );
 }

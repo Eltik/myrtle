@@ -71,6 +71,8 @@ struct PeerItem {
     stage: u8,
     /// Floor the basis by `step` and ignore a negative total.
     quantized: bool,
+    /// Count only the roommates' own skill entries in the basis.
+    own_skills_only: bool,
     value: f64,
     cap: Option<f64>,
     emitted: f64,
@@ -519,6 +521,7 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                     step,
                     stage,
                     quantized,
+                    own_skills_only,
                 } => peers.push(PeerItem {
                     entity: i,
                     metric_out: clause.metric.clone(),
@@ -527,6 +530,7 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                     step: *step,
                     stage: *stage,
                     quantized: *quantized,
+                    own_skills_only: *own_skills_only,
                     value: clause.value * factor,
                     cap: clause.cap,
                     emitted: 0.0,
@@ -617,11 +621,18 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
             for item in peers.iter_mut().filter(|p| p.stage == stage) {
                 // The reference-pure basis: the FULL metric total the roommates
                 // are contributing right now - facility-scaled, count-scaled,
-                // granted and pool-drained entries included.
+                // granted and pool-drained entries included. An own-skills
+                // reader (Waai Fu's "provided by all other Operators ...
+                // excluding facility count") drops the facility-count parts
+                // and the external grants nobody in the room provides.
                 let basis_total: f64 = entries
                     .iter()
                     .filter(|e| e.metric == item.basis_metric)
                     .filter(|e| item.include_self || e.entity != item.entity)
+                    .filter(|e| {
+                        !item.own_skills_only
+                            || !matches!(e.source, Source::RoomCountScaled | Source::Granted)
+                    })
                     .map(|e| e.amount)
                     .sum();
                 // A quantized reader ("per 5 CAP", "-1 per 10%") counts only

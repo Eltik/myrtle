@@ -297,6 +297,12 @@ pub enum ClauseKind {
         step: f64,
         stage: u8,
         quantized: bool,
+        /// Read only what the roommates' OWN skills contribute: facility-count
+        /// parts and external (Control-Center) grants are left out, for
+        /// texts that pay "per X provided by all other Operators assigned to
+        /// that room (excluding ... facility count)". The default reads the
+        /// full total, as the Kjerag limit readers do.
+        own_skills_only: bool,
     },
     /// `value` applies once per order of the room's FINAL order limit - the
     /// level's base plus every capacity delta in the room (crew skills,
@@ -456,7 +462,19 @@ pub fn clauses_from_strategy(
             ));
         }
 
-        S::TeammateOutputMirroring { ratio, cap_pct } => {
+        // "+5% for every 5% provided by all other Operators assigned to that
+        // Factory (excluding the additional productivity affected by facility
+        // count), up to a maximum of 40%" (Waai Fu; Snowsant at a post). Paid
+        // per FULL step of what the roommates' own skills add - not per
+        // point, and not on facility-count parts or Control-Center grants,
+        // which no roommate "provides". Priced per point it read 5x the
+        // room and always hit the cap (31010962: Tragodia's 35 became 40 in
+        // a room the game shows at 72 with Wang's 2).
+        S::TeammateOutputMirroring {
+            ratio,
+            step,
+            cap_pct,
+        } => {
             let mut c = Clause::base(
                 buff_id,
                 buff,
@@ -464,9 +482,10 @@ pub fn clauses_from_strategy(
                 ClauseKind::ScalingPeerMetric {
                     metric: speed(),
                     include_self: false,
-                    step: 1.0,
+                    step: *step,
                     stage: PEER_STAGE_MIRROR,
-                    quantized: false,
+                    quantized: true,
+                    own_skills_only: true,
                 },
                 *ratio,
             );
@@ -504,6 +523,7 @@ pub fn clauses_from_strategy(
                     step: *pct_per_cut,
                     stage: PEER_STAGE_LIMIT_CUT,
                     quantized: true,
+                    own_skills_only: false,
                 },
                 f64::from(*cut),
             ));
@@ -673,6 +693,7 @@ pub fn clauses_from_strategy(
                     step: *per_cap_threshold,
                     stage: *stage,
                     quantized: true,
+                    own_skills_only: false,
                 },
                 *bonus_per_threshold,
             );

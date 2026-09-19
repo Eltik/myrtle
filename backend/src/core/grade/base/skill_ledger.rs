@@ -331,7 +331,71 @@ pub(crate) fn production_room_ledger(
             note: None,
         });
     }
+    relabel_feeding_generators(ctx, &mut out);
     out
+}
+
+/// A pool generator's own ablation is structurally zero: pools settle at
+/// assignment scope, so removing the generator clause here leaves the settled
+/// points untouched and the line read "inactive" while a roommate's consumer
+/// line carried the value (Rosmontis' Extrasensory under her own
+/// Manifestation of Consciousness). When a consumer of the same pool in the
+/// room reads a positive marginal, the generator contributes; the note says
+/// where its value sits.
+fn relabel_feeding_generators(ctx: &LedgerCtx, lines: &mut [LedgerLine]) {
+    use super::clause::{ClauseKind, ResourceOp, clauses_from_strategy};
+    // Pools consumed in this room with a positive marginal, and the line that reads them.
+    let mut consumed: HashMap<String, String> = HashMap::new();
+    for l in lines.iter() {
+        if l.speed_pct <= EPS {
+            continue;
+        }
+        let (Some(buff), Some(strategy)) = (
+            ctx.building_data.buffs.get(&l.buff_id),
+            ctx.registry.get(&l.buff_id),
+        ) else {
+            continue;
+        };
+        for c in clauses_from_strategy(&l.buff_id, buff, strategy) {
+            let resource = match &c.kind {
+                ClauseKind::ResourceConvert(ResourceOp::Consume { resource })
+                | ClauseKind::ScalingPoolPoints { resource, .. } => resource.clone(),
+                _ => continue,
+            };
+            consumed
+                .entry(resource)
+                .or_insert_with(|| buff.buff_name.clone());
+        }
+    }
+    if consumed.is_empty() {
+        return;
+    }
+    for l in lines.iter_mut() {
+        if l.disposition != LineDisposition::Inactive {
+            continue;
+        }
+        let (Some(buff), Some(strategy)) = (
+            ctx.building_data.buffs.get(&l.buff_id),
+            ctx.registry.get(&l.buff_id),
+        ) else {
+            continue;
+        };
+        let fed: Option<(&String, &String)> = clauses_from_strategy(&l.buff_id, buff, strategy)
+            .iter()
+            .find_map(|c| match &c.kind {
+                ClauseKind::ResourceConvert(
+                    ResourceOp::Generate { resource, .. }
+                    | ResourceOp::Convert { to: resource, .. },
+                ) => consumed.get_key_value(resource),
+                _ => None,
+            });
+        if let Some((resource, reader)) = fed {
+            l.disposition = LineDisposition::Contributes;
+            l.note = Some(format!(
+                "Feeds the {resource} pool; its value shows on the {reader} line."
+            ));
+        }
+    }
 }
 
 /// The Control Center row's own breakdown: each member's CONTROL buff, valued

@@ -568,10 +568,13 @@ pub enum BuffResolutionStrategy {
         per_match_pct: f64,
     },
 
-    /// Mirrors/multiplies based on teammates' total output.
-    /// e.g. Heavenly Reward: "+5% per 5% from others, max +25%"
+    /// Pays `ratio` % for every full `step` % the roommates' OWN skills
+    /// contribute, up to `cap_pct`. e.g. Heavenly Reward: "+5% per 5% from
+    /// others, max +25%"; Waai Fu's Cooperative Will: +5% per 5%, max +40%,
+    /// "excluding the additional productivity affected by facility count".
     TeammateOutputMirroring {
-        ratio: f64,   // e.g. 1.0 (1:1 mirror) or 0.5
+        ratio: f64,   // % paid per step, e.g. 5.0
+        step: f64,    // % of roommate contribution per payout, e.g. 5.0
         cap_pct: f64, // max bonus, e.g. 25.0
     },
 
@@ -2102,12 +2105,21 @@ pub fn build_registry(
                         per_match_pct: per_match,
                     }
                 }
-                // Output mirroring, eg. Heavenly Reward, Champion's Bearing
+                // Output mirroring (Waai Fu's Cooperative Will, Snowsant's
+                // Heavenly Reward): "+5% for every 5% provided by all other
+                // Operators assigned to that <room>, up to a maximum of N%".
+                // The first % is the payout, the second the step it is paid
+                // per; the same number in every such skill so far, read
+                // separately anyway.
                 else if prefix.contains("_variable2") {
                     let cap = parse_last_pct(&buff.description).unwrap_or(25.0);
                     let per = parse_first_pct(&buff.description).unwrap_or(5.0);
+                    let step = parse_nth_pct(&buff.description, 1)
+                        .filter(|s| *s > 0.0)
+                        .unwrap_or(per);
                     BuffResolutionStrategy::TeammateOutputMirroring {
                         ratio: per,
+                        step,
                         cap_pct: cap,
                     }
                 }
