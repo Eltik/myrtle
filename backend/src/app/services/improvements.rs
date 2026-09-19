@@ -18,16 +18,14 @@ use crate::core::gamedata::types::medal::{MedalData, MedalDefinition, Obtainabil
 use crate::core::gamedata::types::operator::OperatorProfession;
 use crate::core::gamedata::types::stage_universe::EventEntry;
 use crate::core::grade::base::assignment::{
-    cc_non_production_effects, compute_live_assignment, compute_optimal_assignment_with_pins,
-    compute_sustained_assignment,
+    cc_non_production_effects, compute_live_assignment, compute_sustained_assignment,
 };
 use crate::core::grade::base::buff_registry::{
     BuffResolutionStrategy, build_name_to_char, targeted_morale_effects,
 };
 use crate::core::grade::base::context::BaseContext;
-use crate::core::grade::base::dorms::morale_manager_pin;
 use crate::core::grade::base::pools::{
-    candidate_bundles, has_morale_conditional_grant, plan_optimal_economies,
+    has_morale_conditional_grant, optimal_with_bundles, search_economy,
 };
 use crate::core::grade::base::shift_rotation::ShiftRotation;
 use crate::core::grade::base::shift_rotation::recommend_shift_rotation;
@@ -1545,40 +1543,16 @@ fn compute_base_improvements(
     // whenever the roster owns both a morale-conditional generator (Ling) and
     // a manager - the manager sustains the generator's grant, and she carries
     // no production value a reservation could waste.
-    let mut optimal_registry = registry.clone();
-    let mut optimal_pins: Vec<(String, String)> = Vec::new();
     let has_conditional_generator = profiles
         .iter()
         .any(|op| has_morale_conditional_grant(op, &game_data.building));
-    let manager_pin = morale_manager_pin(&profiles, &user_building, &game_data.building);
-    let rotation_manager = manager_pin.as_ref().map(|(id, _)| id.clone());
-    if let Some(pin) = manager_pin {
-        optimal_pins.push(pin);
-    }
-
-    // Native pool economies (Senshi's Monster Meals, Mr. Nothing's and
-    // Rosmontis' dorm-fed chains): the same override-and-pin pattern, solved
-    // from clauses. A consumer is only credited when every generator feeding
-    // it is the consumer themself or pinned by the plan - never phantom value
-    // from an operator the search might not seat. Perception's richer
-    // economics win any overlap.
-    let native_economies =
-        plan_optimal_economies(&profiles, &user_building, &game_data.building, &registry);
-    for (buff_id, pct) in &native_economies.overrides {
-        if optimal_registry.get(buff_id).is_none_or(|s| {
-            !matches!(
-                s,
-                BuffResolutionStrategy::PoolPayoff { .. }
-                    | BuffResolutionStrategy::GlobalEffect { .. }
-            )
-        }) {
-            optimal_registry.insert(
-                buff_id.clone(),
-                BuffResolutionStrategy::PoolPayoff { pct: *pct },
-            );
-        }
-    }
-    optimal_pins.extend(native_economies.pins.iter().cloned());
+    // The optimal search's registry and pins: solved native economies plus
+    // the reserved morale-swap manager - `pools::search_economy`, shared with
+    // the planner.
+    let economy = search_economy(&profiles, &user_building, &game_data.building, &registry);
+    let optimal_registry = economy.registry;
+    let optimal_pins: Vec<(String, String)> = economy.pins;
+    let rotation_manager = economy.manager;
 
     let live_morale = crate::core::grade::base::sustain_sim::synced_live_morale(building_json);
     let current = compute_live_assignment(
@@ -1590,79 +1564,20 @@ fn compute_base_improvements(
         None,
         &live_morale,
     );
-    let mut optimal = compute_optimal_assignment_with_pins(
+    // The optimal search with the joint-seating bundle trials -
+    // `pools::optimal_with_bundles`, shared with the planner.
+    let accepted = optimal_with_bundles(
         &profiles,
         &user_building,
         &game_data.building,
+        &registry,
         &optimal_registry,
         &morale_drains,
         &optimal_pins,
     );
-    // Joint-seating bundles (the Sui Control-Center economy): each bundle
-    // packages generator pins + solved consumer overrides, and the OPTIMIZER
-    // judges the seat economics - run the search with the bundle and keep it
-    // only if the realized total yield improves. Displacement costs (globals
-    // the pinned CC seats would otherwise carry) show up in the yield, so no
-    // hand-modeled tradeoff is needed.
-    for bundle in candidate_bundles(&profiles, &user_building, &game_data.building, &registry) {
-        // A seat bundle for a counter nobody fields is not worth a trial.
-        if let Some(who) = &bundle.beneficiary
-            && !optimal
-                .rooms
-                .iter()
-                .any(|r| r.operators.iter().any(|o| o == who))
-        {
-            continue;
-        }
-        let mut trial_registry = optimal_registry.clone();
-        for (buff_id, pct) in &bundle.overrides {
-            // Never downgrade: a consumer already priced higher by another
-            // plan (native economies, perception) keeps its better value.
-            let existing = match trial_registry.get(buff_id) {
-                Some(BuffResolutionStrategy::PoolPayoff { pct: p }) => *p,
-                _ => f64::NEG_INFINITY,
-            };
-            if *pct > existing {
-                trial_registry.insert(
-                    buff_id.clone(),
-                    BuffResolutionStrategy::PoolPayoff { pct: *pct },
-                );
-            }
-        }
-        // Pool-scaled Control-Center globals ride the same never-downgrade
-        // rule against whatever global value another plan already folded.
-        for (buff_id, target_room, pct) in &bundle.globals {
-            let existing = match trial_registry.get(buff_id) {
-                Some(BuffResolutionStrategy::GlobalEffect { bonus_pct, .. }) => *bonus_pct,
-                _ => f64::NEG_INFINITY,
-            };
-            if *pct > existing {
-                trial_registry.insert(
-                    buff_id.clone(),
-                    BuffResolutionStrategy::GlobalEffect {
-                        target_room: target_room.clone(),
-                        bonus_pct: *pct,
-                    },
-                );
-            }
-        }
-        let mut trial_pins = optimal_pins.clone();
-        trial_pins.extend(bundle.pins.iter().cloned());
-        let trial = compute_optimal_assignment_with_pins(
-            &profiles,
-            &user_building,
-            &game_data.building,
-            &trial_registry,
-            &morale_drains,
-            &trial_pins,
-        );
-        use crate::core::grade::base::assignment::assignment_value;
-        if assignment_value(&trial.rooms) > assignment_value(&optimal.rooms) + 1e-9 {
-            optimal = trial;
-            optimal_registry = trial_registry;
-            optimal_pins = trial_pins;
-        }
-    }
+    let optimal = accepted.optimal;
+    let optimal_registry = accepted.registry;
+    let optimal_pins = accepted.pins;
     let sustained = compute_sustained_assignment(
         &profiles,
         &user_building,

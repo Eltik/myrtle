@@ -24,11 +24,10 @@ use crate::app::services::improvements::{
 use crate::app::state::AppState;
 use crate::core::gamedata::types::GameData;
 use crate::core::grade::base::assignment::{
-    compute_current_assignment, compute_live_assignment, compute_optimal_assignment_with_pins,
-    morale_recovery,
+    compute_current_assignment, compute_live_assignment, morale_recovery,
 };
 use crate::core::grade::base::context::BaseContext;
-use crate::core::grade::base::dorms::morale_manager_pin;
+use crate::core::grade::base::pools::{optimal_with_bundles, search_economy};
 use crate::core::grade::base::shift_rotation::{SHIFT_COUNT, recommend_shift_rotation};
 use crate::core::grade::base::sustain_sim::game_morale_drain;
 use crate::core::grade::base::types::{
@@ -1120,8 +1119,19 @@ pub async fn optimize(
             .map(DraftRoom::into_user_room)
             .collect(),
     };
-    let pins = build_pins(&req.layout, &req.scope, &req.locked);
+    let mut pins = build_pins(&req.layout, &req.scope, &req.locked);
     let candidates = ctx.profiles_excluding(&req.excluded);
+    // The same solved economies and generator pins the improvements pipeline
+    // searches with (Rosmontis' feeders in the Control Center, the reserved
+    // morale-swap manager): without them the planner never seated a pool
+    // consumer's feeders and left her unused.
+    let economy = search_economy(&candidates, &building, &game_data.building, &ctx.registry);
+    for pin in economy.pins {
+        if !pins.iter().any(|(id, _)| *id == pin.0) {
+            pins.push(pin);
+        }
+    }
+    let search_registry = economy.registry;
     // The two searches are CPU-bound; on the blocking pool they cannot stall
     // the async worker's other futures (see `cpu::offload`). The context and
     // the building move in and come back, so nothing is cloned.
@@ -1135,14 +1145,18 @@ pub async fn optimize(
             &ctx.morale_drains,
             None,
         );
-        let proposal = compute_optimal_assignment_with_pins(
+        // With the joint-seating bundle trials, as the Score tab's optimal
+        // (`pools::optimal_with_bundles`).
+        let proposal = optimal_with_bundles(
             &candidates,
             &building,
             &gd.building,
             &ctx.registry,
+            &search_registry,
             &ctx.morale_drains,
             &pins,
-        );
+        )
+        .optimal;
         (ctx, building, baseline, proposal)
     })
     .await?;
@@ -1198,26 +1212,38 @@ pub async fn rotation(
 
     let mut pins = build_pins(&req.layout, &[], &req.locked);
     let candidates = ctx.profiles_excluding(&req.excluded);
-    // Same reservation the improvements plan makes: a morale-swap manager
-    // (Fiammetta) holds a dormitory seat when the roster runs a
-    // morale-conditional generator - the planner and the Score tab must
-    // never disagree about her.
-    if let Some(pin) = morale_manager_pin(&candidates, &building, &game_data.building)
-        && !pins.iter().any(|(id, _)| id == &pin.0)
-    {
-        pins.push(pin);
+    // Same solved economies, generator pins and morale-swap manager
+    // reservation the improvements plan rotates with - the planner and the
+    // Score tab must never disagree about them.
+    let economy = search_economy(&candidates, &building, &game_data.building, &ctx.registry);
+    for pin in economy.pins {
+        if !pins.iter().any(|(id, _)| *id == pin.0) {
+            pins.push(pin);
+        }
     }
+    let search_registry = economy.registry;
     // The rotation search is the planner's heaviest step (about a second in
     // release, ten in a debug build): on the blocking pool, see `cpu::offload`.
     let gd = std::sync::Arc::clone(&game_data);
     let (ctx, building, candidates, plan) = cpu::offload("base_rotation", move || {
-        let plan = recommend_shift_rotation(
+        // The rotation plans with the economy the bundle trials accepted
+        // (registry and pins), exactly as the Score tab's rotation does.
+        let accepted = optimal_with_bundles(
             &candidates,
             &building,
             &gd.building,
             &ctx.registry,
+            &search_registry,
             &ctx.morale_drains,
             &pins,
+        );
+        let plan = recommend_shift_rotation(
+            &candidates,
+            &building,
+            &gd.building,
+            &accepted.registry,
+            &ctx.morale_drains,
+            &accepted.pins,
         );
         (ctx, building, candidates, plan)
     })

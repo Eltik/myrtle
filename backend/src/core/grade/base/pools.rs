@@ -1369,3 +1369,161 @@ pub fn candidate_bundles(
     }
     unique
 }
+
+/// The registry and pins an OPTIMAL search runs with: every native pool
+/// economy solved into consumer payoffs (`plan_optimal_economies`), its
+/// generator seats pinned, and the morale-swap manager (Fiammetta) reserved
+/// when the roster runs a morale-conditional generator (Ling). Shared by the
+/// improvements pipeline and the interactive planner so the two never
+/// disagree on which operators a search can feed - the planner used to run
+/// on the bare registry and never seated Rosmontis' feeders.
+pub struct SearchEconomy {
+    pub registry: HashMap<String, BuffResolutionStrategy>,
+    pub pins: Vec<(String, String)>,
+    /// The reserved morale-swap manager, when one is.
+    pub manager: Option<String>,
+}
+
+pub fn search_economy(
+    profiles: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+) -> SearchEconomy {
+    let mut out = registry.clone();
+    let mut pins: Vec<(String, String)> = Vec::new();
+    let manager_pin = super::dorms::morale_manager_pin(profiles, building, building_data);
+    let manager = manager_pin.as_ref().map(|(id, _)| id.clone());
+    if let Some(pin) = manager_pin {
+        pins.push(pin);
+    }
+    let native = plan_optimal_economies(profiles, building, building_data, registry);
+    for (buff_id, pct) in &native.overrides {
+        // Never downgrade a consumer another plan already priced higher.
+        if out.get(buff_id).is_none_or(|s| {
+            !matches!(
+                s,
+                BuffResolutionStrategy::PoolPayoff { .. }
+                    | BuffResolutionStrategy::GlobalEffect { .. }
+            )
+        }) {
+            out.insert(
+                buff_id.clone(),
+                BuffResolutionStrategy::PoolPayoff { pct: *pct },
+            );
+        }
+    }
+    pins.extend(native.pins.iter().cloned());
+    SearchEconomy {
+        registry: out,
+        pins,
+        manager,
+    }
+}
+
+/// A search's accepted economy: the registry and pins after every
+/// joint-seating bundle that improved realized yield, and the plan they
+/// produce.
+pub struct AcceptedEconomy {
+    pub registry: HashMap<String, BuffResolutionStrategy>,
+    pub pins: Vec<(String, String)>,
+    pub optimal: super::types::BaseAssignment,
+}
+
+/// The optimal search with joint-seating bundles (the Sui Control-Center
+/// economy, facility and base counts, resting Durins): each bundle packages
+/// generator pins and solved consumer overrides, the OPTIMIZER judges the
+/// seat economics - the search runs with the bundle and keeps it only if the
+/// realized total yield improves. Displacement costs (globals the pinned CC
+/// seats would otherwise carry) show up in the yield, so no hand-modeled
+/// tradeoff is needed. Shared by the improvements pipeline and the planner:
+/// Rosmontis' feeders (Dusk and Ling) reach the Control Center only through
+/// these trials, and a planner without them never used her.
+///
+/// `base_registry` is the bare registry the bundles are generated from (a
+/// consumer already solved into the search registry still gets its bundle);
+/// `search_registry` is the starting point every trial is layered on.
+pub fn optimal_with_bundles(
+    profiles: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    base_registry: &HashMap<String, BuffResolutionStrategy>,
+    search_registry: &HashMap<String, BuffResolutionStrategy>,
+    morale_drains: &HashMap<String, f64>,
+    pins: &[(String, String)],
+) -> AcceptedEconomy {
+    use super::assignment::{assignment_value, compute_optimal_assignment_with_pins};
+    let mut optimal_registry = search_registry.clone();
+    let mut optimal_pins: Vec<(String, String)> = pins.to_vec();
+    let mut optimal = compute_optimal_assignment_with_pins(
+        profiles,
+        building,
+        building_data,
+        &optimal_registry,
+        morale_drains,
+        &optimal_pins,
+    );
+    for bundle in candidate_bundles(profiles, building, building_data, base_registry) {
+        // A seat bundle for a counter nobody fields is not worth a trial.
+        if let Some(who) = &bundle.beneficiary
+            && !optimal
+                .rooms
+                .iter()
+                .any(|r| r.operators.iter().any(|o| o == who))
+        {
+            continue;
+        }
+        let mut trial_registry = optimal_registry.clone();
+        for (buff_id, pct) in &bundle.overrides {
+            // Never downgrade: a consumer already priced higher by another
+            // plan (native economies, perception) keeps its better value.
+            let existing = match trial_registry.get(buff_id) {
+                Some(BuffResolutionStrategy::PoolPayoff { pct: p }) => *p,
+                _ => f64::NEG_INFINITY,
+            };
+            if *pct > existing {
+                trial_registry.insert(
+                    buff_id.clone(),
+                    BuffResolutionStrategy::PoolPayoff { pct: *pct },
+                );
+            }
+        }
+        // Pool-scaled Control-Center globals ride the same never-downgrade
+        // rule against whatever global value another plan already folded.
+        for (buff_id, target_room, pct) in &bundle.globals {
+            let existing = match trial_registry.get(buff_id) {
+                Some(BuffResolutionStrategy::GlobalEffect { bonus_pct, .. }) => *bonus_pct,
+                _ => f64::NEG_INFINITY,
+            };
+            if *pct > existing {
+                trial_registry.insert(
+                    buff_id.clone(),
+                    BuffResolutionStrategy::GlobalEffect {
+                        target_room: target_room.clone(),
+                        bonus_pct: *pct,
+                    },
+                );
+            }
+        }
+        let mut trial_pins = optimal_pins.clone();
+        trial_pins.extend(bundle.pins.iter().cloned());
+        let trial = compute_optimal_assignment_with_pins(
+            profiles,
+            building,
+            building_data,
+            &trial_registry,
+            morale_drains,
+            &trial_pins,
+        );
+        if assignment_value(&trial.rooms) > assignment_value(&optimal.rooms) + 1e-9 {
+            optimal = trial;
+            optimal_registry = trial_registry;
+            optimal_pins = trial_pins;
+        }
+    }
+    AcceptedEconomy {
+        registry: optimal_registry,
+        pins: optimal_pins,
+        optimal,
+    }
+}

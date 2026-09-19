@@ -100,6 +100,11 @@ pub struct RoomEval<'a> {
     pub facility_counts: &'a HashMap<String, usize>,
     pub total_dorm_levels: i32,
     pub cc_conditions: &'a [CcCondition],
+    /// The room's own level, when the caller knows it: a trading post's order
+    /// rarity and base order limit follow ITS level. `None` falls back to the
+    /// base-wide `TRADING_MIN_LEVEL` synthetic (candidate ranking, callers
+    /// scoring a room type without a room).
+    pub room_level: Option<i32>,
     /// Operators actively working any non-dormitory room, for
     /// `RequiresChar { scope: BaseWorkArea }`. `None` = unknown (candidate
     /// enumeration) - such clauses then contribute 0.
@@ -131,13 +136,29 @@ pub struct RoomTotals {
 pub(crate) fn trading_base_limit(
     building_data: &BuildingDataFile,
     facility_counts: &HashMap<String, usize>,
+    room_level: Option<i32>,
 ) -> i32 {
     let phases = &building_data.trading_data.phases;
-    facility_counts
-        .get(super::assignment::TRADING_MIN_LEVEL)
+    trading_level(facility_counts, room_level)
         .and_then(|lv| phases.get(lv.saturating_sub(1)))
         .or_else(|| phases.last())
         .map_or(FALLBACK_TRADING_ORDER_LIMIT, |p| p.order_limit)
+}
+
+/// The level a trading post is priced at: its own when known, else the
+/// base-wide minimum (a mixed-level base used to price every post at the
+/// lower cap - a level-2 post beside a level-3 one made both read wrong).
+fn trading_level(
+    facility_counts: &HashMap<String, usize>,
+    room_level: Option<i32>,
+) -> Option<usize> {
+    room_level
+        .and_then(|lv| usize::try_from(lv).ok())
+        .or_else(|| {
+            facility_counts
+                .get(super::assignment::TRADING_MIN_LEVEL)
+                .copied()
+        })
 }
 
 /// Score one room's team: the clause walk (P0-P1), pool settlement (P2), peer
@@ -652,7 +673,7 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
     let order_limit: Option<i32> = (ev.room_type == "TRADING").then(|| {
         #[allow(clippy::cast_possible_truncation)]
         let delta = capacity_delta.round() as i32;
-        (trading_base_limit(ev.building_data, ev.facility_counts) + delta)
+        (trading_base_limit(ev.building_data, ev.facility_counts, ev.room_level) + delta)
             .max(MIN_TRADING_ORDER_LIMIT)
     });
     // Jaye's per-order riders pay on the FINAL limit, base included. From
@@ -728,10 +749,8 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
     let (order_value, order_gold) = if order_items.is_empty() {
         (0.0, 0.0)
     } else {
-        let level = ev
-            .facility_counts
-            .get(super::assignment::TRADING_MIN_LEVEL)
-            .map_or(i32::MAX, |lv| i32::try_from(*lv).unwrap_or(i32::MAX));
+        let level = trading_level(ev.facility_counts, ev.room_level)
+            .map_or(i32::MAX, |lv| i32::try_from(lv).unwrap_or(i32::MAX));
         let rarity = super::order_mix::rarity_for_level(ev.building_data, level);
         let effects: Vec<OrderEffect> = order_items.iter().map(|o| o.effect.clone()).collect();
         (
@@ -946,7 +965,7 @@ pub fn op_optimistic_bound(
             // holds before peers add and his own cut subtracts - optimistic
             // at the base.
             ClauseKind::ScalingRoomOrderLimit => {
-                v * f64::from(trading_base_limit(building_data, facility_counts))
+                v * f64::from(trading_base_limit(building_data, facility_counts, None))
             }
             _ => 0.0,
         };

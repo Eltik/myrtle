@@ -940,6 +940,7 @@ fn pad_teams(
                     &trial,
                     &room_type,
                     formula.as_deref(),
+                    None,
                     &op_index,
                     registry,
                     building_data,

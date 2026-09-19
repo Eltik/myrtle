@@ -4856,6 +4856,102 @@ fn kjerag_posts_read_the_games_six_measured_figures() {
     );
 }
 
+/// A mixed-level base prices each post at ITS level: the level-3 post keeps its
+/// 10-order limit and rarity-3 order value while the level-2 post beside it
+/// reads 8 and rarity 2. Every post used to be priced at the base-wide
+/// minimum, so a level-2 post made the level-3 one read as level 2 too.
+#[test]
+fn mixed_level_posts_price_each_post_at_its_own_level() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    const PROVISO: &str = "char_4032_provs";
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let roster = vec![profile(gd, PROVISO)];
+    let seated_in = |slot: &str| {
+        let mut building = UserBuilding {
+            rooms: vec![room("tp3", "TRADING", 3), room("tp2", "TRADING", 2)],
+        };
+        for r in &mut building.rooms {
+            if r.slot_id == slot {
+                r.current_operators = vec![PROVISO.to_string()];
+            }
+        }
+        compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None)
+    };
+    let alone_at = |level: i32| {
+        let mut building = UserBuilding {
+            rooms: vec![room("tp", "TRADING", level)],
+        };
+        building.rooms[0].current_operators = vec![PROVISO.to_string()];
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms
+            .into_iter()
+            .find(|r| r.room_type == "TRADING")
+            .unwrap()
+    };
+    let mixed = seated_in("tp3");
+    let tp3 = mixed.rooms.iter().find(|r| r.slot_id == "tp3").unwrap();
+    let tp2 = mixed.rooms.iter().find(|r| r.slot_id == "tp2").unwrap();
+    assert_eq!(tp3.order_limit, Some(10), "a level-3 post holds 10 orders");
+    assert_eq!(tp2.order_limit, Some(8), "a level-2 post holds 8 orders");
+    let solo3 = alone_at(3);
+    assert!(
+        (tp3.order_value - solo3.order_value).abs() < 1e-9,
+        "Proviso in the level-3 post is priced at rarity 3 beside a level-2 post: {} vs {}",
+        tp3.order_value,
+        solo3.order_value
+    );
+    let mixed2 = seated_in("tp2");
+    let tp2 = mixed2.rooms.iter().find(|r| r.slot_id == "tp2").unwrap();
+    let solo2 = alone_at(2);
+    assert!(
+        (tp2.order_value - solo2.order_value).abs() < 1e-9,
+        "Proviso in the level-2 post is priced at rarity 2: {} vs {}",
+        tp2.order_value,
+        solo2.order_value
+    );
+    assert!(
+        (solo3.order_value - solo2.order_value).abs() > 1e-6,
+        "the two rarities must differ for the check to mean anything"
+    );
+}
+
+/// A strongest-only Control-Center skill is worth only what it adds beyond
+/// the seated crew: Lee's Worldly Insight (clue +25%, "only the strongest
+/// effect of this type") beside a crew already covering clue +25% buys no
+/// bench seat.
+#[test]
+fn a_covered_strongest_only_clue_skill_buys_no_bench_seat() {
+    use backend::core::grade::base::assignment::{cc_seated_coverage, cc_spare_seat_value};
+    use backend::core::grade::base::clause::NonProdKind;
+    use std::collections::HashMap;
+    const LEE: &str = "char_322_lmlee";
+    let gd = load_game_data();
+    let (registry, _drains) =
+        build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let lee = profile(gd, LEE);
+    let uncovered = cc_spare_seat_value(&lee, &gd.building, &registry, &HashMap::new());
+    assert!(
+        uncovered > 0.0,
+        "Lee's clue skill has bench value on an empty crew: {uncovered}"
+    );
+    let mut covered = HashMap::new();
+    covered.insert(NonProdKind::ClueSearch, 25.0);
+    assert!(
+        cc_spare_seat_value(&lee, &gd.building, &registry, &covered).abs() < 1e-9,
+        "covered by an equal or stronger clue skill, Lee adds nothing"
+    );
+    // Lee himself seated sets the bar his own kind of skill is measured against.
+    let seated = cc_seated_coverage(&[LEE.to_string()], &[lee.clone()], &gd.building, &registry);
+    assert!(
+        seated
+            .get(&NonProdKind::ClueSearch)
+            .is_some_and(|v| (*v - 25.0).abs() < 1e-9),
+        "seated coverage reads Lee's clue +25: {seated:?}"
+    );
+}
+
 #[test]
 fn viviana_synergy_flips_the_cc_to_a_block_aligned_with_her_knights() {
     // Viviana's CC buff ("all Knight Operators in Factories +7%") links her to the factory

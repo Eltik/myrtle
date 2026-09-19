@@ -61,7 +61,7 @@ pub enum Metric {
     FacilityCount(String),
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum NonProdKind {
     ClueSearch, // MEETING
     HrContact,  // HIRE

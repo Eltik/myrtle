@@ -736,6 +736,7 @@ fn optimal_inner_core(
                 &crew,
                 "POWER",
                 None,
+                None,
                 &build_op_index(operators),
                 registry,
                 building_data,
@@ -1758,6 +1759,7 @@ pub fn compute_sustained_assignment(
                 ops,
                 room_type,
                 formula,
+                None,
                 &op_index,
                 registry,
                 building_data,
@@ -2148,6 +2150,7 @@ pub fn compute_live_assignment(
             &ops,
             &room.room_type,
             formula.as_deref(),
+            Some(room.level),
             &op_index,
             registry,
             building_data,
@@ -2242,6 +2245,7 @@ pub fn compute_live_assignment(
                 compute_team_totals(
                     &ops,
                     "POWER",
+                    None,
                     None,
                     &op_index,
                     registry,
@@ -2571,6 +2575,14 @@ pub fn fill_remaining_slots(
 ) -> Vec<String> {
     let mut added = Vec::new();
     while (slots.len() as i32) < max_slots {
+        // What the crew already carries, so a strongest-only skill counts
+        // only for what it adds (recomputed per seat: the previous pick may
+        // have raised the bar).
+        let coverage = if room_type == "CONTROL" {
+            cc_seated_coverage(slots, operators, building_data, registry)
+        } else {
+            HashMap::new()
+        };
         let pick = operators
             .iter()
             .filter(|op| !assigned.contains(&op.char_id))
@@ -2586,9 +2598,9 @@ pub fn fill_remaining_slots(
                 if room_type != "CONTROL" {
                     return ka.cmp(&kb);
                 }
-                let va = cc_spare_seat_value(a, building_data, registry)
+                let va = cc_spare_seat_value(a, building_data, registry, &coverage)
                     + cc_global_morale_recovery(a, registry, building_data);
-                let vb = cc_spare_seat_value(b, building_data, registry)
+                let vb = cc_spare_seat_value(b, building_data, registry, &coverage)
                     + cc_global_morale_recovery(b, registry, building_data);
                 (va <= 0.0)
                     .cmp(&(vb <= 0.0))
@@ -2671,10 +2683,49 @@ pub fn cc_non_production_effects(
 /// free seat - they are priorities, NOT LMD; the objective stays
 /// production-pure. Same-room-gated clauses need a partner we can't assume, so
 /// they count nothing here (never guess).
-fn cc_spare_seat_value(
+/// The best non-stacking non-production value the seated Control-Center crew
+/// already carries, per effect kind: a candidate's "only the strongest effect
+/// of this type" skill is worth only what it adds beyond that. Lee's Worldly
+/// Insight (clue +25%, strongest-only) beside a stronger clue skill is worth
+/// nothing, and used to buy him the seat.
+pub fn cc_seated_coverage(
+    seated: &[String],
+    operators: &[OperatorBaseProfile],
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+) -> HashMap<crate::core::grade::base::clause::NonProdKind, f64> {
+    use crate::core::grade::base::clause::{ClauseKind, Metric};
+    let mut best = HashMap::new();
+    for op in seated
+        .iter()
+        .filter_map(|id| operators.iter().find(|o| &o.char_id == id))
+    {
+        for b in &op.available_buffs {
+            let Some(buff) = building_data.buffs.get(b) else {
+                continue;
+            };
+            if buff.room_type != "CONTROL" || cc_buff_stacks(buff) {
+                continue;
+            }
+            let Some(strategy) = registry.get(b) else {
+                continue;
+            };
+            for c in clauses_from_strategy(b, buff, strategy) {
+                if let (ClauseKind::SelfValue, Metric::NonProduction(kind)) = (&c.kind, &c.metric) {
+                    let slot = best.entry(*kind).or_insert(0.0_f64);
+                    *slot = slot.max(c.value);
+                }
+            }
+        }
+    }
+    best
+}
+
+pub fn cc_spare_seat_value(
     op: &OperatorBaseProfile,
     building_data: &BuildingDataFile,
     registry: &HashMap<String, BuffResolutionStrategy>,
+    coverage: &HashMap<crate::core::grade::base::clause::NonProdKind, f64>,
 ) -> f64 {
     use crate::core::grade::base::clause::{ClauseKind, Metric, NonProdKind};
     op.available_buffs
@@ -2683,15 +2734,27 @@ fn cc_spare_seat_value(
             let buff = building_data.buffs.get(b)?;
             (buff.room_type == "CONTROL").then_some(())?;
             let strategy = registry.get(b)?;
+            let stacks = cc_buff_stacks(buff);
             Some(
                 clauses_from_strategy(b, buff, strategy)
                     .iter()
                     .filter(|c| matches!(c.kind, ClauseKind::SelfValue))
-                    .map(|c| match &c.metric {
-                        Metric::NonProduction(NonProdKind::ClueSearch) => c.value * 3.0,
-                        Metric::NonProduction(NonProdKind::HrContact) => c.value * 2.0,
-                        Metric::NonProduction(NonProdKind::Training) => c.value,
-                        _ => 0.0,
+                    .map(|c| {
+                        let Metric::NonProduction(kind) = &c.metric else {
+                            return 0.0;
+                        };
+                        // A strongest-only effect pays only beyond the crew's best of its kind.
+                        let value = if stacks {
+                            c.value
+                        } else {
+                            (c.value - coverage.get(kind).copied().unwrap_or(0.0)).max(0.0)
+                        };
+                        match kind {
+                            NonProdKind::ClueSearch => value * 3.0,
+                            NonProdKind::HrContact => value * 2.0,
+                            NonProdKind::Training => value,
+                            _ => 0.0,
+                        }
                     })
                     .sum::<f64>(),
             )
@@ -3668,6 +3731,7 @@ fn reallocate_across_formulas(
             &ops,
             &tpl.room_type,
             tpl.formula_type.as_deref(),
+            Some(tpl.level),
             &op_index,
             registry,
             building_data,
@@ -3860,6 +3924,7 @@ fn pad_production_rooms(
                         &trial,
                         &room.room_type,
                         room.formula_type.as_deref(),
+                        Some(room.level),
                         &op_index,
                         registry,
                         building_data,
@@ -4470,6 +4535,7 @@ pub(crate) fn enumerate_candidate_teams(
                 &combo,
                 room_type,
                 formula_type,
+                Some(room_level),
                 &op_index,
                 registry,
                 building_data,
@@ -4750,6 +4816,7 @@ pub(crate) fn compute_team_efficiency(
     member_ids: &[String],
     room_type: &str,
     formula_type: Option<&str>,
+    room_level: Option<i32>,
     op_index: &HashMap<&str, &OperatorBaseProfile>,
     registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
@@ -4762,6 +4829,7 @@ pub(crate) fn compute_team_efficiency(
         member_ids,
         room_type,
         formula_type,
+        room_level,
         op_index,
         registry,
         building_data,
@@ -4781,6 +4849,7 @@ pub(crate) fn compute_team_totals(
     member_ids: &[String],
     room_type: &str,
     formula_type: Option<&str>,
+    room_level: Option<i32>,
     op_index: &HashMap<&str, &OperatorBaseProfile>,
     registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
@@ -4803,6 +4872,7 @@ pub(crate) fn compute_team_totals(
         facility_counts,
         total_dorm_levels,
         cc_conditions,
+        room_level,
         deployed_work_area: None,
     })
 }
@@ -4836,6 +4906,7 @@ pub fn team_value(
         team,
         room_type,
         formula_type,
+        None,
         &op_index,
         registry,
         building_data,
@@ -5009,6 +5080,7 @@ fn rebalance_rooms(
             ops,
             room_type,
             formula,
+            None,
             &op_index,
             registry,
             building_data,

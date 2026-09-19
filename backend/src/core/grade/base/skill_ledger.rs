@@ -160,6 +160,7 @@ impl LedgerCtx<'_> {
             ops,
             room_type,
             formula,
+            None,
             &index,
             self.registry,
             self.building_data,
