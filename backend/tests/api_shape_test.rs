@@ -87,17 +87,19 @@ const fn type_name(v: &Value) -> &'static str {
 /// Record every reachable key path and the set of JSON types seen at it.
 ///
 /// Map keys and array indices collapse to `*`, so the snapshot describes the
-/// schema and stays stable when the game data itself changes. A new operator
-/// must not churn this file.
+/// schema and stays stable when the game data itself changes. A new operator,
+/// event, or item must not churn this file.
 fn walk(path: &str, value: &Value, out: &mut BTreeSet<String>) {
     match value {
         Value::Object(map) => {
             out.insert(format!("{path}: object"));
+            let record = is_record_map(map);
             for (k, v) in map {
                 // A record keyed by id (operators, items) collapses to `*`; a
                 // struct's own field names are the thing we are pinning, so they
-                // are kept verbatim. Heuristic: ids are long or contain `_`/`#`.
-                let key = if k.len() > 24 || k.contains('_') || k.contains('#') {
+                // are kept verbatim. The per-key fallback (long, `_`, `#`) is for
+                // containers the map test cannot decide.
+                let key = if record || k.len() > 24 || k.contains('_') || k.contains('#') {
                     "*"
                 } else {
                     k.as_str()
@@ -114,6 +116,43 @@ fn walk(path: &str, value: &Value, out: &mut BTreeSet<String>) {
         leaf => {
             out.insert(format!("{path}: {}", type_name(leaf)));
         }
+    }
+}
+
+/// Whether an object is a `HashMap` keyed by game data rather than a struct.
+///
+/// Decided for the whole container, not per key, because the per-key rule
+/// cannot tell `act51side` (an activity id) from `endTime` (a field). Two
+/// signals, either one suffices:
+///
+/// 1. A key no Rust field can have: digit-led (`30011`, `1stact`), or
+///    containing `-`, `#`, or a space (`act2vmulti-tr03`, `char_002_amiya#1`).
+///    `_` is deliberately NOT in this list: four struct fields in the operator
+///    payload carry one, and a container-level `_` rule would erase the whole
+///    operator shape.
+/// 2. Every value is an object with the identical key set, and there are at
+///    least two of them (`subProfDict`, `brandList`, `raceData`). A struct
+///    whose fields are all same-shaped sub-objects would trip this too; there
+///    is none in the twenty payloads (checked 2026-09-20: every hit was a
+///    `HashMap<String, _>`).
+fn is_record_map(map: &serde_json::Map<String, Value>) -> bool {
+    if map.keys().any(|k| {
+        k.starts_with(|c: char| c.is_ascii_digit())
+            || k.contains('-')
+            || k.contains('#')
+            || k.contains(' ')
+    }) {
+        return true;
+    }
+    if map.len() < 2 {
+        return false;
+    }
+    let mut shapes = map
+        .values()
+        .map(|v| v.as_object().map(|o| o.keys().collect::<BTreeSet<_>>()));
+    match shapes.next() {
+        Some(Some(first)) if !first.is_empty() => shapes.all(|s| s.as_ref() == Some(&first)),
+        _ => false,
     }
 }
 
