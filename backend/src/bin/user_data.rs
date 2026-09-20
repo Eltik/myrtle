@@ -424,8 +424,7 @@ async fn run_import(args: ImportArgs) -> Result<()> {
     let mut skipped_total = 0u64;
     for table in &selected {
         let Some(rows) = export.tables.get(table.name) else {
-            // A file written by an older build simply lacks the table. Treat it as
-            // empty rather than aborting a restore that is otherwise complete.
+            // Older builds did not write this table. Treat it as empty, not as a failed restore.
             println!("  {:<24} {:>7}  (absent from file)", table.name, "-");
             continue;
         };
@@ -657,8 +656,7 @@ async fn live_columns(tx: &mut Transaction<'_, Postgres>, table: &str) -> Result
 /// Intersecting both ways is what makes the format survive a migration in either
 /// direction. A column the file does not carry is left out of the INSERT so it
 /// takes its DEFAULT - listing it would force a NULL and trip a NOT NULL that the
-/// default was there to satisfy. A column the file carries but the table has lost
-/// is simply dropped.
+/// default was there to satisfy. A column the table has lost is dropped.
 fn usable_columns(live: &[String], rows: &[Value], regenerate: &[&str]) -> Vec<String> {
     live.iter()
         .filter(|c| !regenerate.contains(&c.as_str()))

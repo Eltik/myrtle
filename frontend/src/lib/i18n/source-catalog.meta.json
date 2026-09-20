@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-20T13:29:49.017Z",
+    "generatedAt": "2026-09-20T14:30:14.254Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -34292,6 +34292,13 @@
             "namespace": "user",
             "source_text": "Unique units in roster",
             "description": "Caption under the operator count.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.strip.originite.sub",
+            "namespace": "user",
+            "source_text": "Originite Prime Available",
+            "description": "Caption under the Originite Prime balance. 'Originite Prime' is the game's premium currency; keep its official name.",
             "placeholders": []
         },
         {

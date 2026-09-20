@@ -30,9 +30,9 @@ const BUCKET_COUNT: usize = BUCKET_BOUNDS.len() + 1; // + "+Inf"
 
 /// Ceiling on distinct label values held per map.
 ///
-/// Route labels come from axum's matched path and are bounded by the router,
-/// but callers may supply other label values. Past this ceiling a new label is
-/// simply not recorded, so no caller can grow these maps without limit.
+/// Route labels are bounded by the router, but callers may supply other
+/// label values. Past this ceiling a new label is dropped, so no caller
+/// can grow these maps without limit.
 const MAX_SERIES: usize = 512;
 
 #[derive(Default)]
@@ -86,9 +86,8 @@ struct RegradeStats {
     passes: AtomicU64,
 }
 
-/// Insert-with-a-ceiling. Returns `None` once `MAX_SERIES` distinct labels are
-/// held, so a caller with an unbounded label simply stops being recorded rather
-/// than growing the map.
+/// Insert-with-a-ceiling. `None` once `MAX_SERIES` distinct labels are
+/// held: an unbounded label is dropped rather than growing the map.
 fn slot<'a, V: Default>(
     map: &'a DashMap<String, V>,
     key: &str,

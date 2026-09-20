@@ -37,9 +37,8 @@ pub struct UserTable {
     /// restore into a different one.
     pub regenerate: &'static [&'static str],
 
-    /// Rows failing this predicate are skipped on import rather than aborting it.
-    /// Used where a row points at an entity outside the export's scope, which may
-    /// simply not exist in the target database.
+    /// Rows failing this predicate are skipped on import, not fatal. For rows that
+    /// point outside the export's scope and may be absent in the target database.
     pub import_guard: Option<&'static str>,
 }
 

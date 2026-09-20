@@ -73,14 +73,8 @@ pub async fn get_user_score(
     auth: MaybeAuthUser,
     Query(params): Query<GetUserParams>,
 ) -> Result<Json<Option<UserScore>>, ApiError> {
-    // The full `user_scores` row (every category score, the grade, the
-    // timestamp) for the Score tab's detailed breakdown.
-    //
-    // Returned as the row type rather than round-tripped through
-    // `serde_json::Value`. The wire format is identical, since that round trip
-    // was serializing this same struct, but the type is now the documented
-    // schema and the generated TypeScript, and the infallible-serialization
-    // error branch goes away with it.
+    // Typed row, not a `serde_json::Value` round-trip: same bytes on the wire,
+    // but the type is the schema and the generated TS.
     let uid = resolve_uid(&state, &auth, Some(&params.uid)).await?;
     let score = get_score_by_uid(&state.db, &uid).await?;
     Ok(Json(score))
@@ -113,9 +107,7 @@ pub async fn get_user_checkin(
     auth: MaybeAuthUser,
     Query(params): Query<GetUserParams>,
 ) -> Result<Json<Option<UserCheckin>>, ApiError> {
-    // Daily sign-in state: the month's claim count and per-claim monthly-card
-    // flags, the lifetime total, and the active series' progress. `null` when
-    // the user has never synced.
+    // `null` until the user has synced once.
     let uid = resolve_uid(&state, &auth, Some(&params.uid)).await?;
     let checkin = get_checkin_by_uid(&state.db, &uid).await?;
     Ok(Json(checkin))

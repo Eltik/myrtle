@@ -47,11 +47,22 @@ const ORDER_SIZES: [OrderSize; 3] = [
 /// post draws only 2-gold orders, level-2 adds 3-gold, level-3 adds 4-gold.
 const MIX_BY_RARITY: [[f64; 3]; 3] = [[1.0, 0.0, 0.0], [0.6, 0.4, 0.0], [0.3, 0.5, 0.2]];
 
-/// The Tailoring family's mix at rarity 3: "increased slightly" (α tiers)
-/// and "increased" (β tiers). Below rarity 3 no high-yield order exists to
+/// The Tailoring family's mix at rarity 3, by the crew's summed tailoring
+/// STEPS: "increased slightly" (α tiers: Shamare, E0 Bibeak) is one step,
+/// "increased" (β: E2 Bibeak) two, and the steps of every tailor in the
+/// room add up (the texts carry no strongest-only clause). Index = steps - 1,
+/// capped at the table's end. Below rarity 3 no high-yield order exists to
 /// shift toward, and the game publishes no shifted mix there - never guess.
-const TAILORING_MIX_SLIGHT: [f64; 3] = [0.15, 0.30, 0.55];
-const TAILORING_MIX_STRONG: [f64; 3] = [0.05, 0.10, 0.85];
+///
+/// Measured, not guessed: the community sheet's Shamare-squad table gives
+/// eight equivalent-productivity figures at a level-3 post (Shamare + other
+/// 91.6; E0/E2 Tequila + other 108.07/124.39; with E0 Bibeak 110.08/128.12;
+/// E2 Bibeak + other 92.8, with E0/E2 Tequila 115.52/138.21). One mix per
+/// step count reproduces all eight within 0.05 (least squares on a 0.01
+/// grid, 2026-09-20); the earlier guesses (0.15/0.30/0.55, 0.05/0.10/0.85)
+/// read the Tequila rows 0.6-1.7 low and could not stack two α tiers at all.
+const TAILORING_MIX_BY_STEPS: [[f64; 3]; 3] =
+    [[0.18, 0.25, 0.57], [0.14, 0.21, 0.65], [0.05, 0.06, 0.89]];
 
 /// Highest supported rarity (the size table has three entries).
 const MAX_RARITY: usize = 3;
@@ -67,24 +78,26 @@ pub fn rarity_for_level(building_data: &BuildingDataFile, level: i32) -> usize {
     })
 }
 
-/// The draw mix for `rarity` once the room's mix-shifting effects apply
-/// (the strongest Tailoring tier present wins - they don't stack).
+/// The draw mix for `rarity` once the room's mix-shifting effects apply:
+/// the Tailoring tiers present add their steps (see
+/// `TAILORING_MIX_BY_STEPS`).
 fn mix_for(effects: &[OrderEffect], rarity: usize) -> [f64; 3] {
     let base = MIX_BY_RARITY[rarity.clamp(1, MAX_RARITY) - 1];
     if rarity < MAX_RARITY {
         return base;
     }
-    let strongest = effects
+    let steps: usize = effects
         .iter()
-        .filter_map(|e| match e {
-            OrderEffect::HigherYieldChance { strong } => Some(*strong),
-            _ => None,
+        .map(|e| match e {
+            OrderEffect::HigherYieldChance { strong: true } => 2,
+            OrderEffect::HigherYieldChance { strong: false } => 1,
+            _ => 0,
         })
-        .max();
-    match strongest {
-        Some(true) => TAILORING_MIX_STRONG,
-        Some(false) => TAILORING_MIX_SLIGHT,
-        None => base,
+        .sum();
+    if steps == 0 {
+        base
+    } else {
+        TAILORING_MIX_BY_STEPS[steps.min(TAILORING_MIX_BY_STEPS.len()) - 1]
     }
 }
 
@@ -315,11 +328,12 @@ mod tests {
         assert!(gold_pct(&[TEQUILA], 3).abs() < 1e-9);
         assert!(value_pct(&[TEQUILA], 3) > 0.0);
         // Beside strong Tailoring the mix shifts (bigger, slower orders): gold
-        // throughput barely moves while Tequila's LMD rider fires on 85%.
+        // throughput barely moves while Tequila's LMD rider fires on most
+        // orders (65% at two steps, measured).
         let strong = OrderEffect::HigherYieldChance { strong: true };
         let g = gold_pct(&[TEQUILA, strong.clone()], 3);
         let v = value_pct(&[TEQUILA, strong], 3);
-        assert!(g.abs() < 5.0 && v > 20.0, "gold {g} vs value {v}");
+        assert!(g.abs() < 5.0 && v > 15.0, "gold {g} vs value {v}");
     }
 
     #[test]

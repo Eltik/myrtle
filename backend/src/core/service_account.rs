@@ -291,8 +291,8 @@ impl ServiceAccount {
 
 /// Every service account the backend has credentials for, keyed by server.
 ///
-/// Servers without a stored session are simply absent; callers treat a missing
-/// account as "this feature is off for that server" rather than an error.
+/// A server with no stored session is absent; callers read that as "feature off
+/// for that server", not an error.
 #[derive(Default)]
 pub struct ServiceAccounts {
     accounts: HashMap<Server, Arc<ServiceAccount>>,

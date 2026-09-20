@@ -1,8 +1,5 @@
-// ── Clippy: pragmatic lint policy for an application crate ──────────────────
-// `backend` is an internal application crate (it backs our own binaries), not a
-// published library, so we run `pedantic`/`nursery` for signal but allow the
-// categories below that don't earn their keep here. Genuinely actionable findings
-// have been fixed; these remaining groups are intentional.
+// Internal app crate, not a published library: `pedantic`/`nursery` run for
+// signal, the groups below are allowed on purpose.
 #![allow(
     // Library-API doc/ergonomics lints - not meaningful for an internal app crate
     // with no external consumers.
@@ -42,9 +39,7 @@
     clippy::suboptimal_flops,
     clippy::imprecise_flops
 )]
-// Every `unsafe` block must carry a `// SAFETY:` comment justifying its soundness.
-// All `unsafe` lives in `utils::random` (the platform CSPRNG FFI); this keeps it
-// documented as the module grows.
+// All `unsafe` is the CSPRNG FFI in `utils::random`; each block needs a `// SAFETY:`.
 #![warn(clippy::undocumented_unsafe_blocks)]
 
 pub mod app;

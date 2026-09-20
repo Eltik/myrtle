@@ -19,10 +19,9 @@ use crate::core::{
     },
 };
 
-/// Most candidate operators considered per room before exhaustively searching
-/// team combinations. The optimal team is essentially always among the top
-/// candidates by optimistic bound (synergy enablers are boosted into this set),
-/// so 16 covers realistic optima while keeping C(16,3) combinations cheap.
+/// Candidate cut per room before the exhaustive team search. The optimum is
+/// nearly always in the top candidates by optimistic bound (synergy enablers
+/// are boosted in), so 16 covers realistic optima and keeps C(16,3) cheap.
 const CANDIDATE_LIMIT: usize = 16;
 
 /// `char_id` -> profile, for the hot inner loops.

@@ -153,7 +153,6 @@ pub async fn get_by_char_for_user(
     .await
 }
 
-/// Fetch settings row, creating defaults if missing.
 pub async fn get_or_create_settings(
     pool: &PgPool,
     user_id: Uuid,
@@ -177,7 +176,6 @@ pub async fn get_or_create_settings(
     .await
 }
 
-/// Patch settings flags.
 pub async fn update_gacha_flags(
     pool: &PgPool,
     user_id: Uuid,

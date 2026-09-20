@@ -86,7 +86,6 @@ static QUEUE_DEPTH: LazyLock<usize> = LazyLock::new(|| {
         .unwrap_or_else(|| *PERMITS * 8)
 });
 
-/// Requests currently waiting for a permit.
 static WAITING: AtomicUsize = AtomicUsize::new(0);
 
 /// Keeps `WAITING` honest when a waiter goes away.
@@ -103,17 +102,14 @@ impl Drop for Waiter {
     }
 }
 
-/// How many requests are waiting for a CPU permit right now.
 pub fn waiting() -> usize {
     WAITING.load(Ordering::Relaxed)
 }
 
-/// The bounded wait, in milliseconds, this process will spend on a permit.
 pub fn wait_ms() -> u64 {
     WAIT.as_millis() as u64
 }
 
-/// How many concurrent CPU-bound requests this process admits.
 pub fn permits() -> usize {
     *PERMITS
 }

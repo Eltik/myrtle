@@ -639,7 +639,7 @@ pub async fn sync_data(
 /// - `user.dungeon.stages[*].hasBattleReplay == 1`          -> `battle_type = "quest"`
 /// - `user.campaignsV2.instances[*].hasBattleReplay == 1`   -> `battle_type = "campaignV2"`
 ///
-/// Note `campaignsV2` sits at the top level of `user`, not under `dungeon`.
+/// `campaignsV2` is top-level under `user`, not under `dungeon`.
 pub fn saved_replay_targets(sync: &serde_json::Value) -> Vec<(String, String)> {
     let mut out = Vec::new();
     collect_replay_flags(sync.pointer("/user/dungeon/stages"), "quest", &mut out);

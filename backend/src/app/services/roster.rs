@@ -29,6 +29,10 @@ pub struct GameUser {
     pub status: Option<PlayerStatus>,
     pub troop: Option<Troop>,
     pub inventory: Option<serde_json::Map<String, serde_json::Value>>,
+    /// Vouchers, selectors and packs: `itemId -> instId -> { ts, count }`,
+    /// one instance per grant, `ts` its expiry (-1 = never). Not part of
+    /// `inventory`, so it has to be read on its own.
+    pub consumable: Option<serde_json::Map<String, serde_json::Value>>,
     pub skin: Option<SkinStore>,
     pub medal: Option<MedalStore>,
 
@@ -87,6 +91,11 @@ pub struct PlayerStatus {
     pub hgg_shard: Option<i64>,
     pub lgg_shard: Option<i64>,
     pub practice_ticket: Option<i64>,
+    /// Expedited Plans (item 7002) and Universal Certificates (item
+    /// `classic_normal_ticket`): `status` fields like the other tickets, but
+    /// stored as `user_items` rows so they need no column.
+    pub instant_finish_ticket: Option<i64>,
+    pub classic_shard: Option<i64>,
     #[serde(rename = "monthlySubscriptionEndTime")]
     pub monthly_sub_end: Option<i64>,
     pub register_ts: Option<i64>,
@@ -223,6 +232,7 @@ pub async fn refresh(
     };
 
     game_session::save(state, user_id, &session).await;
+    dump_sync_data(user_id, server, &text);
 
     let data: SyncDataResponse =
         serde_json::from_str(&text).map_err(|e| ApiError::Internal(e.into()))?;
@@ -254,7 +264,20 @@ pub async fn refresh(
     let operators = extract_operators(&user.troop);
     let skills = extract_skills(&user.troop);
     let modules = extract_modules(&user.troop);
-    let items = extract_items(&user.inventory);
+    let items = extract_items(
+        &user.inventory,
+        &user.consumable,
+        &[
+            (
+                EXPEDITED_PLAN_ITEM,
+                status.and_then(|s| s.instant_finish_ticket),
+            ),
+            (
+                UNIVERSAL_CERTIFICATE_ITEM,
+                status.and_then(|s| s.classic_shard),
+            ),
+        ],
+    );
     let skins = extract_skins(&user.skin);
     let mut status_json = extract_status(status);
     status_json["originite"] =
@@ -529,24 +552,81 @@ fn push_modules(
     }
 }
 
+/// Item ids of the counters the game keeps on `status` rather than in
+/// `inventory`: Expedited Plans (`instantFinishTicket`) and Universal
+/// Certificates (`classicShard`, the `CLASSIC_SHD` item).
+const EXPEDITED_PLAN_ITEM: &str = "7002";
+const UNIVERSAL_CERTIFICATE_ITEM: &str = "classic_normal_ticket";
+
+/// Every `(item_id, quantity)` the account holds, from the three places the
+/// game keeps them: the `inventory` map, the `consumable` block summed per
+/// item over its unexpired instances, and the `status` counters passed as
+/// `(item_id, count)`. One shape out, so the inventory and the leaderboard
+/// see all of them alike.
 fn extract_items(
     inventory: &Option<serde_json::Map<String, serde_json::Value>>,
+    consumable: &Option<serde_json::Map<String, serde_json::Value>>,
+    status_counters: &[(&str, Option<i64>)],
 ) -> serde_json::Value {
-    let Some(inv) = inventory.as_ref() else {
-        return serde_json::json!([]);
-    };
-
-    let items: Vec<serde_json::Value> = inv
+    let mut quantities: std::collections::BTreeMap<&str, i64> = inventory
         .iter()
-        .map(|(id, qty)| {
-            serde_json::json!({
-                "item_id": id,
-                "quantity": qty.as_i64().unwrap_or(0),
-            })
-        })
+        .flat_map(|inv| inv.iter())
+        .map(|(id, qty)| (id.as_str(), qty.as_i64().unwrap_or(0)))
         .collect();
 
+    let now = chrono::Utc::now().timestamp();
+    for (id, instances) in consumable.iter().flat_map(|c| c.iter()) {
+        let total: i64 = instances
+            .as_object()
+            .into_iter()
+            .flat_map(|insts| insts.values())
+            .filter(|inst| {
+                let expiry = inst
+                    .get("ts")
+                    .and_then(serde_json::Value::as_i64)
+                    .unwrap_or(-1);
+                expiry < 0 || expiry > now
+            })
+            .filter_map(|inst| inst.get("count").and_then(serde_json::Value::as_i64))
+            .sum();
+        if total > 0 {
+            *quantities.entry(id.as_str()).or_insert(0) += total;
+        }
+    }
+
+    for (id, count) in status_counters {
+        if let Some(count) = count.filter(|n| *n > 0) {
+            *quantities.entry(id).or_insert(0) += count;
+        }
+    }
+
+    let items: Vec<serde_json::Value> = quantities
+        .into_iter()
+        .map(|(id, quantity)| serde_json::json!({ "item_id": id, "quantity": quantity }))
+        .collect();
     serde_json::to_value(items).unwrap_or_default()
+}
+
+/// Write the raw `syncData` text to `$MYRTLE_SYNC_DUMP_DIR/<server>_<uid>_<unix>.json`
+/// when that variable is set. Off by default: the payload is the whole account.
+/// Exists so a field the extractors do not read yet can be looked up at the
+/// source instead of guessed.
+fn dump_sync_data(uid: &str, server: Server, text: &str) {
+    let Ok(dir) = std::env::var("MYRTLE_SYNC_DUMP_DIR") else {
+        return;
+    };
+    if dir.is_empty() {
+        return;
+    }
+    let path = std::path::Path::new(&dir).join(format!(
+        "{}_{uid}_{}.json",
+        server.as_str(),
+        chrono::Utc::now().timestamp()
+    ));
+    match std::fs::create_dir_all(&dir).and_then(|()| std::fs::write(&path, text)) {
+        Ok(()) => tracing::info!(uid, path = %path.display(), "syncData dumped"),
+        Err(e) => tracing::warn!(uid, error = %e, "syncData dump failed"),
+    }
 }
 
 fn extract_skins(skin: &Option<SkinStore>) -> serde_json::Value {
@@ -903,5 +983,73 @@ mod tests {
         // A real save-provided record wins over the synthesized one.
         assert_eq!(stages["camp_01"]["completeTimes"], 5);
         assert_eq!(stages["camp_01"]["state"], 2);
+    }
+
+    /// The `consumable` block as the game sends it: per item, one instance per
+    /// grant with `ts` its expiry (-1 = never) and `count`. Unexpired instances
+    /// sum per item, expired ones are dropped, an item with nothing left is
+    /// omitted, and the `status` counters become their item ids. Shape read
+    /// from a real syncData on 2026-09-20 (95 consumable entries, including
+    /// `count: 0` instances and empty objects).
+    #[test]
+    fn extract_items_merges_inventory_consumables_and_expedited_plans() {
+        let far_future = chrono::Utc::now().timestamp() + 86_400;
+        let inventory = serde_json::json!({ "30011": 12, "4006": 3 });
+        let consumable = serde_json::json!({
+            "voucher_elite_II_4": {
+                "1": { "ts": -1, "count": 2 },
+                "2": { "ts": far_future, "count": 1 },
+                "3": { "ts": 1, "count": 7 }
+            },
+            "voucher_skin": { "9": { "ts": 1, "count": 1 } }
+        });
+        let items = extract_items(
+            &inventory.as_object().cloned(),
+            &consumable.as_object().cloned(),
+            &[
+                (EXPEDITED_PLAN_ITEM, Some(912)),
+                (UNIVERSAL_CERTIFICATE_ITEM, Some(513)),
+            ],
+        );
+        let got: std::collections::BTreeMap<String, i64> = items
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|i| {
+                (
+                    i["item_id"].as_str().unwrap().to_owned(),
+                    i["quantity"].as_i64().unwrap(),
+                )
+            })
+            .collect();
+        assert_eq!(got["30011"], 12);
+        assert_eq!(got["4006"], 3);
+        assert_eq!(
+            got["voucher_elite_II_4"], 3,
+            "two live instances, one expired"
+        );
+        assert!(
+            !got.contains_key("voucher_skin"),
+            "only an expired instance"
+        );
+        assert_eq!(got["7002"], 912, "expedited plans come from status");
+        assert_eq!(
+            got["classic_normal_ticket"], 513,
+            "so do universal certificates"
+        );
+        assert_eq!(got.len(), 5);
+    }
+
+    #[test]
+    fn extract_items_without_consumables_or_plans_is_the_inventory() {
+        let inventory = serde_json::json!({ "30011": 12 });
+        let items = extract_items(&inventory.as_object().cloned(), &None, &[]);
+        assert_eq!(items.as_array().unwrap().len(), 1);
+        let items = extract_items(&None, &None, &[(EXPEDITED_PLAN_ITEM, Some(0))]);
+        assert_eq!(
+            items.as_array().unwrap().len(),
+            0,
+            "a zero counter is not a row"
+        );
     }
 }

@@ -115,6 +115,48 @@ fn profile(gd: &GameData, char_id: &str) -> OperatorBaseProfile {
     }
 }
 
+/// [`profile`] limited to the base skills unlocked at `elite` (the highest
+/// tier at or below it in every slot), for pricing an E0 operator.
+fn profile_at(gd: &GameData, char_id: &str, elite: i32) -> OperatorBaseProfile {
+    let bc = gd
+        .building
+        .chars
+        .get(char_id)
+        .unwrap_or_else(|| panic!("{char_id} missing from building data"));
+    let available_buffs: Vec<String> = bc
+        .buff_char
+        .iter()
+        .filter_map(|slot| {
+            slot.buff_data
+                .iter()
+                .filter(|e| e.cond.elite() <= elite)
+                .last()
+                .map(|e| e.buff_id.clone())
+        })
+        .collect();
+    let faction_tags = gd
+        .operators
+        .get(char_id)
+        .map(backend::core::grade::base::buff_registry::faction_tags_of)
+        .unwrap_or_default();
+    let match_tags = backend::core::grade::base::types::compute_match_tags(
+        &faction_tags,
+        &available_buffs,
+        &gd.building,
+    );
+    OperatorBaseProfile {
+        char_id: char_id.to_string(),
+        available_buffs,
+        faction_tags,
+        match_tags,
+        rarity: gd
+            .operators
+            .get(char_id)
+            .map_or(0, |o| o.rarity.to_star_int()),
+        elite: elite as i16,
+    }
+}
+
 fn trading_post(level: i32) -> UserBuilding {
     single_room("TRADING", level)
 }
@@ -10009,8 +10051,7 @@ fn a_spare_cc_seat_ranks_morale_and_hr_ahead_of_clue_speed() {
         .operators
         .iter()
         .find(|(_, o)| o.name == "Umiri Yahata")
-        .map(|(id, _)| id.clone())
-        .unwrap_or_else(|| UMIRI.to_string());
+        .map_or_else(|| UMIRI.to_string(), |(id, _)| id.clone());
     let roster: Vec<_> = [LEE, umiri.as_str(), CHONGYUE]
         .iter()
         .map(|id| profile(gd, id))
@@ -10028,7 +10069,7 @@ fn a_spare_cc_seat_ranks_morale_and_hr_ahead_of_clue_speed() {
     );
     assert_eq!(
         slots,
-        vec![CHONGYUE.to_string(), umiri.clone()],
+        vec![CHONGYUE.to_string(), umiri],
         "morale aura, then HR speed; Lee's clue speed waits"
     );
 }
@@ -10241,4 +10282,186 @@ fn a_frozen_room_keeps_its_crew_and_recipe_while_the_scoped_room_is_planned() {
         Some("F_EXP"),
         "one post is fed by the frozen gold factory, so the scoped room stays on Battle Records"
     );
+}
+
+/// Score one trading crew at a post level through the ledger alone, as the
+/// community sheets price it: no Control Center, no facility context.
+fn ledger_totals(
+    gd: &GameData,
+    registry: &std::collections::HashMap<String, BuffResolutionStrategy>,
+    crew: &[OperatorBaseProfile],
+    level: i32,
+) -> backend::core::grade::base::ledger::RoomTotals {
+    use backend::core::grade::base::ledger::{RoomEval, score_room};
+    let op_index: std::collections::HashMap<&str, &OperatorBaseProfile> =
+        crew.iter().map(|o| (o.char_id.as_str(), o)).collect();
+    let ids: Vec<String> = crew.iter().map(|o| o.char_id.clone()).collect();
+    let counts = std::collections::HashMap::new();
+    score_room(&RoomEval {
+        member_ids: &ids,
+        room_type: "TRADING",
+        formula_type: None,
+        op_index: &op_index,
+        registry,
+        building_data: &gd.building,
+        facility_counts: &counts,
+        total_dorm_levels: 0,
+        cc_conditions: &[],
+        room_level: Some(level),
+        deployed_work_area: None,
+    })
+}
+
+/// The community sheet's Proviso table: her order manipulation as a
+/// multiplier on a level-3 post's LMD rate, per post level and elite, and
+/// its worked example (E2 Proviso + Exusiai at a level-2 post, Amiya in the
+/// Control Center: (100 + 35 + 7 + 2) x 1.811073 - 103 - 7 = 150.79). The
+/// order-mix model reproduces every figure to six decimals from the game's
+/// order sizes and each level's draw mix - no table of multipliers.
+#[test]
+#[allow(clippy::suboptimal_flops)] // the sheet's formula, written as the sheet writes it
+fn proviso_multipliers_match_the_community_sheet_at_every_level_and_elite() {
+    use backend::core::grade::base::order_mix::bars_per_day;
+    const PROVISO: &str = "char_4032_provs";
+    let gd = load_game_data();
+    let (registry, _) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let l2_over_l3 = bars_per_day(2) / bars_per_day(3);
+    assert!(
+        (l2_over_l3 - 0.987_858).abs() < 5e-7,
+        "a bare level-2 post sells {l2_over_l3:.6} of a level-3 post's LMD (sheet 0.987858)"
+    );
+    for (level, elite, sheet) in [
+        (3, 0, 1.275_862),
+        (3, 2, 1.551_724),
+        (2, 0, 1.399_466),
+        (2, 2, 1.811_073),
+    ] {
+        let t = ledger_totals(gd, &registry, &[profile_at(gd, PROVISO, elite)], level);
+        let ratio = if level == 2 { l2_over_l3 } else { 1.0 };
+        let ours = (1.0 + t.order_value_pct / 100.0) * ratio;
+        assert!(
+            (ours - sheet).abs() < 5e-7,
+            "Proviso E{elite} at a level-{level} post: {ours:.6} vs sheet {sheet:.6}"
+        );
+        assert!(
+            t.speed_pct.abs() < 1e-9,
+            "Proviso adds no order speed of her own, got {}",
+            t.speed_pct
+        );
+    }
+    let t = ledger_totals(
+        gd,
+        &registry,
+        &[
+            profile_at(gd, PROVISO, 2),
+            profile_at(gd, "char_103_angel", 2),
+        ],
+        2,
+    );
+    let equivalent =
+        (100.0 + t.speed_pct + 7.0 + 2.0) * (1.0 + t.order_value_pct / 100.0) * l2_over_l3
+            - 103.0
+            - 7.0;
+    assert!(
+        (equivalent - 150.79).abs() < 0.01,
+        "the sheet's worked example reads {equivalent:.2} (speed {}, value {})",
+        t.speed_pct,
+        t.order_value_pct
+    );
+}
+
+/// The community sheet's Shamare-squad table: equivalent productivity of a
+/// level-3 post over a three-seat bare post (103), for every Tequila and
+/// Bibeak tier. Tailoring steps add across the crew (Shamare's α plus E0
+/// Bibeak's α is more than either), and one measured mix per step count
+/// reproduces all eight rows within 0.1.
+#[test]
+#[allow(clippy::suboptimal_flops)] // the sheet's formula, written as the sheet writes it
+fn shamare_squad_equivalents_match_the_community_sheet() {
+    const SHAMARE: &str = "char_254_vodfox";
+    const TEQUILA: &str = "char_486_takila";
+    const BIBEAK: &str = "char_252_bibeak";
+    let gd = load_game_data();
+    let (registry, _) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let other = |n: usize| profile_at(gd, ["char_123_fang", "char_133_mm"][n], 2);
+    let rows: Vec<(&str, Vec<OperatorBaseProfile>, f64)> = vec![
+        (
+            "Shamare + other",
+            vec![profile_at(gd, SHAMARE, 2), other(0), other(1)],
+            91.6,
+        ),
+        (
+            "E2 Bibeak + other",
+            vec![
+                profile_at(gd, SHAMARE, 2),
+                profile_at(gd, BIBEAK, 2),
+                other(0),
+            ],
+            92.8,
+        ),
+        (
+            "E0 Tequila + other",
+            vec![
+                profile_at(gd, SHAMARE, 2),
+                profile_at(gd, TEQUILA, 0),
+                other(0),
+            ],
+            108.07,
+        ),
+        (
+            "E0 Tequila + E0 Bibeak",
+            vec![
+                profile_at(gd, SHAMARE, 2),
+                profile_at(gd, TEQUILA, 0),
+                profile_at(gd, BIBEAK, 0),
+            ],
+            110.08,
+        ),
+        (
+            "E0 Tequila + E2 Bibeak",
+            vec![
+                profile_at(gd, SHAMARE, 2),
+                profile_at(gd, TEQUILA, 0),
+                profile_at(gd, BIBEAK, 2),
+            ],
+            115.52,
+        ),
+        (
+            "E2 Tequila + other",
+            vec![
+                profile_at(gd, SHAMARE, 2),
+                profile_at(gd, TEQUILA, 2),
+                other(0),
+            ],
+            124.39,
+        ),
+        (
+            "E2 Tequila + E0 Bibeak",
+            vec![
+                profile_at(gd, SHAMARE, 2),
+                profile_at(gd, TEQUILA, 2),
+                profile_at(gd, BIBEAK, 0),
+            ],
+            128.12,
+        ),
+        (
+            "E2 Tequila + E2 Bibeak",
+            vec![
+                profile_at(gd, SHAMARE, 2),
+                profile_at(gd, TEQUILA, 2),
+                profile_at(gd, BIBEAK, 2),
+            ],
+            138.21,
+        ),
+    ];
+    for (name, crew, sheet) in rows {
+        let t = ledger_totals(gd, &registry, &crew, 3);
+        let equivalent = (100.0 + t.speed_pct + 3.0) * (1.0 + t.order_value_pct / 100.0) - 103.0;
+        assert!(
+            (equivalent - sheet).abs() < 0.1,
+            "{name}: {equivalent:.2} vs sheet {sheet:.2} (speed {}, value {:.2})",
+            t.speed_pct,
+            t.order_value_pct
+        );
+    }
 }

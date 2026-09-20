@@ -1494,9 +1494,8 @@ fn extract_and_transpile_init_mutations(init_body: &str) -> InitMutations {
         }
     }
 
-    // Build shadow declarations. When ANY init mutation exists, shadow ALL boolean
-    // fields unconditionally - this ensures cross-references in mutation conditions
-    // (e.g., "if skill_damage && module_damage: talent_damage = false") work.
+    // Any init mutation shadows ALL bool fields: mutation conditions cross-reference
+    // each other ("if skill_damage && module_damage: talent_damage = false").
     let mut shadow_decls = Vec::new();
     let has_any_mutation = !mutations.is_empty();
 
@@ -1772,8 +1771,8 @@ fn transpile_skill_dps(
             }
             let transpiled = transpile_expressions(expr, &mut declared_vars);
             let coerced = coerce_arithmetic_literals(&transpiled);
-            // Top-level return (indent 0): capture as final expression instead of early return
-            // This ensures modifiers like "return dps * scale" apply to ALL skill branches
+            // Top-level return (indent 0) becomes the final expression, so `return dps * scale`
+            // covers every skill branch.
             if tab_count == 0 {
                 final_return_expr = Some(coerced);
                 continue;

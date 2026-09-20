@@ -2,8 +2,6 @@
 //!
 //! `FlatBuffer` outputs dictionaries as arrays of key-value pairs:
 //! `[{ "key": "id", "value": {...} }]`
-//!
-//! These helpers convert that format to standard `HashMaps`.
 
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;

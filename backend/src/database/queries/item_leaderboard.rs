@@ -21,8 +21,10 @@ use crate::database::models::item_leaderboard::{
 
 /// Game item id -> `user_status` column. `orundum_shard` is deliberately
 /// absent: `extract_status` writes it as a constant 0, so it ranks nothing.
+/// Expedited Plans (7002) are also a `status` field in the game but are
+/// written as a `user_items` row by `extract_items`, so they need no entry.
 /// `originite` is NULL for users who last refreshed before v019 landed
-/// (2026-09-15); NULL fails `> 0`, so they are simply not holders yet.
+/// (2026-09-15); NULL fails `> 0`, so they are not holders yet.
 const CURRENCY_COLUMNS: &[(&str, &str)] = &[
     ("4001", "lmd"),
     ("4002", "originite"),
@@ -34,7 +36,20 @@ const CURRENCY_COLUMNS: &[(&str, &str)] = &[
     ("7004", "ten_pull_tickets"),
     ("6001", "practice_tickets"),
     ("SOCIAL_PT", "social_point"),
+    ("classic_gacha", "classic_gacha_tickets"),
+    ("classic_gacha_10", "classic_ten_pull_tickets"),
 ];
+
+/// `('4001', st.lmd::bigint), ('4002', st.originite::bigint), ...`: one VALUES
+/// row per currency, for a `CROSS JOIN LATERAL` over `user_status st`.
+/// Generated from `CURRENCY_COLUMNS` so no query can drift from the map.
+pub fn currency_values_sql() -> String {
+    CURRENCY_COLUMNS
+        .iter()
+        .map(|(id, col)| format!("('{id}', st.{col}::bigint)"))
+        .collect::<Vec<_>>()
+        .join(", ")
+}
 
 pub fn currency_column(item_id: &str) -> Option<&'static str> {
     CURRENCY_COLUMNS
@@ -241,11 +256,7 @@ pub async fn get_item_catalog(
     server: Option<&str>,
 ) -> Result<Vec<ItemHoldingSummary>, sqlx::Error> {
     let server_sql = server.map_or("", |_| " AND s.code = $1");
-    let currency_values = CURRENCY_COLUMNS
-        .iter()
-        .map(|(id, col)| format!("('{id}', st.{col}::bigint)"))
-        .collect::<Vec<_>>()
-        .join(", ");
+    let currency_values = currency_values_sql();
     let sql = format!(
         r"
         WITH visible AS (

@@ -449,7 +449,6 @@ impl OperatorUnit {
                     }
                 }
             }
-            // Suppress unused variable warnings
             let _ = current_promo;
             let _ = current_req_level;
             let _ = current_req_potential;
@@ -500,7 +499,6 @@ impl OperatorUnit {
                     }
                 }
             }
-            // Suppress unused variable warnings
             let _ = current_promo;
             let _ = current_req_level;
             let _ = current_req_potential;

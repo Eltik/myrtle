@@ -573,8 +573,7 @@ pub fn simulate_rotation_from(
         // Per-facility production this block: rate x mean crew alive-fraction.
         // A dark cell (the room rests unstaffed this shift) is fully idle; a
         // working crew that runs dry mid-block idles for the remainder.
-        // (A rotation can carry fewer than 3 shifts in synthetic fixtures -
-        // a missing shift simply contributes nothing.)
+        // (Synthetic fixtures can carry fewer than 3 shifts; a missing shift contributes nothing.)
         for room in rotation
             .shifts
             .get(shift)

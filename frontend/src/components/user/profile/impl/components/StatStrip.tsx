@@ -119,13 +119,16 @@ interface IStatStripProps {
 export function StatStrip({ profile, rosterCount }: IStatStripProps) {
     const t: TypedT<typeof messages> = useT("user");
     const [orundumRaw, setOrundumRaw] = useState(false);
+    const [originiteRaw, setOriginiteRaw] = useState(false);
     return (
-        <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: "clamp(0.5rem, 0.6vw + 0.375rem, 0.875rem)" }}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5" style={{ gap: "clamp(0.5rem, 0.6vw + 0.375rem, 0.875rem)" }}>
             <StatCard kicker={t("profile.strip.operators.kicker")} value={rosterCount ?? profile.operator_count} sub={t("profile.strip.operators.sub")} live />
             <StatCard kicker={t("profile.strip.skins.kicker")} value={profile.non_default_skin_count} sub={t("profile.strip.skins.sub")} />
             <StatCard kicker={t("profile.strip.items.kicker")} value={profile.item_count} sub={t("profile.strip.items.sub")} />
             {/* "Orundum" is the in-game currency's own name and stays as game vocabulary. */}
             <StatCard kicker="Orundum" value={profile.orundum} sub={t("profile.strip.orundum.sub")} compactOnMobile={!orundumRaw} unformatted={orundumRaw} onClick={() => setOrundumRaw((v) => !v)} />
+            {/* "Originite Prime" is game vocabulary too. `null` until the account syncs again: the field arrived on 2026-09-15 and is filled per refresh. */}
+            <StatCard kicker="Originite Prime" value={profile.originite} sub={t("profile.strip.originite.sub")} compactOnMobile={!originiteRaw} unformatted={originiteRaw} onClick={() => setOriginiteRaw((v) => !v)} />
         </div>
     );
 }

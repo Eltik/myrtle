@@ -743,7 +743,7 @@ pub struct RoomLayoutEntry {
 ///
 /// The user row is fetched here rather than inside the builder so the key can be
 /// derived before any of the expensive work: `users.updated_at` moves on every
-/// sync, so a rebuilt roster lands on a new key and the previous body simply ages
+/// sync, so a rebuilt roster lands on a new key and the previous body ages
 /// out. The body is cached PRE-SERIALIZED with its `ETag`, because it runs to
 /// hundreds of kilobytes on a large account and a hit should neither re-serialize
 /// it nor re-hash it, and an `If-None-Match` revalidation can then answer 304
@@ -820,7 +820,7 @@ async fn build_improvements(
     // for the length of five database round-trips with the CPU idle, and two
     // permits therefore capped the endpoint at two concurrent callers for a
     // reason that was mostly not CPU. Held this tightly, the queue in `cpu`
-    // should essentially never engage for this route, and remains a real floor
+    // should almost never engage for this route, and remains a real floor
     // under the base optimizer and DPS, which it was written for.
     let operators = {
         let _admission = cpu::admit("user_improvements").await?;

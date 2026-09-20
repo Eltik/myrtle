@@ -31,6 +31,10 @@ export const messages = {
         text: "Orundum Available",
         description: "Caption under the Orundum balance. 'Orundum' is an in-game currency; keep the game's own name for it.",
     },
+    "profile.strip.originite.sub": {
+        text: "Originite Prime Available",
+        description: "Caption under the Originite Prime balance. 'Originite Prime' is the game's premium currency; keep its official name.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

@@ -12,10 +12,10 @@
 //!   `#[ts(type = "number")]` (or `"number | null"` / `"Record<string, number>"`).
 //! * A bare `any` disables checking on everything downstream of it. It should
 //!   never appear: `serde_json::Value` resolves to ts-rs's recursive `JsonValue`
-//!   via the `serde-json-impl` feature. Note that `unknown` is NOT a valid
-//!   substitute here: `TanStack` Start's `createServerFn` rejects it as
-//!   unserializable, so a hand-written `#[ts(type = "unknown")]` breaks the
-//!   frontend build at every server-fn boundary the type crosses.
+//!   via the `serde-json-impl` feature. `unknown` is NOT a substitute:
+//!   `TanStack` Start's `createServerFn` rejects it as unserializable, so a
+//!   hand-written `#[ts(type = "unknown")]` breaks the frontend build at
+//!   every server-fn boundary the type crosses.
 //!
 //! Neither shows up as a build failure anywhere else: the bindings compile fine,
 //! they are just wrong. Hence this test.

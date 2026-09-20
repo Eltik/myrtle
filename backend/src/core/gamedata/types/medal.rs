@@ -406,10 +406,6 @@ impl MedalData {
                 };
             }
 
-            // Otherwise the activity schedule only *repairs* medals the table
-            // mislabels as permanently/indefinitely earnable; a properly-bounded
-            // event window (e.g. a TEMP->PERM medal keyed off its TEMP end, which
-            // already covers reruns) is trusted as-is.
             let base_says_open = matches!(
                 base,
                 Obtainability::Permanent | Obtainability::Event { proxy_close_ts: 0 }

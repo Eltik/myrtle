@@ -10,9 +10,9 @@
 //! annotation, which makes the route registration and the spec entry the same
 //! declaration rather than two that have to be kept in agreement.
 //!
-//! Routes registered with plain `.route()` still work and simply do not appear
-//! in the spec, which is what let the annotation pass run incrementally rather
-//! than as a 166-handler flag day. There are now none left:
+//! Routes registered with plain `.route()` still serve but never reach the
+//! spec, which let the annotation pass run incrementally rather than as a
+//! 166-handler flag day. There are now none left:
 //! `tests/openapi_snapshot_test.rs` asserts that count is zero, and pins the
 //! generated document, so both a new endpoint and any drift in an existing one
 //! land in a PR as a reviewable diff.

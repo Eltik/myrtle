@@ -520,8 +520,7 @@ fn select_balanced_teams(
                 .or_insert(st);
         };
         for st in &beam {
-            // Leaving the slot empty keeps small rosters feasible (the room simply
-            // rests dark on that block).
+            // An empty slot keeps small rosters feasible: the room rests dark on that block.
             push(st.clone());
             let mut taken = 0usize;
             for (ci, (cand, mask)) in masked[g].iter().enumerate() {

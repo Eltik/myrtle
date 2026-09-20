@@ -93,9 +93,8 @@ fn build_roster_map(roster: &[RosterEntry]) -> HashMap<&str, &RosterEntry> {
     roster.iter().map(|r| (r.operator_id.as_str(), r)).collect()
 }
 
-/// The operators that count toward `operator_grade`: real, obtainable operators the
-/// roster has invested in, paired with their static data and roster entry. This is
-/// the single source of truth for "gradeable operator" - share it everywhere.
+/// The operators that count toward `operator_grade`: real, obtainable, invested,
+/// with static data and roster entry. Every "gradeable operator" set derives from here.
 fn invested_operators<'a>(
     roster_map: &'a HashMap<&'a str, &'a RosterEntry>,
     game_data: &'a GameData,
@@ -629,7 +628,6 @@ fn simulate_score_for_tag(
     let mut dims = build_dimensions(roster, static_op, favor, is_support);
     let applied = match tag {
         // Full promotion path: jump to max elite + max level at that phase.
-        // Both the elite and level dimensions go to 1.0.
         "ELITE" => {
             set(&mut dims, DimensionKind::Elite, 1.0) && set(&mut dims, DimensionKind::Level, 1.0)
         }

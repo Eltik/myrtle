@@ -30,7 +30,7 @@ fn item_id_validation() {
 }
 
 #[test]
-fn currency_map_is_the_documented_ten() {
+fn currency_map_is_the_documented_twelve() {
     for id in [
         "4001",
         "4002",
@@ -42,6 +42,8 @@ fn currency_map_is_the_documented_ten() {
         "7004",
         "6001",
         "SOCIAL_PT",
+        "classic_gacha",
+        "classic_gacha_10",
     ] {
         assert!(currency_column(id).is_some(), "{id} should be a currency");
     }
@@ -71,7 +73,7 @@ async fn check_item(pool: &PgPool, item: &str, server: Option<&str>) {
         .await
         .expect("page");
     assert_eq!(
-        page.len() as i64,
+        i64::try_from(page.len()).unwrap(),
         total.min(50),
         "{label}: page size vs total"
     );
