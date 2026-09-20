@@ -1,6 +1,7 @@
 pub mod audit;
 pub mod gacha;
 pub mod i18n;
+pub mod item_leaderboard;
 pub mod operator_notes;
 pub mod planner;
 pub mod roster;

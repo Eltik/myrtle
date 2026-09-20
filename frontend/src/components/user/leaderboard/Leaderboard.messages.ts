@@ -19,6 +19,10 @@ export const messages = {
         text: "Showing {start}-{end} of {count, number} {count, plural, one {player} other {players}}",
         description: "Range summary in the table footer. {start} and {end} are the first and last row numbers on this page, {count} the number of Doctors matching the filters.",
     },
+    "leaderboard.showingHolders": {
+        text: "Showing {start}-{end} of {count, number} {count, plural, one {holder} other {holders}}",
+        description: "Range summary in the table footer of the inventory view. {start} and {end} are the first and last row numbers on this page, {count} the number of players holding the item.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

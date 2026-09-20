@@ -587,6 +587,7 @@ impl DraftRoom {
             current_formula: self.formula_type,
             preset_shifts: Vec::new(),
             comfort: self.comfort,
+            frozen: false,
         }
     }
 }
@@ -1111,12 +1112,26 @@ pub async fn optimize(
     let facts = effective_facts(state, uid, req.facts).await;
     apply_account_facts(&mut ctx, &game_data, &facts);
 
+    // A scoped run freezes every production room outside the scope: the
+    // search keeps its crew and recipe as drafted and plans the scoped rooms
+    // beside it. The (operator, room type) pins below only reserved those
+    // operators; without the freeze "optimize this room only" re-crewed
+    // every other room, flipped a factory's recipe and left the frozen crews
+    // unseated (31010962, 2026-09-20).
+    let in_scope: HashSet<&str> = req.scope.iter().map(String::as_str).collect();
     let building = UserBuilding {
         rooms: req
             .layout
             .iter()
             .cloned()
-            .map(DraftRoom::into_user_room)
+            .map(|draft| {
+                let frozen = !in_scope.is_empty()
+                    && !in_scope.contains(draft.slot_id.as_str())
+                    && crate::core::grade::base::util::is_production_room(&draft.room_type);
+                let mut room = draft.into_user_room();
+                room.frozen = frozen;
+                room
+            })
             .collect(),
     };
     let mut pins = build_pins(&req.layout, &req.scope, &req.locked);

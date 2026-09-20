@@ -72,6 +72,10 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v023_translation_source_snapshot",
         include_str!("v023_translation_source_snapshot.sql"),
     ),
+    (
+        "v024_user_items_leaderboard_index",
+        include_str!("v024_user_items_leaderboard_index.sql"),
+    ),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

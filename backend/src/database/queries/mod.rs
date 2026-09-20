@@ -3,6 +3,7 @@ pub mod enemies;
 pub mod gacha;
 pub mod game_credentials;
 pub mod i18n;
+pub mod item_leaderboard;
 pub mod items;
 pub mod medal_ownership;
 pub mod medals;

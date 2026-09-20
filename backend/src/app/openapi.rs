@@ -182,7 +182,7 @@ it is missing from the server too.",
     ),
     tags(
         (name = "auth", description = "Logging in to a Hypergryph, Bilibili or CN account, and managing the resulting session."),
-        (name = "leaderboard", description = "Global and per-server score rankings, movement over time, and a single player's standing."),
+        (name = "leaderboard", description = "Global and per-server score rankings, movement over time, a single player's standing, and per-item inventory rankings."),
         (name = "dps", description = "Damage- and healing-per-second simulation. Pure functions of the request body and the loaded game data."),
         (name = "gamedata", description = "Game data as shipped by the game: operators, stages, enemies, skins and the raw tables behind them. Cacheable and unauthenticated."),
         (name = "assets", description = "Images, audio and animation files. Long-lived cache headers, conditional requests and byte ranges."),

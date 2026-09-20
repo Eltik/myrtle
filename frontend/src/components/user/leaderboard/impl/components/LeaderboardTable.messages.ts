@@ -27,14 +27,6 @@ export const messages = {
         text: "Lv",
         description: "Column header over the account level, abbreviated: the column is 60px wide.",
     },
-    "leaderboard.table.sortLabel": {
-        text: "Change sort category",
-        description: "Accessible name of the menu button that picks which score the leaderboard is ranked by.",
-    },
-    "leaderboard.table.sortHeading": {
-        text: "Sort",
-        description: "Small uppercase label beside the sort menu on narrow screens.",
-    },
     "leaderboard.table.movement.none": {
         text: "No change in rank {interval}",
         description: "Tooltip on a flat rank indicator. {interval} is a phrase like 'since yesterday' or 'in the past 7 days'.",
@@ -54,6 +46,14 @@ export const messages = {
     "leaderboard.table.levelInline": {
         text: "· Lv {level}",
         description: "Account level on the narrow-screen row, after the server tag. Keep the leading separator dot and the abbreviation.",
+    },
+    "leaderboard.table.empty.item": {
+        text: "Nobody with a public profile holds this item yet.",
+        description: "Shown in place of the table when the ranked item has no visible holders.",
+    },
+    "leaderboard.table.share": {
+        text: "{pct}% of the top holding",
+        description: "Tooltip on a row's quantity bar while ranked by an item. {pct} is the player's quantity as a percentage of the largest holding, 0 to 100.",
     },
 } satisfies MessageMap;
 

@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-19T09:09:04.530Z",
+    "generatedAt": "2026-09-20T10:12:48.563Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -29296,6 +29296,15 @@
             "placeholders": []
         },
         {
+            "key": "user.leaderboard.hero.blurb.item",
+            "namespace": "user",
+            "source_text": "Every player with a public profile, ranked by how much {item} they held when they last synced.",
+            "description": "One-sentence explanation under the title while the table is ranked by an item. {item} is the item's name, e.g. 'Originite Prime'.",
+            "placeholders": [
+                "item"
+            ]
+        },
+        {
             "key": "user.leaderboard.hero.eyebrow",
             "namespace": "user",
             "source_text": "Players · Leaderboard",
@@ -29319,10 +29328,38 @@
             "placeholders": []
         },
         {
+            "key": "user.leaderboard.hero.stat.asOf",
+            "namespace": "user",
+            "source_text": "Counted at",
+            "description": "Label of the freshness stat while ranked by an item; the value says the numbers are from each player's own last sync.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.hero.stat.asOf.value",
+            "namespace": "user",
+            "source_text": "last sync",
+            "description": "Value of the freshness stat while ranked by an item: item counts are read at each player's own last sync, not on a schedule.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.hero.stat.holders",
+            "namespace": "user",
+            "source_text": "Holders",
+            "description": "Label under the count of players holding at least one of the ranked item.",
+            "placeholders": []
+        },
+        {
             "key": "user.leaderboard.hero.stat.ranked",
             "namespace": "user",
             "source_text": "Players ranked",
             "description": "Label under the count of players on the leaderboard. Fits a narrow tile, so keep it short.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.hero.stat.topHolding",
+            "namespace": "user",
+            "source_text": "Top holding",
+            "description": "Label under the largest single quantity of the ranked item anyone holds.",
             "placeholders": []
         },
         {
@@ -29465,6 +29502,96 @@
             "placeholders": []
         },
         {
+            "key": "user.leaderboard.itemYou.metric.held",
+            "namespace": "user",
+            "source_text": "Held",
+            "description": "Label over how much of the ranked item the player holds.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.itemYou.metric.holders",
+            "namespace": "user",
+            "source_text": "Holders",
+            "description": "Label over how many visible players hold the item at all.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.itemYou.metric.server",
+            "namespace": "user",
+            "source_text": "On {server}",
+            "description": "Label over the player's rank among holders on their own server. {server} is the server code, e.g. EN.",
+            "placeholders": [
+                "server"
+            ]
+        },
+        {
+            "key": "user.leaderboard.itemYou.none",
+            "namespace": "user",
+            "source_text": "You hold none of this item, so you are not ranked for it.",
+            "description": "Shown when the signed-in player has a public profile but holds none of the ranked item.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.itemYou.rank",
+            "namespace": "user",
+            "source_text": "Rank",
+            "description": "Label before the player's global rank for the item, as in 'Rank #12'.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.itemYou.title",
+            "namespace": "user",
+            "source_text": "You",
+            "description": "Heading of the signed-in player's own standing card while the table is ranked by an item.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.itemYou.topPercentile",
+            "namespace": "user",
+            "source_text": " · Top ",
+            "description": "Separator and label before the percentile, as in 'Rank #12 · Top 3.4%'. Keep the surrounding spaces.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.itemYou.viewProfile",
+            "namespace": "user",
+            "source_text": "View profile",
+            "description": "Button linking to the signed-in player's own profile.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.mostHeld.holders",
+            "namespace": "user",
+            "source_text": "{count, number} {count, plural, one {holder} other {holders}}",
+            "description": "Holder count on each row of the 'Most held' card. {count} is the number of players holding the item.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "user.leaderboard.mostHeld.subtitle",
+            "namespace": "user",
+            "source_text": "Items by how many players hold them",
+            "description": "Subtitle under the 'Most held' heading.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.mostHeld.title",
+            "namespace": "user",
+            "source_text": "Most held",
+            "description": "Heading of the sidebar card listing the items held by the most players.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.mostHeld.top",
+            "namespace": "user",
+            "source_text": "top {top}",
+            "description": "The largest single holding on each row of the 'Most held' card. {top} is a compact number like 230k.",
+            "placeholders": [
+                "top"
+            ]
+        },
+        {
             "key": "user.leaderboard.movers.empty",
             "namespace": "user",
             "source_text": "No movements yet.",
@@ -29481,6 +29608,80 @@
             ]
         },
         {
+            "key": "user.leaderboard.rankBy.aria",
+            "namespace": "user",
+            "source_text": "Choose what to rank by",
+            "description": "Accessible name of the 'Rank by' control.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.rankBy.empty",
+            "namespace": "user",
+            "source_text": "Nothing matches.",
+            "description": "Shown in the picker when the search matches neither a score metric nor an item.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.rankBy.group.items",
+            "namespace": "user",
+            "source_text": "Inventory",
+            "description": "Heading of the picker group listing items players can be ranked by (Originite Prime, Orundum, …).",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.rankBy.group.items.hint",
+            "namespace": "user",
+            "source_text": "Type to search all {count, number} items",
+            "description": "Hint under the Inventory group heading before the user searches. {count} is how many distinct items at least one player holds.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "user.leaderboard.rankBy.group.score",
+            "namespace": "user",
+            "source_text": "Score",
+            "description": "Heading of the picker group listing the score metrics (total, operators, stages, …).",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.rankBy.holders",
+            "namespace": "user",
+            "source_text": "{count, number} {count, plural, one {holder} other {holders}}",
+            "description": "Holder count shown next to each item in the picker. {count} is the number of players holding the item.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "user.leaderboard.rankBy.label",
+            "namespace": "user",
+            "source_text": "Rank by",
+            "description": "Small label on the control that chooses what the leaderboard is ranked by: a score, or how much of one item players hold.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.rankBy.search.clear",
+            "namespace": "user",
+            "source_text": "Clear search",
+            "description": "Accessible label of the button that empties the picker's search box.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.rankBy.search.label",
+            "namespace": "user",
+            "source_text": "Search rankings",
+            "description": "Accessible label of the search box inside the 'Rank by' picker.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.rankBy.search.placeholder",
+            "namespace": "user",
+            "source_text": "Search scores and items…",
+            "description": "Placeholder of the search box inside the 'Rank by' picker.",
+            "placeholders": []
+        },
+        {
             "key": "user.leaderboard.serverSplit.title",
             "namespace": "user",
             "source_text": "Server share · top 250",
@@ -29492,6 +29693,17 @@
             "namespace": "user",
             "source_text": "Showing {start}-{end} of {count, number} {count, plural, one {player} other {players}}",
             "description": "Range summary in the table footer. {start} and {end} are the first and last row numbers on this page, {count} the number of Doctors matching the filters.",
+            "placeholders": [
+                "count",
+                "end",
+                "start"
+            ]
+        },
+        {
+            "key": "user.leaderboard.showingHolders",
+            "namespace": "user",
+            "source_text": "Showing {start}-{end} of {count, number} {count, plural, one {holder} other {holders}}",
+            "description": "Range summary in the table footer of the inventory view. {start} and {end} are the first and last row numbers on this page, {count} the number of players holding the item.",
             "placeholders": [
                 "count",
                 "end",
@@ -29562,6 +29774,13 @@
             "placeholders": []
         },
         {
+            "key": "user.leaderboard.table.empty.item",
+            "namespace": "user",
+            "source_text": "Nobody with a public profile holds this item yet.",
+            "description": "Shown in place of the table when the ranked item has no visible holders.",
+            "placeholders": []
+        },
+        {
             "key": "user.leaderboard.table.levelInline",
             "namespace": "user",
             "source_text": "· Lv {level}",
@@ -29600,18 +29819,13 @@
             ]
         },
         {
-            "key": "user.leaderboard.table.sortHeading",
+            "key": "user.leaderboard.table.share",
             "namespace": "user",
-            "source_text": "Sort",
-            "description": "Small uppercase label beside the sort menu on narrow screens.",
-            "placeholders": []
-        },
-        {
-            "key": "user.leaderboard.table.sortLabel",
-            "namespace": "user",
-            "source_text": "Change sort category",
-            "description": "Accessible name of the menu button that picks which score the leaderboard is ranked by.",
-            "placeholders": []
+            "source_text": "{pct}% of the top holding",
+            "description": "Tooltip on a row's quantity bar while ranked by an item. {pct} is the player's quantity as a percentage of the largest holding, 0 to 100.",
+            "placeholders": [
+                "pct"
+            ]
         },
         {
             "key": "user.leaderboard.table.th.doctor",
@@ -29690,6 +29904,13 @@
             "namespace": "user",
             "source_text": "Change movement interval",
             "description": "Accessible name of the menu button that picks the window rank movement is measured over.",
+            "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.toolbar.movement.scoreOnly",
+            "namespace": "user",
+            "source_text": "Rank movement is tracked for score rankings only",
+            "description": "Tooltip on the disabled interval and movement controls while the table is ranked by an item, explaining why they are off.",
             "placeholders": []
         },
         {

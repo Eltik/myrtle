@@ -110,6 +110,7 @@ pub mod health;
 pub mod i18n;
 pub mod improvements;
 pub mod inventory;
+pub mod item_leaderboard;
 pub mod leaderboard;
 pub mod level;
 pub mod operator_notes;
@@ -152,6 +153,9 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(leaderboard::distribution))
         .routes(routes!(leaderboard::standing))
         .routes(routes!(leaderboard::score_history))
+        .routes(routes!(item_leaderboard::item_leaderboard))
+        .routes(routes!(item_leaderboard::item_catalog))
+        .routes(routes!(item_leaderboard::item_standing))
         .routes(routes!(search::search))
         .routes(routes!(static_data::get_static))
         .routes(routes!(level::get_level_map))

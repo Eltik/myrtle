@@ -10154,3 +10154,96 @@ fn vermeil_capacity_comp_control_shallow_pool_and_alone() {
         "with nobody cut the comp is found at {shallow_eff:.1}"
     );
 }
+
+/// A scoped planner run freezes the rooms outside its scope: their crews and
+/// recipes stay exactly as drafted, their operators are unavailable to the
+/// scoped room, and they still feed the yield the scoped room is planned
+/// beside. Held only as (operator, room type) pins, "optimize this room
+/// only" re-crewed every other room, flipped a factory's recipe and left the
+/// frozen crews unseated (31010962, 2026-09-20).
+#[test]
+fn a_frozen_room_keeps_its_crew_and_recipe_while_the_scoped_room_is_planned() {
+    const VERMEIL: &str = "char_190_clour";
+    const SCENE: &str = "char_336_folivo";
+    const PALLAS: &str = "char_485_pallas";
+    const NASTI: &str = "char_4212_nasti";
+    const DOROTHY: &str = "char_4048_doroth";
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let roster: Vec<_> = [
+        VERMEIL,
+        SCENE,
+        PALLAS,
+        NASTI,
+        DOROTHY,
+        "char_123_fang",
+        "char_133_mm",
+        "char_502_nblade",
+        "char_124_kroos",
+    ]
+    .iter()
+    .filter(|id| gd.building.chars.contains_key(**id))
+    .map(|id| profile(gd, id))
+    .collect();
+    assert!(
+        roster.len() >= 8,
+        "the roster is in the game data: {}",
+        roster.len()
+    );
+    // The frozen factory runs Nasti/Dorothy on gold, drafted by the player;
+    // the scoped factory is empty and wants Battle Records.
+    let mut frozen = room("mf_frozen", "MANUFACTURE", 3);
+    frozen.current_formula = Some("F_GOLD".into());
+    frozen.current_operators = vec![NASTI.into(), DOROTHY.into(), "char_123_fang".into()];
+    frozen.frozen = true;
+    let mut open = room("mf_open", "MANUFACTURE", 3);
+    open.current_formula = Some("F_EXP".into());
+    let building = UserBuilding {
+        rooms: vec![frozen, open, room("tp", "TRADING", 3)],
+    };
+    let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+    let by_slot = |slot: &str| {
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == slot)
+            .unwrap_or_else(|| panic!("{slot} is in the plan"))
+    };
+    let kept = by_slot("mf_frozen");
+    assert_eq!(
+        kept.operators,
+        vec![
+            NASTI.to_string(),
+            DOROTHY.to_string(),
+            "char_123_fang".to_string()
+        ],
+        "the frozen crew is kept verbatim"
+    );
+    assert_eq!(
+        kept.formula_type.as_deref(),
+        Some("F_GOLD"),
+        "the frozen recipe is kept"
+    );
+    assert!(
+        kept.total_efficiency > 0.0,
+        "the frozen room is scored as drafted"
+    );
+    let planned = by_slot("mf_open");
+    assert!(
+        planned
+            .operators
+            .iter()
+            .all(|o| !kept.operators.contains(o)),
+        "the scoped room cannot take a frozen operator, got {:?}",
+        planned.operators
+    );
+    assert!(
+        planned.operators.iter().any(|o| o == VERMEIL),
+        "the scoped room is planned from the free pool, got {:?}",
+        planned.operators
+    );
+    assert_eq!(
+        planned.formula_type.as_deref(),
+        Some("F_EXP"),
+        "one post is fed by the frozen gold factory, so the scoped room stays on Battle Records"
+    );
+}

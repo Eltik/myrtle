@@ -5,6 +5,7 @@ pub mod gacha;
 pub mod game_session;
 pub mod i18n;
 pub mod improvements;
+pub mod item_leaderboard;
 pub mod leaderboard;
 pub mod level;
 pub mod max_level;

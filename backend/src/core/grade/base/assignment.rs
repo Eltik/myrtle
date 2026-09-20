@@ -3596,9 +3596,69 @@ fn assign_production_rooms(
     morale_drains: &HashMap<String, f64>,
     cap_aware: bool,
 ) -> Vec<RoomAssignment> {
+    // A frozen room (a scoped planner run's out-of-scope room) keeps its
+    // drafted crew and recipe: it is scored as drafted, its operators are
+    // taken, and it sits in the yield context the free rooms are planned
+    // beside - its gold feeds the posts, its post sells the gold. Held only
+    // as (operator, room type) pins, a scoped "optimize this room only"
+    // re-crewed every other room, flipped a factory's recipe and left the
+    // frozen crews unseated (31010962, 2026-09-20).
+    let op_index = build_op_index(operators);
+    let mut fixed: Vec<RoomAssignment> = Vec::new();
+    for room in rooms.iter().filter(|r| r.frozen) {
+        let crew: Vec<String> = room
+            .current_operators
+            .iter()
+            .filter(|id| op_index.contains_key(id.as_str()))
+            .cloned()
+            .collect();
+        let formula = if room.room_type == "MANUFACTURE" {
+            room.current_formula.as_deref()
+        } else {
+            None
+        };
+        let level = (room.room_type == "TRADING").then_some(room.level);
+        let totals = compute_team_totals(
+            &crew,
+            &room.room_type,
+            formula,
+            level,
+            &op_index,
+            registry,
+            building_data,
+            facility_counts,
+            total_dorm_levels,
+            morale_drains,
+            cc_conditions,
+        );
+        let global = *global_bonuses.get(&room.room_type).unwrap_or(&0.0);
+        for id in &crew {
+            assigned.insert(id.clone());
+        }
+        fixed.push(RoomAssignment {
+            slot_id: room.slot_id.clone(),
+            room_type: room.room_type.clone(),
+            level: room.level,
+            formula_type: formula.map(str::to_string),
+            operators: crew,
+            total_efficiency: totals.speed_pct + global,
+            order_value: totals.order_value_pct,
+            order_gold: totals.order_gold_pct,
+            order_limit: totals.order_limit,
+            locked: true,
+            ledger: Vec::new(),
+            fill: None,
+        });
+    }
+    let frozen_gold = fixed
+        .iter()
+        .filter(|r| r.room_type == "MANUFACTURE" && r.formula_type.as_deref() == Some("F_GOLD"))
+        .count();
+    let total_posts = rooms.iter().filter(|r| r.room_type == "TRADING").count();
+
     let mut factory_rooms: Vec<&&UserRoom> = rooms
         .iter()
-        .filter(|r| r.room_type == "MANUFACTURE")
+        .filter(|r| r.room_type == "MANUFACTURE" && !r.frozen)
         .collect();
     // Lay the gold/EXP split onto the slots the player ALREADY runs that way: the COUNT of gold vs
     // EXP is what's optimized, but which physical factory runs which keeps the player's existing
@@ -3609,8 +3669,10 @@ fn assign_production_rooms(
         Some("F_EXP") => 1,
         _ => 2,
     });
-    let trading_rooms: Vec<&&UserRoom> =
-        rooms.iter().filter(|r| r.room_type == "TRADING").collect();
+    let trading_rooms: Vec<&&UserRoom> = rooms
+        .iter()
+        .filter(|r| r.room_type == "TRADING" && !r.frozen)
+        .collect();
 
     let num_factories = factory_rooms.len();
 
@@ -3619,8 +3681,9 @@ fn assign_production_rooms(
     let mut best_objective: f64 = f64::NEG_INFINITY;
     let mut best_assigned_snapshot: HashSet<String> = assigned.clone();
 
-    // Gold factories must be >= trading post count (TPs need gold bars to trade).
-    let min_gold = trading_rooms.len().min(num_factories);
+    // Gold factories must be >= trading post count (TPs need gold bars to
+    // trade); a frozen gold factory already counts toward that.
+    let min_gold = total_posts.saturating_sub(frozen_gold).min(num_factories);
     // The yield-coupled optimum is "just enough gold to feed the trading posts"
     // (excess gold is unsold and worth less than EXP), so only the splits at and
     // just above min_gold are ever competitive - no need to scan all the way up.
@@ -3628,7 +3691,10 @@ fn assign_production_rooms(
 
     for num_gold in min_gold..=max_gold {
         let mut trial_assigned = assigned.clone();
-        let mut trial_rooms: Vec<RoomAssignment> = Vec::new();
+        // The frozen rooms lead the trial so the posts' yield pick and the
+        // split's objective see them; they are split off again before the
+        // free rooms are rebalanced.
+        let mut trial_rooms: Vec<RoomAssignment> = fixed.clone();
 
         // Assign factories: first num_gold get F_GOLD, rest get F_EXP
         for (i, factory) in factory_rooms.iter().enumerate() {
@@ -3672,9 +3738,10 @@ fn assign_production_rooms(
 
         // Balance operators across same-type/formula rooms (diminishing-returns
         // aware), then score this split by the soft-capped objective so stacking
-        // everything into one room is penalized.
+        // everything into one room is penalized. Only the free rooms move.
+        let mut free = trial_rooms.split_off(fixed.len());
         rebalance_rooms(
-            &mut trial_rooms,
+            &mut free,
             operators,
             registry,
             building_data,
@@ -3689,10 +3756,12 @@ fn assign_production_rooms(
         // of efficiency %. This makes the gold/EXP split value-based: gold
         // factories only pay off up to the trading posts' selling capacity, so
         // excess gold factories are correctly switched to EXP.
-        let trial_objective = assignment_value(&trial_rooms);
+        let mut scored = trial_rooms;
+        scored.extend(free.iter().cloned());
+        let trial_objective = assignment_value(&scored);
         if trial_objective > best_objective {
             best_objective = trial_objective;
-            best_assignments = trial_rooms;
+            best_assignments = free;
             best_assigned_snapshot = trial_assigned;
         }
     }
@@ -3732,7 +3801,9 @@ fn assign_production_rooms(
         morale_drains,
     );
 
-    best_assignments
+    let mut out = fixed;
+    out.extend(best_assignments);
+    out
 }
 
 /// Move a generic operator out of a formula-specific room into a different-formula

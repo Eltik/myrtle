@@ -51,6 +51,21 @@ pub enum CacheKey<'a> {
         server: &'a str,
         window: u32,
     },
+    ItemLeaderboard {
+        item: &'a str,
+        server: Option<&'a str>,
+        q: Option<&'a str>,
+        limit: u32,
+        offset: u32,
+    },
+    ItemLeaderboardCatalog {
+        server: Option<&'a str>,
+    },
+    ItemLeaderboardStanding {
+        item: &'a str,
+        uid: &'a str,
+        server: &'a str,
+    },
     SkinPopularity,
     OperatorOwnership {
         server: &'a str,
@@ -171,6 +186,24 @@ impl CacheKey<'_> {
             } => {
                 format!("leaderboard:standing:{server}:{uid}:{window}")
             }
+            CacheKey::ItemLeaderboard {
+                item,
+                server,
+                q,
+                limit,
+                offset,
+            } => {
+                let srv = server.unwrap_or("all");
+                let qk = q.unwrap_or("");
+                format!("leaderboard:items:{item}:{srv}:{qk}:{limit}:{offset}")
+            }
+            CacheKey::ItemLeaderboardCatalog { server } => {
+                let srv = server.unwrap_or("all");
+                format!("leaderboard:items:catalog:{srv}")
+            }
+            CacheKey::ItemLeaderboardStanding { item, uid, server } => {
+                format!("leaderboard:items:standing:{item}:{server}:{uid}")
+            }
             CacheKey::SkinPopularity => "skins:popularity".to_owned(),
             CacheKey::OperatorOwnership { server } => format!("operators:ownership:{server}"),
             CacheKey::OperatorBuildStats {
@@ -216,6 +249,9 @@ impl CacheKey<'_> {
             CacheKey::LeaderboardMovers { .. } => Duration::from_mins(15),
             CacheKey::LeaderboardDistribution { .. } => Duration::from_mins(10),
             CacheKey::LeaderboardStanding { .. } => Duration::from_mins(1),
+            CacheKey::ItemLeaderboard { .. } => Duration::from_mins(5),
+            CacheKey::ItemLeaderboardCatalog { .. } => Duration::from_mins(10),
+            CacheKey::ItemLeaderboardStanding { .. } => Duration::from_mins(1),
             CacheKey::SkinPopularity => Duration::from_hours(1),
             CacheKey::OperatorOwnership { .. } => Duration::from_hours(1),
             CacheKey::OperatorBuildStats { .. } => Duration::from_hours(1),

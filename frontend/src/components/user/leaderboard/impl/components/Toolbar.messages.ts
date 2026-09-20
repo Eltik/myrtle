@@ -63,6 +63,10 @@ export const messages = {
         text: "Clear search",
         description: "Accessible name of the small x button that empties the leaderboard's filter box.",
     },
+    "leaderboard.toolbar.movement.scoreOnly": {
+        text: "Rank movement is tracked for score rankings only",
+        description: "Tooltip on the disabled interval and movement controls while the table is ranked by an item, explaining why they are off.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

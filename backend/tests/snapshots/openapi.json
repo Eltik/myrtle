@@ -3981,6 +3981,210 @@
         ]
       }
     },
+    "/api/leaderboard/items": {
+      "get": {
+        "tags": [
+          "leaderboard"
+        ],
+        "summary": "One page of the players holding the most of one item.",
+        "description": "Currencies and inventory items share one key space, the game's item id, so\n`item=4002` ranks Originite Prime and `item=30011` ranks Orirock the same\nway. Only public profiles are ranked; ties share a rank.",
+        "operationId": "item_leaderboard",
+        "parameters": [
+          {
+            "name": "item",
+            "in": "query",
+            "description": "Game item id to rank by, e.g. `4002` for Originite Prime or `4003` for Orundum.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "description": "Restrict the page to one game server.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Free-text filter applied to nickname and uid. Matching rows keep their rank among all visible holders.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size. Defaults to 20, capped at 100.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Rows to skip. Defaults to 0.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of holders ranked by quantity, and how many visible players hold the item at all.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemLeaderboardPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/leaderboard/items/catalog": {
+      "get": {
+        "tags": [
+          "leaderboard"
+        ],
+        "summary": "Every item at least one visible player holds, with the holder count and\nthe largest single holding. Ordered by holders, most first.",
+        "operationId": "item_catalog",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "query",
+            "description": "Count holders on one game server only.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Holder count and top holding per item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ItemHoldingSummary"
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/leaderboard/items/standing": {
+      "get": {
+        "tags": [
+          "leaderboard"
+        ],
+        "summary": "One player's rank among the holders of one item, globally and on their\nown server.",
+        "description": "Subject to the same privacy gate as every other by-uid endpoint: a private\nprofile is visible only to its owner. 404 when the player holds none of\nthe item.",
+        "operationId": "item_standing",
+        "parameters": [
+          {
+            "name": "item",
+            "in": "query",
+            "description": "Game item id.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uid",
+            "in": "query",
+            "description": "The player to locate.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "description": "The player's game server.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The player's quantity and rank, globally and on their server.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemStanding"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {}
+        ]
+      }
+    },
     "/api/leaderboard/movers": {
       "get": {
         "tags": [
@@ -13366,6 +13570,150 @@
           }
         }
       },
+      "ItemHoldingSummary": {
+        "type": "object",
+        "description": "How many visible players hold an item and the largest single holding.\nDrives the item picker so it never offers an item nobody holds.",
+        "required": [
+          "item_id",
+          "holders",
+          "top"
+        ],
+        "properties": {
+          "holders": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "top": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ItemLeaderboardEntry": {
+        "type": "object",
+        "description": "One row of the inventory leaderboard: a player and how much of the\nrequested item they hold. Identity fields mirror `LeaderboardEntry` so the\nsame row components render both.",
+        "required": [
+          "rank",
+          "uid",
+          "server",
+          "quantity"
+        ],
+        "properties": {
+          "avatar_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "grade": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The player's score grade, so a row reads the same whichever metric\nranks it."
+          },
+          "level": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "nick_number": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nickname": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rank": {
+            "type": "integer",
+            "format": "int64",
+            "description": "`rank()` over quantity among visible holders: ties share a rank."
+          },
+          "server": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        }
+      },
+      "ItemLeaderboardPage": {
+        "type": "object",
+        "required": [
+          "item_id",
+          "entries",
+          "total"
+        ],
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemLeaderboardEntry"
+            }
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Visible holders of the item: the population the page is cut from."
+          }
+        }
+      },
+      "ItemStanding": {
+        "type": "object",
+        "description": "One player's place on the leaderboard for one item.",
+        "required": [
+          "item_id",
+          "quantity",
+          "rank_global",
+          "holders_global",
+          "rank_server",
+          "holders_server"
+        ],
+        "properties": {
+          "holders_global": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "holders_server": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "item_id": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rank_global": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Rank among every visible holder, and that population's size."
+          },
+          "rank_server": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Rank among visible holders on the player's own server, and that\npopulation's size."
+          }
+        }
+      },
       "LagModel": {
         "type": "object",
         "required": [
@@ -19385,7 +19733,7 @@
     },
     {
       "name": "leaderboard",
-      "description": "Global and per-server score rankings, movement over time, and a single player's standing."
+      "description": "Global and per-server score rankings, movement over time, a single player's standing, and per-item inventory rankings."
     },
     {
       "name": "dps",

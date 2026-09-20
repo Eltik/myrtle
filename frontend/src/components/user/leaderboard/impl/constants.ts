@@ -9,6 +9,13 @@ export const PAGE_SIZE = 25;
 
 export type LeaderboardScope = "global" | "friends";
 
+/**
+ * What the table is ranked by. A score column, or one game item; the two are
+ * one list in the picker and one column in the table, so the page never has
+ * to change shape to rank by inventory.
+ */
+export type Ranking = { kind: "score"; sort: LeaderboardSort } | { kind: "item"; item: string };
+
 export const SERVERS = ["EN", "JP", "CN", "KR", "TW"] as const;
 export type ServerCode = (typeof SERVERS)[number];
 

@@ -13,6 +13,10 @@ import type { EncounteredEnemy } from "#/types/generated/EncounteredEnemy";
 import type { FacilityOutputDto } from "#/types/generated/FacilityOutputDto";
 import type { ImprovementsResponse } from "#/types/generated/ImprovementsResponse";
 import type { ItemEntry } from "#/types/generated/ItemEntry";
+import type { ItemHoldingSummary } from "#/types/generated/ItemHoldingSummary";
+import type { ItemLeaderboardEntry } from "#/types/generated/ItemLeaderboardEntry";
+import type { ItemLeaderboardPage } from "#/types/generated/ItemLeaderboardPage";
+import type { ItemStanding } from "#/types/generated/ItemStanding";
 import type { LeaderboardEntry } from "#/types/generated/LeaderboardEntry";
 import type { LeaderboardMover } from "#/types/generated/LeaderboardMover";
 import type { LeaderboardPage } from "#/types/generated/LeaderboardPage";
@@ -538,6 +542,94 @@ export function playerStandingQueryOptions(input: IPlayerStandingInput) {
     return queryOptions({
         queryKey: ["user", "leaderboard", "standing", input.uid, input.server, input.window ?? null, input.interval ?? null],
         queryFn: () => getPlayerStandingFn({ data: input }),
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
+export type IItemLeaderboardEntry = ItemLeaderboardEntry;
+export type IItemLeaderboardPage = ItemLeaderboardPage;
+export type IItemHoldingSummary = ItemHoldingSummary;
+export type IItemStanding = ItemStanding;
+
+export interface IItemLeaderboardInput {
+    /** Game item id. Currencies use theirs too: `4002` Originite Prime, `4003` Orundum, `4001` LMD. */
+    item: string;
+    server?: string;
+    /** Free-text filter on nickname / uid (ILIKE); rows keep their rank among all holders. */
+    q?: string;
+    limit?: number;
+    offset?: number;
+}
+
+/** One page of the players holding the most of one item. */
+export const getItemLeaderboardFn = createServerFn({ method: "GET" })
+    .inputValidator((data: IItemLeaderboardInput) => data)
+    .handler(async ({ data: { item, server, q, limit, offset } }) => {
+        const params = new URLSearchParams({ item });
+        if (server) params.set("server", server);
+        if (q) params.set("q", q);
+        if (limit !== undefined) params.set("limit", String(limit));
+        if (offset !== undefined) params.set("offset", String(offset));
+
+        const res = await backendFetch(`/leaderboard/items?${params.toString()}`);
+        if (!res.ok) throw new Error(`Failed to load item leaderboard: ${res.status}`);
+        return (await res.json()) as IItemLeaderboardPage;
+    });
+
+export function itemLeaderboardQueryOptions(input: IItemLeaderboardInput) {
+    return queryOptions({
+        queryKey: ["user", "leaderboard", "items", input.item, input.server ?? null, input.q ?? null, input.limit ?? null, input.offset ?? null],
+        queryFn: () => getItemLeaderboardFn({ data: input }),
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
+/** Every item at least one visible player holds, most holders first. */
+export const getItemCatalogFn = createServerFn({ method: "GET" })
+    .inputValidator((data: { server?: string }) => data)
+    .handler(async ({ data: { server } }) => {
+        const params = new URLSearchParams();
+        if (server) params.set("server", server);
+        const qs = params.toString();
+        const res = await backendFetch(`/leaderboard/items/catalog${qs ? `?${qs}` : ""}`);
+        if (!res.ok) throw new Error(`Failed to load item catalog: ${res.status}`);
+        return (await res.json()) as IItemHoldingSummary[];
+    });
+
+export function itemCatalogQueryOptions(server?: string) {
+    return queryOptions({
+        queryKey: ["user", "leaderboard", "items", "catalog", server ?? null],
+        queryFn: () => getItemCatalogFn({ data: { server } }),
+        staleTime: 5 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
+    });
+}
+
+export interface IItemStandingInput {
+    item: string;
+    uid: string;
+    server: string;
+}
+
+/** One player's rank among the holders of one item; `null` when they hold none. */
+export const getItemStandingFn = createServerFn({ method: "GET" })
+    .inputValidator((data: IItemStandingInput) => data)
+    .handler(async ({ data: { item, uid, server } }) => {
+        const params = new URLSearchParams({ item, uid, server });
+        const res = await backendFetch(`/leaderboard/items/standing?${params.toString()}`);
+        if (!res.ok) {
+            if (res.status === 404) return null;
+            throw new Error(`Failed to load item standing: ${res.status}`);
+        }
+        return (await res.json()) as IItemStanding;
+    });
+
+export function itemStandingQueryOptions(input: IItemStandingInput) {
+    return queryOptions({
+        queryKey: ["user", "leaderboard", "items", "standing", input.item, input.uid, input.server],
+        queryFn: () => getItemStandingFn({ data: input }),
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
     });

@@ -25,6 +25,11 @@ pub struct UserRoom {
     pub preset_shifts: Vec<Vec<String>>,
     /// Dormitory ambience (0-5000) from the synced furniture, 0 elsewhere.
     pub comfort: i32,
+    /// A production room the search must leave exactly as drafted (crew and
+    /// recipe): a scoped planner run's out-of-scope room. It is scored as
+    /// drafted and sits in the yield context the free rooms are planned
+    /// beside; its operators are taken.
+    pub frozen: bool,
 }
 
 /// One operator's morale state from the synced building data: the bar as the
@@ -205,6 +210,7 @@ impl UserBuilding {
                         current_formula: formula_by_slot.get(slot_id).cloned(),
                         preset_shifts: presets_by_slot.get(slot_id).cloned().unwrap_or_default(),
                         comfort: comfort_by_slot.get(slot_id).copied().unwrap_or(0),
+                        frozen: false,
                     });
                 }
             }

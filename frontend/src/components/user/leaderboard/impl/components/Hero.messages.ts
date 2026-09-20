@@ -55,6 +55,26 @@ export const messages = {
         text: "{lead} - the leaderboard is in active development and the ranking formula is subject to change.",
         description: "Development-status notice under the leaderboard heading. {lead} is the bold opening labelled by leaderboard.hero.notice.lead and may move wherever the sentence needs it.",
     },
+    "leaderboard.hero.blurb.item": {
+        text: "Every player with a public profile, ranked by how much {item} they held when they last synced.",
+        description: "One-sentence explanation under the title while the table is ranked by an item. {item} is the item's name, e.g. 'Originite Prime'.",
+    },
+    "leaderboard.hero.stat.holders": {
+        text: "Holders",
+        description: "Label under the count of players holding at least one of the ranked item.",
+    },
+    "leaderboard.hero.stat.topHolding": {
+        text: "Top holding",
+        description: "Label under the largest single quantity of the ranked item anyone holds.",
+    },
+    "leaderboard.hero.stat.asOf": {
+        text: "Counted at",
+        description: "Label of the freshness stat while ranked by an item; the value says the numbers are from each player's own last sync.",
+    },
+    "leaderboard.hero.stat.asOf.value": {
+        text: "last sync",
+        description: "Value of the freshness stat while ranked by an item: item counts are read at each player's own last sync, not on a schedule.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });
