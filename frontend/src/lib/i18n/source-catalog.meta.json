@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-20T10:12:48.563Z",
+    "generatedAt": "2026-09-20T12:46:51.603Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -8740,7 +8740,7 @@
         {
             "key": "legal.privacy.collect.game.roguelike.label",
             "namespace": "legal",
-            "source_text": "Roguelike & Sandbox progress",
+            "source_text": "Roguelike & Reclamation Algorithm progress",
             "description": "Bolded term of a list item. The ampersand is literal.",
             "placeholders": []
         },
@@ -9434,7 +9434,7 @@
         {
             "key": "legal.privacy.use.leaderboards.body",
             "namespace": "legal",
-            "source_text": "If you opt in to public visibility, your account scores and rankings may appear on our leaderboards. This allows the community to compare account progress across multiple dimensions (operators, stages, roguelike, sandbox, medals, base). You can opt out at any time in your settings.",
+            "source_text": "If you opt in to public visibility, your account scores and rankings may appear on our leaderboards. This allows the community to compare account progress across multiple dimensions (operators, stages, roguelike, Reclamation Algorithm, medals, base). You can opt out at any time in your settings.",
             "description": "Body of the Leaderboards panel.",
             "placeholders": []
         },
@@ -15595,8 +15595,8 @@
         {
             "key": "settings.data.sync.rowDesc",
             "namespace": "settings",
-            "source_text": "Operators, stage progress, IS/Sandbox, base, medals, inventory.",
-            "description": "Caption listing what a re-sync fetches. 'IS' is Integrated Strategies and 'base' the player's home installation - both in-game systems.",
+            "source_text": "Operators, stage progress, IS/RA, base, medals, inventory.",
+            "description": "Caption listing what a re-sync fetches. 'IS' is Integrated Strategies, 'RA' is Reclamation Algorithm and 'base' the player's home installation - all in-game systems.",
             "placeholders": []
         },
         {
@@ -29266,8 +29266,8 @@
         {
             "key": "user.leaderboard.grade.tooltip",
             "namespace": "user",
-            "source_text": "Grade {grade}: composite score {from}-{to}%, weighted across operators, base, Integrated Strategies, medals, stages and sandbox.",
-            "description": "Hover explanation on a grade badge. {grade} is the letter (S+, S, A, B, C, D, F); {from} and {to} are the percentage bounds of that band, already formatted. 'Integrated Strategies' and 'sandbox' are in-game modes.",
+            "source_text": "Grade {grade}: composite score {from}-{to}%, weighted across operators, base, Integrated Strategies, medals, stages and Reclamation Algorithm.",
+            "description": "Hover explanation on a grade badge. {grade} is the letter (S+, S, A, B, C, D, F); {from} and {to} are the percentage bounds of that band, already formatted. 'Integrated Strategies' and 'Reclamation Algorithm' are in-game modes.",
             "placeholders": [
                 "from",
                 "grade",
@@ -29741,7 +29741,7 @@
         {
             "key": "user.leaderboard.sort.sandbox",
             "namespace": "user",
-            "source_text": "Sandbox",
+            "source_text": "Reclamation Algorithm",
             "description": "Sort option: the Reclamation Algorithm subscore.",
             "placeholders": []
         },
@@ -35060,14 +35060,14 @@
             "key": "user.score.improvements.sandbox.empty",
             "namespace": "user",
             "source_text": "No RA progress detected. Start RA in Operation Originium Dust to begin tracking.",
-            "description": "Empty state in the Sandbox panel. 'RA' abbreviates the game mode Reclamation Algorithm and 'Operation Originium Dust' is the in-game event that hosts it - both keep the game's own names.",
+            "description": "Empty state in the RA panel. 'RA' abbreviates the game mode Reclamation Algorithm and 'Operation Originium Dust' is the in-game event that hosts it - both keep the game's own names.",
             "placeholders": []
         },
         {
             "key": "user.score.improvements.sandbox.weight",
             "namespace": "user",
             "source_text": "{pct}% of RA",
-            "description": "Pill beside a Reclamation Algorithm category saying how much of the Sandbox score it carries. 'RA' is the game mode's own abbreviation.",
+            "description": "Pill beside a Reclamation Algorithm category saying how much of the RA score it carries. 'RA' is the game mode's own abbreviation.",
             "placeholders": [
                 "pct"
             ]
@@ -35372,15 +35372,15 @@
         {
             "key": "user.score.section.sandbox.desc",
             "namespace": "user",
-            "source_text": "RA progress & nodes",
-            "description": "Blurb under the Sandbox section's percentage. 'RA' abbreviates the game mode Reclamation Algorithm; 'nodes' are its map points.",
+            "source_text": "Progress & nodes",
+            "description": "Blurb under the RA section's percentage. The section label already says RA, so the blurb does not repeat it; 'nodes' are the mode's map points.",
             "placeholders": []
         },
         {
             "key": "user.score.section.sandbox.label",
             "namespace": "user",
-            "source_text": "Sandbox",
-            "description": "Name of the scored section covering Reclamation Algorithm.",
+            "source_text": "RA",
+            "description": "Name of the scored section covering Reclamation Algorithm. 'RA' is the game mode's own abbreviation; the siblings are one short word each and the legend truncates.",
             "placeholders": []
         },
         {

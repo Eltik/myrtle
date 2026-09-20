@@ -4,8 +4,8 @@ export const namespace = "user";
 
 export const messages = {
     "leaderboard.grade.tooltip": {
-        text: "Grade {grade}: composite score {from}-{to}%, weighted across operators, base, Integrated Strategies, medals, stages and sandbox.",
-        description: "Hover explanation on a grade badge. {grade} is the letter (S+, S, A, B, C, D, F); {from} and {to} are the percentage bounds of that band, already formatted. 'Integrated Strategies' and 'sandbox' are in-game modes.",
+        text: "Grade {grade}: composite score {from}-{to}%, weighted across operators, base, Integrated Strategies, medals, stages and Reclamation Algorithm.",
+        description: "Hover explanation on a grade badge. {grade} is the letter (S+, S, A, B, C, D, F); {from} and {to} are the percentage bounds of that band, already formatted. 'Integrated Strategies' and 'Reclamation Algorithm' are in-game modes.",
     },
     "leaderboard.grade.unknown": {
         text: "Not graded yet - this account has not been scored.",

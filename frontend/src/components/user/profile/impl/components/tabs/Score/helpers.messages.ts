@@ -44,12 +44,12 @@ export const messages = {
         description: "Blurb under the Roguelike section's percentage. 'IS' abbreviates the game mode Integrated Strategies and 'relics' are its in-game collectibles.",
     },
     "score.section.sandbox.label": {
-        text: "Sandbox",
-        description: "Name of the scored section covering Reclamation Algorithm.",
+        text: "RA",
+        description: "Name of the scored section covering Reclamation Algorithm. 'RA' is the game mode's own abbreviation; the siblings are one short word each and the legend truncates.",
     },
     "score.section.sandbox.desc": {
-        text: "RA progress & nodes",
-        description: "Blurb under the Sandbox section's percentage. 'RA' abbreviates the game mode Reclamation Algorithm; 'nodes' are its map points.",
+        text: "Progress & nodes",
+        description: "Blurb under the RA section's percentage. The section label already says RA, so the blurb does not repeat it; 'nodes' are the mode's map points.",
     },
     "score.section.medal.label": {
         text: "Medals",

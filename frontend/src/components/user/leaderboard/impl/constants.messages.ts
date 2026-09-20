@@ -28,7 +28,7 @@ export const messages = {
         description: "Sort option: the Integrated Strategies subscore.",
     },
     "leaderboard.sort.sandbox": {
-        text: "Sandbox",
+        text: "Reclamation Algorithm",
         description: "Sort option: the Reclamation Algorithm subscore.",
     },
     "leaderboard.sort.medals": {

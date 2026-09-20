@@ -181,7 +181,7 @@ export const messages = {
         description: "Gloss following the bolded term. Mainline, sidestory and activity are in-game stage categories. Begins with a hyphen and a space.",
     },
     "privacy.collect.game.roguelike.label": {
-        text: "Roguelike & Sandbox progress",
+        text: "Roguelike & Reclamation Algorithm progress",
         description: "Bolded term of a list item. The ampersand is literal.",
     },
     "privacy.collect.game.roguelike.body": {
@@ -255,7 +255,7 @@ export const messages = {
         description: "Summary line of an expandable panel. The ampersand is literal.",
     },
     "privacy.use.leaderboards.body": {
-        text: "If you opt in to public visibility, your account scores and rankings may appear on our leaderboards. This allows the community to compare account progress across multiple dimensions (operators, stages, roguelike, sandbox, medals, base). You can opt out at any time in your settings.",
+        text: "If you opt in to public visibility, your account scores and rankings may appear on our leaderboards. This allows the community to compare account progress across multiple dimensions (operators, stages, roguelike, Reclamation Algorithm, medals, base). You can opt out at any time in your settings.",
         description: "Body of the Leaderboards panel.",
     },
     "privacy.use.improvement.summary": {

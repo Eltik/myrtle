@@ -25,9 +25,14 @@ export function MyListRow({ tl, onEdit, onDelete, onCopyLink }: IMyListRowProps)
     const isOfficial = tl.listType === "official";
     const isEmpty = totalOps === 0;
 
+    // Below `sm` the row WRAPS: title and the actions button take the first
+    // line, the preview strip the second. One line did not fit a phone: the six
+    // shrink-0 avatars plus the overflow pill are ~266 px, which left the title
+    // no width, and the shrink-0 flair pill then spilled out of the title link
+    // over the actions button.
     return (
-        <article className="group relative flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5 shadow-[0_1px_2px_oklch(0_0_0/0.04)] transition-[border-color,box-shadow] hover:border-[color-mix(in_srgb,var(--foreground)_22%,var(--border))] hover:shadow-[0_6px_16px_oklch(0_0_0/0.06)]">
-            <div className="flex shrink-0 items-center gap-0.5">
+        <article className="group relative flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5 shadow-[0_1px_2px_oklch(0_0_0/0.04)] transition-[border-color,box-shadow] hover:border-[color-mix(in_srgb,var(--foreground)_22%,var(--border))] hover:shadow-[0_6px_16px_oklch(0_0_0/0.06)] sm:flex-nowrap">
+            <div className="flex shrink-0 items-center gap-0.5 max-sm:order-3 max-sm:w-full">
                 {previewOps.length === 0 ? (
                     <div className="flex h-9 w-24 items-center justify-center rounded-md border border-border border-dashed bg-muted/30 font-sans text-[10.5px] text-muted-foreground italic">{t("my.row.emptyPreview")}</div>
                 ) : (
@@ -42,7 +47,7 @@ export function MyListRow({ tl, onEdit, onDelete, onCopyLink }: IMyListRowProps)
                 )}
             </div>
 
-            <Link to="/tier-lists/$id" params={{ id: tl.slug }} className="min-w-0 flex-1 no-underline">
+            <Link to="/tier-lists/$id" params={{ id: tl.slug }} className="min-w-0 flex-1 no-underline max-sm:order-1">
                 <div className="flex min-w-0 items-center gap-2">
                     <h3 className="m-0 truncate font-sans font-semibold text-[14px] text-foreground leading-tight tracking-tight transition-colors group-hover:text-primary" title={tl.title}>
                         {tl.title || t("my.row.untitled")}
@@ -85,7 +90,7 @@ export function MyListRow({ tl, onEdit, onDelete, onCopyLink }: IMyListRowProps)
             </div>
 
             <Menu>
-                <MenuTrigger aria-label={t("my.row.actions")} className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground">
+                <MenuTrigger aria-label={t("my.row.actions")} className="inline-flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-md border border-transparent text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground max-sm:order-2">
                     <MoreHorizontalIcon className="h-4 w-4" />
                 </MenuTrigger>
                 <MenuPopup align="end" sideOffset={6} className="min-w-44">

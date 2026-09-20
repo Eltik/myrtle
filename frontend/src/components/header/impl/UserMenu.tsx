@@ -40,12 +40,13 @@ export default function UserMenu({ user, loading, logout }: { user: ISession | n
                     />
                 </div>
                 <DropdownMenuContent align="end" className="w-48">
-                    <div className="px-2 pb-1.5">
-                        <Link className="block font-medium text-sm hover:underline" to="/user/$id" params={{ id: user.uid }}>
-                            {user.nickname ?? "Player"}
-                        </Link>
-                        <p className="text-muted-foreground text-xs">{t("userMenu.level", { level: user.level })}</p>
-                    </div>
+                    {/* A menu item, not a bare Link: Base UI closes the menu
+                        on item click, while a plain anchor inside the popup
+                        navigated and LEFT the menu open over the profile page. */}
+                    <DropdownMenuItem className="cursor-pointer flex-col items-start gap-0 py-1.5" render={<Link to="/user/$id" params={{ id: user.uid }} />}>
+                        <span className="font-medium text-sm">{user.nickname ?? "Player"}</span>
+                        <span className="text-muted-foreground text-xs">{t("userMenu.level", { level: user.level })}</span>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="cursor-pointer" render={<Link to="/tier-lists/my" search={{ sort: "recent", type: "all", view: "grid", q: "" }} />}>
                         <LayoutList className="h-4 w-4 text-muted-foreground" />

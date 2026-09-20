@@ -16,8 +16,8 @@ export const messages = {
         description: "Label of the row holding the re-sync button.",
     },
     "data.sync.rowDesc": {
-        text: "Operators, stage progress, IS/Sandbox, base, medals, inventory.",
-        description: "Caption listing what a re-sync fetches. 'IS' is Integrated Strategies and 'base' the player's home installation - both in-game systems.",
+        text: "Operators, stage progress, IS/RA, base, medals, inventory.",
+        description: "Caption listing what a re-sync fetches. 'IS' is Integrated Strategies, 'RA' is Reclamation Algorithm and 'base' the player's home installation - all in-game systems.",
     },
     "data.yourData.title": {
         text: "Your data on Myrtle",
