@@ -11,6 +11,62 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-09-20.title": {
+        text: "New: Rank the leaderboard by anything you hold",
+        description: "Title of the 2026-09-20 release note. The leaderboard could previously only be ranked by the site's own score.",
+    },
+    "note.2026-09-20.lead": {
+        text: "The leaderboard ranks by any item in your inventory, not just by score: pick LMD, Orundum, a certificate or anything else you hold, and the table, your own standing and the cards beside them all follow it. Five more base scoring bugs are fixed, and like yesterday's these do move numbers. Reclamation Algorithm is called by its name across the site instead of Sandbox.",
+        description: "Lead paragraph of the 2026-09-20 release note, rendered as Markdown. LMD and Orundum are in-game currencies and Reclamation Algorithm is a game mode; all keep the game's names. 'Base' is the player's RIIC facility.",
+    },
+    "note.2026-09-20.hrefLabel": {
+        text: "Open the leaderboard",
+        description: "Label of the 2026-09-20 release note's call to action, which opens the player leaderboard.",
+    },
+    "note.2026-09-20.item.1": {
+        text: "Rank the leaderboard by any item you hold. The Rank by picker searches everything anyone is holding and shows each item's icon and how many players hold it; the page keeps its shape whichever ranking you choose.",
+        description: "Bullet in the 2026-09-20 release note, filed under 'New'. 'Rank by' is the picker's own label and should match its translation there.",
+    },
+    "note.2026-09-20.item.2": {
+        text: "An item ranking is a link you can share, and a player you search for keeps their true rank rather than being renumbered inside your search.",
+        description: "Bullet in the 2026-09-20 release note, filed under 'New'.",
+    },
+    "note.2026-09-20.item.3": {
+        text: "Optimizing a single base room no longer re-crews the rooms outside it or changes a factory's recipe behind your back. Rooms outside the scope are held as they are and scored that way.",
+        description: "Bullet in the 2026-09-20 release note, filed under 'Improved'. A 'factory' is an RIIC room and its 'recipe' is what it is set to produce.",
+    },
+    "note.2026-09-20.item.4": {
+        text: "Reclamation Algorithm is named as such across the site, rather than Sandbox. Where a label has to be short it reads RA.",
+        description: "Bullet in the 2026-09-20 release note, filed under 'Improved'. Reclamation Algorithm is a game mode and keeps the game's name; RA is its usual abbreviation.",
+    },
+    "note.2026-09-20.item.5": {
+        text: "A rotation's shifts were priced against the operators you have seated now rather than the ones the shift recommends, so any skill that depends on who else is deployed read as inactive in every shift while the stationed view counted it.",
+        description: "Bullet in the 2026-09-20 release note, filed under 'Fixed'. A 'shift' is one block of the base rotation; 'stationed' is the single best staffing shown beside the rotation.",
+    },
+    "note.2026-09-20.item.6": {
+        text: "On a gold-starved base Proviso takes the lower-level trading post, where her bonus on small orders pays on every order the post draws.",
+        description: "Bullet in the 2026-09-20 release note, filed under 'Fixed'. Proviso is an operator, a trading post is an RIIC room and an 'order' is what it produces; all keep the game's names.",
+    },
+    "note.2026-09-20.item.7": {
+        text: "An operator reserved for the Office or the Reception Room was held out of every rotation and then never actually seated there.",
+        description: "Bullet in the 2026-09-20 release note, filed under 'Fixed'. The Office and the Reception Room are RIIC rooms and keep the game's names.",
+    },
+    "note.2026-09-20.item.8": {
+        text: "A spare Control Center seat now goes to a base-wide morale bonus first, HR or training speed next, and clue speed last whatever its size. Clue speed was counted at triple weight and beat everything.",
+        description: "Bullet in the 2026-09-20 release note, filed under 'Fixed'. The Control Center is an RIIC room; morale, HR, training and clues are the kinds of bonus its base skills give and keep the game's names.",
+    },
+    "note.2026-09-20.item.9": {
+        text: "Teams built around a capacity bonus were cut before they were ever compared, because the shortlist ranked on speed alone and a capacity skill scores nothing there.",
+        description: "Bullet in the 2026-09-20 release note, filed under 'Fixed'. 'Capacity' is an RIIC base-skill effect that raises how much a room can hold.",
+    },
+    "note.2026-09-20.item.10": {
+        text: "Tapping your nickname in the account menu left the menu sitting open over the page. It closes now, and the entry can be reached with the arrow keys.",
+        description: "Bullet in the 2026-09-20 release note, filed under 'Fixed'. The 'account menu' is the popup under the avatar in the site header.",
+    },
+    "note.2026-09-20.item.11": {
+        text: "A row in your tier lists squeezed its own title down to a single letter on a phone and spilled its badge across the actions button. The row wraps below that width now.",
+        description: "Bullet in the 2026-09-20 release note, filed under 'Fixed'. 'Your tier lists' is the page listing the tier lists a player made.",
+    },
     "note.2026-09-19-2.title": {
         text: "New: API docs, and more accurate base scoring",
         description: "Title of the second 2026-09-19 release note. 'Base' is the player's RIIC facility.",
