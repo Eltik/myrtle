@@ -27,6 +27,22 @@ export const messages = {
         text: "All",
         description: "Ownership filter: every operator, owned or not.",
     },
+    "profile.roster.filters.source": {
+        text: "Source",
+        description: "Label over the any / headhunting / welfare choice in the roster filters: how the operator is obtained.",
+    },
+    "profile.roster.filters.source.any": {
+        text: "Any",
+        description: "Source filter: operators from every source.",
+    },
+    "profile.roster.filters.source.headhunting": {
+        text: "Headhunting",
+        description: "Source filter: only operators pulled from the gacha (headhunting or recruitment) pool.",
+    },
+    "profile.roster.filters.source.welfare": {
+        text: "Welfare",
+        description: "Source filter: only operators the game gives away (event rewards, voucher exchange, Integrated Strategies, story), which all reach max potential for free.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages, dynamic: true });

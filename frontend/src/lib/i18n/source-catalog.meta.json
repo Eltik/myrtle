@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-20T14:30:14.254Z",
+    "generatedAt": "2026-09-20T15:35:08.570Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -32973,6 +32973,20 @@
             "placeholders": []
         },
         {
+            "key": "user.profile.roster.chips.source.headhunting",
+            "namespace": "user",
+            "source_text": "Headhunting only",
+            "description": "Active-filter chip when the roster is narrowed to gacha (headhunting or recruitment) operators.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.roster.chips.source.welfare",
+            "namespace": "user",
+            "source_text": "Welfare only",
+            "description": "Active-filter chip when the roster is narrowed to operators the game gives away.",
+            "placeholders": []
+        },
+        {
             "key": "user.profile.roster.compact.levelAbbr",
             "namespace": "user",
             "source_text": "LV",
@@ -33137,6 +33151,34 @@
             "namespace": "user",
             "source_text": "Ownership",
             "description": "Label over the owned / unowned / all choice in the roster filters.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.roster.filters.source",
+            "namespace": "user",
+            "source_text": "Source",
+            "description": "Label over the any / headhunting / welfare choice in the roster filters: how the operator is obtained.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.roster.filters.source.any",
+            "namespace": "user",
+            "source_text": "Any",
+            "description": "Source filter: operators from every source.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.roster.filters.source.headhunting",
+            "namespace": "user",
+            "source_text": "Headhunting",
+            "description": "Source filter: only operators pulled from the gacha (headhunting or recruitment) pool.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.roster.filters.source.welfare",
+            "namespace": "user",
+            "source_text": "Welfare",
+            "description": "Source filter: only operators the game gives away (event rewards, voucher exchange, Integrated Strategies, story), which all reach max potential for free.",
             "placeholders": []
         },
         {

@@ -16,7 +16,7 @@ import { CompactCard } from "./CompactCard";
 import { DetailedCard } from "./DetailedCard";
 import { RosterFilters } from "./RosterFilters";
 import type { messages } from "./RosterTab.messages";
-import type { SortKey, ViewMode } from "./types";
+import type { SortKey, SourceFilter, ViewMode } from "./types";
 import { UnownedCard } from "./UnownedCard";
 import { useRoster } from "./useRoster";
 
@@ -40,11 +40,22 @@ const SORT_LABELS: Record<SortKey, MessageKey> = {
     maxed: "profile.roster.sort.maxed",
 };
 
+const SOURCE_CHIP_LABELS: Record<Exclude<SourceFilter, "any">, MessageKey> = {
+    headhunting: "profile.roster.chips.source.headhunting",
+    welfare: "profile.roster.chips.source.welfare",
+};
+
 export function RosterTab({ roster, operatorsIndex, operatorsStatic, voices }: IRosterTabProps) {
     const t: TypedT<typeof messages> = useT("user");
     const { filters, set, toggleSortOrder, visible, totalCount, displayCount, lastRef, filtersVisible, toggleFilters, filterOptions, removeFrom, setShared, clearFilters, activeFilterCount, hasActiveFilters } = useRoster(roster, operatorsIndex, operatorsStatic, voices);
     const { search, ownership, sortBy, sortOrder, viewMode } = filters;
-    const activeChips = useMemo(() => buildSharedChips(filters, removeFrom), [filters, removeFrom]);
+    const activeChips = useMemo(() => {
+        const chips = buildSharedChips(filters, removeFrom);
+        if (filters.source !== "any") {
+            chips.push({ key: `source-${filters.source}`, label: t(SOURCE_CHIP_LABELS[filters.source]), onRemove: () => set("source", "any") });
+        }
+        return chips;
+    }, [filters, removeFrom, set, t]);
 
     return (
         <section className="flex flex-col gap-4" aria-label={t("profile.roster.aria")}>
@@ -55,6 +66,8 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic, voices }: I
                     onChange={setShared}
                     ownership={filters.ownership}
                     onOwnershipChange={(v) => set("ownership", v)}
+                    source={filters.source}
+                    onSourceChange={(v) => set("source", v)}
                     onClearAll={clearFilters}
                     hasActiveFilters={hasActiveFilters}
                     collapsed={!filtersVisible}

@@ -2,15 +2,36 @@ import type { FilterSets } from "#/components/operators/list/impl/shared-filters
 import { hasAnySharedFilter, matchesSharedFilters } from "#/components/operators/list/impl/shared-filters";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import { isMaxed, MAX_ELITE_BY_RARITY, MAX_LEVEL_BY_RARITY } from "./helpers.card";
-import type { IDisplayEntry, SortKey, SortOrder } from "./types";
+import type { IDisplayEntry, SortKey, SortOrder, SourceFilter } from "./types";
 
-export function filterEntries(entries: IDisplayEntry[], search: string, sets: FilterSets): IDisplayEntry[] {
+/**
+ * Classifies `character_table.ItemObtainApproach`. On EN (2026-09-21) every
+ * gacha operator's approach contains "Headhunting": 313 read "Recruitment &
+ * Headhunting" and Texas alone reads "Recruitment & Headhunting, Pinboard
+ * Missions", which is why this is a substring test and not an equality. The
+ * other side is "Event Reward" (70), "Voucher Exchange" (12), "Obtained from
+ * Integrated Strategies" (5), "Credit Store" (3), "Anniversary Reward"
+ * (Savage), "Main Theme Story" (Amiya), "Limited Gift Pack" (Purestream).
+ *
+ * `null` is an operator with NO approach: the backend serialises the missing
+ * field as "" for the 29 `isNotObtainable` rows (Reserve Operators, IS-only
+ * temporaries), and an entry whose static row has not loaded looks the same.
+ * Neither side of the filter claims those, so "any" is the only view that
+ * shows them.
+ */
+export function operatorSource(approach: string | null | undefined): Exclude<SourceFilter, "any"> | null {
+    if (!approach) return null;
+    return approach.includes("Headhunting") ? "headhunting" : "welfare";
+}
+
+export function filterEntries(entries: IDisplayEntry[], search: string, sets: FilterSets, source: SourceFilter = "any"): IDisplayEntry[] {
     const q = compactForSearch(search);
     const active = hasAnySharedFilter(sets);
-    if (!q && !active) return entries;
+    if (!q && !active && source === "any") return entries;
 
     return entries.filter((e) => {
         if (q && !compactForSearch(e.name).includes(q)) return false;
+        if (source !== "any" && operatorSource(e.static?.itemObtainApproach) !== source) return false;
         if (!active) return true;
         // An operator missing from the index cannot be shown as matching any attribute filter.
         if (!e.meta) return false;

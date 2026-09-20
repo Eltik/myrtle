@@ -13,6 +13,7 @@ import { type IDisplayEntry, type IRosterFilterState, OWNED_ONLY_SORTS, type Vie
 const INITIAL: IRosterFilterState = {
     search: "",
     ownership: "owned",
+    source: "any",
     ...EMPTY_SHARED_FILTERS,
     sortBy: "rarity",
     sortOrder: "desc",
@@ -109,7 +110,7 @@ export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndex
     }, [roster, operatorsIndex, indexMap, staticMap, ownedIds, filters.ownership, voices]);
 
     const sets = useMemo(() => toFilterSets(filters), [filters]);
-    const filtered = useMemo(() => filterEntries(allEntries, filters.search, sets), [allEntries, filters.search, sets]);
+    const filtered = useMemo(() => filterEntries(allEntries, filters.search, sets, filters.source), [allEntries, filters.search, sets, filters.source]);
 
     const sorted = useMemo(() => sortEntries(filtered, filters.sortBy, filters.sortOrder), [filtered, filters.sortBy, filters.sortOrder]);
 
@@ -142,8 +143,9 @@ export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndex
     const removeFrom = useCallback((key: ArrayFilterKey, value: string) => setFilters((p) => ({ ...p, [key]: p[key].filter((v) => v !== value) })), [setFilters]);
     const setShared = useCallback(<K extends ArrayFilterKey>(key: K, value: ISharedFilters[K]) => setFilters((p) => ({ ...p, [key]: value })), [setFilters]);
     // Ownership, sorting, and view mode define scope or presentation and remain intact.
-    const clearFilters = useCallback(() => setFilters((p) => ({ ...p, search: "", ...EMPTY_SHARED_FILTERS })), [setFilters]);
-    const activeFilterCount = countSharedFilters(filters) + (filters.search ? 1 : 0);
+    // Source is a filter like the notes select on /operators: it counts, chips, and clears.
+    const clearFilters = useCallback(() => setFilters((p) => ({ ...p, search: "", source: "any", ...EMPTY_SHARED_FILTERS })), [setFilters]);
+    const activeFilterCount = countSharedFilters(filters) + (filters.search ? 1 : 0) + (filters.source !== "any" ? 1 : 0);
 
     return {
         filters,

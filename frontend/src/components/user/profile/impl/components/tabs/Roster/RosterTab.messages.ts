@@ -72,6 +72,14 @@ export const messages = {
         text: "Showing {shown} of {total} operators. Scroll to load more.",
         description: "Footer under the roster grid while more cards are still to be loaded.",
     },
+    "profile.roster.chips.source.headhunting": {
+        text: "Headhunting only",
+        description: "Active-filter chip when the roster is narrowed to gacha (headhunting or recruitment) operators.",
+    },
+    "profile.roster.chips.source.welfare": {
+        text: "Welfare only",
+        description: "Active-filter chip when the roster is narrowed to operators the game gives away.",
+    },
 } satisfies MessageMap;
 
 // `dynamic`: the sort names are also resolved through the SORT_LABELS table as

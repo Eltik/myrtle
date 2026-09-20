@@ -5,7 +5,7 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { PROFILE_STICKY_OFFSET_PX } from "../../ProfileTabs";
 import type { messages } from "./RosterFilters.messages";
-import type { OwnershipFilter } from "./types";
+import type { OwnershipFilter, SourceFilter } from "./types";
 
 /** A key in `RosterFilters.messages.ts`; resolved by the panel below. */
 type MessageKey = keyof typeof messages & string;
@@ -16,6 +16,8 @@ interface IRosterFiltersProps {
     onChange: <K extends ArrayFilterKey>(key: K, value: ISharedFilters[K]) => void;
     ownership: OwnershipFilter;
     onOwnershipChange: (v: OwnershipFilter) => void;
+    source: SourceFilter;
+    onSourceChange: (v: SourceFilter) => void;
     onClearAll: () => void;
     hasActiveFilters: boolean;
     collapsed: boolean;
@@ -29,12 +31,29 @@ const OWNERSHIP_OPTIONS: { value: OwnershipFilter; labelKey: MessageKey }[] = [
     { value: "all", labelKey: "profile.roster.filters.all" },
 ];
 
+const SOURCE_OPTIONS: { value: SourceFilter; labelKey: MessageKey }[] = [
+    { value: "any", labelKey: "profile.roster.filters.source.any" },
+    { value: "headhunting", labelKey: "profile.roster.filters.source.headhunting" },
+    { value: "welfare", labelKey: "profile.roster.filters.source.welfare" },
+];
+
 export function RosterFilters(props: IRosterFiltersProps) {
     const t: TypedT<typeof messages> = useT("user");
     const ownershipOptions = OWNERSHIP_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
+    const sourceOptions = SOURCE_OPTIONS.map((o) => ({ value: o.value, label: t(o.labelKey) }));
     return (
         <FilterPanel collapsed={props.collapsed} onToggle={props.onToggle} hasActiveFilters={props.hasActiveFilters} onClearAll={props.onClearAll} activeFilterCount={props.activeFilterCount} ariaLabel={t("profile.roster.filters.aria")} stickyOffset={PROFILE_STICKY_OFFSET_PX}>
-            <OperatorFilterFields filters={props.filters} options={props.options} onChange={props.onChange} basicLeading={<TagRow label={t("profile.roster.filters.ownership")} options={ownershipOptions} value={props.ownership} onChange={props.onOwnershipChange} />} />
+            <OperatorFilterFields
+                filters={props.filters}
+                options={props.options}
+                onChange={props.onChange}
+                basicLeading={
+                    <>
+                        <TagRow label={t("profile.roster.filters.ownership")} options={ownershipOptions} value={props.ownership} onChange={props.onOwnershipChange} />
+                        <TagRow label={t("profile.roster.filters.source")} options={sourceOptions} value={props.source} onChange={props.onSourceChange} />
+                    </>
+                }
+            />
         </FilterPanel>
     );
 }
