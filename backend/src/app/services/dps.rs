@@ -109,10 +109,8 @@ fn build_list_entries(
                             })
                             .unzip()
                     }
-                    // Operator absent from game data entirely - advertise nothing.
                     None => (Vec::new(), Vec::new()),
                 };
-            // Keep default_module consistent: if it's been filtered out, drop it.
             let default_module = if available_modules.contains(&formula.default_module) {
                 formula.default_module
             } else {
@@ -177,7 +175,6 @@ pub struct RequestConditionals {
 #[serde(rename_all = "camelCase")]
 pub struct CalculateRequest {
     pub operator_id: String,
-    // Operator config
     pub promotion: Option<i32>,
     pub level: Option<i32>,
     pub potential: Option<i32>,
@@ -188,16 +185,12 @@ pub struct CalculateRequest {
     pub skill_level: Option<i32>,
     pub module_index: Option<i32>,
     pub module_level: Option<i32>,
-    // Enemy
     pub defense: Option<f64>,
     pub res: Option<f64>,
-    // Buffs
     pub buffs: Option<RequestBuffs>,
     pub shred: Option<RequestShred>,
-    // Targets
     pub targets: Option<i32>,
     pub sp_boost: Option<f32>,
-    // Conditionals
     pub conditionals: Option<RequestConditionals>,
     pub all_cond: Option<bool>,
 }

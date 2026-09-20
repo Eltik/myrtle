@@ -7,7 +7,6 @@ pub use migrations::run_migrations;
 pub use pool::create_pool;
 use sqlx::PgPool;
 
-/// Initialize database: create pool, run migrations, seed data, return pool
 pub async fn init(database_url: &str) -> Result<PgPool, sqlx::Error> {
     crate::core::startup::step("connect");
     let pool = create_pool(database_url).await?;

@@ -621,10 +621,7 @@ pub async fn sync_data_raw(
     read_body(response, "yostar::sync_data").await
 }
 
-/// Convenience wrapper over [`sync_data_raw`] that parses the body into a
-/// `serde_json::Value`. Use this for downstream extractors like
-/// [`saved_replay_targets`]; if you need both a typed view and raw access,
-/// call [`sync_data_raw`] directly and parse twice.
+/// [`sync_data_raw`] parsed to a `Value`; [`saved_replay_targets`] reads this.
 pub async fn sync_data(
     client: &Client,
     session: &mut AuthSession,
@@ -669,24 +666,9 @@ fn collect_replay_flags(
     }));
 }
 
-/// One per-player pipeline: discover via syncData -> harvest only the stages
-/// that actually have a saved replay. This is the safe-by-construction path -
-/// no 5516 misses, traffic shape matches the live client.
-///
-/// Scale across players by spawning one task per session:
-/// ```ignore
-/// let sem = Arc::new(Semaphore::new(64));   // cap network fan-out
-/// let mut set = tokio::task::JoinSet::new();
-/// for (uid, mut session) in players {
-///     let permit = sem.clone().acquire_owned().await?;
-///     let client = client.clone();
-///     set.spawn(async move {
-///         let _permit = permit;
-///         collect_player_replays(&client, &mut session, server,
-///             &Default::default(), |_, _, _| {}).await
-///     });
-/// }
-/// ```
+/// Discover via syncData, then harvest only the stages with a saved replay: no
+/// 5516 misses, and the traffic shape matches the live client. Fan out one task
+/// per session behind a Semaphore(64).
 pub async fn collect_player_replays<F>(
     client: &Client,
     session: &mut AuthSession,

@@ -49,7 +49,6 @@ fn etag_response(cached: CachedJson, cache_control: &str, headers: &HeaderMap) -
 /// `GET /i18n/manifest` - enabled locales and the current content hash of each
 /// namespace. Short TTL: this is the only read that has to go stale fast,
 /// because publishing a new hash here is what makes a saved edit visible.
-/// The locales on offer and the content hash of each namespace.
 ///
 /// A client reads this first, then fetches the catalogs it needs at the hashes
 /// named here. Public and unauthenticated.
@@ -81,10 +80,6 @@ pub async fn manifest(
 /// `hash` comes from the manifest and exists to make the URL change when the
 /// content does. Pass `latest` to fetch the current catalog without consulting
 /// the manifest first (useful in development; never cached hard).
-/// One namespace of one locale, at one content hash.
-///
-/// The hash is in the path so the response is immutable: a changed catalog is a
-/// different URL, which is what lets this be cached indefinitely.
 #[utoipa::path(
     get,
     path = "/i18n/{locale}/{namespace}/{hash}",

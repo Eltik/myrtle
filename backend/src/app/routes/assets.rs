@@ -773,7 +773,6 @@ macro_rules! indexed_asset_routes {
     };
 }
 
-// `/banner-image/{pool_id}`: gacha banner art by pool id.
 indexed_asset_routes!(
     banner_image_impl,
     banner_image,
@@ -784,7 +783,6 @@ indexed_asset_routes!(
     "pool_id",
     " Gacha banner art, by gacha pool id."
 );
-// `/event-image/{act_id}`: event art by activity id.
 indexed_asset_routes!(
     event_image_impl,
     event_image,
@@ -795,7 +793,6 @@ indexed_asset_routes!(
     "act_id",
     " Event art, by activity id."
 );
-// `/brand-kv/{kv_id}`: skin brand key visual.
 indexed_asset_routes!(
     brand_kv_impl,
     brand_kv,
@@ -806,7 +803,6 @@ indexed_asset_routes!(
     "kv_id",
     " Skin brand key visual."
 );
-// `/brand-logo/{brand_id}`: skin brand logo.
 indexed_asset_routes!(
     brand_logo_impl,
     brand_logo,

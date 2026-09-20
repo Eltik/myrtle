@@ -143,10 +143,8 @@ pub fn calculate_dps(
     let op_id = operator.id.as_deref()?;
     let formula = FORMULAS.get(op_id)?;
 
-    // Create OperatorData from game data
     let data = OperatorData::new(operator.clone());
 
-    // Create OperatorUnit with resolved stats
     let mut unit = OperatorUnit::new(
         data,
         params,
@@ -166,32 +164,25 @@ pub fn calculate_dps(
 
     let shredded = apply_shreds(enemy, &unit.shreds);
 
-    // Get the skill formula for current skill index
     let skill_key = unit.skill_index.to_string();
     let skill_formula = formula.skills.get(&skill_key)?;
 
-    // Calculate skill DPS
-    // Save and zero out buff_fragile before calling skill_dps - operators should not
-    // see external fragile (matches Python behavior where buff_fragile=0 during skill_dps).
-    // Fragile is applied externally after the call.
+    // buff_fragile is 0 during skill_dps in the Python reference: the operator never
+    // sees external fragile, it is multiplied on after the call.
     let external_fragile = unit.buff_fragile;
 
     unit.buff_fragile = 0.0;
     let skill_dps = calculate_skill_dps(&unit, skill_formula, &shredded);
 
-    // Apply fragile externally (always last)
     let skill_dps = skill_dps * (1.0 + external_fragile);
 
-    // Total damage
     let total_damage = if unit.skill_duration > 0.0 {
         skill_dps * unit.skill_duration
     } else {
         skill_dps
     };
 
-    // Average DPS (cycle including downtime)
     let average_dps = if unit.skill_duration > 0.0 && unit.skill_cost > 0 {
-        // Calculate off-skill DPS (basic attack)
         let off_skill_dps =
             unit.normal_attack(&shredded, None, None, None) * (1.0 + unit.buff_fragile);
         let sp_time = f64::from(unit.skill_cost) / (1.0 + f64::from(unit.sp_boost));

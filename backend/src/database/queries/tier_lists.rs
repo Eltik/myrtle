@@ -166,7 +166,6 @@ pub async fn create_version(
     .await
 }
 
-/// Update tier list metadata
 pub async fn update(
     pool: &PgPool,
     id: Uuid,
@@ -180,7 +179,6 @@ pub async fn update(
     .fetch_one(pool).await
 }
 
-/// List tier lists created by a specific user
 pub async fn find_by_user(pool: &PgPool, user_id: Uuid) -> Result<Vec<TierList>, sqlx::Error> {
     sqlx::query_as::<_, TierList>(
         "SELECT * FROM tier_lists WHERE created_by = $1 AND is_active = true ORDER BY updated_at DESC"
@@ -507,7 +505,6 @@ pub async fn latest_version(pool: &PgPool, tier_list_id: Uuid) -> Result<Option<
         .await
 }
 
-/// Get tier list stats
 pub async fn get_stats(
     pool: &PgPool,
     tier_list_id: Uuid,

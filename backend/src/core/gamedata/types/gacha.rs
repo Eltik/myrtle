@@ -134,7 +134,6 @@ pub struct RecruitTimeEntry {
 pub struct RecruitPool {
     #[serde(alias = "RecruitTimeTable")]
     pub recruit_time_table: Vec<RecruitTimeEntry>,
-    // Add other fields as needed
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

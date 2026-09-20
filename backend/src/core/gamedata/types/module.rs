@@ -6,10 +6,6 @@ use super::material::ItemType;
 use super::serde_helpers::deserialize_null_default;
 use super::serde_helpers::{deserialize_fb_map, deserialize_fb_map_option};
 
-// ============================================================================
-// Enums
-// ============================================================================
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 #[derive(Default, TS, utoipa::ToSchema)]
@@ -41,11 +37,6 @@ pub enum ModuleTarget {
     Unknown,
 }
 
-// ============================================================================
-// Nested Structs
-// ============================================================================
-
-/// Raw module item cost from game data (uses lowercase field names)
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -59,7 +50,6 @@ pub struct RawModuleItemCost {
     pub item_type: ItemType,
 }
 
-/// Processed module item cost with additional fields
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -355,10 +345,6 @@ pub struct Module {
     pub char_equip_order: i32,
 }
 
-// ============================================================================
-// Container Types
-// ============================================================================
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -382,11 +368,9 @@ pub struct RawModules {
     pub mission_list: HashMap<String, Mission>,
     pub sub_prof_dict: HashMap<String, SubProfession>,
     pub char_equip: HashMap<String, Vec<String>>,
-    // equip_track_dict has a complex nested structure; kept as raw JSON.
     pub equip_track_dict: Vec<serde_json::Value>,
 }
 
-/// `BattleEquip` is a map of module IDs to their battle data
 pub type BattleEquip = HashMap<String, ModuleData>;
 
 // ============================================================================
@@ -405,7 +389,7 @@ pub struct UniequipTableFile {
     #[serde(deserialize_with = "deserialize_fb_map", default)]
     pub char_equip: HashMap<String, Vec<String>>,
     #[serde(default)]
-    pub equip_track_dict: Vec<serde_json::Value>, // Complex nested structure
+    pub equip_track_dict: Vec<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]

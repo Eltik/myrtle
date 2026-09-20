@@ -33,7 +33,6 @@ fn parse_basic_info(text: &str) -> BasicInfo {
             continue;
         };
         match key {
-            // English
             "Code Name" | "代号" => info.code_name = value.to_owned(),
             "Gender" | "性别" => info.gender = parse_gender(value),
             "Combat Experience" | "战斗经验" => info.combat_experience = value.to_owned(),
@@ -98,7 +97,6 @@ fn parse_gender(s: &str) -> OperatorGender {
 }
 
 fn parse_birthplace(s: &str) -> OperatorBirthPlace {
-    // Try CN lookup first (most common in raw data), then fall back to serde for EN
     match s {
         "未公开" | "Undisclosed" => OperatorBirthPlace::Undisclosed,
         "东国" | "東国" | "Higashi" => OperatorBirthPlace::Higashi,

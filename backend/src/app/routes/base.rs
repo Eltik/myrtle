@@ -42,7 +42,6 @@ async fn viewer_id(state: &AppState, auth: &MaybeAuthUser) -> Option<uuid::Uuid>
 // at all, so a gate further in would not see that request.
 
 /// The player's real stationed base, as the planner's starting draft.
-/// A player's current RIIC base layout as synced from the game.
 /// Runs the shared privacy gate: another player's data is readable only when
 /// their profile is public, and a player always sees their own.
 #[utoipa::path(
@@ -173,9 +172,6 @@ pub async fn optimize_layout(
 /// arriving while the search runs joins it instead of starting another. The
 /// admission permit is taken inside the build task, so a joiner never holds
 /// one and a cache hit never runs a search.
-/// Build a shift rotation over a player's base.
-///
-/// Same CPU admission control as `/base/optimize`.
 /// Runs the shared privacy gate: another player's data is readable only when
 /// their profile is public, and a player always sees their own.
 #[utoipa::path(
@@ -236,9 +232,6 @@ fn request_hash<T: serde::Serialize>(body: &T) -> u64 {
 
 /// Facility definitions from `building_data`. Roster-independent and stable, so
 /// it needs no auth and the client can cache it hard.
-/// Every RIIC room, facility level and skill the planner knows about.
-///
-/// Static reference data; it changes only when game data does.
 #[utoipa::path(
     get,
     path = "/base/catalog",
@@ -257,8 +250,6 @@ pub async fn get_catalog(State(state): State<AppState>) -> Json<CatalogResponse>
 /// The signed-in user saving their OWN account facts (recruit slots etc.).
 /// Facts always attach to the caller's profile - there is no setting another
 /// player's facts; viewers get per-request overrides instead.
-/// Record the account facts the planner cannot read from synced data.
-///
 /// With no declaration the never-guess default stands and the dependent skills
 /// price at zero.
 #[utoipa::path(

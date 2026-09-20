@@ -9,14 +9,12 @@ use crate::core::gamedata::{
     },
 };
 
-/// Build a fully-resolved level entry by overlaying `entry`'s defined fields
-/// on top of `base`. Hypergryph's `enemy_database.json` only fills in the
-/// fields a higher difficulty tier (or boss phase) explicitly overrides;
-/// everything else relies on `MaybeValue.defined == false` falling through to
-/// the previous level. If we drop that flag we end up serving `ASPD=0`,
-/// `weight=0`, empty skill lists, etc. for every non-zero-indexed level -
-/// which is wrong. Merging here means the frontend receives a complete,
-/// self-contained attribute set per level/phase.
+/// Overlay `entry`'s defined fields on `base`. `enemy_database.json` only
+/// fills the fields a higher difficulty tier (or boss phase) overrides;
+/// everything else is `MaybeValue.defined == false` and falls through to the
+/// previous level. Drop that flag and every non-zero level serves `ASPD=0`,
+/// `weight=0` and an empty skill list, so the merge happens here and each
+/// level/phase leaves complete.
 fn merge_level_entry(
     base: Option<&EnemyLevelStats>,
     entry: &RawEnemyLevelEntry,

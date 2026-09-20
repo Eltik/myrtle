@@ -40,7 +40,6 @@ pub struct OperatorData {
     pub is_physical: bool,
     pub is_ranged: bool,
 
-    // Attack values
     pub atk: OperatorAtk,
     pub atk_potential: PotentialValues,
 
@@ -48,17 +47,14 @@ pub struct OperatorData {
 
     pub atk_trust: f64,
 
-    // ASPD values
     pub aspd_potential: PotentialValues,
     pub aspd_module: Vec<ModuleValues>,
     pub aspd_trust: f64,
 
-    // Skill values
     pub skill_parameters: Vec<Vec<Vec<f64>>>,
     pub skill_durations: Vec<Vec<f64>>,
     pub skill_costs: Vec<Vec<i32>>,
 
-    // Talent values
     pub has_second_talent: bool,
 
     pub talent1_parameters: Vec<TalentParameters>,
@@ -67,11 +63,10 @@ pub struct OperatorData {
     pub talent1_defaults: Vec<f64>,
     pub talent2_defaults: Vec<f64>,
 
-    // Module values
     pub talent1_module_extra: Vec<OperatorModuleExtra>,
     pub talent2_module_extra: Vec<OperatorModuleExtra>,
 
-    // Summon-specific - stores data for all drones (index 0 = drone 1, etc.)
+    // one entry per drone, index 0 = drone 1
     pub drone_atk: Vec<OperatorAtk>,
     pub drone_atk_interval: Vec<f32>,
 }
@@ -284,8 +279,7 @@ impl OperatorData {
         let mut aspd_module: Vec<ModuleValues> = Vec::new();
 
         for op_module in &operator.modules {
-            // Only include ADVANCED type modules (skip INITIAL which is just base equipment)
-            // This matches Python's behavior where available_modules only contains real modules
+            // INITIAL is the base equipment, not a module; Python's available_modules skips it too.
             if op_module.module.module_type != ModuleType::Advanced {
                 continue;
             }
@@ -332,8 +326,7 @@ impl OperatorData {
             );
         }
 
-        // Store all drones' data for skill-dependent selection
-        // Each skill may use a different drone (e.g., Magallan S1/S2/S3 use drone1/drone2/drone3)
+        // each skill may use a different drone (Magallan S1/S2/S3 = drone1/2/3)
         let mut drone_atk: Vec<OperatorAtk> = Vec::new();
         let mut drone_atk_interval: Vec<f32> = Vec::new();
 
@@ -354,7 +347,6 @@ impl OperatorData {
 
             drone_atk.push(OperatorAtk { e0, e1, e2 });
 
-            // Get attack interval for this drone
             let base_attack_time = drone_data
                 .phases
                 .first()

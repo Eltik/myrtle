@@ -288,7 +288,6 @@ fn small_subsets(pool: &[String], size: usize) -> Vec<Vec<String>> {
     let mut idx: Vec<usize> = (0..size).collect();
     loop {
         out.push(idx.iter().map(|&i| pool[i].clone()).collect());
-        // Advance the combination indices.
         let mut i = size;
         loop {
             if i == 0 {
@@ -803,7 +802,6 @@ fn rotation_core(
     let cc_squad2 = cc_plan.squad2(operators, building_data, registry, &assigned, &team_rooms);
     assigned.extend(cc_squad2.iter().cloned());
 
-    // Power plants: two squads of the best leftover power specialists per plant.
     let power_plan = build_power_plan(
         operators,
         building,

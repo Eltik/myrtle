@@ -39,8 +39,7 @@ pub(crate) fn json_response(cached: CachedJson, headers: &HeaderMap) -> Response
         .into_response()
 }
 
-/// `GET /static/{resource}` - default (EN) game-data table.
-/// One whole game-data table, verbatim.
+/// One whole game-data table from the default (EN) server, verbatim.
 ///
 /// The resource names are fixed; `tests/api_shape_test.rs` pins the JSON shape
 /// of every one of them.
@@ -71,7 +70,6 @@ pub async fn get_static(
 }
 
 /// `GET /{server}/static/{resource}` - per-server game-data table.
-/// One whole game-data table, verbatim.///
 /// The `/{server}` form reads that server's game data; the bare form reads the
 /// default server.
 #[utoipa::path(

@@ -8,7 +8,6 @@ use crate::core::hypergryph::fetch::FetchError;
 
 #[derive(Debug, Error)]
 pub enum ApiError {
-    // Client errors
     #[error("{0}")]
     BadRequest(String),
     #[error("unauthorized")]
@@ -24,7 +23,6 @@ pub enum ApiError {
     #[error("validation failed")]
     ValidationFailed(Vec<FieldError>),
 
-    // Server errors
     #[error("internal error")]
     Internal(#[from] anyhow::Error),
     #[error("service unavailable")]

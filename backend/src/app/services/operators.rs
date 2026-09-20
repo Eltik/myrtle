@@ -434,10 +434,6 @@ pub async fn get_build_stats(
         },
     );
 
-    // Group the flat histogram rows by key and zero-fill 0..3, so a client
-    // renders a fixed four-bucket strip and never has to decide whether an
-    // absent level means zero users or missing data. It always means zero here:
-    // the aggregate emits a row only where at least one user sits.
     let mut mastery_by_index: HashMap<i16, Vec<LevelBucket>> = HashMap::new();
     for row in mastery_rows {
         if let Ok(index) = row.key.parse::<i16>() {

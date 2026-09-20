@@ -81,8 +81,9 @@ fn fb_list_names(list: &Value, field: &str) -> HashMap<String, String> {
 }
 
 /// Recursively collect every object that carries a `levelId`/`LevelId` plus a
-/// `code`/`name`, keyed by lowercased level id. Robust to the differing shapes
-/// of the roguelike (`Details[].Stages[]`) and sandbox (`stageDatas[]`) tables.
+/// `code`/`name`, keyed by lowercased level id. Shape-agnostic on purpose: the
+/// roguelike table nests them as `Details[].Stages[]`, the sandbox table as
+/// `stageDatas[]`.
 fn collect_level_named(v: &Value, out: &mut HashMap<String, (String, String)>) {
     match v {
         Value::Object(map) => {

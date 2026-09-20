@@ -3,12 +3,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub sub: String,    // User internal ID
-    pub uid: String,    // Arknights UID
-    pub server: String, // Game server
-    pub role: String,   // User role
-    pub exp: u64,       // Expiration timestamp
-    pub iat: u64,       // Issued at
+    pub sub: String, // User internal ID
+    pub uid: String, // Arknights UID
+    pub server: String,
+    pub role: String,
+    pub exp: u64,
+    pub iat: u64,
 }
 
 pub fn create_token(

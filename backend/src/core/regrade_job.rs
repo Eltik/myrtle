@@ -157,7 +157,6 @@ async fn regrade_one(
     Ok(overall)
 }
 
-/// Runs one full pass over the users table. Returns (successes, failures).
 /// One full regrade pass, shared by the loop and by `core::refresh`.
 ///
 /// Marked HEAVY in the task registry: this walks the entire `users` table and
@@ -207,7 +206,7 @@ async fn run_pass(state: &AppState, cfg: &Cfg) -> (u64, u64) {
         cursor = page.last().map(|(id, _)| *id);
 
         for (user_id, uid) in page {
-            // Wait for an available slot before spawning. Bounds memory + DB usage.
+            // Permit before spawn: bounds memory and open DB connections
             let Ok(permit) = sem.clone().acquire_owned().await else {
                 break;
             };

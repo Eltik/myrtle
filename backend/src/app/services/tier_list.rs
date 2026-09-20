@@ -113,8 +113,7 @@ fn assemble_details(
         .collect()
 }
 
-/// Check if a user can perform `required` action on a tier list.
-/// Returns Ok(()) or Err(Forbidden).
+/// Global role, then ownership, then the per-list grant: the first that covers `required` admits.
 pub async fn check_permission(
     state: &AppState,
     tier_list: &TierList,
@@ -122,19 +121,16 @@ pub async fn check_permission(
     role: GlobalRole,
     required: Permission,
 ) -> Result<(), ApiError> {
-    // Global admins can do anything
     if let Some(global_perm) = role.global_tier_permission()
         && global_perm.grants(required)
     {
         return Ok(());
     }
 
-    // Owner has Admin permission
     if tier_list.created_by == Some(user_id) {
         return Ok(());
     }
 
-    // Check per-list permission
     let perm = get_user_permission(&state.db, tier_list.id, user_id).await?;
     match perm {
         Some(p) => {
@@ -280,7 +276,6 @@ pub async fn create(
     description: Option<&str>,
     list_type: &str,
 ) -> Result<TierList, ApiError> {
-    // Community lists: 10-per-user limit
     if list_type == "community" {
         let count = count_by_user(&state.db, user_id).await?;
         if count >= 10 {

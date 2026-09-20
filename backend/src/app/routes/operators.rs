@@ -16,8 +16,8 @@ use crate::core::gamedata::types::skin::SkinData;
 use crate::core::gamedata::types::voice::Voices;
 use crate::core::hypergryph::constants::Server;
 
-/// `GET /operators/index` - default (EN) operator index.
-/// Every operator, in the compact form the roster and list screens use.
+/// Every operator on the default (EN) server, in the compact form the roster
+/// and list screens use.
 #[utoipa::path(
     get,
     path = "/operators/index",
@@ -36,7 +36,6 @@ pub async fn index(
 }
 
 /// `GET /{server}/operators/index` - per-server operator index.
-/// Every operator, in the compact form the roster and list screens use.///
 /// The `/{server}` form reads that server's game data; the bare form reads the
 /// default server.
 #[utoipa::path(
@@ -61,7 +60,6 @@ pub async fn index_srv(
 }
 
 /// `GET /operators/ownership` - default-server operator ownership rates.
-/// How many tracked players own each operator.
 #[utoipa::path(
     get,
     path = "/operators/ownership",
@@ -80,7 +78,6 @@ pub async fn ownership(
 }
 
 /// `GET /{server}/operators/ownership` - per-server operator ownership rates.
-/// How many tracked players own each operator.///
 /// The `/{server}` form reads that server's game data; the bare form reads the
 /// default server.
 #[utoipa::path(
@@ -132,8 +129,6 @@ pub async fn build_stats(
 }
 
 /// `GET /{server}/operators/{id}/build-stats` - per-server community defaults.
-/// How tracked players actually build one operator: skill, mastery and module
-/// choices, as proportions.///
 /// The `/{server}` form reads that server's game data; the bare form reads the
 /// default server.
 #[utoipa::path(
@@ -160,7 +155,6 @@ pub async fn build_stats_srv(
 }
 
 /// `GET /upcoming` - operators on CN not yet on the default (EN) server.
-/// Operators released on CN but not yet on this server.
 #[utoipa::path(
     get,
     path = "/upcoming",
@@ -179,7 +173,6 @@ pub async fn upcoming(
 }
 
 /// `GET /{server}/upcoming` - operators on `{server}` not yet on the default server.
-/// Operators released on CN but not yet on this server.///
 /// The `/{server}` form reads that server's game data; the bare form reads the
 /// default server.
 #[utoipa::path(
@@ -203,10 +196,11 @@ pub async fn upcoming_srv(
     Ok(Json(get_upcoming(&state, server).await?))
 }
 
-/// `GET /operators/{id}` - one enriched operator. Resolves across loaded servers
-/// (default first, then CN/others) and tags the response with the `server` it was
-/// found on, so the client fetches once for both global and upcoming operators.
 /// One operator's full record: stats, talents, skills, modules and handbook.
+///
+/// Resolves across loaded servers (default first, then CN/others) and tags the
+/// response with the `server` it was found on, so the client fetches once for
+/// both global and upcoming operators.
 #[utoipa::path(
     get,
     path = "/operators/{id}",
@@ -234,7 +228,6 @@ pub async fn detail(
 }
 
 /// `GET /{server}/operators/{id}` - one enriched operator from `{server}`.
-/// One operator's full record: stats, talents, skills, modules and handbook.///
 /// The `/{server}` form reads that server's game data; the bare form reads the
 /// default server.
 #[utoipa::path(
@@ -264,8 +257,8 @@ pub async fn detail_srv(
     Ok(json_response(cached, &headers))
 }
 
-/// `GET /voices/{id}` - one operator's voice lines (default server).
-/// An operator's voice lines, with the audio URLs for each language.
+/// An operator's voice lines on the default server, with the audio URLs for
+/// each language.
 #[utoipa::path(
     get,
     path = "/voices/{id}",
@@ -291,7 +284,6 @@ pub async fn voices_detail(
 }
 
 /// `GET /{server}/voices/{id}` - one operator's voice lines from `{server}`.
-/// An operator's voice lines, with the audio URLs for each language.///
 /// The `/{server}` form reads that server's game data; the bare form reads the
 /// default server.
 #[utoipa::path(
@@ -318,7 +310,6 @@ pub async fn voices_detail_srv(
 }
 
 /// `GET /skins/{id}` - one operator's skins (default server).
-/// One operator's skins.
 #[utoipa::path(
     get,
     path = "/skins/{id}",
@@ -344,7 +335,6 @@ pub async fn skins_detail(
 }
 
 /// `GET /{server}/skins/{id}` - one operator's skins from `{server}`.
-/// One operator's skins.///
 /// The `/{server}` form reads that server's game data; the bare form reads the
 /// default server.
 #[utoipa::path(

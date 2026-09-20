@@ -52,7 +52,6 @@ pub struct EncounteredEnemiesResponse {
 /// `GET /enemies/{id}` - one enemy handbook record plus the race lookup table
 /// (default server). Replaces the enemy-detail page's full `/static/enemies`
 /// fetch.
-/// One enemy's handbook record and stats.
 #[utoipa::path(
     get,
     path = "/enemies/{id}",
@@ -80,7 +79,6 @@ pub async fn enemy_detail(
 }
 
 /// `GET /{server}/enemies/{id}` - per-server variant.
-/// One enemy's handbook record and stats.///
 /// The `/{server}` form reads that server's game data; the bare form reads the
 /// default server.
 #[utoipa::path(
@@ -112,7 +110,6 @@ pub async fn enemy_detail_srv(
 
 /// `GET /enemies/{id}/stages` - the "Appears In" list for one enemy (default
 /// server). Replaces the full `/static/enemy-stages` map fetch.
-/// Every stage this enemy appears in.
 #[utoipa::path(
     get,
     path = "/enemies/{id}/stages",
@@ -140,7 +137,6 @@ pub async fn enemy_stages(
 }
 
 /// `GET /{server}/enemies/{id}/stages` - per-server variant.
-/// Every stage this enemy appears in.///
 /// The `/{server}` form reads that server's game data; the bare form reads the
 /// default server.
 #[utoipa::path(
@@ -249,7 +245,6 @@ pub struct CommunityEnemyAverageResponse {
 
 /// Community-wide average enemies-encountered figure, used to draw the
 /// "community average" marker on a user's enemy-handbook progress bar.
-/// The community-wide average for enemy encounters, as a comparison baseline.
 #[utoipa::path(
     get,
     path = "/encountered-enemies/community-average",

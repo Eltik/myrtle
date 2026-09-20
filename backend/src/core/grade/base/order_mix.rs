@@ -132,12 +132,10 @@ fn order_gold(effects: &[OrderEffect], size: OrderSize) -> f64 {
     f64::from(size.gold + defaulted_bonus)
 }
 
-/// LMD per minute of a post drawing `mix` with `effects` applied.
 fn lmd_per_minute(effects: &[OrderEffect], mix: [f64; 3]) -> f64 {
     per_minute(mix, |size| order_lmd(effects, size))
 }
 
-/// Pure Gold per minute of a post drawing `mix` with `effects` applied.
 fn gold_per_minute(effects: &[OrderEffect], mix: [f64; 3]) -> f64 {
     per_minute(mix, |size| order_gold(effects, size))
 }

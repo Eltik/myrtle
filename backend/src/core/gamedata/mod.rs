@@ -318,7 +318,6 @@ pub fn init_game_data(
     startup::step("modules");
     let modules = enrich_modules_global(&raw_modules, &battle_equip, &materials, &assets);
 
-    // Voice enrichment
     startup::step("voices");
     let enriched_char_words =
         enrich_all_voices(&voice_file.char_words, &voice_file.voice_lang_dict);
@@ -331,8 +330,6 @@ pub fn init_game_data(
         ..Default::default()
     };
 
-    // Map battle SoundFX banks (deploy/attack/skill sounds, voice barks) to
-    // operators by char id, resolving each asset to a playable URL.
     startup::step("battle audio");
     let op_ids: std::collections::HashSet<&str> =
         raw_operators.keys().map(String::as_str).collect();
@@ -393,7 +390,6 @@ pub fn init_game_data(
             &roguelike_file,
         );
 
-        // Inverted enemy -> stages index, parsed from per-stage level files.
         let enemies_by_stage = build_enemy_stage_index(&levels_dir, data_dir, &classifier);
         let (index, modes) = build_stage_index(
             assets_dir,

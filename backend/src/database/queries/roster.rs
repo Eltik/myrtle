@@ -4,7 +4,6 @@ use uuid::Uuid;
 use crate::database::models::roster::RosterEntry;
 use crate::database::models::roster::SupportUnit;
 
-/// Get full roster for a user
 pub async fn get_roster(pool: &PgPool, user_id: Uuid) -> Result<Vec<RosterEntry>, sqlx::Error> {
     sqlx::query_as::<_, RosterEntry>("SELECT * FROM v_user_roster WHERE user_id = $1")
         .bind(user_id)
@@ -12,7 +11,6 @@ pub async fn get_roster(pool: &PgPool, user_id: Uuid) -> Result<Vec<RosterEntry>
         .await
 }
 
-/// Get a single operator for a user
 pub async fn get_operator(
     pool: &PgPool,
     user_id: Uuid,
@@ -27,7 +25,6 @@ pub async fn get_operator(
     .await
 }
 
-/// Sync full user data from game server
 #[allow(clippy::too_many_arguments)]
 pub async fn sync_user_data(
     pool: &PgPool,

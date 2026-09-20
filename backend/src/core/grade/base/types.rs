@@ -5,8 +5,7 @@ use crate::{core::gamedata::types::building::BuildingChar, database::models::ros
 
 #[derive(Clone)]
 pub struct UserBuilding {
-    /// How many factories, trading posts, power plants, and their levels.
-    /// Key = `slot_id` (e.g. "`slot_1`"), Value = room info.
+    /// One entry per built slot (`roomSlots` with state > 0 and level > 0).
     pub rooms: Vec<UserRoom>,
 }
 
@@ -82,7 +81,6 @@ pub fn live_morale_snapshot(
         .unwrap_or_default()
 }
 
-/// Map a manufacture `formulaId` to its production formula type.
 fn formula_from_id(id: &str) -> Option<String> {
     match id {
         "4" => Some("F_GOLD".to_string()),
@@ -227,7 +225,6 @@ impl UserBuilding {
             .sum()
     }
 
-    /// Is the building data present/non-empty?
     pub const fn is_empty(&self) -> bool {
         self.rooms.is_empty()
     }

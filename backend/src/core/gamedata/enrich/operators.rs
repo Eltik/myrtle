@@ -191,7 +191,6 @@ fn enrich_operator(id: &str, raw: &RawOperator, ctx: &EnrichCtx) -> Operator {
 fn resolve_drones(id: &str, raw: &RawOperator, drones: &HashMap<String, Drone>) -> Vec<Drone> {
     let mut result: Vec<Drone> = Vec::new();
 
-    // Strategy 1: display_token_dict
     if let Some(dict) = &raw.display_token_dict {
         for key in dict.keys() {
             if let Some(drone) = drones.get(key) {
@@ -200,7 +199,6 @@ fn resolve_drones(id: &str, raw: &RawOperator, drones: &HashMap<String, Drone>) 
         }
     }
 
-    // Strategy 2: skill override_token_key
     for skill in &raw.skills {
         if let Some(ref token_key) = skill.override_token_key
             && let Some(drone) = drones.get(token_key)
@@ -210,7 +208,6 @@ fn resolve_drones(id: &str, raw: &RawOperator, drones: &HashMap<String, Drone>) 
         }
     }
 
-    // Strategy 3: ID pattern fallback (if nothing found yet)
     if result.is_empty()
         && let Some(name_part) = id.split('_').nth(2)
     {

@@ -3,7 +3,6 @@ use uuid::Uuid;
 
 use crate::database::models::user::{User, UserCheckin, UserProfile};
 
-/// Create minimal user
 pub async fn create_user(pool: &PgPool, uid: &str, server_id: i16) -> Result<User, sqlx::Error> {
     sqlx::query_as::<_, User>("INSERT INTO users (uid, server_id) VALUES ($1, $2) RETURNING *")
         .bind(uid)
@@ -12,7 +11,6 @@ pub async fn create_user(pool: &PgPool, uid: &str, server_id: i16) -> Result<Use
         .await
 }
 
-/// Find user profile by Arknights UID
 pub async fn find_by_uid(pool: &PgPool, uid: &str) -> Result<Option<UserProfile>, sqlx::Error> {
     sqlx::query_as::<_, UserProfile>("SELECT * FROM v_user_profile WHERE uid = $1")
         .bind(uid)
@@ -43,7 +41,6 @@ pub async fn get_checkin_by_uid(
     .await
 }
 
-/// Find user profile by internal UUID
 pub async fn find_by_id(pool: &PgPool, id: Uuid) -> Result<Option<UserProfile>, sqlx::Error> {
     sqlx::query_as::<_, UserProfile>("SELECT * FROM v_user_profile WHERE id = $1")
         .bind(id)
@@ -88,7 +85,6 @@ pub async fn count_by_nickname(pool: &PgPool, query: Option<&str>) -> Result<i64
     .await
 }
 
-/// Find raw user by UID + server
 pub async fn find_raw_by_uid(
     pool: &PgPool,
     uid: &str,
@@ -101,7 +97,6 @@ pub async fn find_raw_by_uid(
         .await
 }
 
-/// Update user settings
 pub async fn update_settings(
     pool: &PgPool,
     user_id: Uuid,
@@ -152,7 +147,6 @@ pub async fn set_base_facts(
     Ok(())
 }
 
-/// Update user role
 pub async fn update_role(pool: &PgPool, user_id: Uuid, role: &str) -> Result<(), sqlx::Error> {
     sqlx::query("UPDATE users SET role = $2 WHERE id = $1")
         .bind(user_id)

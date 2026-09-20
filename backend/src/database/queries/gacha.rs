@@ -4,7 +4,6 @@ use uuid::Uuid;
 use crate::database::models::gacha::{GachaRecord, GachaStats};
 use crate::database::models::user::UserSettings;
 
-/// Batch insert gacha records via stored procedure
 pub async fn insert_batch(
     pool: &PgPool,
     user_id: Uuid,
@@ -18,8 +17,6 @@ pub async fn insert_batch(
     Ok(())
 }
 
-/// Get gacha history
-///
 /// All history queries order ties on `batch_index ASC, id ASC`: a multi-pull
 /// shares one `pull_timestamp`, and the in-game Headhunting History lists the
 /// batch `batch_index` 0->9 top-to-bottom in its newest-first view. Without the
@@ -54,7 +51,6 @@ pub async fn get_history(
     }
 }
 
-/// Get gacha stats for a user
 pub async fn get_stats(pool: &PgPool, user_id: Uuid) -> Result<Option<GachaStats>, sqlx::Error> {
     sqlx::query_as::<_, GachaStats>("SELECT * FROM v_gacha_stats WHERE user_id = $1")
         .bind(user_id)
@@ -78,10 +74,6 @@ pub async fn get_history_filtered(
 ) -> Result<(Vec<GachaRecord>, i64), sqlx::Error> {
     let order_sql = if order_desc { "DESC" } else { "ASC" };
 
-    // Build WHERE clause. Map gacha_type param:
-    //   "limited" -> ('limited','linkage')
-    //   "regular" -> ('normal','classic')
-    //   "special" -> ('single','boot')
     let gacha_types: Option<Vec<&'static str>> = gacha_type.as_deref().map(|gt| match gt {
         "limited" => vec!["limited", "linkage"],
         "regular" => vec!["normal", "classic"],
@@ -147,7 +139,6 @@ pub async fn get_all_for_user(
     .await
 }
 
-/// All pulls of a given char for the user
 pub async fn get_by_char_for_user(
     pool: &PgPool,
     user_id: Uuid,
@@ -193,7 +184,6 @@ pub async fn update_gacha_flags(
     store_gacha: Option<bool>,
     share_stats: Option<bool>,
 ) -> Result<UserSettings, sqlx::Error> {
-    // Ensure row exists
     let _ = get_or_create_settings(pool, user_id).await?;
     sqlx::query_as::<_, UserSettings>(
         "UPDATE user_settings SET \

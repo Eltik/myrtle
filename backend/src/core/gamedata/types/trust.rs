@@ -1,10 +1,6 @@
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-// ============================================================================
-// Nested Structs
-// ============================================================================
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -28,10 +24,6 @@ pub struct FavorFrame {
     #[serde(alias = "Data")]
     pub data: FavorFrameData,
 }
-
-// ============================================================================
-// Favor
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

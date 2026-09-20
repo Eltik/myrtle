@@ -117,8 +117,6 @@ async fn main() -> Result<()> {
         .await
         .context("failed to set session_replication_role")?;
 
-    // Pre-flight: ensure every target table is either empty or we have
-    // permission to truncate it.
     for &table in TABLES {
         let count: i64 = sqlx::query_scalar(&format!("SELECT COUNT(*) FROM {table}"))
             .fetch_one(&mut *tx)

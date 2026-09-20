@@ -1,6 +1,6 @@
 -- Expose the last-sync timestamp on v_user_profile. users.updated_at is
 -- bumped by trg_users_timestamp on every sync upsert, so it reflects when
--- the account was last synced to our DB — unlike the in-game last_online_ts.
+-- the account was last synced to our DB, unlike the in-game last_online_ts.
 -- CREATE OR REPLACE VIEW only allows appending columns, hence last position.
 CREATE OR REPLACE VIEW v_user_profile AS
 SELECT

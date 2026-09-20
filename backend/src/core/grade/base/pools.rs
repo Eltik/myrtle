@@ -131,20 +131,6 @@ fn flat_grant_unconditional(desc: &str, start: usize) -> bool {
     .any(|kw| window.contains(kw))
 }
 
-/// A simple deployed-tag counter: "for each <tag.X> ... Operator, <Resource>
-/// +P" (the Felvine generator; no cap, unlike the Sui faction counter).
-/// The deployment-independent pool grants a buff's TEXT carries beside the
-/// effect the parser owns: unconditional flat grants (Dusk's "Perception
-/// Information +10" rider, guarded so a parsed generator is never counted
-/// twice), morale-conditional grants at their steady-state weight, and
-/// dorm-occupancy counters settled against `dorm_occupants`. Faction and
-/// deployed-tag counters need the deployment and stay with their callers.
-/// One extractor for the live settlement, the dorm economies and the
-/// Control-Center grant bundles, so every path reads the same points.
-/// `current_morale` is the owner's REAL bar when the caller knows it (the live
-/// settlement, from the sync's last write): a morale-conditional grant
-/// then reads as the game shows it - all or nothing by the condition -
-/// instead of its steady-state time-share.
 /// The riders that grant per LEVEL of the owner's own room, on buffs whose
 /// primary effect is something else (Iris' aura: "for every level of the
 /// current Dormitory, 1 level of Dreamland"; Czerny's aura: "each Dormitory
@@ -168,6 +154,18 @@ fn recruit_slots_of(building: &UserBuilding) -> f64 {
         .fold(0.0, f64::max)
 }
 
+/// The deployment-independent pool grants a buff's TEXT carries beside the
+/// effect the parser owns: unconditional flat grants (Dusk's "Perception
+/// Information +10" rider, guarded so a parsed generator is never counted
+/// twice), morale-conditional grants at their steady-state weight, and
+/// dorm-occupancy counters settled against `dorm_occupants`. Faction and
+/// deployed-tag counters need the deployment and stay with their callers.
+/// One extractor for the live settlement, the dorm economies and the
+/// Control-Center grant bundles, so every path reads the same points.
+/// `current_morale` is the owner's REAL bar when the caller knows it (the live
+/// settlement, from the sync's last write): a morale-conditional grant
+/// then reads as the game shows it - all or nothing by the condition -
+/// instead of its steady-state time-share.
 fn text_grants(
     buff_id: &str,
     buff: &Buff,
@@ -221,6 +219,8 @@ fn text_grants(
     grants
 }
 
+/// A simple deployed-tag counter: "for each <tag.X> ... Operator, <Resource>
+/// +P" (the Felvine generator; no cap, unlike the Sui faction counter).
 static RE_TAG_GRANT: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
         r"for each <\$cc\.tag\.([a-z0-9_]+)>.{0,80}?Operator,\s*<\$cc\.(bd_[A-Za-z0-9_]+)>[^+]{0,40}?<@cc\.vup>\+([\d.]+)</>",

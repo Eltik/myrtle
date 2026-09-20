@@ -89,7 +89,6 @@ pub fn advanced_module_levels(
         .collect()
 }
 
-/// Index a roster by operator id for O(1) lookups.
 fn build_roster_map(roster: &[RosterEntry]) -> HashMap<&str, &RosterEntry> {
     roster.iter().map(|r| (r.operator_id.as_str(), r)).collect()
 }
@@ -161,7 +160,6 @@ pub fn grade_operator(
     average_dimensions(&build_dimensions(roster, static_op, favor, is_support))
 }
 
-/// Collapse labeled dimensions to their weight-normalized average.
 fn average_dimensions(dims: &[(DimensionKind, Dimension)]) -> f64 {
     let unlabeled: Vec<Dimension> = dims.iter().map(|(_, dim)| *dim).collect();
     weighted_average(&unlabeled)
@@ -207,38 +205,32 @@ fn build_dimensions(
 
     let mut dimensions: Vec<(DimensionKind, Dimension)> = vec![];
 
-    // Elite promotion progress
     if max_elite > 0.0 {
         let elite_score = f64::from(roster.elite) / max_elite;
         dimensions.push((DimensionKind::Elite, (WEIGHT_ELITE, elite_score)));
     }
 
-    // Level progress
     let level_score = cumulative_level_progress(roster, static_op);
     dimensions.push((
         DimensionKind::Level,
         (level_weight(&static_op.rarity), level_score),
     ));
 
-    // Skill level
     if !can_master && num_skills > 0 {
         let sl_score = f64::from(roster.skill_level - 1) / 6.0; // SL1=0, SL7=1.0
         dimensions.push((DimensionKind::SkillLevel, (WEIGHT_SKILL_LEVEL, sl_score)));
     }
 
-    // Mastery
     if can_master {
         let mastery_score = mastery_milestone_score(roster, num_skills);
         dimensions.push((DimensionKind::Mastery, (WEIGHT_MASTERY, mastery_score)));
     }
 
-    // Modules
     if !advanced_modules.is_empty() {
         let module_score = module_milestone_score(roster, &advanced_modules);
         dimensions.push((DimensionKind::Module, (WEIGHT_MODULE, module_score)));
     }
 
-    // Potential
     if potential_matters(static_op) {
         dimensions.push((
             DimensionKind::Potential,
@@ -336,8 +328,7 @@ const fn level_weight(rarity: &OperatorRarity) -> f64 {
     }
 }
 
-/// Calculates cumulative level progress across all elite phases.
-/// Returns 0.0-1.0 with logarithmic compression.
+/// 0.0-1.0 across every elite phase, log-compressed.
 ///
 /// Example for a 6-star at E2 L60:
 ///   completed: E0 (50 levels) + E1 (80 levels) + 60 of E2
@@ -541,7 +532,6 @@ pub const fn has_investment(roster: &RosterEntry) -> bool {
     roster.elite > 0 || roster.level > 1
 }
 
-/// Log compression on a 0-1 ratio.
 fn log_curve_ratio(t: f64) -> f64 {
     (1.0 + t).ln() / 2.0_f64.ln()
 }
@@ -671,7 +661,6 @@ fn simulate_score_for_tag(
                 mastery_milestone_from_levels(&simulated, num_skills),
             )
         }
-        // Skill level -> 7 (the dimension's max).
         "SL7" => set(&mut dims, DimensionKind::SkillLevel, 1.0),
         // First advanced module to L3 (same "promote highest non-Mod3" model
         // as M3 above).
@@ -703,7 +692,6 @@ fn promote_to_milestone(levels: &[i16], slots: usize, milestone: i16) -> Vec<i16
     while padded.len() < slots {
         padded.push(0);
     }
-    // Find index of the highest entry strictly below milestone.
     let pick = padded
         .iter()
         .enumerate()

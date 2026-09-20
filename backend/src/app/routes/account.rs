@@ -18,7 +18,6 @@ pub struct AccountParams {
 /// owned operator to its final promotion and level cap, against what the
 /// account holds. A roster walk over static tables - milliseconds, no
 /// admission needed.
-/// What it would cost this player to take every owned operator to max level.
 /// Runs the shared privacy gate: another player's data is readable only when
 /// their profile is public, and a player always sees their own.
 #[utoipa::path(

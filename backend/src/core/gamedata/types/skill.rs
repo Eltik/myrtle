@@ -4,10 +4,6 @@ use ts_rs::TS;
 
 use super::serde_helpers::deserialize_fb_map;
 
-// ============================================================================
-// Nested Structs
-// ============================================================================
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -65,10 +61,6 @@ pub struct SkillLevel {
     pub blackboard: Vec<SkillBlackboard>,
 }
 
-// ============================================================================
-// RawSkill
-// ============================================================================
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -83,10 +75,6 @@ pub struct RawSkill {
     #[serde(alias = "Levels")]
     pub levels: Vec<SkillLevel>,
 }
-
-// ============================================================================
-// Skill
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

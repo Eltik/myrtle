@@ -36,7 +36,6 @@ pub struct StageClearDto {
 /// `GET /stages/{stageId}/detail` - one stage plus its zone, level data, the
 /// enemies it references and its drop materials (default server). Replaces the
 /// stage-detail page's full stages/zones/enemies/materials table fetches.
-/// One stage's full record.
 #[utoipa::path(
     get,
     path = "/stages/{stage_id}/detail",
@@ -64,7 +63,6 @@ pub async fn stage_detail(
 }
 
 /// `GET /{server}/stages/{stageId}/detail` - per-server variant.
-/// One stage's full record.///
 /// The `/{server}` form reads that server's game data; the bare form reads the
 /// default server.
 #[utoipa::path(

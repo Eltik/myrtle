@@ -155,9 +155,6 @@ pub async fn calculate_hps(
     if let Some(hit) = state.cache.get::<HpsResult>(&key).await {
         return Ok(Json(hit));
     }
-    // `cpu::run` needs an owned closure, so the compute side takes its own handle.
-    // AppState is an Arc behind the scenes, so this is a refcount bump, and it
-    // leaves `state` available for the cache write once the work comes back.
     let compute_state = state.clone();
     let result = cpu::run("hps_calculate", move || {
         services::dps::calculate_hps(&compute_state, body)

@@ -90,8 +90,6 @@ pub enum CacheKey<'a> {
         uid: &'a str,
         request_hash: u64,
     },
-    /// One memoised simulation. `kind` separates dps from hps, which share a
-    /// request type but not a result type.
     /// One user's improvements body, keyed on the sync generation that produced
     /// it. `version` is `users.updated_at`, which `trg_users_timestamp` bumps on
     /// every sync upsert, so a fresh sync writes a NEW key rather than needing the
@@ -106,6 +104,8 @@ pub enum CacheKey<'a> {
         uid: &'a str,
         version: i64,
     },
+    /// One memoised simulation. `kind` separates dps from hps, which share a
+    /// request type but not a result type.
     DpsCalculate {
         kind: &'a str,
         body_hash: u64,
@@ -258,10 +258,6 @@ impl CacheKey<'_> {
             CacheKey::CommunityEnemyAverage => Duration::from_mins(30),
             CacheKey::BaseRotation { .. } => Duration::from_mins(5),
             CacheKey::BaseOptimize { .. } => Duration::from_mins(5),
-            // Same hour as the list it belongs to. A simulation is a pure
-            // function of the body and the game data, so the only thing that can
-            // invalidate it is a reload, and `asset_watcher` clears the whole
-            // `dps:` prefix on one.
             // Deliberately SHORT, and not because of the roster: the version in
             // the key already handles that. Two builders read the wall clock,
             // `build_stage_improvements` to decide which events are open and
@@ -270,6 +266,10 @@ impl CacheKey<'_> {
             // boundary rather than just a label. This TTL is the only bound on
             // how long a user is told an event is open after it closed.
             CacheKey::UserImprovements { .. } => Duration::from_mins(5),
+            // Same hour as the list it belongs to. A simulation is a pure
+            // function of the body and the game data, so the only thing that can
+            // invalidate it is a reload, and `asset_watcher` clears the whole
+            // `dps:` prefix on one.
             CacheKey::DpsCalculate { .. } => Duration::from_hours(1),
             CacheKey::DpsList { .. } => Duration::from_hours(1),
             CacheKey::I18nCatalog { .. } => Duration::from_hours(24), // content-addressed; cannot go stale

@@ -4,10 +4,6 @@ use ts_rs::TS;
 
 use super::serde_helpers::deserialize_fb_map;
 
-// ============================================================================
-// Enums
-// ============================================================================
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum ItemRarity {
@@ -199,10 +195,6 @@ pub enum VoucherDisplayType {
     Unknown,
 }
 
-// ============================================================================
-// Nested Structs
-// ============================================================================
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -353,10 +345,6 @@ pub struct CharVoucherItem {
     pub display_type: VoucherDisplayType,
 }
 
-// ============================================================================
-// Item
-// ============================================================================
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -395,10 +383,6 @@ pub struct Item {
     #[serde(alias = "VoucherRelateList")]
     pub voucher_relate_list: Option<Vec<VoucherRelate>>,
 }
-
-// ============================================================================
-// Container Types
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

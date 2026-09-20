@@ -99,7 +99,6 @@ fn test_hps_engine_vs_python_expected() {
                     continue;
                 };
 
-                // Compare all three components.
                 tested += 1;
                 let skill_ok = compare_hps(result.skill_hps, exp.skill_hps);
                 let base_ok = compare_hps(result.base_hps, exp.base_hps);

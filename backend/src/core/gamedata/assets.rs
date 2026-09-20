@@ -84,8 +84,7 @@ pub struct AssetIndex {
 }
 
 impl AssetIndex {
-    /// Build the index by scanning the assets directory.
-    /// Expects `assets_dir` to be the `output/` root containing `textures/` and `portraits/`.
+    /// `assets_dir` is the `output/` root, the one holding `textures/` and `portraits/`.
     pub fn build(assets_dir: &Path) -> Self {
         let mut idx = Self::default();
         for kind in ALL_KINDS {
@@ -122,7 +121,6 @@ impl AssetIndex {
                 continue;
             };
 
-            // Classify into AssetKind by parent directory name
             if let Some(kind) = classify_dir(parent) {
                 let key = match kind {
                     AssetKind::GachaBanner => normalize_stem(stem),

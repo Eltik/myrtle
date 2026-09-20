@@ -118,7 +118,6 @@ pub fn permits() -> usize {
     *PERMITS
 }
 
-/// Refuse one request, with the reason, and account for it.
 fn refuse(kind: &'static str, why: &'static str) -> ApiError {
     METRICS.cpu_rejected(kind);
     tracing::warn!(
@@ -190,10 +189,6 @@ where
     })
 }
 
-/// A permit held for the duration of an async service that computes inline.
-///
-/// Records elapsed time on drop, so the metric is correct whether the handler
-/// returned, errored, or was cancelled.
 /// Runs a CPU-bound section on the blocking pool for a service that ALREADY
 /// holds an [`Admission`] and cannot hand its whole body to [`run`] because it
 /// loads first and computes after.
@@ -216,6 +211,10 @@ where
     })
 }
 
+/// A permit held for the duration of an async service that computes inline.
+///
+/// Records elapsed time on drop, so the metric is correct whether the handler
+/// returned, errored, or was cancelled.
 pub struct Admission {
     kind: &'static str,
     started: Instant,

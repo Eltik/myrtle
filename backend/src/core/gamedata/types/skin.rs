@@ -4,10 +4,6 @@ use ts_rs::TS;
 
 use super::serde_helpers::deserialize_fb_map;
 
-// ============================================================================
-// Nested Structs
-// ============================================================================
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -138,10 +134,6 @@ pub struct SpecialSkinInfo {
     pub end_time: i64,
 }
 
-// ============================================================================
-// Skin
-// ============================================================================
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -182,10 +174,6 @@ pub struct Skin {
     #[serde(alias = "DisplaySkin", default)]
     pub display_skin: DisplaySkin,
 }
-
-// ============================================================================
-// Container Types
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

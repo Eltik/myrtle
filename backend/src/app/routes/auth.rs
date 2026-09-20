@@ -326,10 +326,8 @@ pub async fn verify(
     State(state): State<AppState>,
     auth: AuthUser,
 ) -> Result<Json<VerifySession>, ApiError> {
-    // AuthUser extractor already validated the token. Re-read the user's
-    // role from the DB so admin promotions/demotions take effect on the next
-    // `verify` call without requiring the user to log out and back in
-    // (JWT claims freeze the role at login time).
+    // the extractor already validated the token; the role is re-read because
+    // the JWT claim froze it at login (see the fn doc).
     let db_role: Option<String> = if let Ok(uuid) = uuid::Uuid::parse_str(&auth.user_id) {
         sqlx::query_scalar::<_, String>("SELECT role FROM users WHERE id = $1")
             .bind(uuid)

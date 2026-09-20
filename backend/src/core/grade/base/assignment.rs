@@ -25,7 +25,7 @@ use crate::core::{
 /// so 16 covers realistic optima while keeping C(16,3) combinations cheap.
 const CANDIDATE_LIMIT: usize = 16;
 
-/// Build a `char_id` -> profile index for O(1) lookups in the hot inner loops.
+/// `char_id` -> profile, for the hot inner loops.
 pub(crate) fn build_op_index(
     operators: &[OperatorBaseProfile],
 ) -> HashMap<&str, &OperatorBaseProfile> {
@@ -649,8 +649,6 @@ fn optimal_inner_core(
     let total_production_efficiency = room_assignments.iter().map(|r| r.total_efficiency).sum();
 
     let mut rooms = room_assignments;
-    // Surface the Control Center so its operators (and the global bonuses they
-    // provide to every production room) are visible in the recommendation.
     let mut cc_room = cc_room;
     // Force perception's Control-Center generators (Ling/Dusk) into the CC: their payoff is the
     // resource economy they feed, not a CC production bonus, so the bonus-greedy selector skips
@@ -793,11 +791,11 @@ fn aux_room_value(
 // Total clue-search speed = RR-level bonus + (base ambience bonus, unmodeled - not synced) +
 // per-operator (rarity bonus + elite bonus + own clue-search skill). See the player's RR table.
 
-/// Rarity ambience bonus: 6★ +5, 5★ +4, 4★ +2, ≤3★ +0.
 /// The Reception Room's innate clue-search bonus for being staffed at all
 /// (the feedback sheet's in-game check: Kazemaru alone = 50 + 5 + 4 + 16).
 const RECEPTION_INNATE_PCT: f64 = 5.0;
 
+/// Rarity ambience bonus: 6★ +5, 5★ +4, 4★ +2, ≤3★ +0.
 const fn rarity_bonus(stars: i16) -> f64 {
     match stars {
         6 => 5.0,
@@ -1049,8 +1047,6 @@ pub(crate) fn assign_auxiliary_rooms(
     }
 }
 
-/// Append a room per non-production, non-Control-Center pin group (Office, dormitories),
-/// distributing the pinned operators across that type's actual rooms up to each room's capacity.
 /// The figure a support room reports for its crew, in the room's own units:
 /// the Reception Room's full model (working operators' summed skills, rarity
 /// and promotion ambience for everyone seated, the innate 5%), the Office's
@@ -1120,6 +1116,8 @@ pub(crate) fn support_room_figure(
     if figure == 0.0 { 0.0 } else { figure }
 }
 
+/// Append a room per non-production, non-Control-Center pin group (Office, dormitories),
+/// distributing the pinned operators across that type's actual rooms up to each room's capacity.
 fn append_support_rooms(
     rooms: &mut Vec<RoomAssignment>,
     pins: &[(String, String)],
@@ -1790,8 +1788,7 @@ pub fn compute_sustained_assignment(
     };
 
     // Per-room rotation plan: who to swap first (fastest-draining) and the best
-    // filler to rotate in. The same filler may back up several rooms - it is only
-    // ever needed in one at a time - so backups are NOT consumed per room.
+    // filler to rotate in.
     let mut rooms = Vec::new();
     let mut bench: Vec<String> = Vec::new();
     for room in main
@@ -1926,8 +1923,6 @@ pub fn compute_sustained_assignment(
     }
 }
 
-/// Which operators occupy a room for a given live view: the static stationed
-/// crew (`shift = None`) or one of the player's planned preset rotation shifts.
 /// Depleted as the game shows it: the sync stores raw ap (a "dead" Lancet-2
 /// sat at 35 ap, a ten-thousandth of a point), so a bar counts as zero
 /// below a minute of work at the 1/h baseline. A depleted operator holds the
@@ -1962,6 +1957,8 @@ pub(crate) fn seats_of(asn: &BaseAssignment) -> HashMap<String, String> {
         .collect()
 }
 
+/// Which operators occupy a room for a given live view: the static stationed
+/// crew (`shift = None`) or one of the player's planned preset rotation shifts.
 fn room_ops_for_shift(room: &UserRoom, shift: Option<usize>) -> Vec<String> {
     match shift {
         Some(i) => room
@@ -2438,7 +2435,6 @@ pub(crate) fn effective_facility_counts_with_inert(
             })
             .sum::<usize>();
     counts.insert(DRONE_CAPACITY.to_string(), drone_capacity);
-    // Lowest trading-post level, for the level-scaled base order limit (6/8/10).
     // The base's Reception Room level (Vigil's "+5% per Reception Room level").
     if let Some(lv) = building
         .rooms
@@ -2449,6 +2445,7 @@ pub(crate) fn effective_facility_counts_with_inert(
     {
         counts.insert(MEETING_LEVEL.to_string(), lv);
     }
+    // Lowest trading-post level, for the level-scaled base order limit (6/8/10).
     let trading_min_level = building
         .rooms
         .iter()
@@ -2686,14 +2683,6 @@ pub fn cc_non_production_effects(
     out
 }
 
-/// Tie-break value of parking `op` in a SPARE Control-Center seat: its
-/// non-production CC skills (clue / HR / training), each weighted by the
-/// reference priority (krooster basemaker's CC weight table: clue speed
-/// outranks HR outranks training; production-relay and morale-recovery seats
-/// are claimed by earlier selection layers). The ranks order candidates for a
-/// free seat - they are priorities, NOT LMD; the objective stays
-/// production-pure. Same-room-gated clauses need a partner we can't assume, so
-/// they count nothing here (never guess).
 /// The best non-stacking non-production value the seated Control-Center crew
 /// already carries, per effect kind: a candidate's "only the strongest effect
 /// of this type" skill is worth only what it adds beyond that. Lee's Worldly
@@ -2732,6 +2721,15 @@ pub fn cc_seated_coverage(
     best
 }
 
+/// Tie-break value of parking `op` in a SPARE Control-Center seat: its
+/// non-production CC skills (clue / HR / training). HR and training speed
+/// rank ahead of clue speed whatever its size, and a base-wide morale aura
+/// ahead of both (user feedback 2026-09-19, the order `fill_remaining_slots`
+/// applies; production-relay and morale-recovery seats are claimed by earlier
+/// selection layers). The ranks order candidates for a
+/// free seat - they are priorities, NOT LMD; the objective stays
+/// production-pure. Same-room-gated clauses need a partner we can't assume, so
+/// they count nothing here (never guess).
 pub fn cc_spare_seat_value(
     op: &OperatorBaseProfile,
     building_data: &BuildingDataFile,
@@ -3055,7 +3053,6 @@ impl CcBonusAccumulator {
     }
 }
 
-/// Collect an operator's Control Center global production bonuses.
 /// The Control-Center bonus one buff maps to, if any. Split out per-buff so
 /// the skill ledger can attribute non-stacking families to their strongest
 /// member instead of relying on tie-blind ablation marginals.
@@ -3337,8 +3334,6 @@ pub(crate) fn assign_control_center(
         }
     }
 
-    // Marginal-greedy selection: each slot takes the operator adding the most flat
-    // gain over what's already chosen (the non-stacking rule lives in the accumulator).
     let (cc_assigned, acc) = greedy_cc_fill(seed, &candidates, max_slots);
 
     let (global_bonuses, conditions) = acc.finish();
@@ -3676,7 +3671,6 @@ fn assign_production_rooms(
 
     let num_factories = factory_rooms.len();
 
-    // Try all gold/EXP splits and pick the best
     let mut best_assignments: Vec<RoomAssignment> = Vec::new();
     let mut best_objective: f64 = f64::NEG_INFINITY;
     let mut best_assigned_snapshot: HashSet<String> = assigned.clone();
@@ -3696,7 +3690,6 @@ fn assign_production_rooms(
         // free rooms are rebalanced.
         let mut trial_rooms: Vec<RoomAssignment> = fixed.clone();
 
-        // Assign factories: first num_gold get F_GOLD, rest get F_EXP
         for (i, factory) in factory_rooms.iter().enumerate() {
             let formula = if i < num_gold { "F_GOLD" } else { "F_EXP" };
             let room_assignment = assign_single_room(
@@ -3766,7 +3759,6 @@ fn assign_production_rooms(
         }
     }
 
-    // Apply the winning assignment's used operators to the real assigned set
     *assigned = best_assigned_snapshot;
 
     // Cross-formula cleanup: free a generic operator from a formula-specific room
@@ -4479,7 +4471,6 @@ fn profile_strategies<'a>(
         .collect()
 }
 
-/// Does this buff apply to the given room type and (optional) formula?
 fn buff_applies(buff: &Buff, room_type: &str, formula_type: Option<&str>) -> bool {
     if buff.room_type != room_type {
         return false;
@@ -4537,7 +4528,6 @@ fn applicable_strategy<'a>(
         .flatten()
 }
 
-/// Resolved strategies for an operator's buffs that apply in the given room.
 fn applicable_strategies<'a>(
     op: &'a OperatorBaseProfile,
     room_type: &'a str,
@@ -4550,7 +4540,6 @@ fn applicable_strategies<'a>(
     })
 }
 
-/// Sum of an operator's order-VALUE contributions (LMD per order) in this room.
 /// An operator's order value that SURVIVES a Shamare-type speed-nullifier: flat-LMD
 /// and Precious-Metal value count, but Pure-Gold value (Proviso) does not, because
 /// Shamare shifts the post away from Pure-Gold orders. This is what makes an operator
@@ -4654,16 +4643,6 @@ fn best_team_for_room(
     })
 }
 
-/// Enumerate EVERY scored team combination for a room type/formula, best first - the
-/// engine behind `best_team_for_room` (which takes the head) and the rotation's
-/// balanced multi-team selection (which packs several disjoint teams from the list).
-///
-/// `pool_limit` widens the candidate cut when several disjoint teams must come out of
-/// one enumeration. `include_automation` admits Weedy-type automation operators to the
-/// pool: `compute_team_efficiency` already scores automation teams correctly (only
-/// facility-count productivity survives), so enumerating them yields pure automation
-/// teams AND automation + facility-count-scaler pairings (Weedy + Purestream, whose
-/// per-Trading-Post gold buff survives the nullify) as ordinary candidates.
 /// The operators a room's team search may draw from: not yet assigned,
 /// carrying a buff that applies to the room, automation admitted or not,
 /// and (for rotation teams) able to work a 24h block. Factored out so a
@@ -4696,6 +4675,16 @@ pub(crate) fn candidate_pool<'a>(
         .collect()
 }
 
+/// Enumerate EVERY scored team combination for a room type/formula, best first - the
+/// engine behind `best_team_for_room` (which takes the head) and the rotation's
+/// balanced multi-team selection (which packs several disjoint teams from the list).
+///
+/// `pool_limit` widens the candidate cut when several disjoint teams must come out of
+/// one enumeration. `include_automation` admits Weedy-type automation operators to the
+/// pool: `compute_team_efficiency` already scores automation teams correctly (only
+/// facility-count productivity survives), so enumerating them yields pure automation
+/// teams AND automation + facility-count-scaler pairings (Weedy + Purestream, whose
+/// per-Trading-Post gold buff survives the nullify) as ordinary candidates.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn enumerate_candidate_teams(
     room_type: &str,
@@ -4723,9 +4712,6 @@ pub(crate) fn enumerate_candidate_teams(
     let max_slots = max_slots as usize;
     let op_index = build_op_index(operators);
 
-    // Candidate pool: operators with at least one applicable buff. Automation
-    // operators (nullify-others) are excluded unless the caller wants automation
-    // teams enumerated too.
     let candidates = candidate_pool(
         room_type,
         formula_type,
@@ -5130,7 +5116,6 @@ fn combos_of_size(
         out.push(current.clone());
         return;
     }
-    // Stop early if not enough remaining elements to reach `size`.
     let need = size - current.len();
     if pool.len() - start < need {
         return;
@@ -5142,7 +5127,6 @@ fn combos_of_size(
     }
 }
 
-/// Score only `FacilityCountScaling` buffs for an operator (used in automation rooms).
 fn score_operator_facility_only(
     op: &OperatorBaseProfile,
     room_type: &str,
@@ -5163,8 +5147,7 @@ fn score_operator_facility_only(
     )
 }
 
-/// Compute the total order limit contribution for an operator in a room.
-/// Conditional order limit counts only when its required teammate is present.
+/// A teammate-conditional order limit counts only when its partner is in `present`.
 #[allow(clippy::cast_possible_truncation)]
 fn compute_order_limit(
     op: &OperatorBaseProfile,
@@ -5478,7 +5461,6 @@ fn rebalance_rooms(
         room_search_score(room_type, room_value(speed, room_type), value)
     };
 
-    // Up to a few passes; each pass tries all same-type/formula room pairs.
     for _pass in 0..4 {
         let mut improved = false;
         for a in 0..rooms.len() {

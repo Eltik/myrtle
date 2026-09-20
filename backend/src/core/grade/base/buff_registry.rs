@@ -544,7 +544,7 @@ pub enum OrderEffect {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum BuffResolutionStrategy {
-    /// Efficiency field is the bonus %. Value = efficiency as f64.
+    /// The buff's Efficiency field, taken as the flat bonus %.
     DirectEfficiency { value: f64 },
 
     /// Bonus scales with count of a facility type.
@@ -796,8 +796,6 @@ pub enum BuffResolutionStrategy {
         pure_gold: bool,
     },
 
-    /// Control Center buff that applies globally to all rooms of a type.
-    /// e.g. "all Factories +2%"
     /// A Control-Center global whose strength scales with a POOL: "for every 8
     /// Passion, all Trading Posts' order efficiency +1%" (Sakiko), "all
     /// Factories +1%, with an additional +1% for every 20 Passion" (Mortis).
@@ -814,6 +812,8 @@ pub enum BuffResolutionStrategy {
         resource: String,
     },
 
+    /// Control Center buff that applies globally to all rooms of a type.
+    /// e.g. "all Factories +2%"
     GlobalEffect {
         target_room: String, // "MANUFACTURE", "TRADING"
         bonus_pct: f64,
@@ -940,8 +940,7 @@ pub enum BuffResolutionStrategy {
         same_room_gate: Option<Vec<String>>,
     },
 
-    /// Fallback for truly complex buffs we can't cleanly parse.
-    /// Stores a conservative estimate.
+    /// No branch parses the buff; `estimated_pct` is a conservative estimate.
     Complex { estimated_pct: f64 },
 
     /// Efficiency changes over the course of a shift based on time/morale.
@@ -1586,7 +1585,6 @@ pub fn build_registry(
                         same_room_gate,
                     }
                 } else {
-                    // Other buffs
                     let value = parse_first_pct(&buff.description).unwrap_or(0.0);
                     BuffResolutionStrategy::Complex {
                         estimated_pct: value,
@@ -1927,7 +1925,6 @@ pub fn build_registry(
                     // [030] tier's base (20%), not the per-hour ramp rate we need here.
                     let per_hr = parse_per_hour_pct(&buff.description).unwrap_or(1.0);
                     let cap = parse_last_pct(&buff.description).unwrap_or(25.0);
-                    // Time to reach cap from base: (cap - base) / per_hr hours
                     let ramp_hours = if per_hr > 0.0 {
                         (cap - base) / per_hr
                     } else {
@@ -2042,9 +2039,7 @@ pub fn build_registry(
                         base_pct: base,
                         cap_pct: parse_last_pct(&buff.description).map(|c| (c - base).max(0.0)),
                     }
-                }
-                // Direct efficiency
-                else if buff.efficiency > 0 {
+                } else if buff.efficiency > 0 {
                     BuffResolutionStrategy::DirectEfficiency {
                         value: f64::from(buff.efficiency),
                     }
@@ -2083,9 +2078,7 @@ pub fn build_registry(
                         base_pct: 0.0,
                         cap_pct: None,
                     }
-                }
-                // Dormitory scaling
-                else if prefix.contains("&dorm") {
+                } else if prefix.contains("&dorm") {
                     let per_unit = parse_first_pct(&buff.description).unwrap_or(1.0);
                     BuffResolutionStrategy::FacilityCountScaling {
                         target_room: "DORMITORY".to_string(),
@@ -2181,9 +2174,7 @@ pub fn build_registry(
                         .or_else(|| parse_first_pct(&buff.description))
                         .unwrap_or(0.0);
                     BuffResolutionStrategy::DirectEfficiency { value }
-                }
-                // Fallback
-                else {
+                } else {
                     let est = parse_first_pct(&buff.description).unwrap_or(15.0);
                     BuffResolutionStrategy::Complex { estimated_pct: est }
                 }
@@ -2327,7 +2318,6 @@ fn first_token(s: &str) -> String {
         .to_lowercase()
 }
 
-/// Extract first percentage like "+25%" from description markup
 fn parse_first_pct(desc: &str) -> Option<f64> {
     RE_FIRST_PCT.captures(desc).and_then(|c| c[1].parse().ok())
 }
@@ -2405,13 +2395,6 @@ fn room_type_from_label(label: &str) -> Option<&'static str> {
     })
 }
 
-/// Deployment-context gates: "if <op> is assigned to the <Room>", "and <op> is
-/// in a <Room>", "if another <faction> Operator is assigned to a <Room>".
-/// Audited across all gamedata buffs (2026-08-13): within the production room
-/// arms the named form captures exactly `manu_formula_spd_P[000]` (Gummy in a
-/// Trading Post) and `power_rec_spd_P[000]/[001]` (Kal'tsit in the Control
-/// Center, Logos as the Trainer); the faction form captures exactly
-/// `power_rec_spd_ext&faction[000]` (another Laterano op in a Power Plant).
 /// Parse a Control-Center buff's named-operator room gates ("if <NAME> is
 /// assigned to <room>, <payload>") into grants landing on the named
 /// operator's room. Returns None when no segment carries BOTH a resolvable
@@ -2527,6 +2510,13 @@ fn parse_room_presence_gated_global(desc: &str) -> Option<BuffResolutionStrategy
     })
 }
 
+/// Deployment-context gates: "if <op> is assigned to the <Room>", "and <op> is
+/// in a <Room>", "if another <faction> Operator is assigned to a <Room>".
+/// Audited across all gamedata buffs (2026-08-13): within the production room
+/// arms the named form captures exactly `manu_formula_spd_P[000]` (Gummy in a
+/// Trading Post) and `power_rec_spd_P[000]/[001]` (Kal'tsit in the Control
+/// Center, Logos as the Trainer); the faction form captures exactly
+/// `power_rec_spd_ext&faction[000]` (another Laterano op in a Power Plant).
 fn parse_room_presence_gate(
     desc: &str,
     base_efficiency: f64,
@@ -2605,7 +2595,6 @@ fn parse_per_capacity_rate(desc: &str) -> Option<(f64, f64)> {
     (units > 0.0).then_some((per_pct, units))
 }
 
-/// Extract first float like "+0.7" from description markup (for morale values)
 fn parse_first_float(desc: &str) -> Option<f64> {
     RE_FIRST_FLOAT
         .captures(desc)
@@ -2653,7 +2642,6 @@ fn parse_tag_keyword(desc: &str) -> Option<String> {
     (!first.is_empty()).then_some(first)
 }
 
-/// Extract the last percentage in description (for cap values)
 fn parse_last_pct(desc: &str) -> Option<f64> {
     RE_LAST_PCT.find_iter(desc).last().and_then(|m| {
         RE_LAST_PCT_INNER
@@ -2662,7 +2650,6 @@ fn parse_last_pct(desc: &str) -> Option<f64> {
     })
 }
 
-/// Parse number from <@cc.kw>4</> pattern
 fn parse_kw_number(desc: &str) -> Option<f64> {
     RE_KW_NUMBER.captures(desc).and_then(|c| c[1].parse().ok())
 }
@@ -2672,7 +2659,6 @@ fn parse_first_vdown_pct(desc: &str) -> Option<f64> {
     RE_VDOWN_PCT.captures(desc).and_then(|c| c[1].parse().ok())
 }
 
-/// Parse "per hour" percentage: "+2% per hour" or "+1% per hour"
 fn parse_per_hour_pct(desc: &str) -> Option<f64> {
     RE_PER_HOUR_PCT.captures(desc).and_then(|c| {
         c.get(1)
@@ -2681,16 +2667,12 @@ fn parse_per_hour_pct(desc: &str) -> Option<f64> {
     })
 }
 
-/// Parse the first signed percentage, up or down (`-15` from
-/// `<@cc.vdown>-15%</>`, `20` from `<@cc.vup>+20%</>`).
 fn parse_first_signed_pct(desc: &str) -> Option<f64> {
     RE_FIRST_SIGNED_PCT
         .captures(desc)
         .and_then(|c| c[1].parse().ok())
 }
 
-/// Parse order limit from description.
-/// Matches "+4" from <@cc.vup>+4</> or "-6" from <@cc.vdown>-6</>
 fn parse_order_limit(desc: &str) -> Option<i32> {
     if let Some(cap) = RE_ORDER_LIMIT_POS.captures(desc) {
         return cap[1].parse::<i32>().ok();
@@ -2701,8 +2683,7 @@ fn parse_order_limit(desc: &str) -> Option<i32> {
     None
 }
 
-/// Parse the Nth <@cc.vup> percentage (0-indexed).
-/// Useful when a description has multiple percentage values.
+/// The Nth `<@cc.vup>` percentage, 0-indexed
 fn parse_nth_pct(desc: &str, n: usize) -> Option<f64> {
     RE_NTH_PCT.find_iter(desc).nth(n).and_then(|m| {
         RE_LAST_PCT_INNER
@@ -2711,7 +2692,6 @@ fn parse_nth_pct(desc: &str, n: usize) -> Option<f64> {
     })
 }
 
-/// Parse a plain number from <@cc.vup>5</> (no % sign)
 fn parse_first_vup_number(desc: &str) -> Option<f64> {
     RE_VUP_NUMBER.captures(desc).and_then(|c| c[1].parse().ok())
 }

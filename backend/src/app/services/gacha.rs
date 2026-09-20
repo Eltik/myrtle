@@ -52,7 +52,6 @@ impl GachaApiItem {
         self.star.parse().unwrap_or(3)
     }
 
-    /// Derive gacha type from `pool_id` prefix
     fn gacha_type(&self) -> &'static str {
         if self.pool_id.starts_with("LIMITED_") {
             "limited"
@@ -124,7 +123,6 @@ pub struct GlobalGachaStats {
 const GACHA_API_URL: &str = "https://account.yo-star.com/api/game/gachas";
 const PAGE_SIZE: i64 = 50;
 
-/// Fetch gacha records from Yostar API and store them
 pub async fn fetch_and_store(
     state: &AppState,
     user_id: Uuid,
@@ -238,7 +236,6 @@ struct GlobalGachaStatsRow {
     five_star_count: i64,
 }
 
-/// Global anonymous stats
 pub async fn get_global_stats(state: &AppState) -> Result<GlobalGachaStats, ApiError> {
     let key = CacheKey::GachaGlobalStats;
     if let Some(cached) = state.cache.get(&key).await {
@@ -400,7 +397,6 @@ pub async fn get_enhanced_stats(
         return Ok(cached);
     }
 
-    // Collective stats
     #[derive(sqlx::FromRow)]
     struct CollectiveRow {
         total_pulls: i64,
@@ -485,7 +481,7 @@ pub async fn get_enhanced_stats(
         })
         .collect();
 
-    // Average pulls to a 6-star / 5-star (simple estimate: total pulls / count)
+    // naive: total pulls / count
     let average_pulls_to_six_star = if collective.total_six_stars > 0 {
         collective.total_pulls as f64 / collective.total_six_stars as f64
     } else {
@@ -497,7 +493,6 @@ pub async fn get_enhanced_stats(
         0.0
     };
 
-    // Optional pull timing data
     let pull_timing = if include_timing {
         #[derive(sqlx::FromRow)]
         struct HourRow {
@@ -977,10 +972,6 @@ pub async fn get_history_for_char(
     let rows = get_by_char_for_user(&state.db, user_id, char_id).await?;
     Ok(rows.into_iter().map(Into::into).collect())
 }
-
-// ============================================
-// Settings
-// ============================================
 
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]

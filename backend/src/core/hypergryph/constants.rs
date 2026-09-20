@@ -22,7 +22,6 @@ pub enum Server {
 }
 
 impl Server {
-    /// Returns all server variants for iteration
     pub const fn all() -> &'static [Self] {
         &[
             Self::EN,

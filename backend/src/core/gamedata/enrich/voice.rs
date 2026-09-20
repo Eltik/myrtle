@@ -142,7 +142,6 @@ fn build_voice_url(voice_asset: &str, lang: &LangType) -> Option<String> {
         return Some(format!("/audio/sound_beta_2/voice/{voice_asset}.ogg").replace('#', "%23"));
     };
 
-    // Strip any existing language suffix from dir, then append the target suffix
     let base_dir = original_dir
         .to_lowercase()
         .replace("_cn_topolect", "")

@@ -8,7 +8,6 @@
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
 
-/// Key-value pair structure used by `FlatBuffer` JSON output
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FbKeyValue<K, V> {
     #[serde(alias = "Key")]
@@ -17,7 +16,6 @@ pub struct FbKeyValue<K, V> {
     pub value: V,
 }
 
-/// Deserialize `FlatBuffer`'s [{key, value}] array format into `HashMap`
 pub fn deserialize_fb_map<'de, D, K, V>(deserializer: D) -> Result<HashMap<K, V>, D::Error>
 where
     D: Deserializer<'de>,
@@ -43,7 +41,6 @@ where
         .unwrap_or_default())
 }
 
-/// Deserialize a nested `HashMap` where both levels use `FlatBuffer` format
 pub fn deserialize_fb_nested_map<'de, D, K1, K2, V>(
     deserializer: D,
 ) -> Result<HashMap<K1, HashMap<K2, V>>, D::Error>
@@ -77,7 +74,6 @@ where
     Ok(opt.unwrap_or_default())
 }
 
-/// Deserialize `FlatBuffer`'s [{key, value}] array format into Option<HashMap>
 pub fn deserialize_fb_map_option<'de, D, K, V>(
     deserializer: D,
 ) -> Result<Option<HashMap<K, V>>, D::Error>

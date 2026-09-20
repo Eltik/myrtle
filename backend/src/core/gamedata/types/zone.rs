@@ -1,16 +1,10 @@
-//! Zone table types for stage randomization.
-//!
-//! Zones represent chapters/regions in the game (e.g., Episode 1, Side Stories, etc.)
+//! `zone_table` types: chapters and regions.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use ts_rs::TS;
 
 use super::serde_helpers::deserialize_fb_map;
-
-// ============================================================================
-// Enums
-// ============================================================================
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -34,10 +28,6 @@ pub enum ZoneType {
     #[serde(other)]
     Unknown,
 }
-
-// ============================================================================
-// Zone
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -80,10 +70,6 @@ pub struct Zone {
     #[serde(alias = "HasAdditionalPanel", default)]
     pub has_additional_panel: bool,
 }
-
-// ============================================================================
-// Container Types
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

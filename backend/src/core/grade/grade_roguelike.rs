@@ -82,8 +82,7 @@ struct Bp {
     reward: Option<HashMap<String, serde_json::Value>>,
 }
 
-/// Grades a user's roguelike progress across all themes.
-/// Returns 0.0-1.0.
+/// 0.0-1.0, themes weighted by `theme_weight`.
 pub fn grade_roguelike(
     theme_progress: &[(String, serde_json::Value)],
     roguelike_data: &RoguelikeGameData,
@@ -217,10 +216,10 @@ fn difficulty_milestone_score(progress: &ThemeProgress, theme: &RoguelikeThemeGa
 
     let ratio = f64::from(highest) / max;
     match ratio {
-        r if r >= 1.0 => 1.0,   // Cleared max difficulty
-        r if r >= 0.75 => 0.75, // 75%+ of max
-        r if r >= 0.50 => 0.50, // 50%+ of max
-        _ => 0.25,              // Any clear at all
+        r if r >= 1.0 => 1.0, // Cleared max difficulty
+        r if r >= 0.75 => 0.75,
+        r if r >= 0.50 => 0.50,
+        _ => 0.25, // Any clear at all
     }
 }
 

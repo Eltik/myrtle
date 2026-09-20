@@ -1,16 +1,10 @@
-//! Stage table types for stage randomization.
-//!
-//! Stages represent individual playable levels in the game.
+//! `stage_table` types.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use ts_rs::TS;
 
 use super::serde_helpers::deserialize_fb_map;
-
-// ============================================================================
-// Enums
-// ============================================================================
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -60,10 +54,6 @@ pub enum AppearanceStyle {
     Unknown,
 }
 
-// ============================================================================
-// Nested Structs
-// ============================================================================
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -109,10 +99,6 @@ pub struct StageDropInfo {
     #[serde(alias = "DisplayDetailRewards", default)]
     pub display_detail_rewards: Vec<DisplayDetailReward>,
 }
-
-// ============================================================================
-// Stage
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -198,10 +184,6 @@ pub struct Stage {
     #[serde(alias = "StageDropInfo", skip_serializing_if = "Option::is_none")]
     pub stage_drop_info: Option<StageDropInfo>,
 }
-
-// ============================================================================
-// Container Types
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

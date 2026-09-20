@@ -139,8 +139,6 @@ fn push_ref(
     });
 }
 
-/// Build the `enemy_id -> stages` index from the level files plus boss-only
-/// declarations.
 pub fn build_enemy_stage_index(
     levels_dir: &Path,
     data_dir: &Path,

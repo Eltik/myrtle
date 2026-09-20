@@ -53,7 +53,6 @@ pub async fn list_locales(
 }
 
 /// The locales this caller may actually write, for the editor's locale picker.
-/// Which locales the caller may actually write to.
 ///
 /// The workspace uses this to decide what to render read-only.
 #[utoipa::path(
@@ -92,7 +91,6 @@ pub struct UpsertLocaleRequest {
 /// Adding or enabling a locale is a super-admin action: enabling one commits
 /// the deployment to a game-data region and a font subset, which is an
 /// infrastructure decision rather than a translation one.
-/// Create a locale or change its settings.
 #[utoipa::path(
     put,
     path = "/admin/i18n/locales",
@@ -209,7 +207,6 @@ pub struct UpdateMessageRequest {
 ///
 /// The key travels in the body rather than the path: message keys are dotted
 /// and arbitrary, and path-encoding them buys nothing.
-/// Write one message in one locale.
 ///
 /// Direct edit with no review step; every write lands in the audit log.
 /// Needs a translation grant on the locale, or a role that can open the admin
@@ -283,7 +280,6 @@ pub async fn clear_message(
 
 /// `GET /admin/i18n/namespaces` - the full namespace list, independent of
 /// whatever page of messages the editor happens to be showing.
-/// Every namespace the source catalog defines.
 #[utoipa::path(
     get,
     path = "/admin/i18n/namespaces",
@@ -386,7 +382,6 @@ pub struct EntryAuditQuery {
 /// Per-key history. This is what the editor's revert button reads: every entry
 /// carries the value it replaced, so reverting is an ordinary write of
 /// `old_value` rather than a special restore path.
-/// Edit history for one message in one locale.
 #[utoipa::path(
     get,
     path = "/admin/i18n/audit/entry",
@@ -427,7 +422,6 @@ pub struct SyncRequest {
 /// `POST /admin/i18n/sync` - the extractor's output becomes the truth about
 /// which keys exist and what their English source is. Super-admin only: it can
 /// deactivate every key in the catalog.
-/// Reconcile the stored source strings with the ones the frontend now ships.
 ///
 /// New keys are added, changed source marks its translations stale, and keys
 /// the frontend dropped are retired.

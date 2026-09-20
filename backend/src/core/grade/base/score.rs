@@ -69,7 +69,7 @@ pub fn grade_base(
 
     let user_building = match building_json {
         Some(json) => UserBuilding::from_json(json),
-        None => return BaseGrade::default(), // No building data synced
+        None => return BaseGrade::default(),
     };
     if user_building.is_empty() {
         return BaseGrade::default();

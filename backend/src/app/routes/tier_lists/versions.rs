@@ -78,7 +78,6 @@ pub async fn publish(
     let user_id: Uuid = auth.user_uuid()?;
     let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Publish).await?;
 
-    // Build snapshot from current state
     let detail = get_by_slug(&state, &slug).await?;
     let snapshot = serde_json::to_value(&detail.tiers).map_err(|e| ApiError::Internal(e.into()))?;
 

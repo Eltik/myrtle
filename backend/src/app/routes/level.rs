@@ -6,10 +6,9 @@ use crate::app::services::level::get_level;
 use crate::app::{error::ApiError, state::AppState};
 use crate::core::hypergryph::constants::Server;
 
-/// `GET /level/{stage_id}` - raw Arknights level (camelCased keys, 2D map grid)
-/// for the default (EN) server. Powers the Stage Viewer map + pathing renderer.
-/// A stage's level data: the tile map, enemy routes and wave schedule that
-/// drive the stage viewer's pathing simulation.
+/// A stage's raw level data (camelCased keys, 2D map grid) on the default (EN)
+/// server: the tile map, enemy routes and wave schedule that drive the stage
+/// viewer's pathing simulation.
 #[utoipa::path(
     get,
     path = "/level/{stage_id}",
@@ -43,7 +42,6 @@ pub async fn get_level_map(
 }
 
 /// `GET /{server}/level/{stage_id}` - per-server variant of the raw level.
-/// A stage's level data for one server.///
 /// The `/{server}` form reads that server's game data; the bare form reads the
 /// default server.
 #[utoipa::path(

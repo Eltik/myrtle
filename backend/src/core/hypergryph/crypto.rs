@@ -40,7 +40,6 @@ struct HeaderAuth {
     sign: String,
 }
 
-/// Generates the Authorization header value for game server requests.
 pub fn generate_auth_header(
     body: &str,
     server: Server,

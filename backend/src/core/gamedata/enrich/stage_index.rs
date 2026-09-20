@@ -320,7 +320,6 @@ fn entry_from_stage(
     }
 }
 
-/// A procedural-mode node with no `stage_table` entry (IS / RA / CC / Paradox).
 /// The URL-safe id for a procedural-mode node: its level filename (last path
 /// segment), e.g. `obt/roguelike/ro1/level_rogue1_6-1` -> `level_rogue1_6-1`.
 /// Unique across modes (the season prefix is in the name) and free of slashes,
@@ -367,7 +366,6 @@ fn entry_from_mode_level(
     }
 }
 
-/// Build the full Stage List catalogue.
 pub fn build_stage_index(
     assets_dir: &Path,
     levels_dir: &Path,
@@ -412,11 +410,11 @@ pub fn build_stage_index(
             continue;
         };
         if classifier.stage_for_level(&rel).is_some() {
-            continue; // has a stage_table stage, already emitted above.
+            continue;
         }
         let info = classifier.classify_level(&rel);
         if info.category != "modes" {
-            continue; // only fill the procedural modes here.
+            continue;
         }
         // Collapse layout variants that resolve to the same season + node code.
         if !seen_mode.insert((info.zone_id.clone(), info.code.clone())) {

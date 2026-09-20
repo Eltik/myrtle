@@ -35,7 +35,6 @@ pub async fn get_leaderboard(
     limit: u32,
     offset: u32,
 ) -> Result<LeaderboardPage, ApiError> {
-    // Cache key incorporates all query params
     let key = CacheKey::Leaderboard {
         sort: sort_by,
         server,
@@ -49,7 +48,6 @@ pub async fn get_leaderboard(
         return Ok(cached);
     }
 
-    // Run count + data in parallel
     let (entries, total, updated_at) = tokio::try_join!(
         score::get_leaderboard(
             &state.db,

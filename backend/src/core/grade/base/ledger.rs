@@ -1196,7 +1196,6 @@ fn config_factor(clause: &Clause, formula_type: Option<&str>) -> f64 {
     }
 }
 
-/// How many entities match a scaling subject.
 fn count_matches(
     subject: &Subject,
     owner: usize,

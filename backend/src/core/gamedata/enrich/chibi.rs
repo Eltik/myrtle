@@ -150,7 +150,6 @@ pub fn init_enemy_chibi_data(assets_dir: &Path, enemies: &EnemyHandbook) -> Chib
     }
 }
 
-/// Helper to find or create a skin entry on a character.
 fn get_or_create_skin<'a>(
     character: &'a mut ChibiCharacter,
     skin_name: &str,

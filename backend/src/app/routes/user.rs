@@ -21,9 +21,6 @@ pub struct GetUserParams {
 /// expiry, last-online time and the account's role, so the `uid` goes through
 /// the shared privacy gate: the caller's own profile or a public one, 403
 /// otherwise.
-/// A player's public profile.
-/// Runs the shared privacy gate: another player's data is readable only when
-/// their profile is public, and a player always sees their own.
 #[utoipa::path(
     get,
     path = "/get-user",
@@ -143,7 +140,6 @@ pub struct SetRoleRequest {
 /// their old privileges until their token refreshes. Per-locale translation
 /// grants deliberately do not work this way - they are read from the database
 /// per request and take effect immediately.
-/// Change another account's global role.
 #[utoipa::path(
     put,
     path = "/admin/users/{user_id}/role",

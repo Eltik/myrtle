@@ -1285,8 +1285,6 @@ fn medal_gap(
     }
 }
 
-/// Order medal gaps by rarity weight (desc) so the highest-value gaps rank
-/// first, with medal id as a stable tiebreak.
 fn cmp_medal_by_rarity_desc(a: &MedalGap, b: &MedalGap) -> std::cmp::Ordering {
     rarity_weight(&b.rarity)
         .partial_cmp(&rarity_weight(&a.rarity))
@@ -1437,9 +1435,6 @@ pub fn build_operator_improvements(
         });
     }
 
-    // Within a rarity bucket, the highest-potential gains rank first so users
-    // see the most worthwhile upgrades at the top. Ties fall back to op id
-    // for a stable order.
     below_milestone.sort_by(|a, b| {
         b.rarity
             .cmp(&a.rarity)
@@ -1761,7 +1756,7 @@ fn native_economy_dto(
         return None;
     }
     let mut consumers: Vec<PerceptionConsumerDto> = by_char.into_values().collect();
-    // Strongest bonus first - a stable, meaningful order for the UI.
+    // Strongest first; the UI shows them in this order
     consumers.sort_by(|a, b| {
         b.bonus_pct
             .partial_cmp(&a.bonus_pct)
@@ -1783,7 +1778,7 @@ fn native_economy_dto(
 
 /// A base with the full production spread the shift rotation plans over: at
 /// least one trading post, a factory pair to split, and a power plant. Covers
-/// 243 and 252 (the tested layouts) and degrades gracefully for others.
+/// 243 and 252 (the tested layouts); anything else gets no shift rotation.
 fn has_shift_rotation_layout(building: &UserBuilding) -> bool {
     let count = |room_type: &str| {
         building
@@ -2403,7 +2398,6 @@ pub(crate) fn base_assignment_to_dto(
     }
 }
 
-/// Resolve a `char_id` to an `AssignedOperator` (id + display name).
 pub(crate) fn assigned_operator(id: &str, game_data: &GameData) -> AssignedOperator {
     AssignedOperator {
         operator_id: id.to_string(),

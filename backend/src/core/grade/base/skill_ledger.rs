@@ -150,8 +150,6 @@ impl LedgerCtx<'_> {
         conditions: &[CcCondition],
         replace: Option<(&str, &OperatorBaseProfile)>,
     ) -> (f64, f64) {
-        // Borrow everything from the real index, swapping in at most one
-        // ablated profile.
         let mut index: HashMap<&str, &OperatorBaseProfile> = self.op_index.clone();
         if let Some((id, p)) = replace {
             index.insert(id, p);
@@ -398,9 +396,6 @@ fn relabel_feeding_generators(ctx: &LedgerCtx, lines: &mut [LedgerLine]) {
     }
 }
 
-/// The Control Center row's own breakdown: each member's CONTROL buff, valued
-/// as the marginal on the SUM of global bonuses the crew grants (the number the
-/// CC row displays). Non-global CC skills classify by strategy.
 /// One Control-Center bonus line, pre-attribution.
 struct CcBonusLine {
     operator_id: String,
@@ -460,8 +455,7 @@ pub(crate) fn control_room_ledger(
     team_rooms: &[super::types::RoomAssignment],
 ) -> Vec<LedgerLine> {
     let mut out = Vec::new();
-    // Non-bonus CONTROL buffs (morale, clue, unmodeled...) classify by
-    // strategy as before.
+    // Non-bonus CONTROL buffs (morale, clue, unmodeled...) classify by strategy.
     for id in cc_ops {
         let Some(op) = ctx.op_index.get(id.as_str()) else {
             continue;

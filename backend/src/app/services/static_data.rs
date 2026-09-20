@@ -130,7 +130,6 @@ pub async fn get_stage_detail(
     let resource = format!("stage_detail:{stage_id}");
     let key = cache_key(&resource, server);
     cached_json(state, &key, move || async move {
-        // The stage must exist before we do any of the joins.
         {
             let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
             if !sd.game_data.load_full().stages.contains_key(stage_id) {
@@ -237,10 +236,6 @@ pub async fn get_enemy_stages(
     })
     .await
 }
-
-// ============================================================================
-// Chibi lookup: one operator's chibi catalog entry.
-// ============================================================================
 
 pub async fn get_chibi(
     state: &AppState,

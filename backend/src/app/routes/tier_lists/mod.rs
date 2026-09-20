@@ -22,26 +22,20 @@ pub mod versions;
 
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()
-        // CRUD
         .routes(routes!(crud::create, crud::list))
         .routes(routes!(crud::list_details))
         .routes(routes!(crud::mine))
         .routes(routes!(crud::favorites))
         .routes(routes!(crud::get, crud::update, crud::delete))
-        // Tiers
         .routes(routes!(tiers::create))
         .routes(routes!(tiers::update, tiers::delete))
-        // Placements
         .routes(routes!(placements::add))
         .routes(routes!(placements::remove, placements::update_description))
         .routes(routes!(placements::move_to))
-        // Versions
         .routes(routes!(versions::list))
         .routes(routes!(versions::publish))
-        // Permissions
         .routes(routes!(permissions::list, permissions::grant))
         .routes(routes!(permissions::revoke))
-        // Stats & engagement
         .routes(routes!(stats::record_view))
         .routes(routes!(stats::get_stats))
         .routes(routes!(stats::get_favorite, stats::toggle_favorite))

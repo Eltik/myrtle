@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Permission {
-    View,    // Can view the tier list
+    View,
     Edit,    // Can modify placements
     Publish, // Can create new versions
     Admin,   // Can manage permissions + delete
@@ -71,7 +71,7 @@ pub enum GlobalRole {
     TierListEditor, // Can edit tier lists they have permission for
     TierListAdmin,  // Can manage all tier lists
     Translator,     // Can edit UI translations for locales granted in translation_permissions
-    SuperAdmin,     // Full access to everything
+    SuperAdmin,
 }
 
 impl GlobalRole {

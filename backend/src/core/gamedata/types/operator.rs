@@ -11,10 +11,6 @@ use super::serde_helpers::{
 };
 use super::skill::SkillLevel;
 
-// ============================================================================
-// Enums
-// ============================================================================
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 #[derive(Default, TS, utoipa::ToSchema)]
@@ -123,10 +119,6 @@ impl OperatorProfession {
         }
     }
 }
-
-// ============================================================================
-// Nested Structs
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -402,7 +394,6 @@ pub struct AllSkillLevelUp {
     pub lvl_up_cost: Vec<LevelUpCostItem>,
 }
 
-/// Wrapper for `character_table.json`
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CharacterTable {
@@ -503,10 +494,6 @@ pub struct RawOperator {
     #[serde(default)]
     pub sp_target_type: Option<String>,
 }
-
-// ============================================================================
-// Operator
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -769,7 +756,6 @@ pub struct OperatorBaseSkill {
     pub skill_icon: String,
     /// Elite phase required to unlock (0, 1, or 2)
     pub unlock_elite: i32,
-    /// Level required to unlock
     pub unlock_level: i32,
     /// Index of this skill's slot in the operator's kit (`BuffChar` order).
     /// Tiers of one slot REPLACE each other on promotion - only the highest
@@ -779,10 +765,6 @@ pub struct OperatorBaseSkill {
     #[serde(default)]
     pub slot: usize,
 }
-
-// ============================================================================
-// Drone Type
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

@@ -9,7 +9,6 @@ use crate::core::hypergryph::constants::Server;
 
 /// `GET /chibis/{operatorId}` - one operator's chibi catalog entry (default
 /// server). Replaces fetching the whole `/static/chibis` catalog to find one.
-/// An operator's chibi animation set, with the asset paths to load it.
 #[utoipa::path(
     get,
     path = "/chibis/{operator_id}",
@@ -37,7 +36,6 @@ pub async fn chibi_detail(
 }
 
 /// `GET /{server}/chibis/{operatorId}` - per-server variant.
-/// An operator's chibi animation set, with the asset paths to load it.///
 /// The `/{server}` form reads that server's game data; the bare form reads the
 /// default server.
 #[utoipa::path(

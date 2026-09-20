@@ -345,10 +345,6 @@ pub struct StageMap {
     pub duration: f64,
 }
 
-// ============================================================================
-// Builder
-// ============================================================================
-
 const DEFAULT_SPEED: f64 = 0.72;
 
 /// Parse a raw level file and normalize it against the stage metadata and the
@@ -410,7 +406,6 @@ pub fn parse_stage_map(
 
     let route_len: Vec<f64> = routes.iter().map(|r| polyline_length(&r.points)).collect();
 
-    // ── Roster counts + per-enemy speed/level lookups ─────────────────────
     let speed_of = |id: &str| -> f64 {
         enemies
             .enemy_data
@@ -492,7 +487,7 @@ pub fn parse_stage_map(
                         speed,
                         level: level.clone(),
                     });
-                    clock = clock.max(arrival); // track latest arrival for duration
+                    clock = clock.max(arrival);
                 }
             }
         }
@@ -503,11 +498,10 @@ pub fn parse_stage_map(
                 label: format!("Wave {}", wi + 1),
             });
         }
-        // Advance the clock to the next wave's earliest start.
         clock = clock.max(wave_end + wave.max_time_waiting_for_next_wave + wave.post_delay);
     }
 
-    // Duration: ensure the last enemy can finish its route, plus a small tail.
+    // duration: last arrival or the scheduler clock, floor 10 s, plus a 2 s tail.
     let last_arrival = spawns
         .iter()
         .map(|s| s.t0 + route_len.get(s.route).copied().unwrap_or(0.0) / s.speed.max(0.1))
@@ -539,7 +533,6 @@ pub fn parse_stage_map(
             .then_with(|| a.name.cmp(&b.name))
     });
 
-    // ── Conditional / branch routes (revealed on demand by the board) ─────
     let hidden_routes: Vec<HiddenRoute> = raw
         .extra_routes
         .iter()
@@ -562,7 +555,6 @@ pub fn parse_stage_map(
         })
         .collect();
 
-    // ── Stage rules + modifiers ───────────────────────────────────────────
     let o = raw.options.unwrap_or_default();
     let options = MapOptions {
         char_limit: o.character_limit,
@@ -612,10 +604,6 @@ pub fn parse_stage_map(
         duration,
     })
 }
-
-// ============================================================================
-// Helpers
-// ============================================================================
 
 fn tile_cell(t: &RawTile) -> TileCell {
     TileCell {

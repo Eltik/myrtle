@@ -22,7 +22,6 @@ pub async fn get_score_by_uid(pool: &PgPool, uid: &str) -> Result<Option<UserSco
     .await
 }
 
-/// Fetch the full score row for one user by internal `user_id` (Uuid).
 #[allow(dead_code)]
 pub async fn get_score_by_user_id(
     pool: &PgPool,
@@ -47,8 +46,6 @@ fn sort_column(sort_by: &str) -> &'static str {
     }
 }
 
-/// Get leaderboard with pagination.
-///
 /// When `movement_interval` is provided, each row is enriched with `rank_delta`
 /// computed against the most recent snapshot taken before that interval.
 /// When `movement_only` is also true, rows whose rank hasn't changed (or which
@@ -269,7 +266,6 @@ pub async fn get_score_history(
     .await
 }
 
-/// Upsert a user's score
 pub async fn update_score(pool: &PgPool, score: &UserScore) -> Result<(), sqlx::Error> {
     sqlx::query(
         r"

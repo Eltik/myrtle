@@ -115,7 +115,6 @@ pub async fn get_stats(state: &AppState) -> Result<StatsResponse, ApiError> {
         return Ok(cached);
     }
 
-    // Run all DB queries in parallel
     let (user_row, gacha_row, tier_list_row, rosters_row) = tokio::try_join!(
         fetch_user_stats(&state.db),
         fetch_gacha_stats(&state.db),
@@ -123,7 +122,6 @@ pub async fn get_stats(state: &AppState) -> Result<StatsResponse, ApiError> {
         fetch_rosters_stats(&state.db),
     )?;
 
-    // Game data stats are free - just read from memory
     let gd = state.default_game_data();
     let game_data = GameDataStats {
         operators: gd.operators.len(),

@@ -56,7 +56,6 @@ impl FromRequestParts<AppState> for AuthUser {
             });
         }
 
-        // Otherwise, require Bearer token
         let token = extract_bearer(&parts.headers)?;
         let claims = verify_token(&state.config.jwt_secret, token)?;
 

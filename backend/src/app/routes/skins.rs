@@ -26,7 +26,6 @@ pub struct SkinsParams {
 /// `GET /skins/index` - slim `skinId -> {charId, displaySkin{...}}` map over all
 /// skins (default server), for the profile Stats tab's skin count + browser.
 /// Replaces the full `/static/skins` fetch on that tab.
-/// Every skin in the game, indexed for browsing.
 #[utoipa::path(
     get,
     path = "/skins/index",
@@ -52,7 +51,6 @@ pub async fn skins_index(
 }
 
 /// `GET /{server}/skins/index` - per-server variant.
-/// Every skin in the game, indexed for browsing.///
 /// The `/{server}` form reads that server's game data; the bare form reads the
 /// default server.
 #[utoipa::path(

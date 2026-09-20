@@ -14,7 +14,7 @@ use super::voice::LangType;
 
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct RawAudioData {
-    // Note the uppercase `FX` in the source key (not `Fx`).
+    // uppercase FX is the source's spelling, not a typo
     #[serde(rename = "SoundFXBanks", default)]
     pub sound_fx_banks: Vec<RawSoundFxBank>,
 }
@@ -33,10 +33,6 @@ pub struct RawSound {
     /// Logical asset path, e.g. `Audio/Sound_Beta_2/Battle/b_char/b_char_kong`.
     pub asset: String,
 }
-
-// ============================================================================
-// Enriched output types
-// ============================================================================
 
 /// Coarse semantic label derived from the bank's event/sub-parts/assets so the
 /// frontend can group an operator's clips without parsing bank names.

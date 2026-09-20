@@ -29,9 +29,6 @@ impl CachedJson {
     }
 }
 
-/// Fetch a pre-serialized JSON body (+ its precomputed `ETag`) from the cache, or
-/// build it with `build` on a miss and store both together. `build` runs only on a
-/// cache miss and is the sole place the body is serialized or the `ETag` is hashed.
 /// The outcome a detached build broadcasts to everyone waiting on its key.
 type Outcome = Option<Arc<Result<CachedJson, ApiError>>>;
 
@@ -112,6 +109,9 @@ async fn join(mut rx: watch::Receiver<Outcome>) -> Result<CachedJson, ApiError> 
     }
 }
 
+/// Fetch a pre-serialized JSON body (+ its precomputed `ETag`) from the cache, or
+/// build it with `build` on a miss and store both together. `build` runs only on a
+/// cache miss and is the sole place the body is serialized or the `ETag` is hashed.
 pub async fn cached_json<F, Fut>(
     state: &AppState,
     key: &CacheKey<'_>,

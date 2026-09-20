@@ -105,7 +105,7 @@
         "tags": [
           "i18n-admin"
         ],
-        "summary": "Per-key history. This is what the editor's revert button reads: every entry\ncarries the value it replaced, so reverting is an ordinary write of\n`old_value` rather than a special restore path.\nEdit history for one message in one locale.",
+        "summary": "Per-key history. This is what the editor's revert button reads: every entry\ncarries the value it replaced, so reverting is an ordinary write of\n`old_value` rather than a special restore path.",
         "operationId": "entry_audit_log",
         "parameters": [
           {
@@ -220,7 +220,7 @@
         "tags": [
           "i18n-admin"
         ],
-        "summary": "Adding or enabling a locale is a super-admin action: enabling one commits\nthe deployment to a game-data region and a font subset, which is an\ninfrastructure decision rather than a translation one.\nCreate a locale or change its settings.",
+        "summary": "Adding or enabling a locale is a super-admin action: enabling one commits\nthe deployment to a game-data region and a font subset, which is an\ninfrastructure decision rather than a translation one.",
         "operationId": "upsert_locale",
         "requestBody": {
           "content": {
@@ -281,7 +281,7 @@
           "i18n-admin"
         ],
         "summary": "`PUT /admin/i18n/message`",
-        "description": "The key travels in the body rather than the path: message keys are dotted\nand arbitrary, and path-encoding them buys nothing.\nWrite one message in one locale.\n\nDirect edit with no review step; every write lands in the audit log.\nNeeds a translation grant on the locale, or a role that can open the admin\npanel.",
+        "description": "The key travels in the body rather than the path: message keys are dotted\nand arbitrary, and path-encoding them buys nothing.\n\nDirect edit with no review step; every write lands in the audit log.\nNeeds a translation grant on the locale, or a role that can open the admin\npanel.",
         "operationId": "update_message",
         "requestBody": {
           "content": {
@@ -511,7 +511,7 @@
         "tags": [
           "i18n-admin"
         ],
-        "summary": "`GET /admin/i18n/namespaces` - the full namespace list, independent of\nwhatever page of messages the editor happens to be showing.\nEvery namespace the source catalog defines.",
+        "summary": "`GET /admin/i18n/namespaces` - the full namespace list, independent of\nwhatever page of messages the editor happens to be showing.",
         "operationId": "namespaces",
         "responses": {
           "200": {
@@ -956,7 +956,7 @@
         "tags": [
           "i18n-admin"
         ],
-        "summary": "`POST /admin/i18n/sync` - the extractor's output becomes the truth about\nwhich keys exist and what their English source is. Super-admin only: it can\ndeactivate every key in the catalog.\nReconcile the stored source strings with the ones the frontend now ships.",
+        "summary": "`POST /admin/i18n/sync` - the extractor's output becomes the truth about\nwhich keys exist and what their English source is. Super-admin only: it can\ndeactivate every key in the catalog.",
         "description": "New keys are added, changed source marks its translations stale, and keys\nthe frontend dropped are retired.",
         "operationId": "sync",
         "requestBody": {
@@ -1017,7 +1017,7 @@
         "tags": [
           "i18n-admin"
         ],
-        "summary": "The locales this caller may actually write, for the editor's locale picker.\nWhich locales the caller may actually write to.",
+        "summary": "The locales this caller may actually write, for the editor's locale picker.",
         "description": "The workspace uses this to decide what to render read-only.",
         "operationId": "writable_locales",
         "responses": {
@@ -1154,7 +1154,7 @@
           "admin"
         ],
         "summary": "`PUT /admin/users/{user_id}/role`",
-        "description": "Until now the only way to change a role was the interactive\n`manage_permissions` CLI, so the admin panel could display a role but never\nassign one. Granting the Translator role has to be possible from the panel,\nwhich is what this route is for.\n\nSuper-admin only, and it refuses to change a super-admin's own row: an\naccidental self-demotion here would need the CLI to undo.\n\nNote the role reaches `AuthUser` from the JWT, so the target user keeps\ntheir old privileges until their token refreshes. Per-locale translation\ngrants deliberately do not work this way - they are read from the database\nper request and take effect immediately.\nChange another account's global role.",
+        "description": "Until now the only way to change a role was the interactive\n`manage_permissions` CLI, so the admin panel could display a role but never\nassign one. Granting the Translator role has to be possible from the panel,\nwhich is what this route is for.\n\nSuper-admin only, and it refuses to change a super-admin's own row: an\naccidental self-demotion here would need the CLI to undo.\n\nNote the role reaches `AuthUser` from the JWT, so the target user keeps\ntheir old privileges until their token refreshes. Per-locale translation\ngrants deliberately do not work this way - they are read from the database\nper request and take effect immediately.",
         "operationId": "set_user_role",
         "parameters": [
           {
@@ -1565,8 +1565,7 @@
         "tags": [
           "base"
         ],
-        "summary": "Facility definitions from `building_data`. Roster-independent and stable, so\nit needs no auth and the client can cache it hard.\nEvery RIIC room, facility level and skill the planner knows about.",
-        "description": "Static reference data; it changes only when game data does.",
+        "summary": "Facility definitions from `building_data`. Roster-independent and stable, so\nit needs no auth and the client can cache it hard.",
         "operationId": "get_catalog",
         "responses": {
           "200": {
@@ -1668,8 +1667,7 @@
         "tags": [
           "base"
         ],
-        "summary": "The signed-in user saving their OWN account facts (recruit slots etc.).\nFacts always attach to the caller's profile - there is no setting another\nplayer's facts; viewers get per-request overrides instead.\nRecord the account facts the planner cannot read from synced data.",
-        "description": "With no declaration the never-guess default stands and the dependent skills\nprice at zero.",
+        "summary": "The signed-in user saving their OWN account facts (recruit slots etc.).\nFacts always attach to the caller's profile - there is no setting another\nplayer's facts; viewers get per-request overrides instead.\nWith no declaration the never-guess default stands and the dependent skills\nprice at zero.",
         "operationId": "put_facts",
         "parameters": [
           {
@@ -1738,7 +1736,7 @@
         "tags": [
           "base"
         ],
-        "summary": "The player's real stationed base, as the planner's starting draft.\nA player's current RIIC base layout as synced from the game.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own.",
+        "summary": "The player's real stationed base, as the planner's starting draft.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own.",
         "operationId": "get_layout",
         "parameters": [
           {
@@ -1879,7 +1877,7 @@
           "base"
         ],
         "summary": "A two-squad, three-shift rotation for the drafted layout. The heaviest\nplanner endpoint, so identical (uid, request) pairs serve from cache: the\ncomputation is deterministic given its inputs, and the short TTL only\nbounds staleness against a fresh account sync.",
-        "description": "Both searches run DETACHED and single-flight (`cached_json_detached`): a\nrequest the handler timeout drops still fills the cache, and a retry\narriving while the search runs joins it instead of starting another. The\nadmission permit is taken inside the build task, so a joiner never holds\none and a cache hit never runs a search.\nBuild a shift rotation over a player's base.\n\nSame CPU admission control as `/base/optimize`.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own.",
+        "description": "Both searches run DETACHED and single-flight (`cached_json_detached`): a\nrequest the handler timeout drops still fills the cache, and a retry\narriving while the search runs joins it instead of starting another. The\nadmission permit is taken inside the build task, so a joiner never holds\none and a cache hit never runs a search.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own.",
         "operationId": "rotation_plan",
         "parameters": [
           {
@@ -2154,7 +2152,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /chibis/{operatorId}` - one operator's chibi catalog entry (default\nserver). Replaces fetching the whole `/static/chibis` catalog to find one.\nAn operator's chibi animation set, with the asset paths to load it.",
+        "summary": "`GET /chibis/{operatorId}` - one operator's chibi catalog entry (default\nserver). Replaces fetching the whole `/static/chibis` catalog to find one.",
         "operationId": "chibi_detail",
         "parameters": [
           {
@@ -2355,7 +2353,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "Community-wide average enemies-encountered figure, used to draw the\n\"community average\" marker on a user's enemy-handbook progress bar.\nThe community-wide average for enemy encounters, as a comparison baseline.",
+        "summary": "Community-wide average enemies-encountered figure, used to draw the\n\"community average\" marker on a user's enemy-handbook progress bar.",
         "operationId": "get_community_average",
         "responses": {
           "200": {
@@ -2385,7 +2383,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /enemies/{id}` - one enemy handbook record plus the race lookup table\n(default server). Replaces the enemy-detail page's full `/static/enemies`\nfetch.\nOne enemy's handbook record and stats.",
+        "summary": "`GET /enemies/{id}` - one enemy handbook record plus the race lookup table\n(default server). Replaces the enemy-detail page's full `/static/enemies`\nfetch.",
         "operationId": "enemy_detail",
         "parameters": [
           {
@@ -2440,7 +2438,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /enemies/{id}/stages` - the \"Appears In\" list for one enemy (default\nserver). Replaces the full `/static/enemy-stages` map fetch.\nEvery stage this enemy appears in.",
+        "summary": "`GET /enemies/{id}/stages` - the \"Appears In\" list for one enemy (default\nserver). Replaces the full `/static/enemy-stages` map fetch.",
         "operationId": "enemy_stages",
         "parameters": [
           {
@@ -3185,7 +3183,7 @@
         "tags": [
           "player"
         ],
-        "summary": "A player's profile. `UserProfile` carries currency, sanity, subscription\nexpiry, last-online time and the account's role, so the `uid` goes through\nthe shared privacy gate: the caller's own profile or a public one, 403\notherwise.\nA player's public profile.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own.",
+        "summary": "A player's profile. `UserProfile` carries currency, sanity, subscription\nexpiry, last-online time and the account's role, so the `uid` goes through\nthe shared privacy gate: the caller's own profile or a public one, 403\notherwise.",
         "operationId": "get_user",
         "parameters": [
           {
@@ -3539,7 +3537,7 @@
         "tags": [
           "i18n"
         ],
-        "summary": "`GET /i18n/manifest` - enabled locales and the current content hash of each\nnamespace. Short TTL: this is the only read that has to go stale fast,\nbecause publishing a new hash here is what makes a saved edit visible.\nThe locales on offer and the content hash of each namespace.",
+        "summary": "`GET /i18n/manifest` - enabled locales and the current content hash of each\nnamespace. Short TTL: this is the only read that has to go stale fast,\nbecause publishing a new hash here is what makes a saved edit visible.",
         "description": "A client reads this first, then fetches the catalogs it needs at the hashes\nnamed here. Public and unauthenticated.",
         "operationId": "manifest",
         "parameters": [
@@ -3584,7 +3582,7 @@
           "i18n"
         ],
         "summary": "`GET /i18n/{locale}/{namespace}/{hash}` - one rendered message catalog.",
-        "description": "`hash` comes from the manifest and exists to make the URL change when the\ncontent does. Pass `latest` to fetch the current catalog without consulting\nthe manifest first (useful in development; never cached hard).\nOne namespace of one locale, at one content hash.\n\nThe hash is in the path so the response is immutable: a changed catalog is a\ndifferent URL, which is what lets this be cached indefinitely.",
+        "description": "`hash` comes from the manifest and exists to make the URL change when the\ncontent does. Pass `latest` to fetch the current catalog without consulting\nthe manifest first (useful in development; never cached hard).",
         "operationId": "catalog",
         "parameters": [
           {
@@ -4352,7 +4350,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /level/{stage_id}` - raw Arknights level (camelCased keys, 2D map grid)\nfor the default (EN) server. Powers the Stage Viewer map + pathing renderer.\nA stage's level data: the tile map, enemy routes and wave schedule that\ndrive the stage viewer's pathing simulation.",
+        "summary": "A stage's raw level data (camelCased keys, 2D map grid) on the default (EN)\nserver: the tile map, enemy routes and wave schedule that drive the stage\nviewer's pathing simulation.",
         "operationId": "get_level_map",
         "parameters": [
           {
@@ -5095,7 +5093,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /operators/index` - default (EN) operator index.\nEvery operator, in the compact form the roster and list screens use.",
+        "summary": "Every operator on the default (EN) server, in the compact form the roster\nand list screens use.",
         "operationId": "index",
         "responses": {
           "200": {
@@ -5128,7 +5126,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /operators/ownership` - default-server operator ownership rates.\nHow many tracked players own each operator.",
+        "summary": "`GET /operators/ownership` - default-server operator ownership rates.",
         "operationId": "ownership",
         "responses": {
           "200": {
@@ -5158,7 +5156,8 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /operators/{id}` - one enriched operator. Resolves across loaded servers\n(default first, then CN/others) and tags the response with the `server` it was\nfound on, so the client fetches once for both global and upcoming operators.\nOne operator's full record: stats, talents, skills, modules and handbook.",
+        "summary": "One operator's full record: stats, talents, skills, modules and handbook.",
+        "description": "Resolves across loaded servers (default first, then CN/others) and tags the\nresponse with the `server` it was found on, so the client fetches once for\nboth global and upcoming operators.",
         "operationId": "detail",
         "parameters": [
           {
@@ -6532,7 +6531,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /skins/index` - slim `skinId -> {charId, displaySkin{...}}` map over all\nskins (default server), for the profile Stats tab's skin count + browser.\nReplaces the full `/static/skins` fetch on that tab.\nEvery skin in the game, indexed for browsing.",
+        "summary": "`GET /skins/index` - slim `skinId -> {charId, displaySkin{...}}` map over all\nskins (default server), for the profile Stats tab's skin count + browser.\nReplaces the full `/static/skins` fetch on that tab.",
         "operationId": "skins_index",
         "parameters": [
           {
@@ -6608,7 +6607,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /skins/{id}` - one operator's skins (default server).\nOne operator's skins.",
+        "summary": "`GET /skins/{id}` - one operator's skins (default server).",
         "operationId": "skins_detail",
         "parameters": [
           {
@@ -6714,7 +6713,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /stages/{stageId}/detail` - one stage plus its zone, level data, the\nenemies it references and its drop materials (default server). Replaces the\nstage-detail page's full stages/zones/enemies/materials table fetches.\nOne stage's full record.",
+        "summary": "`GET /stages/{stageId}/detail` - one stage plus its zone, level data, the\nenemies it references and its drop materials (default server). Replaces the\nstage-detail page's full stages/zones/enemies/materials table fetches.",
         "operationId": "stage_detail",
         "parameters": [
           {
@@ -6769,7 +6768,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /static/{resource}` - default (EN) game-data table.\nOne whole game-data table, verbatim.",
+        "summary": "One whole game-data table from the default (EN) server, verbatim.",
         "description": "The resource names are fixed; `tests/api_shape_test.rs` pins the JSON shape\nof every one of them.",
         "operationId": "get_static",
         "parameters": [
@@ -8537,7 +8536,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /upcoming` - operators on CN not yet on the default (EN) server.\nOperators released on CN but not yet on this server.",
+        "summary": "`GET /upcoming` - operators on CN not yet on the default (EN) server.",
         "operationId": "upcoming",
         "responses": {
           "200": {
@@ -8696,7 +8695,7 @@
         "tags": [
           "player"
         ],
-        "summary": "`GET /user/max-level-cost`: the EXP and LMD still needed to bring every\nowned operator to its final promotion and level cap, against what the\naccount holds. A roster walk over static tables - milliseconds, no\nadmission needed.\nWhat it would cost this player to take every owned operator to max level.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own.",
+        "summary": "`GET /user/max-level-cost`: the EXP and LMD still needed to bring every\nowned operator to its final promotion and level cap, against what the\naccount holds. A roster walk over static tables - milliseconds, no\nadmission needed.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own.",
         "operationId": "get_max_level_cost",
         "parameters": [
           {
@@ -8752,7 +8751,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /voices/{id}` - one operator's voice lines (default server).\nAn operator's voice lines, with the audio URLs for each language.",
+        "summary": "An operator's voice lines on the default server, with the audio URLs for\neach language.",
         "operationId": "voices_detail",
         "parameters": [
           {
@@ -9238,7 +9237,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /{server}/chibis/{operatorId}` - per-server variant.\nAn operator's chibi animation set, with the asset paths to load it.///\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "summary": "`GET /{server}/chibis/{operatorId}` - per-server variant.\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
         "operationId": "chibi_detail_srv",
         "parameters": [
           {
@@ -9302,7 +9301,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /{server}/enemies/{id}` - per-server variant.\nOne enemy's handbook record and stats.///\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "summary": "`GET /{server}/enemies/{id}` - per-server variant.\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
         "operationId": "enemy_detail_srv",
         "parameters": [
           {
@@ -9366,7 +9365,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /{server}/enemies/{id}/stages` - per-server variant.\nEvery stage this enemy appears in.///\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "summary": "`GET /{server}/enemies/{id}/stages` - per-server variant.\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
         "operationId": "enemy_stages_srv",
         "parameters": [
           {
@@ -9649,7 +9648,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /{server}/level/{stage_id}` - per-server variant of the raw level.\nA stage's level data for one server.///\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "summary": "`GET /{server}/level/{stage_id}` - per-server variant of the raw level.\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
         "operationId": "get_level_map_srv",
         "parameters": [
           {
@@ -9917,7 +9916,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /{server}/operators/index` - per-server operator index.\nEvery operator, in the compact form the roster and list screens use.///\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "summary": "`GET /{server}/operators/index` - per-server operator index.\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
         "operationId": "index_srv",
         "parameters": [
           {
@@ -9961,7 +9960,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /{server}/operators/ownership` - per-server operator ownership rates.\nHow many tracked players own each operator.///\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "summary": "`GET /{server}/operators/ownership` - per-server operator ownership rates.\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
         "operationId": "ownership_srv",
         "parameters": [
           {
@@ -10002,7 +10001,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /{server}/operators/{id}` - one enriched operator from `{server}`.\nOne operator's full record: stats, talents, skills, modules and handbook.///\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "summary": "`GET /{server}/operators/{id}` - one enriched operator from `{server}`.\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
         "operationId": "detail_srv",
         "parameters": [
           {
@@ -10066,7 +10065,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /{server}/operators/{id}/build-stats` - per-server community defaults.\nHow tracked players actually build one operator: skill, mastery and module\nchoices, as proportions.///\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "summary": "`GET /{server}/operators/{id}/build-stats` - per-server community defaults.\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
         "operationId": "build_stats_srv",
         "parameters": [
           {
@@ -10338,7 +10337,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /{server}/skins/index` - per-server variant.\nEvery skin in the game, indexed for browsing.///\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "summary": "`GET /{server}/skins/index` - per-server variant.\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
         "operationId": "skins_index_srv",
         "parameters": [
           {
@@ -10393,7 +10392,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /{server}/skins/{id}` - one operator's skins from `{server}`.\nOne operator's skins.///\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "summary": "`GET /{server}/skins/{id}` - one operator's skins from `{server}`.\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
         "operationId": "skins_detail_srv",
         "parameters": [
           {
@@ -10446,7 +10445,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /{server}/stages/{stageId}/detail` - per-server variant.\nOne stage's full record.///\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "summary": "`GET /{server}/stages/{stageId}/detail` - per-server variant.\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
         "operationId": "stage_detail_srv",
         "parameters": [
           {
@@ -10510,7 +10509,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /{server}/static/{resource}` - per-server game-data table.\nOne whole game-data table, verbatim.///\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "summary": "`GET /{server}/static/{resource}` - per-server game-data table.\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
         "operationId": "get_static_srv",
         "parameters": [
           {
@@ -10574,7 +10573,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /{server}/upcoming` - operators on `{server}` not yet on the default server.\nOperators released on CN but not yet on this server.///\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "summary": "`GET /{server}/upcoming` - operators on `{server}` not yet on the default server.\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
         "operationId": "upcoming_srv",
         "parameters": [
           {
@@ -10618,7 +10617,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /{server}/voices/{id}` - one operator's voice lines from `{server}`.\nAn operator's voice lines, with the audio URLs for each language.///\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "summary": "`GET /{server}/voices/{id}` - one operator's voice lines from `{server}`.\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
         "operationId": "voices_detail_srv",
         "parameters": [
           {
@@ -13555,7 +13554,6 @@
       },
       "ItemEntry": {
         "type": "object",
-        "description": "Simple key-value pair for inventory",
         "required": [
           "item_id",
           "quantity"

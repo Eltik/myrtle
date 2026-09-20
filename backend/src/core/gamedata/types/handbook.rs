@@ -5,10 +5,6 @@ use ts_rs::TS;
 use super::material::ItemType;
 use super::serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default};
 
-// ============================================================================
-// Enums
-// ============================================================================
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub enum OperatorGender {
@@ -117,10 +113,6 @@ pub enum OperatorRace {
     #[serde(rename = "Sa■&K?uSxw?")]
     Corrupted, // Special corrupted text for certain operators
 }
-
-// ============================================================================
-// Nested Structs
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -426,10 +418,6 @@ pub struct HandbookStageData {
     #[ts(type = "number")]
     pub stage_get_time: i64,
 }
-
-// ============================================================================
-// Container Types
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

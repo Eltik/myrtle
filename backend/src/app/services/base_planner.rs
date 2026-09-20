@@ -1189,7 +1189,7 @@ pub async fn optimize(
 /// Rooms the optimizer has no model for at all: it never staffs a Training Room
 /// or a Workshop, and no part of the search values a seat in one.
 ///
-/// Note this is NOT simply "everything the optimizer doesn't staff" -
+/// This is NOT simply "everything the optimizer doesn't staff" -
 /// dormitories are excluded on purpose. The optimizer never *puts* anyone in a
 /// dorm, but a resting operator is legitimately available labor, and the
 /// improvements plan treats them that way. Pinning dorm crews here would make

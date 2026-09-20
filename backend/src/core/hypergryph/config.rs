@@ -86,22 +86,18 @@ impl GlobalConfig {
         Self::default()
     }
 
-    /// Get a domain URL for a specific server + domain pair
     pub fn domain(&self, server: Server, domain: Domain) -> Option<&str> {
         self.domains[server.index()][domain.index()].as_deref()
     }
 
-    /// Set a domain URL for a specific server + domain pair
     pub fn set_domain(&mut self, server: Server, domain: Domain, url: String) {
         self.domains[server.index()][domain.index()] = Some(url);
     }
 
-    /// Get version info for a server
     pub const fn version(&self, server: Server) -> &VersionInfo {
         &self.versions[server.index()]
     }
 
-    /// Set version info for a server
     pub fn set_version(&mut self, server: Server, info: VersionInfo) {
         self.versions[server.index()] = info;
     }

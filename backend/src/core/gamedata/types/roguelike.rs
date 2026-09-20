@@ -1,7 +1,5 @@
 //! Roguelike (Integrated Strategies) game data types
 //!
-//! Contains types for parsing `roguelike_topic_table.json` and storing
-//! processed data for use in user scoring calculations.
 //!
 //! The FlatBuffer-exported JSON uses `PascalCase` keys and `[{key, value}]`
 //! arrays for dict types. We parse via `serde_json::Value` and extract manually.
@@ -9,20 +7,16 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-/// Processed roguelike data for efficient lookups during scoring
 #[derive(Debug, Clone, Default)]
 pub struct RoguelikeGameData {
-    /// Per-theme data indexed by `theme_id` (e.g., "`rogue_1`", "`rogue_2`", etc.)
     pub themes: HashMap<String, RoguelikeThemeGameData>,
 }
 
-/// Max available counts for a single roguelike theme
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RoguelikeThemeGameData {
     pub theme_id: String,
     pub theme_name: String,
-    /// Total unique endings available
     pub max_endings: i32,
     /// Total relics available (`relic_ids.len()`)
     pub max_relics: i32,
@@ -45,11 +39,8 @@ pub struct RoguelikeThemeGameData {
     /// upgrade-ref table, not the band list (empty for `rogue_1`/`rogue_3`, and
     /// only `band_11..22` for `rogue_2`), so it is the wrong denominator.
     pub band_ids: Vec<String>,
-    /// Total challenge stages available
     pub max_challenges: i32,
-    /// Total monthly squads available
     pub max_monthly_squads: i32,
-    /// Highest difficulty grade available
     pub max_difficulty_grade: i32,
     /// Total BP levels (milestones)
     pub max_bp_levels: i32,
@@ -58,7 +49,6 @@ pub struct RoguelikeThemeGameData {
     pub max_theme_collectibles: i32,
     /// Max endbook CG items
     pub max_endbook_items: i32,
-    /// Max buff unlocks
     pub max_buffs: i32,
 }
 
@@ -140,12 +130,10 @@ impl RoguelikeGameData {
         data
     }
 
-    /// Get total max endings across all themes
     pub fn total_max_endings(&self) -> i32 {
         self.themes.values().map(|t| t.max_endings).sum()
     }
 
-    /// Get total max collectibles (relics + capsules + bands) across all themes
     pub fn total_max_collectibles(&self) -> i32 {
         self.themes
             .values()
@@ -153,17 +141,14 @@ impl RoguelikeGameData {
             .sum()
     }
 
-    /// Get total max challenges across all themes
     pub fn total_max_challenges(&self) -> i32 {
         self.themes.values().map(|t| t.max_challenges).sum()
     }
 
-    /// Get total max monthly squads across all themes
     pub fn total_max_monthly_squads(&self) -> i32 {
         self.themes.values().map(|t| t.max_monthly_squads).sum()
     }
 
-    /// Get number of themes
     pub fn theme_count(&self) -> i32 {
         self.themes.len() as i32
     }
@@ -288,10 +273,8 @@ fn parse_archive_comp(detail: &serde_json::Value) -> (Vec<String>, Vec<String>, 
             obj.values()
                 .map(|v| {
                     if let Some(arr) = v.as_array() {
-                        // FBS format: [{key, value}, ...]
                         arr.len() as i32
                     } else if let Some(inner_obj) = v.as_object() {
-                        // CN format: {id: ...}
                         inner_obj.len() as i32
                     } else {
                         0
@@ -330,8 +313,6 @@ fn parse_archive_comp(detail: &serde_json::Value) -> (Vec<String>, Vec<String>, 
     )
 }
 
-// ── JSON helpers ───────────────────────────────────────────────
-
 /// Convert a `[{key, value}]` array or `{key: value}` dict to a `HashMap`.
 fn kv_to_map(val: &serde_json::Value) -> HashMap<String, serde_json::Value> {
     let mut map = HashMap::new();
@@ -351,7 +332,6 @@ fn kv_to_map(val: &serde_json::Value) -> HashMap<String, serde_json::Value> {
     map
 }
 
-/// Get a string field, trying multiple key variants.
 fn get_str(val: &serde_json::Value, keys: &[&str]) -> Option<String> {
     keys.iter()
         .find_map(|k| val.get(*k))
@@ -369,7 +349,6 @@ fn get_kv_array_len(val: &serde_json::Value, keys: &[&str]) -> i32 {
     }
 }
 
-/// Count elements in a plain array.
 fn get_array_len(val: &serde_json::Value, keys: &[&str]) -> i32 {
     keys.iter()
         .find_map(|k| val.get(*k))
@@ -377,7 +356,6 @@ fn get_array_len(val: &serde_json::Value, keys: &[&str]) -> i32 {
         .map_or(0, |a| a.len() as i32)
 }
 
-/// Get a plain array.
 fn get_array(val: &serde_json::Value, keys: &[&str]) -> Vec<serde_json::Value> {
     keys.iter()
         .find_map(|k| val.get(*k))

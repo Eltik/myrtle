@@ -184,7 +184,6 @@ fn test_engine_vs_python_expected() {
     let mut corrected = vec![0u64; REFERENCE_BUGS.len()];
     let mut known_defects = vec![0u64; KNOWN_ENGINE_DEFECTS.len()];
 
-    // Per-formula-type tracking
     let mut type_tested: HashMap<String, u64> = HashMap::new();
     let mut type_passed: HashMap<String, u64> = HashMap::new();
 
@@ -195,7 +194,6 @@ fn test_engine_vs_python_expected() {
         };
 
         for &skill in &formula.available_skills {
-            // Get formula type for this skill
             let formula_type = formula
                 .skills
                 .get(&skill.to_string())
@@ -207,9 +205,8 @@ fn test_engine_vs_python_expected() {
                 continue;
             }
 
-            // Check if ALL formula modules exist in game data.
             // Python's talent resolution cross-references data from ALL modules,
-            // so missing any module causes talent value divergence.
+            // so one missing module diverges the talent values: skip every module case then.
             let prefixes = ["uniequip_002_", "uniequip_003_", "uniequip_004_"];
             let all_modules_exist = formula.available_modules.iter().all(|&m| {
                 let pos = formula.available_modules.iter().position(|&v| v == m);
@@ -224,7 +221,6 @@ fn test_engine_vs_python_expected() {
             });
 
             for module in std::iter::once(0).chain(formula.available_modules.iter().copied()) {
-                // Skip ALL module tests if any formula module is missing from game data
                 if module > 0 && !all_modules_exist {
                     skipped += 1;
                     continue;
@@ -258,7 +254,6 @@ fn test_engine_vs_python_expected() {
                                     None => expected_dps,
                                 };
 
-                            // Build params with debuffs
                             let shred = if def_mult != 1.0
                                 || def_flat != 0.0
                                 || res_mult != 1.0
@@ -292,8 +287,8 @@ fn test_engine_vs_python_expected() {
                             let enemy = EnemyStats { defense: def, res };
 
                             if let Some(result) = engine::calculate_dps(operator, params, &enemy) {
-                                // Skip cases where Rust returns 0 but Python expects significant DPS
-                                // (indicates missing skill data, e.g. CN-only operators)
+                                // Rust 0 against a real Python figure is missing skill data (CN-only
+                                // operators), not a divergence.
                                 if result.skill_dps.abs() < 0.01 && expected_dps.abs() > 1.0 {
                                     skipped += 1;
                                     continue;
@@ -335,7 +330,6 @@ fn test_engine_vs_python_expected() {
         }
     }
 
-    // Print results
     println!("\n============================================================");
     println!("  DPS Engine Validation Results");
     println!("============================================================");
@@ -368,7 +362,6 @@ fn test_engine_vs_python_expected() {
     };
     println!("  Overall pass rate: {pass_rate:.1}%");
 
-    // Per-formula-type breakdown
     println!("\n  Per-formula-type:");
     let mut types: Vec<_> = type_tested.keys().cloned().collect();
     types.sort();
@@ -454,7 +447,6 @@ fn test_unavailable_module_returns_none() {
             continue;
         };
 
-        // The operator's advanced modules, sorted by uniequip number.
         let mut advanced: Vec<i32> = operator
             .modules
             .iter()

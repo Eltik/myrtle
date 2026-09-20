@@ -44,7 +44,6 @@ pub fn build_operator_audio(
             None => (bank.name.as_str(), None),
         };
 
-        // Resolve the owning operator + optional skill metadata.
         let mut skill_id = None;
         let mut skill_slot = None;
         let char_id: Option<&str> = match CHAR_RE.find(base_name) {
@@ -58,7 +57,6 @@ pub fn build_operator_audio(
         };
         let Some(char_id) = char_id else { continue };
 
-        // Resolve each sound asset to URLs, dropping anything that doesn't exist.
         let mut sounds: Vec<AudioSound> = Vec::new();
         let mut any_voice = false;
         for sound in &bank.sounds {

@@ -16,8 +16,8 @@
 //! | SPECIAL           | `DynMeta`    | same as FESCLASSIC
 //! | LINKAGE / SINGLE / NORMAL / DOUBLE | (no blob - rate-ups come from elsewhere)
 //!
-//! Decoding is best-effort: a malformed blob never errors out, it just
-//! leaves the banner's featured lists empty (the UI gracefully falls back).
+//! Decoding is best-effort: a malformed blob never errors out, it leaves the
+//! banner's featured lists empty and the UI falls back.
 //!
 //! # The static blobs are not the whole story
 //!

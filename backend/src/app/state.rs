@@ -284,7 +284,6 @@ fn parse_asset_ws_urls(default_server: Server) -> HashMap<Server, String> {
     }
 }
 
-/// Per-server asset directory, for example `../assets/output/cn`.
 /// Load every configured server's game data and asset index into the map
 /// `AppState::new` expects.
 ///
@@ -371,6 +370,7 @@ pub fn load_server_map<G>(
     servers
 }
 
+/// Per-server asset directory, for example `../assets/output/cn`.
 pub fn derive_assets_dir(base: &str, server: Server) -> String {
     format!("{base}/{}", server.as_str())
 }

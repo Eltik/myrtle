@@ -7,7 +7,6 @@ use ts_rs::TS;
 // Chibi Types - Spine animation data for operators
 // ============================================================================
 
-/// Animation types for different views/poses
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -34,7 +33,6 @@ impl AnimationType {
     }
 }
 
-/// Spine files for an animation type
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -51,7 +49,6 @@ impl SpineFiles {
     }
 }
 
-/// Character skin with different animation types
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -63,7 +60,6 @@ pub struct ChibiSkin {
     pub animation_types: HashMap<String, SpineFiles>,
 }
 
-/// Processed character data for frontend
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -79,7 +75,6 @@ pub struct ChibiCharacter {
 // Internal crawling types (not serialized to frontend)
 // ============================================================================
 
-/// Content type for repo items
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ContentType {
@@ -87,7 +82,6 @@ pub enum ContentType {
     File,
 }
 
-/// Repository item (internal structure for crawling)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RepoItem {
@@ -118,7 +112,6 @@ impl RepoItem {
     }
 }
 
-/// Cached chibi data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CachedChibiData {
     pub timestamp: i64,
@@ -126,31 +119,22 @@ pub struct CachedChibiData {
     pub version: u32,
 }
 
-// ============================================================================
-// Container type
-// ============================================================================
-
-/// All chibi data
-/// Uses Arc<ChibiCharacter> to share data between Vec and `HashMap` without cloning
+/// `characters` and `by_operator` share one `Arc` per character
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct ChibiData {
-    /// Raw repo items from crawling
     #[serde(skip)]
     #[ts(skip)]
     pub raw_items: Vec<RepoItem>,
-    /// Processed character data for frontend (uses Arc for zero-copy sharing)
     #[serde(serialize_with = "serialize_arc_vec", skip_deserializing)]
     pub characters: Vec<Arc<ChibiCharacter>>,
-    /// Lookup by operator code (shares Arc with characters vec)
     #[serde(skip)]
     #[ts(skip)]
     pub by_operator: HashMap<String, Arc<ChibiCharacter>>,
 }
 
-/// Custom serializer to serialize Vec<Arc<T>> as Vec<T>
 fn serialize_arc_vec<S>(data: &[Arc<ChibiCharacter>], serializer: S) -> Result<S::Ok, S::Error>
 where
     S: serde::Serializer,

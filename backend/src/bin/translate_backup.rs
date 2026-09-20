@@ -835,8 +835,7 @@ where
 
         buf.clear();
         buf.push(start_byte);
-        // We expect each element to be an object or array. Track depth +
-        // string state so we know when the element ends.
+        // depth + string state mark where the element ends
         let mut depth: i32 = i32::from(start_byte == b'{' || start_byte == b'[');
         let mut in_string = start_byte == b'"';
         let mut escape = false;

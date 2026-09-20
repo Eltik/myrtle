@@ -89,7 +89,6 @@ pub struct OperatorUnit {
     pub buff_atk_flat: f64,
     pub buff_fragile: f64,
 
-    // Operator-specific fields for advanced calculations
     pub shreds: Vec<f64>, // Defense shred values [def_shred_mult, def_shred_flat, res_shred_mult, res_shred_flat]
 
     /// Ammo count; also doubles as the `hits` input for some healing formulas.
@@ -118,13 +117,11 @@ impl OperatorUnit {
     ) -> Self {
         let rarity = operator_data.rarity;
 
-        // Apply defaults to params
         let all_cond = params.all_cond.unwrap_or(true);
         let trust = params.trust.unwrap_or(100);
         let targets = params.targets.unwrap_or(1).max(1);
         let sp_boost = params.sp_boost.unwrap_or(0.0);
 
-        // Get conditionals with defaults
         let conditionals = params.conditionals.as_ref();
         let trait_damage = if all_cond {
             conditionals.and_then(|c| c.trait_damage).unwrap_or(true)
@@ -152,19 +149,15 @@ impl OperatorUnit {
             false
         };
 
-        // Set attack interval
         let attack_interval = operator_data.atk_interval;
 
-        // Set is_ranged and is_physical
         let is_ranged = operator_data.is_ranged;
         let is_physical = operator_data.is_physical;
 
-        // Calculate elite level
         let promotion = params.promotion.unwrap_or(-1);
         let mut elite = if promotion < 0 { 2 } else { promotion };
         elite = elite.max(0).min(MAX_PROMOTIONS[(rarity - 1) as usize]);
 
-        // Calculate level
         let param_level = params.level.unwrap_or(-1);
         let max_level_for_elite = MAX_LEVELS[elite as usize][(rarity - 1) as usize];
         let level = if param_level > 0 && param_level < max_level_for_elite {
@@ -173,7 +166,6 @@ impl OperatorUnit {
             max_level_for_elite
         };
 
-        // Calculate potential
         let param_potential = params.potential.unwrap_or(-1);
         let potential = if (1..=6).contains(&param_potential) {
             param_potential
@@ -183,9 +175,7 @@ impl OperatorUnit {
             1
         };
 
-        // Calculate skill index
-        // Note: skill_index is 1-indexed (1=S1, 2=S2, 3=S3) to match Python semantics
-        // Python uses skill=0 for "no skill" (basic attack), skill=1,2,3 for S1,S2,S3
+        // skill_index is 1-based to match Python: 0 = no skill (basic attack), 1..3 = S1..S3
         let mut skill_index = 0;
         if rarity > 2 {
             let param_skill_index = params.skill_index.unwrap_or(0);
@@ -193,12 +183,11 @@ impl OperatorUnit {
 
             skill_index = param_skill_index;
 
-            // Validate skill_index is within range (1-indexed, so skills_len >= skill_index)
             if !(skills_len >= skill_index || skill_index == 0) {
                 skill_index = if skills_len >= default_skill_index {
                     default_skill_index
                 } else {
-                    skills_len // Last skill in 1-indexed
+                    skills_len
                 };
             }
 
@@ -212,9 +201,9 @@ impl OperatorUnit {
             // For E1 or < 6-star with S3 selected, limit to S2 max (1-indexed: 3 -> 2)
             if !is_amiya && (elite == 1 || (rarity < 6 && skill_index == 3)) {
                 skill_index = if skills_len >= 2 {
-                    2 // S2 in 1-indexed
+                    2
                 } else if skills_len >= 1 {
-                    1 // S1 in 1-indexed
+                    1
                 } else {
                     0
                 };
@@ -226,7 +215,6 @@ impl OperatorUnit {
             }
         }
 
-        // Calculate skill level
         let mastery_level = params.mastery_level.unwrap_or(-1);
         let skill_level = if let Some(explicit) = params.skill_level.filter(|&v| v >= 1) {
             // Explicit pre-mastery skill level (1-7), clamped to the elite's
@@ -244,7 +232,7 @@ impl OperatorUnit {
             MAX_SKILL_LEVELS[elite as usize]
         };
 
-        // Calculate trust (already got default above, but need to clamp)
+        // Out-of-range trust reads as 100
         let trust = if (0..100).contains(&trust) {
             trust
         } else {
@@ -326,10 +314,8 @@ impl OperatorUnit {
             }
         }
 
-        // Set default attack speed
         let mut attack_speed: f64 = 100.0;
 
-        // Calculate ATK based on elite level
         let max_level_for_elite_f64 = f64::from(MAX_LEVELS[elite as usize][(rarity - 1) as usize]);
         let mut atk = match elite {
             0 => {
@@ -350,23 +336,18 @@ impl OperatorUnit {
             _ => 0.0,
         };
 
-        // Apply potential ATK bonus
         if potential >= operator_data.atk_potential.required_potential {
             atk += operator_data.atk_potential.value;
         }
 
-        // Apply trust ATK bonus
         atk += (operator_data.atk_trust * f64::from(trust)) / 100.0;
 
-        // Apply potential ASPD bonus
         if potential >= operator_data.aspd_potential.required_potential {
             attack_speed += operator_data.aspd_potential.value;
         }
 
-        // Apply trust ASPD bonus
         attack_speed += (operator_data.aspd_trust * f64::from(trust)) / 100.0;
 
-        // Apply module bonuses
         if elite == 2
             && level >= max_level_e2 - 30
             && let Some(ref op_module) = operator_module
@@ -389,15 +370,12 @@ impl OperatorUnit {
             attack_speed += module_aspd as f64;
         }
 
-        // Set skill parameters
-        // Note: skill_index is 1-indexed (1=S1, 2=S2, 3=S3) like Python
-        // For array access, we use (skill_index - 1) since Python does skill_parameters[skill-1]
+        // skill_index is 1-based (S1=1) to match Python; index with skill_index - 1
         let mut skill_parameters: Vec<f64> = Vec::new();
         let mut skill_cost = 0;
         let mut skill_duration: f64 = -1.0;
 
         if rarity > 2 && skill_index >= 1 {
-            // Python uses skill_parameters[skill-1] where skill is 1-indexed
             let skill_idx = (skill_index - 1) as usize;
             let skill_lvl = (skill_level - 1) as usize;
 
@@ -423,12 +401,9 @@ impl OperatorUnit {
                 .unwrap_or(-1.0);
         }
 
-        // Calculate talent1 parameters
-        // Use module_sequential (1/2/3) for talent resolution, matching Python's
-        // req_module numbering (1=uniequip_002, 2=uniequip_003, 3=uniequip_004).
-        // Python resolves: required_module = available_modules[req_module-1]
-        // and checks: module == required_module
-        // We match this by comparing module_sequential against talent's required_module_id.
+        // Talent gating compares module_sequential (1=uniequip_002, 2=uniequip_003,
+        // 3=uniequip_004) against the talent's required_module_id; Python does
+        // required_module = available_modules[req_module-1], then module == required_module.
         let op_module_seq = format!("{module_sequential}");
         let mut talent1_parameters = operator_data.talent1_defaults.clone();
         if !operator_data.talent1_parameters.is_empty() {
@@ -481,7 +456,6 @@ impl OperatorUnit {
             let _ = current_req_module_lvl;
         }
 
-        // Calculate talent2 parameters
         let mut talent2_parameters = operator_data.talent2_defaults.clone();
         if !operator_data.talent2_parameters.is_empty() {
             let mut current_promo = 0;
@@ -533,37 +507,30 @@ impl OperatorUnit {
             let _ = current_req_module_lvl;
         }
 
-        // Calculate drone/summon parameters
-        // Select drone based on skill_index (skill 1 -> drone 0, skill 2 -> drone 1, etc.)
         let mut drone_atk: f64 = 0.0;
         // Default to 1.0 to avoid division by zero (matches Python's default)
         let mut drone_atk_interval: f32 = 1.0;
 
         if !operator_data.drone_atk.is_empty() {
-            // Python logic: slot = self.skill - 1 if self.skill > 0 else 2
-            // If skill == 0, default to drone 3 (slot 2)
-            // If fewer than 2 drones exist, always use slot 0
+            // Python: slot = self.skill - 1 if self.skill > 0 else 2; fewer than 2 drones always use slot 0
             let slot = if skill_index > 0 {
                 (skill_index - 1) as usize
             } else {
-                2 // Default to third drone for skill 0
+                2
             };
 
-            // Cap at the actual number of drones
             let capped_slot = if operator_data.drone_atk.len() < 2 {
-                0 // If fewer than 2 drones, always use first
+                0
             } else {
                 slot.min(operator_data.drone_atk.len().saturating_sub(1))
             };
 
-            // Get attack interval for selected drone
             drone_atk_interval = operator_data
                 .drone_atk_interval
                 .get(capped_slot)
                 .copied()
-                .unwrap_or(1.0); // Default to 1.0 to avoid division by zero
+                .unwrap_or(1.0);
 
-            // Get ATK for selected drone
             if let Some(selected_drone) = operator_data.drone_atk.get(capped_slot) {
                 drone_atk = match elite {
                     0 => {
@@ -601,12 +568,10 @@ impl OperatorUnit {
             }
         }
 
-        // Apply base buffs
         let base_atk = f64::from(params.base_buffs.atk.unwrap_or(1.0));
         let base_atk_flat = f64::from(params.base_buffs.flat_atk.unwrap_or(0));
         atk = atk * base_atk + base_atk_flat;
 
-        // Build buff name
         let mut buff_name = String::new();
 
         if base_atk > 1.0 {
@@ -648,7 +613,6 @@ impl OperatorUnit {
             write!(buff_name, " +{sp_boost:.0}SP/s").unwrap();
         }
 
-        // Calculate shred values from params
         // shreds format: [def_mult, def_flat, res_mult, res_flat]
         // def/res are percentages (e.g., 40 = -40% DEF/RES), so multiplier = 1 - (value/100)
         let (shred_def_mult, shred_def_flat, shred_res_mult, shred_res_flat) =
@@ -658,7 +622,6 @@ impl OperatorUnit {
                 let res_percent = shred.res.unwrap_or(0);
                 let res_flat = shred.res_flat.unwrap_or(0);
 
-                // Build buff name for display
                 if def_percent != 0 {
                     write!(buff_name, " -{def_percent}%def").unwrap();
                 }
@@ -672,13 +635,11 @@ impl OperatorUnit {
                     write!(buff_name, " -{res_flat}res").unwrap();
                 }
 
-                // Convert percentage to multiplier: 40% shred = 0.6 multiplier
                 let def_mult = 1.0 - (f64::from(def_percent) / 100.0);
                 let res_mult = 1.0 - (f64::from(res_percent) / 100.0);
 
                 (def_mult, f64::from(def_flat), res_mult, f64::from(res_flat))
             } else {
-                // Default: no shred applied (1.0 multiplier, 0 flat)
                 (1.0, 0.0, 1.0, 0.0)
             };
 
@@ -756,7 +717,6 @@ impl OperatorUnit {
             buff_atk_flat,
             buff_fragile,
 
-            // Shreds: [def_mult, def_flat, res_mult, res_flat]
             shreds: vec![
                 shred_def_mult,
                 shred_def_flat,
@@ -798,7 +758,6 @@ impl OperatorUnit {
     }
 
     pub fn skill_dps(&self, _enemy: &EnemyStats) -> f64 {
-        // This method should be overridden by specific operator implementations
         panic!("Not implemented");
     }
 
@@ -837,20 +796,14 @@ pub struct EnemyStats {
     pub res: f64,
 }
 
-/// Trait for all DPS calculator operators
-/// This enables dynamic dispatch and registry-based operator lookup
 pub trait DpsCalculator {
-    /// Calculate DPS against the given enemy stats
     fn skill_dps(&self, enemy: &EnemyStats) -> f64;
 
-    /// Get a reference to the underlying `OperatorUnit`
     fn unit(&self) -> &OperatorUnit;
 
-    /// Get a mutable reference to the underlying `OperatorUnit`
     fn unit_mut(&mut self) -> &mut OperatorUnit;
 }
 
-/// Type alias for operator constructor functions
 pub type OperatorConstructor =
     fn(OperatorData, OperatorParams) -> Box<dyn DpsCalculator + Send + Sync>;
 

@@ -4,10 +4,6 @@ use ts_rs::TS;
 
 use super::serde_helpers::deserialize_fb_map;
 
-// ============================================================================
-// Enums
-// ============================================================================
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[derive(Default, TS, utoipa::ToSchema)]
@@ -108,10 +104,6 @@ pub enum UnlockType {
     #[serde(other)]
     Unknown,
 }
-
-// ============================================================================
-// Nested Structs
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -252,10 +244,6 @@ pub struct VoiceLang {
     pub dict: HashMap<String, VoiceLangDictEntry>,
 }
 
-// ============================================================================
-// RawVoice
-// ============================================================================
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -289,10 +277,6 @@ pub struct RawVoice {
     pub voice_asset: String,
 }
 
-// ============================================================================
-// Voice
-// ============================================================================
-
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -316,10 +300,6 @@ pub struct Voice {
     pub data: Option<Vec<VoiceData>>,
     pub languages: Option<Vec<LangType>>,
 }
-
-// ============================================================================
-// Container Types
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

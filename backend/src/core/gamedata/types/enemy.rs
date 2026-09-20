@@ -4,10 +4,6 @@ use ts_rs::TS;
 
 use super::serde_helpers::deserialize_fb_map;
 
-// ============================================================================
-// Enums
-// ============================================================================
-
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 #[derive(Default, TS, utoipa::ToSchema)]
@@ -55,10 +51,6 @@ pub enum EnemyMotion {
     #[serde(other)]
     Unknown,
 }
-
-// ============================================================================
-// Nested Structs
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -148,7 +140,6 @@ impl<T: Default> MaybeValue<T> {
     }
 }
 
-/// Enemy attributes from `enemy_database.json`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RawEnemyAttributes {
@@ -172,7 +163,6 @@ pub struct RawEnemyAttributes {
     pub ep_resistance: MaybeValue<f64>,
 }
 
-/// Skill blackboard entry
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -186,7 +176,6 @@ pub struct SkillBlackboardEntry {
     pub value_str: Option<String>,
 }
 
-/// Enemy skill from `enemy_database.json`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RawEnemySkill {
@@ -199,7 +188,6 @@ pub struct RawEnemySkill {
     pub blackboard: Vec<SkillBlackboardEntry>,
 }
 
-/// Enemy data entry from `enemy_database.json`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RawEnemyData {
@@ -217,7 +205,6 @@ pub struct RawEnemyData {
     pub skills: Vec<RawEnemySkill>,
 }
 
-/// Level entry in `enemy_database.json`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RawEnemyLevelEntry {
@@ -225,7 +212,6 @@ pub struct RawEnemyLevelEntry {
     pub enemy_data: RawEnemyData,
 }
 
-/// Enemy entry in `enemy_database.json`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RawEnemyDatabaseEntry {
@@ -233,7 +219,6 @@ pub struct RawEnemyDatabaseEntry {
     pub value: Vec<RawEnemyLevelEntry>,
 }
 
-/// Root structure for `enemy_database.json`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct EnemyDatabaseFile {
@@ -244,7 +229,6 @@ pub struct EnemyDatabaseFile {
 // Enriched Enemy Stats (output format)
 // ============================================================================
 
-/// Processed enemy attributes for API output
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -266,7 +250,6 @@ pub struct EnemyAttributes {
     pub levitate_immune: bool,
 }
 
-/// Processed enemy skill for API output
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -280,7 +263,6 @@ pub struct EnemySkill {
     pub blackboard: Vec<SkillBlackboardEntry>,
 }
 
-/// Per-level stats for an enemy
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -295,7 +277,6 @@ pub struct EnemyLevelStats {
     pub skills: Vec<EnemySkill>,
 }
 
-/// All stats for an enemy (all levels)
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -303,10 +284,6 @@ pub struct EnemyLevelStats {
 pub struct EnemyStats {
     pub levels: Vec<EnemyLevelStats>,
 }
-
-// ============================================================================
-// Enemy
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -347,17 +324,11 @@ pub struct Enemy {
     pub damage_type: Vec<DamageType>,
     #[serde(alias = "InvisibleDetail")]
     pub invisible_detail: bool,
-    /// Enriched stats from `enemy_database.json`
     #[serde(default, skip_deserializing)]
     pub stats: Option<EnemyStats>,
-    /// Enemy portrait/icon path
     #[serde(default, skip_deserializing)]
     pub portrait: Option<String>,
 }
-
-// ============================================================================
-// Container Types (used in GameData)
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

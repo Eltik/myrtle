@@ -234,8 +234,6 @@ pub(crate) fn calculate_leveling_costs(
     }
 }
 
-/// Claims up to `count` units of `item_id` from the shared pool, returning how
-/// many were actually taken.
 fn claim_from_pool(pool: &mut HashMap<String, i32>, item_id: &str, count: i32) -> i32 {
     let entry = pool.entry(item_id.to_owned()).or_insert(0);
     let take = (*entry).min(count).max(0);

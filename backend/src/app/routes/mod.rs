@@ -23,7 +23,6 @@ pub struct StatusOk {
     pub status: String,
 }
 
-/// The standard success body for endpoints that return no payload.
 pub fn ok_status() -> Json<StatusOk> {
     Json(StatusOk {
         status: "ok".to_owned(),

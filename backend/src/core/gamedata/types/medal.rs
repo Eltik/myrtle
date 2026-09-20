@@ -1,7 +1,5 @@
 //! Medal game data types
 //!
-//! Contains types for parsing `medal_table.json` and storing processed medal data
-//! for use in user scoring calculations.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -34,7 +32,6 @@ pub struct OperatorLock {
     pub operator_name: String,
 }
 
-/// Root structure for `medal_table.json`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct MedalTableFile {
@@ -42,7 +39,6 @@ pub struct MedalTableFile {
     pub medal_type_data: Vec<MedalTypeEntry>,
 }
 
-/// Individual medal definition from game data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct MedalDefinition {
@@ -66,7 +62,7 @@ pub struct MedalDefinition {
     #[serde(default)]
     pub expire_times: Vec<ExpireTime>,
     #[serde(default)]
-    pub medal_reward_group: serde_json::Value, // Complex nested structure, use Value for flexibility
+    pub medal_reward_group: serde_json::Value,
     #[serde(default)]
     pub is_hidden: bool,
     /// "Upgrade variant" medals (e.g. `medal_*_035`) reference their base medal here
@@ -76,7 +72,6 @@ pub struct MedalDefinition {
     pub origin_medal: String,
 }
 
-/// Time window for medal availability
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ExpireTime {
@@ -86,14 +81,12 @@ pub struct ExpireTime {
     pub expire_type: String,
 }
 
-/// Medal type/category entry with groups
 #[derive(Debug, Clone, Deserialize)]
 pub struct MedalTypeEntry {
     pub key: String,
     pub value: MedalTypeData,
 }
 
-/// Medal category metadata
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct MedalTypeData {
@@ -104,7 +97,6 @@ pub struct MedalTypeData {
     pub group_data: Vec<MedalGroup>,
 }
 
-/// Medal group (themed set of medals)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct MedalGroup {
@@ -119,12 +111,9 @@ pub struct MedalGroup {
     pub shared_expire_times: Vec<ExpireTime>,
 }
 
-/// Processed medal data for efficient lookups during scoring
 #[derive(Debug, Clone, Default)]
 pub struct MedalData {
-    /// All medals indexed by `medal_id`
     pub medals: HashMap<String, MedalDefinition>,
-    /// All medal groups indexed by `group_id`
     pub groups: HashMap<String, MedalGroup>,
     /// Medals organized by type/category (e.g., "playerMedal" -> vec of `medal_ids`)
     pub medals_by_type: HashMap<String, Vec<String>>,
@@ -194,7 +183,6 @@ pub enum Obtainability {
 }
 
 impl MedalData {
-    /// Process raw medal table data into indexed structures
     pub fn from_table(table: MedalTableFile) -> Self {
         let mut data = Self::default();
 
@@ -347,7 +335,6 @@ impl MedalData {
         self.event_windows = event_windows;
     }
 
-    /// Get the display name for a medal category
     pub fn get_category_name(&self, category: &str) -> String {
         self.category_names
             .get(category)
@@ -613,7 +600,6 @@ mod tests {
 
     const NOW: i64 = 1_700_000_000;
 
-    /// Minimal medal definition for classification tests.
     fn mk_medal(id: &str, template: &str, unlock_param: &[&str]) -> MedalDefinition {
         MedalDefinition {
             medal_id: id.to_string(),
@@ -651,16 +637,12 @@ mod tests {
         }
     }
 
-    /// `MedalData` with a single tower medal whose obtainability is driven by the
-    /// given season windows.
     fn data_with_tower_windows(windows: Vec<(i64, i64)>) -> MedalData {
         let mut d = data_with(vec![mk_medal("medal_t", "PassTower", &["tower_n_10"])]);
         d.tower_windows.insert("medal_t".to_string(), windows);
         d
     }
 
-    /// `MedalData` with a single event medal whose obtainability is driven by the
-    /// given activity window.
     fn data_with_event_window(window: EventWindow) -> MedalData {
         let mut d = data_with(vec![mk_medal("medal_ev", "", &[])]);
         d.event_windows.insert("medal_ev".to_string(), window);

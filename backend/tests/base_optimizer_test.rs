@@ -27,7 +27,6 @@ use backend::core::grade::base::types::{OperatorBaseProfile, UserBuilding, UserR
 use backend::database::models::roster::RosterEntry;
 use common::{load_game_data, max_stationed};
 
-/// A `UserRoom` of `room_type` at `level` with a stable slot id.
 fn room(slot: &str, room_type: &str, level: i32) -> UserRoom {
     UserRoom {
         slot_id: slot.into(),
@@ -1571,7 +1570,6 @@ fn current_assignment_reflects_live_base() {
     let optimal =
         compute_optimal_assignment(&profiles, &building, &gd.building, &registry, &drains);
 
-    // Current base has production rooms with real operators stationed.
     let staffed = current
         .rooms
         .iter()
@@ -1621,7 +1619,7 @@ fn base_grade_perf() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
 
-    // Warm up, then time the full optimizer pipeline (the part the grade runs).
+    // Time the two calls the grade runs.
     let iters = 30;
     let t = Instant::now();
     for _ in 0..iters {
@@ -2118,7 +2116,6 @@ fn rotation_is_expressed_as_overlapping_sets() {
         "at most three sets (the 12h-swap cadence)"
     );
 
-    // The trading post's working crew in each set.
     let tp_working: Vec<Vec<String>> = rot
         .sets
         .iter()
@@ -2766,7 +2763,7 @@ fn bd_base_243() -> UserBuilding {
     UserBuilding { rooms }
 }
 
-/// Run the resource-economy solve the way the service does (real registry + drains).
+/// Owns at least one Control Center buff.
 fn is_control_op(gd: &GameData, op: &OperatorBaseProfile) -> bool {
     op.available_buffs.iter().any(|b| {
         gd.building
@@ -3547,7 +3544,6 @@ fn synergy_pairs_stay_co_teamed_and_all_three_teams_are_staffed() {
     .collect();
     let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
 
-    // Collect the distinct trading teams by team_id.
     let mut teams: std::collections::HashMap<String, std::collections::HashSet<String>> =
         std::collections::HashMap::new();
     for s in &rot.shifts {
@@ -5752,7 +5748,6 @@ fn delphine_needs_glasgow_traders_to_earn_her_cc_seat() {
         other => panic!("expected ConditionalGlobalEffect, got {other:?}"),
     }
 
-    // The buff's owner, from gamedata.
     let delphine = gd
         .building
         .chars

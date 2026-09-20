@@ -77,7 +77,6 @@ impl OpMask {
         out
     }
 
-    /// Everything in `self` that is not in `other`.
     fn difference(&self, other: &Self) -> Self {
         let mut out = *self;
         for (o, b) in out.0.iter_mut().zip(&other.0) {
@@ -847,7 +846,6 @@ fn pad_teams(
         }
     }
 
-    // Padding order: weakest teams first across all groups.
     let mut order: Vec<(usize, usize)> = groups
         .iter()
         .enumerate()

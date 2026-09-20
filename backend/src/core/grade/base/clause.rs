@@ -1205,9 +1205,6 @@ pub fn clauses_from_strategy(
             out.push(c);
         }
 
-        // An own-room-level generator (Senshi's Monster Meals): points depend
-        // on WHERE the owner sits, so the assignment-scope settlement resolves
-        // it; the room-local slice skips it.
         // Snegurochka: the automation-style wipe, plus per-occupant room
         // grants (speed and capacity) that carry the facility provenance.
         S::RoomPerOperatorGrant {
@@ -1266,6 +1263,9 @@ pub fn clauses_from_strategy(
             ));
         }
 
+        // An own-room-level generator (Senshi's Monster Meals): points depend
+        // on WHERE the owner sits, so the assignment-scope settlement resolves
+        // it; the room-local slice skips it.
         S::PoolGenerateOwnRoomLevel {
             resource,
             per_level,

@@ -1,8 +1,4 @@
-//! Building (RIIC) game data types.
-//!
-//! Contains types for parsing `building_data.json` - the static game data that
-//! defines base facilities, operator base skills, buff definitions, and
-//! production mechanics.
+//! Building (RIIC) data from `building_data.json`: facilities, operator base skills, buffs, production mechanics.
 
 use std::collections::HashMap;
 
@@ -38,24 +34,19 @@ pub struct BuildingDataFile {
     #[serde(deserialize_with = "deserialize_fb_map")]
     pub rooms: HashMap<String, RoomDef>,
 
-    /// Room upgrade prerequisites.
     #[serde(deserialize_with = "deserialize_fb_map_or_default")]
     pub room_unlock_conds: HashMap<String, RoomUnlockCond>,
 
-    /// Factory production mechanics.
     pub manufact_data: ManufactData,
 
     /// Factory recipes (gold, EXP, orundum, chips).
     #[serde(deserialize_with = "deserialize_fb_map")]
     pub manufact_formulas: HashMap<String, ManufactFormula>,
 
-    /// Trading post mechanics.
     pub trading_data: TradingData,
 
-    /// Control center mechanics.
     pub control_data: ControlData,
 
-    /// Dormitory recovery mechanics.
     pub dorm_data: DormData,
 
     /// Ambience -> recovery conversion: `comfort / this` = manpower recovered
@@ -64,19 +55,14 @@ pub struct BuildingDataFile {
     #[serde(default)]
     pub comfort_manpower_recover_factor: f64,
 
-    /// Power plant mechanics.
     pub power_data: PowerData,
 
-    /// Office/recruitment mechanics.
     pub hire_data: HireData,
 
-    /// Reception room mechanics.
     pub meeting_data: MeetingData,
 
-    /// Training room mechanics.
     pub training_data: TrainingData,
 
-    /// Workshop mechanics.
     pub workshop_data: WorkshopData,
 
     /// Morale cost adjustments by operator count in factories.
@@ -87,7 +73,6 @@ pub struct BuildingDataFile {
     #[serde(default)]
     pub trading_manpower_cost_by_num: Vec<i32>,
 
-    /// Workshop recipes/formulas.
     #[serde(deserialize_with = "deserialize_fb_map", default)]
     pub workshop_formulas: HashMap<String, WorkshopFormula>,
 
@@ -174,7 +159,6 @@ pub struct StoreyDef {
 
 // ─── Buffs ───────────────────────────────────────────────────────────────────
 
-/// A single base skill/buff definition.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Buff {
@@ -206,7 +190,6 @@ pub struct Buff {
 
 // ─── Chars (operator base skills) ────────────────────────────────────────────
 
-/// An operator's base skill configuration.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BuildingChar {
@@ -217,7 +200,6 @@ pub struct BuildingChar {
     pub buff_char: Vec<BuffCharSlot>,
 }
 
-/// A skill slot containing one or more buff entries.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BuffCharSlot {
@@ -273,7 +255,6 @@ pub struct RoomDef {
     pub phases: Vec<RoomPhase>,
 }
 
-/// Grid dimensions for a room.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RoomSize {
@@ -281,12 +262,10 @@ pub struct RoomSize {
     pub row: i32,
 }
 
-/// A single upgrade level for a room.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RoomPhase {
     pub unlock_cond_id: String,
-    /// Max operators that can be stationed.
     pub max_stationed_num: i32,
     /// Power balance. For POWER rooms: generation (60/130/270).
     /// For output/function rooms: consumption (negative).
@@ -297,7 +276,6 @@ pub struct RoomPhase {
     pub build_cost: BuildCost,
 }
 
-/// Construction cost for upgrading a room.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BuildCost {
@@ -307,7 +285,6 @@ pub struct BuildCost {
     pub items: Vec<BuildCostItem>,
 }
 
-/// A material required for construction.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BuildCostItem {
@@ -319,7 +296,6 @@ pub struct BuildCostItem {
 
 // ─── Room unlock conditions ──────────────────────────────────────────────────
 
-/// Prerequisites for unlocking a room phase.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RoomUnlockCond {
@@ -329,7 +305,6 @@ pub struct RoomUnlockCond {
     pub number: HashMap<i32, RoomUnlockReq>,
 }
 
-/// A single prerequisite requirement.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RoomUnlockReq {
@@ -341,13 +316,11 @@ pub struct RoomUnlockReq {
 
 // ─── Facility mechanics ──────────────────────────────────────────────────────
 
-/// Factory production configuration.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ManufactData {
     /// Base speed buff unit (~0.01 = 1%).
     pub basic_speed_buff: f64,
-    /// Per-level stats: capacity and base speed.
     pub phases: Vec<ManufactPhase>,
 }
 
@@ -370,7 +343,6 @@ pub struct ManufactFormula {
     pub formula_type: String,
     /// Internal buff type (e.g. `"M_GOLD"`, `"M_EXP"`, `"M_ASC"`).
     pub buff_type: String,
-    /// Produced item ID.
     pub item_id: String,
     /// Production time in seconds.
     pub cost_point: i64,
@@ -378,18 +350,14 @@ pub struct ManufactFormula {
     pub count: i32,
     /// Item weight (for capacity calculations).
     pub weight: i32,
-    /// Input materials required.
     #[serde(default)]
     pub costs: Vec<FormulaCost>,
-    /// Room requirements to unlock this formula.
     #[serde(default)]
     pub require_rooms: Vec<FormulaRoomReq>,
-    /// Stage requirements to unlock this formula.
     #[serde(default)]
     pub require_stages: Vec<serde_json::Value>,
 }
 
-/// Material cost for a factory formula.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct FormulaCost {
@@ -399,7 +367,6 @@ pub struct FormulaCost {
     pub count: i32,
 }
 
-/// Room requirement to unlock a factory formula.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct FormulaRoomReq {
@@ -408,13 +375,11 @@ pub struct FormulaRoomReq {
     pub room_level: i32,
 }
 
-/// Trading post configuration.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct TradingData {
     /// Base speed buff unit (~0.01 = 1%).
     pub basic_speed_buff: f64,
-    /// Per-level stats: order limit, rarity, speed.
     pub phases: Vec<TradingPhase>,
 }
 
@@ -430,7 +395,6 @@ pub struct TradingPhase {
     pub order_speed: f64,
 }
 
-/// Control center configuration.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ControlData {
@@ -438,11 +402,9 @@ pub struct ControlData {
     pub basic_cost_buff: i32,
 }
 
-/// Dormitory recovery configuration.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct DormData {
-    /// Per-level stats: comfort limit and morale recovery rate.
     pub phases: Vec<DormPhase>,
 }
 
@@ -456,7 +418,6 @@ pub struct DormPhase {
     pub manpower_recover: i32,
 }
 
-/// Power plant configuration.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct PowerData {
@@ -464,7 +425,6 @@ pub struct PowerData {
     pub basic_speed_buff: f64,
 }
 
-/// Office/recruitment configuration.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct HireData {
@@ -481,7 +441,6 @@ pub struct HirePhase {
     pub economize_rate: f64,
 }
 
-/// Reception room configuration.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct MeetingData {
@@ -498,7 +457,6 @@ pub struct MeetingPhase {
     pub friend_slot_inc: i32,
 }
 
-/// Training room configuration.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct TrainingData {
@@ -514,7 +472,6 @@ pub struct TrainingPhase {
     pub spec_skill_lvl_limit: i32,
 }
 
-/// Workshop configuration.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct WorkshopData {
@@ -529,7 +486,6 @@ pub struct WorkshopPhase {
     pub manpower_factor: f64,
 }
 
-/// A workshop recipe definition
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct WorkshopFormula {

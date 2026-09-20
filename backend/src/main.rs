@@ -114,7 +114,6 @@ async fn async_main() {
         .build()
         .expect("failed to build HTTP client");
 
-    // Initialize configs
     {
         let _phase = boot.phase("hypergryph");
         config::init_config(GlobalConfig::new());
@@ -130,7 +129,6 @@ async fn async_main() {
         ServiceAccounts::load(&config.servers)
     };
 
-    // Start server
     let state = AppState::new(
         db,
         cache,
@@ -141,9 +139,6 @@ async fn async_main() {
         service_accounts,
     );
 
-    // Background watchers + cron jobs. These query Postgres and (in the case of
-    // `regrade_job`) fan out parallel workers across every user, which is heavy
-    // and pointless for local stage-viewer / API work. Set
     // Report any table that fell back to an empty default at boot. Same alert the
     // hot-reload path fires; startup needs its own call because `perform_reload`
     // never runs at startup.
@@ -159,6 +154,9 @@ async fn async_main() {
         }
     }
 
+    // Background watchers + cron jobs. These query Postgres and (in the case of
+    // `regrade_job`) fan out parallel workers across every user, which is heavy
+    // and pointless for local stage-viewer / API work. Set
     // `DISABLE_BACKGROUND_JOBS=1` to skip them during local development.
     let jobs_phase = boot.phase("jobs");
     startup::step("spawn");
@@ -167,13 +165,10 @@ async fn async_main() {
     if jobs_disabled {
         info!("DISABLE_BACKGROUND_JOBS set - skipping asset/DPS watchers and cron jobs");
     } else {
-        // Spawn asset hot-reload watcher (connects to asset pipeline WebSocket)
         asset_watcher::spawn(state.clone());
 
-        // Spawn DPS formula auto-update watcher (polls GitHub for upstream changes)
         dps_watcher::spawn(state.clone());
 
-        // Spawn cron jobs
         trending_job::spawn(state.clone());
         leaderboard_snapshot_job::spawn(state.clone());
         operator_ownership_job::spawn(state.clone());

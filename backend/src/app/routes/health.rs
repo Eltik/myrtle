@@ -69,7 +69,6 @@ fn elapsed_ms(d: Duration) -> f64 {
 pub async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
     let start = Instant::now();
 
-    // Ping cache
     let cache_start = Instant::now();
     let cache_ok = state.cache.ping().await;
     let cache_ms = elapsed_ms(cache_start.elapsed());
@@ -80,7 +79,6 @@ pub async fn health(State(state): State<AppState>) -> Json<HealthResponse> {
         "memory"
     };
 
-    // Ping Database
     let db_start = Instant::now();
     let db_ok = sqlx::query("SELECT 1").execute(&state.db).await.is_ok();
     let db_ms = elapsed_ms(db_start.elapsed());
