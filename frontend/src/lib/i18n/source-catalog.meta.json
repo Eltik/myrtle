@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-21T02:26:28.037Z",
+    "generatedAt": "2026-09-21T07:27:22.317Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -20054,6 +20054,23 @@
             "namespace": "tierLists",
             "source_text": "Move tier up",
             "description": "Accessible name of the button that moves this tier one place up the board.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.row.removeOperator",
+            "namespace": "tierLists",
+            "source_text": "Remove {name} from tier {tier}",
+            "description": "Accessible name of the small cross on an operator tile in the editor, which takes that operator off the tier and back into the pool. {name} is the operator's name from the game data; {tier} is the author's own tier label.",
+            "placeholders": [
+                "name",
+                "tier"
+            ]
+        },
+        {
+            "key": "tierLists.edit.row.removeOperatorTitle",
+            "namespace": "tierLists",
+            "source_text": "Remove from tier",
+            "description": "Tooltip on the small cross on an operator tile in the editor.",
             "placeholders": []
         },
         {

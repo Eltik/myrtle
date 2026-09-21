@@ -2735,6 +2735,8 @@
     "tierLists.edit.row.editTier": "Edit tier \"{name}\"",
     "tierLists.edit.row.moveDown": "Move tier down",
     "tierLists.edit.row.moveUp": "Move tier up",
+    "tierLists.edit.row.removeOperator": "Remove {name} from tier {tier}",
+    "tierLists.edit.row.removeOperatorTitle": "Remove from tier",
     "tierLists.edit.row.settings": "Tier settings",
     "tierLists.edit.save.creatingTier": "Creating tier \"{name}\"",
     "tierLists.edit.save.deletingTier": "Deleting tier \"{name}\"",

@@ -12,6 +12,20 @@ export const TIER_DESCRIPTION_MAX = 1000;
 export const PLACEMENT_DESCRIPTION_MAX = 1000;
 export const DESCRIPTION_CLAMP_THRESHOLD = 280;
 
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
+
+export function isHexColor(value: string): boolean {
+    return HEX_COLOR_RE.test(value);
+}
+
+/** Trims, adds the missing `#`, lowercases; null when the result is not a six-digit hex colour. */
+export function normalizeHexColor(raw: string | null | undefined): string | null {
+    const trimmed = raw?.trim() ?? "";
+    if (!trimmed) return null;
+    const withHash = trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+    return isHexColor(withHash) ? withHash.toLowerCase() : null;
+}
+
 export function operatorPlacementNote(op: { description: string | null }): string | null {
     return op.description?.trim() || null;
 }

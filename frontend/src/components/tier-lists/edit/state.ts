@@ -1,6 +1,6 @@
 import type { ITierListDetail, ITierOperator } from "#/lib/api/tier-lists";
 import type { TypedT } from "#/lib/i18n/messages";
-import { operatorPlacementNote } from "../shared";
+import { normalizeHexColor, operatorPlacementNote } from "../shared";
 import type { messages as stateMessages } from "./state.messages";
 
 /** The `t` `diffStates` needs, narrowed to the keys it can render. */
@@ -45,17 +45,24 @@ export type EditAction =
     | { type: "SET_OPERATOR_DESCRIPTION"; operatorId: string; description: string }
     | { type: "RESET"; state: IEditState };
 
-const DEFAULT_TIER_COLORS = ["#dc4d56", "#e0834a", "#d8b54a", "#5dbf86", "#5aa9d9", "#9b73d4", "#8a8a8a"];
-const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+/** The ladder: the colour a tier gets from its row position (S red, A orange, ...) when the author has not chosen one. */
+const LADDER_TIER_COLORS = ["#dc4d56", "#e0834a", "#d8b54a", "#5dbf86", "#5aa9d9", "#9b73d4", "#8a8a8a"];
 
 export function nextFallbackTierColor(existing: number): string {
-    return DEFAULT_TIER_COLORS[existing % DEFAULT_TIER_COLORS.length] ?? "#8a8a8a";
+    return LADDER_TIER_COLORS[existing % LADDER_TIER_COLORS.length] ?? "#8a8a8a";
+}
+
+/**
+ * A ladder colour describes the ROW, so a move leaves it on the row and
+ * slides the tier out from under it. A colour the author chose belongs to
+ * the tier and travels with it.
+ */
+export function isLadderTierColor(color: string): boolean {
+    return LADDER_TIER_COLORS.includes(color.toLowerCase());
 }
 
 function sanitizeTierColor(raw: string | null | undefined, index: number): string {
-    const trimmed = raw?.trim() ?? "";
-    const withHash = trimmed.startsWith("#") ? trimmed : trimmed ? `#${trimmed}` : "";
-    return HEX_RE.test(withHash) ? withHash.toLowerCase() : nextFallbackTierColor(index);
+    return normalizeHexColor(raw) ?? nextFallbackTierColor(index);
 }
 
 export function detailToEditState(detail: ITierListDetail): IEditState {
@@ -136,12 +143,14 @@ export function editReducer(state: IEditState, action: EditAction): IEditState {
             if (idx < 0) return state;
             const swap = action.direction === "up" ? idx - 1 : idx + 1;
             if (swap < 0 || swap >= state.tiers.length) return state;
+            const moving = state.tiers[idx];
+            const displaced = state.tiers[swap];
+            if (!moving || !displaced) return state;
+            // Both wearing ladder colours: the colours stay on their rows; either custom: each keeps its own.
+            const colorsStayOnRows = isLadderTierColor(moving.color) && isLadderTierColor(displaced.color);
             const next = [...state.tiers];
-            const a = next[idx];
-            const b = next[swap];
-            if (!a || !b) return state;
-            next[idx] = b;
-            next[swap] = a;
+            next[idx] = colorsStayOnRows ? { ...displaced, color: moving.color } : displaced;
+            next[swap] = colorsStayOnRows ? { ...moving, color: displaced.color } : moving;
             return { ...state, tiers: next };
         }
         case "PLACE_OPERATOR": {

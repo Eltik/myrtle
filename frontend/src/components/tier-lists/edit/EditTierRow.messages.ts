@@ -27,6 +27,14 @@ export const messages = {
         text: "Move tier down",
         description: "Accessible name of the button that moves this tier one place down the board.",
     },
+    "edit.row.removeOperator": {
+        text: "Remove {name} from tier {tier}",
+        description: "Accessible name of the small cross on an operator tile in the editor, which takes that operator off the tier and back into the pool. {name} is the operator's name from the game data; {tier} is the author's own tier label.",
+    },
+    "edit.row.removeOperatorTitle": {
+        text: "Remove from tier",
+        description: "Tooltip on the small cross on an operator tile in the editor.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

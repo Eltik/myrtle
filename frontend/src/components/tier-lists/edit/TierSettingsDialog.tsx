@@ -7,12 +7,10 @@ import { Input } from "#/components/ui/input";
 import { MarkdownEditor } from "#/components/ui/markdown-editor";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { TIER_DESCRIPTION_MAX as DESC_MAX, TIER_NAME_MAX as NAME_MAX } from "../shared";
+import { TIER_DESCRIPTION_MAX as DESC_MAX, isHexColor, TIER_NAME_MAX as NAME_MAX } from "../shared";
 import { ColorPicker } from "./ColorPicker";
 import type { IEditTier } from "./state";
 import type { messages } from "./TierSettingsDialog.messages";
-
-const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
 interface ITierSettingsDialogProps {
     tier: IEditTier | null;
@@ -53,7 +51,7 @@ export function TierSettingsDialog({ tier, canDelete, onClose, onSave, onDelete,
     const operatorCount = tier?.operatorIds.length ?? 0;
 
     const trimmedName = name.trim();
-    const validColor = HEX_RE.test(color);
+    const validColor = isHexColor(color);
     const canSave = trimmedName.length > 0 && trimmedName.length <= NAME_MAX && validColor;
 
     const submit = () => {

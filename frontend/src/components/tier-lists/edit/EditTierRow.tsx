@@ -1,4 +1,4 @@
-import { ChevronDownIcon, ChevronUpIcon, SettingsIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon, SettingsIcon, XIcon } from "lucide-react";
 import { Fragment, useCallback, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
 import type { ITierOperator } from "#/lib/api/tier-lists";
@@ -26,7 +26,7 @@ interface IEditTierRowProps {
     onActivateOperator: (operator: ITierOperator) => void;
 }
 
-export function EditTierRow({ tier, operators, notedOperatorIds, canMoveUp, canMoveDown, onMoveUp, onMoveDown, onOpenSettings, onPlace, onActivateOperator }: IEditTierRowProps) {
+export function EditTierRow({ tier, operators, notedOperatorIds, canMoveUp, canMoveDown, onMoveUp, onMoveDown, onOpenSettings, onPlace, onUnplace, onActivateOperator }: IEditTierRowProps) {
     const t: TypedT<typeof messages> = useT("tierLists");
     const textColor = readableTextColor(tier.color);
     const touchDropIndex = useTierDropIndex(tier.id);
@@ -108,9 +108,7 @@ export function EditTierRow({ tier, operators, notedOperatorIds, canMoveUp, canM
                     return (
                         <Fragment key={op.id}>
                             <li className={styles.dropMarker} data-active={showMarker(i) || undefined} aria-hidden="true" />
-                            <li className="contents">
-                                <EditableOpTile operator={op} hasNote={notedOperatorIds.has(op.id)} onDragOverChip={handleChipDragOver} onActivate={onActivateOperator} />
-                            </li>
+                            <PlacedChip operator={op} tierName={tier.name} tierLabelId={labelledById} hasNote={notedOperatorIds.has(op.id)} onRemove={onUnplace} onDragOverChip={handleChipDragOver} onActivate={onActivateOperator} />
                         </Fragment>
                     );
                 })}
@@ -130,4 +128,55 @@ export function EditTierRow({ tier, operators, notedOperatorIds, canMoveUp, canM
             </div>
         </section>
     );
+}
+
+interface IPlacedChipProps {
+    operator: ITierOperator;
+    tierName: string;
+    /** Focus target when the chip being removed was the last one in its row. */
+    tierLabelId: string;
+    hasNote: boolean;
+    onRemove: (operatorId: string) => void;
+    onDragOverChip: (operatorId: string, side: "before" | "after") => void;
+    onActivate: (operator: ITierOperator) => void;
+}
+
+/**
+ * One placed tile plus its remove cross. The cross is a sibling of the tile's
+ * button, not a child, because nested controls are invalid HTML; Delete and
+ * Backspace on the focused tile remove it too.
+ */
+function PlacedChip({ operator, tierName, tierLabelId, hasNote, onRemove, onDragOverChip, onActivate }: IPlacedChipProps) {
+    const t: TypedT<typeof messages> = useT("tierLists");
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+        if (e.key !== "Delete" && e.key !== "Backspace") return;
+        e.preventDefault();
+        focusNeighbourChip(e.currentTarget, tierLabelId);
+        onRemove(operator.id);
+    };
+
+    return (
+        <li className={styles.chip}>
+            <EditableOpTile operator={operator} hasNote={hasNote} onDragOverChip={onDragOverChip} onActivate={onActivate} onKeyDown={handleKeyDown} />
+            <button type="button" className={styles.chipRemove} onClick={() => onRemove(operator.id)} aria-label={t("edit.row.removeOperator", { name: operator.name, tier: tierName })} title={t("edit.row.removeOperatorTitle")}>
+                <XIcon aria-hidden="true" />
+            </button>
+        </li>
+    );
+}
+
+/**
+ * Removing the focused tile unmounts it, which would drop focus to `body`.
+ * Move focus first: to the next tile in the row, else the previous one, else
+ * the tier label when the row is about to be empty. Tiles are keyed by
+ * operator id, so the neighbour survives the re-render.
+ */
+function focusNeighbourChip(tile: HTMLElement, tierLabelId: string) {
+    const row = tile.closest("li")?.parentElement;
+    if (!row) return;
+    const chips = Array.from(row.querySelectorAll<HTMLElement>("[data-tl-chip-id]"));
+    const idx = chips.indexOf(tile);
+    const next = chips[idx + 1] ?? chips[idx - 1] ?? document.getElementById(tierLabelId);
+    next?.focus();
 }

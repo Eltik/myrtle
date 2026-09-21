@@ -196,6 +196,73 @@
     cursor: default;
 }
 
+/* Remove cross: revealed on hover/focus, always shown where nothing hovers, hidden during a drag so a drop never lands on it. */
+.chip {
+    position: relative;
+    flex: 0 0 auto;
+    display: inline-flex;
+}
+
+.chipRemove {
+    appearance: none;
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    z-index: 1;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 1.5px solid var(--card);
+    background: var(--destructive);
+    color: white;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.8);
+    box-shadow: 0 1px 2px oklch(0 0 0 / 0.25);
+    transition:
+        opacity 120ms ease,
+        transform 120ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.chipRemove > svg {
+    width: 11px;
+    height: 11px;
+    stroke-width: 3;
+}
+
+.chip:hover .chipRemove,
+.chip:focus-within .chipRemove {
+    opacity: 1;
+    transform: none;
+}
+
+.chipRemove:hover {
+    filter: brightness(1.1);
+}
+
+.chipRemove:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 1px;
+}
+
+@media (hover: none) {
+    .chipRemove {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.dropArea[data-over="true"] .chipRemove,
+.chip:has(.opTile[data-dragging="true"]) .chipRemove {
+    opacity: 0;
+    pointer-events: none;
+}
+
 .dropMarker {
     flex: 0 0 auto;
     width: 0;
@@ -218,7 +285,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .dropMarker {
+    .dropMarker,
+    .chipRemove {
         transition: none;
     }
 }
