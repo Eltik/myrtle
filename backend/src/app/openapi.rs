@@ -167,6 +167,10 @@ it is missing from the server too.",
             // validator and code generator rejects it. `tests/openapi_snapshot_test.rs`
             // fails on a dangling `$ref`, which is what caught it.
             crate::database::models::planner::PlanRecipe,
+            // A query-parameter enum is referenced by `$ref` from the handler's
+            // `params(...)` but utoipa collects schemas only from bodies, so it
+            // must be named here or the `$ref` dangles.
+            crate::app::services::max_level::LevelTarget,
         ),
         responses(
             responses::BadRequest,

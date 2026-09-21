@@ -8695,7 +8695,7 @@
         "tags": [
           "player"
         ],
-        "summary": "`GET /user/max-level-cost`: the EXP and LMD still needed to bring every\nowned operator to its final promotion and level cap, against what the\naccount holds. A roster walk over static tables - milliseconds, no\nadmission needed.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own.",
+        "summary": "`GET /user/max-level-cost`: the EXP and LMD still needed to bring every\nowned operator to its target, the level cap or the level its modules\nunlock at, against what the account holds. A roster walk over static\ntables - milliseconds, no admission needed.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own.",
         "operationId": "get_max_level_cost",
         "parameters": [
           {
@@ -8761,6 +8761,15 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "target",
+            "in": "query",
+            "description": "Where each operator's walk stops: `max` (the level cap, the default) or `module` (the level its modules unlock at; an operator without a module takes its rarity's module level, a rarity with no modules keeps its cap).",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/LevelTarget"
             }
           }
         ],
@@ -14093,6 +14102,14 @@
           }
         }
       },
+      "LevelTarget": {
+        "type": "string",
+        "description": "Where the walk stops for each operator.",
+        "enum": [
+          "max",
+          "module"
+        ]
+      },
       "LineDisposition": {
         "type": "string",
         "description": "How a zero-marginal line should be read.\n\nSerialized straight into `SkillLineDto`, so the generated TS binding is a\nunion rather than a bare `string`: the frontend switches on these values.",
@@ -14336,7 +14353,7 @@
           },
           "operators_remaining": {
             "type": "integer",
-            "description": "Owned operators not yet at their final promotion and level cap.",
+            "description": "Owned operators not yet at their target.",
             "minimum": 0
           },
           "operators_total": {
@@ -14352,7 +14369,7 @@
       },
       "MaxLevelOperatorDto": {
         "type": "object",
-        "description": "One operator still short of its cap, with what closing the gap costs.",
+        "description": "One operator still short of its target, with what closing the gap costs.",
         "required": [
           "operator_id",
           "name",

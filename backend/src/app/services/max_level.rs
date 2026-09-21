@@ -1,7 +1,10 @@
 //! The account-wide "what does it take to max every operator" figure: the
 //! EXP and LMD still needed to bring each owned operator that is not yet at
-//! its final promotion and level cap up to it, against what the account
-//! holds.
+//! its target up to it, against what the account holds. The target is the
+//! level cap by default, or the level the operator's modules unlock at
+//! (`LevelTarget::Module`): the last thirty levels of a 6-star are 43.0% of
+//! its LMD and 47.1% of its EXP for a few points of stat, and a player who
+//! stops where the module opens wants that priced, not the cap.
 //!
 //! Costs come from the same tables the operator planner uses for a single
 //! plan (`calculate_leveling_costs`: the per-level EXP and LMD maps by
@@ -12,14 +15,18 @@
 
 use std::sync::Arc;
 
-use serde::Serialize;
+use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::app::cpu;
 use crate::app::error::ApiError;
-use crate::app::services::planner::calculate_leveling_costs;
+use crate::app::services::planner::{calculate_leveling_costs, module_phase_to_int};
 use crate::app::state::AppState;
 use crate::core::gamedata::types::GameData;
+use crate::core::gamedata::types::module::ModuleType;
+use crate::core::gamedata::types::operator::Operator;
 use crate::core::grade::base::assignment::compute_live_assignment;
 use crate::core::grade::base::context::BaseContext;
 use crate::core::grade::base::sustain_sim::synced_live_morale;
@@ -31,7 +38,73 @@ use crate::database::queries::{
     items as items_queries, roster as roster_queries, users as users_queries,
 };
 
-/// One operator still short of its cap, with what closing the gap costs.
+/// Where the walk stops for each operator.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, utoipa::ToSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum LevelTarget {
+    /// The final promotion and its level cap.
+    #[default]
+    Max,
+    /// The promotion and level the operator's modules unlock at. An operator
+    /// without a module takes its rarity's module level (every module of a
+    /// rarity unlocks at one point: 4-star E2 40, 5-star E2 50, 6-star
+    /// E2 60, read from the module table, never assumed); a rarity with no
+    /// modules at all (1 to 3 stars) keeps its cap.
+    Module,
+}
+
+/// `(elite, level)` a module unlocks at, `None` for the initial badge every
+/// operator holds from E0 1.
+fn module_unlock(operator: &Operator) -> impl Iterator<Item = (i16, i16)> + '_ {
+    operator.modules.iter().filter_map(|m| {
+        if m.module.module_type == ModuleType::Initial {
+            return None;
+        }
+        Some((
+            module_phase_to_int(&m.module.unlock_evolve_phase),
+            i16::try_from(m.module.unlock_level).ok()?,
+        ))
+    })
+}
+
+/// The earliest module unlock per rarity (star count), over every operator
+/// the game data knows.
+pub fn module_targets_by_rarity(gamedata: &GameData) -> HashMap<i16, (i16, i16)> {
+    let mut by_rarity: HashMap<i16, (i16, i16)> = HashMap::new();
+    for operator in gamedata.operators.values() {
+        let Some(earliest) = module_unlock(operator).min() else {
+            continue;
+        };
+        by_rarity
+            .entry(operator.rarity.to_star_int())
+            .and_modify(|current| *current = (*current).min(earliest))
+            .or_insert(earliest);
+    }
+    by_rarity
+}
+
+/// `(elite, level)` the walk stops at for one operator: its own earliest
+/// module, else its rarity's, else the cap. Never past the cap.
+pub fn operator_target(
+    operator: &Operator,
+    target: LevelTarget,
+    by_rarity: &HashMap<i16, (i16, i16)>,
+) -> Option<(i16, i16)> {
+    let last = operator.phases.last()?;
+    let cap = (
+        i16::try_from(operator.phases.len()).ok()? - 1,
+        i16::try_from(last.max_level).ok()?,
+    );
+    if target == LevelTarget::Max {
+        return Some(cap);
+    }
+    let module = module_unlock(operator)
+        .min()
+        .or_else(|| by_rarity.get(&operator.rarity.to_star_int()).copied());
+    Some(module.map_or(cap, |m| m.min(cap)))
+}
+
+/// One operator still short of its target, with what closing the gap costs.
 #[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
 #[ts(export)]
 pub struct MaxLevelOperatorDto {
@@ -58,7 +131,7 @@ pub struct MaxLevelOperatorDto {
 pub struct MaxLevelCostResponse {
     /// Owned operators the game data knows.
     pub operators_total: usize,
-    /// Owned operators not yet at their final promotion and level cap.
+    /// Owned operators not yet at their target.
     pub operators_remaining: usize,
     #[ts(type = "number")]
     pub exp_needed: i64,
@@ -127,6 +200,7 @@ const EXP_ITEM: &str = "5001";
 pub async fn max_level_costs(
     state: &AppState,
     uid: &str,
+    target: LevelTarget,
 ) -> Result<MaxLevelCostResponse, ApiError> {
     let user = users_queries::find_by_uid(&state.db, uid)
         .await?
@@ -152,20 +226,21 @@ pub async fn max_level_costs(
         })
         .sum();
 
+    let by_rarity = match target {
+        LevelTarget::Max => HashMap::new(),
+        LevelTarget::Module => module_targets_by_rarity(&gamedata),
+    };
     let mut operators_total = 0usize;
     let mut operators: Vec<MaxLevelOperatorDto> = Vec::new();
     for entry in &roster {
         let Some(operator) = gamedata.operators.get(&entry.operator_id) else {
             continue;
         };
-        let Some(last) = operator.phases.last() else {
+        let Some((target_elite, target_level)) = operator_target(operator, target, &by_rarity)
+        else {
             continue;
         };
         operators_total += 1;
-        #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
-        let target_elite = (operator.phases.len() - 1) as i16;
-        #[allow(clippy::cast_possible_truncation)]
-        let target_level = last.max_level as i16;
         if entry.elite >= target_elite && entry.level >= target_level {
             continue;
         }

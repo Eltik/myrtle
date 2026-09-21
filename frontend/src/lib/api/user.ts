@@ -637,22 +637,28 @@ export function itemStandingQueryOptions(input: IItemStandingInput) {
 
 export type IMaxLevelCost = MaxLevelCostResponse;
 
-/** The EXP and LMD still needed to bring every owned operator to its cap. */
+/**
+ * Where the max-level walk stops each operator: the level cap, or the level
+ * its modules unlock at (the backend's `LevelTarget`, a query parameter).
+ */
+export type MaxLevelTarget = "max" | "module";
+
+/** The EXP and LMD still needed to bring every owned operator to its target. */
 export const getMaxLevelCostFn = createServerFn({ method: "GET" })
-    .inputValidator((data: { uid: string; bearerToken?: string }) => data)
-    .handler(async ({ data: { uid, bearerToken } }) => {
+    .inputValidator((data: { uid: string; target: MaxLevelTarget; bearerToken?: string }) => data)
+    .handler(async ({ data: { uid, target, bearerToken } }) => {
         const token = bearerToken ?? optionalSiteToken();
-        const res = await backendFetch(`/user/max-level-cost?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
+        const res = await backendFetch(`/user/max-level-cost?uid=${encodeURIComponent(uid)}&target=${target}`, { bearerToken: token });
         if (!res.ok) {
             throw new Error(`Failed to load max-level cost: ${res.status}`);
         }
         return (await res.json()) as IMaxLevelCost;
     });
 
-export function maxLevelCostQueryOptions(uid: string, bearerToken?: string) {
+export function maxLevelCostQueryOptions(uid: string, target: MaxLevelTarget, bearerToken?: string) {
     return queryOptions({
-        queryKey: ["user", "max-level-cost", uid, bearerToken ? "auth" : "anon"],
-        queryFn: () => getMaxLevelCostFn({ data: { uid, bearerToken } }),
+        queryKey: ["user", "max-level-cost", uid, target, bearerToken ? "auth" : "anon"],
+        queryFn: () => getMaxLevelCostFn({ data: { uid, target, bearerToken } }),
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
     });

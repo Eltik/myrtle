@@ -3,7 +3,10 @@ import { Calculator } from "lucide-react";
 import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
-import { maxLevelCostQueryOptions } from "#/lib/api/user";
+import { Switch } from "#/components/ui/switch";
+import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
+import { useLocalStorageState } from "#/hooks/use-local-storage-state";
+import { type MaxLevelTarget, maxLevelCostQueryOptions } from "#/lib/api/user";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { Headline } from "../base/controls/Headline";
@@ -13,17 +16,27 @@ import type { messages } from "./AccountOptimizer.messages";
 /** Rows shown before the list is expanded. */
 const PREVIEW_ROWS = 12;
 
+/** Whether the walk stops at the module level; a viewing preference, so one key for every profile. */
+const MODULE_TARGET_STORAGE_KEY = "account-optimizer-module-target";
+const MODULE_TARGET_FIELD_ID = "account-module-target";
+
 /**
  * The Account Optimizer's first card: what it takes to bring every owned
- * operator to its level cap. The figure is computed on demand (a button), not
- * on tab open, so browsing a profile never pays for it.
+ * operator to its level cap, or to the level its module unlocks at (a switch:
+ * the last thirty levels of a 6-star are 43% of its LMD and 47% of its EXP for
+ * a few points of stat). The figure is computed on demand (a button), not on
+ * tab open, so browsing a profile never pays for it.
  */
 export function AccountOptimizer({ uid }: IOptimizerProps) {
     const t: TypedT<typeof messages> = useT("user");
     const f = useFormatters();
     const [requested, setRequested] = useState(false);
     const [showAll, setShowAll] = useState(false);
-    const query = useQuery({ ...maxLevelCostQueryOptions(uid), enabled: requested });
+    const [moduleTarget, setModuleTarget] = useLocalStorageState<boolean>(MODULE_TARGET_STORAGE_KEY, false);
+    const target: MaxLevelTarget = moduleTarget ? "module" : "max";
+    // Flipping the switch changes the query key; keeping the previous figure
+    // on screen makes it read as a re-price, not a fresh run.
+    const query = useQuery({ ...maxLevelCostQueryOptions(uid, target), enabled: requested, placeholderData: (prev) => prev });
     const data = query.data;
     const rows = data ? (showAll ? data.operators : data.operators.slice(0, PREVIEW_ROWS)) : [];
 
@@ -40,12 +53,27 @@ export function AccountOptimizer({ uid }: IOptimizerProps) {
             <div className="flex flex-wrap items-end justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3">
                 <div className="flex max-w-xl flex-col gap-0.5">
                     <p className="font-medium text-[13px] text-foreground">{t("profile.account.maxLevel.title")}</p>
-                    <p className="text-[12px] text-muted-foreground">{t("profile.account.maxLevel.blurb")}</p>
+                    <p className="text-[12px] text-muted-foreground">{moduleTarget ? t("profile.account.maxLevel.blurbModule") : t("profile.account.maxLevel.blurb")}</p>
                 </div>
-                <Button disabled={query.isFetching} onClick={run} size="sm">
-                    <Calculator />
-                    {query.isFetching ? t("profile.account.maxLevel.calculating") : data ? t("profile.account.maxLevel.recalculate") : t("profile.account.maxLevel.calculate")}
-                </Button>
+                <div className="flex flex-wrap items-center gap-4">
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={(props) => (
+                                <div {...props} className="flex items-center gap-2">
+                                    <Switch checked={moduleTarget} id={MODULE_TARGET_FIELD_ID} onCheckedChange={setModuleTarget} />
+                                    <label className="cursor-pointer text-[12px] text-muted-foreground" htmlFor={MODULE_TARGET_FIELD_ID}>
+                                        {t("profile.account.maxLevel.moduleTarget")}
+                                    </label>
+                                </div>
+                            )}
+                        />
+                        <TooltipPopup className="max-w-72">{t("profile.account.maxLevel.moduleTarget.tooltip")}</TooltipPopup>
+                    </Tooltip>
+                    <Button disabled={query.isFetching} onClick={run} size="sm">
+                        <Calculator />
+                        {query.isFetching ? t("profile.account.maxLevel.calculating") : data ? t("profile.account.maxLevel.recalculate") : t("profile.account.maxLevel.calculate")}
+                    </Button>
+                </div>
             </div>
 
             {query.isError && <p className="text-[12px] text-destructive">{t("profile.account.maxLevel.error")}</p>}
@@ -105,7 +133,7 @@ export function AccountOptimizer({ uid }: IOptimizerProps) {
                             <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
                                 <th className="px-3 py-2 text-left font-medium">{t("profile.account.maxLevel.col.operator")}</th>
                                 <th className="px-3 py-2 text-left font-medium">{t("profile.account.maxLevel.col.now")}</th>
-                                <th className="px-3 py-2 text-left font-medium">{t("profile.account.maxLevel.col.target")}</th>
+                                <th className="px-3 py-2 text-left font-medium">{moduleTarget ? t("profile.account.maxLevel.col.moduleTarget") : t("profile.account.maxLevel.col.target")}</th>
                                 <th className="px-3 py-2 text-right font-medium">{t("profile.account.maxLevel.col.exp")}</th>
                                 <th className="px-3 py-2 text-right font-medium">{t("profile.account.maxLevel.col.lmd")}</th>
                             </tr>

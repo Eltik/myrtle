@@ -8,7 +8,7 @@ export type MaxLevelCostResponse = {
      */
     operators_total: number;
     /**
-     * Owned operators not yet at their final promotion and level cap.
+     * Owned operators not yet at their target.
      */
     operators_remaining: number;
     exp_needed: number;

@@ -11,6 +11,18 @@ export const messages = {
         text: "The EXP and LMD still needed to take every operator you own to its final promotion and level cap, against what you hold.",
         description: "One-line explanation under the max-level cost card title. Promotion is the game's elite upgrade; LMD is the game's currency.",
     },
+    "profile.account.maxLevel.blurbModule": {
+        text: "The EXP and LMD still needed to take every operator you own to the level its module unlocks at, against what you hold.",
+        description: "Replaces the blurb while the 'stop at module level' switch is on. A module is the game's late-game operator upgrade, unlocked at a fixed level per rarity (4-star E2 40, 5-star E2 50, 6-star E2 60).",
+    },
+    "profile.account.maxLevel.moduleTarget": {
+        text: "Stop at module level",
+        description: "Label of the switch that prices each operator only up to the level its module unlocks at instead of the level cap.",
+    },
+    "profile.account.maxLevel.moduleTarget.tooltip": {
+        text: "Prices each operator up to the level its module unlocks at (E2 40 / 50 / 60 for 4 / 5 / 6 stars) instead of the cap. The last 30 levels of a 6-star are 43% of its LMD and 47% of its EXP for a few points of stat. Operators without a module use their rarity's level; 1 to 3 stars keep their cap.",
+        description: "Tooltip on the 'stop at module level' switch. E2 is the game's second promotion; the percentages are from the game's cost tables.",
+    },
     "profile.account.maxLevel.calculate": {
         text: "Calculate",
         description: "Button that runs the max-level cost calculation.",
@@ -98,6 +110,10 @@ export const messages = {
     "profile.account.maxLevel.col.target": {
         text: "Cap",
         description: "Table column header: the operator's final promotion and level.",
+    },
+    "profile.account.maxLevel.col.moduleTarget": {
+        text: "Module",
+        description: "Table column header while the 'stop at module level' switch is on: the promotion and level the operator's module unlocks at.",
     },
     "profile.account.maxLevel.col.exp": {
         text: "EXP",
