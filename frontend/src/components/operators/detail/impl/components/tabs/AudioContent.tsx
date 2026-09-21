@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { AudioLines, ChevronDown, ChevronUp, Download, Layers, Loader2, Pause, Play, Search, Volume2, VolumeX, X } from "lucide-react";
-import { Fragment, memo, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { memo, type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Slider } from "#/components/ui/slider";
@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { operatorGamedataServer } from "#/lib/api/gamedata";
 import { operatorVoicesQueryOptions } from "#/lib/api/voices";
+import { GameText } from "#/lib/gamedata/GameText";
+import { plainText } from "#/lib/gamedata/richtext";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { normalizeForSearch } from "#/lib/search/fuzzy";
@@ -26,7 +28,7 @@ type AudioMode = "voice" | "sfx";
 /** This tab renders its own chrome plus the language, category and event taxonomies. */
 type AudioT = TypedT<typeof messages & typeof detailConstantsMessages>;
 
-function sanitize(name: string): string {
+function sanitizeFilename(name: string): string {
     return name.replace(/[^a-zA-Z0-9\-_]/g, "_");
 }
 
@@ -37,6 +39,30 @@ function fileExtension(url: string, fallback: string): string {
 
 function operatorDisplayName(operator: IOperatorListItem): string {
     return operator.name ?? operator.id ?? "operator";
+}
+
+/** The language's translated name, or its code when the catalog has none. */
+function languageLabel(lang: LangType, t: AudioT): string {
+    const key = VOICE_LANGUAGE_LABEL_KEY[lang];
+    return key ? t(key) : lang;
+}
+
+/** The clip URL for one voice line in one language, relative to the asset host. */
+function voiceClipPath(voice: IVoice, lang: LangType): string | null {
+    return voice.data?.find((d) => d.language === lang)?.voiceUrl ?? null;
+}
+
+/** The category bucket a voice line files under; the bucket NAME is an identifier, not display text. */
+function voiceCategoryBucket(voice: IVoice): string {
+    return VOICE_CATEGORY_MAP[voice.placeType] ?? "Other";
+}
+
+function voiceCategoryId(bucket: string): string {
+    return bucket.toLowerCase().replace(/\s+/g, "-");
+}
+
+function voiceCategoryLabelKey(bucket: string) {
+    return VOICE_CATEGORY_LABEL_KEY[bucket] ?? "voice.category.other";
 }
 
 // =============================================================================
@@ -241,6 +267,38 @@ function EmptyState({ children }: { children: ReactNode }) {
     return <div className="py-12 text-center text-muted-foreground text-sm">{children}</div>;
 }
 
+function SearchBox({ value, onChange, placeholder, label }: { value: string; onChange: (v: string) => void; placeholder: string; label: string }) {
+    const t: AudioT = useT("operators");
+
+    return (
+        <div className="flex h-9 min-w-60 max-w-115 flex-1 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 transition-[border-color,box-shadow] duration-150 focus-within:border-primary focus-within:shadow-[0_0_0_1px_var(--primary)] [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
+            <Search className="h-3.75 w-3.75" aria-hidden="true" />
+            <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} aria-label={label} className="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 font-sans text-foreground text-sm leading-none outline-none placeholder:text-muted-foreground" />
+            {value && (
+                <button type="button" aria-label={t("audio.search.clear")} onClick={() => onChange("")} className="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground">
+                    <X className="h-3.5 w-3.5" />
+                </button>
+            )}
+        </div>
+    );
+}
+
+function AudioSkeleton() {
+    return (
+        <div>
+            <div className="flex gap-2">
+                <Skeleton className="h-9 w-48" />
+                <Skeleton className="h-9 w-60" />
+            </div>
+            <div className="mt-6 space-y-2">
+                {[0, 1, 2, 3, 4].map((i) => (
+                    <Skeleton key={i} className="h-16 w-full rounded-lg" />
+                ))}
+            </div>
+        </div>
+    );
+}
+
 interface ICategoryTab {
     id: string;
     label: string;
@@ -374,19 +432,16 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
     const categories: IVoiceCategory[] = useMemo(() => {
         const map = new Map<string, IVoice[]>();
         for (const v of operatorVoices) {
-            // The bucket NAME is an identifier, and the tab id is derived from
-            // it; only `name` below is text a reader sees.
-            const bucket = VOICE_CATEGORY_MAP[v.placeType] ?? "Other";
-            const id = bucket.toLowerCase().replace(/\s+/g, "-");
+            const id = voiceCategoryId(voiceCategoryBucket(v));
             const list = map.get(id) ?? [];
             list.push(v);
             map.set(id, list);
         }
         const ordered: IVoiceCategory[] = [];
         for (const bucket of VOICE_CATEGORY_ORDER) {
-            const id = bucket.toLowerCase().replace(/\s+/g, "-");
+            const id = voiceCategoryId(bucket);
             const list = map.get(id);
-            if (list?.length) ordered.push({ id, name: t(VOICE_CATEGORY_LABEL_KEY[bucket] ?? "voice.category.other"), lines: list });
+            if (list?.length) ordered.push({ id, name: t(voiceCategoryLabelKey(bucket)), lines: list });
         }
         if (ordered.length > 0) {
             ordered.unshift({ id: ALL_CATEGORY_ID, name: t("audio.category.all"), lines: operatorVoices });
@@ -401,7 +456,7 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
         if (!normalizedQuery) return categories;
         return categories.map((c) => ({
             ...c,
-            lines: c.lines.filter((v) => normalizeForSearch(v.voiceTitle).includes(normalizedQuery) || normalizeForSearch(v.voiceText).includes(normalizedQuery)),
+            lines: c.lines.filter((v) => normalizeForSearch(v.voiceTitle).includes(normalizedQuery) || normalizeForSearch(plainText(v.voiceText)).includes(normalizedQuery)),
         }));
     }, [categories, normalizedQuery]);
 
@@ -415,18 +470,16 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
     const operatorName = operatorDisplayName(operator);
 
     const playVoice = (voice: IVoice) => {
-        if (!voice.id) return;
-        const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceUrl;
-        if (!url) return;
-        player.play(voice.id, audioURL(url, operator.server));
+        const path = voiceClipPath(voice, selectedLanguage);
+        if (!voice.id || !path) return;
+        player.play(voice.id, audioURL(path, operator.server));
     };
 
     const downloadVoice = (voice: IVoice) => {
-        const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceUrl;
-        if (!url || !voice.id) return;
-        const langKey = VOICE_LANGUAGE_LABEL_KEY[selectedLanguage];
-        const langLabel = langKey ? t(langKey) : selectedLanguage;
-        player.download(voice.id, audioURL(url, operator.server), `${sanitize(operatorName)}_${sanitize(voice.voiceTitle)}_${sanitize(langLabel)}.${fileExtension(url, "mp3")}`);
+        const path = voiceClipPath(voice, selectedLanguage);
+        if (!voice.id || !path) return;
+        const filename = `${sanitizeFilename(operatorName)}_${sanitizeFilename(voice.voiceTitle)}_${sanitizeFilename(languageLabel(selectedLanguage, t))}.${fileExtension(path, "mp3")}`;
+        player.download(voice.id, audioURL(path, operator.server), filename);
     };
 
     if (isLoading) return <AudioSkeleton />;
@@ -447,7 +500,7 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
                         <SelectContent>
                             {availableLanguages.map((lang) => (
                                 <SelectItem key={lang} value={lang}>
-                                    {VOICE_LANGUAGE_LABEL_KEY[lang] ? t(VOICE_LANGUAGE_LABEL_KEY[lang]) : lang}
+                                    {languageLabel(lang, t)}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -466,10 +519,9 @@ function VoiceLinesPanel({ operator, player }: { operator: IOperatorListItem; pl
                             ) : (
                                 <div className="max-h-112 space-y-2 overflow-y-auto pr-2">
                                     {c.lines.map((voice) => {
-                                        const url = voice.data?.find((d) => d.language === selectedLanguage)?.voiceUrl;
-                                        const fullURL = url ? audioURL(url, operator.server) : null;
-                                        const isUnavailable = !url || (fullURL !== null && player.erroredURLs.has(fullURL));
-                                        const categoryLabel = c.id === ALL_CATEGORY_ID ? t(VOICE_CATEGORY_LABEL_KEY[VOICE_CATEGORY_MAP[voice.placeType] ?? "Other"] ?? "voice.category.other") : null;
+                                        const path = voiceClipPath(voice, selectedLanguage);
+                                        const isUnavailable = !path || player.erroredURLs.has(audioURL(path, operator.server));
+                                        const categoryLabel = c.id === ALL_CATEGORY_ID ? t(voiceCategoryLabelKey(voiceCategoryBucket(voice))) : null;
                                         return (
                                             <VoiceLineRow
                                                 key={voice.id ?? voice.charWordId}
@@ -537,13 +589,13 @@ function VoiceLineRow({ voice, isPlaying, progress, isDownloading, isUnavailable
         <AudioRow isPlaying={isPlaying} isUnavailable={isUnavailable} isDownloading={isDownloading} progress={progress} downloadLabel={t("audio.download.voice")} onPlay={onPlay} onDownload={onDownload}>
             <div className="flex flex-wrap items-center gap-2">
                 <div className="font-medium text-foreground text-sm">
-                    <HighlightedText text={voice.voiceTitle} query={highlight} />
+                    <GameText text={voice.voiceTitle} highlight={highlight} />
                 </div>
                 {categoryLabel && <Pill>{categoryLabel}</Pill>}
                 {isUnavailable && <Pill className="bg-muted">{t("audio.unavailable")}</Pill>}
             </div>
             <p ref={textRef} className={cn("text-muted-foreground text-xs duration-300", showFull ? "" : "line-clamp-2")}>
-                <HighlightedText text={voice.voiceText} query={highlight} />
+                <GameText text={voice.voiceText} highlight={highlight} />
             </p>
             {showToggle && (
                 <button type="button" onClick={() => setIsExpanded((v) => !v)} aria-expanded={isExpanded} className="mt-1 inline-flex items-center gap-1 rounded font-medium text-[11px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring">
@@ -771,7 +823,7 @@ function SfxRow({ item, player, operatorName, showCategory }: { item: ISfxItem; 
         if (!currentURL) return;
         const langPart = selectedLang ? `_${selectedLang}` : "";
         const variantPart = variantCount > 1 ? `_v${safeIndex + 1}` : "";
-        player.download(item.id, currentURL, `${sanitize(operatorName)}_${sanitize(item.label)}${langPart}${variantPart}.${fileExtension(currentURL, "ogg")}`);
+        player.download(item.id, currentURL, `${sanitizeFilename(operatorName)}_${sanitizeFilename(item.label)}${langPart}${variantPart}.${fileExtension(currentURL, "ogg")}`);
     };
 
     return (
@@ -800,7 +852,7 @@ function SfxRow({ item, player, operatorName, showCategory }: { item: ISfxItem; 
                             <button
                                 key={track.lang}
                                 type="button"
-                                title={VOICE_LANGUAGE_LABEL_KEY[track.lang] ? t(VOICE_LANGUAGE_LABEL_KEY[track.lang]) : track.lang}
+                                title={languageLabel(track.lang, t)}
                                 onClick={() => {
                                     setSelectedLang(track.lang);
                                     setVariantIndex(0);
@@ -844,67 +896,5 @@ function SfxRow({ item, player, operatorName, showCategory }: { item: ISfxItem; 
                 </div>
             )}
         </AudioRow>
-    );
-}
-
-// =============================================================================
-// Shared bits
-// =============================================================================
-
-function SearchBox({ value, onChange, placeholder, label }: { value: string; onChange: (v: string) => void; placeholder: string; label: string }) {
-    const t: AudioT = useT("operators");
-
-    return (
-        <div className="flex h-9 min-w-60 max-w-115 flex-1 items-center gap-2 rounded-lg border border-border bg-[color-mix(in_oklch,var(--secondary)_60%,transparent)] px-3 transition-[border-color,box-shadow] duration-150 focus-within:border-primary focus-within:shadow-[0_0_0_1px_var(--primary)] [&>svg]:shrink-0 [&>svg]:text-muted-foreground">
-            <Search className="h-3.75 w-3.75" aria-hidden="true" />
-            <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} aria-label={label} className="min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 font-sans text-foreground text-sm leading-none outline-none placeholder:text-muted-foreground" />
-            {value && (
-                <button type="button" aria-label={t("audio.search.clear")} onClick={() => onChange("")} className="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground">
-                    <X className="h-3.5 w-3.5" />
-                </button>
-            )}
-        </div>
-    );
-}
-
-function HighlightedText({ text, query }: { text: string; query: string }) {
-    if (!query) return <>{text}</>;
-    const lower = text.toLowerCase();
-    const q = query.toLowerCase();
-    if (!lower.includes(q)) return <>{text}</>;
-    const segments: { value: string; match: boolean; offset: number }[] = [];
-    let i = 0;
-    while (i < text.length) {
-        const idx = lower.indexOf(q, i);
-        if (idx === -1) {
-            segments.push({ value: text.slice(i), match: false, offset: i });
-            break;
-        }
-        if (idx > i) segments.push({ value: text.slice(i, idx), match: false, offset: i });
-        segments.push({ value: text.slice(idx, idx + q.length), match: true, offset: idx });
-        i = idx + q.length;
-    }
-    return (
-        <>
-            {segments.map((seg) => (
-                <Fragment key={`${seg.offset}-${seg.match ? "m" : "t"}`}>{seg.match ? <mark className="rounded-sm bg-primary/30 px-0.5 text-foreground">{seg.value}</mark> : seg.value}</Fragment>
-            ))}
-        </>
-    );
-}
-
-function AudioSkeleton() {
-    return (
-        <div>
-            <div className="flex gap-2">
-                <Skeleton className="h-9 w-48" />
-                <Skeleton className="h-9 w-60" />
-            </div>
-            <div className="mt-6 space-y-2">
-                {[0, 1, 2, 3, 4].map((i) => (
-                    <Skeleton key={i} className="h-16 w-full rounded-lg" />
-                ))}
-            </div>
-        </div>
     );
 }

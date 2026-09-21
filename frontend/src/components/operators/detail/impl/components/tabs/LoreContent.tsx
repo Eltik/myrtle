@@ -1,6 +1,7 @@
 import { BookMarked, ChevronDown, FileText, FlaskConical, ScrollText, Sparkles } from "lucide-react";
 import { memo, useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
+import { GameText } from "#/lib/gamedata/GameText";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -31,6 +32,27 @@ const STAT_HEADERS = new Set([
     "Infection Status",
 ]);
 
+/** Section icon from the archive's title; the handbook gives no type field to key on. */
+function storyIcon(title: string): React.ElementType {
+    const lower = title.toLowerCase();
+    if (lower.includes("clinical") || lower.includes("medical")) return FlaskConical;
+    if (lower.includes("promotion") || lower.includes("elite")) return Sparkles;
+    return ScrollText;
+}
+
+const QUOTE_OPENERS = [">", "「", "『"];
+
+function isQuoted(line: string): boolean {
+    return (line.startsWith('"') && line.endsWith('"')) || QUOTE_OPENERS.some((q) => line.startsWith(q));
+}
+
+/** The quote's text without its `>` marker or surrounding double quotes; CJK brackets stay as written. */
+function unquote(line: string): string {
+    if (line.startsWith(">")) return line.substring(1).trim();
+    if (line.startsWith('"') && line.endsWith('"')) return line.substring(1, line.length - 1).trim();
+    return line;
+}
+
 export const LoreContent = memo(function LoreContent({ operator }: ILoreContentProps) {
     const t: TypedT<typeof messages> = useT("operators");
     const stories = operator.handbook?.storyTextAudio ?? [];
@@ -49,19 +71,13 @@ export const LoreContent = memo(function LoreContent({ operator }: ILoreContentP
                         <BookMarked className="h-5 w-5 text-primary" />
                         <h3 className="font-semibold text-foreground text-lg">{t("lore.archives")}</h3>
                     </div>
-                    {stories.map((section, idx) => {
-                        const title = section.storyTitle.toLowerCase();
-                        let Icon: React.ElementType = ScrollText;
-                        if (title.includes("clinical") || title.includes("medical")) Icon = FlaskConical;
-                        else if (title.includes("promotion") || title.includes("elite")) Icon = Sparkles;
-                        return (
-                            <LoreSection key={section.storyTitle} title={section.storyTitle} icon={Icon} defaultOpen={idx === 0}>
-                                {section.stories.map((story) => (
-                                    <StoryEntry key={story.storyText.slice(0, 50)} text={story.storyText} />
-                                ))}
-                            </LoreSection>
-                        );
-                    })}
+                    {stories.map((section, idx) => (
+                        <LoreSection key={section.storyTitle} title={section.storyTitle} icon={storyIcon(section.storyTitle)} defaultOpen={idx === 0}>
+                            {section.stories.map((story) => (
+                                <StoryEntry key={story.storyText.slice(0, 50)} text={story.storyText} />
+                            ))}
+                        </LoreSection>
+                    ))}
                 </div>
             ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -93,10 +109,13 @@ function LoreSection({ title, icon: Icon, children, defaultOpen = false }: { tit
 }
 
 function StoryEntry({ text }: { text: string }) {
-    const paragraphs = text.split("\n");
-    return <div className="prose-sm max-w-none">{paragraphs.map((p, idx) => renderParagraph(p, idx))}</div>;
+    return <div className="prose-sm max-w-none">{text.split("\n").map(renderParagraph)}</div>;
 }
 
+/**
+ * The handbook writes stories as line-oriented markup: `[Header] value` rows
+ * (stat rows get a monospace cell), `-` bullets, quoted lines, and prose.
+ */
 function renderParagraph(paragraph: string, idx: number) {
     const trimmed = paragraph.trim();
     if (!trimmed) return null;
@@ -109,7 +128,7 @@ function renderParagraph(paragraph: string, idx: number) {
         return (
             <div className="flex flex-col gap-1 py-1.5 sm:flex-row sm:items-baseline sm:gap-3" key={`hdr-${idx}`}>
                 <span className="min-w-40 shrink-0 font-semibold text-primary text-xs uppercase tracking-wide sm:text-right">{header}</span>
-                <span className={cn("flex-1 text-foreground text-sm leading-relaxed", isStat && "rounded-md bg-secondary/40 px-2 py-1 font-mono text-xs")}>{content || "-"}</span>
+                <span className={cn("flex-1 text-foreground text-sm leading-relaxed", isStat && "rounded-md bg-secondary/40 px-2 py-1 font-mono text-xs")}>{content ? <GameText text={content} /> : "-"}</span>
             </div>
         );
     }
@@ -118,25 +137,26 @@ function renderParagraph(paragraph: string, idx: number) {
         return (
             <div className="flex gap-3 py-1 pl-2" key={`bul-${idx}`}>
                 <span className="mt-1 text-primary">•</span>
-                <span className="flex-1 text-muted-foreground text-sm leading-relaxed">{trimmed.substring(1).trim()}</span>
+                <span className="flex-1 text-muted-foreground text-sm leading-relaxed">
+                    <GameText text={trimmed.substring(1).trim()} />
+                </span>
             </div>
         );
     }
 
-    if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || trimmed.startsWith(">") || trimmed.startsWith("「") || trimmed.startsWith("『")) {
-        let q = trimmed;
-        if (trimmed.startsWith(">")) q = trimmed.substring(1).trim();
-        else if (trimmed.startsWith('"') && trimmed.endsWith('"')) q = trimmed.substring(1, trimmed.length - 1).trim();
+    if (isQuoted(trimmed)) {
         return (
             <blockquote className="my-3 rounded-r-lg border-primary/40 border-l-4 bg-secondary/30 py-3 pr-4 pl-4" key={`q-${idx}`}>
-                <p className="text-muted-foreground text-sm italic leading-relaxed">{q}</p>
+                <p className="text-muted-foreground text-sm italic leading-relaxed">
+                    <GameText text={unquote(trimmed)} />
+                </p>
             </blockquote>
         );
     }
 
     return (
         <p className="my-2 text-muted-foreground text-sm leading-relaxed" key={`p-${idx}`}>
-            {trimmed}
+            <GameText text={trimmed} />
         </p>
     );
 }
