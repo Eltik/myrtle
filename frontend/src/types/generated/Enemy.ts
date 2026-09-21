@@ -23,12 +23,6 @@ export type Enemy = {
     linkEnemies: Array<string>;
     damageType: Array<DamageType>;
     invisibleDetail: boolean;
-    /**
-     * Enriched stats from `enemy_database.json`
-     */
     stats: EnemyStats | null;
-    /**
-     * Enemy portrait/icon path
-     */
     portrait: string | null;
 };

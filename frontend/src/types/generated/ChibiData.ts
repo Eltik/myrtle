@@ -2,12 +2,6 @@
 import type { ChibiCharacter } from "./ChibiCharacter";
 
 /**
- * All chibi data
- * Uses Arc<ChibiCharacter> to share data between Vec and `HashMap` without cloning
+ * `characters` and `by_operator` share one `Arc` per character
  */
-export type ChibiData = {
-    /**
-     * Processed character data for frontend (uses Arc for zero-copy sharing)
-     */
-    characters: Array<ChibiCharacter>;
-};
+export type ChibiData = { characters: Array<ChibiCharacter> };

@@ -2,7 +2,4 @@
 import type { EnemyAttributes } from "./EnemyAttributes";
 import type { EnemySkill } from "./EnemySkill";
 
-/**
- * Per-level stats for an enemy
- */
 export type EnemyLevelStats = { level: number; attributes: EnemyAttributes; applyWay: string | null; motion: string | null; rangeRadius: number | null; lifePointReduce: number; skills: Array<EnemySkill> };

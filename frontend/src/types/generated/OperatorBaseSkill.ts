@@ -16,9 +16,6 @@ export type OperatorBaseSkill = {
      * Elite phase required to unlock (0, 1, or 2)
      */
     unlockElite: number;
-    /**
-     * Level required to unlock
-     */
     unlockLevel: number;
     /**
      * Index of this skill's slot in the operator's kit (`BuffChar` order).
