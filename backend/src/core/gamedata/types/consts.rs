@@ -12,6 +12,10 @@ pub struct GameDataConst {
     /// is defined.
     #[serde(default)]
     pub term_description_dict: Vec<TermDescriptionEntry>,
+    /// Minutes per point of natural sanity regeneration (`PlayerApRegenSpeed`,
+    /// 6): 1440 / 6 = 240 sanity a day. 0 when the table lacks it.
+    #[serde(default)]
+    pub player_ap_regen_speed: i64,
 }
 
 /// One `TermDescriptionDict` row: `{"key": "cc.bd_wang_1", "value": {...}}`.

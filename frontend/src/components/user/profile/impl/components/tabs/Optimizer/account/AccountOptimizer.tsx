@@ -65,6 +65,37 @@ export function AccountOptimizer({ uid }: IOptimizerProps) {
                 </div>
             )}
 
+            {data && data.lmd_missing > 0 && (
+                <div className="flex flex-wrap gap-6 rounded-xl border border-border bg-card px-4 py-3">
+                    {/* What the account earns and how long the shortfall takes:
+                        the base as stationed now plus the mission chests, then
+                        the same count with a day's natural sanity spent on the
+                        LMD stage. */}
+                    <Headline
+                        hint={
+                            data.income.base_per_day === null
+                                ? t("profile.account.maxLevel.incomeNoBase", { dailies: f.number(Math.round(data.income.dailies_per_day)) })
+                                : t("profile.account.maxLevel.incomeSplit", { base: f.number(Math.round(data.income.base_per_day)), dailies: f.number(Math.round(data.income.dailies_per_day)) })
+                        }
+                        label={t("profile.account.maxLevel.incomePerDay")}
+                        value={f.number(Math.round((data.income.base_per_day ?? 0) + data.income.dailies_per_day))}
+                    />
+                    <Headline
+                        hint={
+                            data.income.days_with_farming === null
+                                ? undefined
+                                : t("profile.account.maxLevel.daysWithFarming", {
+                                      days: t("profile.account.maxLevel.days", { count: data.income.days_with_farming }),
+                                      stage: data.income.farming_stage,
+                                      perDay: f.number(Math.round(data.income.farming_per_day)),
+                                  })
+                        }
+                        label={t("profile.account.maxLevel.daysToAfford")}
+                        value={data.income.days_without_farming === null ? t("profile.account.maxLevel.noIncome") : t("profile.account.maxLevel.days", { count: data.income.days_without_farming })}
+                    />
+                </div>
+            )}
+
             {data && data.operators_remaining === 0 && <p className="text-[12.5px] text-muted-foreground">{t("profile.account.maxLevel.allMaxed")}</p>}
 
             {data && data.operators_remaining > 0 && (

@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-20T15:47:54.300Z",
+    "generatedAt": "2026-09-21T02:26:28.037Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -30352,6 +30352,33 @@
             "placeholders": []
         },
         {
+            "key": "user.profile.account.maxLevel.days",
+            "namespace": "user",
+            "source_text": "{count, plural, one {# day} other {# days}}",
+            "description": "A day count, e.g. '12 days'. {count} is the number of days.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "user.profile.account.maxLevel.daysToAfford",
+            "namespace": "user",
+            "source_text": "Days to afford",
+            "description": "Label over the number of days until the account has earned the LMD it is short, without farming.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.daysWithFarming",
+            "namespace": "user",
+            "source_text": "{days} with {stage} farming ({perDay} more per day)",
+            "description": "Hint under the days figure: the same count if every day's natural sanity is spent on the LMD stage. {days} is a formatted day count, {stage} the stage code (e.g. CE-6), {perDay} a formatted number.",
+            "placeholders": [
+                "days",
+                "perDay",
+                "stage"
+            ]
+        },
+        {
             "key": "user.profile.account.maxLevel.elite",
             "namespace": "user",
             "source_text": "E{elite} Lv{level}",
@@ -30383,6 +30410,32 @@
             "placeholders": []
         },
         {
+            "key": "user.profile.account.maxLevel.incomeNoBase",
+            "namespace": "user",
+            "source_text": "{dailies} from dailies · no synced base",
+            "description": "Hint under the LMD-per-day figure when the account has no synced base, so only mission chests count. {dailies} is a formatted number.",
+            "placeholders": [
+                "dailies"
+            ]
+        },
+        {
+            "key": "user.profile.account.maxLevel.incomePerDay",
+            "namespace": "user",
+            "source_text": "LMD per day",
+            "description": "Label over the LMD the account earns in a day without farming: its base plus daily and weekly mission chests.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.account.maxLevel.incomeSplit",
+            "namespace": "user",
+            "source_text": "{base} from the base · {dailies} from dailies",
+            "description": "Hint under the LMD-per-day figure splitting it. {base} and {dailies} are formatted numbers.",
+            "placeholders": [
+                "base",
+                "dailies"
+            ]
+        },
+        {
             "key": "user.profile.account.maxLevel.lmdMissing",
             "namespace": "user",
             "source_text": "LMD short",
@@ -30405,6 +30458,13 @@
                 "levels",
                 "promotions"
             ]
+        },
+        {
+            "key": "user.profile.account.maxLevel.noIncome",
+            "namespace": "user",
+            "source_text": "Nothing earned yet",
+            "description": "Shown in place of the day count when the account earns no LMD at all (no base, no chests).",
+            "placeholders": []
         },
         {
             "key": "user.profile.account.maxLevel.owned",

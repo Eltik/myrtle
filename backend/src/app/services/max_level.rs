@@ -10,12 +10,23 @@
 //! carry as an item. EXP owned is the sum of the account's EXP cards; LMD
 //! owned is the synced balance.
 
+use std::sync::Arc;
+
 use serde::Serialize;
 use ts_rs::TS;
 
+use crate::app::cpu;
 use crate::app::error::ApiError;
 use crate::app::services::planner::calculate_leveling_costs;
 use crate::app::state::AppState;
+use crate::core::gamedata::types::GameData;
+use crate::core::grade::base::assignment::compute_live_assignment;
+use crate::core::grade::base::context::BaseContext;
+use crate::core::grade::base::sustain_sim::synced_live_morale;
+use crate::core::grade::base::types::UserBuilding;
+use crate::core::grade::base::yield_model::BaseFlows;
+use crate::database::models::roster::RosterEntry;
+use crate::database::queries::building::get_building;
 use crate::database::queries::{
     items as items_queries, roster as roster_queries, users as users_queries,
 };
@@ -71,7 +82,42 @@ pub struct MaxLevelCostResponse {
     pub lmd_missing: i64,
     /// Every remaining operator, most expensive first.
     pub operators: Vec<MaxLevelOperatorDto>,
+    /// What the account earns in a day and how long the LMD shortfall takes.
+    pub income: LmdIncomeDto,
 }
+
+/// LMD the account earns in a day, and the days until `lmd_missing` is
+/// covered - once from the base and mission chests alone, once with every
+/// day's natural sanity spent on the LMD farming stage.
+#[derive(Debug, Clone, Serialize, TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct LmdIncomeDto {
+    /// The synced base's realized LMD per day as stationed right now (the
+    /// Score tab's current figure). `None` without a synced base.
+    pub base_per_day: Option<f64>,
+    /// The live daily mission chests (weekday and weekend groups weighted by
+    /// their days) plus the live weekly chests over seven days, LMD only,
+    /// every chest claimed.
+    pub dailies_per_day: f64,
+    /// The stage the farming estimate runs (the LMD stage, CE-6).
+    pub farming_stage: String,
+    /// Runs of that stage a day's natural sanity regeneration buys.
+    pub farming_runs_per_day: f64,
+    /// LMD those runs pay.
+    pub farming_per_day: f64,
+    /// Days until the shortfall is earned from the base and dailies: 0 when
+    /// nothing is missing, `None` when nothing is earned.
+    #[ts(type = "number | null")]
+    pub days_without_farming: Option<i64>,
+    /// The same with the farming stage's LMD added.
+    #[ts(type = "number | null")]
+    pub days_with_farming: Option<i64>,
+}
+
+/// The LMD stage the farming estimate spends sanity on.
+const FARMING_STAGE_CODE: &str = "CE-6";
+/// Minutes in a day, for sanity regeneration.
+const MINUTES_PER_DAY: f64 = 1440.0;
 
 /// LMD item id in the planner's material map.
 const LMD_ITEM: &str = "4001";
@@ -174,6 +220,8 @@ pub async fn max_level_costs(
     let level_lmd_needed: i64 = operators.iter().map(|o| o.level_lmd).sum();
     let promotion_lmd_needed: i64 = operators.iter().map(|o| o.promotion_lmd).sum();
     let lmd_needed = level_lmd_needed + promotion_lmd_needed;
+    let lmd_missing = (lmd_needed - lmd_owned).max(0);
+    let income = lmd_income(state, user.id, &roster, &gamedata, lmd_missing).await?;
     Ok(MaxLevelCostResponse {
         operators_total,
         operators_remaining: operators.len(),
@@ -184,7 +232,143 @@ pub async fn max_level_costs(
         exp_owned,
         lmd_owned,
         exp_missing: (exp_needed - exp_owned).max(0),
-        lmd_missing: (lmd_needed - lmd_owned).max(0),
+        lmd_missing,
         operators,
+        income,
     })
+}
+
+/// What the account earns in a day and how long `lmd_missing` takes.
+async fn lmd_income(
+    state: &AppState,
+    user_id: uuid::Uuid,
+    roster: &[RosterEntry],
+    gamedata: &Arc<GameData>,
+    lmd_missing: i64,
+) -> Result<LmdIncomeDto, ApiError> {
+    // The base as stationed now, priced the way the Score tab prices it:
+    // a live assignment and the coupled gold-to-LMD flow. It is a real
+    // computation (0.2 s), so it runs on the blocking pool like every other
+    // base scorer.
+    let base_per_day = match get_building(&state.db, user_id).await? {
+        Some(json) => {
+            let roster = roster.to_vec();
+            let gd = Arc::clone(gamedata);
+            cpu::offload("max_level_income", move || {
+                current_base_lmd_per_day(&roster, &gd, &json)
+            })
+            .await?
+        }
+        None => None,
+    };
+    let now = i64::try_from(
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |d| d.as_secs()),
+    )
+    .unwrap_or(0);
+    let dailies_per_day = gamedata.missions.daily_lmd_per_day(now).unwrap_or(0.0)
+        + gamedata.missions.weekly_lmd_per_day(now).unwrap_or(0.0);
+    let (farming_runs_per_day, farming_per_day) = farming_income(gamedata);
+    let without = base_per_day.unwrap_or(0.0) + dailies_per_day;
+    Ok(LmdIncomeDto {
+        base_per_day,
+        dailies_per_day,
+        farming_stage: FARMING_STAGE_CODE.to_string(),
+        farming_runs_per_day,
+        farming_per_day,
+        days_without_farming: days_to_earn(lmd_missing, without),
+        days_with_farming: days_to_earn(lmd_missing, without + farming_per_day),
+    })
+}
+
+/// The synced base's realized LMD per day as stationed now; `None` when the
+/// sync carries no rooms.
+fn current_base_lmd_per_day(
+    roster: &[RosterEntry],
+    gamedata: &GameData,
+    building_json: &serde_json::Value,
+) -> Option<f64> {
+    let building = UserBuilding::from_json(building_json);
+    if building.is_empty() {
+        return None;
+    }
+    let BaseContext {
+        profiles,
+        registry,
+        morale_drains,
+    } = BaseContext::build(roster, gamedata, false);
+    let live_morale = synced_live_morale(building_json);
+    let current = compute_live_assignment(
+        &profiles,
+        &building,
+        &gamedata.building,
+        &registry,
+        &morale_drains,
+        None,
+        &live_morale,
+    );
+    let mut flows = BaseFlows::default();
+    for r in &current.rooms {
+        flows.add_room(
+            &r.room_type,
+            r.formula_type.as_deref(),
+            r.level,
+            r.total_efficiency,
+            r.order_gold,
+            r.order_value,
+            r.operators.len(),
+            r.order_limit,
+        );
+    }
+    Some(flows.realized_lmd())
+}
+
+/// `(runs per day, LMD per day)` from spending a day's natural sanity on
+/// the farming stage: sanity a day is the minutes in a day over the game's
+/// regeneration interval; a run costs the stage's sanity and pays its LMD.
+/// Zero when the stage or the interval is missing from the game data.
+fn farming_income(gamedata: &GameData) -> (f64, f64) {
+    let regen = gamedata.consts.player_ap_regen_speed;
+    let Some(stage) = gamedata
+        .stages
+        .values()
+        .find(|s| s.code == FARMING_STAGE_CODE && !s.stage_id.contains('#'))
+    else {
+        return (0.0, 0.0);
+    };
+    if regen <= 0 || stage.ap_cost <= 0 {
+        return (0.0, 0.0);
+    }
+    #[allow(clippy::cast_precision_loss)]
+    let sanity_per_day = MINUTES_PER_DAY / regen as f64;
+    let runs = sanity_per_day / f64::from(stage.ap_cost);
+    (runs, runs * f64::from(stage.gold_gain))
+}
+
+/// Whole days until `missing` LMD is earned at `per_day`: 0 when nothing is
+/// missing, `None` when nothing is earned.
+fn days_to_earn(missing: i64, per_day: f64) -> Option<i64> {
+    if missing <= 0 {
+        return Some(0);
+    }
+    if per_day <= 0.0 {
+        return None;
+    }
+    #[allow(clippy::cast_precision_loss, clippy::cast_possible_truncation)]
+    Some((missing as f64 / per_day).ceil() as i64)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::days_to_earn;
+
+    #[test]
+    fn days_round_up_and_handle_the_edges() {
+        assert_eq!(days_to_earn(0, 100.0), Some(0));
+        assert_eq!(days_to_earn(-5, 0.0), Some(0));
+        assert_eq!(days_to_earn(250, 100.0), Some(3));
+        assert_eq!(days_to_earn(300, 100.0), Some(3));
+        assert_eq!(days_to_earn(1, 0.0), None);
+    }
 }

@@ -141,6 +141,7 @@ const BOOT_TABLES: &[&str] = &[
     "activity_table",
     "retro_table",
     "gamedata_const",
+    "mission_table",
 ];
 
 /// The steps [`AssetIndex::build`] reports, in order.
@@ -272,6 +273,9 @@ pub fn init_game_data(
     let retro_file: RetroTableFile = load_table_or_warn(data_dir, "retro_table", &mut warnings);
     let shop_file: ShopTableFile = load_table_or_warn(data_dir, "shop_client_table", &mut warnings);
     let consts: GameDataConst = load_table_or_warn(data_dir, "gamedata_const", &mut warnings);
+    let mission_file: crate::core::gamedata::types::mission::MissionTableFile =
+        load_table_or_warn(data_dir, "mission_table", &mut warnings);
+    let missions = crate::core::gamedata::types::mission::MissionData::from_table(mission_file);
     // Layout-counted base resources (Wang's Influence/Territory) are defined
     // only in the term glossary; the base scorer reads them off building data.
     building_file.layout_terms =
@@ -455,6 +459,7 @@ pub fn init_game_data(
             sandbox_universe,
             campaign_rotations,
             consts,
+            missions,
         },
         assets,
     ))

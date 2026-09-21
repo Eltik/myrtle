@@ -16,6 +16,7 @@ pub mod handbook;
 pub mod level;
 pub mod material;
 pub mod medal;
+pub mod mission;
 pub mod module;
 pub mod operator;
 pub mod range;
@@ -108,6 +109,8 @@ pub struct GameData {
     pub sandbox_universe: SandboxUniverse,
     pub campaign_rotations: CampaignRotations,
     pub consts: GameDataConst,
+    /// Daily and weekly mission chests (the LMD an account earns from dailies).
+    pub missions: mission::MissionData,
     /// Tables that failed to deserialize and fell back to `T::default()`.
     /// One entry per table, `"<table>: <error>"`. Empty on a clean load.
     ///

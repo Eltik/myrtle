@@ -14107,6 +14107,61 @@
           "unmodeled"
         ]
       },
+      "LmdIncomeDto": {
+        "type": "object",
+        "description": "LMD the account earns in a day, and the days until `lmd_missing` is\ncovered - once from the base and mission chests alone, once with every\nday's natural sanity spent on the LMD farming stage.",
+        "required": [
+          "dailies_per_day",
+          "farming_stage",
+          "farming_runs_per_day",
+          "farming_per_day"
+        ],
+        "properties": {
+          "base_per_day": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "The synced base's realized LMD per day as stationed right now (the\nScore tab's current figure). `None` without a synced base."
+          },
+          "dailies_per_day": {
+            "type": "number",
+            "format": "double",
+            "description": "The live daily mission chests (weekday and weekend groups weighted by\ntheir days) plus the live weekly chests over seven days, LMD only,\nevery chest claimed."
+          },
+          "days_with_farming": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "The same with the farming stage's LMD added."
+          },
+          "days_without_farming": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Days until the shortfall is earned from the base and dailies: 0 when\nnothing is missing, `None` when nothing is earned."
+          },
+          "farming_per_day": {
+            "type": "number",
+            "format": "double",
+            "description": "LMD those runs pay."
+          },
+          "farming_runs_per_day": {
+            "type": "number",
+            "format": "double",
+            "description": "Runs of that stage a day's natural sanity regeneration buys."
+          },
+          "farming_stage": {
+            "type": "string",
+            "description": "The stage the farming estimate runs (the LMD stage, CE-6)."
+          }
+        }
+      },
       "Locale": {
         "type": "object",
         "description": "`locales` table. `gamedata_server` names the Arknights client whose text\nserves this locale's operator/skill/stage strings.",
@@ -14232,7 +14287,8 @@
           "lmd_owned",
           "exp_missing",
           "lmd_missing",
-          "operators"
+          "operators",
+          "income"
         ],
         "properties": {
           "exp_missing": {
@@ -14248,6 +14304,10 @@
             "type": "integer",
             "format": "int64",
             "description": "EXP held as cards (every EXP item times its EXP value)."
+          },
+          "income": {
+            "$ref": "#/components/schemas/LmdIncomeDto",
+            "description": "What the account earns in a day and how long the LMD shortfall takes."
           },
           "level_lmd_needed": {
             "type": "integer",

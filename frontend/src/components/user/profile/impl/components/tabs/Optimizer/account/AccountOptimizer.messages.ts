@@ -55,6 +55,34 @@ export const messages = {
         text: "LMD short",
         description: "Label over the LMD still missing after what the account holds.",
     },
+    "profile.account.maxLevel.incomePerDay": {
+        text: "LMD per day",
+        description: "Label over the LMD the account earns in a day without farming: its base plus daily and weekly mission chests.",
+    },
+    "profile.account.maxLevel.incomeSplit": {
+        text: "{base} from the base · {dailies} from dailies",
+        description: "Hint under the LMD-per-day figure splitting it. {base} and {dailies} are formatted numbers.",
+    },
+    "profile.account.maxLevel.incomeNoBase": {
+        text: "{dailies} from dailies · no synced base",
+        description: "Hint under the LMD-per-day figure when the account has no synced base, so only mission chests count. {dailies} is a formatted number.",
+    },
+    "profile.account.maxLevel.daysToAfford": {
+        text: "Days to afford",
+        description: "Label over the number of days until the account has earned the LMD it is short, without farming.",
+    },
+    "profile.account.maxLevel.daysWithFarming": {
+        text: "{days} with {stage} farming ({perDay} more per day)",
+        description: "Hint under the days figure: the same count if every day's natural sanity is spent on the LMD stage. {days} is a formatted day count, {stage} the stage code (e.g. CE-6), {perDay} a formatted number.",
+    },
+    "profile.account.maxLevel.days": {
+        text: "{count, plural, one {# day} other {# days}}",
+        description: "A day count, e.g. '12 days'. {count} is the number of days.",
+    },
+    "profile.account.maxLevel.noIncome": {
+        text: "Nothing earned yet",
+        description: "Shown in place of the day count when the account earns no LMD at all (no base, no chests).",
+    },
     "profile.account.maxLevel.allMaxed": {
         text: "Every operator you own is already at its cap.",
         description: "Shown when no operator is left to level.",
