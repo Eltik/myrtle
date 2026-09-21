@@ -10551,3 +10551,197 @@ fn a_per_faction_cc_morale_aura_is_not_priced_flat() {
         registry.get("control_mp_cost[010]")
     );
 }
+
+/// A player who runs saved preset shifts is graded on their average, not on
+/// whichever shift was on duty at sync: a rotation's shifts are each weaker
+/// than the sustained optimum on purpose, so one shift of a three-shift plan
+/// read 88% on 00980819 whose plan as a whole read 94%.
+#[test]
+fn preset_shifts_are_graded_on_their_average() {
+    const TEXAS: &str = "char_102_texas";
+    const LAPPLAND: &str = "char_140_whitew";
+    const EXUSIAI: &str = "char_103_angel";
+    const PLAIN: [&str; 3] = ["char_123_fang", "char_133_mm", "char_502_nblade"];
+    let gd = load_game_data();
+    let ids = [TEXAS, LAPPLAND, EXUSIAI, PLAIN[0], PLAIN[1], PLAIN[2]];
+    let roster: Vec<RosterEntry> = ids.iter().map(|id| roster_entry(id)).collect();
+    let inst_of = |id: &str| -> i64 { ids.iter().position(|x| *x == id).unwrap() as i64 + 1 };
+    let building = |stationed: &[&str], presets: Option<(&[&str], &[&str])>| {
+        let mut chars = serde_json::Map::new();
+        for id in ids {
+            chars.insert(inst_of(id).to_string(), serde_json::json!({ "charId": id }));
+        }
+        let insts = |crew: &[&str]| -> Vec<i64> { crew.iter().map(|id| inst_of(id)).collect() };
+        let mut tp = serde_json::json!({});
+        if let Some((a, b)) = presets {
+            tp["presetQueue"] = serde_json::json!([insts(a), insts(b)]);
+        }
+        serde_json::json!({
+            "chars": chars,
+            "rooms": { "TRADING": { "tp0": tp } },
+            "roomSlots": {
+                "tp0": { "roomId": "TRADING", "level": 3, "state": 2, "charInstIds": insts(stationed) },
+                "d0": { "roomId": "DORMITORY", "level": 5, "state": 2 },
+            }
+        })
+    };
+    let strong = [TEXAS, LAPPLAND, EXUSIAI];
+    let weak = PLAIN;
+    let g_strong = grade_base(&roster, Some(&building(&strong, None)), gd);
+    let g_weak = grade_base(&roster, Some(&building(&weak, None)), gd);
+    let g_both = grade_base(
+        &roster,
+        Some(&building(&strong, Some((&strong, &weak)))),
+        gd,
+    );
+    assert!(
+        g_weak.utilization < g_both.utilization && g_both.utilization < g_strong.utilization,
+        "presets grade between their shifts: weak {:.3} < both {:.3} < strong {:.3}",
+        g_weak.utilization,
+        g_both.utilization,
+        g_strong.utilization
+    );
+}
+
+/// An automation leader's wipe spares facility-scaled partners, so the
+/// automation team admits them: Weedy beside Purestream (+20% per Trading
+/// Post) reads more than Weedy beside Eunectes when the base has two posts
+/// and few plants. And when the greedy room order has already seated the
+/// partner in a normal room, she is poached whenever the base as a whole
+/// gains (00980819: Rosmontis+Purestream 116 and Weedy/Eunectes 77, where
+/// Weedy/Purestream 117 leaves Rosmontis a partner).
+#[test]
+fn weedy_takes_a_facility_scaled_partner_over_a_second_nullifier() {
+    const WEEDY: &str = "char_400_weedy";
+    const EUNECTES: &str = "char_416_zumama";
+    const PURESTREAM: &str = "char_385_finlpp";
+    const NASTI: &str = "char_4212_nasti";
+    const DOROTHY: &str = "char_4048_doroth";
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let purestream = PURESTREAM.to_string();
+    // Traders crew the posts, so the gold the factories make is sold and a
+    // factory hand is never worth more in an empty post.
+    let roster: Vec<_> = [
+        WEEDY,
+        EUNECTES,
+        PURESTREAM,
+        NASTI,
+        DOROTHY,
+        "char_123_fang",
+        "char_133_mm",
+        "char_102_texas",
+        "char_140_whitew",
+        "char_103_angel",
+        "char_4193_lemuen",
+    ]
+    .iter()
+    .filter(|id| gd.building.chars.contains_key(**id))
+    .map(|id| profile(gd, id))
+    .collect();
+    assert!(
+        roster.len() >= 6,
+        "the roster is in the game data: {}",
+        roster.len()
+    );
+    let mut rooms = Vec::new();
+    for i in 0..2 {
+        let mut r = room(&format!("mf{i}"), "MANUFACTURE", 2);
+        r.current_formula = Some("F_GOLD".into());
+        rooms.push(r);
+    }
+    rooms.push(room("tp0", "TRADING", 3));
+    rooms.push(room("tp1", "TRADING", 2));
+    rooms.push(room("pp0", "POWER", 3));
+    rooms.push(room("pp1", "POWER", 3));
+    let building = UserBuilding { rooms };
+    let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+    let weedy_room = asn
+        .rooms
+        .iter()
+        .find(|r| r.operators.iter().any(|o| o == WEEDY))
+        .expect("Weedy leads an automation factory");
+    assert!(
+        weedy_room.operators.contains(&purestream),
+        "Purestream's per-post skill survives Weedy's wipe and beats Eunectes here, got {:?}",
+        weedy_room.operators
+    );
+}
+
+/// The grade's 100% is never below what the Optimizer tab shows: copying
+/// the tab's plan reads at most 100%, and a base is never held to a bar the
+/// tab itself cannot reach.
+#[test]
+fn the_grade_ceiling_is_at_least_the_tab_optimal() {
+    use backend::core::grade::base::assignment::sustained_assignment_value;
+    use backend::core::grade::base::pools::{optimal_with_bundles, search_economy};
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let profiles = full_roster(gd);
+    let building = generic_base();
+    let economy = search_economy(&profiles, &building, &gd.building, &registry);
+    let accepted = optimal_with_bundles(
+        &profiles,
+        &building,
+        &gd.building,
+        &registry,
+        &economy.registry,
+        &drains,
+        &economy.pins,
+    );
+    let tab = sustained_assignment_value(
+        &accepted.optimal,
+        &profiles,
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+    );
+    // Station the tab's plan as the player's base and grade it: at most 100%.
+    let ids: Vec<&str> = profiles.iter().map(|p| p.char_id.as_str()).collect();
+    let inst_of = |id: &str| -> i64 { ids.iter().position(|x| *x == id).unwrap() as i64 + 1 };
+    let mut chars = serde_json::Map::new();
+    for id in &ids {
+        chars.insert(inst_of(id).to_string(), serde_json::json!({ "charId": id }));
+    }
+    let mut slots = serde_json::Map::new();
+    for r in &building.rooms {
+        let crew: Vec<i64> = accepted
+            .optimal
+            .rooms
+            .iter()
+            .find(|a| a.slot_id == r.slot_id)
+            .map(|a| a.operators.iter().map(|o| inst_of(o)).collect())
+            .unwrap_or_default();
+        slots.insert(
+            r.slot_id.clone(),
+            serde_json::json!({ "roomId": r.room_type, "level": r.level, "state": 2, "charInstIds": crew }),
+        );
+    }
+    let mut factories = serde_json::Map::new();
+    for a in &accepted.optimal.rooms {
+        if a.room_type == "MANUFACTURE" {
+            let formula_id = match a.formula_type.as_deref() {
+                Some("F_GOLD") => "4",
+                Some("F_DIAMOND") => "13",
+                _ => "1",
+            };
+            factories.insert(
+                a.slot_id.clone(),
+                serde_json::json!({ "formulaId": formula_id }),
+            );
+        }
+    }
+    let json = serde_json::json!({
+        "chars": chars,
+        "rooms": { "MANUFACTURE": factories },
+        "roomSlots": slots
+    });
+    let roster: Vec<RosterEntry> = ids.iter().map(|id| roster_entry(id)).collect();
+    let g = grade_base(&roster, Some(&json), gd);
+    assert!(
+        g.utilization <= 1.0 + 1e-9 && g.utilization > 0.9,
+        "the tab's plan grades near 100%, got {:.3} (tab sustained {tab:.0})",
+        g.utilization
+    );
+}

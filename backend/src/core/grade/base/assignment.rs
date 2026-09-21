@@ -3650,6 +3650,41 @@ fn assign_production_rooms(
     morale_drains: &HashMap<String, f64>,
     cap_aware: bool,
 ) -> Vec<RoomAssignment> {
+    assign_production_rooms_inner(
+        rooms,
+        operators,
+        assigned,
+        registry,
+        building_data,
+        facility_counts,
+        total_dorm_levels,
+        global_bonuses,
+        cc_conditions,
+        morale_drains,
+        cap_aware,
+        true,
+    )
+}
+
+/// `retry_idle_leader`: once, when the greedy leaves an automation leader
+/// idle because its facility-scaled partner was taken by a normal room,
+/// re-plan with that pair seated together and keep the better base.
+#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
+fn assign_production_rooms_inner(
+    rooms: &[&UserRoom],
+    operators: &[OperatorBaseProfile],
+    assigned: &mut HashSet<String>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+    facility_counts: &HashMap<String, usize>,
+    total_dorm_levels: i32,
+    global_bonuses: &HashMap<String, f64>,
+    cc_conditions: &[CcCondition],
+    morale_drains: &HashMap<String, f64>,
+    cap_aware: bool,
+    retry_idle_leader: bool,
+) -> Vec<RoomAssignment> {
+    let assigned_before = assigned.clone();
     // A frozen room (a scoped planner run's out-of-scope room) keeps its
     // drafted crew and recipe: it is scored as drafted, its operators are
     // taken, and it sits in the yield context the free rooms are planned
@@ -3820,6 +3855,145 @@ fn assign_production_rooms(
 
     *assigned = best_assigned_snapshot;
 
+    // A facility-scaled partner (Purestream) seated in a normal room by the
+    // greedy room order is worth more beside an automation leader, whose
+    // wipe spares her: move her there and re-crew the room she leaves from
+    // the bench, whenever the base as a whole gains (00980819: Rosmontis
+    // took Purestream first at 116, leaving Weedy/Eunectes at 77, where
+    // Weedy/Purestream reads 117 and Rosmontis keeps a partner).
+    // An automation leader the greedy left IDLE (his room lost to a normal
+    // team holding the partner he needed: Weedy 30 alone vs Purestream 40
+    // with Nasti, where Weedy with Purestream reads 70) is tried once more
+    // with the pair seated together in the partner's room and every other
+    // room re-planned around them; the better base wins.
+    if retry_idle_leader {
+        let op_index = build_op_index(operators);
+        let facility_value = |op: &OperatorBaseProfile, formula: Option<&str>| {
+            score_operator_facility_only(
+                op,
+                "MANUFACTURE",
+                formula,
+                registry,
+                building_data,
+                facility_counts,
+                total_dorm_levels,
+            )
+        };
+        let leader = operators
+            .iter()
+            .filter(|op| !assigned.contains(&op.char_id) && has_automation_buff(op, registry))
+            .map(|op| (op, facility_value(op, None)))
+            .filter(|(_, v)| *v > 0.0)
+            .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal))
+            .map(|(op, _)| op);
+        let partner = best_assignments
+            .iter()
+            .filter(|r| r.room_type == "MANUFACTURE")
+            .flat_map(|r| {
+                r.operators
+                    .iter()
+                    .map(move |id| (r.slot_id.clone(), r.formula_type.clone(), id))
+            })
+            .filter_map(|(slot, formula, id)| {
+                let op = op_index.get(id.as_str())?;
+                (has_facility_scaled_buff(op, registry) && !has_automation_buff(op, registry)).then(
+                    || {
+                        (
+                            slot,
+                            formula.clone(),
+                            id.clone(),
+                            facility_value(op, formula.as_deref()),
+                        )
+                    },
+                )
+            })
+            .filter(|(_, _, _, v)| *v > 0.0)
+            .max_by(|a, b| a.3.partial_cmp(&b.3).unwrap_or(std::cmp::Ordering::Equal));
+        if let (Some(leader), Some((slot, formula, partner_id, _))) = (leader, partner)
+            && let Some(forced_room) = rooms.iter().find(|r| r.slot_id == slot)
+        {
+            let mut seeded = assigned_before;
+            seeded.insert(leader.char_id.clone());
+            seeded.insert(partner_id.clone());
+            let others: Vec<&UserRoom> = rooms
+                .iter()
+                .filter(|r| r.slot_id != slot)
+                .copied()
+                .collect();
+            let mut trial = assign_production_rooms_inner(
+                &others,
+                operators,
+                &mut seeded,
+                registry,
+                building_data,
+                facility_counts,
+                total_dorm_levels,
+                global_bonuses,
+                cc_conditions,
+                morale_drains,
+                cap_aware,
+                false,
+            );
+            let pair = vec![leader.char_id.clone(), partner_id];
+            let (speed, _) = compute_team_efficiency(
+                &pair,
+                "MANUFACTURE",
+                formula.as_deref(),
+                None,
+                &op_index,
+                registry,
+                building_data,
+                facility_counts,
+                total_dorm_levels,
+                morale_drains,
+                cc_conditions,
+            );
+            trial.push(RoomAssignment {
+                slot_id: forced_room.slot_id.clone(),
+                room_type: "MANUFACTURE".to_string(),
+                level: forced_room.level,
+                formula_type: formula,
+                operators: pair,
+                total_efficiency: speed + *global_bonuses.get("MANUFACTURE").unwrap_or(&0.0),
+                order_value: 0.0,
+                order_gold: 0.0,
+                order_limit: None,
+                locked: true,
+                ledger: Vec::new(),
+                fill: None,
+            });
+            let mut fixed_and_trial = fixed.clone();
+            fixed_and_trial.extend(trial.iter().cloned());
+            let mut fixed_and_best = fixed.clone();
+            fixed_and_best.extend(best_assignments.iter().cloned());
+            if assignment_value(&fixed_and_trial) > assignment_value(&fixed_and_best) + 1e-9 {
+                // The recursive plan already carries the frozen rooms and
+                // padding of its own; strip its frozen copies and keep the rest.
+                trial.retain(|r| !fixed.iter().any(|f| f.slot_id == r.slot_id));
+                best_assignments = trial;
+                *assigned = seeded;
+                let mut out = fixed;
+                out.extend(best_assignments);
+                return out;
+            }
+        }
+    }
+
+    poach_facility_partners(
+        &mut best_assignments,
+        rooms,
+        operators,
+        assigned,
+        registry,
+        building_data,
+        facility_counts,
+        total_dorm_levels,
+        global_bonuses,
+        cc_conditions,
+        morale_drains,
+        cap_aware,
+    );
+
     // Cross-formula cleanup: free a generic operator from a formula-specific room
     // for one that lacks a dedicated operator, seating an idle specialist in its
     // place. Runs before padding (EXP rooms still have open seats) and applies only
@@ -3855,6 +4029,162 @@ fn assign_production_rooms(
     let mut out = fixed;
     out.extend(best_assignments);
     out
+}
+
+/// Move facility-scaled partners from normal rooms into automation rooms
+/// where the base gains: see the call site in `assign_production_rooms`.
+#[allow(clippy::too_many_arguments)]
+fn poach_facility_partners(
+    rooms: &mut Vec<RoomAssignment>,
+    user_rooms: &[&UserRoom],
+    operators: &[OperatorBaseProfile],
+    assigned: &mut HashSet<String>,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+    facility_counts: &HashMap<String, usize>,
+    total_dorm_levels: i32,
+    global_bonuses: &HashMap<String, f64>,
+    cc_conditions: &[CcCondition],
+    morale_drains: &HashMap<String, f64>,
+    cap_aware: bool,
+) {
+    let op_index = build_op_index(operators);
+    let auto_rooms: Vec<usize> = rooms
+        .iter()
+        .enumerate()
+        .filter(|(_, r)| {
+            r.room_type == "MANUFACTURE"
+                && r.operators.iter().any(|id| {
+                    op_index
+                        .get(id.as_str())
+                        .is_some_and(|op| has_automation_buff(op, registry))
+                })
+        })
+        .map(|(i, _)| i)
+        .collect();
+    if auto_rooms.is_empty() {
+        return;
+    }
+    for &ai in &auto_rooms {
+        let room_max = user_rooms
+            .iter()
+            .find(|u| u.slot_id == rooms[ai].slot_id)
+            .map_or(0, |u| {
+                max_stationed_at_level(building_data, &u.room_type, u.level)
+            });
+        // Partners worth poaching: facility-scaled, non-nullifying, seated in
+        // another factory that is not itself an automation room.
+        let partners: Vec<(usize, String)> = rooms
+            .iter()
+            .enumerate()
+            .filter(|(di, r)| *di != ai && r.room_type == "MANUFACTURE" && !auto_rooms.contains(di))
+            .flat_map(|(di, r)| r.operators.iter().map(move |id| (di, id.clone())))
+            .filter(|(_, id)| {
+                op_index.get(id.as_str()).is_some_and(|op| {
+                    has_facility_scaled_buff(op, registry) && !has_automation_buff(op, registry)
+                })
+            })
+            .collect();
+        for (di, partner) in partners {
+            // The automation room with the partner: a free seat, else the
+            // seat of its lowest-value non-leader member.
+            let mut new_auto = rooms[ai].operators.clone();
+            if (new_auto.len() as i32) >= room_max {
+                let Some(weakest) = new_auto
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, id)| {
+                        op_index
+                            .get(id.as_str())
+                            .is_some_and(|op| !has_automation_buff(op, registry))
+                            || new_auto.len() > 1
+                    })
+                    .min_by(|(_, a), (_, b)| {
+                        let va = op_index.get(a.as_str()).map_or(0.0, |op| {
+                            score_operator_facility_only(
+                                op,
+                                "MANUFACTURE",
+                                rooms[ai].formula_type.as_deref(),
+                                registry,
+                                building_data,
+                                facility_counts,
+                                total_dorm_levels,
+                            )
+                        });
+                        let vb = op_index.get(b.as_str()).map_or(0.0, |op| {
+                            score_operator_facility_only(
+                                op,
+                                "MANUFACTURE",
+                                rooms[ai].formula_type.as_deref(),
+                                registry,
+                                building_data,
+                                facility_counts,
+                                total_dorm_levels,
+                            )
+                        });
+                        va.partial_cmp(&vb).unwrap_or(std::cmp::Ordering::Equal)
+                    })
+                    .map(|(i, _)| i)
+                else {
+                    continue;
+                };
+                new_auto.remove(weakest);
+            }
+            new_auto.push(partner.clone());
+            let (auto_speed, _) = compute_team_efficiency(
+                &new_auto,
+                "MANUFACTURE",
+                rooms[ai].formula_type.as_deref(),
+                None,
+                &op_index,
+                registry,
+                building_data,
+                facility_counts,
+                total_dorm_levels,
+                morale_drains,
+                cc_conditions,
+            );
+            // The donor room re-crewed from the bench without the partner.
+            let Some(donor_user) = user_rooms.iter().find(|u| u.slot_id == rooms[di].slot_id)
+            else {
+                continue;
+            };
+            let mut trial_assigned: HashSet<String> = assigned.clone();
+            for id in &rooms[di].operators {
+                trial_assigned.remove(id);
+            }
+            for id in &rooms[ai].operators {
+                trial_assigned.remove(id);
+            }
+            for id in &new_auto {
+                trial_assigned.insert(id.clone());
+            }
+            let donor = assign_single_room(
+                donor_user,
+                rooms[di].formula_type.as_deref(),
+                operators,
+                &mut trial_assigned,
+                registry,
+                building_data,
+                facility_counts,
+                total_dorm_levels,
+                global_bonuses,
+                cc_conditions,
+                morale_drains,
+                cap_aware,
+            );
+            let mut trial = rooms.clone();
+            trial[ai].operators = new_auto.clone();
+            trial[ai].total_efficiency =
+                auto_speed + *global_bonuses.get("MANUFACTURE").unwrap_or(&0.0);
+            trial[di] = donor;
+            if assignment_value(&trial) > assignment_value(rooms) + 1e-9 {
+                *rooms = trial;
+                *assigned = trial_assigned;
+                break;
+            }
+        }
+    }
 }
 
 /// Move a generic operator out of a formula-specific room into a different-formula
@@ -3927,9 +4257,13 @@ fn reallocate_across_formulas(
                 let mut a_ops = rooms[ai].operators.clone();
                 a_ops.remove(gi);
                 let a_new = scored(&rooms[ai], a_ops);
+                // Only a factory running the OTHER recipe: a trading post's
+                // recipe is `None`, which read as "different" and let a
+                // factory hand into a post where it produces nothing.
                 for bi in 0..rooms.len() {
                     if bi == ai
-                        || !is_production_room(&rooms[bi].room_type)
+                        || rooms[bi].room_type != rooms[ai].room_type
+                        || rooms[bi].formula_type.is_none()
                         || rooms[bi].formula_type == fa
                     {
                         continue;
@@ -5064,34 +5398,56 @@ fn best_automation_team(
     total_dorm_levels: i32,
     max_slots: i32,
 ) -> (Vec<String>, f64) {
-    let mut scored: Vec<(&OperatorBaseProfile, f64)> = operators
+    // An automation team is led by a nullifier (Weedy, Eunectes, Passenger,
+    // Snegurochka); the other seats go to whoever's facility-count skill
+    // survives the wipe - another nullifier OR a plain facility-scaled
+    // partner (Purestream's "+20% per Trading Post"). Admitting only
+    // nullifiers paired Weedy with Eunectes at 77 where Weedy with
+    // Purestream reads 117 beside two posts (00980819, 2026-09-21).
+    let facility_value = |op: &OperatorBaseProfile| {
+        score_operator_facility_only(
+            op,
+            &room.room_type,
+            formula_type,
+            registry,
+            building_data,
+            facility_counts,
+            total_dorm_levels,
+        )
+    };
+    let mut scored: Vec<(&OperatorBaseProfile, f64, bool)> = operators
         .iter()
         .filter(|op| !already_assigned.contains(&op.char_id))
-        .filter(|op| has_automation_buff(op, registry))
-        .map(|op| {
-            let val = score_operator_facility_only(
-                op,
-                &room.room_type,
-                formula_type,
-                registry,
-                building_data,
-                facility_counts,
-                total_dorm_levels,
-            );
-            (op, val)
-        })
-        .filter(|(_, v)| *v > 0.0)
+        .filter(|op| has_facility_scaled_buff(op, registry))
+        .map(|op| (op, facility_value(op), has_automation_buff(op, registry)))
+        .filter(|(_, v, _)| *v > 0.0)
         .collect();
-
     scored.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
-
-    let mut ops = Vec::new();
-    let mut total = 0.0;
-    for (op, val) in scored.into_iter().take(max_slots.max(0) as usize) {
+    let Some(lead) = scored.iter().position(|(_, _, nullifies)| *nullifies) else {
+        return (Vec::new(), f64::NEG_INFINITY);
+    };
+    let leader = scored.remove(lead);
+    let mut ops = vec![leader.0.char_id.clone()];
+    let mut total = leader.1;
+    for (op, val, _) in scored.into_iter().take(max_slots.max(1) as usize - 1) {
         ops.push(op.char_id.clone());
         total += val;
     }
     (ops, total)
+}
+
+/// Any facility-count skill, nullifying or not: the contributions that
+/// survive an automation wipe.
+pub(crate) fn has_facility_scaled_buff(
+    op: &OperatorBaseProfile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+) -> bool {
+    op.available_buffs.iter().any(|b| {
+        matches!(
+            registry.get(b),
+            Some(BuffResolutionStrategy::FacilityCountScaling { .. })
+        )
+    })
 }
 
 pub(crate) fn has_automation_buff(

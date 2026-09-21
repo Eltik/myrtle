@@ -91,26 +91,69 @@ pub fn grade_base(
     }
 
     // The base as the player actually stationed it, with each bar as the
-    // game last wrote it.
+    // game last wrote it. A player who runs saved preset shifts is graded on
+    // the average of those shifts, not on whichever one happened to be on
+    // duty at sync: a rotation's shifts are each weaker than the sustained
+    // optimum on purpose (one is the rest shift), so a single shift of a
+    // three-shift plan read 88% on 00980819 whose plan as a whole read 94%.
     let live_morale =
         building_json.map_or_else(HashMap::new, super::sustain_sim::synced_live_morale);
-    let current = compute_live_assignment(
-        &profiles,
-        &user_building,
-        building_data,
-        &registry,
-        &morale_drains,
-        None,
-        &live_morale,
-    );
-    let actual = sustained_assignment_value(
-        &current,
-        &profiles,
-        &user_building,
-        building_data,
-        &registry,
-        &morale_drains,
-    );
+    let value_of = |shift: Option<usize>| {
+        let stationed = compute_live_assignment(
+            &profiles,
+            &user_building,
+            building_data,
+            &registry,
+            &morale_drains,
+            shift,
+            &live_morale,
+        );
+        sustained_assignment_value(
+            &stationed,
+            &profiles,
+            &user_building,
+            building_data,
+            &registry,
+            &morale_drains,
+        )
+    };
+    // A preset shift counts only where every production room that keeps
+    // presets has a crew in it: the game stores an unset third preset as
+    // empty seats (`-1` ids), which would otherwise read as a shift with
+    // dark rooms (00980819: two posts and a factory dark in "shift 3", the
+    // average fell to 78% of a base that runs at 98%).
+    let usable_shifts: Vec<usize> = {
+        let with_presets: Vec<&super::types::UserRoom> = user_building
+            .rooms
+            .iter()
+            .filter(|r| {
+                super::util::is_production_room(&r.room_type) && !r.preset_shifts.is_empty()
+            })
+            .collect();
+        let most = with_presets
+            .iter()
+            .map(|r| r.preset_shifts.len())
+            .max()
+            .unwrap_or(0);
+        (0..most)
+            .filter(|&i| {
+                with_presets
+                    .iter()
+                    .all(|r| r.preset_shifts.get(i).is_some_and(|crew| !crew.is_empty()))
+            })
+            .collect()
+    };
+    let actual = if usable_shifts.len() >= 2 {
+        #[allow(clippy::cast_precision_loss)]
+        let n = usable_shifts.len() as f64;
+        usable_shifts
+            .iter()
+            .map(|&i| value_of(Some(i)))
+            .sum::<f64>()
+            / n
+    } else {
+        value_of(None)
+    };
     let utilization = log_curve_ratio((actual / achievable).clamp(0.0, 1.0));
 
     // The same rooms at max level: what finishing the upgrades would unlock.
@@ -143,16 +186,40 @@ fn best_yield(
     registry: &HashMap<String, BuffResolutionStrategy>,
     morale_drains: &HashMap<String, f64>,
 ) -> f64 {
-    let optimal =
+    let sustained =
         compute_sustained_assignment(profiles, building, building_data, registry, morale_drains);
-    sustained_assignment_value(
-        &optimal.main,
+    let main = sustained_assignment_value(
+        &sustained.main,
         profiles,
         building,
         building_data,
         registry,
         morale_drains,
-    )
+    );
+    // The Optimizer tab's plan is a second candidate for "best": the two
+    // searches differ by a few percent either way, and a player who copies
+    // the tab must not be held to a bar the tab cannot reach. One search
+    // with the tab's solved economy and pins stands in for the tab's full
+    // bundle trials, which cost 30 s in a debug build - the grade runs at
+    // every sync. A tab plan above this bar clamps to 100%.
+    let economy = super::pools::search_economy(profiles, building, building_data, registry);
+    let pinned = super::assignment::compute_optimal_assignment_with_pins(
+        profiles,
+        building,
+        building_data,
+        &economy.registry,
+        morale_drains,
+        &economy.pins,
+    );
+    let tab = sustained_assignment_value(
+        &pinned,
+        profiles,
+        building,
+        building_data,
+        registry,
+        morale_drains,
+    );
+    main.max(tab)
 }
 
 /// The same layout with every room upgraded to its max level (`phases` count
