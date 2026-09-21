@@ -449,6 +449,43 @@ fn cc_bonus_lines(
     (lines, winners)
 }
 
+/// The plain-words reach of a gated Control-Center grant: who it pays,
+/// where, and how many the plan fields.
+fn conditional_reach_note(cond: &super::assignment::CcCondition, reach: usize) -> String {
+    let room = match cond.target_room.as_str() {
+        "MANUFACTURE" => "Factories",
+        "TRADING" => "Trading Posts",
+        "POWER" => "Power Plants",
+        other => other,
+    };
+    let who = if cond.faction_token.starts_with("char_") {
+        "the named operator".to_string()
+    } else {
+        let mut chars = cond.faction_token.chars();
+        chars.next().map_or_else(String::new, |c| {
+            c.to_uppercase().collect::<String>() + chars.as_str()
+        })
+    };
+    let payload = if cond.order_limit != 0.0 && cond.bonus_pct == 0.0 {
+        format!("+{} order limit", cond.order_limit)
+    } else {
+        format!("+{}%", cond.bonus_pct)
+    };
+    if cond.per_operator {
+        match reach {
+            0 => format!("{payload} to each {who} operator in {room}; no team fields one."),
+            1 => format!("{payload} to each {who} operator in {room}; 1 fielded."),
+            n => format!("{payload} to each {who} operator in {room}; {n} fielded."),
+        }
+    } else {
+        let need = cond.required_count;
+        match reach {
+            0 => format!("{payload} to {room} with {need} {who} operators; none qualifies."),
+            n => format!("{payload} to {room} with {need} {who} operators; {n} qualify."),
+        }
+    }
+}
+
 pub(crate) fn control_room_ledger(
     ctx: &LedgerCtx,
     cc_ops: &[String],
@@ -488,23 +525,26 @@ pub(crate) fn control_room_ledger(
     for (i, l) in lines.iter().enumerate() {
         let claims = l.bonus.stacks
             || winners.get(&(l.bonus.room.clone(), l.bonus.family.clone())) == Some(&i);
-        let (value, disposition) = if let Some(cond) = &l.bonus.conditional {
+        let (value, disposition, note) = if let Some(cond) = &l.bonus.conditional {
             // Umiri-style: the credit lands inside the rooms whose crews meet
             // the gate. On the CC row, say WHERE it went - "inactive" is only
-            // honest when no team satisfies it.
-            let fires = super::assignment::cc_condition_fires(cond, team_rooms, ctx.op_index);
+            // honest when no team satisfies it - and how far it reaches, so a
+            // seat held for one Knight in a factory (Viviana beside Fartooth)
+            // is not read as a seat held for nothing (31010962, 2026-09-21).
+            let reach = super::assignment::cc_condition_reach(cond, team_rooms, ctx.op_index);
             (
                 0.0,
-                if fires {
+                if reach > 0 {
                     LineDisposition::PerRoom
                 } else {
                     LineDisposition::Inactive
                 },
+                Some(conditional_reach_note(cond, reach)),
             )
         } else if claims {
-            (l.bonus.bonus, LineDisposition::Contributes)
+            (l.bonus.bonus, LineDisposition::Contributes, None)
         } else {
-            (0.0, LineDisposition::Covered)
+            (0.0, LineDisposition::Covered, None)
         };
         out.push(LedgerLine {
             operator_id: l.operator_id.clone(),
@@ -513,7 +553,7 @@ pub(crate) fn control_room_ledger(
             value_pct: 0.0,
             from_control_center: false,
             disposition,
-            note: None,
+            note,
         });
     }
     out

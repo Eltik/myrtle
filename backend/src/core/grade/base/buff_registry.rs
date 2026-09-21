@@ -330,6 +330,12 @@ static RE_CC_TRAIN: LazyLock<Regex> = LazyLock::new(|| {
 });
 static RE_CC_HIRE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"HR contacting speed <@cc\.vup>\+([\d.]+)%</>").unwrap());
+/// A Control-Center morale aura paid per seated operator of a faction:
+/// "each <$cc.g.lgd>...</> Operator", "each Operator from <$cc.g.R6>",
+/// "for each <$cc.g.karlan>...</> Operator assigned to the Control Center".
+static RE_CC_EACH_FACTION: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"(?i)each (?:operator from )?<\$cc\.g\.[a-z0-9]+>").unwrap());
+
 /// A same-room companion gate: "assigned to the Control Center with <op>".
 static RE_CC_WITH: LazyLock<Regex> = LazyLock::new(|| {
     // Both word orders: "assigned to the Control Center with <Aak>" and
@@ -1470,9 +1476,18 @@ pub fn build_registry(
                     // the gate/condition isn't resolvable at parse time); self
                     // DRAINS still ride the `parse_morale_loss_increase` side-map.
                     let partner_gated = RE_CC_WITH.is_match(&buff.description);
+                    // "each <faction> Operator increases the Morale of all
+                    // Operators in the Control Center by +0.05" (Lungmen
+                    // Guard, Ursus students, Kjerag, Alternates, Team
+                    // Rainbow, Lee's agency): the aura scales with the
+                    // faction's seated count, which no consumer resolves yet.
+                    // Priced flat it credited +0.05 to a crew with none of
+                    // them (Lava the Purgatory seated beside no Alternate,
+                    // 31010962), so it prices 0 until it is count-scaled.
+                    let faction_counted = RE_CC_EACH_FACTION.is_match(&buff.description);
                     let aura_scope = desc_lower.contains("operators in the control center")
                         || desc_lower.contains("other building");
-                    let recovery = if partner_gated || !aura_scope {
+                    let recovery = if partner_gated || faction_counted || !aura_scope {
                         0.0
                     } else {
                         parse_morale_recovery(&buff.description).unwrap_or(0.0)

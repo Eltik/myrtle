@@ -10465,3 +10465,89 @@ fn shamare_squad_equivalents_match_the_community_sheet() {
         );
     }
 }
+
+/// A gated Control-Center grant says on its own line how far it reaches:
+/// Viviana's "+7% to Knight operators in Factories" reads "1 fielded" when a
+/// Knight works a factory and "no team fields one" otherwise, so a seat
+/// held for one Knight is not read as a seat held for nothing (31010962).
+#[test]
+fn a_gated_cc_grant_line_says_how_many_it_reaches() {
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    const VIVIANA: &str = "char_4098_vvana";
+    const FARTOOTH: &str = "char_430_fartth";
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let roster: Vec<_> = [VIVIANA, FARTOOTH, "char_123_fang"]
+        .iter()
+        .map(|id| profile(gd, id))
+        .collect();
+    let note_for = |factory_crew: Vec<&str>| -> String {
+        let mut cc = room("cc", "CONTROL", 5);
+        cc.current_operators = vec![VIVIANA.into()];
+        let mut mf = room("mf", "MANUFACTURE", 3);
+        mf.current_formula = Some("F_GOLD".into());
+        mf.current_operators = factory_crew.iter().map(|s| (*s).to_string()).collect();
+        let building = UserBuilding {
+            rooms: vec![cc, mf],
+        };
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        let cc = asn
+            .rooms
+            .iter()
+            .find(|r| r.room_type == "CONTROL")
+            .expect("the CC is scored");
+        cc.ledger
+            .iter()
+            .find(|l| l.operator_id == VIVIANA && l.note.is_some())
+            .and_then(|l| l.note.clone())
+            .unwrap_or_else(|| panic!("Viviana's gated line carries a note: {:?}", cc.ledger))
+    };
+    let with = note_for(vec![FARTOOTH, "char_123_fang"]);
+    assert!(
+        with.contains("1 fielded"),
+        "a Knight in the factory: {with}"
+    );
+    let without = note_for(vec!["char_123_fang"]);
+    assert!(
+        without.contains("no team fields one"),
+        "no Knight anywhere: {without}"
+    );
+}
+
+/// A Control-Center morale aura paid per seated operator of a faction
+/// ("each Alternate Operator increases the Morale of all Operators in the
+/// Control Center by +0.05") is not a flat aura: priced flat it seated Lava
+/// the Purgatory beside no Alternate (31010962). Until it is count-scaled
+/// it prices 0, like the partner-gated kind; the plain aura still reads.
+#[test]
+fn a_per_faction_cc_morale_aura_is_not_priced_flat() {
+    let gd = load_game_data();
+    let (registry, _) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    for id in [
+        "control_mp_cost&faction[900]",
+        "control_mp_cost&faction[000]",
+        "control_mp_cost&faction[030]",
+        "control_mp_cost&faction2[000]",
+    ] {
+        let Some(strategy) = registry.get(id) else {
+            continue;
+        };
+        assert!(
+            matches!(
+                strategy,
+                BuffResolutionStrategy::MoraleModifier { recovery_per_hour, .. } if *recovery_per_hour == 0.0
+            ),
+            "{id} prices no flat recovery, got {strategy:?}"
+        );
+    }
+    // Viviana's plain "+0.05 to all Operators in the Control Center" still reads.
+    assert!(
+        matches!(
+            registry.get("control_mp_cost[010]"),
+            Some(BuffResolutionStrategy::MoraleModifier { recovery_per_hour, .. }) if (*recovery_per_hour - 0.05).abs() < 1e-9
+        ),
+        "a plain CC aura keeps its rate, got {:?}",
+        registry.get("control_mp_cost[010]")
+    );
+}

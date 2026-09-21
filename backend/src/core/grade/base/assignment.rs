@@ -1270,6 +1270,34 @@ fn cc_global_morale_recovery(
         .sum()
 }
 
+/// Morale recovery an operator's Control-Center skill gives the CC crew
+/// itself ("increases Morale of all Operators in the Control Center by
+/// +0.05 per hour" - Viviana, `GreyThroat`, `Mon3tr`): a real, priced effect
+/// that sustains the crew, worth a spare seat over a blank filler though
+/// less than a base-wide aura (`cc_global_morale_recovery`).
+fn cc_room_morale_recovery(
+    op: &OperatorBaseProfile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+    building_data: &BuildingDataFile,
+) -> f64 {
+    op.available_buffs
+        .iter()
+        .filter_map(|b| {
+            let buff = building_data.buffs.get(b)?;
+            (buff.room_type == "CONTROL").then_some(())?;
+            match registry.get(b) {
+                Some(BuffResolutionStrategy::MoraleModifier {
+                    recovery_per_hour,
+                    base_wide: false,
+                    is_self_only: false,
+                    ..
+                }) if *recovery_per_hour > 0.0 => Some(*recovery_per_hour),
+                _ => None,
+            }
+        })
+        .sum()
+}
+
 /// Fill the Control Center's spare seats with idle global morale-recovery operators
 /// (strongest first), reserving them from production padding. Each lifts the whole
 /// base's sustain, so it is a better use of a spare seat than a zero-value filler.
@@ -2600,17 +2628,22 @@ pub fn fill_remaining_slots(
                 // reception room fills its board either way, so Lee's +25%
                 // is not worth a seat over a smaller HR or morale skill
                 // (user feedback 2026-09-19).
+                // A CC-crew morale aura (Viviana's +0.05 to the Control
+                // Center) is real value too, behind the base-wide kind.
                 let ma = cc_global_morale_recovery(a, registry, building_data);
                 let mb = cc_global_morale_recovery(b, registry, building_data);
+                let ra = cc_room_morale_recovery(a, registry, building_data);
+                let rb = cc_room_morale_recovery(b, registry, building_data);
                 let (fa, ca) = cc_spare_seat_split(a, building_data, registry, &coverage);
                 let (fb, cb) = cc_spare_seat_split(b, building_data, registry, &coverage);
-                let va = fa + ca + ma;
-                let vb = fb + cb + mb;
+                let va = fa + ca + ma + ra;
+                let vb = fb + cb + mb + rb;
                 let desc = |x: f64, y: f64| y.partial_cmp(&x).unwrap_or(std::cmp::Ordering::Equal);
                 (va <= 0.0)
                     .cmp(&(vb <= 0.0))
                     .then_with(|| ka.cmp(&kb))
                     .then_with(|| desc(ma, mb))
+                    .then_with(|| desc(ra, rb))
                     .then_with(|| desc(fa, fb))
                     .then_with(|| desc(ca, cb))
             });
@@ -3244,6 +3277,33 @@ pub(crate) fn cc_condition_fires(
                 count >= cond.required_count
             }
         })
+}
+
+/// How many operators a per-operator CC grant reaches in `rooms` (or, for a
+/// room-level gate, how many target rooms meet its count). Zero = the gate
+/// is unmet anywhere - what `cc_condition_fires` reports as false.
+pub(crate) fn cc_condition_reach(
+    cond: &CcCondition,
+    rooms: &[RoomAssignment],
+    op_index: &HashMap<&str, &OperatorBaseProfile>,
+) -> usize {
+    rooms
+        .iter()
+        .filter(|r| r.room_type == cond.target_room)
+        .map(|r| {
+            let count = r
+                .operators
+                .iter()
+                .filter_map(|id| op_index.get(id.as_str()))
+                .filter(|op| cc_token_matches(op, &cond.faction_token))
+                .count();
+            if cond.per_operator {
+                count
+            } else {
+                usize::from(count >= cond.required_count)
+            }
+        })
+        .sum()
 }
 
 /// Is a CC operator dead weight - i.e. every effect it brings is a conditional that
