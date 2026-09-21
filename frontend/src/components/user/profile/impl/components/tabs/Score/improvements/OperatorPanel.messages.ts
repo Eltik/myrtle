@@ -166,7 +166,7 @@ export const messages = {
         description: "The highlighted unit in that footnote: each row shows what is earned against what is available.",
     },
     "score.improvements.operator.dim.footnote": {
-        text: "Each row is one investment axis: {unit}, both in % of this section. What an axis is worth depends on your roster (rarer operators and their masteries/modules count for more); the earned figures add up to the section score at the top of the card.",
+        text: "Each row is one investment axis: {unit}, both in % of this section. Every operator you own is graded, raised or not, so an unraised pull counts against you until you build it. What an axis is worth depends on your roster (rarer operators and their masteries/modules count for more); the earned figures add up to the section score at the top of the card.",
         description: "Footnote under the investment axes. {unit} is the highlighted 'earned / available' (score.improvements.operator.dim.footnote.unit) and may move wherever the sentence needs it.",
     },
     "score.improvements.operator.dim.elite.label": {

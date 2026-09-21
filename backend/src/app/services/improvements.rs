@@ -37,7 +37,7 @@ use crate::core::grade::base::yield_model::room_yield;
 use crate::core::grade::grade_medals::rarity_weight;
 use crate::core::grade::grade_operators::{
     ScoreDimension, TRUST_MILESTONE_PCT, UpgradeDelta, advanced_module_levels, advanced_modules,
-    has_investment, operator_score_breakdown, operator_upgrade_deltas, potential_matters,
+    is_graded, operator_score_breakdown, operator_upgrade_deltas, potential_matters,
     rarity_to_weight, total_roster_weight,
 };
 use crate::core::grade::sandbox::grade_sandbox_detail;
@@ -1306,7 +1306,7 @@ pub fn build_operator_improvements(
     game_data: &GameData,
     support_ids: &HashSet<&str>,
 ) -> OperatorImprovements {
-    // Total weight across all invested operators - used to translate per-op
+    // Total weight across all graded operators - used to translate per-op
     // score deltas into a contribution against operator_grade.
     let total_weight = total_roster_weight(roster, game_data);
     let mut below_milestone: Vec<OperatorGap> = Vec::new();
@@ -1321,14 +1321,16 @@ pub fn build_operator_improvements(
         {
             continue;
         }
-        // Only operators the grade averages belong here. An E0 L1 pull is not
-        // in `grade_operators`' denominator, so pricing its ELITE delta against
-        // `total_weight` claims a gain the score cannot pay: promoting it adds
-        // a ~0.5 operator to the average and LOWERS the subscore. Before this
-        // filter, 72.9% of all ELITE gaps on the local data (288,379 of
-        // 395,666) were unraised pulls, and a section with 13.8 points of
-        // headroom advertised +25.2 from E↑ alone.
-        if !has_investment(entry) {
+        // Only operators the grade averages belong here, because a delta priced
+        // against `total_weight` for an entry outside the average claims a gain
+        // the score cannot pay. Since 2026-09-22 every owned operator is in the
+        // average, so an E0 L1 pull is listed with its real ELITE gain; under
+        // `GRADE_INVESTED_ONLY=1` it is outside the average again and skipped
+        // (under that model, promoting it added a ~0.5 operator to the average
+        // and LOWERED the subscore: 72.9% of ELITE gaps on the local data,
+        // 288,379 of 395,666, were unraised pulls, and a section with 13.8
+        // points of headroom advertised +25.2 from E↑ alone).
+        if !is_graded(entry) {
             continue;
         }
 

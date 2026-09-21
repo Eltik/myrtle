@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::OnceLock,
+};
 
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
@@ -93,11 +96,39 @@ fn build_roster_map(roster: &[RosterEntry]) -> HashMap<&str, &RosterEntry> {
     roster.iter().map(|r| (r.operator_id.as_str(), r)).collect()
 }
 
-/// The operators that count toward `operator_grade`: real, obtainable, invested,
-/// with static data and roster entry. Every "gradeable operator" set derives from here.
-fn invested_operators<'a>(
+/// Kill switch for the 2026-09-22 denominator change. The Operators subscore
+/// averages every owned, obtainable operator; `GRADE_INVESTED_ONLY=1` restores
+/// the earlier touched-only average (elite > 0 or level > 1). That average let
+/// a roster of 75 owned and 2 raised read 60.8% on Modules, and the median
+/// account had raised only 43.7% of what it owned, so an unraised pull cost
+/// nothing. Read once per process.
+pub fn invested_only() -> bool {
+    static FLAG: OnceLock<bool> = OnceLock::new();
+    *FLAG.get_or_init(|| std::env::var("GRADE_INVESTED_ONLY").is_ok_and(|v| v == "1"))
+}
+
+/// Whether a roster entry is inside the Operators average: every owned entry
+/// by default, only raised ones under `invested_only`. The improvements builder
+/// prices upgrade deltas only for entries this admits, because a delta on an
+/// entry outside the average claims a gain the score cannot pay.
+pub fn is_graded(entry: &RosterEntry) -> bool {
+    !invested_only() || has_investment(entry)
+}
+
+/// The operators that count toward `operator_grade`: real, obtainable, owned
+/// (static data plus a roster entry), raised or not unless `invested_only`.
+/// Every "gradeable operator" set derives from here.
+fn graded_operators<'a>(
     roster_map: &'a HashMap<&'a str, &'a RosterEntry>,
     game_data: &'a GameData,
+) -> impl Iterator<Item = (&'a str, &'a Operator, &'a RosterEntry)> {
+    graded_operators_in(roster_map, game_data, invested_only())
+}
+
+fn graded_operators_in<'a>(
+    roster_map: &'a HashMap<&'a str, &'a RosterEntry>,
+    game_data: &'a GameData,
+    invested_only: bool,
 ) -> impl Iterator<Item = (&'a str, &'a Operator, &'a RosterEntry)> {
     game_data
         .operators
@@ -110,7 +141,7 @@ fn invested_operators<'a>(
         })
         .filter_map(move |(op_id, static_op)| {
             let entry = *roster_map.get(op_id.as_str())?;
-            has_investment(entry).then_some((op_id.as_str(), static_op, entry))
+            (!invested_only || has_investment(entry)).then_some((op_id.as_str(), static_op, entry))
         })
 }
 
@@ -119,11 +150,24 @@ pub fn grade_operators(
     game_data: &GameData,
     support_ids: &HashSet<&str>,
 ) -> f64 {
+    grade_operators_in(roster, game_data, support_ids, invested_only())
+}
+
+/// `grade_operators` with the denominator chosen explicitly instead of read
+/// from the environment, so both modes can be tested in one process.
+pub fn grade_operators_in(
+    roster: &[RosterEntry],
+    game_data: &GameData,
+    support_ids: &HashSet<&str>,
+    invested_only: bool,
+) -> f64 {
     let roster_map = build_roster_map(roster);
     let mut weighted_sum = 0.0;
     let mut weight_total = 0.0;
 
-    for (op_id, static_op, roster_entry) in invested_operators(&roster_map, game_data) {
+    for (op_id, static_op, roster_entry) in
+        graded_operators_in(&roster_map, game_data, invested_only)
+    {
         let rarity_weight = rarity_to_weight(&static_op.rarity);
         let is_support = support_ids.contains(op_id);
         let op_score = grade_operator(roster_entry, static_op, &game_data.favor, is_support);
@@ -145,7 +189,7 @@ pub fn grade_operators(
 /// into a contribution against the user's overall Operators subscore.
 pub fn total_roster_weight(roster: &[RosterEntry], game_data: &GameData) -> f64 {
     let roster_map = build_roster_map(roster);
-    invested_operators(&roster_map, game_data)
+    graded_operators(&roster_map, game_data)
         .map(|(_, static_op, _)| rarity_to_weight(&static_op.rarity))
         .sum()
 }
@@ -276,8 +320,19 @@ pub fn operator_score_breakdown(
     game_data: &GameData,
     support_ids: &HashSet<&str>,
 ) -> Vec<ScoreDimension> {
+    operator_score_breakdown_in(roster, game_data, support_ids, invested_only())
+}
+
+/// `operator_score_breakdown` with the denominator chosen explicitly; see
+/// `grade_operators_in`.
+pub fn operator_score_breakdown_in(
+    roster: &[RosterEntry],
+    game_data: &GameData,
+    support_ids: &HashSet<&str>,
+    invested_only: bool,
+) -> Vec<ScoreDimension> {
     let roster_map = build_roster_map(roster);
-    let total_rarity_weight: f64 = invested_operators(&roster_map, game_data)
+    let total_rarity_weight: f64 = graded_operators_in(&roster_map, game_data, invested_only)
         .map(|(_, static_op, _)| rarity_to_weight(&static_op.rarity))
         .sum();
     if total_rarity_weight <= 0.0 {
@@ -285,7 +340,7 @@ pub fn operator_score_breakdown(
     }
 
     let mut shares: HashMap<DimensionKind, (f64, f64)> = HashMap::new();
-    for (op_id, static_op, entry) in invested_operators(&roster_map, game_data) {
+    for (op_id, static_op, entry) in graded_operators_in(&roster_map, game_data, invested_only) {
         let is_support = support_ids.contains(op_id);
         let dims = build_dimensions(entry, static_op, &game_data.favor, is_support);
         let op_weight_total: f64 = dims.iter().map(|(_, (w, _))| w).sum();
@@ -527,6 +582,8 @@ fn potential_score(potential: i16) -> f64 {
 }
 
 /// Returns true if the player has invested beyond the initial pull state (E0 L1).
+/// Since 2026-09-22 this no longer gates the Operators average (see
+/// `invested_only`); it still marks a raised operator elsewhere.
 pub const fn has_investment(roster: &RosterEntry) -> bool {
     roster.elite > 0 || roster.level > 1
 }

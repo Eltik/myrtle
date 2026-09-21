@@ -6,7 +6,8 @@ mod common;
 use std::collections::HashSet;
 
 use backend::core::grade::grade_operators::{
-    DimensionKind, grade_operators, operator_score_breakdown,
+    DimensionKind, grade_operators, grade_operators_in, operator_score_breakdown,
+    operator_score_breakdown_in,
 };
 use backend::database::models::roster::RosterEntry;
 use sqlx::types::Uuid;
@@ -105,13 +106,62 @@ fn breakdown_sums_to_the_operator_grade() {
     }
 }
 
+/// An owned operator is in the average from the moment it is pulled: an E0 L1
+/// roster has a full set of weight shares and earns nothing on them. Under the
+/// `GRADE_INVESTED_ONLY` kill switch the same roster is outside the grade.
 #[test]
-fn breakdown_is_empty_for_an_uninvested_roster() {
+fn an_unraised_pull_is_in_the_denominator_unless_invested_only() {
     let game_data = common::load_game_data();
-    // E0 L1 = no investment; such operators don't count toward the grade.
     let roster = vec![entry("char_123_fang", 0, 1)];
-    let breakdown = operator_score_breakdown(&roster, game_data, &HashSet::new());
-    assert!(breakdown.is_empty());
+    let support_ids: HashSet<&str> = HashSet::new();
+
+    let breakdown = operator_score_breakdown_in(&roster, game_data, &support_ids, false);
+    assert!(
+        !breakdown.is_empty(),
+        "an owned E0 L1 operator must be graded"
+    );
+    let share: f64 = breakdown.iter().map(|d| d.weight_share).sum();
+    assert!(
+        (share - 1.0).abs() < 1e-12,
+        "shares must sum to 1.0, got {share}"
+    );
+    let earned: f64 = breakdown.iter().map(|d| d.contribution).sum();
+    let grade = grade_operators_in(&roster, game_data, &support_ids, false);
+    assert!(
+        (earned - grade).abs() < 1e-12,
+        "earned {earned} vs grade {grade}"
+    );
+    assert!(
+        grade < 0.05,
+        "a fresh pull must earn next to nothing, got {grade}"
+    );
+
+    let legacy = operator_score_breakdown_in(&roster, game_data, &support_ids, true);
+    assert!(
+        legacy.is_empty(),
+        "invested-only must drop the unraised pull"
+    );
+    assert_eq!(
+        grade_operators_in(&roster, game_data, &support_ids, true),
+        0.0
+    );
+}
+
+/// The default entry points read the switch from the environment; with it
+/// unset they must be the all-owned grader bit for bit.
+#[test]
+fn default_entry_points_grade_every_owned_operator() {
+    let game_data = common::load_game_data();
+    let roster = vec![entry("char_123_fang", 0, 1), entry("char_003_kalts", 2, 60)];
+    let support_ids: HashSet<&str> = HashSet::new();
+    assert_eq!(
+        grade_operators(&roster, game_data, &support_ids),
+        grade_operators_in(&roster, game_data, &support_ids, false)
+    );
+    assert_eq!(
+        operator_score_breakdown(&roster, game_data, &support_ids).len(),
+        operator_score_breakdown_in(&roster, game_data, &support_ids, false).len()
+    );
 }
 
 #[test]
@@ -160,10 +210,10 @@ fn every_skill_at_m3_completes_the_mastery_dimension() {
 /// The "operators below milestone" card must price gains the score can pay.
 /// Only operators inside `grade_operators`' average may be listed, and the
 /// advertised gains, summed, must fit inside the subscore's remaining headroom.
-/// An unraised pull priced against the invested-only weight used to advertise
-/// a positive ELITE gain when promoting it would lower the average.
+/// Every owned operator is in the average, so an unraised pull is listed with
+/// an ELITE gain the score really pays.
 #[test]
-fn below_milestone_lists_only_graded_operators_and_fits_the_headroom() {
+fn below_milestone_lists_every_graded_operator_and_fits_the_headroom() {
     use backend::app::services::improvements::build_operator_improvements;
 
     let game_data = common::load_game_data();
@@ -175,7 +225,7 @@ fn below_milestone_lists_only_graded_operators_and_fits_the_headroom() {
     kaltsit.modules = serde_json::json!([{ "id": "uniequip_002_kalts", "level": 2 }]);
     let mut ptilopsis = entry("char_128_plosis", 1, 40);
     ptilopsis.skill_level = 6;
-    // A 6★ still at its pull state: owned, uninvested, outside the average.
+    // A 6★ still at its pull state: owned, unraised, inside the average.
     let unraised = entry("char_010_chen", 0, 1);
     let roster: Vec<RosterEntry> = vec![kaltsit, ptilopsis, unraised]
         .into_iter()
@@ -197,12 +247,24 @@ fn below_milestone_lists_only_graded_operators_and_fits_the_headroom() {
         .map(|g| g.operator_id.as_str())
         .collect();
     assert!(
-        !listed.contains(&"char_010_chen"),
-        "an E0 L1 pull is not in the grade's denominator and must not be priced: {listed:?}"
+        listed.contains(&"char_010_chen"),
+        "an E0 L1 pull is in the grade's denominator and must be priced: {listed:?}"
     );
     assert!(
         listed.contains(&"char_003_kalts") && listed.contains(&"char_128_plosis"),
-        "invested operators with open milestones must be listed: {listed:?}"
+        "raised operators with open milestones must be listed: {listed:?}"
+    );
+    let chen = improvements
+        .below_milestone
+        .iter()
+        .find(|g| g.operator_id == "char_010_chen")
+        .expect("chen listed");
+    assert!(
+        chen.deltas
+            .iter()
+            .any(|d| d.tag == "ELITE" && d.operator_grade_delta > 0.0),
+        "promoting an unraised pull must now raise the subscore: {:?}",
+        chen.deltas
     );
 
     let headroom = 1.0 - grade;
