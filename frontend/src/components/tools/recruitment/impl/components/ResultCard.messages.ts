@@ -31,6 +31,56 @@ export const messages = {
         text: "Tags",
         description: "Heading over one operator's recruitment tags, in the hover card and in the expanded mobile row.",
     },
+    "recruit.result.potentialAlt": {
+        text: "Potential {rank}",
+        description: "Alt text of the potential icon overlaid on an operator's portrait. {rank} is 1 to 6.",
+    },
+    "recruit.result.upgrade.unowned": {
+        text: "Not owned",
+        description: "Next-upgrade slot for an operator the signed-in roster does not hold: recruiting them is the gain.",
+    },
+    "recruit.result.upgrade.maxed": {
+        text: "Maxed",
+        description: "Next-upgrade slot for an operator already at the last potential rank.",
+    },
+    "recruit.result.upgrade.talent": {
+        text: "Talent {n}",
+        description: "Next potential improves the operator's n-th talent. Used only when the operator has more than one talent.",
+    },
+    "recruit.result.upgrade.talentOnly": {
+        text: "Talent",
+        description: "Next potential improves the operator's only talent.",
+    },
+    "recruit.result.upgrade.stat.COST": {
+        text: "DP cost {value}",
+        description: "Next potential changes deployment cost. {value} is signed, e.g. '-1'.",
+    },
+    "recruit.result.upgrade.stat.RESPAWN_TIME": {
+        text: "Redeploy {value}s",
+        description: "Next potential changes redeployment time in seconds. {value} is signed, e.g. '-4'.",
+    },
+    "recruit.result.upgrade.stat.ATK": {
+        text: "ATK {value}",
+        description: "Next potential changes attack. {value} is signed, e.g. '+28'.",
+    },
+    "recruit.result.upgrade.stat.DEF": {
+        text: "DEF {value}",
+        description: "Next potential changes defense. {value} is signed.",
+    },
+    "recruit.result.upgrade.stat.MAX_HP": {
+        text: "HP {value}",
+        description: "Next potential changes max HP. {value} is signed.",
+    },
+    "recruit.result.upgrade.stat.MAGIC_RESISTANCE": {
+        text: "RES {value}",
+        description: "Next potential changes arts resistance. {value} is signed.",
+    },
+    "recruit.result.upgrade.stat.ATTACK_SPEED": {
+        text: "ASPD {value}",
+        description: "Next potential changes attack speed. {value} is signed.",
+    },
 } satisfies MessageMap;
 
-export const { keys } = defineMessages({ namespace, messages });
+// `dynamic`: the stat labels are resolved as `t(`recruit.result.upgrade.stat.${attribute}`)`
+// off the game's attribute type, so the extractor has no literal call site for them.
+export const { keys } = defineMessages({ namespace, messages, dynamic: true });

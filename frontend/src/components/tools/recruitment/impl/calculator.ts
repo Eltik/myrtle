@@ -1,6 +1,5 @@
-import { rarityToNumber } from "#/lib/utils";
 import { SENIOR_OPERATOR_TAG_ID, TOP_OPERATOR_TAG_ID } from "./constants";
-import type { ICalculatorOptions, IRecruitableOperator, IRecruitableOperatorWithTags, ITagCombinationResult, OperatorSortMode } from "./types";
+import type { ICalculatorOptions, IRecruitableOperator, ITagCombinationResult, OperatorSortMode, PotentialByOperator } from "./types";
 
 // "Highest rarity first": 6 > 5 > 4 > Robot(1) > 3 > 2.
 // Robots sit just above 3-stars because they are valuable guaranteed pulls.
@@ -9,9 +8,20 @@ const RARITY_DESC_PRIORITY: Record<number, number> = { 6: 0, 5: 1, 4: 2, 1: 3, 3
 // 3-stars are the most common recruit, with robots elevated above them.
 const COMMON_FIRST_PRIORITY: Record<number, number> = { 1: 0, 3: 1, 4: 2, 2: 3, 5: 4, 6: 5 };
 
-function sortOperators(operators: IRecruitableOperator[], mode: OperatorSortMode): IRecruitableOperator[] {
+// "Lowest potential first": the recruit that gains the most sits on top. An
+// operator the roster does not hold is the best outcome of all, so unowned
+// sorts before P1; a maxed operator gains nothing and sinks to the bottom.
+// Ties fall through to "highest rarity first".
+const UNOWNED_POTENTIAL = -1;
+
+function sortOperators(operators: IRecruitableOperator[], mode: OperatorSortMode, potentialByOperator?: PotentialByOperator): IRecruitableOperator[] {
     const priority = mode === "common-first" ? COMMON_FIRST_PRIORITY : RARITY_DESC_PRIORITY;
+    const potentialOf = (op: IRecruitableOperator) => potentialByOperator?.get(op.id) ?? UNOWNED_POTENTIAL;
     return [...operators].sort((a, b) => {
+        if (mode === "potential-asc") {
+            const diff = potentialOf(a) - potentialOf(b);
+            if (diff !== 0) return diff;
+        }
         const diff = (priority[a.rarity] ?? 99) - (priority[b.rarity] ?? 99);
         if (diff !== 0) return diff;
         return a.name.localeCompare(b.name);
@@ -57,7 +67,7 @@ const RARITY_BY_TAG_ID: Record<number, number> = {
     28: 1, // Robot
 };
 
-function operatorMatchesTag(op: IRecruitableOperatorWithTags, tagId: number, tagName: string): boolean {
+function operatorMatchesTag(op: IRecruitableOperator, tagId: number, tagName: string): boolean {
     const position = POSITION_BY_TAG_ID[tagId];
     if (position) return op.position === position;
 
@@ -65,7 +75,7 @@ function operatorMatchesTag(op: IRecruitableOperatorWithTags, tagId: number, tag
     if (profession) return op.profession === profession;
 
     const rarity = RARITY_BY_TAG_ID[tagId];
-    if (rarity) return rarityToNumber(op.rarity) === rarity;
+    if (rarity) return op.rarity === rarity;
 
     return op.tagList.includes(tagName);
 }
@@ -141,9 +151,10 @@ const byBreadthThenCeiling: ResultComparator = (a, b) => (a.operators.length !==
 const byCeilingThenPrecision: ResultComparator = (a, b) => (b.maxRarity !== a.maxRarity ? b.maxRarity - a.maxRarity : a.operators.length - b.operators.length);
 
 function rankingFor(mode: OperatorSortMode): readonly ResultComparator[] {
-    // The operator sort mode only ever reorders the TIEBREAKS. Both modes keep
+    // The operator sort mode only ever reorders the TIEBREAKS. Every mode keeps
     // the floor first; a display preference does not change which recruit is the
-    // better bet.
+    // better bet. "potential-asc" reorders operators inside a card only and
+    // ranks combinations exactly as "rarity-desc" does.
     return [byGuaranteedFloor, byFiveStarShare, mode === "common-first" ? byBreadthThenCeiling : byCeilingThenPrecision];
 }
 
@@ -169,7 +180,7 @@ function assertFloorOutranksPoolShare(): void {
     const make = (rarities: number[]): ITagCombinationResult => ({
         tags: [],
         tagNames: [],
-        operators: rarities.map((rarity, i) => ({ id: `op${i}`, name: `op${i}`, rarity, profession: "", position: "", tagList: [] })),
+        operators: rarities.map((rarity, i) => ({ id: `op${i}`, name: `op${i}`, rarity, profession: "", position: "", tagList: [], potentials: [] })),
         guaranteedRarity: Math.min(...rarities),
         maxRarity: Math.max(...rarities),
         fiveStarCount: rarities.filter((r) => r >= 5).length,
@@ -180,7 +191,7 @@ function assertFloorOutranksPoolShare(): void {
     // 3★ floor, half the pool is 5★. Better pool, worse guarantee.
     const threeStarFloor = make([3, 5]);
 
-    for (const mode of ["rarity-desc", "common-first"] as const) {
+    for (const mode of ["rarity-desc", "common-first", "potential-asc"] as const) {
         if (rankCombinations(mode)(robotFloor, threeStarFloor) >= 0) {
             throw new Error(`recruitment ranking: pool composition is outranking the guaranteed floor in "${mode}" mode. See the precedence note in calculator.ts - the floor is the primary key and pool share is a tiebreak beneath it.`);
         }
@@ -191,54 +202,34 @@ if (import.meta.env.DEV) {
     assertFloorOutranksPoolShare();
 }
 
-export function calculateResults(selectedTags: { id: number; name: string }[], allOperators: IRecruitableOperatorWithTags[], options: ICalculatorOptions = {}): ITagCombinationResult[] {
-    const { includeRobots = true, includeTwoStars = true, includeThreeStars = true, operatorSortMode = "rarity-desc" } = options;
+export function calculateResults(selectedTags: { id: number; name: string }[], allOperators: IRecruitableOperator[], options: ICalculatorOptions = {}): ITagCombinationResult[] {
+    const { includeRobots = true, includeTwoStars = true, includeThreeStars = true, operatorSortMode = "rarity-desc", potentialByOperator } = options;
 
     if (selectedTags.length === 0) return [];
 
-    const combinations = getCombinations(selectedTags, selectedTags.length);
+    const excludedRarities = new Set<number>();
+    if (!includeRobots) excludedRarities.add(1);
+    if (!includeTwoStars) excludedRarities.add(2);
+    if (!includeThreeStars) excludedRarities.add(3);
+
     const results: ITagCombinationResult[] = [];
 
-    for (const combo of combinations) {
+    for (const combo of getCombinations(selectedTags, selectedTags.length)) {
         const comboHasTopOperator = combo.some((t) => t.id === TOP_OPERATOR_TAG_ID);
 
-        const matching = allOperators.filter((op) => {
-            const rarity = rarityToNumber(op.rarity);
-            if (!comboHasTopOperator && rarity === 6) return false;
-
+        const operators = allOperators.filter((op) => {
+            if (!comboHasTopOperator && op.rarity === 6) return false;
+            if (excludedRarities.has(op.rarity)) return false;
             return combo.every((tag) => operatorMatchesTag(op, tag.id, tag.name));
         });
 
-        if (matching.length === 0) continue;
-
-        let filteredOps: IRecruitableOperator[] = matching.map((op) => ({
-            id: op.id,
-            name: op.name,
-            rarity: rarityToNumber(op.rarity),
-            profession: op.profession,
-            position: op.position,
-            tagList: op.tagList,
-        }));
+        if (operators.length === 0) continue;
 
         const tagIds = combo.map((t) => t.id);
-
-        if (!includeRobots) {
-            filteredOps = filteredOps.filter((op) => op.rarity !== 1);
-        }
-        if (!includeTwoStars) {
-            filteredOps = filteredOps.filter((op) => op.rarity !== 2);
-        }
-        if (!includeThreeStars) {
-            filteredOps = filteredOps.filter((op) => op.rarity !== 3);
-        }
-
-        if (filteredOps.length === 0) continue;
-
-        const minRarity = Math.min(...filteredOps.map((op) => op.rarity));
-        const maxRarity = Math.max(...filteredOps.map((op) => op.rarity));
+        const rarities = operators.map((op) => op.rarity);
+        const minRarity = Math.min(...rarities);
 
         let guaranteedRarity = minRarity;
-
         if (tagIds.includes(TOP_OPERATOR_TAG_ID)) {
             guaranteedRarity = 6;
         } else if (tagIds.includes(SENIOR_OPERATOR_TAG_ID)) {
@@ -248,12 +239,12 @@ export function calculateResults(selectedTags: { id: number; name: string }[], a
         results.push({
             tags: tagIds,
             tagNames: combo.map((t) => t.name),
-            operators: sortOperators(filteredOps, operatorSortMode),
+            operators: sortOperators(operators, operatorSortMode, potentialByOperator),
             guaranteedRarity,
-            maxRarity,
-            fiveStarCount: filteredOps.filter((op) => op.rarity >= 5).length,
+            maxRarity: Math.max(...rarities),
+            fiveStarCount: rarities.filter((r) => r >= 5).length,
         });
     }
 
-    return [...results].sort(rankCombinations(operatorSortMode));
+    return results.sort(rankCombinations(operatorSortMode));
 }

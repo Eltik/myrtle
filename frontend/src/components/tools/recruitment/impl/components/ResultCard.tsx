@@ -1,6 +1,7 @@
 import { ChevronDown } from "lucide-react";
 import type * as React from "react";
 import { useState } from "react";
+import { potentialIcon } from "#/components/operators/detail/impl/assets";
 import { Badge } from "#/components/ui/badge";
 import { Card, CardHeader, CardPanel } from "#/components/ui/card";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
@@ -11,16 +12,17 @@ import { cn } from "#/lib/utils";
 import { guaranteedFloorRarity } from "../calculator";
 import { PROFESSION_LABELS, RARITY_COLORS } from "../constants";
 import { getStarsDisplay } from "../helpers";
-import type { IRecruitableOperator, ITagCombinationResult } from "../types";
+import type { IRecruitableOperator, IRosterOverlay, ITagCombinationResult } from "../types";
 import type { messages } from "./ResultCard.messages";
 
 type ResultT = TypedT<typeof messages>;
 
 interface IResultCardProps {
     result: ITagCombinationResult;
+    roster: IRosterOverlay | null;
 }
 
-export function ResultCard({ result }: IResultCardProps): React.ReactElement {
+export function ResultCard({ result, roster }: IResultCardProps): React.ReactElement {
     return (
         <Card>
             <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-x-3 gap-y-1.5 px-3 py-2.5 sm:px-4 sm:py-3">
@@ -36,7 +38,7 @@ export function ResultCard({ result }: IResultCardProps): React.ReactElement {
             <CardPanel className="px-3 pt-0 pb-3 sm:px-4">
                 <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
                     {result.operators.map((op) => (
-                        <OperatorRow key={op.id} operator={op} />
+                        <OperatorRow key={op.id} operator={op} roster={roster} />
                     ))}
                 </ul>
             </CardPanel>
@@ -92,11 +94,62 @@ function OperatorTagList({ tags }: { tags: string[] }): React.ReactElement {
     );
 }
 
-function OperatorRow({ operator }: { operator: IRecruitableOperator }): React.ReactElement {
+/** Every attribute a BUFF potential carries in the character table (EN, 2026-09-21); a new one falls through to a raw label. */
+const STAT_LABEL_KEY: Record<string, keyof typeof messages> = {
+    COST: "recruit.result.upgrade.stat.COST",
+    RESPAWN_TIME: "recruit.result.upgrade.stat.RESPAWN_TIME",
+    ATK: "recruit.result.upgrade.stat.ATK",
+    DEF: "recruit.result.upgrade.stat.DEF",
+    MAX_HP: "recruit.result.upgrade.stat.MAX_HP",
+    MAGIC_RESISTANCE: "recruit.result.upgrade.stat.MAGIC_RESISTANCE",
+    ATTACK_SPEED: "recruit.result.upgrade.stat.ATTACK_SPEED",
+};
+
+/** Signed like the game's own potential text: "+28", "-1". Whole numbers only, which is every value in the table. */
+function signed(value: number): string {
+    return value > 0 ? `+${value}` : `${value}`;
+}
+
+type UpgradeTone = "gain" | "unowned" | "maxed";
+
+const UPGRADE_TONE_CLASS: Record<UpgradeTone, string> = {
+    gain: "text-foreground/80",
+    unowned: "text-foreground",
+    maxed: "text-muted-foreground",
+};
+
+/**
+ * The gain from the operator's NEXT potential rank, or what stands in for it:
+ * unowned (recruiting is the gain), maxed (nothing left). Stat labels resolve
+ * off the attribute type; an attribute the catalog does not know falls back to
+ * a raw "ATTRIBUTE +n" so it still reads, just untranslated.
+ */
+function nextUpgradeLabel(operator: IRecruitableOperator, potential: number | undefined, t: ResultT): { text: string; tone: UpgradeTone } {
+    if (potential === undefined) return { text: t("recruit.result.upgrade.unowned"), tone: "unowned" };
+    const next = operator.potentials[potential];
+    if (!next) return { text: t("recruit.result.upgrade.maxed"), tone: "maxed" };
+    switch (next.kind) {
+        case "stat": {
+            const key = STAT_LABEL_KEY[next.attribute];
+            return { text: key ? t(key, { value: signed(next.value) }) : `${next.attribute} ${signed(next.value)}`, tone: "gain" };
+        }
+        case "talent":
+            return { text: next.of > 1 ? t("recruit.result.upgrade.talent", { n: next.index + 1 }) : t("recruit.result.upgrade.talentOnly"), tone: "gain" };
+        case "text":
+            return { text: next.text, tone: "gain" };
+    }
+}
+
+function OperatorRow({ operator, roster }: { operator: IRecruitableOperator; roster: IRosterOverlay | null }): React.ReactElement {
     const t: ResultT = useT("tools");
     const colors = RARITY_COLORS[operator.rarity];
     const profession = PROFESSION_LABELS[operator.profession] ?? operator.profession;
     const [mobileExpanded, setMobileExpanded] = useState(false);
+
+    const potential = roster?.potentialByOperator.get(operator.id);
+    const owned = potential !== undefined;
+    const showPotential = roster?.showPotentials ?? false;
+    const upgrade = roster?.showNextUpgrade ? nextUpgradeLabel(operator, potential, t) : null;
 
     return (
         <li className={cn("rounded-md border transition-colors", colors?.border, colors?.bg, colors?.hoverBg, colors?.hoverBorder)}>
@@ -104,8 +157,13 @@ function OperatorRow({ operator }: { operator: IRecruitableOperator }): React.Re
                 <HoverCardTrigger
                     render={
                         <button type="button" onClick={() => setMobileExpanded((v) => !v)} aria-expanded={mobileExpanded} aria-controls={`op-tags-${operator.id}`} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-left sm:py-1.5">
-                            <span aria-hidden="true" className="inline-flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted font-semibold text-[11px]">
-                                <OperatorAvatar charId={operator.id} name={operator.name} />
+                            <span className="relative inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-muted font-semibold text-[11px]">
+                                <span aria-hidden="true" className={cn("inline-flex size-8 items-center justify-center overflow-hidden rounded-md", showPotential && !owned && "opacity-50 grayscale")}>
+                                    <OperatorAvatar charId={operator.id} name={operator.name} />
+                                </span>
+                                {showPotential && owned && potential > 0 && (
+                                    <img alt={t("recruit.result.potentialAlt", { rank: potential + 1 })} className="icon-theme-aware absolute -bottom-1 -left-1 h-4 w-3.5 object-contain drop-shadow-sm" decoding="async" height={16} loading="lazy" src={potentialIcon(potential)} width={14} />
+                                )}
                             </span>
                             <div className="min-w-0 flex-1">
                                 <div className="truncate font-medium text-[13px] text-foreground leading-tight">{operator.name}</div>
@@ -113,6 +171,12 @@ function OperatorRow({ operator }: { operator: IRecruitableOperator }): React.Re
                                     <span className={cn("font-mono", colors?.text)}>{getStarsDisplay(operator.rarity)}</span>
                                     <span>·</span>
                                     <span className="truncate">{profession}</span>
+                                    {upgrade && (
+                                        <>
+                                            <span>·</span>
+                                            <span className={cn("truncate font-mono", UPGRADE_TONE_CLASS[upgrade.tone])}>{upgrade.text}</span>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                             <ChevronDown aria-hidden="true" className={cn("size-3.5 shrink-0 text-muted-foreground transition-transform duration-200 sm:hidden", mobileExpanded && "rotate-180")} />

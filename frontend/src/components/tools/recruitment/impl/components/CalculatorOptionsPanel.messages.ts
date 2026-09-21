@@ -31,6 +31,22 @@ export const messages = {
         text: "Most common first",
         description: "Sort option: order operators from the most frequently rolled up.",
     },
+    "recruit.options.sort.potentialAsc": {
+        text: "Lowest potential first",
+        description: "Sort option, offered only when signed in: operators the roster does not hold first, then by the potential the roster holds them at, lowest first. Maxed operators last.",
+    },
+    "recruit.options.showPotentials": {
+        text: "Show my potentials",
+        description: "Switch label: overlay the signed-in user's current potential (P1 to P6) on each operator in the results.",
+    },
+    "recruit.options.showNextUpgrade": {
+        text: "Show next upgrade",
+        description: "Switch label: under each operator, show what the next potential rank would grant (e.g. 'DP cost -1', 'Talent 2').",
+    },
+    "recruit.options.roster.signIn": {
+        text: "Sign in to sync your roster",
+        description: "Hint under the roster switches when nobody is signed in; the switches are disabled.",
+    },
 } satisfies MessageMap;
 
 // `dynamic`: the sort-order keys are stored on a constants entry and resolved as

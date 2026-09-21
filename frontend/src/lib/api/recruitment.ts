@@ -1,11 +1,10 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
-import { HIDDEN_TAG_NAMES, PROFESSION_LABELS } from "#/components/tools/recruitment/impl/constants";
+import { toRecruitableOperator } from "#/components/tools/recruitment/impl/derive";
 import type { IGachaTag } from "#/components/tools/recruitment/impl/helpers";
-import type { IRecruitableOperatorWithTags } from "#/components/tools/recruitment/impl/types";
+import type { IRecruitableOperator } from "#/components/tools/recruitment/impl/types";
 import { deepCamelize } from "#/lib/api/operators";
 import { backendFetch } from "#/lib/fetch";
-import { rarityToNumber } from "#/lib/utils";
 import type { IOperatorListItem, IOperatorsStaticMap } from "#/types/operators";
 import { DEFAULT_GAMEDATA_SERVER, gamedataKey, gamedataPath, resolveGamedataServer } from "./gamedata";
 
@@ -16,7 +15,7 @@ interface IGachaDataResponse {
 
 export interface IRecruitmentData {
     tags: IGachaTag[];
-    operators: IRecruitableOperatorWithTags[];
+    operators: IRecruitableOperator[];
 }
 
 function parseRecruitableNames(recruitDetail: string): Set<string> {
@@ -44,23 +43,6 @@ function parseRecruitableNames(recruitDetail: string): Set<string> {
     return names;
 }
 
-function buildOperatorTagList(op: IOperatorListItem, rarity: number): string[] {
-    const tags: string[] = [];
-    if (op.position === "MELEE") tags.push("Melee");
-    if (op.position === "RANGED") tags.push("Ranged");
-
-    const profTag = PROFESSION_LABELS[op.profession];
-    if (profTag) tags.push(profTag);
-
-    if (rarity === 6) tags.push("Top Operator");
-    if (rarity === 5) tags.push("Senior Operator");
-    if (rarity === 1) tags.push("Robot");
-
-    if (op.tagList) tags.push(...op.tagList.filter((t) => !HIDDEN_TAG_NAMES.has(t)));
-
-    return tags;
-}
-
 export const getRecruitmentDataFn = createServerFn({ method: "GET" })
     .inputValidator((server: string | undefined) => server)
     .handler(async ({ data: server }): Promise<IRecruitmentData> => {
@@ -76,18 +58,10 @@ export const getRecruitmentDataFn = createServerFn({ method: "GET" })
         const tags = gacha.gachaTags ?? [];
         const recruitableNames = parseRecruitableNames(gacha.recruitDetail ?? "");
 
-        const operators: IRecruitableOperatorWithTags[] = [];
+        const operators: IRecruitableOperator[] = [];
         for (const op of allOperators) {
             if (!op.id || !recruitableNames.has(op.name)) continue;
-            const rarity = rarityToNumber(op.rarity);
-            operators.push({
-                id: op.id,
-                name: op.name,
-                rarity: `TIER_${rarity}`,
-                profession: op.profession,
-                position: op.position,
-                tagList: buildOperatorTagList(op, rarity),
-            });
+            operators.push(toRecruitableOperator(op.id, op));
         }
 
         return { tags, operators };

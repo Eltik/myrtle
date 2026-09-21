@@ -3,16 +3,17 @@ import type * as React from "react";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import type { ITagCombinationResult } from "../types";
+import type { IRosterOverlay, ITagCombinationResult } from "../types";
 import { ResultCard } from "./ResultCard";
 import type { messages } from "./ResultsList.messages";
 
 interface IResultsListProps {
     results: ITagCombinationResult[];
     hasSelection: boolean;
+    roster: IRosterOverlay | null;
 }
 
-export function ResultsList({ results, hasSelection }: IResultsListProps): React.ReactElement {
+export function ResultsList({ results, hasSelection, roster }: IResultsListProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("tools");
     if (!hasSelection) {
         return (
@@ -45,7 +46,7 @@ export function ResultsList({ results, hasSelection }: IResultsListProps): React
     return (
         <div className="flex flex-col gap-3">
             {results.map((result) => (
-                <ResultCard key={result.tags.join("-")} result={result} />
+                <ResultCard key={result.tags.join("-")} result={result} roster={roster} />
             ))}
         </div>
     );

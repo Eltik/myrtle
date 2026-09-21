@@ -14,15 +14,19 @@ import { SelectedTagsBar } from "./impl/components/SelectedTagsBar";
 import { TagSelector } from "./impl/components/TagSelector";
 import { MAX_SELECTED_TAGS } from "./impl/constants";
 import { groupTagsByType, transformTags } from "./impl/helpers";
-import type { ICalculatorOptions, IRecruitmentTag, OperatorSortMode } from "./impl/types";
+import type { ICalculatorSettings, IRecruitmentTag, IRosterOverlay, IRosterViewOptions } from "./impl/types";
+import { useRecruitRoster } from "./impl/useRecruitRoster";
 import type { messages } from "./RecruitmentCalculator.messages";
 
-const DEFAULT_OPTIONS: Required<ICalculatorOptions> = {
+const DEFAULT_SETTINGS: ICalculatorSettings = {
     includeRobots: true,
     includeTwoStars: true,
     includeThreeStars: true,
     operatorSortMode: "rarity-desc",
 };
+
+// Both overlays on by default: a signed-in reader opened the tool to see them.
+const DEFAULT_ROSTER_VIEW: IRosterViewOptions = { showPotentials: true, showNextUpgrade: true };
 
 export function RecruitmentCalculator(): React.ReactElement {
     const t: TypedT<typeof messages> = useT("tools");
@@ -33,7 +37,16 @@ export function RecruitmentCalculator(): React.ReactElement {
     const tags = data?.tags ?? [];
     const operators = data?.operators ?? [];
 
-    const [options, setOptions] = React.useState<Required<ICalculatorOptions>>(DEFAULT_OPTIONS);
+    const [settings, setSettings] = React.useState(DEFAULT_SETTINGS);
+    const [rosterView, setRosterView] = React.useState(DEFAULT_ROSTER_VIEW);
+    const roster = useRecruitRoster();
+
+    // The potential sort is only offered while signed in; a session that ends
+    // mid-visit falls back to the default rather than sorting on an empty map.
+    const activeSettings: ICalculatorSettings = React.useMemo(() => {
+        if (roster.signedIn || settings.operatorSortMode !== "potential-asc") return settings;
+        return { ...settings, operatorSortMode: DEFAULT_SETTINGS.operatorSortMode };
+    }, [settings, roster.signedIn]);
 
     const allTags: IRecruitmentTag[] = React.useMemo(() => transformTags(tags), [tags]);
     const tagGroups = React.useMemo(() => groupTagsByType(allTags), [allTags]);
@@ -48,7 +61,18 @@ export function RecruitmentCalculator(): React.ReactElement {
         return out;
     }, [selectedIds, tagById]);
 
-    const results = React.useMemo(() => calculateResults(selectedTags, operators, options), [selectedTags, operators, options]);
+    const results = React.useMemo(() => {
+        const potentialByOperator = roster.signedIn ? roster.potentialByOperator : undefined;
+        return calculateResults(selectedTags, operators, { ...activeSettings, potentialByOperator });
+    }, [selectedTags, operators, activeSettings, roster.signedIn, roster.potentialByOperator]);
+
+    // Cards get the overlay only once the roster has landed: an empty map would
+    // paint every operator as unowned for the length of the request.
+    const rosterOverlay: IRosterOverlay | null = React.useMemo(() => {
+        if (!roster.signedIn || roster.loading) return null;
+        if (!rosterView.showPotentials && !rosterView.showNextUpgrade) return null;
+        return { potentialByOperator: roster.potentialByOperator, ...rosterView };
+    }, [roster.signedIn, roster.loading, roster.potentialByOperator, rosterView]);
 
     const setSelectedIds = React.useCallback(
         (updater: (prev: ReadonlyArray<number>) => ReadonlyArray<number>) => {
@@ -86,17 +110,11 @@ export function RecruitmentCalculator(): React.ReactElement {
         setSelectedIds(() => []);
     }, [setSelectedIds]);
 
-    const onChangeIncludeRobots = React.useCallback((value: boolean) => {
-        setOptions((prev) => ({ ...prev, includeRobots: value }));
+    const onChangeSettings = React.useCallback((patch: Partial<ICalculatorSettings>) => {
+        setSettings((prev) => ({ ...prev, ...patch }));
     }, []);
-    const onChangeIncludeTwoStars = React.useCallback((value: boolean) => {
-        setOptions((prev) => ({ ...prev, includeTwoStars: value }));
-    }, []);
-    const onChangeIncludeThreeStars = React.useCallback((value: boolean) => {
-        setOptions((prev) => ({ ...prev, includeThreeStars: value }));
-    }, []);
-    const onChangeSortMode = React.useCallback((value: OperatorSortMode) => {
-        setOptions((prev) => ({ ...prev, operatorSortMode: value }));
+    const onChangeRosterView = React.useCallback((patch: Partial<IRosterViewOptions>) => {
+        setRosterView((prev) => ({ ...prev, ...patch }));
     }, []);
 
     const selectedIdSet = React.useMemo(() => new Set(selectedIds), [selectedIds]);
@@ -125,14 +143,14 @@ export function RecruitmentCalculator(): React.ReactElement {
                             <CardTitle className="text-[15px]">{t("recruit.options")}</CardTitle>
                         </CardHeader>
                         <CardPanel className="px-4 pt-0 pb-4 sm:px-6 sm:pb-6">
-                            <CalculatorOptionsPanel options={options} onChangeIncludeRobots={onChangeIncludeRobots} onChangeIncludeTwoStars={onChangeIncludeTwoStars} onChangeIncludeThreeStars={onChangeIncludeThreeStars} onChangeSortMode={onChangeSortMode} />
+                            <CalculatorOptionsPanel settings={activeSettings} rosterView={rosterView} rosterAvailable={roster.signedIn} onChangeSettings={onChangeSettings} onChangeRosterView={onChangeRosterView} />
                         </CardPanel>
                     </Card>
                 </aside>
 
                 <main className="flex min-w-0 flex-col gap-3 sm:gap-4">
                     <SelectedTagsBar selectedTags={selectedTags} resultCount={results.length} onRemove={onRemove} onReset={onReset} />
-                    <ResultsList results={results} hasSelection={selectedTags.length > 0} />
+                    <ResultsList results={results} hasSelection={selectedTags.length > 0} roster={rosterOverlay} />
                 </main>
             </div>
         </div>

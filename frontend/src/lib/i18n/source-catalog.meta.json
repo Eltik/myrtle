@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-20T15:35:08.570Z",
+    "generatedAt": "2026-09-20T15:47:54.300Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -25703,6 +25703,27 @@
             "placeholders": []
         },
         {
+            "key": "tools.recruit.options.roster.signIn",
+            "namespace": "tools",
+            "source_text": "Sign in to sync your roster",
+            "description": "Hint under the roster switches when nobody is signed in; the switches are disabled.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.recruit.options.showNextUpgrade",
+            "namespace": "tools",
+            "source_text": "Show next upgrade",
+            "description": "Switch label: under each operator, show what the next potential rank would grant (e.g. 'DP cost -1', 'Talent 2').",
+            "placeholders": []
+        },
+        {
+            "key": "tools.recruit.options.showPotentials",
+            "namespace": "tools",
+            "source_text": "Show my potentials",
+            "description": "Switch label: overlay the signed-in user's current potential (P1 to P6) on each operator in the results.",
+            "placeholders": []
+        },
+        {
             "key": "tools.recruit.options.sort",
             "namespace": "tools",
             "source_text": "Sort operators",
@@ -25721,6 +25742,13 @@
             "namespace": "tools",
             "source_text": "Sort",
             "description": "Placeholder in the sort select before an order is chosen. Very narrow control.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.recruit.options.sort.potentialAsc",
+            "namespace": "tools",
+            "source_text": "Lowest potential first",
+            "description": "Sort option, offered only when signed in: operators the roster does not hold first, then by the potential the roster holds them at, lowest first. Maxed operators last.",
             "placeholders": []
         },
         {
@@ -25763,6 +25791,15 @@
             "placeholders": []
         },
         {
+            "key": "tools.recruit.result.potentialAlt",
+            "namespace": "tools",
+            "source_text": "Potential {rank}",
+            "description": "Alt text of the potential icon overlaid on an operator's portrait. {rank} is 1 to 6.",
+            "placeholders": [
+                "rank"
+            ]
+        },
+        {
             "key": "tools.recruit.result.robotFloor",
             "namespace": "tools",
             "source_text": "Robot",
@@ -25783,6 +25820,99 @@
             "namespace": "tools",
             "source_text": "Tags",
             "description": "Heading over one operator's recruitment tags, in the hover card and in the expanded mobile row.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.recruit.result.upgrade.maxed",
+            "namespace": "tools",
+            "source_text": "Maxed",
+            "description": "Next-upgrade slot for an operator already at the last potential rank.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.recruit.result.upgrade.stat.ATK",
+            "namespace": "tools",
+            "source_text": "ATK {value}",
+            "description": "Next potential changes attack. {value} is signed, e.g. '+28'.",
+            "placeholders": [
+                "value"
+            ]
+        },
+        {
+            "key": "tools.recruit.result.upgrade.stat.ATTACK_SPEED",
+            "namespace": "tools",
+            "source_text": "ASPD {value}",
+            "description": "Next potential changes attack speed. {value} is signed.",
+            "placeholders": [
+                "value"
+            ]
+        },
+        {
+            "key": "tools.recruit.result.upgrade.stat.COST",
+            "namespace": "tools",
+            "source_text": "DP cost {value}",
+            "description": "Next potential changes deployment cost. {value} is signed, e.g. '-1'.",
+            "placeholders": [
+                "value"
+            ]
+        },
+        {
+            "key": "tools.recruit.result.upgrade.stat.DEF",
+            "namespace": "tools",
+            "source_text": "DEF {value}",
+            "description": "Next potential changes defense. {value} is signed.",
+            "placeholders": [
+                "value"
+            ]
+        },
+        {
+            "key": "tools.recruit.result.upgrade.stat.MAGIC_RESISTANCE",
+            "namespace": "tools",
+            "source_text": "RES {value}",
+            "description": "Next potential changes arts resistance. {value} is signed.",
+            "placeholders": [
+                "value"
+            ]
+        },
+        {
+            "key": "tools.recruit.result.upgrade.stat.MAX_HP",
+            "namespace": "tools",
+            "source_text": "HP {value}",
+            "description": "Next potential changes max HP. {value} is signed.",
+            "placeholders": [
+                "value"
+            ]
+        },
+        {
+            "key": "tools.recruit.result.upgrade.stat.RESPAWN_TIME",
+            "namespace": "tools",
+            "source_text": "Redeploy {value}s",
+            "description": "Next potential changes redeployment time in seconds. {value} is signed, e.g. '-4'.",
+            "placeholders": [
+                "value"
+            ]
+        },
+        {
+            "key": "tools.recruit.result.upgrade.talent",
+            "namespace": "tools",
+            "source_text": "Talent {n}",
+            "description": "Next potential improves the operator's n-th talent. Used only when the operator has more than one talent.",
+            "placeholders": [
+                "n"
+            ]
+        },
+        {
+            "key": "tools.recruit.result.upgrade.talentOnly",
+            "namespace": "tools",
+            "source_text": "Talent",
+            "description": "Next potential improves the operator's only talent.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.recruit.result.upgrade.unowned",
+            "namespace": "tools",
+            "source_text": "Not owned",
+            "description": "Next-upgrade slot for an operator the signed-in roster does not hold: recruiting them is the gain.",
             "placeholders": []
         },
         {
