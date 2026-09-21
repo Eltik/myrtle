@@ -306,6 +306,7 @@ pub fn init_game_data(
         &activity_file.basic_info,
         &campaign_rotations,
         &retro_linked_acts,
+        &activity_file.optional_stage_ids(),
     );
 
     let sandbox_perm_raw: serde_json::Value =

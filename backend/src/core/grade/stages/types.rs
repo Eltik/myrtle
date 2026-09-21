@@ -18,10 +18,14 @@ impl StageClear {
         self.state >= 2
     }
 
+    pub const fn is_three_starred(&self) -> bool {
+        self.state >= 3
+    }
+
     pub const fn clear_score(&self) -> f64 {
         if !self.is_cleared() {
             0.0
-        } else if self.state >= 3 {
+        } else if self.is_three_starred() {
             1.0
         } else {
             0.7

@@ -110,3 +110,52 @@ fn vignette_stages_in_mainline_zones_are_events_not_permanent() {
         );
     }
 }
+
+/// `act21side_06_m` (IS-QT, Penguin Logistics Office) is reached only through
+/// the `OR` ring `taskRing_Texas_4` in Il Siracusano's hub: its battle task and
+/// a story task lock each other, so the player who read the story can never
+/// clear the stage. It must be in the pools as optional, never as a gap.
+///
+/// The set is derived from the hub's own `LogicType`, so it is asserted whole.
+/// A new member means a new event shipped the either/or mechanic: verify in
+/// game that the stage really is unreachable after the other arm before
+/// widening this assertion.
+#[test]
+fn or_ring_battle_stages_are_optional_never_gaps() {
+    let gd = common::load_game_data();
+    let universe = &gd.stage_universe;
+
+    let mut optional: Vec<&str> = universe
+        .permanent
+        .iter()
+        .filter(|e| e.optional)
+        .map(|e| e.stage_id.as_str())
+        .chain(
+            universe
+                .event
+                .iter()
+                .filter(|e| e.optional)
+                .map(|e| e.stage_id.as_str()),
+        )
+        .collect();
+    optional.sort_unstable();
+    assert_eq!(
+        optional,
+        vec!["act21side_06_m"],
+        "the optional set is derived from OR rings alone; a new member is a new event \
+         with the either/or mechanic and must be verified in game before this assertion \
+         is widened, and a missing member means the derivation stopped reading the hub"
+    );
+
+    let sibling_optional = universe
+        .event
+        .iter()
+        .find(|e| e.stage_id == "act21side_06_t")
+        .map(|e| e.optional)
+        .expect("act21side_06_t is in the event pool");
+    assert!(
+        !sibling_optional,
+        "act21side_06_t sits in a LINEAR ring and is fully reachable; the `_m`/`_t` \
+         suffix is not the discriminator"
+    );
+}

@@ -1,7 +1,7 @@
 //! Acitivty table types, used for event start/end times
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use ts_rs::TS;
 
 use super::{
@@ -104,6 +104,71 @@ pub struct ActivityTableFile {
     pub mission_data: Vec<ActivityMission>,
     #[serde(default, deserialize_with = "deserialize_fb_map_or_default")]
     pub activity_items: HashMap<String, Vec<String>>,
+    /// Il Siracusano's hub table. Only its task rings and battle tasks are read;
+    /// everything else in it (areas, opera, char cards) belongs to the event UI.
+    #[serde(default)]
+    pub siracusa_data: SiracusaData,
+}
+
+/// The two maps of the Il Siracusano hub that decide whether a stage is
+/// reachable: the rings group tasks under a logic type, and a battle task
+/// names the stage that clears it.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct SiracusaData {
+    #[serde(default, deserialize_with = "deserialize_fb_map_or_default")]
+    pub task_ring_map: HashMap<String, TaskRing>,
+    #[serde(default, deserialize_with = "deserialize_fb_map_or_default")]
+    pub battle_task_map: HashMap<String, BattleTask>,
+}
+
+/// One hub ring. `logic_type` is `LINEAR`, `AND` or `OR`; on the 2026-09-22
+/// tables the 49 rings are 43 LINEAR, 3 AND and 3 OR, on both EN and CN.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct TaskRing {
+    #[serde(default)]
+    pub logic_type: String,
+    #[serde(default)]
+    pub task_id_list: Vec<String>,
+}
+
+/// One hub task cleared by playing a stage. The rest of the hub's tasks are
+/// story (AVG) tasks and name no stage.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct BattleTask {
+    #[serde(default)]
+    pub stage_id: String,
+}
+
+impl ActivityTableFile {
+    /// Stages a player can only reach by taking one arm of an either/or choice.
+    /// Picking the other arm locks this one for good, so the stage can never be
+    /// a gap: not owning it says nothing about the player.
+    ///
+    /// This is the single place either/or hub mechanics get derived. If another
+    /// event ships a similar hub table, add its derivation here, keyed on that
+    /// table's own logic type, never on stage codes or id suffixes.
+    ///
+    /// Measured on the 2026-09-22 EN and CN tables: exactly `{act21side_06_m}`,
+    /// out of 49 rings that are 43 LINEAR, 3 AND and 3 OR on both servers. Ring
+    /// `taskRing_Texas_4` is the only OR ring holding a battle task; it pairs
+    /// `act21side_06_m` with a story task, and 910 of the 1,451 local users who
+    /// finished Il Siracusano hold `06_m` at state 0. The `_m`/`_t` suffix is
+    /// not the discriminator: the linear siblings were cleared by 1,195 to
+    /// 1,588 of 2,630 local users against 549 for `06_m`.
+    pub fn optional_stage_ids(&self) -> HashSet<String> {
+        self.siracusa_data
+            .task_ring_map
+            .values()
+            .filter(|ring| ring.logic_type == "OR")
+            .flat_map(|ring| &ring.task_id_list)
+            .filter_map(|task_id| self.siracusa_data.battle_task_map.get(task_id))
+            .filter(|task| !task.stage_id.is_empty())
+            .map(|task| task.stage_id.clone())
+            .collect()
+    }
 }
 
 /// One event mission (`MissionData`). Only the template and its parameters

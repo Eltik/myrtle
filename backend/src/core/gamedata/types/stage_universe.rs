@@ -19,6 +19,12 @@
 //!       rotation window as the event window, so a map that rotated out long ago
 //!       decays instead of dragging the grade as a permanent gap. The three
 //!       permanent Annihilation maps (`camp_01/02/03`) stay in the permanent pool.
+//!
+//! An entry in either pool can also be OPTIONAL (`optional: true`). An optional
+//! stage sits behind an either/or choice the player makes once and cannot undo,
+//! so it counts in numerator and denominator only when the player has cleared it
+//! (state >= 2), and it is never a gap. The set comes from
+//! `ActivityTableFile::optional_stage_ids`, which is where the derivation lives.
 
 use serde::{Deserialize, Serialize};
 use std::{
@@ -37,6 +43,10 @@ use super::{
 pub struct UniverseEntry {
     pub stage_id: String,
     pub weight: f64,
+    /// Reachable only by taking one arm of an either/or choice; counts only
+    /// once cleared and is never a gap. See the module doc.
+    #[serde(default)]
+    pub optional: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -52,6 +62,10 @@ pub struct EventEntry {
     /// Permanent events count toward grading at all times; limited events that
     /// have yet to rerun only count while their run window is currently open.
     pub is_permanent: bool,
+    /// Reachable only by taking one arm of an either/or choice; counts only
+    /// once cleared and is never a gap. See the module doc.
+    #[serde(default)]
+    pub optional: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -68,6 +82,7 @@ impl StageUniverse {
         activities: &HashMap<String, ActivityBasicInfo>,
         campaign: &CampaignRotations,
         retro_linked_acts: &HashSet<String>,
+        optional: &HashSet<String>,
     ) -> Self {
         let mut sorted_activities: Vec<&ActivityBasicInfo> = activities.values().collect();
         sorted_activities.sort_by_key(|a| Reverse(a.id.len()));
@@ -93,6 +108,7 @@ impl StageUniverse {
             };
 
             let weight = zone_weight * difficulty_multiplier(&stage.difficulty);
+            let is_optional = optional.contains(&stage.stage_id);
 
             if let Some(window) = campaign.window(&stage.stage_id) {
                 event.push(EventEntry {
@@ -101,6 +117,7 @@ impl StageUniverse {
                     start_time: Some(window.start_ts),
                     end_time: Some(window.end_ts),
                     is_permanent: false,
+                    optional: is_optional,
                 });
                 continue;
             }
@@ -109,6 +126,7 @@ impl StageUniverse {
                 permanent.push(UniverseEntry {
                     stage_id: stage.stage_id.clone(),
                     weight,
+                    optional: is_optional,
                 });
             } else {
                 // Activity zones - event pool
@@ -138,11 +156,18 @@ impl StageUniverse {
                     start_time,
                     end_time,
                     is_permanent,
+                    optional: is_optional,
                 });
             }
         }
 
-        let permanent_max: f64 = permanent.iter().map(|e| e.weight).sum();
+        // An optional stage is only ever in the denominator for a player who
+        // cleared it, so it cannot belong to the pool-wide maximum.
+        let permanent_max: f64 = permanent
+            .iter()
+            .filter(|e| !e.optional)
+            .map(|e| e.weight)
+            .sum();
 
         Self {
             permanent,

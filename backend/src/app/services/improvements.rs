@@ -16,7 +16,6 @@ use crate::core::gamedata::types::GameData;
 use crate::core::gamedata::types::campaign::RotationStatus;
 use crate::core::gamedata::types::medal::{MedalData, MedalDefinition, Obtainability};
 use crate::core::gamedata::types::operator::OperatorProfession;
-use crate::core::gamedata::types::stage_universe::EventEntry;
 use crate::core::grade::base::assignment::{
     cc_non_production_effects, compute_live_assignment, compute_sustained_assignment,
 };
@@ -44,7 +43,7 @@ use crate::core::grade::sandbox::grade_sandbox_detail;
 use crate::core::grade::sandbox::score::{
     ACHIEVEMENT_WEIGHT, BASE_WEIGHT, CONTENT_WEIGHT, EXPLORATION_WEIGHT, QUEST_WEIGHT, TECH_WEIGHT,
 };
-use crate::core::grade::stages::{StageClear, event_is_gradeable};
+use crate::core::grade::stages::{PlayerPools, PoolStage};
 use crate::core::hypergryph::constants::Server;
 use crate::database::models::roster::RosterEntry;
 use crate::database::queries::building::get_building;
@@ -847,10 +846,14 @@ async fn build_stage_improvements(
         get_user_stage_clears(pool, user_id),
         get_known_stage_ids_for_server(pool, user_id),
     )?;
-    let clears = &data.clears;
-    let last_synced_ts = data.last_synced_ts;
-    let universe = &game_data.stage_universe;
     let now = chrono::Utc::now().timestamp();
+    let pools = PlayerPools::new(
+        &game_data.stage_universe,
+        &data.clears,
+        Some(&known),
+        now,
+        data.last_synced_ts,
+    );
 
     let rotation_for = |stage_id: &str| -> Option<RotationInfo> {
         let status = game_data.campaign_rotations.status(stage_id, now)?;
@@ -866,67 +869,41 @@ async fn build_stage_improvements(
         })
     };
 
-    let event_in_window =
-        |e: &EventEntry| -> bool { event_is_gradeable(e, now, last_synced_ts, Some(&known)) };
-
-    let permanent = build_stage_pool(
-        universe
-            .permanent
-            .iter()
-            .filter(|e| known.contains(&e.stage_id))
-            .map(|e| (e.stage_id.as_str(), e.weight)),
-        clears,
-        game_data,
-        rotation_for,
-    );
-    let event = build_stage_pool(
-        universe
-            .event
-            .iter()
-            .filter(|e| event_in_window(e))
-            .map(|e| (e.stage_id.as_str(), e.weight)),
-        clears,
-        game_data,
-        rotation_for,
-    );
-
-    Ok(StageImprovements { permanent, event })
+    Ok(StageImprovements {
+        permanent: build_stage_pool(pools.permanent(), game_data, rotation_for),
+        event: build_stage_pool(pools.event(), game_data, rotation_for),
+    })
 }
 
-/// Bucket a pool of stages (already filtered to the gradeable set) into
-/// cleared / 3-starred / missing, with gap lists sorted by weight desc.
+/// Bucket one of a player's pools (already gated by `PlayerPools`, so an
+/// uncleared either/or stage is not here at all) into cleared / 3-starred /
+/// missing, with gap lists sorted by weight desc.
 fn build_stage_pool<'a>(
-    entries: impl Iterator<Item = (&'a str, f64)>,
-    clears: &HashMap<String, StageClear>,
+    stages: impl Iterator<Item = PoolStage<'a>>,
     game_data: &GameData,
     rotation_for: impl Fn(&str) -> Option<RotationInfo>,
 ) -> StagePoolImprovements {
     let mut pool = StagePoolImprovements::default();
-    for (stage_id, weight) in entries {
+    for stage in stages {
         pool.total += 1;
-        let state = clears.get(stage_id).map_or(0, |c| c.state);
-        let stage_meta = game_data.stages.get(stage_id);
+        let stage_meta = game_data.stages.get(stage.stage_id);
         let gap = StageGap {
-            stage_id: stage_id.to_string(),
+            stage_id: stage.stage_id.to_string(),
             code: stage_meta.map(|s| s.code.clone()).unwrap_or_default(),
             name: stage_meta.and_then(|s| s.name.clone()),
             zone_id: stage_meta.map(|s| s.zone_id.clone()).unwrap_or_default(),
-            weight,
-            state,
-            rotation: rotation_for(stage_id),
+            weight: stage.weight,
+            state: stage.state(),
+            rotation: rotation_for(stage.stage_id),
         };
-        match state {
-            s if s >= 3 => {
-                pool.cleared += 1;
-                pool.three_starred += 1;
-            }
-            s if s >= 2 => {
-                pool.cleared += 1;
-                pool.not_three_starred.push(gap);
-            }
-            _ => {
-                pool.missing.push(gap);
-            }
+        if stage.is_three_starred() {
+            pool.cleared += 1;
+            pool.three_starred += 1;
+        } else if stage.is_cleared() {
+            pool.cleared += 1;
+            pool.not_three_starred.push(gap);
+        } else {
+            pool.missing.push(gap);
         }
     }
     sort_by_weight_desc(&mut pool.missing);
@@ -2616,5 +2593,77 @@ mod shift_match_tests {
             a.contains(&"X".to_string()) && a.contains(&"Y".to_string()),
             "post a should pair with the player's near-matching X/Y team, got {a:?}"
         );
+    }
+}
+
+#[cfg(test)]
+mod stage_pool_tests {
+    use super::{PoolStage, build_stage_pool};
+    use crate::core::gamedata::types::GameData;
+    use crate::core::grade::stages::StageClear;
+
+    fn record(state: i16) -> StageClear {
+        StageClear {
+            state,
+            state_max: state,
+            inferred: false,
+            complete_times: 1,
+            practice_times: 0,
+        }
+    }
+
+    fn pool(rows: &[(&str, Option<&StageClear>)]) -> super::StagePoolImprovements {
+        let game_data = GameData::default();
+        let stages = rows.iter().map(|(stage_id, clear)| PoolStage {
+            stage_id,
+            weight: 1.0,
+            decay: 1.0,
+            clear: *clear,
+        });
+        build_stage_pool(stages, &game_data, |_: &str| None)
+    }
+
+    fn ids(gaps: &[super::StageGap]) -> Vec<&str> {
+        gaps.iter().map(|g| g.stage_id.as_str()).collect()
+    }
+
+    #[test]
+    fn stages_bucket_by_state() {
+        let three = record(3);
+        let two = record(2);
+        let pool = pool(&[
+            ("main_01-01", Some(&three)),
+            ("main_01-02", Some(&two)),
+            ("main_01-03", None),
+        ]);
+        assert_eq!((pool.total, pool.cleared, pool.three_starred), (3, 2, 1));
+        assert_eq!(ids(&pool.missing), vec!["main_01-03"]);
+        assert_eq!(ids(&pool.not_three_starred), vec!["main_01-02"]);
+        assert_eq!(pool.not_three_starred[0].state, 2);
+    }
+
+    #[test]
+    fn a_cleared_either_or_stage_is_held_to_the_same_three_star_bar() {
+        // The gate that drops an uncleared either/or stage lives in
+        // `PlayerPools`; once it is in the pool it is an ordinary row.
+        let two = record(2);
+        let pool = pool(&[("act21side_06_m", Some(&two))]);
+        assert_eq!((pool.total, pool.cleared, pool.three_starred), (1, 1, 0));
+        assert_eq!(ids(&pool.not_three_starred), vec!["act21side_06_m"]);
+    }
+
+    #[test]
+    fn gaps_sort_by_weight_desc() {
+        let game_data = GameData::default();
+        let stages = [("light", 0.85), ("heavy", 1.5), ("mid", 1.0)]
+            .into_iter()
+            .map(|(stage_id, weight)| PoolStage {
+                stage_id,
+                weight,
+                decay: 1.0,
+                clear: None,
+            });
+        let pool = build_stage_pool(stages, &game_data, |_: &str| None);
+        assert_eq!(ids(&pool.missing), vec!["heavy", "mid", "light"]);
     }
 }
