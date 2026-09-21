@@ -11,6 +11,66 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-09-21.title": {
+        text: "New: Recruitment reads your roster, and every item you hold is tracked",
+        description: "Title of the 2026-09-21 release note. 'Recruitment' is the tag calculator tool and 'roster' is the player's collection of operators.",
+    },
+    "note.2026-09-21.lead": {
+        text: "The recruitment calculator now knows what you own: every operator on a result card says whether you have them, at what potential, and what one more copy would buy. Your consumables are stored for the first time, so vouchers, selectors and packs count on the leaderboard alongside currencies. The account card works out what you earn a day and how long the LMD you are short will take. Four more base scoring bugs are fixed, and one of them gives points back.",
+        description: "Lead paragraph of the 2026-09-21 release note, rendered as Markdown. 'Potential' is the upgrade earned from duplicate operators; LMD is the game's main currency and keeps its name; 'base' is the player's RIIC facility.",
+    },
+    "note.2026-09-21.hrefLabel": {
+        text: "Open the recruitment calculator",
+        description: "Label of the 2026-09-21 release note's call to action, which opens the recruitment tag calculator.",
+    },
+    "note.2026-09-21.item.1": {
+        text: "Every operator on a recruitment result says whether you own them, at what potential, and what the next copy buys, read from the game's own data rather than from English wording, so it works on every server. A new sort puts the ones you do not own first.",
+        description: "Bullet in the 2026-09-21 release note, filed under 'New'. 'Potential' is the upgrade earned from duplicate copies of an operator.",
+    },
+    "note.2026-09-21.item.2": {
+        text: "The roster filters by how an operator is obtained: any, headhunting or welfare. Hiding welfare operators is what makes the headhunting pool's potentials readable, since all 79 obtainable welfare 5 and 6 stars come at maximum potential.",
+        description: "Bullet in the 2026-09-21 release note, filed under 'New'. 'Welfare' operators are given out by events rather than pulled; 'headhunting' is the game's word for the gacha.",
+    },
+    "note.2026-09-21.item.3": {
+        text: "The account card works out what your base and dailies earn in a day, and how many days the LMD you are short will take, with and without farming CE-6.",
+        description: "Bullet in the 2026-09-21 release note, filed under 'New'. CE-6 is a stage farmed for LMD and keeps the game's name; 'dailies' are the daily mission rewards.",
+    },
+    "note.2026-09-21.item.4": {
+        text: "Consumables and ticket counters are stored for the first time: operator and Elite II vouchers, headhunting data contracts, material selectors, item packs, outfit vouchers, Expedited Plans and Universal Certificates. They count on the leaderboard, and the Items tab now lists your currencies alongside them.",
+        description: "Bullet in the 2026-09-21 release note, filed under 'New'. Every item name is the game's own and keeps its wording.",
+    },
+    "note.2026-09-21.item.5": {
+        text: "Moving a tier up or down in a tier list keeps the colour ladder on the rows, so the tiers slide under it instead of carrying their colours along. A colour you chose yourself still travels with its tier.",
+        description: "Bullet in the 2026-09-21 release note, filed under 'Improved'. The 'colour ladder' is the default red to green sequence the editor assigns by position.",
+    },
+    "note.2026-09-21.item.6": {
+        text: "A placed operator comes off a tier in one click, or with Delete or Backspace while it has focus, rather than through a dialog.",
+        description: "Bullet in the 2026-09-21 release note, filed under 'Improved'. Delete and Backspace are keyboard keys and keep their English names.",
+    },
+    "note.2026-09-21.item.7": {
+        text: 'A tier list card shows as many operators as its row actually holds. The count was fixed at nine whatever the width, so a row could sit half empty behind a "+28".',
+        description: "Bullet in the 2026-09-21 release note, filed under 'Improved'. The '+28' is the overflow badge counting operators the row could not show.",
+    },
+    "note.2026-09-21.item.8": {
+        text: "Voice lines, story text and module descriptions printed the game's own formatting tags as literal text instead of rendering them. It affected 187 voice lines across 89 operators and 308 passages of story.",
+        description: "Bullet in the 2026-09-21 release note, filed under 'Fixed'. A 'module' is an operator equipment upgrade and keeps the game's name.",
+    },
+    "note.2026-09-21.item.9": {
+        text: "A Control Center seat held for a bonus that only reaches some operators now says what it pays, where, and how many operators in your plan qualify. Six morale skills that pay per operator of a given faction were priced as though they paid everyone, which seated operators next to nobody they applied to.",
+        description: "Bullet in the 2026-09-21 release note, filed under 'Fixed'. The Control Center is an RIIC room; 'morale' is the stat its skills restore and keeps the game's name.",
+    },
+    "note.2026-09-21.item.10": {
+        text: "Copying a single shift of the rotation cost about nine points, because the score graded that one stationing against the sustained optimum. Saved presets are graded on their own shifts now, so those points come back.",
+        description: "Bullet in the 2026-09-21 release note, filed under 'Fixed'. A 'shift' is one block of the base rotation and a 'preset' is a staffing the player saved in game.",
+    },
+    "note.2026-09-21.item.11": {
+        text: "An automation room would only take a partner whose skill the automation leader cancels out, so it never paired Weedy with Purestream: that pairing reads 117 where Weedy and Eunectes read 77.",
+        description: "Bullet in the 2026-09-21 release note, filed under 'Fixed'. Weedy, Eunectes and Purestream are operators and keep the game's names; the numbers are room efficiency percentages.",
+    },
+    "note.2026-09-21.item.12": {
+        text: "A factory hand could be moved into a trading post, where it produces nothing, and the grade's 100% now includes the plan the Optimizer tab can actually reach rather than only the sustained one.",
+        description: "Bullet in the 2026-09-21 release note, filed under 'Fixed'. A factory and a trading post are RIIC rooms; the Optimizer tab is a section of a player profile.",
+    },
     "note.2026-09-20.title": {
         text: "New: Rank the leaderboard by anything you hold",
         description: "Title of the 2026-09-20 release note. The leaderboard could previously only be ranked by the site's own score.",
