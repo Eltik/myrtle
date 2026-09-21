@@ -1,19 +1,19 @@
 import { Link } from "@tanstack/react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
-import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ITierListBrowseItem } from "#/lib/api/tier-lists";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { getAvatarById } from "#/lib/utils";
 import type { messages } from "./BrowseCard.messages";
 import styles from "./BrowseCard.module.css";
+import { CardStat } from "./CardStat";
 import { buildThumbRows, MAX_THUMB_TIERS } from "./shared";
-
-type Size = "default" | "trending";
+import { ThumbTierRow } from "./ThumbTierRow";
 
 interface IBrowseCardProps {
     tl: ITierListBrowseItem;
-    size?: Size;
+    /** "trending" gives the title two lines and shows the 24h view count. */
+    size?: "default" | "trending";
     rank?: number;
     onOpen?: (slug: string) => void;
 }
@@ -24,9 +24,8 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen }: IBrow
     const rows = buildThumbRows(tl);
     const isOfficial = tl.listType === "official";
     const trending = size === "trending";
-    const hasOps = rows.some((r) => r.visible.length > 0);
+    const hasOps = rows.some((r) => r.operators.length > 0);
     const showCornerRibbon = trending || typeof rank === "number";
-    const showOfficial = isOfficial;
 
     return (
         <Link to="/tier-lists/$id" params={{ id: tl.slug }} className={`${styles.card} group`} aria-labelledby={`tl-${tl.id}-title`} onClick={() => onOpen?.(tl.slug)}>
@@ -40,7 +39,7 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen }: IBrow
                     </span>
                 )}
 
-                {showOfficial && (
+                {isOfficial && (
                     <span className={`${styles.cornerBadge} ${styles.cornerBadgeOfficial}`}>
                         <svg viewBox="0 0 24 24" aria-hidden="true">
                             <path d="M12 2 9.6 4.4 6.3 4l-.6 3.3L2.5 9 4 12l-1.5 3 3.2 1.7.6 3.3 3.3-.4L12 22l2.4-2.4 3.3.4.6-3.3L21.5 15 20 12l1.5-3-3.2-1.7-.6-3.3L14.4 4.4Zm-1.2 13.4-3.4-3.4 1.4-1.4 2 2 4.4-4.4 1.4 1.4Z" />
@@ -54,19 +53,7 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen }: IBrow
                 ) : (
                     <>
                         {rows.map((row) => (
-                            <div key={row.name} className={styles.tierRow} style={{ ["--row-color" as string]: row.color }}>
-                                <span className={styles.tierPill} title={t("browse.card.tier", { name: row.name })}>
-                                    {row.name}
-                                </span>
-                                <div className={styles.tierOps}>
-                                    {row.visible.map((op) => (
-                                        <span key={op.id} className={styles.op} title={op.name}>
-                                            <OperatorAvatar charId={op.id} name={op.name} />
-                                        </span>
-                                    ))}
-                                    {row.overflow > 0 && <span className={styles.opOverflow}>+{row.overflow}</span>}
-                                </div>
-                            </div>
+                            <ThumbTierRow key={row.name} row={row} styles={styles} title={t("browse.card.tier", { name: row.name })} />
                         ))}
                         {tl.tiers.length > MAX_THUMB_TIERS && <div className={styles.thumbFade} aria-hidden="true" />}
                     </>
@@ -90,27 +77,9 @@ export default function BrowseCard({ tl, size = "default", rank, onOpen }: IBrow
                     </span>
 
                     <span className="ml-auto flex shrink-0 items-center gap-2.5">
-                        <span className="inline-flex items-center gap-1" title={t("browse.card.views", { count: f.number(tl.views) })}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 opacity-70" aria-hidden="true">
-                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                                <circle cx="12" cy="12" r="3" />
-                            </svg>
-                            <span className="font-semibold text-foreground">{f.compact(tl.views)}</span>
-                        </span>
-                        <span className="inline-flex items-center gap-1" title={t("browse.card.favorites", { count: f.number(tl.favorites) })}>
-                            <svg viewBox="0 0 24 24" fill="currentColor" className="h-2.75 w-2.75 opacity-70" aria-hidden="true">
-                                <path d="M12 21s-7-4.5-9.5-9C.7 8.7 2.5 5 6 5c2 0 3.5 1 4 2.5C10.5 6 12 5 14 5c3.5 0 5.3 3.7 3.5 7-2.5 4.5-9.5 9-9.5 9Z" />
-                            </svg>
-                            <span className="font-semibold text-foreground">{f.compact(tl.favorites)}</span>
-                        </span>
-                        {trending && tl.views24h > 0 && (
-                            <span className="inline-flex items-center gap-0.5 text-primary" title={t("browse.card.views24h", { count: f.number(tl.views24h) })}>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden="true">
-                                    <path d="m6 14 6-6 6 6" />
-                                </svg>
-                                <span className="font-bold">{f.compact(tl.views24h)}</span>
-                            </span>
-                        )}
+                        <CardStat kind="views" value={f.compact(tl.views)} title={t("browse.card.views", { count: f.number(tl.views) })} />
+                        <CardStat kind="favorites" value={f.compact(tl.favorites)} title={t("browse.card.favorites", { count: f.number(tl.favorites) })} />
+                        {trending && tl.views24h > 0 && <CardStat kind="views24h" value={f.compact(tl.views24h)} title={t("browse.card.views24h", { count: f.number(tl.views24h) })} />}
                     </span>
                 </div>
             </div>

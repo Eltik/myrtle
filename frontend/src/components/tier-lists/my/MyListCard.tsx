@@ -1,11 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { CopyIcon, ExternalLinkIcon, HeartIcon, LayoutGridIcon, MoreHorizontalIcon, PencilIcon, ShieldCheckIcon, TrashIcon } from "lucide-react";
+import { CopyIcon, ExternalLinkIcon, LayoutGridIcon, MoreHorizontalIcon, PencilIcon, ShieldCheckIcon, TrashIcon } from "lucide-react";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
-import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ITierListBrowseItem } from "#/lib/api/tier-lists";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { CardStat } from "../CardStat";
 import { buildThumbRows, MAX_THUMB_TIERS } from "../shared";
+import { ThumbTierRow } from "../ThumbTierRow";
 import type { messages } from "./MyListCard.messages";
 import styles from "./MyListCard.module.css";
 
@@ -20,14 +21,13 @@ export function MyListCard({ tl, onEdit, onDelete, onCopyLink }: IMyListCardProp
     const t: TypedT<typeof messages> = useT("tierLists");
     const f = useFormatters();
     const rows = buildThumbRows(tl);
-    const hasOps = rows.some((r) => r.visible.length > 0);
-    const isEmpty = !hasOps;
+    const isEmpty = rows.every((r) => r.operators.length === 0);
     const isOfficial = tl.listType === "official";
 
     return (
         <article className={`${styles.card} group`} aria-labelledby={`my-tl-${tl.id}-title`}>
             <Link to="/tier-lists/my/$id/edit" params={{ id: tl.slug }} className={styles.thumbLink}>
-                <div className={styles.thumb} data-rows={hasOps ? rows.length : 0}>
+                <div className={styles.thumb} data-rows={isEmpty ? 0 : rows.length}>
                     {isEmpty && <span className={`${styles.cornerBadge} ${styles.cornerBadgeDraft}`}>{t("my.card.emptyDraft")}</span>}
                     {isOfficial && (
                         <span className={`${styles.cornerBadge} ${styles.cornerBadgeOfficial}`}>
@@ -46,19 +46,7 @@ export function MyListCard({ tl, onEdit, onDelete, onCopyLink }: IMyListCardProp
                     ) : (
                         <>
                             {rows.map((row) => (
-                                <div key={row.name} className={styles.tierRow} style={{ ["--row-color" as string]: row.color }}>
-                                    <span className={styles.tierPill} title={t("my.card.tier", { name: row.name })}>
-                                        {row.name}
-                                    </span>
-                                    <div className={styles.tierOps}>
-                                        {row.visible.map((op) => (
-                                            <span key={op.id} className={styles.op} title={op.name}>
-                                                <OperatorAvatar charId={op.id} name={op.name} />
-                                            </span>
-                                        ))}
-                                        {row.overflow > 0 && <span className={styles.opOverflow}>+{row.overflow}</span>}
-                                    </div>
-                                </div>
+                                <ThumbTierRow key={row.name} row={row} styles={styles} title={t("my.card.tier", { name: row.name })} />
                             ))}
                             {tl.tiers.length > MAX_THUMB_TIERS && <div className={styles.thumbFade} aria-hidden="true" />}
                         </>
@@ -105,25 +93,9 @@ export function MyListCard({ tl, onEdit, onDelete, onCopyLink }: IMyListCardProp
                 </div>
 
                 <div className="mt-auto flex items-center gap-3 font-mono text-[11px] text-muted-foreground tabular-nums leading-none">
-                    <span className="inline-flex items-center gap-1" title={t("my.card.views", { count: f.number(tl.views) })}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 opacity-70" aria-hidden="true">
-                            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                            <circle cx="12" cy="12" r="3" />
-                        </svg>
-                        <span className="font-semibold text-foreground">{f.compact(tl.views)}</span>
-                    </span>
-                    <span className="inline-flex items-center gap-1" title={t("my.card.favorites", { count: f.number(tl.favorites) })}>
-                        <HeartIcon className="h-2.75 w-2.75 fill-current opacity-70" aria-hidden="true" />
-                        <span className="font-semibold text-foreground">{f.compact(tl.favorites)}</span>
-                    </span>
-                    {tl.views24h > 0 && (
-                        <span className="inline-flex items-center gap-0.5 text-primary" title={t("my.card.views24h", { count: f.number(tl.views24h) })}>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3" aria-hidden="true">
-                                <path d="m6 14 6-6 6 6" />
-                            </svg>
-                            <span className="font-bold">{f.compact(tl.views24h)}</span>
-                        </span>
-                    )}
+                    <CardStat kind="views" value={f.compact(tl.views)} title={t("my.card.views", { count: f.number(tl.views) })} />
+                    <CardStat kind="favorites" value={f.compact(tl.favorites)} title={t("my.card.favorites", { count: f.number(tl.favorites) })} />
+                    {tl.views24h > 0 && <CardStat kind="views24h" value={f.compact(tl.views24h)} title={t("my.card.views24h", { count: f.number(tl.views24h) })} />}
                     <span className="ml-auto shrink-0 text-[10.5px] text-muted-foreground/80">{tl.updated}</span>
                 </div>
             </div>

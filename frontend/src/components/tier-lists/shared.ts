@@ -17,24 +17,26 @@ export function operatorPlacementNote(op: { description: string | null }): strin
 }
 
 export const MAX_THUMB_TIERS = 5;
+// Pre-measurement cap per row, keyed by how many tiers the thumbnail shows
+// (fewer rows -> larger tiles -> fewer fit). The row measures its real width
+// on mount and replaces this; see `useFittedOpCount`.
 const OPS_PER_ROW_BY_COUNT: Record<number, number> = { 1: 4, 2: 6, 3: 7 };
 const DEFAULT_OPS_PER_ROW = 9;
 
 export interface IThumbRow {
     name: string;
     color: string;
-    visible: IOperator[];
-    overflow: number;
+    operators: IOperator[];
+    /** How many operators to show before the row has measured itself. */
+    fallbackVisible: number;
 }
 
 export function buildThumbRows(tl: ITierListBrowseItem): IThumbRow[] {
     const slice = tl.tiers.slice(0, MAX_THUMB_TIERS);
-    const opsPerRow = OPS_PER_ROW_BY_COUNT[slice.length] ?? DEFAULT_OPS_PER_ROW;
+    const fallbackVisible = OPS_PER_ROW_BY_COUNT[slice.length] ?? DEFAULT_OPS_PER_ROW;
     return slice.map((t, idx): IThumbRow => {
         const color = t.color ?? FALLBACK_TIER_COLORS[idx % FALLBACK_TIER_COLORS.length] ?? "var(--primary)";
-        const visible = t.operators.slice(0, opsPerRow);
-        const overflow = Math.max(0, t.operators.length - visible.length);
-        return { name: t.name, color, visible, overflow };
+        return { name: t.name, color, operators: t.operators, fallbackVisible };
     });
 }
 
