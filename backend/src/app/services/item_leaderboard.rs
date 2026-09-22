@@ -4,7 +4,7 @@ use ts_rs::TS;
 use crate::{
     app::{cache::keys::CacheKey, error::ApiError, state::AppState},
     database::{
-        models::item_leaderboard::{ItemHoldingSummary, ItemLeaderboardEntry, ItemStanding},
+        models::item_leaderboard::{ItemCatalog, ItemLeaderboardEntry, ItemStanding},
         queries::item_leaderboard,
     },
 };
@@ -18,6 +18,10 @@ pub struct ItemLeaderboardPage {
     /// Visible holders of the item: the population the page is cut from.
     #[ts(type = "number")]
     pub total: i64,
+    /// Every holding in that population summed: how much of the item exists
+    /// across the ranked players.
+    #[ts(type = "number")]
+    pub total_quantity: i64,
 }
 
 pub async fn get_item_leaderboard(
@@ -38,7 +42,7 @@ pub async fn get_item_leaderboard(
     if let Some(cached) = state.cache.get(&key).await {
         return Ok(cached);
     }
-    let (entries, total) = tokio::try_join!(
+    let (entries, totals) = tokio::try_join!(
         item_leaderboard::get_item_leaderboard(
             &state.db,
             item_id,
@@ -47,12 +51,13 @@ pub async fn get_item_leaderboard(
             i64::from(limit),
             i64::from(offset)
         ),
-        item_leaderboard::count_item_holders(&state.db, item_id, server, q),
+        item_leaderboard::item_holding_totals(&state.db, item_id, server, q),
     )?;
     let page = ItemLeaderboardPage {
         item_id: item_id.to_owned(),
         entries,
-        total,
+        total: totals.holders,
+        total_quantity: totals.quantity,
     };
     state.cache.set(&key, &page).await;
     Ok(page)
@@ -61,14 +66,18 @@ pub async fn get_item_leaderboard(
 pub async fn get_item_catalog(
     state: &AppState,
     server: Option<&str>,
-) -> Result<Vec<ItemHoldingSummary>, ApiError> {
+) -> Result<ItemCatalog, ApiError> {
     let key = CacheKey::ItemLeaderboardCatalog { server };
     if let Some(cached) = state.cache.get(&key).await {
         return Ok(cached);
     }
-    let rows = item_leaderboard::get_item_catalog(&state.db, server).await?;
-    state.cache.set(&key, &rows).await;
-    Ok(rows)
+    let (items, population) = tokio::try_join!(
+        item_leaderboard::get_item_catalog(&state.db, server),
+        item_leaderboard::count_visible_players(&state.db, server),
+    )?;
+    let catalog = ItemCatalog { population, items };
+    state.cache.set(&key, &catalog).await;
+    Ok(catalog)
 }
 
 pub async fn get_item_standing(

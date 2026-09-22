@@ -135,7 +135,7 @@ export function Leaderboard() {
 
                 {youCard ? <div className="hidden lg:col-start-2 lg:row-start-1 lg:block">{youCard}</div> : null}
                 <div className={youCard ? "flex flex-col gap-4 lg:col-start-2 lg:row-start-2 lg:gap-5" : "flex flex-col gap-4 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:gap-5"}>
-                    {byItem ? <MostHeldCard catalog={data.catalog} current={ranking.item} onItem={(item) => handleRanking({ kind: "item", item })} isLoading={data.catalogLoading} /> : <MoversCard movers={data.movers} isLoading={data.moversLoading} intervalKey={intervalMeta.subtitleKey} />}
+                    {byItem ? <MostHeldCard catalog={data.catalog.items} current={ranking.item} onItem={(item) => handleRanking({ kind: "item", item })} isLoading={data.catalogLoading} /> : <MoversCard movers={data.movers} isLoading={data.moversLoading} intervalKey={intervalMeta.subtitleKey} />}
                     {/* {distributionQuery.data ? <ServerSplitCard shares={distributionQuery.data} /> : null} */}
                 </div>
             </div>

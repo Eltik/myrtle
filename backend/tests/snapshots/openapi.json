@@ -4040,7 +4040,7 @@
         ],
         "responses": {
           "200": {
-            "description": "A page of holders ranked by quantity, and how many visible players hold the item at all.",
+            "description": "A page of holders ranked by quantity, how many visible players hold the item at all, and how much of it they hold between them.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4069,7 +4069,7 @@
         "tags": [
           "leaderboard"
         ],
-        "summary": "Every item at least one visible player holds, with the holder count and\nthe largest single holding. Ordered by holders, most first.",
+        "summary": "Every item at least one visible player holds, with the holder count, the\nlargest single holding and the summed holdings, ordered by holders, most\nfirst; and the visible population those counts are taken over.",
         "operationId": "item_catalog",
         "parameters": [
           {
@@ -4084,14 +4084,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Holder count and top holding per item.",
+            "description": "Holder count, top holding and total held per item, and the visible population.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ItemHoldingSummary"
-                  }
+                  "$ref": "#/components/schemas/ItemCatalog"
                 }
               }
             }
@@ -13561,6 +13558,28 @@
           }
         }
       },
+      "ItemCatalog": {
+        "type": "object",
+        "description": "The item picker's data: every held item, and the population the holder\ncounts are cut from, so a row can say what share of players hold it.",
+        "required": [
+          "population",
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemHoldingSummary"
+            },
+            "description": "Ordered by holders, most first."
+          },
+          "population": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Visible players under the same gate and server filter as `holders`,\nso `holders / population` is a share of the same people."
+          }
+        }
+      },
       "ItemEntry": {
         "type": "object",
         "required": [
@@ -13579,11 +13598,12 @@
       },
       "ItemHoldingSummary": {
         "type": "object",
-        "description": "How many visible players hold an item and the largest single holding.\nDrives the item picker so it never offers an item nobody holds.",
+        "description": "How many visible players hold an item, the largest single holding, and\nhow much of it they hold between them. Drives the item picker so it\nnever offers an item nobody holds.",
         "required": [
           "item_id",
           "holders",
-          "top"
+          "top",
+          "total_quantity"
         ],
         "properties": {
           "holders": {
@@ -13596,6 +13616,11 @@
           "top": {
             "type": "integer",
             "format": "int64"
+          },
+          "total_quantity": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Every visible holding of the item summed: how much of it exists\nacross the ranked population."
           }
         }
       },
@@ -13663,7 +13688,8 @@
         "required": [
           "item_id",
           "entries",
-          "total"
+          "total",
+          "total_quantity"
         ],
         "properties": {
           "entries": {
@@ -13679,6 +13705,11 @@
             "type": "integer",
             "format": "int64",
             "description": "Visible holders of the item: the population the page is cut from."
+          },
+          "total_quantity": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Every holding in that population summed: how much of the item exists\nacross the ranked players."
           }
         }
       },

@@ -24,8 +24,9 @@ pub struct ItemLeaderboardEntry {
     pub quantity: i64,
 }
 
-/// How many visible players hold an item and the largest single holding.
-/// Drives the item picker so it never offers an item nobody holds.
+/// How many visible players hold an item, the largest single holding, and
+/// how much of it they hold between them. Drives the item picker so it
+/// never offers an item nobody holds.
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -35,6 +36,33 @@ pub struct ItemHoldingSummary {
     pub holders: i64,
     #[ts(type = "number")]
     pub top: i64,
+    /// Every visible holding of the item summed: how much of it exists
+    /// across the ranked population.
+    #[ts(type = "number")]
+    pub total_quantity: i64,
+}
+
+/// The population behind one item page: how many visible players hold the
+/// item and how much of it they hold between them. Not exported; the page
+/// carries these as its own fields.
+#[derive(Debug, Clone, Copy, sqlx::FromRow)]
+pub struct HoldingTotals {
+    pub holders: i64,
+    pub quantity: i64,
+}
+
+/// The item picker's data: every held item, and the population the holder
+/// counts are cut from, so a row can say what share of players hold it.
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ItemCatalog {
+    /// Visible players under the same gate and server filter as `holders`,
+    /// so `holders / population` is a share of the same people.
+    #[ts(type = "number")]
+    pub population: i64,
+    /// Ordered by holders, most first.
+    pub items: Vec<ItemHoldingSummary>,
 }
 
 /// One player's place on the leaderboard for one item.

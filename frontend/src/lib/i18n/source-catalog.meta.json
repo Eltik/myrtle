@@ -30442,13 +30442,6 @@
             "placeholders": []
         },
         {
-            "key": "user.leaderboard.hero.stat.totalHeld",
-            "namespace": "user",
-            "source_text": "Total held",
-            "description": "Label under the sum of every ranked player's holding of the ranked item: how much of it exists across the leaderboard. Fits a narrow tile, so keep it short.",
-            "placeholders": []
-        },
-        {
             "key": "user.leaderboard.hero.stat.updated",
             "namespace": "user",
             "source_text": "Updated",
@@ -30648,26 +30641,6 @@
             ]
         },
         {
-            "key": "user.leaderboard.mostHeld.line",
-            "namespace": "user",
-            "source_text": "{total} held · top {top}",
-            "description": "The small line on each row of the 'Most held' card. {total} is how much of the item every ranked player holds together, {top} the largest single holding; both are compact numbers like 230k.",
-            "placeholders": [
-                "top",
-                "total"
-            ]
-        },
-        {
-            "key": "user.leaderboard.mostHeld.line.title",
-            "namespace": "user",
-            "source_text": "{total} held in all, largest holding {top}",
-            "description": "Hover text on the small line of each 'Most held' row, with the same two numbers written out in full.",
-            "placeholders": [
-                "top",
-                "total"
-            ]
-        },
-        {
             "key": "user.leaderboard.mostHeld.subtitle",
             "namespace": "user",
             "source_text": "Items by how many players hold them",
@@ -30680,6 +30653,15 @@
             "source_text": "Most held",
             "description": "Heading of the sidebar card listing the items held by the most players.",
             "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.mostHeld.top",
+            "namespace": "user",
+            "source_text": "top {top}",
+            "description": "The largest single holding on each row of the 'Most held' card. {top} is a compact number like 230k.",
+            "placeholders": [
+                "top"
+            ]
         },
         {
             "key": "user.leaderboard.movers.empty",
@@ -30735,6 +30717,15 @@
             "placeholders": []
         },
         {
+            "key": "user.leaderboard.rankBy.held",
+            "namespace": "user",
+            "source_text": "{total} held",
+            "description": "Follows the holder count next to each item in the picker, after a separator: how much of the item every ranked player holds together. {total} is a compact number like 544.8k.",
+            "placeholders": [
+                "total"
+            ]
+        },
+        {
             "key": "user.leaderboard.rankBy.holders",
             "namespace": "user",
             "source_text": "{count, number} {count, plural, one {holder} other {holders}}",
@@ -30751,12 +30742,15 @@
             "placeholders": []
         },
         {
-            "key": "user.leaderboard.rankBy.population",
+            "key": "user.leaderboard.rankBy.line.title",
             "namespace": "user",
-            "source_text": "{count, number} total",
-            "description": "Follows the holder count next to each item in the picker, after a separator: how many visible players there are in all, so the holder count can be read as a share. {count} is that population.",
+            "source_text": "{holders, number} of {population, number} players hold {total, number} in all, {share}",
+            "description": "Hover text and screen-reader reading of an item's line in the picker. {holders} hold the item, {population} is every visible player, {total} is their holdings summed, {share} is the percentage already formatted.",
             "placeholders": [
-                "count"
+                "holders",
+                "population",
+                "share",
+                "total"
             ]
         },
         {
@@ -30779,17 +30773,6 @@
             "source_text": "Search scores and items…",
             "description": "Placeholder of the search box inside the 'Rank by' picker.",
             "placeholders": []
-        },
-        {
-            "key": "user.leaderboard.rankBy.share.aria",
-            "namespace": "user",
-            "source_text": "{holders, number} of {population, number} players, {share}",
-            "description": "Accessible reading of an item's holder line in the picker. {holders} holds the item, {population} is every visible player, {share} is the percentage already formatted.",
-            "placeholders": [
-                "holders",
-                "population",
-                "share"
-            ]
         },
         {
             "key": "user.leaderboard.serverSplit.title",

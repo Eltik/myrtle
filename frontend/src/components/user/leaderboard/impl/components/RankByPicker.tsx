@@ -5,14 +5,14 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from "#/components/ui/in
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { ItemIcon } from "#/components/user/profile/impl/components/tabs/Items/ItemIcon";
 import type { IMaterials } from "#/lib/api/materials";
-import { useT } from "#/lib/i18n";
+import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import { LEADERBOARD_SORTS, type LeaderboardSort, type Ranking } from "../constants";
 import type { messages as constantsMessages } from "../constants.messages";
 import { FEATURED_ITEMS } from "../inventory.constants";
 import { resolveCatalogItem, toIconEntry } from "../inventory.helpers";
-import type { ICatalogItem } from "../inventory.types";
+import type { ICatalog, ICatalogItem } from "../inventory.types";
 import type { messages } from "./RankByPicker.messages";
 
 /** The sort labels in `constants.messages.ts` are rendered here too. */
@@ -21,7 +21,7 @@ type PickerT = TypedT<typeof messages & typeof constantsMessages>;
 interface IRankByPickerProps {
     ranking: Ranking;
     onRanking: (next: Ranking) => void;
-    catalog: ICatalogItem[];
+    catalog: ICatalog;
     materials: IMaterials | undefined;
     /** `toolbar` is the labelled control; `header` is the compact trigger in the table's value column. */
     variant: "toolbar" | "header";
@@ -48,7 +48,7 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, variant, 
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState("");
     const deferred = useDeferredValue(query.trim().toLowerCase());
-    const { label, item: activeItem } = useRankingLabel(ranking, catalog, materials);
+    const { label, item: activeItem } = useRankingLabel(ranking, catalog.items, materials);
 
     const scoreOptions = useMemo(() => LEADERBOARD_SORTS.map((s) => ({ value: s.value, label: t(s.labelKey) })).filter((o) => !deferred || o.label.toLowerCase().includes(deferred)), [deferred, t]);
     const itemOptions = useMemo<ICatalogItem[]>(() => {
@@ -57,10 +57,10 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, variant, 
             // things a visitor sees are the currencies they came to compare. A
             // featured item nobody holds yet (Originite Prime is only stored
             // for players who synced after 2026-09-15) still appears, at 0.
-            return FEATURED_ITEMS.map((id) => resolveCatalogItem(catalog, id, materials));
+            return FEATURED_ITEMS.map((id) => resolveCatalogItem(catalog.items, id, materials));
         }
-        return catalog.filter((c) => c.name.toLowerCase().includes(deferred) || c.item_id.toLowerCase().includes(deferred)).slice(0, SEARCH_LIMIT);
-    }, [deferred, catalog, materials]);
+        return catalog.items.filter((c) => c.name.toLowerCase().includes(deferred) || c.item_id.toLowerCase().includes(deferred)).slice(0, SEARCH_LIMIT);
+    }, [deferred, catalog.items, materials]);
 
     const choose = (next: Ranking) => {
         onRanking(next);
@@ -137,7 +137,7 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, variant, 
 
                     {itemOptions.length > 0 ? (
                         <section aria-label={t("leaderboard.rankBy.group.items")} className={scoreOptions.length > 0 ? "mt-1 border-border/70 border-t pt-1" : undefined}>
-                            <GroupHeading hint={!deferred && catalog.length > 0 ? t("leaderboard.rankBy.group.items.hint", { count: catalog.length }) : undefined}>{t("leaderboard.rankBy.group.items")}</GroupHeading>
+                            <GroupHeading hint={!deferred && catalog.items.length > 0 ? t("leaderboard.rankBy.group.items.hint", { count: catalog.items.length }) : undefined}>{t("leaderboard.rankBy.group.items")}</GroupHeading>
                             <ul className="m-0 list-none p-0">
                                 {itemOptions.map((c) => {
                                     const active = ranking.kind === "item" && ranking.item === c.item_id;
@@ -145,9 +145,9 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, variant, 
                                         <li key={c.item_id}>
                                             <Option active={active} onClick={() => choose({ kind: "item", item: c.item_id })}>
                                                 <ItemIcon item={toIconEntry(c)} size={28} className="rounded-md" />
-                                                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                                <span className="@container flex min-w-0 flex-1 flex-col gap-0.5">
                                                     <span className="truncate">{c.name}</span>
-                                                    <span className="truncate font-mono text-[10.5px] text-muted-foreground leading-none">{t("leaderboard.rankBy.holders", { count: c.holders })}</span>
+                                                    <HolderLine item={c} population={catalog.population} />
                                                 </span>
                                             </Option>
                                         </li>
@@ -160,6 +160,51 @@ export function RankByPicker({ ranking, onRanking, catalog, materials, variant, 
             </PopoverPopup>
         </Popover>
     );
+}
+
+/**
+ * Width at which the full `holders / held / share` line fits: the widest
+ * plausible line, `12,345 holders / 544.8k held / 100%`, is 35 characters of
+ * 10.5px mono, about 221px. Measured against the row's text column, not the
+ * viewport, so the header and toolbar variants of the popup agree.
+ */
+const FULL_LINE_MIN = "@[15rem]:inline";
+
+const HOLDER_LINE = "truncate font-mono text-[10.5px] text-muted-foreground leading-none";
+
+/**
+ * `1,878 holders / 544.8k held / 65%` under an item: the share is of the
+ * visible population, which the hover text and screen readers name. The
+ * total and the share are only drawn when the text column is wide enough
+ * for the whole line; a narrow phone keeps the holder count alone rather
+ * than an ellipsis through the numbers. Before the catalog loads there is
+ * no population and only the holder count is shown.
+ */
+function HolderLine({ item, population }: { item: Pick<ICatalogItem, "holders" | "total_quantity">; population: number | null }) {
+    const t: PickerT = useT("user");
+    const f = useFormatters();
+    const holdersText = t("leaderboard.rankBy.holders", { count: item.holders });
+    if (population == null || population <= 0) {
+        return <span className={HOLDER_LINE}>{holdersText}</span>;
+    }
+    const share = f.percent(item.holders / population);
+    const sentence = t("leaderboard.rankBy.line.title", { holders: item.holders, population, total: item.total_quantity, share });
+    return (
+        <span className={HOLDER_LINE} title={sentence}>
+            <span className="sr-only">{sentence}</span>
+            <span aria-hidden>{holdersText}</span>
+            <span aria-hidden className={cn("hidden", FULL_LINE_MIN)}>
+                <Slash />
+                {t("leaderboard.rankBy.held", { total: f.compact(item.total_quantity) })}
+                <Slash />
+                {share}
+            </span>
+        </span>
+    );
+}
+
+function Slash() {
+    return <span className="mx-1 opacity-50">/</span>;
 }
 
 function GroupHeading({ children, hint }: { children: React.ReactNode; hint?: string }) {

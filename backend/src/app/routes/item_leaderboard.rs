@@ -12,7 +12,7 @@ use crate::app::services::item_leaderboard::{
 use crate::database::queries::item_leaderboard::is_valid_item_id;
 use crate::{
     app::{error::ApiError, extractors::pagination::Pagination, state::AppState},
-    database::models::item_leaderboard::{ItemHoldingSummary, ItemStanding},
+    database::models::item_leaderboard::{ItemCatalog, ItemStanding},
 };
 
 fn validated_item_id(item: &str) -> Result<&str, ApiError> {
@@ -58,7 +58,7 @@ pub struct ItemLeaderboardParams {
         ("offset" = Option<u32>, Query, description = "Rows to skip. Defaults to 0.")
     ),
     responses(
-        (status = 200, description = "A page of holders ranked by quantity, and how many visible players hold the item at all.", body = ItemLeaderboardPage),
+        (status = 200, description = "A page of holders ranked by quantity, how many visible players hold the item at all, and how much of it they hold between them.", body = ItemLeaderboardPage),
         (status = 400, response = crate::app::openapi::responses::BadRequest),
         (status = 429, response = crate::app::openapi::responses::RateLimited),
         (status = 500, response = crate::app::openapi::responses::InternalError),
@@ -88,8 +88,9 @@ pub struct ItemCatalogParams {
     pub server: Option<String>,
 }
 
-/// Every item at least one visible player holds, with the holder count and
-/// the largest single holding. Ordered by holders, most first.
+/// Every item at least one visible player holds, with the holder count, the
+/// largest single holding and the summed holdings, ordered by holders, most
+/// first; and the visible population those counts are taken over.
 #[utoipa::path(
     get,
     path = "/leaderboard/items/catalog",
@@ -98,7 +99,7 @@ pub struct ItemCatalogParams {
         ("server" = Option<String>, Query, description = "Count holders on one game server only.")
     ),
     responses(
-        (status = 200, description = "Holder count and top holding per item.", body = Vec<ItemHoldingSummary>),
+        (status = 200, description = "Holder count, top holding and total held per item, and the visible population.", body = ItemCatalog),
         (status = 429, response = crate::app::openapi::responses::RateLimited),
         (status = 500, response = crate::app::openapi::responses::InternalError),
         (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
@@ -107,9 +108,9 @@ pub struct ItemCatalogParams {
 pub async fn item_catalog(
     State(state): State<AppState>,
     Query(params): Query<ItemCatalogParams>,
-) -> Result<Json<Vec<ItemHoldingSummary>>, ApiError> {
-    let rows = get_item_catalog(&state, params.server.as_deref()).await?;
-    Ok(Json(rows))
+) -> Result<Json<ItemCatalog>, ApiError> {
+    let catalog = get_item_catalog(&state, params.server.as_deref()).await?;
+    Ok(Json(catalog))
 }
 
 #[derive(Deserialize)]

@@ -13,8 +13,8 @@
 //! `cargo test --test item_leaderboard_test -- --ignored --nocapture`
 
 use backend::database::queries::item_leaderboard::{
-    count_item_holders, currency_column, get_item_catalog, get_item_leaderboard, get_item_standing,
-    is_valid_item_id,
+    count_visible_players, currency_column, get_item_catalog, get_item_leaderboard,
+    get_item_standing, is_valid_item_id, item_holding_totals,
 };
 use sqlx::PgPool;
 
@@ -66,12 +66,23 @@ async fn pool() -> PgPool {
 
 async fn check_item(pool: &PgPool, item: &str, server: Option<&str>) {
     let label = format!("{item} server={}", server.unwrap_or("all"));
-    let total = count_item_holders(pool, item, server, None)
+    let totals = item_holding_totals(pool, item, server, None)
         .await
         .expect("count");
+    let total = totals.holders;
     let page = get_item_leaderboard(pool, item, server, None, 50, 0)
         .await
         .expect("page");
+    // The summed holdings are the page's quantities summed, so a single
+    // player's share of the total is a share of what is ranked.
+    if total <= 50 {
+        let summed: i64 = page.iter().map(|r| r.quantity).sum();
+        assert_eq!(totals.quantity, summed, "{label}: summed holdings vs page");
+    }
+    assert!(
+        page.first().is_none_or(|r| r.quantity <= totals.quantity),
+        "{label}: top holding exceeds the total held"
+    );
     assert_eq!(
         i64::try_from(page.len()).unwrap(),
         total.min(50),
@@ -160,12 +171,10 @@ async fn real_data_invariants() {
         check_item(&pool, item, Some("EN")).await;
     }
     // An item nobody holds is an empty page and a zero count, not an error.
-    assert_eq!(
-        count_item_holders(&pool, "no_such_item", None, None)
-            .await
-            .unwrap(),
-        0
-    );
+    let none = item_holding_totals(&pool, "no_such_item", None, None)
+        .await
+        .unwrap();
+    assert_eq!((none.holders, none.quantity), (0, 0));
     assert!(
         get_item_leaderboard(&pool, "no_such_item", None, None, 20, 0)
             .await
@@ -189,7 +198,10 @@ async fn real_data_invariants() {
     .unwrap();
     eprintln!("private profiles: {}", private.len());
     for item in ["4001", "3401"] {
-        let total = count_item_holders(&pool, item, None, None).await.unwrap();
+        let total = item_holding_totals(&pool, item, None, None)
+            .await
+            .unwrap()
+            .holders;
         let all = get_item_leaderboard(&pool, item, None, None, total.max(1), 0)
             .await
             .unwrap();
@@ -218,12 +230,17 @@ async fn real_data_invariants() {
         .iter()
         .filter(|r| ["4001", "4002", "4003", "3401", "4006"].contains(&r.item_id.as_str()))
     {
-        let total = count_item_holders(&pool, &row.item_id, None, None)
+        let totals = item_holding_totals(&pool, &row.item_id, None, None)
             .await
             .unwrap();
         assert_eq!(
-            row.holders, total,
+            row.holders, totals.holders,
             "{}: catalog holders vs count",
+            row.item_id
+        );
+        assert_eq!(
+            row.total_quantity, totals.quantity,
+            "{}: catalog total held vs page total",
             row.item_id
         );
         let top = get_item_leaderboard(&pool, &row.item_id, None, None, 1, 0)
@@ -235,11 +252,27 @@ async fn real_data_invariants() {
             row.item_id
         );
         eprintln!(
-            "catalog {}: holders {} top {}",
-            row.item_id, row.holders, row.top
+            "catalog {}: holders {} top {} total {}",
+            row.item_id, row.holders, row.top, row.total_quantity
         );
     }
     assert!(catalog.iter().all(|r| r.holders > 0));
     let en = get_item_catalog(&pool, Some("EN")).await.unwrap();
     assert!(en.len() <= catalog.len());
+
+    // The population is the same gate the holder counts use, so no item is
+    // held by more players than exist: LMD, which every synced account has,
+    // is the tightest check.
+    let population = count_visible_players(&pool, None).await.unwrap();
+    let en_population = count_visible_players(&pool, Some("EN")).await.unwrap();
+    eprintln!("population: {population} (EN {en_population})");
+    assert!(population > 0);
+    assert!(en_population <= population);
+    let most = catalog.first().map_or(0, |r| r.holders);
+    assert!(
+        most <= population,
+        "most-held item has {most} holders but only {population} visible players"
+    );
+    let en_most = en.first().map_or(0, |r| r.holders);
+    assert!(en_most <= en_population);
 }

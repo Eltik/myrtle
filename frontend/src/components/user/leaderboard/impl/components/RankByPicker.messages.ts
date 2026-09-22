@@ -39,6 +39,14 @@ export const messages = {
         text: "{count, number} {count, plural, one {holder} other {holders}}",
         description: "Holder count shown next to each item in the picker. {count} is the number of players holding the item.",
     },
+    "leaderboard.rankBy.held": {
+        text: "{total} held",
+        description: "Follows the holder count next to each item in the picker, after a separator: how much of the item every ranked player holds together. {total} is a compact number like 544.8k.",
+    },
+    "leaderboard.rankBy.line.title": {
+        text: "{holders, number} of {population, number} players hold {total, number} in all, {share}",
+        description: "Hover text and screen-reader reading of an item's line in the picker. {holders} hold the item, {population} is every visible player, {total} is their holdings summed, {share} is the percentage already formatted.",
+    },
     "leaderboard.rankBy.empty": {
         text: "Nothing matches.",
         description: "Shown in the picker when the search matches neither a score metric nor an item.",

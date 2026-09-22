@@ -16,7 +16,7 @@ use std::fmt::Write;
 use sqlx::PgPool;
 
 use crate::database::models::item_leaderboard::{
-    ItemHoldingSummary, ItemLeaderboardEntry, ItemStanding,
+    HoldingTotals, ItemHoldingSummary, ItemLeaderboardEntry, ItemStanding,
 };
 
 /// Game item id -> `user_status` column. `orundum_shard` is deliberately
@@ -119,6 +119,17 @@ const HOLDERS_JOIN: &str = r"FROM holding h
 const VISIBLE: &str =
     "EXISTS (SELECT 1 FROM user_settings us WHERE us.user_id = u.id AND us.public_profile)";
 
+/// `SELECT u.id ...` for every visible player, on one server when `server`
+/// is given; the caller then binds that server as `$1`. The catalog
+/// counts holders over this set and `count_visible_players` sizes it, so a
+/// holder share is a share of the same people.
+fn visible_players_sql(server: Option<&str>) -> String {
+    let server_sql = server.map_or("", |_| " AND s.code = $1");
+    format!(
+        "SELECT u.id FROM users u JOIN servers s ON s.id = u.server_id WHERE {VISIBLE}{server_sql}"
+    )
+}
+
 /// Optional server and nickname/uid filters, as `AND` clauses against the
 /// given `(server, nickname, uid)` column names, binding from `$first`.
 /// `params` are the values to bind, in `$n` order; `next_param` is the first
@@ -156,6 +167,46 @@ impl Filters {
     }
 }
 
+/// What the page and its totals share: the `holding` CTE for one item and
+/// the server / search filters after it, with every bind value in `$n`
+/// order. `cols` names the columns the filters test, which differ by
+/// whether they run over the `ranked` CTE or the joined tables.
+struct HolderQuery<'a> {
+    holding: Holding,
+    filters: Filters,
+    item_id: &'a str,
+}
+
+impl<'a> HolderQuery<'a> {
+    fn new(
+        item_id: &'a str,
+        server: Option<&str>,
+        q: Option<&str>,
+        cols: (&str, &str, &str),
+    ) -> Self {
+        let holding = Holding::of(item_id);
+        let filters = Filters::new(holding.next_param(), server, q, cols);
+        Self {
+            holding,
+            filters,
+            item_id,
+        }
+    }
+
+    /// Index of the first `$n` left free after the CTE's and filters' binds.
+    const fn next_param(&self) -> usize {
+        self.filters.next_param
+    }
+
+    /// The bind values the CTE and filters consume, in `$n` order.
+    fn binds(&self) -> impl Iterator<Item = &str> {
+        self.holding
+            .params(self.item_id)
+            .into_iter()
+            .chain(self.filters.params.iter().map(String::as_str))
+    }
+}
+
 /// One page of holders of `item_id`, highest quantity first. Ties share a
 /// rank and are ordered by uid so paging is stable. `q` filters by nickname
 /// or uid the same way the score leaderboard does; the rank is still taken
@@ -168,16 +219,10 @@ pub async fn get_item_leaderboard(
     limit: i64,
     offset: i64,
 ) -> Result<Vec<ItemLeaderboardEntry>, sqlx::Error> {
-    let holding = Holding::of(item_id);
     // The filters apply to the ranked rows, so a search does not renumber
     // the rows it finds.
-    let filters = Filters::new(
-        holding.next_param(),
-        server,
-        q,
-        ("server", "nickname", "uid"),
-    );
-    let limit_idx = filters.next_param;
+    let query = HolderQuery::new(item_id, server, q, ("server", "nickname", "uid"));
+    let limit_idx = query.next_param();
     let offset_idx = limit_idx + 1;
     let sql = format!(
         r"
@@ -197,81 +242,65 @@ pub async fn get_item_leaderboard(
         ORDER BY quantity DESC, uid
         LIMIT ${limit_idx} OFFSET ${offset_idx}
         ",
-        cte = holding.cte,
-        tail = filters.sql,
+        cte = query.holding.cte,
+        tail = query.filters.sql,
     );
     let mut qry = sqlx::query_as::<_, ItemLeaderboardEntry>(&sql);
-    for p in holding
-        .params(item_id)
-        .into_iter()
-        .chain(filters.params.iter().map(String::as_str))
-    {
+    for p in query.binds() {
         qry = qry.bind(p);
     }
     qry.bind(limit).bind(offset).fetch_all(pool).await
 }
 
-/// Visible holders of `item_id` matching the same filters as the page: the
-/// row count behind `get_item_leaderboard`.
-pub async fn count_item_holders(
+/// Visible holders of `item_id` matching the same filters as the page, and
+/// their holdings summed: the row count behind `get_item_leaderboard` and
+/// how much of the item that population holds in all.
+pub async fn item_holding_totals(
     pool: &PgPool,
     item_id: &str,
     server: Option<&str>,
     q: Option<&str>,
-) -> Result<i64, sqlx::Error> {
-    let holding = Holding::of(item_id);
-    let filters = Filters::new(
-        holding.next_param(),
-        server,
-        q,
-        ("s.code", "u.nickname", "u.uid"),
-    );
+) -> Result<HoldingTotals, sqlx::Error> {
+    let query = HolderQuery::new(item_id, server, q, ("s.code", "u.nickname", "u.uid"));
     let sql = format!(
         r"
         WITH holding AS ({cte})
-        SELECT count(*)
+        SELECT count(*) AS holders, coalesce(sum(h.quantity), 0)::bigint AS quantity
         {HOLDERS_JOIN}
         WHERE {VISIBLE}{tail}
         ",
-        cte = holding.cte,
-        tail = filters.sql,
+        cte = query.holding.cte,
+        tail = query.filters.sql,
     );
-    let mut qry = sqlx::query_scalar::<_, i64>(&sql);
-    for p in holding
-        .params(item_id)
-        .into_iter()
-        .chain(filters.params.iter().map(String::as_str))
-    {
+    let mut qry = sqlx::query_as::<_, HoldingTotals>(&sql);
+    for p in query.binds() {
         qry = qry.bind(p);
     }
     qry.fetch_one(pool).await
 }
 
-/// Holder count and top holding for every item at least one visible player
-/// holds, currencies included. One pass over `user_items` and one over
-/// `user_status`; the currency VALUES list is generated from
+/// Holder count, top holding and summed holdings for every item at least one
+/// visible player holds, currencies included. One pass over `user_items` and
+/// one over `user_status`; the currency VALUES list is generated from
 /// `CURRENCY_COLUMNS` so the two can never disagree.
 pub async fn get_item_catalog(
     pool: &PgPool,
     server: Option<&str>,
 ) -> Result<Vec<ItemHoldingSummary>, sqlx::Error> {
-    let server_sql = server.map_or("", |_| " AND s.code = $1");
+    let visible = visible_players_sql(server);
     let currency_values = currency_values_sql();
     let sql = format!(
         r"
-        WITH visible AS (
-            SELECT u.id
-            FROM users u
-            JOIN servers s ON s.id = u.server_id
-            WHERE {VISIBLE}{server_sql}
-        )
-        SELECT ui.item_id, count(*)::bigint AS holders, max(ui.quantity)::bigint AS top
+        WITH visible AS ({visible})
+        SELECT ui.item_id, count(*)::bigint AS holders, max(ui.quantity)::bigint AS top,
+               sum(ui.quantity)::bigint AS total_quantity
         FROM user_items ui
         JOIN visible v ON v.id = ui.user_id
         WHERE ui.quantity > 0
         GROUP BY ui.item_id
         UNION ALL
-        SELECT c.item_id, count(*) FILTER (WHERE c.q > 0)::bigint AS holders, coalesce(max(c.q), 0)::bigint AS top
+        SELECT c.item_id, count(*) FILTER (WHERE c.q > 0)::bigint AS holders, coalesce(max(c.q), 0)::bigint AS top,
+               coalesce(sum(c.q) FILTER (WHERE c.q > 0), 0)::bigint AS total_quantity
         FROM user_status st
         JOIN visible v ON v.id = st.user_id
         CROSS JOIN LATERAL (VALUES {currency_values}) AS c(item_id, q)
@@ -290,6 +319,21 @@ pub async fn get_item_catalog(
             .then_with(|| a.item_id.cmp(&b.item_id))
     });
     Ok(rows)
+}
+
+/// How many players `visible_players_sql` selects: the population every
+/// catalog holder count is taken over, so the denominator of a holder share.
+pub async fn count_visible_players(
+    pool: &PgPool,
+    server: Option<&str>,
+) -> Result<i64, sqlx::Error> {
+    let visible = visible_players_sql(server);
+    let sql = format!("SELECT count(*) FROM ({visible}) v");
+    let mut qry = sqlx::query_scalar::<_, i64>(&sql);
+    if let Some(code) = server {
+        qry = qry.bind(code);
+    }
+    qry.fetch_one(pool).await
 }
 
 /// Where one player sits among visible holders of `item_id`, globally and on

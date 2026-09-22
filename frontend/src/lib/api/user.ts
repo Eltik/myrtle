@@ -12,6 +12,7 @@ import type { EncounteredEnemiesResponse } from "#/types/generated/EncounteredEn
 import type { EncounteredEnemy } from "#/types/generated/EncounteredEnemy";
 import type { FacilityOutputDto } from "#/types/generated/FacilityOutputDto";
 import type { ImprovementsResponse } from "#/types/generated/ImprovementsResponse";
+import type { ItemCatalog } from "#/types/generated/ItemCatalog";
 import type { ItemEntry } from "#/types/generated/ItemEntry";
 import type { ItemHoldingSummary } from "#/types/generated/ItemHoldingSummary";
 import type { ItemLeaderboardEntry } from "#/types/generated/ItemLeaderboardEntry";
@@ -550,6 +551,7 @@ export function playerStandingQueryOptions(input: IPlayerStandingInput) {
 export type IItemLeaderboardEntry = ItemLeaderboardEntry;
 export type IItemLeaderboardPage = ItemLeaderboardPage;
 export type IItemHoldingSummary = ItemHoldingSummary;
+export type IItemCatalog = ItemCatalog;
 export type IItemStanding = ItemStanding;
 
 export interface IItemLeaderboardInput {
@@ -586,7 +588,8 @@ export function itemLeaderboardQueryOptions(input: IItemLeaderboardInput) {
     });
 }
 
-/** Every item at least one visible player holds, most holders first. */
+/** Every item at least one visible player holds, most holders first, and
+ * the visible population the holder counts are taken over. */
 export const getItemCatalogFn = createServerFn({ method: "GET" })
     .inputValidator((data: { server?: string }) => data)
     .handler(async ({ data: { server } }) => {
@@ -595,7 +598,7 @@ export const getItemCatalogFn = createServerFn({ method: "GET" })
         const qs = params.toString();
         const res = await backendFetch(`/leaderboard/items/catalog${qs ? `?${qs}` : ""}`);
         if (!res.ok) throw new Error(`Failed to load item catalog: ${res.status}`);
-        return (await res.json()) as IItemHoldingSummary[];
+        return (await res.json()) as IItemCatalog;
     });
 
 export function itemCatalogQueryOptions(server?: string) {

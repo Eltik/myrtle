@@ -8,4 +8,9 @@ export type ItemLeaderboardPage = {
      * Visible holders of the item: the population the page is cut from.
      */
     total: number;
+    /**
+     * Every holding in that population summed: how much of the item exists
+     * across the ranked players.
+     */
+    total_quantity: number;
 };

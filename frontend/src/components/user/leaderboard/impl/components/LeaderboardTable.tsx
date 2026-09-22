@@ -8,7 +8,7 @@ import { cn } from "#/lib/utils";
 import { formatPct, type LeaderboardMessageKey, type Ranking, toPct } from "../constants";
 import type { messages as constantsMessages } from "../constants.messages";
 import { playerIdentity } from "../identity";
-import type { ICatalogItem } from "../inventory.types";
+import type { ICatalog } from "../inventory.types";
 import type { IRankedRow } from "../types";
 import { GradeBadge } from "./GradeBadge";
 import type { messages } from "./LeaderboardTable.messages";
@@ -22,7 +22,7 @@ interface ILeaderboardTableProps {
     rows: IRankedRow[];
     ranking: Ranking;
     onRanking: (next: Ranking) => void;
-    catalog: ICatalogItem[];
+    catalog: ICatalog;
     materials: IMaterials | undefined;
     /** For an item ranking, the largest holding; every row's bar is drawn against it. */
     topValue: number | null;

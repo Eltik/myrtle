@@ -1,8 +1,8 @@
 import { rarityTierToNumber } from "#/components/user/profile/impl/components/tabs/Items/helpers";
 import type { IItemEntry } from "#/components/user/profile/impl/components/tabs/Items/types";
 import type { IMaterials } from "#/lib/api/materials";
-import type { IItemHoldingSummary } from "#/lib/api/user";
-import type { ICatalogItem } from "./inventory.types";
+import type { IItemHoldingSummary, IItemLeaderboardPage } from "#/lib/api/user";
+import { type ICatalogItem, type IHoldingCounts, NO_HOLDINGS } from "./inventory.types";
 
 /** Join one catalog row with the item table. An id the table does not name
  * still ranks and is shown by its raw id, so a roster ahead of the item
@@ -23,8 +23,16 @@ export function toCatalogItem(row: IItemHoldingSummary, materials: IMaterials | 
  * the catalog has no row for it: nobody visible holds it, or the catalog is
  * still loading. `counts` lets a caller fill the stand-in from another query.
  */
-export function resolveCatalogItem(catalog: ICatalogItem[], itemId: string, materials: IMaterials | undefined, counts: { holders: number; top: number } = { holders: 0, top: 0 }): ICatalogItem {
+export function resolveCatalogItem(catalog: ICatalogItem[], itemId: string, materials: IMaterials | undefined, counts: IHoldingCounts = NO_HOLDINGS): ICatalogItem {
     return catalog.find((c) => c.item_id === itemId) ?? toCatalogItem({ item_id: itemId, ...counts }, materials);
+}
+
+/** An item's counts read off its own page: the population size, the first
+ * (highest) row's quantity, and the summed holdings. `NO_HOLDINGS` before
+ * the page loads. */
+export function countsFromPage(page: IItemLeaderboardPage | undefined): IHoldingCounts {
+    if (!page) return NO_HOLDINGS;
+    return { holders: page.total, top: page.entries[0]?.quantity ?? 0, total_quantity: page.total_quantity };
 }
 
 /** The shape `ItemIcon` renders; the quantity is not shown there so it is 0. */

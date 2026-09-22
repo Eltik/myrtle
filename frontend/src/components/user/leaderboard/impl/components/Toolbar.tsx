@@ -8,7 +8,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import { INTERVALS, type LeaderboardInterval, type LeaderboardScope, type Ranking, SERVERS, type ServerCode } from "../constants";
 import type { messages as constantsMessages } from "../constants.messages";
-import type { ICatalogItem } from "../inventory.types";
+import type { ICatalog } from "../inventory.types";
 import { RankByPicker } from "./RankByPicker";
 import type { messages } from "./Toolbar.messages";
 
@@ -18,7 +18,7 @@ type ToolbarT = TypedT<typeof messages & typeof constantsMessages>;
 interface IToolbarProps {
     ranking: Ranking;
     onRanking: (next: Ranking) => void;
-    catalog: ICatalogItem[];
+    catalog: ICatalog;
     materials: IMaterials | undefined;
     scope: LeaderboardScope;
     onScope: (next: LeaderboardScope) => void;

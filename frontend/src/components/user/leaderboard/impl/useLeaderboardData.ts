@@ -3,8 +3,8 @@ import { useMemo } from "react";
 import { type IMaterials, materialsQueryOptions } from "#/lib/api/materials";
 import { type IItemStanding, type ILeaderboardMover, type IPlayerStanding, itemCatalogQueryOptions, itemLeaderboardQueryOptions, itemStandingQueryOptions, leaderboardMoversQueryOptions, leaderboardQueryOptions, playerStandingQueryOptions } from "#/lib/api/user";
 import { type LeaderboardInterval, type LeaderboardSort, PAGE_SIZE, type Ranking } from "./constants";
-import { resolveCatalogItem, toCatalogItem } from "./inventory.helpers";
-import type { ICatalogItem } from "./inventory.types";
+import { countsFromPage, resolveCatalogItem, toCatalogItem } from "./inventory.helpers";
+import { EMPTY_CATALOG, type ICatalog, type ICatalogItem } from "./inventory.types";
 import { rowFromItem, rowFromScore } from "./rows";
 import type { IRankedRow } from "./types";
 
@@ -24,7 +24,7 @@ export interface ILeaderboardDataInput {
 }
 
 export interface ILeaderboardData {
-    catalog: ICatalogItem[];
+    catalog: ICatalog;
     materials: IMaterials | undefined;
     catalogLoading: boolean;
     /** The ranked item, or `null` for a score ranking. */
@@ -81,11 +81,13 @@ export function useLeaderboardData({ ranking, sort, server, q, interval, movemen
         enabled: byItem && signedIn,
     });
 
-    const catalog = useMemo<ICatalogItem[]>(() => (catalogQuery.data ?? []).map((row) => toCatalogItem(row, materialsQuery.data)), [catalogQuery.data, materialsQuery.data]);
+    const catalog = useMemo<ICatalog>(() => {
+        if (!catalogQuery.data) return EMPTY_CATALOG;
+        return { items: catalogQuery.data.items.map((row) => toCatalogItem(row, materialsQuery.data)), population: catalogQuery.data.population };
+    }, [catalogQuery.data, materialsQuery.data]);
     const currentItem = useMemo<ICatalogItem | null>(() => {
         if (!byItem) return null;
-        const counts = { holders: itemTopQuery.data?.total ?? 0, top: itemTopQuery.data?.entries[0]?.quantity ?? 0 };
-        return resolveCatalogItem(catalog, itemId, materialsQuery.data, counts);
+        return resolveCatalogItem(catalog.items, itemId, materialsQuery.data, countsFromPage(itemTopQuery.data));
     }, [byItem, catalog, itemId, itemTopQuery.data, materialsQuery.data]);
 
     const rows = useMemo<IRankedRow[]>(() => {
