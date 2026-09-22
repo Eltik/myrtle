@@ -838,6 +838,7 @@ zones.*.zoneNameTitleUnCurrent: null
 zones.*.zoneNameTitleUnCurrent: string
 zones.*: object
 zones: object
+activities.*.displayType: string
 activities.*.endTime: number
 activities.*.hasStage: bool
 activities.*.id: string

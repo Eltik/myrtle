@@ -53,6 +53,13 @@ pub struct ActivityBasicInfo {
     #[serde(alias = "Type_", rename = "type", default)]
     pub activity_type: String,
 
+    /// The Archives shelf the game files the event under: `SIDESTORY`,
+    /// `BRANCHLINE` (Intermezzi), `MINISTORY` (Vignettes) or `NONE`. On EN
+    /// 3 of the 50 `ACTIVITY_STORY` groups are `BRANCHLINE` (act9d0, act18d0,
+    /// act18d3); the story reader shows it beside the derived category.
+    #[serde(alias = "DisplayType", default)]
+    pub display_type: String,
+
     /// The event token shop's id on the game server (`shop_act54side`), the
     /// argument to `templateShop/getGoodList`. Absent when the activity has no
     /// token shop (sign-ins, logins, and the few events with a bespoke shop).
