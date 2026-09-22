@@ -33,6 +33,11 @@ use super::{
 /// scored as their own dimension.
 const WEIGHT_ELITE: f64 = 35.0;
 const WEIGHT_MASTERY: f64 = 30.0;
+/// Per advanced module SLOT since 2026-09-22 (see `module_weight`). Every
+/// module of a rarity costs the same (4★: 3 blocks / 15 sticks / 5
+/// instruments / 75k LMD / 15 T3; 6★: 12 / 60 / 20 / 300k / 9 T5), but with
+/// one weight per operator a 6★ with two slots (71 of 127) earned half the
+/// dimension per Mod3 that a one-slot 6★ (42) earned for the same materials.
 const WEIGHT_MODULE: f64 = 25.0;
 const WEIGHT_POTENTIAL: f64 = 10.0;
 const WEIGHT_SKILL_LEVEL: f64 = 20.0;
@@ -45,6 +50,9 @@ const WEIGHT_TRUST: f64 = 5.0;
 /// non-support ops. Support-unit operators are held to `max_favor` instead -
 /// publishing an op for others to borrow implies completionist intent.
 pub const TRUST_MILESTONE_PCT: f64 = 100.0;
+
+/// The level at which a skill (M3) or module (Mod3) counts as a milestone.
+const MILESTONE: i16 = 3;
 
 /// Maximum partial credit when no milestone (M3 / Mod3) has been reached.
 const PARTIAL_CAP: f64 = 0.30;
@@ -65,8 +73,13 @@ struct ModuleEntry {
     locked: bool,
 }
 
-fn parse_masteries(masteries_json: &serde_json::Value) -> Vec<MasteryEntry> {
-    Vec::<MasteryEntry>::deserialize(masteries_json).unwrap_or_default()
+/// Mastery level per skill as stored on the roster entry.
+fn mastery_levels(masteries_json: &serde_json::Value) -> Vec<i16> {
+    Vec::<MasteryEntry>::deserialize(masteries_json)
+        .unwrap_or_default()
+        .iter()
+        .map(|m| m.mastery)
+        .collect()
 }
 
 fn parse_modules(modules_json: &serde_json::Value) -> Vec<ModuleEntry> {
@@ -96,15 +109,56 @@ fn build_roster_map(roster: &[RosterEntry]) -> HashMap<&str, &RosterEntry> {
     roster.iter().map(|r| (r.operator_id.as_str(), r)).collect()
 }
 
-/// Kill switch for the 2026-09-22 denominator change. The Operators subscore
-/// averages every owned, obtainable operator; `GRADE_INVESTED_ONLY=1` restores
-/// the earlier touched-only average (elite > 0 or level > 1). That average let
-/// a roster of 75 owned and 2 raised read 60.8% on Modules, and the median
-/// account had raised only 43.7% of what it owned, so an unraised pull cost
-/// nothing. Read once per process.
+/// The switches that shape the Operators subscore. Each one is a kill switch
+/// for a 2026-09-22 change, read from the environment once per process, and
+/// flipping it restores the previous numbers exactly:
+///
+/// - `GRADE_INVESTED_ONLY=1`: average only raised operators (elite > 0 or
+///   level > 1). That average let a roster of 75 owned and 2 raised read
+///   60.8% on Modules, and the median account had raised only 43.7% of what
+///   it owned, so an unraised pull cost nothing.
+/// - `GRADE_RARITY_WEIGHTS=legacy`: rarity weights 1/.7/.4/.15/.1/.05 instead
+///   of the cost-based 1/.5/.3/.05/.02/.01 (see `rarity_to_weight_in`).
+/// - `GRADE_MODULE_PER_SLOT=0`: one `WEIGHT_MODULE` per operator instead of
+///   one per advanced module slot (see `module_weight`).
+///
+/// Priced on 2,630 local accounts (all-owned denominator): the rarity weights
+/// alone move the median subscore 0.2164 -> 0.2332 (1,963 up, 400 down by
+/// more than 0.5 pt); per-slot modules alone 0.2164 -> 0.2111 (1,185 down);
+/// both 0.2164 -> 0.2259 (1,566 up, 465 down). Production needs
+/// `regrade-users` after a deploy that flips any of them.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ScoreModel {
+    pub invested_only: bool,
+    pub legacy_rarity_weights: bool,
+    pub module_per_slot: bool,
+}
+
+impl ScoreModel {
+    /// The model in production since 2026-09-22.
+    pub const SHIPPED: Self = Self {
+        invested_only: false,
+        legacy_rarity_weights: false,
+        module_per_slot: true,
+    };
+
+    /// `SHIPPED` with each switch overridden from the environment.
+    pub fn from_env() -> Self {
+        static MODEL: OnceLock<ScoreModel> = OnceLock::new();
+        *MODEL.get_or_init(|| {
+            let var = |k: &str| std::env::var(k).ok();
+            Self {
+                invested_only: var("GRADE_INVESTED_ONLY").is_some_and(|v| v == "1"),
+                legacy_rarity_weights: var("GRADE_RARITY_WEIGHTS").is_some_and(|v| v == "legacy"),
+                module_per_slot: !var("GRADE_MODULE_PER_SLOT").is_some_and(|v| v == "0"),
+            }
+        })
+    }
+}
+
+/// `GRADE_INVESTED_ONLY` as read by `ScoreModel::from_env`.
 pub fn invested_only() -> bool {
-    static FLAG: OnceLock<bool> = OnceLock::new();
-    *FLAG.get_or_init(|| std::env::var("GRADE_INVESTED_ONLY").is_ok_and(|v| v == "1"))
+    ScoreModel::from_env().invested_only
 }
 
 /// Whether a roster entry is inside the Operators average: every owned entry
@@ -118,13 +172,6 @@ pub fn is_graded(entry: &RosterEntry) -> bool {
 /// The operators that count toward `operator_grade`: real, obtainable, owned
 /// (static data plus a roster entry), raised or not unless `invested_only`.
 /// Every "gradeable operator" set derives from here.
-fn graded_operators<'a>(
-    roster_map: &'a HashMap<&'a str, &'a RosterEntry>,
-    game_data: &'a GameData,
-) -> impl Iterator<Item = (&'a str, &'a Operator, &'a RosterEntry)> {
-    graded_operators_in(roster_map, game_data, invested_only())
-}
-
 fn graded_operators_in<'a>(
     roster_map: &'a HashMap<&'a str, &'a RosterEntry>,
     game_data: &'a GameData,
@@ -150,27 +197,33 @@ pub fn grade_operators(
     game_data: &GameData,
     support_ids: &HashSet<&str>,
 ) -> f64 {
-    grade_operators_in(roster, game_data, support_ids, invested_only())
+    grade_operators_in(roster, game_data, support_ids, ScoreModel::from_env())
 }
 
-/// `grade_operators` with the denominator chosen explicitly instead of read
-/// from the environment, so both modes can be tested in one process.
+/// `grade_operators` with the model chosen explicitly instead of read from
+/// the environment, so every switch can be tested in one process.
 pub fn grade_operators_in(
     roster: &[RosterEntry],
     game_data: &GameData,
     support_ids: &HashSet<&str>,
-    invested_only: bool,
+    model: ScoreModel,
 ) -> f64 {
     let roster_map = build_roster_map(roster);
     let mut weighted_sum = 0.0;
     let mut weight_total = 0.0;
 
     for (op_id, static_op, roster_entry) in
-        graded_operators_in(&roster_map, game_data, invested_only)
+        graded_operators_in(&roster_map, game_data, model.invested_only)
     {
-        let rarity_weight = rarity_to_weight(&static_op.rarity);
+        let rarity_weight = rarity_to_weight_in(&static_op.rarity, model.legacy_rarity_weights);
         let is_support = support_ids.contains(op_id);
-        let op_score = grade_operator(roster_entry, static_op, &game_data.favor, is_support);
+        let op_score = grade_operator_in(
+            roster_entry,
+            static_op,
+            &game_data.favor,
+            is_support,
+            &model,
+        );
 
         weighted_sum += op_score * rarity_weight;
         weight_total += rarity_weight;
@@ -188,9 +241,20 @@ pub fn grade_operators_in(
 /// Used by the improvements builder to translate per-operator score deltas
 /// into a contribution against the user's overall Operators subscore.
 pub fn total_roster_weight(roster: &[RosterEntry], game_data: &GameData) -> f64 {
+    total_roster_weight_in(roster, game_data, ScoreModel::from_env())
+}
+
+/// `total_roster_weight` under an explicit model.
+pub fn total_roster_weight_in(
+    roster: &[RosterEntry],
+    game_data: &GameData,
+    model: ScoreModel,
+) -> f64 {
     let roster_map = build_roster_map(roster);
-    graded_operators(&roster_map, game_data)
-        .map(|(_, static_op, _)| rarity_to_weight(&static_op.rarity))
+    graded_operators_in(&roster_map, game_data, model.invested_only)
+        .map(|(_, static_op, _)| {
+            rarity_to_weight_in(&static_op.rarity, model.legacy_rarity_weights)
+        })
         .sum()
 }
 
@@ -200,7 +264,26 @@ pub fn grade_operator(
     favor: &Favor,
     is_support: bool,
 ) -> f64 {
-    average_dimensions(&build_dimensions(roster, static_op, favor, is_support))
+    grade_operator_in(
+        roster,
+        static_op,
+        favor,
+        is_support,
+        &ScoreModel::from_env(),
+    )
+}
+
+/// `grade_operator` under an explicit model.
+pub fn grade_operator_in(
+    roster: &RosterEntry,
+    static_op: &Operator,
+    favor: &Favor,
+    is_support: bool,
+    model: &ScoreModel,
+) -> f64 {
+    average_dimensions(&build_dimensions(
+        roster, static_op, favor, is_support, model,
+    ))
 }
 
 fn average_dimensions(dims: &[(DimensionKind, Dimension)]) -> f64 {
@@ -240,6 +323,7 @@ fn build_dimensions(
     static_op: &Operator,
     favor: &Favor,
     is_support: bool,
+    model: &ScoreModel,
 ) -> Vec<(DimensionKind, Dimension)> {
     let max_elite = (static_op.phases.len() - 1) as f64;
     let num_skills = static_op.skills.len();
@@ -271,7 +355,10 @@ fn build_dimensions(
 
     if !advanced_modules.is_empty() {
         let module_score = module_milestone_score(roster, &advanced_modules);
-        dimensions.push((DimensionKind::Module, (WEIGHT_MODULE, module_score)));
+        dimensions.push((
+            DimensionKind::Module,
+            (module_weight(advanced_modules.len(), model), module_score),
+        ));
     }
 
     if potential_matters(static_op) {
@@ -320,34 +407,36 @@ pub fn operator_score_breakdown(
     game_data: &GameData,
     support_ids: &HashSet<&str>,
 ) -> Vec<ScoreDimension> {
-    operator_score_breakdown_in(roster, game_data, support_ids, invested_only())
+    operator_score_breakdown_in(roster, game_data, support_ids, ScoreModel::from_env())
 }
 
-/// `operator_score_breakdown` with the denominator chosen explicitly; see
+/// `operator_score_breakdown` with the model chosen explicitly; see
 /// `grade_operators_in`.
 pub fn operator_score_breakdown_in(
     roster: &[RosterEntry],
     game_data: &GameData,
     support_ids: &HashSet<&str>,
-    invested_only: bool,
+    model: ScoreModel,
 ) -> Vec<ScoreDimension> {
     let roster_map = build_roster_map(roster);
-    let total_rarity_weight: f64 = graded_operators_in(&roster_map, game_data, invested_only)
-        .map(|(_, static_op, _)| rarity_to_weight(&static_op.rarity))
-        .sum();
+    let rarity_weight =
+        |static_op: &Operator| rarity_to_weight_in(&static_op.rarity, model.legacy_rarity_weights);
+    let total_rarity_weight = total_roster_weight_in(roster, game_data, model);
     if total_rarity_weight <= 0.0 {
         return Vec::new();
     }
 
     let mut shares: HashMap<DimensionKind, (f64, f64)> = HashMap::new();
-    for (op_id, static_op, entry) in graded_operators_in(&roster_map, game_data, invested_only) {
+    for (op_id, static_op, entry) in
+        graded_operators_in(&roster_map, game_data, model.invested_only)
+    {
         let is_support = support_ids.contains(op_id);
-        let dims = build_dimensions(entry, static_op, &game_data.favor, is_support);
+        let dims = build_dimensions(entry, static_op, &game_data.favor, is_support, &model);
         let op_weight_total: f64 = dims.iter().map(|(_, (w, _))| w).sum();
         if op_weight_total <= 0.0 {
             continue;
         }
-        let op_share = rarity_to_weight(&static_op.rarity) / total_rarity_weight;
+        let op_share = rarity_weight(static_op) / total_rarity_weight;
         for (kind, (weight, score)) in dims {
             let dim_share = op_share * weight / op_weight_total;
             let slot = shares.entry(kind).or_insert((0.0, 0.0));
@@ -390,30 +479,11 @@ const fn level_weight(rarity: &OperatorRarity) -> f64 {
 ///   raw ratio: (50 + 80 + 60) / 220 = 0.864
 ///   after log:  ~0.90
 fn cumulative_level_progress(roster: &RosterEntry, static_op: &Operator) -> f64 {
-    let mut progress = 0.0;
-    let mut total = 0.0;
-
-    for (i, phase) in static_op.phases.iter().enumerate() {
-        let max_lvl = f64::from(phase.max_level);
-        total += max_lvl;
-
-        if (i as i16) < roster.elite {
-            progress += max_lvl;
-        } else if i as i16 == roster.elite {
-            progress += f64::from(roster.level);
-        }
-    }
-
-    if total == 0.0 {
-        return 1.0;
-    }
-
-    let raw = progress / total;
-    log_curve_ratio(raw)
+    cumulative_level_progress_at(static_op, roster.elite, roster.level)
 }
 
-/// Same shape as `cumulative_level_progress` but for an overridden (elite, level)
-/// pair - used by the delta simulator without mutating the `RosterEntry`.
+/// `cumulative_level_progress` for an overridden (elite, level) pair, so the
+/// delta simulator can score a promotion without mutating the `RosterEntry`.
 fn cumulative_level_progress_at(static_op: &Operator, elite: i16, level: i16) -> f64 {
     let mut progress = 0.0;
     let mut total = 0.0;
@@ -432,98 +502,68 @@ fn cumulative_level_progress_at(static_op: &Operator, elite: i16, level: i16) ->
     log_curve_ratio(progress / total)
 }
 
-/// Returns 0.0-1.0 based on mastery milestones.
-///
-/// Without any M3, partial credit is capped at `PARTIAL_CAP` (0.30).
-/// With M3 skills: 1 -> 0.50, 2 -> 0.75, plus partial bonus. Every skill at M3
-/// is always 1.00, whether the operator has one, two or three of them.
+/// Mastery dimension, 0.0-1.0 (`milestone_score` on the `mastery_ladder`).
 fn mastery_milestone_score(roster: &RosterEntry, num_skills: usize) -> f64 {
-    let masteries = parse_masteries(&roster.masteries);
-    mastery_milestone_from_levels(
-        &masteries.iter().map(|m| m.mastery).collect::<Vec<_>>(),
+    milestone_score(
+        &mastery_levels(&roster.masteries),
         num_skills,
+        mastery_ladder,
     )
 }
 
-fn mastery_milestone_from_levels(levels: &[i16], num_skills: usize) -> f64 {
-    let m3_count = levels.iter().filter(|&&m| m >= 3).count();
-
-    if m3_count == 0 {
-        let total: f64 = levels.iter().map(|&m| f64::from(m)).sum();
-        let max = num_skills as f64 * 3.0;
-        if max > 0.0 {
-            (total / max) * PARTIAL_CAP
-        } else {
-            0.0
-        }
-    } else {
-        // Mastering every skill an operator *has* is the milestone - most 4★/5★
-        // ops only ever get two skills, so keying the ladder on the raw M3 count
-        // would cap a fully-mastered one at 0.75 with nothing left to buy.
-        let base = if m3_count >= num_skills {
-            1.00
-        } else {
-            match m3_count {
-                1 => 0.50,
-                2 => 0.75,
-                _ => 1.00,
-            }
-        };
-
-        let remaining_skills = num_skills - m3_count;
-        if remaining_skills > 0 {
-            let non_m3_mastery: f64 = levels
-                .iter()
-                .filter(|&&m| m < 3)
-                .map(|&m| f64::from(m))
-                .sum();
-            let remaining_max = remaining_skills as f64 * 3.0;
-            let partial = (non_m3_mastery / remaining_max) * PARTIAL_BONUS;
-            (base + partial).min(1.0)
-        } else {
-            base
-        }
-    }
-}
-
-/// Returns 0.0-1.0 based on module milestones.
-///
-/// Without any Mod3, partial credit is capped at `PARTIAL_CAP` (0.30).
-/// With Mod3: first -> 0.50, second -> 0.80, all -> 1.00, plus partial bonus.
+/// Module dimension, 0.0-1.0 (`milestone_score` on the `module_ladder`).
 fn module_milestone_score(roster: &RosterEntry, advanced_modules: &[&OperatorModule]) -> f64 {
-    let user_advanced = advanced_module_levels(&roster.modules, advanced_modules);
-    module_milestone_from_levels(&user_advanced, advanced_modules.len())
+    let levels = advanced_module_levels(&roster.modules, advanced_modules);
+    milestone_score(&levels, advanced_modules.len(), module_ladder)
 }
 
-fn module_milestone_from_levels(user_advanced: &[i16], num_available: usize) -> f64 {
-    if num_available == 0 {
+/// The milestone curve shared by masteries and modules. Before the first
+/// milestone, partial credit is the fraction of the ladder climbed, capped at
+/// `PARTIAL_CAP`. From the first milestone on, the dimension's `ladder` sets
+/// the base for `reached` of `slots` and the slots still below it add up to
+/// `PARTIAL_BONUS` on top.
+fn milestone_score(levels: &[i16], slots: usize, ladder: fn(usize, usize) -> f64) -> f64 {
+    let reached = levels.iter().filter(|&&l| l >= MILESTONE).count();
+    if reached == 0 {
+        return sub_milestone_progress(levels, slots) * PARTIAL_CAP;
+    }
+    let remaining = slots.saturating_sub(reached);
+    (ladder(reached, slots) + sub_milestone_progress(levels, remaining) * PARTIAL_BONUS).min(1.0)
+}
+
+/// Fraction of the ladder climbed by the entries still below `MILESTONE`,
+/// over `slots` slots of `MILESTONE` steps each; 0.0 with no slots.
+fn sub_milestone_progress(levels: &[i16], slots: usize) -> f64 {
+    let max = slots as f64 * f64::from(MILESTONE);
+    if max <= 0.0 {
         return 0.0;
     }
+    let climbed: f64 = levels
+        .iter()
+        .filter(|&&l| l < MILESTONE)
+        .map(|&l| f64::from(l))
+        .sum();
+    climbed / max
+}
 
-    let mod3_count = user_advanced.iter().filter(|&&lvl| lvl >= 3).count();
-
-    if mod3_count == 0 {
-        let total_levels: f64 = user_advanced.iter().map(|&l| f64::from(l)).sum();
-        let max_total = num_available as f64 * 3.0;
-        (total_levels / max_total) * PARTIAL_CAP
-    } else {
-        let base = mod3_count as f64 / num_available as f64;
-        let milestone = base.max(0.50);
-
-        let non_max_levels: f64 = user_advanced
-            .iter()
-            .filter(|&&lvl| lvl < 3)
-            .map(|&l| f64::from(l))
-            .sum();
-        let remaining_max = (num_available - mod3_count) as f64 * 3.0;
-        let partial = if remaining_max > 0.0 {
-            (non_max_levels / remaining_max) * PARTIAL_BONUS
-        } else {
-            0.0
-        };
-
-        (milestone + partial).min(1.0)
+/// One M3 -> 0.50, two -> 0.75, every skill the operator has -> 1.00. Keyed
+/// on the operator's own skill count because most 4★/5★ only ever get two
+/// skills, and a raw count would cap a fully-mastered one at 0.75 with
+/// nothing left to buy.
+fn mastery_ladder(reached: usize, slots: usize) -> f64 {
+    if reached >= slots {
+        return 1.0;
     }
+    match reached {
+        1 => 0.50,
+        2 => 0.75,
+        _ => 1.00,
+    }
+}
+
+/// The share of advanced modules at Mod3, never below 0.50 for the first.
+fn module_ladder(reached: usize, slots: usize) -> f64 {
+    (reached as f64 / slots as f64).max(0.50)
 }
 
 /// Returns 0.0-1.0 based on trust progress.
@@ -560,16 +600,49 @@ pub fn advanced_modules(static_op: &Operator) -> Vec<&OperatorModule> {
         .collect()
 }
 
-pub const fn rarity_to_weight(rarity: &OperatorRarity) -> f64 {
-    match rarity {
-        OperatorRarity::SixStar => 1.0,
-        OperatorRarity::FiveStar => 0.7,
-        OperatorRarity::FourStar => 0.4,
-        OperatorRarity::ThreeStar => 0.15,
-        OperatorRarity::TwoStar => 0.1,
-        OperatorRarity::OneStar => 0.05,
+/// Module dimension weight: `WEIGHT_MODULE` per advanced module slot, or per
+/// operator under `GRADE_MODULE_PER_SLOT=0`. Per slot, a 6★ Mod3 is worth
+/// 25 of a two-slot operator's 145 weight points against 25 of a one-slot
+/// operator's 120 (0.172 vs 0.208 of the operator score); per operator it
+/// was 12.5 of 120 against 25 of 120, a 2x gap at identical cost.
+fn module_weight(slots: usize, model: &ScoreModel) -> f64 {
+    if model.module_per_slot {
+        WEIGHT_MODULE * slots as f64
+    } else {
+        WEIGHT_MODULE
     }
 }
+
+/// How much a fully built operator of each rarity weighs in the roster
+/// average, read from `GRADE_RARITY_WEIGHTS`; see `rarity_to_weight_in`.
+pub fn rarity_to_weight(rarity: &OperatorRarity) -> f64 {
+    rarity_to_weight_in(rarity, ScoreModel::from_env().legacy_rarity_weights)
+}
+
+/// Rarity weights follow the cost of a full build relative to a 6★, from a
+/// 2026-09-22 census of `character_table` / `uniequip_table` /
+/// `gamedata_const` (127 6★, 188 5★, 61 4★, 17 3★). The whole-build ratio
+/// under three valuations (tokens priced / tokens at zero / LMD only) is
+/// 5★ 0.44 / 0.54 / 0.53, 4★ 0.26 / 0.31 / 0.31, 3★ 0.03 / 0.04 / 0.06; the
+/// shipped constants sit between them. This is a TRADE: per dimension the
+/// 4★/6★ ratio spreads from 0.25 (a module) to 0.47 (promotion), so 0.30 is
+/// 20% generous on a 4★ module and 25% stingy on its levels. The legacy
+/// 1/.7/.4/.15 overpriced 5★ and 4★ builds by about 1.5x and a 3★ by 2.5x to
+/// 5x. 2★ and 1★ are not censused (one 30-level phase, 3.7% of roster weight
+/// under the legacy values, 1.8% now).
+pub const fn rarity_to_weight_in(rarity: &OperatorRarity, legacy: bool) -> f64 {
+    let table = if legacy {
+        &LEGACY_RARITY_WEIGHTS
+    } else {
+        &RARITY_WEIGHTS
+    };
+    table[(6 - rarity.to_star_int()) as usize]
+}
+
+/// Rarity weights, 6★ first down to 1★.
+const RARITY_WEIGHTS: [f64; 6] = [1.0, 0.5, 0.3, 0.05, 0.02, 0.01];
+/// The weights before 2026-09-22, same order (`GRADE_RARITY_WEIGHTS=legacy`).
+const LEGACY_RARITY_WEIGHTS: [f64; 6] = [1.0, 0.7, 0.4, 0.15, 0.1, 0.05];
 
 pub const fn potential_matters(static_op: &Operator) -> bool {
     !static_op.can_use_general_potential_item || static_op.is_sp_char
@@ -631,7 +704,8 @@ pub fn operator_upgrade_deltas(
     rarity_weight: f64,
     total_roster_weight: f64,
 ) -> Vec<UpgradeDelta> {
-    let current_dims = build_dimensions(roster, static_op, favor, is_support);
+    let model = ScoreModel::from_env();
+    let current_dims = build_dimensions(roster, static_op, favor, is_support, &model);
     if current_dims.iter().map(|(_, (w, _))| w).sum::<f64>() <= 0.0 {
         return Vec::new();
     }
@@ -639,7 +713,7 @@ pub fn operator_upgrade_deltas(
 
     let mut out = Vec::with_capacity(missing.len());
     for &tag in missing {
-        let new_score = simulate_score_for_tag(roster, static_op, favor, is_support, tag);
+        let new_score = simulate_score_for_tag(roster, static_op, favor, is_support, tag, &model);
         let Some(new_score) = new_score else { continue };
         let op_delta = (new_score - current_score).max(0.0);
         let grade_delta = if total_roster_weight > 0.0 {
@@ -671,6 +745,7 @@ fn simulate_score_for_tag(
     favor: &Favor,
     is_support: bool,
     tag: &str,
+    model: &ScoreModel,
 ) -> Option<f64> {
     fn set(dims: &mut [(DimensionKind, Dimension)], kind: DimensionKind, score: f64) -> bool {
         match dims.iter_mut().find(|(k, _)| *k == kind) {
@@ -682,7 +757,7 @@ fn simulate_score_for_tag(
         }
     }
 
-    let mut dims = build_dimensions(roster, static_op, favor, is_support);
+    let mut dims = build_dimensions(roster, static_op, favor, is_support, model);
     let applied = match tag {
         // Full promotion path: jump to max elite + max level at that phase.
         "ELITE" => {
@@ -705,15 +780,11 @@ fn simulate_score_for_tag(
         // current trajectory.
         "M3" => {
             let num_skills = static_op.skills.len();
-            let levels: Vec<i16> = parse_masteries(&roster.masteries)
-                .iter()
-                .map(|m| m.mastery)
-                .collect();
-            let simulated = promote_to_milestone(&levels, num_skills, 3);
+            let simulated = promote_to_milestone(&mastery_levels(&roster.masteries), num_skills);
             set(
                 &mut dims,
                 DimensionKind::Mastery,
-                mastery_milestone_from_levels(&simulated, num_skills),
+                milestone_score(&simulated, num_skills, mastery_ladder),
             )
         }
         "SL7" => set(&mut dims, DimensionKind::SkillLevel, 1.0),
@@ -722,11 +793,11 @@ fn simulate_score_for_tag(
         "MOD3" => {
             let advanced_mods = advanced_modules(static_op);
             let user_advanced = advanced_module_levels(&roster.modules, &advanced_mods);
-            let simulated = promote_to_milestone(&user_advanced, advanced_mods.len(), 3);
+            let simulated = promote_to_milestone(&user_advanced, advanced_mods.len());
             set(
                 &mut dims,
                 DimensionKind::Module,
-                module_milestone_from_levels(&simulated, advanced_mods.len()),
+                milestone_score(&simulated, advanced_mods.len(), module_ladder),
             )
         }
         "POT6" => set(&mut dims, DimensionKind::Potential, 1.0),
@@ -739,22 +810,19 @@ fn simulate_score_for_tag(
     Some(average_dimensions(&dims))
 }
 
-/// Promote the highest entry below `milestone` up to `milestone`. Used to
-/// model "one more M3" / "one more Mod3" - most generous interpretation of
-/// which slot the user would push.
-fn promote_to_milestone(levels: &[i16], slots: usize, milestone: i16) -> Vec<i16> {
+/// Promote the highest entry below `MILESTONE` up to it: "one more M3" /
+/// "one more Mod3" on the slot the user is most likely to push next.
+fn promote_to_milestone(levels: &[i16], slots: usize) -> Vec<i16> {
     let mut padded: Vec<i16> = levels.to_vec();
-    while padded.len() < slots {
-        padded.push(0);
-    }
+    padded.resize(padded.len().max(slots), 0);
     let pick = padded
         .iter()
         .enumerate()
-        .filter(|&(_, &v)| v < milestone)
+        .filter(|&(_, &v)| v < MILESTONE)
         .max_by_key(|&(_, &v)| v)
         .map(|(i, _)| i);
     if let Some(idx) = pick {
-        padded[idx] = milestone;
+        padded[idx] = MILESTONE;
     }
     padded
 }

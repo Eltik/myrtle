@@ -124,6 +124,8 @@ const WEIGHT_POTENTIAL = 10;
 const WEIGHT_SKILL_LEVEL = 20;
 const WEIGHT_TRUST = 5;
 
+/** The level at which a skill (M3) or module (Mod3) counts as a milestone. */
+const MILESTONE = 3;
 const PARTIAL_CAP = 0.3;
 const PARTIAL_BONUS = 0.1;
 const TRUST_MILESTONE_PCT = 100;
@@ -168,34 +170,38 @@ function cumulativeLevelProgress(entry: IRosterEntry, op: IOperatorListItem): nu
     return logCurveRatio(progress / total);
 }
 
-/** Milestone-based mastery score (`mastery_milestone_from_levels`). */
-function masteryMilestoneScore(levels: number[], numSkills: number): number {
-    const m3 = levels.filter((m) => m >= 3).length;
-    if (m3 === 0) {
-        const total = levels.reduce((s, m) => s + m, 0);
-        const max = numSkills * 3;
-        return max > 0 ? (total / max) * PARTIAL_CAP : 0;
-    }
-    const base = m3 === 1 ? 0.5 : m3 === 2 ? 0.75 : 1.0;
-    const remaining = numSkills - m3;
-    if (remaining <= 0) return base;
-    const nonM3 = levels.filter((m) => m < 3).reduce((s, m) => s + m, 0);
-    return Math.min(base + (nonM3 / (remaining * 3)) * PARTIAL_BONUS, 1);
+/**
+ * Fraction of the ladder climbed by the entries still below `MILESTONE`, over
+ * `slots` slots of `MILESTONE` steps each; 0 with no slots.
+ */
+function subMilestoneProgress(levels: number[], slots: number): number {
+    const max = slots * MILESTONE;
+    if (max <= 0) return 0;
+    const climbed = levels.filter((l) => l < MILESTONE).reduce((s, l) => s + l, 0);
+    return climbed / max;
 }
 
-/** Milestone-based module score (`module_milestone_from_levels`). */
-function moduleMilestoneScore(levels: number[], numAvailable: number): number {
-    if (numAvailable === 0) return 0;
-    const mod3 = levels.filter((l) => l >= 3).length;
-    if (mod3 === 0) {
-        const total = levels.reduce((s, l) => s + l, 0);
-        return (total / (numAvailable * 3)) * PARTIAL_CAP;
-    }
-    const milestone = Math.max(mod3 / numAvailable, 0.5);
-    const nonMax = levels.filter((l) => l < 3).reduce((s, l) => s + l, 0);
-    const remainingMax = (numAvailable - mod3) * 3;
-    const partial = remainingMax > 0 ? (nonMax / remainingMax) * PARTIAL_BONUS : 0;
-    return Math.min(milestone + partial, 1);
+/**
+ * The milestone curve shared by masteries and modules (`milestone_score`):
+ * partial credit capped at `PARTIAL_CAP` until the first milestone, then the
+ * dimension's ladder position plus up to `PARTIAL_BONUS` from the rest.
+ */
+function milestoneScore(levels: number[], slots: number, ladder: (reached: number, slots: number) => number): number {
+    const reached = levels.filter((l) => l >= MILESTONE).length;
+    if (reached === 0) return subMilestoneProgress(levels, slots) * PARTIAL_CAP;
+    const remaining = Math.max(0, slots - reached);
+    return Math.min(ladder(reached, slots) + subMilestoneProgress(levels, remaining) * PARTIAL_BONUS, 1);
+}
+
+/** One M3 -> 0.5, two -> 0.75, every skill the operator has -> 1 (`mastery_ladder`). */
+function masteryLadder(reached: number, slots: number): number {
+    if (reached >= slots) return 1;
+    return reached === 1 ? 0.5 : reached === 2 ? 0.75 : 1;
+}
+
+/** The share of advanced modules at Mod3, never below 0.5 for the first (`module_ladder`). */
+function moduleLadder(reached: number, slots: number): number {
+    return Math.max(reached / slots, 0.5);
 }
 
 /**
@@ -215,15 +221,22 @@ function advancedModules(op: IOperatorListItem) {
     return (op.modules ?? []).filter((m) => m.type === "ADVANCED");
 }
 
+/** The roster's levels for the operator's advanced modules (`advanced_module_levels`). */
+function advancedModuleLevels(entry: IRosterEntry, advanced: IModule[]): number[] {
+    const advancedIds = new Set(advanced.map((m) => m.uniEquipId));
+    return entry.modules.filter((m) => advancedIds.has(m.id)).map((m) => m.level);
+}
+
 type Dimension = [weight: number, score: number];
 
 /**
- * Build the applicable (weight, score) dimensions for an operator - closely
- * follows the backend `build_dimensions`.
+ * Build the applicable (weight, score) dimensions for an operator - the same
+ * shape as the backend `build_dimensions`.
  *
- * Differences vs. the server: potential is counted for every operator (see
- * {@link maxPotential}); `is_support` isn't known client-side, so trust always
- * uses the ordinary 100% target; and trust % comes from the linear
+ * Differences vs. the server: the elite and level weights are this card's own
+ * (the server's are 35 and 25/40); potential is counted for every operator
+ * (see {@link maxPotential}); `is_support` isn't known client-side, so trust
+ * always uses the ordinary 100% target; and trust % comes from the linear
  * {@link getTrustPercent} approximation rather than the favor table.
  */
 function operatorDimensions(entry: IRosterEntry, op: IOperatorListItem, rarity: number): Dimension[] {
@@ -244,19 +257,15 @@ function operatorDimensions(entry: IRosterEntry, op: IOperatorListItem, rarity: 
     }
 
     if (canMaster) {
-        dims.push([
-            WEIGHT_MASTERY,
-            masteryMilestoneScore(
-                entry.masteries.map((m) => m.mastery),
-                numSkills,
-            ),
-        ]);
+        const masteryLevels = entry.masteries.map((m) => m.mastery);
+        dims.push([WEIGHT_MASTERY, milestoneScore(masteryLevels, numSkills, masteryLadder)]);
     }
 
     if (advanced.length > 0) {
-        const advancedIds = new Set(advanced.map((m) => m.uniEquipId));
-        const levels = entry.modules.filter((m) => advancedIds.has(m.id)).map((m) => m.level);
-        dims.push([WEIGHT_MODULE, moduleMilestoneScore(levels, advanced.length)]);
+        // One weight per advanced module slot (`module_weight`): every module
+        // of a rarity costs the same, so a two-slot 6★ earns as much per Mod3
+        // as a one-slot one.
+        dims.push([WEIGHT_MODULE * advanced.length, milestoneScore(advancedModuleLevels(entry, advanced), advanced.length, moduleLadder)]);
     }
 
     const maxPot = maxPotential(op);
@@ -271,11 +280,11 @@ function operatorDimensions(entry: IRosterEntry, op: IOperatorListItem, rarity: 
 
 /**
  * How "complete" an owned operator is, as a 0..1 fraction - the weight-normalized
- * average of its applicable investment dimensions. Closely follows the backend's
- * `grade_operator` (same weights, milestone curves, and log-compressed leveling),
- * with one deliberate difference: potential is counted for every operator (see
- * {@link maxPotential}). Dimensions that don't apply are skipped (a 3★ has no
- * E2/mastery/module), so a fully-built low-rarity op still reaches 1.0.
+ * average of its applicable investment dimensions. Follows the backend's
+ * `grade_operator` (same milestone curves and log-compressed leveling; see
+ * {@link operatorDimensions} for where the weights differ). Dimensions that
+ * don't apply are skipped (a 3★ has no E2/mastery/module), so a fully-built
+ * low-rarity op still reaches 1.0.
  */
 export function operatorCompleteness(entry: IRosterEntry, op: IOperatorListItem, rarity: number): number {
     const dims = operatorDimensions(entry, op, rarity);
@@ -307,11 +316,10 @@ export function operatorMissing(entry: IRosterEntry, op: IOperatorListItem, t: C
     const advanced = advancedModules(op);
 
     const masteryLevels = entry.masteries.map((m) => m.mastery);
-    const skillsToM3 = canMaster ? numSkills - masteryLevels.filter((m) => m >= 3).length : 0;
+    const skillsToM3 = canMaster ? numSkills - masteryLevels.filter((m) => m >= MILESTONE).length : 0;
 
-    const advancedIds = new Set(advanced.map((m) => m.uniEquipId));
-    const moduleLevels = entry.modules.filter((m) => advancedIds.has(m.id)).map((m) => m.level);
-    const modulesToL3 = advanced.length - moduleLevels.filter((l) => l >= 3).length;
+    const moduleLevels = advancedModuleLevels(entry, advanced);
+    const modulesToL3 = advanced.length - moduleLevels.filter((l) => l >= MILESTONE).length;
 
     const maxPot = maxPotential(op);
 
@@ -332,18 +340,19 @@ export function operatorMissing(entry: IRosterEntry, op: IOperatorListItem, t: C
 
 /**
  * How expensive an operator is to fully build, by rarity. Mirrors the backend's
- * `rarity_to_weight` (grade_operators.rs): a maxed 6★ represents far more
- * invested EXP/LMD/materials than a maxed 3★, so it weighs ~6.7× as much and a
- * 1★ only 0.05×. Used to rank "most invested", since completeness alone treats a
- * finished 3★ the same as a finished 6★.
+ * `rarity_to_weight_in` (grade_operators.rs): the cost of a full build relative
+ * to a 6★ from the 2026-09-22 game-table census (5★ 0.44 to 0.54, 4★ 0.26 to
+ * 0.31, 3★ 0.03 to 0.06 depending on how the non-farmable tokens are valued).
+ * Used to rank "most invested", since completeness alone treats a finished 3★
+ * the same as a finished 6★.
  */
 export const RARITY_WEIGHT: Record<number, number> = {
     6: 1.0,
-    5: 0.7,
-    4: 0.4,
-    3: 0.15,
-    2: 0.1,
-    1: 0.05,
+    5: 0.5,
+    4: 0.3,
+    3: 0.05,
+    2: 0.02,
+    1: 0.01,
 };
 
 export interface IDerivedStats {
@@ -421,18 +430,19 @@ interface IModuleBonus {
     blockCnt: number;
 }
 
+const NO_MODULE_BONUS: IModuleBonus = { maxHp: 0, atk: 0, def: 0, magicResistance: 0, cost: 0, attackSpeed: 0, blockCnt: 0 };
+
 function statsFromModule(op: IOperatorListItem, currentEquip: string | null, rosterModules: IRosterEntry["modules"]): IModuleBonus {
-    const empty: IModuleBonus = { maxHp: 0, atk: 0, def: 0, magicResistance: 0, cost: 0, attackSpeed: 0, blockCnt: 0 };
-    if (!currentEquip) return empty;
+    if (!currentEquip) return NO_MODULE_BONUS;
     const equipped = op.modules.find((m) => m.uniEquipId === currentEquip);
-    if (!equipped?.data?.phases) return empty;
+    if (!equipped?.data?.phases) return NO_MODULE_BONUS;
     const rosterMod = rosterModules.find((m) => m.id === currentEquip);
     const lvl = rosterMod?.level ?? 0;
-    if (lvl <= 0) return empty;
+    if (lvl <= 0) return NO_MODULE_BONUS;
     const phase = equipped.data.phases[lvl - 1];
-    if (!phase?.attributeBlackboard) return empty;
+    if (!phase?.attributeBlackboard) return NO_MODULE_BONUS;
 
-    const out: IModuleBonus = { ...empty };
+    const out: IModuleBonus = { ...NO_MODULE_BONUS };
     for (const attr of phase.attributeBlackboard) {
         switch (attr.key) {
             case "max_hp":
@@ -473,7 +483,7 @@ export function getAttributeStats(entry: IOwnedEntry, op: IOperatorListItem): ID
     const maxLevel = phase.maxLevel;
     const trust = statsAtTrust(op.favorKeyFrames, entry.favor_point);
     const pot = statsAtPotential(op.potentialRanks, entry.potential);
-    const mod = entry.elite === 2 ? statsFromModule(op, entry.current_equip, entry.modules) : { maxHp: 0, atk: 0, def: 0, magicResistance: 0, cost: 0, attackSpeed: 0, blockCnt: 0 };
+    const mod = entry.elite === 2 ? statsFromModule(op, entry.current_equip, entry.modules) : NO_MODULE_BONUS;
 
     return {
         maxHp: lerpByLevel(entry.level, maxLevel, first.maxHp, last.maxHp) + trust.maxHp + pot.health + mod.maxHp,
