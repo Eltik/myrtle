@@ -173,7 +173,11 @@ export function StatsForNerds() {
                                             {Math.round(diff.efficiency_before)}% &rarr; {Math.round(diff.efficiency_after)}%
                                         </span>
                                         <span className="w-24 text-right font-mono tabular-nums">
-                                            <Delta from={diff.efficiency_before} suffix="%" to={diff.efficiency_after} />
+                                            {/* Every listed room has a changed crew; a dormitory or an
+                                                equal-output swap still reads 0% -> 0%, and "no change"
+                                                there hid the plan's dorm seating from a player copying
+                                                it 1:1. */}
+                                            {Math.round(diff.efficiency_before) === Math.round(diff.efficiency_after) ? <span className="text-muted-foreground">{t("profile.base.nerds.crewChanged")}</span> : <Delta from={diff.efficiency_before} suffix="%" to={diff.efficiency_after} />}
                                         </span>
                                     </div>
                                 ))}

@@ -1559,7 +1559,8 @@ fn compute_base_improvements(
         &morale_drains,
         &optimal_pins,
     );
-    let optimal = accepted.optimal;
+    let mut optimal = accepted.optimal;
+    crate::core::grade::base::assignment::align_rooms_to_current(&user_building, &mut optimal);
     let optimal_registry = accepted.registry;
     let optimal_pins = accepted.pins;
     let sustained = compute_sustained_assignment(

@@ -1176,6 +1176,8 @@ pub async fn optimize(
     })
     .await?;
 
+    let mut proposal = proposal;
+    crate::core::grade::base::assignment::align_rooms_to_current(&building, &mut proposal);
     let room_diffs = diff_rooms(&req.layout, &baseline, &proposal);
 
     Ok(OptimizeResponse {

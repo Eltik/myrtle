@@ -11,6 +11,10 @@ export const messages = {
         text: "no change",
         description: "Replaces a delta figure when the two numbers are equal. Lowercase on purpose.",
     },
+    "profile.base.nerds.crewChanged": {
+        text: "crew changes",
+        description: "Replaces the delta figure in the per-room changes list when the room's crew changes but its percentage does not (a dormitory, or a swap with equal output). Lowercase on purpose.",
+    },
     "profile.base.nerds.output": {
         text: "Output",
         description: "Section heading over what the base produces. Rendered uppercase by CSS.",

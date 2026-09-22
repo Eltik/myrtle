@@ -4793,6 +4793,53 @@ fn assign_single_room(
     }
 }
 
+/// Re-slot a proposal's rooms onto the slots the player already runs the
+/// same crews in: among rooms of one type and level the slots are
+/// interchangeable, and the search lays the gold/EXP split onto slots by
+/// the player's recipes, so a changed recipe permuted every factory and a
+/// player who had copied the plan was told every room changed (00980819,
+/// 2026-09-22). Greedy by crew overlap; a room keeps its slot on a tie.
+pub fn align_rooms_to_current(building: &UserBuilding, proposal: &mut BaseAssignment) {
+    let mut by_kind: HashMap<(String, i32), Vec<usize>> = HashMap::new();
+    for (i, r) in proposal.rooms.iter().enumerate() {
+        by_kind
+            .entry((r.room_type.clone(), r.level))
+            .or_default()
+            .push(i);
+    }
+    for ((room_type, level), idxs) in by_kind {
+        if idxs.len() < 2 {
+            continue;
+        }
+        let mut free_slots: Vec<&UserRoom> = building
+            .rooms
+            .iter()
+            .filter(|u| u.room_type == room_type && u.level == level)
+            .collect();
+        let mut pending = idxs.clone();
+        while !pending.is_empty() && !free_slots.is_empty() {
+            let mut best: Option<(usize, usize, usize, bool)> = None;
+            for (pi, &i) in pending.iter().enumerate() {
+                for (si, slot) in free_slots.iter().enumerate() {
+                    let overlap = proposal.rooms[i]
+                        .operators
+                        .iter()
+                        .filter(|o| slot.current_operators.contains(o))
+                        .count();
+                    let same = proposal.rooms[i].slot_id == slot.slot_id;
+                    if best.is_none_or(|(_, _, o, s)| overlap > o || (overlap == o && same && !s)) {
+                        best = Some((pi, si, overlap, same));
+                    }
+                }
+            }
+            let Some((pi, si, _, _)) = best else { break };
+            let i = pending.remove(pi);
+            let slot = free_slots.remove(si);
+            proposal.rooms[i].slot_id = slot.slot_id.clone();
+        }
+    }
+}
+
 /// A FIXED synergy squad: its operators depend on each other, so they can't be
 /// swapped without breaking the combo. True when the team mixes a nullifier
 /// (Shamare) with order-value partners, or any member's buff is gated on a
@@ -5265,7 +5312,18 @@ pub(crate) fn enumerate_candidate_teams(
                     &companions,
                 ) + enabler_boost.get(&op.char_id).copied().unwrap_or(0.0)
                     + capacity_boost(op)
-                    + value_boost;
+                    + value_boost
+                    // A per-operator Control-Center grant (Viviana's +7 to
+                    // Knights, Flametail's +10 Battle Records to Kazimierz)
+                    // is part of what this operator brings, and a bound that
+                    // ignored it cut the Knights at their flat 25 behind
+                    // every other 25 - the trio at 42 each was never
+                    // enumerated (00980819, 2026-09-22).
+                    + cc_conditions
+                        .iter()
+                        .filter(|c| c.per_operator)
+                        .map(|c| c.contribution(room_type, &[*op], formula_type).max(0.0))
+                        .sum::<f64>();
                 let specialist =
                     op_is_formula_specialist(op, room_type, formula_type, building_data);
                 (*op, bound, specialist)

@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-22T09:01:41.427Z",
+    "generatedAt": "2026-09-22T09:24:49.298Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -32199,6 +32199,13 @@
             "namespace": "user",
             "source_text": "Crew",
             "description": "Section heading over the stationed operators. Rendered uppercase by CSS.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.base.nerds.crewChanged",
+            "namespace": "user",
+            "source_text": "crew changes",
+            "description": "Replaces the delta figure in the per-room changes list when the room's crew changes but its percentage does not (a dormitory, or a swap with equal output). Lowercase on purpose.",
             "placeholders": []
         },
         {

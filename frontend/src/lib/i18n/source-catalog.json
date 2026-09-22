@@ -4332,6 +4332,7 @@
     "user.profile.base.nerds.comparison": "Optimized vs your base",
     "user.profile.base.nerds.consumed": "Consumed",
     "user.profile.base.nerds.crew": "Crew",
+    "user.profile.base.nerds.crewChanged": "crew changes",
     "user.profile.base.nerds.days": "{days}d",
     "user.profile.base.nerds.depleting": "Operators depleting",
     "user.profile.base.nerds.dormAura": "+{rate} aura",

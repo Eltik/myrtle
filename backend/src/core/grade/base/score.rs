@@ -1,7 +1,5 @@
 use crate::core::gamedata::types::{GameData, building::BuildingDataFile};
-use crate::core::grade::base::assignment::{
-    compute_live_assignment, compute_sustained_assignment, sustained_assignment_value,
-};
+use crate::core::grade::base::assignment::{compute_live_assignment, sustained_assignment_value};
 use crate::database::models::roster::RosterEntry;
 
 use super::{
@@ -186,40 +184,31 @@ fn best_yield(
     registry: &HashMap<String, BuffResolutionStrategy>,
     morale_drains: &HashMap<String, f64>,
 ) -> f64 {
-    let sustained =
-        compute_sustained_assignment(profiles, building, building_data, registry, morale_drains);
-    let main = sustained_assignment_value(
-        &sustained.main,
+    // The bar is the plan the Optimizer tab shows - the bundle-searched
+    // optimal - valued sustained. A player who copies that plan reads
+    // 100%; held against a plan the tab never shows (the cap-aware
+    // sustained selection, 3% above it on 00980819), a perfect copy read
+    // 96% and the player asked why (2026-09-22). The bundle search is the
+    // expensive part of a grade (a few seconds in release); it runs on
+    // the blocking pool like every other base search.
+    let economy = super::pools::search_economy(profiles, building, building_data, registry);
+    let accepted = super::pools::optimal_with_bundles(
         profiles,
         building,
         building_data,
         registry,
-        morale_drains,
-    );
-    // The Optimizer tab's plan is a second candidate for "best": the two
-    // searches differ by a few percent either way, and a player who copies
-    // the tab must not be held to a bar the tab cannot reach. One search
-    // with the tab's solved economy and pins stands in for the tab's full
-    // bundle trials, which cost 30 s in a debug build - the grade runs at
-    // every sync. A tab plan above this bar clamps to 100%.
-    let economy = super::pools::search_economy(profiles, building, building_data, registry);
-    let pinned = super::assignment::compute_optimal_assignment_with_pins(
-        profiles,
-        building,
-        building_data,
         &economy.registry,
         morale_drains,
         &economy.pins,
     );
-    let tab = sustained_assignment_value(
-        &pinned,
+    sustained_assignment_value(
+        &accepted.optimal,
         profiles,
         building,
         building_data,
         registry,
         morale_drains,
-    );
-    main.max(tab)
+    )
 }
 
 /// The same layout with every room upgraded to its max level (`phases` count

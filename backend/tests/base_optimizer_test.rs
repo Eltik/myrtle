@@ -10847,3 +10847,154 @@ fn the_rotation_sells_proviso_at_the_lower_post_and_shamare_at_the_higher() {
         "both sell where they pay most: {posts:?}"
     );
 }
+
+/// A proposal is re-slotted onto the slots the player already runs the same
+/// crews in: among rooms of one type and level the slots are interchangeable,
+/// and a permuted proposal read as "every room changed" to a player who had
+/// copied it (00980819, 2026-09-22).
+#[test]
+fn a_permuted_proposal_is_aligned_to_the_players_slots() {
+    use backend::core::grade::base::assignment::align_rooms_to_current;
+    use backend::core::grade::base::types::{BaseAssignment, RoomAssignment};
+    let crew_a = vec!["a1".to_string(), "a2".to_string()];
+    let crew_b = vec!["b1".to_string(), "b2".to_string()];
+    let crew_c = vec!["c1".to_string()];
+    let mut building = UserBuilding {
+        rooms: vec![
+            room("mf0", "MANUFACTURE", 3),
+            room("mf1", "MANUFACTURE", 3),
+            room("mf2", "MANUFACTURE", 2),
+        ],
+    };
+    building.rooms[0].current_operators = crew_a.clone();
+    building.rooms[1].current_operators = crew_b.clone();
+    building.rooms[2].current_operators = crew_c.clone();
+    let mk = |slot: &str, level: i32, ops: &[String], formula: &str| RoomAssignment {
+        slot_id: slot.into(),
+        room_type: "MANUFACTURE".into(),
+        level,
+        formula_type: Some(formula.into()),
+        operators: ops.to_vec(),
+        ..Default::default()
+    };
+    let mut proposal = BaseAssignment {
+        rooms: vec![
+            mk("mf0", 3, &crew_b, "F_EXP"),
+            mk("mf1", 3, &crew_a, "F_GOLD"),
+            mk("mf2", 2, &crew_c, "F_GOLD"),
+        ],
+        total_production_efficiency: 0.0,
+        bench: Vec::new(),
+    };
+    align_rooms_to_current(&building, &mut proposal);
+    let slot_of = |ops: &[String]| {
+        proposal
+            .rooms
+            .iter()
+            .find(|r| r.operators == ops)
+            .map(|r| (r.slot_id.clone(), r.formula_type.clone()))
+    };
+    assert_eq!(
+        slot_of(&crew_a),
+        Some(("mf0".into(), Some("F_GOLD".into()))),
+        "crew A keeps its slot, recipe travels with it"
+    );
+    assert_eq!(slot_of(&crew_b), Some(("mf1".into(), Some("F_EXP".into()))));
+    assert_eq!(
+        slot_of(&crew_c),
+        Some(("mf2".into(), Some("F_GOLD".into()))),
+        "a level-2 room never trades with level-3 ones"
+    );
+}
+
+/// Viviana's "+7% to Knight operators in Factories" is worth a Control
+/// Center seat only once the Knights sit in a factory, and the Knights are
+/// worth that factory only with her seated: three plain +25 Knights read 96
+/// with her against 75, and a roster whose other factory hands are weaker
+/// should field the trio with her in the Control Center. The greedy seat
+/// picker never took her (a discounted guess against flat bonuses); a
+/// bundle trial pins her and keeps the plan when the base gains.
+#[test]
+fn a_knight_trio_is_assembled_with_viviana_in_the_control_center() {
+    const VIVIANA: &str = "char_4098_vvana";
+    const KNIGHTS: [&str; 3] = ["char_430_fartth", "char_431_ashlok", "char_496_wildmn"];
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let mut roster: Vec<_> = [
+        VIVIANA,
+        KNIGHTS[0],
+        KNIGHTS[1],
+        KNIGHTS[2],
+        "char_003_kalts",
+        "char_002_amiya",
+    ]
+    .iter()
+    .map(|id| profile(gd, id))
+    .collect();
+    // Weaker generic hands: +15% (E0 tier) operators, and two order traders.
+    for id in [
+        "char_123_fang",
+        "char_133_mm",
+        "char_502_nblade",
+        "char_124_kroos",
+        "char_102_texas",
+        "char_140_whitew",
+    ] {
+        if gd.building.chars.contains_key(id) {
+            roster.push(profile_at(gd, id, 0));
+        }
+    }
+    let mut rooms = vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)];
+    let mut mf = room("mf0", "MANUFACTURE", 3);
+    mf.current_formula = Some("F_GOLD".into());
+    rooms.push(mf);
+    rooms.extend((0..2).map(|i| room(&format!("d{i}"), "DORMITORY", 3)));
+    let building = UserBuilding { rooms };
+    let economy = backend::core::grade::base::pools::search_economy(
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+    );
+    let accepted = backend::core::grade::base::pools::optimal_with_bundles(
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+        &economy.registry,
+        &drains,
+        &economy.pins,
+    );
+    let cc = accepted
+        .optimal
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "CONTROL")
+        .expect("a CC");
+    let factory = accepted
+        .optimal
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "MANUFACTURE")
+        .expect("a factory");
+    assert!(
+        cc.operators.iter().any(|o| o == VIVIANA),
+        "Viviana sits in the Control Center, got {:?}",
+        cc.operators
+    );
+    let knights = factory
+        .operators
+        .iter()
+        .filter(|o| KNIGHTS.contains(&o.as_str()))
+        .count();
+    assert_eq!(
+        knights, 3,
+        "the Knights share the factory, got {:?} at {:.1}",
+        factory.operators, factory.total_efficiency
+    );
+    assert!(
+        factory.total_efficiency >= 96.0,
+        "three Knights at +32 each: {:.1}",
+        factory.total_efficiency
+    );
+}

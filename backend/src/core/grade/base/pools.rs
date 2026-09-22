@@ -879,6 +879,89 @@ fn shared_pool_bundles(
 /// "+1" needs her plant seat. Offered only when the roster fields an
 /// automation scaler that reads the count (Weedy, Eunectes, Pudding); the
 /// oracle keeps the seats if the boosted count pays for them.
+/// A Control-Center operator whose bonus is gated on a production room's
+/// crew (Viviana: "all Knight Operators assigned to Factories +7%") is a
+/// seat the greedy Control-Center selector rarely takes: her selection
+/// weight is a discounted guess, and the crews that would earn it are
+/// only assembled once she sits. For each such operator whose faction the
+/// roster fields at least twice with a skill for the target room, pin her
+/// into the Control Center and let the caller's oracle keep the plan if
+/// the base gains (00980819 ran Fartooth/Ashlock/Wild Mane with Viviana
+/// where the plan never assembled them, 2026-09-22).
+fn cc_conditional_bundles(
+    profiles: &[OperatorBaseProfile],
+    building: &UserBuilding,
+    building_data: &BuildingDataFile,
+    registry: &HashMap<String, BuffResolutionStrategy>,
+) -> Vec<EconomyPlan> {
+    if !building.rooms.iter().any(|r| r.room_type == "CONTROL") {
+        return Vec::new();
+    }
+    let mut bundles = Vec::new();
+    // (operator, the operators their grant reaches) per qualifying seat.
+    let mut seats: Vec<(String, HashSet<String>)> = Vec::new();
+    for op in profiles {
+        for bonus in super::assignment::cc_bonuses(op, registry, building_data) {
+            let Some(cond) = bonus.conditional else {
+                continue;
+            };
+            if !cond.per_operator
+                || !building
+                    .rooms
+                    .iter()
+                    .any(|r| r.room_type == cond.target_room)
+            {
+                continue;
+            }
+            let reached: HashSet<String> = profiles
+                .iter()
+                .filter(|p| p.char_id != op.char_id)
+                .filter(|p| super::assignment::cc_token_matches(p, &cond.faction_token))
+                .filter(|p| {
+                    p.available_buffs.iter().any(|b| {
+                        building_data
+                            .buffs
+                            .get(b)
+                            .is_some_and(|buff| buff.room_type == cond.target_room)
+                    })
+                })
+                .map(|p| p.char_id.clone())
+                .collect();
+            if reached.len() < 2 {
+                continue;
+            }
+            bundles.push(EconomyPlan {
+                overrides: Vec::new(),
+                pins: vec![(op.char_id.clone(), "CONTROL".to_string())],
+                globals: Vec::new(),
+                beneficiary: None,
+            });
+            seats.push((op.char_id.clone(), reached));
+            break;
+        }
+    }
+    // Two seats whose grants reach the same operators pay TOGETHER (Viviana's
+    // +7 to Knights and Flametail's +10 Battle Records to Kazimierz land on
+    // the same trio: 128 with both, 96 with one), so each overlapping pair
+    // is also tried as one bundle.
+    for i in 0..seats.len() {
+        for j in (i + 1)..seats.len() {
+            if seats[i].1.intersection(&seats[j].1).count() >= 2 {
+                bundles.push(EconomyPlan {
+                    overrides: Vec::new(),
+                    pins: vec![
+                        (seats[i].0.clone(), "CONTROL".to_string()),
+                        (seats[j].0.clone(), "CONTROL".to_string()),
+                    ],
+                    globals: Vec::new(),
+                    beneficiary: None,
+                });
+            }
+        }
+    }
+    bundles
+}
+
 fn facility_count_bundles(
     profiles: &[OperatorBaseProfile],
     registry: &HashMap<String, BuffResolutionStrategy>,
@@ -1037,6 +1120,12 @@ pub fn candidate_bundles(
 ) -> Vec<EconomyPlan> {
     let mut bundles = shared_pool_bundles(profiles, building, building_data, registry);
     bundles.extend(facility_count_bundles(profiles, registry));
+    bundles.extend(cc_conditional_bundles(
+        profiles,
+        building,
+        building_data,
+        registry,
+    ));
     bundles.extend(base_count_bundles(
         profiles,
         building,
@@ -1455,6 +1544,9 @@ pub fn optimal_with_bundles(
     use super::assignment::{assignment_value, compute_optimal_assignment_with_pins};
     let mut optimal_registry = search_registry.clone();
     let mut optimal_pins: Vec<(String, String)> = pins.to_vec();
+    // Control Center pins accepted from PLAIN bundles (seats only): a later
+    // plain bundle may displace them to compete for the seats.
+    let mut plain_cc: HashSet<String> = HashSet::new();
     let mut optimal = compute_optimal_assignment_with_pins(
         profiles,
         building,
@@ -1507,11 +1599,50 @@ pub fn optimal_with_bundles(
         }
         let mut trial_pins = optimal_pins.clone();
         trial_pins.extend(bundle.pins.iter().cloned());
+        let plain_bundle = bundle.overrides.is_empty() && bundle.globals.is_empty();
         // Pins are seats: a bundle that, with the pins already accepted, needs
-        // more seats of a room type than the base has cannot be run (the
-        // Mujica five plus Dusk and Ling made a seven-seat Control Center).
+        // more seats of a room type than the base has cannot be run as is
+        // (the Mujica five plus Dusk and Ling made a seven-seat Control
+        // Center). A PLAIN bundle (seats only, no priced economy) may still
+        // compete for the Control Center against the plain pins accepted
+        // before it: those are dropped, the bundle's seats added, and the
+        // trial keeps the plan only if the base gains. Without this the
+        // first five Control Center pins accepted were final, and Viviana
+        // with Flametail (128 on the Knight trio) was never tried (00980819).
+        let mut displaced: Vec<String> = Vec::new();
         if !pins_fit(building, building_data, &trial_pins) {
-            continue;
+            if !plain_bundle {
+                continue;
+            }
+            // The most recently accepted plain seats go first, one at a
+            // time, until the bundle fits: an early seat (Eunectes' plant
+            // count) is worth more than a late filler (a displaced robot).
+            let candidates: Vec<String> = optimal_pins
+                .iter()
+                .filter(|(id, rt)| {
+                    rt == "CONTROL"
+                        && plain_cc.contains(id)
+                        && !bundle.pins.iter().any(|(b, _)| b == id)
+                })
+                .map(|(id, _)| id.clone())
+                .collect();
+            let mut fits = false;
+            for id in candidates.iter().rev() {
+                displaced.push(id.clone());
+                trial_pins = optimal_pins
+                    .iter()
+                    .filter(|(pid, _)| !displaced.contains(pid))
+                    .cloned()
+                    .collect();
+                trial_pins.extend(bundle.pins.iter().cloned());
+                if pins_fit(building, building_data, &trial_pins) {
+                    fits = true;
+                    break;
+                }
+            }
+            if !fits {
+                continue;
+            }
         }
         let trial = compute_optimal_assignment_with_pins(
             profiles,
@@ -1525,6 +1656,18 @@ pub fn optimal_with_bundles(
             optimal = trial;
             optimal_registry = trial_registry;
             optimal_pins = trial_pins;
+            for id in &displaced {
+                plain_cc.remove(id);
+            }
+            if plain_bundle {
+                plain_cc.extend(
+                    bundle
+                        .pins
+                        .iter()
+                        .filter(|(_, rt)| rt == "CONTROL")
+                        .map(|(id, _)| id.clone()),
+                );
+            }
         }
     }
     AcceptedEconomy {
