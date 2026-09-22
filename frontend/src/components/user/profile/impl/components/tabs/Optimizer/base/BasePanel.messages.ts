@@ -39,6 +39,14 @@ export const messages = {
         text: "Re-optimize",
         description: "Button label that runs the optimizer again over an already-planned board.",
     },
+    "profile.base.wip": {
+        text: "The base optimizer is a work in progress. If a recommendation looks wrong, please report it on Discord.",
+        description: "Disclaimer shown at the top of the base optimizer tab. 'Discord' is a link to the community server.",
+    },
+    "profile.base.wip.link": {
+        text: "Discord",
+        description: "The link text inside the base optimizer disclaimer, pointing at the community Discord server.",
+    },
     "profile.base.optimize": {
         text: "Optimize",
         description: "Button label that runs the optimizer for the first time.",

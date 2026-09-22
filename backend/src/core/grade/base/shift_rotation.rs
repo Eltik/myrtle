@@ -534,6 +534,7 @@ fn rotation_core(
                 cc_conditions,
                 morale_drains,
                 &HashMap::new(),
+                &HashMap::new(),
                 &memo,
             )
         },
@@ -554,6 +555,8 @@ fn rotation_core(
         preset_sustained_operators(building, operators, morale_drains, registry, building_data);
     let managers = num_morale_swap_managers(operators, building_data);
     let op_index = build_op_index(operators);
+    // The post the oracle priced each candidate's 24/7 seat at.
+    let mut oracle_slot: HashMap<String, String> = HashMap::new();
     if sustained.len() < managers && super::dorms::building_hosts_manager(building, building_data) {
         let recovery = morale_recovery(building);
         // Swap feasibility: the manager can only hold an operator whose drain
@@ -567,6 +570,11 @@ fn rotation_core(
         let mut exclude_base: HashSet<String> = cc_plan.squad1.iter().cloned().collect();
         exclude_base.extend(pinned_ids.iter().cloned());
         let mut cands: Vec<(String, f64)> = Vec::new();
+        let trading_slots: Vec<String> = groups
+            .iter()
+            .filter(|g| g.room_type == "TRADING")
+            .flat_map(|g| g.rooms.iter().map(|(s, _)| s.clone()))
+            .collect();
         for g in groups.iter().filter(|g| g.room_type == "TRADING") {
             let group_rooms: Vec<String> = g.rooms.iter().map(|(s, _)| s.clone()).collect();
             for team in g.teams.iter().filter(|t| !t.ops.is_empty()) {
@@ -583,57 +591,74 @@ fn rotation_core(
                     if !feasible {
                         continue;
                     }
-                    let Some(slot) = preset_room_of(building, id)
-                        .filter(|slot| group_rooms.contains(slot))
-                        .or_else(|| group_rooms.first().cloned())
-                    else {
-                        continue;
+                    // The seat is tried at EVERY trading post, and the best
+                    // one is kept: a value shape pays by post level (Proviso
+                    // at a level-2 post, the Shamare squad at level 3), and
+                    // "the first room of her group" pinned Proviso to the
+                    // level-3 post, where the plan then built Shamare's squad
+                    // around her (31010962). A saved preset that holds the
+                    // operator in a post still wins outright.
+                    let slots: Vec<String> = match preset_room_of(building, id)
+                        .filter(|slot| trading_slots.contains(slot))
+                    {
+                        Some(slot) => vec![slot],
+                        None => trading_slots.clone(),
                     };
-                    let mut exclude = exclude_base.clone();
-                    exclude.insert(id.clone());
-                    let reserved: HashMap<String, usize> = HashMap::from([(slot.clone(), 1)]);
-                    let mut pinned_plan = plan_production_groups(
-                        &production_rooms,
-                        operators,
-                        &exclude,
-                        registry,
-                        building_data,
-                        &facility_counts,
-                        total_dorm_levels,
-                        &cc_plan.global_bonuses,
-                        &cc_plan.conditions,
-                        morale_drains,
-                        &reserved,
-                        &memo,
-                    );
-                    let unseated = tiled_objective(&pinned_plan, &cc_plan.global_bonuses);
-                    seat_pinned_operator(
-                        &mut pinned_plan,
-                        &slot,
-                        id,
-                        &op_index,
-                        registry,
-                        building_data,
-                        &facility_counts,
-                        total_dorm_levels,
-                        morale_drains,
-                        &cc_plan.conditions,
-                    );
-                    let seated = tiled_objective(&pinned_plan, &cc_plan.global_bonuses);
-                    let delta = (seated - unseated).max(0.0);
+                    let _ = &group_rooms;
                     let uptime = op_index
                         .get(id.as_str())
                         .map_or(1.0, |op| op_uptime(op, morale_drains, recovery));
                     // Without the manager the operator works ~2 of 3 shifts at their
                     // morale-limited uptime; with it, all three at full.
                     let extra_uptime = 1.0 - uptime * (2.0 / 3.0);
-                    if std::env::var_os("BASE_PIN_TRACE").is_some() {
-                        eprintln!(
-                            "[pin] {id} @ {slot}: unseated {unseated:.1} seated {seated:.1} uptime {uptime:.2} -> gain {:.1}",
-                            delta * extra_uptime
+                    let mut best: Option<(String, f64)> = None;
+                    for slot in slots {
+                        let mut exclude = exclude_base.clone();
+                        exclude.insert(id.clone());
+                        let reserved: HashMap<String, usize> = HashMap::from([(slot.clone(), 1)]);
+                        let mut pinned_plan = plan_production_groups(
+                            &production_rooms,
+                            operators,
+                            &exclude,
+                            registry,
+                            building_data,
+                            &facility_counts,
+                            total_dorm_levels,
+                            &cc_plan.global_bonuses,
+                            &cc_plan.conditions,
+                            morale_drains,
+                            &reserved,
+                            &HashMap::new(),
+                            &memo,
                         );
+                        let unseated = tiled_objective(&pinned_plan, &cc_plan.global_bonuses);
+                        seat_pinned_operator(
+                            &mut pinned_plan,
+                            &slot,
+                            id,
+                            &op_index,
+                            registry,
+                            building_data,
+                            &facility_counts,
+                            total_dorm_levels,
+                            morale_drains,
+                            &cc_plan.conditions,
+                        );
+                        let seated = tiled_objective(&pinned_plan, &cc_plan.global_bonuses);
+                        let gain = (seated - unseated).max(0.0) * extra_uptime;
+                        if std::env::var_os("BASE_PIN_TRACE").is_some() {
+                            eprintln!(
+                                "[pin] {id} @ {slot}: unseated {unseated:.1} seated {seated:.1} uptime {uptime:.2} -> gain {gain:.1}"
+                            );
+                        }
+                        if best.as_ref().is_none_or(|(_, g)| gain > *g + 1e-9) {
+                            best = Some((slot, gain));
+                        }
                     }
-                    cands.push((id.clone(), delta * extra_uptime));
+                    if let Some((slot, gain)) = best {
+                        oracle_slot.insert(id.clone(), slot);
+                        cands.push((id.clone(), gain));
+                    }
                 }
             }
         }
@@ -662,8 +687,22 @@ fn rotation_core(
         let group_rooms: Vec<String> = g.rooms.iter().map(|(s, _)| s.clone()).collect();
         for team in &g.teams {
             for op in team.ops.iter().filter(|op| sustained.contains(*op)) {
+                // The preset's post, else the post the oracle priced the
+                // seat at, else the first room of the operator's group. A
+                // trading preset may name a post in ANOTHER level's group
+                // (the posts are grouped per level), and the player's
+                // choice still wins.
+                let same_kind = |slot: &String| {
+                    group_rooms.contains(slot)
+                        || (g.room_type == "TRADING"
+                            && groups
+                                .iter()
+                                .filter(|h| h.room_type == "TRADING")
+                                .any(|h| h.rooms.iter().any(|(s, _)| s == slot)))
+                };
                 let room = preset_room_of(building, op)
-                    .filter(|slot| group_rooms.contains(slot))
+                    .filter(same_kind)
+                    .or_else(|| oracle_slot.get(op).cloned())
                     .or_else(|| group_rooms.first().cloned());
                 if let Some(slot) = room {
                     kept_by_room.entry(slot).or_default().push(op.clone());
@@ -693,10 +732,6 @@ fn rotation_core(
         // Teams re-planned around the pin and without the heavy drainers: the
         // pinned operator is out of the pool and their permanent slot shrinks
         // the teams that only ever work their room.
-        let reserved: HashMap<String, usize> = kept_by_room
-            .iter()
-            .map(|(slot, ops)| (slot.clone(), ops.len()))
-            .collect();
         groups = plan_production_groups(
             &production_rooms,
             operators,
@@ -708,7 +743,8 @@ fn rotation_core(
             &cc_plan.global_bonuses,
             &cc_plan.conditions,
             morale_drains,
-            &reserved,
+            &HashMap::new(),
+            &kept_by_room,
             &memo,
         );
     }
@@ -877,17 +913,33 @@ fn rotation_core(
         let mut linked: Option<usize> = None;
         let mut best_weight = 0.0;
         for (ti, team) in g.teams.iter().enumerate() {
-            let profiles: Vec<&OperatorBaseProfile> = team
-                .ops
-                .iter()
-                .filter_map(|id| op_index.get(id.as_str()).copied())
-                .collect();
-            let weight: f64 = cc_plan
-                .conditions
-                .iter()
-                .map(|c| c.contribution(&g.room_type, &profiles, g.formula_type.as_deref()))
-                .sum();
-            if weight > best_weight {
+            if team.ops.is_empty() {
+                continue;
+            }
+            // What the Control Center's conditions ADD to this team as
+            // scored - not what they would grant on paper. A nullifier
+            // kills a per-operator grant on its roommates (Umiri's Siracusa
+            // +5% on Texas and Lappland under Shamare), and a team linked
+            // on paper was swapped onto the two-shift block over the squad
+            // that actually earns there (00980819, 2026-09-21).
+            let scored = |conditions: &[super::assignment::CcCondition]| {
+                compute_team_efficiency(
+                    &team.ops,
+                    &g.room_type,
+                    g.formula_type.as_deref(),
+                    None,
+                    &op_index,
+                    registry,
+                    building_data,
+                    &facility_counts,
+                    total_dorm_levels,
+                    morale_drains,
+                    conditions,
+                )
+                .0
+            };
+            let weight = scored(&cc_plan.conditions) - scored(&[]);
+            if weight > best_weight + 1e-9 {
                 best_weight = weight;
                 linked = Some(ti);
             }

@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-21T09:51:50.906Z",
+    "generatedAt": "2026-09-22T09:01:41.427Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -10977,6 +10977,38 @@
             "placeholders": []
         },
         {
+            "key": "meta.stories.description",
+            "namespace": "meta",
+            "source_text": "Read every Arknights story: main chapters, events and operator records.",
+            "description": "Meta description of the story library.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.stories.title",
+            "namespace": "meta",
+            "source_text": "Stories",
+            "description": "Document title of the story library (the Archives reader).",
+            "placeholders": []
+        },
+        {
+            "key": "meta.story.description",
+            "namespace": "meta",
+            "source_text": "Read {name} in the Arknights story reader.",
+            "description": "Meta description of one story. `{name}` is the group and story name from game data.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "meta.story.title",
+            "namespace": "meta",
+            "source_text": "{name} - Story",
+            "description": "Document title of one story. `{name}` is the group and story name from game data.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
             "key": "meta.terms.description",
             "namespace": "meta",
             "source_text": "Legal agreement governing your use of Myrtle.",
@@ -11832,6 +11864,20 @@
             "namespace": "nav",
             "source_text": "Stages",
             "description": "Palette entry for the stage (mission map) browser.",
+            "placeholders": []
+        },
+        {
+            "key": "nav.page.stories.desc",
+            "namespace": "nav",
+            "source_text": "Read main chapters, events and operator records",
+            "description": "Blurb under the Stories palette entry.",
+            "placeholders": []
+        },
+        {
+            "key": "nav.page.stories.label",
+            "namespace": "nav",
+            "source_text": "Stories",
+            "description": "Palette entry for the story reader (the game's Archives).",
             "placeholders": []
         },
         {
@@ -18275,6 +18321,682 @@
                 "total",
                 "versions"
             ]
+        },
+        {
+            "key": "story.backlog.choice",
+            "namespace": "story",
+            "source_text": "Choice: {text}",
+            "description": "Backlog row for a decision the reader made; `{text}` is the chosen option.",
+            "placeholders": [
+                "text"
+            ]
+        },
+        {
+            "key": "story.backlog.copied",
+            "namespace": "story",
+            "source_text": "Copied",
+            "description": "Button label right after a successful copy.",
+            "placeholders": []
+        },
+        {
+            "key": "story.backlog.copy",
+            "namespace": "story",
+            "source_text": "Copy",
+            "description": "Button copying the backlog as plain text.",
+            "placeholders": []
+        },
+        {
+            "key": "story.backlog.empty",
+            "namespace": "story",
+            "source_text": "Nothing read yet.",
+            "description": "Backlog empty state.",
+            "placeholders": []
+        },
+        {
+            "key": "story.backlog.title",
+            "namespace": "story",
+            "source_text": "Backlog",
+            "description": "Title of the dialog listing every line read so far.",
+            "placeholders": []
+        },
+        {
+            "key": "story.category.is",
+            "namespace": "story",
+            "source_text": "Integrated Strategies",
+            "description": "Story category: the roguelike mode's stories. Game mode name, keep the official translation.",
+            "placeholders": []
+        },
+        {
+            "key": "story.category.main",
+            "namespace": "story",
+            "source_text": "Main story",
+            "description": "Story category: the mainline chapters.",
+            "placeholders": []
+        },
+        {
+            "key": "story.category.reclamation",
+            "namespace": "story",
+            "source_text": "Reclamation Algorithm",
+            "description": "Story category: the survival mode's stories. Game mode name, keep the official translation.",
+            "placeholders": []
+        },
+        {
+            "key": "story.category.record",
+            "namespace": "story",
+            "source_text": "Operator records",
+            "description": "Story category: per-operator record stories from the handbook.",
+            "placeholders": []
+        },
+        {
+            "key": "story.category.side",
+            "namespace": "story",
+            "source_text": "Side stories",
+            "description": "Story category: event stories (side stories and intermezzi).",
+            "placeholders": []
+        },
+        {
+            "key": "story.category.sideContent",
+            "namespace": "story",
+            "source_text": "Other",
+            "description": "Story category for anything the derivation could not place.",
+            "placeholders": []
+        },
+        {
+            "key": "story.category.vignette",
+            "namespace": "story",
+            "source_text": "Vignettes",
+            "description": "Story category: the small seasonal event stories the game calls Vignettes.",
+            "placeholders": []
+        },
+        {
+            "key": "story.chapter.category",
+            "namespace": "story",
+            "source_text": "Category",
+            "description": "Label of the category select in the chapter-jump dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "story.chapter.group",
+            "namespace": "story",
+            "source_text": "Group",
+            "description": "Label of the story group select (chapter or event).",
+            "placeholders": []
+        },
+        {
+            "key": "story.chapter.noScript",
+            "namespace": "story",
+            "source_text": "(no script)",
+            "description": "Suffix on a story option whose script is missing.",
+            "placeholders": []
+        },
+        {
+            "key": "story.chapter.open",
+            "namespace": "story",
+            "source_text": "Open",
+            "description": "Button that navigates to the selected story.",
+            "placeholders": []
+        },
+        {
+            "key": "story.chapter.operator",
+            "namespace": "story",
+            "source_text": "Operator",
+            "description": "Label of the operator select when the category is operator records.",
+            "placeholders": []
+        },
+        {
+            "key": "story.chapter.story",
+            "namespace": "story",
+            "source_text": "Story",
+            "description": "Label of the story select.",
+            "placeholders": []
+        },
+        {
+            "key": "story.chapter.title",
+            "namespace": "story",
+            "source_text": "Jump to a story",
+            "description": "Title of the chapter-jump dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "story.library.continue",
+            "namespace": "story",
+            "source_text": "Continue reading",
+            "description": "Heading of the row that resumes the last story opened.",
+            "placeholders": []
+        },
+        {
+            "key": "story.library.continueLine",
+            "namespace": "story",
+            "source_text": "Line {line} of {total}",
+            "description": "Position under the continue row; 1-based line counts.",
+            "placeholders": [
+                "line",
+                "total"
+            ]
+        },
+        {
+            "key": "story.library.count",
+            "namespace": "story",
+            "source_text": "{count, plural, one {# story} other {# stories}}",
+            "description": "Story count next to a group header.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.library.description",
+            "namespace": "story",
+            "source_text": "Read every Arknights story: main chapters, events and operator records.",
+            "description": "Page subtitle of the story library.",
+            "placeholders": []
+        },
+        {
+            "key": "story.library.finished",
+            "namespace": "story",
+            "source_text": "Finished",
+            "description": "Badge on a story the reader has completed.",
+            "placeholders": []
+        },
+        {
+            "key": "story.library.noScript",
+            "namespace": "story",
+            "source_text": "No script",
+            "description": "Badge on a story whose script file is missing from the served data.",
+            "placeholders": []
+        },
+        {
+            "key": "story.library.title",
+            "namespace": "story",
+            "source_text": "Stories",
+            "description": "Page title of the story library.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.end.again",
+            "namespace": "story",
+            "source_text": "Read again",
+            "description": "End card button restarting the story.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.end.body",
+            "namespace": "story",
+            "source_text": "Use Chapter to pick another, or press the left arrow key to look back.",
+            "description": "End card body. `Chapter` is the toolbar button of that name; the left arrow key steps back through the lines already read.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.end.library",
+            "namespace": "story",
+            "source_text": "Back to library",
+            "description": "End card link to the story library.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.end.next",
+            "namespace": "story",
+            "source_text": "Next story",
+            "description": "End card button to the next story in the same group.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.end.previous",
+            "namespace": "story",
+            "source_text": "Previous story",
+            "description": "End card button to the previous story in the same group.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.end.title",
+            "namespace": "story",
+            "source_text": "End of story",
+            "description": "Heading of the end card.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.error.noScript",
+            "namespace": "story",
+            "source_text": "This story has no script file in the served data.",
+            "description": "Shown when the library lists a story but the backend has no script for it.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.error.notFound",
+            "namespace": "story",
+            "source_text": "Story not found.",
+            "description": "Shown for an unknown story id.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.line.continue",
+            "namespace": "story",
+            "source_text": "Continue",
+            "description": "Accessible label of the chevron that marks a finished line.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.loading",
+            "namespace": "story",
+            "source_text": "Loading story…",
+            "description": "Loading state of the reader.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.narrator",
+            "namespace": "story",
+            "source_text": "Narration",
+            "description": "Speaker label used in the backlog for lines with no speaker.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.progress",
+            "namespace": "story",
+            "source_text": "Reading progress",
+            "description": "Accessible label of the thin progress bar across the top of the reader.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.stage.label",
+            "namespace": "story",
+            "source_text": "Story stage. Click to advance.",
+            "description": "Accessible label of the scene area.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.title.begin",
+            "namespace": "story",
+            "source_text": "Click or press Space to begin",
+            "description": "Hint on the title card shown before the first line.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.title.resume",
+            "namespace": "story",
+            "source_text": "You left off at line {line} of {total}.",
+            "description": "Resume prompt body. `{line}` and `{total}` are 1-based line counts.",
+            "placeholders": [
+                "line",
+                "total"
+            ]
+        },
+        {
+            "key": "story.reader.title.resumeButton",
+            "namespace": "story",
+            "source_text": "Resume from line {line}",
+            "description": "Resume prompt button; `{line}` is 1-based.",
+            "placeholders": [
+                "line"
+            ]
+        },
+        {
+            "key": "story.reader.title.startOver",
+            "namespace": "story",
+            "source_text": "Start over",
+            "description": "Resume prompt button that begins the story from the first line.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.toolbar.auto",
+            "namespace": "story",
+            "source_text": "Auto",
+            "description": "Toolbar toggle for auto-play (lines advance on their own). Short; sits in a compact toolbar.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.toolbar.back",
+            "namespace": "story",
+            "source_text": "Library",
+            "description": "Toolbar button that leaves the reader for the story library.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.toolbar.chapter",
+            "namespace": "story",
+            "source_text": "Chapter",
+            "description": "Toolbar button opening the jump-to-story dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.toolbar.exitFullscreen",
+            "namespace": "story",
+            "source_text": "Exit fullscreen",
+            "description": "Toolbar button leaving fullscreen.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.toolbar.fullscreen",
+            "namespace": "story",
+            "source_text": "Fullscreen",
+            "description": "Toolbar button entering fullscreen.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.toolbar.hide",
+            "namespace": "story",
+            "source_text": "Hide",
+            "description": "Toolbar toggle that hides the text box so the scene art is unobstructed.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.toolbar.log",
+            "namespace": "story",
+            "source_text": "Log",
+            "description": "Toolbar button opening the backlog of lines read so far.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.toolbar.mute",
+            "namespace": "story",
+            "source_text": "Mute music",
+            "description": "Toolbar button muting music and sound.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.toolbar.settings",
+            "namespace": "story",
+            "source_text": "Settings",
+            "description": "Toolbar button opening the reader settings.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.toolbar.unmute",
+            "namespace": "story",
+            "source_text": "Unmute music",
+            "description": "Toolbar button restoring music and sound.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.toolbar.volume",
+            "namespace": "story",
+            "source_text": "Music volume",
+            "description": "Accessible label of the toolbar volume slider.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.animateRatio",
+            "namespace": "story",
+            "source_text": "Playback speed",
+            "description": "Setting: the multiplier the game applies to every scene animation. 1 is the scripted speed, 0 skips animations.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.animateRatioHint",
+            "namespace": "story",
+            "source_text": "Multiplies every fade, tween and hold the script asks for. 0 plays each step instantly, which is what the game's skip does.",
+            "description": "Hint under the playback speed slider.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.autoPace",
+            "namespace": "story",
+            "source_text": "Auto-play pace",
+            "description": "Setting: multiplier on the reading time auto-play waits per line.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.bottomMargin",
+            "namespace": "story",
+            "source_text": "Bottom margin",
+            "description": "Setting: how far the text box is lifted off the bottom edge of the stage.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.cps",
+            "namespace": "story",
+            "source_text": "Text speed",
+            "description": "Setting: typewriter speed in characters per second.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.cpsValue",
+            "namespace": "story",
+            "source_text": "{value} chars/s",
+            "description": "Displayed value of the text speed slider.",
+            "placeholders": [
+                "value"
+            ]
+        },
+        {
+            "key": "story.settings.hotkeys",
+            "namespace": "story",
+            "source_text": "Space, Enter or → advance · ← back · A auto · H log · Esc hide text · F fullscreen",
+            "description": "One-line hotkey summary at the bottom of the settings dialog. The letters are keyboard keys and stay as-is.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.hotkeys.heading",
+            "namespace": "story",
+            "source_text": "Keyboard",
+            "description": "Heading of the hotkey legend in the settings dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.lightBox",
+            "namespace": "story",
+            "source_text": "Light text box",
+            "description": "Setting: the text box switches to a light paper surface. Only the reading surface changes, not the site theme.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.lightBoxHint",
+            "namespace": "story",
+            "source_text": "Only the reading surface changes; the site theme stays as you set it.",
+            "description": "Hint under the light text box switch.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.lineWidth",
+            "namespace": "story",
+            "source_text": "Line width",
+            "description": "Setting: the text box's maximum line width.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.lineWidthValue",
+            "namespace": "story",
+            "source_text": "{value} ch",
+            "description": "Displayed value of the line width slider; `ch` is the CSS unit (width of a digit).",
+            "placeholders": [
+                "value"
+            ]
+        },
+        {
+            "key": "story.settings.minLineSec",
+            "namespace": "story",
+            "source_text": "Minimum line time",
+            "description": "Setting: the least time auto-play holds a line.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.multiplier",
+            "namespace": "story",
+            "source_text": "{value}x",
+            "description": "A multiplier value.",
+            "placeholders": [
+                "value"
+            ]
+        },
+        {
+            "key": "story.settings.musicVolume",
+            "namespace": "story",
+            "source_text": "Music volume",
+            "description": "Setting: background music volume.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.nickname",
+            "namespace": "story",
+            "source_text": "Doctor's name",
+            "description": "Setting: the name substituted for the player in story text.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.percent",
+            "namespace": "story",
+            "source_text": "{value}%",
+            "description": "A percentage value.",
+            "placeholders": [
+                "value"
+            ]
+        },
+        {
+            "key": "story.settings.progress.backup",
+            "namespace": "story",
+            "source_text": "Backup",
+            "description": "Button downloading the reading progress as a JSON file.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.progress.heading",
+            "namespace": "story",
+            "source_text": "Reading progress",
+            "description": "Heading of the backup, restore and reset section.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.progress.reset",
+            "namespace": "story",
+            "source_text": "Reset",
+            "description": "Button clearing all reading progress (asks for confirmation).",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.progress.restore",
+            "namespace": "story",
+            "source_text": "Restore",
+            "description": "Button choosing a JSON backup file to restore progress from.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.progress.restoreFailed",
+            "namespace": "story",
+            "source_text": "That file is not a progress backup.",
+            "description": "Error after a backup file could not be read.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.progress.restored",
+            "namespace": "story",
+            "source_text": "Progress restored: {stories} stories read, {positions} positions.",
+            "description": "Confirmation after a backup file was loaded.",
+            "placeholders": [
+                "positions",
+                "stories"
+            ]
+        },
+        {
+            "key": "story.settings.progress.wasReset",
+            "namespace": "story",
+            "source_text": "Reading progress cleared.",
+            "description": "Confirmation shown in the settings dialog after the reset was confirmed.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.progressBar",
+            "namespace": "story",
+            "source_text": "Progress bar",
+            "description": "Setting: show the thin progress bar at the top of the reader.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.reset.body",
+            "namespace": "story",
+            "source_text": "Every read mark and saved position is removed. This cannot be undone.",
+            "description": "Confirmation dialog body.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.reset.cancel",
+            "namespace": "story",
+            "source_text": "Cancel",
+            "description": "Confirmation dialog cancel button.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.reset.confirm",
+            "namespace": "story",
+            "source_text": "Reset",
+            "description": "Confirmation dialog destructive button.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.reset.title",
+            "namespace": "story",
+            "source_text": "Reset reading progress?",
+            "description": "Confirmation dialog title.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.seconds",
+            "namespace": "story",
+            "source_text": "{value} s",
+            "description": "A duration in seconds.",
+            "placeholders": [
+                "value"
+            ]
+        },
+        {
+            "key": "story.settings.sfxVolume",
+            "namespace": "story",
+            "source_text": "Sound volume",
+            "description": "Setting: sound effect volume.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.sideMargin",
+            "namespace": "story",
+            "source_text": "Side margin",
+            "description": "Setting: how far the text box is inset from the left and right edges of the stage.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.style",
+            "namespace": "story",
+            "source_text": "Reading style",
+            "description": "Setting: a preset of font, size and line height.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.style.comfortable",
+            "namespace": "story",
+            "source_text": "Comfortable",
+            "description": "Reading style preset: a serif face with a taller line.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.style.default",
+            "namespace": "story",
+            "source_text": "Default",
+            "description": "Reading style preset.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.style.dyslexia",
+            "namespace": "story",
+            "source_text": "Dyslexia friendly",
+            "description": "Reading style preset: wider tracking and a taller line.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.style.large",
+            "namespace": "story",
+            "source_text": "Large print",
+            "description": "Reading style preset: bigger text.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.textSize",
+            "namespace": "story",
+            "source_text": "Text size",
+            "description": "Setting: text size in percent.",
+            "placeholders": []
+        },
+        {
+            "key": "story.settings.title",
+            "namespace": "story",
+            "source_text": "Reader settings",
+            "description": "Title of the settings dialog.",
+            "placeholders": []
         },
         {
             "key": "tierLists.browse.card.emptyDraft",
@@ -29720,6 +30442,13 @@
             "placeholders": []
         },
         {
+            "key": "user.leaderboard.hero.stat.totalHeld",
+            "namespace": "user",
+            "source_text": "Total held",
+            "description": "Label under the sum of every ranked player's holding of the ranked item: how much of it exists across the leaderboard. Fits a narrow tile, so keep it short.",
+            "placeholders": []
+        },
+        {
             "key": "user.leaderboard.hero.stat.updated",
             "namespace": "user",
             "source_text": "Updated",
@@ -29919,6 +30648,26 @@
             ]
         },
         {
+            "key": "user.leaderboard.mostHeld.line",
+            "namespace": "user",
+            "source_text": "{total} held · top {top}",
+            "description": "The small line on each row of the 'Most held' card. {total} is how much of the item every ranked player holds together, {top} the largest single holding; both are compact numbers like 230k.",
+            "placeholders": [
+                "top",
+                "total"
+            ]
+        },
+        {
+            "key": "user.leaderboard.mostHeld.line.title",
+            "namespace": "user",
+            "source_text": "{total} held in all, largest holding {top}",
+            "description": "Hover text on the small line of each 'Most held' row, with the same two numbers written out in full.",
+            "placeholders": [
+                "top",
+                "total"
+            ]
+        },
+        {
             "key": "user.leaderboard.mostHeld.subtitle",
             "namespace": "user",
             "source_text": "Items by how many players hold them",
@@ -29931,15 +30680,6 @@
             "source_text": "Most held",
             "description": "Heading of the sidebar card listing the items held by the most players.",
             "placeholders": []
-        },
-        {
-            "key": "user.leaderboard.mostHeld.top",
-            "namespace": "user",
-            "source_text": "top {top}",
-            "description": "The largest single holding on each row of the 'Most held' card. {top} is a compact number like 230k.",
-            "placeholders": [
-                "top"
-            ]
         },
         {
             "key": "user.leaderboard.movers.empty",
@@ -30011,6 +30751,15 @@
             "placeholders": []
         },
         {
+            "key": "user.leaderboard.rankBy.population",
+            "namespace": "user",
+            "source_text": "{count, number} total",
+            "description": "Follows the holder count next to each item in the picker, after a separator: how many visible players there are in all, so the holder count can be read as a share. {count} is that population.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
             "key": "user.leaderboard.rankBy.search.clear",
             "namespace": "user",
             "source_text": "Clear search",
@@ -30030,6 +30779,17 @@
             "source_text": "Search scores and items…",
             "description": "Placeholder of the search box inside the 'Rank by' picker.",
             "placeholders": []
+        },
+        {
+            "key": "user.leaderboard.rankBy.share.aria",
+            "namespace": "user",
+            "source_text": "{holders, number} of {population, number} players, {share}",
+            "description": "Accessible reading of an item's holder line in the picker. {holders} holds the item, {population} is every visible player, {share} is the percentage already formatted.",
+            "placeholders": [
+                "holders",
+                "population",
+                "share"
+            ]
         },
         {
             "key": "user.leaderboard.serverSplit.title",
@@ -32160,6 +32920,20 @@
             "namespace": "user",
             "source_text": "Not Built",
             "description": "Tag on a board slot whose facility the account has not built yet.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.base.wip",
+            "namespace": "user",
+            "source_text": "The base optimizer is a work in progress. If a recommendation looks wrong, please report it on Discord.",
+            "description": "Disclaimer shown at the top of the base optimizer tab. 'Discord' is a link to the community server.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.base.wip.link",
+            "namespace": "user",
+            "source_text": "Discord",
+            "description": "The link text inside the base optimizer disclaimer, pointing at the community Discord server.",
             "placeholders": []
         },
         {
@@ -35117,7 +35891,7 @@
         {
             "key": "user.score.improvements.operator.dim.footnote",
             "namespace": "user",
-            "source_text": "Each row is one investment axis: {unit}, both in % of this section. What an axis is worth depends on your roster (rarer operators and their masteries/modules count for more); the earned figures add up to the section score at the top of the card.",
+            "source_text": "Each row is one investment axis: {unit}, both in % of this section. Every operator you own is graded, raised or not, so an unraised pull counts against you until you build it. What an axis is worth depends on your roster (rarer operators and their masteries/modules count for more); the earned figures add up to the section score at the top of the card.",
             "description": "Footnote under the investment axes. {unit} is the highlighted 'earned / available' (score.improvements.operator.dim.footnote.unit) and may move wherever the sentence needs it.",
             "placeholders": [
                 "unit"

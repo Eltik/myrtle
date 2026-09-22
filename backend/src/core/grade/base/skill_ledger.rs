@@ -507,6 +507,32 @@ pub(crate) fn control_room_ledger(
             {
                 continue;
             }
+            // A morale skill says what it does in plain words: a seat held
+            // for "+0.05 morale/h to the Control Center crew" (Gladiia,
+            // Projekt Red) read as a seat held for nothing when its text
+            // led with an Abyssal Hunter rider (00980819, 2026-09-21).
+            let note = match ctx.registry.get(buff_id) {
+                Some(BuffResolutionStrategy::MoraleModifier {
+                    recovery_per_hour,
+                    base_wide,
+                    is_self_only,
+                    ..
+                }) => Some(if *recovery_per_hour > 0.0 {
+                    let scope = if *base_wide {
+                        "every operator working outside a dormitory"
+                    } else {
+                        "the Control Center crew"
+                    };
+                    format!("+{recovery_per_hour} morale per hour to {scope}.")
+                } else if *is_self_only {
+                    "Affects only this operator's own morale; nothing for the base.".to_string()
+                } else {
+                    "Conditional morale effect the plan does not price (never guessed); \
+                     the seat is not held for it."
+                        .to_string()
+                }),
+                _ => None,
+            };
             out.push(LedgerLine {
                 operator_id: (*id).clone(),
                 buff_id: buff_id.clone(),
@@ -514,7 +540,7 @@ pub(crate) fn control_room_ledger(
                 value_pct: 0.0,
                 from_control_center: false,
                 disposition: zero_disposition(ctx.registry.get(buff_id), cc_ops),
-                note: None,
+                note,
             });
         }
     }

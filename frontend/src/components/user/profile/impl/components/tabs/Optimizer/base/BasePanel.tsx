@@ -39,6 +39,12 @@ export function BasePanel({ board }: { board: IBoard }) {
     return (
         <TooltipProvider closeDelay={0} delay={350}>
             <div className="flex flex-col gap-3">
+                <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-[12px] text-foreground">
+                    {t("profile.base.wip")}{" "}
+                    <a className="underline underline-offset-2" href="/discord" rel="noreferrer" target="_blank">
+                        {t("profile.base.wip.link")}
+                    </a>
+                </p>
                 <div className="flex flex-wrap items-end justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3">
                     <div className="flex flex-wrap gap-6">
                         <Headline hint={t("profile.base.headline.efficiency.hint")} label={t("profile.base.headline.efficiency")} value={totals ? `${Math.round(totals.total_production_efficiency)}%` : "-"} />

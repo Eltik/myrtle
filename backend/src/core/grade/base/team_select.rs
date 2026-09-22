@@ -18,7 +18,7 @@ use std::collections::{HashMap, HashSet};
 use crate::core::gamedata::types::building::BuildingDataFile;
 
 use super::assignment::{
-    CandidateTeam, CcCondition, assignment_value, build_op_index, candidate_pool,
+    CandidateTeam, CcCondition, POST_TIE_BAND, assignment_value, build_op_index, candidate_pool,
     compute_team_efficiency, enumerate_candidate_teams, has_automation_buff, op_is_nullifier,
     padding_cost, room_search_score,
 };
@@ -242,9 +242,17 @@ pub fn plan_production_groups(
     global_bonuses: &HashMap<String, f64>,
     cc_conditions: &[CcCondition],
     morale_drains: &HashMap<String, f64>,
-    reserved: &HashMap<String, usize>,
+    reserved_seats: &HashMap<String, usize>,
+    kept: &HashMap<String, Vec<String>>,
     memo: &EnumerationMemo,
 ) -> Vec<PlannedGroup> {
+    // Seats held out of each room: `reserved_seats` (a seat the sustain
+    // oracle keeps EMPTY to price a plan without its candidate) plus the
+    // pinned crews, which the trading posts fold into their teams.
+    let mut reserved: HashMap<String, usize> = reserved_seats.clone();
+    for (slot, ops) in kept {
+        *reserved.entry(slot.clone()).or_insert(0) += ops.len();
+    }
     let mut factory_rooms: Vec<&&UserRoom> = production_rooms
         .iter()
         .filter(|r| r.room_type == "MANUFACTURE")
@@ -292,12 +300,22 @@ pub fn plan_production_groups(
                 rooms: exp,
             });
         }
-        if !trading_rooms.is_empty() {
+        // One trading group PER POST LEVEL: a post's order rarity, base
+        // limit and order value follow its level, so a level-3 and a
+        // level-2 post planned as one group (at the lower level) priced
+        // Shamare's tailoring at nothing and Proviso's bonus bars at the
+        // wrong post. Same-level posts still share a group and a tiling.
+        let mut levels: Vec<i32> = trading_rooms.iter().map(|r| r.level).collect();
+        levels.sort_unstable();
+        levels.dedup();
+        levels.reverse();
+        for level in levels {
             specs.push(GroupSpec {
                 room_type: "TRADING".into(),
                 formula_type: None,
                 rooms: trading_rooms
                     .iter()
+                    .filter(|r| r.level == level)
                     .map(|r| (r.slot_id.clone(), r.level))
                     .collect(),
             });
@@ -314,8 +332,10 @@ pub fn plan_production_groups(
             building_data,
             facility_counts,
             total_dorm_levels,
+            global_bonuses,
             cc_conditions,
             morale_drains,
+            kept,
             memo,
         );
         pad_teams(
@@ -328,7 +348,7 @@ pub fn plan_production_groups(
             total_dorm_levels,
             cc_conditions,
             morale_drains,
-            reserved,
+            &reserved,
         );
         let objective = tiled_objective(&planned, global_bonuses);
         if best.as_ref().is_none_or(|(b, _)| objective > *b) {
@@ -374,6 +394,38 @@ pub fn tiled_objective(groups: &[PlannedGroup], global_bonuses: &HashMap<String,
         .sum()
 }
 
+/// The trading posts' own LMD summed over the tiling, uncoupled from the
+/// gold supply: the tie-breaker inside `POST_TIE_BAND`.
+fn trading_uncoupled_lmd(groups: &[PlannedGroup], global_bonuses: &HashMap<String, f64>) -> f64 {
+    let global = *global_bonuses.get("TRADING").unwrap_or(&0.0);
+    groups
+        .iter()
+        .filter(|g| g.room_type == "TRADING")
+        .flat_map(|g| {
+            g.rooms
+                .iter()
+                .enumerate()
+                .flat_map(move |(ri, (_, level))| {
+                    (0..SHIFT_COUNT).filter_map(move |shift| {
+                        let team = g.teams.get(g.cells[ri][shift])?;
+                        Some(
+                            super::yield_model::room_yield(
+                                "TRADING",
+                                None,
+                                *level,
+                                team.speed + global,
+                                team.value,
+                                team.ops.len(),
+                                team.order_limit,
+                            )
+                            .lmd_per_day,
+                        )
+                    })
+                })
+        })
+        .sum()
+}
+
 /// Beam-search the disjoint team selection maximizing `Σ score × cells_worked`
 /// across every group's team slots, then polish with local moves. Returns each
 /// group planned with its teams in ordinal order (strongest on the widest block).
@@ -386,10 +438,13 @@ fn select_balanced_teams(
     building_data: &BuildingDataFile,
     facility_counts: &HashMap<String, usize>,
     total_dorm_levels: i32,
+    global_bonuses: &HashMap<String, f64>,
     cc_conditions: &[CcCondition],
     morale_drains: &HashMap<String, f64>,
+    kept: &HashMap<String, Vec<String>>,
     memo: &EnumerationMemo,
 ) -> Vec<PlannedGroup> {
+    let op_index = build_op_index(operators);
     // Phase A: enumerate candidate teams per group (once per group - this replaces
     // the old per-room searches). Team size is bounded by the group's SMALLEST room
     // so any team fits any room its block spans.
@@ -397,9 +452,41 @@ fn select_balanced_teams(
         .iter()
         .map(|spec| {
             let capacity = group_capacity(spec, building_data);
+            // A pinned 24/7 crew (the sustained Shamare, Proviso) is part
+            // of every team its post fields, so the post's candidates carry
+            // it and are scored WITH it: enumerated without her and merged
+            // afterwards, a level-3 post picked a Proviso team and the merge
+            // put Proviso beside Shamare, who nullifies her (00980819).
+            // Only a group whose rooms all hold the same pinned crew can be
+            // folded this way; others keep the seat-count reservation.
+            let group_kept: Option<&Vec<String>> = {
+                let sets: Vec<&Vec<String>> = spec
+                    .rooms
+                    .iter()
+                    .filter_map(|(slot, _)| kept.get(slot))
+                    .filter(|ops| !ops.is_empty())
+                    .collect();
+                (sets.len() == spec.rooms.len() && sets.iter().all(|s| *s == sets[0]))
+                    .then(|| sets[0])
+            };
             let teams_needed = teams_for_rooms(spec.rooms.len());
             let min_level = spec.rooms.iter().map(|(_, l)| *l).min().unwrap_or(1);
             let pool = BASE_POOL + POOL_PER_EXTRA_TEAM * teams_needed.saturating_sub(1);
+            // The pinned crew is allowed back into ITS post's enumeration:
+            // the enumerator knows how to build a nullifier's squad (Shamare
+            // with the order-value partners that survive her), and a team
+            // built without her and folded afterwards never is one.
+            let assigned_for_group: HashSet<String> = group_kept.map_or_else(
+                || assigned.clone(),
+                |pinned| {
+                    assigned
+                        .iter()
+                        .filter(|id| !pinned.contains(id))
+                        .cloned()
+                        .collect()
+                },
+            );
+            let assigned = &assigned_for_group;
             let key = EnumerationMemo::key(
                 &spec.room_type,
                 min_level,
@@ -439,6 +526,66 @@ fn select_balanced_teams(
                 )
             });
             teams.truncate(CANDIDATES_PER_GROUP);
+            if let Some(pinned) = group_kept
+                && spec.room_type == "TRADING"
+            {
+                let level = spec.rooms.iter().map(|(_, l)| *l).min().unwrap_or(1);
+                let free = capacity.saturating_sub(pinned.len());
+                let mut seen: HashSet<Vec<String>> = HashSet::new();
+                let mut folded: Vec<CandidateTeam> = Vec::new();
+                for t in &teams {
+                    let mut ops: Vec<String> = pinned.clone();
+                    ops.extend(
+                        t.ops
+                            .iter()
+                            .filter(|o| !pinned.contains(o))
+                            .take(free)
+                            .cloned(),
+                    );
+                    let mut key = ops.clone();
+                    key.sort();
+                    if !seen.insert(key) {
+                        continue;
+                    }
+                    // A team the enumerator built around the pin keeps its
+                    // own figures; only the folded ones are re-scored.
+                    if pinned.iter().all(|p| t.ops.contains(p)) && t.ops.len() == ops.len() {
+                        folded.push(t.clone());
+                        continue;
+                    }
+                    let totals = super::assignment::compute_team_totals(
+                        &ops,
+                        &spec.room_type,
+                        None,
+                        Some(level),
+                        &op_index,
+                        registry,
+                        building_data,
+                        facility_counts,
+                        total_dorm_levels,
+                        morale_drains,
+                        cc_conditions,
+                    );
+                    folded.push(CandidateTeam {
+                        ops,
+                        speed: totals.speed_pct,
+                        value: totals.order_value_pct,
+                        gold: totals.order_gold_pct,
+                        order_limit: totals.order_limit,
+                        score: room_search_score(
+                            &spec.room_type,
+                            totals.speed_pct,
+                            totals.order_value_pct,
+                        ),
+                    });
+                }
+                folded.sort_by(|a, b| {
+                    b.score
+                        .partial_cmp(&a.score)
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                });
+                teams = folded;
+            }
             teams
         })
         .collect();
@@ -634,53 +781,218 @@ fn select_balanced_teams(
     // ordinals sorted widest-block-first, so any trailing 1-cell block gets the
     // weakest team. Missing picks leave an empty team, which `backfill_empty_teams`
     // then fills - an unstaffed production room is never the right answer.
-    let mut groups: Vec<PlannedGroup> = specs
+    let materialize = |picks: &[Option<usize>]| -> Vec<PlannedGroup> {
+        specs
+            .iter()
+            .enumerate()
+            .map(|(g, spec)| {
+                let n = spec.rooms.len();
+                let teams_needed = teams_for_rooms(n);
+                let mut selected: Vec<CandidateTeam> = Vec::new();
+                for (si, &(sg, _)) in slots.iter().enumerate() {
+                    if sg == g
+                        && let Some(ci) = picks[si]
+                    {
+                        selected.push(masked[g][ci].0.clone());
+                    }
+                }
+                selected.sort_by(|a, b| {
+                    b.score
+                        .partial_cmp(&a.score)
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                });
+                // Ordinals by descending cell count, strongest team first.
+                let w = ordinal_weights(n);
+                let mut ordinals: Vec<usize> = (0..teams_needed).collect();
+                ordinals.sort_by_key(|&o| std::cmp::Reverse(w[o]));
+                let mut teams: Vec<CandidateTeam> = (0..teams_needed)
+                    .map(|_| CandidateTeam {
+                        ops: Vec::new(),
+                        speed: 0.0,
+                        value: 0.0,
+                        gold: 0.0,
+                        order_limit: None,
+                        score: 0.0,
+                    })
+                    .collect();
+                for (rank, &o) in ordinals.iter().enumerate() {
+                    if let Some(t) = selected.get(rank) {
+                        teams[o] = t.clone();
+                    }
+                }
+                PlannedGroup {
+                    room_type: spec.room_type.clone(),
+                    formula_type: spec.formula_type.clone(),
+                    rooms: spec.rooms.clone(),
+                    teams,
+                    cells: tile_group(n),
+                }
+            })
+            .collect()
+    };
+
+    // Coupled polish for the TRADING slots: the beam ranks a post's teams by
+    // raw score (speed x order value), which cannot see that a gold-starved
+    // base sells no more than its factories make, nor which post level a
+    // value shape pays at. Each trading slot tries every disjoint candidate
+    // and keeps the one that raises the tiled objective (the peak search's
+    // coupled yield, per shift) - the rotation's twin of the peak search's
+    // yield-picked posts. Texas/Lappland at 122 beat the Shamare squad at 97
+    // on score while the squad realized more (00980819, 2026-09-21).
+    let trading_slots: Vec<usize> = slots
         .iter()
         .enumerate()
-        .map(|(g, spec)| {
-            let n = spec.rooms.len();
-            let teams_needed = teams_for_rooms(n);
-            let mut selected: Vec<CandidateTeam> = Vec::new();
-            for (si, &(sg, _)) in slots.iter().enumerate() {
-                if sg == g
-                    && let Some(ci) = best.picks[si]
-                {
-                    selected.push(masked[g][ci].0.clone());
-                }
-            }
-            selected.sort_by(|a, b| {
-                b.score
-                    .partial_cmp(&a.score)
-                    .unwrap_or(std::cmp::Ordering::Equal)
-            });
-            // Ordinals by descending cell count, strongest team first.
-            let w = ordinal_weights(n);
-            let mut ordinals: Vec<usize> = (0..teams_needed).collect();
-            ordinals.sort_by_key(|&o| std::cmp::Reverse(w[o]));
-            let mut teams: Vec<CandidateTeam> = (0..teams_needed)
-                .map(|_| CandidateTeam {
-                    ops: Vec::new(),
-                    speed: 0.0,
-                    value: 0.0,
-                    gold: 0.0,
-                    order_limit: None,
-                    score: 0.0,
-                })
-                .collect();
-            for (rank, &o) in ordinals.iter().enumerate() {
-                if let Some(t) = selected.get(rank) {
-                    teams[o] = t.clone();
-                }
-            }
-            PlannedGroup {
-                room_type: spec.room_type.clone(),
-                formula_type: spec.formula_type.clone(),
-                rooms: spec.rooms.clone(),
-                teams,
-                cells: tile_group(n),
-            }
-        })
+        .filter(|(_, (g, _))| specs[*g].room_type == "TRADING")
+        .map(|(si, _)| si)
         .collect();
+    // Within `POST_TIE_BAND` of the coupled value the posts' own (uncoupled)
+    // LMD breaks the tie, as the peak search's `best_post_combination`
+    // does: on a starved base the coupled value cannot tell Proviso at the
+    // level-2 post from a plain speed pair there, and her value shape pays
+    // most at the lower post. A move inside the band must raise the tie-
+    // breaker, a move outside it must clear the band: monotone both ways,
+    // so the polish cannot cycle.
+    if !trading_slots.is_empty() {
+        let measure = |picks: &[Option<usize>]| {
+            let groups = materialize(picks);
+            (
+                tiled_objective(&groups, global_bonuses),
+                trading_uncoupled_lmd(&groups, global_bonuses),
+            )
+        };
+        // Pair moves draw from each slot's best teams by raw score AND by
+        // the post's own LMD at its level: at a level-3 post every top
+        // score is a Proviso team, while the Shamare squad (lower score,
+        // more LMD per order) is what the coupled objective wants there.
+        let pair_pool: Vec<Vec<usize>> = specs
+            .iter()
+            .enumerate()
+            .map(|(g, spec)| {
+                if spec.room_type != "TRADING" {
+                    return Vec::new();
+                }
+                let level = spec.rooms.iter().map(|(_, l)| *l).min().unwrap_or(1);
+                let global = *global_bonuses.get("TRADING").unwrap_or(&0.0);
+                let mut by_yield: Vec<usize> = (0..masked[g].len()).collect();
+                by_yield.sort_by(|&a, &b| {
+                    let lmd = |ci: usize| {
+                        let t = &masked[g][ci].0;
+                        super::yield_model::room_yield(
+                            "TRADING",
+                            None,
+                            level,
+                            t.speed + global,
+                            t.value,
+                            t.ops.len(),
+                            t.order_limit,
+                        )
+                        .lmd_per_day
+                    };
+                    lmd(b)
+                        .partial_cmp(&lmd(a))
+                        .unwrap_or(std::cmp::Ordering::Equal)
+                });
+                let mut pool: Vec<usize> = (0..EXTENSIONS_PER_SLOT.min(masked[g].len())).collect();
+                for ci in by_yield.into_iter().take(EXTENSIONS_PER_SLOT) {
+                    if !pool.contains(&ci) {
+                        pool.push(ci);
+                    }
+                }
+                pool
+            })
+            .collect();
+        let (mut current, mut current_tie) = measure(&best.picks);
+        for _ in 0..POLISH_PASSES {
+            let mut improved = false;
+            for &si in &trading_slots {
+                let g = slots[si].0;
+                let cur_mask = best.picks[si].map_or(OpMask::EMPTY, |ci| masked[g][ci].1);
+                let rest = best.mask.difference(&cur_mask);
+                let mut best_alt: Option<(usize, f64, f64)> = None;
+                for (ci, (_, mask)) in masked[g].iter().enumerate() {
+                    if Some(ci) == best.picks[si] || mask.intersects(&rest) {
+                        continue;
+                    }
+                    let mut picks = best.picks.clone();
+                    picks[si] = Some(ci);
+                    let (value, tie) = measure(&picks);
+                    let band = current.abs() * POST_TIE_BAND;
+                    let better = value > current + band
+                        || (value >= current - band && tie > current_tie + 1e-6);
+                    let beats_alt = best_alt.is_none_or(|(_, v, t)| {
+                        let b = v.abs() * POST_TIE_BAND;
+                        value > v + b || (value >= v - b && tie > t + 1e-6)
+                    });
+                    if better && beats_alt {
+                        best_alt = Some((ci, value, tie));
+                    }
+                }
+                if let Some((ci, value, tie)) = best_alt {
+                    best.mask = rest.union(&masked[g][ci].1);
+                    best.picks[si] = Some(ci);
+                    current = value;
+                    current_tie = tie;
+                    improved = true;
+                }
+            }
+            // Pair moves: two trading slots re-picked together over their
+            // top candidates, so an operator held by one slot can move to
+            // the other (Proviso parked in the level-3 post's single-shift
+            // slot could never reach the level-2 post's two-shift slot by
+            // single moves - she was "taken" from that slot's view).
+            for (pi, &si) in trading_slots.iter().enumerate() {
+                for &sj in &trading_slots[pi + 1..] {
+                    let (gi, gj) = (slots[si].0, slots[sj].0);
+                    let mask_i = best.picks[si].map_or(OpMask::EMPTY, |ci| masked[gi][ci].1);
+                    let mask_j = best.picks[sj].map_or(OpMask::EMPTY, |cj| masked[gj][cj].1);
+                    let rest = best.mask.difference(&mask_i).difference(&mask_j);
+                    let mut best_pair: Option<(usize, usize, f64, f64)> = None;
+                    for &ci in &pair_pool[gi] {
+                        let mi = &masked[gi][ci].1;
+                        if mi.intersects(&rest) {
+                            continue;
+                        }
+                        for &cj in &pair_pool[gj] {
+                            let mj = &masked[gj][cj].1;
+                            if mj.intersects(&rest)
+                                || mj.intersects(mi)
+                                || (Some(ci) == best.picks[si] && Some(cj) == best.picks[sj])
+                            {
+                                continue;
+                            }
+                            let mut picks = best.picks.clone();
+                            picks[si] = Some(ci);
+                            picks[sj] = Some(cj);
+                            let (value, tie) = measure(&picks);
+                            let band = current.abs() * POST_TIE_BAND;
+                            let better = value > current + band
+                                || (value >= current - band && tie > current_tie + 1e-6);
+                            let beats_alt = best_pair.is_none_or(|(_, _, v, t)| {
+                                let b = v.abs() * POST_TIE_BAND;
+                                value > v + b || (value >= v - b && tie > t + 1e-6)
+                            });
+                            if better && beats_alt {
+                                best_pair = Some((ci, cj, value, tie));
+                            }
+                        }
+                    }
+                    if let Some((ci, cj, value, tie)) = best_pair {
+                        best.mask = rest.union(&masked[gi][ci].1).union(&masked[gj][cj].1);
+                        best.picks[si] = Some(ci);
+                        best.picks[sj] = Some(cj);
+                        current = value;
+                        current_tie = tie;
+                        improved = true;
+                    }
+                }
+            }
+            if !improved {
+                break;
+            }
+        }
+    }
+
+    let mut groups: Vec<PlannedGroup> = materialize(&best.picks);
 
     backfill_empty_teams(
         &mut groups,
@@ -692,6 +1004,7 @@ fn select_balanced_teams(
         total_dorm_levels,
         cc_conditions,
         morale_drains,
+        kept,
         memo,
     );
     groups
@@ -725,6 +1038,7 @@ fn backfill_empty_teams(
     total_dorm_levels: i32,
     cc_conditions: &[CcCondition],
     morale_drains: &HashMap<String, f64>,
+    kept: &HashMap<String, Vec<String>>,
     memo: &EnumerationMemo,
 ) {
     if !groups
@@ -733,6 +1047,7 @@ fn backfill_empty_teams(
     {
         return;
     }
+    let op_index = build_op_index(operators);
 
     // Teams must stay genuinely disjoint: an operator seated by the beam, or
     // already committed elsewhere in the base, is not available here.
@@ -754,17 +1069,37 @@ fn backfill_empty_teams(
             continue;
         }
         let min_level = g.rooms.iter().map(|(_, l)| *l).min().unwrap_or(1);
+        // A pinned trading crew is part of the backfilled team too, scored
+        // with it: filled without the pin, a post's spare block took a
+        // speed pair whose raw score outranked the pinned squad, and the
+        // pair then sat under the nullifier while the squad worked one
+        // shift (00980819).
+        let pinned: Option<&Vec<String>> = (g.room_type == "TRADING")
+            .then(|| {
+                let sets: Vec<&Vec<String>> = g
+                    .rooms
+                    .iter()
+                    .filter_map(|(slot, _)| kept.get(slot))
+                    .filter(|ops| !ops.is_empty())
+                    .collect();
+                (sets.len() == g.rooms.len() && sets.iter().all(|s| *s == sets[0])).then(|| sets[0])
+            })
+            .flatten();
 
         for ordinal in 0..g.teams.len() {
             if !g.teams[ordinal].ops.is_empty() {
                 continue;
             }
+            let pool_used: HashSet<String> = pinned.map_or_else(
+                || used.clone(),
+                |p| used.iter().filter(|id| !p.contains(id)).cloned().collect(),
+            );
             let key = EnumerationMemo::key(
                 &g.room_type,
                 min_level,
                 g.formula_type.as_deref(),
                 operators,
-                &used,
+                &pool_used,
                 registry,
                 building_data,
                 morale_drains,
@@ -780,7 +1115,7 @@ fn backfill_empty_teams(
                     min_level,
                     g.formula_type.as_deref(),
                     operators,
-                    &used,
+                    &pool_used,
                     registry,
                     building_data,
                     facility_counts,
@@ -800,6 +1135,46 @@ fn backfill_empty_teams(
                 // Genuinely nobody left with an applicable skill - resting the
                 // room really is all that's on offer.
                 break;
+            };
+            let team = match pinned {
+                Some(p) if !p.iter().all(|id| team.ops.contains(id)) => {
+                    #[allow(clippy::cast_sign_loss)]
+                    let free = (capacity as usize).saturating_sub(p.len());
+                    let mut ops = p.clone();
+                    ops.extend(
+                        team.ops
+                            .iter()
+                            .filter(|o| !p.contains(o))
+                            .take(free)
+                            .cloned(),
+                    );
+                    let totals = super::assignment::compute_team_totals(
+                        &ops,
+                        &g.room_type,
+                        None,
+                        Some(min_level),
+                        &op_index,
+                        registry,
+                        building_data,
+                        facility_counts,
+                        total_dorm_levels,
+                        morale_drains,
+                        cc_conditions,
+                    );
+                    CandidateTeam {
+                        ops,
+                        speed: totals.speed_pct,
+                        value: totals.order_value_pct,
+                        gold: totals.order_gold_pct,
+                        order_limit: totals.order_limit,
+                        score: room_search_score(
+                            &g.room_type,
+                            totals.speed_pct,
+                            totals.order_value_pct,
+                        ),
+                    }
+                }
+                _ => team,
             };
             used.extend(team.ops.iter().cloned());
             g.teams[ordinal] = team;

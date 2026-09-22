@@ -4596,7 +4596,7 @@ fn assign_trading_rooms_by_yield(
 /// pays on every order a level-2 post draws and only on some of a level-3
 /// post's, so the posts' own value seats her at the lower post, where the
 /// community runs her (31010962: the three arrangements were within 0.7%).
-const POST_TIE_BAND: f64 = 0.01;
+pub(crate) const POST_TIE_BAND: f64 = 0.01;
 
 /// For each post, the index of its crew in the combination of disjoint
 /// candidates that realizes the most value beside `context`; `None` where a

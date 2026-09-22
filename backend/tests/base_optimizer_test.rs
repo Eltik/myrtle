@@ -10499,7 +10499,9 @@ fn a_gated_cc_grant_line_says_how_many_it_reaches() {
             .expect("the CC is scored");
         cc.ledger
             .iter()
-            .find(|l| l.operator_id == VIVIANA && l.note.is_some())
+            .find(|l| {
+                l.operator_id == VIVIANA && l.note.as_deref().is_some_and(|n| n.contains("Knight"))
+            })
             .and_then(|l| l.note.clone())
             .unwrap_or_else(|| panic!("Viviana's gated line carries a note: {:?}", cc.ledger))
     };
@@ -10743,5 +10745,105 @@ fn the_grade_ceiling_is_at_least_the_tab_optimal() {
         g.utilization <= 1.0 + 1e-9 && g.utilization > 0.9,
         "the tab's plan grades near 100%, got {:.3} (tab sustained {tab:.0})",
         g.utilization
+    );
+}
+
+/// The rotation prices each trading post at ITS level and picks the posts'
+/// teams by the coupled yield the peak search uses: on a gold-starved base
+/// with a level-3 and a level-2 post, Proviso (whose "+2 gold below 4"
+/// pays on every order a level-2 post draws) sells at the level-2 post and
+/// the Shamare squad at the level-3 one, in every shift that fields them.
+/// Planned as one group at the lower level and ranked by raw score, shift 1
+/// fielded Texas/Lappland at level 3 and the Laterano pair at level 2 with
+/// Proviso and Shamare benched (00980819, 2026-09-21).
+#[test]
+fn the_rotation_sells_proviso_at_the_lower_post_and_shamare_at_the_higher() {
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    const SHAMARE: &str = "char_254_vodfox";
+    const TEQUILA: &str = "char_486_takila";
+    const BIBEAK: &str = "char_252_bibeak";
+    const PROVISO: &str = "char_4032_provs";
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let mut roster: Vec<_> = [
+        SHAMARE,
+        TEQUILA,
+        BIBEAK,
+        PROVISO,
+        "char_102_texas",
+        "char_140_whitew",
+        "char_103_angel",
+        "char_4193_lemuen",
+        "char_4088_hodrer",
+        "char_4063_quartz",
+        "char_427_vigil",
+        "char_4046_ebnhlz",
+    ]
+    .iter()
+    .filter(|id| gd.building.chars.contains_key(**id))
+    .map(|id| profile(gd, id))
+    .collect();
+    assert!(
+        roster.len() >= 10,
+        "the traders are in the game data: {}",
+        roster.len()
+    );
+    let hands: Vec<_> = [
+        "char_123_fang",
+        "char_133_mm",
+        "char_502_nblade",
+        "char_124_kroos",
+        "char_211_adnach",
+        "char_212_ansel",
+        "char_210_stward",
+        "char_120_hibisc",
+        "char_121_lava",
+        "char_36_forget",
+        "char_4212_nasti",
+        "char_4048_doroth",
+    ]
+    .iter()
+    .filter(|id| gd.building.chars.contains_key(**id))
+    .map(|id| profile(gd, id))
+    .collect();
+    roster.extend(hands);
+    // Three gold factories outsell two posts: with gold to spare, Proviso's
+    // bonus bars are sold and her value shape decides the post, as on the
+    // reporter's base.
+    let mut rooms = vec![room("tp3", "TRADING", 3), room("tp2", "TRADING", 2)];
+    for i in 0..3 {
+        let mut r = room(&format!("mf{i}"), "MANUFACTURE", 3);
+        r.current_formula = Some("F_GOLD".into());
+        rooms.push(r);
+    }
+    rooms.extend((0..2).map(|i| room(&format!("d{i}"), "DORMITORY", 5)));
+    let building = UserBuilding { rooms };
+    let rot = recommend_shift_rotation(&roster, &building, &gd.building, &registry, &drains, &[]);
+    let posts: Vec<(usize, String, Vec<String>)> = rot
+        .shifts
+        .iter()
+        .flat_map(|s| {
+            s.rooms
+                .iter()
+                .filter(|r| r.room_type == "TRADING")
+                .map(move |r| (s.index, r.slot_id.clone(), r.recommended.clone()))
+        })
+        .collect();
+    let at = |slot: &str, id: &str| {
+        posts
+            .iter()
+            .any(|(_, s, crew)| s == slot && crew.iter().any(|o| o == id))
+    };
+    assert!(
+        !at("tp3", PROVISO),
+        "Proviso never sells at the level-3 post: {posts:?}"
+    );
+    assert!(
+        !at("tp2", SHAMARE),
+        "the Shamare squad never sits at the level-2 post: {posts:?}"
+    );
+    assert!(
+        at("tp2", PROVISO) && at("tp3", SHAMARE),
+        "both sell where they pay most: {posts:?}"
     );
 }
