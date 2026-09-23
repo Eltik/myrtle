@@ -8,6 +8,7 @@ use crate::core::gamedata::types::operator::Operator;
 
 use super::clause::{PEER_STAGE_FIXED_LIMIT, PEER_STAGE_NET_LIMIT};
 use super::pools::ROBOTS_IN_POWER;
+use super::util::buff_family;
 
 /// Build a lowercased operator-name -> `char_id` lookup, used to resolve
 /// named-teammate conditional buffs (the buff text references operators by
@@ -685,6 +686,11 @@ pub enum BuffResolutionStrategy {
         threshold: i32,
         low_pct: f64,
         high_pct: f64,
+        /// Buff-id prefixes this skill takes priority over in its room ("does
+        /// not stack with Recycling and takes priority over it"): the named
+        /// skill's family, resolved by skill NAME from the buff table. A
+        /// roommate's clauses from these families do not apply.
+        excludes: Vec<String>,
     },
 
     /// Raises a room type's EFFECTIVE facility count by `amount` ("Power Plant +1, only affects
@@ -1080,7 +1086,7 @@ pub fn build_registry(
 
     for (buff_id, buff) in buffs {
         // Strip the tier suffix: "manu_prod_spd&power[000]" -> "manu_prod_spd&power".
-        let prefix = buff_id.split('[').next().unwrap_or(buff_id);
+        let prefix = buff_family(buff_id);
 
         // Morale-drain extraction runs FIRST, before any parse branch can
         // `continue` past it - a buff's cost rider must be captured no matter
@@ -2018,6 +2024,7 @@ pub fn build_registry(
                         threshold,
                         low_pct: low,
                         high_pct: high,
+                        excludes: non_stacking_priority_families(&buff.description, buffs),
                     }
                 }
                 // Recipe-type scaling (Quartz "Precise Scheduling"): a base trading
@@ -2331,6 +2338,35 @@ fn first_token(s: &str) -> String {
         .next()
         .unwrap_or("")
         .to_lowercase()
+}
+
+/// The buff families a skill takes priority over: "(This effect does not
+/// stack with Recycling and takes priority over it)" names a SKILL, resolved
+/// to every buff carrying that name (all tiers share the id prefix). Empty
+/// when the text carries no such clause or the name resolves to nothing -
+/// then nothing is excluded (never guess).
+fn non_stacking_priority_families(desc: &str, buffs: &HashMap<String, Buff>) -> Vec<String> {
+    let plain = plain_text(desc);
+    let Some(start) = plain.find("does not stack with ") else {
+        return Vec::new();
+    };
+    let rest = &plain[start + "does not stack with ".len()..];
+    let end = rest
+        .find(" and takes priority")
+        .or_else(|| rest.find(')'))
+        .unwrap_or(rest.len());
+    let name = rest[..end].trim();
+    if name.is_empty() {
+        return Vec::new();
+    }
+    let mut families: Vec<String> = buffs
+        .iter()
+        .filter(|(_, b)| b.buff_name.eq_ignore_ascii_case(name))
+        .map(|(id, _)| buff_family(id).to_string())
+        .collect();
+    families.sort();
+    families.dedup();
+    families
 }
 
 fn parse_first_pct(desc: &str) -> Option<f64> {

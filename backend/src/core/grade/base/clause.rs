@@ -18,6 +18,7 @@ use std::collections::HashMap;
 use crate::core::gamedata::types::building::Buff;
 
 use super::buff_registry::{BuffResolutionStrategy, OrderEffect};
+use super::util::buff_family;
 
 /// What a clause's contribution is denominated in.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -279,6 +280,10 @@ pub enum ClauseKind {
         metrics: Vec<Metric>,
         exempt: SuppressExempt,
     },
+    /// The owner's skill takes priority over roommates' skills of these buff
+    /// families ("does not stack with Recycling and takes priority over it"):
+    /// their clauses are dropped from the room before anything is priced.
+    ExcludesBuffs { prefixes: Vec<String> },
     /// The owner's bonus scales off a total that roommates are already
     /// contributing. A `quantized` reader floors the basis by `step` and
     /// ignores a negative total ("per 5 CAP" -> floor(max(0, total) / 5)); a
@@ -370,7 +375,7 @@ fn cc_non_stacking_family(buff_id: &str, buff: &Buff) -> Option<String> {
     let non_stacking = d.contains("only the most effective")
         || d.contains("strongest effect of this type")
         || d.contains("only the strongest");
-    non_stacking.then(|| buff_id.split('[').next().unwrap_or(buff_id).to_string())
+    non_stacking.then(|| buff_family(buff_id).to_string())
 }
 
 /// Map one legacy [`BuffResolutionStrategy`] to its clause set - the migration
@@ -705,9 +710,21 @@ pub fn clauses_from_strategy(
             threshold,
             low_pct,
             high_pct,
+            excludes,
         } => {
             // Per capacity POINT, tiered by each occupant's own bonus: low
             // per point at or below the threshold, high per point above it.
+            if !excludes.is_empty() {
+                out.push(Clause::base(
+                    buff_id,
+                    buff,
+                    speed(),
+                    ClauseKind::ExcludesBuffs {
+                        prefixes: excludes.clone(),
+                    },
+                    0.0,
+                ));
+            }
             out.push(Clause::base(
                 buff_id,
                 buff,
@@ -1673,6 +1690,7 @@ mod tests {
                 threshold: 4,
                 low_pct: 1.0,
                 high_pct: 3.0,
+                excludes: vec![],
             },
         );
         assert_eq!(set.len(), 2);

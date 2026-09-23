@@ -15,7 +15,7 @@ use crate::core::{
             BaseAssignment, OperatorBaseProfile, RoomAssignment, RoomRotation, RotationAssignment,
             RotationMember, RotationSet, RotationSetRoom, UserBuilding, UserRoom,
         },
-        util::{is_production_room, max_stationed_at_level},
+        util::{buff_family, is_production_room, max_stationed_at_level},
     },
 };
 
@@ -1191,8 +1191,15 @@ const MORALE_RECOVERY: f64 = 1.0;
 const MAX_DORM_LEVEL: f64 = 5.0;
 /// Floor on the recovery factor so a barely-built base still rotates (slowly).
 const MIN_RECOVERY_FACTOR: f64 = 0.3;
-/// How much of a resting main's output a backup recovers while covering it (a
-/// good rotation piece is close, but not equal, to the operator it replaces).
+/// How much of a resting main's output its relief recovers (a good rotation
+/// piece is close, but not equal, to the operator it replaces). The same for
+/// every room: a flexible room swaps a backup in one operator at a time, and a
+/// LOCKED synergy squad (Texas needs Lappland) is relieved by the next shift's
+/// WHOLE crew - the rotation the planner itself recommends - which covers the
+/// gap just as well. Pricing a locked crew's rest at zero coverage made the
+/// grade prefer a plain 75-speed post over the 132-speed synergy post the
+/// search had chosen, so plain stationing out-graded the plan (56505800,
+/// +4.5%). `locked` still means "no one-at-a-time backup" in the rotation view.
 const BACKUP_COVERAGE: f64 = 0.8;
 
 /// Effective per-hour morale recovery for this base. Operators rest in dormitories,
@@ -1507,7 +1514,6 @@ pub fn morale_sustained_beneficiaries(
         .iter()
         .filter(|r| is_production_room(&r.room_type))
     {
-        let coverage = if r.locked { 0.0 } else { BACKUP_COVERAGE };
         let n = r.operators.len().max(1) as f64;
         let room_mag = r.total_efficiency + r.order_value;
         for id in &r.operators {
@@ -1516,7 +1522,7 @@ pub fn morale_sustained_beneficiaries(
                     continue;
                 }
                 let up = op_uptime(op, morale_drains, recovery);
-                let gain = room_mag * (1.0 - up) * (1.0 - coverage) / n;
+                let gain = room_mag * (1.0 - up) * (1.0 - BACKUP_COVERAGE) / n;
                 if gain > 1e-9 {
                     ranked.push((id.clone(), gain));
                 }
@@ -1532,16 +1538,14 @@ pub fn morale_sustained_beneficiaries(
 }
 
 /// How close a room stays to its peak under a staggered rotation: 1.0 if its
-/// operators never rest, lower as they rest more. A flexible room swaps a backup in
-/// to cover a resting main (recovering `BACKUP_COVERAGE` of the gap); a LOCKED team
-/// can't be staggered, so its rest gaps are uncovered (`coverage = 0`) and it falls
-/// further from peak. Low-drain teams stay nearer peak either way.
+/// operators never rest, lower as they rest more. A room recovers
+/// `BACKUP_COVERAGE` of each rest gap through its relief. Low-drain teams stay
+/// nearer peak either way.
 fn room_sustain_factor(
     room_ops: &[String],
     op_index: &HashMap<&str, &OperatorBaseProfile>,
     morale_drains: &HashMap<String, f64>,
     recovery: f64,
-    coverage: f64,
     morale_sustained: &HashSet<String>,
 ) -> f64 {
     // An operator a morale-swap manager (Fiammetta) holds at full morale never rests, so it works
@@ -1561,7 +1565,7 @@ fn room_sustain_factor(
         return 1.0;
     }
     let avg_uptime = uptimes.iter().sum::<f64>() / uptimes.len() as f64;
-    1.0 - (1.0 - avg_uptime) * (1.0 - coverage)
+    1.0 - (1.0 - avg_uptime) * (1.0 - BACKUP_COVERAGE)
 }
 
 /// Sustained 24/7 efficiency of a staffing under a staggered rotation: each
@@ -1580,15 +1584,11 @@ pub fn sustained_efficiency_of(
         .iter()
         .filter(|r| is_production_room(&r.room_type))
         .map(|r| {
-            // A locked synergy team can't be staggered, so a resting member's gap is
-            // uncovered; a flexible room recovers `BACKUP_COVERAGE` of it.
-            let coverage = if r.locked { 0.0 } else { BACKUP_COVERAGE };
             let rotation = room_sustain_factor(
                 &r.operators,
                 &op_index,
                 morale_drains,
                 recovery,
-                coverage,
                 morale_sustained,
             );
             // AFK product-buffer stall: a gold factory that overflows its buffer loses the excess,
@@ -1619,7 +1619,8 @@ pub fn sustained_efficiency_of(
 /// [`sustained_efficiency_of`] - and the throttled rooms are then valued
 /// through the coupled yield model ([`assignment_value`]). This is the honest
 /// "what does this staffing actually earn per day" figure that a snapshot
-/// efficiency overstates. An UNSTAFFED room is worth exactly 0 - in the game
+/// efficiency overstates. An UNSTAFFED room is worth exactly 0 (priced so in
+/// `BaseFlows::add_room`, where an idle gold factory still bounds its posts) - in the game
 /// a factory with no operators produces nothing, even though the scorer
 /// still reports its Control-Center globals as room efficiency.
 pub fn sustained_assignment_value(
@@ -1648,13 +1649,11 @@ pub fn sustained_assignment_value(
         .filter(|r| is_production_room(&r.room_type))
         .filter(|r| !r.operators.is_empty())
         .map(|r| {
-            let coverage = if r.locked { 0.0 } else { BACKUP_COVERAGE };
             let rotation = room_sustain_factor(
                 &r.operators,
                 &op_index,
                 morale_drains,
                 recovery,
-                coverage,
                 &morale_sustained,
             );
             let cap = team_capacity_bonus(
@@ -1678,7 +1677,26 @@ pub fn sustained_assignment_value(
             }
         })
         .collect();
-    assignment_value(&throttled)
+    let mut flows = base_flows(&throttled);
+    flows.gold_factories += idle_gold_factories(&main.rooms);
+    flows.total_value()
+}
+
+/// Gold factories with no crew. They make nothing but are still gold
+/// factories: the posts are bounded by the gold the base makes (none), they do
+/// NOT fall back to stock the way a base that runs no gold factory does.
+/// Dropping idle rooms before pricing read two idle gold factories as "runs no
+/// gold" and priced the posts unbounded (32537844: stationed 64,903 against a
+/// plan of 58,833 for the same rooms; 25,440 once priced right).
+fn idle_gold_factories(rooms: &[RoomAssignment]) -> usize {
+    rooms
+        .iter()
+        .filter(|r| r.operators.is_empty() && is_gold_factory(r))
+        .count()
+}
+
+fn is_gold_factory(room: &RoomAssignment) -> bool {
+    room.room_type == "MANUFACTURE" && room.formula_type.as_deref() == Some("F_GOLD")
 }
 
 pub fn compute_sustained_assignment(
@@ -2415,7 +2433,7 @@ pub(crate) fn effective_facility_counts_with_inert(
                     }
                     FacilityGate::NoRobotsInOtherRooms => !robot_in(target_room),
                 };
-                let family = buff_id.split('[').next().unwrap_or(buff_id);
+                let family = buff_family(buff_id);
                 if gate_ok && *amount > 0 && seen_families.insert(family) {
                     *counts.entry(target_room.clone()).or_insert(0) += *amount as usize;
                 }
@@ -3119,7 +3137,7 @@ pub(crate) fn cc_bonus_for(
             ..
         }) => Some(CcBonus {
             room: target_room.clone(),
-            family: buff_id.split('[').next().unwrap_or(buff_id).to_string(),
+            family: buff_family(buff_id).to_string(),
             // Faction bonuses only reach matching operators - credit half. They
             // carry no non-stacking clause, so they stack on top of generics.
             bonus: bonus_pct * 0.5,
@@ -3136,7 +3154,7 @@ pub(crate) fn cc_bonus_for(
             formula_bonuses,
         }) => Some(CcBonus {
             room: target_room.clone(),
-            family: buff_id.split('[').next().unwrap_or(buff_id).to_string(),
+            family: buff_family(buff_id).to_string(),
             // Selection weight: discounted since the gate may not be met. The
             // real value is granted per-room via `conditional`. A capacity
             // grant (Gnosis) carries no weight of its own here - its worth is
@@ -3167,7 +3185,7 @@ pub(crate) fn cc_bonus_for(
                 .find(|g| g.order_limit != 0.0)
                 .map(|g| CcBonus {
                     room: g.target_room.clone(),
-                    family: buff_id.split('[').next().unwrap_or(buff_id).to_string(),
+                    family: buff_family(buff_id).to_string(),
                     bonus: 0.0,
                     stacks: false,
                     conditional: Some(CcCondition {
@@ -3769,15 +3787,10 @@ fn assign_production_rooms_inner(
     let mut best_objective: f64 = f64::NEG_INFINITY;
     let mut best_assigned_snapshot: HashSet<String> = assigned.clone();
 
-    // Gold factories must be >= trading post count (TPs need gold bars to
-    // trade); a frozen gold factory already counts toward that.
-    let min_gold = total_posts.saturating_sub(frozen_gold).min(num_factories);
-    // The yield-coupled optimum is "just enough gold to feed the trading posts"
-    // (excess gold is unsold and worth less than EXP), so only the splits at and
-    // just above min_gold are ever competitive - no need to scan all the way up.
-    let max_gold = (min_gold + 1).min(num_factories);
+    let fed = total_posts.saturating_sub(frozen_gold).min(num_factories);
+    let splits = gold_split_candidates(&factory_rooms, fed, frozen_gold);
 
-    for num_gold in min_gold..=max_gold {
+    for num_gold in splits {
         let mut trial_assigned = assigned.clone();
         // The frozen rooms lead the trial so the posts' yield pick and the
         // split's objective see them; they are split off again before the
@@ -5851,11 +5864,60 @@ fn team_capacity_bonus(
         .sum()
 }
 
+/// The gold-factory counts a planner tries for `factory_rooms` when `fed` of
+/// them are needed to feed the trading posts (`frozen_gold` of those already
+/// fixed). The yield-coupled optimum is "just enough gold to feed the posts"
+/// (excess gold is unsold and worth less than EXP), so the splits at and just
+/// above `fed` are the competitive ones.
+///
+/// ZERO gold factories is a candidate too: a base with none sells from stock
+/// (the game hands gold out outside the base), keeping the posts' LMD AND
+/// every factory's EXP. That supply is unbounded, so as a free CHOICE zero
+/// gold would win on every base; it is a candidate only where the player
+/// ALREADY runs no gold factory - they sell from stock today, and a plan that
+/// switched a lone factory to gold fed a post that was already fed and threw
+/// the EXP away (a plan worth 42% less than the player's own stationing, 27
+/// small accounts in the 2026-09-22 census). A player running gold is
+/// modelled as running gold: the game does not hand out enough to replace a
+/// factory.
+pub(crate) fn gold_split_candidates(
+    factory_rooms: &[&&UserRoom],
+    fed: usize,
+    frozen_gold: usize,
+) -> Vec<usize> {
+    let num_factories = factory_rooms.len();
+    let max_gold = (fed + 1).min(num_factories);
+    let mut splits: Vec<usize> = (fed..=max_gold).collect();
+    if fed > 0 && frozen_gold == 0 && player_runs_no_gold(factory_rooms) {
+        splits.insert(0, 0);
+    }
+    splits
+}
+
+/// "Runs no gold" is a RECORDED choice: at least one factory carries a recipe
+/// and none of the recorded ones is gold (the sync records no recipe for an
+/// idle room). A base with no recipes at all (a draft, a test fixture) has
+/// made no such choice and is fed the ordinary way.
+fn player_runs_no_gold(factory_rooms: &[&&UserRoom]) -> bool {
+    let mut recorded = factory_rooms
+        .iter()
+        .filter_map(|r| r.current_formula.as_deref())
+        .peekable();
+    recorded.peek().is_some() && recorded.all(|f| f != "F_GOLD")
+}
+
 /// Total realized daily output of a production assignment, as a single
 /// LMD-equivalent value. Each room's efficiency is soft-capped (per-room
 /// throughput ceiling) and converted to its resource yield; the gold->trade loop
 /// is then coupled so LMD = min(gold made, gold sold) × 500 and EXP adds at 1:1.
 pub fn assignment_value(rooms: &[RoomAssignment]) -> f64 {
+    base_flows(rooms).total_value()
+}
+
+/// The gold/EXP/drone flows of a room list, every room priced as given (the
+/// search prices synthetic rooms here; [`sustained_assignment_value`] is the
+/// stationed reading, where an empty room is idle).
+fn base_flows(rooms: &[RoomAssignment]) -> BaseFlows {
     let mut flows = BaseFlows::default();
     for r in rooms {
         let speed = room_value(r.total_efficiency, &r.room_type);
@@ -5870,7 +5932,7 @@ pub fn assignment_value(rooms: &[RoomAssignment]) -> f64 {
             r.order_limit,
         );
     }
-    flows.total_value()
+    flows
 }
 
 /// Soft-capped value of a room's raw efficiency. Production rooms have a

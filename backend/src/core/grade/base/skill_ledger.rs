@@ -23,6 +23,7 @@ use ts_rs::TS;
 use super::assignment::{CcBonusAccumulator, CcCondition, cc_bonuses, compute_team_efficiency};
 use super::buff_registry::BuffResolutionStrategy;
 use super::types::{OperatorBaseProfile, compute_match_tags};
+use super::util::buff_family;
 
 /// How a zero-marginal line should be read.
 ///
@@ -87,10 +88,64 @@ fn ablated(
     buff_id: &str,
     building_data: &BuildingDataFile,
 ) -> OperatorBaseProfile {
+    ablated_where(op, |b| b != buff_id, building_data)
+}
+
+/// A copy of `op` keeping only the buffs `keep` accepts, with its match tags
+/// recomputed for the reduced skill set.
+fn ablated_where(
+    op: &OperatorBaseProfile,
+    keep: impl Fn(&str) -> bool,
+    building_data: &BuildingDataFile,
+) -> OperatorBaseProfile {
     let mut p = op.clone();
-    p.available_buffs.retain(|b| b != buff_id);
+    p.available_buffs.retain(|b| keep(b));
     p.match_tags = compute_match_tags(&p.faction_tags, &p.available_buffs, building_data);
     p
+}
+
+/// A skill in this room that takes priority over roommates' skills of some
+/// buff families ("does not stack with Recycling and takes priority over it").
+struct PriorityExclusion {
+    owner: String,
+    buff_id: String,
+    families: Vec<String>,
+}
+
+/// Every live priority exclusion in a crew, for `room_type`.
+fn priority_exclusions(ctx: &LedgerCtx, ops: &[String], room_type: &str) -> Vec<PriorityExclusion> {
+    ops.iter()
+        .filter_map(|id| ctx.op_index.get(id.as_str()).map(|op| (id, op)))
+        .flat_map(|(id, op)| {
+            op.available_buffs.iter().filter_map(move |b| {
+                let live = ctx
+                    .building_data
+                    .buffs
+                    .get(b)
+                    .is_some_and(|x| x.room_type == room_type);
+                match ctx.registry.get(b) {
+                    Some(BuffResolutionStrategy::CapacityTierScaling { excludes, .. })
+                        if live && !excludes.is_empty() =>
+                    {
+                        Some(PriorityExclusion {
+                            owner: id.clone(),
+                            buff_id: b.clone(),
+                            families: excludes.clone(),
+                        })
+                    }
+                    _ => None,
+                }
+            })
+        })
+        .collect()
+}
+
+/// A buff's display name, falling back to its id.
+fn buff_name<'a>(ctx: &'a LedgerCtx, buff_id: &'a str) -> &'a str {
+    ctx.building_data
+        .buffs
+        .get(buff_id)
+        .map_or(buff_id, |b| b.buff_name.as_str())
 }
 
 fn zero_disposition(strategy: Option<&BuffResolutionStrategy>, crew: &[String]) -> LineDisposition {
@@ -150,8 +205,20 @@ impl LedgerCtx<'_> {
         conditions: &[CcCondition],
         replace: Option<(&str, &OperatorBaseProfile)>,
     ) -> (f64, f64) {
+        self.score_with(ops, room_type, formula, conditions, replace.as_slice())
+    }
+
+    /// [`Self::score`] with any number of members' profiles replaced.
+    fn score_with(
+        &self,
+        ops: &[String],
+        room_type: &str,
+        formula: Option<&str>,
+        conditions: &[CcCondition],
+        replace: &[(&str, &OperatorBaseProfile)],
+    ) -> (f64, f64) {
         let mut index: HashMap<&str, &OperatorBaseProfile> = self.op_index.clone();
-        if let Some((id, p)) = replace {
+        for (id, p) in replace {
             index.insert(id, p);
         }
         compute_team_efficiency(
@@ -218,6 +285,7 @@ pub(crate) fn production_room_ledger(
     let (full_speed, full_value) = ctx.score(ops, room_type, formula, cc_conditions, None);
     let full_global = global_bonuses.get(room_type).copied().unwrap_or(0.0);
 
+    let exclusions = priority_exclusions(ctx, ops, room_type);
     // The room's own crew, one line per same-room buff.
     for id in ops {
         let Some(op) = ctx.op_index.get(id.as_str()) else {
@@ -230,17 +298,49 @@ pub(crate) fn production_room_ledger(
             if buff.room_type != room_type {
                 continue;
             }
+            // A skill that takes priority over a roommate's family is priced
+            // as ITS OWN contribution: its probe keeps the excluded family
+            // out, otherwise removing Bubble's tiers resurrects Recycling and
+            // her line would read -33.
             let probe = ablated(op, buff_id, ctx.building_data);
+            let kept_out: Vec<(String, OperatorBaseProfile)> = exclusions
+                .iter()
+                .filter(|e| e.buff_id == *buff_id)
+                .flat_map(|e| {
+                    ops.iter()
+                        .filter(|o| *o != id)
+                        .filter_map(|o| ctx.op_index.get(o.as_str()).map(|p| (o, *p)))
+                        .map(|(o, other)| {
+                            let keep = |b: &str| !e.families.iter().any(|f| f == buff_family(b));
+                            (o.clone(), ablated_where(other, keep, ctx.building_data))
+                        })
+                })
+                .collect();
+            let mut replacements: Vec<(&str, &OperatorBaseProfile)> = vec![(id.as_str(), &probe)];
+            replacements.extend(kept_out.iter().map(|(o, p)| (o.as_str(), p)));
             let (speed, value) =
-                ctx.score(ops, room_type, formula, cc_conditions, Some((id, &probe)));
+                ctx.score_with(ops, room_type, formula, cc_conditions, &replacements);
             let d_speed = full_speed - speed;
             let d_value = full_value - value;
-            let disposition = if d_speed.abs() > EPS || d_value.abs() > EPS {
+            // A roommate's skill that takes priority over this one's family
+            // reads covered, with the winner named - not a fault.
+            let excluded_by = exclusions
+                .iter()
+                .find(|e| e.owner != *id && e.families.iter().any(|f| f == buff_family(buff_id)));
+            let disposition = if excluded_by.is_some() {
+                LineDisposition::Covered
+            } else if d_speed.abs() > EPS || d_value.abs() > EPS {
                 LineDisposition::Contributes
             } else {
                 zero_disposition(ctx.registry.get(buff_id), ops)
             };
             let note = match ctx.registry.get(buff_id) {
+                _ if excluded_by.is_some() => excluded_by.map(|e| {
+                    format!(
+                        "Does not stack with a roommate's {}, which takes priority in this room.",
+                        buff_name(ctx, &e.buff_id)
+                    )
+                }),
                 Some(BuffResolutionStrategy::MatchCountScaling {
                     per_match_pct,
                     count_skills: true,

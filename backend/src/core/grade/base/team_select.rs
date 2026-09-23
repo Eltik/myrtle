@@ -19,8 +19,8 @@ use crate::core::gamedata::types::building::BuildingDataFile;
 
 use super::assignment::{
     CandidateTeam, CcCondition, POST_TIE_BAND, assignment_value, build_op_index, candidate_pool,
-    compute_team_efficiency, enumerate_candidate_teams, has_automation_buff, op_is_nullifier,
-    padding_cost, room_search_score,
+    compute_team_efficiency, enumerate_candidate_teams, gold_split_candidates, has_automation_buff,
+    op_is_nullifier, padding_cost, room_search_score,
 };
 use super::buff_registry::BuffResolutionStrategy;
 use super::shift_rotation::SHIFT_COUNT;
@@ -270,13 +270,14 @@ pub fn plan_production_groups(
         .collect();
 
     let num_factories = factory_rooms.len();
-    // Gold factories must cover the trading posts' gold demand; only the splits at
-    // and just above that are competitive (excess gold is unsold).
-    let min_gold = trading_rooms.len().min(num_factories);
-    let max_gold = (min_gold + 1).min(num_factories);
+    // Gold factories cover the trading posts' gold demand; zero gold is a
+    // candidate only where the player runs no gold factory today (see
+    // `gold_split_candidates`).
+    let fed = trading_rooms.len().min(num_factories);
+    let splits = gold_split_candidates(&factory_rooms, fed, 0);
 
     let mut best: Option<(f64, Vec<PlannedGroup>)> = None;
-    for num_gold in min_gold..=max_gold {
+    for num_gold in splits {
         let mut specs: Vec<GroupSpec> = Vec::new();
         let gold: Vec<(String, i32)> = factory_rooms[..num_gold]
             .iter()

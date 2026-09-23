@@ -2010,6 +2010,183 @@ fn low_level_dorms_reduce_sustained_output() {
 }
 
 #[test]
+fn a_locked_synergy_crew_is_relieved_by_the_next_shift_like_any_other() {
+    // The rotation the planner recommends relieves a Texas+Lappland post with
+    // the next shift's WHOLE crew, so its rest gaps are covered as well as a
+    // flexible room's are. Pricing a locked crew's rest at zero coverage made
+    // the grade prefer a plain 75-speed post over a 132-speed synergy post the
+    // search had chosen (56505800: the player's plain crews out-graded the
+    // plan by 4.5%). Sustained value must not depend on the `locked` flag.
+    use backend::core::grade::base::assignment::sustained_assignment_value;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let building = UserBuilding {
+        rooms: vec![
+            room("tp", "TRADING", 3),
+            room("mf", "MANUFACTURE", 3),
+            room("d0", "DORMITORY", 5),
+            room("d1", "DORMITORY", 5),
+        ],
+    };
+    let roster = vec![
+        profile(gd, TEXAS),
+        profile(gd, LAPPLAND),
+        profile(gd, EXUSIAI),
+        profile(gd, "char_123_fang"),
+        profile(gd, "char_133_mm"),
+    ];
+    let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+    let post = asn
+        .rooms
+        .iter()
+        .find(|r| r.room_type == "TRADING")
+        .expect("a trading post");
+    assert!(
+        post.locked && post.operators.contains(&TEXAS.to_string()),
+        "precondition: the Penguin synergy squad forms and is locked, got {:?}",
+        post.operators
+    );
+    let value = |a: &backend::core::grade::base::types::BaseAssignment| {
+        sustained_assignment_value(a, &roster, &building, &gd.building, &registry, &drains)
+    };
+    let mut unlocked = asn.clone();
+    for r in &mut unlocked.rooms {
+        r.locked = false;
+    }
+    let (locked_v, unlocked_v) = (value(&asn), value(&unlocked));
+    assert!(
+        locked_v > 0.0 && (locked_v - unlocked_v).abs() < 1e-6,
+        "a locked crew sustains exactly like the same crew unlocked: {locked_v:.1} vs {unlocked_v:.1}"
+    );
+}
+
+#[test]
+fn an_idle_gold_factory_bounds_its_posts_instead_of_selling_from_stock() {
+    // A base whose gold factory is set but UNSTAFFED makes no gold: its posts
+    // sell nothing, they do not fall back to stock the way a base that runs
+    // no gold factory at all does. The stationed reading used to drop idle
+    // rooms before pricing, so two idle gold factories read as "runs no gold"
+    // and the posts priced unbounded (32537844: a stationed value of 64,903
+    // against a plan of 58,833 for the same rooms, 25,440 once priced right).
+    use backend::core::grade::base::assignment::{
+        compute_current_assignment, sustained_assignment_value,
+    };
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let roster = vec![
+        profile(gd, TEXAS),
+        profile(gd, LAPPLAND),
+        profile(gd, "char_123_fang"),
+    ];
+    let stationed = |factory: Option<Vec<&str>>| {
+        let mut post = room("tp", "TRADING", 3);
+        post.current_operators = vec![TEXAS.into(), LAPPLAND.into()];
+        let mut rooms = vec![post, room("d0", "DORMITORY", 5)];
+        if let Some(crew) = factory {
+            let mut mf = room("mf", "MANUFACTURE", 3);
+            mf.current_formula = Some("F_GOLD".into());
+            mf.current_operators = crew.iter().map(|s| (*s).to_string()).collect();
+            rooms.push(mf);
+        }
+        let building = UserBuilding { rooms };
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        sustained_assignment_value(&asn, &roster, &building, &gd.building, &registry, &drains)
+    };
+    let from_stock = stationed(None);
+    let idle = stationed(Some(vec![]));
+    let fed = stationed(Some(vec!["char_123_fang"]));
+    assert!(
+        from_stock > 0.0,
+        "a post with no gold factory sells from stock"
+    );
+    assert!(
+        idle.abs() < 1e-9,
+        "a post beside an idle gold factory sells nothing, got {idle:.1}"
+    );
+    assert!(
+        fed > 0.0 && fed < from_stock,
+        "a staffed gold factory bounds the post below stock: fed {fed:.1} vs stock {from_stock:.1}"
+    );
+}
+
+#[test]
+fn bubbles_tiers_take_priority_over_vermeils_recycling() {
+    // Bubble's Bigger is Better! "does not stack with Recycling and takes
+    // priority over it": with Bubble in the factory, Vermeil's 2% per
+    // capacity point does not apply, and the room reads Bubble's 1% per point
+    // alone (Bubble +10, Vermeil +8, Click +15 on Battle Records = 33; the
+    // game shows +0.36 with the three 1% innates). Without Bubble, Vermeil's
+    // Recycling reads the same points at 2% (46). User-verified 2026-09-22.
+    use backend::core::grade::base::skill_ledger::LineDisposition;
+    const BUBBLE: &str = "char_381_bubble";
+    const VERMEIL: &str = "char_190_clour";
+    const CLICK: &str = "char_328_cammou";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let factory = |crew: &[&str]| {
+        let mut mf = room("mf", "MANUFACTURE", 3);
+        mf.current_formula = Some("F_EXP".into());
+        mf.current_operators = crew.iter().map(|s| (*s).to_string()).collect();
+        let building = UserBuilding { rooms: vec![mf] };
+        let roster: Vec<_> = crew.iter().map(|id| profile(gd, id)).collect();
+        let asn = backend::core::grade::base::assignment::compute_current_assignment(
+            &roster,
+            &building,
+            &gd.building,
+            &registry,
+            &drains,
+            None,
+        );
+        asn.rooms.into_iter().next().expect("the factory")
+    };
+    let with_bubble = factory(&[BUBBLE, VERMEIL, CLICK]);
+    assert!(
+        (with_bubble.total_efficiency - 33.0).abs() < 1e-6,
+        "Bubble's 1% per point alone: got {:.1}",
+        with_bubble.total_efficiency
+    );
+    let recycling = with_bubble
+        .ledger
+        .iter()
+        .find(|l| l.operator_id == VERMEIL && l.buff_id.starts_with("manu_prod_spd_variable["))
+        .expect("Vermeil's Recycling line");
+    assert!(
+        recycling.disposition == LineDisposition::Covered && recycling.speed_pct.abs() < 1e-9,
+        "Recycling reads covered under Bubble, got {:?} {:.1}",
+        recycling.disposition,
+        recycling.speed_pct
+    );
+    assert!(
+        recycling
+            .note
+            .as_deref()
+            .is_some_and(|n| n.contains("Bigger is Better") && n.contains("priority")),
+        "the line names the skill that takes priority: {:?}",
+        recycling.note
+    );
+    let tiers = with_bubble
+        .ledger
+        .iter()
+        .find(|l| l.operator_id == BUBBLE && l.buff_id.starts_with("manu_prod_spd_variable3["))
+        .expect("Bubble's Bigger is Better! line");
+    assert!(
+        (tiers.speed_pct - 33.0).abs() < 1e-6,
+        "Bubble's tiers read their own +33, not the -33 of a probe that resurrects Recycling: {:.1}",
+        tiers.speed_pct
+    );
+    let without_bubble = factory(&[VERMEIL, CLICK]);
+    assert!(
+        (without_bubble.total_efficiency - 46.0).abs() < 1e-6,
+        "Vermeil's 2% per point without Bubble: got {:.1}",
+        without_bubble.total_efficiency
+    );
+}
+
+#[test]
 fn dead_conditional_cc_operator_is_dropped_after_assignment() {
     // The roster HAS three Kjerag traders, so SilverAsh's gate passes the roster
     // feasibility check and he is initially seated in the CC. But stronger non-Kjerag
@@ -10996,5 +11173,54 @@ fn a_knight_trio_is_assembled_with_viviana_in_the_control_center() {
         factory.total_efficiency >= 96.0,
         "three Knights at +32 each: {:.1}",
         factory.total_efficiency
+    );
+}
+
+/// A player who runs no gold factory at all sells from stock: their posts
+/// earn AND every factory makes EXP. A plan that switched their lone
+/// factory to gold fed a post that was already fed and threw the EXP away -
+/// the 2026-09-22 census found 27 such bases graded at half their own
+/// yield. Zero gold is tried only where every factory carries a recorded
+/// non-gold recipe; a base with no recipes (a draft, a fixture) or any gold
+/// factory is fed the ordinary way.
+#[test]
+fn a_base_that_runs_no_gold_keeps_its_exp_factory() {
+    let gd = load_game_data();
+    let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
+    let roster: Vec<_> = [
+        "char_235_jesica",
+        "char_502_nblade",
+        "char_123_fang",
+        "char_121_lava",
+    ]
+    .iter()
+    .map(|id| profile(gd, id))
+    .collect();
+    let plan = |recipe: Option<&str>| {
+        let mut mf = room("mf", "MANUFACTURE", 1);
+        mf.current_formula = recipe.map(str::to_string);
+        let building = UserBuilding {
+            rooms: vec![room("tp", "TRADING", 1), mf],
+        };
+        let asn = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+        asn.rooms
+            .iter()
+            .find(|r| r.room_type == "MANUFACTURE")
+            .and_then(|r| r.formula_type.clone())
+    };
+    assert_eq!(
+        plan(Some("F_EXP")).as_deref(),
+        Some("F_EXP"),
+        "a recorded EXP-only base keeps EXP"
+    );
+    assert_eq!(
+        plan(None).as_deref(),
+        Some("F_GOLD"),
+        "a base with no recorded recipe feeds its post"
+    );
+    assert_eq!(
+        plan(Some("F_GOLD")).as_deref(),
+        Some("F_GOLD"),
+        "a base running gold keeps feeding its post"
     );
 }

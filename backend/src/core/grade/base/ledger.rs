@@ -17,6 +17,7 @@ use super::clause::{
     Clause, ClauseKind, CondScope, Metric, Subject, SuppressExempt, clauses_from_strategy,
 };
 use super::types::OperatorBaseProfile;
+use super::util::buff_family;
 
 /// The game floor on a trading post's order limit - a team that slashes the
 /// limit below it (Degenbrecher) still banks at least one order.
@@ -178,7 +179,7 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
     // engine). Clauses are derived on the fly from the (possibly
     // base-wide-resolved) strategy registry; once the registry dies (CP5) this
     // reads a prebuilt clause store instead.
-    let member_clauses: Vec<Vec<(Clause, bool)>> = members
+    let mut member_clauses: Vec<Vec<(Clause, bool)>> = members
         .iter()
         .map(|op| {
             op.available_buffs
@@ -203,6 +204,29 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                 .collect()
         })
         .collect();
+
+    // Priority exclusions: a live "does not stack with X and takes priority
+    // over it" clause drops every ROOMMATE's clause of X's family before
+    // anything is priced (Bubble's Bigger is Better! over Vermeil's
+    // Recycling: the game credits her 1%-per-point tiers alone, 33 not 99).
+    let exclusions: Vec<(usize, Vec<String>)> = member_clauses
+        .iter()
+        .enumerate()
+        .flat_map(|(i, cs)| {
+            cs.iter().filter_map(move |(c, _)| match &c.kind {
+                ClauseKind::ExcludesBuffs { prefixes } => Some((i, prefixes.clone())),
+                _ => None,
+            })
+        })
+        .collect();
+    for (owner, prefixes) in &exclusions {
+        for (j, cs) in member_clauses.iter_mut().enumerate() {
+            if j == *owner {
+                continue;
+            }
+            cs.retain(|(c, _)| !prefixes.iter().any(|p| p == buff_family(&c.buff_id)));
+        }
+    }
 
     // The automation wipe fires only when a member's automation clause is LIVE
     // in this room (its buff applies here) - clause-gated like every other
@@ -538,6 +562,9 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                 ClauseKind::ScalingRoomOrderLimit => {
                     limit_items.push((i, clause.metric.clone(), clause.value * factor));
                 }
+                // Priority exclusions were applied to the member clause lists
+                // above; the marker itself prices nothing.
+                ClauseKind::ExcludesBuffs { .. } => {}
                 // The exempt marker on automation clauses is honored via the
                 // wipe's source check, not per-suppressor state.
                 ClauseKind::SuppressesOthers { metrics, .. } => {

@@ -24,6 +24,10 @@ name = "regrade-users"
 path = "src/bin/regrade_users.rs"
 
 [[bin]]
+name = "base-regression"
+path = "src/bin/base_regression.rs"
+
+[[bin]]
 name = "manage-permissions"
 path = "src/bin/manage_permissions.rs"
 

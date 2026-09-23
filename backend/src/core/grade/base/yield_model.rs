@@ -312,6 +312,14 @@ pub struct RoomYield {
     pub exp_per_day: f64,
 }
 
+impl RoomYield {
+    /// The room's day as one LMD-equivalent figure, on the objective's own
+    /// exchange rates (a gold bar at `GOLD_BAR_LMD`, EXP at `EXP_TO_LMD`).
+    pub fn lmd_equivalent(&self) -> f64 {
+        self.lmd_per_day + self.gold_per_day * GOLD_BAR_LMD + self.exp_per_day * EXP_TO_LMD
+    }
+}
+
 /// Standalone per-room yield (no coupling) for display. Trading posts show the
 /// LMD they could realize if gold-supplied (sell capacity × 500), with order
 /// value (`value_pct`) raising the LMD per order.

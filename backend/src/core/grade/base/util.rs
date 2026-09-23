@@ -30,3 +30,11 @@ pub fn max_stationed_at_level(
 ) -> i32 {
     room_phase(building_data, room_type, level).map_or(1, |phase| phase.max_stationed_num)
 }
+
+/// The family a buff id belongs to: its id without the tier suffix
+/// (`manu_prod_spd_variable[000]` -> `manu_prod_spd_variable`). Tiers of one
+/// skill share the family, which is what non-stacking and priority clauses
+/// name.
+pub fn buff_family(buff_id: &str) -> &str {
+    buff_id.split('[').next().unwrap_or(buff_id)
+}
