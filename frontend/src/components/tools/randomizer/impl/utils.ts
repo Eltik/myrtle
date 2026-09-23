@@ -41,21 +41,20 @@ function isHeartOfSurgingFlameStage(zoneId: string, lookup: IActivityLookup): bo
     return false;
 }
 
-function shouldIncludeBySanityCost(stage: IStage, lookup: IActivityLookup): boolean {
+/**
+ * A stage that costs sanity is a battle. Heart of Surging Flame is the exception:
+ * its battles cost 0 AP, so there the ST / TR codes are what mark the non-battles.
+ */
+function isPlayableStage(stage: IStage, lookup: IActivityLookup): boolean {
     if (stage.apCost > 0) return true;
-
-    if (isHeartOfSurgingFlameStage(stage.zoneId, lookup)) {
-        const code = stage.code.toUpperCase();
-        if (code.includes("ST") || code.includes("TR")) return false;
-        return true;
-    }
-
-    return false;
+    if (!isHeartOfSurgingFlameStage(stage.zoneId, lookup)) return false;
+    const code = stage.code.toUpperCase();
+    return !code.includes("ST") && !code.includes("TR");
 }
 
 /** Drops 0-AP tutorial/story-only stages (except Heart of Surging Flame playables). */
 export function filterPlayableStages(stages: IStage[], lookup: IActivityLookup): IStage[] {
-    return stages.filter((stage) => shouldIncludeBySanityCost(stage, lookup));
+    return stages.filter((stage) => isPlayableStage(stage, lookup));
 }
 
 export function buildRosterIndex(roster: IRosterEntry[] | null | undefined): IRosterIndex {
@@ -86,6 +85,22 @@ export function toRandomizerOperator(op: IOperatorIndexEntry): IRandomizerOperat
     };
 }
 
+/**
+ * The settings as they apply to this session. Saved settings outlive the
+ * session, but the owned / E2 / cleared filters read data only a profile
+ * brings: signed out, the roster and the clears are empty, so a filter saved
+ * while signed in would draw nothing ("0 drawable") behind a switch that
+ * renders off and locked, where it cannot be turned off. Those filters apply
+ * only with a profile, and the cleared filter only once the clears have loaded
+ * (a missing clears map reads every stage as uncleared). The stored choice is
+ * untouched and returns when the data does.
+ */
+export function applyProfileGate(settings: IRandomizerSettings, { hasProfile, hasStageClears }: { hasProfile: boolean; hasStageClears: boolean }): IRandomizerSettings {
+    if (!hasProfile) return { ...settings, onlyOwnedOperators: false, onlyE2Operators: false, onlyCompletedStages: false };
+    if (!hasStageClears) return { ...settings, onlyCompletedStages: false };
+    return settings;
+}
+
 export function selectAvailableOperators(operators: IRandomizerOperator[], settings: IRandomizerSettings, rosterIndex: IRosterIndex): IRandomizerOperator[] {
     return operators.filter((op) => {
         if (!settings.allowedRarities.includes(op.rarity)) return false;
@@ -100,6 +115,16 @@ export function selectAvailableOperators(operators: IRandomizerOperator[], setti
 /** Zone types whose stages are always available (mainline, retro, daily farming, annihilation). */
 const PERMANENT_ZONE_TYPES = new Set(["MAINLINE", "MAINLINE_ACTIVITY", "MAINLINE_RETRO", "WEEKLY", "CAMPAIGN"]);
 
+/** Playable right now: permanent content, or an event whose window is open at `now` (unix seconds). */
+function isStageAvailableNow(stage: IStage, zone: IZone, lookup: IActivityLookup, now: number): boolean {
+    if (PERMANENT_ZONE_TYPES.has(zone.type)) return true;
+    if (getPermanentZonePrefix(stage.zoneId)) return true;
+    const activityId = getActivityIdFromZoneId(stage.zoneId);
+    if (!activityId) return false;
+    if (getPermanentEventInfo(activityId, lookup)) return true;
+    return isActivityCurrentlyOpen(activityId, lookup, now);
+}
+
 export function selectAvailableStages(stages: IStage[], zones: IZone[], settings: IRandomizerSettings, stageClears: StageClearsMap | null | undefined, lookup: IActivityLookup): IStage[] {
     const zoneById = new Map(zones.map((z) => [z.zoneId, z]));
     const deselectedStages = new Set(settings.deselectedStageIds);
@@ -110,20 +135,8 @@ export function selectAvailableStages(stages: IStage[], zones: IZone[], settings
         if (!zone) return false;
         if (!settings.allowedZoneTypes.includes(zone.type)) return false;
         if (deselectedStages.has(stage.stageId)) return false;
-
-        if (settings.onlyCompletedStages) {
-            if (!isStageCleared(stage.stageId, stageClears)) return false;
-        }
-
-        if (settings.onlyAvailableStages) {
-            if (PERMANENT_ZONE_TYPES.has(zone.type)) return true;
-            if (getPermanentZonePrefix(stage.zoneId)) return true;
-            const activityId = getActivityIdFromZoneId(stage.zoneId);
-            if (!activityId) return false;
-            if (getPermanentEventInfo(activityId, lookup)) return true;
-            return isActivityCurrentlyOpen(activityId, lookup, now);
-        }
-
+        if (settings.onlyCompletedStages && !isStageCleared(stage.stageId, stageClears)) return false;
+        if (settings.onlyAvailableStages) return isStageAvailableNow(stage, zone, lookup, now);
         return true;
     });
 }
@@ -233,6 +246,9 @@ export function isStageCleared(stageId: string, stageClears: StageClearsMap | nu
 
 export type StageGroupSection = "MAIN" | "EVENT" | "OTHER";
 
+/** Display order of the sections; the same order `buildStageGroups` sorts by. */
+export const STAGE_SECTION_ORDER: readonly StageGroupSection[] = ["MAIN", "EVENT", "OTHER"];
+
 export interface IStageGroup {
     id: string;
     label: string;
@@ -245,6 +261,9 @@ export interface IStageGroup {
     sortKey: number;
     stages: IStage[];
 }
+
+/** Everything a group takes from the first stage that lands in it. */
+type StageGroupHead = Pick<IStageGroup, "id" | "label" | "sublabel" | "section" | "isOpen" | "sortKey">;
 
 function natCompareCode(a: string, b: string): number {
     return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
@@ -273,135 +292,119 @@ function getActivityIdFromStageId(stageId: string): string | null {
     return /^act\d/i.test(prefix) ? prefix : null;
 }
 
+const MAINLINE_ZONE_TYPES = new Set(["MAINLINE", "MAINLINE_ACTIVITY", "MAINLINE_RETRO"]);
+
+/**
+ * Genuine main story: a mainline zone AND a `main_/tough_/easy_/hard_/st_` stage
+ * id. Legacy event stages (e.g. `act7d5_04`) sometimes share a `main_X` zone
+ * but are not main story.
+ */
+function isMainStoryStage(stage: IStage, zone: IZone): boolean {
+    const stageIdPrefix = stage.stageId.split("_", 1)[0] ?? "";
+    return MAINLINE_ZONE_TYPES.has(zone.type) && /^(main|tough|easy|hard|st)$/i.test(stageIdPrefix);
+}
+
+function mainStoryGroupHead(zone: IZone, t: RandomizerUtilsT): StageGroupHead {
+    const chapterNumber = zone.zoneNameTitleCurrent?.replace(/^0+/, "") || String(zone.zoneIndex ?? 0);
+    const chapterName = zone.zoneNameSecond ?? zone.zoneNameFirst ?? zone.zoneId;
+    const chapterSortKey = Number.parseInt(zone.zoneNameTitleCurrent ?? "", 10);
+    return {
+        // Keyed by chapter number so the MAINLINE / MAINLINE_ACTIVITY /
+        // MAINLINE_RETRO variants of one chapter merge into one entry.
+        id: `mainline:${chapterNumber || zone.zoneId}`,
+        label: t("randomizer.stages.chapter", { number: chapterNumber, name: chapterName }),
+        sublabel: zone.zoneNameFirst && zone.zoneNameFirst !== chapterName ? zone.zoneNameFirst : undefined,
+        section: "MAIN",
+        isOpen: true,
+        sortKey: Number.isFinite(chapterSortKey) ? chapterSortKey : (zone.zoneIndex ?? 0),
+    };
+}
+
+/** An event group. A retro'd side story or branchline is permanent; anything else is open only inside its window. */
+function activityGroupHead(activityId: string, fallbackLabel: string, lookup: IActivityLookup, now: number, t: RandomizerUtilsT): StageGroupHead {
+    const activity = lookup.activityById.get(activityId);
+    const retro = lookup.retroByActivityId.get(activityId);
+    const isPermanentSideOrBranch = !!retro && (retro.type === "SIDESTORY" || retro.type === "BRANCHLINE");
+
+    let sublabel: string | undefined;
+    let isOpen = false;
+    if (isPermanentSideOrBranch) {
+        sublabel = t("randomizer.stages.permanent");
+        isOpen = true;
+    } else if (activity) {
+        isOpen = activity.startTime <= now && now <= activity.endTime;
+        sublabel = activity.isReplicate ? t("randomizer.stages.rerun") : undefined;
+    }
+
+    return {
+        id: `activity:${activityId}`,
+        label: activity?.name ?? retro?.name ?? fallbackLabel,
+        sublabel,
+        section: isOtherActivity(activityId) && !isPermanentSideOrBranch ? "OTHER" : "EVENT",
+        isOpen,
+        sortKey: activity?.startTime ?? retro?.startTime ?? 0,
+    };
+}
+
+/**
+ * Which group a stage belongs to. The stage id's own activity wins over the
+ * zone's (see `getActivityIdFromStageId`); then a permanent retro zone, the
+ * zone's activity, and finally the bare zone.
+ */
+function stageGroupHead(stage: IStage, zone: IZone, lookup: IActivityLookup, now: number, t: RandomizerUtilsT): StageGroupHead {
+    if (isMainStoryStage(stage, zone)) return mainStoryGroupHead(zone, t);
+
+    const stageActivityId = getActivityIdFromStageId(stage.stageId);
+    if (stageActivityId && (lookup.activityById.has(stageActivityId) || lookup.retroByActivityId.has(stageActivityId))) {
+        return activityGroupHead(stageActivityId, stageActivityId, lookup, now, t);
+    }
+
+    const zoneLabel = getZoneDisplayName(zone, zone.zoneId);
+    const permanentPrefix = getPermanentZonePrefix(stage.zoneId);
+    if (permanentPrefix) {
+        const retro = lookup.retroByZonePrefix.get(permanentPrefix);
+        return { id: `permanent:${permanentPrefix}`, label: retro?.name ?? zoneLabel, sublabel: t("randomizer.stages.permanent"), section: "EVENT", isOpen: true, sortKey: retro?.startTime ?? 0 };
+    }
+
+    const zoneActivityId = getActivityIdFromZoneId(stage.zoneId);
+    if (zoneActivityId) return activityGroupHead(zoneActivityId, zoneLabel, lookup, now, t);
+
+    return { id: `zone:${stage.zoneId}`, label: zoneLabel, sublabel: undefined, section: "OTHER", isOpen: PERMANENT_ZONE_TYPES.has(zone.type), sortKey: zone.zoneIndex ?? 0 };
+}
+
 /**
  * Bucket the supplied stages into user-facing groups partitioned into three sections:
  * Main Story (one per mainline episode), Events (full sidestories / permanent SS/BL),
- * and Other (mini events, sandbox, festivals, etc.).
+ * and Other (mini events, sandbox, festivals, etc.). Main Story runs oldest chapter
+ * first; the other sections newest first.
  */
 export function buildStageGroups(stages: IStage[], zones: IZone[], lookup: IActivityLookup, t: RandomizerUtilsT = sourceT): IStageGroup[] {
     const zoneById = new Map(zones.map((z) => [z.zoneId, z]));
     const now = Math.floor(Date.now() / 1000);
-
     const groups = new Map<string, IStageGroup>();
 
     for (const stage of stages) {
         const zone = zoneById.get(stage.zoneId);
         if (!zone) continue;
-
-        let groupId: string;
-        let label: string;
-        let sublabel: string | undefined;
-        let section: StageGroupSection;
-        let isOpen: boolean;
-        let sortKey: number;
-
-        const stageActivityId = getActivityIdFromStageId(stage.stageId);
-        const stageActivity = stageActivityId ? lookup.activityById.get(stageActivityId) : undefined;
-        const stageRetro = stageActivityId ? lookup.retroByActivityId.get(stageActivityId) : undefined;
-        const stageBelongsToActivity = !!(stageActivity || stageRetro);
-
-        const isMainlineZoneType = zone.type === "MAINLINE" || zone.type === "MAINLINE_ACTIVITY" || zone.type === "MAINLINE_RETRO";
-        // Stage IDs for genuine mainline content are `main_/tough_/easy_/hard_/st_` prefixed;
-        // legacy event stages (e.g. `act7d5_04`) sometimes share a `main_X` zone but should
-        // NOT be considered main story.
-        const stageIdPrefix = stage.stageId.split("_", 1)[0] ?? "";
-        const isMainlineStageId = /^(main|tough|easy|hard|st)$/i.test(stageIdPrefix);
-        const isTrueMainStory = isMainlineZoneType && isMainlineStageId;
-
-        if (isTrueMainStory) {
-            const chapterNumber = zone.zoneNameTitleCurrent?.replace(/^0+/, "") || String(zone.zoneIndex ?? 0);
-            const chapterName = zone.zoneNameSecond ?? zone.zoneNameFirst ?? zone.zoneId;
-            // Group by chapter number so MAINLINE / MAINLINE_ACTIVITY / MAINLINE_RETRO
-            // variants of the same chapter merge into one entry.
-            groupId = `mainline:${chapterNumber || zone.zoneId}`;
-            label = t("randomizer.stages.chapter", { number: chapterNumber, name: chapterName });
-            sublabel = zone.zoneNameFirst && zone.zoneNameFirst !== chapterName ? zone.zoneNameFirst : undefined;
-            section = "MAIN";
-            isOpen = true;
-            sortKey = Number.parseInt(zone.zoneNameTitleCurrent ?? "", 10);
-            if (!Number.isFinite(sortKey)) sortKey = zone.zoneIndex ?? 0;
-        } else if (stageBelongsToActivity && stageActivityId) {
-            const activityId = stageActivityId;
-            const activity = stageActivity;
-            const retro = stageRetro;
-            groupId = `activity:${activityId}`;
-            label = activity?.name ?? retro?.name ?? activityId;
-
-            const isPermanentSideOrBranch = !!retro && (retro.type === "SIDESTORY" || retro.type === "BRANCHLINE");
-            if (isPermanentSideOrBranch) {
-                sublabel = t("randomizer.stages.permanent");
-                isOpen = true;
-            } else if (activity) {
-                isOpen = activity.startTime <= now && now <= activity.endTime;
-                sublabel = activity.isReplicate ? t("randomizer.stages.rerun") : undefined;
-            } else {
-                isOpen = false;
-            }
-
-            section = isOtherActivity(activityId) && !isPermanentSideOrBranch ? "OTHER" : "EVENT";
-            sortKey = activity?.startTime ?? retro?.startTime ?? 0;
-        } else {
-            const permanentPrefix = getPermanentZonePrefix(stage.zoneId);
-            const zoneActivityId = getActivityIdFromZoneId(stage.zoneId);
-
-            if (permanentPrefix) {
-                const retro = lookup.retroByZonePrefix.get(permanentPrefix);
-                groupId = `permanent:${permanentPrefix}`;
-                label = retro?.name ?? getZoneDisplayName(zone, zone.zoneId);
-                sublabel = t("randomizer.stages.permanent");
-                section = "EVENT";
-                isOpen = true;
-                sortKey = retro?.startTime ?? 0;
-            } else if (zoneActivityId) {
-                const activity = lookup.activityById.get(zoneActivityId);
-                const retro = lookup.retroByActivityId.get(zoneActivityId);
-                groupId = `activity:${zoneActivityId}`;
-                label = activity?.name ?? retro?.name ?? getZoneDisplayName(zone, zone.zoneId);
-
-                const isPermanentSideOrBranch = !!retro && (retro.type === "SIDESTORY" || retro.type === "BRANCHLINE");
-                if (isPermanentSideOrBranch) {
-                    sublabel = t("randomizer.stages.permanent");
-                    isOpen = true;
-                } else if (activity) {
-                    isOpen = activity.startTime <= now && now <= activity.endTime;
-                    sublabel = activity.isReplicate ? t("randomizer.stages.rerun") : undefined;
-                } else {
-                    isOpen = false;
-                }
-
-                section = isOtherActivity(zoneActivityId) && !isPermanentSideOrBranch ? "OTHER" : "EVENT";
-                sortKey = activity?.startTime ?? retro?.startTime ?? 0;
-            } else {
-                groupId = `zone:${stage.zoneId}`;
-                label = getZoneDisplayName(zone, zone.zoneId);
-                section = "OTHER";
-                isOpen = PERMANENT_ZONE_TYPES.has(zone.type);
-                sortKey = zone.zoneIndex ?? 0;
-            }
-        }
-
-        let group = groups.get(groupId);
+        const head = stageGroupHead(stage, zone, lookup, now, t);
+        let group = groups.get(head.id);
         if (!group) {
-            group = { id: groupId, label, sublabel, section, zoneType: zone.type, isOpen, sortKey, stages: [] };
-            groups.set(groupId, group);
+            group = { ...head, zoneType: zone.type, stages: [] };
+            groups.set(head.id, group);
         }
         group.stages.push(stage);
     }
 
     const out = Array.from(groups.values());
-
     for (const g of out) {
         g.stages.sort((a, b) => natCompareCode(a.code, b.code) || a.stageId.localeCompare(b.stageId));
     }
-
-    const SECTION_ORDER: Record<StageGroupSection, number> = { MAIN: 0, EVENT: 1, OTHER: 2 };
     out.sort((a, b) => {
-        const sec = SECTION_ORDER[a.section] - SECTION_ORDER[b.section];
+        const sec = STAGE_SECTION_ORDER.indexOf(a.section) - STAGE_SECTION_ORDER.indexOf(b.section);
         if (sec !== 0) return sec;
         if (a.section === "MAIN") return a.sortKey - b.sortKey;
         return b.sortKey - a.sortKey;
     });
-
     return out;
 }
 

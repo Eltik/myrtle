@@ -1,15 +1,13 @@
-import { Lock } from "lucide-react";
 import type React from "react";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { Slider } from "#/components/ui/slider";
-import { Switch } from "#/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn } from "#/lib/utils";
 import type { OperatorProfession, OperatorRarity } from "#/types/operators";
 import { ALL_CLASSES, ALL_RARITIES, CLASS_LABEL } from "../constants";
 import type { IRandomizerSettings } from "../types";
+import { FieldGroup, SwitchRow } from "./FilterControls";
 import type { messages } from "./OperatorFiltersPanel.messages";
 
 interface IOperatorFiltersPanelProps {
@@ -65,30 +63,5 @@ export function OperatorFiltersPanel({ settings, onChange, hasProfile }: IOperat
                 <SwitchRow label={t("randomizer.ops.onlyE2")} description={t("randomizer.ops.onlyE2.desc")} checked={settings.onlyE2Operators} onChange={(v) => onChange({ onlyE2Operators: v, onlyOwnedOperators: v ? true : settings.onlyOwnedOperators })} locked={!hasProfile} />
             </FieldGroup>
         </div>
-    );
-}
-
-function FieldGroup({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
-    return (
-        <div className="flex flex-col gap-2.5">
-            <p className="font-mono text-[10.5px] text-muted-foreground/90 uppercase tracking-[0.18em]">{label}</p>
-            {children}
-        </div>
-    );
-}
-
-function SwitchRow({ label, description, checked, onChange, locked = false }: { label: string; description: string; checked: boolean; onChange: (v: boolean) => void; locked?: boolean }) {
-    return (
-        // biome-ignore lint/a11y/noLabelWithoutControl: Switch is a Base UI primitive; wrapping label provides click target and is correctly associated at runtime
-        <label className={cn("flex items-start justify-between gap-3 rounded-md border border-border/50 bg-card/60 px-3 py-2.5 transition-colors hover:bg-accent/30", locked && "cursor-not-allowed opacity-60 hover:bg-card/60")}>
-            <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-1.5 font-medium text-[12.5px] text-foreground">
-                    {label}
-                    {locked && <Lock aria-hidden="true" className="h-3 w-3 text-muted-foreground/70" />}
-                </p>
-                <p className="mt-0.5 text-[11.5px] text-muted-foreground leading-snug">{description}</p>
-            </div>
-            <Switch checked={locked ? false : checked} disabled={locked} onCheckedChange={onChange} />
-        </label>
     );
 }

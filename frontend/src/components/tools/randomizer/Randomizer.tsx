@@ -8,6 +8,7 @@ import { activitiesQueryOptions, retroActsQueryOptions, stagesQueryOptions, user
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import type { IStage } from "#/types/stages";
 import { buildActivityLookup } from "./impl/activity-lookup";
 import { BriefingHero } from "./impl/components/BriefingHero";
 import { EmptyState } from "./impl/components/EmptyState";
@@ -17,7 +18,7 @@ import { SquadSlab } from "./impl/components/SquadSlab";
 import { StageSlab } from "./impl/components/StageSlab";
 import { DEFAULT_SETTINGS, SETTINGS_VERSION, STORAGE_KEY_SETTINGS } from "./impl/constants";
 import type { IChallenge, IRandomizerOperator, IRandomizerSettings } from "./impl/types";
-import { buildRosterIndex, filterPlayableStages, pickRandomChallenge, pickRandomSquad, pickRandomStage, selectAvailableOperators, selectAvailableStages, toRandomizerOperator } from "./impl/utils";
+import { applyProfileGate, buildRosterIndex, filterPlayableStages, pickRandomChallenge, pickRandomSquad, pickRandomStage, selectAvailableOperators, selectAvailableStages, toRandomizerOperator } from "./impl/utils";
 import type { messages } from "./Randomizer.messages";
 
 const ROSTER_STORAGE_KEY = "randomizer-roster-v4";
@@ -26,9 +27,21 @@ interface IPersistedSettings extends IRandomizerSettings {
     _version?: number;
 }
 
+/** Fills any setting added since the save with its default, and drops the version stamp. */
 function migrateSettings(saved: IPersistedSettings): IRandomizerSettings {
     const { _version: _, ...rest } = saved;
     return { ...DEFAULT_SETTINGS, ...rest } satisfies IRandomizerSettings;
+}
+
+/**
+ * `null` is a stored value of its own ("never pruned"), so it round-trips;
+ * anything else that is not an array is malformed and keeps the initial value.
+ * The hook already keeps the initial value when `JSON.parse` throws.
+ */
+function parseRosterSelection(raw: string): string[] | null | undefined {
+    const parsed = JSON.parse(raw) as unknown;
+    if (parsed === null) return null;
+    return Array.isArray(parsed) ? (parsed as string[]) : undefined;
 }
 
 export function Randomizer(): React.ReactElement {
@@ -61,35 +74,14 @@ export function Randomizer(): React.ReactElement {
     const rosterIndex = React.useMemo(() => buildRosterIndex(hasProfile ? rosterEntries : null), [hasProfile, rosterEntries]);
     const zoneById = React.useMemo(() => new Map(zones.map((z) => [z.zoneId, z])), [zones]);
 
-    const [persisted, setPersisted] = useLocalStorageState<IPersistedSettings>(
-        STORAGE_KEY_SETTINGS,
-        { ...DEFAULT_SETTINGS, _version: SETTINGS_VERSION },
-        {
-            parse: (raw) => {
-                try {
-                    return JSON.parse(raw) as IPersistedSettings;
-                } catch {
-                    return undefined;
-                }
-            },
-        },
-    );
-    const settings = React.useMemo(() => migrateSettings(persisted), [persisted]);
+    const [persisted, setPersisted] = useLocalStorageState<IPersistedSettings>(STORAGE_KEY_SETTINGS, { ...DEFAULT_SETTINGS, _version: SETTINGS_VERSION });
+    const hasStageClears = stageClears != null;
+    const settings = React.useMemo(() => applyProfileGate(migrateSettings(persisted), { hasProfile, hasStageClears }), [persisted, hasProfile, hasStageClears]);
     const updateSettings = React.useCallback((next: Partial<IRandomizerSettings>) => setPersisted((prev) => ({ ...migrateSettings(prev), ...next, _version: SETTINGS_VERSION })), [setPersisted]);
 
     // Roster selection: `null` means "user hasn't pruned the roster yet" -> treat as all
     // operators. Any array (even empty) is an explicit choice the user made.
-    const [rosterStored, setRosterStored] = useLocalStorageState<string[] | null>(ROSTER_STORAGE_KEY, null, {
-        parse: (raw) => {
-            try {
-                const parsed = JSON.parse(raw) as unknown;
-                if (parsed === null) return null;
-                return Array.isArray(parsed) ? (parsed as string[]) : undefined;
-            } catch {
-                return undefined;
-            }
-        },
-    });
+    const [rosterStored, setRosterStored] = useLocalStorageState<string[] | null>(ROSTER_STORAGE_KEY, null, { parse: parseRosterSelection });
     const effectiveRosterSet = React.useMemo(() => {
         if (rosterStored === null) return new Set(randomizerOperators.map((op) => op.id));
         return new Set(rosterStored);
@@ -97,18 +89,14 @@ export function Randomizer(): React.ReactElement {
     const setRosterSelection = React.useCallback((next: Set<string>) => setRosterStored(Array.from(next)), [setRosterStored]);
     const resetRosterSelection = React.useCallback(() => setRosterStored(null), [setRosterStored]);
 
-    const availableOperators = React.useMemo(() => {
-        const filtered = selectAvailableOperators(randomizerOperators, settings, rosterIndex);
-        return filtered.filter((op) => effectiveRosterSet.has(op.id));
-    }, [randomizerOperators, settings, rosterIndex, effectiveRosterSet]);
-
     // The roster picker mirrors every operator-tab constraint, so flipping a setting
     // immediately prunes the roster view to match what the randomizer can actually draw.
     const rosterPickerOperators = React.useMemo(() => selectAvailableOperators(randomizerOperators, settings, rosterIndex), [randomizerOperators, settings, rosterIndex]);
+    const availableOperators = React.useMemo(() => rosterPickerOperators.filter((op) => effectiveRosterSet.has(op.id)), [rosterPickerOperators, effectiveRosterSet]);
 
     const availableStages = React.useMemo(() => selectAvailableStages(playableStages, zones, settings, stageClears ?? null, activityLookup), [playableStages, zones, settings, stageClears, activityLookup]);
 
-    const [rolledStage, setRolledStage] = React.useState<(typeof playableStages)[number] | null>(null);
+    const [rolledStage, setRolledStage] = React.useState<IStage | null>(null);
     const [rolledSquad, setRolledSquad] = React.useState<IRandomizerOperator[]>([]);
     const [rolledChallenge, setRolledChallenge] = React.useState<IChallenge | null>(null);
     const [rollSeq, setRollSeq] = React.useState(0);
@@ -118,10 +106,7 @@ export function Randomizer(): React.ReactElement {
     const hasResult = rolledStage !== null || rolledSquad.length > 0 || rolledChallenge !== null;
     const canRoll = availableOperators.length > 0 && availableStages.length > 0;
 
-    /**
-     * Resolve the squad pool given the active challenge: if it's a SQUAD_FILTER,
-     * apply the filter directly to the available operator pool.
-     */
+    /** The squad pool under `challenge`: a SQUAD_FILTER narrows the available operators. */
     const resolveSquadPool = React.useCallback(
         (challenge: IChallenge | null): IRandomizerOperator[] => {
             if (!challenge || challenge.type !== "SQUAD_FILTER") return availableOperators;

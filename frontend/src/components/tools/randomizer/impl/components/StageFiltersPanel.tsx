@@ -3,7 +3,6 @@ import * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
 import { Input } from "#/components/ui/input";
-import { Switch } from "#/components/ui/switch";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
@@ -11,8 +10,9 @@ import { cn } from "#/lib/utils";
 import type { IStage, IZone, StageClearsMap } from "#/types/stages";
 import type { IActivityLookup } from "../activity-lookup";
 import type { IRandomizerSettings } from "../types";
-import { buildStageGroups, type IStageGroup, isStageCleared, STAGE_SECTION_LABEL_KEYS, type StageGroupSection } from "../utils";
+import { buildStageGroups, type IStageGroup, isStageCleared, STAGE_SECTION_LABEL_KEYS, STAGE_SECTION_ORDER, type StageGroupSection } from "../utils";
 import type { messages as utilMessages } from "../utils.messages";
+import { FieldGroup, SwitchRow } from "./FilterControls";
 import type { messages } from "./StageFiltersPanel.messages";
 
 /** This panel renders its own chrome plus the group labels `utils.ts` derives. */
@@ -28,7 +28,21 @@ interface IStageFiltersPanelProps {
     stageClears: StageClearsMap | null;
 }
 
-const SECTION_ORDER: StageGroupSection[] = ["MAIN", "EVENT", "OTHER"];
+type CheckboxState = "checked" | "unchecked" | "indeterminate";
+
+/** A copy of `set` with `key` flipped in or out. */
+function toggled<T>(set: ReadonlySet<T>, key: T): Set<T> {
+    const next = new Set(set);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    return next;
+}
+
+function countSelected(stages: IStage[], deselected: ReadonlySet<string>): number {
+    let n = 0;
+    for (const s of stages) if (!deselected.has(s.stageId)) n++;
+    return n;
+}
 
 export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zones, activityLookup, stageClears }: IStageFiltersPanelProps): React.ReactElement {
     const t: StageFiltersT = useT("tools");
@@ -43,21 +57,28 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
     const visibleGroups = React.useMemo(() => {
         let pool = groups;
         if (settings.onlyAvailableStages) pool = pool.filter((g) => g.isOpen);
+        // A view filter, like `onlyAvailableStages`: it hides uncleared stages
+        // and leaves `deselectedStageIds` alone, so turning it off restores the
+        // pool. (It once wrote every uncleared stage into the deselection, which
+        // nothing undid.)
+        if (settings.onlyCompletedStages) {
+            pool = pool.map((group) => ({ ...group, stages: group.stages.filter((s) => isStageCleared(s.stageId, stageClears)) }) satisfies IStageGroup).filter((group) => group.stages.length > 0);
+        }
         if (!trimmedQuery) return pool;
+        const matches = (text: string | null | undefined) => (text ? compactForSearch(text).includes(trimmedQuery) : false);
         return pool
             .map((group) => {
-                const groupHit = compactForSearch(group.label).includes(trimmedQuery) || (group.sublabel ? compactForSearch(group.sublabel).includes(trimmedQuery) : false);
-                if (groupHit) return group;
-                const stagesHit = group.stages.filter((s) => compactForSearch(s.code).includes(trimmedQuery) || (s.name ? compactForSearch(s.name).includes(trimmedQuery) : false));
+                if (matches(group.label) || matches(group.sublabel)) return group;
+                const stagesHit = group.stages.filter((s) => matches(s.code) || matches(s.name));
                 if (stagesHit.length === 0) return null;
                 return { ...group, stages: stagesHit } satisfies IStageGroup;
             })
             .filter((g): g is IStageGroup => g !== null);
-    }, [groups, trimmedQuery, settings.onlyAvailableStages]);
+    }, [groups, trimmedQuery, settings.onlyAvailableStages, settings.onlyCompletedStages, stageClears]);
 
     const groupsBySection = React.useMemo(() => {
         const map = new Map<StageGroupSection, IStageGroup[]>();
-        for (const section of SECTION_ORDER) map.set(section, []);
+        for (const section of STAGE_SECTION_ORDER) map.set(section, []);
         for (const g of visibleGroups) map.get(g.section)?.push(g);
         return map;
     }, [visibleGroups]);
@@ -67,31 +88,18 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
     const totalStages = stages.length;
     const selectedCount = totalStages - deselected.size;
 
-    const setDeselected = React.useCallback(
-        (next: Set<string>) => {
-            onChange({ deselectedStageIds: Array.from(next) });
-        },
-        [onChange],
-    );
+    const setDeselected = React.useCallback((next: Set<string>) => onChange({ deselectedStageIds: Array.from(next) }), [onChange]);
 
-    const onToggleStage = React.useCallback(
-        (stageId: string) => {
-            const next = new Set(deselected);
-            if (next.has(stageId)) next.delete(stageId);
-            else next.add(stageId);
-            setDeselected(next);
-        },
-        [deselected, setDeselected],
-    );
+    const onToggleStage = React.useCallback((stageId: string) => setDeselected(toggled(deselected, stageId)), [deselected, setDeselected]);
 
+    /** A group with anything selected deselects whole; a fully deselected one selects whole. */
     const onToggleGroup = React.useCallback(
         (group: IStageGroup) => {
             const next = new Set(deselected);
             const anySelected = group.stages.some((s) => !next.has(s.stageId));
-            if (anySelected) {
-                for (const s of group.stages) next.add(s.stageId);
-            } else {
-                for (const s of group.stages) next.delete(s.stageId);
+            for (const s of group.stages) {
+                if (anySelected) next.add(s.stageId);
+                else next.delete(s.stageId);
             }
             setDeselected(next);
         },
@@ -101,44 +109,17 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
     const onSelectAll = React.useCallback(() => setDeselected(new Set()), [setDeselected]);
     const onDeselectAll = React.useCallback(() => setDeselected(new Set(stages.map((s) => s.stageId))), [setDeselected, stages]);
 
-    const onToggleExpand = React.useCallback((groupId: string) => {
-        setOpenGroups((prev) => {
-            const next = new Set(prev);
-            if (next.has(groupId)) next.delete(groupId);
-            else next.add(groupId);
-            return next;
-        });
-    }, []);
+    const onToggleExpand = React.useCallback((groupId: string) => setOpenGroups((prev) => toggled(prev, groupId)), []);
+    const onToggleSection = React.useCallback((section: StageGroupSection) => setCollapsedSections((prev) => toggled(prev, section)), []);
 
-    const onToggleSection = React.useCallback((section: StageGroupSection) => {
-        setCollapsedSections((prev) => {
-            const next = new Set(prev);
-            if (next.has(section)) next.delete(section);
-            else next.add(section);
-            return next;
-        });
-    }, []);
-
-    const onChangeCompletedToggle = React.useCallback(
-        (v: boolean) => {
-            if (!v) {
-                onChange({ onlyCompletedStages: false });
-                return;
-            }
-            const next = new Set(deselected);
-            for (const stage of stages) {
-                if (!isStageCleared(stage.stageId, stageClears)) next.add(stage.stageId);
-            }
-            onChange({ onlyCompletedStages: true, deselectedStageIds: Array.from(next) });
-        },
-        [onChange, deselected, stages, stageClears],
-    );
+    // An active search opens every section and group so the hits are visible.
+    const searching = trimmedQuery !== "";
 
     return (
         <div className="flex flex-col gap-4">
             <FieldGroup label={t("randomizer.stages.eligibility")}>
                 <SwitchRow label={t("randomizer.stages.onlyAvailable")} description={t("randomizer.stages.onlyAvailable.desc")} checked={settings.onlyAvailableStages} onChange={(v) => onChange({ onlyAvailableStages: v })} />
-                <SwitchRow label={t("randomizer.stages.onlyCleared")} description={t("randomizer.stages.onlyCleared.desc")} checked={settings.onlyCompletedStages} onChange={onChangeCompletedToggle} locked={!hasProfile} />
+                <SwitchRow label={t("randomizer.stages.onlyCleared")} description={t("randomizer.stages.onlyCleared.desc")} checked={settings.onlyCompletedStages} onChange={(v) => onChange({ onlyCompletedStages: v })} locked={!hasProfile || !stageClears} />
             </FieldGroup>
 
             <FieldGroup label={t("randomizer.stages.pool")}>
@@ -168,12 +149,12 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
 
                 <div className="flex flex-col gap-3">
                     {visibleGroups.length === 0 && <p className="rounded-md border border-border/50 bg-card/40 px-3 py-6 text-center text-[12px] text-muted-foreground">{t("randomizer.stages.noMatch")}</p>}
-                    {SECTION_ORDER.map((section) => {
+                    {STAGE_SECTION_ORDER.map((section) => {
                         const sectionGroups = groupsBySection.get(section) ?? [];
                         if (sectionGroups.length === 0) return null;
-                        const isExpanded = !collapsedSections.has(section) || trimmedQuery !== "";
+                        const isExpanded = !collapsedSections.has(section) || searching;
                         const totalSectionStages = sectionGroups.reduce((acc, g) => acc + g.stages.length, 0);
-                        const selectedSectionStages = sectionGroups.reduce((acc, g) => acc + g.stages.reduce((a2, s) => a2 + (deselected.has(s.stageId) ? 0 : 1), 0), 0);
+                        const selectedSectionStages = sectionGroups.reduce((acc, g) => acc + countSelected(g.stages, deselected), 0);
                         return (
                             <section key={section} className="flex flex-col gap-1.5">
                                 <button type="button" onClick={() => onToggleSection(section)} className="flex items-center gap-1.5 rounded-sm px-0.5 outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-expanded={isExpanded}>
@@ -181,26 +162,7 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
                                     <h3 className="font-mono text-[10px] text-muted-foreground/70 uppercase tracking-[0.2em]">{t(STAGE_SECTION_LABEL_KEYS[section])}</h3>
                                     <span className="font-mono text-[10px] text-muted-foreground/50 uppercase tracking-[0.16em]">{t("randomizer.stages.sectionCount", { selected: selectedSectionStages, total: totalSectionStages })}</span>
                                 </button>
-                                {isExpanded &&
-                                    sectionGroups.map((group) => {
-                                        const groupDeselectedCount = group.stages.reduce((acc, s) => acc + (deselected.has(s.stageId) ? 1 : 0), 0);
-                                        const allDeselected = groupDeselectedCount === group.stages.length;
-                                        const allSelected = groupDeselectedCount === 0;
-                                        const isOpen = openGroups.has(group.id) || trimmedQuery !== "";
-                                        return (
-                                            <EventRow
-                                                key={group.id}
-                                                group={group}
-                                                isOpen={isOpen}
-                                                onToggleExpand={() => onToggleExpand(group.id)}
-                                                checkboxState={allSelected ? "checked" : allDeselected ? "unchecked" : "indeterminate"}
-                                                onToggleGroup={() => onToggleGroup(group)}
-                                                deselected={deselected}
-                                                onToggleStage={onToggleStage}
-                                                t={t}
-                                            />
-                                        );
-                                    })}
+                                {isExpanded && sectionGroups.map((group) => <EventRow key={group.id} group={group} isOpen={openGroups.has(group.id) || searching} onToggleExpand={() => onToggleExpand(group.id)} onToggleGroup={() => onToggleGroup(group)} deselected={deselected} onToggleStage={onToggleStage} t={t} />)}
                             </section>
                         );
                     })}
@@ -214,15 +176,15 @@ interface IEventRowProps {
     group: IStageGroup;
     isOpen: boolean;
     onToggleExpand: () => void;
-    checkboxState: "checked" | "unchecked" | "indeterminate";
     onToggleGroup: () => void;
     deselected: Set<string>;
     onToggleStage: (stageId: string) => void;
     t: StageFiltersT;
 }
 
-function EventRow({ group, isOpen, onToggleExpand, checkboxState, onToggleGroup, deselected, onToggleStage, t }: IEventRowProps): React.ReactElement {
-    const selectedCount = group.stages.length - group.stages.reduce((acc, s) => acc + (deselected.has(s.stageId) ? 1 : 0), 0);
+function EventRow({ group, isOpen, onToggleExpand, onToggleGroup, deselected, onToggleStage, t }: IEventRowProps): React.ReactElement {
+    const selectedCount = countSelected(group.stages, deselected);
+    const checkboxState: CheckboxState = selectedCount === group.stages.length ? "checked" : selectedCount === 0 ? "unchecked" : "indeterminate";
     return (
         <div className="overflow-hidden rounded-md border border-border/50 bg-card/60">
             <div className="flex items-center gap-2 px-2.5 py-2">
@@ -286,29 +248,4 @@ function StageModeBadge({ stage, t }: { stage: IStage; t: StageFiltersT }): Reac
     if (mode === "ADVERSE") return <span className="shrink-0 rounded-sm border border-rose-500/40 bg-rose-500/10 px-1 font-mono text-[9px] text-rose-500/90 uppercase tracking-[0.14em]">{t("randomizer.stages.badge.adverse")}</span>;
     if (mode === "STORY") return <span className="shrink-0 rounded-sm border border-border/50 px-1 font-mono text-[9px] text-muted-foreground uppercase tracking-[0.14em]">{t("randomizer.stages.badge.story")}</span>;
     return null;
-}
-
-function FieldGroup({ label, children }: { label: string; children: React.ReactNode }): React.ReactElement {
-    return (
-        <div className="flex flex-col gap-2.5">
-            <p className="font-mono text-[10.5px] text-muted-foreground/90 uppercase tracking-[0.18em]">{label}</p>
-            {children}
-        </div>
-    );
-}
-
-function SwitchRow({ label, description, checked, onChange, locked = false }: { label: string; description: string; checked: boolean; onChange: (v: boolean) => void; locked?: boolean }) {
-    return (
-        // biome-ignore lint/a11y/noLabelWithoutControl: Switch is a Base UI primitive; wrapping label provides click target and is correctly associated at runtime
-        <label className={cn("flex items-start justify-between gap-3 rounded-md border border-border/50 bg-card/60 px-3 py-2.5 transition-colors hover:bg-accent/30", locked && "cursor-not-allowed opacity-60 hover:bg-card/60")}>
-            <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-1.5 font-medium text-[12.5px] text-foreground">
-                    {label}
-                    {locked && <Lock aria-hidden="true" className="h-3 w-3 text-muted-foreground/70" />}
-                </p>
-                <p className="mt-0.5 text-[11.5px] text-muted-foreground leading-snug">{description}</p>
-            </div>
-            <Switch checked={locked ? false : checked} disabled={locked} onCheckedChange={onChange} />
-        </label>
-    );
 }
