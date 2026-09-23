@@ -46,7 +46,7 @@ interface IAuthState {
      * A session this client minted itself, from a login response that has not
      * yet been echoed back by a route load.
      *
-     * The login response writes `site_token` with `SameSite=Strict`; the
+     * The login response writes `site_token` (`SameSite=Lax`); the
      * `router.invalidate()` that follows re-runs the root `beforeLoad`, which
      * reads that cookie off the NEW request. When the browser has not committed
      * the cookie jar by then, `getSessionFn` returns null and the route context
@@ -112,6 +112,12 @@ function rememberSaveCredentials(value: boolean): void {
 
 export const authStore = new Store<IAuthState>({ user: null, status: "idle", login: initialLogin, dialogOpen: false, postLoginRedirect: null, clientAuthoritative: false });
 
+/** Merge a patch into the login form; every form setter is one of these. */
+const patchLogin = (patch: Partial<ILoginFormState>) => authStore.setState((s) => ({ ...s, login: { ...s.login, ...patch } }));
+
+/** The `*CooldownUntil` timestamp for a code just sent, when resending unlocks. */
+const cooldownEnd = (cooldownSeconds: number) => Date.now() + cooldownSeconds * 1000;
+
 export const authActions = {
     setUser: (user: ISession | null) => authStore.setState((s) => ({ ...s, user, status: "ready", clientAuthoritative: user !== null })),
     /**
@@ -130,46 +136,33 @@ export const authActions = {
     setLoading: () => authStore.setState((s) => ({ ...s, status: "loading" })),
     clear: () => authStore.setState((s) => ({ ...s, user: null, status: "ready", login: { ...initialLogin, saveCredentials: s.login.saveCredentials }, dialogOpen: false, postLoginRedirect: null, clientAuthoritative: false })),
 
-    setLoginEmail: (email: string) => authStore.setState((s) => ({ ...s, login: { ...s.login, email } })),
-    setLoginServer: (server: AKServer) => authStore.setState((s) => ({ ...s, login: { ...s.login, server } })),
-    setLoginOTP: (otp: string) => authStore.setState((s) => ({ ...s, login: { ...s.login, otp } })),
-    markOTPSent: (cooldownSeconds = 60) =>
-        authStore.setState((s) => ({
-            ...s,
-            login: { ...s.login, isOTPSent: true, cooldownUntil: Date.now() + cooldownSeconds * 1000 },
-        })),
-    resetLoginOTP: () => authStore.setState((s) => ({ ...s, login: { ...s.login, otp: "", isOTPSent: false, cooldownUntil: 0 } })),
+    setLoginEmail: (email: string) => patchLogin({ email }),
+    setLoginServer: (server: AKServer) => patchLogin({ server }),
+    setLoginOTP: (otp: string) => patchLogin({ otp }),
+    markOTPSent: (cooldownSeconds = 60) => patchLogin({ isOTPSent: true, cooldownUntil: cooldownEnd(cooldownSeconds) }),
+    resetLoginOTP: () => patchLogin({ otp: "", isOTPSent: false, cooldownUntil: 0 }),
 
-    setBiliUsername: (biliUsername: string) => authStore.setState((s) => ({ ...s, login: { ...s.login, biliUsername } })),
-    setBiliPassword: (biliPassword: string) => authStore.setState((s) => ({ ...s, login: { ...s.login, biliPassword } })),
+    setBiliUsername: (biliUsername: string) => patchLogin({ biliUsername }),
+    setBiliPassword: (biliPassword: string) => patchLogin({ biliPassword }),
+    setBiliPhone: (biliPhone: string) => patchLogin({ biliPhone }),
+    setBiliSmsCode: (biliSmsCode: string) => patchLogin({ biliSmsCode }),
+    setBiliUseSms: (biliUseSms: boolean) => patchLogin({ biliUseSms }),
+    markBiliCodeSent: (cooldownSeconds = 60) => patchLogin({ isBiliCodeSent: true, biliCooldownUntil: cooldownEnd(cooldownSeconds) }),
+    resetBiliCode: () => patchLogin({ biliSmsCode: "", isBiliCodeSent: false, biliCooldownUntil: 0 }),
 
-    setBiliPhone: (biliPhone: string) => authStore.setState((s) => ({ ...s, login: { ...s.login, biliPhone } })),
-    setBiliSmsCode: (biliSmsCode: string) => authStore.setState((s) => ({ ...s, login: { ...s.login, biliSmsCode } })),
-    setBiliUseSms: (biliUseSms: boolean) => authStore.setState((s) => ({ ...s, login: { ...s.login, biliUseSms } })),
-    markBiliCodeSent: (cooldownSeconds = 60) =>
-        authStore.setState((s) => ({
-            ...s,
-            login: { ...s.login, isBiliCodeSent: true, biliCooldownUntil: Date.now() + cooldownSeconds * 1000 },
-        })),
-    resetBiliCode: () => authStore.setState((s) => ({ ...s, login: { ...s.login, biliSmsCode: "", isBiliCodeSent: false, biliCooldownUntil: 0 } })),
-
-    setCnPhone: (cnPhone: string) => authStore.setState((s) => ({ ...s, login: { ...s.login, cnPhone } })),
-    setCnPassword: (cnPassword: string) => authStore.setState((s) => ({ ...s, login: { ...s.login, cnPassword } })),
-    setCnSmsCode: (cnSmsCode: string) => authStore.setState((s) => ({ ...s, login: { ...s.login, cnSmsCode } })),
-    setCnUseSms: (cnUseSms: boolean) => authStore.setState((s) => ({ ...s, login: { ...s.login, cnUseSms } })),
-    markCnCodeSent: (cooldownSeconds = 60) =>
-        authStore.setState((s) => ({
-            ...s,
-            login: { ...s.login, isCnCodeSent: true, cnCooldownUntil: Date.now() + cooldownSeconds * 1000 },
-        })),
-    resetCnCode: () => authStore.setState((s) => ({ ...s, login: { ...s.login, cnSmsCode: "", isCnCodeSent: false, cnCooldownUntil: 0 } })),
+    setCnPhone: (cnPhone: string) => patchLogin({ cnPhone }),
+    setCnPassword: (cnPassword: string) => patchLogin({ cnPassword }),
+    setCnSmsCode: (cnSmsCode: string) => patchLogin({ cnSmsCode }),
+    setCnUseSms: (cnUseSms: boolean) => patchLogin({ cnUseSms }),
+    markCnCodeSent: (cooldownSeconds = 60) => patchLogin({ isCnCodeSent: true, cnCooldownUntil: cooldownEnd(cooldownSeconds) }),
+    resetCnCode: () => patchLogin({ cnSmsCode: "", isCnCodeSent: false, cnCooldownUntil: 0 }),
 
     setSaveCredentials: (saveCredentials: boolean) => {
         rememberSaveCredentials(saveCredentials);
-        authStore.setState((s) => ({ ...s, login: { ...s.login, saveCredentials } }));
+        patchLogin({ saveCredentials });
     },
     /** Applies the remembered answer to the form, on mount. */
-    hydrateSaveCredentials: () => authStore.setState((s) => ({ ...s, login: { ...s.login, saveCredentials: readRememberedSaveCredentials() } })),
+    hydrateSaveCredentials: () => patchLogin({ saveCredentials: readRememberedSaveCredentials() }),
 
     // Keeps `saveCredentials`: see its doc comment on ILoginFormState.
     resetLoginForm: () => authStore.setState((s) => ({ ...s, login: { ...initialLogin, saveCredentials: s.login.saveCredentials } })),
