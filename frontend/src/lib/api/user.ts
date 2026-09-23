@@ -52,6 +52,7 @@ import type { SandboxImprovements } from "#/types/generated/SandboxImprovements"
 import type { SandboxPart } from "#/types/generated/SandboxPart";
 import type { ScoreDimension } from "#/types/generated/ScoreDimension";
 import type { ScoreHistoryPoint } from "#/types/generated/ScoreHistoryPoint";
+import type { SearchEntry } from "#/types/generated/SearchEntry";
 import type { SearchPage } from "#/types/generated/SearchPage";
 import type { ServerShare } from "#/types/generated/ServerShare";
 import type { ShiftDto } from "#/types/generated/ShiftDto";
@@ -364,17 +365,34 @@ export function userImprovementsQueryOptions(uid: string, bearerToken?: string) 
 
 export interface ISearchUsersInput {
     q?: string;
+    /** `score` (default) | `operators` | `joined` | ... | `class:<PROFESSION>` | `sub:<subProfessionId>`. */
+    sort?: string;
+    /** `asc` | `desc`; absent = the sort's own default (`joined` ascends, every count descends). */
+    dir?: string;
+    /** Comma-separated operator ids that must all be owned. */
+    has?: string;
+    /** One operator id that must sit in the support unit. */
+    support?: string;
+    /** `class:<PROFESSION>` | `sub:<subProfessionId>`: every obtainable operator of that scope is owned. */
+    all?: string;
     limit?: number;
     offset?: number;
 }
+
+export type ISearchEntry = SearchEntry;
 
 export type ISearchPage = SearchPage;
 
 export const searchUsersFn = createServerFn({ method: "GET" })
     .inputValidator((data: ISearchUsersInput) => data)
-    .handler(async ({ data: { q, limit, offset } }) => {
+    .handler(async ({ data: { q, sort, dir, has, support, all, limit, offset } }) => {
         const params = new URLSearchParams();
         if (q) params.set("q", q);
+        if (sort) params.set("sort", sort);
+        if (dir) params.set("dir", dir);
+        if (has) params.set("has", has);
+        if (support) params.set("support", support);
+        if (all) params.set("all", all);
         if (limit !== undefined) params.set("limit", String(limit));
         if (offset !== undefined) params.set("offset", String(offset));
 
@@ -385,7 +403,7 @@ export const searchUsersFn = createServerFn({ method: "GET" })
 
 export function searchUsersQueryOptions(input: ISearchUsersInput) {
     return queryOptions({
-        queryKey: ["user", "search", input.q ?? null, input.limit ?? null, input.offset ?? null],
+        queryKey: ["user", "search", input.q ?? null, input.sort ?? null, input.dir ?? null, input.has ?? null, input.support ?? null, input.all ?? null, input.limit ?? null, input.offset ?? null],
         queryFn: () => searchUsersFn({ data: input }),
         staleTime: 30 * 1000,
         gcTime: 5 * 60 * 1000,

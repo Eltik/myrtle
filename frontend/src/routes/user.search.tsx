@@ -1,10 +1,16 @@
 import { createFileRoute, stripSearchParams } from "@tanstack/react-router";
+import { DEFAULT_SORT, parseAll, parseDir, parseOperatorId, parseOperatorIds, parseSort } from "#/components/user/search/impl/searchControls";
 import { UserSearch } from "#/components/user/search/UserSearch";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
-const SEARCH_DEFAULTS = { q: "", page: 1 } as const;
+/**
+ * `dir` defaults to absent: that means the sort's own default direction
+ * (`defaultDir` in searchControls.ts), and the component only writes it when
+ * the visitor flips away from that.
+ */
+const SEARCH_DEFAULTS = { q: "", page: 1, sort: DEFAULT_SORT, dir: undefined, has: "", support: "", all: "" } as const;
 
 export const Route = createFileRoute("/user/search")({
     component: RouteComponent,
@@ -14,6 +20,11 @@ export const Route = createFileRoute("/user/search")({
         return {
             q: typeof search.q === "string" ? search.q : "",
             page,
+            sort: parseSort(search.sort),
+            dir: parseDir(search.dir),
+            has: parseOperatorIds(search.has),
+            support: parseOperatorId(search.support),
+            all: parseAll(search.all),
         };
     },
     search: { middlewares: [stripSearchParams(SEARCH_DEFAULTS)] },

@@ -71,7 +71,9 @@ impl OperatorRarity {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default, TS, utoipa::ToSchema)]
+#[derive(
+    Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, Default, TS, utoipa::ToSchema,
+)]
 #[ts(export)]
 pub enum OperatorProfession {
     #[serde(rename = "MEDIC")]

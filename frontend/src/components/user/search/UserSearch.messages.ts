@@ -47,6 +47,10 @@ export const messages = {
         text: "Browsing public profiles by total score",
         description: "Status line over the results when the search box is empty and profiles are listed by score.",
     },
+    "search.browsingBy": {
+        text: "Browsing public profiles by {sort}",
+        description: "Status line over the results when the search box is empty and profiles are ranked by something other than score. {sort} is the rank-by option's name as the toolbar shows it, e.g. 'Masteries (M3)', 'Guard operators'.",
+    },
     "search.count.unit": {
         text: "{count, plural, one {doctor} other {doctors}}",
         description: "Unit after the result count, which is rendered in bold just before it: '1,234 doctors'. The number itself is not part of this string.",
@@ -58,6 +62,14 @@ export const messages = {
     "search.empty.noResults.desc": {
         text: "No public profiles match {query}. Try a different nickname.",
         description: "Empty-state body when a search matches no public profile. {query} is the search term in quotes, rendered in bold by search.quotedQuery, and may move wherever the sentence needs it.",
+    },
+    "search.empty.filtered.title": {
+        text: "No player matches these filters",
+        description: "Empty-state title when the roster filters (owns operators, support unit, complete class) match no public profile.",
+    },
+    "search.empty.filtered.desc": {
+        text: "Loosen a filter, or clear them all to browse every public profile.",
+        description: "Empty-state body under search.empty.filtered.title. A 'Clear filters' button follows.",
     },
     "search.empty.none.title": {
         text: "No public profiles yet",

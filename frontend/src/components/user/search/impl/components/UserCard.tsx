@@ -5,17 +5,25 @@ import { Badge } from "#/components/ui/badge";
 import { Card } from "#/components/ui/card";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { getAvatarById } from "#/lib/utils";
+import { formatArchetype, formatProfession, getAvatarById } from "#/lib/utils";
 import { DEFAULT_AVATAR_ID } from "../constants";
+import { DEFAULT_SORT, parseScope } from "../searchControls";
 import type { DisplayUser } from "../types";
 import type { messages } from "./UserCard.messages";
 
-export function UserCard({ user }: { user: DisplayUser }) {
+interface IUserCardProps {
+    user: DisplayUser;
+    /** The active `sort` token; under anything but `score` the row's `metric` leads the stats. */
+    sort?: string;
+}
+
+export function UserCard({ user, sort = DEFAULT_SORT }: IUserCardProps) {
     const t: TypedT<typeof messages> = useT("user");
     const f = useFormatters();
     const nickname = user.nickname ?? `Player ${user.uid}`;
     const initials = (user.nickname ?? user.uid).slice(0, 2).toUpperCase();
     const avatarSrc = getAvatarById(user.avatar_id ?? DEFAULT_AVATAR_ID);
+    const metric = sort !== DEFAULT_SORT && user.metric != null ? formatMetric(sort, user.metric, t, f.date) : null;
 
     return (
         <Card className="group transition-shadow duration-150 hover:shadow-md">
@@ -43,6 +51,7 @@ export function UserCard({ user }: { user: DisplayUser }) {
                     </div>
 
                     <div className="mt-1.5 flex items-center gap-2.5 font-sans text-[11.5px] text-muted-foreground leading-none">
+                        {metric != null && <span className="font-semibold text-primary">{metric}</span>}
                         {user.level != null && (
                             <span>
                                 <span className="font-medium text-foreground">{t("search.card.level", { level: user.level })}</span>
@@ -53,12 +62,12 @@ export function UserCard({ user }: { user: DisplayUser }) {
                                 <span className="font-medium text-foreground">{f.number(user.total_score)}</span> {t("search.card.points")}
                             </span>
                         )}
-                        {user.operator_count != null && (
+                        {user.operator_count != null && sort !== "operators" && (
                             <span>
                                 <span className="font-medium text-foreground">{f.number(user.operator_count)}</span> {t("search.card.operators")}
                             </span>
                         )}
-                        {user.skin_count != null && (
+                        {user.skin_count != null && sort !== "skins" && (
                             <span>
                                 <span className="font-medium text-foreground">{f.number(user.skin_count)}</span> {t("search.card.skins")}
                             </span>
@@ -70,4 +79,28 @@ export function UserCard({ user }: { user: DisplayUser }) {
             </Link>
         </Card>
     );
+}
+
+/** The row's metric worded for its sort; `joined` carries a unix timestamp in seconds. */
+function formatMetric(sort: string, metric: number, t: TypedT<typeof messages>, date: (value: number) => string): string {
+    const scope = parseScope(sort);
+    if (scope) return t("search.card.metric.scoped", { count: metric, label: scope.kind === "class" ? formatProfession(scope.profession) : formatArchetype(scope.subProfessionId) });
+    switch (sort) {
+        case "operators":
+            return t("search.card.metric.operators", { count: metric });
+        case "joined":
+            return t("search.card.metric.joined", { date: date(metric * 1000) });
+        case "enemies":
+            return t("search.card.metric.enemies", { count: metric });
+        case "potentials":
+            return t("search.card.metric.potentials", { count: metric });
+        case "masteries":
+            return t("search.card.metric.masteries", { count: metric });
+        case "modules":
+            return t("search.card.metric.modules", { count: metric });
+        case "skins":
+            return t("search.card.metric.skins", { count: metric });
+        default:
+            return String(metric);
+    }
 }

@@ -59,6 +59,22 @@ pub struct UserProfile {
     pub originite: Option<i32>,
 }
 
+/// One player search row: the profile plus the value of the sort that
+/// ranked it. `metric` is the count for a count sort and `register_ts` for
+/// the join-date sort; it is `None` under the score sort, where the
+/// profile's `total_score` already is the value.
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct SearchEntry {
+    #[serde(flatten)]
+    #[sqlx(flatten)]
+    #[ts(flatten)]
+    pub profile: UserProfile,
+    #[ts(type = "number | null")]
+    pub metric: Option<i64>,
+}
+
 /// users table
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]

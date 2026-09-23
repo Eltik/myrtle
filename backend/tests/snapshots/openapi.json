@@ -6337,13 +6337,58 @@
         "tags": [
           "search"
         ],
-        "summary": "Search operators, stages and players in one call.",
+        "summary": "Search public players by nickname, ranked by score or by a roster metric,\ncut by what they own.",
         "operationId": "search",
         "parameters": [
           {
             "name": "q",
             "in": "query",
-            "description": "Query text. An empty or missing value returns an empty page.",
+            "description": "Nickname substring. Absent or empty matches every public player.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "`score` (default), `operators`, `joined`, `enemies`, `potentials`, `masteries` (skills at M3), `modules` (modules at level 3), `skins`, `class:<PROFESSION>` (owned operators of a class, e.g. `class:WARRIOR`) or `sub:<archetype>` (e.g. `sub:centurion`).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dir",
+            "in": "query",
+            "description": "`asc` or `desc`. Defaults to `desc` for every sort except `joined`, whose default is `asc` (oldest accounts first).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "has",
+            "in": "query",
+            "description": "Comma-separated operator ids the player must all own, at most 20.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "support",
+            "in": "query",
+            "description": "An operator id that must be in the player's support unit.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "all",
+            "in": "query",
+            "description": "`class:<PROFESSION>` or `sub:<archetype>`: only players who own every obtainable operator of it on their server.",
             "required": false,
             "schema": {
               "type": "string"
@@ -6374,7 +6419,7 @@
         ],
         "responses": {
           "200": {
-            "description": "One page of mixed results.",
+            "description": "One page of players, each carrying the active sort's value as `metric`.",
             "content": {
               "application/json": {
                 "schema": {
@@ -6382,6 +6427,9 @@
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -8703,6 +8751,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "target",
+            "in": "query",
+            "description": "Where each operator's walk stops: `max` (the level cap, the default) or `module` (the level its modules unlock at; an operator without a module takes its rarity's module level, a rarity with no modules keeps its cap).",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/LevelTarget"
+            }
           }
         ],
         "responses": {
@@ -8758,15 +8815,6 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "target",
-            "in": "query",
-            "description": "Where each operator's walk stops: `max` (the level cap, the default) or `module` (the level its modules unlock at; an operator without a module takes its rarity's module level, a rarity with no modules keeps its cap).",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/LevelTarget"
             }
           }
         ],
@@ -16863,6 +16911,26 @@
           }
         }
       },
+      "SearchEntry": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/UserProfile"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "metric": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "int64"
+              }
+            }
+          }
+        ],
+        "description": "One player search row: the profile plus the value of the sort that\nranked it. `metric` is the count for a count sort and `register_ts` for\nthe join-date sort; it is `None` under the score sort, where the\nprofile's `total_score` already is the value."
+      },
       "SearchPage": {
         "type": "object",
         "required": [
@@ -16873,7 +16941,7 @@
           "entries": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/UserProfile"
+              "$ref": "#/components/schemas/SearchEntry"
             }
           },
           "total": {

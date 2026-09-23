@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
-import { Search, Trophy, Users, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Filter, Search, Trophy, Users, X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Pagination } from "#/components/operators/list/impl/components/Pagination";
 import { Button } from "#/components/ui/button";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
@@ -13,15 +13,22 @@ import { isEditableTarget, isPlainKey } from "#/lib/hotkeys";
 import { type TypedRichT, useFormatters, useLocale, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { Route } from "#/routes/user.search";
+import { SearchToolbar, useSortLabel } from "./impl/components/SearchToolbar";
+import type { messages as toolbarMessages } from "./impl/components/SearchToolbar.messages";
 import { UserCard } from "./impl/components/UserCard";
 import { UserGridSkeleton } from "./impl/components/UserGridSkeleton";
 import { PAGE_SIZE } from "./impl/constants";
+import { DEFAULT_SORT, defaultDir, scopeToken } from "./impl/searchControls";
 import { sortBySubstringMatch } from "./impl/sortBySubstringMatch";
 import type { DisplayUser } from "./impl/types";
+import { useSearchControls } from "./impl/useSearchControls";
 import type { messages } from "./UserSearch.messages";
 
+/** The toolbar's "Clear filters" label is rendered in the filtered empty state too. */
+type SearchT = TypedT<typeof messages & typeof toolbarMessages>;
+
 export function UserSearch() {
-    const t: TypedT<typeof messages> = useT("user");
+    const t: SearchT = useT("user");
     const rt: TypedRichT<typeof messages> = useRichT("user");
     const f = useFormatters();
     const locale = useLocale();
@@ -35,6 +42,10 @@ export function UserSearch() {
     const isSearching = debouncedQuery.length > 0;
 
     const [currentPage, setCurrentPage] = useState(initialPage);
+    const resetPage = useCallback(() => setCurrentPage(1), []);
+    const controls = useSearchControls(resetPage);
+    const { sort, dir, has, support, all, activeFilters } = controls;
+    const sortLabel = useSortLabel(sort);
 
     const prevDebouncedRef = useRef(debouncedQuery);
     useEffect(() => {
@@ -45,7 +56,7 @@ export function UserSearch() {
     }, [debouncedQuery]);
 
     useEffect(() => {
-        navigate({ search: { q: inputValue.trim(), page: currentPage }, replace: true, resetScroll: false });
+        navigate({ search: (prev) => ({ ...prev, q: inputValue.trim(), page: currentPage }), replace: true, resetScroll: false });
     }, [inputValue, currentPage, navigate]);
 
     useEffect(() => {
@@ -62,11 +73,26 @@ export function UserSearch() {
     }, []);
 
     const offset = (currentPage - 1) * PAGE_SIZE;
-    const searchQuery = useQuery(searchUsersQueryOptions({ q: debouncedQuery || undefined, limit: PAGE_SIZE, offset }));
+    // The default sort and direction travel as absences, so a plain search
+    // hits the endpoint exactly as it did before sorting existed.
+    const searchQuery = useQuery(
+        searchUsersQueryOptions({
+            q: debouncedQuery || undefined,
+            sort: sort !== DEFAULT_SORT ? sort : undefined,
+            dir: dir !== defaultDir(sort) ? dir : undefined,
+            has: has.length > 0 ? has.join(",") : undefined,
+            support: support || undefined,
+            all: all ? scopeToken(all) : undefined,
+            limit: PAGE_SIZE,
+            offset,
+        }),
+    );
 
     const isLoading = searchQuery.isLoading || searchQuery.isFetching;
     const rawUsers: DisplayUser[] = searchQuery.data?.entries ?? [];
-    const users: DisplayUser[] = isSearching ? sortBySubstringMatch(rawUsers, debouncedQuery, locale) : rawUsers;
+    // Under a metric sort the server's ranking stands; the client re-sort only
+    // pulls closer nickname matches up the score order.
+    const users: DisplayUser[] = isSearching && sort === DEFAULT_SORT ? sortBySubstringMatch(rawUsers, debouncedQuery, locale) : rawUsers;
     const totalCount = searchQuery.data?.total ?? null;
     const totalPages = Math.max(1, Math.ceil((totalCount ?? 0) / PAGE_SIZE));
     const showResults = !isLoading && users.length > 0;
@@ -103,12 +129,19 @@ export function UserSearch() {
                     </InputGroupAddon>
                 </InputGroup>
 
+                <SearchToolbar controls={controls} />
+
                 <div className="flex items-center justify-between gap-3 font-sans text-[12.5px] text-muted-foreground leading-none">
                     <span className="inline-flex items-center gap-1.5">
                         {isSearching ? (
                             <>
                                 <Search className="h-3 w-3" aria-hidden="true" />
                                 {t("search.resultsFor")} <strong className="text-foreground">{t("search.quotedQuery", { query: debouncedQuery })}</strong>
+                            </>
+                        ) : sort !== DEFAULT_SORT ? (
+                            <>
+                                <Trophy className="h-3 w-3" aria-hidden="true" />
+                                {t("search.browsingBy", { sort: sortLabel })}
                             </>
                         ) : (
                             <>
@@ -129,11 +162,26 @@ export function UserSearch() {
                 ) : showResults ? (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {users.map((user) => (
-                            <UserCard key={`${user.uid}-${user.server}`} user={user} />
+                            <UserCard key={`${user.uid}-${user.server}`} user={user} sort={sort} />
                         ))}
                     </div>
                 ) : showEmpty ? (
-                    isSearching ? (
+                    activeFilters > 0 ? (
+                        <Empty>
+                            <EmptyHeader>
+                                <EmptyMedia variant="icon">
+                                    <Filter aria-hidden="true" />
+                                </EmptyMedia>
+                                <EmptyTitle>{t("search.empty.filtered.title")}</EmptyTitle>
+                                <EmptyDescription>{t("search.empty.filtered.desc")}</EmptyDescription>
+                            </EmptyHeader>
+                            <EmptyContent>
+                                <Button variant="outline" size="sm" onClick={controls.clearFilters}>
+                                    {t("search.toolbar.clearFilters")}
+                                </Button>
+                            </EmptyContent>
+                        </Empty>
+                    ) : isSearching ? (
                         <Empty>
                             <EmptyHeader>
                                 <EmptyMedia variant="icon">

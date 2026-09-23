@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-22T09:24:49.298Z",
+    "generatedAt": "2026-09-23T00:27:33.109Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -36752,12 +36752,94 @@
             "placeholders": []
         },
         {
+            "key": "user.search.browsingBy",
+            "namespace": "user",
+            "source_text": "Browsing public profiles by {sort}",
+            "description": "Status line over the results when the search box is empty and profiles are ranked by something other than score. {sort} is the rank-by option's name as the toolbar shows it, e.g. 'Masteries (M3)', 'Guard operators'.",
+            "placeholders": [
+                "sort"
+            ]
+        },
+        {
             "key": "user.search.card.level",
             "namespace": "user",
             "source_text": "Lv {level}",
             "description": "Account level on a search-result card. Abbreviated on purpose; the tile is narrow.",
             "placeholders": [
                 "level"
+            ]
+        },
+        {
+            "key": "user.search.card.metric.enemies",
+            "namespace": "user",
+            "source_text": "{count, plural, one {# enemy} other {# enemies}}",
+            "description": "Leading stat on a card while players are ranked by enemies discovered.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "user.search.card.metric.joined",
+            "namespace": "user",
+            "source_text": "Joined {date}",
+            "description": "Leading stat on a card while players are ranked by the date they joined the game. {date} is already formatted.",
+            "placeholders": [
+                "date"
+            ]
+        },
+        {
+            "key": "user.search.card.metric.masteries",
+            "namespace": "user",
+            "source_text": "{count} M3",
+            "description": "Leading stat on a card while players are ranked by skills at mastery 3. Keep 'M3', the game's shorthand.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "user.search.card.metric.modules",
+            "namespace": "user",
+            "source_text": "{count, plural, one {# Lv3 module} other {# Lv3 modules}}",
+            "description": "Leading stat on a card while players are ranked by modules at level 3. Keep 'Lv3'.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "user.search.card.metric.operators",
+            "namespace": "user",
+            "source_text": "{count, plural, one {# operator} other {# operators}}",
+            "description": "Leading stat on a card while players are ranked by operators owned.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "user.search.card.metric.potentials",
+            "namespace": "user",
+            "source_text": "{count, plural, one {# potential} other {# potentials}}",
+            "description": "Leading stat on a card while players are ranked by potentials: potential ranks summed over the roster.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "user.search.card.metric.scoped",
+            "namespace": "user",
+            "source_text": "{count, plural, one {# {label}} other {# {label}s}}",
+            "description": "Leading stat on a card while players are ranked by operators of one class or archetype. {label} is the game's class or archetype name: '23 Guards', '1 Centurion'.",
+            "placeholders": [
+                "count",
+                "label"
+            ]
+        },
+        {
+            "key": "user.search.card.metric.skins",
+            "namespace": "user",
+            "source_text": "{count, plural, one {# skin} other {# skins}}",
+            "description": "Leading stat on a card while players are ranked by skins owned.",
+            "placeholders": [
+                "count"
             ]
         },
         {
@@ -36796,6 +36878,20 @@
             "placeholders": [
                 "count"
             ]
+        },
+        {
+            "key": "user.search.empty.filtered.desc",
+            "namespace": "user",
+            "source_text": "Loosen a filter, or clear them all to browse every public profile.",
+            "description": "Empty-state body under search.empty.filtered.title. A 'Clear filters' button follows.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.empty.filtered.title",
+            "namespace": "user",
+            "source_text": "No player matches these filters",
+            "description": "Empty-state title when the roster filters (owns operators, support unit, complete class) match no public profile.",
+            "placeholders": []
         },
         {
             "key": "user.search.empty.noResults.desc",
@@ -36842,6 +36938,29 @@
             "placeholders": []
         },
         {
+            "key": "user.search.operatorPicker.empty",
+            "namespace": "user",
+            "source_text": "No matching operators.",
+            "description": "Shown in an operator picker's list when the typed text matches nobody.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.operatorPicker.loading",
+            "namespace": "user",
+            "source_text": "Loading operators…",
+            "description": "Placeholder in an operator picker while the operator index loads. Keep the single-character ellipsis.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.operatorPicker.rarity",
+            "namespace": "user",
+            "source_text": "{rarity}★",
+            "description": "Rarity shown under an operator's name in the picker list, before the class. Keep the star character.",
+            "placeholders": [
+                "rarity"
+            ]
+        },
+        {
             "key": "user.search.quotedQuery",
             "namespace": "user",
             "source_text": "\"{query}\"",
@@ -36858,6 +36977,99 @@
             "placeholders": []
         },
         {
+            "key": "user.search.scope.anyArchetype",
+            "namespace": "user",
+            "source_text": "Whole class",
+            "description": "First chip in the archetype row: the whole class counts, not one archetype of it.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.scope.archetype",
+            "namespace": "user",
+            "source_text": "Archetype",
+            "description": "Legend over the archetype chips that appear once a class is chosen.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.scope.class",
+            "namespace": "user",
+            "source_text": "Class",
+            "description": "Legend over the row of eight class icons in the class/archetype picker.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.scope.loading",
+            "namespace": "user",
+            "source_text": "Loading archetypes…",
+            "description": "Shown in place of the archetype chips while the operator index is still loading. Keep the single-character ellipsis.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.sort.enemies",
+            "namespace": "user",
+            "source_text": "Enemies discovered",
+            "description": "Rank-by option: how many enemy entries the player has unlocked.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.sort.joined",
+            "namespace": "user",
+            "source_text": "Joined the game",
+            "description": "Rank-by option: the date the game account was registered.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.sort.masteries",
+            "namespace": "user",
+            "source_text": "Masteries (M3)",
+            "description": "Rank-by option: skills at mastery 3. Keep 'M3', it is the game's shorthand.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.sort.modules",
+            "namespace": "user",
+            "source_text": "Modules (Lv3)",
+            "description": "Rank-by option: modules at level 3. Keep 'Lv3'.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.sort.operators",
+            "namespace": "user",
+            "source_text": "Operators owned",
+            "description": "Rank-by option: how many operators the player owns.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.sort.potentials",
+            "namespace": "user",
+            "source_text": "Potentials",
+            "description": "Rank-by option: potential ranks summed over the roster.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.sort.scoped",
+            "namespace": "user",
+            "source_text": "{label} operators",
+            "description": "Rank-by label when ranking by operators of one class or archetype. {label} is the game's class or archetype name, e.g. 'Guard operators', 'Centurion operators'.",
+            "placeholders": [
+                "label"
+            ]
+        },
+        {
+            "key": "user.search.sort.score",
+            "namespace": "user",
+            "source_text": "Score",
+            "description": "Rank-by option and status-line label: the site's total profile score, the default order.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.sort.skins",
+            "namespace": "user",
+            "source_text": "Skins owned",
+            "description": "Rank-by option: how many skins the player owns.",
+            "placeholders": []
+        },
+        {
             "key": "user.search.subtitle",
             "namespace": "user",
             "source_text": "Find player profiles by nickname or browse public profiles ranked by score.",
@@ -36869,6 +37081,155 @@
             "namespace": "user",
             "source_text": "Search Players",
             "description": "Page heading of the user-search page.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.all.aria",
+            "namespace": "user",
+            "source_text": "Owns every operator of a class or archetype",
+            "description": "Accessible name of the trigger for the complete-class filter.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.all.clear",
+            "namespace": "user",
+            "source_text": "Clear",
+            "description": "Button inside the complete-class filter popup that unsets the filter.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.all.hint",
+            "namespace": "user",
+            "source_text": "Only players who own every obtainable operator of the chosen scope on their own server.",
+            "description": "Explanation at the top of the complete-class filter popup.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.all.label",
+            "namespace": "user",
+            "source_text": "Owns every",
+            "description": "Small caps kicker on the trigger for the filter that requires the whole of a class or archetype to be owned. The chosen class or archetype name follows.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.all.none",
+            "namespace": "user",
+            "source_text": "Not set",
+            "description": "Value on the complete-class filter trigger while no class or archetype is chosen.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.clearFilters",
+            "namespace": "user",
+            "source_text": "Clear filters",
+            "description": "Button that unsets every roster filter. Shown in the toolbar while any is set, and in the empty state when the filters match nobody.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.dir.aria",
+            "namespace": "user",
+            "source_text": "Sort direction",
+            "description": "Accessible name of the button that flips the sort between ascending and descending.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.dir.asc",
+            "namespace": "user",
+            "source_text": "Low to high",
+            "description": "Visible label of the direction button while a count sort ascends.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.dir.desc",
+            "namespace": "user",
+            "source_text": "High to low",
+            "description": "Visible label of the direction button while a count sort descends.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.dir.joined.asc",
+            "namespace": "user",
+            "source_text": "Oldest first",
+            "description": "Visible label of the direction button while the 'joined' sort ascends (earliest accounts first).",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.dir.joined.desc",
+            "namespace": "user",
+            "source_text": "Newest first",
+            "description": "Visible label of the direction button while the 'joined' sort descends (latest accounts first).",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.filters",
+            "namespace": "user",
+            "source_text": "Filters",
+            "description": "Small caps kicker in front of the active-filter count above the filter controls.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.filters.count",
+            "namespace": "user",
+            "source_text": "{count, plural, =0 {none active} one {# active} other {# active}}",
+            "description": "How many of the three roster filters are set, after the 'Filters' kicker.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "user.search.toolbar.has.label",
+            "namespace": "user",
+            "source_text": "Owns operators",
+            "description": "Label of the picker for operators every listed player must own. Several can be chosen.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.has.placeholder",
+            "namespace": "user",
+            "source_text": "Add an operator…",
+            "description": "Placeholder in the 'owns operators' picker while it is empty. Keep the single-character ellipsis.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.rankBy",
+            "namespace": "user",
+            "source_text": "Rank by",
+            "description": "Small caps kicker in front of the active sort name on the rank-by trigger.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.rankBy.aria",
+            "namespace": "user",
+            "source_text": "Rank players by",
+            "description": "Accessible name of the rank-by trigger button.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.rankBy.group.metric",
+            "namespace": "user",
+            "source_text": "Roster metric",
+            "description": "Heading over the eight metric chips inside the rank-by popup.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.rankBy.group.scope",
+            "namespace": "user",
+            "source_text": "Operators of a class",
+            "description": "Heading over the class icons inside the rank-by popup: pick a class or archetype to rank by how many of them a player owns.",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.support.label",
+            "namespace": "user",
+            "source_text": "Support unit has",
+            "description": "Label of the picker for one operator that must be in the player's support unit (the operators they lend to friends).",
+            "placeholders": []
+        },
+        {
+            "key": "user.search.toolbar.support.placeholder",
+            "namespace": "user",
+            "source_text": "Pick an operator…",
+            "description": "Placeholder in the 'support unit has' picker while it is empty. Keep the single-character ellipsis.",
             "placeholders": []
         }
     ]
