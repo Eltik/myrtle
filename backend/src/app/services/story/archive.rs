@@ -68,7 +68,7 @@ fn archive_components(gd: &GameData) -> HashMap<String, &ActArchiveComponent> {
     for key in keys {
         if let Some(group_id) = archive_group_id(gd, key) {
             out.entry(group_id)
-                .or_insert(&gd.story_archives.act_archive_data.components[key]);
+                .or_insert_with(|| &gd.story_archives.act_archive_data.components[key]);
         }
     }
     out

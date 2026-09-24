@@ -282,7 +282,7 @@ pub fn grade_operator_in(
     model: &ScoreModel,
 ) -> f64 {
     average_dimensions(&build_dimensions(
-        roster, static_op, favor, is_support, model,
+        roster, static_op, favor, is_support, *model,
     ))
 }
 
@@ -323,7 +323,7 @@ fn build_dimensions(
     static_op: &Operator,
     favor: &Favor,
     is_support: bool,
-    model: &ScoreModel,
+    model: ScoreModel,
 ) -> Vec<(DimensionKind, Dimension)> {
     let max_elite = (static_op.phases.len() - 1) as f64;
     let num_skills = static_op.skills.len();
@@ -431,7 +431,7 @@ pub fn operator_score_breakdown_in(
         graded_operators_in(&roster_map, game_data, model.invested_only)
     {
         let is_support = support_ids.contains(op_id);
-        let dims = build_dimensions(entry, static_op, &game_data.favor, is_support, &model);
+        let dims = build_dimensions(entry, static_op, &game_data.favor, is_support, model);
         let op_weight_total: f64 = dims.iter().map(|(_, (w, _))| w).sum();
         if op_weight_total <= 0.0 {
             continue;
@@ -605,7 +605,7 @@ pub fn advanced_modules(static_op: &Operator) -> Vec<&OperatorModule> {
 /// 25 of a two-slot operator's 145 weight points against 25 of a one-slot
 /// operator's 120 (0.172 vs 0.208 of the operator score); per operator it
 /// was 12.5 of 120 against 25 of 120, a 2x gap at identical cost.
-fn module_weight(slots: usize, model: &ScoreModel) -> f64 {
+fn module_weight(slots: usize, model: ScoreModel) -> f64 {
     if model.module_per_slot {
         WEIGHT_MODULE * slots as f64
     } else {
@@ -705,7 +705,7 @@ pub fn operator_upgrade_deltas(
     total_roster_weight: f64,
 ) -> Vec<UpgradeDelta> {
     let model = ScoreModel::from_env();
-    let current_dims = build_dimensions(roster, static_op, favor, is_support, &model);
+    let current_dims = build_dimensions(roster, static_op, favor, is_support, model);
     if current_dims.iter().map(|(_, (w, _))| w).sum::<f64>() <= 0.0 {
         return Vec::new();
     }
@@ -713,7 +713,7 @@ pub fn operator_upgrade_deltas(
 
     let mut out = Vec::with_capacity(missing.len());
     for &tag in missing {
-        let new_score = simulate_score_for_tag(roster, static_op, favor, is_support, tag, &model);
+        let new_score = simulate_score_for_tag(roster, static_op, favor, is_support, tag, model);
         let Some(new_score) = new_score else { continue };
         let op_delta = (new_score - current_score).max(0.0);
         let grade_delta = if total_roster_weight > 0.0 {
@@ -745,7 +745,7 @@ fn simulate_score_for_tag(
     favor: &Favor,
     is_support: bool,
     tag: &str,
-    model: &ScoreModel,
+    model: ScoreModel,
 ) -> Option<f64> {
     fn set(dims: &mut [(DimensionKind, Dimension)], kind: DimensionKind, score: f64) -> bool {
         match dims.iter_mut().find(|(k, _)| *k == kind) {

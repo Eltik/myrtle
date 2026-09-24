@@ -66,7 +66,11 @@ pub fn sprites_from_objects(objects: &HashMap<i64, (i32, Value)>) -> SpriteMetaM
         if *class_id != 213 {
             continue;
         }
-        let Some(name) = v.get("m_Name").and_then(Value::as_str).filter(|n| !n.is_empty()) else {
+        let Some(name) = v
+            .get("m_Name")
+            .and_then(Value::as_str)
+            .filter(|n| !n.is_empty())
+        else {
             continue;
         };
         let (Some(w), Some(h)) = (
@@ -184,7 +188,10 @@ mod tests {
     #[test]
     fn a_sprite_with_no_rect_or_no_ppu_is_dropped() {
         let mut m: HashMap<i64, (i32, Value)> = HashMap::new();
-        m.insert(1, (213, json!({"m_Name": "no_rect", "m_PixelsToUnits": 100.0})));
+        m.insert(
+            1,
+            (213, json!({"m_Name": "no_rect", "m_PixelsToUnits": 100.0})),
+        );
         m.insert(2, (213, sprite("zero_ppu", 100.0, 100.0, 0.0)));
         m.insert(3, (213, sprite("", 100.0, 100.0, 100.0)));
         assert!(sprites_from_objects(&m).is_empty());

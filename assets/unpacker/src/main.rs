@@ -246,14 +246,15 @@ fn cmd_backfill_sprites(args: &cli::BackfillSpritesArgs) {
                 .as_ref()
                 .map(avg_sprites::sprites_from_bundle)
                 .unwrap_or_default();
-            let mut ok = true;
-            if !sprites.is_empty()
+            let ok = if !sprites.is_empty()
                 && (exists || args.create_missing)
                 && let Err(e) = avg_sprites::write_sprites_json(&dir, &sprites)
             {
                 eprintln!("  error writing {}: {e}", dir.display());
-                ok = false;
-            }
+                false
+            } else {
+                true
+            };
             (sub, sprites, exists, ok)
         })
         .collect();
@@ -284,7 +285,8 @@ fn cmd_backfill_sprites(args: &cli::BackfillSpritesArgs) {
         entries += sprites.len();
         for meta in sprites.values() {
             *ppu.entry(format!("{:.4}", meta.ppu)).or_default() += 1;
-            if (meta.pivot.x - 0.5).abs() > f32::EPSILON || (meta.pivot.y - 0.5).abs() > f32::EPSILON
+            if (meta.pivot.x - 0.5).abs() > f32::EPSILON
+                || (meta.pivot.y - 0.5).abs() > f32::EPSILON
             {
                 off_pivot += 1;
             }
@@ -385,14 +387,15 @@ fn cmd_backfill_hubs(args: &cli::BackfillHubsArgs) {
                 .and_then(|d| BundleFile::parse(d).ok())
                 .as_ref()
                 .and_then(export::avg_hub::hub_from_bundle);
-            let mut ok = true;
-            if let Some(h) = hub.as_ref()
+            let ok = if let Some(h) = hub.as_ref()
                 && (exists || args.create_missing)
                 && let Err(e) = export::avg_hub::write_hub_json(&dir, h)
             {
                 eprintln!("  error writing {}: {e}", dir.display());
-                ok = false;
-            }
+                false
+            } else {
+                true
+            };
             (stem, hub, exists, ok)
         })
         .collect();

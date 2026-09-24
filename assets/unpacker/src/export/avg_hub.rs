@@ -1,6 +1,6 @@
 //! The AVG character sprite hub: where a face patch sits on its body.
 //!
-//! An `avg/characters/*.ab` bundle carries one MonoBehaviour that says how its
+//! An `avg/characters/*.ab` bundle carries one `MonoBehaviour` that says how its
 //! PNGs compose. Two classes ship, and the type tree names their fields
 //! differently:
 //!
@@ -224,7 +224,7 @@ fn sprite_entries(
 }
 
 /// Read the hub out of already-deserialized objects: `path_id -> (class_id,
-/// value)`. Returns `None` when the bundle carries no hub MonoBehaviour.
+/// value)`. Returns `None` when the bundle carries no hub `MonoBehaviour`.
 #[must_use]
 pub fn hub_from_objects(objects: &HashMap<i64, (i32, Value)>) -> Option<Hub> {
     let mut sprite_names: HashMap<i64, (String, Option<HubSize>)> = HashMap::new();
@@ -385,7 +385,13 @@ mod tests {
         assert!(g.sprites[2].is_whole_body);
         // Each entry carries its OWN texture size: 128 px faces on a 1024 body.
         assert_eq!(g.sprites[0].size, Some(HubSize { w: 128.0, h: 128.0 }));
-        assert_eq!(g.sprites[2].size, Some(HubSize { w: 1024.0, h: 1024.0 }));
+        assert_eq!(
+            g.sprites[2].size,
+            Some(HubSize {
+                w: 1024.0,
+                h: 1024.0
+            })
+        );
     }
 
     /// `facePos` is in BODY TEXTURE pixels, and Amiya's body texture is 1280,
@@ -415,7 +421,13 @@ mod tests {
         ))
         .unwrap();
         let g = &h.groups[0];
-        assert_eq!(g.sprites[1].size, Some(HubSize { w: 1280.0, h: 1280.0 }));
+        assert_eq!(
+            g.sprites[1].size,
+            Some(HubSize {
+                w: 1280.0,
+                h: 1280.0
+            })
+        );
         assert_eq!(g.face_pos.x / g.sprites[1].size.unwrap().w, 570.0 / 1280.0);
         assert_eq!(g.sprites[2].size, None);
     }

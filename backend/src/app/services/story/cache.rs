@@ -118,6 +118,9 @@ impl<T> ServerCache<T> {
         let built = build().await?;
         self.builds.fetch_add(1, Ordering::Relaxed);
         *held = Some((key, Arc::clone(&built)));
+        // The guard is the single flight: it must live across `build`, and it is
+        // released here, before the value is handed back, not at scope end.
+        drop(held);
         Ok(built)
     }
 }

@@ -18,7 +18,7 @@ export type StoryGroupReaders = {
      * the stage records can speak for. A group with no gated story counts 0,
      * and the tab prints that as not measurable rather than as nobody:
      * 494 EN stories carry no gate (every operator record, 20 mini vignettes,
-     * main_0's two Prologue guide entries), and 2,313 of 2,576 accounts are
+     * `main_0`'s two Prologue guide entries), and 2,313 of 2,576 accounts are
      * known only through their stage records, so "every scripted story"
      * would have made chapter 0 finished by 0 of its 2,314 readers.
      */
