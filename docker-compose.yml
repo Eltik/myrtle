@@ -59,6 +59,10 @@ services:
             SERVERS: ${SERVERS:-en}
             JWT_SECRET: ${JWT_SECRET}
             SERVICE_KEY: ${SERVICE_KEY}
+            GAME_CREDENTIAL_KEY: ${GAME_CREDENTIAL_KEY:?GAME_CREDENTIAL_KEY must be set; see .env.example}
+            GAME_SESSION_DIR: ${GAME_SESSION_DIR:-game_sessions}
+            GACHA_DETAIL_DIR: ${GACHA_DETAIL_DIR:-}
+            EVENT_SHOP_DIR: ${EVENT_SHOP_DIR:-}
             ASSET_WS_URLS: ${ASSET_WS_URLS}
             RATE_LIMIT_RPM: ${RATE_LIMIT_RPM:-100}
             DPS_POLL_INTERVAL: ${DPS_POLL_INTERVAL:-1800}
@@ -67,6 +71,10 @@ services:
         volumes:
             - ./backend:/src
             - ./assets/output:/data/output:ro
+            # The extract stays read-only; `derived/` holds what the backend itself
+            # persists (farm archive, event shops, pool details) and must be writable.
+            - ./assets/output/en/derived:/data/output/en/derived
+            - ./assets/output/cn/derived:/data/output/cn/derived
         ports:
             - "3060:3060"
         networks:
