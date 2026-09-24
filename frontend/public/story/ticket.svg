@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 272" width="500" height="272" preserveAspectRatio="none">
+  <!-- The ticket silhouette used as a CSS mask by both halves of a story card.
+       Subpath 1 is the rounded body; subpaths 2 and 3 are the two large
+       semicircular notches bitten out of the top and bottom edge at the tear
+       (x = 395.5 = 79% of 500); subpath 4 is the tear itself, a 3.5 px gap
+       whose edges wave through eight rounded bumps. fill-rule="evenodd" turns
+       subpaths 2..4 into holes. -->
+  <path fill="#fff" fill-rule="evenodd" d="M16 0 H484 A16 16 0 0 1 500 16 V256 A16 16 0 0 1 484 272 H16 A16 16 0 0 1 0 256 V16 A16 16 0 0 1 16 0 Z M383.5 0 A12 12 0 0 0 407.5 0 Z M383.5 272 A12 12 0 0 1 407.5 272 Z M393.75 12 q-7 15.5 0 31 q7 15.5 0 31 q-7 15.5 0 31 q7 15.5 0 31 q-7 15.5 0 31 q7 15.5 0 31 q-7 15.5 0 31 q7 15.5 0 31 L397.25 260 q7 -15.5 0 -31 q-7 -15.5 0 -31 q7 -15.5 0 -31 q-7 -15.5 0 -31 q7 -15.5 0 -31 q-7 -15.5 0 -31 q7 -15.5 0 -31 q-7 -15.5 0 -31 Z"/>
+</svg>

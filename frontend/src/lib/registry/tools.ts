@@ -1,6 +1,6 @@
 import type { messages as toolMessages } from "#/lib/registry/tools.messages";
 
-export type ToolIconName = "chart" | "calc" | "star" | "dice" | "cake" | "pack" | "search" | "trophy" | "users" | "user" | "history" | "tiers" | "heart" | "list-todo" | "shield" | "crosshair" | "map" | "calendar-clock";
+export type ToolIconName = "chart" | "calc" | "star" | "dice" | "cake" | "pack" | "search" | "trophy" | "users" | "user" | "history" | "tiers" | "heart" | "list-todo" | "shield" | "crosshair" | "map" | "calendar-clock" | "book";
 
 export type ToolCategory = "calculator" | "fun";
 

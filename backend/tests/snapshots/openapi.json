@@ -6894,6 +6894,199 @@
         }
       }
     },
+    "/api/story/community": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "What the community has READ, on the default server: how many accounts have\nopened each story, and how far into each group they get.",
+        "description": "Anonymous throughout: every field is a count over accounts and nothing\nnames one. An account is counted only while it has turned neither\n`publicProfile` nor `shareStats` off. The aggregate is computed off the\nrequest path and recomputed at most every six hours, so `computedAt` is how\nold the numbers are rather than when they were asked for.",
+        "operationId": "story_community",
+        "responses": {
+          "200": {
+            "description": "The community reading aggregate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryCommunity"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/story/group/{group_id}/archive": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "The game's own \"from the archive\" screen for one group: its logs,\nlandmarks, news, files, gallery, soundtrack and recordings, in the order\nthe game lists them, with every picture and clip resolved to an\n`/api/assets` path. Only the sections the group HAS are listed, so a group\nthe archive table does not carry answers 200 with an empty `sections`\nrather than a 404; an id the library does not list at all is a 404, the\nsame as the illustrations route. Answered from the warmed index, so no\ntable is re-read.",
+        "operationId": "story_group_archive",
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "description": "Story group id or an operator `charId`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The group's archive.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryArchive"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/story/group/{group_id}/illustrations": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "Every background, CG and character sprite a group's stories reference, on\nthe default server. `group_id` is a `StoryGroup.id` (`main_0`, `act11side`,\n`story_kroos_set_1`) or an operator `charId` (`char_124_kroos`) for that\noperator's records: one route rather than two, because an operator's\nrecords are split over one or two story sets and have no single group id,\nwhile the two id spaces cannot collide (every operator id starts with\n`char_`, no group id does). Answered from the warmed index, so no script\nis read. A name with no file on disk is listed with `url: null`.",
+        "operationId": "story_group_illustrations",
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "description": "Story group id or an operator `charId`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The group's illustrations.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryIllustrations"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/story/index": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "The Archives library on the default server: every story group with its\nstories, and every operator's records. `hasScript` says whether\n`GET /story/{id}` will answer with a script.",
+        "operationId": "story_index",
+        "responses": {
+          "200": {
+            "description": "The story library.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryIndex"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/story/{story_id}": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "One story on the default server: its script as a generic command stream\nand every asset it references, resolved to `/api/assets` paths. 404 when\nthe id is unknown, and 404 with a message when the id is in the library\nbut no script file backs it.",
+        "operationId": "story_detail",
+        "parameters": [
+          {
+            "name": "story_id",
+            "in": "path",
+            "description": "Story id from the library (`1stact_level_a001_01_beg`).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The parsed script.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryScript"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
     "/api/tier-list-flairs": {
       "get": {
         "tags": [
@@ -8800,6 +8993,132 @@
         ]
       }
     },
+    "/api/user/story-progress": {
+      "get": {
+        "tags": [
+          "player"
+        ],
+        "summary": "The caller's stored reading progress, or null when nothing is stored yet.",
+        "operationId": "get_story_progress",
+        "responses": {
+          "200": {
+            "description": "The stored document and when it was written, both null when the account has never synced.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryProgressResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "player"
+        ],
+        "summary": "Replace the caller's stored reading progress with the document sent.",
+        "operationId": "put_story_progress",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoryProgressDocument"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The document as stored, and when it was written.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryProgressResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
+    "/api/user/story-progress/import": {
+      "post": {
+        "tags": [
+          "player"
+        ],
+        "summary": "Re-derive which stories the GAME has read from the account's stored game\ndata, without refreshing it, and answer as `GET` would.",
+        "description": "The \"Sync now\" button calls this: it reaches the database, never the game\nserver, so it is safe to press while the game is open.",
+        "operationId": "import_story_progress",
+        "responses": {
+          "200": {
+            "description": "The stored document and the re-derived game verdict.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryProgressResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
     "/api/voices/{id}": {
       "get": {
         "tags": [
@@ -10622,6 +10941,253 @@
         }
       }
     },
+    "/api/{server}/story/community": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "`GET /{server}/story/community` - the same from `{server}`. The `/{server}`\nform reads that server's game data and its accounts; the bare form reads\nthe default server.",
+        "operationId": "story_community_srv",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "description": "Game server: `en`, `jp`, `kr`, `cn` or `tw`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The community reading aggregate.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryCommunity"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/{server}/story/group/{group_id}/archive": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "`GET /{server}/story/group/{group_id}/archive` - the same from `{server}`.\nThe `/{server}` form reads that server's game data; the bare form reads\nthe default server.",
+        "operationId": "story_group_archive_srv",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "description": "Game server: `en`, `jp`, `kr`, `cn` or `tw`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "group_id",
+            "in": "path",
+            "description": "Story group id or an operator `charId`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The group's archive.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryArchive"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/{server}/story/group/{group_id}/illustrations": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "`GET /{server}/story/group/{group_id}/illustrations` - the same from\n`{server}`. The `/{server}` form reads that server's game data; the bare\nform reads the default server.",
+        "operationId": "story_group_illustrations_srv",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "description": "Game server: `en`, `jp`, `kr`, `cn` or `tw`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "group_id",
+            "in": "path",
+            "description": "Story group id or an operator `charId`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The group's illustrations.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryIllustrations"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/{server}/story/index": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "`GET /{server}/story/index` - the story library from `{server}`. The\n`/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "operationId": "story_index_srv",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "description": "Game server: `en`, `jp`, `kr`, `cn` or `tw`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The story library.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryIndex"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/{server}/story/{story_id}": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "`GET /{server}/story/{story_id}` - one story from `{server}`. The\n`/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "operationId": "story_detail_srv",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "description": "Game server: `en`, `jp`, `kr`, `cn` or `tw`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "story_id",
+            "in": "path",
+            "description": "Story id from the library (`1stact_level_a001_01_beg`).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The parsed script.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryScript"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
     "/api/{server}/upcoming": {
       "get": {
         "tags": [
@@ -10841,6 +11407,391 @@
             "type": "integer",
             "format": "int32",
             "minimum": 0
+          }
+        }
+      },
+      "ArchiveClip": {
+        "type": "object",
+        "description": "One recorded line, in every language whose file is on disk.",
+        "required": [
+          "charId",
+          "voiceId",
+          "index",
+          "tracks"
+        ],
+        "properties": {
+          "charId": {
+            "type": "string"
+          },
+          "index": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tracks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArchiveClipTrack"
+            }
+          },
+          "voiceId": {
+            "type": "string"
+          }
+        }
+      },
+      "ArchiveClipTrack": {
+        "type": "object",
+        "required": [
+          "language",
+          "url"
+        ],
+        "properties": {
+          "language": {
+            "$ref": "#/components/schemas/LangType"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "ArchiveFile": {
+        "type": "object",
+        "description": "One of the archive's files or diaries: a page of prose with its own plate.",
+        "required": [
+          "id",
+          "title",
+          "text"
+        ],
+        "properties": {
+          "date": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The in-setting date the file is stamped with (`1097.10.27`)."
+          },
+          "id": {
+            "type": "string"
+          },
+          "pictureUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "titlePictureUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The drawn title over the page, on 4 of the 16 EN files."
+          }
+        }
+      },
+      "ArchiveLandmark": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "engName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The landmark's name in the setting's own Latin spelling, dropped when\nit repeats `name` (15 of the 26 EN landmarks repeat it)."
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "pictureUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ArchiveLog": {
+        "type": "object",
+        "required": [
+          "id",
+          "text"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "ArchiveLogChapter": {
+        "type": "object",
+        "description": "A run of log entries under one of the archive's own chapter headers, in\nthe order the chapter lists them.",
+        "required": [
+          "id",
+          "name",
+          "logs"
+        ],
+        "properties": {
+          "chapterIcon": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`NORMAL` or `SPECIAL`, the header's own glyph. Kept raw: no art is\njoined to it, because the two values are the whole vocabulary."
+          },
+          "displayId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The number the chapter header prints (`01`), a string because the\ntable writes it padded."
+          },
+          "id": {
+            "type": "string"
+          },
+          "logs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArchiveLog"
+            }
+          },
+          "name": {
+            "type": "string"
+          },
+          "unlockDesc": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ArchiveNewsFormat": {
+        "type": "object",
+        "required": [
+          "typeId",
+          "typeName"
+        ],
+        "properties": {
+          "logoUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The small masthead glyph, and the big one the story is headed with."
+          },
+          "mainLogoUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "typeId": {
+            "type": "string"
+          },
+          "typeName": {
+            "type": "string"
+          }
+        }
+      },
+      "ArchiveNewsItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "lines"
+        ],
+        "properties": {
+          "author": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "format": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ArchiveNewsFormat",
+                "description": "The masthead this story ran under."
+              }
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArchiveNewsLine"
+            },
+            "description": "The body, already split by the table into prose and pictures."
+          },
+          "title": {
+            "type": "string",
+            "description": "The headline."
+          }
+        }
+      },
+      "ArchiveNewsLine": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "text",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "text"
+                ]
+              },
+              "text": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "name",
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "image"
+                ]
+              },
+              "name": {
+                "type": "string",
+                "description": "The picture's name, kept so a line with no file on disk still says\nwhat is missing."
+              },
+              "url": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        ],
+        "description": "One line of a news body: prose, or a picture that runs in the column."
+      },
+      "ArchivePicture": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "pictureType"
+        ],
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "pictureType": {
+            "type": "string",
+            "description": "`IMAGE`, `ENDING_IMAGE` or `ROGUE_IMAGE`, raw from the table. All 57\npictures on the EN library groups are `IMAGE`; the other two values\nbelong to the `rogue_*` archives the library does not list."
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The AVG image, resolved through the same tree a script's `[Image]`\nname resolves through."
+          }
+        }
+      },
+      "ArchiveRecordingNode": {
+        "type": "object",
+        "description": "One node of the recordings shelf: a titled set of clips the player unlocks\ntogether.",
+        "required": [
+          "id",
+          "title",
+          "clips"
+        ],
+        "properties": {
+          "clips": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArchiveClip"
+            }
+          },
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "unlockDesc": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ArchiveTrack": {
+        "type": "object",
+        "required": [
+          "id",
+          "loopUrl"
+        ],
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "introUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "loopUrl": {
+            "type": "string"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },
@@ -11208,6 +12159,24 @@
           "save_credentials": {
             "type": "boolean",
             "description": "See the module note on `save_credentials`."
+          }
+        }
+      },
+      "BodySize": {
+        "type": "object",
+        "description": "The body TEXTURE's size in pixels, which is the unit `facePos` is measured\nin. 1024 for most bodies, 1280 for the oversized ones, and a face patch's\nfraction of the plate is `facePos / bodySize` in both cases. Absent only\nwhen neither the hub nor the PNG header could be read.",
+        "required": [
+          "w",
+          "h"
+        ],
+        "properties": {
+          "h": {
+            "type": "number",
+            "format": "float"
+          },
+          "w": {
+            "type": "number",
+            "format": "float"
           }
         }
       },
@@ -11662,6 +12631,26 @@
           }
         }
       },
+      "ChapterRange": {
+        "type": "object",
+        "description": "An inclusive run of mainline chapter numbers, `from <= to`.",
+        "required": [
+          "from",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "to": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
       "CharExtraWord": {
         "type": "object",
         "required": [
@@ -11682,6 +12671,56 @@
           },
           "wordKey": {
             "type": "string"
+          }
+        }
+      },
+      "CharacterSprite": {
+        "type": "object",
+        "description": "A resolved character sprite.",
+        "required": [
+          "bodyUrl"
+        ],
+        "properties": {
+          "bodySize": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/BodySize",
+                "description": "The `body_url` texture's own size. `face_pos` divided by THIS is the\npatch's fraction of the body plate."
+              }
+            ]
+          },
+          "bodyUrl": {
+            "type": "string"
+          },
+          "facePos": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/FacePos"
+              }
+            ]
+          },
+          "faceUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "plate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PlateRect",
+                "description": "The canvas rect the whole plate is drawn into, from the character's own\nprefab root. It is the bundle's, so every sprite of a folder shares it."
+              }
+            ]
           }
         }
       },
@@ -12739,6 +13778,34 @@
           }
         }
       },
+      "FacePos": {
+        "type": "object",
+        "description": "Where a face patch sits on its body, in BODY PIXELS: `x`,`y` are the\npatch's top-left corner measured from the body's left and TOP edge, `w`,`h`\nthe on-body size the face texture is scaled into. Haak reads\n`{x: 512, y: 120, w: 51, h: 71}` from the hub's `facePos (512,120,0)` /\n`faceSize (51,71)`. Absent on a legacy hub's `(-1,-1)`/`(0,0)` sentinel, on\na whole-body sprite, and on any folder whose `hub.json` the unpacker has\nnot written yet.",
+        "required": [
+          "x",
+          "y",
+          "w",
+          "h"
+        ],
+        "properties": {
+          "h": {
+            "type": "number",
+            "format": "float"
+          },
+          "w": {
+            "type": "number",
+            "format": "float"
+          },
+          "x": {
+            "type": "number",
+            "format": "float"
+          },
+          "y": {
+            "type": "number",
+            "format": "float"
+          }
+        }
+      },
       "FacilityOutputDto": {
         "type": "object",
         "required": [
@@ -13603,6 +14670,60 @@
             "type": "number",
             "format": "double",
             "description": "Heal-per-second while the active skill is up."
+          }
+        }
+      },
+      "IllustrationItem": {
+        "type": "object",
+        "description": "One background or CG a group's stories reference, with the stories that\nreference it. `url` is `null` when the name resolves to no file on disk:\nthe tab lists the name and says so rather than dropping it.",
+        "required": [
+          "name",
+          "storyIds"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "storyIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ImageSize": {
+        "type": "object",
+        "description": "A background or CG plate's own metrics: `w`,`h` the sprite rect in texture\npx and `ppu` its pixels-per-unit. A command with no `screenadapt` draws it\n`w * 100 / ppu` by `h * 100 / ppu` canvas px, 100 being the reference\npixels-per-unit every AVG `CanvasScaler` carries. `ppu_assumed` says the\n100 is a FALLBACK, not a read: the size came from the PNG header because no\n`sprites.json` covered that name.",
+        "required": [
+          "w",
+          "h",
+          "ppu"
+        ],
+        "properties": {
+          "h": {
+            "type": "number",
+            "format": "float"
+          },
+          "ppu": {
+            "type": "number",
+            "format": "float"
+          },
+          "ppuAssumed": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "w": {
+            "type": "number",
+            "format": "float"
           }
         }
       },
@@ -14584,6 +15705,24 @@
           }
         }
       },
+      "MusicCue": {
+        "type": "object",
+        "description": "A music cue: the intro plays once, the loop repeats.",
+        "properties": {
+          "intro": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "loop": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "NewSkin": {
         "type": "object",
         "required": [
@@ -15313,6 +16452,67 @@
           "Sa■&K?uSxw?"
         ]
       },
+      "OperatorRecordGroup": {
+        "type": "object",
+        "required": [
+          "charId",
+          "name",
+          "rarity",
+          "profession",
+          "avatarUrl",
+          "wordCount",
+          "illustrationCount",
+          "spriteCount",
+          "stories"
+        ],
+        "properties": {
+          "avatarUrl": {
+            "type": "string",
+            "description": "The `ui_char_avatar_*` sprite as an asset-index path\n(`/textures/spritepack/...`), the same form the operators list's\n`portrait` and a group's `coverUrl` carry: the frontend serves it\nunder `/api/assets`. Empty when no avatar resolves (0 of 315 on EN)."
+          },
+          "charId": {
+            "type": "string"
+          },
+          "illustrationCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Distinct backgrounds plus distinct CGs over this operator's records.",
+            "minimum": 0
+          },
+          "name": {
+            "type": "string",
+            "description": "The operator's name from the character table."
+          },
+          "profession": {
+            "$ref": "#/components/schemas/OperatorProfession",
+            "description": "The character table's profession, the raw game value the operators\nlist carries (`PIONEER`, `WARRIOR`, ...)."
+          },
+          "rarity": {
+            "type": "integer",
+            "format": "int32",
+            "description": "1-6 stars, the same `u8` the operators list's `rarity` carries; 0 when\nthe character table has no such operator (0 of 315 on EN).",
+            "minimum": 0
+          },
+          "spriteCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Distinct sprite folders over this operator's records.",
+            "minimum": 0
+          },
+          "stories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryEntry"
+            }
+          },
+          "wordCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The sum of this operator's records' `wordCount`.",
+            "minimum": 0
+          }
+        }
+      },
       "OptimizeRequest": {
         "type": "object",
         "required": [
@@ -15584,6 +16784,34 @@
             "items": {
               "$ref": "#/components/schemas/OperatorPlanResponse"
             }
+          }
+        }
+      },
+      "PlateRect": {
+        "type": "object",
+        "description": "The plate a character is drawn into, in CANVAS px: the prefab root rect the\nbundle ships, `x`,`y` its anchored position over the slot origin and\n`w`,`h` its size. Amiya legacy reads `{x: 0, y: 203, w: 1090, h: 1090}`,\nHaak `{x: 0, y: 150, w: 955, h: 955}`. It WINS over the slot template's\n1024 at y 203, so two characters in one frame are drawn at different sizes.\nAbsent when the folder has no `hub.json`, or one written before the\nunpacker read the root rect.",
+        "required": [
+          "x",
+          "y",
+          "w",
+          "h"
+        ],
+        "properties": {
+          "h": {
+            "type": "number",
+            "format": "float"
+          },
+          "w": {
+            "type": "number",
+            "format": "float"
+          },
+          "x": {
+            "type": "number",
+            "format": "float"
+          },
+          "y": {
+            "type": "number",
+            "format": "float"
           }
         }
       },
@@ -17637,6 +18865,37 @@
           }
         }
       },
+      "SpriteItem": {
+        "type": "object",
+        "description": "One character sprite folder a group's stories reference. `bodyUrl` is the\n`$1` body, the same file `GET /story/{id}` resolves a bare name to, and\n`faces` counts the DISTINCT `#N` variants the group's scripts ask for.",
+        "required": [
+          "base",
+          "storyIds",
+          "faces"
+        ],
+        "properties": {
+          "base": {
+            "type": "string"
+          },
+          "bodyUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "faces": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "storyIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "StageClearDto": {
         "type": "object",
         "required": [
@@ -17728,6 +18987,1013 @@
           "status": {
             "type": "string",
             "example": "ok"
+          }
+        }
+      },
+      "StoryArchive": {
+        "type": "object",
+        "description": "Everything the game's own \"from the archive\" screen shows for one group.\n\nAn archive is a group's, not a story's: it belongs to the event and is\nunlocked by playing it. A group with no archive answers 200 with an empty\n`sections`, because \"this event kept no archive\" is an answer and a 404 is\nnot.",
+        "required": [
+          "groupId",
+          "sections"
+        ],
+        "properties": {
+          "groupId": {
+            "type": "string"
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryArchiveSection"
+            }
+          }
+        }
+      },
+      "StoryArchiveSection": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "count",
+              "chapters",
+              "kind"
+            ],
+            "properties": {
+              "chapters": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ArchiveLogChapter"
+                }
+              },
+              "count": {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "logs"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "count",
+              "landmarks",
+              "kind"
+            ],
+            "properties": {
+              "count": {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "landmarks"
+                ]
+              },
+              "landmarks": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ArchiveLandmark"
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "count",
+              "news",
+              "kind"
+            ],
+            "properties": {
+              "count": {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "news"
+                ]
+              },
+              "news": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ArchiveNewsItem"
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "count",
+              "files",
+              "kind"
+            ],
+            "properties": {
+              "count": {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
+              },
+              "files": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ArchiveFile"
+                }
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "files"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "count",
+              "pictures",
+              "kind"
+            ],
+            "properties": {
+              "count": {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "gallery"
+                ]
+              },
+              "pictures": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ArchivePicture"
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "count",
+              "tracks",
+              "kind"
+            ],
+            "properties": {
+              "count": {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "music"
+                ]
+              },
+              "tracks": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ArchiveTrack"
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "count",
+              "nodes",
+              "hidden",
+              "kind"
+            ],
+            "properties": {
+              "count": {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
+              },
+              "hidden": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ArchiveClip"
+                },
+                "description": "The clips the shelf hides until they are unlocked, which belong to\nno node (8 of `main_14`'s 43)."
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "recordings"
+                ]
+              },
+              "nodes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ArchiveRecordingNode"
+                }
+              }
+            }
+          }
+        ],
+        "description": "One item of a group's archive: a log entry, a landmark, a news story, a\nfile, a gallery picture, a track or a recording.\n\nThe sections are a TAGGED list rather than a fixed record because an\narchive carries two or three of them and never all seven: on EN\n`act13side` is news, files and a gallery, `act17side` is logs, landmarks\nand a gallery, `act25side` is files and a gallery, `main_14` is nothing\nbut recordings. `count` is the LEAF count, the number of rows the game's\nown screen lists, so `logs` counts logs and not the chapters they are\ngrouped into, and `recordings` counts clips and not nodes."
+      },
+      "StoryAssets": {
+        "type": "object",
+        "description": "The assets one script references, keyed by the raw name as written in the\nscript (`avg_225_haak_1#3$1`, `$escape_loop`). Only resolved names appear.",
+        "required": [
+          "backgrounds",
+          "images",
+          "characters",
+          "music",
+          "sounds",
+          "avatars",
+          "imageSizes",
+          "videos"
+        ],
+        "properties": {
+          "avatars": {
+            "type": "object",
+            "description": "`[popupdialog]` head portraits, keyed by the raw `dialoghead` value\n(`$avatar_amiya`). 163 distinct values over EN, all 163 resolve.",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "backgrounds": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "characters": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CharacterSprite"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "imageSizes": {
+            "type": "object",
+            "description": "Every name in `backgrounds` and `images`, under the SAME key, with the\nplate metrics that size it when the command carries no `screenadapt`.",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ImageSize"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "images": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "music": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MusicCue"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "sounds": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "videos": {
+            "type": "object",
+            "description": "Cutscene clips, keyed by the `[Video]` command's own `res` argument\n(`video/act38side/PV01.mp4`) so the engine looks a halt up by the\nstring it already holds. Only resolved references appear: 12 of the 25\ndistinct names the EN scripts reference have a file, the other 13 are\nclips EN retired and the reader skips them.",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/VideoSources"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "StoryCategory": {
+        "type": "string",
+        "enum": [
+          "main",
+          "side",
+          "vignette",
+          "is",
+          "reclamation",
+          "sideContent",
+          "record"
+        ]
+      },
+      "StoryCommand": {
+        "type": "object",
+        "description": "One parsed line. `kind` is lowercased and typo-normalised; a bare text line\nis `kind: \"text\"` with the whole line in `text`.",
+        "required": [
+          "kind",
+          "args",
+          "line"
+        ],
+        "properties": {
+          "args": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "type": "string"
+          },
+          "line": {
+            "type": "integer",
+            "format": "int32",
+            "description": "1-based line number in the script file.",
+            "minimum": 0
+          },
+          "text": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "StoryCommunity": {
+        "type": "object",
+        "description": "The community reading aggregate for one server.",
+        "required": [
+          "players",
+          "computedAt",
+          "stories",
+          "groups"
+        ],
+        "properties": {
+          "computedAt": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Unix seconds this aggregate was computed at."
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryGroupReaders"
+            },
+            "description": "Every group in the library index, the operator record groups included,\nin index order."
+          },
+          "players": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Accounts counted: those that passed the privacy gate and carry at least\none of the three sources. It is the denominator for every count here.",
+            "minimum": 0
+          },
+          "stories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryReaders"
+            },
+            "description": "Every story in the library index, in index order."
+          }
+        }
+      },
+      "StoryCoverKind": {
+        "type": "string",
+        "description": "Where a group's `coverUrl` came from. `EntryPic` is the game's own\nArchives picture; `Background` is DERIVED, the first background of the\ngroup's first scripted story, because most EN groups have no\n`StoryEntryPicId` and all 17 mainline chapters are among them.",
+        "enum": [
+          "entryPic",
+          "background"
+        ]
+      },
+      "StoryEntry": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "sort",
+          "groupId",
+          "hasScript",
+          "wordCount",
+          "hasVideo",
+          "requiredStages"
+        ],
+        "properties": {
+          "avgTag": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`Before Operation`, `After Operation` or `Interlude`."
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The operation code (`GT-1`), absent on records and interludes."
+          },
+          "groupId": {
+            "type": "string"
+          },
+          "hasScript": {
+            "type": "boolean",
+            "description": "True when a script file answers the probe, so `GET /story/{id}` will\nreturn a script rather than a 404."
+          },
+          "hasVideo": {
+            "type": "boolean",
+            "description": "The script plays a `[Video]`. 1 of the 1,797 scripted EN stories is\nnothing but one (`main_14_level_main_14-20_beg`)."
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "requiredStages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sort": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "wordCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Whitespace-separated words of prose in the script, counted once at\nindex build by the same rule as `StoryScript.wordCount`. 0 when the\nstory has no script.",
+            "minimum": 0
+          }
+        }
+      },
+      "StoryGroup": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "category",
+          "entryType",
+          "actType",
+          "startTime",
+          "wordCount",
+          "illustrationCount",
+          "spriteCount",
+          "stories"
+        ],
+        "properties": {
+          "actType": {
+            "type": "string"
+          },
+          "bannerUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The group's KEY VISUAL, `StorylineStorySets[].KvImageId` resolved\nthrough `spritepack/mixstory_kv_sprites_{0,1,2}`: the card art the\ngame's own Story Collection draws. It is NOT `coverUrl`: a cover is the\nArchives entry picture (67 groups) or a derived first background (382),\nwhile a banner is the authored 532x456 plate and exists for exactly the\n81 groups a storyline shelf lists, all 17 mainline chapters among them.\nFor an event both exist and differ; the banner is the key visual."
+          },
+          "category": {
+            "$ref": "#/components/schemas/StoryCategory"
+          },
+          "chapterNumber": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "0 through 16 on the 17 mainline chapters, absent everywhere else. Read\noff the ZONE (`zone_table.ZoneNameTitleCurrent`, the \"00\"..\"16\" the\nclient prints under `EPISODE`), falling back to the `main_N` id. It is\nwhat a reader actually knows a chapter by, where `name` is an arc\ntitle nobody remembers.",
+            "minimum": 0
+          },
+          "coverKind": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StoryCoverKind",
+                "description": "Which source `coverUrl` came from, absent exactly when `coverUrl` is."
+              }
+            ]
+          },
+          "coverUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "displayType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`activity_table.BasicInfo.DisplayType` for event groups (`SIDESTORY`,\n`BRANCHLINE`, `MINISTORY`, `NONE`); the game's own Archives shelf."
+          },
+          "entryType": {
+            "type": "string"
+          },
+          "iconUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The group's own small glyph, `MainlineData.DecoImageId` resolved\nthrough `spritepack/mixstory_deco_sprites_h2_0`. MAINLINE only: the\ntable carries a deco for the 17 chapters and for nothing else, so an\nevent group has none and the UI falls back to its title or code."
+          },
+          "id": {
+            "type": "string"
+          },
+          "illustrationCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Distinct backgrounds plus distinct CGs the group's scripts reference,\nthe row count of the ILLUSTRATIONS tab. Counted over names, resolved\nor not.",
+            "minimum": 0
+          },
+          "music": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StoryMusic",
+                "description": "The group's THEME, the track the game plays over its Archives entry:\n`music_3in1bg_main{N}` on a mainline chapter and the\n`sys.ON_ACTIVITY_LOADED.{id}` bank on an event. 86 of the 87 EN\nlibrary groups carry one and 6 of those carry a title; the one that\ndoes not is `act24side`, whose bank names a loop clip the tree does\nnot hold."
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "spriteCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Distinct sprite folders the group's scripts reference, the row count\nof the Sprites sub-tab.",
+            "minimum": 0
+          },
+          "startTime": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Unix release time, `-1` when nothing dates the group. It is the\ngroup's own `StartTime`, except on a MAINLINE group, where every one of\nthe 17 EN rows writes -1 and the date is the zone's\n`zone_table.MainlineAdditionInfo.ZoneOpenTime` instead (5 of 17 carry\none: `main_10` 1666180800 through `main_14` 1730394000). No field says\nwhich source answered, because a release date is a release date and the\nconsumer renders one line either way."
+          },
+          "stories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryEntry"
+            }
+          },
+          "titleImageUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The group's title as ART, `StorylineStorySets[].TitleImageId` resolved\nthrough `spritepack/mixstory_title_sprites_0`: the 516x260 logotype the\ngame sets behind the written title, on all 81 groups a storyline shelf\nlists. It carries the same words as `name`, drawn, so a consumer that\nshows it still prints `name` for search and for a reader who cannot see\nthe image."
+          },
+          "wordCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The sum of this group's stories' `wordCount`.",
+            "minimum": 0
+          },
+          "zone": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StoryZone"
+              }
+            ]
+          }
+        }
+      },
+      "StoryGroupReaders": {
+        "type": "object",
+        "description": "One group, its readers, its finishers and its depth curve.",
+        "required": [
+          "id",
+          "readers",
+          "finished"
+        ],
+        "properties": {
+          "depth": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            },
+            "description": "Readers per story, in the group's own story order: the \"how far people\nget\" curve. It is the same number `stories[]` carries for each id,\narranged so a consumer can draw the curve without a join.\n\nABSENT on an operator's records, and only there. Carrying it for all\n766 groups put the document at 153,950 bytes, over the 150 KB the wire\ncontract allows; dropping it from the 315 record groups, which hold 367\none-story-deep curves that say nothing their `readers` count does not,\nbrings it to 150,066. That is 3,534 bytes under the ceiling and about 70\nmore stories, which is a THIN margin: the real-data test asserts the\nceiling, so the next EN batch that crosses it says so before the wire\ndoes, and the fix then is to drop the curve everywhere and let the\nconsumer join it. A consumer that wants a record's curve reads\n`stories[]`, which is where every one of these numbers came from."
+          },
+          "finished": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Accounts that have read every GATED story in the group, the stories\nthe stage records can speak for. A group with no gated story counts 0,\nand the tab prints that as not measurable rather than as nobody:\n494 EN stories carry no gate (every operator record, 20 mini vignettes,\nmain_0's two Prologue guide entries), and 2,313 of 2,576 accounts are\nknown only through their stage records, so \"every scripted story\"\nwould have made chapter 0 finished by 0 of its 2,314 readers.",
+            "minimum": 0
+          },
+          "id": {
+            "type": "string",
+            "description": "A `StoryGroup.id` (`main_8`, `act17side`) or, for an operator's\nrecords, that operator's `charId`."
+          },
+          "readers": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Accounts that have read at least one story in the group.",
+            "minimum": 0
+          }
+        }
+      },
+      "StoryIllustrations": {
+        "type": "object",
+        "description": "Every illustration one group or one operator's records reference, in\nfirst-appearance order over the group's stories in library order.",
+        "required": [
+          "groupId",
+          "backgrounds",
+          "images",
+          "sprites"
+        ],
+        "properties": {
+          "backgrounds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IllustrationItem"
+            }
+          },
+          "groupId": {
+            "type": "string",
+            "description": "The id as asked for: a `StoryGroup.id` or an operator `charId`."
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IllustrationItem"
+            }
+          },
+          "sprites": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpriteItem"
+            }
+          }
+        }
+      },
+      "StoryIndex": {
+        "type": "object",
+        "required": [
+          "groups",
+          "records",
+          "storylines",
+          "totals"
+        ],
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryGroup"
+            }
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OperatorRecordGroup"
+            }
+          },
+          "storylines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Storyline"
+            },
+            "description": "The game's themed shelves, in `SortId` order. Empty when the loaded\n`stage_table` carries no `Storylines` (every CN/EN tree since 2024\ndoes)."
+          },
+          "totals": {
+            "$ref": "#/components/schemas/StoryTotals"
+          }
+        }
+      },
+      "StoryMusic": {
+        "type": "object",
+        "description": "The theme a story group plays, resolved to clips.\n\n`loopUrl` is the only required half: 59 of the 86 EN groups that have a\ntheme also carry a one-shot `introUrl` in front of it, and a group whose\nloop clip is not on disk carries no `music` at all rather than a URL that\n404s. `title` is the `Musics` row's `Name`, which 101 of the 208 EN rows\nwrite as a single space, so it is trimmed and dropped when empty.",
+        "required": [
+          "loopUrl"
+        ],
+        "properties": {
+          "introUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "loopUrl": {
+            "type": "string"
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "StoryProgressDocument": {
+        "type": "object",
+        "description": "The reading-progress document, exactly as the browser holds it.\n\nOpaque on purpose: typing it here would put the format in two places and\nmake every reader-side field addition a backend migration. The TS type is\ndeclared inline so the generated binding still names the real shape."
+      },
+      "StoryProgressResponse": {
+        "type": "object",
+        "description": "What `GET /user/story-progress` answers.",
+        "required": [
+          "gameRead",
+          "gameUnread",
+          "gameArchived"
+        ],
+        "properties": {
+          "gameArchived": {
+            "type": "integer",
+            "format": "int32",
+            "description": "How many of `game_read` the game's ARCHIVE lists. The rest are known\nonly from the client's played-script flags, which is the half that\ncovers the mainline.",
+            "minimum": 0
+          },
+          "gameRead": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Story ids the GAME says this account has read, imported on the last\ngame-data refresh. Empty when the account has never refreshed, or when\nthe payload carried no story block."
+          },
+          "gameSyncedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Unix seconds of that import, null when nothing has ever been imported."
+          },
+          "gameUnread": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Story ids the game's Archive lists that NOTHING played: unlocked by an\nevent, never opened. A v1 document may carry these as read marks,\nbecause the first import baked its whole union into the document; the\nclient's v1 -> v2 upgrade withdraws exactly these and nothing else."
+          },
+          "progress": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StoryProgressDocument",
+                "description": "The stored document, or null when this account has never synced."
+              }
+            ]
+          },
+          "updatedAt": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "Unix seconds of the last write, null alongside a null `progress`."
+          }
+        }
+      },
+      "StoryReaders": {
+        "type": "object",
+        "description": "One story and how many accounts have read it.",
+        "required": [
+          "id",
+          "readers"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "readers": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "StoryScript": {
+        "type": "object",
+        "description": "One story, parsed, with every asset it references resolved.",
+        "required": [
+          "id",
+          "name",
+          "groupId",
+          "commands",
+          "assets",
+          "wordCount"
+        ],
+        "properties": {
+          "assets": {
+            "$ref": "#/components/schemas/StoryAssets"
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryCommand"
+            }
+          },
+          "groupId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "wordCount": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "StoryTotals": {
+        "type": "object",
+        "description": "The library's size, over the DISTINCT story ids in the index: the 364\n`record` groups and the 315 operator records list the same 367 stories,\nso a naive sum of both halves would count those twice.",
+        "required": [
+          "stories",
+          "withScript",
+          "words"
+        ],
+        "properties": {
+          "stories": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "withScript": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "words": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "StoryZone": {
+        "type": "object",
+        "description": "A main chapter's names, from `zone_table` and `chapter_table`.",
+        "properties": {
+          "chapterName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nameFirst": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nameSecond": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nameThird": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "Storyline": {
+        "type": "object",
+        "description": "One of the game's own themed shelves over the Archives\n(`stage_table.Storylines`), with the `StoryGroup.id`s it holds, in the\norder the shelf lists them.\n\nThe join is `StorylineStorySets`, NOT the group id: a location names a\n`RelevantStorySetId`, that set is `MAINLINE` and names a zone\n(`MainlineData.ZoneId`, which is the mainline group's own id) or `SS` /\n`COLLECT` and names an activity (`RelevantActivityId`, which is the event\ngroup's own id). On EN 81 of 81 sets resolve and 79 of them name a group\nthe Archives list; the other 2 (`setId_mainline_3_1` -> `act2mainss`,\n`setId_mainline_3_2` -> `act3mainss`) name ids `story_review_table` does\nnot carry and are dropped.\n\nA group can sit on SEVERAL shelves (17 do on EN), so `groupIds` over all\nstorylines is not a partition: it lists 104 slots over 81 distinct groups.\nPicking one shelf per group is the consumer's job.",
+        "required": [
+          "id",
+          "name",
+          "sort",
+          "groupIds",
+          "arcs"
+        ],
+        "properties": {
+          "arcs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorylineArc"
+            }
+          },
+          "chapterRange": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChapterRange",
+                "description": "The mainline chapters this shelf spans: the min and max\n`StoryGroup.chapterNumber` over its groups. `mainLine` is 0 to 16, and\na themed shelf carries one when it holds mainline chapters of its own\n(`ssLine_1` holds `main_7` through `main_14`); it is absent on the 7 EN\nshelves that hold none."
+              }
+            ]
+          },
+          "groupIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "iconUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The shelf's own glyph: `StorylineIconId`\n(`spritepack/mixstory_abbr_sprites_h2_0`, 44x36, 13 of the 14 EN\nshelves) and, where that is absent, `StorylineLogoId`\n(`spritepack/mixstory_logo_sprites_0`, 14 of 14). `mainLine` is the one\nshelf with no abbreviation glyph, so it draws its logo."
+          },
+          "id": {
+            "type": "string"
+          },
+          "logoUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The shelf's LOGO, `StorylineLogoId` (`spritepack/mixstory_logo_sprites_0`,\n108x108, 14 of 14 EN shelves): the emblem the game's Story Collection\ndraws for the shelf, monochrome white on transparent. The jump bar draws\nthis so every shelf chip carries the same kind of mark as the arcs."
+          },
+          "name": {
+            "type": "string"
+          },
+          "sort": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "StorylineArc": {
+        "type": "object",
+        "description": "One arc inside a storyline: the run of groups between two of the game's\nown `MAINLINE_SPLIT` headers. Only `mainLine` carries any on EN (4:\n`HOUR OF AN AWAKENING`, `SHATTER OF A VISION`, `SHADOW OF A DYING SUN`,\n`NEXUS POINT OF FUTURE`); every `ssLine_*` has an empty list.",
+        "required": [
+          "name",
+          "sort",
+          "groupIds"
+        ],
+        "properties": {
+          "chapterRange": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChapterRange",
+                "description": "The chapters the arc spans: the min and max\n`StoryGroup.chapterNumber` over the groups on it that carry one.\nAbsent on an arc that holds no numbered chapter at all."
+              }
+            ]
+          },
+          "groupIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "iconUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The arc header's own icon, `MainlineSplitData.IconId` resolved through\n`spritepack/mixstory_deco_sprites_h2_0` (`act_0` to `act_3`, 184x52).\nAll 4 EN mainline arcs carry one and nothing else declares an arc."
+          },
+          "name": {
+            "type": "string"
+          },
+          "sort": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -19300,6 +21566,24 @@
           "valid": {
             "type": "boolean",
             "description": "Always true - a failing token is a 401, not `valid: false`."
+          }
+        }
+      },
+      "VideoSources": {
+        "type": "object",
+        "description": "The two transcodes of one cutscene clip. `webm` is offered first and `mp4`\nis the fallback; a clip is only ever missing one of them when a transcode\nfailed, since `assets/transcode-video.sh` writes both.",
+        "properties": {
+          "mp4Url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "webmUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         }
       },

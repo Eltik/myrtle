@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TierListsRouteImport } from './routes/tier-lists'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as StoriesRouteImport } from './routes/stories'
 import { Route as StatsRouteImport } from './routes/stats'
 import { Route as StagesRouteImport } from './routes/stages'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -35,6 +36,7 @@ import { Route as ToolsHpsRouteImport } from './routes/tools.hps'
 import { Route as ToolsDpsRouteImport } from './routes/tools.dps'
 import { Route as ToolsBirthdaysRouteImport } from './routes/tools.birthdays'
 import { Route as TierListsIdRouteImport } from './routes/tier-lists_.$id'
+import { Route as StoriesStoryIdRouteImport } from './routes/stories_.$storyId'
 import { Route as StagesStageIdRouteImport } from './routes/stages_.$stageId'
 import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
 import { Route as GachaHistoryRouteImport } from './routes/gacha.history'
@@ -64,6 +66,11 @@ const TierListsRoute = TierListsRouteImport.update({
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoriesRoute = StoriesRouteImport.update({
+  id: '/stories',
+  path: '/stories',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StatsRoute = StatsRouteImport.update({
@@ -185,6 +192,11 @@ const TierListsIdRoute = TierListsIdRouteImport.update({
   path: '/tier-lists/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoriesStoryIdRoute = StoriesStoryIdRouteImport.update({
+  id: '/stories_/$storyId',
+  path: '/stories/$storyId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StagesStageIdRoute = StagesStageIdRouteImport.update({
   id: '/stages_/$stageId',
   path: '/stages/$stageId',
@@ -301,6 +313,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/stages': typeof StagesRoute
   '/stats': typeof StatsRoute
+  '/stories': typeof StoriesRoute
   '/terms': typeof TermsRoute
   '/tier-lists': typeof TierListsRoute
   '/admin': typeof AuthedAdminRouteWithChildren
@@ -309,6 +322,7 @@ export interface FileRoutesByFullPath {
   '/gacha/history': typeof GachaHistoryRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/stages/$stageId': typeof StagesStageIdRoute
+  '/stories/$storyId': typeof StoriesStoryIdRoute
   '/tier-lists/$id': typeof TierListsIdRoute
   '/tools/birthdays': typeof ToolsBirthdaysRoute
   '/tools/dps': typeof ToolsDpsRoute
@@ -348,6 +362,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/stages': typeof StagesRoute
   '/stats': typeof StatsRoute
+  '/stories': typeof StoriesRoute
   '/terms': typeof TermsRoute
   '/tier-lists': typeof TierListsRoute
   '/enemies/$id': typeof EnemiesIdRoute
@@ -355,6 +370,7 @@ export interface FileRoutesByTo {
   '/gacha/history': typeof GachaHistoryRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/stages/$stageId': typeof StagesStageIdRoute
+  '/stories/$storyId': typeof StoriesStoryIdRoute
   '/tier-lists/$id': typeof TierListsIdRoute
   '/tools/birthdays': typeof ToolsBirthdaysRoute
   '/tools/dps': typeof ToolsDpsRoute
@@ -396,6 +412,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/stages': typeof StagesRoute
   '/stats': typeof StatsRoute
+  '/stories': typeof StoriesRoute
   '/terms': typeof TermsRoute
   '/tier-lists': typeof TierListsRoute
   '/_authed/admin': typeof AuthedAdminRouteWithChildren
@@ -404,6 +421,7 @@ export interface FileRoutesById {
   '/gacha/history': typeof GachaHistoryRoute
   '/operators_/$id': typeof OperatorsIdRoute
   '/stages_/$stageId': typeof StagesStageIdRoute
+  '/stories_/$storyId': typeof StoriesStoryIdRoute
   '/tier-lists_/$id': typeof TierListsIdRoute
   '/tools/birthdays': typeof ToolsBirthdaysRoute
   '/tools/dps': typeof ToolsDpsRoute
@@ -445,6 +463,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/stages'
     | '/stats'
+    | '/stories'
     | '/terms'
     | '/tier-lists'
     | '/admin'
@@ -453,6 +472,7 @@ export interface FileRouteTypes {
     | '/gacha/history'
     | '/operators/$id'
     | '/stages/$stageId'
+    | '/stories/$storyId'
     | '/tier-lists/$id'
     | '/tools/birthdays'
     | '/tools/dps'
@@ -492,6 +512,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/stages'
     | '/stats'
+    | '/stories'
     | '/terms'
     | '/tier-lists'
     | '/enemies/$id'
@@ -499,6 +520,7 @@ export interface FileRouteTypes {
     | '/gacha/history'
     | '/operators/$id'
     | '/stages/$stageId'
+    | '/stories/$storyId'
     | '/tier-lists/$id'
     | '/tools/birthdays'
     | '/tools/dps'
@@ -539,6 +561,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/stages'
     | '/stats'
+    | '/stories'
     | '/terms'
     | '/tier-lists'
     | '/_authed/admin'
@@ -547,6 +570,7 @@ export interface FileRouteTypes {
     | '/gacha/history'
     | '/operators_/$id'
     | '/stages_/$stageId'
+    | '/stories_/$storyId'
     | '/tier-lists_/$id'
     | '/tools/birthdays'
     | '/tools/dps'
@@ -588,6 +612,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   StagesRoute: typeof StagesRoute
   StatsRoute: typeof StatsRoute
+  StoriesRoute: typeof StoriesRoute
   TermsRoute: typeof TermsRoute
   TierListsRoute: typeof TierListsRoute
   EnemiesIdRoute: typeof EnemiesIdRoute
@@ -595,6 +620,7 @@ export interface RootRouteChildren {
   GachaHistoryRoute: typeof GachaHistoryRoute
   OperatorsIdRoute: typeof OperatorsIdRoute
   StagesStageIdRoute: typeof StagesStageIdRoute
+  StoriesStoryIdRoute: typeof StoriesStoryIdRoute
   TierListsIdRoute: typeof TierListsIdRoute
   ToolsBirthdaysRoute: typeof ToolsBirthdaysRoute
   ToolsDpsRoute: typeof ToolsDpsRoute
@@ -625,6 +651,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stories': {
+      id: '/stories'
+      path: '/stories'
+      fullPath: '/stories'
+      preLoaderRoute: typeof StoriesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stats': {
@@ -793,6 +826,13 @@ declare module '@tanstack/react-router' {
       path: '/tier-lists/$id'
       fullPath: '/tier-lists/$id'
       preLoaderRoute: typeof TierListsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stories_/$storyId': {
+      id: '/stories_/$storyId'
+      path: '/stories/$storyId'
+      fullPath: '/stories/$storyId'
+      preLoaderRoute: typeof StoriesStoryIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stages_/$stageId': {
@@ -995,6 +1035,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   StagesRoute: StagesRoute,
   StatsRoute: StatsRoute,
+  StoriesRoute: StoriesRoute,
   TermsRoute: TermsRoute,
   TierListsRoute: TierListsRoute,
   EnemiesIdRoute: EnemiesIdRoute,
@@ -1002,6 +1043,7 @@ const rootRouteChildren: RootRouteChildren = {
   GachaHistoryRoute: GachaHistoryRoute,
   OperatorsIdRoute: OperatorsIdRoute,
   StagesStageIdRoute: StagesStageIdRoute,
+  StoriesStoryIdRoute: StoriesStoryIdRoute,
   TierListsIdRoute: TierListsIdRoute,
   ToolsBirthdaysRoute: ToolsBirthdaysRoute,
   ToolsDpsRoute: ToolsDpsRoute,

@@ -1,10 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { useRichT } from "#/lib/i18n/rich";
 import type { messages } from "./Footer.messages";
+
+/** The font credit's six links. The sentence itself is ONE message, so a translator can move them. */
+const FONT_LINK = "underline underline-offset-2 transition-colors hover:text-foreground";
 
 export default function Footer() {
     const t: TypedT<typeof messages> = useT("common");
+    const rt = useRichT("common");
 
     return (
         <footer className="border-border border-t bg-[color-mix(in_srgb,var(--background)_84%,transparent)] py-7">
@@ -35,6 +40,45 @@ export default function Footer() {
                     </nav>
                 </div>
                 <span className="max-w-130 font-sans text-muted-foreground text-xs leading-normal">{t("footer.disclaimer")}</span>
+                {/* One line, and it is REQUIRED: the Sarkaz face is CC BY-NC 4.0,
+                    which asks for attribution by name, the two Terra faces are OFL
+                    derivatives renamed because OFL reserves "Samigirian", and
+                    OpenDyslexic is shipped unmodified under OFL 1.1, which asks
+                    for the copyright notice to travel with the font. */}
+                <span className="max-w-170 font-sans text-[11px] text-muted-foreground leading-normal opacity-80">
+                    {rt("footer.fontCredit", {
+                        endfield: (
+                            <a href="https://github.com/lhclbt/Endfield_Font" target="_blank" rel="noreferrer" className={FONT_LINK}>
+                                Endfield_Font
+                            </a>
+                        ),
+                        ccLicence: (
+                            <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noreferrer" className={FONT_LINK}>
+                                CC BY-NC 4.0
+                            </a>
+                        ),
+                        samigirian: (
+                            <a href="https://github.com/Siphercase/Samigirian" target="_blank" rel="noreferrer" className={FONT_LINK}>
+                                Samigirian
+                            </a>
+                        ),
+                        oflLicence: (
+                            <a href="/terra-fonts/OFL.txt" target="_blank" rel="noreferrer" className={FONT_LINK}>
+                                OFL 1.1
+                            </a>
+                        ),
+                        openDyslexic: (
+                            <a href="https://github.com/antijingoist/opendyslexic" target="_blank" rel="noreferrer" className={FONT_LINK}>
+                                OpenDyslexic
+                            </a>
+                        ),
+                        odLicence: (
+                            <a href="/opendyslexic/OFL.txt" target="_blank" rel="noreferrer" className={FONT_LINK}>
+                                OFL 1.1
+                            </a>
+                        ),
+                    })}
+                </span>
                 {/* No language picker here. It was the third copy of one control,
                     after the header trigger and the mobile drawer, and the footer is
                     the least likely of the three to be where anyone looks for it. */}

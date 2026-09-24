@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use ts_rs::TS;
 
-use super::serde_helpers::deserialize_fb_map;
+use super::serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -88,6 +88,9 @@ pub struct ZoneData {
 pub struct ZoneTableFile {
     #[serde(deserialize_with = "deserialize_fb_map")]
     pub zones: HashMap<String, Zone>,
+    /// Main zone -> chapter link, read by the story reader.
+    #[serde(deserialize_with = "deserialize_fb_map_or_default", default)]
+    pub mainline_addition_info: HashMap<String, super::chapter::MainlineAdditionInfo>,
     // Other fields like WeeklyAdditionInfo, ZoneRecordRewardData, etc.
     // are not needed for the randomizer
 }

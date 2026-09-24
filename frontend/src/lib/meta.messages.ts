@@ -70,6 +70,24 @@ export const messages = {
         description: "Meta description of an enemy page that has no description text of its own. `{index}` is the in-game enemy code, e.g. `B1`.",
     },
 
+    // -------------------------------------------------------------- stories
+    "stories.title": {
+        text: "Stories",
+        description: "Document title of the story library (the Archives reader).",
+    },
+    "stories.description": {
+        text: "Read every Arknights story: main chapters, events and operator records.",
+        description: "Meta description of the story library.",
+    },
+    "story.title": {
+        text: "{name} - Story",
+        description: "Document title of one story. `{name}` is the group and story name from game data.",
+    },
+    "story.description": {
+        text: "Read {name} in the Arknights story reader.",
+        description: "Meta description of one story. `{name}` is the group and story name from game data.",
+    },
+
     // --------------------------------------------------------------- stages
     "stages.title": {
         text: "Stages",

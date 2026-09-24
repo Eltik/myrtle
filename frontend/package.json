@@ -45,6 +45,7 @@
     "@tanstack/react-virtual": "^3.13.24",
     "@tanstack/router-plugin": "^1.132.0",
     "@tanstack/store": "latest",
+    "@vidstack/react": "1.15.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "gif.js": "^0.2.0",

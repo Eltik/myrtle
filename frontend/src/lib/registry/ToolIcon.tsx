@@ -148,6 +148,13 @@ export function ToolIcon({ name, className }: { name: ToolIconName; className?: 
                     <circle cx="16" cy="16" r="6" />
                 </svg>
             );
+        case "book":
+            return (
+                <svg aria-hidden="true" viewBox="0 0 24 24" className={className} {...p}>
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                </svg>
+            );
         default:
             return null;
     }

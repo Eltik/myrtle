@@ -32,12 +32,77 @@ pub static MALLOC_CONF: &[u8] = b"background_thread:true,dirty_decay_ms:5000,muz
 /// build) kept Ctrl+C hanging for its whole duration. `server::run` drains
 /// connections under a grace period first; this bounds the rest.
 fn main() {
+    spawn_shutdown_watchdog();
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
         .expect("tokio runtime");
     runtime.block_on(async_main());
     runtime.shutdown_timeout(std::time::Duration::from_secs(2));
+}
+
+/// How long past a shutdown signal the process may still be here before it is
+/// ended from outside the runtime.
+const HARD_EXIT_GRACE: Duration = Duration::from_secs(15);
+
+/// A shutdown signal the main runtime cannot ANSWER still ends the process.
+///
+/// `server::run` drains under a 5 s grace and `shutdown_timeout` bounds the
+/// blocking pool, but both of those are futures on the main runtime: when
+/// every worker is parked in synchronous compute, nothing polls them and the
+/// signal is simply never seen. That is what happened on 2026-09-23, when one
+/// account's grade held a worker for 39,861 ms in a debug build and SIGTERM
+/// went unanswered until the process was killed by hand. This watchdog owns
+/// its own thread and its own single-threaded runtime, so it is polled
+/// whatever the main runtime is doing, and it leaves once the grace is up.
+/// A clean shutdown is faster than the grace, so this never fires on one.
+fn spawn_shutdown_watchdog() {
+    let started = std::thread::Builder::new()
+        .name("shutdown-watchdog".into())
+        .spawn(|| {
+            let Ok(runtime) = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+            else {
+                eprintln!("shutdown watchdog: no runtime; shutdown stays unbounded");
+                return;
+            };
+            runtime.block_on(async {
+                #[cfg(unix)]
+                {
+                    use tokio::signal::unix::{SignalKind, signal};
+                    let (Ok(mut term), Ok(mut interrupt)) = (
+                        signal(SignalKind::terminate()),
+                        signal(SignalKind::interrupt()),
+                    ) else {
+                        eprintln!("shutdown watchdog: no signal handler; shutdown stays unbounded");
+                        return;
+                    };
+                    tokio::select! {
+                        _ = term.recv() => {},
+                        _ = interrupt.recv() => {},
+                    }
+                }
+                #[cfg(not(unix))]
+                {
+                    if tokio::signal::ctrl_c().await.is_err() {
+                        return;
+                    }
+                }
+                tokio::time::sleep(HARD_EXIT_GRACE).await;
+                // Written straight to stderr rather than through tracing: the
+                // reason this thread exists is that the rest of the process
+                // may be unable to make progress.
+                eprintln!(
+                    "shutdown watchdog: {} s past the signal and the runtime has not left; exiting",
+                    HARD_EXIT_GRACE.as_secs()
+                );
+                std::process::exit(0);
+            });
+        });
+    if let Err(e) = started {
+        eprintln!("shutdown watchdog not started ({e}); shutdown stays unbounded");
+    }
 }
 
 // Startup wiring is inherently a long, linear sequence of `.await`s; splitting it into
@@ -195,6 +260,27 @@ async fn async_main() {
                 continue;
             }
             release::ledger::spawn_record(state.clone(), server, None);
+        }
+    }
+
+    // The story library index, off the request path. It loads and parses every
+    // script (EN: 1,887 of them), which is seconds of CPU, so the first reader
+    // must not be the one who pays it. Spawned, so it does not delay listening,
+    // and the lazy build in the service stays the fallback.
+    {
+        let mut seen: std::collections::HashSet<*const ()> = std::collections::HashSet::new();
+        for (&server, sd) in &state.servers {
+            if !seen.insert(std::sync::Arc::as_ptr(sd).cast::<()>()) {
+                continue;
+            }
+            if !sd.loaded.load(std::sync::atomic::Ordering::Acquire) {
+                continue;
+            }
+            backend::app::services::story::spawn_warm(state.clone(), server);
+            // And the community reading aggregate on top of it: a walk over
+            // every account's stage records, which is far too long to run on a
+            // request. It recomputes on its own six-hour clock from here.
+            backend::app::services::story_community::spawn_warm(state.clone(), server);
         }
     }
 

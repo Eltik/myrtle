@@ -31,6 +31,15 @@ pub fn export_gamedata(
             continue;
         }
 
+        // The manifest names a bundle by its path relative to the server's
+        // asset root, e.g. `anon/0dfb59a7275154d610241fcaef7aef4d.bin`, which
+        // is exactly what the walk yields once the input root is stripped.
+        let bundle_key = path
+            .strip_prefix(bundle_dir)
+            .unwrap_or(path)
+            .to_string_lossy()
+            .into_owned();
+
         let data = std::fs::read(path)?;
         let bundle = match BundleFile::parse(data) {
             Ok(b) => b,
@@ -61,51 +70,63 @@ pub fn export_gamedata(
                 None => continue,
             };
 
-            // Look up real path from manifest
-            let real_path = match manifest.get_output_path(name) {
-                Some(p) => p,
-                None => continue,
+            // Look up the real path from the manifest, KEYED BY BUNDLE. An
+            // asset name is not unique: every story ships twice under one
+            // name, the script in one bundle and its one-line summary in
+            // another, so a name-only lookup handed both objects the same
+            // destination and the summary landed on top of the script. Fall
+            // back to the name-only map only when the bundle is unknown to the
+            // manifest, so a bundle the walk found under a different root
+            // still exports what it did before.
+            let real_paths: Vec<&str> = match manifest.get_output_paths(&bundle_key, name) {
+                Some(paths) => paths.iter().map(std::string::String::as_str).collect(),
+                None => match manifest.get_output_path(name) {
+                    Some(p) => vec![p],
+                    None => continue,
+                },
             };
 
-            // Only extract gamedata files
-            if !real_path.starts_with("gamedata/") {
-                continue;
-            }
+            for real_path in real_paths {
+                // Only extract gamedata files
+                if !real_path.starts_with("gamedata/") {
+                    continue;
+                }
 
-            // Build output directory from the real path
-            let out_path = output_dir.join(real_path);
-            let out_parent = out_path.parent().unwrap_or(output_dir);
-            std::fs::create_dir_all(out_parent)?;
+                // Build output directory from the real path
+                let out_path = output_dir.join(real_path);
+                let out_parent = out_path.parent().unwrap_or(output_dir);
+                std::fs::create_dir_all(out_parent)?;
 
-            // Export using text_asset (handles AES decrypt + JSON detection)
-            let file_stem = Path::new(real_path)
-                .file_name()
-                .and_then(|f| f.to_str())
-                .unwrap_or(name);
+                // Export using text_asset (handles AES decrypt + JSON detection)
+                let file_stem = Path::new(real_path)
+                    .file_name()
+                    .and_then(|f| f.to_str())
+                    .unwrap_or(name);
 
-            // A FlatBuffer that verifies under no schema is SKIPPED, not
-            // decoded — see `decode_flatbuffer` for why an unchecked decode of
-            // a mismatched schema can run forever. The check has to happen
-            // HERE rather than inside `export_text_asset`, because that
-            // function's last resort is to dump the raw payload as `.txt` or
-            // `.bytes`, which would replace the previous extraction's good
-            // `.json` with rubbish. Writing nothing leaves that file in place,
-            // which is the graceful degrade the VPS watcher wants: a stale
-            // table beats a missing one, and both beat a garbage one.
-            if let Some(fb) = crate::export::text_asset::flatbuffer_payload(&val)
-                && let Some(table) = crate::flatbuffers_decode::unverified_table(&fb, file_stem)
-            {
-                eprintln!(
-                    "schema: {table} verifies under no schema, skipped (previous output kept)"
-                );
-                continue;
-            }
+                // A FlatBuffer that verifies under no schema is SKIPPED, not
+                // decoded — see `decode_flatbuffer` for why an unchecked decode of
+                // a mismatched schema can run forever. The check has to happen
+                // HERE rather than inside `export_text_asset`, because that
+                // function's last resort is to dump the raw payload as `.txt` or
+                // `.bytes`, which would replace the previous extraction's good
+                // `.json` with rubbish. Writing nothing leaves that file in place,
+                // which is the graceful degrade the VPS watcher wants: a stale
+                // table beats a missing one, and both beat a garbage one.
+                if let Some(fb) = crate::export::text_asset::flatbuffer_payload(&val)
+                    && let Some(table) = crate::flatbuffers_decode::unverified_table(&fb, file_stem)
+                {
+                    eprintln!(
+                        "schema: {table} verifies under no schema, skipped (previous output kept)"
+                    );
+                    continue;
+                }
 
-            match export_text_asset(&val, out_parent, Some(file_stem)) {
-                Ok(()) => exported += 1,
-                Err(e) => {
-                    eprintln!("  error exporting {name}: {e}");
-                    failed += 1;
+                match export_text_asset(&val, out_parent, Some(file_stem)) {
+                    Ok(()) => exported += 1,
+                    Err(e) => {
+                        eprintln!("  error exporting {name}: {e}");
+                        failed += 1;
+                    }
                 }
             }
         }

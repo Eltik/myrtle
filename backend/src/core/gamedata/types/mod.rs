@@ -4,6 +4,7 @@ pub mod activity;
 pub mod audio;
 pub mod building;
 pub mod campaign;
+pub mod chapter;
 pub mod chibi;
 pub mod climb_tower;
 pub mod consts;
@@ -17,6 +18,7 @@ pub mod level;
 pub mod material;
 pub mod medal;
 pub mod mission;
+pub mod mission_archive;
 pub mod module;
 pub mod operator;
 pub mod range;
@@ -31,6 +33,8 @@ pub mod stage;
 pub mod stage_evidence;
 pub mod stage_index;
 pub mod stage_universe;
+pub mod story_review;
+pub mod story_review_meta;
 pub mod trust;
 pub mod voice;
 pub mod zone;
@@ -58,6 +62,8 @@ use skin::SkinData;
 use stage::Stage;
 use stage_index::StageIndex;
 use stage_universe::StageUniverse;
+use story_review::StoryReviewGroup;
+use story_review_meta::StoryReviewMetaTableFile;
 use trust::Favor;
 use voice::Voices;
 use zone::Zone;
@@ -91,6 +97,31 @@ pub struct GameData {
     /// Activity id -> its token shop as the game server serves it, see [`event_shop`].
     pub event_shops: HashMap<String, event_shop::EventShopData>,
     pub retro_acts: HashMap<String, RetroAct>,
+    /// The Archives library index (`story_review_table`), keyed by group id.
+    pub story_reviews: HashMap<String, StoryReviewGroup>,
+    /// The event archives (`story_review_meta_table`), layout and content as
+    /// the table carries them; the join to a story group is done once at
+    /// story-index build.
+    pub story_archives: StoryReviewMetaTableFile,
+    /// The recordings shelves (`activity_table.MissionArchives`), keyed by
+    /// topic id. EN carries one, `mission_archive_main_14`.
+    pub mission_archives: HashMap<String, mission_archive::MissionArchive>,
+    /// The soundtrack tables (`audio_data.Musics`/`BgmBanks`/`BankAlias`),
+    /// which give a story group its theme and an archived track its clips.
+    pub music: audio::MusicBanks,
+    /// Main story chapters (`chapter_table`), keyed by chapter id.
+    pub chapters: HashMap<String, chapter::Chapter>,
+    /// Main zone id -> chapter id (`zone_table.MainlineAdditionInfo`).
+    pub zone_chapters: HashMap<String, String>,
+    /// Main zone id -> `ZoneOpenTime`, only the zones that carry a real one
+    /// (5 of 17 on EN: `main_10` through `main_14`).
+    pub zone_open_times: HashMap<String, i64>,
+    /// `stage_table.Storylines`: the game's themed shelves over the Archives,
+    /// in table order (14 on EN, `mainLine` plus 13 `ssLine_*`).
+    pub storylines: Vec<stage::Storyline>,
+    /// `stage_table.StorylineStorySets` keyed by `StorySetId`: the join from a
+    /// storyline location to a `story_review_table` group (81 on EN).
+    pub storyline_story_sets: HashMap<String, stage::StorylineStorySet>,
     /// Skin shop carousel windows (the promo layer), see [`shop`].
     pub skin_windows: Vec<SkinWindow>,
     /// Skin store listings from the recommend panel (the rerun record).

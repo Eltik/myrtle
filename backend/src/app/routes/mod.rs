@@ -123,6 +123,8 @@ pub mod social;
 pub mod stages;
 pub mod static_data;
 pub mod stats;
+pub mod story;
+pub mod story_progress;
 pub mod tier_lists;
 pub mod user;
 
@@ -203,6 +205,11 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(enemies::get_community_average))
         .routes(routes!(improvements::get_user_improvements))
         .routes(routes!(account::get_max_level_cost))
+        .routes(routes!(
+            story_progress::get_story_progress,
+            story_progress::put_story_progress
+        ))
+        .routes(routes!(story_progress::import_story_progress))
         .routes(routes!(base::get_catalog))
         .routes(routes!(base::get_layout))
         .routes(routes!(base::evaluate_layout))
@@ -248,6 +255,16 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(operators::build_stats))
         .routes(routes!(operators::voices_detail))
         .routes(routes!(operators::voices_detail_srv))
+        .routes(routes!(story::community))
+        .routes(routes!(story::index))
+        .routes(routes!(story::illustrations))
+        .routes(routes!(story::archive))
+        .routes(routes!(story::detail))
+        .routes(routes!(story::community_srv))
+        .routes(routes!(story::index_srv))
+        .routes(routes!(story::illustrations_srv))
+        .routes(routes!(story::archive_srv))
+        .routes(routes!(story::detail_srv))
         .routes(routes!(operators::skins_detail))
         .routes(routes!(operators::skins_detail_srv))
         .routes(routes!(operators::index_srv))

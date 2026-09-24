@@ -1,0 +1,221 @@
+/* Terra's own scripts, from `public/terra-fonts`. They are declared HERE and not
+   in `styles.css` because this file is imported by the reader alone: a page with
+   no dialogue on it never asks for them. `swap` so a line is readable while the
+   22 KB face arrives, and the fallback the reader sees in that moment is the
+   reading style's family, which is what `fontFamilyFor` puts behind them. */
+@font-face {
+    font-family: "Terra Aegir";
+    src:
+        url("/terra-fonts/TerraAegir-Regular.woff2") format("woff2"),
+        url("/terra-fonts/TerraAegir-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Terra Sarkaz";
+    src:
+        url("/terra-fonts/Sarkaz-EndfieldByButan.woff2") format("woff2"),
+        url("/terra-fonts/Sarkaz-EndfieldByButan.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Terra Sami";
+    src:
+        url("/terra-fonts/TerraSami-Regular.woff2") format("woff2"),
+        url("/terra-fonts/TerraSami-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* OpenDyslexic, SIL Open Font License 1.1 (`/opendyslexic/OFL.txt`). Regular
+   and Bold only: the reader sets no italic and the box's own emphasis is the
+   `<i>` tag, which synthesises. */
+@font-face {
+    font-family: "OpenDyslexic";
+    src: url("/opendyslexic/OpenDyslexic-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "OpenDyslexic";
+    src: url("/opendyslexic/OpenDyslexic-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Story reader motion. Imported by StoryReader.tsx; all durations here are one-shot
+   cues (a sprite bounce, a camera shake, the continue chevron), the frame-to-frame
+   transitions come from inline `transition-duration` driven by the engine's frames. */
+
+/* Scene fades are driven per element with an inline animation-duration, because
+   every duration in the client is the script's own number times one ratio; a
+   fixed 0.25s here was the reader inventing a clamp. A new image fades IN over
+   the still-opaque old one, and a bare one fades the current OUT. */
+@keyframes story-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes story-fade-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes story-jump {
+    0%,
+    100% {
+        translate: 0 0;
+    }
+    30% {
+        translate: 0 -4%;
+    }
+    60% {
+        translate: 0 0;
+    }
+    80% {
+        translate: 0 -1.5%;
+    }
+}
+
+.story-jump {
+    animation: story-jump 0.5s ease-out 1;
+}
+
+@keyframes story-shake {
+    0%,
+    100% {
+        translate: 0 0;
+    }
+    20% {
+        translate: -1.5% 0;
+    }
+    40% {
+        translate: 1.5% 0;
+    }
+    60% {
+        translate: -1% 0;
+    }
+    80% {
+        translate: 1% 0;
+    }
+}
+
+.story-shake {
+    animation: story-shake 0.4s ease-in-out 1;
+}
+
+/* `[camerashake]` is DOShakePosition, not a keyframe: its duration is the
+   command's own (ten seconds by default) and it must not gate the reader, so
+   `Stage` drives it from rAF on the scene container. The 0.45 s keyframe that
+   used to live here was a fixed invention. */
+
+@keyframes story-bounce {
+    0%,
+    100% {
+        translate: 0 0;
+    }
+    50% {
+        translate: 0 3px;
+    }
+}
+
+.story-bounce {
+    animation: story-bounce 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .story-jump,
+    .story-shake,
+    .story-bounce {
+        animation: none;
+    }
+}
+
+/* ---------------------------------------------------------------------------
+   Layout. `--story-header` is the site header the reader has to sit under: the
+   header is `h-14` (3.5rem) below 640 px and `sm:h-16` (4rem) above it, and the
+   reader used a flat 3.5rem, so every viewport at or above 640 px overshot the
+   viewport by 8 px and the page scrolled. The value now follows the header.
+   --------------------------------------------------------------------------- */
+
+[data-story-reader] {
+    --story-header: 3.5rem;
+    --story-avail: calc(100dvh - var(--story-header));
+}
+
+@media (min-width: 640px) {
+    [data-story-reader] {
+        --story-header: 4rem;
+    }
+}
+
+/* Fullscreen and the immersive short-viewport mode both own the whole viewport. */
+[data-story-reader]:fullscreen,
+[data-story-reader][data-story-immersive="true"] {
+    --story-header: 0px;
+}
+
+/* A phone in landscape is under 500 px tall, and the 56 px site header is 14% of
+   that. Below 500 px the reader lifts out of the document flow and covers the
+   header instead of subtracting it: the stage gets the whole viewport and the
+   toolbar, which is the reader's own navigation, stays. `z-60` clears the
+   header's `z-50`. */
+@media (max-height: 500px) {
+    [data-story-reader][data-story-immersive="true"] {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+    }
+}
+
+/* No rule hides a control by viewport height any more. The chrome is TWO pills,
+   the client's own left and right clusters, and they are one flex row at every
+   width: at 375 px the ten controls measure 367 px end to end (32x44 each, two
+   168 px pills, a 31 px gap), so nothing wraps and nothing is dropped. The
+   volume slider left the bar for Settings; the bar keeps a mute button. */
+
+/* Safe areas. A notched phone puts the toolbar under the status bar in landscape
+   and the text box under the home indicator in portrait; these are 0 px on every
+   device without insets, so nothing moves on a desktop. */
+[data-story-reader] .story-toolbar {
+    margin-top: env(safe-area-inset-top, 0px);
+    margin-inline-start: env(safe-area-inset-left, 0px);
+    margin-inline-end: env(safe-area-inset-right, 0px);
+}
+
+[data-story-reader] .story-textbox {
+    padding-bottom: calc(var(--story-textbox-bottom, 3%) + env(safe-area-inset-bottom, 0px));
+    padding-inline-start: calc(var(--story-textbox-side, 4%) + env(safe-area-inset-left, 0px));
+    padding-inline-end: calc(var(--story-textbox-side, 4%) + env(safe-area-inset-right, 0px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+    /* Frame transitions and scene fades are inline `transition-duration` and
+       `animation-duration` values the engine writes per frame, so only
+       `!important` outranks them; under reduced motion they resolve instantly
+       instead of easing. The typewriter is a rAF counter in `TextBox`, not a
+       transition, so it keeps running. */
+    [data-story-reader] * {
+        /* biome-ignore lint/complexity/noImportantStyles: an inline per-frame duration is the thing being overridden. */
+        transition-duration: 0.01ms !important;
+        /* biome-ignore lint/complexity/noImportantStyles: the scene fades are inline durations too. */
+        animation-duration: 0.01ms !important;
+    }
+}

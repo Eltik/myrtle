@@ -32,6 +32,14 @@ export const PAGES: IPage[] = [
         keywords: ["stage", "stages", "map", "level", "mission", "operation", "pathing", "simulator"],
     },
     {
+        id: "stories",
+        href: "/stories",
+        labelKey: "page.stories.label",
+        descKey: "page.stories.desc",
+        icon: "book",
+        keywords: ["story", "stories", "archive", "archives", "reader", "lore", "chapter", "event", "record", "records"],
+    },
+    {
         id: "tier-lists",
         href: "/tier-lists",
         labelKey: "page.tierLists.label",

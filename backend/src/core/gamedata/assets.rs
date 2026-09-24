@@ -42,6 +42,14 @@ pub enum AssetKind {
     /// `textures/spritepack/fur_icon_N/{furniture_icon_id}.png`: the furniture
     /// catalogue icons, which event shops sell by the piece.
     FurnitureIcon,
+    /// `textures/spritepack/mixstory_*/{id}.png`: the Story Collection's own
+    /// art, the screen `ui/[uc]mixstory.ab` draws. One flat namespace over
+    /// seven bundles, because the ids never collide: `kv_*` (81 key visuals),
+    /// `title_*` (81 title logotypes), `storyline_abbr_*` (13 shelf glyphs),
+    /// `storyline_*` (14 shelf logos), `deco_*` (17 chapter glyphs), `act_0`
+    /// to `act_3` (4 arc icons) and the shelf backgrounds. Keyed by the id
+    /// `stage_table` names, which is the PNG stem.
+    StorylineArt,
 }
 
 const ALL_KINDS: &[AssetKind] = &[
@@ -61,6 +69,7 @@ const ALL_KINDS: &[AssetKind] = &[
     AssetKind::BrandKv,
     AssetKind::BrandLogo,
     AssetKind::FurnitureIcon,
+    AssetKind::StorylineArt,
 ];
 
 #[derive(Debug, Clone, Default)]
@@ -414,6 +423,8 @@ fn classify_dir(dir_name: &str) -> Option<AssetKind> {
         Some(AssetKind::BrandLogo)
     } else if dir_name.starts_with("fur_icon_") {
         Some(AssetKind::FurnitureIcon)
+    } else if dir_name.starts_with("mixstory_") {
+        Some(AssetKind::StorylineArt)
     } else {
         None
     }

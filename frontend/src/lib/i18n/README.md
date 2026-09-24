@@ -64,6 +64,7 @@ string in the namespace of the screen it appears on.
 | `tools` | `components/tools/**` |
 | `tierLists` | `components/tier-lists/**` |
 | `stages` | `components/stages/**` |
+| `story` | `components/story/**` (the reader and the story library) |
 | `enemies` | `components/enemies/**` |
 | `gacha` | `components/gacha/**` |
 | `stats` | `components/stats/**` |

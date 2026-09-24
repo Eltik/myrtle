@@ -18,5 +18,8 @@ pub mod search;
 pub mod social;
 pub mod static_data;
 pub mod stats;
+pub mod story;
+pub mod story_community;
+pub mod story_progress;
 pub mod tier_list;
 pub mod user;

@@ -1,6 +1,8 @@
 pub mod alpha_merge;
 pub mod anim;
 pub mod audio;
+pub mod avg_hub;
+pub mod avg_sprites;
 pub mod cardfields;
 pub mod fsb5;
 pub mod fx_textures;
@@ -12,6 +14,7 @@ pub mod portrait;
 pub mod shader_map;
 pub mod spine;
 pub mod stage_preview;
+pub mod story_art;
 pub mod text_asset;
 pub mod texture;
 

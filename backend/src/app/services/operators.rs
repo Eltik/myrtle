@@ -688,7 +688,9 @@ pub async fn get_operator_skins(
     })
 }
 
-const fn rarity_to_stars(rarity: &OperatorRarity) -> u8 {
+/// 1-6 stars from the game's `TIER_N` enum. The story index carries the
+/// same representation on an operator's record group.
+pub const fn rarity_to_stars(rarity: &OperatorRarity) -> u8 {
     match rarity {
         OperatorRarity::SixStar => 6,
         OperatorRarity::FiveStar => 5,

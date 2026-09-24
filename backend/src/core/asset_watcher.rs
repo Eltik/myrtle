@@ -192,6 +192,11 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server, res_version
                 res_version.map(str::to_owned),
             );
 
+            // The story index is keyed on the `GameData` allocation, so the
+            // swap above just invalidated it. Rebuild it now rather than
+            // leaving the cost to the next reader.
+            crate::app::services::story::spawn_warm(state.clone(), server);
+
             let prefix = if is_default {
                 "static:".to_string()
             } else {

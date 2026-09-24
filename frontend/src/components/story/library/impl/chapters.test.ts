@@ -1,0 +1,150 @@
+import { describe, expect, it } from "vitest";
+import { chapterNumberOf, glyphIndexFor, hashKey, parseMainOrdinal, rangeIsSingle, releaseYear, SECTION_GLYPHS, sectionChapters, specModel } from "./chapters";
+import type { LibEntry, LibGroup } from "./derive";
+
+function entry(id: string, over: Partial<LibEntry> = {}): LibEntry {
+    return { id, name: id, sort: 1, groupId: "g", hasScript: true, requiredStages: [], ...over };
+}
+
+function group(id: string, over: Partial<LibGroup> = {}): LibGroup {
+    return { id, name: id, category: "side", entryType: "ACTIVITY", actType: "ACTIVITY_STORY", startTime: 0, stories: [entry(`${id}_1`)], ...over };
+}
+
+describe("parseMainOrdinal", () => {
+    it("reads the number out of a mainline group id", () => {
+        expect(parseMainOrdinal("main_0")).toBe(0);
+        expect(parseMainOrdinal("main_9")).toBe(9);
+        expect(parseMainOrdinal("main_14")).toBe(14);
+    });
+
+    it("refuses anything that is not exactly main_<digits>", () => {
+        expect(parseMainOrdinal("main_")).toBeNull();
+        expect(parseMainOrdinal("main_x")).toBeNull();
+        expect(parseMainOrdinal("act18d0")).toBeNull();
+        expect(parseMainOrdinal("main_1_extra")).toBeNull();
+        expect(parseMainOrdinal("")).toBeNull();
+    });
+});
+
+describe("chapterNumberOf", () => {
+    it("prefers the wire field when the backend sends one", () => {
+        expect(chapterNumberOf(group("main_3", { category: "main", chapterNumber: 7 }))).toBe(7);
+    });
+
+    it("reads chapter ZERO off the wire rather than falling back, because 0 is not missing", () => {
+        // `group.chapterNumber || parse(id)` would answer 9 here. Chapter 0 is
+        // the Prologue and the most common mainline number on the page.
+        expect(chapterNumberOf(group("main_9", { category: "main", chapterNumber: 0 }))).toBe(0);
+    });
+
+    it("parses the id while the field is absent, which is what :3060 sends", () => {
+        expect(chapterNumberOf(group("main_0", { category: "main" }))).toBe(0);
+        expect(chapterNumberOf(group("main_14", { category: "main" }))).toBe(14);
+    });
+
+    it("has no number for an event, a vignette or a record", () => {
+        expect(chapterNumberOf(group("act18d0"))).toBeNull();
+        expect(chapterNumberOf(group("act5d0", { category: "vignette" }))).toBeNull();
+        expect(chapterNumberOf(group("char_002_amiya", { category: "record" }))).toBeNull();
+    });
+
+    it("treats a non-finite field as absent", () => {
+        expect(chapterNumberOf(group("main_4", { category: "main", chapterNumber: Number.NaN }))).toBe(4);
+    });
+});
+
+describe("releaseYear", () => {
+    it("reads the year off the release time", () => {
+        expect(releaseYear({ startTime: 1666180800 })).toBe(2022);
+    });
+
+    it("has no year for the 17 mainline groups the table writes -1 on", () => {
+        expect(releaseYear({ startTime: -1 })).toBeNull();
+        expect(releaseYear({ startTime: 0 })).toBeNull();
+    });
+});
+
+describe("specModel", () => {
+    it("prints a chapter number for the mainline instead of the group id", () => {
+        const g = group("main_0", { category: "main", stories: [entry("a"), entry("b")] });
+        expect(specModel(g, "EPISODE 00")).toEqual({ kind: "chapter", chapter: 0, entries: 2 });
+    });
+
+    it("keeps the operation code for an event and adds the year it ran", () => {
+        const g = group("act18d0", { startTime: 1666180800, stories: [entry("a")] });
+        expect(specModel(g, "GT")).toEqual({ kind: "code", code: "GT", year: 2022, entries: 1 });
+    });
+
+    it("leaves the year out when nothing dates the group", () => {
+        expect(specModel(group("act1d0", { startTime: -1 }), "GT")).toEqual({ kind: "code", code: "GT", year: null, entries: 1 });
+    });
+});
+
+describe("sectionChapters", () => {
+    it("makes a mainline arc a chapter RUN, which is its primary label", () => {
+        const run = [group("main_0", { category: "main" }), group("main_1", { category: "main" }), group("main_3", { category: "main" })];
+        expect(sectionChapters(run)).toEqual({ primary: { from: 0, to: 3 }, includes: null });
+    });
+
+    it("keeps the run on a mainline arc that also shelves side material, which 3 of the 4 EN arcs do", () => {
+        // arc-mainLine-201 is 6 numbered of 9, the narrowest of the four.
+        const arc = [group("main_9", { category: "main" }), group("main_10", { category: "main" }), group("main_11", { category: "main" }), group("main_12", { category: "main" }), group("main_13", { category: "main" }), group("main_14", { category: "main" }), group("act18d0"), group("act22side"), group("act33side")];
+        expect(sectionChapters(arc, { from: 9, to: 14 })).toEqual({ primary: { from: 9, to: 14 }, includes: null });
+    });
+
+    it("takes the wire's own range as the primary on a run, and ignores a non-finite one", () => {
+        expect(sectionChapters([group("main_2", { category: "main" })], { from: 0, to: 3 })).toEqual({ primary: { from: 0, to: 3 }, includes: null });
+        expect(sectionChapters([group("main_2", { category: "main" })], { from: Number.NaN, to: 3 })).toEqual({ primary: { from: 2, to: 2 }, includes: null });
+    });
+
+    it("gives a THEMED shelf that owns no mainline group nothing at all, whatever range the wire sends", () => {
+        // The defect: ssLine_2 "The Blessed" carries chapterRange 15 to 15 and
+        // owns 5 groups, none of them a chapter, because mainLine sorts 0 and
+        // took main_15 first. It headed "Main story · Chapter 15".
+        expect(sectionChapters([group("act18d0"), group("act5d0")], { from: 15, to: 15 })).toEqual({ primary: null, includes: null });
+        expect(sectionChapters([group("act18d0"), group("act5d0")])).toEqual({ primary: null, includes: null });
+        // ssLine_1 "The Ark", chapterRange 7 to 14 over 3 owned event groups.
+        expect(sectionChapters([group("act11d0"), group("act12side"), group("act17side")], { from: 7, to: 14 })).toEqual({ primary: null, includes: null });
+    });
+
+    it("gives a themed shelf that DOES own mainline groups the muted includes, never the heading", () => {
+        const shelf = [group("main_7", { category: "main" }), group("main_14", { category: "main" }), group("act18d0"), group("act22side"), group("act33side")];
+        expect(sectionChapters(shelf, { from: 7, to: 14 })).toEqual({ primary: null, includes: { from: 7, to: 14 } });
+    });
+
+    it("reads includes off the section's OWN groups, not off the shelf's range", () => {
+        const shelf = [group("main_9", { category: "main" }), group("act18d0"), group("act22side")];
+        expect(sectionChapters(shelf, { from: 4, to: 14 })).toEqual({ primary: null, includes: { from: 9, to: 9 } });
+    });
+
+    it("says nothing about an empty section", () => {
+        expect(sectionChapters([])).toEqual({ primary: null, includes: null });
+    });
+});
+
+describe("rangeIsSingle", () => {
+    it("separates a one-chapter section from a run", () => {
+        expect(rangeIsSingle({ from: 9, to: 9 })).toBe(true);
+        expect(rangeIsSingle({ from: 0, to: 3 })).toBe(false);
+    });
+});
+
+describe("glyphIndexFor", () => {
+    it("is stable and inside the glyph table", () => {
+        for (const id of ["mainLine", "ssLine_1", "ssLine_12", "other-events", "operator-records"]) {
+            const at = glyphIndexFor(id);
+            expect(at).toBe(glyphIndexFor(id));
+            expect(at).toBeGreaterThanOrEqual(0);
+            expect(at).toBeLessThan(SECTION_GLYPHS.length);
+        }
+    });
+
+    it("gives the thirteen EN shelves more than one glyph between them", () => {
+        const ids = ["mainLine", "ssLine_1", "ssLine_2", "ssLine_3", "ssLine_4", "ssLine_5", "ssLine_6", "ssLine_7", "ssLine_8", "ssLine_9", "ssLine_10", "ssLine_11", "ssLine_12"];
+        expect(new Set(ids.map(glyphIndexFor)).size).toBeGreaterThan(1);
+    });
+
+    it("hashes the id, not its length", () => {
+        expect(hashKey("ssLine_1")).not.toBe(hashKey("ssLine_2"));
+    });
+});

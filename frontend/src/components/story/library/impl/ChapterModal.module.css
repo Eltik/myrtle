@@ -1,0 +1,153 @@
+/* The chapter sheet's hero.
+
+   Only the rules Tailwind cannot state without becoming unreadable live here:
+   the dark ground the key visual is printed on, the veil that carries it into
+   the sheet, and the four-stop halo under the authored logotype. Everything
+   else on the sheet is a theme token.
+
+   The hero is an inline-size CONTAINER, so every cap below is written in
+   `cqw` the way the ticket writes its own. The box is a fixed 16:7, so a
+   fraction of its HEIGHT is a fixed fraction of its width: 44% of the height
+   is 44% x 7/16 = 19.25cqw. That is the card's idiom (`GroupCard.module.css`
+   caps the logotype at 32.64cqw, which is 60% of the card's height) and it
+   holds at 720 px and at 390 px alike without a breakpoint. */
+.hero {
+    container-type: inline-size;
+}
+
+/* THE PLATE NEEDS A DARK GROUND, and that is a property of the art rather than
+   a preference. Every key visual is authored with a vignette that feathers to
+   transparent at its edges and with highlights blown to near-white, for a game
+   whose own chrome is near-black. Printed straight onto `--card`, which is
+   oklch(1 0 0) in light mode, the top third of `kv_roaring_flare.png` came back
+   almost white and the plate read as washed out. The ticket already solved
+   this: it prints the plate on #0d0f16 tinted by the cover's own sampled first
+   ink. The hero takes the same ground and the same `--ticket-c1`, sampled from
+   the same file by the same `useTicketPalette`, so a card and its sheet can
+   never disagree about what colour the chapter is. */
+.ground {
+    background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--ticket-c1) 22%, transparent) 0, transparent 65%), #0d0f16;
+}
+
+/* The veil ramps the picture DOWN INTO THE GROUND and only then into the sheet.
+   The old ramp washed `--card` straight over the raw image, which is what made
+   the bottom of a bright plate go pale. Reading from the bottom edge up: the
+   last 4% is the sheet's own surface, #0d0f16 owns 16%, and the ground gives
+   out at 84%, so the art meets the sheet through the dark rather than through
+   white. */
+.veil {
+    background: linear-gradient(to top, var(--card) 0%, var(--card) 4%, #0d0f16 16%, rgba(13, 15, 22, 0.62) 42%, rgba(13, 15, 22, 0.18) 66%, transparent 84%);
+}
+
+/* The halo is the ticket's, verbatim (`GroupCard.module.css`): a 1 px edge
+   under a soft glow, because the glow alone gave the ink a dark ground but no
+   OUTLINE and thin strokes still met light art at their own edge. The logotype
+   is white-on-anything art and the key visuals it lands on are not. */
+.logotype {
+    max-width: 46cqw;
+    max-height: 19.25cqw;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    object-position: left bottom;
+    filter: drop-shadow(rgba(0, 0, 0, 1) 0 0 1px) drop-shadow(rgba(0, 0, 0, 1) 0 0 1px) drop-shadow(rgba(0, 0, 0, 0.9) 0 2px 6px) drop-shadow(rgba(0, 0, 0, 0.6) 0 0 18px);
+}
+
+/* The 6 groups with no logotype set their name instead, at the size
+   impl/titleFit.ts measured for it, in the same 46cqw box. The same halo, as a
+   text shadow. */
+.textTitle {
+    display: flex;
+    flex-direction: column;
+    max-width: 46cqw;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: calc(var(--sheet-title-size, 26) * 1px);
+    letter-spacing: -0.5px;
+    line-height: 1.04;
+    color: #fff;
+    text-transform: uppercase;
+    overflow-wrap: var(--sheet-title-wrap, normal);
+    text-shadow:
+        rgba(0, 0, 0, 1) 0 0 1px,
+        rgba(0, 0, 0, 1) 0 0 2px,
+        rgba(0, 0, 0, 0.9) 0 2px 6px,
+        rgba(0, 0, 0, 0.6) 0 0 18px,
+        rgba(0, 0, 0, 0.5) 2px 2px 0;
+}
+
+/* ON A SHORT VIEWPORT THE PICTURE GIVES WAY, because it is the one part of the
+   sheet that carries no control. A 16:7 hero on the 720 px dialog is 314.1 px
+   tall; measured at 844x390 the dialog is 358, so the hero plus the 116.5 px
+   meta row came to 430.6, the meta was clipped from 374 down, and the entries
+   list resolved to 0 px and could not be reached at all. At 34dvh the plate is
+   132.6 and the list gets 108.9, which is two operations and a scroll. The
+   logotype is capped with it: 19.25cqw is 138.6 px at this width and would not
+   fit inside the shortened plate. Neither cap binds above 829 px of viewport
+   height, so 1440x900 and 1024x768 are untouched. */
+@media (max-height: 600px) {
+    .plate {
+        max-height: 34dvh;
+    }
+
+    .logotype {
+        max-height: min(19.25cqw, 20dvh);
+    }
+}
+
+/* THE TWO PILLS ON THE HERO ARE ONE FAMILY, which is what they were not.
+   "MAIN STORY" was the ticket's badge, `GroupCard.module.css .kindBadge`: a
+   white pill, black `--font-heading` at 9px/700, 80.73 x 16.80 measured on
+   main_8. "CHAPTER 8" beside it was a dark translucent pill, white
+   `--font-mono` at 10px/400, 77.20 x 21.00. Two shapes, two faces, two grounds,
+   6.6 px of height between them, and nothing about the content asks for the
+   difference: both are one word about what this chapter IS.
+
+   They are the mono pill now, at a flat 24 px so the pair has one height and
+   the row has one baseline. The ticket keeps its white badge untouched: a card
+   sits in a grid on the page's own surface and needs the contrast, a hero pill
+   sits on a key visual and the dark ground is what carries it there. */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 9px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+/* THE PARALLAX IS THE OPERATOR HERO'S, to the pixel: the same 80 px drift, the
+   same 1.1 scale, the same 40 px lift on the content over an opacity ramp.
+   What differs is only where the progress comes from, because the sheet's
+   scroller is its own content box rather than the window, and that is the
+   whole of what `useParallaxProgress`'s second argument buys.
+
+   `--parallax-progress` is declared here so the layers have a value before the
+   hook's first frame and after `prefers-reduced-motion` pins it: at 0 the
+   plate's transform is the identity matrix and the content is unmoved and
+   fully opaque, which is the previous rendering exactly. */
+.parallax {
+    --parallax-progress: 0;
+}
+
+.parallaxPlate {
+    transform: translate3d(0, calc(var(--parallax-progress) * 80px), 0) scale(calc(1 + var(--parallax-progress) * 0.1));
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+.parallaxLift {
+    transform: translate3d(0, calc(var(--parallax-progress) * -40px), 0);
+    opacity: calc(1 - var(--parallax-progress));
+    will-change: transform, opacity;
+}

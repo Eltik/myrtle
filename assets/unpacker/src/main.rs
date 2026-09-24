@@ -45,9 +45,12 @@ use walkdir::WalkDir;
 use cli::{Cli, Command};
 use export::alpha_merge;
 use export::audio::export_audio;
+use export::avg_hub;
+use export::avg_sprites;
 use export::portrait;
 use export::spine;
 use export::stage_preview::{self, StageAspectMap};
+use export::story_art;
 use export::text_asset::export_text_asset;
 use export::texture::{decode_texture_object, save_decoded_texture};
 use unity::bundle::BundleFile;
@@ -61,7 +64,468 @@ fn main() {
         Command::Extract(args) => cmd_extract(&args),
         Command::List(args) => cmd_list(&args),
         Command::Verify(args) => cmd_verify(&args),
+        Command::BackfillHubs(args) => cmd_backfill_hubs(&args),
+        Command::BackfillSprites(args) => cmd_backfill_sprites(&args),
+        Command::BackfillStoryArt(args) => cmd_backfill_story_art(&args),
     }
+}
+
+/// Write the Story Collection's art for one server without re-extracting
+/// anything else. The `spritepack/mixstory_*` bundles are plain `Texture2D` +
+/// full-rect `Sprite` pairs, one texture per sprite, so this is the ordinary
+/// texture pass narrowed to those bundles: decode, alpha-merge, write
+/// `textures/spritepack/<bundle>/<m_Name>.png`. The report is per KIND, by
+/// stem, because each stem answers a different `stage_table` field.
+fn cmd_backfill_story_art(args: &cli::BackfillStoryArtArgs) {
+    let started = std::time::Instant::now();
+    if let Some(jobs) = args.jobs {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(jobs)
+            .build_global()
+            .ok();
+    }
+    let mut bundles: Vec<PathBuf> = WalkDir::new(args.input.join("spritepack"))
+        .min_depth(1)
+        .into_iter()
+        .filter_map(Result::ok)
+        .map(walkdir::DirEntry::into_path)
+        .filter(|p| p.extension().is_some_and(|e| e == "ab"))
+        .filter(|p| {
+            let sub = p.strip_prefix(&args.input).unwrap_or(p).with_extension("");
+            story_art::is_story_art_bundle(&sub)
+        })
+        .collect();
+    bundles.sort();
+    if bundles.is_empty() {
+        eprintln!(
+            "error: no spritepack/mixstory_* bundles under {}",
+            args.input.display()
+        );
+        std::process::exit(1);
+    }
+    println!("backfilling story art from {} bundles", bundles.len());
+
+    let rows: Vec<(PathBuf, usize, Vec<String>)> = bundles
+        .par_iter()
+        .map(|path| {
+            let sub = path
+                .strip_prefix(&args.input)
+                .unwrap_or(path)
+                .with_extension("");
+            let Ok(data) = std::fs::read(path) else {
+                return (sub, 0, Vec::new());
+            };
+            let Ok(bundle) = BundleFile::parse(data) else {
+                return (sub, 0, Vec::new());
+            };
+            let mut resources: HashMap<String, Vec<u8>> = HashMap::new();
+            for entry in &bundle.files {
+                if is_resource_entry(&entry.path) {
+                    let filename = entry.path.rsplit('/').next().unwrap_or(&entry.path);
+                    resources.insert(filename.to_string(), entry.data.clone());
+                }
+            }
+            let mut textures: HashMap<String, export::texture::DecodedTexture> = HashMap::new();
+            for entry in &bundle.files {
+                if is_resource_entry(&entry.path) {
+                    continue;
+                }
+                let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+                    continue;
+                };
+                for obj in &sf.objects {
+                    if obj.class_id != 28 {
+                        continue;
+                    }
+                    let Ok(val) = read_object(&sf, obj) else {
+                        continue;
+                    };
+                    if let Ok(Some(tex)) = decode_texture_object(&val, &resources) {
+                        textures.insert(tex.name.clone(), tex);
+                    }
+                }
+            }
+            let dir = args.output.join("textures").join(&sub);
+            std::fs::create_dir_all(&dir).ok();
+            // The names BEFORE the merge folds `<name>[alpha]` into `<name>`,
+            // so the census counts plates, not companions.
+            let mut stems: Vec<String> = textures
+                .keys()
+                .filter(|n| !n.ends_with("[alpha]"))
+                .cloned()
+                .collect();
+            stems.sort();
+            let written = if args.no_merge {
+                let mut n = 0;
+                for tex in textures.values() {
+                    match save_decoded_texture(tex, &dir) {
+                        Ok(()) => n += 1,
+                        Err(e) => eprintln!("  error saving {}: {e}", tex.name),
+                    }
+                }
+                n
+            } else {
+                alpha_merge::merge_and_export(textures, &dir)
+            };
+            (sub, written, stems)
+        })
+        .collect();
+
+    let mut written = 0usize;
+    let mut per_kind: HashMap<&'static str, usize> = HashMap::new();
+    let mut empty: Vec<String> = Vec::new();
+    for (sub, n, stems) in rows {
+        if n == 0 {
+            empty.push(sub.display().to_string());
+            continue;
+        }
+        written += n;
+        println!("  {} -> {n} files", sub.display());
+        for stem in &stems {
+            *per_kind.entry(story_art::art_kind(stem)).or_default() += 1;
+        }
+    }
+    println!("story art written: {written} files");
+    let mut kinds: Vec<(&str, usize)> = per_kind.into_iter().collect();
+    kinds.sort_unstable_by_key(|(k, n)| (std::cmp::Reverse(*n), *k));
+    for (kind, n) in kinds {
+        println!("  {kind}: {n}");
+    }
+    if !empty.is_empty() {
+        println!("bundles that yielded no texture: {empty:?}");
+    }
+    println!("wall time {:.1} s", started.elapsed().as_secs_f64());
+}
+
+/// Write the story image trees' `sprites.json` files for one server without
+/// re-extracting a single texture. Reports folders written, sprite entries and
+/// the pixels-per-unit census, because the PPU is what sizes a plate: an
+/// absent `screenadapt` is `SetNativeSize` at the sprite's own PPU against the
+/// canvas scaler's reference 100.
+fn cmd_backfill_sprites(args: &cli::BackfillSpritesArgs) {
+    let started = std::time::Instant::now();
+    if let Some(jobs) = args.jobs {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(jobs)
+            .build_global()
+            .ok();
+    }
+    let mut bundles: Vec<PathBuf> = ["avg", "spritepack"]
+        .iter()
+        .flat_map(|root| WalkDir::new(args.input.join(root)).min_depth(1))
+        .filter_map(Result::ok)
+        .map(walkdir::DirEntry::into_path)
+        .filter(|p| p.extension().is_some_and(|e| e == "ab"))
+        .filter(|p| {
+            let sub = p.strip_prefix(&args.input).unwrap_or(p).with_extension("");
+            avg_sprites::is_avg_image_bundle(&sub)
+        })
+        .collect();
+    bundles.sort();
+    if bundles.is_empty() {
+        eprintln!(
+            "error: no story image bundles under {}",
+            args.input.display()
+        );
+        std::process::exit(1);
+    }
+    println!("backfilling sprites.json for {} bundles", bundles.len());
+
+    let rows: Vec<(PathBuf, avg_sprites::SpriteMetaMap, bool, bool)> = bundles
+        .par_iter()
+        .map(|path| {
+            let sub = path
+                .strip_prefix(&args.input)
+                .unwrap_or(path)
+                .with_extension("");
+            let dir = args.output.join("textures").join(&sub);
+            let exists = dir.is_dir();
+            let sprites = std::fs::read(path)
+                .ok()
+                .and_then(|d| BundleFile::parse(d).ok())
+                .as_ref()
+                .map(avg_sprites::sprites_from_bundle)
+                .unwrap_or_default();
+            let mut ok = true;
+            if !sprites.is_empty()
+                && (exists || args.create_missing)
+                && let Err(e) = avg_sprites::write_sprites_json(&dir, &sprites)
+            {
+                eprintln!("  error writing {}: {e}", dir.display());
+                ok = false;
+            }
+            (sub, sprites, exists, ok)
+        })
+        .collect();
+
+    let mut written = 0usize;
+    let mut entries = 0usize;
+    let mut empty = 0usize;
+    let mut no_folder: Vec<String> = Vec::new();
+    let mut failed: Vec<String> = Vec::new();
+    // The PPU value as written, keyed to 4 decimals so 68.2464 is one bucket.
+    let mut ppu: HashMap<String, usize> = HashMap::new();
+    let mut off_pivot = 0usize;
+    for (sub, sprites, exists, ok) in rows {
+        let label = sub.display().to_string();
+        if sprites.is_empty() {
+            empty += 1;
+            continue;
+        }
+        if !exists && !args.create_missing {
+            no_folder.push(label);
+            continue;
+        }
+        if !ok {
+            failed.push(label);
+            continue;
+        }
+        written += 1;
+        entries += sprites.len();
+        for meta in sprites.values() {
+            *ppu.entry(format!("{:.4}", meta.ppu)).or_default() += 1;
+            if (meta.pivot.x - 0.5).abs() > f32::EPSILON || (meta.pivot.y - 0.5).abs() > f32::EPSILON
+            {
+                off_pivot += 1;
+            }
+        }
+    }
+    println!(
+        "sprites.json written to {written} folders, {entries} sprite entries; {empty} bundles carry no sprite, {} have no output folder, {} failed to write",
+        no_folder.len(),
+        failed.len()
+    );
+    let mut rows: Vec<(String, usize)> = ppu.into_iter().collect();
+    rows.sort_unstable_by_key(|(v, n)| (std::cmp::Reverse(*n), v.clone()));
+    let top: Vec<String> = rows
+        .iter()
+        .take(8)
+        .map(|(v, n)| format!("{v} x {n}"))
+        .collect();
+    let shown: usize = rows.iter().take(8).map(|(_, n)| n).sum();
+    println!(
+        "pixels per unit: {} distinct values; {}; the other {} values cover {} entries",
+        rows.len(),
+        top.join(", "),
+        rows.len().saturating_sub(8),
+        entries - shown
+    );
+    println!("sprite entries whose pivot is not (0.5,0.5): {off_pivot}");
+    if !no_folder.is_empty() {
+        let head: Vec<&String> = no_folder.iter().take(10).collect();
+        println!("first folders with no PNGs on disk: {head:?}");
+    }
+    println!("wall time {:.1} s", started.elapsed().as_secs_f64());
+}
+
+/// Write the sprite-hub `hub.json` files for one server without re-extracting
+/// a single texture. Reports the same census the phase-4 report quotes:
+/// folders written, groups per folder, how many hubs are legacy sentinels.
+fn cmd_backfill_hubs(args: &cli::BackfillHubsArgs) {
+    let started = std::time::Instant::now();
+    if let Some(jobs) = args.jobs {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(jobs)
+            .build_global()
+            .ok();
+    }
+    let root = args.input.join("avg/characters");
+    let mut bundles: Vec<PathBuf> = WalkDir::new(&root)
+        .min_depth(1)
+        .into_iter()
+        .filter_map(Result::ok)
+        .map(walkdir::DirEntry::into_path)
+        .filter(|p| p.extension().is_some_and(|e| e == "ab"))
+        .collect();
+    bundles.sort();
+    if bundles.is_empty() {
+        eprintln!("error: no .ab bundles under {}", root.display());
+        std::process::exit(1);
+    }
+    println!("backfilling hubs for {} bundles", bundles.len());
+
+    #[derive(Default)]
+    struct Census {
+        written: usize,
+        no_hub: usize,
+        no_folder: Vec<String>,
+        failed: Vec<String>,
+        legacy: usize,
+        sentinel: usize,
+        groups: HashMap<usize, usize>,
+        sprites: usize,
+        aliased: usize,
+        whole_body: usize,
+        unnamed: usize,
+        /// Texture px -> how many `isWholeBody` entries are that square.
+        body_px: HashMap<i64, usize>,
+        /// Texture px -> how many face patches are that square.
+        face_px: HashMap<i64, usize>,
+        sized: usize,
+        /// Every written hub's root-rect WIDTH in canvas px, for the census.
+        root_w: Vec<f32>,
+        /// Hubs whose bundle carries no root `RectTransform` to read.
+        no_root: usize,
+        /// Root rects that are not square, which the slot template never is.
+        root_oblong: usize,
+    }
+
+    let rows: Vec<(String, Option<export::avg_hub::Hub>, bool, bool)> = bundles
+        .par_iter()
+        .map(|path| {
+            let stem = path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or_default()
+                .to_owned();
+            let dir = args.output.join("textures/avg/characters").join(&stem);
+            let exists = dir.is_dir();
+            let hub = std::fs::read(path)
+                .ok()
+                .and_then(|d| BundleFile::parse(d).ok())
+                .as_ref()
+                .and_then(export::avg_hub::hub_from_bundle);
+            let mut ok = true;
+            if let Some(h) = hub.as_ref()
+                && (exists || args.create_missing)
+                && let Err(e) = export::avg_hub::write_hub_json(&dir, h)
+            {
+                eprintln!("  error writing {}: {e}", dir.display());
+                ok = false;
+            }
+            (stem, hub, exists, ok)
+        })
+        .collect();
+
+    let mut c = Census::default();
+    for (stem, hub, exists, ok) in rows {
+        let Some(hub) = hub else {
+            c.no_hub += 1;
+            continue;
+        };
+        if !exists && !args.create_missing {
+            c.no_folder.push(stem);
+            continue;
+        }
+        if !ok {
+            c.failed.push(stem);
+            continue;
+        }
+        c.written += 1;
+        let stem_lc = stem.to_ascii_lowercase();
+        if hub.legacy {
+            c.legacy += 1;
+        }
+        if hub
+            .groups
+            .iter()
+            .all(export::avg_hub::HubGroup::is_sentinel)
+        {
+            c.sentinel += 1;
+        }
+        match hub.root {
+            Some(r) => {
+                c.root_w.push(r.w);
+                if (r.w - r.h).abs() > f32::EPSILON {
+                    c.root_oblong += 1;
+                }
+            }
+            None => c.no_root += 1,
+        }
+        *c.groups.entry(hub.groups.len()).or_default() += 1;
+        for g in &hub.groups {
+            c.sprites += g.sprites.len();
+            c.aliased += g.sprites.iter().filter(|s| !s.alias.is_empty()).count();
+            c.whole_body += g.sprites.iter().filter(|s| s.is_whole_body).count();
+            c.unnamed += g.sprites.iter().filter(|s| s.name.is_empty()).count();
+            // A BODY is the entry named after the bundle itself
+            // (`avg_1037_amiya3_1$1`); everything else in the group is a face
+            // patch. The `isWholeBody` flag is NOT that split: only 460 of
+            // 12,114 entries carry it, while 2,130 entries are bodies.
+            for sprite in &g.sprites {
+                let Some(size) = sprite.size else { continue };
+                c.sized += 1;
+                let px = size.w.max(size.h) as i64;
+                let bucket = if sprite.name.to_ascii_lowercase().starts_with(&stem_lc) {
+                    &mut c.body_px
+                } else {
+                    &mut c.face_px
+                };
+                *bucket.entry(px).or_default() += 1;
+            }
+        }
+    }
+    let mut groups: Vec<(usize, usize)> = c.groups.into_iter().collect();
+    groups.sort_unstable();
+    let dist: Vec<String> = groups
+        .iter()
+        .map(|(n, k)| format!("{n} group(s) x {k}"))
+        .collect();
+    println!(
+        "hub.json written to {} folders; {} bundles carry no hub; {} have no output folder; {} failed to write",
+        c.written,
+        c.no_hub,
+        c.no_folder.len(),
+        c.failed.len()
+    );
+    println!("groups per folder: {}", dist.join(", "));
+    println!(
+        "legacy `AVGCharacterSpriteHub` class {}; hubs whose every group is the (-1,-1)/(0,0) sentinel {}",
+        c.legacy, c.sentinel
+    );
+    println!(
+        "sprite entries {}, of which {} carry an alias, {} are flagged isWholeBody, {} have no in-bundle Sprite",
+        c.sprites, c.aliased, c.whole_body, c.unnamed
+    );
+    let census = |rows: &Vec<(i64, usize)>| {
+        rows.iter()
+            .map(|(px, n)| format!("{px}px x {n}"))
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+    let head = |m: &HashMap<i64, usize>, n: usize| {
+        let mut rows: Vec<(i64, usize)> = m.iter().map(|(k, v)| (*k, *v)).collect();
+        rows.sort_unstable_by_key(|(px, n)| (std::cmp::Reverse(*n), *px));
+        let total: usize = rows.iter().map(|(_, n)| n).sum();
+        let shown: usize = rows.iter().take(n).map(|(_, n)| n).sum();
+        format!(
+            "{total} over {} distinct sizes; {}, the other {} sizes {}",
+            rows.len(),
+            census(&rows.iter().take(n).copied().collect()),
+            rows.len().saturating_sub(n),
+            total - shown
+        )
+    };
+    println!(
+        "sprite entries carrying an m_Rect size {} of {}; bodies: {}",
+        c.sized,
+        c.sprites,
+        head(&c.body_px, 6)
+    );
+    println!("face patches: {}", head(&c.face_px, 6));
+    // The prefab's own root rect, which BEATS the 1024 slot template: the
+    // spread is what the character-size fix is worth.
+    let mut widths = c.root_w;
+    widths.sort_unstable_by(f32::total_cmp);
+    if widths.is_empty() {
+        println!("root rects: none read");
+    } else {
+        let at_1024 = widths.iter().filter(|w| (**w - 1024.0).abs() < 0.5).count();
+        let median = widths[widths.len() / 2];
+        println!(
+            "root rects: {} read, {} carry none; {at_1024} are the 1024 slot template, min {}, max {}, median {median}; {} not square",
+            widths.len(),
+            c.no_root,
+            widths[0],
+            widths[widths.len() - 1],
+            c.root_oblong
+        );
+    }
+    if !c.no_folder.is_empty() {
+        let head: Vec<&String> = c.no_folder.iter().take(10).collect();
+        println!("first folders with no PNGs on disk: {head:?}");
+    }
+    println!("wall time {:.1} s", started.elapsed().as_secs_f64());
 }
 
 fn cmd_extract(args: &cli::ExtractArgs) {
@@ -1173,6 +1637,42 @@ fn process_bundle(
                         }
                     }
                 }
+            }
+        }
+    }
+
+    // The sprite hub: where a face patch sits on its body. A first-class
+    // output of the texture pass, rewritten on every extract so the orphan
+    // sweep never reaps it, and the only thing under
+    // `textures/avg/characters/<folder>/` that is not a PNG.
+    if extract_image
+        && avg_hub::is_avg_character_bundle(&bundle_subdir)
+        && let Some(hub) = avg_hub::hub_from_bundle(&bundle)
+    {
+        let dir = output_dir.join("textures").join(&bundle_subdir);
+        match avg_hub::write_hub_json(&dir, &hub) {
+            Ok(()) => exported += 1,
+            Err(e) => eprintln!(
+                "  error writing hub.json for {}: {e}",
+                bundle_subdir.display()
+            ),
+        }
+    }
+
+    // The image sprites: a plate's own rect, pixels-per-unit and pivot. Same
+    // deal as the hub, for the story's background and CG trees, because an
+    // absent `screenadapt` sizes a plate at its OWN PPU and the PNG alone does
+    // not carry it.
+    if extract_image && avg_sprites::is_avg_image_bundle(&bundle_subdir) {
+        let sprites = avg_sprites::sprites_from_bundle(&bundle);
+        if !sprites.is_empty() {
+            let dir = output_dir.join("textures").join(&bundle_subdir);
+            match avg_sprites::write_sprites_json(&dir, &sprites) {
+                Ok(()) => exported += 1,
+                Err(e) => eprintln!(
+                    "  error writing sprites.json for {}: {e}",
+                    bundle_subdir.display()
+                ),
             }
         }
     }

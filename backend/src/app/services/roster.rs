@@ -237,8 +237,11 @@ pub async fn refresh(
     let data: SyncDataResponse =
         serde_json::from_str(&text).map_err(|e| ApiError::Internal(e.into()))?;
 
-    let raw: serde_json::Value =
-        serde_json::from_str(&text).map_err(|e| ApiError::Internal(e.into()))?;
+    let raw: std::sync::Arc<serde_json::Value> =
+        std::sync::Arc::new(serde_json::from_str(&text).map_err(|e| ApiError::Internal(e.into()))?);
+
+    let game_story = game_story_read(state, user_id, server, &raw).await;
+    log_story_block(user_id, &raw, &game_story);
 
     let user = data
         .user
@@ -295,6 +298,7 @@ pub async fn refresh(
         &state.default_game_data().campaign_rotations,
     );
     merge_inferred_clears(&mut stages, &raw, &state.game_data(server).stage_evidence);
+    merge_cow_level(&mut stages, &raw);
     let roguelike = extract_roguelike(&user.roguelike);
     let sandbox = user.sandbox_perm.unwrap_or_default();
     let medals = extract_medals(&user.medal);
@@ -333,28 +337,103 @@ pub async fn refresh(
     )
     .await?;
 
-    if let Some(user) = find_by_uid(&state.db, user_id).await? {
-        let grade = calculate_user_grade(&state.db, user.id, &state.default_game_data()).await?;
+    // What the game says has been read goes in BEFORE the grade, and the grade
+    // goes off the async runtime. Both halves of that are the 2026-09-24
+    // defect.
+    // `calculate_user_grade` scores INLINE on this task: 40,327 ms standalone in
+    // a debug build, 73,011 ms of the failing request's 75.967 s as
+    // `myrtle_cpu_task_duration_seconds_sum{kind="user_grade"}` measured it. A
+    // task inside inline compute is never polled, so the 30 s handler timeout in
+    // `middleware` could not be OBSERVED until the scoring returned, and
+    // `tokio::time::timeout` polls its inner future first, so it fired at the
+    // first await afterwards and DROPPED everything behind it. That is why the
+    // request answered 5xx at 75.967 s, `user_scores` was written (its INSERT
+    // had been sent) and `user_game_story_read` held 0 rows. The store itself is
+    // 19 ms for 1,365 rows, so it belongs ahead of the scoring, not behind it.
+    let mut import = serde_json::json!({
+        "ok": false,
+        "error": "the account row was not found after the sync",
+    });
 
-        update_score(
-            &state.db,
-            &UserScore {
-                user_id: user.id,
-                operator_score: grade.operator_grade,
-                total_score: grade.total_score, // operator grade only
-                grade: Some(grade.overall),
-                stage_score: grade.stage_grade,
-                roguelike_score: grade.roguelike_grade,
-                sandbox_score: grade.sandbox_grade,
-                medal_score: grade.medal_grade,
-                base_score: grade.base_grade,
-                base_utilization: Some(grade.base_utilization),
-                base_infrastructure: Some(grade.base_infrastructure),
-                skin_score: 0.0,
-                calculated_at: Utc::now(),
-            },
-        )
-        .await?;
+    if let Some(user) = find_by_uid(&state.db, user_id).await? {
+        import = import_game_read(state, user_id, user.id, &game_story).await;
+
+        // The grade on its own task, bounded, and the scoring on the BLOCKING
+        // POOL rather than on a runtime worker.
+        //
+        // Its own task was not enough. Measured 2026-09-24: the grade held its
+        // admission for 73.620 s
+        // (`myrtle_cpu_task_duration_seconds_sum{kind="user_grade"}`), and this
+        // 12 s budget was not observed until 23:36:36.532, 73.6 s after the
+        // import at 23:35:22.916, so the deadline passed 61.6 s unnoticed. A
+        // `tokio::time::timeout` is only observed when its own task is polled,
+        // and with one worker inside a non-yielding 73 s compute the runtime's
+        // timer was not serviced on time either. `cpu::admit` bounded how many
+        // such computes could run at once; it never took the compute off the
+        // worker, which is exactly the distinction `cpu`'s module doc draws.
+        // Measured offline on the same account, one runtime, the same probe
+        // running `/auth/verify`'s two queries every 100 ms
+        // (`sync_stall_test::the_grade_budget_is_observed_on_time_only_off_the_runtime`):
+        // on a worker the budget was observed at 39.604 s and 43.156 s over two
+        // runs, both of them the instant the grade RETURNED (39.603 s,
+        // 43.156 s); off it, 12.003 s and 12.002 s while the grade still took
+        // 40.373 s and 40.908 s. The session probe was never the casualty: its
+        // worst was 0.012 s and 0.021 s on a worker, so nothing in this path
+        // held a lock a user route needed.
+        //
+        // `calculate_user_grade` is an `async fn` whose only awaits are the
+        // seven up-front queries, and `core/grade` is another session's file,
+        // so it is not split here into load-then-score. Instead the whole call
+        // is DRIVEN from a blocking-pool thread: `Handle::block_on` inside
+        // `cpu::run` parks that thread on the queries, which stay registered
+        // with this runtime's IO driver, and runs the scoring there. No async
+        // worker is held at any point, so the awaited `JoinHandle` yields and
+        // the budget below fires at 12 s.
+        let db = state.db.clone();
+        let scoring_db = state.db.clone();
+        let game_data = state.default_game_data();
+        let graded = user.id;
+        let handle = tokio::runtime::Handle::current();
+        let grading = tokio::spawn(async move {
+            let grade = crate::app::cpu::run("user_grade", move || {
+                handle.block_on(calculate_user_grade(&scoring_db, graded, &game_data))
+            })
+            .await??;
+            update_score(
+                &db,
+                &UserScore {
+                    user_id: graded,
+                    operator_score: grade.operator_grade,
+                    total_score: grade.total_score, // operator grade only
+                    grade: Some(grade.overall),
+                    stage_score: grade.stage_grade,
+                    roguelike_score: grade.roguelike_grade,
+                    sandbox_score: grade.sandbox_grade,
+                    medal_score: grade.medal_grade,
+                    base_score: grade.base_grade,
+                    base_utilization: Some(grade.base_utilization),
+                    base_infrastructure: Some(grade.base_infrastructure),
+                    skin_score: 0.0,
+                    calculated_at: Utc::now(),
+                },
+            )
+            .await?;
+            Ok::<(), ApiError>(())
+        });
+        match tokio::time::timeout(GRADE_BUDGET, grading).await {
+            Ok(Ok(Ok(()))) => {}
+            Ok(Ok(Err(e))) => {
+                tracing::error!(uid = %user_id, error = ?e, "the grade failed; the roster sync stands");
+            }
+            Ok(Err(e)) => {
+                tracing::error!(uid = %user_id, error = %e, "the grade task panicked; the roster sync stands");
+            }
+            Err(_) => tracing::error!(
+                uid = %user_id,
+                budget_secs = GRADE_BUDGET.as_secs(),
+                "the grade did not finish inside the budget; it continues in the background and user_scores updates when it does"
+            ),
+        }
     }
 
     state.mark_ownership_dirty();
@@ -371,7 +450,156 @@ pub async fn refresh(
         .invalidate_by_prefix(&format!("improvements:{user_id}:"))
         .await;
 
-    Ok(raw)
+    // The import rides back on the payload the route passes through, so the
+    // Progress tab can say "imported" or say why not, instead of the refresh
+    // silently answering 200 with nothing stored.
+    let mut payload = std::sync::Arc::try_unwrap(raw).unwrap_or_else(|shared| (*shared).clone());
+    if let Some(object) = payload.as_object_mut() {
+        object.insert("gameReadImport".to_owned(), import);
+    }
+    Ok(payload)
+}
+
+/// How long the story index may take before the flags half of the game's
+/// reading record is given up on for this refresh.
+const STORY_INDEX_BUDGET: std::time::Duration = std::time::Duration::from_secs(30);
+
+/// How long the game-read store may take before the refresh abandons it.
+const GAME_READ_STORE_BUDGET: std::time::Duration = std::time::Duration::from_secs(10);
+
+/// How long the refresh waits for the grade before it answers without it.
+///
+/// The handler timeout in `middleware` is 30 s and everything before the grade
+/// has to fit inside it too, so this is deliberately well under it: a grade
+/// that overruns keeps running on its own task and writes `user_scores` when
+/// it finishes, and the refresh that triggered it answers with the roster the
+/// user asked for.
+///
+/// This is only a budget when the grade is off the async runtime. While the
+/// scoring ran on a worker it was observed at 73.620 s instead of 12 s
+/// (2026-09-24); see the comment at the spawn.
+const GRADE_BUDGET: std::time::Duration = std::time::Duration::from_secs(12);
+
+/// Store the game's own read marks, and say what happened in a form the
+/// Progress tab can show.
+///
+/// Non-fatal on every axis: the roster sync has already COMMITTED by the time
+/// this runs, so nothing here may cost the user their data. A failure is loud
+/// (`error!`, with the stage and the elapsed ms) and travels back as
+/// `gameReadImport.ok = false` rather than as a 5xx.
+async fn import_game_read(
+    state: &AppState,
+    uid: &str,
+    user_id: uuid::Uuid,
+    set: &crate::app::services::story_progress::GameStoryReadSet,
+) -> serde_json::Value {
+    let started = std::time::Instant::now();
+    match tokio::time::timeout(
+        GAME_READ_STORE_BUDGET,
+        crate::app::services::story_progress::store_game_read(state, user_id, set),
+    )
+    .await
+    {
+        Ok(Ok(outcome)) => {
+            if set.present {
+                tracing::info!(
+                    uid,
+                    rows = outcome.rows,
+                    read = set.read_count(),
+                    archived = set.archived(),
+                    delete_ms = outcome.delete_ms as u64,
+                    insert_ms = outcome.insert_ms as u64,
+                    commit_ms = outcome.commit_ms as u64,
+                    elapsed_ms = started.elapsed().as_millis() as u64,
+                    "game story read marks imported"
+                );
+            }
+            serde_json::json!({
+                "ok": true,
+                "rows": outcome.rows,
+                "read": set.read_count(),
+                "archived": set.archived(),
+                "elapsedMs": started.elapsed().as_millis() as u64,
+            })
+        }
+        Ok(Err(e)) => {
+            tracing::error!(
+                uid,
+                stage = e.stage,
+                stage_ms = e.elapsed_ms as u64,
+                elapsed_ms = started.elapsed().as_millis() as u64,
+                error = %e.message,
+                "game story read import FAILED; the roster sync stands"
+            );
+            serde_json::json!({ "ok": false, "error": e.to_string() })
+        }
+        Err(_) => {
+            let message = format!(
+                "the game read store did not answer inside {} s",
+                GAME_READ_STORE_BUDGET.as_secs()
+            );
+            tracing::error!(
+                uid,
+                budget_secs = GAME_READ_STORE_BUDGET.as_secs(),
+                rows_expected = set.read.len(),
+                "game story read import TIMED OUT; the roster sync stands"
+            );
+            serde_json::json!({ "ok": false, "error": message })
+        }
+    }
+}
+
+/// Both halves of the game's own reading record, parsed OFF the async worker.
+///
+/// The flags half is a set of script paths and needs the story index's
+/// `StoryTxt` -> id map, so this reaches the index. An index that cannot be
+/// built, or does not build inside [`STORY_INDEX_BUDGET`], yields an EMPTY map
+/// rather than an error: the Archive half still imports and the census reports
+/// `flag_hits` 0, which is how that degradation shows up in the log.
+///
+/// The parse goes to the blocking pool because it walks a 2.4 MB payload, and,
+/// when no named Archive block is found, walks it again to depth 5 for the log
+/// line. Neither belongs on a tokio worker. It takes no CPU permit: a census
+/// must never be the reason a refresh is shed.
+async fn game_story_read(
+    state: &AppState,
+    uid: &str,
+    server: Server,
+    raw: &std::sync::Arc<serde_json::Value>,
+) -> crate::app::services::story_progress::GameStoryReadSet {
+    let index = match tokio::time::timeout(
+        STORY_INDEX_BUDGET,
+        crate::app::services::story::cached_index(state, server),
+    )
+    .await
+    {
+        Ok(Ok(index)) => Some(index),
+        Ok(Err(e)) => {
+            tracing::warn!(uid, error = ?e, "story index unavailable; the flags half is skipped");
+            None
+        }
+        Err(_) => {
+            tracing::warn!(
+                uid,
+                budget_secs = STORY_INDEX_BUDGET.as_secs(),
+                "story index did not build inside the budget; the flags half is skipped"
+            );
+            None
+        }
+    };
+    let raw = std::sync::Arc::clone(raw);
+    crate::app::cpu::offload("sync_story_census", move || {
+        let empty = std::collections::HashMap::new();
+        let no_gates = std::collections::HashMap::new();
+        let by_txt = index.as_ref().map_or(&empty, |i| &i.by_txt);
+        let gates = index.as_ref().map_or(&no_gates, |i| &i.gates);
+        crate::app::services::story_progress::parse_game_story_read(&raw, by_txt, gates)
+    })
+    .await
+    .unwrap_or_else(|e| {
+        tracing::warn!(uid, error = ?e, "story census failed; nothing is imported");
+        crate::app::services::story_progress::GameStoryReadSet::default()
+    })
 }
 
 /// Originite Prime is `status.payDiamond` + `status.freeDiamond`; absent
@@ -629,6 +857,48 @@ fn dump_sync_data(uid: &str, server: Server, text: &str) {
     }
 }
 
+/// Log what the payload's top level holds and what the two reading sources say.
+/// One line per refresh, no user data beyond a single story id and three
+/// unmatched script paths.
+///
+/// The numbers that matter are `flag_hits` (played-script flags that map to a
+/// story), `review_hits` (Archive ids the index knows), `stage_hits` (gated
+/// stories whose stage record satisfies every gate), `union` (rows stored),
+/// `read` (rows the verdict marks read) and `archive_only_unread` (Archive
+/// entries on a gated story nothing played). Against the 2026-09-24 EN payload
+/// those read 1,084, 1,020, 1,061, 1,407, 1,313 and 94.
+fn log_story_block(
+    uid: &str,
+    raw: &serde_json::Value,
+    set: &crate::app::services::story_progress::GameStoryReadSet,
+) {
+    let user_keys: Vec<&str> = raw
+        .get("user")
+        .and_then(serde_json::Value::as_object)
+        .map(|o| o.keys().map(String::as_str).collect())
+        .unwrap_or_default();
+    tracing::info!(
+        uid,
+        ?user_keys,
+        story_block = set.present,
+        key = ?set.key,
+        groups = set.groups,
+        stories = set.stories,
+        flags = set.flags,
+        flag_hits = set.flag_hits,
+        flag_misses = set.flag_misses,
+        flag_miss_sample = ?set.flag_miss_sample,
+        review_hits = set.review_hits,
+        stage_records = set.stage_records,
+        stage_hits = set.stage_hits,
+        archive_only_unread = set.archive_only_unread,
+        union = set.read.len(),
+        read = set.read_count(),
+        sample = ?set.sample,
+        "syncData story block census"
+    );
+}
+
 fn extract_skins(skin: &Option<SkinStore>) -> serde_json::Value {
     let Some(skins) = skin.as_ref().and_then(|s| s.character_skins.as_ref()) else {
         return serde_json::json!([]);
@@ -865,6 +1135,39 @@ fn merge_campaign_clears(
 /// The client drops a closed event's battle records; fold in what the
 /// account's surviving mission, medal, story-flag and unlock records still
 /// prove about those stages (see `stage_evidence`).
+/// Copy each `dungeon.cowLevel` first-open time onto its stage record as
+/// `cowFirstTs`.
+///
+/// The special story stages (`spst_*`, choices and all) keep their opening in
+/// `cowLevel.<stageId>.fts` and NOWHERE in `dungeon.stages`, whose record sits
+/// at state 3 with zero starts and zero completions like every story-only
+/// stage. The story verdict needs that opening after the payload is gone (the
+/// "Sync now" re-derivation reads the stored records), so it rides on the
+/// record under a name the game does not use. Only records that exist are
+/// annotated, and only openings that happened (`fts` above zero).
+fn merge_cow_level(stages: &mut serde_json::Value, raw: &serde_json::Value) {
+    let Some(cow) = raw
+        .pointer("/user/dungeon/cowLevel")
+        .and_then(serde_json::Value::as_object)
+    else {
+        return;
+    };
+    let Some(map) = stages.as_object_mut() else {
+        return;
+    };
+    for (id, entry) in cow {
+        let Some(fts) = entry.get("fts").and_then(serde_json::Value::as_i64) else {
+            continue;
+        };
+        if fts <= 0 {
+            continue;
+        }
+        if let Some(record) = map.get_mut(id).and_then(serde_json::Value::as_object_mut) {
+            record.insert("cowFirstTs".to_owned(), serde_json::Value::from(fts));
+        }
+    }
+}
+
 fn merge_inferred_clears(
     stages: &mut serde_json::Value,
     raw: &serde_json::Value,
@@ -918,6 +1221,30 @@ mod tests {
         }))
         .unwrap();
         CampaignRotations::from_table(table)
+    }
+
+    #[test]
+    fn cow_level_first_opens_ride_on_the_stage_record() {
+        let raw = serde_json::json!({ "user": { "dungeon": { "cowLevel": {
+            "spst_08-01": { "id": "spst_08-01", "type": "STAGE", "val": [true], "fts": 1_708_906_788, "rts": 1_708_907_776 },
+            "spst_16-01": { "id": "spst_16-01", "type": "STAGE", "val": [], "fts": -1, "rts": -1 },
+            "spst_99-01": { "id": "spst_99-01", "type": "STAGE", "val": [true], "fts": 5, "rts": 6 }
+        } } } });
+        let mut stages = serde_json::json!({
+            "spst_08-01": {"stageId": "spst_08-01", "state": 3, "startTimes": 0, "completeTimes": 0},
+            "spst_16-01": {"stageId": "spst_16-01", "state": 3, "startTimes": 0, "completeTimes": 0},
+            "main_00-01": {"stageId": "main_00-01", "state": 3, "startTimes": 2, "completeTimes": 1}
+        });
+        merge_cow_level(&mut stages, &raw);
+        assert_eq!(stages["spst_08-01"]["cowFirstTs"], 1_708_906_788);
+        // Never opened: no annotation. Unknown to the stages map: nothing is invented.
+        assert!(stages["spst_16-01"].get("cowFirstTs").is_none());
+        assert!(stages.get("spst_99-01").is_none());
+        assert!(stages["main_00-01"].get("cowFirstTs").is_none());
+        // A payload without the block leaves the map untouched.
+        let before = stages.clone();
+        merge_cow_level(&mut stages, &serde_json::json!({ "user": {} }));
+        assert_eq!(stages, before);
     }
 
     #[test]

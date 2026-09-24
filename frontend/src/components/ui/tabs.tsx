@@ -30,10 +30,29 @@ export function TabsList({
             {...props}
         >
             {children}
+            {/* THE INDICATOR MUST NOT LEAVE THE PADDING BOX. It used to be nudged
+                one pixel down (`translate-y-px`) so the 2 px underline covered the
+                1 px `border-b` a caller adds, and an absolutely positioned child
+                one pixel past the padding box is SCROLLABLE OVERFLOW. The two tab
+                strips that are also horizontal scrollers (`overflow-x: auto`
+                computes `overflow-y: visible` to `auto`) therefore measured
+                scrollHeight 41 against clientHeight 40 and drew a permanent 8 px
+                vertical scrollbar, on the story Illustrations strip and in the
+                operator dialog alike. `translate-y-0` pins the bar to the padding
+                box edge, which is where the hairline starts: it sits ON the
+                border instead of over it, one pixel of difference, and the strip
+                stops being a vertical scroller.
+
+                The zero is EXPLICIT and it is not a no-op. Both this and the
+                base class's `-translate-y-(--active-tab-bottom)` write
+                `--tw-translate-y`, so they do not add; the variant wins on
+                specificity. Dropping the rule entirely would hand the base class
+                back and lift the bar by `--active-tab-bottom`, measured 4 px,
+                leaving it floating clear of the hairline it is meant to sit on. */}
             <TabsPrimitive.Indicator
                 className={cn(
                     "absolute bottom-0 left-0 h-(--active-tab-height) w-(--active-tab-width) translate-x-(--active-tab-left) -translate-y-(--active-tab-bottom) transition-[width,translate] duration-200 ease-in-out",
-                    variant === "underline" ? "z-10 bg-primary data-[orientation=horizontal]:h-0.5 data-[orientation=vertical]:w-0.5 data-[orientation=vertical]:-translate-x-px data-[orientation=horizontal]:translate-y-px" : "-z-1 rounded-md bg-background shadow-sm/5 dark:bg-input",
+                    variant === "underline" ? "z-10 bg-primary data-[orientation=horizontal]:h-0.5 data-[orientation=vertical]:w-0.5 data-[orientation=vertical]:-translate-x-px data-[orientation=horizontal]:translate-y-0" : "-z-1 rounded-md bg-background shadow-sm/5 dark:bg-input",
                 )}
                 data-slot="tab-indicator"
             />

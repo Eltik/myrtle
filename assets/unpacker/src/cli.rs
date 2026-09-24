@@ -16,6 +16,16 @@ pub enum Command {
     List(ListArgs),
     /// Report which `FlatBuffer` schema each gamedata table verifies against
     Verify(VerifyArgs),
+    /// Write only the `avg/characters` sprite-hub `hub.json` files into an
+    /// existing output tree, without re-extracting any texture
+    BackfillHubs(BackfillHubsArgs),
+    /// Write only the story image trees' `sprites.json` files (rect, pixels
+    /// per unit and pivot) into an existing output tree
+    BackfillSprites(BackfillSpritesArgs),
+    /// Write only the Story Collection's art (`spritepack/mixstory_*`: the
+    /// chapter/event key visuals, titles, shelf glyphs, arc icons and chapter
+    /// decos) into an existing output tree
+    BackfillStoryArt(BackfillStoryArtArgs),
 }
 
 #[derive(Parser)]
@@ -90,4 +100,80 @@ pub struct VerifyArgs {
     /// Path to resource manifest .idx file (auto-detected in the input dir)
     #[arg(long)]
     pub idx: Option<PathBuf>,
+}
+
+/// `unpacker backfill-hubs` — the hub half of a texture extract on its own.
+/// It writes `hub.json` into sprite folders that already hold their PNGs and
+/// touches nothing else, so an output tree can gain face placement without a
+/// multi-hour re-extract.
+#[derive(Parser)]
+pub struct BackfillHubsArgs {
+    /// `ArkAssets` root for one server (the directory holding `avg/`)
+    #[arg(short, long)]
+    pub input: PathBuf,
+
+    /// Output tree for that server (the directory holding `textures/`)
+    #[arg(short, long)]
+    pub output: PathBuf,
+
+    /// Also write into sprite folders that do not exist yet (default: skip
+    /// them, so the walk never invents a folder with no PNGs in it)
+    #[arg(long)]
+    pub create_missing: bool,
+
+    /// Number of parallel threads (default: number of CPUs)
+    #[arg(short = 'j', long = "jobs")]
+    pub jobs: Option<usize>,
+}
+
+/// `unpacker backfill-sprites` — the `sprites.json` half of a texture extract
+/// on its own. It writes the per-sprite rect, pixels-per-unit and pivot into
+/// the `avg/bg`, `avg/imgs`, `avg/items`, `avg/backgrounds` and
+/// `spritepack/cutin_char_*` folders that already hold their PNGs, and touches
+/// nothing else: an output tree gains plate sizing without a multi-hour
+/// re-extract.
+#[derive(Parser)]
+pub struct BackfillSpritesArgs {
+    /// `ArkAssets` root for one server (the directory holding `avg/`)
+    #[arg(short, long)]
+    pub input: PathBuf,
+
+    /// Output tree for that server (the directory holding `textures/`)
+    #[arg(short, long)]
+    pub output: PathBuf,
+
+    /// Also write into folders that do not exist yet (default: skip them, so
+    /// the walk never invents a folder with no PNGs in it)
+    #[arg(long)]
+    pub create_missing: bool,
+
+    /// Number of parallel threads (default: number of CPUs)
+    #[arg(short = 'j', long = "jobs")]
+    pub jobs: Option<usize>,
+}
+
+/// `unpacker backfill-story-art` — the Story Collection half of a texture
+/// extract on its own. It writes the `spritepack/mixstory_*` PNGs (key
+/// visuals, title logotypes, shelf glyphs and logos, arc icons, chapter
+/// decos, shelf backgrounds) into an existing output tree and touches nothing
+/// else, so `/stories` can gain its banners and icons without a multi-hour
+/// re-extract. Every one of these is a plain `Texture2D` + full-rect `Sprite`
+/// pair, so nothing is cut out of an atlas.
+#[derive(Parser)]
+pub struct BackfillStoryArtArgs {
+    /// `ArkAssets` root for one server (the directory holding `spritepack/`)
+    #[arg(short, long)]
+    pub input: PathBuf,
+
+    /// Output tree for that server (the directory holding `textures/`)
+    #[arg(short, long)]
+    pub output: PathBuf,
+
+    /// Disable automatic alpha texture merging (export raw textures as-is)
+    #[arg(long)]
+    pub no_merge: bool,
+
+    /// Number of parallel threads (default: number of CPUs)
+    #[arg(short = 'j', long = "jobs")]
+    pub jobs: Option<usize>,
 }

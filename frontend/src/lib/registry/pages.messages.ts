@@ -20,6 +20,14 @@ export const messages = {
         text: "Every stage, mapped with an enemy-pathing simulator",
         description: "Blurb under the Stages palette entry.",
     },
+    "page.stories.label": {
+        text: "Stories",
+        description: "Palette entry for the story reader (the game's Archives).",
+    },
+    "page.stories.desc": {
+        text: "Read main chapters, events and operator records",
+        description: "Blurb under the Stories palette entry.",
+    },
     "page.tierLists.label": {
         text: "Tier Lists",
         description: "Palette entry for the tier-list section. A tier list ranks operators into tiers.",

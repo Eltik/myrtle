@@ -16,6 +16,10 @@ pub enum ApiError {
     Forbidden,
     #[error("not found")]
     NotFound,
+    /// A 404 that says WHAT is missing (`NOT_FOUND` code, prose message), for
+    /// the cases where the id is known but its backing file is not there.
+    #[error("{0}")]
+    NotFoundMessage(String),
     #[error("rate limited")]
     RateLimited,
     #[error("{0}")]
@@ -40,6 +44,7 @@ impl ApiError {
             Self::Unauthorized => Self::Unauthorized,
             Self::Forbidden => Self::Forbidden,
             Self::NotFound => Self::NotFound,
+            Self::NotFoundMessage(m) => Self::NotFoundMessage(m.clone()),
             Self::RateLimited => Self::RateLimited,
             Self::Conflict(m) => Self::Conflict(m.clone()),
             Self::ValidationFailed(errors) => Self::ValidationFailed(errors.clone()),
@@ -87,7 +92,7 @@ impl IntoResponse for ApiError {
             Self::BadRequest(_) => (StatusCode::BAD_REQUEST, "BAD_REQUEST", None),
             Self::Unauthorized => (StatusCode::UNAUTHORIZED, "UNAUTHORIZED", None),
             Self::Forbidden => (StatusCode::FORBIDDEN, "FORBIDDEN", None),
-            Self::NotFound => (StatusCode::NOT_FOUND, "NOT_FOUND", None),
+            Self::NotFound | Self::NotFoundMessage(_) => (StatusCode::NOT_FOUND, "NOT_FOUND", None),
             Self::RateLimited => (StatusCode::TOO_MANY_REQUESTS, "RATE_LIMITED", None),
             Self::Conflict(_) => (StatusCode::CONFLICT, "CONFLICT", None),
             Self::ValidationFailed(errors) => (

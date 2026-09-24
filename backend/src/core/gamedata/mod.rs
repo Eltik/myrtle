@@ -140,6 +140,9 @@ const BOOT_TABLES: &[&str] = &[
     "roguelike_topic_table",
     "activity_table",
     "retro_table",
+    "story_review_table",
+    "story_review_meta_table",
+    "chapter_table",
     "gamedata_const",
     "mission_table",
 ];
@@ -271,6 +274,19 @@ pub fn init_game_data(
         .map(|raw| crate::core::gamedata::types::activity::scan_skin_refs(&raw))
         .unwrap_or_default();
     let retro_file: RetroTableFile = load_table_or_warn(data_dir, "retro_table", &mut warnings);
+    let story_review_file: crate::core::gamedata::types::story_review::StoryReviewTableFile =
+        load_table_or_warn(data_dir, "story_review_table", &mut warnings);
+    let story_archives: crate::core::gamedata::types::story_review_meta::StoryReviewMetaTableFile =
+        load_table_or_warn(data_dir, "story_review_meta_table", &mut warnings);
+    // `MissionArchives` rides in `activity_table.json`, which is read again
+    // here with only that field kept: `ActivityTableFile` belongs to the event
+    // code and the shelf belongs to the Archives.
+    let mission_archives = crate::core::gamedata::types::mission_archive::load_mission_archives(
+        data_dir,
+        &mut warnings,
+    );
+    let chapter_file: crate::core::gamedata::types::chapter::ChapterTableFile =
+        load_table_or_warn(data_dir, "chapter_table", &mut warnings);
     let shop_file: ShopTableFile = load_table_or_warn(data_dir, "shop_client_table", &mut warnings);
     let consts: GameDataConst = load_table_or_warn(data_dir, "gamedata_const", &mut warnings);
     let mission_file: crate::core::gamedata::types::mission::MissionTableFile =
@@ -291,6 +307,18 @@ pub fn init_game_data(
     let mut gacha = gacha_file.into_gacha_data();
     enrich_banners(&mut gacha.gacha_pool_client, pool_details.as_ref());
     let zones = zone_file.zones;
+    let mut zone_chapters: std::collections::HashMap<String, String> =
+        std::collections::HashMap::new();
+    let mut zone_open_times: std::collections::HashMap<String, i64> =
+        std::collections::HashMap::new();
+    for (zone_id, info) in zone_file.mainline_addition_info {
+        if info.zone_open_time > 0 {
+            zone_open_times.insert(zone_id.clone(), info.zone_open_time);
+        }
+        zone_chapters.insert(zone_id, info.chapter_id);
+    }
+    let storylines = stage_file.storylines;
+    let storyline_story_sets = stage_file.storyline_story_sets;
     let stages = stage_file.stages;
     let mut medals = MedalData::from_table(medal_file);
     let roguelike = RoguelikeGameData::from_table(&roguelike_file);
@@ -441,6 +469,15 @@ pub fn init_game_data(
             stages,
             activities: activity_file.basic_info,
             retro_acts: retro_file.retro_act_list,
+            story_reviews: story_review_file.story_reviews,
+            story_archives,
+            mission_archives,
+            music: crate::core::gamedata::types::audio::MusicBanks::from_raw(&audio_file),
+            chapters: chapter_file.chapters,
+            zone_chapters,
+            zone_open_times,
+            storylines,
+            storyline_story_sets,
             activity_op_stages,
             activity_farm_stages,
             activity_mission_tokens,
