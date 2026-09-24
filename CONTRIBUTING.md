@@ -34,10 +34,14 @@ git submodule update --init --recursive
 ### 1. Environment Setup
 
 First, configure your environment variables.
-Copy `.env.example` into a new `.env` file at the root of the project.
+Copy `.env.example` into a new `.env` file at the root of the project, and
+`backend/.env.example` into `backend/.env`. Compose loads `backend/.env` for the
+backend, the same file a manual run reads, and overrides only the hostnames and
+paths that differ inside its network.
 
 ```shell
 cp .env.example .env
+cp backend/.env.example backend/.env
 ```
 
 Following docker-specific options are to be configured in the `.env` file.

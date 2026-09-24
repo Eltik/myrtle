@@ -556,7 +556,7 @@ Tier-list operations use a 4-level hierarchy - **View → Edit → Publish → A
 |----------|---------|-------------|
 | `GAME_SESSION_DIR` | `game_sessions` | Per-server service-account session storage |
 | `GAME_SESSION_MAX_AGE_SECS` | `1800` | Session reuse window |
-| `GACHA_DETAIL_DIR` | derived under `ASSETS_DIR` | Pool-detail cache. Must be overridden when assets are mounted read-only |
+| `GACHA_DETAIL_DIR` | derived under `ASSETS_DIR` | Pool-detail cache. Compose mounts `derived/` writable, so only a custom read-only mount needs it |
 | `GACHA_DETAIL_REFRESH_SECS` | `21600` | Pool-detail refresh interval |
 | `GACHA_DETAIL_CALL_DELAY_MS` | `120` | Delay between pool-detail calls |
 | `GACHA_DETAIL_MAX_FAILURES` | `5` | Failures before the job backs off |
