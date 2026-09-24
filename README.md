@@ -119,9 +119,10 @@ git submodule update --init --recursive
 
 ```bash
 cp .env.example .env
+cp backend/.env.example backend/.env
 ```
 
-Set `JWT_SECRET`, `SERVICE_KEY`, and `GAME_CREDENTIAL_KEY`; the backend refuses to start without them. `COMPOSE_PROFILES` selects which services run - `true` is the always-on app, and `tools` adds the one-off asset and DPS job containers.
+The backend reads `backend/.env`, the same file a manual run uses; compose overrides only the hostnames and paths that differ inside its network. Set `JWT_SECRET` and `GAME_CREDENTIAL_KEY` there (`openssl rand -hex 32`), and `SERVICE_KEY` in the root `.env`, which the frontend shares; the backend refuses to start without them. `COMPOSE_PROFILES` selects which services run - `true` is the always-on app, and `tools` adds the one-off asset and DPS job containers.
 
 ### 3. Build the game assets
 

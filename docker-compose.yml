@@ -52,22 +52,20 @@ services:
             redis:
                 condition: service_healthy
                 required: false
+        # The backend's own config is backend/.env, the same file a manual run
+        # reads. `environment` overrides it only where the compose network differs:
+        # service hostnames, mount paths, and the key the frontend shares. An entry
+        # here wins even when empty, so nothing optional belongs in this block.
+        env_file:
+            - ./backend/.env
         environment:
             DATABASE_URL: ${DATABASE_URL}
             REDIS_URL: ${REDIS_URL}
-            ASSETS_DIR: ${ASSETS_DIR}
+            ASSETS_DIR: /data/output
             SERVERS: ${SERVERS:-en}
-            JWT_SECRET: ${JWT_SECRET}
-            SERVICE_KEY: ${SERVICE_KEY}
-            GAME_CREDENTIAL_KEY: ${GAME_CREDENTIAL_KEY:?GAME_CREDENTIAL_KEY must be set; see .env.example}
-            GAME_SESSION_DIR: ${GAME_SESSION_DIR:-game_sessions}
-            GACHA_DETAIL_DIR: ${GACHA_DETAIL_DIR:-}
-            EVENT_SHOP_DIR: ${EVENT_SHOP_DIR:-}
             ASSET_WS_URLS: ${ASSET_WS_URLS}
-            RATE_LIMIT_RPM: ${RATE_LIMIT_RPM:-100}
-            DPS_POLL_INTERVAL: ${DPS_POLL_INTERVAL:-1800}
-            GITHUB_TOKEN: ${GITHUB_TOKEN}
-            RUST_LOG: ${RUST_LOG:-info}
+            SERVICE_KEY: ${SERVICE_KEY}
+            PORT: 3060
         volumes:
             - ./backend:/src
             - ./assets/output:/data/output:ro
