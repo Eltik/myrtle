@@ -670,3 +670,117 @@ fn census_reproduces_on_the_live_extract() {
         en.skins.brand_list.len()
     );
 }
+
+/// The CN edition of 2026-04-23T20:00Z, the first one the EN extract has no
+/// listing for (the announced one); its override key is this start.
+const ANNOUNCED_CN_REVIEW: i64 = 1_776_974_400;
+
+/// EN's shop table with its newest real Fashion Review listing cloned onto
+/// new dates, as the next extract would carry the announced edition.
+fn en_listings_with_review(start: i64, end: i64) -> Option<ShopTableFile> {
+    let path = root("en").join("gamedata/excel/shop_client_table.json");
+    let mut v: serde_json::Value = serde_json::from_slice(&std::fs::read(path).ok()?).ok()?;
+    let list = v.get_mut("RecommendList")?.as_array_mut()?;
+    let mut review = list
+        .iter()
+        .filter(|r| {
+            r["TagName"]
+                .as_str()
+                .is_some_and(backend::core::gamedata::types::shop::is_review_name)
+        })
+        .max_by_key(|r| r["StartDatetime"].as_i64())?
+        .clone();
+    review["StartDatetime"] = start.into();
+    review["EndDatetime"] = end.into();
+    list.push(review);
+    serde_json::from_value(v).ok()
+}
+
+#[test]
+fn announced_review_override_yields_to_the_listing() {
+    use backend::core::release::{ledger, override_index, resolve_reviews};
+    use backend::database::queries::release::OverrideRow;
+
+    let (Some(cn), Some(mut en)) = (load("cn"), load("en")) else {
+        eprintln!("skipping: no extract");
+        return;
+    };
+    let pairs = estimate::activity_pairs(&cn, &en);
+    let yearly_types = estimate::yearly_types(&pairs);
+    let (pairs, _) = estimate::split_yearly(&pairs, &yearly_types);
+    let model = estimate::build_lag_model(&pairs, 10);
+    let cn_windows = skins::review_windows(&cn);
+    let at = cn_windows
+        .iter()
+        .position(|&(s, _)| s == ANNOUNCED_CN_REVIEW)
+        .expect("the 2026-04-23 CN edition is in the extract");
+    let status = |r: &[Resolution]| {
+        r.iter()
+            .map(|x| match x {
+                Resolution::Confirmed { .. } => 'C',
+                Resolution::Override { .. } => 'O',
+                Resolution::Estimated { .. } => 'E',
+                _ => '-',
+            })
+            .collect::<String>()
+    };
+
+    // 2026-09-24T15:00Z .. 2026-10-21T14:59:59Z, a 27-day run like EN's last ones.
+    let (en_start, en_end) = (1_790_262_000, 1_792_594_799);
+    let row = OverrideRow {
+        kind: ledger::KIND_REVIEW.into(),
+        cn_id: ANNOUNCED_CN_REVIEW.to_string(),
+        en_id: None,
+        en_name: None,
+        en_start: Some(en_start),
+        en_end: Some(en_end),
+        featured_chars: None,
+        source: "EN announcement".into(),
+        note: String::new(),
+        updated_at: chrono::Utc::now(),
+    };
+    let rows = vec![row];
+    let idx = override_index(&rows);
+    let none = override_index(&[]);
+
+    let before = resolve_reviews(&cn_windows, &skins::review_windows(&en), &none, &model);
+    eprintln!("no override:   {}", status(&before));
+    assert!(
+        before[..at]
+            .iter()
+            .all(|r| matches!(r, Resolution::Confirmed { .. }))
+    );
+    assert!(matches!(before[at], Resolution::Estimated { .. }));
+
+    let announced = resolve_reviews(&cn_windows, &skins::review_windows(&en), &idx, &model);
+    eprintln!("override:      {}", status(&announced));
+    assert!(matches!(
+        &announced[at],
+        Resolution::Override { en_start: s, en_end: Some(e), source, .. }
+            if *s == en_start && *e == en_end && source == "EN announcement"
+    ));
+    for (i, (a, b)) in before.iter().zip(&announced).enumerate() {
+        if i != at {
+            assert_eq!(a, b, "the override moves only its own edition");
+        }
+    }
+
+    // The next extract carries the listing; nobody touches the override.
+    let shop = en_listings_with_review(en_start, en_end).expect("EN shop table");
+    en.skin_listings = shop.into_skin_listings();
+    let landed = resolve_reviews(&cn_windows, &skins::review_windows(&en), &idx, &model);
+    eprintln!("listing lands: {}", status(&landed));
+    assert_eq!(
+        landed[at],
+        Resolution::Confirmed {
+            en_id: format!("review:{en_start}"),
+            en_start,
+            en_end,
+        }
+    );
+    assert_eq!(
+        landed[..at],
+        before[..at],
+        "older editions keep their pairs"
+    );
+}

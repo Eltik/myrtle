@@ -7,6 +7,7 @@ use crate::{
         release::{
             BatchForecast, NewSkin, RerunForecast, Resolution, ReviewOutfit, ReviewWindow,
             SkinGroupArt, SkinTile, SkinsResponse, estimate, ledger, prices, resolve,
+            resolve_reviews,
             skins::{self, GroupHistory, RerunBasis},
         },
         translate::{self, TranslationMemory},
@@ -341,23 +342,17 @@ fn review_pool(p: &Planner, names: &Names<'_>) -> Vec<ReviewOutfit> {
     out
 }
 
-fn reviews(p: &Planner) -> Vec<ReviewWindow> {
+fn reviews(p: &Planner, names: &Names<'_>) -> Vec<ReviewWindow> {
     let cn = skins::review_windows(&p.ctx.cn);
     let en = skins::review_windows(&p.ctx.en);
+    let resolved = resolve_reviews(&cn, &en, &names.ov, &p.models.general);
     cn.iter()
-        .zip(skins::pair_reviews(&cn, &en))
-        .map(|(&(cn_start, cn_end), en_window)| ReviewWindow {
+        .zip(resolved)
+        .map(|(&(cn_start, cn_end), resolution)| ReviewWindow {
             cn_start,
             cn_end,
             pool_cutoff: skins::review_pool_cutoff(cn_start),
-            resolution: match en_window {
-                Some((en_start, en_end)) => Resolution::Confirmed {
-                    en_id: format!("review:{en_start}"),
-                    en_start,
-                    en_end,
-                },
-                None => estimate::estimate(&p.models.general, cn_start),
-            },
+            resolution,
         })
         .collect()
 }
@@ -382,7 +377,7 @@ pub async fn get_skins(state: &AppState) -> Result<SkinsResponse, ApiError> {
         batches: batches(&p, &names, &en_batches, &cn_batches),
         new_skins: new_skins(&p, &names, &mut art),
         rerun_forecasts: reruns(&p, &names, &en_groups, &cn_groups, &mut art),
-        reviews: reviews(&p),
+        reviews: reviews(&p, &names),
         review_pool,
         group_art: art.map,
         model: p.models.general.clone(),

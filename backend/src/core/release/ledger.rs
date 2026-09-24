@@ -12,6 +12,10 @@ pub const KIND_SKIN: &str = "skin";
 pub const KIND_SKIN_WINDOW: &str = "skin_window";
 pub const KIND_RETRO: &str = "retro";
 pub const KIND_CHAR: &str = "char";
+/// Override-only: a Fashion Review has no id in either server's data, so its
+/// override is keyed by the CN edition's start time in unix seconds. Never a
+/// sighting kind.
+pub const KIND_REVIEW: &str = "review";
 
 pub fn enabled() -> bool {
     match std::env::var("RELEASE_LEDGER") {

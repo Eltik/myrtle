@@ -13,6 +13,7 @@ const KINDS: &[&str] = &[
     ledger::KIND_POOL,
     ledger::KIND_SKIN,
     ledger::KIND_RETRO,
+    ledger::KIND_REVIEW,
 ];
 
 fn to_wire(r: q::OverrideRow) -> ReleaseOverride {
