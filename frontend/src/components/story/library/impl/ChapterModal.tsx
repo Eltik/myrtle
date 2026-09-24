@@ -126,7 +126,7 @@ export function ChapterModal({ group, progress, gameRead, onClose }: IChapterMod
 
     return (
         <Dialog open onOpenChange={(open) => !open && onClose()}>
-            <DialogPopup showCloseButton={false} className="max-w-[720px] overflow-hidden bg-card">
+            <DialogPopup showCloseButton={false} className="max-w-180 overflow-hidden bg-card">
                 <div ref={scroller} className="max-h-[90dvh] min-h-0 overflow-y-auto overscroll-contain">
                     <Hero group={group} title={DialogTitle} audio={audio} scrollRoot={scroller} />
                     {sticky}

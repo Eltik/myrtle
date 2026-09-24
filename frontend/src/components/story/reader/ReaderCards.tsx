@@ -45,7 +45,7 @@ export interface ITitleCardProps {
 export function TitleCard({ meta, title, category, savedHalt, totalHalts, onResume, onStart }: ITitleCardProps): React.ReactElement {
     const t: ReaderT = useT("story");
     return (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-gradient-to-b from-black via-neutral-950 to-black px-8 text-center" data-story-card="title">
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-linear-to-b from-black via-neutral-950 to-black px-8 text-center" data-story-card="title">
             <div className="font-heading text-white/55 text-xs uppercase tracking-[0.3em]">{meta}</div>
             <h1 className="font-display font-semibold text-3xl text-white sm:text-5xl">{title}</h1>
             <div className="mt-2 text-sm text-white/60">{category}</div>

@@ -186,7 +186,7 @@ function Body({
 
     if (unavailable) {
         return (
-            <div className="rounded-[12px] border border-border border-dashed p-8 text-center">
+            <div className="rounded-xl border border-border border-dashed p-8 text-center">
                 <p className="m-0 font-sans text-[13px] text-muted-foreground">{t("illustrations.panel.unavailable")}</p>
                 <p className="mt-1.5 mb-0 font-mono text-[11px] text-muted-foreground/80">{t("illustrations.panel.unavailableNote")}</p>
             </div>
@@ -202,7 +202,7 @@ function Body({
             </output>
         );
     }
-    if (summary.rows === 0) return <div className="rounded-[12px] border border-border border-dashed p-8 text-center font-sans text-[13px] text-muted-foreground">{t("illustrations.panel.empty")}</div>;
+    if (summary.rows === 0) return <div className="rounded-xl border border-border border-dashed p-8 text-center font-sans text-[13px] text-muted-foreground">{t("illustrations.panel.empty")}</div>;
 
     return (
         <>

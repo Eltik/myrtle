@@ -150,7 +150,7 @@ impl ScoreModel {
             Self {
                 invested_only: var("GRADE_INVESTED_ONLY").is_some_and(|v| v == "1"),
                 legacy_rarity_weights: var("GRADE_RARITY_WEIGHTS").is_some_and(|v| v == "legacy"),
-                module_per_slot: !var("GRADE_MODULE_PER_SLOT").is_some_and(|v| v == "0"),
+                module_per_slot: var("GRADE_MODULE_PER_SLOT").is_none_or(|v| v != "0"),
             }
         })
     }
@@ -550,7 +550,7 @@ fn sub_milestone_progress(levels: &[i16], slots: usize) -> f64 {
 /// on the operator's own skill count because most 4★/5★ only ever get two
 /// skills, and a raw count would cap a fully-mastered one at 0.75 with
 /// nothing left to buy.
-fn mastery_ladder(reached: usize, slots: usize) -> f64 {
+const fn mastery_ladder(reached: usize, slots: usize) -> f64 {
     if reached >= slots {
         return 1.0;
     }

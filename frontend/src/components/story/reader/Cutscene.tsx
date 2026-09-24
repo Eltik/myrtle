@@ -240,11 +240,11 @@ export function Cutscene({ sources, label, skipLabel, playLabel, onSkip, onEnded
                 </video>
             )}
             {blocked ? (
-                <Button variant="ghost" size="sm" data-story-cutscene-play onClick={start} className={cn("absolute z-[200]", PILL_BUTTON)}>
+                <Button variant="ghost" size="sm" data-story-cutscene-play onClick={start} className={cn("absolute z-200", PILL_BUTTON)}>
                     {playLabel}
                 </Button>
             ) : null}
-            <Button variant="ghost" size="sm" data-story-cutscene-skip aria-label={skipLabel} onClick={onSkip} className={cn("absolute end-4 z-[200]", PILL_CORNER[player], PILL_BUTTON)}>
+            <Button variant="ghost" size="sm" data-story-cutscene-skip aria-label={skipLabel} onClick={onSkip} className={cn("absolute end-4 z-200", PILL_CORNER[player], PILL_BUTTON)}>
                 {skipLabel}
             </Button>
         </div>

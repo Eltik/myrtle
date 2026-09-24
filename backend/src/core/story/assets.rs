@@ -855,14 +855,14 @@ impl StoryAssetIndex {
     /// command kind means first, the other as the fallback. This ordering is
     /// the ONLY thing that separates a `[Background]` lookup from an `[Image]`
     /// one, so both pairs below are this with the pair swapped.
-    fn trees(&self, primary: ImageSource) -> (&HashMap<String, String>, &HashMap<String, String>) {
+    const fn trees(&self, primary: ImageSource) -> (&HashMap<String, String>, &HashMap<String, String>) {
         match primary {
             ImageSource::Background => (&self.backgrounds, &self.images),
             ImageSource::Image => (&self.images, &self.backgrounds),
         }
     }
 
-    fn size_trees(
+    const fn size_trees(
         &self,
         primary: ImageSource,
     ) -> (&HashMap<String, ImageSize>, &HashMap<String, ImageSize>) {

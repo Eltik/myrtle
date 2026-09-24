@@ -1,6 +1,6 @@
 //! The story reader's WIRE TYPES, and nothing that derives them.
 //!
-//! Every field's doc comment reaches the OpenAPI document and the generated TS
+//! Every field's doc comment reaches the `OpenAPI` document and the generated TS
 //! binding, so the measured numbers in them are the contract's own evidence.
 //! The full census behind those numbers is `docs/story-reader.md`, section
 //! "1. What is true about the data"; the shapes are section "2. Wire contract".

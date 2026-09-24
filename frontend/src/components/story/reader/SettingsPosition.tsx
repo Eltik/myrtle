@@ -43,7 +43,7 @@ function PositionPad({ value, label, onChange }: { value: BoxPosition; label: st
         <div
             ref={padRef}
             data-story-position-pad
-            className="relative aspect-video w-full max-w-sm touch-none rounded-md border bg-gradient-to-b from-muted to-background"
+            className="relative aspect-video w-full max-w-sm touch-none rounded-md border bg-linear-to-b from-muted to-background"
             onPointerDown={(e) => {
                 dragging.current = true;
                 e.currentTarget.setPointerCapture(e.pointerId);

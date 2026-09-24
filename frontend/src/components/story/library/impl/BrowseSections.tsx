@@ -29,7 +29,7 @@ export function FlatHead({ title, count }: { title: string; count: string }): Re
     return (
         <div className="mb-3 flex items-end justify-between gap-3 border-border border-b pb-2">
             <div className="flex min-w-0 flex-col gap-0.5">
-                <h2 className="m-0 font-bold font-heading text-[13px] text-foreground uppercase tracking-[0.1em] sm:truncate">{title}</h2>
+                <h2 className="m-0 font-bold font-heading text-[13px] text-foreground uppercase tracking-widest sm:truncate">{title}</h2>
                 <span className="font-mono text-[10px] text-muted-foreground uppercase tabular-nums tracking-[0.08em] sm:truncate">{count}</span>
             </div>
         </div>
@@ -90,7 +90,7 @@ function includesLabel(range: IChapterRange, t: BrowseT): string {
  */
 export function SectionGlyph({ chip, place, className, ink = "theme" }: { chip: IChipModel; place: "chip" | "head"; className?: string; ink?: "theme" | "white" }): React.ReactElement {
     if (chip.iconUrl) {
-        const size = chip.iconWide ? (place === "chip" ? "h-5 w-auto max-w-[78px]" : "h-6.5 w-auto max-w-[88px] sm:max-w-[104px]") : chip.iconLogo ? (place === "chip" ? "size-5.5" : "size-7") : place === "chip" ? "size-5" : "size-6";
+        const size = chip.iconWide ? (place === "chip" ? "h-5 w-auto max-w-19.5" : "h-6.5 w-auto max-w-22 sm:max-w-26") : chip.iconLogo ? (place === "chip" ? "size-5.5" : "size-7") : place === "chip" ? "size-5" : "size-6";
         return <img src={asset(chip.iconUrl)} alt="" loading="lazy" decoding="async" className={cn("shrink-0 object-contain", size, ink === "white" ? "brightness-0 invert" : GLYPH_INK, className)} />;
     }
     const Glyph = SECTION_GLYPHS[chip.glyph] ?? SECTION_GLYPHS[0];
@@ -126,7 +126,7 @@ export function SectionHead({ chip, count, action }: { chip: IChipModel | undefi
                     reader navigates by. `truncate` is kept from 640 up, where the
                     column is 245 px and the string has never been cut. */}
                 <div className="flex min-w-0 flex-col gap-0.5">
-                    <h2 className="m-0 font-bold font-heading text-[15px] text-foreground uppercase tracking-[0.1em] sm:truncate">{heading}</h2>
+                    <h2 className="m-0 font-bold font-heading text-[15px] text-foreground uppercase tracking-widest sm:truncate">{heading}</h2>
                     <span className="font-mono text-[10px] text-muted-foreground uppercase tabular-nums tracking-[0.08em] sm:truncate">{under}</span>
                 </div>
             </div>

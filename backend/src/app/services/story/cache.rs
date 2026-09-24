@@ -11,7 +11,7 @@
 //! 6,332 ms and every caller that arrives inside it would otherwise miss and
 //! start its own. Measured on the 2026-09-24 boot, before the lock existed:
 //! `spawn_warm` logged "story index warmed" for EN and the first
-//! `GET /api/story/index` logged "story index built build_ms=6332" a second
+//! `GET /api/story/index` logged "story index built `build_ms=6332`" a second
 //! later, and `/metrics` counted
 //! `myrtle_cpu_task_total{kind="story_index",outcome="started"} 3` with
 //! `duration_seconds_sum 14.580557` for ONE game-data load. The warm and the

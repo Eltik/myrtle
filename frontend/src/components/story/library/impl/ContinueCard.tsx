@@ -43,11 +43,11 @@ export function ContinueCard({ pick, progress, gameRead, onViewChapter }: IConti
     const banner = group.bannerUrl ? asset(group.bannerUrl) : null;
 
     return (
-        <section className="relative mb-5 flex flex-wrap items-center gap-x-4 gap-y-3 overflow-hidden rounded-[12px] border border-border bg-card px-3.5 py-3">
+        <section className="relative mb-5 flex flex-wrap items-center gap-x-4 gap-y-3 overflow-hidden rounded-xl border border-border bg-card px-3.5 py-3">
             {banner ? (
                 <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 hidden w-[46%] sm:block">
                     <img src={banner} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover object-center opacity-45" />
-                    <span className="absolute inset-0 bg-gradient-to-r from-card via-card/72 to-card/20" />
+                    <span className="absolute inset-0 bg-linear-to-r from-card via-card/72 to-card/20" />
                 </span>
             ) : null}
             <div className="relative z-1 flex min-w-0 flex-1 flex-col gap-1">

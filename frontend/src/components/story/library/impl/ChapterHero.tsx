@@ -160,7 +160,7 @@ function ThemeButton({ music, audio }: { music: StoryMusic; audio: IChapterAudio
             className="ms-auto flex h-11 min-w-0 cursor-pointer items-center gap-2 rounded-full bg-black/45 px-3 text-white outline-none backdrop-blur-[2px] transition-colors hover:bg-black/65 focus-visible:ring-2 focus-visible:ring-white/80"
         >
             {playing ? <PauseIcon className="size-4 shrink-0" aria-hidden="true" /> : <PlayIcon className="size-4 shrink-0" aria-hidden="true" />}
-            <span className="max-w-[6.5rem] truncate font-mono text-[10px] uppercase tracking-[0.08em] sm:max-w-[10rem]">{name}</span>
+            <span className="max-w-26 truncate font-mono text-[10px] uppercase tracking-[0.08em] sm:max-w-40">{name}</span>
         </button>
     );
 }

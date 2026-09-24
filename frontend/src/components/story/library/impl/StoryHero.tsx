@@ -42,8 +42,8 @@ export function StoryHero({ pick, progress, gameRead, onViewChapter }: IStoryHer
                     {code}
                 </span>
             )}
-            <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-r from-card via-card/92 to-card/55" />
-            <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-card/85 to-transparent" />
+            <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-linear-to-r from-card via-card/92 to-card/55" />
+            <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-linear-to-t from-card/85 to-transparent" />
 
             <div className="relative flex flex-col gap-4 p-4 sm:gap-5 sm:p-7">
                 <div className="flex min-w-0 flex-col gap-1.5">

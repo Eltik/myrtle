@@ -63,7 +63,7 @@ function Bar({ state }: { state: IPlayerState }): React.ReactElement {
                 page rather than a card clipped by a home indicator. */}
             <div aria-hidden="true" className="h-[calc(120px+env(safe-area-inset-bottom))] sm:h-[calc(64px+env(safe-area-inset-bottom))]" />
             <div className="fixed inset-x-0 bottom-0 z-40 border-border border-t bg-card/95 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.45)] backdrop-blur-md">
-                <section aria-label={t("nowPlaying.region")} className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-2 gap-y-1 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:flex-nowrap sm:gap-x-4 sm:px-6">
+                <section aria-label={t("nowPlaying.region")} className="mx-auto flex max-w-350 flex-wrap items-center gap-x-2 gap-y-1 px-3 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:flex-nowrap sm:gap-x-4 sm:px-6">
                     <MusicIcon aria-hidden="true" className="hidden size-4 shrink-0 text-primary sm:block" />
 
                     <div className="flex min-w-0 flex-1 flex-col leading-tight">
@@ -105,7 +105,7 @@ function Bar({ state }: { state: IPlayerState }): React.ReactElement {
                         the three controls keep the first row exactly as they had it. At 1440
                         the row does not wrap and the seek sits inline between the transport and
                         the volume, sharing the free width with the title column. */}
-                    <Seek className="order-last w-full sm:order-none sm:w-auto sm:min-w-[180px] sm:flex-[1.4]" state={state} t={t} />
+                    <Seek className="order-last w-full sm:order-none sm:w-auto sm:min-w-45 sm:flex-[1.4]" state={state} t={t} />
 
                     {/* Two things the primitive's defaults get wrong here, both measured. The
                         control box is 44 px tall on a phone so the thumb is a touch target, and

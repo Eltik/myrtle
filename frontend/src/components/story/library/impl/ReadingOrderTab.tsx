@@ -79,7 +79,7 @@ export function ReadingOrderTab({ groups, progress, gameRead }: IReadingOrderTab
                         storyline order disagree about what comes next by design,
                         so it is recomputed per order rather than shared with the
                         continue card at the top of the page. */}
-                    <div className="mb-4 rounded-[12px] border border-primary/35 bg-primary/5 px-3 py-2.5">
+                    <div className="mb-4 rounded-xl border border-primary/35 bg-primary/5 px-3 py-2.5">
                         {next ? (
                             <p className="m-0 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 font-sans text-[12.5px]">
                                 <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{t("reading.next")}</span>
@@ -107,7 +107,7 @@ export function ReadingOrderTab({ groups, progress, gameRead }: IReadingOrderTab
 function Blurb({ tone, text }: { tone: "pro" | "con"; text: string }): React.ReactElement {
     const Icon = tone === "pro" ? PlusIcon : MinusIcon;
     return (
-        <div className={cn("flex gap-2.5 rounded-[12px] border p-3", tone === "pro" ? "border-primary/35 bg-primary/5" : "border-border bg-secondary/30")}>
+        <div className={cn("flex gap-2.5 rounded-xl border p-3", tone === "pro" ? "border-primary/35 bg-primary/5" : "border-border bg-secondary/30")}>
             <Icon className={cn("mt-0.5 size-3.5 shrink-0", tone === "pro" ? "text-primary" : "text-muted-foreground")} aria-hidden="true" />
             <p className="m-0 font-sans text-[12.5px] text-muted-foreground leading-relaxed">{text}</p>
         </div>
@@ -172,9 +172,9 @@ function OrderRow({ row, progress, gameRead, open, onToggle }: { row: IOrderRow;
                 onClick={onToggle}
                 aria-expanded={open}
                 aria-label={open ? t("reading.row.collapse", { name: group.name }) : t("reading.row.expand", { name: group.name })}
-                className={cn("flex w-full cursor-pointer items-center gap-3 rounded-[12px] border border-border bg-card p-2 text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring/60 max-sm:min-h-11", open && "border-primary/70")}
+                className={cn("flex w-full cursor-pointer items-center gap-3 rounded-xl border border-border bg-card p-2 text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring/60 max-sm:min-h-11", open && "border-primary/70")}
             >
-                <span className="relative block aspect-16/9 w-18 shrink-0 overflow-hidden rounded-[8px] bg-secondary/55 sm:w-24">
+                <span className="relative block aspect-16/9 w-18 shrink-0 overflow-hidden rounded-lg bg-secondary/55 sm:w-24">
                     {plate ? (
                         <img src={plate} alt="" aria-hidden="true" loading="lazy" decoding="async" data-source={model.plate.kind} className="h-full w-full object-cover" />
                     ) : (
@@ -210,7 +210,7 @@ function OrderRow({ row, progress, gameRead, open, onToggle }: { row: IOrderRow;
             </button>
 
             {open ? (
-                <ul className="m-0 mt-1 flex list-none flex-col rounded-[12px] border border-primary/45 bg-card/70 p-2 sm:p-2.5">
+                <ul className="m-0 mt-1 flex list-none flex-col rounded-xl border border-primary/45 bg-card/70 p-2 sm:p-2.5">
                     {sortedStories(group.stories).map((story) => (
                         <li key={story.id}>
                             <StoryRow story={story} progress={progress} gameRead={gameRead} />

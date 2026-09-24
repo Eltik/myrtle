@@ -114,7 +114,7 @@ function OperationRow({ row, progress, gameRead }: { row: IOperationRow; progres
     return (
         <div className={cn(shell, "min-h-11")}>
             {face}
-            <span className="flex shrink-0 items-center gap-1.5 max-sm:w-full max-sm:ps-[3.625rem]">
+            <span className="flex shrink-0 items-center gap-1.5 max-sm:w-full max-sm:ps-14.5">
                 {row.segments.map((segment) => (
                     <PhaseSegment key={segment.entry.id} segment={segment} title={row.title} progress={progress} gameRead={gameRead} />
                 ))}

@@ -65,7 +65,7 @@ pub struct PlayerPools<'a> {
 }
 
 impl<'a> PlayerPools<'a> {
-    pub fn new(
+    pub const fn new(
         universe: &'a StageUniverse,
         clears: &'a HashMap<String, StageClear>,
         allowed: Option<&'a HashSet<String>>,

@@ -108,7 +108,7 @@ function ArtCard({ group, kind, onOpen }: { group: IArtGroup; kind: ArtKind; onO
             type="button"
             onClick={onOpen}
             aria-label={t("illustrations.card.open", { name: group.name })}
-            className="group flex cursor-pointer flex-col overflow-hidden rounded-[12px] border border-border bg-card text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring/60"
+            className="group flex cursor-pointer flex-col overflow-hidden rounded-xl border border-border bg-card text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring/60"
         >
             <span className="relative block aspect-16/9 w-full overflow-hidden bg-secondary/55">
                 {art ? (

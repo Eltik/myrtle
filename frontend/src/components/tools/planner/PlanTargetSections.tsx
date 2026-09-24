@@ -290,7 +290,7 @@ function ModuleTargetRow({ operator, mod, targets }: IModuleTargetRowProps): Rea
                 const isLocked = stage !== 0 && !isUnlocked;
                 return (
                     <TargetStepButton key={stage} isActive={currentTarget === stage} lockedReason={isLocked ? lockedText : ""} title={stage === 0 ? t("planner.dialog.notPlanned") : t("planner.dialog.stage", { stage })} sizeClassName="size-9" onSelect={() => changeModuleTarget(mod.uniEquipId, stage)}>
-                        <span className="font-semibold text-xs sm:text-[13px]">{stage === 0 ? "—" : stage}</span>
+                        <span className="font-semibold text-xs sm:text-[13px]">{stage === 0 ? "-" : stage}</span>
                     </TargetStepButton>
                 );
             })}

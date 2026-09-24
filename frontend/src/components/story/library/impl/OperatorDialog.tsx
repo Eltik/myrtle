@@ -199,7 +199,7 @@ function Shelf<T>({ loading, failed, rows, count, words, empty, emptyNote, child
     }
     if (rows.length === 0) {
         return (
-            <div className="rounded-[12px] border border-border border-dashed p-8 text-center">
+            <div className="rounded-xl border border-border border-dashed p-8 text-center">
                 <p className="m-0 font-sans text-[13px] text-muted-foreground">{empty}</p>
                 {emptyNote ? <p className="mt-1.5 mb-0 font-sans text-[11.5px] text-muted-foreground/80">{emptyNote}</p> : null}
             </div>
@@ -370,7 +370,7 @@ function VoicesShelf({ loading, failed, lines, words }: { loading: boolean; fail
             </output>
         );
     }
-    if (lines.length === 0) return <div className="rounded-[12px] border border-border border-dashed p-8 text-center font-sans text-[13px] text-muted-foreground">{t("operators.dialog.voices.empty")}</div>;
+    if (lines.length === 0) return <div className="rounded-xl border border-border border-dashed p-8 text-center font-sans text-[13px] text-muted-foreground">{t("operators.dialog.voices.empty")}</div>;
 
     return (
         <>

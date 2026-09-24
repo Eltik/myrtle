@@ -90,7 +90,7 @@ function OperatorCard({ record, progress, gameRead, onOpen }: { record: LibRecor
             onClick={onOpen}
             aria-haspopup="dialog"
             aria-label={t("operators.card.open", { name: record.name })}
-            className="group flex cursor-pointer items-center gap-2.5 rounded-[12px] border border-border bg-card p-2 text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring/60 max-sm:min-h-11"
+            className="group flex cursor-pointer items-center gap-2.5 rounded-xl border border-border bg-card p-2 text-left ring-inset transition-colors hover:border-primary/45 focus-visible:ring-2 focus-visible:ring-ring/60 max-sm:min-h-11"
         >
             <span className="relative block size-12 shrink-0 overflow-hidden rounded-[9px] bg-secondary/60 sm:size-13" style={{ borderBottom: `3px solid ${tone}` }}>
                 <img src={avatar} alt="" aria-hidden="true" loading="lazy" decoding="async" className="h-full w-full object-cover" />

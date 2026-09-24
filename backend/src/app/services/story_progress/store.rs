@@ -72,7 +72,7 @@ pub async fn reverdict(
     get(state, user_id).await
 }
 
-/// One stored row, as {@link stored_payload} rebuilds it.
+/// One stored row, as {@link `stored_payload`} rebuilds it.
 #[derive(Debug, sqlx::FromRow)]
 pub struct StoredRead {
     pub story_id: String,

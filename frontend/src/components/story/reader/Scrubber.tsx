@@ -105,7 +105,7 @@ export function Scrubber({ shown, summaries, totalHalts, progress, barRect, onPo
                 if (summary) onJump(summary.haltIndex);
             }}
         >
-            <div className="absolute inset-x-0 top-0 h-[3px] bg-white/15 transition-[height,background-color] duration-150 group-hover:h-1.5 group-hover:bg-white/25" role="progressbar" aria-label={t("reader.progress")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}>
+            <div className="absolute inset-x-0 top-0 h-0.75 bg-white/15 transition-[height,background-color] duration-150 group-hover:h-1.5 group-hover:bg-white/25" role="progressbar" aria-label={t("reader.progress")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}>
                 <div className="relative h-full bg-primary transition-[width] duration-300 group-hover:shadow-[0_0_10px_1px_var(--color-primary)]" style={{ width: `${progress * 100}%` }}>
                     {/* The knob marks the halt the reader is AT. It only appears
                         under the pointer, so the resting bar is a hairline and

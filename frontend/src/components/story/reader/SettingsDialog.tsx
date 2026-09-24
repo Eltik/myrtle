@@ -163,7 +163,7 @@ export function SettingsDialog({ open, onOpenChange, settings, onChange }: ISett
                                     title={t("settings.textColor.default")}
                                     aria-pressed={settings.textColor === ""}
                                     onClick={() => set("textColor", "")}
-                                    className={cn("size-7 rounded-full border bg-gradient-to-br from-white to-neutral-900 max-sm:size-11", settings.textColor === "" && "ring-2 ring-ring ring-offset-2 ring-offset-background")}
+                                    className={cn("size-7 rounded-full border bg-linear-to-br from-white to-neutral-900 max-sm:size-11", settings.textColor === "" && "ring-2 ring-ring ring-offset-2 ring-offset-background")}
                                 />
                                 {TEXT_SWATCHES.map((sw, i) => (
                                     <button

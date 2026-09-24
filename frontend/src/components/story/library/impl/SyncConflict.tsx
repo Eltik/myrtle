@@ -99,7 +99,7 @@ function Side({ heading, side, newer, names, t, f }: { heading: string; side: Sy
     const last = side.last === null ? t("progress.sync.conflict.lastNone") : (names.get(side.last) ?? side.last);
 
     return (
-        <div className="min-w-0 rounded-[12px] border border-border bg-background p-3">
+        <div className="min-w-0 rounded-xl border border-border bg-background p-3">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <span className="font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{heading}</span>
                 {newer ? <span className="rounded-full bg-primary/12 px-1.5 py-0.5 font-medium font-sans text-[10px] text-primary">{t("progress.sync.conflict.newer")}</span> : null}

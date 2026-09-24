@@ -218,12 +218,12 @@ function DepthStrip({ groups, initial, t, f }: { groups: ICommunityDepthGroup[];
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="mt-4 flex h-32 items-end gap-[3px] border-border border-b">
+                    <div className="mt-4 flex h-32 items-end gap-0.75 border-border border-b">
                         {group.bars.map((bar) => {
                             const label = t("community.depth.bar", { name: bar.code ? `${bar.code} ${bar.name}` : bar.name, readers: f.number(bar.readers), share: f.percent(bar.readerShare) });
                             return (
                                 <span key={bar.id} role="img" title={label} aria-label={label} className="flex min-w-0 flex-1 items-end self-stretch">
-                                    <span className="w-full rounded-t-[2px] bg-primary/80" style={{ height: `${Math.max(1, Math.round(bar.readerShare * 1000) / 10)}%` }} />
+                                    <span className="w-full rounded-t-xs bg-primary/80" style={{ height: `${Math.max(1, Math.round(bar.readerShare * 1000) / 10)}%` }} />
                                 </span>
                             );
                         })}
