@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsPanel, TabsTab } from "#/components/ui/tabs";
 import { storyIndexQueryOptions } from "#/lib/api/story";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { emptyProgress, loadProgress, onProgressWritten, type StoryProgress } from "#/lib/story/progress";
+import { emptyProgress, loadProgress, onProgressStorage, onProgressWritten, type StoryProgress } from "#/lib/story/progress";
 import { useStoryGameRead, useStoryProgressSync } from "#/lib/story/sync";
 import { Browse, DialogueModeTab } from "./impl/Browse";
 import { CommunityTab } from "./impl/CommunityTab";
@@ -47,7 +47,15 @@ export function StoryLibrary(): React.ReactElement {
     const [progress, setProgress] = useState<StoryProgress>(emptyProgress);
     useEffect(() => {
         setProgress(loadProgress());
-        return onProgressWritten(setProgress);
+        // This tab's writes and another tab's writes are two seams; the
+        // library follows both so a story finished in a reader tab turns
+        // read here without a reload.
+        const offWrite = onProgressWritten(setProgress);
+        const offStorage = onProgressStorage(setProgress);
+        return () => {
+            offWrite();
+            offStorage();
+        };
     }, []);
 
     // Mounting the library is a sync trigger: it pulls the account's document,

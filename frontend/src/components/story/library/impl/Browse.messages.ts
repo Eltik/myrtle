@@ -155,6 +155,14 @@ export const messages = {
         text: "Includes chapter {n}",
         description: "Muted secondary under a themed shelf's name, when that shelf holds one main story chapter.",
     },
+    "browse.chip.otherAbbr": {
+        text: "MISC",
+        description: 'The mono stand-in for "Other events" on a collapsed jump chip, where the full name does not fit. The full name is in the chip\'s tooltip and accessible name.',
+    },
+    "browse.chip.recordsAbbr": {
+        text: "REC",
+        description: 'The mono stand-in for "Operator records" on a collapsed jump chip, where the full name does not fit. The full name is in the chip\'s tooltip and accessible name.',
+    },
     "browse.jump.select": {
         text: "Section",
         description: "Label of the section picker that replaces the jump chip row on a phone.",

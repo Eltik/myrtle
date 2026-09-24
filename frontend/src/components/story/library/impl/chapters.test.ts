@@ -173,15 +173,18 @@ describe("splitActOrdinal", () => {
 });
 
 describe("chipLines", () => {
-    const arc: Pick<IChipModel, "name" | "range" | "includes" | "iconWide"> = { name: "SHATTER OF A VISION", range: { from: 4, to: 8 }, includes: null, iconWide: true };
-    const shelf: Pick<IChipModel, "name" | "range" | "includes" | "iconWide"> = { name: "The Ark", range: null, includes: null, iconWide: false };
+    type Chip = Pick<IChipModel, "name" | "range" | "includes" | "iconWide" | "iconLogo" | "abbr">;
+    const arc: Chip = { name: "SHATTER OF A VISION", range: { from: 4, to: 8 }, includes: null, iconWide: true };
+    // Every one of the twelve EN shelves carries the 108x108 `storyline_*`
+    // logo, which is the mark the collapsed chip is.
+    const shelf: Chip = { name: "The Ark", range: null, includes: null, iconWide: false, iconLogo: true };
 
     it("collapses a mainline arc to its range, because the banner beside it already prints the name", () => {
-        expect(chipLines(arc, false)).toEqual({ name: null, range: { from: 4, to: 8 }, holds: false, ordinal: null });
+        expect(chipLines(arc, false)).toEqual({ name: null, abbr: null, range: { from: 4, to: 8 }, holds: false, ordinal: null });
     });
 
     it("expands the active arc to the name over the range", () => {
-        expect(chipLines(arc, true)).toEqual({ name: "SHATTER OF A VISION", range: { from: 4, to: 8 }, holds: false, ordinal: null });
+        expect(chipLines(arc, true)).toEqual({ name: "SHATTER OF A VISION", abbr: null, range: { from: 4, to: 8 }, holds: false, ordinal: null });
     });
 
     it("keeps an arc's name collapsed when there is no banner to carry it", () => {
@@ -194,24 +197,53 @@ describe("chipLines", () => {
         expect(one.range && rangeIsSingle(one.range)).toBe(true);
     });
 
-    it("prints a themed shelf's name in both forms and never a range it does not have", () => {
-        expect(chipLines(shelf, false)).toEqual({ name: "The Ark", range: null, holds: false, ordinal: null });
-        expect(chipLines(shelf, true)).toEqual({ name: "The Ark", range: null, holds: false, ordinal: null });
+    it("collapses a themed shelf to its monogram, which prints nothing at all, and expands the active one to its name", () => {
+        expect(chipLines(shelf, false)).toEqual({ name: null, abbr: null, range: null, holds: false, ordinal: null });
+        expect(chipLines(shelf, true)).toEqual({ name: "The Ark", abbr: null, range: null, holds: false, ordinal: null });
+    });
+
+    it("keeps a themed shelf's name where the wire sends no monogram to collapse to", () => {
+        // A shelf with only the 44x36 abbreviation art, or none at all: the
+        // 108x108 logo is what the collapse trades the name for, and 12 of the
+        // 12 EN shelves have one.
+        expect(chipLines({ ...shelf, iconLogo: false }, false).name).toBe("The Ark");
+        expect(chipLines({ ...shelf, iconLogo: undefined }, false).name).toBe("The Ark");
+    });
+
+    it("prints neither line where a section has both a mark and an abbreviation, because the mark is the stronger stand-in", () => {
+        expect(chipLines({ ...shelf, abbr: "ARK" }, false)).toEqual({ name: null, abbr: null, range: null, holds: false, ordinal: null });
     });
 
     it("holds back the weaker includes claim until the chip is the active one", () => {
         const holding = { ...shelf, includes: { from: 7, to: 14 } };
         expect(chipLines(holding, false).range).toBeNull();
-        expect(chipLines(holding, true)).toEqual({ name: "The Ark", range: { from: 7, to: 14 }, holds: true, ordinal: null });
+        expect(chipLines(holding, true)).toEqual({ name: "The Ark", abbr: null, range: { from: 7, to: 14 }, holds: true, ordinal: null });
+    });
+
+    it("collapses the two unmarked sections to their mono abbreviation and gives the name back when they are active", () => {
+        // Other events and Operator records are the only sections the game
+        // marks with nothing, so a lucide glyph plus MISC or REC is all a
+        // collapsed chip has; the name is in the tooltip and the aria-label.
+        const misc: Chip = { name: "Other events", range: null, includes: null, abbr: "MISC" };
+        const rec: Chip = { name: "Operator records", range: null, includes: null, abbr: "REC" };
+        expect(chipLines(misc, false)).toEqual({ name: null, abbr: "MISC", range: null, holds: false, ordinal: null });
+        expect(chipLines(rec, false)).toEqual({ name: null, abbr: "REC", range: null, holds: false, ordinal: null });
+        expect(chipLines(misc, true)).toEqual({ name: "Other events", abbr: null, range: null, holds: false, ordinal: null });
+        expect(chipLines(rec, true)).toEqual({ name: "Operator records", abbr: null, range: null, holds: false, ordinal: null });
+    });
+
+    it("keeps the name on a section with neither a mark nor an abbreviation, which is every fallback section", () => {
+        const year: Chip = { name: "2022", range: null, includes: null };
+        expect(chipLines(year, false)).toEqual({ name: "2022", abbr: null, range: null, holds: false, ordinal: null });
     });
 
     it("prints the act ordinal on the expanded chip alone, and strips it from the name", () => {
         const named = { ...arc, name: "Act I: Shatter of a Vision" };
-        expect(chipLines(named, true)).toEqual({ name: "Shatter of a Vision", range: { from: 4, to: 8 }, holds: false, ordinal: "I" });
+        expect(chipLines(named, true)).toEqual({ name: "Shatter of a Vision", abbr: null, range: { from: 4, to: 8 }, holds: false, ordinal: "I" });
         expect(chipLines(named, false).ordinal).toBeNull();
     });
 
     it("prints no name at all for a bare ordinal, rather than repeating it on both lines", () => {
-        expect(chipLines({ ...arc, name: "Act 1", iconWide: false }, true)).toEqual({ name: null, range: { from: 4, to: 8 }, holds: false, ordinal: "1" });
+        expect(chipLines({ ...arc, name: "Act 1", iconWide: false }, true)).toEqual({ name: null, abbr: null, range: { from: 4, to: 8 }, holds: false, ordinal: "1" });
     });
 });

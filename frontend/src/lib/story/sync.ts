@@ -85,6 +85,9 @@ let acknowledged: string | null = null;
  * trigger is the whole point of sharing the engine.
  */
 let pullInFlight: Promise<void> | null = null;
+/** A tab that comes back after this long re-pulls: the account may have moved under it. */
+export const REPULL_AFTER_MS = 15_000;
+let lastPullAt = 0;
 /** The push in flight, and the one document waiting behind it. */
 let pushInFlight: Promise<void> | null = null;
 let queuedPush: StoryProgress | null = null;
@@ -232,6 +235,7 @@ function pull(reverdict = false): Promise<void> {
  * is stored as it is. Neither reaches the game server.
  */
 async function runPull(reverdict: boolean): Promise<void> {
+    lastPullAt = Date.now();
     setState({ kind: "syncing" });
     const res = await (reverdict ? importStoryProgressFn() : getStoryProgressFn());
     if (!enabled) return;
@@ -407,7 +411,23 @@ export function syncStoryProgressNow(): void {
 }
 
 function onVisibilityChange(): void {
-    if (document.visibilityState === "hidden") flushStorySync();
+    if (document.visibilityState === "hidden") {
+        flushStorySync();
+        return;
+    }
+    onReturn();
+}
+
+/**
+ * A tab regaining focus or visibility pulls again when its last pull is older
+ * than {@link REPULL_AFTER_MS}: a merge decided in another tab, a story read
+ * on another device, or a "Sync now" pressed elsewhere used to stay invisible
+ * here until a reload, which read as the merge not happening.
+ */
+function onReturn(): void {
+    if (!enabled || pullInFlight) return;
+    if (Date.now() - lastPullAt < REPULL_AFTER_MS) return;
+    void pull();
 }
 
 function enable(): void {
@@ -415,6 +435,7 @@ function enable(): void {
     enabled = true;
     unsubscribeWrite = onProgressWritten(schedulePush);
     document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("focus", onReturn);
 }
 
 function disable(): void {
@@ -423,6 +444,7 @@ function disable(): void {
     unsubscribeWrite?.();
     unsubscribeWrite = null;
     document.removeEventListener("visibilitychange", onVisibilityChange);
+    window.removeEventListener("focus", onReturn);
     if (pushTimer) clearTimeout(pushTimer);
     pushTimer = null;
     pendingPush = null;
@@ -499,6 +521,7 @@ export function __resetStorySyncForTests(): void {
     pushTimer = null;
     pendingPush = null;
     pullInFlight = null;
+    lastPullAt = 0;
     pushInFlight = null;
     queuedPush = null;
     acknowledged = null;
@@ -521,9 +544,11 @@ export function __storySyncStateForTests(): SyncState {
 
 /** Start the engine outside React. Tests only. */
 export function __enableStorySyncForTests(): void {
-    enabled = true;
+    // The real path, so the visibility and focus listeners are on too.
+    enabled = false;
     unsubscribeWrite?.();
-    unsubscribeWrite = onProgressWritten(schedulePush);
+    unsubscribeWrite = null;
+    enable();
 }
 
 /**

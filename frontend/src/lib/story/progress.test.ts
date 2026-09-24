@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coerceProgress, emptyProgress, isStoryRead, parseProgress, readSourceOf, withoutPosition, withPosition, withRead, withUnread } from "./progress";
+import { coerceProgress, emptyProgress, isStoryRead, onProgressStorage, PROGRESS_KEY, parseProgress, readSourceOf, type StoryProgress, withoutPosition, withPosition, withRead, withUnread } from "./progress";
 
 describe("coerceProgress", () => {
     it("returns an empty progress for anything that is not an object", () => {
@@ -103,5 +103,18 @@ describe("updates", () => {
         const q = withoutPosition(p, "s1");
         expect(Object.keys(q.pos)).toEqual(["s2"]);
         expect(withoutPosition(q, "missing")).toBe(q);
+    });
+});
+
+describe("another tab's write", () => {
+    it("reaches an onProgressStorage listener, coerced, and other keys do not", () => {
+        const seen: StoryProgress[] = [];
+        const off = onProgressStorage((p) => seen.push(p));
+        window.dispatchEvent(new StorageEvent("storage", { key: "myrtle.story.settings", newValue: "{}" }));
+        window.dispatchEvent(new StorageEvent("storage", { key: PROGRESS_KEY, newValue: JSON.stringify({ v: 2, read: { a: 5, "": 1 }, pos: {} }) }));
+        window.dispatchEvent(new StorageEvent("storage", { key: PROGRESS_KEY, newValue: null }));
+        off();
+        window.dispatchEvent(new StorageEvent("storage", { key: PROGRESS_KEY, newValue: JSON.stringify({ v: 2, read: { b: 5 }, pos: {} }) }));
+        expect(seen).toEqual([{ v: 2, read: { a: 5 }, pos: {} }]);
     });
 });

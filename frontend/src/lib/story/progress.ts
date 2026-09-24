@@ -144,6 +144,26 @@ export function onProgressWritten(fn: ProgressListener): () => void {
     return () => writeListeners.delete(fn);
 }
 
+/**
+ * Called when ANOTHER TAB writes the document, with what it wrote.
+ *
+ * `saveProgress` notifies only its own tab: the reader open in one tab and
+ * the library in another used to disagree until a reload. The browser's
+ * `storage` event is the bridge, and it is a SEPARATE seam from
+ * `onProgressWritten` on purpose: the writing tab already pushed that
+ * document to the account, so the sync must not treat the echo as a write of
+ * its own. A malformed value is coerced like any stored document.
+ */
+export function onProgressStorage(fn: ProgressListener): () => void {
+    if (typeof window === "undefined") return () => {};
+    const handler = (e: StorageEvent) => {
+        if (e.key !== PROGRESS_KEY || e.newValue === null) return;
+        fn(parseProgress(e.newValue));
+    };
+    window.addEventListener("storage", handler);
+    return () => window.removeEventListener("storage", handler);
+}
+
 export function saveProgress(p: StoryProgress): void {
     if (typeof window === "undefined") return;
     try {

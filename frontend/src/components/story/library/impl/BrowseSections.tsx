@@ -70,6 +70,11 @@ function includesLabel(range: IChapterRange, t: BrowseT): string {
     return rangeIsSingle(range) ? t("browse.chip.includesOne", { n: range.from }) : t("browse.chip.includes", { from: range.from, to: range.to });
 }
 
+/** What a collapsed chip is called for a reader who cannot read the mark it collapsed to: the tooltip's own pair, in one line. */
+function chipLabel(chip: IChipModel, t: BrowseT): string {
+    return underLine([chip.name, chip.range ? rangeLabel(chip.range, t) : chip.includes ? includesLabel(chip.includes, t) : null]);
+}
+
 /**
  * The section's own icon when the wire sends one, else the glyph its id hashes
  * to. The three image shapes are NOT the same slot: an arc icon is a 184x52
@@ -84,13 +89,17 @@ function includesLabel(range: IChapterRange, t: BrowseT): string {
  * chip and 92.0 in a heading, and the monogram is the LARGER of the two by
  * height in both places.
  *
+ * A MONOGRAM ALONE IN A CHIP IS 24 PX, not the 22 it is beside a name. A
+ * collapsed shelf chip is the logo and nothing else, and at 22 px in a 36 px
+ * pill it read as an icon rather than as the shelf's mark.
+ *
  * INK. The game art is monochrome and is flattened to the theme's ink
  * (`GLYPH_INK`); on the ACTIVE chip, which is a filled primary pill, that ink
  * would be black on red, so the active chip inks the glyph white instead.
  */
-export function SectionGlyph({ chip, place, className, ink = "theme" }: { chip: IChipModel; place: "chip" | "head"; className?: string; ink?: "theme" | "white" }): React.ReactElement {
+export function SectionGlyph({ chip, place, className, ink = "theme", alone = false }: { chip: IChipModel; place: "chip" | "head"; className?: string; ink?: "theme" | "white"; alone?: boolean }): React.ReactElement {
     if (chip.iconUrl) {
-        const size = chip.iconWide ? (place === "chip" ? "h-5 w-auto max-w-19.5" : "h-6.5 w-auto max-w-22 sm:max-w-26") : chip.iconLogo ? (place === "chip" ? "size-5.5" : "size-7") : place === "chip" ? "size-5" : "size-6";
+        const size = chip.iconWide ? (place === "chip" ? "h-5 w-auto max-w-19.5" : "h-6.5 w-auto max-w-22 sm:max-w-26") : chip.iconLogo ? (place === "chip" ? (alone ? "size-6" : "size-5.5") : "size-7") : place === "chip" ? "size-5" : "size-6";
         return <img src={asset(chip.iconUrl)} alt="" loading="lazy" decoding="async" className={cn("shrink-0 object-contain", size, ink === "white" ? "brightness-0 invert" : GLYPH_INK, className)} />;
     }
     const Glyph = SECTION_GLYPHS[chip.glyph] ?? SECTION_GLYPHS[0];
@@ -148,20 +157,29 @@ const FADE = 28;
  * both its lines and its count, and the row measured 3,411 px of scroll width
  * against a 1,400 px rail at 1440: the bar was a horizontal list nobody could
  * see the end of, and its first line was "Chapters 0 to 3" rather than the
- * name. A collapsed chip now prints one line, and on a mainline arc that line
- * is the compact range alone because the 184x52 banner beside it reads ACT I;
- * the active chip alone expands to the name over the range and keeps its
- * count. The hover tooltip carries the unabbreviated pair for every collapsed
- * chip, so nothing the bar stops printing becomes unreachable.
+ * name. A collapsed chip now prints one line at most, and on a mainline arc
+ * that line is the compact range alone because the 184x52 banner beside it
+ * reads ACT I; the active chip alone expands to the name over the range and
+ * keeps its count. The tooltip carries the unabbreviated pair for every
+ * collapsed chip and the `aria-label` carries the name, so nothing the bar
+ * stops printing becomes unreachable.
  *
- * THE BAR STILL SCROLLS AT 1440 AND THAT IS NOT FIXABLE HERE: 3,411 px ->
- * 3,014 against the same 1,400 px rail. The four mainline chips paid 1,025.9
- * -> 722.2 and the count came off every collapsed chip, but the thirteen
- * themed shelves are 2,036.3 px of that total on their NAMES, which no
- * collapse may touch: a shelf's 108x108 logo is a monogram (RL, UR, LA) and
- * names nothing, so "The Ark" is the only thing its chip says. Eighteen chips
- * on a 1,400 px rail needs the shelf names abbreviated or dropped, which is a
- * decision about what a reader can recognise and not a layout tweak.
+ * THE EIGHTEEN CHIPS FIT THE RAIL AT 1440, which the last pass said was not
+ * fixable here: 2,877 px of content -> 1,359.5 against a 1,400 px rail, no
+ * horizontal scroll and both fade masks off. The shelf names were the whole of
+ * it. Twelve themed chips were 1,881.0 px on their names and are 504.0 px as
+ * 42 px monograms, and the two chips the game marks with nothing were 280.1 px
+ * as "Other events" and "Operator records" against 139.6 as MISC and REC. The
+ * four mainline chips are untouched at 613.9 px. Two of those numbers are
+ * load-bearing and were measured, not chosen: keeping the two full names is
+ * 1,500.0 px and still scrolls, and leaving the bare monogram chips on the
+ * 10 px side padding the text chips use is 1,407.5 and still scrolls, which is
+ * why a chip with no text is padded 8.
+ *
+ * THE ACTIVE CHIP CAN STILL PUT THE BAR OVER THE RAIL, by design and only
+ * while it is active: the widest shelf, "Snow and Silver Steel", expands to
+ * 201.7 px and takes the row to 1,519.2. The reader is looking at the section
+ * that chip names, and the bar centres it.
  *
  * The active chip is centred by writing `scrollLeft` directly, never by
  * `scrollIntoView`: that walks every scrollable ancestor and would drag the
@@ -222,32 +240,49 @@ export function JumpBar({ chips, active }: { chips: readonly IChipModel[]; activ
 }
 
 /**
- * One chip. Collapsed it is the glyph plus a single line; active it is the
- * glyph, the name, the range under it and the count.
+ * One chip. Collapsed it is the mark plus at most one line; active it is the
+ * mark, the name, the range under it and the count.
  *
- * The tooltip is on the COLLAPSED chip only, and it carries the pair the
- * collapsed form leaves out: the name a banner-only chip does not print, and
- * the range in full words rather than in the "Ch. 4-8" shorthand. An expanded
- * chip is already showing both, so tipping it would repeat the screen.
+ * A COLLAPSED SHELF CHIP HAS NO TEXT AT ALL, so it says what it is twice over
+ * where a sighted reader cannot read the monogram: in the tooltip, and in the
+ * `aria-label`, which is the only one of the two a screen reader or a keyboard
+ * reader is guaranteed. The label is the tooltip's own pair in one line, and it
+ * is set on every chip whose name the collapsed form leaves out, the mainline
+ * arcs included: "CH. 4-8" names the run and not the act.
+ *
+ * The tooltip is on the COLLAPSED chip only, and it carries what the collapsed
+ * form leaves out: the name, and the range in full words rather than in the
+ * "Ch. 4-8" shorthand. An expanded chip is already showing both, so tipping it
+ * would repeat the screen.
  */
 function JumpChip({ chip, on, t }: { chip: IChipModel; on: boolean; t: BrowseT }): React.ReactElement {
     const lines = chipLines(chip, on);
     const mono = monoLabel(lines, t);
+    // A chip that prints nothing is a square around its mark, and the 10 px of
+    // side padding a chip with text wears is 4 px a chip the rail has not got:
+    // the twelve shelves are 504.0 px at 8 and 552.0 at 10, and only the first
+    // of those fits at 1440.
+    const bare = lines.name === null && lines.abbr === null && mono === null;
     const link = (
         <a
             data-chip={chip.id}
             href={`#${chip.id}`}
             aria-current={on ? "true" : undefined}
+            aria-label={lines.name === null ? chipLabel(chip, t) : undefined}
             className={cn(
-                "flex shrink-0 items-center gap-2 rounded-[10px] border px-2.5 py-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-ring/60",
+                "flex shrink-0 items-center gap-2 rounded-[10px] border py-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-ring/60",
+                bare ? "px-2" : "px-2.5",
                 on ? "border-primary bg-primary text-primary-foreground" : "border-transparent text-muted-foreground hover:border-border hover:bg-secondary/50 hover:text-foreground",
             )}
         >
-            <SectionGlyph chip={chip} place="chip" ink={on ? "white" : "theme"} className={on ? "opacity-95" : "opacity-70"} />
-            <span className="flex min-w-0 flex-col items-start leading-none">
-                {lines.name ? <span className="whitespace-nowrap font-sans font-semibold text-[13px]">{lines.name}</span> : null}
-                {mono ? <span className={cn("whitespace-nowrap font-mono text-[10px] uppercase tabular-nums tracking-[0.08em]", lines.name ? "mt-1" : "", on ? "opacity-80" : "opacity-75")}>{mono}</span> : null}
-            </span>
+            <SectionGlyph chip={chip} place="chip" alone={bare} ink={on ? "white" : "theme"} className={on ? "opacity-95" : "opacity-70"} />
+            {bare ? null : (
+                <span className="flex min-w-0 flex-col items-start leading-none">
+                    {lines.name ? <span className="whitespace-nowrap font-sans font-semibold text-[13px]">{lines.name}</span> : null}
+                    {lines.abbr ? <span className="whitespace-nowrap font-mono font-semibold text-[10px] uppercase tracking-[0.08em] opacity-75">{lines.abbr}</span> : null}
+                    {mono ? <span className={cn("whitespace-nowrap font-mono text-[10px] uppercase tabular-nums tracking-[0.08em]", lines.name ? "mt-1" : "", on ? "opacity-80" : "opacity-75")}>{mono}</span> : null}
+                </span>
+            )}
             {on ? <span className="shrink-0 font-mono text-[10px] tabular-nums opacity-80">{chip.count}</span> : null}
         </a>
     );

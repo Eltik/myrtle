@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-24T12:57:44.532Z",
+    "generatedAt": "2026-09-24T23:24:15.468Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -18686,6 +18686,13 @@
             ]
         },
         {
+            "key": "story.browse.chip.otherAbbr",
+            "namespace": "story",
+            "source_text": "MISC",
+            "description": "The mono stand-in for \"Other events\" on a collapsed jump chip, where the full name does not fit. The full name is in the chip's tooltip and accessible name.",
+            "placeholders": []
+        },
+        {
             "key": "story.browse.chip.range",
             "namespace": "story",
             "source_text": "Chapters {from} to {to}",
@@ -18703,6 +18710,13 @@
             "placeholders": [
                 "n"
             ]
+        },
+        {
+            "key": "story.browse.chip.recordsAbbr",
+            "namespace": "story",
+            "source_text": "REC",
+            "description": "The mono stand-in for \"Operator records\" on a collapsed jump chip, where the full name does not fit. The full name is in the chip's tooltip and accessible name.",
+            "placeholders": []
         },
         {
             "key": "story.browse.continue.kicker",

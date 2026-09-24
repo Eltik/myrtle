@@ -134,6 +134,8 @@ export interface IChipModel {
     includes: IChapterRange | null;
     /** The section's own name, translated where the data does not name it. */
     name: string;
+    /** The two or three letter mono stand-in a collapsed chip prints in place of its name, on a section the game gives no mark of its own. */
+    abbr?: string;
     count: number;
     /** The arc's or the shelf's `iconUrl` when the wire sends one. */
     iconUrl?: string;
@@ -185,15 +187,27 @@ export function splitActOrdinal(name: string): { ordinal: string | null; name: s
  * once a section is the one they are in, and the form the tooltip shows on
  * hover for every collapsed chip.
  *
- * A themed shelf keeps its name in both forms, because its 108x108 logo is a
- * monogram (RL, UR, LA) and names nothing. Its `includes` line, the weaker
- * "holds these chapters" claim, is printed on the expanded chip only: it is
- * true of no EN shelf today and it is never worth a line in a bar that
- * overflows.
+ * A THEMED SHELF NOW COLLAPSES TO ITS MONOGRAM TOO, which is a correction. It
+ * kept its name in both forms on the grounds that a 108x108 logo is a monogram
+ * (RL, UR, LA) and names nothing, and that left the twelve EN shelves printing
+ * 1,881.0 px of names inside a 2,877 px rail against a 1,400 px viewport at
+ * 1440. The name is not dropped, it moves to the tooltip and to the chip's
+ * `aria-label`, and the shelf the reader is in prints it again.
+ *
+ * The two sections the game marks with nothing, Other events and Operator
+ * records, have no monogram to collapse to, so they collapse to a mono
+ * abbreviation beside their lucide glyph. A section with neither a mark nor an
+ * abbreviation, which is every fallback section, keeps its name.
+ *
+ * The `includes` line, the weaker "holds these chapters" claim, is printed on
+ * the expanded chip only: it is true of no EN shelf today and it is never worth
+ * a line in a bar that overflows.
  */
 export interface IChipLines {
-    /** The name line. `null` only where the arc banner already prints it, which is a collapsed mainline chip. */
+    /** The name line. `null` on a collapsed chip that carries a mark or an abbreviation instead. */
     name: string | null;
+    /** The mono stand-in for the name on a collapsed chip with no mark of its own. Never set beside {@link IChipLines.name}. */
+    abbr: string | null;
     /** The chapter run on the mono line, compact when collapsed. */
     range: IChapterRange | null;
     /** True when {@link IChipLines.range} is the weaker "holds these chapters" claim rather than the run the section IS. */
@@ -202,12 +216,16 @@ export interface IChipLines {
     ordinal: string | null;
 }
 
-export function chipLines(chip: Pick<IChipModel, "name" | "range" | "includes" | "iconWide">, active: boolean): IChipLines {
+export function chipLines(chip: Pick<IChipModel, "name" | "range" | "includes" | "iconWide" | "iconLogo" | "abbr">, active: boolean): IChipLines {
     const split = splitActOrdinal(chip.name);
-    // The banner carries the name only where there IS a banner and the chip is
-    // a chapter run: a themed shelf with `iconWide` would lose its name here.
-    const bannerNames = chip.iconWide === true && chip.range !== null;
-    const name = active || !bannerNames ? (split.name === "" ? null : split.name) : null;
+    // What a collapsed chip has to stand in for its name: the act banner, which
+    // IS the name and so is read only on a chapter run, or the shelf's own
+    // monogram. An `iconWide` themed shelf would lose its name to a banner that
+    // does not name it, which is why the run is part of the test.
+    const marked = (chip.iconWide === true && chip.range !== null) || chip.iconLogo === true;
+    const abbr = !active && !marked && chip.abbr ? chip.abbr : null;
+    const named = active || (!marked && abbr === null);
+    const name = named && split.name !== "" ? split.name : null;
     const range = active ? (chip.range ?? chip.includes) : chip.range;
-    return { name, range, holds: range !== null && chip.range === null, ordinal: active && range !== null ? split.ordinal : null };
+    return { name, abbr, range, holds: range !== null && chip.range === null, ordinal: active && range !== null ? split.ordinal : null };
 }

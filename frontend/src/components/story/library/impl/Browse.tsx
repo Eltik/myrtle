@@ -115,11 +115,26 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
             // An ARC is main story by definition, even when an intermezzo is
             // shelved inside it (Act I holds Darknights' Memoir): the kind word
             // names the run, not the majority of its cards.
-            return { id: s.id, range: chapters.primary, includes: chapters.includes, name: sectionTitle(s, t), count: s.groups.length, iconUrl: s.iconUrl, iconWide: s.iconWide === true, iconLogo: s.iconLogo === true, glyph: glyphIndexFor(s.lineId), filter: s.kind === "arc" ? "main" : sectionFilterKey(s.groups) };
+            // "Other events" is the one wire section the game marks with
+            // nothing, so it is the one that needs an abbreviation to collapse
+            // to. A shelf collapses to its monogram and an arc to its banner.
+            return {
+                id: s.id,
+                range: chapters.primary,
+                includes: chapters.includes,
+                name: sectionTitle(s, t),
+                abbr: s.kind === "other" ? t("browse.chip.otherAbbr") : undefined,
+                count: s.groups.length,
+                iconUrl: s.iconUrl,
+                iconWide: s.iconWide === true,
+                iconLogo: s.iconLogo === true,
+                glyph: glyphIndexFor(s.lineId),
+                filter: s.kind === "arc" ? "main" : sectionFilterKey(s.groups),
+            };
         });
         // The records section is NOT given a kind word: its name already is
         // one, and "Operator records · Operator records" is what that reads as.
-        if (library.records.length > 0) out.push({ id: RECORDS_ID, range: null, includes: null, name: t("browse.section.records"), count: library.records.length, glyph: glyphIndexFor(RECORDS_ID), filter: null });
+        if (library.records.length > 0) out.push({ id: RECORDS_ID, range: null, includes: null, name: t("browse.section.records"), abbr: t("browse.chip.recordsAbbr"), count: library.records.length, glyph: glyphIndexFor(RECORDS_ID), filter: null });
         return out;
     }, [library, t]);
 

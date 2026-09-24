@@ -20,6 +20,7 @@ const {
     __resetStorySyncForTests,
     __resolveStorySyncForTests,
     __reverdictStorySyncForTests,
+    REPULL_AFTER_MS,
     __storyGameImportForTests,
     __storyGameReadForTests,
     __storySyncStateForTests,
@@ -493,5 +494,33 @@ describe("a conflict between the browser and the account", () => {
         expect(loadProgress().read).toEqual({ a: 1 });
         expect(loadProgress().v).toBe(2);
         expect(putMock).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe("a tab that comes back", () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        localStorage.clear();
+        __resetStorySyncForTests();
+        getMock.mockReset();
+        putMock.mockReset();
+        __enableStorySyncForTests();
+    });
+    afterEach(() => {
+        __resetStorySyncForTests();
+        vi.useRealTimers();
+    });
+
+    it("re-pulls on focus only once its last pull is older than the threshold", async () => {
+        getMock.mockResolvedValue(pullAnswer({ gameSyncedAt: 1 }));
+        await __pullStorySyncForTests();
+        expect(getMock).toHaveBeenCalledTimes(1);
+        window.dispatchEvent(new Event("focus"));
+        await vi.runOnlyPendingTimersAsync();
+        expect(getMock).toHaveBeenCalledTimes(1);
+        vi.advanceTimersByTime(REPULL_AFTER_MS + 1);
+        window.dispatchEvent(new Event("focus"));
+        await vi.runOnlyPendingTimersAsync();
+        expect(getMock).toHaveBeenCalledTimes(2);
     });
 });
