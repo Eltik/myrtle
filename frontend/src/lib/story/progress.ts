@@ -235,6 +235,32 @@ export function withRead(p: StoryProgress, storyId: string, now: number = Date.n
  * entry outranks the game's verdict until the story is marked read again.
  * Idempotent on a story that is already neither marked nor game-read.
  */
+/**
+ * The stories the reader cleared by hand that the game says were read: the
+ * hand clear OUTRANKS the game's verdict, so these stay unread until the
+ * reader marks them again or hands the verdict back with {@link trustingGame}.
+ */
+export function overriddenByHand(progress: StoryProgress, gameRead: ReadonlySet<string>): string[] {
+    return Object.keys(progress.unread ?? {}).filter((id) => gameRead.has(id));
+}
+
+/**
+ * Drop every hand clear on a story the game says was read, so the game's
+ * verdict shows again. Clears on stories the game does not vouch for stay,
+ * since nothing else would mark those. Returns the same document when there
+ * is nothing to drop.
+ */
+export function trustingGame(progress: StoryProgress, gameRead: ReadonlySet<string>): StoryProgress {
+    const dropped = overriddenByHand(progress, gameRead);
+    if (dropped.length === 0 || !progress.unread) return progress;
+    const unread: Record<string, number> = {};
+    for (const [id, at] of Object.entries(progress.unread)) if (!gameRead.has(id)) unread[id] = at;
+    const out: StoryProgress = { ...progress };
+    if (Object.keys(unread).length > 0) out.unread = unread;
+    else delete out.unread;
+    return out;
+}
+
 export function withUnread(p: StoryProgress, storyId: string, now: number = Date.now()): StoryProgress {
     const { [storyId]: _dropped, ...read } = p.read;
     const unread = { ...(p.unread ?? {}), [storyId]: Math.max(1, Math.floor(now)) };

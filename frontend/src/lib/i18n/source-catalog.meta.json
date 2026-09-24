@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-24T23:24:15.468Z",
+    "generatedAt": "2026-09-24T23:48:05.144Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -19782,8 +19782,8 @@
         {
             "key": "story.marks.clearAll.confirm",
             "namespace": "story",
-            "source_text": "Clear {count} marks?",
-            "description": "Inline confirmation shown in place of the chapter actions after Clear all is pressed. {count} is how many stories count as read.",
+            "source_text": "Clear {count} marks? Cleared stories stay unread even if the game says you read them.",
+            "description": "Inline confirmation shown in place of the chapter actions after Clear all is pressed. {count} is how many stories count as read. The second sentence says that a hand clear outranks the game's verdict.",
             "placeholders": [
                 "count"
             ]
@@ -20216,6 +20216,29 @@
             "namespace": "story",
             "source_text": "Reading progress lives in this browser and on your account, so it follows you to another device. Back it up before clearing site data.",
             "description": "Explanation under the progress heading, shown to a signed-in reader whose progress syncs.",
+            "placeholders": []
+        },
+        {
+            "key": "story.progress.overrides",
+            "namespace": "story",
+            "source_text": "{count} stories you cleared that the game says you read",
+            "description": "Heading of the row that offers to hand the game's read verdict back. {count} is the number of stories the reader marked unread by hand although the account's game data says they were played.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.progress.overrides.blurb",
+            "namespace": "story",
+            "source_text": "A story you clear stays unread even when your game data says you read it, and the clear syncs to your account like any mark, so Account wins keeps it. Trust the game to show those as read again.",
+            "description": "Explanation under the overrides heading: why clearing a story wins over the game's verdict and why the sync choice does not undo it.",
+            "placeholders": []
+        },
+        {
+            "key": "story.progress.overrides.trust",
+            "namespace": "story",
+            "source_text": "Trust the game",
+            "description": "Button that drops every hand clear on a story the game says was read, so those stories show as read again.",
             "placeholders": []
         },
         {

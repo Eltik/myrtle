@@ -7,7 +7,7 @@ import { Button } from "#/components/ui/button";
 import { authActions, authStore } from "#/lib/auth/store";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { emptyProgress, loadProgress, parseProgress, type StoryProgress, saveProgress } from "#/lib/story/progress";
+import { emptyProgress, loadProgress, overriddenByHand, parseProgress, type StoryProgress, saveProgress, trustingGame } from "#/lib/story/progress";
 import { type GameImport, pushStoryProgressNow, resolveStorySync, type SyncState, useStoryGameImport, useStoryProgressSync } from "#/lib/story/sync";
 import { type LibIndex, progressSummary } from "./derive";
 import type { messages } from "./ProgressTab.messages";
@@ -45,6 +45,9 @@ export function ProgressTab({ index, progress, gameRead, onProgressChanged }: IP
     const [confirmReset, setConfirmReset] = useState(false);
 
     const summary = useMemo(() => progressSummary(index, progress, gameRead), [index, progress, gameRead]);
+    // Hand clears the game disagrees with. A clear is pushed to the account
+    // like any mark, so "Account wins" cannot undo it; only this can.
+    const overridden = useMemo(() => overriddenByHand(progress, gameRead), [progress, gameRead]);
 
     const backup = () => {
         const blob = new Blob([JSON.stringify(loadProgress(), null, 2)], { type: "application/json" });
@@ -106,6 +109,27 @@ export function ProgressTab({ index, progress, gameRead, onProgressChanged }: IP
             ) : (
                 <SyncRow state={syncState} signedIn={isAuthenticated} gameImport={gameImport} onSyncNow={syncNow} t={t} f={f} />
             )}
+
+            {isAuthenticated && overridden.length > 0 ? (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5 rounded-[14px] border border-border bg-card p-4 sm:p-5">
+                    <div className="min-w-0 flex-1">
+                        <h3 className="m-0 font-sans font-semibold text-[14px] text-foreground">{t("progress.overrides", { count: f.number(overridden.length) })}</h3>
+                        <p className="mt-0.5 mb-0 font-sans text-[12.5px] text-muted-foreground">{t("progress.overrides.blurb")}</p>
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="max-sm:h-11"
+                        onClick={() => {
+                            const next = trustingGame(progress, gameRead);
+                            saveProgress(next);
+                            onProgressChanged(next);
+                        }}
+                    >
+                        {t("progress.overrides.trust")}
+                    </Button>
+                </div>
+            ) : null}
 
             <div className="rounded-[14px] border border-border bg-card p-4 sm:p-5">
                 <h3 className="m-0 font-sans font-semibold text-[14px] text-foreground">{t("progress.manage")}</h3>

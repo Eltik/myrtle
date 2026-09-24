@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { coerceProgress, emptyProgress, isStoryRead, onProgressStorage, PROGRESS_KEY, parseProgress, readSourceOf, type StoryProgress, withoutPosition, withPosition, withRead, withUnread } from "./progress";
+import { coerceProgress, emptyProgress, isStoryRead, onProgressStorage, overriddenByHand, PROGRESS_KEY, parseProgress, readSourceOf, type StoryProgress, trustingGame, withoutPosition, withPosition, withRead, withUnread } from "./progress";
 
 describe("coerceProgress", () => {
     it("returns an empty progress for anything that is not an object", () => {
@@ -116,5 +116,27 @@ describe("another tab's write", () => {
         off();
         window.dispatchEvent(new StorageEvent("storage", { key: PROGRESS_KEY, newValue: JSON.stringify({ v: 2, read: { b: 5 }, pos: {} }) }));
         expect(seen).toEqual([{ v: 2, read: { a: 5 }, pos: {} }]);
+    });
+});
+
+describe("trusting the game again", () => {
+    const game: ReadonlySet<string> = new Set(["g1", "g2"]);
+
+    it("lists the hand clears the game disagrees with and drops only those", () => {
+        let p = withUnread(withUnread(withUnread(emptyProgress(), "g1", 5), "g2", 6), "own", 7);
+        expect(overriddenByHand(p, game).sort()).toEqual(["g1", "g2"]);
+        expect(isStoryRead(p, game, "g1")).toBe(false);
+        p = trustingGame(p, game);
+        expect(p.unread).toEqual({ own: 7 });
+        expect(isStoryRead(p, game, "g1")).toBe(true);
+        expect(isStoryRead(p, game, "g2")).toBe(true);
+        expect(overriddenByHand(p, game)).toEqual([]);
+    });
+
+    it("returns the same document when there is nothing to drop, and removes an emptied map", () => {
+        const untouched = withRead(emptyProgress(), "s1", 9);
+        expect(trustingGame(untouched, game)).toBe(untouched);
+        const cleared = withUnread(emptyProgress(), "g1", 5);
+        expect(trustingGame(cleared, game).unread).toBeUndefined();
     });
 });

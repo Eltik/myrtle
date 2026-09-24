@@ -92,6 +92,18 @@ export const messages = {
         text: "Nothing imported from the game yet. Refresh your profile to bring in what you have read in-game.",
         description: "Second line of the sync row when the account has never refreshed its game data.",
     },
+    "progress.overrides": {
+        text: "{count} stories you cleared that the game says you read",
+        description: "Heading of the row that offers to hand the game's read verdict back. {count} is the number of stories the reader marked unread by hand although the account's game data says they were played.",
+    },
+    "progress.overrides.blurb": {
+        text: "A story you clear stays unread even when your game data says you read it, and the clear syncs to your account like any mark, so Account wins keeps it. Trust the game to show those as read again.",
+        description: "Explanation under the overrides heading: why clearing a story wins over the game's verdict and why the sync choice does not undo it.",
+    },
+    "progress.overrides.trust": {
+        text: "Trust the game",
+        description: "Button that drops every hand clear on a story the game says was read, so those stories show as read again.",
+    },
     "progress.sync.now": {
         text: "Sync now",
         description: "Button that starts a sync immediately.",

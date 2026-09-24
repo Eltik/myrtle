@@ -32,8 +32,8 @@ export const messages = {
         description: "Chapter sheet action that withdraws every read mark in the chapter.",
     },
     "marks.clearAll.confirm": {
-        text: "Clear {count} marks?",
-        description: "Inline confirmation shown in place of the chapter actions after Clear all is pressed. {count} is how many stories count as read.",
+        text: "Clear {count} marks? Cleared stories stay unread even if the game says you read them.",
+        description: "Inline confirmation shown in place of the chapter actions after Clear all is pressed. {count} is how many stories count as read. The second sentence says that a hand clear outranks the game's verdict.",
     },
     "marks.clearAll.yes": {
         text: "Confirm",
