@@ -237,8 +237,18 @@ export function rowTouched(row: IPlanRow, clears: StageClears): boolean {
     return !!clears && row.opStages.some((st) => ["claimed", "unrated"].includes(stageStatus(st, clears)));
 }
 
+/** A stage's pick key: its id, since codes repeat within an event (奇象巡展 lists EE-01 twice). */
 export function stageKey(stage: OpStage): string {
+    return stage.stageId;
+}
+
+/** The code-based key plans were saved under before picks were keyed by id; still read so old picks survive. */
+function legacyStageKey(stage: OpStage): string {
     return stage.challenge ? `${stage.code} CM` : stage.code;
+}
+
+function stagePick(chosen: Record<string, boolean> | undefined, stage: OpStage): boolean | undefined {
+    return chosen?.[stageKey(stage)] ?? chosen?.[legacyStageKey(stage)];
 }
 
 export function stageDefault(row: IPlanRow, stage: OpStage, clears: StageClears): boolean {
@@ -255,14 +265,14 @@ export function stageDefault(row: IPlanRow, stage: OpStage, clears: StageClears)
 }
 
 export function stageOn(row: IPlanRow, stage: OpStage, state: IPlanState, clears: StageClears): boolean {
-    return state.stages[row.key]?.[stageKey(stage)] ?? stageDefault(row, stage, clears);
+    return stagePick(state.stages[row.key], stage) ?? stageDefault(row, stage, clears);
 }
 
 export function rowDeviates(row: IPlanRow, state: IPlanState, clears: StageClears): boolean {
     const chosen = state.stages[row.key];
     if (!chosen) return false;
     return row.opStages.some((st) => {
-        const pick = chosen[stageKey(st)];
+        const pick = stagePick(chosen, st);
         return pick !== undefined && pick !== stageDefault(row, st, clears);
     });
 }
