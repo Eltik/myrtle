@@ -129,11 +129,23 @@ export const messages = {
     },
     "browse.chip.range": {
         text: "Chapters {from} to {to}",
-        description: "Primary label of a jump chip or a section heading covering a run of main story chapters.",
+        description: "The chapter run a section covers, in full words. Shown in the tooltip of a collapsed jump chip, where there is room for the words.",
     },
     "browse.chip.rangeOne": {
         text: "Chapter {n}",
-        description: "Primary label of a jump chip or a section heading covering a single main story chapter.",
+        description: "The single main story chapter a section covers, in full words. Shown in the tooltip of a collapsed jump chip.",
+    },
+    "browse.chip.compact": {
+        text: "Ch. {from}-{to}",
+        description: "The chapter run a section covers, abbreviated. The secondary line of a jump chip and of a section heading, where the section's name is the primary. A plain hyphen, in a monospace run.",
+    },
+    "browse.chip.compactOne": {
+        text: "Ch. {n}",
+        description: "The single main story chapter a section covers, abbreviated. The secondary line of a jump chip and of a section heading.",
+    },
+    "browse.chip.act": {
+        text: "Act {ordinal} · {range}",
+        description: "The secondary line of the active jump chip where the section's own name names an act ({ordinal} is the numeral out of that name, I or 1). No English arc names one today; the ordinal is drawn into the act's banner art instead.",
     },
     "browse.chip.includes": {
         text: "Includes chapters {from} to {to}",
@@ -150,10 +162,6 @@ export const messages = {
     "browse.row.fraction": {
         text: "{read} / {total}",
         description: "Read fraction printed on a list row, beside its progress bar.",
-    },
-    "browse.section.mainWith": {
-        text: "Main story · {range}",
-        description: "Section heading over a run of main story chapters: the shelf, then the chapter range.",
     },
     "browse.card.entries": {
         text: "{count, plural, one {# entry} other {# entries}}",

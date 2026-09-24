@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-24T10:01:50.567Z",
+    "generatedAt": "2026-09-24T12:57:44.532Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -18638,6 +18638,35 @@
             ]
         },
         {
+            "key": "story.browse.chip.act",
+            "namespace": "story",
+            "source_text": "Act {ordinal} · {range}",
+            "description": "The secondary line of the active jump chip where the section's own name names an act ({ordinal} is the numeral out of that name, I or 1). No English arc names one today; the ordinal is drawn into the act's banner art instead.",
+            "placeholders": [
+                "ordinal",
+                "range"
+            ]
+        },
+        {
+            "key": "story.browse.chip.compact",
+            "namespace": "story",
+            "source_text": "Ch. {from}-{to}",
+            "description": "The chapter run a section covers, abbreviated. The secondary line of a jump chip and of a section heading, where the section's name is the primary. A plain hyphen, in a monospace run.",
+            "placeholders": [
+                "from",
+                "to"
+            ]
+        },
+        {
+            "key": "story.browse.chip.compactOne",
+            "namespace": "story",
+            "source_text": "Ch. {n}",
+            "description": "The single main story chapter a section covers, abbreviated. The secondary line of a jump chip and of a section heading.",
+            "placeholders": [
+                "n"
+            ]
+        },
+        {
             "key": "story.browse.chip.includes",
             "namespace": "story",
             "source_text": "Includes chapters {from} to {to}",
@@ -18660,7 +18689,7 @@
             "key": "story.browse.chip.range",
             "namespace": "story",
             "source_text": "Chapters {from} to {to}",
-            "description": "Primary label of a jump chip or a section heading covering a run of main story chapters.",
+            "description": "The chapter run a section covers, in full words. Shown in the tooltip of a collapsed jump chip, where there is room for the words.",
             "placeholders": [
                 "from",
                 "to"
@@ -18670,7 +18699,7 @@
             "key": "story.browse.chip.rangeOne",
             "namespace": "story",
             "source_text": "Chapter {n}",
-            "description": "Primary label of a jump chip or a section heading covering a single main story chapter.",
+            "description": "The single main story chapter a section covers, in full words. Shown in the tooltip of a collapsed jump chip.",
             "placeholders": [
                 "n"
             ]
@@ -18854,15 +18883,6 @@
             "source_text": "Main story",
             "description": "Section heading holding the main story chapters, used when the game's own storyline shelves are not available.",
             "placeholders": []
-        },
-        {
-            "key": "story.browse.section.mainWith",
-            "namespace": "story",
-            "source_text": "Main story · {range}",
-            "description": "Section heading over a run of main story chapters: the shelf, then the chapter range.",
-            "placeholders": [
-                "range"
-            ]
         },
         {
             "key": "story.browse.section.other",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chapterNumberOf, glyphIndexFor, hashKey, parseMainOrdinal, rangeIsSingle, releaseYear, SECTION_GLYPHS, sectionChapters, specModel } from "./chapters";
+import { chapterNumberOf, chipLines, glyphIndexFor, hashKey, type IChipModel, parseMainOrdinal, rangeIsSingle, releaseYear, SECTION_GLYPHS, sectionChapters, specModel, splitActOrdinal } from "./chapters";
 import type { LibEntry, LibGroup } from "./derive";
 
 function entry(id: string, over: Partial<LibEntry> = {}): LibEntry {
@@ -146,5 +146,72 @@ describe("glyphIndexFor", () => {
 
     it("hashes the id, not its length", () => {
         expect(hashKey("ssLine_1")).not.toBe(hashKey("ssLine_2"));
+    });
+});
+
+describe("splitActOrdinal", () => {
+    it("finds no ordinal in any of the four EN arc names, because the ordinal is in the banner art", () => {
+        for (const name of ["HOUR OF AN AWAKENING", "SHATTER OF A VISION", "SHADOW OF A DYING SUN", "NEXUS POINT OF FUTURE"]) {
+            expect(splitActOrdinal(name)).toEqual({ ordinal: null, name });
+        }
+    });
+
+    it("reads a roman or arabic ordinal off a name that carries one, and hands back the name without it", () => {
+        expect(splitActOrdinal("Act I: Shatter of a Vision")).toEqual({ ordinal: "I", name: "Shatter of a Vision" });
+        expect(splitActOrdinal("Act 2 - Shadow of a Dying Sun")).toEqual({ ordinal: "2", name: "Shadow of a Dying Sun" });
+        expect(splitActOrdinal("act iii · Nexus Point")).toEqual({ ordinal: "III", name: "Nexus Point" });
+    });
+
+    it("leaves a bare ordinal with an empty name rather than printing it twice", () => {
+        expect(splitActOrdinal("Act 1")).toEqual({ ordinal: "1", name: "" });
+    });
+
+    it("does not read ACT out of a name that merely starts with those letters", () => {
+        expect(splitActOrdinal("Actors of the Dawn").ordinal).toBeNull();
+        expect(splitActOrdinal("Action").ordinal).toBeNull();
+    });
+});
+
+describe("chipLines", () => {
+    const arc: Pick<IChipModel, "name" | "range" | "includes" | "iconWide"> = { name: "SHATTER OF A VISION", range: { from: 4, to: 8 }, includes: null, iconWide: true };
+    const shelf: Pick<IChipModel, "name" | "range" | "includes" | "iconWide"> = { name: "The Ark", range: null, includes: null, iconWide: false };
+
+    it("collapses a mainline arc to its range, because the banner beside it already prints the name", () => {
+        expect(chipLines(arc, false)).toEqual({ name: null, range: { from: 4, to: 8 }, holds: false, ordinal: null });
+    });
+
+    it("expands the active arc to the name over the range", () => {
+        expect(chipLines(arc, true)).toEqual({ name: "SHATTER OF A VISION", range: { from: 4, to: 8 }, holds: false, ordinal: null });
+    });
+
+    it("keeps an arc's name collapsed when there is no banner to carry it", () => {
+        expect(chipLines({ ...arc, iconWide: false }, false).name).toBe("SHATTER OF A VISION");
+    });
+
+    it("carries a single chapter as a range of one rather than dropping it", () => {
+        const one = chipLines({ ...arc, range: { from: 9, to: 9 } }, false);
+        expect(one.range).toEqual({ from: 9, to: 9 });
+        expect(one.range && rangeIsSingle(one.range)).toBe(true);
+    });
+
+    it("prints a themed shelf's name in both forms and never a range it does not have", () => {
+        expect(chipLines(shelf, false)).toEqual({ name: "The Ark", range: null, holds: false, ordinal: null });
+        expect(chipLines(shelf, true)).toEqual({ name: "The Ark", range: null, holds: false, ordinal: null });
+    });
+
+    it("holds back the weaker includes claim until the chip is the active one", () => {
+        const holding = { ...shelf, includes: { from: 7, to: 14 } };
+        expect(chipLines(holding, false).range).toBeNull();
+        expect(chipLines(holding, true)).toEqual({ name: "The Ark", range: { from: 7, to: 14 }, holds: true, ordinal: null });
+    });
+
+    it("prints the act ordinal on the expanded chip alone, and strips it from the name", () => {
+        const named = { ...arc, name: "Act I: Shatter of a Vision" };
+        expect(chipLines(named, true)).toEqual({ name: "Shatter of a Vision", range: { from: 4, to: 8 }, holds: false, ordinal: "I" });
+        expect(chipLines(named, false).ordinal).toBeNull();
+    });
+
+    it("prints no name at all for a bare ordinal, rather than repeating it on both lines", () => {
+        expect(chipLines({ ...arc, name: "Act 1", iconWide: false }, true)).toEqual({ name: null, range: { from: 4, to: 8 }, holds: false, ordinal: "1" });
     });
 });

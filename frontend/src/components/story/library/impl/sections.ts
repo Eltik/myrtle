@@ -66,6 +66,37 @@ export function matchesFilter(kind: StoryKind, filter: FilterKey): boolean {
     }
 }
 
+/**
+ * The one pill every group in a section answers to, or `null` where it mixes.
+ *
+ * It is the LEAD-IN WORD of the muted line under a section heading ("Main
+ * story · Ch. 4-8 · 6 chapters"), and it is derived rather than written per
+ * section so the mainline arcs are not a special case: their groups are all
+ * `main`, so they say "Main story" for the same reason a vignette shelf says
+ * "Side stories".
+ *
+ * A shelf holding events beside vignettes answers `null` and its line carries
+ * the count alone, because naming one of the two kinds over a heading would be
+ * a claim about the other. The pill keys are reused verbatim rather than a new
+ * set of words, so a section and the filter row can never disagree about what
+ * "Side stories" covers.
+ */
+export function sectionFilterKey(groups: readonly Pick<LibGroup, "category" | "displayType">[]): Exclude<FilterKey, "all"> | null {
+    let found: Exclude<FilterKey, "all"> | null = null;
+    for (const group of groups) {
+        const key = FILTER_ORDER.find((f) => f !== "all" && matchesFilter(kindOf(group), f)) as Exclude<FilterKey, "all"> | undefined;
+        if (!key) return null;
+        if (found === null) found = key;
+        else if (found !== key) return null;
+    }
+    return found;
+}
+
+/** The muted line under a section heading, from the parts it has. An absent part drops out rather than leaving a stray separator. */
+export function underLine(parts: readonly (string | null | undefined)[]): string {
+    return parts.filter((part): part is string => typeof part === "string" && part !== "").join(" · ");
+}
+
 export type SectionKind = "arc" | "storyline" | "other" | "records" | "year" | "main";
 
 export interface ISection {

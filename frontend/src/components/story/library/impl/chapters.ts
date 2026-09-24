@@ -17,6 +17,7 @@
 
 import { BookMarkedIcon, CompassIcon, DramaIcon, FeatherIcon, FlameIcon, LeafIcon, MoonStarIcon, MountainSnowIcon, ShipIcon, SnowflakeIcon, SwordsIcon, WavesIcon } from "lucide-react";
 import type { LibGroup } from "./derive";
+import type { FilterKey } from "./sections";
 
 /** A group's chapter number when it has one, whatever the wire sends. */
 export function chapterNumberOf(group: Pick<LibGroup, "id" | "category"> & { chapterNumber?: number }): number | null {
@@ -124,7 +125,7 @@ export function glyphIndexFor(id: string): number {
     return hashKey(id) % SECTION_GLYPHS.length;
 }
 
-/** What a jump chip and a section heading print. `secondary` is the arc's own name, which is decoration under a number rather than the only thing said. */
+/** What a jump chip and a section heading print. The NAME is the primary line on both and the chapter range is the secondary, which is the reverse of what shipped first. */
 export interface IChipModel {
     id: string;
     /** `null` on a section the chapter numbers do not describe, which is every themed shelf; the caller then prints {@link IChipModel.name} alone. */
@@ -142,9 +143,71 @@ export interface IChipModel {
     iconLogo?: boolean;
     /** The index into {@link SECTION_GLYPHS} used when there is no `iconUrl`. */
     glyph: number;
+    /** The one pill every group in the section answers to, which is the lead-in word of the heading's muted line, or `null` where the section mixes kinds. */
+    filter?: Exclude<FilterKey, "all"> | null;
 }
 
 /** "Chapters 0 to 3", or "Chapter 9" when a section holds one. The caller owns the wording; this owns which of the two it is. */
 export function rangeIsSingle(range: IChapterRange): boolean {
     return range.from === range.to;
+}
+
+/**
+ * The act ordinal a section's name carries, and the name with it taken off.
+ *
+ * THE ORDINAL IS IN THE ART, NOT IN THE STRING. All four EN arcs are named by
+ * `MainlineSplitData.SubName` alone ("HOUR OF AN AWAKENING", "SHATTER OF A
+ * VISION", "SHADOW OF A DYING SUN", "NEXUS POINT OF FUTURE"), and the ordinal
+ * a reader asks for is typeset into the 184x52 banner beside them, which reads
+ * AD INITIUM, ACT I, ACT II, ACT III. So this returns `null` on 4 of 4 EN arcs
+ * and the chip prints no ordinal of its own: printing one would either repeat
+ * the banner or invent a numbering the game does not use.
+ *
+ * It exists for the server that one day names an arc "Act I: Shatter of a
+ * Vision", which is the shape the second reader asked for. A bare "Act 1" with
+ * nothing after it splits to an EMPTY name, and the chip then prints the
+ * ordinal line alone rather than printing "Act 1" twice.
+ */
+export function splitActOrdinal(name: string): { ordinal: string | null; name: string } {
+    const match = /^act\s+([ivxlcdm]+|\d{1,3})\b[\s:.·-]*(.*)$/i.exec(name.trim());
+    if (!match?.[1]) return { ordinal: null, name };
+    return { ordinal: match[1].toUpperCase(), name: (match[2] ?? "").trim() };
+}
+
+/**
+ * WHAT ONE JUMP CHIP PRINTS, as a structure rather than as words.
+ *
+ * A chip has two forms and the bar is mostly the first. COLLAPSED is the
+ * inactive form: one line, and on a mainline arc that line is the compact
+ * chapter range alone, because the arc's banner IS its name and printing the
+ * name beside a picture of the name cost 255.0 px a chip. EXPANDED is the
+ * active one: the name over the range, which is the form the reader is given
+ * once a section is the one they are in, and the form the tooltip shows on
+ * hover for every collapsed chip.
+ *
+ * A themed shelf keeps its name in both forms, because its 108x108 logo is a
+ * monogram (RL, UR, LA) and names nothing. Its `includes` line, the weaker
+ * "holds these chapters" claim, is printed on the expanded chip only: it is
+ * true of no EN shelf today and it is never worth a line in a bar that
+ * overflows.
+ */
+export interface IChipLines {
+    /** The name line. `null` only where the arc banner already prints it, which is a collapsed mainline chip. */
+    name: string | null;
+    /** The chapter run on the mono line, compact when collapsed. */
+    range: IChapterRange | null;
+    /** True when {@link IChipLines.range} is the weaker "holds these chapters" claim rather than the run the section IS. */
+    holds: boolean;
+    /** The act ordinal off the section's own name, printed before the range on an expanded chip. `null` on every EN arc; see {@link splitActOrdinal}. */
+    ordinal: string | null;
+}
+
+export function chipLines(chip: Pick<IChipModel, "name" | "range" | "includes" | "iconWide">, active: boolean): IChipLines {
+    const split = splitActOrdinal(chip.name);
+    // The banner carries the name only where there IS a banner and the chip is
+    // a chapter run: a themed shelf with `iconWide` would lose its name here.
+    const bannerNames = chip.iconWide === true && chip.range !== null;
+    const name = active || !bannerNames ? (split.name === "" ? null : split.name) : null;
+    const range = active ? (chip.range ?? chip.includes) : chip.range;
+    return { name, range, holds: range !== null && chip.range === null, ordinal: active && range !== null ? split.ordinal : null };
 }

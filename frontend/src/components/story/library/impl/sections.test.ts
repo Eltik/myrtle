@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Storyline } from "#/types/generated/Storyline";
 import type { LibEntry, LibGroup, LibIndex, LibRecord } from "./derive";
-import { buildSections, cardCode, FILTER_ORDER, fallbackSections, kindOf, matchesFilter, sectionLibrary } from "./sections";
+import { buildSections, cardCode, FILTER_ORDER, fallbackSections, kindOf, matchesFilter, sectionFilterKey, sectionLibrary, underLine } from "./sections";
 
 function entry(id: string, over: Partial<LibEntry> = {}): LibEntry {
     return { id, name: id, sort: 1, groupId: "g", hasScript: true, requiredStages: [], ...over };
@@ -184,5 +184,38 @@ describe("cardCode", () => {
     it("falls back to the uppercased group id, never to a placeholder word", () => {
         expect(cardCode(group("act10mini", { stories: [entry("a"), entry("b")] }))).toBe("ACT10MINI");
         expect(cardCode(group("act5d0", { stories: [entry("a", { code: "ENTRY" })] }))).toBe("ACT5D0");
+    });
+});
+
+describe("sectionFilterKey", () => {
+    it("answers Main story for a mainline arc, which is how its heading earns that word without a special case", () => {
+        expect(sectionFilterKey([group("main_0", { category: "main" }), group("main_1", { category: "main" })])).toBe("main");
+    });
+
+    it("answers the shelf's own pill where every group on it is one kind", () => {
+        expect(sectionFilterKey([group("act9d0"), group("act5d0")])).toBe("events");
+        expect(sectionFilterKey([group("act10mini", { category: "vignette" }), group("act11mini", { category: "vignette", displayType: "BRANCHLINE" })])).toBe("side");
+        expect(sectionFilterKey([group("rec", { category: "record" })])).toBe("records");
+    });
+
+    it("answers null where a shelf mixes kinds, because naming one would be a claim about the others", () => {
+        expect(sectionFilterKey([group("act9d0"), group("act10mini", { category: "vignette" })])).toBeNull();
+        expect(sectionFilterKey([group("main_0", { category: "main" }), group("act9d0")])).toBeNull();
+    });
+
+    it("answers null on an empty section rather than a word about nothing", () => {
+        expect(sectionFilterKey([])).toBeNull();
+    });
+});
+
+describe("underLine", () => {
+    it("reads kind, then chapters, then count", () => {
+        expect(underLine(["Main story", "Ch. 4-8", "6 chapters"])).toBe("Main story · Ch. 4-8 · 6 chapters");
+    });
+
+    it("drops an absent part instead of leaving its separator behind", () => {
+        expect(underLine(["Events", null, "3 chapters"])).toBe("Events · 3 chapters");
+        expect(underLine([null, null, "315 record sets"])).toBe("315 record sets");
+        expect(underLine([undefined, "", "6 chapters"])).toBe("6 chapters");
     });
 });

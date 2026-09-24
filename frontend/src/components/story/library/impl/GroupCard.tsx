@@ -10,7 +10,7 @@ import type { messages as archiveMessages } from "./Archive.messages";
 import { plateCrop, plateSource, titleSource } from "./art";
 import type { messages } from "./Browse.messages";
 import { chapterNumberOf, specModel } from "./chapters";
-import { groupWords, type LibGroup, readFraction } from "./derive";
+import { groupWords, type LibGroup, type ReadFilter, readFraction } from "./derive";
 import styles from "./GroupCard.module.css";
 import { type ITicketPalette, useTicketPalette } from "./palette";
 import { themeTrack, toggle as togglePlayer, useIsSounding } from "./player";
@@ -33,6 +33,22 @@ type ThemeT = TypedT<typeof archiveMessages>;
 export function KindBadge({ kind, className }: { kind: StoryKind; className?: string }): React.ReactElement {
     const t: BrowseT = useT("story");
     return <span className={cn(styles.kindBadge, className)}>{t(`browse.badge.${kind}`)}</span>;
+}
+
+/**
+ * The bookmark at legend size, for the read-state filter pills.
+ *
+ * It is the one place the ticket's colour code is spelled out: the pills name
+ * the three states in words and wear the tab in each state's own ink, so a
+ * reader who wonders what an amber tab means finds the answer in the control
+ * they are already using. Decorative here, because the pill's own label says
+ * the same thing.
+ */
+export function ReadMark({ state, className }: { state: ReadFilter; className?: string }): React.ReactElement | null {
+    // An UNREAD ticket wears no tab, so its pill wears none either: a grey tab
+    // on the legend would name a mark no card ever shows.
+    if (state === "any" || state === "unread") return null;
+    return <span aria-hidden="true" className={cn(styles.mark, state === "progress" && styles.markProgress, state === "done" && styles.markDone, className)} />;
 }
 
 /** The card grid. `auto-fill, minmax(300px, 1fr)` at an 18 px gap, which lands four 336.5 x 183.1 tickets across a 1,400 px content column. */
@@ -174,7 +190,13 @@ export function GroupCard({ group, progress, gameRead, onOpen, index = 0 }: IGro
                 <span aria-hidden="true" className={styles.stub}>
                     <span className={cn(styles.half, styles.stubFace)}>{art ? <img src={art} alt="" crossOrigin="anonymous" loading="lazy" decoding="async" className={styles.stubImage} /> : <span className={styles.stubBlank} />}</span>
                 </span>
-                {pct > 0 ? <span aria-hidden="true" className={cn(styles.bookmark, fraction.done && styles.bookmarkDone)} /> : null}
+                {/* THE BOOKMARK SAYS WHAT IT MEANS NOW. It is amber part-read and green
+                    finished, and it carried neither a name nor a number, so the colour
+                    was a code with no key. `role="img"` plus the fraction gives it one,
+                    and the native `title` shows the same words on hover; the card's own
+                    `aria-label` already carries the fraction, so this adds no tab stop
+                    and no second announcement of the same number. */}
+                {pct > 0 ? <span role="img" aria-label={t("chapter.readFraction", { read: fraction.read, total: fraction.total })} title={t("chapter.readFraction", { read: fraction.read, total: fraction.total })} className={cn(styles.bookmark, fraction.done && styles.bookmarkDone)} /> : null}
             </button>
             <ThemeGlyph group={group} className={styles.cardPlay} />
         </div>

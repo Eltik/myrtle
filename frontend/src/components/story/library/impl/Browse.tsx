@@ -13,9 +13,9 @@ import { FlatHead, JumpBar, SectionHead, sectionTitle, useScrollSpy } from "./Br
 import { ChapterModal } from "./ChapterModal";
 import { glyphIndexFor, type IChipModel, sectionChapters } from "./chapters";
 import { filterGroups, filterRecords, LIBRARY_SORTS, type LibGroup, type LibIndex, type LibRecord, type LibrarySort, matchesReadState, READ_FILTERS, type ReadFilter, readFraction, sortLibrary } from "./derive";
-import { GroupCard, GroupGrid, GroupRow, GroupRowList } from "./GroupCard";
+import { GroupCard, GroupGrid, GroupRow, GroupRowList, ReadMark } from "./GroupCard";
 import { OperatorsTab } from "./OperatorsTab";
-import { FILTER_ORDER, type FilterKey, RECORDS_ID, sectionLibrary, type ViewMode } from "./sections";
+import { FILTER_ORDER, type FilterKey, RECORDS_ID, sectionFilterKey, sectionLibrary, type ViewMode } from "./sections";
 
 type BrowseT = TypedT<typeof messages>;
 
@@ -112,9 +112,14 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
     const chips: IChipModel[] = useMemo(() => {
         const out: IChipModel[] = library.sections.map((s) => {
             const chapters = sectionChapters(s.groups, s.chapterRange);
-            return { id: s.id, range: chapters.primary, includes: chapters.includes, name: sectionTitle(s, t), count: s.groups.length, iconUrl: s.iconUrl, iconWide: s.iconWide === true, iconLogo: s.iconLogo === true, glyph: glyphIndexFor(s.lineId) };
+            // An ARC is main story by definition, even when an intermezzo is
+            // shelved inside it (Act I holds Darknights' Memoir): the kind word
+            // names the run, not the majority of its cards.
+            return { id: s.id, range: chapters.primary, includes: chapters.includes, name: sectionTitle(s, t), count: s.groups.length, iconUrl: s.iconUrl, iconWide: s.iconWide === true, iconLogo: s.iconLogo === true, glyph: glyphIndexFor(s.lineId), filter: s.kind === "arc" ? "main" : sectionFilterKey(s.groups) };
         });
-        if (library.records.length > 0) out.push({ id: RECORDS_ID, range: null, includes: null, name: t("browse.section.records"), count: library.records.length, glyph: glyphIndexFor(RECORDS_ID) });
+        // The records section is NOT given a kind word: its name already is
+        // one, and "Operator records · Operator records" is what that reads as.
+        if (library.records.length > 0) out.push({ id: RECORDS_ID, range: null, includes: null, name: t("browse.section.records"), count: library.records.length, glyph: glyphIndexFor(RECORDS_ID), filter: null });
         return out;
     }, [library, t]);
 
@@ -168,7 +173,8 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
                     ))}
                 </div>
 
-                {/* The read state is a segmented control and the order a native select: four states are worth four targets, and six orders in a row are a scroller nobody reads. */}
+                {/* The read state is a segmented control and the order a native select: four states are worth four targets, and six orders in a row are a scroller nobody reads.
+                    THE THREE STATE PILLS ARE ALSO THE TICKET'S LEGEND: each wears the card's own bookmark in that state's ink, which is what the colour meant all along and nowhere said. */}
                 <div className="flex flex-wrap items-center gap-2">
                     <fieldset className="msv-scroll flex min-w-0 max-w-full gap-0.5 overflow-x-auto rounded-[9px] border border-border bg-secondary/45 p-0.75" aria-label={t("browse.read.aria")}>
                         {READ_FILTERS.map((key) => (
@@ -178,10 +184,11 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
                                 onClick={() => setReadFilter(key)}
                                 aria-pressed={readFilter === key}
                                 className={cn(
-                                    "h-11 pointer-coarse:h-11 min-w-11 pointer-coarse:min-w-11 shrink-0 cursor-pointer rounded-md px-2.5 font-sans font-semibold text-[11.5px] transition-colors sm:h-7 sm:min-w-0",
+                                    "flex h-11 pointer-coarse:h-11 min-w-11 pointer-coarse:min-w-11 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-md px-2.5 font-sans font-semibold text-[11.5px] transition-colors sm:h-7 sm:min-w-0",
                                     readFilter === key ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground",
                                 )}
                             >
+                                <ReadMark state={key} />
                                 {t(`browse.read.${key}`)}
                             </button>
                         ))}

@@ -437,6 +437,22 @@
     transition: width 0.3s;
 }
 
+/* WHAT THE BOOKMARK'S COLOUR MEANS, declared once because two surfaces print
+   it. A reader asked "bookmark thingies look funny with the different colors,
+   what do they signify?", which is the right question: the ticket printed
+   amber and green and nothing on the page said which was which. The colours
+   stay and the read-state pills wear the same glyph in the same ink, so the
+   control that filters by read state IS the legend. Unread is the theme's own
+   muted ink rather than a third saturated colour, and an untouched ticket
+   still wears no bookmark at all: on a signed-out page that is most of the 87
+   EN groups, and a grey tab on every one of them is chrome carrying nothing.
+   So the grey tab is the legend's word for "no tab", which is the one place
+   the pill row and the ticket do not match shape for shape. */
+:root {
+    --story-mark-progress: rgb(240, 196, 25);
+    --story-mark-done: rgb(79, 209, 122);
+}
+
 .bookmark {
     position: absolute;
     top: 0;
@@ -448,11 +464,32 @@
     mask-image: url(/story/bookmark.svg);
     -webkit-mask-size: 100% 100%;
     mask-size: 100% 100%;
-    background: rgb(240, 196, 25);
+    background: var(--story-mark-progress);
 }
 
 .bookmarkDone {
-    background: rgb(79, 209, 122);
+    background: var(--story-mark-done);
+}
+
+/* The same tab at legend size, for the read-state pills. */
+.mark {
+    display: inline-block;
+    flex: none;
+    width: 8px;
+    height: 14px;
+    -webkit-mask-image: url(/story/bookmark.svg);
+    mask-image: url(/story/bookmark.svg);
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    background: var(--muted-foreground);
+}
+
+.markProgress {
+    background: var(--story-mark-progress);
+}
+
+.markDone {
+    background: var(--story-mark-done);
 }
 
 /* ---- list mode ------------------------------------------------------- */
