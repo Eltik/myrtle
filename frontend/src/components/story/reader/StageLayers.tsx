@@ -13,6 +13,7 @@ import { asset } from "#/components/operators/detail/impl/assets";
 import { CANVAS_H, CANVAS_W, cpx } from "#/lib/story/canvas";
 import type { Curtain, Cutin, ImageLayer, InterludePanel, Overlay, PanelLayer } from "#/lib/story/scene";
 import { cn } from "#/lib/utils";
+import { bodyPlate } from "./StageSprites";
 import { fade, focusFilter, useOutgoing } from "./stageFx";
 
 /**
@@ -127,17 +128,23 @@ export function Panels({ panels, sec, focus }: { panels: PanelLayer; sec: number
 }
 
 /**
- * `charactercutin`: a plate sized from the command's `width` and `height`, put
- * at the NEGATED offsets, fading alpha 0 to 1. There is no slide.
- * AMBIGUOUS: `height` is never written in EN and the two size arguments are
- * `GetInt` calls whose defaults are not in the binary, so the plate runs the
- * full canvas height here; one capture of a `[CharacterCutin(width=200)]`
- * would settle it.
+ * `charactercutin`: a WINDOW onto the character standing as they would on
+ * stage. The mask is `width` wide (200 in every EN use) and `height` tall
+ * (never written; the full canvas), centred at the offsets AS WRITTEN
+ * (negative x is screen-left; the corpus test is in the engine), and it fades
+ * alpha 0 to 1 with no slide. Inside it the body is drawn exactly as `Sprite`
+ * draws a slot: the prefab's `cutin_charslot` anchors bottom-centre in the
+ * mask at (0,0), so the plate sits centred on the strip with its bottom edge
+ * `plate.y - plate.h/2` from the canvas bottom, the figure at stage scale
+ * with its knees below the mask. The old plate stretched the whole body into
+ * the strip (`object-cover`), a small full-length figure where the game
+ * shows the head and shoulders at the size of everyone else on stage.
  */
-export function CutinPlate({ cutin, sec }: { cutin: Cutin; sec: number }): React.ReactElement {
+export function CutinPlate({ cutin, sec, plateFromWire = true }: { cutin: Cutin; sec: number; plateFromWire?: boolean }): React.ReactElement {
+    const plate = bodyPlate(cutin.sprite as { plate?: unknown }, plateFromWire);
     return (
         <div data-story-cutin={cutin.name} className="absolute overflow-hidden" style={{ left: `calc(50% + ${cpx(cutin.x)})`, top: `calc(50% - ${cpx(cutin.y)})`, width: cpx(cutin.width), height: cpx(cutin.height), transform: "translate(-50%, -50%)", ...fade("in", Math.max(0, sec)) }}>
-            <img src={asset(cutin.sprite.bodyUrl)} alt={cutin.name} draggable={false} className="absolute inset-0 size-full select-none object-cover object-top" />
+            <img src={asset(cutin.sprite.bodyUrl)} alt={cutin.name} draggable={false} className="absolute max-w-none select-none" style={{ left: `calc(50% + ${cpx(plate.x)})`, bottom: cpx(plate.y - plate.h / 2), width: cpx(plate.w), height: cpx(plate.h), transform: "translateX(-50%)" }} />
         </div>
     );
 }

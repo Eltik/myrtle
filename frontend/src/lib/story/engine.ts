@@ -830,9 +830,20 @@ function build(script: StoryScript, options: EngineOptions, total: number): Engi
                 }
                 case "charactercutin": {
                     // 611 of 1,007 carry a `name`; the rest are the CLOSE.
-                    // `Show` sizes the plate from two ints and NEGATES both
-                    // offsets before writing `anchoredPosition`, then fades
-                    // alpha 0 to 1. There is no slide.
+                    // `Show` sizes the plate from two ints and fades alpha 0
+                    // to 1. There is no slide. THE OFFSET IS SCREEN-SIGNED:
+                    // `offsetx=-300` is a strip LEFT of centre. The IL2CPP read
+                    // saw `Show` negate both floats before `anchoredPosition`,
+                    // and the first cut negated them too, which put the strip
+                    // on the occupied side (st_05-01: Wei's call over Amiya in
+                    // the right slot). The scripts decide it: of the EN cut-ins
+                    // followed by a one-character `[character]`, a negative
+                    // offset stands beside a RIGHT-slot character 64 times and
+                    // a left-slot one 7, a positive offset beside a left-slot
+                    // character 13 times and a right-slot one 0. Authors put
+                    // the strip on the free side, and negative is left. The
+                    // negation in `Show` lands on a transform whose parent
+                    // flips it back; what is written is what the screen shows.
                     const sec = num(a.fadetime, 0);
                     const blocking = bool(a.block, true);
                     if (a.name === undefined || a.name.trim() === "") {
@@ -845,8 +856,7 @@ function build(script: StoryScript, options: EngineOptions, total: number): Engi
                         unresolved("character", a.name);
                         break;
                     }
-                    const negate = (v: number) => (v === 0 ? 0 : -v);
-                    state.cutin = { sprite, name: key(a.name), x: negate(num(a.offsetx, 0)), y: negate(num(a.offsety, 0)), width: num(a.width, 200), height: num(a.height, CANVAS_H) };
+                    state.cutin = { sprite, name: key(a.name), x: num(a.offsetx, 0), y: num(a.offsety, 0), width: num(a.width, 200), height: num(a.height, CANVAS_H) };
                     frame(sec, blocking);
                     break;
                 }

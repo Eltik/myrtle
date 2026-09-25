@@ -113,7 +113,7 @@ export interface PanelLayer {
 export interface Cutin {
     sprite: CharacterSprite;
     name: string;
-    /** Canvas pixels; `Show` NEGATES both offsets before writing `anchoredPosition`. */
+    /** Canvas pixels as the script writes them: negative x is screen-left (the corpus test is in the engine). */
     x: number;
     y: number;
     /** Plate size in canvas pixels; `width=200` is every use that carries one. */

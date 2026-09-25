@@ -516,7 +516,7 @@ describe("commands that reached the engine in phase 3", () => {
         const e = createEngine(s, { nickname: "D" });
         const inFrame = e.step();
         // `Show` NEGATES both offsets before writing `anchoredPosition`.
-        expect(inFrame.timeline[0].state.cutin).toEqual({ sprite: SPRITE_A, name: "a", x: 300, y: 0, width: 800, height: 720 });
+        expect(inFrame.timeline[0].state.cutin).toEqual({ sprite: SPRITE_A, name: "a", x: -300, y: 0, width: 800, height: 720 });
         expect(e.step().timeline[0].state.cutin).toBeUndefined();
     });
 
