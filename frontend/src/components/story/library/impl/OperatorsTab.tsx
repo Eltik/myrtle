@@ -2,6 +2,7 @@ import { CheckIcon, SearchIcon, StarIcon } from "lucide-react";
 import type React from "react";
 import { useId, useMemo, useState } from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
+import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -10,6 +11,7 @@ import { cn, formatProfession, getAvatarById, RARITY_HEX, rarityToNumber } from 
 import { filterRecords, type LibRecord, readFraction } from "./derive";
 import { OperatorDialog } from "./OperatorDialog";
 import type { messages } from "./OperatorsTab.messages";
+import { nextPage, pageOf, RECORD_PAGE } from "./paging";
 
 export interface IOperatorsTabProps {
     records: LibRecord[];
@@ -18,6 +20,13 @@ export interface IOperatorsTabProps {
     gameRead: ReadonlySet<string>;
     /** False inside the browse page's records section, whose own search box and pills already filtered `records`. */
     controls?: boolean;
+    /**
+     * Mount the grid {@link RECORD_PAGE} cards at a time behind a "Show more"
+     * button. The browse page sets it; `pageKey` is what a reader changed
+     * (query, category, read state), and a new key starts again from one page.
+     */
+    paged?: boolean;
+    pageKey?: string;
 }
 
 /** The operator's rarity as 1 to 6, or `null` while the backend sends no `rarity`; the wire's own "no such operator" sentinel is 0. */
@@ -26,7 +35,7 @@ function rarityOf(record: LibRecord): number | null {
     return rarityToNumber(record.rarity);
 }
 
-export function OperatorsTab({ records, progress, gameRead, controls = true }: IOperatorsTabProps): React.ReactElement {
+export function OperatorsTab({ records, progress, gameRead, controls = true, paged = false, pageKey = "" }: IOperatorsTabProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("story");
     const [query, setQuery] = useState("");
     const [hideFinished, setHideFinished] = useState(false);
@@ -37,6 +46,12 @@ export function OperatorsTab({ records, progress, gameRead, controls = true }: I
         const searched = filterRecords(query, records);
         return hideFinished ? searched.filter((r) => !readFraction(r.stories, progress, gameRead).done) : searched;
     }, [records, query, hideFinished, progress, gameRead]);
+
+    // The limit is remembered against the key it was raised under, so a new
+    // search starts from one page without an effect or a render-time setState.
+    const [raised, setRaised] = useState<{ key: string; limit: number }>({ key: pageKey, limit: RECORD_PAGE });
+    const limit = raised.key === pageKey ? raised.limit : RECORD_PAGE;
+    const { shown, hidden } = paged ? pageOf(visible, limit) : { shown: visible, hidden: 0 };
 
     const done = useMemo(() => records.filter((r) => readFraction(r.stories, progress, gameRead).done).length, [records, progress, gameRead]);
 
@@ -66,11 +81,19 @@ export function OperatorsTab({ records, progress, gameRead, controls = true }: I
                 <div className="rounded-[14px] border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("operators.empty")}</div>
             ) : (
                 <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-                    {visible.map((record) => (
+                    {shown.map((record) => (
                         <OperatorCard key={record.charId} record={record} progress={progress} gameRead={gameRead} onOpen={() => setOpen(record)} />
                     ))}
                 </div>
             )}
+
+            {hidden > 0 ? (
+                <div className="mt-3 flex justify-center">
+                    <Button variant="outline" className="max-sm:min-h-11" onClick={() => setRaised({ key: pageKey, limit: limit + nextPage(hidden) })}>
+                        {t("operators.showMore", { count: nextPage(hidden), remaining: hidden })}
+                    </Button>
+                </div>
+            ) : null}
 
             <OperatorDialog key={open?.charId ?? "none"} record={open} progress={progress} gameRead={gameRead} onClose={() => setOpen(null)} />
         </div>

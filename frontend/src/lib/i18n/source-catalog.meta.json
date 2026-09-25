@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-25T04:21:25.673Z",
+    "generatedAt": "2026-09-25T09:32:59.889Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -18866,6 +18866,13 @@
             "placeholders": []
         },
         {
+            "key": "story.browse.continue.more",
+            "namespace": "story",
+            "source_text": "More reading options",
+            "description": "Accessible name of the menu button on the continue-reading row on a phone. It holds Start from the beginning and View chapter.",
+            "placeholders": []
+        },
+        {
             "key": "story.browse.empty",
             "namespace": "story",
             "source_text": "Nothing matches that search.",
@@ -18922,31 +18929,19 @@
             "placeholders": []
         },
         {
-            "key": "story.browse.jump.select",
+            "key": "story.browse.jump.picker",
             "namespace": "story",
-            "source_text": "Section",
-            "description": "Label of the section picker that replaces the jump chip row on a phone.",
-            "placeholders": []
+            "source_text": "Section picker, current section: {name}",
+            "description": "Accessible name of the pill that replaces the jump chip row on a phone. It opens a sheet listing every section; {name} is the section the reader is in.",
+            "placeholders": [
+                "name"
+            ]
         },
         {
-            "key": "story.browse.mode.browse",
+            "key": "story.browse.jump.sheetTitle",
             "namespace": "story",
-            "source_text": "Browse",
-            "description": "First mode tab above the story library: the chapter sections.",
-            "placeholders": []
-        },
-        {
-            "key": "story.browse.mode.dialogue",
-            "namespace": "story",
-            "source_text": "Search dialogue",
-            "description": "Second mode tab above the story library, disabled until full-text search of scripts ships.",
-            "placeholders": []
-        },
-        {
-            "key": "story.browse.mode.dialogue.soon",
-            "namespace": "story",
-            "source_text": "Coming soon",
-            "description": "Tooltip on the disabled dialogue-search tab.",
+            "source_text": "Jump to a section",
+            "description": "Title of the bottom sheet that lists every section, opened from the section picker on a phone.",
             "placeholders": []
         },
         {
@@ -19123,6 +19118,52 @@
             "source_text": "Title A to Z",
             "description": "Browse order: alphabetical by chapter name.",
             "placeholders": []
+        },
+        {
+            "key": "story.browse.toolbar.category",
+            "namespace": "story",
+            "source_text": "Category",
+            "description": "Label over the category pills (All, Main story, Events...) inside the filters sheet and popover.",
+            "placeholders": []
+        },
+        {
+            "key": "story.browse.toolbar.done",
+            "namespace": "story",
+            "source_text": "Done",
+            "description": "Button that closes the filters sheet on a phone. The filters apply as they are tapped; this only closes it.",
+            "placeholders": []
+        },
+        {
+            "key": "story.browse.toolbar.filters",
+            "namespace": "story",
+            "source_text": "Filters",
+            "description": "Button on a phone that opens the sheet holding the category, read-state and sort controls.",
+            "placeholders": []
+        },
+        {
+            "key": "story.browse.toolbar.filtersAria",
+            "namespace": "story",
+            "source_text": "Filters, {count, plural, one {# active} other {# active}}",
+            "description": "Accessible name of the phone Filters button while some of category, read state and sort are off their default.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.browse.toolbar.open",
+            "namespace": "story",
+            "source_text": "Search and filters",
+            "description": "Accessible name and tooltip of the sticky bar's button that opens the search box and the category, read-state, sort and layout controls.",
+            "placeholders": []
+        },
+        {
+            "key": "story.browse.toolbar.openActive",
+            "namespace": "story",
+            "source_text": "Search and filters, {count, plural, one {# filter active} other {# filters active}}",
+            "description": "Accessible name of the sticky bar's search and filters button while some of category, read state and sort are off their default.",
+            "placeholders": [
+                "count"
+            ]
         },
         {
             "key": "story.browse.view.aria",
@@ -19857,6 +19898,17 @@
             ]
         },
         {
+            "key": "story.library.countsAll",
+            "namespace": "story",
+            "source_text": "{groups} chapters · {records} operators · {stories} stories",
+            "description": "Subhead under the page title on a phone, where the headline story count beside the title is dropped and folded in here. {stories} arrives already formatted (1,887).",
+            "placeholders": [
+                "groups",
+                "records",
+                "stories"
+            ]
+        },
+        {
             "key": "story.library.description",
             "namespace": "story",
             "source_text": "Read every Arknights story: main chapters, events and operator records.",
@@ -20288,6 +20340,16 @@
             "source_text": "Search operators",
             "description": "Placeholder of the search box above the operator records grid.",
             "placeholders": []
+        },
+        {
+            "key": "story.operators.showMore",
+            "namespace": "story",
+            "source_text": "Show {count} more ({remaining} left)",
+            "description": "Button under the operator records grid in the browse page that mounts the next page of cards. count is how many the press adds, remaining how many are still hidden.",
+            "placeholders": [
+                "count",
+                "remaining"
+            ]
         },
         {
             "key": "story.progress.backup",

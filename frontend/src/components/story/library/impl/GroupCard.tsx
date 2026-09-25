@@ -1,16 +1,16 @@
 import { ChevronRightIcon, PauseIcon, PlayIcon } from "lucide-react";
 import type React from "react";
+import { memo, useMemo } from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import type { StoryProgress } from "#/lib/story/progress";
 import { humanTime, minutesFor, useReadingSpeed } from "#/lib/story/reading";
 import { cn } from "#/lib/utils";
 import type { messages as archiveMessages } from "./Archive.messages";
 import { plateCrop, plateSource, titleSource } from "./art";
 import type { messages } from "./Browse.messages";
 import { chapterNumberOf, specModel } from "./chapters";
-import { groupWords, type LibGroup, type ReadFilter, readFraction } from "./derive";
+import { groupWords, type IReadFraction, type LibGroup, type ReadFilter } from "./derive";
 import styles from "./GroupCard.module.css";
 import { type ITicketPalette, useTicketPalette } from "./palette";
 import { themeTrack, toggle as togglePlayer, useIsSounding } from "./player";
@@ -61,11 +61,19 @@ export function GroupRowList({ children }: { children: React.ReactNode }): React
     return <div className={styles.rows}>{children}</div>;
 }
 
+/**
+ * THE CARD RECEIVES ITS FRACTION, it does not walk its stories for one. The
+ * browse page already computes every group's fraction once per progress change
+ * (the read filter and the read sorts need it), and a card that took
+ * `progress` and `gameRead` instead recomputed it on every render. The props
+ * are all stable between renders that change nothing on the card, which is
+ * what lets `memo` skip it: a section change or a keystroke that leaves a card
+ * in place no longer re-renders it.
+ */
 export interface IGroupCardProps {
     group: LibGroup;
-    progress: StoryProgress;
-    /** The game's own read verdict, weighed beside the document. */
-    gameRead: ReadonlySet<string>;
+    fraction: IReadFraction;
+    /** Must be stable (a state setter or a `useCallback`), or `memo` never skips. */
     onOpen: (groupId: string) => void;
     /** Position in its section, for the reveal stagger. */
     index?: number;
@@ -143,10 +151,9 @@ function ThemeGlyph({ group, className }: { group: LibGroup; className: string }
  * The ticket does not follow the site theme. It is dark art in light mode and
  * in dark mode alike; only the page around it, and the badge, change.
  */
-export function GroupCard({ group, progress, gameRead, onOpen, index = 0 }: IGroupCardProps): React.ReactElement {
+export const GroupCard = memo(function GroupCard({ group, fraction, onOpen, index = 0 }: IGroupCardProps): React.ReactElement {
     const t: BrowseT = useT("story");
     const { wpm } = useReadingSpeed();
-    const fraction = readFraction(group.stories, progress, gameRead);
     // The KEY VISUAL is the picture, and the cover is only its fallback. The
     // background, the stub and the inks read the SAME choice: a chapter that
     // opens on a fade derives a black cover, and sampling that gives a card
@@ -158,10 +165,11 @@ export function GroupCard({ group, progress, gameRead, onOpen, index = 0 }: IGro
     const fit = useTitleFit(group.name, CARD_FIT);
     const pct = fraction.total > 0 ? Math.round((fraction.read / fraction.total) * 100) : 0;
     const spec = specText(group, t, wpm);
+    const inks = useMemo(() => inkVars(palette, index), [palette, index]);
 
     return (
         <div className={styles.cardWrap}>
-            <button type="button" onClick={() => onOpen(group.id)} aria-label={t("browse.card.openWithProgress", { name: group.name, read: fraction.read, total: fraction.total })} className={styles.ticket} style={inkVars(palette, index)}>
+            <button type="button" onClick={() => onOpen(group.id)} aria-label={t("browse.card.openWithProgress", { name: group.name, read: fraction.read, total: fraction.total })} className={styles.ticket} style={inks}>
                 <span className={cn(styles.half, styles.body)}>
                     {art ? <img src={art} alt="" crossOrigin="anonymous" data-source={plate.kind} loading="lazy" decoding="async" className={styles.kv} style={{ objectPosition: plateCrop(group) }} /> : null}
                     <span aria-hidden="true" className={styles.scrim} />
@@ -201,7 +209,7 @@ export function GroupCard({ group, progress, gameRead, onOpen, index = 0 }: IGro
             <ThemeGlyph group={group} className={styles.cardPlay} />
         </div>
     );
-}
+});
 
 /**
  * The spec line under a card or a row title. A main story chapter prints its
@@ -232,10 +240,9 @@ function specText(group: LibGroup, t: BrowseT, wpm: number): string {
  * plate in an 18.9 px line box is unreadable. It is no longer clipped with an
  * ellipsis either: it wraps to two whole-word lines.
  */
-export function GroupRow({ group, progress, gameRead, onOpen, index = 0 }: IGroupCardProps): React.ReactElement {
+export const GroupRow = memo(function GroupRow({ group, fraction, onOpen, index = 0 }: IGroupCardProps): React.ReactElement {
     const t: BrowseT = useT("story");
     const { wpm } = useReadingSpeed();
-    const fraction = readFraction(group.stories, progress, gameRead);
     const art = plateSource(group);
     const thumb = art.kind === "none" ? null : asset(art.url);
     const mark = group.iconUrl ? asset(group.iconUrl) : null;
@@ -243,10 +250,11 @@ export function GroupRow({ group, progress, gameRead, onOpen, index = 0 }: IGrou
     const pct = fraction.total > 0 ? Math.round((fraction.read / fraction.total) * 100) : 0;
     const code = cardCode(group);
     const chapter = chapterNumberOf(group);
+    const inks = useMemo(() => inkVars(palette, index), [palette, index]);
 
     return (
         <div className={styles.rowWrap} data-music={group.music ? "" : undefined}>
-            <button type="button" onClick={() => onOpen(group.id)} aria-label={t("browse.card.openWithProgress", { name: group.name, read: fraction.read, total: fraction.total })} className={styles.row} style={inkVars(palette, index)}>
+            <button type="button" onClick={() => onOpen(group.id)} aria-label={t("browse.card.openWithProgress", { name: group.name, read: fraction.read, total: fraction.total })} className={styles.row} style={inks}>
                 <span className={styles.rowThumb}>
                     {thumb ? <img src={thumb} alt="" crossOrigin="anonymous" loading="lazy" decoding="async" data-source={art.kind} /> : <span className={styles.rowBlank}>{mark ? <img src={mark} alt="" loading="lazy" decoding="async" className={styles.rowMark} /> : code}</span>}
                     {chapter !== null ? (
@@ -278,4 +286,4 @@ export function GroupRow({ group, progress, gameRead, onOpen, index = 0 }: IGrou
             <ThemeGlyph group={group} className={styles.rowPlay} />
         </div>
     );
-}
+});

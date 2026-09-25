@@ -7,6 +7,7 @@ import {
     finishedGroups,
     groupCode,
     groupOperations,
+    groupSearchTarget,
     groupWords,
     type LibEntry,
     type LibGroup,
@@ -15,10 +16,12 @@ import {
     matchesReadState,
     pickContinue,
     pickHero,
+    prepareSearch,
     progressSummary,
     READ_FILTERS,
     readFraction,
     readStateOf,
+    searchList,
     sortedStories,
     sortGroups,
     sortLibrary,
@@ -114,6 +117,30 @@ describe("filterRecords", () => {
 
     it("matches on a record's own name", () => {
         expect(filterRecords("incoming", records).map((r) => r.charId)).toEqual(["char_002_amiya"]);
+    });
+});
+
+describe("prepareSearch + searchList", () => {
+    const groups = [group("a", { name: "Under Tides" }), group("b", { name: "Dossoles Holiday", stories: [entry("b_1", { name: "Beach Episode", code: "DH-1" })] }), group("c", { name: "Ancient Forge" }), group("d", { name: "Kal'tsit's Ænigma", stories: [entry("d_1", { name: "Mon3tr" })] })];
+    const prepared = prepareSearch(groups, groupSearchTarget);
+
+    it("answers the same set as the one-shot filter, query by query", () => {
+        for (const query of ["", " ", "a", "ar", "tides", "beach", "dh-1", "dh1", "kaltsit", "aenigma", "mon3", "ut", "zzzz", "  forge  "]) {
+            expect(
+                searchList(query, prepared).map((g) => g.id),
+                query,
+            ).toEqual(filterGroups(query, groups).map((g) => g.id));
+        }
+    });
+
+    it("keeps input order and every item for a blank query", () => {
+        expect(searchList("", prepared).map((g) => g.id)).toEqual(["a", "b", "c", "d"]);
+    });
+
+    it("normalises each haystack once, at prepare time", () => {
+        expect(prepared.prepared).toHaveLength(4);
+        expect(prepared.prepared[3]?.names[0]?.name).toBe("kaltsits aenigma");
+        expect(prepared.prepared[1]?.extra).toBe("beach episode dh1");
     });
 });
 

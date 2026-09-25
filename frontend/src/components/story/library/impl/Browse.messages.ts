@@ -3,18 +3,6 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "story";
 
 export const messages = {
-    "browse.mode.browse": {
-        text: "Browse",
-        description: "First mode tab above the story library: the chapter sections.",
-    },
-    "browse.mode.dialogue": {
-        text: "Search dialogue",
-        description: "Second mode tab above the story library, disabled until full-text search of scripts ships.",
-    },
-    "browse.mode.dialogue.soon": {
-        text: "Coming soon",
-        description: "Tooltip on the disabled dialogue-search tab.",
-    },
     "browse.search.placeholder": {
         text: "Search stories",
         description: "Placeholder of the story library's search box.",
@@ -163,9 +151,13 @@ export const messages = {
         text: "REC",
         description: 'The mono stand-in for "Operator records" on a collapsed jump chip, where the full name does not fit. The full name is in the chip\'s tooltip and accessible name.',
     },
-    "browse.jump.select": {
-        text: "Section",
-        description: "Label of the section picker that replaces the jump chip row on a phone.",
+    "browse.jump.picker": {
+        text: "Section picker, current section: {name}",
+        description: "Accessible name of the pill that replaces the jump chip row on a phone. It opens a sheet listing every section; {name} is the section the reader is in.",
+    },
+    "browse.jump.sheetTitle": {
+        text: "Jump to a section",
+        description: "Title of the bottom sheet that lists every section, opened from the section picker on a phone.",
     },
     "browse.row.fraction": {
         text: "{read} / {total}",
@@ -294,6 +286,34 @@ export const messages = {
     "browse.section.sorted": {
         text: "All chapters",
         description: "Heading over the single flat section a sort other than Default produces, where the game's shelves would hide the order.",
+    },
+    "browse.toolbar.filters": {
+        text: "Filters",
+        description: "Button on a phone that opens the sheet holding the category, read-state and sort controls.",
+    },
+    "browse.toolbar.filtersAria": {
+        text: "Filters, {count, plural, one {# active} other {# active}}",
+        description: "Accessible name of the phone Filters button while some of category, read state and sort are off their default.",
+    },
+    "browse.toolbar.open": {
+        text: "Search and filters",
+        description: "Accessible name and tooltip of the sticky bar's button that opens the search box and the category, read-state, sort and layout controls.",
+    },
+    "browse.toolbar.openActive": {
+        text: "Search and filters, {count, plural, one {# filter active} other {# filters active}}",
+        description: "Accessible name of the sticky bar's search and filters button while some of category, read state and sort are off their default.",
+    },
+    "browse.toolbar.category": {
+        text: "Category",
+        description: "Label over the category pills (All, Main story, Events...) inside the filters sheet and popover.",
+    },
+    "browse.toolbar.done": {
+        text: "Done",
+        description: "Button that closes the filters sheet on a phone. The filters apply as they are tapped; this only closes it.",
+    },
+    "browse.continue.more": {
+        text: "More reading options",
+        description: "Accessible name of the menu button on the continue-reading row on a phone. It holds Start from the beginning and View chapter.",
     },
 } satisfies MessageMap;
 

@@ -12,7 +12,7 @@
  * :3060 index on 2026-09-23 sends none of them.
  */
 
-import { searchAndRank } from "#/lib/search/fuzzy";
+import { type IPreparedTarget, type IScoreTarget, prepareQuery, prepareTarget, scorePrepared } from "#/lib/search/fuzzy";
 import { isStoryRead, type StoryProgress } from "#/lib/story/progress";
 import type { OperatorRecordGroup } from "#/types/generated/OperatorRecordGroup";
 import type { StoryEntry } from "#/types/generated/StoryEntry";
@@ -99,21 +99,55 @@ export function sortedStories(stories: readonly LibEntry[]): LibEntry[] {
 }
 
 /**
- * Groups whose name, or one of whose story names, matches. Input order is
- * PRESERVED, because the caller's sort toggle owns the order; the fuzzy score
- * decides membership only.
+ * A list with its search haystacks normalised ONCE, so a keystroke is one scan
+ * over prepared strings and not a re-fold of every name. The browse page
+ * builds one per half of the index with `useMemo` and matches every keystroke
+ * against it; `filterGroups` and `filterRecords` are the one-shot form of the
+ * same thing and answer the same set.
  */
+export interface ISearchList<T> {
+    items: readonly T[];
+    prepared: readonly IPreparedTarget[];
+}
+
+export function prepareSearch<T>(items: readonly T[], target: (item: T) => IScoreTarget): ISearchList<T> {
+    return { items, prepared: items.map((item) => prepareTarget(target(item))) };
+}
+
+/**
+ * The items that match, in INPUT order: the caller's sort toggle owns the
+ * order and the fuzzy score decides membership only. A blank query keeps
+ * everything.
+ */
+export function searchList<T>(query: string, list: ISearchList<T>): T[] {
+    if (query.trim() === "") return [...list.items];
+    const q = prepareQuery(query);
+    return list.items.filter((_, at) => {
+        const target = list.prepared[at];
+        return target !== undefined && scorePrepared(q, target) > 0;
+    });
+}
+
+/** What a group is searched by: its name, then every story's name and operation code. */
+export function groupSearchTarget(group: { name: string; stories: readonly { name: string; code?: string }[] }): IScoreTarget {
+    return { name: group.name, extra: group.stories.map((s) => `${s.name} ${s.code ?? ""}`).join(" ") };
+}
+
+/** What an operator record set is searched by: the operator's name, then every record's name. */
+export function recordSearchTarget(record: Pick<LibRecord, "name" | "stories">): IScoreTarget {
+    return { name: record.name, extra: record.stories.map((s) => s.name).join(" ") };
+}
+
+/** Groups whose name, or one of whose story names, matches, in input order. */
 export function filterGroups<T extends { name: string; stories: readonly { name: string; code?: string }[] }>(query: string, groups: readonly T[]): T[] {
     if (query.trim() === "") return [...groups];
-    const matched = new Set(searchAndRank(query, groups, (g) => ({ name: g.name, extra: g.stories.map((s) => `${s.name} ${s.code ?? ""}`).join(" ") })).map((r) => r.item));
-    return groups.filter((g) => matched.has(g));
+    return searchList(query, prepareSearch(groups, groupSearchTarget));
 }
 
 /** Operator record sets whose operator name, or one of whose record names, matches. */
 export function filterRecords(query: string, records: readonly LibRecord[]): LibRecord[] {
     if (query.trim() === "") return [...records];
-    const matched = new Set(searchAndRank(query, records, (r) => ({ name: r.name, extra: r.stories.map((s) => s.name).join(" ") })).map((r) => r.item));
-    return records.filter((r) => matched.has(r));
+    return searchList(query, prepareSearch(records, recordSearchTarget));
 }
 
 /**

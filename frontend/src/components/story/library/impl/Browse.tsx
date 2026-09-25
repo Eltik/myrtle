@@ -1,27 +1,29 @@
-import { LayoutGridIcon, ListIcon, SearchIcon } from "lucide-react";
 import type React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Button } from "#/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { StoryProgress } from "#/lib/story/progress";
-import { cn } from "#/lib/utils";
 import type { messages } from "./Browse.messages";
-import { FlatHead, JumpBar, SectionHead, sectionTitle, useScrollSpy } from "./BrowseSections";
+import { FlatHead, JumpBar, SectionHead, sectionTitle } from "./BrowseSections";
+import { BrowseToolbar, type IBrowseToolbarState, ToolbarButton } from "./BrowseToolbar";
 import { ChapterModal } from "./ChapterModal";
 import { glyphIndexFor, type IChipModel, sectionChapters } from "./chapters";
-import { filterGroups, filterRecords, LIBRARY_SORTS, type LibGroup, type LibIndex, type LibRecord, type LibrarySort, matchesReadState, READ_FILTERS, type ReadFilter, readFraction, sortLibrary } from "./derive";
-import { GroupCard, GroupGrid, GroupRow, GroupRowList, ReadMark } from "./GroupCard";
+import { groupSearchTarget, type IReadFraction, LIBRARY_SORTS, type LibGroup, type LibIndex, type LibRecord, type LibrarySort, matchesReadState, prepareSearch, READ_FILTERS, type ReadFilter, readFraction, recordSearchTarget, searchList, sortLibrary } from "./derive";
+import { GroupCard, GroupGrid, GroupRow, GroupRowList } from "./GroupCard";
 import { OperatorsTab } from "./OperatorsTab";
-import { FILTER_ORDER, type FilterKey, RECORDS_ID, sectionFilterKey, sectionLibrary, type ViewMode } from "./sections";
+import { type FilterKey, RECORDS_ID, sectionFilterKey, sectionLibrary, type ViewMode } from "./sections";
+import { TOOLBAR_DEFAULTS } from "./toolbar";
 
 type BrowseT = TypedT<typeof messages>;
 
 const VIEW_KEY = "story.library.view";
 const READ_KEY = "story.library.read";
 const SORT_KEY = "story.library.sort";
+
+/** The bar's chips under a sort: none, as one constant so the bar's spy is not handed a fresh empty list every render. */
+const NO_CHIPS: readonly IChipModel[] = [];
 
 /**
  * The three toggles are stored as the BARE token, not as JSON, which is the
@@ -53,17 +55,36 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
     const t: BrowseT = useT("story");
     const collator = useFormatters().collator;
     const [query, setQuery] = useState("");
-    const [filter, setFilter] = useState<FilterKey>("all");
+    const [filter, setFilter] = useState<FilterKey>(TOOLBAR_DEFAULTS.filter);
     const [view, setView] = useLocalStorageState<ViewMode>(VIEW_KEY, "grid", { parse: (raw) => (raw === "list" || raw === "grid" ? raw : undefined), serialize: (v) => v });
-    const [readFilter, setReadFilter] = useLocalStorageState<ReadFilter>(READ_KEY, "any", oneOf(READ_FILTERS));
-    const [sort, setSort] = useLocalStorageState<LibrarySort>(SORT_KEY, "default", oneOf(LIBRARY_SORTS));
+    const [readFilter, setReadFilter] = useLocalStorageState<ReadFilter>(READ_KEY, TOOLBAR_DEFAULTS.readFilter, oneOf(READ_FILTERS));
+    const [sort, setSort] = useLocalStorageState<LibrarySort>(SORT_KEY, TOOLBAR_DEFAULTS.sort, oneOf(LIBRARY_SORTS));
     const [openId, setOpenId] = useState<string | null>(null);
     const [recordsOpen, setRecordsOpen] = useState(false);
 
-    // The fuzzy pass runs ONCE over each half and answers as a set; asking it
-    // per card would build 451 searchers per keystroke.
-    const matchedGroups = useMemo(() => new Set(filterGroups(query, index.groups).map((g) => g.id)), [query, index.groups]);
-    const matchedRecords = useMemo(() => new Set(filterRecords(query, index.records).map((r) => r.charId)), [query, index.records]);
+    /**
+     * THE CONTROLS ANSWER AT ONCE AND THE PAGE FOLLOWS. The toolbar is
+     * controlled by the immediate state; everything the page derives from it
+     * reads React's DEFERRED copies below, so a keystroke or a pill press
+     * commits the control first and the re-filtered page renders after it in an
+     * interruptible pass. Filtering on `query` directly made each keystroke one
+     * 570 to 610 ms task (INP 634 ms at 1440, 631 at 390), and the pills were
+     * the same shape: "All" after "Events" was a 195 ms task once the search
+     * alone had been deferred.
+     */
+    const searched = useDeferredValue(query);
+    const shownFilter = useDeferredValue(filter);
+    const shownRead = useDeferredValue(readFilter);
+    const shownSort = useDeferredValue(sort);
+    const shownView = useDeferredValue(view);
+    // The haystacks are normalised ONCE per index, and the fuzzy pass then runs
+    // once over each half per keystroke and answers as a set; asking it per
+    // card would build 451 searchers, and re-folding every name per keystroke
+    // re-normalised the 1,887 story names each time.
+    const groupSearch = useMemo(() => prepareSearch(index.groups, groupSearchTarget), [index.groups]);
+    const recordSearch = useMemo(() => prepareSearch(index.records, recordSearchTarget), [index.records]);
+    const matchedGroups = useMemo(() => new Set(searchList(searched, groupSearch).map((g) => g.id)), [searched, groupSearch]);
+    const matchedRecords = useMemo(() => new Set(searchList(searched, recordSearch).map((r) => r.charId)), [searched, recordSearch]);
 
     // ONE PASS over the index answers both the read-state filter and the read
     // sorts. `readFraction` walks a group's stories, and calling it per card
@@ -73,9 +94,9 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
     const recordFractions = useMemo(() => new Map(index.records.map((r) => [r.charId, readFraction(r.stories, progress, gameRead)])), [index.records, progress, gameRead]);
     const fractionOf = useCallback((group: LibGroup) => fractions.get(group.id) ?? readFraction(group.stories, progress, gameRead), [fractions, progress, gameRead]);
 
-    const keepGroup = useCallback((group: LibGroup) => matchedGroups.has(group.id) && matchesReadState(readFilter, fractionOf(group)), [matchedGroups, readFilter, fractionOf]);
-    const keepRecord = useCallback((record: LibRecord) => matchedRecords.has(record.charId) && matchesReadState(readFilter, recordFractions.get(record.charId) ?? readFraction(record.stories, progress, gameRead)), [matchedRecords, readFilter, recordFractions, progress, gameRead]);
-    const library = useMemo(() => sectionLibrary(index, filter, keepGroup, keepRecord), [index, filter, keepGroup, keepRecord]);
+    const keepGroup = useCallback((group: LibGroup) => matchedGroups.has(group.id) && matchesReadState(shownRead, fractionOf(group)), [matchedGroups, shownRead, fractionOf]);
+    const keepRecord = useCallback((record: LibRecord) => matchedRecords.has(record.charId) && matchesReadState(shownRead, recordFractions.get(record.charId) ?? readFraction(record.stories, progress, gameRead)), [matchedRecords, shownRead, recordFractions, progress, gameRead]);
+    const library = useMemo(() => sectionLibrary(index, shownFilter, keepGroup, keepRecord), [index, shownFilter, keepGroup, keepRecord]);
 
     /**
      * A SORT OTHER THAN DEFAULT FLATTENS THE SHELVES. Leaving the 14 sections
@@ -86,19 +107,19 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
      */
     const flat = useMemo(
         () =>
-            sort === "default"
+            shownSort === "default"
                 ? null
                 : sortLibrary(
                       library.sections.flatMap((s) => s.groups),
-                      sort,
+                      shownSort,
                       fractionOf,
                       collator,
                   ),
-        [library.sections, sort, fractionOf, collator],
+        [library.sections, shownSort, fractionOf, collator],
     );
 
     // A search or a records-only filter should not leave the 315 cards behind a Show button.
-    const recordsForced = query.trim() !== "" || filter === "records";
+    const recordsForced = searched.trim() !== "" || shownFilter === "records";
     const showRecords = recordsOpen || recordsForced;
 
     const openGroupObject = useMemo(() => (openId ? (index.groups.find((g) => g.id === openId) ?? null) : null), [openId, index.groups]);
@@ -138,96 +159,21 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
         return out;
     }, [library, t]);
 
-    const active = useScrollSpy(useMemo(() => (flat === null ? chips.map((c) => c.id) : []), [chips, flat]));
     const chipById = useMemo(() => new Map(chips.map((c) => [c.id, c])), [chips]);
+    const toolbar: IBrowseToolbarState = { query, setQuery, filter, setFilter, readFilter, setReadFilter, sort, setSort, view, setView };
 
     return (
         <>
             <div className="flex flex-col gap-3">
-                {/* Two rows at every width: the search and the layout toggle, then the pills on their own scrollable line. One wrapping row put the toggle over the pills at 375. */}
-                <div className="flex items-center gap-2">
-                    <div className="relative min-w-0 flex-1">
-                        <SearchIcon className="pointer-events-none absolute top-1/2 left-3.5 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                        <input
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder={t("browse.search.placeholder")}
-                            aria-label={t("browse.search.aria")}
-                            className="h-11 pointer-coarse:h-11 w-full rounded-[9px] border border-border bg-secondary/50 pr-3.5 pl-9 font-sans text-[13px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/40 sm:h-9.5"
-                        />
-                    </div>
-                    <fieldset className="flex shrink-0 gap-0.5 rounded-[9px] border border-border bg-secondary/45 p-0.75" aria-label={t("browse.view.aria")}>
-                        {(["grid", "list"] as const).map((mode) => (
-                            <button
-                                key={mode}
-                                type="button"
-                                onClick={() => setView(mode)}
-                                aria-pressed={view === mode}
-                                aria-label={t(`browse.view.${mode}`)}
-                                className={cn("flex h-11 pointer-coarse:h-11 pointer-coarse:w-11 w-11 cursor-pointer items-center justify-center rounded-md transition-colors sm:h-7.5 sm:w-9", view === mode ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground")}
-                            >
-                                {mode === "grid" ? <LayoutGridIcon className="size-3.5" aria-hidden="true" /> : <ListIcon className="size-3.5" aria-hidden="true" />}
-                            </button>
-                        ))}
-                    </fieldset>
-                </div>
-                <div className="msv-scroll -my-1 flex max-w-full items-center gap-1.5 overflow-x-auto py-1">
-                    {FILTER_ORDER.map((key) => (
-                        <button
-                            key={key}
-                            type="button"
-                            onClick={() => setFilter(key)}
-                            aria-pressed={filter === key}
-                            className={cn(
-                                "h-11 pointer-coarse:h-11 min-w-11 pointer-coarse:min-w-11 shrink-0 cursor-pointer rounded-full border px-3 font-sans font-semibold text-[12px] transition-colors sm:h-8 sm:min-w-0",
-                                filter === key ? "border-primary/55 bg-primary/12 text-foreground" : "border-border bg-secondary/40 text-muted-foreground hover:text-foreground",
-                            )}
-                        >
-                            {t(`browse.filter.${key}`)}
-                        </button>
-                    ))}
-                </div>
-
-                {/* The read state is a segmented control and the order a native select: four states are worth four targets, and six orders in a row are a scroller nobody reads.
-                    THE THREE STATE PILLS ARE ALSO THE TICKET'S LEGEND: each wears the card's own bookmark in that state's ink, which is what the colour meant all along and nowhere said. */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <fieldset className="msv-scroll flex min-w-0 max-w-full gap-0.5 overflow-x-auto rounded-[9px] border border-border bg-secondary/45 p-0.75" aria-label={t("browse.read.aria")}>
-                        {READ_FILTERS.map((key) => (
-                            <button
-                                key={key}
-                                type="button"
-                                onClick={() => setReadFilter(key)}
-                                aria-pressed={readFilter === key}
-                                className={cn(
-                                    "flex h-11 pointer-coarse:h-11 min-w-11 pointer-coarse:min-w-11 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-md px-2.5 font-sans font-semibold text-[11.5px] transition-colors sm:h-7 sm:min-w-0",
-                                    readFilter === key ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground",
-                                )}
-                            >
-                                <ReadMark state={key} />
-                                {t(`browse.read.${key}`)}
-                            </button>
-                        ))}
-                    </fieldset>
-                    <label className="flex min-w-0 items-center gap-2 sm:ms-auto">
-                        <span className="shrink-0 font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{t("browse.sort.label")}</span>
-                        <select
-                            value={sort}
-                            onChange={(e) => setSort(e.target.value as LibrarySort)}
-                            className="h-11 pointer-coarse:h-11 min-w-0 rounded-[9px] border border-border bg-secondary/50 px-2.5 font-sans text-[12.5px] text-foreground outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/40 sm:h-8"
-                        >
-                            {LIBRARY_SORTS.map((key) => (
-                                <option key={key} value={key}>
-                                    {t(`browse.sort.${key}`)}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-                </div>
+                <BrowseToolbar state={toolbar} />
 
                 {library.fallback ? <p className="m-0 rounded-[10px] border border-warning/40 bg-warning/8 px-3 py-2 font-sans text-[12px] text-muted-foreground">{t("browse.fallback")}</p> : null}
             </div>
 
-            {flat === null && chips.length > 0 ? <JumpBar chips={chips} active={active} /> : null}
+            {/* The bar is pinned under a sort too, with no chips in it: it is the only
+                search and filter a scrolled reader has, and a sorted page is the one
+                most likely to want its sort changed back. */}
+            <JumpBar chips={flat === null ? chips : NO_CHIPS} tools={<ToolbarButton state={toolbar} />} />
 
             {(flat === null ? library.sections.length === 0 : flat.length === 0) && library.records.length === 0 ? <div className="mt-6 rounded-[14px] border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("browse.empty")}</div> : null}
 
@@ -235,20 +181,20 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
                 flat.length > 0 ? (
                     <section className="mt-7">
                         <FlatHead title={t("browse.section.sorted")} count={t("browse.section.count", { count: flat.length })} />
-                        <Cards groups={flat} view={view} progress={progress} gameRead={gameRead} onOpen={setOpenId} />
+                        <Cards groups={flat} view={shownView} fractionOf={fractionOf} onOpen={setOpenId} />
                     </section>
                 ) : null
             ) : (
                 library.sections.map((section) => (
-                    <section key={section.id} id={section.id} className="mt-7 scroll-mt-32">
+                    <section key={section.id} id={section.id} className="mt-7 scroll-mt-32 sm:scroll-mt-36">
                         <SectionHead chip={chipById.get(section.id)} count={t("browse.section.count", { count: section.groups.length })} />
-                        <Cards groups={section.groups} view={view} progress={progress} gameRead={gameRead} onOpen={setOpenId} />
+                        <Cards groups={section.groups} view={shownView} fractionOf={fractionOf} onOpen={setOpenId} />
                     </section>
                 ))
             )}
 
             {library.records.length > 0 ? (
-                <section id={RECORDS_ID} className="mt-7 scroll-mt-32">
+                <section id={RECORDS_ID} className="mt-7 scroll-mt-32 sm:scroll-mt-36">
                     <SectionHead
                         chip={chipById.get(RECORDS_ID)}
                         count={t("browse.section.recordCount", { count: library.records.length })}
@@ -260,7 +206,7 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
                             )
                         }
                     />
-                    {showRecords ? <OperatorsTab records={library.records} progress={progress} gameRead={gameRead} controls={false} /> : null}
+                    {showRecords ? <OperatorsTab records={library.records} progress={progress} gameRead={gameRead} controls={false} paged pageKey={`${searched}|${shownFilter}|${shownRead}`} /> : null}
                 </section>
             ) : null}
 
@@ -269,38 +215,26 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
     );
 }
 
-/** The cards of one section, in whichever layout the toggle is on. Both branches were written out twice and the flat list would have made it three times. */
-function Cards({ groups, view, progress, gameRead, onOpen }: { groups: readonly LibGroup[]; view: ViewMode; progress: StoryProgress; gameRead: ReadonlySet<string>; onOpen: (id: string) => void }): React.ReactElement {
+/**
+ * The cards of one section, in whichever layout the toggle is on. Both branches were written out twice and the flat list would have made it three times.
+ *
+ * `fractionOf` hands each card the fraction Browse already holds, so the
+ * memoised card sees the SAME object until progress changes and skips.
+ */
+function Cards({ groups, view, fractionOf, onOpen }: { groups: readonly LibGroup[]; view: ViewMode; fractionOf: (group: LibGroup) => IReadFraction; onOpen: (id: string) => void }): React.ReactElement {
     if (view === "grid")
         return (
             <GroupGrid>
                 {groups.map((group, at) => (
-                    <GroupCard key={group.id} group={group} progress={progress} gameRead={gameRead} onOpen={onOpen} index={at} />
+                    <GroupCard key={group.id} group={group} fraction={fractionOf(group)} onOpen={onOpen} index={at} />
                 ))}
             </GroupGrid>
         );
     return (
         <GroupRowList>
             {groups.map((group, at) => (
-                <GroupRow key={group.id} group={group} progress={progress} gameRead={gameRead} onOpen={onOpen} index={at} />
+                <GroupRow key={group.id} group={group} fraction={fractionOf(group)} onOpen={onOpen} index={at} />
             ))}
         </GroupRowList>
-    );
-}
-
-/** The disabled second mode tab. Rendered here so the page shell does not have to know why it is dead. */
-export function DialogueModeTab(): React.ReactElement {
-    const t: BrowseT = useT("story");
-    return (
-        <Tooltip>
-            <TooltipTrigger
-                render={
-                    <span className="inline-flex h-9 shrink-0 cursor-not-allowed select-none items-center whitespace-nowrap rounded-[9px] px-3 font-sans font-semibold text-[12.5px] text-muted-foreground/60 max-sm:min-h-11" aria-disabled="true">
-                        {t("browse.mode.dialogue")}
-                    </span>
-                }
-            />
-            <TooltipContent>{t("browse.mode.dialogue.soon")}</TooltipContent>
-        </Tooltip>
     );
 }

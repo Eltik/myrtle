@@ -71,38 +71,82 @@ const SCORE_NAME_SUBSEQUENCE = 180;
 const SCORE_EXTRA_CONTAINS = 90;
 
 /**
- * Returns a score ≥ 0 for how well `target` matches `query`. 0 means "no match".
- * An empty query returns a small positive score so the list still renders.
+ * A target with its haystacks normalised ONCE. `scoreMatch` normalises the
+ * query and every field of the target on every call, which for the story
+ * library is 451 targets carrying 1,887 story names re-folded per keystroke;
+ * a caller that scores the same list against many queries prepares it once
+ * with {@link prepareTarget} and scores with {@link scorePrepared}, which gives
+ * the SAME number as `scoreMatch` for every query (pinned in `fuzzy.test.ts`).
  */
-export function scoreMatch(query: string, target: IScoreTarget): number {
-    const q = normalizeForSearch(query.trim());
-    if (q.length === 0) return 1;
+export interface IPreparedTarget {
+    names: readonly IPreparedName[];
+    extra: string;
+    extraCompact: string;
+}
 
-    const qc = q.replace(/\s+/g, "");
+interface IPreparedName {
+    name: string;
+    compact: string;
+}
+
+/** A query normalised once, for {@link scorePrepared}. `null` is the empty query. */
+export interface IPreparedQuery {
+    q: string;
+    qc: string;
+}
+
+function prepareName(raw: string): IPreparedName {
+    const name = normalizeForSearch(raw);
+    return { name, compact: name.replace(/\s+/g, "") };
+}
+
+export function prepareTarget(target: IScoreTarget): IPreparedTarget {
     const extra = normalizeForSearch(target.extra ?? "");
-
-    // Best of the name and its aliases: an alias is another spelling of the
-    // same name, so it earns the same tiers, and the strongest one wins.
-    let best = scoreName(q, qc, normalizeForSearch(target.name));
+    const names = [prepareName(target.name)];
     for (const alias of target.aliases ?? []) {
         if (alias.trim().length === 0) continue;
-        best = Math.max(best, scoreName(q, qc, normalizeForSearch(alias)));
+        names.push(prepareName(alias));
     }
+    return { names, extra, extraCompact: extra.replace(/\s+/g, "") };
+}
+
+export function prepareQuery(query: string): IPreparedQuery | null {
+    const q = normalizeForSearch(query.trim());
+    if (q.length === 0) return null;
+    return { q, qc: q.replace(/\s+/g, "") };
+}
+
+/** {@link scoreMatch} over a prepared target and query. `null` (the empty query) scores 1, as there. */
+export function scorePrepared(query: IPreparedQuery | null, target: IPreparedTarget): number {
+    if (query === null) return 1;
+    const { q, qc } = query;
+    // Best of the name and its aliases: an alias is another spelling of the
+    // same name, so it earns the same tiers, and the strongest one wins.
+    let best = 0;
+    for (const name of target.names) best = Math.max(best, scoreName(q, qc, name.name, name.compact));
     if (best > 0) return best;
 
     // `extra` gets contiguous-substring matching only. Subsequence matching is
     // reserved for `name`: `extra` concatenates unrelated fields, so a
     // subsequence can assemble its letters across field boundaries ("myr" out
     // of "amiya caster …"), which matches nothing meaningful.
-    if (extra.length > 0) {
-        if (extra.includes(q)) return SCORE_EXTRA_CONTAINS;
-        if (extra.replace(/\s+/g, "").includes(qc)) return SCORE_EXTRA_CONTAINS;
+    if (target.extra.length > 0) {
+        if (target.extra.includes(q)) return SCORE_EXTRA_CONTAINS;
+        if (target.extraCompact.includes(qc)) return SCORE_EXTRA_CONTAINS;
     }
 
     return 0;
 }
 
-function scoreName(q: string, qc: string, name: string): number {
+/**
+ * Returns a score ≥ 0 for how well `target` matches `query`. 0 means "no match".
+ * An empty query returns a small positive score so the list still renders.
+ */
+export function scoreMatch(query: string, target: IScoreTarget): number {
+    return scorePrepared(prepareQuery(query), prepareTarget(target));
+}
+
+function scoreName(q: string, qc: string, name: string, nameCompact: string): number {
     if (name === q) return SCORE_NAME_EXACT + lengthBonus(name);
     if (name.startsWith(q)) return SCORE_NAME_PREFIX + lengthBonus(name);
 
@@ -112,7 +156,7 @@ function scoreName(q: string, qc: string, name: string): number {
     const nameIdx = name.indexOf(q);
     if (nameIdx >= 0) return SCORE_NAME_CONTAINS - nameIdx + lengthBonus(name);
 
-    const ncIdx = name.replace(/\s+/g, "").indexOf(qc);
+    const ncIdx = nameCompact.indexOf(qc);
     if (ncIdx >= 0) return SCORE_NAME_CONTAINS - ncIdx + lengthBonus(name);
 
     if (isSubsequence(q, name)) return SCORE_NAME_SUBSEQUENCE + lengthBonus(name);
@@ -122,8 +166,9 @@ function scoreName(q: string, qc: string, name: string): number {
 /** Scores and filters an array, returning matches sorted best-first. */
 export function searchAndRank<T>(query: string, items: readonly T[], getTarget: (item: T) => IScoreTarget, limit?: number): IScored<T>[] {
     const out: IScored<T>[] = [];
+    const prepared = prepareQuery(query);
     for (const item of items) {
-        const score = scoreMatch(query, getTarget(item));
+        const score = scorePrepared(prepared, prepareTarget(getTarget(item)));
         if (score > 0) out.push({ item, score });
     }
     out.sort((a, b) => b.score - a.score);

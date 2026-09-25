@@ -8,7 +8,7 @@ import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { emptyProgress, loadProgress, onProgressStorage, onProgressWritten, type StoryProgress } from "#/lib/story/progress";
 import { useStoryGameRead, useStoryProgressSync } from "#/lib/story/sync";
-import { Browse, DialogueModeTab } from "./impl/Browse";
+import { Browse } from "./impl/Browse";
 import { CommunityTab } from "./impl/CommunityTab";
 import type { messages as communityMessages } from "./impl/CommunityTab.messages";
 import { ContinueCard } from "./impl/ContinueCard";
@@ -91,16 +91,25 @@ export function StoryLibrary(): React.ReactElement {
 
     return (
         <div className="page-shell [--page-max:1400px]">
+            {/* THE BIG NUMBER IS A DESKTOP ORNAMENT. Under 640 it was a 130 px block of
+                its own over a 923 px head, so there it folds into the subhead as a
+                third count and the right-hand stat is hidden. At 640 and up the
+                subhead keeps its two counts and the number stays where it was. */}
             <PageHeader
-                className="mb-5 border-primary/70 border-b-2 pb-4"
+                className="mb-4 border-primary/70 border-b-2 pb-3"
                 breadcrumbLabel={t("library.breadcrumb")}
                 breadcrumb={[t("library.breadcrumb.archive"), t("library.breadcrumb.stories")]}
                 title={t("library.title")}
-                description={t("library.counts", { groups: storyGroups.length, records: index.records.length })}
+                description={
+                    <>
+                        <span className="sm:hidden">{t("library.countsAll", { groups: storyGroups.length, records: index.records.length, stories: f.number(totals) })}</span>
+                        <span className="max-sm:hidden">{t("library.counts", { groups: storyGroups.length, records: index.records.length })}</span>
+                    </>
+                }
                 actions={
-                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 sm:block sm:text-right">
-                        <div className="font-light font-mono text-[26px] text-primary leading-none tracking-[-0.02em] sm:text-[34px]">{f.number(totals)}</div>
-                        <div className="font-mono text-[10px] text-muted-foreground tracking-[0.12em] sm:mt-1.5">{t("library.storiesLabel")}</div>
+                    <div className="hidden sm:block sm:text-right">
+                        <div className="font-light font-mono text-[34px] text-primary leading-none tracking-[-0.02em]">{f.number(totals)}</div>
+                        <div className="mt-1.5 font-mono text-[10px] text-muted-foreground tracking-[0.12em]">{t("library.storiesLabel")}</div>
                     </div>
                 }
             />
@@ -108,9 +117,6 @@ export function StoryLibrary(): React.ReactElement {
             {hero ? <ContinueCard pick={hero} progress={progress} gameRead={gameRead} onViewChapter={viewChapter} /> : null}
 
             <Tabs value={tab} onValueChange={(value) => setTab(String(value))}>
-                {/* The dead dialogue tab sits BESIDE the list, not in it: inside, the list
-                    scrolled itself past the active tab at 375 because a non-Tab child threw
-                    off its indicator. */}
                 <div className="msv-scroll flex max-w-full items-center gap-1 overflow-x-auto">
                     <TabsList className="shrink-0">
                         <TabsTab value="browse" className="shrink-0 max-sm:min-h-11">
@@ -129,7 +135,6 @@ export function StoryLibrary(): React.ReactElement {
                             {t("community.tab")}
                         </TabsTab>
                     </TabsList>
-                    <DialogueModeTab />
                 </div>
                 <TabsPanel value="browse" className="pt-4">
                     <Browse index={index} progress={progress} gameRead={gameRead} openGroup={openGroup} onOpenHandled={onOpenHandled} />

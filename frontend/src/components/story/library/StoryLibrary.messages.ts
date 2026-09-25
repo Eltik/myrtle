@@ -27,6 +27,10 @@ export const messages = {
         text: "{groups} chapters · {records} operators",
         description: "Subhead under the page title: how much the library holds.",
     },
+    "library.countsAll": {
+        text: "{groups} chapters · {records} operators · {stories} stories",
+        description: "Subhead under the page title on a phone, where the headline story count beside the title is dropped and folded in here. {stories} arrives already formatted (1,887).",
+    },
     "library.storiesLabel": {
         text: "STORIES",
         description: "Label under the headline story count beside the page title.",

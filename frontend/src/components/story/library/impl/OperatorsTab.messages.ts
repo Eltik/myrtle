@@ -23,6 +23,10 @@ export const messages = {
         text: "No operator matches.",
         description: "Empty state under the operator records grid when the search and filters leave nothing.",
     },
+    "operators.showMore": {
+        text: "Show {count} more ({remaining} left)",
+        description: "Button under the operator records grid in the browse page that mounts the next page of cards. count is how many the press adds, remaining how many are still hidden.",
+    },
     "operators.card.read": {
         text: "{read}/{total}",
         description: "Read fraction on an operator card: records read over records that have a script.",
