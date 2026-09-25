@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-24T23:48:05.144Z",
+    "generatedAt": "2026-09-25T00:03:58.442Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -11529,6 +11529,20 @@
             "namespace": "nav",
             "source_text": "Stages",
             "description": "Collection menu entry for the stage (mission map) browser.",
+            "placeholders": []
+        },
+        {
+            "key": "nav.header.collection.stories.desc",
+            "namespace": "nav",
+            "source_text": "Read every story in the game, with your progress synced.",
+            "description": "Blurb under the Stories entry in the Collection menu.",
+            "placeholders": []
+        },
+        {
+            "key": "nav.header.collection.stories.label",
+            "namespace": "nav",
+            "source_text": "Stories",
+            "description": "Collection menu entry for the story reader and its library.",
             "placeholders": []
         },
         {

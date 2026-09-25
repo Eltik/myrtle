@@ -52,6 +52,14 @@ export const messages = {
         text: "Every stage, mapped with an enemy-pathing simulator.",
         description: "Blurb under the Stages entry in the Collection menu.",
     },
+    "header.collection.stories.label": {
+        text: "Stories",
+        description: "Collection menu entry for the story reader and its library.",
+    },
+    "header.collection.stories.desc": {
+        text: "Read every story in the game, with your progress synced.",
+        description: "Blurb under the Stories entry in the Collection menu.",
+    },
     "header.gacha.community.label": {
         text: "Community",
         description: "Gacha menu entry for community-wide pull statistics.",

@@ -38,6 +38,7 @@ export default function Header() {
             { href: "/operators", label: t("header.collection.operators.label"), desc: t("header.collection.operators.desc"), icon: "shield" },
             { href: "/enemies", label: t("header.collection.enemies.label"), desc: t("header.collection.enemies.desc"), icon: "crosshair" },
             { href: "/stages", label: t("header.collection.stages.label"), desc: t("header.collection.stages.desc"), icon: "map" },
+            { href: "/stories", label: t("header.collection.stories.label"), desc: t("header.collection.stories.desc"), icon: "book" },
         ];
         const gachaItems: INavItem[] = [
             { href: "/gacha/community", label: t("header.gacha.community.label"), desc: t("header.gacha.community.desc"), icon: "users" },

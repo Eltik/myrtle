@@ -1571,6 +1571,8 @@
     "nav.header.collection.operators.label": "Operators",
     "nav.header.collection.stages.desc": "Every stage, mapped with an enemy-pathing simulator.",
     "nav.header.collection.stages.label": "Stages",
+    "nav.header.collection.stories.desc": "Read every story in the game, with your progress synced.",
+    "nav.header.collection.stories.label": "Stories",
     "nav.header.gacha": "Gacha",
     "nav.header.gacha.community.desc": "Pull rates, top operators, and timing across opted-in doctors",
     "nav.header.gacha.community.label": "Community",
