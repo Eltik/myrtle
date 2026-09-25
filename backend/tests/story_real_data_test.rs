@@ -1,7 +1,9 @@
 //! The story reader against the real EN tree: every library story and every
 //! operator record is probed, loaded, parsed and asset-resolved, and the
-//! counts the phase 1 report quotes are printed. Skips when the EN assets are
-//! not on disk (CI's `game-data` artifact carries tables only, no scripts).
+//! counts the phase 1 report quotes are printed. Skips when the EN scripts are
+//! not on disk. CI's `game-data` artifact carries the tables and the story
+//! scripts but no textures, audio or video, so the tests that count resolved
+//! art, clips or themes also skip without the media tree.
 //!
 //! Run with `cargo test --test story_real_data_test -- --nocapture`.
 
@@ -31,12 +33,21 @@ fn scripts_present(dir: &Path) -> bool {
         && dir.join("gamedata/excel/story_review_table.json").exists()
 }
 
+/// Scripts plus the media they point at: a full local install, not the
+/// tables-and-scripts CI artifact.
+fn media_present(dir: &Path) -> bool {
+    scripts_present(dir)
+        && ["textures", "audio", "video"]
+            .iter()
+            .all(|m| dir.join(m).is_dir())
+}
+
 #[test]
 fn every_en_story_parses_and_the_library_resolves() {
     let dir = assets_dir();
-    if !scripts_present(&dir) {
+    if !media_present(&dir) {
         eprintln!(
-            "story_real_data_test: no EN story tree at {}, skipping",
+            "story_real_data_test: no EN story tree with its media at {}, skipping",
             dir.display()
         );
         return;
@@ -1327,8 +1338,8 @@ fn every_en_story_parses_and_the_library_resolves() {
 #[test]
 fn cutscene_videos_resolve_where_en_still_ships_the_clip() {
     let dir = assets_dir();
-    if !scripts_present(&dir) {
-        eprintln!("story_real_data_test: no EN story tree, skipping video probe");
+    if !media_present(&dir) {
+        eprintln!("story_real_data_test: no EN story tree with its media, skipping video probe");
         return;
     }
     let gd = common::load_game_data();
@@ -1792,9 +1803,9 @@ fn the_archive_resolves_every_picture_and_every_track() {
     use backend::core::hypergryph::constants::Server;
 
     let dir = assets_dir();
-    if !scripts_present(&dir) {
+    if !media_present(&dir) {
         eprintln!(
-            "story_real_data_test: no EN story tree at {}, skipping",
+            "story_real_data_test: no EN story tree with its media at {}, skipping",
             dir.display()
         );
         return;
@@ -2027,9 +2038,9 @@ fn the_archive_resolves_every_picture_and_every_track() {
 #[test]
 fn every_group_theme_resolves_to_a_clip() {
     let dir = assets_dir();
-    if !scripts_present(&dir) {
+    if !media_present(&dir) {
         eprintln!(
-            "story_real_data_test: no EN story tree at {}, skipping",
+            "story_real_data_test: no EN story tree with its media at {}, skipping",
             dir.display()
         );
         return;
