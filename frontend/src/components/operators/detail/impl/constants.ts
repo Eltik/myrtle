@@ -26,8 +26,8 @@ export const RARITY_COLORS: Record<OperatorRarityTier, string> = {
 };
 
 export const RARITY_GLOW: Record<OperatorRarityTier, string> = {
-    TIER_6: "drop-shadow-[0_0_20px_rgba(255,154,74,0.5)]",
-    TIER_5: "drop-shadow-[0_0_20px_rgba(255,230,109,0.4)]",
+    TIER_6: "drop-shadow-[0_0_20px_rgba(255,127,39,0.5)]",
+    TIER_5: "drop-shadow-[0_0_20px_rgba(247,213,76,0.4)]",
     TIER_4: "drop-shadow-[0_0_15px_rgba(201,184,240,0.4)]",
     TIER_3: "drop-shadow-[0_0_15px_rgba(125,211,252,0.4)]",
     TIER_2: "drop-shadow-[0_0_15px_rgba(134,239,172,0.3)]",

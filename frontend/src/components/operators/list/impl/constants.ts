@@ -90,8 +90,8 @@ export const CHIP_CONFIG: { key: ArrayFilterKey; prefix: string; label: (v: stri
 ];
 
 export const RARITY_BLUR_COLORS: Record<number, string> = {
-    6: "#cc9b6a",
-    5: "#d6c474",
+    6: "#d96a1e",
+    5: "#d4b840",
     4: "#9e87c7",
     3: "#62a2bd",
     2: "#57ab72",

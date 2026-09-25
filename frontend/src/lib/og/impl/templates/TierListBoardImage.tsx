@@ -104,8 +104,8 @@ function truncate(text: string, max: number): string {
 }
 
 const RARITY_BAR_COLOR: Record<number, string> = {
-    6: "#f7a452",
-    5: "#f7e79e",
+    6: "#ff7f27",
+    5: "#f7d54c",
     4: "#bcabdb",
     3: "#88c8e3",
     2: "#7ef2a3",

@@ -171,7 +171,7 @@ function BannerNameCell({ banner, name, typeColor, typeLabelKey, sixStars, fiveS
                         </div>
                         <div className="flex flex-col gap-0.5">
                             <span className="font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("history.breakdown.stat.sixStars")}</span>
-                            <span className="font-sans font-semibold text-[14px] tabular-nums" style={{ color: "#f7a452" }}>
+                            <span className="font-sans font-semibold text-[14px] tabular-nums" style={{ color: "#ff7f27" }}>
                                 {f.number(sixStars)}
                             </span>
                         </div>
@@ -269,7 +269,7 @@ export function BannerBreakdown({ records, bannersById, operatorsById, isLoading
                                     <td className="hidden whitespace-nowrap px-2 py-2.5 align-middle font-mono text-[11px] text-muted-foreground tabular-nums sm:table-cell">{fmtDate(banner.lastPullAt, f)}</td>
                                     <td className="whitespace-nowrap px-2 py-2.5 text-right align-middle font-mono font-semibold text-[12px] text-foreground tabular-nums">{f.number(banner.total)}</td>
                                     <td className="hidden px-2 py-2.5 text-right align-middle font-mono text-[11px] tabular-nums sm:table-cell">
-                                        <span style={{ color: "#f7a452" }}>{banner.sixStars > 0 ? `${banner.sixStars}×6★` : "-"}</span>
+                                        <span style={{ color: "#ff7f27" }}>{banner.sixStars > 0 ? `${banner.sixStars}×6★` : "-"}</span>
                                     </td>
                                     <td className="hidden w-36 px-2 py-2.5 align-middle lg:table-cell">
                                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">

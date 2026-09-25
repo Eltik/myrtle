@@ -37,8 +37,8 @@ interface IRarityRow {
 // so the long-run 6★ rate is 1/34.59 ≈ 2.89%. On every pull the non-6★ share splits
 // 8:50:40, so lower rarities scale by (1 − 0.0289)/0.98 - a pity 6★ takes their slot.
 const RARITY_ROWS: IRarityRow[] = [
-    { rarity: 6, countKey: "totalSixStars", color: "oklch(0.85 0.18 80)", starColor: "#f7a452", expected: 0.0289, rateHintKey: "community.rarity.hint.sixStar" },
-    { rarity: 5, countKey: "totalFiveStars", color: "#f7e79e", starColor: "#f7e79e", expected: 0.0793, rateHintKey: "community.rarity.hint.fiveStar" },
+    { rarity: 6, countKey: "totalSixStars", color: "oklch(0.85 0.18 80)", starColor: "#ff7f27", expected: 0.0289, rateHintKey: "community.rarity.hint.sixStar" },
+    { rarity: 5, countKey: "totalFiveStars", color: "#f7d54c", starColor: "#f7d54c", expected: 0.0793, rateHintKey: "community.rarity.hint.fiveStar" },
     { rarity: 4, countKey: "totalFourStars", color: "#bcabdb", starColor: "#bcabdb", expected: 0.4955, rateHintKey: "community.rarity.hint.fourStar" },
     { rarity: 3, countKey: "totalThreeStars", color: "#88c8e3", starColor: "#88c8e3", expected: 0.3964, rateHintKey: "community.rarity.hint.threeStar" },
 ];
