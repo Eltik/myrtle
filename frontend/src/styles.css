@@ -463,6 +463,24 @@ pre code {
     }
 }
 
+/* A page whose shell carries `data-viewport-fit` (the release planner's
+   two-pane view) fills the window from `md` up instead of scrolling it: the
+   body becomes a viewport-tall column, the header keeps its own height, the
+   shell takes the rest (`md:flex-1 md:min-h-0` on the shell), and the footer
+   is dropped because anything below the fold would bring the page scroll
+   back. No header height is hard-coded; the flex column subtracts it. */
+@media (width >= 48rem) {
+    body:has(> [data-viewport-fit]) {
+        display: flex;
+        flex-direction: column;
+        height: 100dvh;
+    }
+
+    body:has(> [data-viewport-fit]) > footer {
+        display: none;
+    }
+}
+
 /* The small uppercase label over a card ("OPERATOR COLLECTION", "ELITE
    PROMOTION"). Lives here rather than as a utility string so the script
    override below has something to hang off.

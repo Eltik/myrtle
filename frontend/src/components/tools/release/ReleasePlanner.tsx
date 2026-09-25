@@ -5,6 +5,7 @@ import { ScrollArea } from "#/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { cn } from "#/lib/utils";
 import { AutoTranslateProvider, useAutoTranslateSetting } from "./impl/autoTranslate";
 import { BannersTab } from "./impl/components/BannersTab";
 import { CalendarTab } from "./impl/components/CalendarTab";
@@ -23,9 +24,15 @@ export function ReleasePlanner(): React.ReactElement {
     const today = React.useMemo(() => new Date(), []);
     const [view, setView] = React.useState<ReleaseView>("planner");
     const [autoTranslate, setAutoTranslate] = useAutoTranslateSetting();
+    const fit = view === "planner";
 
     return (
-        <div className="page-shell [--page-max:1200px]" translate="no">
+        /* The Planner is two scrolling panes, so from `md` up it fits the window
+           instead of making it scroll: `data-viewport-fit` turns the body into a
+           100dvh column under the header and drops the footer (styles.css), and the
+           `md:flex-1 md:min-h-0` chain below hands the leftover height down to the
+           panes. The other tabs are ordinary long pages and keep the page scroll. */
+        <div className={cn("page-shell [--page-max:1200px]", fit && "md:flex md:min-h-0 md:flex-1 md:flex-col md:pb-4")} data-viewport-fit={fit ? "" : undefined} translate="no">
             <PageHeader breadcrumbLabel="breadcrumb" breadcrumb={[t("release.breadcrumb.tools"), t("release.title")]} title={t("release.title")} description={t("release.intro")} />
 
             {/* The explanation of where the names come from was a permanent
@@ -40,8 +47,8 @@ export function ReleasePlanner(): React.ReactElement {
 
             <AutoTranslateProvider value={autoTranslate}>
                 <SkinPopupProvider>
-                    <Tabs value={view} onValueChange={(v) => setView(v as ReleaseView)} className="mt-5">
-                        <ScrollArea className="mb-4 w-full" scrollFade>
+                    <Tabs value={view} onValueChange={(v) => setView(v as ReleaseView)} className={cn("mt-5", fit && "md:min-h-0 md:flex-1")}>
+                        <ScrollArea className="mb-4 h-auto w-full shrink-0" scrollFade>
                             <TabsList className="w-max">
                                 <TabsTrigger value="planner" className="max-sm:shrink-0">
                                     <Palette />
@@ -69,7 +76,7 @@ export function ReleasePlanner(): React.ReactElement {
                                 </TabsTrigger>
                             </TabsList>
                         </ScrollArea>
-                        <TabsContent value="planner">
+                        <TabsContent value="planner" className="md:flex md:min-h-0 md:flex-col">
                             <PlannerTab today={today} />
                         </TabsContent>
                         <TabsContent value="pulls">

@@ -304,8 +304,8 @@ export const messages = {
         description: "Warning that the plan runs out of Originite Prime, naming where. {event} is an event name from the game data.",
     },
     "release.planner.summary.empty": {
-        text: "Nothing selected yet. Open an event on the left and pick its stages and outfits.",
-        description: "Shown in the summary pane before anything has been picked.",
+        text: "No outfits picked yet. Open an event on the left and pick the ones you want.",
+        description: "Shown in the summary pane while no outfit has been picked. Events without a picked outfit are left out of the summary.",
     },
     "release.planner.summary.remove": {
         text: "Remove",
