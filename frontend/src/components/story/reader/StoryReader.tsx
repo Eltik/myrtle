@@ -47,6 +47,7 @@ import { SettingsDialog } from "./SettingsDialog";
 import { type CanvasMode, Stage } from "./Stage";
 import { nextSkip, SKIP_OFF, SKIP_STEP_MS, type SkipState, skipAdvances, skipRatio } from "./skip";
 import { useSpeakerTint } from "./speaker";
+import { nextShownLine, type ShownLine } from "./shownLine";
 import { TextBox } from "./TextBox";
 import { useReaderHotkeys } from "./useReaderHotkeys";
 import { useStoryPlayer } from "./useStoryPlayer";
@@ -145,10 +146,22 @@ export function StoryReader({ script, entry, groupName, category, previous, next
     const cutsceneLabel = t("reader.cutscene.label");
     const player = useStoryPlayer({ script, storyId: script.id, nickname, audio, initialHalt, animateRatio, legacyClamp, firstNameRight, videos: videosOn, cutsceneLabel, onShake });
     const { phase, halt, frame, playing, haltIndex, totalHalts, backlog, revealKey, advance, choose, back, start, resume, restart, savedHalt, haltSummaries, jumpTo } = player;
+    // The box is the SCENE's, not the halt's: a bare `[dialog]` hides it and
+    // the next line shows it again, so while a step's frames play out the box
+    // follows `dialogVisible` and only the halt's own frame brings it back.
+    const boxVisible = frame?.state.dialogVisible ?? true;
+    // What the box PRINTS lags the halt through a hide-and-cut (`shownLine.ts`):
+    // the old line stays in the fading box and the new plate waits for the box
+    // to return. A ref written during render, because a state-and-effect pair
+    // would paint the flash for one frame first; the rule is idempotent, so a
+    // strict-mode double render lands on the same line.
+    const shownRef = useRef<ShownLine | null>(null);
+    const shown = halt?.kind === "line" ? nextShownLine(shownRef.current, halt, revealKey, boxVisible) : null;
+    shownRef.current = shown;
     // The speaker's ink, read off the LIT sprite in the frame the stage is
     // showing. It is undefined unless the reader asked for it, so the default
     // reader never samples an image and the plate keeps its hashed hue.
-    const speakerTint = useSpeakerTint({ speaker: halt?.kind === "line" ? halt.speaker : undefined, slots: frame?.state.slots ?? EMPTY_SLOTS, settings, storyId: script.id });
+    const speakerTint = useSpeakerTint({ speaker: shown?.speaker, slots: frame?.state.slots ?? EMPTY_SLOTS, settings, storyId: script.id });
 
     const [autoPlay, setAutoPlay] = useState(false);
     // Theater mode: the client's eye button. The text box, both pills and the
@@ -368,11 +381,6 @@ export function StoryReader({ script, entry, groupName, category, previous, next
         setTheater((v) => nextTheater(v, "toggle"));
     };
 
-    // The box is the SCENE's, not the halt's: a bare `[dialog]` hides it and
-    // the next line shows it again, so while a step's frames play out the box
-    // follows `dialogVisible` and only the halt's own frame brings it back.
-    const boxVisible = frame?.state.dialogVisible ?? true;
-
     const progress = totalHalts > 0 ? clamp01((haltIndex + 1) / totalHalts) : 0;
     const title = entry?.name ?? script.name;
     const cardMeta = useMemo(() => [groupName, entry?.code, entry?.avgTag].filter((s): s is string => Boolean(s)).join(" · "), [groupName, entry]);
@@ -472,12 +480,12 @@ export function StoryReader({ script, entry, groupName, category, previous, next
                         />
                     ) : null}
 
-                    {phase === "reading" && halt?.kind === "line" ? (
+                    {phase === "reading" && halt?.kind === "line" && shown ? (
                         <TextBox
-                            speaker={halt.speaker}
-                            text={halt.text}
-                            isNarration={halt.isNarration}
-                            revealKey={revealKey}
+                            speaker={shown.speaker}
+                            text={shown.text}
+                            isNarration={shown.isNarration}
+                            revealKey={shown.revealKey}
                             armed={!playing}
                             settings={settings}
                             onRevealDone={onRevealDone}

@@ -218,8 +218,14 @@ export function OverlayText({ overlay, kind }: { overlay: Overlay; kind: "subtit
     return (
         <div
             data-story-overlay={kind}
-            className={cn("absolute whitespace-pre-wrap text-white/95 leading-relaxed [text-shadow:0_1px_2px_rgba(0,0,0,.9),0_0_12px_rgba(0,0,0,.6)]", kind === "subtitle" && "font-medium")}
-            style={{ left: cpx(overlay.x), top: cpx(overlay.y), width: cpx(overlay.width), fontSize: cpx(overlay.size), textAlign: overlay.alignment, ...fade("in", 0.25) }}
+            className={cn("absolute whitespace-pre-wrap text-white/95 [text-shadow:0_1px_2px_rgba(0,0,0,.9),0_0_12px_rgba(0,0,0,.6)]", kind === "subtitle" && "font-medium")}
+            // LINE HEIGHT IS 1.25 OF THE SIZE, read off the scripts rather than
+            // chosen: `act51side_st01` stacks three 800 px stickers at size 24 on
+            // a 120 px stride (y 150, 270, 390) and its first block is 233
+            // characters, four lines in the game, so a line box is 30 px. The
+            // `leading-relaxed` this carried (1.625, 39 px) made the block 156 px
+            // and drew it over the sticker below.
+            style={{ left: cpx(overlay.x), top: cpx(overlay.y), width: cpx(overlay.width), fontSize: cpx(overlay.size), lineHeight: 1.25, textAlign: overlay.alignment, ...fade("in", 0.25) }}
         >
             {overlay.text}
         </div>
