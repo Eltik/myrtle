@@ -21571,7 +21571,7 @@
       },
       "VideoSources": {
         "type": "object",
-        "description": "The two transcodes of one cutscene clip. `webm` is offered first and `mp4`\nis the fallback; a clip is only ever missing one of them when a transcode\nfailed, since `assets/transcode-video.sh` writes both.",
+        "description": "The two transcodes of one cutscene clip. `webm` is offered first and `mp4`\nis the fallback; a clip is only ever missing one of them when a transcode\nfailed, since the unpacker's video step (`backfill-video`, and the tail of\nevery `extract`) writes both.",
         "properties": {
           "mp4Url": {
             "type": [

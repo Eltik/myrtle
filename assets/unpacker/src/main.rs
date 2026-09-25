@@ -53,6 +53,7 @@ use export::stage_preview::{self, StageAspectMap};
 use export::story_art;
 use export::text_asset::export_text_asset;
 use export::texture::{decode_texture_object, save_decoded_texture};
+use export::video;
 use unity::bundle::BundleFile;
 use unity::object_reader::read_object;
 use unity::serialized_file::SerializedFile;
@@ -67,6 +68,25 @@ fn main() {
         Command::BackfillHubs(args) => cmd_backfill_hubs(&args),
         Command::BackfillSprites(args) => cmd_backfill_sprites(&args),
         Command::BackfillStoryArt(args) => cmd_backfill_story_art(&args),
+        Command::BackfillVideo(args) => cmd_backfill_video(&args),
+    }
+}
+
+/// Transcode one server's cutscenes into an existing output tree without re-extracting
+/// anything else. The same pass runs at the end of a full `extract`; here a missing `ffmpeg`
+/// or a failed clip is an error, because transcoding is the whole job.
+fn cmd_backfill_video(args: &cli::BackfillVideoArgs) {
+    match video::transcode_tree(&args.input, &args.output, args.force) {
+        Ok((report, _)) if report.failed == 0 => {}
+        Ok(_) => std::process::exit(1),
+        Err(video::TreeSkip::NoVideoDir) => {
+            eprintln!(
+                "error: no raw/video directory under {}",
+                args.input.display()
+            );
+            std::process::exit(1);
+        }
+        Err(video::TreeSkip::NoFfmpeg) => std::process::exit(1),
     }
 }
 
@@ -750,6 +770,19 @@ fn cmd_extract(args: &cli::ExtractArgs) {
         );
         for line in folded {
             println!("  {line}");
+        }
+    }
+    if args.extract_all() {
+        // The cutscenes, last, so every extract the watchers run leaves `video/` current with
+        // no operator step. Never fatal: a missing ffmpeg warns once and a failed clip is
+        // reported on its row, because `run.mjs` reads a non-zero exit as a failed extract and
+        // backs off the whole server, and the story reader already tolerates a missing clip.
+        // A failed clip's old outputs are not touched, so the orphan sweep removes them.
+        match video::transcode_tree(&args.input, &args.output, false) {
+            Ok(_) | Err(video::TreeSkip::NoFfmpeg) => {}
+            Err(video::TreeSkip::NoVideoDir) => {
+                println!("video: no raw/video under the input, nothing to transcode");
+            }
         }
     }
     let collisions = spine::collision_count();

@@ -3,6 +3,7 @@
 /**
  * The two transcodes of one cutscene clip. `webm` is offered first and `mp4`
  * is the fallback; a clip is only ever missing one of them when a transcode
- * failed, since `assets/transcode-video.sh` writes both.
+ * failed, since the unpacker's video step (`backfill-video`, and the tail of
+ * every `extract`) writes both.
  */
 export type VideoSources = { webmUrl?: string; mp4Url?: string };

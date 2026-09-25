@@ -26,6 +26,10 @@ pub enum Command {
     /// chapter/event key visuals, titles, shelf glyphs, arc icons and chapter
     /// decos) into an existing output tree
     BackfillStoryArt(BackfillStoryArtArgs),
+    /// Transcode the `raw/video/**/*.usm` cutscenes into `video/<rel>.webm`
+    /// and `.mp4` in an existing output tree (the same step `extract` runs
+    /// last)
+    BackfillVideo(BackfillVideoArgs),
 }
 
 #[derive(Parser)]
@@ -176,4 +180,25 @@ pub struct BackfillStoryArtArgs {
     /// Number of parallel threads (default: number of CPUs)
     #[arg(short = 'j', long = "jobs")]
     pub jobs: Option<usize>,
+}
+
+/// `unpacker backfill-video` — the video step of an extract on its own. It
+/// demuxes every `raw/video/**/*.usm` and has `ffmpeg` write
+/// `video/<rel>.webm` (VP9 copied, Opus) and `video/<rel>.mp4` (x264, AAC),
+/// one clip at a time, skipping a clip whose two outputs are both newer than
+/// its `.usm`. Exits 1 when `ffmpeg` is missing or a clip fails, where
+/// `extract` only warns.
+#[derive(Parser)]
+pub struct BackfillVideoArgs {
+    /// `ArkAssets` root for one server (the directory holding `raw/video/`)
+    #[arg(short, long)]
+    pub input: PathBuf,
+
+    /// Output tree for that server (the directory that gains `video/`)
+    #[arg(short, long)]
+    pub output: PathBuf,
+
+    /// Transcode every clip even when its outputs are newer than the `.usm`
+    #[arg(long)]
+    pub force: bool,
 }

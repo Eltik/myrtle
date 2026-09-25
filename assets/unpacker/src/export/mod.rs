@@ -17,6 +17,7 @@ pub mod stage_preview;
 pub mod story_art;
 pub mod text_asset;
 pub mod texture;
+pub mod video;
 
 #[allow(
     unused,
