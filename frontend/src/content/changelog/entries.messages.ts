@@ -11,6 +11,50 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-09-25.title": {
+        text: "New: Read the Arknights story, and pick up where the game left you",
+        description: "Title of the 2026-09-25 release note. 'The Arknights story' means the game's story scripts, which the site can now play back.",
+    },
+    "note.2026-09-25.lead": {
+        text: "**A story reader** now plays the game's own scripts: the text, portraits, backgrounds, music, sound, effects and cutscenes, with choices you can replay, a backlog you can jump through, Auto and Skip, and your own fonts, colours and text box. The library sorts every story by the game's own shelves and shows each event's art and theme music. Sign in and it already knows what you have read in game, and your progress follows you to any device.",
+        description: "Lead paragraph of the 2026-09-25 release note, rendered as Markdown. 'Backlog' is the scrollable history of lines already shown; Auto and Skip are the reader's playback modes and keep their names.",
+    },
+    "note.2026-09-25.hrefLabel": {
+        text: "Open the stories",
+        description: "Label of the 2026-09-25 release note's call to action, which opens the story library.",
+    },
+    "note.2026-09-25.item.1": {
+        text: "Player search can rank by score, operator count, potentials, Mastery 3 skills, level 3 modules, outfits or a class, and filter to players who own given operators. Every ranking is a link you can share.",
+        description: "Bullet in the 2026-09-25 release note, filed under 'New'. Potentials, masteries and modules are operator upgrades and keep the game's names; 'outfits' are skins.",
+    },
+    "note.2026-09-25.item.2": {
+        text: "The max-level cost on your account card can stop at the level where an operator's module unlocks, which skips the most expensive and least useful stretch of levelling.",
+        description: "Bullet in the 2026-09-25 release note, filed under 'New'. A 'module' is an operator equipment upgrade and keeps the game's name.",
+    },
+    "note.2026-09-25.item.3": {
+        text: "Grades have changed. Every operator you own now counts toward the Operators score, not only the ones you have raised, and rarity and modules are weighted by what they actually cost to build. Many accounts will see a lower grade, and it is expected.",
+        description: "Bullet in the 2026-09-25 release note, filed under 'Improved'. 'Grades' and the 'Operators score' are the site's account ratings; 'raised' means levelled or promoted.",
+    },
+    "note.2026-09-25.item.4": {
+        text: "When choosing an item to rank the leaderboard by, each row shows how many players hold it, what share of players that is, and how much of it exists in total.",
+        description: "Bullet in the 2026-09-25 release note, filed under 'Improved'. The item picker is the list the leaderboard is ranked from.",
+    },
+    "note.2026-09-25.item.5": {
+        text: "The base optimizer places Proviso, Shamare and the other traders at the right trading post, assembles the Knights team in the Control Center, and a base copied exactly from the Optimizer tab now grades at 100%.",
+        description: "Bullet in the 2026-09-25 release note, filed under 'Fixed'. Proviso and Shamare are operators and keep the game's names; the Knights are a faction; the trading post and Control Center are RIIC rooms.",
+    },
+    "note.2026-09-25.item.6": {
+        text: "A brief server hiccup no longer signs you out, and links opened from Discord or another app arrive signed in.",
+        description: "Bullet in the 2026-09-25 release note, filed under 'Fixed'. Discord is a chat app and keeps its name.",
+    },
+    "note.2026-09-25.item.7": {
+        text: 'The randomizer no longer draws nothing when you are signed out with filters saved from signing in, and "Only stages I\'ve cleared" is a filter you can turn off again. If your stage list was already thinned by the old behaviour, press All once to restore it.',
+        description: "Bullet in the 2026-09-25 release note, filed under 'Fixed'. \"Only stages I've cleared\" and \"All\" quote the randomizer's own controls and must match their translations.",
+    },
+    "note.2026-09-25.item.8": {
+        text: "The planner's operator picker opens quickly instead of waiting on the whole operator database, and in the release planner two stages sharing a code no longer toggle together, and an announced Fashion Review shows as confirmed.",
+        description: "Bullet in the 2026-09-25 release note, filed under 'Fixed'. The Fashion Review is a recurring in-game outfit event and keeps its name.",
+    },
     "note.2026-09-21.title": {
         text: "New: Recruitment reads your roster, and every item you hold is tracked",
         description: "Title of the 2026-09-21 release note. 'Recruitment' is the tag calculator tool and 'roster' is the player's collection of operators.",
