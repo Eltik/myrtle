@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-25T09:32:59.889Z",
+    "generatedAt": "2026-09-25T10:04:43.216Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -5205,6 +5205,55 @@
             "namespace": "changelog",
             "source_text": "New: Recruitment reads your roster, and every item you hold is tracked",
             "description": "Title of the 2026-09-21 release note. 'Recruitment' is the tag calculator tool and 'roster' is the player's collection of operators.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-25-2.hrefLabel",
+            "namespace": "changelog",
+            "source_text": "Open the stories",
+            "description": "Label of the 2026-09-25-2 release note's call to action, which opens the story library.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-25-2.item.1",
+            "namespace": "changelog",
+            "source_text": "A story link shared on Discord or elsewhere shows its own preview card, with the story's name, chapter, read time and art.",
+            "description": "Bullet in the 2026-09-25-2 release note, filed under 'New'. Discord is a chat app and keeps its name.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-25-2.item.2",
+            "namespace": "changelog",
+            "source_text": "The backlog keeps the lines you had already read ahead when you jump back, so you can jump forward to them again.",
+            "description": "Bullet in the 2026-09-25-2 release note, filed under 'Improved'. The 'backlog' is the reader's scrollable history of lines already shown.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-25-2.item.3",
+            "namespace": "changelog",
+            "source_text": "Hovering the mute button opens the music and sound volume sliders.",
+            "description": "Bullet in the 2026-09-25-2 release note, filed under 'Improved'.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-25-2.item.4",
+            "namespace": "changelog",
+            "source_text": "Stacked stickers no longer overlap, and the next speaker's name no longer flashes in the text box before a scene change.",
+            "description": "Bullet in the 2026-09-25-2 release note, filed under 'Fixed'. 'Stickers' are the text cards some stories lay over the scene.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-25-2.lead",
+            "namespace": "changelog",
+            "source_text": "**Skip** in the story reader now opens the game's own summary of the story, so you can catch up on what happened and either keep reading or skip to the end with the story marked read. The library's search and filters stay pinned while you scroll, the page fits on one screen, and browsing and searching no longer lag.",
+            "description": "Lead paragraph of the 2026-09-25-2 release note, rendered as Markdown. 'Skip' is a reader control and keeps its name; the 'summary' is the game's own synopsis of a story.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-09-25-2.title",
+            "namespace": "changelog",
+            "source_text": "Improved: Skip shows the story's summary, and the library keeps up",
+            "description": "Title of the 2026-09-25-2 release note. 'Skip' is a story reader control and keeps its name; 'the library' is the story library page.",
             "placeholders": []
         },
         {

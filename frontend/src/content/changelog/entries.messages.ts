@@ -11,6 +11,34 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-09-25-2.title": {
+        text: "Improved: Skip shows the story's summary, and the library keeps up",
+        description: "Title of the 2026-09-25-2 release note. 'Skip' is a story reader control and keeps its name; 'the library' is the story library page.",
+    },
+    "note.2026-09-25-2.lead": {
+        text: "**Skip** in the story reader now opens the game's own summary of the story, so you can catch up on what happened and either keep reading or skip to the end with the story marked read. The library's search and filters stay pinned while you scroll, the page fits on one screen, and browsing and searching no longer lag.",
+        description: "Lead paragraph of the 2026-09-25-2 release note, rendered as Markdown. 'Skip' is a reader control and keeps its name; the 'summary' is the game's own synopsis of a story.",
+    },
+    "note.2026-09-25-2.hrefLabel": {
+        text: "Open the stories",
+        description: "Label of the 2026-09-25-2 release note's call to action, which opens the story library.",
+    },
+    "note.2026-09-25-2.item.1": {
+        text: "A story link shared on Discord or elsewhere shows its own preview card, with the story's name, chapter, read time and art.",
+        description: "Bullet in the 2026-09-25-2 release note, filed under 'New'. Discord is a chat app and keeps its name.",
+    },
+    "note.2026-09-25-2.item.2": {
+        text: "The backlog keeps the lines you had already read ahead when you jump back, so you can jump forward to them again.",
+        description: "Bullet in the 2026-09-25-2 release note, filed under 'Improved'. The 'backlog' is the reader's scrollable history of lines already shown.",
+    },
+    "note.2026-09-25-2.item.3": {
+        text: "Hovering the mute button opens the music and sound volume sliders.",
+        description: "Bullet in the 2026-09-25-2 release note, filed under 'Improved'.",
+    },
+    "note.2026-09-25-2.item.4": {
+        text: "Stacked stickers no longer overlap, and the next speaker's name no longer flashes in the text box before a scene change.",
+        description: "Bullet in the 2026-09-25-2 release note, filed under 'Fixed'. 'Stickers' are the text cards some stories lay over the scene.",
+    },
     "note.2026-09-25.title": {
         text: "New: Read the Arknights story, and pick up where the game left you",
         description: "Title of the 2026-09-25 release note. 'The Arknights story' means the game's story scripts, which the site can now play back.",
