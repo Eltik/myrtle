@@ -354,7 +354,7 @@ fn build_dimensions(
     }
 
     if !advanced_modules.is_empty() {
-        let module_score = module_milestone_score(roster, &advanced_modules);
+        let module_score = module_milestone_score(roster, &advanced_modules, model);
         dimensions.push((
             DimensionKind::Module,
             (module_weight(advanced_modules.len(), model), module_score),
@@ -511,10 +511,14 @@ fn mastery_milestone_score(roster: &RosterEntry, num_skills: usize) -> f64 {
     )
 }
 
-/// Module dimension, 0.0-1.0 (`milestone_score` on the `module_ladder`).
-fn module_milestone_score(roster: &RosterEntry, advanced_modules: &[&OperatorModule]) -> f64 {
+/// Module dimension, 0.0-1.0 (`milestone_score` on the model's `module_ladder`).
+fn module_milestone_score(
+    roster: &RosterEntry,
+    advanced_modules: &[&OperatorModule],
+    model: ScoreModel,
+) -> f64 {
     let levels = advanced_module_levels(&roster.modules, advanced_modules);
-    milestone_score(&levels, advanced_modules.len(), module_ladder)
+    milestone_score(&levels, advanced_modules.len(), module_ladder(model))
 }
 
 /// The milestone curve shared by masteries and modules. Before the first
@@ -561,9 +565,27 @@ const fn mastery_ladder(reached: usize, slots: usize) -> f64 {
     }
 }
 
-/// The share of advanced modules at Mod3, never below 0.50 for the first.
-fn module_ladder(reached: usize, slots: usize) -> f64 {
-    (reached as f64 / slots as f64).max(0.50)
+/// The module ladder for `model`. Per slot, every Mod3 buys one slot's
+/// `WEIGHT_MODULE`, so the ladder is the plain share at Mod3: a 0.50 floor
+/// there paid a three-slot operator's first Mod3 37.5 weight points and its
+/// next two 12.5 and 25. Per operator, the floor keeps a first Mod3 at half
+/// the one `WEIGHT_MODULE`.
+fn module_ladder(model: ScoreModel) -> fn(usize, usize) -> f64 {
+    if model.module_per_slot {
+        module_share
+    } else {
+        module_share_floored
+    }
+}
+
+/// The share of advanced modules at Mod3.
+fn module_share(reached: usize, slots: usize) -> f64 {
+    reached as f64 / slots as f64
+}
+
+/// `module_share`, never below 0.50 for the first.
+fn module_share_floored(reached: usize, slots: usize) -> f64 {
+    module_share(reached, slots).max(0.50)
 }
 
 /// Returns 0.0-1.0 based on trust progress.
@@ -797,7 +819,7 @@ fn simulate_score_for_tag(
             set(
                 &mut dims,
                 DimensionKind::Module,
-                milestone_score(&simulated, advanced_mods.len(), module_ladder),
+                milestone_score(&simulated, advanced_mods.len(), module_ladder(model)),
             )
         }
         "POT6" => set(&mut dims, DimensionKind::Potential, 1.0),

@@ -395,6 +395,44 @@ fn a_mod3_is_priced_per_slot_and_per_rarity_cost() {
     );
 }
 
+/// The 2026-09-25 report: Ebenholz (three advanced module slots) showed
+/// Mod +0.09 where a two-slot 6★ showed +0.07. The first Mod3 was floored at
+/// half the module axis, 37.5 of a three-slot operator's 75 module weight
+/// points, and the next two paid 12.5 and 25. Per slot, every Mod3 buys one
+/// slot's 25 of the operator's 170.
+#[test]
+fn every_mod3_of_a_three_slot_operator_is_worth_one_slot() {
+    use backend::core::grade::grade_operators::grade_operator_in;
+    let game_data = common::load_game_data();
+    let op = game_data
+        .operators
+        .get("char_4046_ebnhlz")
+        .expect("Ebenholz in gamedata");
+    let max_level = op.phases.last().map_or(1, |p| p.max_level as i16);
+    let favor = &game_data.favor;
+    let modules = [
+        "uniequip_002_ebnhlz",
+        "uniequip_003_ebnhlz",
+        "uniequip_004_ebnhlz",
+    ];
+    let grades: Vec<f64> = (0..=modules.len())
+        .map(|built| {
+            let mut e = entry("char_4046_ebnhlz", 2, max_level);
+            e.modules = serde_json::Value::Array(
+                modules[..built]
+                    .iter()
+                    .map(|id| serde_json::json!({ "id": id, "level": 3 }))
+                    .collect(),
+            );
+            grade_operator_in(&e, op, favor, false, &ScoreModel::SHIPPED)
+        })
+        .collect();
+    for step in grades.windows(2) {
+        let gain = step[1] - step[0];
+        assert!((gain - 25.0 / 170.0).abs() < 1e-6, "{grades:?}");
+    }
+}
+
 /// Price the 2026-09-22 reweight on every local account: the Operators
 /// subscore under the model deployed that morning (all-owned denominator,
 /// legacy rarity weights, one module weight per operator) against the

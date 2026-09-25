@@ -199,9 +199,9 @@ function masteryLadder(reached: number, slots: number): number {
     return reached === 1 ? 0.5 : reached === 2 ? 0.75 : 1;
 }
 
-/** The share of advanced modules at Mod3, never below 0.5 for the first (`module_ladder`). */
+/** The share of advanced modules at Mod3 (`module_share`, the per-slot `module_ladder`). */
 function moduleLadder(reached: number, slots: number): number {
-    return Math.max(reached / slots, 0.5);
+    return reached / slots;
 }
 
 /**
