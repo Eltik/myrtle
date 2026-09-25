@@ -6,18 +6,12 @@ import { loadProgress, type StoryPosition, saveProgress, withoutPosition, withPo
 import type { Frame } from "#/lib/story/scene";
 import { plainStoryText, renderLine } from "#/lib/story/text";
 import type { StoryScript } from "#/types/generated/StoryScript";
+import { type BacklogEntry, reachOf, rebuiltTo, withChoice, withDecision, withHalt } from "./backlog";
 import { firstWords, type HaltSummary } from "./scrub";
 
-export type Phase = "resume" | "title" | "reading" | "end";
+export type { BacklogEntry } from "./backlog";
 
-export interface BacklogEntry {
-    haltIndex: number;
-    /** `cutscene` is a video halt, which has no line of its own to log. */
-    kind: "line" | "choice" | "cutscene";
-    speaker?: string;
-    text: string;
-    isNarration: boolean;
-}
+export type Phase = "resume" | "title" | "reading" | "end";
 
 interface Playback {
     frames: Frame[];
@@ -33,6 +27,10 @@ export interface StoryPlayer {
     playing: boolean;
     haltIndex: number;
     totalHalts: number;
+    /**
+     * Every halt on the current choice path up to the furthest one reached,
+     * which can be AHEAD of `haltIndex` after a Back or a jump (`backlog.ts`).
+     */
     backlog: BacklogEntry[];
     unhandledKinds: Record<string, number>;
     /** Names the wire `assets` maps have no entry for: each one is a request NOT made. */
@@ -58,6 +56,12 @@ export interface StoryPlayer {
     haltSummaries: HaltSummary[];
     /** Jump to a halt, replaying the scene from the start with `choices`. */
     jumpTo(target: number): void;
+    /**
+     * SKIP: straight to the end card, the story marked read, the audio left as
+     * the end of the script leaves it. A decision not yet made takes its first
+     * option, the same default `haltSummaries` walks.
+     */
+    skipToEnd(): void;
 }
 
 interface Options {
@@ -113,6 +117,11 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
     const [phase, setPhase] = useState<Phase>(initialHalt !== undefined ? "reading" : "title");
     const timer = useRef<number | null>(null);
     const backlogRef = useRef<BacklogEntry[]>([]);
+    // The choices of the path the LOG is on, out to its reach. `engine.choices`
+    // is only the path up to the current halt, because `goTo` resets it, so a
+    // jump back to 16 would forget an option taken at 50 and a jump forward to
+    // 85 would walk the first option instead.
+    const pathChoicesRef = useRef<Record<number, string>>({});
 
     const clearTimer = useCallback(() => {
         if (timer.current !== null) {
@@ -181,13 +190,16 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
     );
 
     const persist = useCallback(
-        (result: StepResult) => {
+        (result: StepResult, log: readonly BacklogEntry[]) => {
             let p = loadProgress();
             if (result.halt.kind === "end") {
                 p = withRead(withoutPosition(p, storyId), storyId);
                 p.last = storyId;
             } else {
-                p = withPosition(p, storyId, { halt: result.haltIndex, total: engine.totalHalts, choices: { ...engine.choices } });
+                // The path's choices, not the engine's: they reach past the
+                // halt when the log does, and `reach` is only meaningful on them.
+                const reach = reachOf(log, result.haltIndex);
+                p = withPosition(p, storyId, { halt: result.haltIndex, total: engine.totalHalts, choices: { ...engine.choices, ...pathChoicesRef.current }, ...(reach > result.haltIndex ? { reach } : {}) });
             }
             saveProgress(p);
         },
@@ -219,53 +231,76 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
             } else {
                 fire(result.effects);
             }
-            const kept = backlogRef.current.filter((e) => e.haltIndex < result.haltIndex);
-            if (result.halt.kind === "line") kept.push({ haltIndex: result.haltIndex, kind: "line", speaker: result.halt.speaker, text: result.halt.text, isNarration: result.halt.isNarration });
-            if (result.halt.kind === "video") kept.push({ haltIndex: result.haltIndex, kind: "cutscene", text: cutsceneLabel, isNarration: false });
-            backlogRef.current = kept;
-            setBacklog(kept);
+            // The END halt logs nothing and keeps what is logged; every other
+            // halt goes through the reach rule in `backlog.ts`.
+            let log = backlogRef.current;
+            if (result.halt.kind === "line") log = withHalt(log, { haltIndex: result.haltIndex, kind: "line", speaker: result.halt.speaker, text: result.halt.text, isNarration: result.halt.isNarration });
+            else if (result.halt.kind === "video") log = withHalt(log, { haltIndex: result.haltIndex, kind: "cutscene", text: cutsceneLabel, isNarration: false });
+            else if (result.halt.kind === "decision") log = withDecision(log, result.haltIndex);
+            backlogRef.current = log;
+            setBacklog(log);
             setPhase(result.halt.kind === "end" ? "end" : "reading");
-            persist(result);
+            persist(result, log);
         },
         [audio, cutsceneLabel, engine, fire, persist, playFrames, playMusicEffect],
     );
 
-    // A replay rebuilds the backlog from the halts it passes through, so Back
-    // and resume both leave a complete log behind the current line.
-    const replayTo = useCallback(
-        (target: number, choices: Record<number, string>) => {
-            const result = engine.goTo(target, choices);
-            // The engine's goTo returns only the final halt; walk the path again for the log.
+    /**
+     * The log a fresh walk of the path writes, out to `limit`. A decision logs
+     * its choice only when `choices` RECORDS one, so a decision the reader is
+     * sitting on unanswered is not logged with a default it never picked; the
+     * walk itself goes on with the first option, as `goTo` does.
+     */
+    const walkLog = useCallback(
+        (limit: number, choices: Record<number, string>): BacklogEntry[] => {
             const log: BacklogEntry[] = [];
             const probe = createEngine(script, { nickname, videos });
             let r = probe.step();
-            while (r.halt.kind !== "end" && r.haltIndex <= target) {
+            for (let guard = 0; r.halt.kind !== "end" && r.haltIndex <= limit && guard <= probe.totalHalts + limit + 1; guard++) {
                 if (r.halt.kind === "line") log.push({ haltIndex: r.haltIndex, kind: "line", speaker: r.halt.speaker, text: r.halt.text, isNarration: r.halt.isNarration });
                 if (r.halt.kind === "video") log.push({ haltIndex: r.haltIndex, kind: "cutscene", text: cutsceneLabel, isNarration: false });
                 if (r.halt.kind === "decision") {
-                    const chosen = choices[Object.keys(probe.choices).length] ?? r.halt.values[0];
-                    const at = r.halt.values.indexOf(chosen);
-                    log.push({ haltIndex: r.haltIndex, kind: "choice", text: r.halt.options[at >= 0 ? at : 0] ?? chosen, isNarration: false });
+                    const recorded = choices[Object.keys(probe.choices).length];
+                    const chosen = recorded !== undefined && r.halt.values.includes(recorded) ? recorded : r.halt.values[0];
+                    if (recorded !== undefined) {
+                        const at = r.halt.values.indexOf(chosen);
+                        log.push({ haltIndex: r.haltIndex, kind: "choice", text: r.halt.options[at >= 0 ? at : 0] ?? chosen, isNarration: false, value: chosen });
+                    }
                     r = probe.step(chosen);
                 } else {
                     r = probe.step();
                 }
             }
-            backlogRef.current = log.filter((e) => e.haltIndex < target);
-            apply(result, true);
+            return log;
         },
-        [apply, cutsceneLabel, engine, nickname, script, videos],
+        [cutsceneLabel, nickname, script, videos],
     );
 
+    // A replay rebuilds the backlog from the halts it passes through, and
+    // keeps the rows AHEAD of the target when the reader's log walked the same
+    // path (`rebuiltTo`). `walkTo` is how far the probe goes: the target for a
+    // jump, and the saved reach for a resume, which starts from an empty log.
+    const replayTo = useCallback(
+        (target: number, choices: Record<number, string>, walkTo: number = target) => {
+            pathChoicesRef.current = { ...choices };
+            const result = engine.goTo(target, choices);
+            backlogRef.current = rebuiltTo(walkLog(Math.max(target, walkTo), choices), backlogRef.current, target);
+            apply(result, true);
+        },
+        [apply, engine, walkLog],
+    );
+
+    // A fresh read: the log and the path start empty, so the reach resets.
     const start = useCallback(() => {
         backlogRef.current = [];
+        pathChoicesRef.current = {};
         // goTo(0) is a reset plus one step, so the result carries the first step's effects.
         apply(engine.goTo(0, {}), false);
     }, [apply, engine]);
 
     const resume = useCallback(() => {
         if (!saved) return start();
-        replayTo(saved.halt, saved.choices);
+        replayTo(saved.halt, saved.choices, saved.reach);
     }, [replayTo, saved, start]);
 
     const restart = useCallback(() => {
@@ -289,7 +324,16 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
         (value: string) => {
             if (halt?.kind !== "decision") return;
             const at = halt.values.indexOf(value);
-            backlogRef.current = [...backlogRef.current.filter((e) => e.haltIndex < haltIndex), { haltIndex, kind: "choice", text: halt.options[at >= 0 ? at : 0] ?? value, isNarration: false }];
+            const chosen = at >= 0 ? value : (halt.values[0] ?? value);
+            // A different option than the path recorded is a new path: every
+            // choice after this one belongs to the old branch and goes with it.
+            const ordinal = Object.keys(engine.choices).length;
+            if (pathChoicesRef.current[ordinal] !== chosen) {
+                const kept: Record<number, string> = {};
+                for (const [k, v] of Object.entries(pathChoicesRef.current)) if (Number(k) < ordinal) kept[Number(k)] = v;
+                pathChoicesRef.current = { ...kept, [ordinal]: chosen };
+            }
+            backlogRef.current = withChoice(backlogRef.current, { haltIndex, kind: "choice", text: halt.options[at >= 0 ? at : 0] ?? value, isNarration: false, value: chosen });
             apply(engine.step(value), false);
         },
         [apply, engine, halt, haltIndex],
@@ -323,16 +367,24 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
     const jumpTo = useCallback(
         (target: number) => {
             if (target < 0) return;
-            replayTo(target, { ...engine.choices });
+            replayTo(target, { ...engine.choices, ...pathChoicesRef.current });
         },
         [engine, replayTo],
     );
 
     const back = useCallback(() => {
         if (haltIndex <= 0 || phase === "title" || phase === "resume") return;
-        const choices = { ...engine.choices };
-        replayTo(haltIndex - 1, choices);
+        replayTo(haltIndex - 1, { ...engine.choices, ...pathChoicesRef.current });
     }, [engine, haltIndex, phase, replayTo]);
+
+    // One `goTo` past every halt lands on the end. It is a REPLAY, so the audio
+    // is re-derived from the engine: the music the script last asked for (or
+    // silence, when it stopped it) and every loop still running at the end,
+    // which is the state the last step leaves when the end is reached by reading.
+    const skipToEnd = useCallback(() => {
+        if (phase !== "reading") return;
+        apply(engine.goTo(Number.MAX_SAFE_INTEGER, { ...engine.choices, ...pathChoicesRef.current }), true);
+    }, [apply, engine, phase]);
 
     // After mount, offer to resume where this story was left. Guarded on the
     // title phase and on nothing having been read yet, so it can never pull a
@@ -354,7 +406,7 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
         const target = initialHaltRef.current;
         if (target === undefined) return;
         const p = loadProgress().pos[storyId];
-        replayRef.current(Math.max(0, target), p?.choices ?? {});
+        replayRef.current(Math.max(0, target), p?.choices ?? {}, p?.reach);
     }, [storyId]);
 
     useEffect(() => () => clearTimer(), [clearTimer]);
@@ -391,5 +443,6 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
         savedHalt: saved?.halt ?? null,
         haltSummaries,
         jumpTo,
+        skipToEnd,
     };
 }

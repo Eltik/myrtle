@@ -62,6 +62,11 @@ function renderNodes(nodes: TextNode[], budget: { left: number }, keyPrefix: str
     return out;
 }
 
+/** The same markup rendering with no reveal budget: every character, for a surface that is not typed out. */
+export function renderStoryNodes(nodes: TextNode[]): React.ReactNode[] {
+    return renderNodes(nodes, { left: Number.POSITIVE_INFINITY }, "n");
+}
+
 export interface ITextBoxProps {
     speaker?: string;
     text: string;

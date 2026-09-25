@@ -7,4 +7,4 @@
  * make every reader-side field addition a backend migration. The TS type is
  * declared inline so the generated binding still names the real shape.
  */
-export type StoryProgressDocument = { v: 1 | 2; read: Record<string, number>; unread?: Record<string, number>; pos: Record<string, { halt: number; total: number; ts: number; choices: Record<number, string> }>; last?: string };
+export type StoryProgressDocument = { v: 1 | 2; read: Record<string, number>; unread?: Record<string, number>; pos: Record<string, { halt: number; total: number; ts: number; choices: Record<number, string>; reach?: number }>; last?: string };

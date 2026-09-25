@@ -1,20 +1,24 @@
 import type { ReactNode } from "react";
 import { env } from "#/env";
+import { gamedataPath } from "#/lib/api/gamedata";
 import { deepCamelize, getOperatorsListFn } from "#/lib/api/operators";
 import { stagePreviewAssetPaths } from "#/lib/api/stages";
 import type { IRosterEntry } from "#/lib/api/user";
 import { backendFetch } from "#/lib/fetch";
 import { metaSourceForLocale } from "#/lib/meta";
 import { formatGroupId, formatNationId, formatNumber, formatTeamId, rarityToNumber, toAvatarStem } from "#/lib/utils";
+import type { StoryIndex } from "#/types/generated/StoryIndex";
 import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
 import type { IStage, IZone } from "#/types/stages";
 import type { IUserProfile } from "#/types/user";
 import { ogHash } from "./hash";
 import { defaultOgPreset, defaultOgTagLabels, resolveDefaultOgPreset } from "./presets";
 import type { IRenderDimensions } from "./render";
+import { buildStoryOgData, type IStoryOgData, parseStoryOgId, storyOgHashParts } from "./story";
 import { DefaultTemplate, type IDefaultOgData } from "./templates/Default";
 import { type IOperatorOgData, OperatorTemplate } from "./templates/Operator";
 import { buildStageOgData, type IStageOgData, StageTemplate } from "./templates/Stage";
+import { StoryTemplate } from "./templates/Story";
 import { type ITierListOgData, type ITierListOperatorPreview, type ITierListTierPreview, TierListTemplate } from "./templates/TierList";
 import { type ITierListBoardImageData, type ITierListBoardImageOperator, type ITierListBoardImageTier, TIER_LIST_BOARD_IMAGE_LAYOUT, TierListBoardImageTemplate, tierListBoardImageDimensions } from "./templates/TierListBoardImage";
 import { type IUserOgData, type IUserSupportModule, type IUserSupportSkill, type IUserSupportUnit, UserTemplate } from "./templates/User";
@@ -651,12 +655,64 @@ const stageHandler = defineOgHandler<IStageOgData>({
     template: (data) => StageTemplate(data),
 });
 
+const STORY_HASH_VERSION = "v2";
+/**
+ * The library index is 706,075 bytes on EN (451 groups, 315 records, measured
+ * 2026-09-25), and a card needs one entry of it. It is cached per server for
+ * the same 30 minutes the stage lists are, and a cache miss on the card costs
+ * one index read, not one per render.
+ */
+const storyIndexCache = new Map<string, { promise: Promise<StoryIndex>; expiresAt: number }>();
+
+function getCachedStoryIndex(server: string): Promise<StoryIndex> {
+    const now = Date.now();
+    const cached = storyIndexCache.get(server);
+    if (cached && now < cached.expiresAt) return cached.promise;
+    const path = gamedataPath(server, "/story/index");
+    const promise = backendFetch(path).then(async (res) => {
+        if (!res.ok) throw new Error(`${path} failed: ${res.status}`);
+        return (await res.json()) as StoryIndex;
+    });
+    storyIndexCache.set(server, { promise, expiresAt: now + STATIC_STAGE_TTL_MS });
+    promise.catch(() => {
+        if (storyIndexCache.get(server)?.promise === promise) storyIndexCache.delete(server);
+    });
+    return promise;
+}
+
+const storyHandler = defineOgHandler<IStoryOgData>({
+    kind: "story",
+    hashVersion: STORY_HASH_VERSION,
+    fetch: async (id, locale) => {
+        const { server, storyId, explicit } = parseStoryOgId(id);
+        const source = await metaSourceForLocale(locale);
+        // A bare id is the default server's; when that index does not list it,
+        // CN is tried next, the order the operator card resolves in, so a
+        // CN-only story still has a card at its bare URL. The page itself
+        // always names the server it read (`storyOgId`).
+        const servers: string[] = explicit || server === "cn" ? [server] : [server, "cn"];
+        for (const s of servers) {
+            const index = await getCachedStoryIndex(s).catch(() => null);
+            if (!index) continue;
+            const data = buildStoryOgData(index, storyId, { server: s, source });
+            if (!data) continue;
+            const assetServer = s === "cn" ? "cn" : undefined;
+            const artURL = data.artPath ? await fetchToDataURI(assetURL(data.artPath, assetServer)) : undefined;
+            return { ...data, artURL };
+        }
+        return null;
+    },
+    hashParts: (data) => storyOgHashParts(data),
+    template: (data) => StoryTemplate(data),
+});
+
 export const ogRegistry = {
     operator: operatorHandler,
     user: userHandler,
     "tier-list": tierListHandler,
     "tier-list-image": tierListBoardImageHandler,
     stage: stageHandler,
+    story: storyHandler,
     default: defaultHandler,
 };
 

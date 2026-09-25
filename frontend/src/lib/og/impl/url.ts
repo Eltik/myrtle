@@ -14,9 +14,20 @@ export function ogURL<K extends OgKind>(kind: K, id: string, data: Parameters<(t
     return `${OG_CONFIG.siteURL}/api/og/${kind}/${encodeURIComponent(id)}?v=${hash}`;
 }
 
-export function warmOg<K extends OgKind>(kind: K, id: string, data: Parameters<(typeof ogRegistry)[K]["template"]>[0]): void {
-    if (typeof window !== "undefined") return;
+/**
+ * {@link ogURL} for a card whose text depends on the page's locale: the locale
+ * rides along as `&locale=` so the handler, which has no router context,
+ * resolves the same catalog the page hashed. The source locale adds nothing,
+ * so an English URL is exactly `ogURL`'s.
+ */
+export function localizedOgURL<K extends OgKind>(kind: K, id: string, data: Parameters<(typeof ogRegistry)[K]["template"]>[0], locale?: string | null): string {
     const url = ogURL(kind, id, data);
+    return !locale || locale === DEFAULT_LOCALE ? url : `${url}&locale=${encodeURIComponent(locale)}`;
+}
+
+export function warmOg<K extends OgKind>(kind: K, id: string, data: Parameters<(typeof ogRegistry)[K]["template"]>[0], locale?: string | null): void {
+    if (typeof window !== "undefined") return;
+    const url = localizedOgURL(kind, id, data, locale);
     if (warmedOgURLs.has(url)) return;
     if (warmedOgURLs.size > MAX_WARMED_URLS) warmedOgURLs.clear();
     warmedOgURLs.add(url);
@@ -38,7 +49,5 @@ export function warmOg<K extends OgKind>(kind: K, id: string, data: Parameters<(
 // every English `og:image` URL, and every PNG already cached behind it, is
 // byte-for-byte what it was.
 export function defaultOgURL(slug: DefaultOgPresetSlug, source?: IMetaSource | null): string {
-    const url = ogURL("default", slug, resolveDefaultOgPreset(DEFAULT_OG_PRESETS[slug], source));
-    const locale = source?.locale;
-    return !locale || locale === DEFAULT_LOCALE ? url : `${url}&locale=${encodeURIComponent(locale)}`;
+    return localizedOgURL("default", slug, resolveDefaultOgPreset(DEFAULT_OG_PRESETS[slug], source), source?.locale);
 }

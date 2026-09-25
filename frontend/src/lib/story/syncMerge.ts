@@ -97,7 +97,8 @@ export const DEFAULT_SYNC_POLICY: SyncPolicy = "merge";
  *
  * `pos` is per story, and the entry with the larger `ts` wins. A tie keeps the
  * LOCAL entry, because a tie is the same write seen twice and the local copy is
- * the one already on screen.
+ * the one already on screen. The winner carries the larger `reach` of the two
+ * when both walked the same choices ({@link withReachOf}).
  *
  * `last` is the newer of the two, judged by the `ts` of the position each one
  * names in the MERGED `pos`. A `last` naming a story with no position scores 0
@@ -119,7 +120,8 @@ export function merge(local: StoryProgress, remote: StoryProgress, gameUnread: r
     const pos: Record<string, StoryPosition> = { ...remote.pos };
     for (const [id, entry] of Object.entries(local.pos)) {
         const other = pos[id];
-        if (!other || entry.ts >= other.ts) pos[id] = entry;
+        if (!other) pos[id] = entry;
+        else pos[id] = entry.ts >= other.ts ? withReachOf(entry, other) : withReachOf(other, entry);
     }
     const out: StoryProgress = { v: 2, read, pos };
     if (Object.keys(unread).length > 0) out.unread = unread;
@@ -143,6 +145,27 @@ function upgraded(side: StoryProgress, gameUnread: readonly string[]): Record<st
     const read = { ...side.read };
     for (const id of gameUnread) if (read[id] === 1) delete read[id];
     return read;
+}
+
+/**
+ * The winning position of one story, carrying the LARGER reach of the two.
+ *
+ * `halt` is the winner's, by the `ts` rule above. The reach is the furthest
+ * halt either side read, but only when the two walked the same path: their
+ * choices agree on every decision both recorded. Then the loser's choices past
+ * the winner's are carried too, because the loser's reach was read on them
+ * and a walk out to it needs them. Two positions that took different options
+ * are two paths, and the winner's reach stands alone.
+ */
+function withReachOf(winner: StoryPosition, loser: StoryPosition): StoryPosition {
+    const agree = Object.entries(loser.choices).every(([k, v]) => {
+        const mine = winner.choices[Number(k)];
+        return mine === undefined || mine === v;
+    });
+    if (!agree) return winner;
+    const reach = Math.max(winner.reach ?? winner.halt, loser.reach ?? loser.halt);
+    if (reach <= (winner.reach ?? winner.halt)) return winner;
+    return { ...winner, choices: { ...loser.choices, ...winner.choices }, reach };
 }
 
 function pickLast(mine: string | undefined, theirs: string | undefined, pos: Record<string, StoryPosition>): string | undefined {
@@ -175,7 +198,9 @@ export function canonical(p: StoryProgress): string {
                 .map(Number)
                 .sort((a, b) => a - b)
                 .map((k) => [k, e.choices[k]]);
-            return [id, e.halt, e.total, e.ts, choices];
+            // `reach` rides at the END and only when present, so a position
+            // written before it existed encodes exactly as it always did.
+            return e.reach === undefined ? [id, e.halt, e.total, e.ts, choices] : [id, e.halt, e.total, e.ts, choices, e.reach];
         });
     const cleared = Object.keys(p.unread ?? {}).sort();
     return JSON.stringify([p.v, Object.keys(p.read).sort(), positions, p.last ?? null, cleared]);

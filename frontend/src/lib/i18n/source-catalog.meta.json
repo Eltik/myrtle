@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-25T01:52:40.667Z",
+    "generatedAt": "2026-09-25T04:21:25.673Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -10770,6 +10770,41 @@
             "placeholders": []
         },
         {
+            "key": "meta.og.story.cutscene",
+            "namespace": "meta",
+            "source_text": "Cutscene",
+            "description": "Chip on a story's social card when the story plays an animated cutscene. Drawn uppercase at 13px beside a play glyph, keep it to one word.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.og.story.noScript",
+            "namespace": "meta",
+            "source_text": "No script yet",
+            "description": "Chip on a story's social card when the game lists the story but ships no script for it yet (unreleased or upcoming content). Drawn uppercase at 13px, keep it short.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.og.story.position",
+            "namespace": "meta",
+            "source_text": "Story",
+            "description": "Stat label on a story's social card, over a value like `3 / 24`: where this story sits in its chapter. Drawn uppercase at 10px, keep it to one short word.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.og.story.reading",
+            "namespace": "meta",
+            "source_text": "Read time",
+            "description": "Stat label on a story's social card, over an estimate like `~7m` at 225 words a minute. Drawn uppercase at 10px, keep it short.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.og.story.words",
+            "namespace": "meta",
+            "source_text": "Words",
+            "description": "Stat label on a story's social card, over the story's word count. Drawn uppercase at 10px, keep it to one short word.",
+            "placeholders": []
+        },
+        {
             "key": "meta.og.tag.collection",
             "namespace": "meta",
             "source_text": "Collection",
@@ -18601,6 +18636,13 @@
             "placeholders": []
         },
         {
+            "key": "story.backlog.ahead",
+            "namespace": "story",
+            "source_text": "Read ahead",
+            "description": "Divider in the backlog above the lines the reader has already read PAST the current line (after jumping back). Each one below it is still a jump.",
+            "placeholders": []
+        },
+        {
             "key": "story.backlog.choice",
             "namespace": "story",
             "source_text": "Choice: {text}",
@@ -20806,29 +20848,29 @@
         {
             "key": "story.reader.skip.cancel",
             "namespace": "story",
-            "source_text": "Cancel",
-            "description": "Button that dismisses the skip confirmation.",
+            "source_text": "Keep reading",
+            "description": "Button that closes the Skip sheet and returns to the story where it was.",
             "placeholders": []
         },
         {
             "key": "story.reader.skip.confirm",
             "namespace": "story",
-            "source_text": "Skip",
-            "description": "Button that starts skipping.",
+            "source_text": "Skip story",
+            "description": "Primary button of the Skip sheet: jumps straight to the end of the story and marks it read.",
             "placeholders": []
         },
         {
-            "key": "story.reader.skip.confirmBody",
+            "key": "story.reader.skip.none",
             "namespace": "story",
-            "source_text": "Lines play instantly until the next choice or the end of the story. Click anywhere to stop.",
-            "description": "Body of the skip confirmation.",
+            "source_text": "This story has no summary.",
+            "description": "Shown in the Skip sheet in place of the summary when the game ships none for this story.",
             "placeholders": []
         },
         {
-            "key": "story.reader.skip.confirmTitle",
+            "key": "story.reader.skip.summaryLabel",
             "namespace": "story",
-            "source_text": "Skip ahead?",
-            "description": "Title of the one-line confirmation shown the first time Skip is pressed in a session.",
+            "source_text": "Story summary",
+            "description": "Small label above the story's name in the Skip sheet, which shows the game's own summary of the story before skipping it.",
             "placeholders": []
         },
         {
@@ -20994,7 +21036,7 @@
             "key": "story.reader.toolbar.skip",
             "namespace": "story",
             "source_text": "Skip",
-            "description": "Toolbar button that fast-forwards to the next choice or the end of the story. Short; sits in a compact toolbar.",
+            "description": "Toolbar button that shows the story's summary and offers to skip to its end. Short; sits in a compact toolbar.",
             "placeholders": []
         },
         {
@@ -21009,6 +21051,27 @@
             "namespace": "story",
             "source_text": "Unmute music",
             "description": "Toolbar button restoring music and sound.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.volume.label",
+            "namespace": "story",
+            "source_text": "Volume",
+            "description": "Accessible name of the popover under the mute button that holds the music and sound volume sliders, and of the small button that opens it on touch screens.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.volume.music",
+            "namespace": "story",
+            "source_text": "Music",
+            "description": "Label of the music volume slider in the toolbar's volume popover. Short.",
+            "placeholders": []
+        },
+        {
+            "key": "story.reader.volume.sound",
+            "namespace": "story",
+            "source_text": "Sound",
+            "description": "Label of the sound effect volume slider in the toolbar's volume popover. Short.",
             "placeholders": []
         },
         {
@@ -21218,7 +21281,7 @@
         {
             "key": "story.settings.animateRatioHint",
             "namespace": "story",
-            "source_text": "Multiplies every fade, tween and hold the script asks for. 0 plays each step instantly, which is what the game's skip does.",
+            "source_text": "Multiplies every fade, tween and hold the script asks for. 0 plays each step instantly.",
             "description": "Hint under the playback speed slider.",
             "placeholders": []
         },

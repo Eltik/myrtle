@@ -11,6 +11,13 @@ export interface StoryPosition {
     total: number;
     ts: number;
     choices: Record<number, string>;
+    /**
+     * The furthest halt read on these `choices`, when it is past `halt`: the
+     * reader rebuilds its log out to it, so a jump back to line 16 after
+     * reading to 85 still offers 85 after a reload. Absent when the reader is
+     * at its furthest point, and on every document written before 2026-09-25.
+     */
+    reach?: number;
 }
 
 /**
@@ -67,7 +74,12 @@ function coercePosition(v: unknown): StoryPosition | null {
             if (ordinal >= 0 && typeof val === "string") choices[ordinal] = val;
         }
     }
-    return { halt, total: Math.max(0, finiteInt(v.total, 0)), ts: Math.max(0, finiteInt(v.ts, 0)), choices };
+    const out: StoryPosition = { halt, total: Math.max(0, finiteInt(v.total, 0)), ts: Math.max(0, finiteInt(v.ts, 0)), choices };
+    // A reach at or behind the halt says nothing the halt does not, and a
+    // malformed one is dropped rather than failing the position.
+    const reach = v.reach === undefined ? -1 : finiteInt(v.reach, -1);
+    if (reach > halt) out.reach = reach;
+    return out;
 }
 
 /**

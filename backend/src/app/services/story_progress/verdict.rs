@@ -541,6 +541,7 @@ mod tests {
                     story_txt: txt.to_owned(),
                     name: String::new(),
                     group_id: String::new(),
+                    story_info: None,
                 },
             )
         })

@@ -30,6 +30,7 @@ import {
     SETTINGS_KEY,
     SPEAKER_TINTS,
     sliderValue,
+    withVolume,
 } from "./settings";
 
 describe("story settings", () => {
@@ -86,6 +87,32 @@ describe("story settings", () => {
         expect(coerceSettings({}).letterbox).toBe(false);
         expect(coerceSettings({ letterbox: "yes" }).letterbox).toBe(false);
         expect(parseSettings(JSON.stringify({ letterbox: true })).letterbox).toBe(true);
+    });
+});
+
+describe("withVolume, the toolbar's volume popover", () => {
+    it("a drag while muted unmutes and takes the level", () => {
+        const muted = { ...DEFAULT_SETTINGS, muted: true, musicVolume: 0.6 };
+        expect(withVolume(muted, "musicVolume", [0.3])).toEqual({ ...muted, musicVolume: 0.3, muted: false });
+        // Even a drag that lands on the same level unmutes: the reader touched the control.
+        expect(withVolume(muted, "sfxVolume", [muted.sfxVolume]).muted).toBe(false);
+    });
+
+    it("clamps to 0..1 and keeps the current level for a missing value", () => {
+        const s = { ...DEFAULT_SETTINGS, musicVolume: 0.6 };
+        expect(withVolume(s, "musicVolume", [1.4]).musicVolume).toBe(1);
+        expect(withVolume(s, "musicVolume", [-0.2]).musicVolume).toBe(0);
+        expect(withVolume(s, "musicVolume", []).musicVolume).toBe(0.6);
+        expect(withVolume(s, "musicVolume", null).musicVolume).toBe(0.6);
+    });
+
+    it("an unmuted no-op hands back the same document, so nothing is written", () => {
+        const s = { ...DEFAULT_SETTINGS, musicVolume: 0.6, muted: false };
+        expect(withVolume(s, "musicVolume", [0.6])).toBe(s);
+    });
+
+    it("zero is a real zero and persists as one", () => {
+        expect(withVolume({ ...DEFAULT_SETTINGS, sfxVolume: 0.8 }, "sfxVolume", [0]).sfxVolume).toBe(0);
     });
 });
 

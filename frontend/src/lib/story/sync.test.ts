@@ -51,9 +51,41 @@ describe("merge", () => {
         const local = doc({ pos: { s1: at(3, 200), s2: at(9, 100) } });
         const remote = doc({ pos: { s1: at(7, 100), s2: at(2, 300), s3: at(1, 50) } });
         const got = merge(local, remote).pos;
-        expect(got.s1).toEqual(at(3, 200));
-        expect(got.s2).toEqual(at(2, 300));
+        // The HALT is the newer side's; the older side's further halt on the
+        // same (empty) choices rides along as the reach.
+        expect(got.s1).toEqual({ ...at(3, 200), reach: 7 });
+        expect(got.s2).toEqual({ ...at(2, 300), reach: 9 });
         expect(got.s3).toEqual(at(1, 50));
+    });
+
+    it("carries the larger reach of two positions on the same choices, whichever wins the halt", () => {
+        // This device jumped back to 16 after reading to 85; the other one is at 40 and older.
+        const local = doc({ pos: { s1: { ...at(16, 300, { 0: "a" }), reach: 85 } } });
+        const remote = doc({ pos: { s1: at(40, 100, { 0: "a" }) } });
+        expect(merge(local, remote).pos.s1).toEqual({ ...at(16, 300, { 0: "a" }), reach: 85 });
+        // The newer side is behind the older side's halt: the halt is still the newer one's.
+        const older = doc({ pos: { s1: at(85, 100, { 0: "a", 1: "b" }) } });
+        const newer = doc({ pos: { s1: at(16, 300, { 0: "a" }) } });
+        const got = merge(newer, older).pos.s1;
+        expect(got.halt).toBe(16);
+        expect(got.reach).toBe(85);
+        // The reach was read on the older side's later choice, so that choice travels with it.
+        expect(got.choices).toEqual({ 0: "a", 1: "b" });
+        expect(merge(older, newer).pos.s1).toEqual(got);
+    });
+
+    it("does not carry a reach across two positions that took different options", () => {
+        const local = doc({ pos: { s1: at(16, 300, { 0: "a" }) } });
+        const remote = doc({ pos: { s1: { ...at(85, 100, { 0: "b" }), reach: 90 } } });
+        expect(merge(local, remote).pos.s1).toEqual(at(16, 300, { 0: "a" }));
+    });
+
+    it("a merge carrying a reach is idempotent", () => {
+        const local = doc({ pos: { s1: at(16, 300, { 0: "a" }) } });
+        const remote = doc({ pos: { s1: at(85, 100, { 0: "a", 1: "c" }) } });
+        const once = merge(local, remote);
+        expect(merge(once, remote)).toEqual(once);
+        expect(merge(local, once)).toEqual(once);
     });
 
     it("keeps the local entry on a tie", () => {
@@ -113,6 +145,12 @@ describe("sameProgress", () => {
         expect(sameProgress(base, { ...base, pos: { s1: at(1, 2, { 0: "b" }) } })).toBe(false);
         expect(sameProgress(base, { ...base, read: { x: 1, y: 1 } })).toBe(false);
         expect(sameProgress(base, { ...base, last: "s2" })).toBe(false);
+    });
+
+    it("separates a different reach, and encodes a position without one as it always did", () => {
+        const base: StoryProgress = { v: 2, read: {}, pos: { s1: at(1, 2) } };
+        expect(sameProgress(base, { ...base, pos: { s1: { ...at(1, 2), reach: 9 } } })).toBe(false);
+        expect(sameProgress({ ...base, pos: { s1: { ...at(1, 2), reach: 9 } } }, { ...base, pos: { s1: { ...at(1, 2), reach: 9 } } })).toBe(true);
     });
 
     it("separates a v1 document from a v2 one carrying the same marks", () => {

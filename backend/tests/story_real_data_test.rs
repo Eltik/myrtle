@@ -2380,3 +2380,64 @@ fn the_community_aggregate_over_the_real_database() {
         );
     });
 }
+
+/// The story summary the Skip sheet shows: every library story whose table
+/// row names a `StoryInfo` and has a script is expected to carry one, and the
+/// script response for act39side ST-1 carries the game's own text. Skips
+/// without the scripts or without the `[uc]info` tree, since the CI artifact
+/// may not carry the summaries.
+///
+/// `cargo test --test story_real_data_test synopsis -- --nocapture`
+#[test]
+fn every_scripted_story_carries_its_synopsis() {
+    let dir = assets_dir();
+    if !scripts_present(&dir) || !dir.join("gamedata/story/[uc]info").is_dir() {
+        eprintln!("story_real_data_test: no EN story tree with [uc]info, skipping synopsis");
+        return;
+    }
+    let gd = common::load_game_data();
+    let asset_index = Arc::new(AssetIndex::build(&dir));
+    let cache = build_index(gd, &asset_index, &dir);
+    let mut named = 0usize;
+    let mut found = 0usize;
+    let mut scripted_without: Vec<String> = Vec::new();
+    let mut bytes = 0usize;
+    for (id, r) in &cache.lookup {
+        let Some(info) = r.story_info.as_deref() else {
+            continue;
+        };
+        named += 1;
+        match story::load_synopsis(&dir, info) {
+            Some(text) => {
+                found += 1;
+                bytes += text.len();
+                assert!(!text.starts_with('['), "{id}: synopsis is a script");
+            }
+            None if story::has_script(&dir, &r.story_txt) => scripted_without.push(id.clone()),
+            None => {}
+        }
+    }
+    scripted_without.sort();
+    println!(
+        "synopsis: {} lookup ids, {named} name a StoryInfo, {found} resolve ({bytes} bytes), {} with a script and no synopsis: {:?}",
+        cache.lookup.len(),
+        scripted_without.len(),
+        &scripted_without[..scripted_without.len().min(20)]
+    );
+    assert!(found > 1_500, "only {found} synopses resolved");
+    assert!(
+        scripted_without.is_empty(),
+        "{} scripted stories have no synopsis",
+        scripted_without.len()
+    );
+
+    let id = "act39side_level_act39side_st01";
+    let got = load_and_parse(&dir, &asset_index, id, &cache.lookup[id])
+        .expect("loads")
+        .expect("known id");
+    let synopsis = got.synopsis.expect("act39side ST-1 has a synopsis");
+    assert!(
+        synopsis.starts_with("Thorns tries to escape from a group of bandits"),
+        "{synopsis}"
+    );
+}

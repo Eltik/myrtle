@@ -14,10 +14,15 @@
  */
 import { ArrowLeftIcon, BookOpenIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, EyeOffIcon, FastForwardIcon, HistoryIcon, MaximizeIcon, MinimizeIcon, PlayIcon, SettingsIcon, Volume2Icon, VolumeXIcon } from "lucide-react";
 import type React from "react";
+import { memo, useId, useRef } from "react";
 import { Button } from "#/components/ui/button";
+import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
+import { Slider } from "#/components/ui/slider";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
+import { useMediaQuery } from "#/hooks/use-media-query";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import type { VolumeKey } from "#/lib/story/settings";
 import { cn } from "#/lib/utils";
 import { DARK_FOCUS, PILL, TOUCH_TARGET } from "./glass";
 import type { messages } from "./reader.messages";
@@ -129,12 +134,22 @@ export interface IReaderToolbarProps {
     onAutoPlay: () => void;
     animateRatio: number;
     onSpeed: () => void;
+    /** The synopsis sheet is open. */
     skipping: boolean;
+    /** Nothing to skip: the title card or the end card is up. */
+    skipDisabled?: boolean;
     onSkip: () => void;
     fullscreen: boolean;
     onFullscreen: () => void;
     muted: boolean;
     onMute: () => void;
+    musicVolume: number;
+    sfxVolume: number;
+    /** A volume slider in the mute button's popover moved (`withVolume` is the rule). */
+    onVolume: (key: VolumeKey, value: number | readonly number[]) => void;
+    /** The volume popover is open, controlled by the reader so it counts as a dialog for the hotkeys. */
+    volumeOpen: boolean;
+    onVolumeOpenChange: (open: boolean) => void;
 }
 
 export function ReaderToolbar(p: IReaderToolbarProps): React.ReactElement {
@@ -212,17 +227,14 @@ export function ReaderToolbar(p: IReaderToolbarProps): React.ReactElement {
                 >
                     {t("settings.multiplier", { value: formatRatio(p.animateRatio) })}
                 </Button>
-                <PillButton compact={compact} label={t("reader.toolbar.skip")} active={p.skipping} onClick={p.onSkip}>
+                <PillButton compact={compact} label={t("reader.toolbar.skip")} active={p.skipping} disabled={p.skipDisabled} hook="skip" onClick={p.onSkip}>
                     <FastForwardIcon />
                 </PillButton>
                 <PillButton compact={compact} label={p.fullscreen ? t("reader.toolbar.exitFullscreen") : t("reader.toolbar.fullscreen")} active={p.fullscreen} onClick={p.onFullscreen}>
                     {p.fullscreen ? <MinimizeIcon /> : <MaximizeIcon />}
                 </PillButton>
                 <span className="mx-0.5 hidden h-5 w-px bg-white/15 lg:block" />
-                {/* Volume is a MUTE here and a slider in Settings, which is the split the client makes too. */}
-                <PillButton compact={compact} iconOnly label={p.muted ? t("reader.toolbar.unmute") : t("reader.toolbar.mute")} active={p.muted} onClick={p.onMute}>
-                    {p.muted ? <VolumeXIcon /> : <Volume2Icon />}
-                </PillButton>
+                <VolumeControl compact={compact} muted={p.muted} musicVolume={p.musicVolume} sfxVolume={p.sfxVolume} volumeOpen={p.volumeOpen} onMute={p.onMute} onVolume={p.onVolume} onVolumeOpenChange={p.onVolumeOpenChange} />
                 <PillButton compact={compact} iconOnly label={t("reader.toolbar.hideToolbar")} onClick={p.onHideToolbar}>
                     <ChevronUpIcon />
                 </PillButton>
@@ -230,6 +242,106 @@ export function ReaderToolbar(p: IReaderToolbarProps): React.ReactElement {
         </div>
     );
 }
+
+/**
+ * The MUTE pill with the volume under it. A click on the pill still mutes; the
+ * two sliders (the same Music and Sound volumes Settings has) sit in a popover
+ * that opens on HOVER and on keyboard focus for a fine pointer, so turning a
+ * loud story down no longer needs the settings dialog.
+ *
+ * A touch screen has no hover, so there a tap is the mute it always was and a
+ * small chevron beside it, 44 px tall like every coarse target in the reader,
+ * opens the same popover. The popup is portalled, so it carries
+ * `data-story-ui` itself: without it a click on a slider would bubble through
+ * the React tree to the stage and turn the page.
+ */
+type IVolumeControlProps = Pick<IReaderToolbarProps, "compact" | "muted" | "musicVolume" | "sfxVolume" | "volumeOpen" | "onMute" | "onVolume" | "onVolumeOpenChange">;
+
+// Memoised on its own props: the toolbar re-renders on every halt, and a
+// base-ui popover trigger is dear enough to render that doing so per step made
+// the reader tests 3x slower. The reader keeps the callbacks stable across a step.
+const VolumeControl = memo(function VolumeControl(p: IVolumeControlProps): React.ReactElement {
+    const t: ReaderT = useT("story");
+    const coarse = useMediaQuery("(pointer: coarse)");
+    const chevronRef = useRef<HTMLButtonElement>(null);
+    const musicId = useId();
+    const sfxId = useId();
+    const label = p.muted ? t("reader.toolbar.unmute") : t("reader.toolbar.mute");
+    const rows: { key: VolumeKey; id: string; label: string; value: number }[] = [
+        { key: "musicVolume", id: musicId, label: t("reader.volume.music"), value: p.musicVolume },
+        { key: "sfxVolume", id: sfxId, label: t("reader.volume.sound"), value: p.sfxVolume },
+    ];
+    return (
+        <Popover
+            open={p.volumeOpen}
+            onOpenChange={(open: boolean, details: { reason: string; event: Event }) => {
+                // The chevron toggles the popover itself; an outside press ON it
+                // would close it here and the chevron's own click reopen it.
+                if (!open && details.reason === "outside-press" && details.event.target instanceof Node && chevronRef.current?.contains(details.event.target)) return;
+                // A press on the pill is the MUTE, never a popover toggle.
+                if (details.reason === "trigger-press") return;
+                p.onVolumeOpenChange(open);
+            }}
+        >
+            <PopoverTrigger
+                openOnHover={!coarse}
+                delay={120}
+                closeDelay={250}
+                render={
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label={label}
+                        aria-pressed={p.muted}
+                        data-story-mute
+                        title={p.compact ? undefined : label}
+                        className={cn("h-8 min-w-9 justify-center px-1.5 text-white/85 hover:bg-white/10 hover:text-white max-sm:min-w-8 lg:px-2", TOUCH_TARGET, DARK_FOCUS, p.muted && "bg-white/20 text-white")}
+                    />
+                }
+                onClick={(e: React.MouseEvent & { preventBaseUIHandler?: () => void }) => {
+                    e.preventBaseUIHandler?.();
+                    p.onMute();
+                }}
+                onFocus={(e: React.FocusEvent<HTMLElement>) => {
+                    // Keyboard focus only: a mouse press also focuses the button,
+                    // and that press is the mute, not a request for the sliders.
+                    if (!coarse && e.currentTarget.matches(":focus-visible")) p.onVolumeOpenChange(true);
+                }}
+            >
+                {p.muted ? <VolumeXIcon /> : <Volume2Icon />}
+            </PopoverTrigger>
+            {coarse ? (
+                <Button
+                    ref={chevronRef}
+                    variant="ghost"
+                    size="sm"
+                    aria-label={t("reader.volume.label")}
+                    aria-expanded={p.volumeOpen}
+                    data-story-volume-toggle
+                    onClick={() => p.onVolumeOpenChange(!p.volumeOpen)}
+                    className={cn("h-11 w-7 min-w-0 justify-center px-0 text-white/70 hover:bg-white/10 hover:text-white", DARK_FOCUS)}
+                >
+                    <ChevronDownIcon className={cn("size-3.5 transition-transform", p.volumeOpen && "rotate-180")} />
+                </Button>
+            ) : null}
+            <PopoverPopup side="bottom" align="end" sideOffset={8} initialFocus={false} className="w-60 border-white/15 bg-black/80 text-white backdrop-blur-md" data-story-ui data-story-volume aria-label={t("reader.volume.label")}>
+                <div className="flex flex-col gap-3">
+                    {rows.map((r) => (
+                        <div key={r.key} className="flex flex-col gap-1.5">
+                            <div className="flex items-center justify-between text-xs">
+                                <span id={r.id} className="text-white/80">
+                                    {r.label}
+                                </span>
+                                <span className="font-mono text-white/60 tabular-nums">{t("settings.percent", { value: Math.round(r.value * 100) })}</span>
+                            </div>
+                            <Slider aria-labelledby={r.id} className="pointer-coarse:[&_[data-slot=slider-control]]:h-11 pointer-coarse:[&_[data-slot=slider-control]]:items-center" min={0} max={1} step={0.05} value={[r.value]} onValueChange={(v: number | readonly number[]) => p.onVolume(r.key, v)} />
+                        </div>
+                    ))}
+                </div>
+            </PopoverPopup>
+        </Popover>
+    );
+});
 
 /**
  * The collapsed toolbar's handle: 24 px of frosted glass at the top edge,

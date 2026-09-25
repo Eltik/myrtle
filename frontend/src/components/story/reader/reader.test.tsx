@@ -25,6 +25,9 @@ vi.mock("@tanstack/react-query", () => ({
     queryOptions: (o: unknown) => o,
 }));
 
+/** Every element the reader scrolled into view, in order: the backlog test reads it. */
+const scrolledTo: Element[] = [];
+
 /** Every `setMusicDucked` the reader made, in order: the cutscene test reads it. */
 const ducked: boolean[] = [];
 
@@ -114,6 +117,16 @@ describe("StoryReader", () => {
         // jsdom has no rAF loop under fake timers; drive it off the timer queue.
         vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => window.setTimeout(() => cb(performance.now()), 16) as unknown as number);
         vi.stubGlobal("cancelAnimationFrame", (id: number) => window.clearTimeout(id));
+        // jsdom has no Web Animations; the dialogs' scroll area asks for them.
+        if (!("getAnimations" in Element.prototype)) Object.defineProperty(Element.prototype, "getAnimations", { value: () => [], configurable: true });
+        // Nor scrollIntoView; the backlog's anchor scroll is recorded instead.
+        scrolledTo.length = 0;
+        Object.defineProperty(Element.prototype, "scrollIntoView", {
+            value(this: Element) {
+                scrolledTo.push(this);
+            },
+            configurable: true,
+        });
     });
     afterEach(() => {
         cleanup();
@@ -233,5 +246,97 @@ describe("StoryReader", () => {
         expect(haltLabel()).toBe("0");
         expect(currentLine()).toContain("after the clip");
         expect(ducked).toEqual([]);
+    });
+
+    it("Skip shows the story summary, and confirming lands on the end card with the story marked read", () => {
+        renderReader({ ...welcome, synopsis: "The Doctor wakes.\nAmiya is there." });
+        pressSpace();
+        tick(1600);
+        for (let i = 0; i < 6; i++) {
+            if (!takeFirstOptionIfOffered()) pressSpace();
+            tick(1600);
+        }
+        const before = Number(haltLabel());
+        expect(before).toBeGreaterThan(0);
+        act(() => {
+            fireEvent.keyDown(window, { key: "s" });
+        });
+        const sheet = document.querySelector("[data-story-synopsis]");
+        expect(sheet?.textContent).toContain("The Doctor wakes.");
+        expect(sheet?.querySelectorAll("p")).toHaveLength(2);
+        // Nothing moved while the sheet is up: no stepping behind it.
+        tick(3000);
+        expect(Number(haltLabel())).toBe(before);
+        act(() => {
+            fireEvent.click(document.querySelector("[data-story-skip-confirm]") as Element);
+        });
+        tick(50);
+        expect(document.querySelector('[data-story-card="end"]')).not.toBeNull();
+        const saved = JSON.parse(window.localStorage.getItem("myrtle.story.progress") ?? "{}");
+        expect(saved.read[welcome.id]).toBeGreaterThan(1);
+        expect(saved.pos[welcome.id]).toBeUndefined();
+    });
+
+    it("Skip on a story with no summary says so in one line and still skips", () => {
+        renderReader();
+        pressSpace();
+        tick(1600);
+        act(() => {
+            fireEvent.keyDown(window, { key: "s" });
+        });
+        expect(document.querySelector("[data-story-synopsis-none]")).not.toBeNull();
+        act(() => {
+            fireEvent.click(document.querySelector("[data-story-skip-confirm]") as Element);
+        });
+        tick(50);
+        expect(document.querySelector('[data-story-card="end"]')).not.toBeNull();
+    });
+
+    it("the log keeps the rows past a jump back, and the saved position carries the reach", () => {
+        renderReader();
+        pressSpace();
+        tick(1600);
+        while (Number(haltLabel()) < 12) {
+            if (!takeFirstOptionIfOffered()) pressSpace();
+            tick(1600);
+        }
+        const reach = Number(haltLabel());
+        for (let i = 0; i < 5; i++) {
+            act(() => {
+                fireEvent.keyDown(window, { key: "ArrowLeft" });
+            });
+            tick(50);
+        }
+        const at = Number(haltLabel());
+        expect(at).toBe(reach - 5);
+        const saved = JSON.parse(window.localStorage.getItem("myrtle.story.progress") ?? "{}");
+        expect(saved.pos[welcome.id].halt).toBe(at);
+        expect(saved.pos[welcome.id].reach).toBe(reach);
+        act(() => {
+            fireEvent.keyDown(window, { key: "l" });
+        });
+        tick(50);
+        const ahead = [...document.querySelectorAll('[data-story-backlog-row][data-story-ahead="true"]')].map((el) => Number(el.getAttribute("data-story-halt-index")));
+        expect(ahead.length).toBeGreaterThan(0);
+        expect(Math.max(...ahead)).toBe(reach);
+        const current = document.querySelector('[data-story-backlog-row][data-story-current="true"]');
+        expect(current?.getAttribute("data-story-halt-index")).toBe(String(at));
+        // Opening scrolled to the CURRENT row, not the top of the story.
+        tick(50);
+        expect(scrolledTo.at(-1)?.querySelector("[data-story-backlog-row]")).toBe(current);
+
+        // A reload: the resume rebuilds the log out to the saved reach.
+        cleanup();
+        renderReader();
+        tick(50);
+        pressSpace();
+        tick(50);
+        expect(Number(haltLabel())).toBe(at);
+        act(() => {
+            fireEvent.keyDown(window, { key: "l" });
+        });
+        tick(50);
+        const resumed = [...document.querySelectorAll('[data-story-backlog-row][data-story-ahead="true"]')].map((el) => Number(el.getAttribute("data-story-halt-index")));
+        expect(resumed).toEqual(ahead);
     });
 });

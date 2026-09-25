@@ -6,7 +6,7 @@
  * the player, the skip state machine, the chrome's idle timer and the peek
  * grace all live here because they are shared, and each of them has its rule in
  * a pure sibling that is tested without a DOM: `chrome.ts` decides whether the
- * chrome is up, `skip.ts` what a skip does next, `scrub.ts` where a fraction
+ * chrome is up, `skip.ts` what a skip press does next, `scrub.ts` where a fraction
  * lands, `settings.ts` what a stored document means.
  *
  * What draws lives beside it: `ReaderToolbar` (both pills and the reveal
@@ -18,15 +18,13 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertDialog, AlertDialogClose, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogPopup, AlertDialogTitle } from "#/components/ui/alert-dialog";
-import { Button } from "#/components/ui/button";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { createStoryAudio, type StoryAudio } from "#/lib/story/audio";
 import type { CameraShake } from "#/lib/story/engine";
 import { clamp01 } from "#/lib/story/num";
-import { autoPlayDelaySec, type BoxPosition, resolveNickname, useStorySettings } from "#/lib/story/settings";
+import { autoPlayDelaySec, type BoxPosition, resolveNickname, useStorySettings, type VolumeKey, withVolume } from "#/lib/story/settings";
 import { parseStoryText, plainStoryText } from "#/lib/story/text";
 import { cn } from "#/lib/utils";
 import type { StoryCategory } from "#/types/generated/StoryCategory";
@@ -44,10 +42,11 @@ import { FAST_RATIO, ReaderToolbar, ToolbarHandle } from "./ReaderToolbar";
 import type { messages } from "./reader.messages";
 import { Scrubber } from "./Scrubber";
 import { SettingsDialog } from "./SettingsDialog";
+import { SkipDialog } from "./SkipDialog";
 import { type CanvasMode, Stage } from "./Stage";
-import { nextSkip, SKIP_OFF, SKIP_STEP_MS, type SkipState, skipAdvances, skipRatio } from "./skip";
-import { useSpeakerTint } from "./speaker";
 import { nextShownLine, type ShownLine } from "./shownLine";
+import { nextSkip, SKIP_CLOSED, type SkipEvent, type SkipState, skipAvailable } from "./skip";
+import { useSpeakerTint } from "./speaker";
 import { TextBox } from "./TextBox";
 import { useReaderHotkeys } from "./useReaderHotkeys";
 import { useStoryPlayer } from "./useStoryPlayer";
@@ -82,32 +81,8 @@ export interface IStoryReaderProps {
     video?: boolean;
 }
 
-/**
- * The skip confirm asks ONCE per session, as the client does. The flag lives in
- * `sessionStorage` so it survives a reload and a walk from one story to the
- * next inside the tab, and dies with the tab; every access is guarded because
- * a locked-down browser throws on the property itself.
- */
-const SKIP_CONFIRMED_KEY = "myrtle.story.skipConfirmed";
-
 /** A stable empty slot map, so a frameless render does not hand the tint hook a new object every time. */
 const EMPTY_SLOTS = {};
-
-function readSkipConfirmed(): boolean {
-    try {
-        return window.sessionStorage.getItem(SKIP_CONFIRMED_KEY) === "1";
-    } catch {
-        return false;
-    }
-}
-
-function rememberSkipConfirmed(): void {
-    try {
-        window.sessionStorage.setItem(SKIP_CONFIRMED_KEY, "1");
-    } catch {
-        // A session that cannot remember asks again. That is the whole cost.
-    }
-}
 
 export function StoryReader({ script, entry, groupName, category, previous, next, initialHalt, ratioOverride, legacyClamp, mask, canvasMode, plateFromWire, firstNameRight, video }: IStoryReaderProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("story");
@@ -134,18 +109,28 @@ export function StoryReader({ script, entry, groupName, category, previous, next
     // the frame timeline rather than inside it; the sequence restarts it.
     const [shake, setShake] = useState<{ seq: number; params: CameraShake } | null>(null);
     const onShake = useCallback((params: CameraShake) => setShake((s) => ({ seq: (s?.seq ?? 0) + 1, params })), []);
-    // SKIP. `confirmed` is seeded from the tab's session, so the reader asks
-    // once per session and not once per story.
-    const [skip, setSkip] = useState<SkipState>(() => ({ ...SKIP_OFF, confirmed: readSkipConfirmed() }));
-    // SKIP is `animateRatio = 0`, the client's own fast-forward, so it rides the
-    // one multiplier the engine already has rather than a second timeline.
-    const animateRatio = skipRatio(skip, ratioOverride ?? settings.animateRatio);
+    // SKIP: the synopsis sheet, and a jump to the end on confirm (`skip.ts`).
+    const [skip, setSkip] = useState<SkipState>(SKIP_CLOSED);
+    const animateRatio = ratioOverride ?? settings.animateRatio;
     // Cutscenes are on unless the URL or the setting says otherwise; the check
     // is against an explicit `false`, so a missing search param is never off.
     const videosOn = video !== false && settings.playVideos !== false;
     const cutsceneLabel = t("reader.cutscene.label");
     const player = useStoryPlayer({ script, storyId: script.id, nickname, audio, initialHalt, animateRatio, legacyClamp, firstNameRight, videos: videosOn, cutsceneLabel, onShake });
-    const { phase, halt, frame, playing, haltIndex, totalHalts, backlog, revealKey, advance, choose, back, start, resume, restart, savedHalt, haltSummaries, jumpTo } = player;
+    const { phase, halt, frame, playing, haltIndex, totalHalts, backlog, revealKey, advance, choose, back, start, resume, restart, savedHalt, haltSummaries, jumpTo, skipToEnd } = player;
+    // One place every skip event goes through, so the button, `S` and the
+    // sheet's two answers cannot disagree about what a press means.
+    const onSkipEvent = useCallback(
+        (e: SkipEvent) => {
+            const { state, toEnd } = nextSkip(skip, e, phase);
+            setSkip(state);
+            if (toEnd) {
+                audio.arm();
+                skipToEnd();
+            }
+        },
+        [audio, phase, skip, skipToEnd],
+    );
     // The box is the SCENE's, not the halt's: a bare `[dialog]` hides it and
     // the next line shows it again, so while a step's frames play out the box
     // follows `dialogVisible` and only the halt's own frame brings it back.
@@ -170,6 +155,21 @@ export function StoryReader({ script, entry, groupName, category, previous, next
     const [logOpen, setLogOpen] = useState(false);
     const [chapterOpen, setChapterOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
+    // The mute button's volume popover. It counts as a dialog: its sliders take
+    // the arrow keys, which would otherwise turn the page under them.
+    const [volumeOpen, setVolumeOpen] = useState(false);
+    // Stable across a step, so the memoised volume control (a base-ui popover
+    // that is dear to render) only re-renders when a volume or the mute
+    // changes. Measured: rendering it on every halt made the reader test
+    // steps 3x slower (0.9 s -> 4.6 s for the Doctor's-name walk).
+    const onMute = useCallback(() => setSettings({ ...settings, muted: !settings.muted }), [settings, setSettings]);
+    const onVolume = useCallback(
+        (key: VolumeKey, v: number | readonly number[]) => {
+            const nextSettings = withVolume(settings, key, v);
+            if (nextSettings !== settings) setSettings(nextSettings);
+        },
+        [settings, setSettings],
+    );
     const [fullscreen, setFullscreen] = useState(false);
     // The uploaded face is registered per MOUNT: a `FontFace` does not survive
     // a reload, so the bytes come back out of IndexedDB every time. Until it
@@ -213,7 +213,7 @@ export function StoryReader({ script, entry, groupName, category, previous, next
     const revealDone = revealDoneKey === revealKey;
     const [completeSignal, setCompleteSignal] = useState(0);
     const rootRef = useRef<HTMLDivElement>(null);
-    const dialogOpen = logOpen || chapterOpen || settingsOpen || skip.phase === "confirming";
+    const dialogOpen = logOpen || chapterOpen || settingsOpen || skip.open || volumeOpen;
     // Under 1024 px the pills are icon-only and every label is a tooltip.
     const compact = useMediaQuery("(max-width: 1023px)");
 
@@ -299,12 +299,6 @@ export function StoryReader({ script, entry, groupName, category, previous, next
                 setTheater(false);
                 return;
             }
-            // A click is one of the three things that end a skip, and it ends
-            // it INSTEAD of advancing, so a stop never overshoots by a line.
-            if (skip.phase === "on") {
-                setSkip((v) => nextSkip(v, "click"));
-                return;
-            }
             audio.arm();
             if (phase === "title") return start();
             if (phase === "resume") return resume();
@@ -320,7 +314,7 @@ export function StoryReader({ script, entry, groupName, category, previous, next
             }
             advance();
         },
-        [advance, audio, halt, phase, playing, resume, revealDone, skip.phase, start, theater],
+        [advance, audio, halt, phase, playing, resume, revealDone, start, theater],
     );
 
     // Auto-play: after the reveal, wait `max(minLineSec, chars / cps * pace)` then advance.
@@ -331,22 +325,6 @@ export function StoryReader({ script, entry, groupName, category, previous, next
         return () => window.clearTimeout(id);
     }, [advance, autoPlay, halt, phase, playing, revealDone, settings]);
 
-    // The skip loop: one advance per frame while it runs. `skipAdvances` is the
-    // rule and it only ever fires on a LINE of a story being read, so the loop
-    // cannot spin on a decision or on the end card.
-    useEffect(() => {
-        if (!skipAdvances(skip, phase, halt?.kind)) return;
-        const id = window.setTimeout(() => advance(), SKIP_STEP_MS);
-        return () => window.clearTimeout(id);
-    }, [advance, halt, phase, skip]);
-
-    // The two stops that are not a click: a decision, and the end of the story.
-    useEffect(() => {
-        if (skip.phase !== "on") return;
-        if (phase !== "reading") setSkip((v) => nextSkip(v, "boundary"));
-        else if (halt?.kind === "decision") setSkip((v) => nextSkip(v, "decision"));
-    }, [halt, phase, skip.phase]);
-
     useReaderHotkeys({
         dialogOpen,
         theater,
@@ -356,7 +334,7 @@ export function StoryReader({ script, entry, groupName, category, previous, next
         onLog: () => setLogOpen(true),
         onTheaterToggle: () => setTheater((v) => nextTheater(v, "toggle")),
         onTheaterRestore: () => setTheater(false),
-        onSkip: () => setSkip((v) => nextSkip(v, "press")),
+        onSkip: () => onSkipEvent("press"),
         onMute: () => setSettings({ ...settings, muted: !settings.muted }),
         onToggleToolbar: toggleToolbar,
         onFullscreen: () => toggleFullscreen(),
@@ -461,12 +439,18 @@ export function StoryReader({ script, entry, groupName, category, previous, next
                         onAutoPlay={() => setAutoPlay((v) => !v)}
                         animateRatio={settings.animateRatio}
                         onSpeed={() => setSettings({ ...settings, animateRatio: settings.animateRatio === FAST_RATIO ? 1 : FAST_RATIO })}
-                        skipping={skip.phase === "on"}
-                        onSkip={() => setSkip((v) => nextSkip(v, "press"))}
+                        skipping={skip.open}
+                        skipDisabled={!skipAvailable(phase)}
+                        onSkip={() => onSkipEvent("press")}
                         fullscreen={fullscreen}
                         onFullscreen={toggleFullscreen}
                         muted={settings.muted}
-                        onMute={() => setSettings({ ...settings, muted: !settings.muted })}
+                        onMute={onMute}
+                        musicVolume={settings.musicVolume}
+                        sfxVolume={settings.sfxVolume}
+                        onVolume={onVolume}
+                        volumeOpen={volumeOpen}
+                        onVolumeOpenChange={setVolumeOpen}
                     />
 
                     {handleOn ? (
@@ -577,28 +561,7 @@ export function StoryReader({ script, entry, groupName, category, previous, next
             />
             <ChapterDialog open={chapterOpen} onOpenChange={setChapterOpen} currentStoryId={script.id} currentCategory={category} currentGroupId={category === "record" ? (entry?.groupId ?? script.groupId) : script.groupId} />
             <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} settings={settings} onChange={setSettings} />
-            {/* The client asks before its first skip of a session; so does this,
-                in one line, and never again in the same tab. */}
-            <AlertDialog open={skip.phase === "confirming"} onOpenChange={(open: boolean) => !open && setSkip((v) => nextSkip(v, "cancel"))}>
-                <AlertDialogPopup>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>{t("reader.skip.confirmTitle")}</AlertDialogTitle>
-                        <AlertDialogDescription>{t("reader.skip.confirmBody")}</AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogClose render={<Button variant="outline" />}>{t("reader.skip.cancel")}</AlertDialogClose>
-                        <Button
-                            onClick={() => {
-                                audio.arm();
-                                rememberSkipConfirmed();
-                                setSkip((v) => nextSkip(v, "confirm"));
-                            }}
-                        >
-                            {t("reader.skip.confirm")}
-                        </Button>
-                    </AlertDialogFooter>
-                </AlertDialogPopup>
-            </AlertDialog>
+            <SkipDialog open={skip.open} onCancel={() => onSkipEvent("cancel")} onConfirm={() => onSkipEvent("confirm")} title={title} synopsis={script.synopsis} />
         </div>
     );
 }

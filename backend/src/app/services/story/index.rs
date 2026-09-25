@@ -45,6 +45,8 @@ pub struct StoryRef {
     pub story_txt: String,
     pub name: String,
     pub group_id: String,
+    /// The table's `StoryInfo`, the summary's path (`info/...`), when it names one.
+    pub story_info: Option<String>,
 }
 
 /// The built index plus the id -> script lookup, cached per game data.
@@ -220,6 +222,7 @@ pub fn build_index(
                         story_txt: s.story_txt.clone(),
                         name: s.story_name.clone(),
                         group_id: g.id.clone(),
+                        story_info: s.story_info.as_deref().and_then(super::opt),
                     });
                 if !s.story_txt.is_empty() {
                     by_txt
@@ -353,6 +356,7 @@ pub fn build_index(
                         story_txt: avg.story_txt.clone(),
                         name: name.clone(),
                         group_id: set.story_set_id.clone(),
+                        story_info: super::opt(&avg.story_info),
                     });
                 if !avg.story_txt.is_empty() {
                     by_txt

@@ -39,6 +39,14 @@ pub struct StoryScript {
     pub commands: Vec<StoryCommand>,
     pub assets: StoryAssets,
     pub word_count: u32,
+    /// The game's own "story summary" for this story, the text its Skip
+    /// dialog shows: the `[uc]info` file `StoryInfo` names, trimmed. Absent
+    /// when the table names none or the file is not on disk. It rides the
+    /// SCRIPT response and not the library index, because the index would
+    /// carry all 1,881 of them on every library load.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub synopsis: Option<String>,
 }
 
 /// Why a script could not be loaded.
@@ -225,6 +233,47 @@ pub fn load_script(server_assets_dir: &Path, story_txt: &str) -> Result<String, 
     }
 }
 
+/// The two places a story summary can sit, `[uc]info` first. `story_info` is
+/// the table's `StoryInfo` (`info/activities/a001/level_a001_01_beg`): its
+/// `info/` prefix is the `[uc]info/` directory on disk. The second path is the
+/// PRIMARY one, where a tree extracted before the unpacker's routing fix put
+/// the summary (see the module doc), so both layouts read.
+#[must_use]
+pub fn synopsis_paths(server_assets_dir: &Path, story_info: &str) -> [PathBuf; 2] {
+    let story = server_assets_dir.join("gamedata/story");
+    let rest = story_info.strip_prefix("info/").unwrap_or(story_info);
+    [
+        story.join(format!("[uc]info/{rest}.txt.txt")),
+        story.join(format!("{rest}.txt.txt")),
+    ]
+}
+
+/// The story summary `story_info` names, trimmed, or `None` when neither
+/// probe path holds one. A candidate that starts with `[` is a SCRIPT (the
+/// swapped layout) and is passed over, the mirror of [`load_script`]'s rule.
+/// Read uncached, like the script it rides with: one file of 18 to 490 bytes
+/// on the EN tree (1,881 files, median 195).
+#[must_use]
+pub fn load_synopsis(server_assets_dir: &Path, story_info: &str) -> Option<String> {
+    if story_info.trim().is_empty() {
+        return None;
+    }
+    for path in synopsis_paths(server_assets_dir, story_info) {
+        let Ok(bytes) = std::fs::read(&path) else {
+            continue;
+        };
+        let content = String::from_utf8_lossy(&bytes);
+        if looks_like_script(&content) {
+            continue;
+        }
+        let text = content.trim_start_matches('\u{feff}').trim();
+        if !text.is_empty() {
+            return Some(text.replace("\r\n", "\n"));
+        }
+    }
+    None
+}
+
 /// Commands whose `image`/`imagegroup` name a background. `backgroundtween`
 /// carries `image=` in 38 EN uses and must look in `bg/` first like the rest.
 const BACKGROUND_KINDS: &[&str] = &[
@@ -258,6 +307,7 @@ pub fn parse_story(
         commands,
         assets,
         word_count,
+        synopsis: None,
     }
 }
 
@@ -542,6 +592,39 @@ mod tests {
             load_script(&dir, "act/x/nope"),
             Err(ScriptError::Missing { .. })
         ));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn synopsis_probe_reads_uc_info_and_passes_over_a_script() {
+        let dir = std::env::temp_dir().join(format!("story-synopsis-{}", std::process::id()));
+        let story = dir.join("gamedata/story");
+        std::fs::create_dir_all(story.join("[uc]info/act/x")).unwrap();
+        std::fs::create_dir_all(story.join("act/x")).unwrap();
+        // Corrected layout: script at the primary path, summary under [uc]info.
+        std::fs::write(story.join("act/x/a.txt.txt"), "[Dialog]\n").unwrap();
+        std::fs::write(
+            story.join("[uc]info/act/x/a.txt.txt"),
+            "\u{feff}First paragraph.\r\nSecond.\r\n",
+        )
+        .unwrap();
+        assert_eq!(
+            load_synopsis(&dir, "info/act/x/a").as_deref(),
+            Some("First paragraph.\nSecond.")
+        );
+        // Swapped layout: the summary sits at the primary path.
+        std::fs::write(story.join("act/x/b.txt.txt"), "Swapped summary.\n").unwrap();
+        std::fs::write(story.join("[uc]info/act/x/b.txt.txt"), "[HEADER] x\n").unwrap();
+        assert_eq!(
+            load_synopsis(&dir, "info/act/x/b").as_deref(),
+            Some("Swapped summary.")
+        );
+        // Nothing but scripts, an empty file, a missing file, an empty name.
+        std::fs::write(story.join("act/x/c.txt.txt"), "[Dialog]\n").unwrap();
+        std::fs::write(story.join("[uc]info/act/x/c.txt.txt"), "  \n").unwrap();
+        assert_eq!(load_synopsis(&dir, "info/act/x/c"), None);
+        assert_eq!(load_synopsis(&dir, "info/act/x/nope"), None);
+        assert_eq!(load_synopsis(&dir, ""), None);
         let _ = std::fs::remove_dir_all(&dir);
     }
 

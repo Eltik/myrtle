@@ -6,7 +6,7 @@ import { storyIndexQueryOptions, storyQueryOptions } from "#/lib/api/story";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { metaT } from "#/lib/meta";
-import { defaultOgURL } from "#/lib/og";
+import { buildStoryOgData, defaultOgURL, localizedOgURL, storyOgId, warmOg } from "#/lib/og";
 import { seo } from "#/lib/seo";
 import { useStoryProgressSync } from "#/lib/story/sync";
 import type { StoryCategory } from "#/types/generated/StoryCategory";
@@ -80,7 +80,12 @@ export const Route = createFileRoute("/stories_/$storyId")({
         const server = context.i18n.gamedataServer;
         const [index, script] = await Promise.all([context.queryClient.ensureQueryData(storyIndexQueryOptions(server)), context.queryClient.ensureQueryData(storyQueryOptions(params.storyId, server))]);
         const placement = placeStory(index, params.storyId);
-        return { name: script?.name ?? placement.entry?.name ?? params.storyId, groupName: placement.groupName, hasScript: script !== null };
+        // The share card is built from the index alone, the same call the OG
+        // handler makes, so the `?v=` hash here is the hash of what it draws.
+        // A story the index does not list keeps the generic card.
+        const og = buildStoryOgData(index, params.storyId, { server, source: context.i18n });
+        if (og) warmOg("story", storyOgId(params.storyId, server), og, context.i18n?.locale);
+        return { name: script?.name ?? placement.entry?.name ?? params.storyId, groupName: placement.groupName, hasScript: script !== null, og, server };
     },
     head: ({ loaderData, match, params }) => {
         const t = metaT(match.context.i18n);
@@ -89,7 +94,9 @@ export const Route = createFileRoute("/stories_/$storyId")({
             title: t("story.title", { name }),
             description: t("story.description", { name }),
             path: `/stories/${params.storyId}`,
-            image: defaultOgURL("stages", match.context.i18n),
+            image: loaderData?.og ? localizedOgURL("story", storyOgId(params.storyId, loaderData.server), loaderData.og, match.context.i18n?.locale) : defaultOgURL("stages", match.context.i18n),
+            type: loaderData?.og ? "article" : undefined,
+            preloadImage: Boolean(loaderData?.og),
             locale: match.context.i18n?.locale,
         });
         return {

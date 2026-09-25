@@ -19832,6 +19832,13 @@
           "name": {
             "type": "string"
           },
+          "synopsis": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The game's own \"story summary\" for this story, the text its Skip\ndialog shows: the `[uc]info` file `StoryInfo` names, trimmed. Absent\nwhen the table names none or the file is not on disk. It rides the\nSCRIPT response and not the library index, because the index would\ncarry all 1,881 of them on every library load."
+          },
           "wordCount": {
             "type": "integer",
             "format": "int32",

@@ -25,6 +25,16 @@ describe("coerceProgress", () => {
         });
     });
 
+    it("keeps a reach only when it is past the halt, and drops a malformed one", () => {
+        const pos = (reach: unknown) => coerceProgress({ pos: { s: { halt: 16, total: 90, ts: 1, choices: {}, reach } } }).pos.s;
+        expect(pos(85)).toEqual({ halt: 16, total: 90, ts: 1, choices: {}, reach: 85 });
+        expect(pos("85").reach).toBe(85);
+        expect(pos(16).reach).toBeUndefined();
+        expect(pos(3).reach).toBeUndefined();
+        expect(pos("x").reach).toBeUndefined();
+        expect(pos(undefined)).toEqual({ halt: 16, total: 90, ts: 1, choices: {} });
+    });
+
     it("drops a non-string last", () => {
         expect(coerceProgress({ last: 4 }).last).toBeUndefined();
     });

@@ -434,6 +434,23 @@ export function sliderValue(v: number | readonly number[] | null | undefined, cu
     return typeof n === "number" && Number.isFinite(n) ? n : current;
 }
 
+/** The volumes the toolbar's popover drives, the same two sliders Settings has. */
+export type VolumeKey = "musicVolume" | "sfxVolume";
+
+/**
+ * A volume slider moved, from the toolbar popover or anywhere else that wants
+ * the same rule. The value goes through {@link sliderValue} (a missing value
+ * keeps the current one, never 0) and the 0..1 clamp `parseSettings` applies,
+ * and moving ANY volume unmutes: a reader dragging the slider wants to hear
+ * the level they are setting, and a muted drag that changed nothing audible
+ * read as a broken control.
+ */
+export function withVolume(s: StorySettings, key: VolumeKey, v: number | readonly number[] | null | undefined): StorySettings {
+    const next = clamp(sliderValue(v, s[key]), 0, 1);
+    if (next === s[key] && !s.muted) return s;
+    return { ...s, [key]: next, muted: false };
+}
+
 /** Seconds auto-play waits after the reveal: `max(minLineSec, chars / cps * pace)`. */
 export function autoPlayDelaySec(chars: number, s: StorySettings): number {
     return Math.max(s.minLineSec, (chars / s.cps) * s.autoPace);

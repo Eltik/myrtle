@@ -25,7 +25,7 @@ export const messages = {
     },
     "reader.toolbar.skip": {
         text: "Skip",
-        description: "Toolbar button that fast-forwards to the next choice or the end of the story. Short; sits in a compact toolbar.",
+        description: "Toolbar button that shows the story's summary and offers to skip to its end. Short; sits in a compact toolbar.",
     },
     "reader.cutscene.label": {
         text: "Cutscene",
@@ -55,21 +55,37 @@ export const messages = {
         text: "Playback controls",
         description: "Accessible name of the right cluster of reader controls (auto, speed, skip, fullscreen, mute).",
     },
-    "reader.skip.confirmTitle": {
-        text: "Skip ahead?",
-        description: "Title of the one-line confirmation shown the first time Skip is pressed in a session.",
+    "reader.skip.summaryLabel": {
+        text: "Story summary",
+        description: "Small label above the story's name in the Skip sheet, which shows the game's own summary of the story before skipping it.",
     },
-    "reader.skip.confirmBody": {
-        text: "Lines play instantly until the next choice or the end of the story. Click anywhere to stop.",
-        description: "Body of the skip confirmation.",
+    "reader.skip.none": {
+        text: "This story has no summary.",
+        description: "Shown in the Skip sheet in place of the summary when the game ships none for this story.",
     },
     "reader.skip.confirm": {
-        text: "Skip",
-        description: "Button that starts skipping.",
+        text: "Skip story",
+        description: "Primary button of the Skip sheet: jumps straight to the end of the story and marks it read.",
     },
     "reader.skip.cancel": {
-        text: "Cancel",
-        description: "Button that dismisses the skip confirmation.",
+        text: "Keep reading",
+        description: "Button that closes the Skip sheet and returns to the story where it was.",
+    },
+    "reader.volume.label": {
+        text: "Volume",
+        description: "Accessible name of the popover under the mute button that holds the music and sound volume sliders, and of the small button that opens it on touch screens.",
+    },
+    "reader.volume.music": {
+        text: "Music",
+        description: "Label of the music volume slider in the toolbar's volume popover. Short.",
+    },
+    "reader.volume.sound": {
+        text: "Sound",
+        description: "Label of the sound effect volume slider in the toolbar's volume popover. Short.",
+    },
+    "backlog.ahead": {
+        text: "Read ahead",
+        description: "Divider in the backlog above the lines the reader has already read PAST the current line (after jumping back). Each one below it is still a jump.",
     },
     "reader.toolbar.log": {
         text: "Log",
@@ -284,7 +300,7 @@ export const messages = {
         description: "Setting: the multiplier the game applies to every scene animation. 1 is the scripted speed, 0 skips animations.",
     },
     "settings.animateRatioHint": {
-        text: "Multiplies every fade, tween and hold the script asks for. 0 plays each step instantly, which is what the game's skip does.",
+        text: "Multiplies every fade, tween and hold the script asks for. 0 plays each step instantly.",
         description: "Hint under the playback speed slider.",
     },
     "settings.autoPace": {

@@ -1,6 +1,6 @@
 //! Loading and parsing ONE story, the `GET /story/{id}` half.
 //!
-//! Nothing here is cached: the parse is milliseconds (measured 2026-09-21: the
+//! Nothing here is cached, the story summary included: the parse is milliseconds (measured 2026-09-21: the
 //! longest EN script parses in under 10 ms) and the asset index it resolves
 //! through is the shared, already-warmed one. The work runs under
 //! [`cpu::run`] because the FIRST call on a cold process still builds that
@@ -56,11 +56,18 @@ pub fn load_and_parse(
         Err(e) => return Err(ApiError::Internal(anyhow::anyhow!(e))),
     };
     let index = StoryAssetIndex::for_dir(assets_dir, live_assets);
-    Ok(Some(story::parse_story(
+    let mut parsed = story::parse_story(
         story_id,
         &story_ref.name,
         &story_ref.group_id,
         &script,
         &index,
-    )))
+    );
+    // The summary is read the way the script is, uncached: one file of at
+    // most 490 bytes on the EN tree, beside a parse that already reads more.
+    parsed.synopsis = story_ref
+        .story_info
+        .as_deref()
+        .and_then(|info| story::load_synopsis(assets_dir, info));
+    Ok(Some(parsed))
 }

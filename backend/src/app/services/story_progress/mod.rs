@@ -60,7 +60,7 @@ pub const MAX_DOCUMENT_BYTES: usize = 512 * 1024;
 #[ts(export)]
 pub struct StoryProgressDocument(
     #[ts(
-        type = "{ v: 1 | 2; read: Record<string, number>; unread?: Record<string, number>; pos: Record<string, { halt: number; total: number; ts: number; choices: Record<number, string> }>; last?: string }"
+        type = "{ v: 1 | 2; read: Record<string, number>; unread?: Record<string, number>; pos: Record<string, { halt: number; total: number; ts: number; choices: Record<number, string>; reach?: number }>; last?: string }"
     )]
     pub Value,
 );
@@ -174,6 +174,14 @@ pub fn validate(doc: &StoryProgressDocument) -> Result<(), ApiError> {
                     "progress.pos.{id}.{key} must be a finite number at or above zero"
                 )));
             }
+        }
+        // `reach` is optional: the furthest halt read on the saved choices,
+        // which the reader rebuilds its log up to. Absent on every document
+        // written before 2026-09-25.
+        if entry.get("reach").is_some_and(|r| !non_negative(r)) {
+            return Err(ApiError::BadRequest(format!(
+                "progress.pos.{id}.reach must be a finite number at or above zero"
+            )));
         }
     }
     if let Some(last) = root.get("last")
@@ -321,6 +329,19 @@ mod tests {
         assert!(validate(&doc(serde_json::json!([]))).is_err());
         assert!(validate(&doc(serde_json::json!({ "v": 1, "read": [], "pos": {} }))).is_err());
         assert!(validate(&doc(serde_json::json!({ "v": 1, "read": {}, "pos": 3 }))).is_err());
+    }
+
+    #[test]
+    fn admits_an_optional_reach_and_refuses_a_bad_one() {
+        let with = |reach: Value| {
+            doc(
+                serde_json::json!({ "v": 2, "read": {}, "pos": { "s": { "halt": 16, "total": 90, "ts": 1, "choices": {}, "reach": reach } } }),
+            )
+        };
+        assert!(validate(&with(serde_json::json!(85))).is_ok());
+        assert!(validate(&with(serde_json::json!(-1))).is_err());
+        assert!(validate(&with(serde_json::json!("85"))).is_err());
+        assert!(validate(&doc(serde_json::json!({ "v": 2, "read": {}, "pos": { "s": { "halt": 16, "total": 90, "ts": 1 } } }))).is_ok());
     }
 
     #[test]
