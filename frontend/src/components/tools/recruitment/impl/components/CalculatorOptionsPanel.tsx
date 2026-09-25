@@ -5,7 +5,7 @@ import { Switch } from "#/components/ui/switch";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
-import type { ICalculatorSettings, IRosterViewOptions, OperatorSortMode } from "../types";
+import type { ICalculatorSettings, IRosterViewOptions, OperatorSortMode, ResultLayout } from "../types";
 import type { messages } from "./CalculatorOptionsPanel.messages";
 
 interface ICalculatorOptionsPanelProps {
@@ -13,25 +13,29 @@ interface ICalculatorOptionsPanelProps {
     rosterView: IRosterViewOptions;
     /** Whether a roster can back the overlays; signed out, the roster rows render disabled with a hint. */
     rosterAvailable: boolean;
+    layout: ResultLayout;
     onChangeSettings: (patch: Partial<ICalculatorSettings>) => void;
     onChangeRosterView: (patch: Partial<IRosterViewOptions>) => void;
+    onChangeLayout: (layout: ResultLayout) => void;
 }
 
 type OptionsT = TypedT<typeof messages>;
+type OptionsKey = keyof typeof messages & string;
 
 /** Sort order, with the message key each mode's label lives under. `roster` modes read the signed-in roster and are listed only when one is there. */
-const SORT_MODES: readonly { value: OperatorSortMode; labelKey: keyof typeof messages & string; roster?: boolean }[] = [
+const SORT_MODES: readonly { value: OperatorSortMode; labelKey: OptionsKey; roster?: boolean }[] = [
     { value: "rarity-desc", labelKey: "recruit.options.sort.rarityDesc" },
     { value: "common-first", labelKey: "recruit.options.sort.commonFirst" },
     { value: "potential-asc", labelKey: "recruit.options.sort.potentialAsc", roster: true },
 ];
 
-export function CalculatorOptionsPanel({ settings, rosterView, rosterAvailable, onChangeSettings, onChangeRosterView }: ICalculatorOptionsPanelProps): React.ReactElement {
+const LAYOUTS: readonly { value: ResultLayout; labelKey: OptionsKey }[] = [
+    { value: "compact", labelKey: "recruit.options.layout.compact" },
+    { value: "detailed", labelKey: "recruit.options.layout.detailed" },
+];
+
+export function CalculatorOptionsPanel({ settings, rosterView, rosterAvailable, layout, onChangeSettings, onChangeRosterView, onChangeLayout }: ICalculatorOptionsPanelProps): React.ReactElement {
     const t: OptionsT = useT("tools");
-    const sortLabel = (mode: OperatorSortMode) => {
-        const entry = SORT_MODES.find((m) => m.value === mode);
-        return entry ? t(entry.labelKey) : mode;
-    };
     const sortModes = SORT_MODES.filter((m) => rosterAvailable || !m.roster);
     const rosterHint = rosterAvailable ? undefined : t("recruit.options.roster.signIn");
     return (
@@ -43,25 +47,9 @@ export function CalculatorOptionsPanel({ settings, rosterView, rosterAvailable, 
                 <ToggleRow id="recruit-show-potentials" label={t("recruit.options.showPotentials")} hint={rosterHint} checked={rosterAvailable && rosterView.showPotentials} disabled={!rosterAvailable} onCheckedChange={(showPotentials) => onChangeRosterView({ showPotentials })} />
                 <ToggleRow id="recruit-show-next-upgrade" label={t("recruit.options.showNextUpgrade")} checked={rosterAvailable && rosterView.showNextUpgrade} disabled={!rosterAvailable} onCheckedChange={(showNextUpgrade) => onChangeRosterView({ showNextUpgrade })} />
             </div>
-            <div className="flex flex-col gap-1.5 border-border/60 border-t pt-3">
-                <label htmlFor="recruit-sort" className="font-medium text-foreground text-sm">
-                    {t("recruit.options.sort")}
-                </label>
-                <Select value={settings.operatorSortMode} onValueChange={(v) => onChangeSettings({ operatorSortMode: v as OperatorSortMode })}>
-                    <SelectPrimitive.Trigger id="recruit-sort" data-slot="select-trigger" className={cn(selectTriggerVariants({ size: "sm" }), "w-fit min-w-0")}>
-                        <SelectValue placeholder={t("recruit.options.sort.placeholder")}>{(v: string) => sortLabel(v as OperatorSortMode)}</SelectValue>
-                        <SelectPrimitive.Icon data-slot="select-icon">
-                            <ChevronDownIcon className={selectTriggerIconClassName} />
-                        </SelectPrimitive.Icon>
-                    </SelectPrimitive.Trigger>
-                    <SelectContent>
-                        {sortModes.map((mode) => (
-                            <SelectItem key={mode.value} value={mode.value}>
-                                {t(mode.labelKey)}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+            <div className="flex flex-col gap-3 border-border/60 border-t pt-3">
+                <SelectRow id="recruit-layout" label={t("recruit.options.layout")} value={layout} options={LAYOUTS} t={t} onValueChange={onChangeLayout} />
+                <SelectRow id="recruit-sort" label={t("recruit.options.sort")} placeholder={t("recruit.options.sort.placeholder")} value={settings.operatorSortMode} options={sortModes} t={t} onValueChange={(operatorSortMode) => onChangeSettings({ operatorSortMode })} />
             </div>
         </div>
     );
@@ -85,5 +73,44 @@ function ToggleRow({ id, label, hint, checked, disabled = false, onCheckedChange
             </span>
             <Switch id={id} checked={checked} disabled={disabled} onCheckedChange={onCheckedChange} />
         </label>
+    );
+}
+
+interface ISelectRowProps<V extends string> {
+    id: string;
+    label: string;
+    placeholder?: string;
+    value: V;
+    options: readonly { value: V; labelKey: OptionsKey }[];
+    t: OptionsT;
+    onValueChange: (value: V) => void;
+}
+
+function SelectRow<V extends string>({ id, label, placeholder, value, options, t, onValueChange }: ISelectRowProps<V>): React.ReactElement {
+    const labelOf = (v: V) => {
+        const entry = options.find((o) => o.value === v);
+        return entry ? t(entry.labelKey) : v;
+    };
+    return (
+        <div className="flex flex-col gap-1.5">
+            <label htmlFor={id} className="font-medium text-foreground text-sm">
+                {label}
+            </label>
+            <Select value={value} onValueChange={(v) => onValueChange(v as V)}>
+                <SelectPrimitive.Trigger id={id} data-slot="select-trigger" className={cn(selectTriggerVariants({ size: "sm" }), "w-fit min-w-0")}>
+                    <SelectValue placeholder={placeholder}>{(v: string) => labelOf(v as V)}</SelectValue>
+                    <SelectPrimitive.Icon data-slot="select-icon">
+                        <ChevronDownIcon className={selectTriggerIconClassName} />
+                    </SelectPrimitive.Icon>
+                </SelectPrimitive.Trigger>
+                <SelectContent>
+                    {options.map((o) => (
+                        <SelectItem key={o.value} value={o.value}>
+                            {t(o.labelKey)}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
     );
 }

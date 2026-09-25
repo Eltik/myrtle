@@ -1,19 +1,22 @@
 import { Search, SearchX } from "lucide-react";
 import type * as React from "react";
+import { Card } from "#/components/ui/card";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import type { IRosterOverlay, ITagCombinationResult } from "../types";
+import type { IRosterOverlay, ITagCombinationResult, ResultLayout } from "../types";
 import { ResultCard } from "./ResultCard";
+import { ResultCardDetailed } from "./ResultCardDetailed";
 import type { messages } from "./ResultsList.messages";
 
 interface IResultsListProps {
     results: ITagCombinationResult[];
     hasSelection: boolean;
     roster: IRosterOverlay | null;
+    layout: ResultLayout;
 }
 
-export function ResultsList({ results, hasSelection, roster }: IResultsListProps): React.ReactElement {
+export function ResultsList({ results, hasSelection, roster, layout }: IResultsListProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("tools");
     if (!hasSelection) {
         return (
@@ -43,11 +46,21 @@ export function ResultsList({ results, hasSelection, roster }: IResultsListProps
         );
     }
 
+    if (layout === "detailed") {
+        return (
+            <div className="flex flex-col gap-3">
+                {results.map((result) => (
+                    <ResultCardDetailed key={result.tags.join("-")} result={result} roster={roster} />
+                ))}
+            </div>
+        );
+    }
+
     return (
-        <div className="flex flex-col gap-3">
+        <Card className="divide-y divide-border/60 overflow-hidden">
             {results.map((result) => (
                 <ResultCard key={result.tags.join("-")} result={result} roster={roster} />
             ))}
-        </div>
+        </Card>
     );
 }

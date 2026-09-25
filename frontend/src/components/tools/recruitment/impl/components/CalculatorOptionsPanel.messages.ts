@@ -35,13 +35,25 @@ export const messages = {
         text: "Lowest potential first",
         description: "Sort option, offered only when signed in: operators the roster does not hold first, then by the potential the roster holds them at, lowest first. Maxed operators last.",
     },
+    "recruit.options.layout": {
+        text: "Layout",
+        description: "Label over the select that picks how the results are drawn. Saved per browser.",
+    },
+    "recruit.options.layout.compact": {
+        text: "Compact",
+        description: "Layout option: one row per tag combination, operators as small portrait tiles.",
+    },
+    "recruit.options.layout.detailed": {
+        text: "Detailed",
+        description: "Layout option: one card per tag combination, each operator a wide row with stars and class.",
+    },
     "recruit.options.showPotentials": {
         text: "Show my potentials",
         description: "Switch label: overlay the signed-in user's current potential (P1 to P6) on each operator in the results.",
     },
     "recruit.options.showNextUpgrade": {
-        text: "Show next upgrade",
-        description: "Switch label: under each operator, show what the next potential rank would grant (e.g. 'DP cost -1', 'Talent 2').",
+        text: "Show next potential",
+        description: "Switch label: under each operator's portrait, show what their next potential rank would grant (e.g. 'DP cost -1', 'Talent 2'). Saved per browser.",
     },
     "recruit.options.roster.signIn": {
         text: "Sign in to sync your roster",
@@ -49,7 +61,7 @@ export const messages = {
     },
 } satisfies MessageMap;
 
-// `dynamic`: the sort-order keys are stored on a constants entry and resolved as
+// `dynamic`: the sort-order and layout keys are stored on a constants entry and resolved as
 // `t(mode.labelKey)`, so the
 // extractor has no literal call site to match them against.
 export const { keys } = defineMessages({ namespace, messages, dynamic: true });

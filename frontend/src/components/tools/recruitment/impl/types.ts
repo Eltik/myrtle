@@ -62,6 +62,9 @@ export interface IRosterViewOptions {
     showNextUpgrade: boolean;
 }
 
+/** How the results draw: `compact` is one row of portrait tiles per combination, `detailed` a card per combination with a wide row per operator. */
+export type ResultLayout = "compact" | "detailed";
+
 /** What the result cards need to draw the roster over the operators; null when there is no signed-in roster to draw. */
 export interface IRosterOverlay extends IRosterViewOptions {
     potentialByOperator: PotentialByOperator;

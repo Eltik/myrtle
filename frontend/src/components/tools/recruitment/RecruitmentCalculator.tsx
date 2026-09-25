@@ -14,19 +14,10 @@ import { SelectedTagsBar } from "./impl/components/SelectedTagsBar";
 import { TagSelector } from "./impl/components/TagSelector";
 import { MAX_SELECTED_TAGS } from "./impl/constants";
 import { groupTagsByType, transformTags } from "./impl/helpers";
-import type { ICalculatorSettings, IRecruitmentTag, IRosterOverlay, IRosterViewOptions } from "./impl/types";
+import type { ICalculatorSettings, IRecruitmentTag, IRosterOverlay, IRosterViewOptions, ResultLayout } from "./impl/types";
+import { DEFAULT_SETTINGS, useRecruitOptions } from "./impl/useRecruitOptions";
 import { useRecruitRoster } from "./impl/useRecruitRoster";
 import type { messages } from "./RecruitmentCalculator.messages";
-
-const DEFAULT_SETTINGS: ICalculatorSettings = {
-    includeRobots: true,
-    includeTwoStars: true,
-    includeThreeStars: true,
-    operatorSortMode: "rarity-desc",
-};
-
-// Both overlays on by default: a signed-in reader opened the tool to see them.
-const DEFAULT_ROSTER_VIEW: IRosterViewOptions = { showPotentials: true, showNextUpgrade: true };
 
 export function RecruitmentCalculator(): React.ReactElement {
     const t: TypedT<typeof messages> = useT("tools");
@@ -37,8 +28,10 @@ export function RecruitmentCalculator(): React.ReactElement {
     const tags = data?.tags ?? [];
     const operators = data?.operators ?? [];
 
-    const [settings, setSettings] = React.useState(DEFAULT_SETTINGS);
-    const [rosterView, setRosterView] = React.useState(DEFAULT_ROSTER_VIEW);
+    const {
+        state: { settings, rosterView, layout },
+        dispatch,
+    } = useRecruitOptions();
     const roster = useRecruitRoster();
 
     // The potential sort is only offered while signed in; a session that ends
@@ -110,12 +103,9 @@ export function RecruitmentCalculator(): React.ReactElement {
         setSelectedIds(() => []);
     }, [setSelectedIds]);
 
-    const onChangeSettings = React.useCallback((patch: Partial<ICalculatorSettings>) => {
-        setSettings((prev) => ({ ...prev, ...patch }));
-    }, []);
-    const onChangeRosterView = React.useCallback((patch: Partial<IRosterViewOptions>) => {
-        setRosterView((prev) => ({ ...prev, ...patch }));
-    }, []);
+    const onChangeSettings = React.useCallback((patch: Partial<ICalculatorSettings>) => dispatch({ type: "SETTINGS", patch }), [dispatch]);
+    const onChangeRosterView = React.useCallback((patch: Partial<IRosterViewOptions>) => dispatch({ type: "ROSTER_VIEW", patch }), [dispatch]);
+    const onChangeLayout = React.useCallback((next: ResultLayout) => dispatch({ type: "LAYOUT", layout: next }), [dispatch]);
 
     const selectedIdSet = React.useMemo(() => new Set(selectedIds), [selectedIds]);
     const maxReached = selectedIds.length >= MAX_SELECTED_TAGS;
@@ -143,14 +133,14 @@ export function RecruitmentCalculator(): React.ReactElement {
                             <CardTitle className="text-[15px]">{t("recruit.options")}</CardTitle>
                         </CardHeader>
                         <CardPanel className="px-4 pt-0 pb-4 sm:px-6 sm:pb-6">
-                            <CalculatorOptionsPanel settings={activeSettings} rosterView={rosterView} rosterAvailable={roster.signedIn} onChangeSettings={onChangeSettings} onChangeRosterView={onChangeRosterView} />
+                            <CalculatorOptionsPanel settings={activeSettings} rosterView={rosterView} rosterAvailable={roster.signedIn} layout={layout} onChangeSettings={onChangeSettings} onChangeRosterView={onChangeRosterView} onChangeLayout={onChangeLayout} />
                         </CardPanel>
                     </Card>
                 </aside>
 
                 <main className="flex min-w-0 flex-col gap-3 sm:gap-4">
                     <SelectedTagsBar selectedTags={selectedTags} resultCount={results.length} onRemove={onRemove} onReset={onReset} />
-                    <ResultsList results={results} hasSelection={selectedTags.length > 0} roster={rosterOverlay} />
+                    <ResultsList results={results} hasSelection={selectedTags.length > 0} roster={rosterOverlay} layout={layout} />
                 </main>
             </div>
         </div>

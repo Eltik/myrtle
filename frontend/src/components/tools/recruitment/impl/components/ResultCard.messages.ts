@@ -35,6 +35,10 @@ export const messages = {
         text: "Potential {rank}",
         description: "Alt text of the potential icon overlaid on an operator's portrait. {rank} is 1 to 6.",
     },
+    "recruit.result.nextPotential": {
+        text: "Next potential:",
+        description: "Label in an operator's detail popover, before what the next potential rank grants (e.g. 'Next potential: ATK +28').",
+    },
     "recruit.result.upgrade.unowned": {
         text: "Not owned",
         description: "Next-upgrade slot for an operator the signed-in roster does not hold: recruiting them is the gain.",

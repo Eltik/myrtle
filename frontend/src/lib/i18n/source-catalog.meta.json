@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-25T10:04:43.216Z",
+    "generatedAt": "2026-09-25T13:15:05.014Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -30108,6 +30108,27 @@
             "placeholders": []
         },
         {
+            "key": "tools.recruit.options.layout",
+            "namespace": "tools",
+            "source_text": "Layout",
+            "description": "Label over the select that picks how the results are drawn. Saved per browser.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.recruit.options.layout.compact",
+            "namespace": "tools",
+            "source_text": "Compact",
+            "description": "Layout option: one row per tag combination, operators as small portrait tiles.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.recruit.options.layout.detailed",
+            "namespace": "tools",
+            "source_text": "Detailed",
+            "description": "Layout option: one card per tag combination, each operator a wide row with stars and class.",
+            "placeholders": []
+        },
+        {
             "key": "tools.recruit.options.roster.signIn",
             "namespace": "tools",
             "source_text": "Sign in to sync your roster",
@@ -30117,8 +30138,8 @@
         {
             "key": "tools.recruit.options.showNextUpgrade",
             "namespace": "tools",
-            "source_text": "Show next upgrade",
-            "description": "Switch label: under each operator, show what the next potential rank would grant (e.g. 'DP cost -1', 'Talent 2').",
+            "source_text": "Show next potential",
+            "description": "Switch label: under each operator's portrait, show what their next potential rank would grant (e.g. 'DP cost -1', 'Talent 2'). Saved per browser.",
             "placeholders": []
         },
         {
@@ -30187,6 +30208,13 @@
             "placeholders": [
                 "floor"
             ]
+        },
+        {
+            "key": "tools.recruit.result.nextPotential",
+            "namespace": "tools",
+            "source_text": "Next potential:",
+            "description": "Label in an operator's detail popover, before what the next potential rank grants (e.g. 'Next potential: ATK +28').",
+            "placeholders": []
         },
         {
             "key": "tools.recruit.result.noTags",
@@ -31685,8 +31713,8 @@
         {
             "key": "tools.release.planner.summary.empty",
             "namespace": "tools",
-            "source_text": "Nothing selected yet. Open an event on the left and pick its stages and outfits.",
-            "description": "Shown in the summary pane before anything has been picked.",
+            "source_text": "No outfits picked yet. Open an event on the left and pick the ones you want.",
+            "description": "Shown in the summary pane while no outfit has been picked. Events without a picked outfit are left out of the summary.",
             "placeholders": []
         },
         {
