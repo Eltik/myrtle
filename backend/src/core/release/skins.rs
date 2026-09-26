@@ -14,6 +14,31 @@ use super::{estimate::percentile, types::Resolution};
 const SECS_PER_DAY: f64 = 86_400.0;
 const SAME_WINDOW_SECS: i64 = 20 * 86_400;
 
+/// Returns whether a skin belongs in skin-shop sale groups.
+///
+/// Measured against the current real-data extracts: this removes 1,984 CN and
+/// 1,716 EN skins from sale-group membership.  Test Collection has 28 skins
+/// in each extract: 13 remain and 15 are removed.  `obtain_approach` is
+/// localized (`采购中心` in CN and `Store` in EN), so the structural SKINSHOP
+/// listing/carousel ID set is preferred whenever it is available.
+fn is_skin_shop_sold(skin: &Skin, shop_skin_ids: &HashSet<&str>) -> bool {
+    shop_skin_ids.contains(skin.skin_id.as_str())
+        || matches!(
+            skin.display_skin.obtain_approach.as_deref(),
+            Some("Store") | Some("采购中心")
+        )
+}
+
+fn keep_unsold_skins() -> bool {
+    std::env::var("RELEASE_KEEP_UNSOLD_SKINS").ok().as_deref() == Some("1")
+}
+
+/// Kill switch for [`group_histories`]' review attachment: `1` puts every
+/// outfit-review window back on every group that debuted before it.
+fn reviews_on_every_group() -> bool {
+    std::env::var("RELEASE_REVIEWS_ALL_GROUPS").ok().as_deref() == Some("1")
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 #[ts(export)]
@@ -111,6 +136,9 @@ pub enum RerunBasis {
         median_days: f64,
         p25_days: f64,
         p75_days: f64,
+        /// The group's own last EN listing gap in days when it dated the
+        /// rerun; `None` when the pooled median did.
+        own_gap_days: Option<f64>,
     },
     CnListing {
         #[ts(type = "number")]
@@ -252,12 +280,35 @@ pub fn group_histories(
     let mut batches: Vec<Batch> = Vec::new();
     let mut groups: BTreeMap<String, GroupHistory> = BTreeMap::new();
     let mut skin_to_group: HashMap<&str, &str> = HashMap::new();
+    let mut shop_skin_ids: HashSet<&str> = gd
+        .skin_windows
+        .iter()
+        .map(|window| window.skin_id.as_str())
+        .collect();
+    for listing in &gd.skin_listings {
+        if let ListingKind::Group { skin_ids, .. } = &listing.kind {
+            shop_skin_ids.extend(skin_ids.iter().map(String::as_str));
+        }
+    }
+    let keep_unsold = keep_unsold_skins();
+    // Earliest release among a group's outfits the Fashion Review stocks. A
+    // review window belongs to a group only once that outfit has aged into
+    // the review's pool; before this every review went on every older group,
+    // Test Collection/XV included, though neither of its outfits is eligible.
+    let mut review_from: HashMap<&str, i64> = HashMap::new();
     for s in gd.skins.char_skins.values() {
         let gid = s.display_skin.skin_group_id.as_str();
-        if gid.is_empty() {
+        if gid.is_empty() || (!keep_unsold && !is_skin_shop_sold(s, &shop_skin_ids)) {
             continue;
         }
         skin_to_group.insert(s.skin_id.as_str(), gid);
+        let t = s.display_skin.get_time;
+        if t > 0 && review_eligible(s, &gd.skins.brand_list) {
+            review_from
+                .entry(gid)
+                .and_modify(|from| *from = (*from).min(t))
+                .or_insert(t);
+        }
         let g = groups
             .entry(gid.to_string())
             .or_insert_with(|| GroupHistory {
@@ -303,8 +354,18 @@ pub fn group_histories(
         };
         let targets: Vec<String> = match &l.kind {
             ListingKind::Review => {
-                for g in groups.values_mut() {
-                    if g.debut > 0 && g.debut <= l.start_time {
+                let every_group = reviews_on_every_group();
+                for (gid, g) in groups.iter_mut() {
+                    let stocked = if every_group {
+                        g.debut > 0 && g.debut <= l.start_time
+                    } else {
+                        // The pool cutoff is defined on CN dates; on EN both
+                        // sides are EN dates, which shifts them by the same lag.
+                        review_from
+                            .get(gid.as_str())
+                            .is_some_and(|from| *from <= review_pool_cutoff(l.start_time))
+                    };
+                    if stocked {
                         push_window(
                             &mut g.windows,
                             SaleWindow {
@@ -544,6 +605,73 @@ pub fn next_by_cadence(en_last: i64, model: &CadenceModel) -> Resolution {
     }
 }
 
+/// Merged EN listing starts of one group: starts closer than
+/// `SAME_WINDOW_SECS` to the previous kept start fold into it, exactly as
+/// `cadence_model` merges them.  Review windows are never listings.
+fn merged_listing_starts(group: &GroupHistory) -> Vec<i64> {
+    let mut starts: Vec<i64> = Vec::new();
+    for w in group.listings() {
+        if starts
+            .last()
+            .is_none_or(|prev| w.start_time - prev > SAME_WINDOW_SECS)
+        {
+            starts.push(w.start_time);
+        }
+    }
+    starts
+}
+
+/// Dates a group's next EN rerun from its own listing rhythm.
+///
+/// The anchor is the group's last EN *listing* start, never a review window:
+/// `group_histories` attaches every outfit-review window to every group that
+/// debuted before it, so anchoring on `last_seen` put 80 outfits on one date
+/// (latest review 2026-07-16 + pooled 343 d = 2027-06-24).  When the group has
+/// at least one own listing gap, the estimate is the anchor plus that last
+/// gap; the lo/hi band keeps the pooled spread around it, since the pooled
+/// model is the only measure of cadence noise.  Without an own gap the pooled
+/// model dates it from the listing anchor.
+///
+/// Leave-last-out backtest, 28 EN groups with >=3 merged listings, predicting
+/// the held-out latest listing (median abs error, within 30 d):
+/// - last window of any kind + pooled 343 d: 259 d, 0/28
+/// - last listing + pooled 343 d: 21 d, 21/28
+/// - last listing + own last gap: 13 d, 21/28 (this rule)
+/// - last listing + own median gap: 18 d, 16/28 (series change cadence,
+///   e.g. 0011 Craft went 6-monthly to yearly)
+///
+/// The own gap is clamped to the pooled p25..p75 band (182..363 d today).
+/// Neutral on the same backtest (13 d, 21/28; mean 66 -> 65 d) but it stops
+/// one long hole from dating a group years out: Bloodline of Combat/I's last
+/// gap is 1273 d (its outfits sat in review pools in between), which put it
+/// on 2029-10-08; Ambience Synesthesia/VI's 135 d moved it before its rhythm.
+///
+/// Returns `None` when the group has no EN listing to anchor on; otherwise
+/// the anchor, the resolution and the own gap in days (`None` = pooled).
+pub fn next_by_own_cadence(
+    group: &GroupHistory,
+    model: &CadenceModel,
+) -> Option<(i64, Resolution, Option<f64>)> {
+    let starts = merged_listing_starts(group);
+    let en_last = *starts.last()?;
+    let own_gap = starts
+        .windows(2)
+        .last()
+        .map(|p| ((p[1] - p[0]) as f64 / SECS_PER_DAY).clamp(model.p25_days, model.p75_days));
+    let resolution = match own_gap {
+        Some(gap) => {
+            let shift = |d: f64| en_last + (d * SECS_PER_DAY).round() as i64;
+            Resolution::Estimated {
+                en_start: shift(gap),
+                lo: shift(gap - (model.median_days - model.p25_days)),
+                hi: shift(gap + (model.p75_days - model.median_days)),
+            }
+        }
+        None => next_by_cadence(en_last, model),
+    };
+    Some((en_last, resolution, own_gap))
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PendingRerun<'a> {
     pub group: &'a GroupHistory,
@@ -670,6 +798,7 @@ mod tests {
         s.display_skin.skin_group_id = group.into();
         s.display_skin.skin_group_name = format!("Coast/{}", group.trim_start_matches('g'));
         s.display_skin.get_time = get_time;
+        s.display_skin.obtain_approach = Some("Store".into());
         s
     }
 
@@ -731,7 +860,7 @@ mod tests {
                     img_id: None,
                 },
             ),
-            listing(500 * D, ListingKind::Review),
+            listing(900 * D, ListingKind::Review),
             listing(
                 465 * D,
                 ListingKind::Group {
@@ -818,16 +947,100 @@ mod tests {
             vec![
                 (100, SaleKind::Listing),
                 (465, SaleKind::Listing),
-                (500, SaleKind::Review),
+                (900, SaleKind::Review),
                 (1000, SaleKind::Listing)
             ]
         );
         assert_eq!(
             kinds(g2),
-            vec![(200, SaleKind::Listing), (500, SaleKind::Review)],
-            "a bare brand name is group one, not the whole brand"
+            vec![(200, SaleKind::Listing)],
+            "a bare brand name is group one, not the whole brand; and at 200 d \
+             g2 is too young for the review at 900 d (pool cutoff 170 d)"
         );
         assert!(g3.is_none(), "never listed, so no history");
         assert_eq!(g1.last_seen(), Some(1000 * D));
+    }
+
+    fn history(windows: &[(i64, SaleKind)]) -> GroupHistory {
+        GroupHistory {
+            skin_group_id: "g".into(),
+            windows: windows
+                .iter()
+                .map(|&(start, kind)| SaleWindow {
+                    start_time: start * D,
+                    end_time: start * D + 14 * D,
+                    kind,
+                })
+                .collect(),
+            ..Default::default()
+        }
+    }
+
+    fn pooled() -> CadenceModel {
+        CadenceModel {
+            n: 40,
+            median_days: 343.0,
+            p25_days: 150.0,
+            p75_days: 400.0,
+        }
+    }
+
+    #[test]
+    fn own_cadence_uses_the_last_own_gap_with_the_pooled_spread() {
+        // 100 -> 280 (180 d) -> 290 merges into 280 -> 463 (183 d, the last gap).
+        let g = history(&[
+            (100, SaleKind::Listing),
+            (280, SaleKind::Listing),
+            (290, SaleKind::Listing),
+            (463, SaleKind::Listing),
+        ]);
+        let (en_last, r, gap) = next_by_own_cadence(&g, &pooled()).unwrap();
+        assert_eq!(en_last, 463 * D);
+        assert_eq!(gap, Some(183.0));
+        assert_eq!(
+            r,
+            Resolution::Estimated {
+                en_start: 646 * D,
+                lo: (646 - 193) * D,
+                hi: (646 + 57) * D,
+            }
+        );
+    }
+
+    #[test]
+    fn own_cadence_falls_back_to_pooled_without_an_own_gap() {
+        let g = history(&[(100, SaleKind::Listing), (110, SaleKind::Listing)]);
+        let (en_last, r, gap) = next_by_own_cadence(&g, &pooled()).unwrap();
+        assert_eq!(en_last, 100 * D);
+        assert_eq!(gap, None);
+        assert_eq!(r, next_by_cadence(100 * D, &pooled()));
+        assert!(next_by_own_cadence(&history(&[]), &pooled()).is_none());
+    }
+
+    #[test]
+    fn own_cadence_clamps_the_own_gap_to_the_pooled_band() {
+        let long = history(&[(100, SaleKind::Listing), (1100, SaleKind::Listing)]);
+        let (_, r, gap) = next_by_own_cadence(&long, &pooled()).unwrap();
+        assert_eq!(gap, Some(400.0));
+        assert!(matches!(r, Resolution::Estimated { en_start, .. } if en_start == 1500 * D));
+        let short = history(&[(100, SaleKind::Listing), (200, SaleKind::Listing)]);
+        assert_eq!(
+            next_by_own_cadence(&short, &pooled()).unwrap().2,
+            Some(150.0)
+        );
+    }
+
+    #[test]
+    fn own_cadence_never_anchors_on_a_review_window() {
+        let g = history(&[
+            (100, SaleKind::Listing),
+            (280, SaleKind::Listing),
+            (700, SaleKind::Review),
+        ]);
+        assert_eq!(g.last_seen(), Some(700 * D));
+        let (en_last, r, gap) = next_by_own_cadence(&g, &pooled()).unwrap();
+        assert_eq!(en_last, 280 * D);
+        assert_eq!(gap, Some(180.0));
+        assert!(matches!(r, Resolution::Estimated { en_start, .. } if en_start == 460 * D));
     }
 }

@@ -63,6 +63,38 @@ fn load(server: &str) -> Option<GameData> {
     Some(gd)
 }
 
+#[test]
+fn test_collection_sale_group_excludes_event_reward_skin() {
+    let Some(cn) = load("cn") else {
+        eprintln!("CN extract not present, skipping");
+        return;
+    };
+    let (groups, _) = skins::group_histories(&cn, &std::collections::HashSet::new());
+    let group = groups
+        .iter()
+        .find(|group| group.skin_group_id == "2025#sale")
+        .expect("Test Collection/XV should have a skin-shop history");
+
+    assert!(
+        !group
+            .skin_ids
+            .iter()
+            .any(|id| id == "char_124_kroos@sale#14")
+    );
+    assert!(
+        group
+            .skin_ids
+            .iter()
+            .any(|id| id == "char_1035_wisdel@sale#14")
+    );
+    assert!(
+        group
+            .skin_ids
+            .iter()
+            .any(|id| id == "char_332_archet@sale#14")
+    );
+}
+
 /// Every activity that names a token shop and has started on the server,
 /// split by whether the sidecar holds that shop.
 fn shop_coverage(gd: &GameData, now: i64) -> (Vec<String>, Vec<String>) {

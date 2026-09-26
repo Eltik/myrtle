@@ -215,6 +215,12 @@ fn batches(
     out
 }
 
+/// `RELEASE_POOLED_CADENCE=1` restores the pre-fix cadence rule: anchor on
+/// the latest window of any kind (reviews included) plus the pooled median.
+fn pooled_cadence() -> bool {
+    std::env::var("RELEASE_POOLED_CADENCE").ok().as_deref() == Some("1")
+}
+
 fn reruns(
     p: &Planner,
     names: &Names<'_>,
@@ -250,16 +256,29 @@ fn reruns(
         };
         if let Some(w) = skins::match_en_listing(en_g, resolved_start(&next), &mut consumed) {
             if w.end_time < p.now && cadence.n > 0 {
-                let en_last = en_g
-                    .and_then(GroupHistory::last_seen)
-                    .unwrap_or(w.start_time);
-                next = skins::next_by_cadence(en_last, &cadence);
+                let (en_last, dated, own_gap_days) = if pooled_cadence() {
+                    let en_last = en_g
+                        .and_then(GroupHistory::last_seen)
+                        .unwrap_or(w.start_time);
+                    (en_last, skins::next_by_cadence(en_last, &cadence), None)
+                } else {
+                    en_g.and_then(|e| skins::next_by_own_cadence(e, &cadence))
+                        .unwrap_or_else(|| {
+                            (
+                                w.start_time,
+                                skins::next_by_cadence(w.start_time, &cadence),
+                                None,
+                            )
+                        })
+                };
+                next = dated;
                 basis = RerunBasis::Cadence {
                     en_last,
                     n: cadence.n,
                     median_days: cadence.median_days,
                     p25_days: cadence.p25_days,
                     p75_days: cadence.p75_days,
+                    own_gap_days,
                 };
             } else {
                 next = Resolution::Confirmed {
