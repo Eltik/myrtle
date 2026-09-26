@@ -28,6 +28,7 @@ use crate::core::grade::base::assignment::{
 };
 use crate::core::grade::base::context::BaseContext;
 use crate::core::grade::base::pools::{optimal_with_bundles, search_economy};
+use crate::core::grade::base::scope::settle_scoped_proposal;
 use crate::core::grade::base::shift_rotation::{SHIFT_COUNT, recommend_shift_rotation};
 use crate::core::grade::base::sustain_sim::game_morale_drain;
 use crate::core::grade::base::types::{
@@ -1151,6 +1152,7 @@ pub async fn optimize(
     // the async worker's other futures (see `cpu::offload`). The context and
     // the building move in and come back, so nothing is cloned.
     let gd = std::sync::Arc::clone(&game_data);
+    let scope: HashSet<String> = req.scope.iter().cloned().collect();
     let (ctx, building, baseline, proposal) = cpu::offload("base_optimize", move || {
         let baseline = compute_current_assignment(
             &ctx.profiles,
@@ -1172,6 +1174,24 @@ pub async fn optimize(
             &pins,
         )
         .optimal;
+        // A scoped run is settled as the player will read it: every room
+        // outside the scope exactly as drafted (the search re-seats dorms and
+        // the Control Center on its own), and a scoped room changed only when
+        // its own yield rises (see `scope::settle_scoped_proposal`).
+        let proposal = if scope.is_empty() {
+            proposal
+        } else {
+            settle_scoped_proposal(
+                &ctx.profiles,
+                &building,
+                &gd.building,
+                &ctx.registry,
+                &ctx.morale_drains,
+                &scope,
+                &baseline,
+                &proposal,
+            )
+        };
         (ctx, building, baseline, proposal)
     })
     .await?;

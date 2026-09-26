@@ -2187,6 +2187,110 @@ fn bubbles_tiers_take_priority_over_vermeils_recycling() {
 }
 
 #[test]
+fn a_scoped_proposal_leaves_every_other_room_as_drafted_and_never_worsens_the_room() {
+    // "Optimize this room only" must read as exactly that: the search
+    // re-seats dormitories and the Control Center on its own and, where the
+    // scoped room is not the bottleneck, may hand back a slower crew. The
+    // settle pass keeps every out-of-scope room as drafted, books nobody
+    // twice, and changes the scoped room only when its own yield rises.
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    use backend::core::grade::base::scope::settle_scoped_proposal;
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let roster = full_roster(gd);
+    let crewed = |slot: &str, room_type: &str, level: i32, crew: &[&str], formula: Option<&str>| {
+        let mut r = room(slot, room_type, level);
+        r.current_operators = crew.iter().map(|s| (*s).to_string()).collect();
+        r.current_formula = formula.map(str::to_string);
+        r
+    };
+    let building = UserBuilding {
+        rooms: vec![
+            crewed("cc", "CONTROL", 5, &["char_002_amiya"], None),
+            crewed("tp0", "TRADING", 3, &[TEXAS, LAPPLAND, EXUSIAI], None),
+            crewed(
+                "mf0",
+                "MANUFACTURE",
+                3,
+                &["char_123_fang", "char_133_mm"],
+                Some("F_GOLD"),
+            ),
+            crewed("mf1", "MANUFACTURE", 3, &["char_502_nblade"], Some("F_EXP")),
+            crewed(
+                "d0",
+                "DORMITORY",
+                5,
+                &["char_124_kroos", "char_212_ansel"],
+                None,
+            ),
+        ],
+    };
+    let baseline =
+        compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+    // An unpinned full plan: it re-crews every room, the worst case a scoped
+    // search could hand the settle pass.
+    let full = compute_optimal_assignment(&roster, &building, &gd.building, &registry, &drains);
+    let scope: std::collections::HashSet<String> = ["mf1".to_string()].into_iter().collect();
+    let settled = settle_scoped_proposal(
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+        &drains,
+        &scope,
+        &baseline,
+        &full,
+    );
+    let crews = |a: &backend::core::grade::base::types::BaseAssignment| -> std::collections::HashMap<String, std::collections::HashSet<String>> {
+        a.rooms
+            .iter()
+            .map(|r| (r.slot_id.clone(), r.operators.iter().cloned().collect()))
+            .collect()
+    };
+    let settled_crews = crews(&settled);
+    for drafted in &building.rooms {
+        if drafted.slot_id == "mf1" {
+            continue;
+        }
+        let want: std::collections::HashSet<String> =
+            drafted.current_operators.iter().cloned().collect();
+        if let Some(got) = settled_crews.get(&drafted.slot_id) {
+            assert_eq!(
+                got, &want,
+                "{} is out of scope and must read as drafted",
+                drafted.slot_id
+            );
+        }
+    }
+    let mut seen = std::collections::HashSet::new();
+    for r in &settled.rooms {
+        for o in &r.operators {
+            assert!(
+                seen.insert(o.clone()),
+                "{o} is booked twice in the settled proposal"
+            );
+        }
+    }
+    let before = baseline
+        .rooms
+        .iter()
+        .find(|r| r.slot_id == "mf1")
+        .expect("drafted mf1");
+    let after = settled
+        .rooms
+        .iter()
+        .find(|r| r.slot_id == "mf1")
+        .expect("settled mf1");
+    assert!(
+        after.total_efficiency >= before.total_efficiency - 1e-9,
+        "the scoped room never reads worse than its draft: {:.1} -> {:.1}",
+        before.total_efficiency,
+        after.total_efficiency
+    );
+}
+
+#[test]
 fn dead_conditional_cc_operator_is_dropped_after_assignment() {
     // The roster HAS three Kjerag traders, so SilverAsh's gate passes the roster
     // feasibility check and he is initially seated in the CC. But stronger non-Kjerag
