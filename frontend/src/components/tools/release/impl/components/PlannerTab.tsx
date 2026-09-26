@@ -1,28 +1,25 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, ListChecks, RotateCcw, X } from "lucide-react";
+import { ListChecks, RotateCcw, X } from "lucide-react";
 import * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
-import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { useAuth } from "#/hooks/use-auth";
 import { refreshRosterFn } from "#/lib/api/auth";
 import { userSkinsQueryOptions } from "#/lib/api/skins";
 import { userStageClearsQueryOptions } from "#/lib/api/stages";
 import { userQueryOptions } from "#/lib/api/user";
-import { useFormatters, useLocale, useT } from "#/lib/i18n";
+import { useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn } from "#/lib/utils";
-import type { ShopGood } from "#/types/generated/ShopGood";
+import { cn, getAvatarById } from "#/lib/utils";
 import { useAutoTranslate } from "../autoTranslate";
-import { formatDate, formatDateRange } from "../helpers";
+import { formatDate } from "../helpers";
 import type { messages as helperMessages } from "../helpers.messages";
-import { balances, EMPTY_STATE, type IPlanRow, type IPlanSkin, type IPlanState, type IRowBalance, rowDeviates, rowExpense, rowIncome, rowPotential, SANITY_PER_TOKEN, SHOP_KIND_LABEL_KEYS, type StageClears, type StageStatus, shopBuyout, shopGroups, stageKey, stageOn, stageStatus, usePlanData } from "../plan";
+import { balances, EMPTY_STATE, type IPlanRow, type IPlanSkin, type IPlanState, type IRowBalance, rowDeviates, rowExpense, rowIncome, rowPotential, type StageClears, type StageStatus, stageKey, stageOn, stageStatus, usePlanData } from "../plan";
 import type { messages as planMessages } from "../plan.messages";
 import { useStoredState } from "../planStore";
 import type { messages } from "./PlannerTab.messages";
 import { Calcs, Op, OpIcon } from "./Primes";
 import { ResolutionBadge } from "./ResolutionBadge";
-import { FarmStages } from "./ScheduleShared";
 import { FALLBACK_COLOR, SkinCard } from "./SkinCard";
 import { CnName, type OperatorLookup, operatorLabel, ReleaseEmpty, ReleaseError, ReleaseLoading, resolveName, Tag, ToggleField, useArt } from "./shared";
 
@@ -82,12 +79,24 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
             delete stages[row.key];
             return { ...s, stages };
         });
-    // The detail pane is its own scroller from `md` up, so a new selection has
-    // to reset THAT, not the window; below `md` it is not a scroller and this is a no-op.
     const detailRef = React.useRef<HTMLDivElement>(null);
+    const plannerRef = React.useRef<HTMLDivElement>(null);
     const showDetail = () => {
         setPane("detail");
-        detailRef.current?.scrollTo({ top: 0 });
+        if (window.matchMedia("(max-width: 47.999rem)").matches) {
+            const rect = plannerRef.current?.getBoundingClientRect();
+            if (rect) window.scrollTo({ top: window.scrollY + rect.top });
+        } else {
+            const rect = detailRef.current?.getBoundingClientRect();
+            if (rect && rect.top < 80) window.scrollTo({ top: window.scrollY + rect.top - 80 });
+        }
+    };
+    const showEvents = () => {
+        setPane("events");
+        if (window.matchMedia("(max-width: 47.999rem)").matches) {
+            const rect = plannerRef.current?.getBoundingClientRect();
+            if (rect) window.scrollTo({ top: window.scrollY + rect.top });
+        }
     };
     const open = (key: string) => {
         setSelected(key);
@@ -99,7 +108,7 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
     if (data.error) return <ReleaseError error={data.error} onRetry={() => window.location.reload()} />;
 
     return (
-        <div className="flex flex-col gap-3 md:min-h-0 md:flex-1">
+        <div ref={plannerRef} className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
                 <ToggleField id="planner-show-past" label={t("release.planner.showPast")} checked={showPast} onChange={setShowPast} />
                 {uid && <ToggleField id="planner-hide-owned" label={t("release.planner.hideOwned")} checked={hideOwned} onChange={setHideOwned} />}
@@ -110,22 +119,10 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
             {data.rows.length === 0 ? (
                 <ReleaseEmpty title={t("release.planner.empty.title")} description={t("release.planner.empty.desc")} />
             ) : (
-                /* Two panes, each ONE scroll region from `md` up. Before this the page
-                   was a single scroll, so reading down the detail pane dragged the event
-                   list off the top of the screen.
-
-                   The page does not scroll at all there: `ReleasePlanner` marks the
-                   shell `data-viewport-fit` and the site CSS makes it the rest of the
-                   viewport under the header, so this grid is the leftover height
-                   (`flex-1` against `min-h-0` all the way down) and both panes stretch
-                   to its bottom. The left column does not scroll itself; the list inside
-                   it takes what the controls above leave and scrolls that. The panes
-                   used to be sticky boxes of `100svh - 2rem` inside a scrolling page,
-                   which left the page taller than the window by the chrome above them
-                   plus the footer (585 px at 1440x900). `min-h-80` is the floor on a
-                   very short window: there the page scrolls rather than crush the panes. */
-                <div className="grid grid-cols-1 gap-4 md:min-h-80 md:flex-1 md:grid-cols-[340px_minmax(0,1fr)] md:grid-rows-[minmax(0,1fr)]">
-                    <div className={cn("flex flex-col gap-2 md:min-h-0 md:overflow-hidden", pane !== "events" && "max-md:hidden")}>
+                /* The page scrolls normally; the left column sticks under the header and
+                   its event list scrolls so it remains reachable while reading detail. */
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-[340px_minmax(0,1fr)]">
+                    <div className={cn("flex flex-col gap-2 md:sticky md:top-20 md:max-h-[calc(100dvh-6rem)] md:self-start", pane !== "events" && "max-md:hidden")}>
                         <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-3">
                             <div className="flex items-center gap-2">
                                 <Button
@@ -171,7 +168,7 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
                             </div>
                         </div>
                         <div className="flex flex-col gap-2 md:min-h-0 md:flex-1 md:overflow-y-auto md:overscroll-contain md:pr-1">
-                            <Button size="sm" variant="outline" className="sticky top-16 z-10 w-full bg-background/90 backdrop-blur md:hidden" onClick={() => setPane("detail")}>
+                            <Button size="sm" variant="outline" className="w-full md:hidden" onClick={showDetail}>
                                 {summary ? t("release.planner.showSummary") : t("release.planner.showSelected")}
                             </Button>
                             {data.rows.map((row) => (
@@ -179,14 +176,14 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
                             ))}
                         </div>
                     </div>
-                    <div ref={detailRef} className={cn("min-w-0 md:min-h-0 md:overflow-y-auto md:overscroll-contain md:pr-1", pane !== "detail" && "max-md:hidden")}>
-                        <Button size="sm" variant="outline" className="sticky top-16 z-10 mb-3 w-full bg-background/90 backdrop-blur md:hidden" onClick={() => setPane("events")}>
+                    <div ref={detailRef} className={cn("min-w-0", pane !== "detail" && "max-md:hidden")}>
+                        <Button size="sm" variant="outline" className="mb-3 w-full md:hidden" onClick={showEvents}>
                             {t("release.planner.showEvents")}
                         </Button>
                         {summary ? (
                             <Summary rows={data.rows} state={state} clears={clears} totals={totals} lookup={data.lookup} onRemove={(skin) => pickSkin(skin, false)} t={t} locale={locale} />
                         ) : current ? (
-                            <EventDetail row={current} state={state} clears={clears} hidden={hidden} total={totals.get(current.key)} today={today} lookup={data.lookup} onPick={pickSkin} onStage={setStage} onAllStages={setAllStages} onResetStages={resetStages} t={t} locale={locale} />
+                            <EventDetail row={current} state={state} clears={clears} hidden={hidden} total={totals.get(current.key)} today={today} lookup={data.lookup} onPick={pickSkin} onStage={setStage} onAllStages={setAllStages} onResetStages={resetStages} t={t} />
                         ) : null}
                     </div>
                 </div>
@@ -237,7 +234,6 @@ interface IEventDetailProps {
     onAllStages: (row: IPlanRow, on: boolean) => void;
     onResetStages: (row: IPlanRow) => void;
     t: PlannerT;
-    locale: string;
 }
 
 const STATUS_TITLE_KEYS: Record<StageStatus, (keyof typeof messages & string) | undefined> = {
@@ -247,7 +243,7 @@ const STATUS_TITLE_KEYS: Record<StageStatus, (keyof typeof messages & string) | 
     unknown: undefined,
 };
 
-function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick, onStage, onAllStages, onResetStages, t, locale }: IEventDetailProps): React.ReactElement {
+function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick, onStage, onAllStages, onResetStages, t }: IEventDetailProps): React.ReactElement {
     const art = useArt(row.imagePath);
     const income = rowIncome(row, state, clears);
     const potential = rowPotential(row);
@@ -342,17 +338,6 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
                     </div>
                 </div>
             )}
-            {row.kind === "event" && (row.missionTokens > 0 || row.shop) && <ShopBuyout row={row} t={t} locale={locale} />}
-            {row.farmStages.length > 0 && (
-                <div className="flex flex-col gap-2 border-border/40 border-t pt-3">
-                    <span className="font-sans font-semibold text-[12.5px] text-foreground">
-                        {t("release.planner.farming")}
-                        <span className="font-medium font-mono text-[10.5px] text-muted-foreground">{t("release.planner.farming.cnDrops")}</span>
-                    </span>
-                    <FarmStages stages={row.farmStages} />
-                </div>
-            )}
-            {row.farmStages.length === 0 && row.kind === "event" && row.opStages.length > 0 && <p className="m-0 border-border/40 border-t pt-3 font-sans text-[11.5px] text-muted-foreground">{t("release.planner.farming.none")}</p>}
             {groups.length === 0 ? (
                 <p className="m-0 border-border/40 border-t pt-3 font-sans text-[12.5px] text-muted-foreground">{ownedHidden > 0 ? t("release.planner.ownedHidden", { count: ownedHidden }) : t("release.planner.noOutfit")}</p>
             ) : (
@@ -373,113 +358,6 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
             {groups.length > 0 && ownedHidden > 0 && <p className="m-0 font-sans text-[11.5px] text-muted-foreground">{t("release.planner.ownedHidden", { count: ownedHidden })}</p>}
         </div>
     );
-}
-
-function ShopBuyout({ row, t, locale }: { row: IPlanRow; t: PlannerT; locale: string }): React.ReactElement {
-    const f = useFormatters();
-    const buyout = shopBuyout(row);
-    const [open, setOpen] = React.useState(false);
-    const shop = row.shop;
-    return (
-        <div className="flex flex-col gap-1.5 border-border/40 border-t pt-3">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                <span className="font-sans font-semibold text-[12.5px] text-foreground">
-                    {t("release.planner.shop")}
-                    {shop && <span className="font-medium font-mono text-[10.5px] text-muted-foreground">{t("release.planner.shop.meta", { name: shop.shopName, server: shop.server.toUpperCase(), dates: formatDateRange(shop.startTime, shop.endTime, locale, t) })}</span>}
-                </span>
-                {shop && (
-                    <button type="button" onClick={() => setOpen((v) => !v)} className="flex cursor-pointer items-center gap-1 font-sans text-[11.5px] text-muted-foreground hover:text-foreground">
-                        {open ? t("release.planner.shop.hide") : t("release.planner.shop.show", { count: shop.goods.length })}
-                        <ChevronDown className={cn("size-3.5 transition-transform", open && "rotate-180")} />
-                    </button>
-                )}
-            </div>
-            {buyout && shop ? (
-                <>
-                    <dl className="m-0 grid grid-cols-[auto_auto] gap-x-4 gap-y-0.5 font-mono text-[11.5px] tabular-nums">
-                        <dt className="flex items-center gap-1.5 font-sans text-muted-foreground">
-                            <ShopIcon item={shop.token} size="size-4" />
-                            {t("release.planner.shop.buyEverything")}
-                            <span className="text-[10px]">{t("release.planner.shop.limitedGoods", { count: buyout.limitedGoods })}</span>
-                        </dt>
-                        <dd className="m-0 text-right text-foreground">{f.number(buyout.total)}</dd>
-                        <dt className="font-sans text-muted-foreground">{t("release.planner.shop.missions")}</dt>
-                        <dd className="m-0 text-right text-emerald-500">{t("release.planner.shop.missionsValue", { count: f.number(buyout.missions) })}</dd>
-                        <dt className="font-sans font-semibold text-foreground">{t("release.planner.shop.toFarm")}</dt>
-                        <dd className="m-0 text-right font-semibold text-foreground">{t("release.planner.shop.toFarmValue", { count: f.number(buyout.remaining), token: shop.token.nameEn ?? shop.token.name, sanity: f.number(buyout.sanity) })}</dd>
-                    </dl>
-                    <p className="m-0 font-sans text-[10.5px] text-muted-foreground">{t("release.planner.shop.sanityNote", { perToken: SANITY_PER_TOKEN })}</p>
-                    {open && <ShopGoods row={row} t={t} />}
-                </>
-            ) : (
-                <p className="m-0 font-sans text-[11.5px] text-muted-foreground">{t("release.planner.shop.noShop", { count: row.missionTokens })}</p>
-            )}
-        </div>
-    );
-}
-
-function ShopGoods({ row, t }: { row: IPlanRow; t: PlannerT }): React.ReactElement | null {
-    const f = useFormatters();
-    if (!row.shop) return null;
-    const { limited, unlimited } = shopGroups(row.shop);
-    const token = row.shop.token.nameEn ?? row.shop.token.name;
-    return (
-        <div className="flex flex-col gap-3 pt-1">
-            {limited.map((g) => (
-                <div key={g.kind} className="flex flex-col gap-1">
-                    <div className="flex items-baseline justify-between gap-2">
-                        <span className="font-sans font-semibold text-[11.5px] text-foreground">
-                            {t(SHOP_KIND_LABEL_KEYS[g.kind])} <span className="font-medium font-mono text-[10px] text-muted-foreground">{t("release.planner.shop.groupCount", { count: g.goods.length })}</span>
-                        </span>
-                        <span className="font-mono text-[11px] text-muted-foreground tabular-nums">{f.number(g.tokens)}</span>
-                    </div>
-                    <ul className="m-0 grid list-none grid-cols-1 gap-x-4 gap-y-0.5 p-0 sm:grid-cols-2">
-                        {g.goods.map((good) => (
-                            <ShopGoodRow key={good.goodId} good={good} t={t} />
-                        ))}
-                    </ul>
-                </div>
-            ))}
-            {unlimited.length > 0 && (
-                <div className="flex flex-col gap-1">
-                    <span className="font-sans font-semibold text-[11.5px] text-foreground">
-                        {t("release.planner.shop.unlimited")}
-                        <span className="font-medium font-mono text-[10px] text-muted-foreground">{t("release.planner.shop.unlimitedNote", { token })}</span>
-                    </span>
-                    <ul className="m-0 grid list-none grid-cols-1 gap-x-4 gap-y-0.5 p-0 sm:grid-cols-2">
-                        {unlimited.map((good) => (
-                            <ShopGoodRow key={good.goodId} good={good} t={t} />
-                        ))}
-                    </ul>
-                </div>
-            )}
-        </div>
-    );
-}
-
-function ShopGoodRow({ good, t }: { good: ShopGood; t: PlannerT }): React.ReactElement {
-    const f = useFormatters();
-    const name = good.item.nameEn ?? good.item.name;
-    const cnOnly = good.item.nameEn === null;
-    return (
-        <li className="flex min-w-0 items-center gap-2 font-mono text-[11px] tabular-nums">
-            <ShopIcon item={good.item} size="size-6" />
-            <span className="min-w-0 flex-1 truncate font-sans text-[11.5px] text-foreground" lang={cnOnly ? "zh-CN" : undefined} translate={cnOnly ? "yes" : undefined} title={name}>
-                {name}
-                {good.count > 1 && <span className="text-muted-foreground">{t("release.planner.shop.goodCount", { count: f.number(good.count) })}</span>}
-            </span>
-            <span className="shrink-0 text-muted-foreground">
-                {f.number(good.price)}
-                {good.availCount > 0 ? t("release.planner.shop.stock", { count: good.availCount }) : ""}
-            </span>
-            {good.availCount > 0 && <span className="w-12 shrink-0 text-right text-foreground">{f.number(good.price * good.availCount)}</span>}
-        </li>
-    );
-}
-
-function ShopIcon({ item, size }: { item: ShopGood["item"]; size: string }): React.ReactElement {
-    const art = useArt(item.iconPath);
-    return art.src ? <img src={art.src} alt="" loading="lazy" onError={art.onError} className={cn("shrink-0 rounded-sm bg-black/30 object-contain", size)} /> : <span aria-hidden="true" className={cn("shrink-0 rounded-sm bg-muted", size)} />;
 }
 
 interface ISummaryProps {
@@ -553,7 +431,7 @@ function SummarySkin({ skin, lookup, autoOn, onRemove, removeLabel }: { skin: IP
     return (
         <li className="flex min-w-0 items-center gap-2.5 rounded-md border border-border border-l-[3px] bg-muted/40 py-1 pr-1 pl-1.5" style={{ borderLeftColor: skin.colors[0] ?? FALLBACK_COLOR }}>
             <span className="size-8 shrink-0 overflow-hidden rounded-sm">
-                <OperatorAvatar charId={skin.charId} name={opName} server={entry ? undefined : "cn"} />
+                <SkinAvatar skinId={skin.skinId} charId={skin.charId} name={opName} server={entry ? undefined : "cn"} />
             </span>
             <span className="flex min-w-0 flex-1 flex-col leading-tight" title={`${opName} · ${skinName}`}>
                 <span className="truncate font-sans font-semibold text-[12.5px] text-foreground">{opName}</span>
@@ -564,5 +442,24 @@ function SummarySkin({ skin, lookup, autoOn, onRemove, removeLabel }: { skin: IP
                 <X className="size-3.5" aria-hidden="true" />
             </button>
         </li>
+    );
+}
+
+function SkinAvatar({ skinId, charId, name, server }: { skinId: string; charId: string; name: string; server?: string }): React.ReactElement {
+    const [fallback, setFallback] = React.useState(0);
+    // Of 262 planner outfits, CN has 258 skin avatars, EN has 220, and 4 have neither.
+    if (fallback === 2) return <>{name.charAt(0).toUpperCase()}</>;
+    return (
+        <img
+            src={fallback === 0 ? getAvatarById(skinId, "cn") : getAvatarById(charId, server)}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+            onDragStart={(e) => e.preventDefault()}
+            onError={() => setFallback((value) => value + 1)}
+            className="block h-full w-full rounded-[inherit] object-cover"
+        />
     );
 }

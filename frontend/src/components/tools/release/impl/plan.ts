@@ -16,13 +16,13 @@ import type { ShopGoodKind } from "#/types/generated/ShopGoodKind";
 import type { SkinPrice } from "#/types/generated/SkinPrice";
 import type { SkinTile } from "#/types/generated/SkinTile";
 import type { StageClearsMap } from "#/types/stages";
-import { groupNewSkins } from "./components/SkinsTab";
 import { buildOperatorLookup, type OperatorLookup } from "./components/shared";
 import { isPast, resolvedEnStart, sortKey } from "./helpers";
 import type { messages as planMessages } from "./plan.messages";
 import { REVIEW_NAME_CN, REVIEW_NAME_EN, reviewOutfits, reviewYearGroup } from "./reviews";
 import type { messages as reviewMessages } from "./reviews.messages";
 import { cnDay } from "./schedule";
+import { groupNewSkins } from "./skins";
 
 /** A key in `plan.messages.ts`; resolved by whichever component renders it. */
 export type PlanMessageKey = keyof typeof planMessages & string;
@@ -311,10 +311,10 @@ export interface IShopBuyout {
     limitedGoods: number;
 }
 
-export function shopBuyout(row: IPlanRow): IShopBuyout | null {
-    if (!row.shop) return null;
-    const remaining = Math.max(0, row.shop.maxPrice - row.missionTokens);
-    return { total: row.shop.maxPrice, missions: row.missionTokens, remaining, sanity: remaining * SANITY_PER_TOKEN, limitedGoods: row.shop.goods.filter((g) => g.availCount > 0).length };
+export function shopBuyout({ shop, missionTokens }: { shop: EventShop | null; missionTokens: number }): IShopBuyout | null {
+    if (!shop) return null;
+    const remaining = Math.max(0, shop.maxPrice - missionTokens);
+    return { total: shop.maxPrice, missions: missionTokens, remaining, sanity: remaining * SANITY_PER_TOKEN, limitedGoods: shop.goods.filter((g) => g.availCount > 0).length };
 }
 
 export const SHOP_KIND_LABEL_KEYS: Record<ShopGoodKind, PlanMessageKey> = {

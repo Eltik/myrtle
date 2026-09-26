@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-25T13:15:05.014Z",
+    "generatedAt": "2026-09-26T10:14:37.173Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -15835,8 +15835,8 @@
         {
             "key": "settings.appearance.latinNames.rowDesc",
             "namespace": "settings",
-            "source_text": "予愿安洁莉娜 becomes Angelina the Mellow Wish. Search matches either name whichever one is shown. On by default.",
-            "description": "Caption under the Latin-names switch. The Chinese example and its Latin name are game data and stay as-is.",
+            "source_text": "予愿安洁莉娜 becomes Angelina the Mellow Wish. Search matches either name whichever one is shown. The release planner follows it for CN-only events and outfits too. On by default.",
+            "description": "Caption under the Latin-names switch. The Chinese example and its Latin name are game data and stay as-is; the setting also controls names in the release planner.",
             "placeholders": []
         },
         {
@@ -30465,20 +30465,6 @@
             "placeholders": []
         },
         {
-            "key": "tools.release.autoTranslate",
-            "namespace": "tools",
-            "source_text": "Auto-translate CN names",
-            "description": "Switch label: fill in English names for Chinese-only rows where this site can work one out.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.autoTranslate.desc",
-            "namespace": "tools",
-            "source_text": "Names come from EN game data where an id exists on both servers; anything still in Chinese is marked for your browser's translator.",
-            "description": "Explanation under the auto-translate switch. 'EN' is the English game server.",
-            "placeholders": []
-        },
-        {
             "key": "tools.release.badge.announced",
             "namespace": "tools",
             "source_text": "Announced",
@@ -31021,6 +31007,131 @@
             "placeholders": []
         },
         {
+            "key": "tools.release.events.shop",
+            "namespace": "tools",
+            "source_text": "Event shop",
+            "description": "Collapsed heading for an event's shop.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.events.shop.buyEverything",
+            "namespace": "tools",
+            "source_text": "Buy everything",
+            "description": "Row label for the cost of clearing the shop's limited stock.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.events.shop.goodCount",
+            "namespace": "tools",
+            "source_text": " ×{count}",
+            "description": "How many of an item one purchase gives. Keep the leading space and multiplication sign.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.events.shop.groupCount",
+            "namespace": "tools",
+            "source_text": "· {count}",
+            "description": "How many goods are in one shop category. Keep the leading middle dot.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.events.shop.limitedGoods",
+            "namespace": "tools",
+            "source_text": "· {count} limited goods",
+            "description": "Note after the buyout cost saying how many goods have limited stock. Keep the leading middle dot.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.events.shop.meta",
+            "namespace": "tools",
+            "source_text": "{name} · {server} {dates}",
+            "description": "Shop details: its name, source server, and date range. Keep the middle dots.",
+            "placeholders": [
+                "dates",
+                "name",
+                "server"
+            ]
+        },
+        {
+            "key": "tools.release.events.shop.missions",
+            "namespace": "tools",
+            "source_text": "Points awarded by clearing missions",
+            "description": "Row label for shop tokens awarded by event missions.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.events.shop.missionsValue",
+            "namespace": "tools",
+            "source_text": "-{count}",
+            "description": "Mission tokens shown as a deduction. Keep the leading minus sign.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.events.shop.noShop",
+            "namespace": "tools",
+            "source_text": "Missions pay {count} tokens. The shop is fetched from the game server once it opens on a server this site has an account on.",
+            "description": "Shown when mission rewards are known but the shop contents are not available yet.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.events.shop.sanityNote",
+            "namespace": "tools",
+            "source_text": "Upper bound: first-clear token rewards are not in the data.",
+            "description": "Caveat below the shop calculation. 'First-clear' means the one-off reward for completing a stage.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.events.shop.stock",
+            "namespace": "tools",
+            "source_text": " × {count}",
+            "description": "How many times an item can be bought after its unit price. Keep the leading space and multiplication sign.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.release.events.shop.toFarm",
+            "namespace": "tools",
+            "source_text": "To farm",
+            "description": "Row label for tokens still needed after mission rewards.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.events.shop.toFarmValue",
+            "namespace": "tools",
+            "source_text": "{sanity} sanity",
+            "description": "Energy needed to earn the remaining shop tokens. 'Sanity' is the game's name for energy.",
+            "placeholders": [
+                "sanity"
+            ]
+        },
+        {
+            "key": "tools.release.events.shop.unlimited",
+            "namespace": "tools",
+            "source_text": "Unlimited",
+            "description": "Heading over shop goods with no stock limit.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.events.shop.unlimitedNote",
+            "namespace": "tools",
+            "source_text": "· not in the total, {token} left over goes here",
+            "description": "Note under the unlimited heading. {token} is the shop currency name. Keep the leading middle dot.",
+            "placeholders": [
+                "token"
+            ]
+        },
+        {
             "key": "tools.release.events.showPast",
             "namespace": "tools",
             "source_text": "Show past",
@@ -31062,13 +31173,6 @@
                 "ap",
                 "code"
             ]
-        },
-        {
-            "key": "tools.release.intro",
-            "namespace": "tools",
-            "source_text": "When CN content lands on EN: confirmed from EN game data, announced from an override, estimated from the CN-to-EN lag.",
-            "description": "Blurb under the page heading. 'CN' and 'EN' are the Chinese and English game servers; 'lag' is how far behind EN runs.",
-            "placeholders": []
         },
         {
             "key": "tools.release.kind.banner",
@@ -31235,8 +31339,8 @@
         {
             "key": "tools.release.planner.blurb",
             "namespace": "tools",
-            "source_text": "First-clear Originite Prime in, the outfits you pick out; stage defaults follow your account, outfit prices the game data.",
-            "description": "Note above the planner. 'First-clear' is the one-off reward for three-starring a stage; 'Originite Prime' is the game's premium currency.",
+            "source_text": "First-clear Originite Prime included.",
+            "description": "Short note above the planner. 'First-clear' is the one-off reward for three-starring a stage; 'Originite Prime' is the game's premium currency.",
             "placeholders": []
         },
         {
@@ -31276,27 +31380,6 @@
             "namespace": "tools",
             "source_text": "Nothing ahead",
             "description": "Empty-state heading when no dated event or sale is coming up.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.planner.farming",
-            "namespace": "tools",
-            "source_text": "Farming stages ",
-            "description": "Heading over the stages worth grinding for materials. Keep the trailing space; a note about the drop source follows.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.planner.farming.cnDrops",
-            "namespace": "tools",
-            "source_text": "· CN drops",
-            "description": "Note beside the farming heading saying the drop table comes from the Chinese client. Keep the leading middle dot.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.planner.farming.none",
-            "namespace": "tools",
-            "source_text": "No drop table in the client for this event: the game carries drops only while stages are open, and these have not opened on CN (or their last run closed) since the extract.",
-            "description": "Explains why an event has no drop table. 'CN' is the Chinese game server; 'the extract' is this site's copy of the game data.",
             "placeholders": []
         },
         {
@@ -31376,8 +31459,8 @@
         {
             "key": "tools.release.planner.saved",
             "namespace": "tools",
-            "source_text": "Saved to your account {date}.",
-            "description": "Status after the plan was written to the signed-in account, naming when.",
+            "source_text": "Last saved to your account: {date}",
+            "description": "Status after the plan was written to the signed-in account, naming when it was last saved.",
             "placeholders": [
                 "date"
             ]
@@ -31388,151 +31471,6 @@
             "source_text": "Saving to your account…",
             "description": "Status while the plan is being written to the signed-in account. Keep the single ellipsis character.",
             "placeholders": []
-        },
-        {
-            "key": "tools.release.planner.shop",
-            "namespace": "tools",
-            "source_text": "Event shop",
-            "description": "Heading over the event shop figures.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.planner.shop.buyEverything",
-            "namespace": "tools",
-            "source_text": "Buy everything ",
-            "description": "Row label for the cost of clearing the shop's limited stock. Keep the trailing space; a count of limited goods follows.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.planner.shop.goodCount",
-            "namespace": "tools",
-            "source_text": " ×{count}",
-            "description": "How many of an item one purchase gives. Keep the leading space and the multiplication sign.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
-            "key": "tools.release.planner.shop.groupCount",
-            "namespace": "tools",
-            "source_text": "· {count}",
-            "description": "How many goods are in one shop category. Keep the leading middle dot.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
-            "key": "tools.release.planner.shop.hide",
-            "namespace": "tools",
-            "source_text": "Hide goods",
-            "description": "Button that folds the shop's item list away.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.planner.shop.limitedGoods",
-            "namespace": "tools",
-            "source_text": "· {count} limited goods",
-            "description": "Note after 'Buy everything' saying how many goods have a stock limit. Keep the leading middle dot.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
-            "key": "tools.release.planner.shop.meta",
-            "namespace": "tools",
-            "source_text": " · {name} · {server} {dates}",
-            "description": "Shop details beside the heading: its own name, which server it came from, and its dates. Keep the leading space and middle dots.",
-            "placeholders": [
-                "dates",
-                "name",
-                "server"
-            ]
-        },
-        {
-            "key": "tools.release.planner.shop.missions",
-            "namespace": "tools",
-            "source_text": "Points awarded by clearing missions",
-            "description": "Row label for the shop tokens the event's missions hand out; the row is subtracted from the buyout cost.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.planner.shop.missionsValue",
-            "namespace": "tools",
-            "source_text": "-{count}",
-            "description": "The mission tokens, shown as a deduction. Keep the leading minus sign.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
-            "key": "tools.release.planner.shop.noShop",
-            "namespace": "tools",
-            "source_text": "Missions pay {count} tokens. The shop is fetched from the game server once it opens on a server this site has an account on.",
-            "description": "Shown when the shop's contents are not available yet.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
-            "key": "tools.release.planner.shop.sanityNote",
-            "namespace": "tools",
-            "source_text": "{perToken} sanity per token, from the game server's shop. First-clear token rewards are not in the data, so the sanity figure is an upper bound.",
-            "description": "Caveat under the shop figures. 'Sanity' is the game's own energy; 'first-clear' is the one-off reward for a stage.",
-            "placeholders": [
-                "perToken"
-            ]
-        },
-        {
-            "key": "tools.release.planner.shop.show",
-            "namespace": "tools",
-            "source_text": "Show {count} goods",
-            "description": "Button that reveals the shop's item list.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
-            "key": "tools.release.planner.shop.stock",
-            "namespace": "tools",
-            "source_text": " × {count}",
-            "description": "How many times an item can be bought, after its unit price. Keep the leading space and the multiplication sign.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
-            "key": "tools.release.planner.shop.toFarm",
-            "namespace": "tools",
-            "source_text": "To farm",
-            "description": "Row label for what still has to be earned by playing.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.planner.shop.toFarmValue",
-            "namespace": "tools",
-            "source_text": "{count} {token} · {sanity} sanity",
-            "description": "What is left to earn: a token count, the token's own name, and the energy it costs. 'Sanity' is the game's name for that energy.",
-            "placeholders": [
-                "count",
-                "sanity",
-                "token"
-            ]
-        },
-        {
-            "key": "tools.release.planner.shop.unlimited",
-            "namespace": "tools",
-            "source_text": "Unlimited ",
-            "description": "Heading over the shop goods with no stock limit. Keep the trailing space; a note follows.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.planner.shop.unlimitedNote",
-            "namespace": "tools",
-            "source_text": "· not in the total, {token} left over goes here",
-            "description": "Note under the Unlimited heading. {token} is the shop currency's own name. Keep the leading middle dot.",
-            "placeholders": [
-                "token"
-            ]
         },
         {
             "key": "tools.release.planner.showEvents",
@@ -33197,454 +33135,6 @@
             "placeholders": []
         },
         {
-            "key": "tools.release.skins.basis.cadence",
-            "namespace": "tools",
-            "source_text": "next re-listing: last on EN {date}; groups re-list every {median} d (p25 {p25}, p75 {p75}, n={count})",
-            "description": "Caption explaining that a rerun is projected from how often groups come back. 'd' abbreviates days; 'p25'/'p75' are percentiles and 'n' the sample size, kept as statistical shorthand.",
-            "placeholders": [
-                "count",
-                "date",
-                "median",
-                "p25",
-                "p75"
-            ]
-        },
-        {
-            "key": "tools.release.skins.basis.cnListing",
-            "namespace": "tools",
-            "source_text": "CN re-listed {dates}",
-            "description": "Caption explaining that a rerun is expected because China put the group back on sale. 'CN' is the Chinese game server.",
-            "placeholders": [
-                "dates"
-            ]
-        },
-        {
-            "key": "tools.release.skins.basisAnchorJoin",
-            "namespace": "tools",
-            "source_text": ", ",
-            "description": "Separator between a rerun's basis line and the event it is expected alongside. Keep the trailing space.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.count",
-            "namespace": "tools",
-            "source_text": "{shown} of {total}",
-            "description": "How many skins the filters keep out of all of them, e.g. '18 of 240'.",
-            "placeholders": [
-                "shown",
-                "total"
-            ]
-        },
-        {
-            "key": "tools.release.skins.en",
-            "namespace": "tools",
-            "source_text": "EN",
-            "description": "Small heading before a group's English-server dates. The game server's usual abbreviation.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.groupCn",
-            "namespace": "tools",
-            "source_text": "CN",
-            "description": "Small heading before a group's Chinese-server date. The game server's usual abbreviation.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.groupCount",
-            "namespace": "tools",
-            "source_text": "{count, plural, one {# skin} other {# skins}}",
-            "description": "How many outfits are in one group card.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
-            "key": "tools.release.skins.inline.confirmed",
-            "namespace": "tools",
-            "source_text": "(confirmed, {date})",
-            "description": "Inline date for a batch whose English date is in the game data. Keep the parentheses.",
-            "placeholders": [
-                "date"
-            ]
-        },
-        {
-            "key": "tools.release.skins.inline.estimated",
-            "namespace": "tools",
-            "source_text": "(estimated {date}, {relative})",
-            "description": "Inline date for a batch whose English date is projected, e.g. '(estimated Nov 3, 2026, in 48 days)'. Keep the parentheses.",
-            "placeholders": [
-                "date",
-                "relative"
-            ]
-        },
-        {
-            "key": "tools.release.skins.inline.none",
-            "namespace": "tools",
-            "source_text": "(no date)",
-            "description": "Inline stand-in for a batch with no English date at all. Keep the parentheses.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.new.empty.filtered",
-            "namespace": "tools",
-            "source_text": "Every new skin is filtered out. Turn on Show past.",
-            "description": "Empty-state body when the filter hid everything. 'Show past' names the switch above, so keep it matching.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.new.empty.none",
-            "namespace": "tools",
-            "source_text": "Every CN skin with a release time is already on EN.",
-            "description": "Empty-state body when nothing is pending. 'CN' and 'EN' are the Chinese and English game servers.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.new.empty.title",
-            "namespace": "tools",
-            "source_text": "No new skins",
-            "description": "Empty-state heading when there are no unreleased skins to list.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.newTitle",
-            "namespace": "tools",
-            "source_text": "New skins",
-            "description": "Section heading over the outfits arriving for the first time.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.noEnWindow",
-            "namespace": "tools",
-            "source_text": "No EN window yet",
-            "description": "Shown on a rerun card that has never been on sale on the English server.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.overdue",
-            "namespace": "tools",
-            "source_text": "expected date passed, not yet listed on EN",
-            "description": "Warning on a rerun whose estimated date has already gone by.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.rerunSummary",
-            "namespace": "tools",
-            "source_text": "Reruns follow CN's re-listings: EN repeats them under the same event (129 of 139 within 7 d of its EN start) or at the lag (48 of 48 within 31 d), confirmed once EN game data lists the group. One EN has already shown estimates its next by EN's own re-listing cadence{batch}. Fashion Reviews, the quarterly sale of every outfit two years old or more, sit behind their own toggle above.",
-            "description": "The rerun explanation. {batch} is either release.skins.rerunSummary.batch or release.skins.rerunSummary.noBatch, and may move wherever the sentence needs it. 'CN' and 'EN' are the game servers; 'd' abbreviates days; 'lag' is how far behind EN runs.",
-            "placeholders": [
-                "batch"
-            ]
-        },
-        {
-            "key": "tools.release.skins.rerunSummary.batch",
-            "namespace": "tools",
-            "source_text": ". The next rotation batch (\"Multi-theme Outfit\", groups not in game data) is {name} {resolution}",
-            "description": "Clause naming the next batch of rotating outfits, substituted into release.skins.rerunSummary as {batch}. {name} is the batch name in a brighter colour and {resolution} its confirmed or estimated date; both may move. 'Multi-theme Outfit' is the game's own label, in its own quotes. Keep the leading full stop.",
-            "placeholders": [
-                "name",
-                "resolution"
-            ]
-        },
-        {
-            "key": "tools.release.skins.rerunSummary.noBatch",
-            "namespace": "tools",
-            "source_text": ". No rotation batch is pending",
-            "description": "Alternative clause when no batch of rotating outfits is expected. Keep the leading full stop.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.reruns.empty.desc",
-            "namespace": "tools",
-            "source_text": "CN has re-listed no skin group in the lookback that EN has not shown.",
-            "description": "Empty-state body when no rerun is expected. 'Lookback' is the recent window this tool examines.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.reruns.empty.title",
-            "namespace": "tools",
-            "source_text": "No reruns pending",
-            "description": "Empty-state heading when no rerun is expected.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.rerunsTitle",
-            "namespace": "tools",
-            "source_text": "Reruns",
-            "description": "Section heading over the outfits going back on sale.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.review.cn",
-            "namespace": "tools",
-            "source_text": "CN",
-            "description": "Small heading before a Fashion Review's Chinese-server dates. The game server's usual abbreviation.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.review.hide",
-            "namespace": "tools",
-            "source_text": "hide",
-            "description": "Link that folds a Fashion Review's outfits away. Lowercase, mid-sentence.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.review.outfits",
-            "namespace": "tools",
-            "source_text": " · {count} outfits · ",
-            "description": "Sits between a Fashion Review's dates and its show/hide link, e.g. ' · 118 outfits · '. Keep the spaces and middle dots.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
-            "key": "tools.release.skins.review.show",
-            "namespace": "tools",
-            "source_text": "show",
-            "description": "Link that reveals a Fashion Review's outfits. Lowercase, mid-sentence.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.review.tag",
-            "namespace": "tools",
-            "source_text": "Fashion Review",
-            "description": "Tag on a Fashion Review row. The game's own name for the sale.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.reviews.empty.desc",
-            "namespace": "tools",
-            "source_text": "CN has listed none.",
-            "description": "Empty-state body when no Fashion Review window is known. 'CN' is the Chinese game server.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.reviews.empty.title",
-            "namespace": "tools",
-            "source_text": "No Fashion Review listed",
-            "description": "Empty-state heading when no Fashion Review window is known.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.reviews.intro",
-            "namespace": "tools",
-            "source_text": "A Fashion Review puts every 18-prime brand outfit that is at least two years old back on sale for four weeks; each edition keeps the last one's stock and adds the outfits that came of age since{cadence}{latest}. EN follows each one about six months later; an unmatched CN listing takes the lag estimate.",
-            "description": "The Fashion Review explanation. {cadence} and {latest} are the optional clauses release.skins.reviews.intro.cadence and .latest, each empty when the figure is unknown; both may move wherever the sentence needs them. '18-prime' is the price in Originite Prime; 'brand' is the game's own grouping of outfits.",
-            "placeholders": [
-                "cadence",
-                "latest"
-            ]
-        },
-        {
-            "key": "tools.release.skins.reviews.intro.cadence",
-            "namespace": "tools",
-            "source_text": ", every {min} to {max} days on CN",
-            "description": "Optional clause continuing the Fashion Review explanation with how often it recurs. Keep the leading comma and space.",
-            "placeholders": [
-                "max",
-                "min"
-            ]
-        },
-        {
-            "key": "tools.release.skins.reviews.intro.latest",
-            "namespace": "tools",
-            "source_text": "; the newest CN listing opened {date}",
-            "description": "Optional clause continuing the Fashion Review explanation with the most recent Chinese listing. Keep the leading semicolon and space.",
-            "placeholders": [
-                "date"
-            ]
-        },
-        {
-            "key": "tools.release.skins.reviewsTitle",
-            "namespace": "tools",
-            "source_text": "Fashion Reviews",
-            "description": "Section heading over the listed Fashion Review windows.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.showPast",
-            "namespace": "tools",
-            "source_text": "Show past",
-            "description": "Switch label: also list skins that have already arrived on the English server.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.showReviews",
-            "namespace": "tools",
-            "source_text": "Fashion Reviews",
-            "description": "Switch label: also show the periodic sale the game calls the Rhodes Fashion Review.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.stat.anniversary",
-            "namespace": "tools",
-            "source_text": "Anniversary reruns",
-            "description": "Label of the tile showing how often a group comes back on its anniversary. Very narrow tile.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.stat.anniversary.none",
-            "namespace": "tools",
-            "source_text": "no EN group has reached its first anniversary",
-            "description": "Caption under the anniversary tile when there is nothing to measure yet.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.stat.anniversary.sub",
-            "namespace": "tools",
-            "source_text": "re-listed by name at year 1 ({observed} of {eligible} EN groups)",
-            "description": "Caption under the anniversary tile. An optional second-year clause may follow.",
-            "placeholders": [
-                "eligible",
-                "observed"
-            ]
-        },
-        {
-            "key": "tools.release.skins.stat.anniversary.year2",
-            "namespace": "tools",
-            "source_text": ", year 2 {observed} of {eligible}",
-            "description": "Optional clause adding the second-year figures to the anniversary caption. Keep the leading comma and space.",
-            "placeholders": [
-                "eligible",
-                "observed"
-            ]
-        },
-        {
-            "key": "tools.release.skins.stat.new",
-            "namespace": "tools",
-            "source_text": "New skins",
-            "description": "Label of the tile counting skins not yet confirmed on the English server. Very narrow tile.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.stat.new.sub",
-            "namespace": "tools",
-            "source_text": "of {total} CN skins not yet confirmed on EN",
-            "description": "Caption under the new-skins tile. 'CN' and 'EN' are the game servers.",
-            "placeholders": [
-                "total"
-            ]
-        },
-        {
-            "key": "tools.release.skins.stat.next",
-            "namespace": "tools",
-            "source_text": "Next confirmed",
-            "description": "Label of the tile counting skins with a confirmed English date still ahead. Very narrow tile.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.stat.next.first",
-            "namespace": "tools",
-            "source_text": "first on {date}",
-            "description": "Caption under the next-confirmed tile naming the soonest date.",
-            "placeholders": [
-                "date"
-            ]
-        },
-        {
-            "key": "tools.release.skins.stat.next.none",
-            "namespace": "tools",
-            "source_text": "none scheduled in EN gamedata",
-            "description": "Caption under the next-confirmed tile when nothing is scheduled.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.stat.reruns",
-            "namespace": "tools",
-            "source_text": "Reruns",
-            "description": "Label of the tile counting re-listings found in the lookback window. Very narrow tile.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.stat.reruns.none",
-            "namespace": "tools",
-            "source_text": "CN re-listings in the lookback, none in EN gamedata yet",
-            "description": "Caption under the reruns tile when none are confirmed yet.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.stat.reruns.some",
-            "namespace": "tools",
-            "source_text": "CN re-listings in the lookback, {count} already in EN gamedata",
-            "description": "Caption under the reruns tile when some are already confirmed on the English server.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
-            "key": "tools.release.skins.tile.notForSale",
-            "namespace": "tools",
-            "source_text": "not for sale",
-            "description": "How a skin is obtained when it is not sold at all. Lowercase, mid-sentence.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.tile.shop",
-            "namespace": "tools",
-            "source_text": "shop",
-            "description": "How a skin is obtained: bought in the store. Lowercase, mid-sentence.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.tileTitle",
-            "namespace": "tools",
-            "source_text": "CN {date}, {how}",
-            "description": "Tooltip on a skin tile: when it arrived in China and how it is obtained.",
-            "placeholders": [
-                "date",
-                "how"
-            ]
-        },
-        {
-            "key": "tools.release.skins.window",
-            "namespace": "tools",
-            "source_text": "{dates}",
-            "description": "One past sale window on a rerun card; the dates are already formatted.",
-            "placeholders": [
-                "dates"
-            ]
-        },
-        {
-            "key": "tools.release.skins.window.review",
-            "namespace": "tools",
-            "source_text": "{dates} (review)",
-            "description": "One past sale window that was part of a Fashion Review rather than its own listing.",
-            "placeholders": [
-                "dates"
-            ]
-        },
-        {
-            "key": "tools.release.skins.windows.debutOnly",
-            "namespace": "tools",
-            "source_text": "debut only",
-            "description": "Shown when a group has only ever been on sale once. 'Debut' is its first listing.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.skins.windows.inReviews",
-            "namespace": "tools",
-            "source_text": " ({count} in reviews)",
-            "description": "Optional clause saying how many of those sales were Fashion Reviews. Keep the leading space and the parentheses.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
-            "key": "tools.release.skins.windows.rerunCount",
-            "namespace": "tools",
-            "source_text": "{count, plural, one {# rerun} other {# reruns}}",
-            "description": "How many times a group has come back on sale after its debut.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
-            "key": "tools.release.skins.windows.title",
-            "namespace": "tools",
-            "source_text": "Every time this group was on sale on EN: its own listings (debut and reruns) and the Fashion Reviews it was old enough for",
-            "description": "Tooltip on the sale-count text of a rerun card.",
-            "placeholders": []
-        },
-        {
             "key": "tools.release.tab.banners",
             "namespace": "tools",
             "source_text": "Banners",
@@ -33677,13 +33167,6 @@
             "namespace": "tools",
             "source_text": "Pulls planner",
             "description": "Tab for budgeting gacha draws. A 'pull' is one draw.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.release.tab.skins",
-            "namespace": "tools",
-            "source_text": "Skins",
-            "description": "Tab listing the outfits and when they are expected on the English server.",
             "placeholders": []
         },
         {

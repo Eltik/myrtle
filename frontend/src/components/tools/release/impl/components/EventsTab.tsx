@@ -10,6 +10,7 @@ import { useAutoTranslate } from "../autoTranslate";
 import { formatDateRange, isPast, sortKey } from "../helpers";
 import type { messages as helperMessages } from "../helpers.messages";
 import { useReleaseTagLabel } from "../labels";
+import { EventShop } from "./EventShop";
 import type { messages } from "./EventsTab.messages";
 import { ModelSummary } from "./ModelSummary";
 import { ResolutionBadge } from "./ResolutionBadge";
@@ -81,6 +82,7 @@ function EventRow({ event, today, t }: { event: ReleaseEvent; today: Date; t: Ev
                 {formatDateRange(event.cnStart, event.cnEnd, locale, t)}
             </div>
             <FarmStages stages={event.farmStages} compact />
+            {(event.missionTokens > 0 || event.shop) && <EventShop event={event} />}
         </ListRow>
     );
 }

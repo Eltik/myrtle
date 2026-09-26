@@ -14,12 +14,12 @@ import type { RerunForecast } from "#/types/generated/RerunForecast";
 import type { Resolution } from "#/types/generated/Resolution";
 import type { ReviewOutfit } from "#/types/generated/ReviewOutfit";
 import type { ReviewWindow } from "#/types/generated/ReviewWindow";
-import { groupNewSkins, type INewSkinGroup } from "./components/SkinsTab";
 import { buildOperatorLookup, type OperatorLookup } from "./components/shared";
 import { resolvedEnStart } from "./helpers";
 import type { messages as helperMessages } from "./helpers.messages";
 import { REVIEW_NAME_CN, REVIEW_NAME_EN, reviewOutfits } from "./reviews";
 import type { messages as scheduleMessages } from "./schedule.messages";
+import { groupNewSkins, type INewSkinGroup } from "./skins";
 
 /** A key in `schedule.messages.ts`; resolved by whichever component renders it. */
 export type ScheduleMessageKey = keyof typeof scheduleMessages & string;

@@ -100,8 +100,8 @@ export const messages = {
         description: "Label of the switch that shows CN-only operators under their Latin-script name, and the switch's accessible name. 'CN' is the Chinese game server's short name and stays as-is.",
     },
     "appearance.latinNames.rowDesc": {
-        text: "予愿安洁莉娜 becomes Angelina the Mellow Wish. Search matches either name whichever one is shown. On by default.",
-        description: "Caption under the Latin-names switch. The Chinese example and its Latin name are game data and stay as-is.",
+        text: "予愿安洁莉娜 becomes Angelina the Mellow Wish. Search matches either name whichever one is shown. The release planner follows it for CN-only events and outfits too. On by default.",
+        description: "Caption under the Latin-names switch. The Chinese example and its Latin name are game data and stay as-is; the setting also controls names in the release planner.",
     },
 } satisfies MessageMap;
 

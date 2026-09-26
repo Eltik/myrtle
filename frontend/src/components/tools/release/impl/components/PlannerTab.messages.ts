@@ -16,16 +16,16 @@ export const messages = {
         description: "Note under an event's outfits when the hide-owned switch has removed some; also the whole outfit section when it removed all of them.",
     },
     "release.planner.blurb": {
-        text: "First-clear Originite Prime in, the outfits you pick out; stage defaults follow your account, outfit prices the game data.",
-        description: "Note above the planner. 'First-clear' is the one-off reward for three-starring a stage; 'Originite Prime' is the game's premium currency.",
+        text: "First-clear Originite Prime included.",
+        description: "Short note above the planner. 'First-clear' is the one-off reward for three-starring a stage; 'Originite Prime' is the game's premium currency.",
     },
     "release.planner.saving": {
         text: "Saving to your account…",
         description: "Status while the plan is being written to the signed-in account. Keep the single ellipsis character.",
     },
     "release.planner.saved": {
-        text: "Saved to your account {date}.",
-        description: "Status after the plan was written to the signed-in account, naming when.",
+        text: "Last saved to your account: {date}",
+        description: "Status after the plan was written to the signed-in account, naming when it was last saved.",
     },
     "release.planner.autosave": {
         text: "Saved to your account as you go.",
@@ -195,18 +195,6 @@ export const messages = {
         text: "Cleared on your account, star rating not on record",
         description: "Tooltip on a stage cleared with no star rating recorded.",
     },
-    "release.planner.farming": {
-        text: "Farming stages ",
-        description: "Heading over the stages worth grinding for materials. Keep the trailing space; a note about the drop source follows.",
-    },
-    "release.planner.farming.cnDrops": {
-        text: "· CN drops",
-        description: "Note beside the farming heading saying the drop table comes from the Chinese client. Keep the leading middle dot.",
-    },
-    "release.planner.farming.none": {
-        text: "No drop table in the client for this event: the game carries drops only while stages are open, and these have not opened on CN (or their last run closed) since the extract.",
-        description: "Explains why an event has no drop table. 'CN' is the Chinese game server; 'the extract' is this site's copy of the game data.",
-    },
     "release.planner.noOutfit": {
         text: "No outfit arrives with this one.",
         description: "Shown when an event brings no outfits at all.",
@@ -218,74 +206,6 @@ export const messages = {
     "release.planner.group.new": {
         text: "New",
         description: "Tag on a group of outfits arriving for the first time.",
-    },
-    "release.planner.shop": {
-        text: "Event shop",
-        description: "Heading over the event shop figures.",
-    },
-    "release.planner.shop.meta": {
-        text: " · {name} · {server} {dates}",
-        description: "Shop details beside the heading: its own name, which server it came from, and its dates. Keep the leading space and middle dots.",
-    },
-    "release.planner.shop.hide": {
-        text: "Hide goods",
-        description: "Button that folds the shop's item list away.",
-    },
-    "release.planner.shop.show": {
-        text: "Show {count} goods",
-        description: "Button that reveals the shop's item list.",
-    },
-    "release.planner.shop.buyEverything": {
-        text: "Buy everything ",
-        description: "Row label for the cost of clearing the shop's limited stock. Keep the trailing space; a count of limited goods follows.",
-    },
-    "release.planner.shop.limitedGoods": {
-        text: "· {count} limited goods",
-        description: "Note after 'Buy everything' saying how many goods have a stock limit. Keep the leading middle dot.",
-    },
-    "release.planner.shop.missions": {
-        text: "Points awarded by clearing missions",
-        description: "Row label for the shop tokens the event's missions hand out; the row is subtracted from the buyout cost.",
-    },
-    "release.planner.shop.missionsValue": {
-        text: "-{count}",
-        description: "The mission tokens, shown as a deduction. Keep the leading minus sign.",
-    },
-    "release.planner.shop.toFarm": {
-        text: "To farm",
-        description: "Row label for what still has to be earned by playing.",
-    },
-    "release.planner.shop.toFarmValue": {
-        text: "{count} {token} · {sanity} sanity",
-        description: "What is left to earn: a token count, the token's own name, and the energy it costs. 'Sanity' is the game's name for that energy.",
-    },
-    "release.planner.shop.sanityNote": {
-        text: "{perToken} sanity per token, from the game server's shop. First-clear token rewards are not in the data, so the sanity figure is an upper bound.",
-        description: "Caveat under the shop figures. 'Sanity' is the game's own energy; 'first-clear' is the one-off reward for a stage.",
-    },
-    "release.planner.shop.noShop": {
-        text: "Missions pay {count} tokens. The shop is fetched from the game server once it opens on a server this site has an account on.",
-        description: "Shown when the shop's contents are not available yet.",
-    },
-    "release.planner.shop.groupCount": {
-        text: "· {count}",
-        description: "How many goods are in one shop category. Keep the leading middle dot.",
-    },
-    "release.planner.shop.unlimited": {
-        text: "Unlimited ",
-        description: "Heading over the shop goods with no stock limit. Keep the trailing space; a note follows.",
-    },
-    "release.planner.shop.unlimitedNote": {
-        text: "· not in the total, {token} left over goes here",
-        description: "Note under the Unlimited heading. {token} is the shop currency's own name. Keep the leading middle dot.",
-    },
-    "release.planner.shop.goodCount": {
-        text: " ×{count}",
-        description: "How many of an item one purchase gives. Keep the leading space and the multiplication sign.",
-    },
-    "release.planner.shop.stock": {
-        text: " × {count}",
-        description: "How many times an item can be bought, after its unit price. Keep the leading space and the multiplication sign.",
     },
     "release.planner.summary.title": {
         text: "Selection summary",
