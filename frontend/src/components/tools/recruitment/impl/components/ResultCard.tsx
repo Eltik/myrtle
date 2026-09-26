@@ -178,7 +178,7 @@ function OperatorTile({ operator, roster }: { operator: IRecruitableOperator; ro
                                 <span aria-hidden="true" className={cn("block size-full", showPotential && !owned && "opacity-50 grayscale")}>
                                     <OperatorAvatar charId={operator.id} name={operator.name} />
                                 </span>
-                                <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-[3px]" style={{ backgroundColor: hex }} />
+                                <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-0.75" style={{ backgroundColor: hex }} />
                                 {potentialLabel && potential !== undefined && potential > 0 && <img alt={potentialLabel} className="icon-theme-aware absolute bottom-0.5 left-0 h-4 w-3.5 object-contain drop-shadow-sm" decoding="async" height={16} loading="lazy" src={potentialIcon(potential)} width={14} />}
                             </span>
                             <span className="w-full truncate font-medium text-[10.5px] text-foreground leading-tight">{operator.name}</span>

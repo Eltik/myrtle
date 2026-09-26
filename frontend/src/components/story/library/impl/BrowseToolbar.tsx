@@ -249,7 +249,7 @@ export function BrowseToolbar({ state }: { state: IBrowseToolbarState }): React.
         // there so it ends the row, as it ends the first row below it.
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:gap-2">
             <div className="flex items-center gap-2 xl:contents">
-                <SearchBox state={state} t={t} density="inline" className="flex-1 xl:max-w-[360px]" />
+                <SearchBox state={state} t={t} density="inline" className="flex-1 xl:max-w-90" />
                 <ViewToggle state={state} t={t} density="inline" className="max-sm:hidden xl:order-last" />
                 <Sheet>
                     <SheetTrigger render={<Button variant="outline" className="h-11 shrink-0 sm:hidden" aria-label={count > 0 ? t("browse.toolbar.filtersAria", { count }) : undefined} />}>

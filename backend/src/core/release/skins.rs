@@ -25,7 +25,7 @@ fn is_skin_shop_sold(skin: &Skin, shop_skin_ids: &HashSet<&str>) -> bool {
     shop_skin_ids.contains(skin.skin_id.as_str())
         || matches!(
             skin.display_skin.obtain_approach.as_deref(),
-            Some("Store") | Some("采购中心")
+            Some("Store" | "采购中心")
         )
 }
 
@@ -355,7 +355,7 @@ pub fn group_histories(
         let targets: Vec<String> = match &l.kind {
             ListingKind::Review => {
                 let every_group = reviews_on_every_group();
-                for (gid, g) in groups.iter_mut() {
+                for (gid, g) in &mut groups {
                     let stocked = if every_group {
                         g.debut > 0 && g.debut <= l.start_time
                     } else {

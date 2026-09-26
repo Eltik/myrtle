@@ -429,7 +429,7 @@ function SummarySkin({ skin, lookup, autoOn, onRemove, removeLabel }: { skin: IP
     const opName = operatorLabel(skin.charId, entry, skin.charName, autoOn).text;
     const skinName = resolveName(skin.skinName, skin.skinNameEn, skin.skinNameAuto, autoOn).text;
     return (
-        <li className="flex min-w-0 items-center gap-2.5 rounded-md border border-border border-l-[3px] bg-muted/40 py-1 pr-1 pl-1.5" style={{ borderLeftColor: skin.colors[0] ?? FALLBACK_COLOR }}>
+        <li className="flex min-w-0 items-center gap-2.5 rounded-md border border-border border-l-3 bg-muted/40 py-1 pr-1 pl-1.5" style={{ borderLeftColor: skin.colors[0] ?? FALLBACK_COLOR }}>
             <span className="size-8 shrink-0 overflow-hidden rounded-sm">
                 <SkinAvatar skinId={skin.skinId} charId={skin.charId} name={opName} server={entry ? undefined : "cn"} />
             </span>
