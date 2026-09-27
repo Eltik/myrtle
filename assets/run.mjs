@@ -1578,14 +1578,7 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 		process.stdin.on("data", (key) => {
 			// 0x03 = CTRL+C
 			if (key[0] === 0x03) {
-				for (const child of activeChildren) {
-					try {
-						child.kill("SIGKILL");
-					} catch {}
-				}
-				wss.close();
-				console.log(chalk.dim("\nInterrupted."));
-				process.exit(1);
+				shutdown(!updating, wss);
 			}
 		});
 	}
@@ -2050,25 +2043,39 @@ async function runWebSocketServer({ nonInteractive = false, cliArgs = {} } = {})
 			`[${new Date().toLocaleTimeString()}] Checks aligned to the clock: every ${config.intervalMin} min at offset ${offsetMs / 60000} min; first check at ${new Date(nextCheckAt).toLocaleTimeString()}`,
 		),
 	);
+
+	process.on("SIGTERM", () => shutdown(!updating, wss));
 }
 
 // ─── Global SIGINT ──────────────────────────────────────────────────────────
-// Track active child processes so CTRL+C can kill them and exit cleanly
+// Track active child processes so CTRL+C/SIGTERM/etc. can kill them and exit cleanly
 const activeChildren = new Set();
 
-// NOTE: Do NOT use readline.createInterface here — it puts stdin into raw mode
-// which intercepts CTRL+C (0x03) and prevents the process-level SIGINT from
-// firing. Instead, rely on process.on("SIGINT") which works when stdin is in
-// normal (cooked) mode.
-process.on("SIGINT", () => {
+const shutdown = (graceful, ws_server) => {
+	if (ws_server) {
+		ws_server.close()
+	}
+
 	for (const child of activeChildren) {
 		try {
 			child.kill("SIGKILL");
 		} catch {}
 	}
-	console.log(chalk.dim("\nInterrupted."));
-	process.exit(1);
-});
+
+	if (graceful) {
+		console.log(chalk.red("Shut down called for during an active update, assets may be incomplete, stale, or corrupted."));
+		process.exit(1);
+	} else {
+		console.log(chalk.dim("No active update running, shutting down safely."));
+		process.exit(0);
+	}
+}
+
+// NOTE: Do NOT use readline.createInterface here — it puts stdin into raw mode
+// which intercepts CTRL+C (0x03) and prevents the process-level SIGINT from
+// firing. Instead, rely on process.on("SIGINT") which works when stdin is in
+// normal (cooked) mode.
+process.on("SIGINT", () => shutdown(true));
 
 // ─── Main Menu ──────────────────────────────────────────────────────────────
 
