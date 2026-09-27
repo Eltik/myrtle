@@ -70,6 +70,15 @@ export function potentialIcon(rank: number, server?: AssetServer): string {
     return asset(`/textures/arts/potential_hub/potential_${rank}.png`, server);
 }
 
+/**
+ * Originite Prime as the game's HUD draws it: the flat gold hexagon in the home
+ * page's top bar and the headhunting screen. The item icon (`DIAMOND`) is the
+ * detailed crystal that only the depot shows, so fewer players recognize it.
+ */
+export function originitePrimeHudIcon(server?: AssetServer): string {
+    return asset("/textures/ui/pages/home_page/diamond_icon.png", server);
+}
+
 export function itemIcon(id: string, iconId: string | null | undefined, image: string | null | undefined, server?: AssetServer): string {
     if (image) return asset(image, server);
     const prefix = server && server !== "en" ? `${server}/` : "";

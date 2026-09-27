@@ -1,6 +1,6 @@
 import { Info } from "lucide-react";
 import * as React from "react";
-import { itemIcon } from "#/components/operators/detail/impl/assets";
+import { itemIcon, originitePrimeHudIcon } from "#/components/operators/detail/impl/assets";
 import { Input } from "#/components/ui/input";
 import { Label } from "#/components/ui/label";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
@@ -28,11 +28,12 @@ export const HINT_TEXT = "font-sans text-[12px] text-muted-foreground leading-no
  *
  * Reported in #ui-ux: "OP/orundum/hh ticket/etc. icons desperately needed". The pair
  * is `(itemId, iconId)` straight out of `item_table.json`; `/api/item-icon` resolves
- * the icon id, so a display-name change cannot break these.
+ * the icon id, so a display-name change cannot break these. Originite Prime is the
+ * exception: it uses the HUD hexagon (`originitePrimeHudIcon`), not its depot icon.
  */
 const CURRENCY = {
     orundum: { id: "4003", icon: "DIAMOND_SHD" },
-    originite: { id: "4002", icon: "DIAMOND" },
+    originite: { src: originitePrimeHudIcon() },
     permit: { id: "7003", icon: "TKT_GACHA" },
     tenPermit: { id: "7004", icon: "TKT_GACHA_10" },
     goldCert: { id: "4004", icon: "HGG_SHD" },
@@ -45,7 +46,8 @@ export type CurrencyName = keyof typeof CURRENCY;
 /** Decorative: the word beside it is what carries the meaning, so this is `aria-hidden`. */
 export function CurrencyIcon({ name, className }: { name: CurrencyName; className?: string }): React.ReactElement {
     const c = CURRENCY[name];
-    return <img src={itemIcon(c.id, c.icon, null)} alt="" aria-hidden="true" decoding="async" loading="lazy" className={cn("size-4.5 shrink-0 object-contain", className)} />;
+    const src = "src" in c ? c.src : itemIcon(c.id, c.icon, null);
+    return <img src={src} alt="" aria-hidden="true" decoding="async" loading="lazy" className={cn("size-4.5 shrink-0 object-contain", className)} />;
 }
 
 /** A label with its currency's icon in front of it. */

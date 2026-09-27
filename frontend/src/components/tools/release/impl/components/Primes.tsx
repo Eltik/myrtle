@@ -1,12 +1,12 @@
 import type * as React from "react";
-import { itemIcon } from "#/components/operators/detail/impl/assets";
+import { originitePrimeHudIcon } from "#/components/operators/detail/impl/assets";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { IRowBalance } from "../plan";
 import type { messages } from "./Primes.messages";
 
-const OP_ICON = itemIcon("4002", "DIAMOND", null);
+const OP_ICON = originitePrimeHudIcon();
 
 export function OpIcon({ className }: { className?: string }): React.ReactElement {
     return <img src={OP_ICON} alt="Originite Prime" title="Originite Prime" className={cn("inline-block size-4 object-contain align-[-3px]", className)} />;
