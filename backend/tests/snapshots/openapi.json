@@ -17501,6 +17501,14 @@
                 "type": "integer",
                 "minimum": 0
               },
+              "own_gap_days": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "format": "double",
+                "description": "The group's own last EN listing gap in days when it dated the\nrerun; `None` when the pooled median did."
+              },
               "p25_days": {
                 "type": "number",
                 "format": "double"
