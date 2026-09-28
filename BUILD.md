@@ -98,7 +98,7 @@ $ sudo apt install build-essential
 4. Clone OpenArknightsFBS into the assets directory
 ```bash
 cd assets
-git clone https://github.com/MooncellWiki/OpenArknightsFBS.git
+git clone https://github.com/Eltik/OpenArknightsFBS.git
 ```
 5. Build the downloader and unpacker:
 ```bash

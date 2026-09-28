@@ -1338,7 +1338,7 @@ cp target/release/unpacker ../binaries/unpacker   # run.mjs uses ./binaries
 ```
 
 `generate-fbs`:
-1. Clones/pulls CN schemas from [MooncellWiki/OpenArknightsFBS](https://github.com/MooncellWiki/OpenArknightsFBS) (`main` branch = CN; a separate `YoStar` branch exists for global) into `OpenArknightsFBS/FBS`, and Yostar schemas from [ArknightsAssets/ArknightsFlatbuffers](https://github.com/ArknightsAssets/ArknightsFlatbuffers).
+1. Clones/pulls CN schemas from [Eltik/OpenArknightsFBS](https://github.com/Eltik/OpenArknightsFBS) (a fork of MooncellWiki/OpenArknightsFBS, checked out as the `assets/OpenArknightsFBS` submodule; `main` branch = CN, a separate `YoStar` branch exists for global) into `OpenArknightsFBS/FBS`, and Yostar schemas into `ArknightsFlatbuffers` from [ArknightsAssets/ArknightsFlatbuffers](https://github.com/ArknightsAssets/ArknightsFlatbuffers).
 2. Applies `patch_schemas()` fixes - community schemas occasionally have field-order bugs that misalign FlatBuffers VTables. These pass upstream's JSON validation (JSON is unordered) but corrupt binary decoding.
 3. Runs `flatc` over every schema and regenerates `fb_json_auto.rs`, `fb_json_auto_yostar.rs`, and `flatbuffers_decode.rs`.
 

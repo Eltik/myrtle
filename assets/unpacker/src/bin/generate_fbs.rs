@@ -72,7 +72,7 @@ fn fetch_cn_schemas(script_dir: &Path) -> Result<PathBuf, Box<dyn std::error::Er
                 "clone",
                 "--depth",
                 "1",
-                "https://github.com/MooncellWiki/OpenArknightsFBS.git",
+                "https://github.com/Eltik/OpenArknightsFBS.git",
                 fbs_dir.parent().unwrap().to_str().unwrap(),
             ])
             .current_dir(parent)
@@ -323,8 +323,14 @@ fn clear_generated_dir(dir: &Path) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn fetch_yostar_schemas() -> Result<PathBuf, Box<dyn std::error::Error>> {
-    let repo_dir = PathBuf::from("/tmp/ArknightsFlatbuffers");
+/// Clones next to `OpenArknightsFBS` (gitignored), not into `/tmp`: `/tmp` is
+/// wiped on reboot and empty in every container build, so the clone was
+/// redone on almost every run.
+fn fetch_yostar_schemas(script_dir: &Path) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    let repo_dir = script_dir
+        .parent()
+        .ok_or("no parent dir")?
+        .join("ArknightsFlatbuffers");
     let fbs_dir = repo_dir.join("yostar");
 
     if repo_dir.exists() {
@@ -1116,23 +1122,23 @@ fn emit_schema_verification(
         arms.push_str(&format!(
             "        \"{schema_type}\" => {{\n\
              \x20           let cn_err = {{\n\
-             \x20               use crate::generated_fbs::{module}::*;\n\
+             \x20               use crate::generated_fbs::{module}::{cn_fn};\n\
              \x20               {cn_fn}(&opts, data).err().map(|e| first_line(&e))\n\
              \x20           }};\n"
         ));
         match yostar_fn {
-            None => arms.push_str("            (cn_err, None)\n        }\n"),
+            None => arms.push_str("            (cn_err, YostarVerdict::NotRun)\n        }\n"),
             Some(yostar_fn) => arms.push_str(&format!(
                 "            if cn_err.is_none() && !full {{\n\
                  \x20               // The CN schema verified and the caller only wants\n\
                  \x20               // the routing decision: skip the second verify.\n\
-                 \x20               return (None, None);\n\
+                 \x20               return (None, YostarVerdict::NotRun);\n\
                  \x20           }}\n\
                  \x20           let yostar_err = {{\n\
-                 \x20               use crate::generated_fbs_yostar::{module}::*;\n\
+                 \x20               use crate::generated_fbs_yostar::{module}::{yostar_fn};\n\
                  \x20               {yostar_fn}(&opts, data).err().map(|e| first_line(&e))\n\
                  \x20           }};\n\
-                 \x20           (cn_err, Some(yostar_err))\n\
+                 \x20           (cn_err, yostar_err.into())\n\
                  \x20       }}\n"
             )),
         }
@@ -1150,15 +1156,38 @@ fn emit_schema_verification(
      Neither,
  }
 
+ /// The Yostar half of a schema-verification verdict.
+ ///
+ /// A bare `Option<Option<String>>` collapses "no Yostar variant" and "Yostar
+ /// variant not run" into one `None`, which `clippy::option_option` flags —
+ /// and which reads ambiguously at every call site anyway.
+ pub enum YostarVerdict {
+     /// The table has no Yostar variant, or the caller short-circuited before
+     /// running it (`full = false` and the CN schema already verified).
+     NotRun,
+     /// The Yostar schema verified.
+     Verified,
+     /// The Yostar schema did not verify; the first line of the error.
+     Failed(String),
+ }
+
+ impl From<Option<String>> for YostarVerdict {
+     fn from(err: Option<String>) -> Self {
+         match err {
+             None => Self::Verified,
+             Some(e) => Self::Failed(e),
+         }
+     }
+ }
+
  /// One table's verification verdict, for the `unpacker verify` report.
  pub struct TableVerdict {
      /// The schema type `guess_root_type` resolved the filename to.
      pub table: &'static str,
      /// `None` when the CN schema verified, else the first line of the error.
      pub cn: Option<String>,
-     /// Outer `None` when the table has no Yostar variant; inner `None` when
-     /// the Yostar schema verified.
-     pub yostar: Option<Option<String>>,
+     /// The Yostar schema's verdict, if it was run.
+     pub yostar: YostarVerdict,
      /// What `decode_flatbuffer` will actually do with this buffer:
      /// `"CN"` (CN schema verified), `"Yostar"` (routed to the Yostar schema),
      /// or `"none"` (nothing verified — the table is skipped, no file written).
@@ -1207,7 +1236,7 @@ fn emit_schema_verification(
  /// them back to CN is the multi-GB garbage this whole mechanism exists to
  /// prevent. A missing terminator is a good discriminator; a bad UTF-8 byte is
  /// not.
- fn verifier_opts() -> ::flatbuffers::VerifierOptions {
+ const fn verifier_opts() -> ::flatbuffers::VerifierOptions {
      ::flatbuffers::VerifierOptions {
          max_depth: 256,
          max_tables: usize::MAX >> 1,
@@ -1220,11 +1249,11 @@ fn emit_schema_verification(
 
  /// Verify `data` against the schemas available for `schema_type`.
  ///
- /// Returns `(cn_err, yostar_err)`, where a `None` error means that schema
- /// verified, and the outer `None` on `yostar_err` means "no Yostar variant, or
- /// not run". `full = false` short-circuits: once the CN schema verifies the
- /// routing decision is already made, so the Yostar verifier is not run.
- /// `full = true` (the `verify` subcommand) always runs both.
+ /// Returns `(cn_err, yostar_verdict)`, where a `None` `cn_err` means the CN
+ /// schema verified. `full = false` short-circuits: once the CN schema
+ /// verifies the routing decision is already made, so the Yostar verifier is
+ /// not run and `yostar_verdict` comes back `NotRun`. `full = true` (the
+ /// `verify` subcommand) always runs both.
  ///
  /// The whole function returns `None` if a verifier panics — it is not supposed
  /// to, but neither was the decoder, and this is the one place that can still
@@ -1233,16 +1262,16 @@ fn emit_schema_verification(
      data: &[u8],
      schema_type: &str,
      full: bool,
- ) -> Option<(Option<String>, Option<Option<String>>)> {
+ ) -> Option<(Option<String>, YostarVerdict)> {
      let opts = verifier_opts();
      panic::catch_unwind(AssertUnwindSafe(|| match schema_type {
 "#,
     );
     if arms.is_empty() {
-        out.push_str("        _ => (None, None),\n");
+        out.push_str("        _ => (None, YostarVerdict::NotRun),\n");
     } else {
         out.push_str(&arms);
-        out.push_str("        _ => (None, None),\n");
+        out.push_str("        _ => (None, YostarVerdict::NotRun),\n");
     }
     out.push_str("    }))\n    .ok()\n}\n\n");
 
@@ -1256,7 +1285,7 @@ fn emit_schema_verification(
  /// mismatch that produces plausible-looking garbage. Measured on EN
  /// 26-08-28-10-20-08_ea3678: `activity_table` under the CN schema writes
  /// 5,211,117,589 bytes of JSON where the Yostar schema writes 13,143,425, and
- /// CN's own activity_table is 15,867,159. Not empty, so nothing detected it,
+ /// CN's own `activity_table` is 15,867,159. Not empty, so nothing detected it,
  /// and it takes peak RSS for one EN extraction from 431 MB to 8.56 GB — which
  /// is the 10 GB OOM kill the unpacker took on the VPS on 2026-08-04.
  ///
@@ -1276,7 +1305,7 @@ fn emit_schema_verification(
      match verify_schemas(data, schema_type, false) {
          None => SchemaChoice::Neither,
          Some((None, _)) => SchemaChoice::Cn,
-         Some((Some(_), Some(None))) => SchemaChoice::Yostar,
+         Some((Some(_), YostarVerdict::Verified)) => SchemaChoice::Yostar,
          Some((Some(_), _)) => SchemaChoice::Neither,
      }
  }
@@ -1291,7 +1320,7 @@ fn emit_schema_verification(
  pub fn verify_table(data: &[u8], filename: &str) -> TableVerdict {
      let table = guess_root_type(filename);
      let (cn, yostar) = verify_schemas(data, table, true)
-         .unwrap_or_else(|| (Some("verifier panicked".to_string()), None));
+         .unwrap_or_else(|| (Some("verifier panicked".to_string()), YostarVerdict::NotRun));
      let routed_yostar = has_yostar_schema(table)
          && select_schema_by_verification(data, table) == SchemaChoice::Yostar;
      let chosen = if routed_yostar {
@@ -1341,13 +1370,14 @@ fn generate_decode_dispatch(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut out = String::new();
 
-    out.push_str("//! Auto-generated FlatBuffer decode dispatch\n");
+    out.push_str("//! Auto-generated `FlatBuffer` decode dispatch\n");
     out.push_str("//! DO NOT EDIT - regenerate with: cargo run --bin generate-fbs\n\n");
-    out.push_str("use serde_json::{json, Value};\n");
+    out.push_str("use serde_json::{Value, json};\n");
     out.push_str("use std::panic::{self, AssertUnwindSafe};\n\n");
 
     out.push_str(
-        r"/// Check if data is likely a FlatBuffer
+        r"/// Check if data is likely a `FlatBuffer`
+ #[must_use]
  pub fn is_flatbuffer(data: &[u8]) -> bool {
      if data.len() < 8 {
          return false;
@@ -1573,7 +1603,7 @@ fn generate_decode_dispatch(
                 {
                     out.push_str(&format!(
                         "            \"{schema_type}\" => {{\n\
-                             \x20               use crate::generated_fbs_yostar::{module}::*;\n\
+                             \x20               use crate::generated_fbs_yostar::{module}::{root_fn};\n\
                              \x20               let root = unsafe {{ {root_fn}(data) }};\n\
                              \x20               Ok(root.to_json())\n\
                              \x20           }}\n"
@@ -1582,12 +1612,12 @@ fn generate_decode_dispatch(
             }
         }
 
-        out.push_str("            _ => Err(format!(\"No Yostar schema for {}\", schema_type)),\n");
+        out.push_str("            _ => Err(format!(\"No Yostar schema for {schema_type}\")),\n");
         out.push_str("        }\n");
         out.push_str("    }));\n");
         out.push_str("    match decode_result {\n");
         out.push_str("        Ok(Ok(value)) => {\n");
-        out.push_str("            if value.as_object().is_some_and(|o| o.is_empty()) {\n");
+        out.push_str("            if value.as_object().is_some_and(serde_json::Map::is_empty) {\n");
         out.push_str("                Err(\"Yostar decode returned empty\".to_string())\n");
         out.push_str("            } else { Ok(value) }\n");
         out.push_str("        }\n");
@@ -1596,11 +1626,11 @@ fn generate_decode_dispatch(
         out.push_str("    }\n");
     } else {
         out.push_str("    let _ = data;\n");
-        out.push_str("    Err(format!(\"No Yostar schema for {}\", schema_type))\n");
+        out.push_str("    Err(format!(\"No Yostar schema for {schema_type}\"))\n");
     }
     out.push_str("}\n\n");
 
-    out.push_str("/// Decode FlatBuffer data to JSON using schema-based decoding\n");
+    out.push_str("/// Decode `FlatBuffer` data to JSON using schema-based decoding\n");
     out.push_str(
         "pub fn decode_flatbuffer(data: &[u8], filename: &str) -> Result<Value, String> {\n",
     );
@@ -1662,7 +1692,7 @@ fn generate_decode_dispatch(
                 if let Some(ref root_fn) = s.root_fn_name {
                     out.push_str(&format!(
                         "            \"{schema_type}\" => {{\n\
-                        \x20               use crate::generated_fbs::{module}::*;\n\
+                        \x20               use crate::generated_fbs::{module}::{root_fn};\n\
                         \x20               let root = unsafe {{ {root_fn}(data) }};\n\
                         \x20               Ok(root.to_json())\n\
                         \x20           }}\n"
@@ -1673,7 +1703,7 @@ fn generate_decode_dispatch(
         }
     }
 
-    out.push_str("            _ => Err(format!(\"Unknown schema type: {}\", schema_type)),\n");
+    out.push_str("            _ => Err(format!(\"Unknown schema type: {schema_type}\")),\n");
     out.push_str("        }\n");
     out.push_str("    }));\n\n");
 
@@ -1699,7 +1729,8 @@ fn generate_decode_dispatch(
     }
 }
 
-/// Extract strings from FlatBuffer (fallback for unknown types)
+/// Extract strings from `FlatBuffer` (fallback for unknown types)
+#[must_use]
 pub fn extract_strings(data: &[u8]) -> Vec<String> {
     let mut strings = Vec::new();
     let mut i = 0;
@@ -1796,7 +1827,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let src_dir = script_dir.join("src");
 
     let cn_fbs_dir = fetch_cn_schemas(&script_dir)?;
-    let yostar_fbs_dir = fetch_yostar_schemas()?;
+    let yostar_fbs_dir = fetch_yostar_schemas(&script_dir)?;
 
     let cn_output = src_dir.join("generated_fbs");
     let yostar_output = src_dir.join("generated_fbs_yostar");
