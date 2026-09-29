@@ -237,15 +237,7 @@ pub fn hub_from_objects(objects: &HashMap<i64, (i32, Value)>) -> Option<Hub> {
     }
     // A bundle holds exactly one hub; take the lowest path_id when a future
     // one holds more, so the output is deterministic across runs.
-    let mut candidates: Vec<(&i64, &Value)> = objects
-        .iter()
-        .filter(|(_, (class_id, v))| {
-            *class_id == 114 && (v.get("spriteGroups").is_some() || v.get("FacePos").is_some())
-        })
-        .map(|(pid, (_, v))| (pid, v))
-        .collect();
-    candidates.sort_by_key(|(pid, _)| **pid);
-    let (_, hub) = candidates.first()?;
+    let hub = hub_behaviour(objects)?;
 
     let root = root_rect(objects);
     if let Some(groups) = hub.get("spriteGroups").and_then(Value::as_array) {
@@ -279,12 +271,81 @@ pub fn hub_from_objects(objects: &HashMap<i64, (i32, Value)>) -> Option<Hub> {
     })
 }
 
-/// Read the hub straight out of a parsed bundle. Only `MonoBehaviour` (114),
-/// `Sprite` (213) and `RectTransform` (224) objects are deserialized, so this
-/// is cheap enough to run on every `avg/characters` bundle of a normal
-/// extract.
+/// The hub `MonoBehaviour` of a bundle: the lowest path ID among the objects
+/// that carry `spriteGroups` (modern) or `FacePos` (legacy).
+fn hub_behaviour(objects: &HashMap<i64, (i32, Value)>) -> Option<&Value> {
+    let mut candidates: Vec<(&i64, &Value)> = objects
+        .iter()
+        .filter(|(_, (class_id, v))| {
+            *class_id == 114 && (v.get("spriteGroups").is_some() || v.get("FacePos").is_some())
+        })
+        .map(|(pid, (_, v))| (pid, v))
+        .collect();
+    candidates.sort_by_key(|(pid, _)| **pid);
+    candidates.first().map(|(_, v)| *v)
+}
+
+/// An in-bundle `PPtr`'s path ID: `None` for a null reference (path ID 0) and
+/// for one that points into another file (`m_FileID != 0`).
+fn local_pptr(v: Option<&Value>) -> Option<i64> {
+    let p = v?;
+    if p.get("m_FileID").and_then(Value::as_i64).unwrap_or(0) != 0 {
+        return None;
+    }
+    p.get("m_PathID")
+        .and_then(Value::as_i64)
+        .filter(|pid| *pid != 0)
+}
+
+/// The hub's own colour -> alpha texture pairing, by `Texture2D` NAME:
+/// `colour texture name -> alpha texture name`.
+///
+/// Each hub sprite entry carries `alphaTex`, a `PPtr<Texture2D>` to the
+/// texture whose R channel is that sprite's alpha, and it does NOT follow the
+/// names. `avg_391_rosmon_1` pairs sprite `1$1` with `1$[alpha]` but `1$2`
+/// with `2$[alpha]`, and several faces of one body can share one alpha
+/// (`avg_007_closre_1`'s `1$1`..`4$1` all take `1$[alpha]`), so the `foo` +
+/// `foo[alpha]` name rule leaves those faces opaque: a rectangle of art and
+/// background drawn over the body. The colour texture is the sprite's own
+/// `m_RD.texture`. An entry with a null or out-of-bundle `alphaTex`, or whose
+/// textures are not in `tex_names` (`Texture2D` path ID -> `m_Name`), yields
+/// no pair, and the caller falls back to the name rule for it.
 #[must_use]
-pub fn hub_from_bundle(bundle: &BundleFile) -> Option<Hub> {
+pub fn alpha_pairs_from_objects(
+    objects: &HashMap<i64, (i32, Value)>,
+    tex_names: &HashMap<i64, String>,
+) -> HashMap<String, String> {
+    let mut pairs = HashMap::new();
+    let Some(hub) = hub_behaviour(objects) else {
+        return pairs;
+    };
+    let lists: Vec<&Value> = hub
+        .get("spriteGroups")
+        .and_then(Value::as_array)
+        .map_or_else(
+            || hub.get("sprites").into_iter().collect(),
+            |groups| groups.iter().filter_map(|g| g.get("sprites")).collect(),
+        );
+    for entry in lists.iter().filter_map(|l| l.as_array()).flatten() {
+        let colour = local_pptr(entry.get("sprite"))
+            .and_then(|pid| objects.get(&pid))
+            .filter(|(class_id, _)| *class_id == 213)
+            .and_then(|(_, v)| local_pptr(v.get("m_RD").and_then(|rd| rd.get("texture"))))
+            .and_then(|pid| tex_names.get(&pid));
+        let alpha = local_pptr(entry.get("alphaTex")).and_then(|pid| tex_names.get(&pid));
+        if let (Some(colour), Some(alpha)) = (colour, alpha)
+            && colour != alpha
+        {
+            pairs.insert(colour.clone(), alpha.clone());
+        }
+    }
+    pairs
+}
+
+/// The objects the hub readers need out of a parsed bundle: `MonoBehaviour`
+/// (114), `Sprite` (213) and `RectTransform` (224), as `path_id -> (class_id,
+/// value)`.
+fn hub_objects(bundle: &BundleFile) -> HashMap<i64, (i32, Value)> {
     let mut objects: HashMap<i64, (i32, Value)> = HashMap::new();
     for entry in &bundle.files {
         // A `.resS`/`.resource` blob is raw texture bytes, not a serialized
@@ -305,7 +366,27 @@ pub fn hub_from_bundle(bundle: &BundleFile) -> Option<Hub> {
             }
         }
     }
-    hub_from_objects(&objects)
+    objects
+}
+
+/// Read the hub straight out of a parsed bundle. Only `MonoBehaviour` (114),
+/// `Sprite` (213) and `RectTransform` (224) objects are deserialized, so this
+/// is cheap enough to run on every `avg/characters` bundle of a normal
+/// extract.
+#[must_use]
+pub fn hub_from_bundle(bundle: &BundleFile) -> Option<Hub> {
+    hub_from_objects(&hub_objects(bundle))
+}
+
+/// [`alpha_pairs_from_objects`] straight out of a parsed bundle. The texture
+/// names come from the caller, which has already read every `Texture2D` to
+/// decode it, so no texture is deserialized twice.
+#[must_use]
+pub fn alpha_pairs_from_bundle(
+    bundle: &BundleFile,
+    tex_names: &HashMap<i64, String>,
+) -> HashMap<String, String> {
+    alpha_pairs_from_objects(&hub_objects(bundle), tex_names)
 }
 
 /// True for a bundle whose textures land under `textures/avg/characters/`.
@@ -549,6 +630,83 @@ mod tests {
         let mut m = objects(hub, &[]);
         m.insert(60, (224, rt(0, 0.0, 1.0, 1.0)));
         assert_eq!(hub_from_objects(&m).unwrap().root, None);
+    }
+
+    /// The hub's `alphaTex` is the pairing, not the names: `avg_391_rosmon_1`
+    /// gives sprite `1$1` the texture `1$[alpha]` and `1$2` the texture
+    /// `2$[alpha]`, `avg_007_closre_1` gives three faces one shared alpha, and
+    /// an entry with a null or out-of-bundle `alphaTex` yields no pair.
+    #[test]
+    fn alpha_pairs_follow_the_alphatex_reference_not_the_name() {
+        let entry = |sprite: i64, alpha_file: i64, alpha: i64| {
+            json!({"alias": "", "isWholeBody": 0,
+                "sprite": {"m_FileID": 0, "m_PathID": sprite},
+                "alphaTex": {"m_FileID": alpha_file, "m_PathID": alpha}})
+        };
+        let hub = json!({
+            "spriteGroups": [
+                {"facePos": {"x": 1.0, "y": 2.0, "z": 0.0}, "faceSize": {"x": 3.0, "y": 4.0},
+                 "sprites": [entry(10, 0, 100), entry(11, 0, 100), entry(12, 0, 0)]},
+                {"facePos": {"x": 1.0, "y": 2.0, "z": 0.0}, "faceSize": {"x": 3.0, "y": 4.0},
+                 "sprites": [entry(20, 0, 101), entry(21, 0, 102), entry(22, 1, 100)]},
+            ],
+        });
+        let mut m: HashMap<i64, (i32, Value)> = HashMap::new();
+        m.insert(1, (114, hub));
+        // Sprite -> its own colour texture through `m_RD.texture`.
+        for (sprite, tex) in [
+            (10, 200),
+            (11, 201),
+            (12, 202),
+            (20, 203),
+            (21, 204),
+            (22, 205),
+        ] {
+            m.insert(
+                sprite,
+                (
+                    213,
+                    json!({"m_Name": "s", "m_RD": {"texture": {"m_FileID": 0, "m_PathID": tex}}}),
+                ),
+            );
+        }
+        let tex_names: HashMap<i64, String> = [
+            (100, "1$[alpha]"),
+            (101, "2$[alpha]"),
+            (102, "2$2[alpha]"),
+            (200, "1$1"),
+            (201, "2$1"),
+            (202, "3$1"),
+            (203, "1$2"),
+            (204, "2$2"),
+            (205, "3$2"),
+        ]
+        .into_iter()
+        .map(|(k, v)| (k, v.to_owned()))
+        .collect();
+        let pairs = alpha_pairs_from_objects(&m, &tex_names);
+        let mut got: Vec<(&str, &str)> = pairs
+            .iter()
+            .map(|(c, a)| (c.as_str(), a.as_str()))
+            .collect();
+        got.sort_unstable();
+        assert_eq!(
+            got,
+            [
+                ("1$1", "1$[alpha]"),
+                // Across the name: body 2's face 1 takes `2$[alpha]`.
+                ("1$2", "2$[alpha]"),
+                // One alpha shared by two faces.
+                ("2$1", "1$[alpha]"),
+                // A reference that agrees with the name rule is still a pair.
+                ("2$2", "2$2[alpha]"),
+            ]
+        );
+        // `3$1` (null alphaTex) and `3$2` (out-of-bundle) carry none.
+        assert!(!pairs.contains_key("3$1") && !pairs.contains_key("3$2"));
+        // No hub, no pairs.
+        m.remove(&1);
+        assert!(alpha_pairs_from_objects(&m, &tex_names).is_empty());
     }
 
     #[test]

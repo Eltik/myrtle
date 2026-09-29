@@ -231,6 +231,22 @@ export const messages = {
         text: "Video",
         description: "Marker on a chapter sheet row whose script plays a cutscene video.",
     },
+    "chapter.nav.prev": {
+        text: "Previous chapter",
+        description: "Accessible name of the chevron in the chapter sheet's header that swaps the sheet to the chapter before this one, in the library's own shelf order.",
+    },
+    "chapter.nav.next": {
+        text: "Next chapter",
+        description: "Accessible name of the chevron in the chapter sheet's header that swaps the sheet to the chapter after this one, in the library's own shelf order.",
+    },
+    "chapter.nav.prevTitle": {
+        text: "Previous: {name}",
+        description: "Tooltip of the previous-chapter chevron in the chapter sheet. {name} is that chapter's name.",
+    },
+    "chapter.nav.nextTitle": {
+        text: "Next: {name}",
+        description: "Tooltip of the next-chapter chevron in the chapter sheet. {name} is that chapter's name.",
+    },
     "chapter.readFraction": {
         text: "{read} of {total} read",
         description: "Read fraction beside a chapter sheet's progress bar.",

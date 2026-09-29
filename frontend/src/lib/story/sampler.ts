@@ -42,17 +42,47 @@ export interface ISamplerOptions<T> {
     fallback: T;
 }
 
+/**
+ * THE DECODE STAYS ON THE PAGE'S THREAD, and that is measured, not an
+ * omission. On a first visit the 85 covers cost 316.4 ms of sampler self time
+ * at 1440 (dev, cold cache), 254.0 ms of it the `Decode Image` that
+ * `drawImage` runs on an image not yet decoded; each cover is its own ~3.7 ms
+ * task, so none of it is a long task. Three ways of moving it were built and
+ * lost on identity, which the palette cache requires:
+ *
+ * - A Worker (`fetch` -> `createImageBitmap` -> `OffscreenCanvas.drawImage`)
+ *   gave identical 32x24 pixels on 1 cover of 85 and the same palette on 1 of 85.
+ * - `createImageBitmap(img)` on the page, with the default, "premultiply",
+ *   "none" alpha and `colorSpaceConversion: "none"`, drew identical pixels on
+ *   0 of 20 covers in every mode: a bitmap is filtered differently from an
+ *   `<img>` on a 32x24 downscale.
+ * - `await img.decode()` before the draw was identical on 85 of 85 but moved
+ *   nothing: 263.4 ms of draws without it, 264.1 ms with it.
+ */
 export function createSampler<T>({ storageKey, width, height, derive, fallback }: ISamplerOptions<T>): ISampler<T> {
     const memory = new Map<string, T>();
     /** In flight, so several callers sharing a url sample it once. */
     const pending = new Map<string, Promise<T>>();
 
+    /**
+     * The stored record, PARSED ONCE per raw string. Every card asks `cached`
+     * on mount, and each ask re-parsed the whole record: one `JSON.parse` per card
+     * of the same 85-entry object, on every library load (12.9 ms of self time
+     * at 1440, dev). The raw string is still read each time, so a record another
+     * tab wrote is picked up; only an unchanged one skips the parse.
+     */
+    let parsedRaw: string | null = null;
+    let parsedStore: Record<string, T> = {};
+
     function readStore(): Record<string, T> {
         try {
             const raw = globalThis.localStorage?.getItem(storageKey);
             if (!raw) return {};
+            if (raw === parsedRaw) return parsedStore;
             const parsed: unknown = JSON.parse(raw);
-            return parsed && typeof parsed === "object" ? (parsed as Record<string, T>) : {};
+            parsedStore = parsed && typeof parsed === "object" ? (parsed as Record<string, T>) : {};
+            parsedRaw = raw;
+            return parsedStore;
         } catch {
             return {};
         }
@@ -60,9 +90,11 @@ export function createSampler<T>({ storageKey, width, height, derive, fallback }
 
     function writeStore(url: string, value: T): void {
         try {
-            const all = readStore();
-            all[url] = value;
-            globalThis.localStorage?.setItem(storageKey, JSON.stringify(all));
+            const all = { ...readStore(), [url]: value };
+            const raw = JSON.stringify(all);
+            globalThis.localStorage?.setItem(storageKey, raw);
+            parsedRaw = raw;
+            parsedStore = all;
         } catch {
             // A private window or a full quota is not an error here: the memory cache still holds.
         }

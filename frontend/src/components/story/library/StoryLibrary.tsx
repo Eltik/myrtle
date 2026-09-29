@@ -108,8 +108,8 @@ export function StoryLibrary(): React.ReactElement {
                 }
                 actions={
                     <div className="hidden sm:block sm:text-right">
-                        <div className="font-light font-mono text-[34px] text-primary leading-none tracking-[-0.02em]">{f.number(totals)}</div>
-                        <div className="mt-1.5 font-mono text-[10px] text-muted-foreground tracking-[0.12em]">{t("library.storiesLabel")}</div>
+                        <div className="font-light font-sans text-[34px] text-primary tabular-nums leading-none tracking-[-0.02em]">{f.number(totals)}</div>
+                        <div className="mt-1.5 font-sans text-[12px] text-muted-foreground">{t("library.storiesLabel")}</div>
                     </div>
                 }
             />

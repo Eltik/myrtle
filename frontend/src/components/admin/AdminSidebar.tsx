@@ -151,7 +151,7 @@ export function AdminSidebar({ open, onClose }: IAdminSidebarProps): React.React
             >
                 <div className="flex items-center gap-2.5 px-4 py-4">
                     <Link to="/admin" onClick={onClose} aria-label={t("sidebar.home")} className="-m-1 flex min-w-0 flex-1 items-center gap-2.5 rounded-lg p-1 transition-colors hover:bg-sidebar-accent">
-                        <img src="/logo/bust_transparent.png" alt="" className="size-7 shrink-0 object-contain" />
+                        <img src="/logo/bust_128.png" alt="" className="size-7 shrink-0 object-contain" />
                         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                             <span className="truncate font-semibold text-[15px] leading-none tracking-[-0.01em]">myrtle.moe</span>
                             <span className="inline-flex items-center gap-1 font-medium font-mono text-[10px] text-muted-foreground leading-none tracking-[0.06em]">

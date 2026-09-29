@@ -1,6 +1,6 @@
 import { CheckIcon, SearchIcon, StarIcon } from "lucide-react";
 import type React from "react";
-import { useId, useMemo, useState } from "react";
+import { memo, useId, useMemo, useState } from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
@@ -35,7 +35,7 @@ function rarityOf(record: LibRecord): number | null {
     return rarityToNumber(record.rarity);
 }
 
-export function OperatorsTab({ records, progress, gameRead, controls = true, paged = false, pageKey = "" }: IOperatorsTabProps): React.ReactElement {
+export const OperatorsTab = memo(function OperatorsTab({ records, progress, gameRead, controls = true, paged = false, pageKey = "" }: IOperatorsTabProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("story");
     const [query, setQuery] = useState("");
     const [hideFinished, setHideFinished] = useState(false);
@@ -98,7 +98,7 @@ export function OperatorsTab({ records, progress, gameRead, controls = true, pag
             <OperatorDialog key={open?.charId ?? "none"} record={open} progress={progress} gameRead={gameRead} onClose={() => setOpen(null)} />
         </div>
     );
-}
+});
 
 function OperatorCard({ record, progress, gameRead, onOpen }: { record: LibRecord; progress: StoryProgress; gameRead: ReadonlySet<string>; onOpen: () => void }): React.ReactElement {
     const t: TypedT<typeof messages> = useT("story");

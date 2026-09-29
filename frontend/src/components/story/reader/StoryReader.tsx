@@ -32,7 +32,6 @@ import type { StoryEntry } from "#/types/generated/StoryEntry";
 import type { StoryScript } from "#/types/generated/StoryScript";
 import type { messages as sharedMessages } from "../shared.messages";
 import { BacklogDialog } from "./BacklogDialog";
-import { ChapterDialog } from "./ChapterDialog";
 import { Cutscene } from "./Cutscene";
 import { chromeIdleMs, chromeShown, nextPeek, nextTheater, PEEK_GRACE_MS, revealHandleShown, revealsChrome, theaterConsumes } from "./chrome";
 import { loadCustomFont, registerCustomFont } from "./fonts";
@@ -45,7 +44,7 @@ import { SettingsDialog } from "./SettingsDialog";
 import { SkipDialog } from "./SkipDialog";
 import { type CanvasMode, Stage } from "./Stage";
 import { nextShownLine, type ShownLine } from "./shownLine";
-import { nextSkip, SKIP_CLOSED, type SkipEvent, type SkipState, skipAvailable } from "./skip";
+import { nextSkip, SKIP_CLOSED, type SkipEvent, type SkipState, skipAvailable, skipNodeLine } from "./skip";
 import { useSpeakerTint } from "./speaker";
 import { TextBox } from "./TextBox";
 import { useReaderHotkeys } from "./useReaderHotkeys";
@@ -141,7 +140,11 @@ export function StoryReader({ script, entry, groupName, category, previous, next
     // would paint the flash for one frame first; the rule is idempotent, so a
     // strict-mode double render lands on the same line.
     const shownRef = useRef<ShownLine | null>(null);
-    const shown = halt?.kind === "line" ? nextShownLine(shownRef.current, halt, revealKey, boxVisible) : null;
+    // Only a BOX line waits for the box. A sticker or subtitle line is drawn on
+    // its own surface and the box stays hidden for it, so holding the old line
+    // there held it forever: the reveal never completed and the reader could
+    // not advance, go back or auto-play past a fullscreen line (15-4, 2026-09-27).
+    const shown = halt?.kind === "line" ? nextShownLine(shownRef.current, halt, revealKey, boxVisible || halt.surface !== "box") : null;
     shownRef.current = shown;
     // The speaker's ink, read off the LIT sprite in the frame the stage is
     // showing. It is undefined unless the reader asked for it, so the default
@@ -153,7 +156,6 @@ export function StoryReader({ script, entry, groupName, category, previous, next
     // scrubber go; the scene stays; any tap or key hands them back.
     const [theater, setTheater] = useState(false);
     const [logOpen, setLogOpen] = useState(false);
-    const [chapterOpen, setChapterOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
     // The mute button's volume popover. It counts as a dialog: its sliders take
     // the arrow keys, which would otherwise turn the page under them.
@@ -213,7 +215,7 @@ export function StoryReader({ script, entry, groupName, category, previous, next
     const revealDone = revealDoneKey === revealKey;
     const [completeSignal, setCompleteSignal] = useState(0);
     const rootRef = useRef<HTMLDivElement>(null);
-    const dialogOpen = logOpen || chapterOpen || settingsOpen || skip.open || volumeOpen;
+    const dialogOpen = logOpen || settingsOpen || skip.open || volumeOpen;
     // Under 1024 px the pills are icon-only and every label is a tooltip.
     const compact = useMediaQuery("(max-width: 1023px)");
 
@@ -431,7 +433,6 @@ export function StoryReader({ script, entry, groupName, category, previous, next
                         onNext={() => goNeighbour(next)}
                         onSettings={() => setSettingsOpen(true)}
                         onLog={() => setLogOpen(true)}
-                        onChapter={() => setChapterOpen(true)}
                         theater={theater}
                         onTheater={() => setTheater((v) => nextTheater(v, "toggle"))}
                         onHideToolbar={toggleToolbar}
@@ -559,9 +560,8 @@ export function StoryReader({ script, entry, groupName, category, previous, next
                     setLogOpen(false);
                 }}
             />
-            <ChapterDialog open={chapterOpen} onOpenChange={setChapterOpen} currentStoryId={script.id} currentCategory={category} currentGroupId={category === "record" ? (entry?.groupId ?? script.groupId) : script.groupId} />
             <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} settings={settings} onChange={setSettings} />
-            <SkipDialog open={skip.open} onCancel={() => onSkipEvent("cancel")} onConfirm={() => onSkipEvent("confirm")} title={title} synopsis={script.synopsis} />
+            <SkipDialog open={skip.open} onCancel={() => onSkipEvent("cancel")} onConfirm={() => onSkipEvent("confirm")} title={title} node={skipNodeLine(entry, groupName)} synopsis={script.synopsis} />
         </div>
     );
 }

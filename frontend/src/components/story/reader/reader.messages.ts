@@ -49,7 +49,7 @@ export const messages = {
     },
     "reader.toolbar.sceneLabel": {
         text: "Story controls",
-        description: "Accessible name of the left cluster of reader controls (library, settings, log, hide, chapter).",
+        description: "Accessible name of the left cluster of reader controls (library, settings, log, hide, previous and next story).",
     },
     "reader.toolbar.playbackLabel": {
         text: "Playback controls",
@@ -90,10 +90,6 @@ export const messages = {
     "reader.toolbar.log": {
         text: "Log",
         description: "Toolbar button opening the backlog of lines read so far.",
-    },
-    "reader.toolbar.chapter": {
-        text: "Chapter",
-        description: "Toolbar button opening the jump-to-story dialog.",
     },
     "reader.toolbar.previousStory": {
         text: "Previous story",
@@ -148,8 +144,8 @@ export const messages = {
         description: "Heading of the end card.",
     },
     "reader.end.body": {
-        text: "Use Chapter to pick another, or press the left arrow key to look back.",
-        description: "End card body. `Chapter` is the toolbar button of that name; the left arrow key steps back through the lines already read.",
+        text: "Use the story arrows in the toolbar to move on, or press the left arrow key to look back.",
+        description: "End card body. The story arrows are the toolbar's previous and next story buttons; the left arrow key steps back through the lines already read.",
     },
     "reader.end.previous": {
         text: "Previous story",
@@ -210,34 +206,6 @@ export const messages = {
     "backlog.choice": {
         text: "Choice: {text}",
         description: "Backlog row for a decision the reader made; `{text}` is the chosen option.",
-    },
-    "chapter.title": {
-        text: "Jump to a story",
-        description: "Title of the chapter-jump dialog.",
-    },
-    "chapter.category": {
-        text: "Category",
-        description: "Label of the category select in the chapter-jump dialog.",
-    },
-    "chapter.group": {
-        text: "Group",
-        description: "Label of the story group select (chapter or event).",
-    },
-    "chapter.operator": {
-        text: "Operator",
-        description: "Label of the operator select when the category is operator records.",
-    },
-    "chapter.story": {
-        text: "Story",
-        description: "Label of the story select.",
-    },
-    "chapter.open": {
-        text: "Open",
-        description: "Button that navigates to the selected story.",
-    },
-    "chapter.noScript": {
-        text: "(no script)",
-        description: "Suffix on a story option whose script is missing.",
     },
     "settings.title": {
         text: "Reader settings",

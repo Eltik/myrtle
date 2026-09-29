@@ -24,11 +24,13 @@ export interface ISkipDialogProps {
     onCancel: () => void;
     onConfirm: () => void;
     title: string;
+    /** Where the story sits, `15-4 · Before Operation` or the group's name (`skipNodeLine`); empty prints nothing. */
+    node: string;
     /** The script's `synopsis`; absent when the game ships none for this story. */
     synopsis?: string;
 }
 
-export function SkipDialog({ open, onCancel, onConfirm, title, synopsis }: ISkipDialogProps): React.ReactElement {
+export function SkipDialog({ open, onCancel, onConfirm, title, node, synopsis }: ISkipDialogProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("story");
     const paragraphs = synopsisParagraphs(synopsis);
     return (
@@ -36,8 +38,14 @@ export function SkipDialog({ open, onCancel, onConfirm, title, synopsis }: ISkip
             <DialogPopup className="max-w-xl" closeProps={{ className: "absolute end-2 top-2 max-sm:size-11" }} data-story-skip-sheet>
                 <DialogHeader className="pe-12">
                     {/* The label sits ABOVE the name, the way the client prints
-                        its summary card: a small caps kicker, then the title. */}
+                        its summary card: a small caps kicker, then the node, then
+                        the title. */}
                     <span className="font-heading font-semibold text-muted-foreground text-xs uppercase tracking-wide">{t("reader.skip.summaryLabel")}</span>
+                    {node ? (
+                        <span className="font-mono text-muted-foreground text-xs tabular-nums" data-story-skip-node>
+                            {node}
+                        </span>
+                    ) : null}
                     <DialogTitle className="text-balance">{title}</DialogTitle>
                 </DialogHeader>
                 <DialogPanel className="max-h-[50dvh] overflow-y-auto">

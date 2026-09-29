@@ -121,3 +121,45 @@ export const BOX_LINE_H = 56.737701416015625;
  */
 export const DEFAULT_SIDE_MARGIN = Number(((BOX_INSET / CANVAS_W) * 100).toFixed(4));
 export const DEFAULT_BOTTOM_MARGIN = Number(((BOX_BOTTOM / CANVAS_W) * 100).toFixed(4));
+
+/**
+ * The interlude windows as `avg/[uc]common.ab` ships them (`dump_avg_prefab
+ * ... tree`, 2026-09-29), canvas px. `root` is the template's own `sizeDelta`,
+ * which a script `size` replaces; `frame` is the visible `back_shadow` and
+ * `content` the `content_mask` that clips the background and the figure, both
+ * kept in proportion to the root when `size` rewrites it.
+ *
+ * - `group_interclude_vertical_common` root 320x760, `back_shadow` stretched
+ *   over it, `content_mask` inset 18 each side (sizeDelta -36,-36).
+ * - `group_interclude_square_common` root 300x300, `back_shadow` 250x250,
+ *   `content_mask` inset 18 of that (214x214).
+ * - `ui_cutin_mask_vertical` 337.3x788.5 and `ui_cutin_mask_horizon`
+ *   1689.2x335.27, a bare `ui_cutin_mask` stretched over the root: no frame.
+ *
+ * An unknown `maskid` falls back to the vertical common shape.
+ */
+export interface InterludeMaskShape {
+    root: { w: number; h: number };
+    frame: { w: number; h: number };
+    content: { w: number; h: number };
+}
+
+export const INTERLUDE_MASKS: Record<string, InterludeMaskShape> = {
+    group_interclude_vertical_common: { root: { w: 320, h: 760 }, frame: { w: 320, h: 760 }, content: { w: 284, h: 724 } },
+    group_interclude_square_common: { root: { w: 300, h: 300 }, frame: { w: 250, h: 250 }, content: { w: 214, h: 214 } },
+    ui_cutin_mask_vertical: { root: { w: 337.29998779296875, h: 788.5 }, frame: { w: 337.29998779296875, h: 788.5 }, content: { w: 337.29998779296875, h: 788.5 } },
+    ui_cutin_mask_horizon: { root: { w: 1689.199951171875, h: 335.26995849609375 }, frame: { w: 1689.199951171875, h: 335.26995849609375 }, content: { w: 1689.199951171875, h: 335.26995849609375 } },
+};
+
+/** The rects of `maskid` at a script `size` (or the prefab's own), canvas px. */
+export function interludeMask(maskId: string, size?: { w: number; h: number }): { w: number; h: number; frameW: number; frameH: number; contentW: number; contentH: number } {
+    const shape = INTERLUDE_MASKS[maskId] ?? INTERLUDE_MASKS.group_interclude_vertical_common;
+    const w = size && size.w > 0 ? size.w : shape.root.w;
+    const h = size && size.h > 0 ? size.h : shape.root.h;
+    // The frame and the content keep their INSETS from the root, which is what
+    // a stretched RectTransform with a negative sizeDelta does when the parent
+    // is resized; the square's centred 250 frame keeps its 25 px margin.
+    const fw = w - (shape.root.w - shape.frame.w);
+    const fh = h - (shape.root.h - shape.frame.h);
+    return { w, h, frameW: fw, frameH: fh, contentW: fw - (shape.frame.w - shape.content.w), contentH: fh - (shape.frame.h - shape.content.h) };
+}

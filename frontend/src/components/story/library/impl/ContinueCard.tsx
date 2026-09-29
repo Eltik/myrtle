@@ -61,7 +61,7 @@ export function ContinueCard({ pick, progress, gameRead, onViewChapter }: IConti
                 </span>
             ) : null}
             <div className="relative z-1 flex min-w-0 flex-1 flex-col gap-1">
-                <div className="flex items-center gap-1.5 font-mono text-[9.5px] text-muted-foreground uppercase tracking-[0.14em]">
+                <div className="flex items-center gap-1.5 font-medium font-sans text-[12px] text-muted-foreground">
                     <BookOpenIcon className="size-3" aria-hidden="true" />
                     {fresh ? t("browse.continue.kickerFresh") : t("browse.continue.kicker")}
                 </div>
@@ -75,7 +75,7 @@ export function ContinueCard({ pick, progress, gameRead, onViewChapter }: IConti
                         </span>
                     </span>
                 </div>
-                <div className="font-mono text-[10px] text-muted-foreground tabular-nums">{th("hero.groupRead", { read: fraction.read, total: fraction.total })}</div>
+                <div className="font-sans text-[12px] text-muted-foreground tabular-nums">{th("hero.groupRead", { read: fraction.read, total: fraction.total })}</div>
             </div>
             <div className="relative z-1 flex shrink-0 items-center gap-1 sm:hidden">
                 <Button className="h-11" render={resume}>

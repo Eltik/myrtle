@@ -190,7 +190,7 @@ export function Stage({ frame, shake, children, onClick, onContextMenu, label, c
                         <Sprite key={slot} slot={slot} state={s} sec={sec} focus={focus.char} plateFromWire={plateFromWire} />
                     ))}
                     <Layer layer={state?.image} sec={sec} kind="image" focus={focus.cg} ease={ease} />
-                    {state ? <InterludePanels panels={state.interludes} sec={sec} /> : null}
+                    {state ? <InterludePanels panels={state.interludes} sec={sec} plateFromWire={plateFromWire} /> : null}
                     {state?.cutin ? <CutinPlate cutin={state.cutin} sec={sec} plateFromWire={plateFromWire} /> : null}
                 </div>
                 <div data-story-blocker className="pointer-events-none absolute inset-0 transition-[background-color] ease-linear" style={{ backgroundColor: `rgba(${Math.round(blocker.r * 255)}, ${Math.round(blocker.g * 255)}, ${Math.round(blocker.b * 255)}, ${blocker.a})`, transitionDuration: `${sec}s` }} />

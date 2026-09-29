@@ -32,4 +32,12 @@ describe("nextShownLine", () => {
         const once = nextShownLine(shown, police, 2, true);
         expect(nextShownLine(once, police, 2, true)).toBe(once);
     });
+
+    it("a line on another surface switches at once: the caller passes the box as visible for it", () => {
+        // A sticker or subtitle line never shows the box; the reader ORs
+        // `surface !== "box"` into the flag, so the rule must switch on it.
+        const shown: ShownLine = { ...narration, revealKey: 1 };
+        const fullscreen = { text: "You have crossed the line.", isNarration: true };
+        expect(nextShownLine(shown, fullscreen, 2, true)).toEqual({ ...fullscreen, speaker: undefined, revealKey: 2 });
+    });
 });

@@ -1104,6 +1104,41 @@ impl StoryAssetIndex {
             .or_else(|| png_size(&folder.dir.join(body_file)))
     }
 
+    /// A face the hub flags `isWholeBody` IS the body. The hub's sprite list
+    /// is the client's `SetImage` input, and a whole-body entry replaces the
+    /// image instead of being composited as a patch, so the wire must carry
+    /// that sprite as `bodyUrl`. Serving the folder's `$1` body with the
+    /// whole sprite as an unplaced `faceUrl` drew the base pose for every
+    /// `#N` (Raidian `avg_npc_1730_1#5$1` showed `avg_npc_1730_1$1`, smiling,
+    /// on every line): 23 of 272 distinct sprite names on the 25 `main_15`
+    /// scripts, all 23 flagged whole in their hub. `STORY_NO_WHOLE_BODY=1`
+    /// restores that wire exactly.
+    fn whole_body(
+        folder: &SpriteFolder,
+        group: Option<&HubGroup>,
+        face_file: Option<&String>,
+    ) -> Option<CharacterSprite> {
+        if std::env::var_os("STORY_NO_WHOLE_BODY").is_some() {
+            return None;
+        }
+        let file = face_file?;
+        let stem = normalized_stem(file);
+        if !group?
+            .sprites
+            .iter()
+            .any(|s| s.name == stem && s.is_whole_body)
+        {
+            return None;
+        }
+        Some(CharacterSprite {
+            body_url: Self::sprite_url(folder, file),
+            face_url: None,
+            face_pos: None,
+            body_size: Self::body_size(folder, &stem, file),
+            plate: folder.plate,
+        })
+    }
+
     /// Resolve `base#face$body` to its body and face files. See the module
     /// doc for the rule order.
     #[must_use]
@@ -1136,6 +1171,9 @@ impl StoryAssetIndex {
                     .or_else(|| folder.files.get(&format!("{face}$1")))
                     .or(hub_face)
             };
+            if let Some(whole) = Self::whole_body(folder, group, face_file) {
+                return Some(whole);
+            }
             let face_pos = face_file.and_then(|f| {
                 let g = group?;
                 let stem = normalized_stem(f);
@@ -1189,6 +1227,9 @@ impl StoryAssetIndex {
         } else {
             folder.files.get(face).or(hub_face)
         };
+        if let Some(whole) = Self::whole_body(folder, group, face_file) {
+            return Some(whole);
+        }
         let face_pos = face_file.and_then(|f| {
             let g = group?;
             let stem = normalized_stem(f);
@@ -1546,9 +1587,49 @@ mod tests {
             folder("avg_x_1", &["avg_x_1.png", "1.png"]),
             whole,
         )]);
+        // The whole-body sprite IS the body: no patch, no placement.
         let s = idx.resolve_character("avg_x_1#1").unwrap();
-        assert!(s.face_url.as_deref().unwrap().ends_with("1.png"));
+        assert!(s.body_url.ends_with("/1.png"), "{}", s.body_url);
+        assert_eq!(s.face_url, None);
         assert_eq!(s.face_pos, None);
+    }
+
+    #[test]
+    fn a_whole_body_face_replaces_the_hub_body() {
+        // `avg_npc_1730_1` (Raidian): a `faceSize (0,0)` hub whose every face
+        // entry is a 1124 px whole body beside the `$1` base pose.
+        let hub = r#"{
+          "groups": [{
+            "facePos": {"x": 0.0, "y": 0.0},
+            "faceSize": {"w": 0.0, "h": 0.0},
+            "sprites": [
+              {"name": "1$1", "alias": "", "isWholeBody": true, "size": {"w": 1124.0, "h": 1124.0}},
+              {"name": "5$1", "alias": "", "isWholeBody": true, "size": {"w": 1124.0, "h": 1124.0}},
+              {"name": "avg_npc_1730_1$1", "alias": "", "isWholeBody": false, "size": {"w": 1124.0, "h": 1124.0}}
+            ]
+          }],
+          "legacy": false
+        }"#;
+        let idx = index_with(vec![with_hub(
+            folder(
+                "avg_npc_1730_1",
+                &["avg_npc_1730_1$1.png", "1$1.png", "5$1.png"],
+            ),
+            hub,
+        )]);
+        let s = idx.resolve_character("avg_npc_1730_1#5$1").unwrap();
+        assert!(s.body_url.ends_with("/5$1.png"), "{}", s.body_url);
+        assert_eq!(s.face_url, None);
+        assert_eq!(s.face_pos, None);
+        assert_eq!(
+            s.body_size,
+            Some(BodySize {
+                w: 1124.0,
+                h: 1124.0
+            })
+        );
+        let s = idx.resolve_character("avg_npc_1730_1#1$1").unwrap();
+        assert!(s.body_url.ends_with("/1$1.png"), "{}", s.body_url);
     }
 
     #[test]

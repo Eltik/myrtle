@@ -116,6 +116,8 @@ interface Reveal {
 export function TextBox({ speaker, text, isNarration, revealKey, armed, settings, onRevealDone, completeSignal, continueLabel, hidden, customFontLoaded, speakerTint, onPositionChange, dragLabel }: ITextBoxProps): React.ReactElement {
     const nodes = useMemo(() => parseStoryText(text), [text]);
     const total = useMemo(() => plainStoryText(nodes).length, [nodes]);
+    // The whole line, laid out once per line: the sizer that holds the box at its final height.
+    const fullLine = useMemo(() => renderStoryNodes(nodes), [nodes]);
     const [reveal, setReveal] = useState<Reveal>({ key: revealKey, shown: 0 });
     // A reveal stamped with another line is that line's progress, so this one is at zero.
     const shown = reveal.key === revealKey ? Math.min(reveal.shown, total) : 0;
@@ -339,7 +341,22 @@ export function TextBox({ speaker, text, isNarration, revealKey, armed, settings
                     data-complete={complete ? "true" : "false"}
                     style={lineColor ? { color: lineColor } : undefined}
                 >
-                    {renderNodes(nodes, budget, "n")}
+                    {/* THE BOX IS ITS FINAL HEIGHT FROM THE FIRST CHARACTER. The
+                        whole line is laid out once, invisible, in the same font,
+                        size, width and wrapping, and the typed text is drawn over
+                        it; the box used to grow a row each time the typewriter
+                        wrapped. The sizer sits INSIDE the scrolling line, so a
+                        line taller than the 40% cap still scrolls. `visibility`
+                        keeps it out of selection, and `aria-hidden` out of the
+                        accessible name. */}
+                    <span className="relative block">
+                        <span aria-hidden="true" className="invisible block" data-story-line-sizer>
+                            {fullLine}
+                        </span>
+                        <span className="absolute inset-0" data-story-line-revealed>
+                            {renderNodes(nodes, budget, "n")}
+                        </span>
+                    </span>
                 </p>
                 <ChevronDownIcon aria-label={continueLabel} className={cn("absolute right-3 bottom-2 size-4 transition-opacity", light ? "text-neutral-900/60" : "text-white/70", complete ? "story-bounce opacity-100" : "opacity-0")} />
             </div>

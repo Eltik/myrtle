@@ -15,49 +15,69 @@ const ALPHA_SUFFIX: &str = "[alpha]";
 /// Textures without a pair are saved as-is.
 #[must_use]
 pub fn merge_and_export(textures: HashMap<String, DecodedTexture>, output_dir: &Path) -> usize {
-    let mut exported = 0;
+    merge_and_export_paired(textures, output_dir, &HashMap::new())
+}
 
-    // Partition into base and alpha sets
-    let alpha_names: Vec<String> = textures
+/// True when `UNPACKER_ALPHA_BY_NAME=1` asks for the name rule alone: the
+/// kill switch for reference pairing, which restores the pre-2026-09-29 AVG
+/// character PNGs exactly.
+#[must_use]
+pub fn alpha_by_name_only() -> bool {
+    std::env::var("UNPACKER_ALPHA_BY_NAME").as_deref() == Ok("1")
+}
+
+/// Where each colour texture takes its alpha from: `colour -> alpha`, both by
+/// texture name. An explicit `pairs` entry wins when both of its textures are
+/// present (the AVG character hub's per-sprite `alphaTex`, which does not
+/// follow names and may give several colours one alpha); every other colour
+/// falls back to the name rule, `foo` + `foo[alpha]`. Sorted by colour name,
+/// so a report built from it is deterministic.
+#[must_use]
+pub fn resolve_pairs<T>(
+    textures: &HashMap<String, T>,
+    pairs: &HashMap<String, String>,
+) -> Vec<(String, String)> {
+    let mut out: Vec<(String, String)> = textures
         .keys()
-        .filter(|n| n.ends_with(ALPHA_SUFFIX))
-        .cloned()
+        .filter_map(|colour| {
+            let by_ref = pairs
+                .get(colour)
+                .filter(|a| !alpha_by_name_only() && textures.contains_key(a.as_str()))
+                .cloned();
+            let by_name = || {
+                let a = format!("{colour}{ALPHA_SUFFIX}");
+                textures.contains_key(&a).then_some(a)
+            };
+            by_ref.or_else(by_name).map(|a| (colour.clone(), a))
+        })
         .collect();
+    out.sort();
+    out
+}
 
-    let mut consumed: std::collections::HashSet<String> = std::collections::HashSet::new();
+/// [`merge_and_export`] with an explicit `colour -> alpha` pairing that wins
+/// over the name rule (see [`resolve_pairs`]). The files written are the same
+/// set either way, one PNG per texture under its own name: a paired colour is
+/// written merged, every alpha texture and every unpaired colour as-is.
+#[must_use]
+pub fn merge_and_export_paired(
+    textures: HashMap<String, DecodedTexture>,
+    output_dir: &Path,
+    pairs: &HashMap<String, String>,
+) -> usize {
+    let mut exported = 0;
+    let resolved: HashMap<String, String> = resolve_pairs(&textures, pairs).into_iter().collect();
 
-    for alpha_name in &alpha_names {
-        let base_name = &alpha_name[..alpha_name.len() - ALPHA_SUFFIX.len()];
-
-        let (Some(base), Some(alpha)) =
-            (textures.get(base_name), textures.get(alpha_name.as_str()))
-        else {
-            continue;
-        };
-
-        // Merge and save combined RGBA
-        let merged = combine_with_alpha(base, alpha);
-        match save_decoded_texture(&merged, output_dir) {
-            Ok(()) => exported += 1,
-            Err(e) => eprintln!("  error saving merged {}: {e}", merged.name),
-        }
-
-        // Save the alpha texture as-is
-        match save_decoded_texture(alpha, output_dir) {
-            Ok(()) => exported += 1,
-            Err(e) => eprintln!("  error saving alpha {}: {e}", alpha.name),
-        }
-
-        consumed.insert(base_name.to_string());
-        consumed.insert(alpha_name.clone());
-    }
-
-    // Export remaining textures that weren't part of a pair
     for (name, tex) in &textures {
-        if consumed.contains(name.as_str()) {
-            continue;
-        }
-        match save_decoded_texture(tex, output_dir) {
+        let merged;
+        let out = match resolved.get(name).and_then(|a| textures.get(a)) {
+            Some(alpha) => {
+                merged = combine_with_alpha(tex, alpha);
+                &merged
+            }
+            None => tex,
+        };
+        match save_decoded_texture(out, output_dir) {
             Ok(()) => exported += 1,
             Err(e) => eprintln!("  error saving {name}: {e}"),
         }
@@ -197,6 +217,84 @@ mod tests {
         for chunk in merged.rgba.chunks(4) {
             assert!(chunk[3] > 100 && chunk[3] < 160, "alpha={}", chunk[3]);
         }
+    }
+
+    fn tex(name: &str, px: [u8; 4]) -> DecodedTexture {
+        DecodedTexture {
+            name: name.into(),
+            width: 1,
+            height: 1,
+            rgba: px.to_vec(),
+        }
+    }
+
+    /// An explicit pair wins over the name rule, one alpha may serve several
+    /// colours, and a colour with no explicit pair keeps the name rule.
+    #[test]
+    fn explicit_pairs_win_over_names() {
+        let textures: HashMap<String, ()> = [
+            "1$1",
+            "1$2",
+            "2$1",
+            "2$1[alpha]",
+            "3$1",
+            "1$[alpha]",
+            "2$[alpha]",
+        ]
+        .into_iter()
+        .map(|n| (n.to_owned(), ()))
+        .collect();
+        let pairs: HashMap<String, String> = [
+            ("1$1", "1$[alpha]"),
+            ("1$2", "2$[alpha]"),
+            ("3$1", "1$[alpha]"),
+            // Names a texture that is not there: falls back to the name rule.
+            ("2$1", "9$[alpha]"),
+        ]
+        .into_iter()
+        .map(|(c, a)| (c.to_owned(), a.to_owned()))
+        .collect();
+        let got = resolve_pairs(&textures, &pairs);
+        let want: Vec<(String, String)> = [
+            ("1$1", "1$[alpha]"),
+            ("1$2", "2$[alpha]"),
+            ("2$1", "2$1[alpha]"),
+            ("3$1", "1$[alpha]"),
+        ]
+        .into_iter()
+        .map(|(c, a)| (c.to_owned(), a.to_owned()))
+        .collect();
+        assert_eq!(got, want);
+        // With no explicit pairs only the name rule pairs.
+        assert_eq!(
+            resolve_pairs(&textures, &HashMap::new()),
+            [("2$1".to_owned(), "2$1[alpha]".to_owned())]
+        );
+    }
+
+    /// The written files carry the referenced alpha: `1$2` takes `2$[alpha]`'s
+    /// value, which the name rule would have left at 255.
+    #[test]
+    fn merge_and_export_paired_writes_the_referenced_alpha() {
+        let dir = std::path::PathBuf::from(format!(
+            "{}/test_output/alpha_merge_paired",
+            env!("CARGO_MANIFEST_DIR")
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let mut textures = HashMap::new();
+        for t in [
+            tex("1$2", [10, 20, 30, 255]),
+            tex("2$[alpha]", [64, 64, 64, 255]),
+            tex("1$[alpha]", [0, 0, 0, 255]),
+        ] {
+            textures.insert(t.name.clone(), t);
+        }
+        let pairs: HashMap<String, String> = [("1$2".to_owned(), "2$[alpha]".to_owned())].into();
+        assert_eq!(merge_and_export_paired(textures, &dir, &pairs), 3);
+        let px = image::open(dir.join("1$2.png")).unwrap().to_rgba8();
+        assert_eq!(px.get_pixel(0, 0).0, [10, 20, 30, 64]);
+        assert!(dir.join("2$[alpha].png").exists() && dir.join("1$[alpha].png").exists());
     }
 
     #[test]

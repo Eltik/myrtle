@@ -17,8 +17,8 @@ export interface IReadToggleProps {
     gameRead: ReadonlySet<string>;
     /** A name for the aria-label when the story's own reads badly on its own, such as a bare "Before". Defaults to the story name. */
     label?: string;
-    /** `sm` is the 32 px tick inside a chapter row on a pointer device; both are 44 px under 640. */
-    size?: "sm" | "md";
+    /** `sm` is the 32 px tick on a pointer device and `md` 36 px; `lg` is the chapter sheet's 40 px, and only on a FINE pointer. All three are 44 px under 640, and `lg` is 44 px on a coarse pointer at every width. */
+    size?: "sm" | "md" | "lg";
     className?: string;
 }
 
@@ -61,7 +61,11 @@ export function ReadToggle({ story, progress, gameRead, label, size = "sm", clas
                 event.stopPropagation();
                 saveProgress(toggleRead(progress, story.id, read));
             }}
-            className={cn("flex pointer-coarse:size-11 size-11 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60", size === "sm" ? "sm:size-8" : "sm:size-9", className)}
+            className={cn(
+                "flex pointer-coarse:size-11 size-11 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
+                size === "sm" ? "sm:size-8" : size === "md" ? "sm:size-9" : "sm:pointer-fine:size-10",
+                className,
+            )}
         >
             <span className="relative flex size-4 items-center justify-center">
                 {read ? <CheckIcon className="size-4 text-primary" aria-hidden="true" /> : <span aria-hidden="true" className={cn("size-4 rounded-full border", source === "cleared" ? "border-primary/45 border-dashed" : "border-border")} />}

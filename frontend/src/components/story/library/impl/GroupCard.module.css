@@ -19,14 +19,52 @@
  * gradient and is noise over a photograph.
  */
 
-/* `min(300px, 100%)` rather than a bare 300px, because a bare one is a FLOOR on
+/* THE SHELF IS A CONTACT SHEET NOW, not four posters. The reader's ask was
+   "a lot smaller, like the skin planner", whose card is 177 px wide on a 12 px
+   gap; the track here bottoms out at 200 on a 12 px gap, which lands six
+   223.3 x 121.5 tickets across the 1,400 px column at 1440 (7 would need
+   1,472), three 237.3 x 129.1 at 768 (a 736 column; 4 would need 836) and,
+   under 640, two 178.0 x 96.8 across the 366 px column at 390 on a 160 px
+   track. The 300 px track it replaces gave 4 / 2 / 1.
+
+   `min(..., 100%)` rather than a bare length, because a bare one is a FLOOR on
    the track and not on the card: at a 320 px viewport the content column is 296
-   and the track still resolved to 300, so every ticket sat 4 px past the section
-   rule above it and out into the right gutter. */
+   and a bare 300 px track sat every ticket 4 px out into the right gutter. The
+   same column takes ONE 296 px ticket under the 160 px track, since two need
+   330. */
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
+    gap: 12px;
+}
+
+/* 639.98 so the grid and the title fit (`useMediaQuery("max-sm")`, under 640) switch at the same pixel. */
+@media (max-width: 639.98px) {
+    .grid {
+        grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr));
+        gap: 10px;
+    }
+}
+
+/* The card is the ticket plus its caption, one <button>, so the caption is as
+   much a target as the art. */
+.card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    outline: none;
+    /* `backwards`, never `both`: a forwards fill pins transform to `none` and the
+       hover scale below never lands. */
+    animation: ticket-in 0.32s cubic-bezier(0.2, 0, 0, 1) backwards;
+    animation-delay: calc(var(--i, 0) * 34ms);
 }
 
 .ticket {
@@ -36,21 +74,10 @@
     aspect-ratio: 500 / 272;
     /* The logotype's caps are expressed in cqw, so they stay proportional at every card width. */
     container-type: inline-size;
-    padding: 0;
-    border: 0;
-    background: none;
-    font: inherit;
-    color: inherit;
-    text-align: left;
-    cursor: pointer;
     filter: drop-shadow(rgba(0, 0, 0, 0.4) 0 4px 10px);
     transition:
         filter 0.25s,
         transform 0.25s cubic-bezier(0.2, 0, 0, 1);
-    /* `backwards`, never `both`: a forwards fill pins transform to `none` and the
-       hover scale below never lands. */
-    animation: ticket-in 0.32s cubic-bezier(0.2, 0, 0, 1) backwards;
-    animation-delay: calc(var(--i, 0) * 34ms);
 }
 
 @keyframes ticket-in {
@@ -64,17 +91,17 @@
     }
 }
 
-.ticket:hover,
-.ticket:focus-visible {
+.card:hover .ticket,
+.card:focus-visible .ticket {
     transform: scale(1.045);
     z-index: 5;
     filter: brightness(1.04) drop-shadow(rgba(0, 0, 0, 0.6) 0 14px 28px);
 }
 
-.ticket:focus-visible {
+.card:focus-visible .ticket {
     outline: 2px solid var(--ring);
     outline-offset: 4px;
-    border-radius: 14px;
+    border-radius: 10px;
 }
 
 /* Both halves carry the same silhouette; the clip decides which part of it shows. */
@@ -166,8 +193,8 @@
         filter 0.32s;
 }
 
-.ticket:hover .stub,
-.ticket:focus-visible .stub {
+.card:hover .stub,
+.card:focus-visible .stub {
     transform: rotate(-5deg) translate(5px, -8px);
     filter: drop-shadow(rgba(0, 0, 0, 0.55) -6px 8px 12px);
 }
@@ -217,7 +244,8 @@
 
 .content {
     position: absolute;
-    inset: 14px 26% 12px 18px;
+    /* 23% on the right is the 21% stub plus a 2% margin before the tear. */
+    inset: 8px 23% 10px 10px;
     z-index: 2;
     display: flex;
     flex-direction: column;
@@ -243,7 +271,7 @@
     align-self: flex-start;
     display: inline-flex;
     align-items: center;
-    padding: 3px 9px;
+    padding: 2px 7px;
     border-radius: 999px;
     font-family: var(--font-heading);
     font-size: 9px;
@@ -296,12 +324,14 @@
  * deviation and it is forced by the silhouette.
  */
 .logotype {
-    max-width: 72cqw;
+    /* The cap is the content box, not 72cqw of the card: at 23% + 10 px the box
+       is 72.5cqw on a 223 px card and 71.4cqw on a 178 px one. The height cap is
+       the old 32.64cqw, so a 223.3 px ticket draws a 72.9 px tall logotype. */
+    max-width: 100%;
     max-height: 32.64cqw;
     width: auto;
     height: auto;
     margin-top: auto;
-    margin-bottom: 14px;
     object-fit: contain;
     object-position: left center;
     /* A 1 px edge under the soft halo: the halo alone gave the ink a dark
@@ -316,8 +346,8 @@
 .title {
     display: flex;
     flex-direction: column;
-    max-width: 72cqw;
-    margin: auto 0 14px;
+    max-width: 100%;
+    margin: auto 0 0;
     font-family: var(--font-heading);
     font-weight: 800;
     font-size: calc(var(--title-size, 18) * 1px);
@@ -349,73 +379,68 @@
    logotype and a 21% stub leaves 17% of the card. The deco keeps the two
    surfaces where it has room: the chapter modal's header at 29.64 x 36.00, and
    the list row's blank plate. */
+/*
+ * THE STAMP IS A CAPTION UNDER THE TICKET NOW, and that is measured, not taste.
+ * Kept inside the art at the 11 px floor the reader set, on the 223.3 px card
+ * at 1440 it took two lines on 86 of the 87 tickets and squeezed the logotype
+ * to 0.0 .. 49.7 px tall (it was 119.5 on the 336.5 card); on the 178 px phone
+ * card 62 of 87 took three lines, the logotype got at most 25.0 px and 6
+ * children ran out of the content box. No tracking or wording fixes that:
+ * "ACT18MINI · 2025 · 6 entries · 1h 52m" is wider than any content box the
+ * small ticket has. Under the ticket it has the card's whole width, so the art
+ * keeps the logotype at the same 32.64cqw cap it always had.
+ *
+ * THE SITE'S SANS, sentence case, no tracking. It was Geist Mono at 9 px,
+ * uppercase and letter-spaced, and the reader's word for it was "looks like
+ * claude": a monospace run is how the site spells a CODE (1-4, GT-1) and this
+ * line is prose about a chapter. Tabular figures keep 12 and 14 entries aligned.
+ */
 .spec {
-    align-self: flex-start;
-    display: inline-flex;
-    align-items: center;
+    display: flex;
+    align-items: flex-start;
     gap: 6px;
-    max-width: 100%;
-    padding: 3px 8px 3px 6px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 2px;
-    background: rgba(0, 0, 0, 0.45);
-    color: rgba(255, 255, 255, 0.82);
-    font-family: var(--font-mono);
-    font-size: 9px;
-    /* 0.5 px, and the 1.5 it replaces was clipping the line at EVERY width
-       rather than only on a phone. Counted over the 87 EN tickets at 1440x900,
-       79 of them ran past the pill and the worst, "ACT18MINI · 2025 · 6
-       ENTRIES · 1H 52M", was 52 px over a 203 px column, so the ellipsis took
-       the whole reading-time field; at 0.5 px the same line is 15 px over and
-       15 of the 87 are still cut, none of them losing a field whole. The
-       tracking was the cost: 1 px x 37 characters is 37 px of a 218 px string.
-       The remaining 15 need the pill itself to be wider, which is the card's
-       composition (the stub takes 21% and the content box 68%) and not a
-       responsive rule. The ticket rect is untouched by this: 336.50 x 183.05
-       at 1440 before and after. */
-    letter-spacing: 0.5px;
-    line-height: 1.3;
-    text-transform: uppercase;
-    white-space: nowrap;
-    overflow: hidden;
+    min-width: 0;
+    padding: 0 2px;
+    color: var(--muted-foreground);
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+    line-height: 16px;
 }
 
-/* One of the two survivors of the sampled triad, and the one the reviewer named. */
+/* One of the two survivors of the sampled triad, and the one the reviewer named.
+   Centred on the FIRST line, because the caption may take two. */
 .dot {
     flex-shrink: 0;
     width: 6px;
     height: 6px;
+    margin-top: 5px;
     border-radius: 50%;
     background: var(--ticket-c2);
 }
 
+/* THE CAPTION WRAPS BETWEEN FIELDS, NEVER INSIDE ONE, and never ellipsises. */
 .specText {
-    overflow: hidden;
-    text-overflow: ellipsis;
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 0.3em;
+    min-width: 0;
 }
 
-/* ON A NARROW CARD THE STAMP TAKES A SECOND LINE rather than losing a field.
-   A 320 px viewport gives a 296 px card and a 173 px text column, and the
-   longest spec, "ACT18MINI · 2025 · 6 ENTRIES · 1H 52M", is 218 px at the
-   0.5 px tracking above: 45 px over, which no tracking closes. 79 of the 87 EN
-   tickets were cut there.
+.specField {
+    white-space: nowrap;
+}
 
-   The query keys on the CARD, and card width is NOT monotonic in viewport
-   width, so it is worth writing the measured row down: 320 -> 296, 375 -> 351,
-   390 -> 366, 768 -> 359, 844 -> 397, 1024 -> 318.7, 1440 -> 336.5. Two of the
-   seven fall under the threshold, the 320 phone and 1024x768, and 1024 is a
-   DELIBERATE desktop change: its 318.7 px card gives the stamp a 189 px column
-   against the same 218 px string, so the ellipsis was eating the reading time
-   there exactly as it was on the phone. 1440 keeps the one-line stamp. The
-   cost is 11.7 px of stamp height on a 161 px card body. */
-@container (max-width: 320px) {
+/* The reader's 11 px floor, taken on the phone only: on the 178 px card it
+   puts "Chapter 4 · 20 entries · 38m" back on one line. */
+@media (max-width: 639.98px) {
     .spec {
-        white-space: normal;
+        font-size: 11px;
+        line-height: 15px;
     }
-
-    .specText {
-        overflow: visible;
-        text-overflow: clip;
+    .dot {
+        margin-top: 4.5px;
     }
 }
 
@@ -456,10 +481,11 @@
 .bookmark {
     position: absolute;
     top: 0;
-    right: 17px;
+    /* Centred on the stub (10.5% of the card) at the smaller ticket's scale. */
+    right: calc(10.5% - 6px);
     z-index: 3;
-    width: 15px;
-    height: 27px;
+    width: 12px;
+    height: 22px;
     -webkit-mask-image: url(/story/bookmark.svg);
     mask-image: url(/story/bookmark.svg);
     -webkit-mask-size: 100% 100%;
@@ -670,10 +696,13 @@
     align-items: center;
     gap: 6px;
     color: var(--muted-foreground);
-    font-family: var(--font-mono);
-    font-size: 10px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+}
+
+.rowSpec .dot {
+    margin-top: 0;
 }
 
 /* The fraction and its bar. The bar is rendered ONLY above 0%, because an
@@ -691,10 +720,9 @@
 
 .rowFraction {
     color: var(--muted-foreground);
-    font-family: var(--font-mono);
-    font-size: 10.5px;
+    font-family: var(--font-sans);
+    font-size: 12px;
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.04em;
     white-space: nowrap;
 }
 
@@ -743,7 +771,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .ticket,
+    .card,
     .row {
         animation: none;
     }
@@ -752,8 +780,8 @@
     .progressFill {
         transition: none;
     }
-    .ticket:hover,
-    .ticket:focus-visible {
+    .card:hover .ticket,
+    .card:focus-visible .ticket {
         transform: none;
     }
 }
@@ -774,6 +802,8 @@
  */
 .cardWrap {
     position: relative;
+    /* The glyph is placed in cqw of the TICKET's width, which is the wrapper's. */
+    container-type: inline-size;
 }
 
 /* The ticket lifts to z-index 5 on hover; the wrapper is its stacking context now. */
@@ -798,22 +828,48 @@
         color 0.2s;
 }
 
+/* ON THE STUB, not over the badge. At 34 px in the top left it sat on the kind
+   badge whenever it showed, and on a 97 px phone ticket the 44 px touch glyph
+   covered the badge outright. The stub is the one part of the ticket that
+   carries no text, so the glyph is a 28 px disc centred on it (the stub is 21%
+   wide and the ticket 54.4cqw tall), and the ::before below keeps a 44 px
+   target on a coarse pointer. */
 .cardPlay {
-    top: 10px;
-    left: 10px;
-    width: 34px;
-    height: 34px;
+    right: calc(10.5cqw - 14px);
+    top: calc(27.2cqw - 14px);
+    width: 28px;
+    height: 28px;
     border: 0;
     background: rgba(0, 0, 0, 0.5);
     color: #fff;
-    backdrop-filter: blur(2px);
     opacity: 0;
+    /* THE BLUR IS ON ONLY WHILE THE DISC CAN BE SEEN. A backdrop-filter is a
+       compositor effect, so every glyph carried its own layer even at opacity
+       0: 100 layers on the page at 1440 against 14 without them, all of them
+       layerized and committed on every frame of a scroll. At rest the disc is
+       invisible, so the blur is too; it switches on the moment the fade in
+       starts and switches off only when the 0.2 s fade out has ended (the
+       delayed 0 s transition holds the old value through the delay), so no
+       frame of the fade looks different. */
+    transition:
+        opacity 0.2s,
+        background 0.2s,
+        border-color 0.2s,
+        color 0.2s,
+        backdrop-filter 0s linear 0.2s;
 }
 
 .cardWrap:hover .cardPlay,
 .cardPlay:focus-visible,
 .cardPlay[data-sounding="true"] {
     opacity: 1;
+    backdrop-filter: blur(2px);
+    transition:
+        opacity 0.2s,
+        background 0.2s,
+        border-color 0.2s,
+        color 0.2s,
+        backdrop-filter 0s;
 }
 
 .cardPlay:hover {
@@ -859,9 +915,13 @@
    appeared only on hover. Either condition now opens the touch treatment. */
 @media (hover: none), (max-width: 640px) {
     .cardPlay {
-        width: 44px;
-        height: 44px;
         opacity: 1;
+        backdrop-filter: blur(2px);
+    }
+    .cardPlay::before {
+        content: "";
+        position: absolute;
+        inset: -8px;
     }
     .rowPlay {
         right: 8px;

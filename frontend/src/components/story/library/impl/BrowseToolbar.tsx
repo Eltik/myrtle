@@ -69,7 +69,7 @@ const TALL: Record<Density, string> = {
     popover: "h-8 pointer-coarse:h-11",
 };
 
-const LABEL = "font-mono text-[10px] text-muted-foreground uppercase tracking-[0.12em]";
+const LABEL = "font-medium font-sans text-[12px] text-muted-foreground";
 
 function SearchBox({ state, t, className, inputRef, density }: { state: IBrowseToolbarState; t: BrowseT; className?: string; inputRef?: React.Ref<HTMLInputElement>; density: Density }): React.ReactElement {
     return (
@@ -193,7 +193,7 @@ function SortSelect({ state, t, className, density }: { state: IBrowseToolbarSta
     );
 }
 
-/** A panel section: the mono label over its control. The fieldsets carry their own accessible names, so the visible label is `aria-hidden` rather than read twice. */
+/** A panel section: the label over its control. The fieldsets carry their own accessible names, so the visible label is `aria-hidden` rather than read twice. */
 function PanelField({ label, children }: { label: string | null; children: React.ReactNode }): React.ReactElement {
     return (
         <div className="flex flex-col gap-2">

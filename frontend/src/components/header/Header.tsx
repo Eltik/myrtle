@@ -65,7 +65,7 @@ export default function Header() {
                 <div className="flex flex-1 items-center gap-2 sm:gap-4">
                     <MobileNav items={navItems} />
                     <Link to="/" className="flex min-w-0 shrink items-center gap-2 text-foreground no-underline">
-                        <img src="/logo/bust_transparent.png" alt="" width={28} height={28} className="h-7 w-7 shrink-0 object-contain" />
+                        <img src="/logo/bust_128.png" alt="" width={28} height={28} className="h-7 w-7 shrink-0 object-contain" />
                         {/* The wordmark yields below `sm`, not any control.
                             The action cluster is five tap targets on a phone
                             (search, language, theme, what's new, account) and

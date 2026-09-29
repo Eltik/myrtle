@@ -578,7 +578,7 @@ describe("commands that reached the engine in phase 3", () => {
         expect(e.step().timeline[0].state.popupHead).toBeUndefined();
     });
 
-    it("interlude puts a panel on its channel and `clear`/`switch=false` takes it off", () => {
+    it("legacyInterlude keeps the old reading: a full-stage image per channel that `switch=false` removes", () => {
         const s = script(
             [
                 { kind: "interlude", args: { channel: "3", type: "3", slot: "m", switch: "false", pfrom: "0,0", pto: "0,0", name: "sprite", duration: "1" } },
@@ -590,12 +590,51 @@ describe("commands that reached the engine in phase 3", () => {
             ],
             { characters: { sprite: SPRITE_A } },
         );
-        const e = createEngine(s, { nickname: "D" });
+        const e = createEngine(s, { nickname: "D", legacyInterlude: true });
         expect(e.step().timeline[0].state.interludes).toEqual({});
         const open = e.step();
-        expect(open.timeline[0].state.interludes["3"]).toEqual({ url: "/a.png", name: "sprite", x: -400, y: 0 });
-        expect(open.timeline[1].state.interludes["3"]).toEqual({ url: "/a.png", name: "sprite", x: 0, y: 0 });
+        expect(open.timeline[0].state.interludes["3"].legacy).toEqual({ url: "/a.png", name: "sprite", x: -400, y: 0 });
+        expect(open.timeline[1].state.interludes["3"].legacy).toEqual({ url: "/a.png", name: "sprite", x: 0, y: 0 });
         expect(e.step().timeline[0].state.interludes).toEqual({});
+    });
+
+    it("interlude is a WINDOW: `maskid` opens it, `switch` only toggles who is talking, `clear` closes it", () => {
+        // 15-13_beg lines 285..291, the Closure call, and 15-04_beg's bg type.
+        const s = script(
+            [
+                { kind: "interlude", args: { maskid: "group_interclude_vertical_common", size: "290,760", tsfrom: "0,1", tsto: "1,1", tsduration: "0.5", switch: "true", style: "0", offset: "-250,0", channel: "3" } },
+                { kind: "interlude", args: { channel: "3", switch: "true", type: "3", slot: "m", pfrom: "-250,0", pto: "-250,0", name: "sprite", duration: "0" } },
+                { kind: "interlude", args: { channel: "3", type: "2", slot: "r", switch: "true", name: "bg", duration: "0" } },
+                { kind: "text", text: "Closure talks" },
+                { kind: "interlude", args: { channel: "3", switch: "false" } },
+                { kind: "text", text: "Amiya talks" },
+                { kind: "interlude", args: { channel: "3", clear: "true", tsfrom: "1,1", tsto: "0,1", tsduration: "0.5" } },
+                { kind: "text", text: "gone" },
+            ],
+            { characters: { sprite: SPRITE_A }, backgrounds: { bg: "/bg.png" } },
+        );
+        const e = createEngine(s, { nickname: "D" });
+        const open = e.step();
+        const opening = open.timeline.map((f) => f.state.interludes["3"]?.scaleX);
+        expect(opening.slice(0, 2)).toEqual([0, 1]);
+        const shown = open.timeline[open.timeline.length - 1].state.interludes["3"];
+        expect(shown).toMatchObject({ maskId: "group_interclude_vertical_common", w: 290, h: 760, frameW: 290, frameH: 760, contentW: 254, contentH: 724, x: -250, y: 0, scaleX: 1, scaleY: 1, speaking: true, bg: { url: "/bg.png", name: "bg" } });
+        expect(shown.character).toMatchObject({ name: "sprite", x: -250, y: 0, alpha: 1 });
+        const muted = e.step().timeline.at(-1)?.state.interludes["3"];
+        expect(muted?.speaking).toBe(false);
+        expect(muted?.character?.name).toBe("sprite");
+        const closing = e.step();
+        expect(closing.timeline.map((f) => f.state.interludes["3"]?.scaleX)).toEqual([1, 0, undefined]);
+        expect(e.unhandledKinds).toEqual({});
+    });
+
+    it("the square window takes the prefab's own rect and the `char` name tag", () => {
+        const s = script([
+            { kind: "interlude", args: { maskid: "group_interclude_square_common", char: "Raidian", switch: "true", style: "1", offset: "-200,170", channel: "3" } },
+            { kind: "text", text: "In position." },
+        ]);
+        const panel = createEngine(s, { nickname: "D" }).step().timeline.at(-1)?.state.interludes["3"];
+        expect(panel).toMatchObject({ w: 300, h: 300, frameW: 250, frameH: 250, contentW: 214, contentH: 214, x: -200, y: 170, label: "Raidian", scaleX: 1 });
     });
 
     it("a name with no entry in `assets` produces NO url and is listed once in unresolvedAssets", () => {

@@ -78,7 +78,11 @@ export function bodyPlate(sprite: { plate?: unknown }, fromWire = true): BodyPla
     return { x, y, w, h };
 }
 
-function Body({ state, sec, mode }: { state: SlotState; sec: number; mode: "in" | "hold" | "out" }): React.ReactElement {
+/**
+ * The body texture with its face patch composited at `facePos`. Exported for
+ * the interlude window, which draws a character exactly as a slot does.
+ */
+export function Body({ state, sec, mode }: { state: Pick<SlotState, "sprite" | "name">; sec: number; mode: "in" | "hold" | "out" }): React.ReactElement {
     const face = facePlacement(state.sprite);
     const declared = bodyTextureSize(state.sprite);
     // A backend that predates `bodySize` sends none, so the texture is

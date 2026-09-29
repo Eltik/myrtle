@@ -284,3 +284,24 @@ export function jumpChips(library: ISectionedLibrary, recordsTitle: string): { i
     if (library.records.length > 0) chips.push({ id: RECORDS_ID, title: recordsTitle, count: library.records.length });
     return chips;
 }
+
+/**
+ * THE CHAPTER SHEET'S NEIGHBOURS, in the order the page is showing.
+ *
+ * `order` is the list the browse page renders, the shelves flattened in their
+ * own order (the same order the jump bar walks), or the one sorted list when a
+ * sort has flattened them. The ends do NOT wrap: the first chapter has no
+ * previous one and the last no next, and the sheet disables that chevron. A
+ * group the list does not hold (a search or a filter hid it after the sheet
+ * opened) has neither, rather than a guess.
+ */
+export function chapterNeighbours<T extends { id: string }>(order: readonly T[], id: string): { prev: T | null; next: T | null } {
+    const at = order.findIndex((g) => g.id === id);
+    if (at < 0) return { prev: null, next: null };
+    return { prev: order[at - 1] ?? null, next: order[at + 1] ?? null };
+}
+
+/** The order the browse page shows its chapters in: the sorted list when a sort has flattened the shelves, else every shelf's cards in shelf order. */
+export function browseOrder(sections: readonly { groups: readonly LibGroup[] }[], flat: readonly LibGroup[] | null): readonly LibGroup[] {
+    return flat ?? sections.flatMap((s) => s.groups);
+}

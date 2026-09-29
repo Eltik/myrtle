@@ -19,6 +19,9 @@ pub enum Command {
     /// Write only the `avg/characters` sprite-hub `hub.json` files into an
     /// existing output tree, without re-extracting any texture
     BackfillHubs(BackfillHubsArgs),
+    /// Rewrite only the `avg/characters` PNGs whose alpha the hub's
+    /// per-sprite `alphaTex` pairs differently from the `foo[alpha]` name rule
+    BackfillAvgFaces(BackfillAvgFacesArgs),
     /// Write only the story image trees' `sprites.json` files (rect, pixels
     /// per unit and pivot) into an existing output tree
     BackfillSprites(BackfillSpritesArgs),
@@ -119,6 +122,48 @@ pub struct BackfillHubsArgs {
     /// Output tree for that server (the directory holding `textures/`)
     #[arg(short, long)]
     pub output: PathBuf,
+
+    /// Also write into sprite folders that do not exist yet (default: skip
+    /// them, so the walk never invents a folder with no PNGs in it)
+    #[arg(long)]
+    pub create_missing: bool,
+
+    /// Number of parallel threads (default: number of CPUs)
+    #[arg(short = 'j', long = "jobs")]
+    pub jobs: Option<usize>,
+}
+
+/// `unpacker backfill-avg-faces` — the AVG character alpha merge on its own.
+/// It decodes every `avg/characters` bundle, pairs each colour texture with
+/// the alpha its hub sprite's `alphaTex` names (the name rule where a sprite
+/// carries none), and rewrites ONLY the PNGs whose pairing differs from what
+/// the name rule gave, so a tree extracted before 2026-09-29 gains the
+/// transparent faces without a multi-hour re-extract and nothing else in it is
+/// touched.
+#[derive(Parser)]
+pub struct BackfillAvgFacesArgs {
+    /// `ArkAssets` root for one server (the directory holding `avg/`)
+    #[arg(short, long)]
+    pub input: PathBuf,
+
+    /// Output tree for that server (the directory holding `textures/`)
+    #[arg(short, long)]
+    pub output: PathBuf,
+
+    /// Report the pairing census and write nothing
+    #[arg(long)]
+    pub dry_run: bool,
+
+    /// Write the re-paired textures, one `<folder>/<colour>\t<alpha>` per
+    /// line, to this file
+    #[arg(long)]
+    pub list: Option<PathBuf>,
+
+    /// Rewrite EVERY texture of every bundle (the extract's texture pass for
+    /// these bundles), not only the re-paired ones: for an A/B into an
+    /// alternate output root
+    #[arg(long)]
+    pub all: bool,
 
     /// Also write into sprite folders that do not exist yet (default: skip
     /// them, so the walk never invents a folder with no PNGs in it)

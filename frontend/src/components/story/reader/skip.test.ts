@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextSkip, SKIP_CLOSED, skipAvailable, synopsisParagraphs } from "./skip";
+import { nextSkip, SKIP_CLOSED, skipAvailable, skipNodeLine, synopsisParagraphs } from "./skip";
 
 describe("nextSkip", () => {
     it("every press opens the sheet: there is no once-per-session confirm", () => {
@@ -50,5 +50,22 @@ describe("synopsisParagraphs", () => {
         expect(synopsisParagraphs(undefined)).toEqual([]);
         expect(synopsisParagraphs(null)).toEqual([]);
         expect(synopsisParagraphs(" \n ")).toEqual([]);
+    });
+});
+
+describe("skipNodeLine", () => {
+    it("prints the code and the phase the way the share card does", () => {
+        expect(skipNodeLine({ code: "15-4", avgTag: "Before Operation" }, "Chapter 15")).toBe("15-4 · Before Operation");
+        expect(skipNodeLine({ code: " 15-4 ", avgTag: " After Operation " }, "Chapter 15")).toBe("15-4 · After Operation");
+    });
+
+    it("names the group where the table gives no code", () => {
+        expect(skipNodeLine({}, "Amiya")).toBe("Amiya");
+        expect(skipNodeLine({ code: "", avgTag: "Interlude" }, "Chapter 15")).toBe("Chapter 15 · Interlude");
+        expect(skipNodeLine(null, "Prologue")).toBe("Prologue");
+    });
+
+    it("is empty when nothing names the node", () => {
+        expect(skipNodeLine(null, "  ")).toBe("");
     });
 });

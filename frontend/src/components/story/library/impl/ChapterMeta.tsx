@@ -16,7 +16,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { type StoryProgress, saveProgress } from "#/lib/story/progress";
 import { humanTime, minutesFor, useReadingSpeed } from "#/lib/story/reading";
 import type { messages } from "./Browse.messages";
-import { releaseYear } from "./chapters";
+import { releaseYear, specModel } from "./chapters";
 import { groupWords, type LibGroup, pickContinue, readFraction, sortedStories } from "./derive";
 import { clearMarks, markAllRead, markable, markedCount } from "./marks";
 import type { messages as marksMessages } from "./ReadToggle.messages";
@@ -53,8 +53,12 @@ export function MetaRow({ group, progress, gameRead }: { group: LibGroup; progre
 
     return (
         <div className="flex shrink-0 flex-col gap-3 border-border border-b px-4 pt-3 pb-4 sm:px-5">
-            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[10.5px] text-muted-foreground uppercase tabular-nums tracking-[0.07em]">
-                <span>{cardCode(group)}</span>
+            {/* The end padding is the pinned cluster's (previous, next, close), which
+                sits over this line once the hero has scrolled away: 3 x 44 px plus
+                two 6 px gaps and the 8 px inset is 152 px on a phone, 3 x 36 + 20 is
+                128 px on a fine pointer. */}
+            <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 pe-38 font-sans text-[13px] text-muted-foreground tabular-nums sm:pointer-fine:pe-32">
+                <span>{sheetCode(group, t)}</span>
                 <Rule />
                 <span>{t("browse.card.entries", { count: group.stories.length })}</span>
                 <Rule />
@@ -84,7 +88,7 @@ export function MetaRow({ group, progress, gameRead }: { group: LibGroup; progre
                     <span aria-hidden="true" className="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-secondary">
                         <span className="block h-full rounded-full bg-primary transition-[width] duration-300 ease-out motion-reduce:transition-none" style={{ width: `${pct}%` }} />
                     </span>
-                    <span className="shrink-0 font-mono text-[10.5px] text-muted-foreground tabular-nums">{t("chapter.readFraction", { read: fraction.read, total: fraction.total })}</span>
+                    <span className="shrink-0 font-sans text-[12.5px] text-muted-foreground tabular-nums">{t("chapter.readFraction", { read: fraction.read, total: fraction.total })}</span>
                 </div>
             ) : null}
 
@@ -168,4 +172,16 @@ function MarkActions({ group, progress, gameRead }: { group: LibGroup; progress:
 /** The hairline between two meta facts. A middle dot is a character and inherits the line's tracking; this is 1 px wide at every size. */
 function Rule(): React.ReactElement {
     return <span aria-hidden="true" className="h-3 w-px bg-border" />;
+}
+
+/**
+ * The chapter's handle, as its ticket prints it: "Chapter 0" for the mainline
+ * and the operation code for everything else. The meta line used to print
+ * `cardCode`, which for the mainline is the zone's own third name, EPISODE 00,
+ * capitals in the data itself; with the mono and the uppercase gone that was
+ * the one word still shouting, and the ticket already calls it Chapter 0.
+ */
+function sheetCode(group: LibGroup, t: BrowseT): string {
+    const model = specModel(group, cardCode(group));
+    return model.kind === "chapter" ? t("browse.card.chapter", { n: model.chapter }) : model.code;
 }

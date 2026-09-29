@@ -2,6 +2,7 @@ import { ChevronRightIcon, PauseIcon, PlayIcon } from "lucide-react";
 import type React from "react";
 import { memo, useMemo } from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
+import { useMediaQuery } from "#/hooks/use-media-query";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { humanTime, minutesFor, useReadingSpeed } from "#/lib/story/reading";
@@ -12,10 +13,10 @@ import type { messages } from "./Browse.messages";
 import { chapterNumberOf, specModel } from "./chapters";
 import { groupWords, type IReadFraction, type LibGroup, type ReadFilter } from "./derive";
 import styles from "./GroupCard.module.css";
-import { type ITicketPalette, useTicketPalette } from "./palette";
+import { FALLBACK_PALETTE, type ITicketPalette, useTicketPalette } from "./palette";
 import { themeTrack, toggle as togglePlayer, useIsSounding } from "./player";
 import { cardCode, kindOf, type StoryKind } from "./sections";
-import { type IFitBounds, useTitleFit } from "./titleFit";
+import { TICKET_FIT, TICKET_FIT_PHONE, useTitleFit } from "./titleFit";
 
 type BrowseT = TypedT<typeof messages>;
 type ThemeT = TypedT<typeof archiveMessages>;
@@ -51,7 +52,7 @@ export function ReadMark({ state, className }: { state: ReadFilter; className?: 
     return <span aria-hidden="true" className={cn(styles.mark, state === "progress" && styles.markProgress, state === "done" && styles.markDone, className)} />;
 }
 
-/** The card grid. `auto-fill, minmax(300px, 1fr)` at an 18 px gap, which lands four 336.5 x 183.1 tickets across a 1,400 px content column. */
+/** The card grid. `auto-fill, minmax(200px, 1fr)` at a 12 px gap, which lands six 223.3 x 121.5 tickets across the 1,400 px column at 1440; under 640 the track is 160 px, two across a phone. */
 export function GroupGrid({ children }: { children: React.ReactNode }): React.ReactElement {
     return <div className={styles.grid}>{children}</div>;
 }
@@ -88,25 +89,11 @@ export interface IGroupCardProps {
  * information. What survives is the spec row's DOT and the progress fill,
  * which the reviewer liked, and nothing else on the card reads `--ticket-c*`.
  */
+// The list row carries its inks on the button, because the row's own left
+// rule reads `--ticket-c1`. The ticket does not: see `InkDot`.
 function inkVars(palette: ITicketPalette, index: number): React.CSSProperties {
     return { "--ticket-c1": palette.c1, "--ticket-c2": palette.c2, "--i": index } as React.CSSProperties;
 }
-
-/**
- * THE TICKET'S TEXT-TITLE BOX, for the 6 groups with no logotype.
- *
- * The box is 72% of the card, the same cap the logotype is contained into, and
- * it is measured against the NARROWEST card the grid can make rather than the
- * one at 1554: `minmax(300px, 1fr)` bottoms out at 300 px, so 216 px is the
- * width every card is at least. At 1554 a card is 336.5 and its box 242.3, so
- * the fit has 26.3 px of slack there and 0 at the narrow end, which is the
- * right way round: a fit measured against 242.3 would overflow a 300 px card
- * by up to 12.1%.
- *
- * The ceiling and the floor take the same step up as the logotype's caps, 28
- * to 32 and 18 to 21, which is the 1.16 the box itself grew by.
- */
-const CARD_FIT: IFitBounds = { box: 216, max: 32, min: 21, lines: 2, floorLines: 3 };
 
 /**
  * THE CHAPTER'S THEME, ONE PRESS FROM THE SHELF.
@@ -121,8 +108,11 @@ const CARD_FIT: IFitBounds = { box: 216, max: 32, min: 21, lines: 2, floorLines:
  * because a nested button is invalid markup. `stopPropagation` is not enough
  * on its own here and is not used: the two controls never overlap in the DOM,
  * so a press on the glyph was never a press on the card.
+ *
+ * Memoised: its props are the group and a class name, and a card re-rendering
+ * for its palette or its fraction has nothing new to tell it.
  */
-function ThemeGlyph({ group, className }: { group: LibGroup; className: string }): React.ReactElement | null {
+const ThemeGlyph = memo(function ThemeGlyph({ group, className }: { group: LibGroup; className: string }): React.ReactElement | null {
     const t: ThemeT = useT("story");
     const track = themeTrack(group);
     const sounding = useIsSounding(track?.key ?? null);
@@ -133,6 +123,53 @@ function ThemeGlyph({ group, className }: { group: LibGroup; className: string }
         <button type="button" className={className} data-sounding={sounding} onClick={() => togglePlayer(track)} aria-label={sounding ? t("archive.theme.pause", { name }) : t("archive.theme.play", { name })}>
             {sounding ? <PauseIcon className="size-4" aria-hidden="true" /> : <PlayIcon className="size-4" aria-hidden="true" />}
         </button>
+    );
+});
+
+/**
+ * THE TICKET'S INKS LIVE ON THE TWO LEAVES THAT DRAW THEM, and each leaf reads
+ * the palette itself.
+ *
+ * On the button, a custom property is inherited, so a palette landing there
+ * restyled all ~39 elements of the card: on load that was one 3,374-element
+ * style recalc (89.1 ms at 1440, dev) for 85 dots and 85 fills. And the card
+ * held the palette state, so its arrival re-rendered all 85 cards in one
+ * commit (49.4 to 54.4 ms in the harness, 168.7 ms under the DevTools MCP,
+ * dev). Now the arrival re-renders these two spans per card and restyles two
+ * elements. The DOM, the variables and the rules that read them are the
+ * same; a card with no art never samples and keeps the fallback ink.
+ */
+function InkDot({ art }: { art: string | null }): React.ReactElement {
+    const palette = useTicketPalette(art);
+    return <span aria-hidden="true" className={styles.dot} style={{ "--ticket-c2": palette.c2 } as React.CSSProperties} />;
+}
+
+function InkFill({ art, pct }: { art: string | null; pct: number }): React.ReactElement {
+    const palette = useTicketPalette(art);
+    return <span className={styles.progressFill} style={{ width: `${pct}%`, "--ticket-c1": palette.c1 } as React.CSSProperties} />;
+}
+
+/** The stub's blank face, drawn only on a card with no art, whose palette is always the fallback. */
+const NO_ART_INK = { "--ticket-c1": FALLBACK_PALETTE.c1 } as React.CSSProperties;
+
+/**
+ * The set name, for the 6 groups with no logotype. It is its OWN component so
+ * the measurement hooks run on those 6 cards only: in the card they ran on all
+ * 87, and each of the 81 logotype cards paid a media-query subscription, a
+ * canvas measurement and a state update (two, once the webfont landed) for a
+ * title it never draws.
+ */
+function FittedTitle({ name }: { name: string }): React.ReactElement {
+    const phone = useMediaQuery("max-sm");
+    const fit = useTitleFit(name, phone ? TICKET_FIT_PHONE : TICKET_FIT);
+    return (
+        <span className={styles.title} style={{ "--title-size": fit.size, "--title-wrap": fit.breakAnywhere ? "anywhere" : "normal" } as React.CSSProperties}>
+            {fit.lines.map((line) => (
+                <span key={line} className={styles.titleLine}>
+                    {line}
+                </span>
+            ))}
+        </span>
     );
 }
 
@@ -160,51 +197,47 @@ export const GroupCard = memo(function GroupCard({ group, fraction, onOpen, inde
     // with no colour in it at all.
     const plate = plateSource(group);
     const art = plate.kind === "none" ? null : asset(plate.url);
-    const palette = useTicketPalette(art);
     const title = titleSource(group);
-    const fit = useTitleFit(group.name, CARD_FIT);
     const pct = fraction.total > 0 ? Math.round((fraction.read / fraction.total) * 100) : 0;
-    const spec = specText(group, t, wpm);
-    const inks = useMemo(() => inkVars(palette, index), [palette, index]);
+    const spec = specParts(group, t, wpm);
+    const stagger = useMemo(() => ({ "--i": index }) as React.CSSProperties, [index]);
 
     return (
         <div className={styles.cardWrap}>
-            <button type="button" onClick={() => onOpen(group.id)} aria-label={t("browse.card.openWithProgress", { name: group.name, read: fraction.read, total: fraction.total })} className={styles.ticket} style={inks}>
-                <span className={cn(styles.half, styles.body)}>
-                    {art ? <img src={art} alt="" crossOrigin="anonymous" data-source={plate.kind} loading="lazy" decoding="async" className={styles.kv} style={{ objectPosition: plateCrop(group) }} /> : null}
-                    <span aria-hidden="true" className={styles.scrim} />
-                    <span className={styles.content}>
-                        <span className={styles.badge}>{t(`browse.badge.${kindOf(group)}`)}</span>
-                        {title.kind === "logotype" ? (
-                            <img src={asset(title.url)} alt={group.name} loading="lazy" decoding="async" className={styles.logotype} />
-                        ) : (
-                            <span className={styles.title} style={{ "--title-size": fit.size, "--title-wrap": fit.breakAnywhere ? "anywhere" : "normal" } as React.CSSProperties}>
-                                {fit.lines.map((line) => (
-                                    <span key={line} className={styles.titleLine}>
-                                        {line}
-                                    </span>
-                                ))}
-                            </span>
-                        )}
-                        <span className={styles.spec}>
-                            <span aria-hidden="true" className={styles.dot} />
-                            <span className={styles.specText}>{spec}</span>
+            <button type="button" onClick={() => onOpen(group.id)} aria-label={t("browse.card.openWithProgress", { name: group.name, read: fraction.read, total: fraction.total })} className={styles.card} style={stagger}>
+                <span className={styles.ticket}>
+                    <span className={cn(styles.half, styles.body)}>
+                        {art ? <img src={art} alt="" crossOrigin="anonymous" data-source={plate.kind} loading="lazy" decoding="async" className={styles.kv} style={{ objectPosition: plateCrop(group) }} /> : null}
+                        <span aria-hidden="true" className={styles.scrim} />
+                        <span className={styles.content}>
+                            <span className={styles.badge}>{t(`browse.badge.${kindOf(group)}`)}</span>
+                            {title.kind === "logotype" ? <img src={asset(title.url)} alt={group.name} loading="lazy" decoding="async" className={styles.logotype} /> : <FittedTitle name={group.name} />}
+                        </span>
+                        <span aria-hidden="true" className={styles.progress}>
+                            <InkFill art={art} pct={pct} />
                         </span>
                     </span>
-                    <span aria-hidden="true" className={styles.progress}>
-                        <span className={styles.progressFill} style={{ width: `${pct}%` }} />
+                    <span aria-hidden="true" className={styles.stub}>
+                        <span className={cn(styles.half, styles.stubFace)}>{art ? <img src={art} alt="" crossOrigin="anonymous" loading="lazy" decoding="async" className={styles.stubImage} /> : <span className={styles.stubBlank} style={NO_ART_INK} />}</span>
+                    </span>
+                    {/* THE BOOKMARK SAYS WHAT IT MEANS NOW. It is amber part-read and green
+                        finished, and it carried neither a name nor a number, so the colour
+                        was a code with no key. `role="img"` plus the fraction gives it one,
+                        and the native `title` shows the same words on hover; the card's own
+                        `aria-label` already carries the fraction, so this adds no tab stop
+                        and no second announcement of the same number. */}
+                    {pct > 0 ? <span role="img" aria-label={t("chapter.readFraction", { read: fraction.read, total: fraction.total })} title={t("chapter.readFraction", { read: fraction.read, total: fraction.total })} className={cn(styles.bookmark, fraction.done && styles.bookmarkDone)} /> : null}
+                </span>
+                <span className={styles.spec}>
+                    <InkDot art={art} />
+                    <span className={styles.specText}>
+                        {spec.map((part, at) => (
+                            <span key={part} className={styles.specField}>
+                                {at < spec.length - 1 ? `${part} ·` : part}
+                            </span>
+                        ))}
                     </span>
                 </span>
-                <span aria-hidden="true" className={styles.stub}>
-                    <span className={cn(styles.half, styles.stubFace)}>{art ? <img src={art} alt="" crossOrigin="anonymous" loading="lazy" decoding="async" className={styles.stubImage} /> : <span className={styles.stubBlank} />}</span>
-                </span>
-                {/* THE BOOKMARK SAYS WHAT IT MEANS NOW. It is amber part-read and green
-                    finished, and it carried neither a name nor a number, so the colour
-                    was a code with no key. `role="img"` plus the fraction gives it one,
-                    and the native `title` shows the same words on hover; the card's own
-                    `aria-label` already carries the fraction, so this adds no tab stop
-                    and no second announcement of the same number. */}
-                {pct > 0 ? <span role="img" aria-label={t("chapter.readFraction", { read: fraction.read, total: fraction.total })} title={t("chapter.readFraction", { read: fraction.read, total: fraction.total })} className={cn(styles.bookmark, fraction.done && styles.bookmarkDone)} /> : null}
             </button>
             <ThemeGlyph group={group} className={styles.cardPlay} />
         </div>
@@ -222,13 +255,13 @@ export const GroupCard = memo(function GroupCard({ group, fraction, onOpen, inde
  * applied to the group's count, so a card and the sheet behind it always quote
  * the same span. A group with no count simply ends a field earlier.
  */
-function specText(group: LibGroup, t: BrowseT, wpm: number): string {
+function specParts(group: LibGroup, t: BrowseT, wpm: number): string[] {
     const model = specModel(group, cardCode(group));
     const entries = t("browse.card.entries", { count: model.entries });
     const parts = model.kind === "chapter" ? [t("browse.card.chapter", { n: model.chapter }), entries] : model.year === null ? [model.code, entries] : [model.code, String(model.year), entries];
     const words = groupWords(group);
     if (words !== null && words > 0) parts.push(humanTime(minutesFor(words, wpm)));
-    return parts.join(" · ");
+    return parts;
 }
 
 /**
@@ -268,7 +301,7 @@ export const GroupRow = memo(function GroupRow({ group, fraction, onOpen, index 
                     <span className={styles.rowTitle}>{group.name}</span>
                     <span className={styles.rowSpec}>
                         <span aria-hidden="true" className={styles.dot} />
-                        {specText(group, t, wpm)}
+                        {specParts(group, t, wpm).join(" · ")}
                     </span>
                 </span>
                 {fraction.total > 0 ? (

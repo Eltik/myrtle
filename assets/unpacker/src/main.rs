@@ -66,6 +66,7 @@ fn main() {
         Command::List(args) => cmd_list(&args),
         Command::Verify(args) => cmd_verify(&args),
         Command::BackfillHubs(args) => cmd_backfill_hubs(&args),
+        Command::BackfillAvgFaces(args) => cmd_backfill_avg_faces(&args),
         Command::BackfillSprites(args) => cmd_backfill_sprites(&args),
         Command::BackfillStoryArt(args) => cmd_backfill_story_art(&args),
         Command::BackfillVideo(args) => cmd_backfill_video(&args),
@@ -338,6 +339,228 @@ fn cmd_backfill_sprites(args: &cli::BackfillSpritesArgs) {
         println!("first folders with no PNGs on disk: {head:?}");
     }
     println!("wall time {:.1} s", started.elapsed().as_secs_f64());
+}
+
+/// One `avg/characters` bundle's share of the `backfill-avg-faces` census.
+#[derive(Default)]
+struct AvgFacesRow {
+    stem: String,
+    /// The folder's PNGs are on disk (or `--create-missing` was given).
+    present: bool,
+    /// Colour textures the hub pairs by `alphaTex` reference.
+    by_ref: usize,
+    /// ... of which the reference names the same alpha as the name rule.
+    agree: usize,
+    /// ... of which the name rule found NO alpha: the opaque faces.
+    was_unpaired: Vec<String>,
+    /// ... of which the name rule found a DIFFERENT alpha.
+    was_other: Vec<String>,
+    /// References whose alpha texture is not in the bundle's decoded set.
+    dangling: usize,
+    written: usize,
+    failed: usize,
+}
+
+/// Rewrite the AVG character PNGs whose alpha pairing the hub's `alphaTex`
+/// changes, and nothing else. Reports how many colour textures the hub pairs,
+/// how many of those agree with the name rule, and how many the name rule had
+/// left opaque or paired with another alpha.
+fn cmd_backfill_avg_faces(args: &cli::BackfillAvgFacesArgs) {
+    let started = std::time::Instant::now();
+    if let Some(jobs) = args.jobs {
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(jobs)
+            .build_global()
+            .ok();
+    }
+    let root = args.input.join("avg/characters");
+    let mut bundles: Vec<PathBuf> = WalkDir::new(&root)
+        .min_depth(1)
+        .into_iter()
+        .filter_map(Result::ok)
+        .map(walkdir::DirEntry::into_path)
+        .filter(|p| p.extension().is_some_and(|e| e == "ab"))
+        .collect();
+    bundles.sort();
+    if bundles.is_empty() {
+        eprintln!("error: no .ab bundles under {}", root.display());
+        std::process::exit(1);
+    }
+    println!(
+        "re-pairing AVG character alpha for {} bundles{}",
+        bundles.len(),
+        if alpha_merge::alpha_by_name_only() {
+            " (UNPACKER_ALPHA_BY_NAME=1: name rule only)"
+        } else {
+            ""
+        }
+    );
+
+    let rows: Vec<AvgFacesRow> = bundles
+        .par_iter()
+        .map(|path| backfill_avg_faces_bundle(path, args))
+        .collect();
+
+    let (mut present, mut by_ref, mut agree, mut dangling, mut written, mut failed) =
+        (0, 0, 0, 0, 0, 0);
+    let mut was_unpaired: Vec<String> = Vec::new();
+    let mut was_other: Vec<String> = Vec::new();
+    let mut folders_changed = 0usize;
+    for r in rows {
+        if !r.present {
+            continue;
+        }
+        present += 1;
+        by_ref += r.by_ref;
+        agree += r.agree;
+        dangling += r.dangling;
+        written += r.written;
+        failed += r.failed;
+        if !r.was_unpaired.is_empty() || !r.was_other.is_empty() {
+            folders_changed += 1;
+        }
+        was_unpaired.extend(r.was_unpaired.iter().map(|n| format!("{}/{n}", r.stem)));
+        was_other.extend(r.was_other.iter().map(|n| format!("{}/{n}", r.stem)));
+    }
+    was_unpaired.sort();
+    was_other.sort();
+    if let Some(list) = &args.list {
+        let mut lines: Vec<&String> = was_unpaired.iter().chain(&was_other).collect();
+        lines.sort();
+        let mut body = lines
+            .iter()
+            .map(|l| l.as_str())
+            .collect::<Vec<_>>()
+            .join("\n");
+        body.push('\n');
+        if let Err(e) = std::fs::write(list, body) {
+            eprintln!("error writing {}: {e}", list.display());
+        }
+    }
+    println!(
+        "{present} bundles with an output folder; {by_ref} colour textures paired by alphaTex, {agree} of them the same alpha the name rule finds, {dangling} references to a texture the bundle does not decode"
+    );
+    println!(
+        "re-paired: {} colour textures in {folders_changed} folders, {} the name rule left OPAQUE and {} it paired with a different alpha",
+        was_unpaired.len() + was_other.len(),
+        was_unpaired.len(),
+        was_other.len()
+    );
+    if !was_other.is_empty() {
+        let head: Vec<&String> = was_other.iter().take(10).collect();
+        println!("first re-paired from a different alpha: {head:?}");
+    }
+    if args.dry_run {
+        println!("dry run: nothing written");
+    } else {
+        println!("PNGs written: {written}; failed: {failed}");
+    }
+    println!("wall time {:.1} s", started.elapsed().as_secs_f64());
+    if failed > 0 {
+        std::process::exit(1);
+    }
+}
+
+fn backfill_avg_faces_bundle(path: &Path, args: &cli::BackfillAvgFacesArgs) -> AvgFacesRow {
+    let stem = path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or_default()
+        .to_owned();
+    let dir = args.output.join("textures/avg/characters").join(&stem);
+    let mut row = AvgFacesRow {
+        present: dir.is_dir() || args.create_missing,
+        stem,
+        ..AvgFacesRow::default()
+    };
+    if !row.present {
+        return row;
+    }
+    let Some(bundle) = std::fs::read(path)
+        .ok()
+        .and_then(|d| BundleFile::parse(d).ok())
+    else {
+        return row;
+    };
+    let mut resources: HashMap<String, Vec<u8>> = HashMap::new();
+    for entry in &bundle.files {
+        if is_resource_entry(&entry.path) {
+            let filename = entry.path.rsplit('/').next().unwrap_or(&entry.path);
+            resources.insert(filename.to_string(), entry.data.clone());
+        }
+    }
+    let mut textures: HashMap<String, export::texture::DecodedTexture> = HashMap::new();
+    let mut tex_pid_names: HashMap<i64, String> = HashMap::new();
+    for entry in &bundle.files {
+        if is_resource_entry(&entry.path) {
+            continue;
+        }
+        let Ok(sf) = SerializedFile::parse(entry.data.clone()) else {
+            continue;
+        };
+        for obj in &sf.objects {
+            if obj.class_id != 28 {
+                continue;
+            }
+            let Ok(val) = read_object(&sf, obj) else {
+                continue;
+            };
+            if let Ok(Some(tex)) = decode_texture_object(&val, &resources) {
+                tex_pid_names.insert(obj.path_id, tex.name.clone());
+                textures.insert(tex.name.clone(), tex);
+            }
+        }
+    }
+    let pairs = avg_hub::alpha_pairs_from_bundle(&bundle, &tex_pid_names);
+    let by_name: HashMap<String, String> = alpha_merge::resolve_pairs(&textures, &HashMap::new())
+        .into_iter()
+        .collect();
+    let resolved = alpha_merge::resolve_pairs(&textures, &pairs);
+    row.by_ref = pairs.len();
+    row.dangling = pairs
+        .values()
+        .filter(|a| !textures.contains_key(a.as_str()))
+        .count();
+    let mut changed_pairs: HashMap<String, String> = HashMap::new();
+    for (colour, alpha) in &resolved {
+        if !pairs.contains_key(colour) {
+            continue;
+        }
+        match by_name.get(colour) {
+            Some(a) if a == alpha => {
+                row.agree += 1;
+                continue;
+            }
+            Some(_) => row.was_other.push(format!("{colour}\t{alpha}")),
+            None => row.was_unpaired.push(format!("{colour}\t{alpha}")),
+        }
+        changed_pairs.insert(colour.clone(), alpha.clone());
+    }
+    if args.dry_run {
+        return row;
+    }
+    if args.all {
+        std::fs::create_dir_all(&dir).ok();
+        let n = textures.len();
+        row.written = alpha_merge::merge_and_export_paired(textures, &dir, &pairs);
+        row.failed = n - row.written;
+        return row;
+    }
+    // Only the re-paired colours, each with its own alpha beside it so the
+    // merge sees the pair; the alpha texture itself is NOT rewritten.
+    for (colour, alpha) in &changed_pairs {
+        if let (Some(c), Some(a)) = (textures.get(colour), textures.get(alpha)) {
+            let merged = alpha_merge::combine_with_alpha(c, a);
+            match save_decoded_texture(&merged, &dir) {
+                Ok(()) => row.written += 1,
+                Err(e) => {
+                    eprintln!("  error saving {}/{colour}: {e}", row.stem);
+                    row.failed += 1;
+                }
+            }
+        }
+    }
+    row
 }
 
 /// Write the sprite-hub `hub.json` files for one server without re-extracting
@@ -1501,6 +1724,9 @@ fn process_bundle(
         // Per-texture output subdir (relative to `textures/`), keyed by m_Name.
         // Only populated for anon bundles; absent entries fall back to bundle_subdir.
         let mut tex_dirs: HashMap<String, PathBuf> = HashMap::new();
+        // `Texture2D` path ID -> `m_Name`, so the AVG character hub's
+        // per-sprite `alphaTex` references can be turned into name pairs.
+        let mut tex_pid_names: HashMap<i64, String> = HashMap::new();
 
         for entry in &bundle.files {
             if is_resource_entry(&entry.path) {
@@ -1613,6 +1839,7 @@ fn process_bundle(
                                 {
                                     tex_dirs.insert(tex.name.clone(), cdir);
                                 }
+                                tex_pid_names.insert(obj.path_id, tex.name.clone());
                                 decoded_textures.insert(tex.name.clone(), tex);
                             }
                             Ok(None) => {}
@@ -1653,6 +1880,15 @@ fn process_bundle(
             // the level's tile grid dims (with a 16:9 fallback).
             let is_mappreview = stage_preview::detect_mappreview_bundle(&bundle_subdir);
 
+            // An AVG character's faces take their alpha from the hub's
+            // per-sprite `alphaTex`, which does not follow the `foo[alpha]`
+            // names; every other texture family keeps the name rule alone.
+            let alpha_pairs = if merge_alpha && avg_hub::is_avg_character_bundle(&bundle_subdir) {
+                avg_hub::alpha_pairs_from_bundle(&bundle, &tex_pid_names)
+            } else {
+                HashMap::new()
+            };
+
             for (sub, mut texs) in groups {
                 let dir = output_dir.join("textures").join(&sub);
                 std::fs::create_dir_all(&dir).ok();
@@ -1664,7 +1900,7 @@ fn process_bundle(
                 }
 
                 if merge_alpha {
-                    exported += alpha_merge::merge_and_export(texs, &dir);
+                    exported += alpha_merge::merge_and_export_paired(texs, &dir, &alpha_pairs);
                 } else {
                     for tex in texs.values() {
                         match save_decoded_texture(tex, &dir) {

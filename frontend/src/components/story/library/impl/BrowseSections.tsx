@@ -24,6 +24,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
 import { Sheet, SheetHeader, SheetPanel, SheetPopup, SheetTitle, SheetTrigger } from "#/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
+import { useMediaQuery } from "#/hooks/use-media-query";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
@@ -41,7 +42,7 @@ export function FlatHead({ title, count }: { title: string; count: string }): Re
         <div className="mb-3 flex items-end justify-between gap-3 border-border border-b pb-2">
             <div className="flex min-w-0 flex-col gap-0.5">
                 <h2 className="m-0 font-bold font-heading text-[13px] text-foreground uppercase tracking-widest sm:truncate">{title}</h2>
-                <span className="font-mono text-[10px] text-muted-foreground uppercase tabular-nums tracking-[0.08em] sm:truncate">{count}</span>
+                <span className="font-sans text-[12px] text-muted-foreground tabular-nums sm:truncate">{count}</span>
             </div>
         </div>
     );
@@ -129,7 +130,7 @@ export function SectionGlyph({ chip, place, className, ink = "theme", alone = fa
  * sits behind the kind the section is all of and in front of the count,
  * reading "Main story · Ch. 4-8 · 6 chapters".
  */
-export function SectionHead({ chip, count, action }: { chip: IChipModel | undefined; count: string; action?: React.ReactNode }): React.ReactElement | null {
+export const SectionHead = memo(function SectionHead({ chip, count, action }: { chip: IChipModel | undefined; count: string; action?: React.ReactNode }): React.ReactElement | null {
     const t: BrowseT = useT("story");
     if (!chip) return null;
     const heading = chip.name;
@@ -147,13 +148,13 @@ export function SectionHead({ chip, count, action }: { chip: IChipModel | undefi
                     column is 245 px and the string has never been cut. */}
                 <div className="flex min-w-0 flex-col gap-0.5">
                     <h2 className="m-0 font-bold font-heading text-[15px] text-foreground uppercase tracking-widest sm:truncate">{heading}</h2>
-                    <span className="font-mono text-[10px] text-muted-foreground uppercase tabular-nums tracking-[0.08em] sm:truncate">{under}</span>
+                    <span className="font-sans text-[12px] text-muted-foreground tabular-nums sm:truncate">{under}</span>
                 </div>
             </div>
             {action}
         </div>
     );
-}
+});
 
 /** How much of the scroller is faded at each edge once there is something to scroll to. */
 const FADE = 28;
@@ -287,6 +288,13 @@ export function JumpBar({ chips, tools }: { chips: readonly IChipModel[]; tools:
     const fade = `linear-gradient(to right, transparent 0, #000 ${edges.start ? FADE : 0}px, #000 calc(100% - ${edges.end ? FADE : 0}px), transparent 100%)`;
     // Before the spy has fired (and on the server) the reader is at the top, which is the first section.
     const current = chips.find((chip) => chip.id === active) ?? chips[0] ?? null;
+    // THE PICKER FOLLOWS THE SPY ONLY WHERE IT IS SHOWN. From 640 up it is
+    // `display: none`, and following the section there re-rendered its sheet
+    // primitives on every section change of a scroll (18.2 ms of the 86 ms of
+    // React in the 1440 wheel test, dev). Above 640 it holds the first section,
+    // which is also what the server renders; under 640 it is live.
+    const phone = useMediaQuery("max-sm");
+    const pickerCurrent = phone ? current : (chips[0] ?? null);
 
     return (
         <nav aria-label={t("browse.jump.aria")} className="page-bleed sticky top-14 z-20 mt-4 border-border/60 border-b bg-background/85 px-(--page-gutter) pt-1 pb-0.75 backdrop-blur-md sm:top-16 sm:py-2">
@@ -297,7 +305,7 @@ export function JumpBar({ chips, tools }: { chips: readonly IChipModel[]; tools:
                     <span className="min-w-0 flex-1 truncate font-bold font-heading text-[13px] text-foreground uppercase tracking-widest">{t("browse.section.sorted")}</span>
                 ) : (
                     <>
-                        <SectionPicker chips={chips} current={current} t={t} />
+                        {pickerCurrent ? <SectionPicker chips={chips} current={pickerCurrent} t={t} /> : null}
                         <div ref={scroller} onScroll={measure} className="msv-scroll -my-1 hidden min-w-0 flex-1 gap-1 overflow-x-auto py-1 sm:flex" style={{ maskImage: fade, WebkitMaskImage: fade }}>
                             {chips.map((chip) => (
                                 <JumpChip key={chip.id} chip={chip} on={active === chip.id} t={t} />
@@ -351,7 +359,7 @@ const SectionPicker = memo(function SectionPicker({ chips, current, t }: { chips
             >
                 <SectionGlyph chip={current} place="chip" className="opacity-80" />
                 <span className="min-w-0 flex-1 truncate font-sans font-semibold text-[13px]">{current.name}</span>
-                {range ? <span className="shrink-0 font-mono text-[10px] text-muted-foreground uppercase tabular-nums tracking-[0.08em]">{range}</span> : null}
+                {range ? <span className="shrink-0 font-sans text-[12px] text-muted-foreground tabular-nums">{range}</span> : null}
                 <ChevronDownIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
             </SheetTrigger>
             <SheetPopup side="bottom" className="max-h-[80dvh]" closeProps={{ className: "absolute end-2 top-2 size-11" }}>
@@ -385,9 +393,9 @@ const SectionPicker = memo(function SectionPicker({ chips, current, t }: { chips
                                         </span>
                                         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                                             <span className="truncate font-sans font-semibold text-[13.5px]">{chip.name}</span>
-                                            {under ? <span className="truncate font-mono text-[10px] text-muted-foreground uppercase tabular-nums tracking-[0.08em]">{under}</span> : null}
+                                            {under ? <span className="truncate font-sans text-[12px] text-muted-foreground tabular-nums">{under}</span> : null}
                                         </span>
-                                        <span className="shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">{chip.count}</span>
+                                        <span className="shrink-0 font-sans text-[12px] text-muted-foreground tabular-nums">{chip.count}</span>
                                     </button>
                                 </li>
                             );
@@ -453,7 +461,7 @@ const JumpChip = memo(function JumpChip({ chip, on, t }: { chip: IChipModel; on:
             <TooltipContent>
                 <span className="flex flex-col gap-0.5 py-0.5">
                     <span className="font-semibold">{chip.name}</span>
-                    <span className="font-mono text-[10px] text-muted-foreground uppercase tabular-nums">{underLine([chip.range ? rangeLabel(chip.range, t) : chip.includes ? includesLabel(chip.includes, t) : null, t("browse.section.count", { count: chip.count })])}</span>
+                    <span className="font-sans text-[12px] text-muted-foreground tabular-nums">{underLine([chip.range ? rangeLabel(chip.range, t) : chip.includes ? includesLabel(chip.includes, t) : null, t("browse.section.count", { count: chip.count })])}</span>
                 </span>
             </TooltipContent>
         </Tooltip>

@@ -33,10 +33,10 @@ import type { StoryCommand } from "#/types/generated/StoryCommand";
 import type { StoryScript } from "#/types/generated/StoryScript";
 import type { VideoSources } from "#/types/generated/VideoSources";
 import { adaptOf, bool, channel01, key, num, slotOf } from "./args";
-import { CANVAS_H, CANVAS_W, LEGACY_SLOT } from "./canvas";
+import { CANVAS_H, CANVAS_W, interludeMask, LEGACY_SLOT } from "./canvas";
 import { EASE_LINEAR, EASE_OUT_CUBIC, easeOf } from "./ease";
 import { clamp, clamp01 } from "./num";
-import { cloneState, type FocusOut, type Frame, type ImageLayer, initialState, layerFrom, nativeSizeOf, overlayFrom, type SceneState, type Slot } from "./scene";
+import { cloneState, type FocusOut, type Frame, type ImageLayer, type InterludePanel, initialState, layerFrom, nativeSizeOf, overlayFrom, type SceneState, type Slot } from "./scene";
 import { substitute } from "./text";
 
 /**
@@ -109,6 +109,12 @@ export interface EngineOptions {
      * the reader has exactly the halt count it had before cutscenes shipped.
      */
     videos?: boolean;
+    /**
+     * `legacyInterlude`: restore the pre-2026-09-29 interlude, one full-stage
+     * image per channel that `switch=false` removes. Kill switch for the mask
+     * reading; an explicit `true` is the only thing that turns it on.
+     */
+    legacyInterlude?: boolean;
 }
 
 /** A name a command referenced that the wire `assets` maps have no entry for. */
@@ -202,6 +208,7 @@ function build(script: StoryScript, options: EngineOptions, total: number): Engi
     const nickname = options.nickname.trim() === "" ? "Doctor" : options.nickname;
     const legacyClamp = options.legacyClamp === true;
     const firstNameRight = options.firstNameRight === true;
+    const legacyInterlude = options.legacyInterlude === true;
     let animateRatio = Number.isFinite(options.animateRatio) ? Math.max(0, options.animateRatio as number) : 1;
     const unhandledKinds: Record<string, number> = {};
     const unresolvedAssets: UnresolvedAsset[] = [];
@@ -279,6 +286,39 @@ function build(script: StoryScript, options: EngineOptions, total: number): Engi
         // seconds; the ratio is applied here so no call site can forget it.
         const frame = (sec: number, blocking: boolean, ease?: string) => {
             timeline.push({ state: cloneState(state), transitionSec: scaleSec(sec), holdSec: 0, blocking, ease });
+        };
+        /**
+         * The pre-2026-09-29 interlude, kept VERBATIM behind
+         * `legacyInterlude`: one full-stage image per channel slid from
+         * `pfrom` to `pto`, removed by `clear` or `switch=false`.
+         */
+        const interludeLegacy = (a: StoryCommand["args"]) => {
+            const channel = (a.channel ?? "1").trim();
+            const duration = num(a.duration, 0);
+            const blocking = bool(a.block, true);
+            const closing = bool(a.clear, false) || a.switch?.trim().toLowerCase() === "false";
+            if (closing) {
+                delete state.interludes[channel];
+                frame(duration, blocking);
+                return;
+            }
+            const name = a.name?.trim();
+            if (name === undefined || name === "") return;
+            const url = script.assets.characters[key(name)]?.bodyUrl ?? script.assets.images[key(name)] ?? script.assets.backgrounds[key(name)];
+            if (!url) {
+                unresolved("image", name);
+                return;
+            }
+            const legacyPanel = (x: number, y: number): InterludePanel => ({ maskId: "legacy", w: CANVAS_W, h: CANVAS_H, frameW: CANVAS_W, frameH: CANVAS_H, contentW: CANVAS_W, contentH: CANVAS_H, x: 0, y: 0, scaleX: 1, scaleY: 1, speaking: false, legacy: { url, name, x, y } });
+            const [fx, fy] = (a.pfrom ?? "").split(",").map((v) => num(v, Number.NaN));
+            const [tx, ty] = (a.pto ?? "").split(",").map((v) => num(v, Number.NaN));
+            if (Number.isFinite(fx)) {
+                state.interludes[channel] = legacyPanel(fx, Number.isFinite(fy) ? fy : 0);
+                frame(0, true);
+            }
+            const prev = state.interludes[channel]?.legacy;
+            state.interludes[channel] = legacyPanel(Number.isFinite(tx) ? tx : (prev?.x ?? 0), Number.isFinite(ty) ? ty : (prev?.y ?? 0));
+            frame(duration, blocking);
         };
         const hold = (sec: number) => {
             if (timeline.length === 0) frame(0, true);
@@ -946,37 +986,116 @@ function build(script: StoryScript, options: EngineOptions, total: number): Engi
                     break;
                 }
                 case "interlude": {
-                    // REFUTED: interlude is not a title card. It carries no
-                    // text argument at all; its keys are `channel` (1,167),
-                    // `switch` (734), `type` (487), `slot` (412), `name` (377)
-                    // and mask geometry. What it does is put a masked panel on
-                    // a channel and slide it from `pfrom` to `pto`. Only the
-                    // panel is modelled; the mask shapes (4 `maskid` values)
-                    // are not, and nothing in the script says their geometry.
+                    if (legacyInterlude) {
+                        interludeLegacy(a);
+                        break;
+                    }
+                    // A radio-call WINDOW, read in `scene.ts` (`InterludePanel`)
+                    // and the prefab in `canvas.ts` (`INTERLUDE_MASKS`). The
+                    // corpus agrees with the read before any capture: every one
+                    // of the 354 EN element commands lands on a channel whose
+                    // mask is open, and 200 bare `switch` commands (191 of them
+                    // `false`) land on open masks too and are followed by more
+                    // lines on the same window, so `switch=false` is not a close.
                     const channel = (a.channel ?? "1").trim();
-                    const duration = num(a.duration, 0);
                     const blocking = bool(a.block, true);
-                    const closing = bool(a.clear, false) || a.switch?.trim().toLowerCase() === "false";
-                    if (closing) {
+                    const pair = (raw: string | undefined): [number, number] | undefined => {
+                        if (raw === undefined) return undefined;
+                        const [x, y] = raw.split(",").map((v) => num(v, Number.NaN));
+                        return Number.isFinite(x) ? [x, Number.isFinite(y) ? y : 0] : undefined;
+                    };
+                    const tsFrom = pair(a.tsfrom);
+                    const tsTo = pair(a.tsto);
+                    const tsSec = num(a.tsduration, 0);
+                    const current = state.interludes[channel];
+                    if (bool(a.clear, false)) {
+                        if (!current) {
+                            frame(0, blocking);
+                            break;
+                        }
+                        // The close tweens the window's scale (`tsfrom 1,1` to
+                        // `tsto 0,1` in 44 of the 137) and then drops it.
+                        if (tsTo && tsSec > 0) {
+                            if (tsFrom) {
+                                state.interludes[channel] = { ...current, scaleX: tsFrom[0], scaleY: tsFrom[1] };
+                                frame(0, true);
+                            }
+                            state.interludes[channel] = { ...state.interludes[channel], scaleX: tsTo[0], scaleY: tsTo[1] };
+                            frame(tsSec, blocking);
+                        }
                         delete state.interludes[channel];
-                        frame(duration, blocking);
+                        frame(0, blocking);
                         break;
                     }
+                    let panel: InterludePanel | undefined = current;
+                    if (a.maskid !== undefined && a.maskid.trim() !== "") {
+                        const maskId = a.maskid.trim();
+                        const size = pair(a.size);
+                        const rects = interludeMask(maskId, size ? { w: size[0], h: size[1] } : undefined);
+                        const [ox, oy] = pair(a.offset) ?? [0, 0];
+                        const [sx, sy] = tsFrom ?? tsTo ?? [1, 1];
+                        panel = { maskId, ...rects, x: ox, y: oy, scaleX: sx, scaleY: sy, label: a.char?.trim() || undefined, speaking: bool(a.switch, false) };
+                    }
+                    if (!panel) {
+                        // No window to draw into. Never seen in EN (0 of 354).
+                        unhandled("interlude:nomask");
+                        break;
+                    }
+                    if (a.switch !== undefined) panel = { ...panel, speaking: bool(a.switch, panel.speaking) };
+                    const type = num(a.type, 0);
                     const name = a.name?.trim();
-                    if (name === undefined || name === "") break;
-                    const url = script.assets.characters[key(name)]?.bodyUrl ?? script.assets.images[key(name)] ?? script.assets.backgrounds[key(name)];
-                    if (!url) {
-                        unresolved("image", name);
-                        break;
+                    const pFrom = pair(a.pfrom);
+                    const pTo = pair(a.pto);
+                    const sFrom = pair(a.sfrom);
+                    const sTo = pair(a.sto);
+                    const aFrom = a.afrom === undefined ? undefined : clamp01(num(a.afrom, 1));
+                    const aTo = a.ato === undefined ? undefined : clamp01(num(a.ato, 1));
+                    let from: InterludePanel = panel;
+                    let to: InterludePanel = panel;
+                    if (type === 2 && name) {
+                        const url = script.assets.backgrounds[key(name)] ?? script.assets.images[key(name)];
+                        if (url) to = from = { ...panel, bg: { url, name: key(name) } };
+                        else unresolved("background", name);
+                    } else if (type === 3 || type === 1) {
+                        const slotKey = type === 3 ? "character" : "image";
+                        const prev = panel[slotKey];
+                        let base: InterludePanel["character"] | InterludePanel["image"] | undefined = prev;
+                        if (name) {
+                            const [ox, oy] = pair(a.offset) ?? pFrom ?? [prev?.x ?? 0, prev?.y ?? 0];
+                            const common = { name: key(name), x: ox, y: oy, scaleX: 1, scaleY: 1, alpha: 1 };
+                            if (type === 3) {
+                                const sprite = script.assets.characters[key(name)];
+                                if (sprite) base = { ...common, sprite };
+                                else unresolved("character", name);
+                            } else {
+                                const url = script.assets.images[key(name)] ?? script.assets.backgrounds[key(name)];
+                                const native = nativeSizeOf(script.assets, key(name));
+                                if (url) base = { ...common, url, w: native?.w, h: native?.h };
+                                else unresolved("image", name);
+                            }
+                        }
+                        if (base) {
+                            const start = { ...base, x: pFrom?.[0] ?? base.x, y: pFrom?.[1] ?? base.y, scaleX: sFrom?.[0] ?? base.scaleX, scaleY: sFrom?.[1] ?? base.scaleY, alpha: aFrom ?? base.alpha };
+                            const end = { ...start, x: pTo?.[0] ?? start.x, y: pTo?.[1] ?? start.y, scaleX: sTo?.[0] ?? start.scaleX, scaleY: sTo?.[1] ?? start.scaleY, alpha: aTo ?? start.alpha };
+                            from = { ...panel, [slotKey]: start };
+                            to = { ...panel, [slotKey]: end };
+                        }
                     }
-                    const [fx, fy] = (a.pfrom ?? "").split(",").map((v) => num(v, Number.NaN));
-                    const [tx, ty] = (a.pto ?? "").split(",").map((v) => num(v, Number.NaN));
-                    if (Number.isFinite(fx)) {
-                        state.interludes[channel] = { url, name, x: fx, y: Number.isFinite(fy) ? fy : 0 };
+                    // One transition carries every channel that moves: the
+                    // window's scale on `tsduration`, the element on
+                    // `duration`, `aduration` and `sduration`. They are
+                    // separate tweens in the client; a frame has one clock, so
+                    // the longest one sets it (a TRADE, 0 of the 15-04/15-13
+                    // commands set two different non-zero durations).
+                    const sec = Math.max(tsSec, num(a.duration, 0), num(a.aduration, 0), num(a.sduration, 0));
+                    if (tsFrom && tsTo) from = { ...from, scaleX: tsFrom[0], scaleY: tsFrom[1] };
+                    if (tsTo) to = { ...to, scaleX: tsTo[0], scaleY: tsTo[1] };
+                    if (from !== to || !current) {
+                        state.interludes[channel] = from;
                         frame(0, true);
                     }
-                    state.interludes[channel] = { url, name, x: Number.isFinite(tx) ? tx : (state.interludes[channel]?.x ?? 0), y: Number.isFinite(ty) ? ty : (state.interludes[channel]?.y ?? 0) };
-                    frame(duration, blocking);
+                    state.interludes[channel] = to;
+                    frame(sec, blocking);
                     break;
                 }
                 default:

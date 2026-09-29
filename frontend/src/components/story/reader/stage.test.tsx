@@ -391,3 +391,31 @@ describe("stage layers and overlays", () => {
         expect(strip.style.transform).toBe("translate(calc(-720 * var(--story-cpx, min(0.078125cqw, 0.1388889cqh))), calc(0 * var(--story-cpx, min(0.078125cqw, 0.1388889cqh))))");
     });
 });
+
+describe("interlude window", () => {
+    // 15-13_beg line 454: Raidian's square window at (-200,170) and her slot
+    // origin at pto (-180,50). Plate (-50,150) 880 on her own hub.
+    const RAIDIAN: Sprite = { bodyUrl: "/r/1$1.png", bodySize: { w: 1124, h: 1124 }, plate: { x: -50, y: 150, w: 880, h: 880 } };
+    const panel = { maskId: "group_interclude_square_common", w: 300, h: 300, frameW: 250, frameH: 250, contentW: 214, contentH: 214, x: -200, y: 170, scaleX: 1, scaleY: 1, label: "Raidian", speaking: true, character: { name: "avg_npc_1730_1#1$1", sprite: RAIDIAN, x: -180, y: 50, scaleX: 1, scaleY: 1, alpha: 1 } };
+
+    it("is a clipped window at the offset, the figure placed in CANVAS coordinates like a slot", () => {
+        const stage = renderStage(frame({ interludes: { "3": panel } }));
+        const win = stage.querySelector('[data-story-interlude="3"]') as HTMLElement;
+        expect(win.dataset.storySpeaking).toBe("true");
+        expect(win.style.left).toBe("calc(50% + calc(-200 * var(--story-cpx, min(0.078125cqw, 0.1388889cqh))))");
+        expect(win.style.width).toBe("calc(250 * var(--story-cpx, min(0.078125cqw, 0.1388889cqh)))");
+        const fig = win.querySelector("[data-story-interlude-char]") as HTMLElement;
+        // left = 214/2 + (-180) + (-50) - (-200) - 880/2 = -363
+        // top  = 214/2 - (-360 + 50 + 150 - 170) - 880/2 = -3
+        expect(fig.style.left).toBe("calc(-363 * var(--story-cpx, min(0.078125cqw, 0.1388889cqh)))");
+        expect(fig.style.top).toBe("calc(-3 * var(--story-cpx, min(0.078125cqw, 0.1388889cqh)))");
+        expect(win.textContent).toContain("Raidian");
+    });
+
+    it("the legacy panel still draws the old full-stage image", () => {
+        const legacy = { ...panel, character: undefined, label: undefined, legacy: { url: "/a.png", name: "a", x: -250, y: 0 } };
+        const stage = renderStage(frame({ interludes: { "2": legacy } }));
+        const img = stage.querySelector('img[data-story-interlude="2"]') as HTMLImageElement;
+        expect(img.className).toContain("object-contain");
+    });
+});

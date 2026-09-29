@@ -133,13 +133,72 @@ export interface Curtain {
     grad: boolean;
 }
 
-/** `interlude`: one masked panel per `channel`. */
-export interface InterludePanel {
-    url: string;
+/**
+ * An element inside an interlude panel. `x`,`y` are CANVAS pixels from the
+ * canvas centre with y UP for an image (type 1) and from the slot origin at
+ * the canvas BOTTOM for a character (type 3), exactly as a `[charslot]` slot
+ * reads, so the panel is a window onto the figure standing where the script
+ * put it. `pfrom`/`pto` tween the position, `sfrom`/`sto` the scale and
+ * `afrom`/`ato` the alpha.
+ */
+export interface InterludeElement {
     name: string;
-    /** Canvas-pixel offsets; `pfrom`/`pto` are "x,y" pairs. */
     x: number;
     y: number;
+    scaleX: number;
+    scaleY: number;
+    alpha: number;
+}
+
+export interface InterludeCharacter extends InterludeElement {
+    sprite: CharacterSprite;
+}
+
+export interface InterludeImage extends InterludeElement {
+    url: string;
+    /** Native plate in canvas px (`w * 100 / ppu`), absent when the wire carries no size. */
+    w?: number;
+    h?: number;
+}
+
+/**
+ * `interlude`: a MASK on a channel, the radio-call window. It is the
+ * `AVGCharacterCutinPanel` executor driving `CutinController.RunCutin`, not a
+ * title card and not a background. A command with `maskid` opens the window
+ * at `offset` (canvas px from the centre, y up) at `size` or the prefab's
+ * own rect, `tsfrom`/`tsto` tween its local scale (the 0,1 -> 1,1 opening),
+ * `type=2` puts a background INSIDE the window, `type=3` a character and
+ * `type=1` a sprite-pack image, and `clear=true` closes it. `switch` is NOT a
+ * close: `UpdateCutinMask` (0x281949c) packs it as the one bool of a
+ * `DataBundle` that `CutinTemplateDecoView.Render` (0x281b840) hands to
+ * `TwoStateToggle.set_selected`, the deco's wave active/stop toggle, which is
+ * the "who is talking" indicator.
+ */
+export interface InterludePanel {
+    maskId: string;
+    /** The ROOT rect in canvas px, before `scaleX`/`scaleY`. */
+    w: number;
+    h: number;
+    /** The visible frame and the clipping content rect inside it, canvas px. */
+    frameW: number;
+    frameH: number;
+    contentW: number;
+    contentH: number;
+    x: number;
+    y: number;
+    scaleX: number;
+    scaleY: number;
+    /** `char`: the square window's name tag. */
+    label?: string;
+    speaking: boolean;
+    bg?: { url: string; name: string };
+    character?: InterludeCharacter;
+    image?: InterludeImage;
+    /**
+     * `legacyInterlude`: the pre-2026-09-29 reading, one full-stage image per
+     * channel slid to `pto`, closed by `switch=false`. Kill switch only.
+     */
+    legacy?: { url: string; name: string; x: number; y: number };
 }
 
 /** Blocker channels are 0..1, CLAMPED, never divided by 255. */
@@ -235,7 +294,7 @@ export function cloneState(s: SceneState): SceneState {
         cutin: s.cutin ? { ...s.cutin } : undefined,
         focus: { ...s.focus },
         popupHead: s.popupHead ? { ...s.popupHead } : undefined,
-        interludes: Object.fromEntries(Object.entries(s.interludes).map(([k, v]) => [k, { ...v }])),
+        interludes: Object.fromEntries(Object.entries(s.interludes).map(([k, v]) => [k, { ...v, bg: v.bg ? { ...v.bg } : undefined, character: v.character ? { ...v.character } : undefined, image: v.image ? { ...v.image } : undefined, legacy: v.legacy ? { ...v.legacy } : undefined }])),
     };
 }
 

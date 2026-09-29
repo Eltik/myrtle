@@ -65,3 +65,17 @@ export function synopsisParagraphs(synopsis: string | null | undefined): string[
         .map((p) => p.trim())
         .filter((p) => p !== "");
 }
+
+/**
+ * The sheet's node line, above the story's name: the operation code and the
+ * phase, `15-4 · Before Operation`, in the wording the share card prints
+ * (`og/impl/story.ts`: the trimmed `code`, the trimmed `avgTag` verbatim, which
+ * is the game's own localised phase). A story the table gives no code (every
+ * operator record, and interludes) names its group in the code's place, so the
+ * line always says where the story sits. Empty only when all three are blank.
+ */
+export function skipNodeLine(entry: { code?: string; avgTag?: string } | null, groupName: string): string {
+    const node = entry?.code?.trim() || groupName.trim();
+    const phase = entry?.avgTag?.trim();
+    return [node, phase].filter((s): s is string => Boolean(s)).join(" · ");
+}

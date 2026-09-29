@@ -13,7 +13,7 @@ import { asset } from "#/components/operators/detail/impl/assets";
 import { CANVAS_H, CANVAS_W, cpx } from "#/lib/story/canvas";
 import type { Curtain, Cutin, ImageLayer, InterludePanel, Overlay, PanelLayer } from "#/lib/story/scene";
 import { cn } from "#/lib/utils";
-import { bodyPlate } from "./StageSprites";
+import { Body, bodyPlate } from "./StageSprites";
 import { fade, focusFilter, useOutgoing } from "./stageFx";
 
 /**
@@ -189,24 +189,99 @@ export function CurtainFill({ curtain, sec }: { curtain: Curtain; sec: number })
     );
 }
 
-/** `interlude`: one masked panel per channel, slid from `pfrom` to `pto`. */
-export function InterludePanels({ panels, sec }: { panels: Record<string, InterludePanel>; sec: number }): React.ReactElement | null {
+/**
+ * `interlude`: the radio-call WINDOW (`InterludePanel` in `scene.ts` has the
+ * read). The panel is a `frame` rect centred at the offset, scaled by the
+ * window's `tsfrom`/`tsto` about its centre, with a dark back and a
+ * `content` rect inside it that CLIPS the background and the figure. The
+ * figure is placed in CANVAS coordinates, exactly as `Sprite` places a slot
+ * (origin at the canvas bottom, the sprite's own plate above it), so the
+ * window shows the part of the standing figure that falls inside it: in 15-13
+ * Raidian's `pto -180,50` puts her face inside a square at `-200,170`.
+ *
+ * Not modelled, with what would settle each: the deco view (the wave that
+ * `switch` toggles, `group_interclude_*_deco`) is exposed as
+ * `data-story-speaking` only, because its placement against the window is a
+ * separate prefab root the tree dump does not relate to the mask; the back and
+ * gradient COLOURS are the prefab's `back_shadow` and `bg_defaul_gradient`
+ * sprites, which were not exported, so the tones here are ours; the empty
+ * window's `img_unknown` "UNKNOWN" plate is not drawn. One capture of a
+ * two-way call (15-04 halt 211) decides all three.
+ */
+export function InterludePanels({ panels, sec, plateFromWire = true }: { panels: Record<string, InterludePanel>; sec: number; plateFromWire?: boolean }): React.ReactElement | null {
     const rows = Object.entries(panels);
     if (rows.length === 0) return null;
+    return <>{rows.map(([channel, p]) => (p.legacy ? <LegacyInterlude key={channel} channel={channel} legacy={p.legacy} sec={sec} /> : <InterludeWindow key={channel} channel={channel} panel={p} sec={sec} plateFromWire={plateFromWire} />))}</>;
+}
+
+function LegacyInterlude({ channel, legacy, sec }: { channel: string; legacy: NonNullable<InterludePanel["legacy"]>; sec: number }): React.ReactElement {
     return (
-        <>
-            {rows.map(([channel, p]) => (
-                <img
-                    key={channel}
-                    src={asset(p.url)}
-                    alt=""
-                    draggable={false}
-                    data-story-interlude={channel}
-                    className="absolute inset-0 size-full select-none object-contain transition-transform ease-out"
-                    style={{ transform: `translate(${cpx(p.x)}, ${cpx(-p.y)})`, transitionDuration: `${Math.max(0.2, sec)}s`, ...fade("in", Math.max(0.2, sec)) }}
-                />
-            ))}
-        </>
+        <img
+            src={asset(legacy.url)}
+            alt=""
+            draggable={false}
+            data-story-interlude={channel}
+            className="absolute inset-0 size-full select-none object-contain transition-transform ease-out"
+            style={{ transform: `translate(${cpx(legacy.x)}, ${cpx(-legacy.y)})`, transitionDuration: `${Math.max(0.2, sec)}s`, ...fade("in", Math.max(0.2, sec)) }}
+        />
+    );
+}
+
+function InterludeWindow({ channel, panel: p, sec, plateFromWire }: { channel: string; panel: InterludePanel; sec: number; plateFromWire: boolean }): React.ReactElement {
+    const framed = p.frameW !== p.contentW || p.frameH !== p.contentH;
+    // The content rect's centre IS the window centre, so a point at canvas
+    // (cx, cy) with y up sits at (cw/2 + cx - x, ch/2 - (cy - y)) inside it.
+    const ch = p.character;
+    const plate = ch ? bodyPlate(ch.sprite as { plate?: unknown }, plateFromWire) : null;
+    const img = p.image;
+    const move = { transitionProperty: "left, top, transform, opacity", transitionDuration: `${sec}s`, transitionTimingFunction: "ease-out" };
+    return (
+        <div
+            data-story-interlude={channel}
+            data-story-mask={p.maskId}
+            data-story-speaking={p.speaking ? "true" : "false"}
+            className="pointer-events-none absolute transition-transform ease-out"
+            style={{ left: `calc(50% + ${cpx(p.x)})`, top: `calc(50% - ${cpx(p.y)})`, width: cpx(p.frameW), height: cpx(p.frameH), transform: `translate(-50%, -50%) scale(${p.scaleX}, ${p.scaleY})`, transitionDuration: `${sec}s` }}
+        >
+            {framed ? <div className="absolute inset-0 bg-black/60 shadow-[0_0_24px_rgba(0,0,0,.5)]" /> : null}
+            <div className="absolute overflow-hidden bg-linear-to-b from-[#3b4049] to-[#121418]" style={{ left: "50%", top: "50%", width: cpx(p.contentW), height: cpx(p.contentH), transform: "translate(-50%, -50%)" }}>
+                {p.bg ? <img src={asset(p.bg.url)} alt="" draggable={false} data-story-interlude-bg={p.bg.name} className="absolute inset-0 size-full max-w-none select-none object-cover" /> : null}
+                {img ? (
+                    <img
+                        src={asset(img.url)}
+                        alt=""
+                        draggable={false}
+                        data-story-interlude-image={img.name}
+                        className="absolute max-w-none select-none"
+                        style={{ left: cpx(p.contentW / 2 + img.x - p.x), top: cpx(p.contentH / 2 - (img.y - p.y)), width: cpx(img.w ?? CANVAS_W), height: cpx(img.h ?? CANVAS_H), transform: `translate(-50%, -50%) scale(${img.scaleX}, ${img.scaleY})`, opacity: img.alpha, ...move }}
+                    />
+                ) : null}
+                {ch && plate ? (
+                    <div
+                        data-story-interlude-char={ch.name}
+                        className="absolute"
+                        style={{
+                            left: cpx(p.contentW / 2 + ch.x + plate.x - p.x - plate.w / 2),
+                            top: cpx(p.contentH / 2 - (-CANVAS_H / 2 + ch.y + plate.y - p.y) - plate.h / 2),
+                            width: cpx(plate.w),
+                            height: cpx(plate.h),
+                            transform: `scale(${ch.scaleX}, ${ch.scaleY})`,
+                            opacity: ch.alpha,
+                            ...move,
+                        }}
+                    >
+                        <Body key={ch.name} state={{ sprite: ch.sprite, name: ch.name }} sec={sec} mode="hold" />
+                    </div>
+                ) : null}
+            </div>
+            {p.label ? (
+                // `group_name`: anchored (-145.3, -85.19) from the 300 px root's
+                // centre with pivot (0, 0.5), 23 px tall, the lower-left of the square.
+                <div className="absolute whitespace-nowrap bg-black/80 px-[0.4em] font-medium text-white" style={{ left: `calc(50% + ${cpx(-145.3 * (p.w / 300))})`, top: `calc(50% + ${cpx(85.19 * (p.h / 300))})`, height: cpx(23), lineHeight: cpx(23), fontSize: cpx(15), transform: "translateY(-50%)" }}>
+                    {p.label}
+                </div>
+            ) : null}
+        </div>
     );
 }
 

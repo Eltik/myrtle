@@ -116,13 +116,13 @@
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(2px);
     color: #fff;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 400;
+    /* The site's sans, not a mono run: "Chapter 0" is a label, not a code. */
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.08em;
+    letter-spacing: 0;
     line-height: 1;
-    text-transform: uppercase;
     white-space: nowrap;
 }
 

@@ -19,12 +19,6 @@ vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => () => undefined,
 }));
 
-// The chapter dialog is the only child that queries the index; it is closed here.
-vi.mock("@tanstack/react-query", () => ({
-    useQuery: () => ({ data: undefined }),
-    queryOptions: (o: unknown) => o,
-}));
-
 /** Every element the reader scrolled into view, in order: the backlog test reads it. */
 const scrolledTo: Element[] = [];
 
@@ -92,7 +86,9 @@ function pressSpace() {
 }
 
 function currentLine(): string {
-    return screen.queryByTestId("story-line")?.textContent ?? "";
+    // The typed text only: the line also holds an invisible copy of the whole
+    // line that reserves the box's height (`TextBox`).
+    return screen.queryByTestId("story-line")?.querySelector("[data-story-line-revealed]")?.textContent ?? "";
 }
 
 /** Space does nothing on a decision, so a walk-through takes the first option. */

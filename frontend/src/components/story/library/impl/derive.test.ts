@@ -9,6 +9,7 @@ import {
     groupOperations,
     groupSearchTarget,
     groupWords,
+    keepEqualFractions,
     type LibEntry,
     type LibGroup,
     type LibIndex,
@@ -411,5 +412,66 @@ describe("pickContinue", () => {
 
     it("counts a story the GAME reports read", () => {
         expect(pickContinue(stories, emptyProgress(), new Set(["a"]))).toMatchObject({ entry: { id: "b" } });
+    });
+});
+
+describe("keepEqualFractions", () => {
+    const f = (read: number, total = 4) => ({ read, total, listed: total, done: read === total });
+
+    it("returns the previous MAP when no fraction moved, so nothing downstream sees a change", () => {
+        const prev = new Map([
+            ["a", f(0)],
+            ["b", f(2)],
+        ]);
+        expect(
+            keepEqualFractions(
+                prev,
+                new Map([
+                    ["a", f(0)],
+                    ["b", f(2)],
+                ]),
+            ),
+        ).toBe(prev);
+    });
+
+    it("keeps the unchanged objects and replaces only the one that moved", () => {
+        const prev = new Map([
+            ["a", f(0)],
+            ["b", f(2)],
+        ]);
+        const next = keepEqualFractions(
+            prev,
+            new Map([
+                ["a", f(0)],
+                ["b", f(3)],
+            ]),
+        );
+        expect(next).not.toBe(prev);
+        expect(next.get("a")).toBe(prev.get("a"));
+        expect(next.get("b")).toEqual(f(3));
+    });
+
+    it("answers a new map when a key is added or dropped, and the first map as it is", () => {
+        const prev = new Map([["a", f(0)]]);
+        expect(
+            keepEqualFractions(
+                prev,
+                new Map([
+                    ["a", f(0)],
+                    ["b", f(0)],
+                ]),
+            ),
+        ).not.toBe(prev);
+        expect(
+            keepEqualFractions(
+                new Map([
+                    ["a", f(0)],
+                    ["b", f(0)],
+                ]),
+                new Map([["a", f(0)]]),
+            ).size,
+        ).toBe(1);
+        const first = new Map([["a", f(1)]]);
+        expect(keepEqualFractions(null, first)).toBe(first);
     });
 });

@@ -12,7 +12,7 @@
  * ways the chrome goes (theater mode, the deliberate "Hide toolbar", and the
  * opt-in idle fade) are all written up there.
  */
-import { ArrowLeftIcon, BookOpenIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, EyeOffIcon, FastForwardIcon, HistoryIcon, MaximizeIcon, MinimizeIcon, PlayIcon, SettingsIcon, Volume2Icon, VolumeXIcon } from "lucide-react";
+import { ArrowLeftIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, EyeOffIcon, FastForwardIcon, HistoryIcon, MaximizeIcon, MinimizeIcon, PlayIcon, SettingsIcon, Volume2Icon, VolumeXIcon } from "lucide-react";
 import type React from "react";
 import { memo, useId, useRef } from "react";
 import { Button } from "#/components/ui/button";
@@ -126,7 +126,6 @@ export interface IReaderToolbarProps {
     onNext: () => void;
     onSettings: () => void;
     onLog: () => void;
-    onChapter: () => void;
     theater: boolean;
     onTheater: () => void;
     onHideToolbar: () => void;
@@ -156,15 +155,15 @@ export function ReaderToolbar(p: IReaderToolbarProps): React.ReactElement {
     const t: ReaderT = useT("story");
     const { compact, shown } = p;
     return (
-        // UNDER 640 THE ROW WRAPS, and that is a correction: the claim that both
-        // clusters fit on one line at 375 was wrong. The left pill is 232 px and
-        // the right 168, which with the 6 px gap is 406 against the 382 px the
-        // row has at a 390 px viewport, and the stage clips what runs past it,
-        // so the collapse chevron at the right end was off screen and
-        // unreachable. Wrapping costs a second 52 px row of chrome over the art
-        // and keeps every control at the size it already had; `ms-auto` returns
-        // the second line to the right edge, which `justify-between` cannot do
-        // with one item on a line.
+        // UNDER 640 THE ROW MAY WRAP. With the Chapter button the left pill was
+        // 232 px and the right 168, 406 with the 6 px gap against the 382 px the
+        // row has at a 390 px viewport, so the collapse chevron ran off the
+        // stage. Without it (2026-09-29) the left pill measures 200 px and both
+        // clusters sit on ONE row at 390 (374 of 382); the wrap is kept for the
+        // viewports under that, where it costs a second 52 px row of chrome and
+        // keeps every control at its size. `ms-auto` returns the second line to
+        // the right edge, which `justify-between` cannot do with one item on a
+        // line.
         <div
             ref={p.barRef}
             className={cn("story-toolbar pointer-events-none absolute inset-x-2 pointer-coarse:top-12 top-2 z-30 flex items-start justify-between gap-1.5 max-sm:inset-x-1 max-sm:flex-wrap", "transition-opacity", shown ? "opacity-100 duration-150" : "opacity-0 duration-200")}
@@ -185,13 +184,10 @@ export function ReaderToolbar(p: IReaderToolbarProps): React.ReactElement {
                 <PillButton compact={compact} label={t("reader.toolbar.hide")} active={p.theater} onClick={p.onTheater}>
                     <EyeOffIcon />
                 </PillButton>
-                <PillButton compact={compact} label={t("reader.toolbar.chapter")} onClick={p.onChapter}>
-                    <BookOpenIcon />
-                </PillButton>
-                {/* The chapter's own order, beside the chapter picker: one story
-                    back and one forward, dead at the two ends rather than
-                    absent, so the pill does not change width halfway through a
-                    chapter. */}
+                {/* The chapter's own order, and the reader's only way to another
+                    story: one back and one forward, dead at the two ends rather
+                    than absent, so the pill does not change width halfway
+                    through a chapter. */}
                 <PillButton compact={compact} iconOnly disabled={!p.hasPrevious} hook="previous" label={t("reader.toolbar.previousStory")} onClick={p.onPrevious}>
                     <ChevronLeftIcon />
                 </PillButton>

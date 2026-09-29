@@ -1,5 +1,5 @@
 import type React from "react";
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -10,10 +10,10 @@ import { FlatHead, JumpBar, SectionHead, sectionTitle } from "./BrowseSections";
 import { BrowseToolbar, type IBrowseToolbarState, ToolbarButton } from "./BrowseToolbar";
 import { ChapterModal } from "./ChapterModal";
 import { glyphIndexFor, type IChipModel, sectionChapters } from "./chapters";
-import { groupSearchTarget, type IReadFraction, LIBRARY_SORTS, type LibGroup, type LibIndex, type LibRecord, type LibrarySort, matchesReadState, prepareSearch, READ_FILTERS, type ReadFilter, readFraction, recordSearchTarget, searchList, sortLibrary } from "./derive";
+import { groupSearchTarget, type IReadFraction, keepEqualFractions, LIBRARY_SORTS, type LibGroup, type LibIndex, type LibRecord, type LibrarySort, matchesReadState, prepareSearch, READ_FILTERS, type ReadFilter, readFraction, recordSearchTarget, searchList, sortLibrary } from "./derive";
 import { GroupCard, GroupGrid, GroupRow, GroupRowList } from "./GroupCard";
 import { OperatorsTab } from "./OperatorsTab";
-import { type FilterKey, RECORDS_ID, sectionFilterKey, sectionLibrary, type ViewMode } from "./sections";
+import { browseOrder, chapterNeighbours, type FilterKey, RECORDS_ID, sectionFilterKey, sectionLibrary, type ViewMode } from "./sections";
 import { TOOLBAR_DEFAULTS } from "./toolbar";
 
 type BrowseT = TypedT<typeof messages>;
@@ -90,12 +90,30 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
     // sorts. `readFraction` walks a group's stories, and calling it per card
     // per comparison would walk the 1,887 EN stories O(n log n) times inside a
     // sort comparator.
-    const fractions = useMemo(() => new Map(index.groups.map((g) => [g.id, readFraction(g.stories, progress, gameRead)])), [index.groups, progress, gameRead]);
-    const recordFractions = useMemo(() => new Map(index.records.map((r) => [r.charId, readFraction(r.stories, progress, gameRead)])), [index.records, progress, gameRead]);
-    const fractionOf = useCallback((group: LibGroup) => fractions.get(group.id) ?? readFraction(group.stories, progress, gameRead), [fractions, progress, gameRead]);
+    //
+    // A NEW DOCUMENT IS NOT NEW FRACTIONS: `keepEqualFractions` hands back the
+    // previous map when no group's numbers moved, so the load-time swap from the
+    // empty first-render document to the stored one (and any sync merge that
+    // changes nothing on screen) no longer re-renders the 87 cards, the 18 chips
+    // and the section heads. Measured at 1440 (dev): that swap was a 140 ms
+    // whole-library commit 400 ms after the first one. The latest document is
+    // read through a ref by the fallback, which no group in the index reaches.
+    const live = useRef({ progress, gameRead });
+    live.current = { progress, gameRead };
+    const lastFractions = useRef<ReadonlyMap<string, IReadFraction> | null>(null);
+    const lastRecordFractions = useRef<ReadonlyMap<string, IReadFraction> | null>(null);
+    const fractions = useMemo(() => {
+        lastFractions.current = keepEqualFractions(lastFractions.current, new Map(index.groups.map((g) => [g.id, readFraction(g.stories, progress, gameRead)])));
+        return lastFractions.current;
+    }, [index.groups, progress, gameRead]);
+    const recordFractions = useMemo(() => {
+        lastRecordFractions.current = keepEqualFractions(lastRecordFractions.current, new Map(index.records.map((r) => [r.charId, readFraction(r.stories, progress, gameRead)])));
+        return lastRecordFractions.current;
+    }, [index.records, progress, gameRead]);
+    const fractionOf = useCallback((group: LibGroup) => fractions.get(group.id) ?? readFraction(group.stories, live.current.progress, live.current.gameRead), [fractions]);
 
     const keepGroup = useCallback((group: LibGroup) => matchedGroups.has(group.id) && matchesReadState(shownRead, fractionOf(group)), [matchedGroups, shownRead, fractionOf]);
-    const keepRecord = useCallback((record: LibRecord) => matchedRecords.has(record.charId) && matchesReadState(shownRead, recordFractions.get(record.charId) ?? readFraction(record.stories, progress, gameRead)), [matchedRecords, shownRead, recordFractions, progress, gameRead]);
+    const keepRecord = useCallback((record: LibRecord) => matchedRecords.has(record.charId) && matchesReadState(shownRead, recordFractions.get(record.charId) ?? readFraction(record.stories, live.current.progress, live.current.gameRead)), [matchedRecords, shownRead, recordFractions]);
     const library = useMemo(() => sectionLibrary(index, shownFilter, keepGroup, keepRecord), [index, shownFilter, keepGroup, keepRecord]);
 
     /**
@@ -123,6 +141,11 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
     const showRecords = recordsOpen || recordsForced;
 
     const openGroupObject = useMemo(() => (openId ? (index.groups.find((g) => g.id === openId) ?? null) : null), [openId, index.groups]);
+    // The sheet's left and right are the page's own order: the shelves as the
+    // sections and the jump bar lay them out, or the one list a sort made. A
+    // step sets the same `openId` a card press does, so the sheet swaps in place.
+    const order = useMemo(() => browseOrder(library.sections, flat), [library.sections, flat]);
+    const neighbours = useMemo(() => (openId ? chapterNeighbours(order, openId) : { prev: null, next: null }), [order, openId]);
 
     useEffect(() => {
         if (!openGroup) return;
@@ -210,7 +233,7 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
                 </section>
             ) : null}
 
-            {openGroupObject ? <ChapterModal key={openGroupObject.id} group={openGroupObject} progress={progress} gameRead={gameRead} onClose={() => setOpenId(null)} /> : null}
+            {openGroupObject ? <ChapterModal group={openGroupObject} progress={progress} gameRead={gameRead} onClose={() => setOpenId(null)} prev={neighbours.prev} next={neighbours.next} onNavigate={setOpenId} /> : null}
         </>
     );
 }
@@ -219,9 +242,13 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
  * The cards of one section, in whichever layout the toggle is on. Both branches were written out twice and the flat list would have made it three times.
  *
  * `fractionOf` hands each card the fraction Browse already holds, so the
- * memoised card sees the SAME object until progress changes and skips.
+ * memoised card sees the SAME object until its own fraction changes and skips.
+ *
+ * MEMOISED ITSELF, because the urgent render of a keystroke or a pill press
+ * re-renders Browse with the same deferred lists: the section's grid then
+ * skips as a whole instead of walking its cards' props one by one.
  */
-function Cards({ groups, view, fractionOf, onOpen }: { groups: readonly LibGroup[]; view: ViewMode; fractionOf: (group: LibGroup) => IReadFraction; onOpen: (id: string) => void }): React.ReactElement {
+const Cards = memo(function Cards({ groups, view, fractionOf, onOpen }: { groups: readonly LibGroup[]; view: ViewMode; fractionOf: (group: LibGroup) => IReadFraction; onOpen: (id: string) => void }): React.ReactElement {
     if (view === "grid")
         return (
             <GroupGrid>
@@ -237,4 +264,4 @@ function Cards({ groups, view, fractionOf, onOpen }: { groups: readonly LibGroup
             ))}
         </GroupRowList>
     );
-}
+});

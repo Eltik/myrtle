@@ -93,6 +93,28 @@ export function readFraction(stories: readonly Pick<LibEntry, "id" | "hasScript"
     return { read: hit, total, listed: stories.length, done: total > 0 && hit === total };
 }
 
+/**
+ * A NEW PROGRESS DOCUMENT IS NOT NEW FRACTIONS. Every progress change used to
+ * hand every card a fresh `IReadFraction`, so the memoised cards re-rendered
+ * all 87 at once for a document that moved one group or none: the swap from
+ * the empty first-render document to the stored one, on every load, was a
+ * whole-library render of 140 ms at 1440 (dev) for a reader with nothing read.
+ *
+ * This keeps the previous fraction object wherever the numbers are the same,
+ * and the previous MAP when nothing moved at all, so a card re-renders only
+ * when its own fraction changes and the page's derived lists stay put.
+ */
+export function keepEqualFractions<K>(prev: ReadonlyMap<K, IReadFraction> | null, next: Map<K, IReadFraction>): ReadonlyMap<K, IReadFraction> {
+    if (!prev) return next;
+    let same = prev.size === next.size;
+    for (const [key, fraction] of next) {
+        const old = prev.get(key);
+        if (old && old.read === fraction.read && old.total === fraction.total && old.listed === fraction.listed && old.done === fraction.done) next.set(key, old);
+        else same = false;
+    }
+    return same ? prev : next;
+}
+
 /** Stories in the order the game lists them. */
 export function sortedStories(stories: readonly LibEntry[]): LibEntry[] {
     return [...stories].sort((a, b) => a.sort - b.sort || a.id.localeCompare(b.id));

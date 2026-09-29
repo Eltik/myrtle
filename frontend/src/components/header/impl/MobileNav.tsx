@@ -68,7 +68,7 @@ export function MobileNav({ items }: IMobileNavProps) {
             <DrawerPopup showCloseButton className="w-70 max-w-[calc(100vw-3rem)]">
                 <DrawerHeader>
                     <DrawerTitle className="flex items-center gap-2">
-                        <img src="/logo/bust_transparent.png" alt="" width={28} height={28} className="h-7 w-7 shrink-0 object-contain" />
+                        <img src="/logo/bust_128.png" alt="" width={28} height={28} className="h-7 w-7 shrink-0 object-contain" />
                         myrtle.moe
                     </DrawerTitle>
                 </DrawerHeader>

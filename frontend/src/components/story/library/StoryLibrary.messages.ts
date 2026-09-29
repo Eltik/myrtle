@@ -32,7 +32,7 @@ export const messages = {
         description: "Subhead under the page title on a phone, where the headline story count beside the title is dropped and folded in here. {stories} arrives already formatted (1,887).",
     },
     "library.storiesLabel": {
-        text: "STORIES",
+        text: "Stories",
         description: "Label under the headline story count beside the page title.",
     },
     "library.tab.browse": {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Storyline } from "#/types/generated/Storyline";
 import type { LibEntry, LibGroup, LibIndex, LibRecord } from "./derive";
-import { buildSections, cardCode, FILTER_ORDER, fallbackSections, kindOf, matchesFilter, sectionFilterKey, sectionLibrary, underLine } from "./sections";
+import { browseOrder, buildSections, cardCode, chapterNeighbours, FILTER_ORDER, fallbackSections, kindOf, matchesFilter, sectionFilterKey, sectionLibrary, underLine } from "./sections";
 
 function entry(id: string, over: Partial<LibEntry> = {}): LibEntry {
     return { id, name: id, sort: 1, groupId: "g", hasScript: true, requiredStages: [], ...over };
@@ -217,5 +217,40 @@ describe("underLine", () => {
         expect(underLine(["Events", null, "3 chapters"])).toBe("Events · 3 chapters");
         expect(underLine([null, null, "315 record sets"])).toBe("315 record sets");
         expect(underLine([undefined, "", "6 chapters"])).toBe("6 chapters");
+    });
+});
+
+describe("chapterNeighbours", () => {
+    const order = [group("main_2", { category: "main" }), group("main_10", { category: "main" }), group("act_2024")];
+
+    it("answers the chapters either side in the order given", () => {
+        const { prev, next } = chapterNeighbours(order, "main_10");
+        expect(prev?.id).toBe("main_2");
+        expect(next?.id).toBe("act_2024");
+    });
+
+    it("does not wrap: the first has no previous and the last no next", () => {
+        expect(chapterNeighbours(order, "main_2").prev).toBeNull();
+        expect(chapterNeighbours(order, "main_2").next?.id).toBe("main_10");
+        expect(chapterNeighbours(order, "act_2024").next).toBeNull();
+        expect(chapterNeighbours(order, "act_2024").prev?.id).toBe("main_10");
+    });
+
+    it("gives a group the list does not hold no neighbours rather than a guess", () => {
+        expect(chapterNeighbours(order, "gone")).toEqual({ prev: null, next: null });
+        expect(chapterNeighbours([], "main_2")).toEqual({ prev: null, next: null });
+    });
+
+    it("walks the SHELF order the page renders, across a shelf boundary, and the sorted list when there is one", () => {
+        // The fallback cut shelves main_2 before main_10 (numeric, not lexical) and the
+        // 2024 event after both, so the last mainline chapter's next is the event.
+        const sections = fallbackSections([group("main_10", { category: "main" }), group("act_2024", { startTime: Date.UTC(2024, 5, 1) / 1000 }), group("main_2", { category: "main" })]);
+        const shelves = browseOrder(sections, null);
+        expect(shelves.map((g) => g.id)).toEqual(["main_2", "main_10", "act_2024"]);
+        expect(chapterNeighbours(shelves, "main_10").next?.id).toBe("act_2024");
+
+        const sorted = [shelves[2], shelves[0], shelves[1]];
+        expect(browseOrder(sections, sorted)).toBe(sorted);
+        expect(chapterNeighbours(browseOrder(sections, sorted), "act_2024")).toEqual({ prev: null, next: shelves[0] });
     });
 });

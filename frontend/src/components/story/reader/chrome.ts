@@ -56,7 +56,7 @@ export interface ChromeInputs {
     collapsed: boolean;
     /** The auto-hide is OFF: the pills stay. The kill switch, and the default. */
     alwaysShow: boolean;
-    /** A backlog, chapter or settings dialog is open. */
+    /** A backlog, settings or skip dialog, or the volume popover, is open. */
     dialogOpen: boolean;
     /** The pointer is over a pill or the scrubber. Keeps a FADING bar up, never a collapsed one. */
     pointerOverChrome: boolean;

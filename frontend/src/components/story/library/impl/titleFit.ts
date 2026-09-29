@@ -50,6 +50,21 @@ export interface IFitBounds {
     step?: number;
 }
 
+/**
+ * THE TICKET'S TEXT-TITLE BOX, for the 6 groups with no logotype, re-derived
+ * for the smaller ticket (2026-09-29).
+ *
+ * The box is the content box's width on the NARROWEST card each grid can make,
+ * because a fit measured on a wider card overflows a narrower one. The content
+ * box is the card less 23% and 10 px, so above 640 the 200 px track floor gives
+ * 144 px, and under 640 the 160 px track floor gives 113 px. The ceiling and the
+ * floor keep the ratio the old 216 px box had (32 / 216 = 0.148, 21 / 216 =
+ * 0.097): 21 and 14 px for 144, 16.5 and 11 px for 113. The old bounds were
+ * `{ box: 216, max: 32, min: 21 }` against a 300 px track floor.
+ */
+export const TICKET_FIT: IFitBounds = { box: 144, max: 21, min: 14, lines: 2, floorLines: 3 };
+export const TICKET_FIT_PHONE: IFitBounds = { box: 113, max: 16.5, min: 11, lines: 2, floorLines: 3 };
+
 /** Greedy word wrap at one size: the lines the title takes, each one whole words. */
 function wrap(words: string[], widthEm: (text: string) => number, capEm: number): string[] {
     const lines: string[] = [];
