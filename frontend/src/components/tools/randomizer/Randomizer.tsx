@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
-import { PageHeader } from "#/components/ui/page-header";
 import { useAuth } from "#/hooks/use-auth";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
@@ -150,9 +149,17 @@ export function Randomizer(): React.ReactElement {
 
     return (
         <div className="page-shell [--page-max:1320px]">
-            <PageHeader breadcrumbLabel="breadcrumb" breadcrumb={[t("randomizer.breadcrumb.tools"), t("randomizer.breadcrumb.title")]} title={t("randomizer.breadcrumb.title")} className="mb-5" />
-
-            <BriefingHero operatorsAvailable={availableOperators.length} operatorsRoster={effectiveRosterSet.size} stagesAvailable={availableStages.length} hasResult={hasResult} canRoll={canRoll} onRollAll={rollAll} onReset={reset} onOpenSettings={() => setSettingsOpen(true)} />
+            <BriefingHero
+                breadcrumb={[t("randomizer.breadcrumb.tools"), t("randomizer.breadcrumb.title")]}
+                operatorsAvailable={availableOperators.length}
+                operatorsRoster={effectiveRosterSet.size}
+                stagesAvailable={availableStages.length}
+                hasResult={hasResult}
+                canRoll={canRoll}
+                onRollAll={rollAll}
+                onReset={reset}
+                onOpenSettings={() => setSettingsOpen(true)}
+            />
 
             <div className="mt-6 flex flex-col gap-3 sm:gap-4" key={rollSeq}>
                 {!hasResult && <EmptyState />}
