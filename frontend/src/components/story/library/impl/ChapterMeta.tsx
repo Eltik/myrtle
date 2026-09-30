@@ -10,6 +10,8 @@
 import { Link } from "@tanstack/react-router";
 import type React from "react";
 import { memo, useState } from "react";
+import { ExportSheet } from "#/components/story/export/ExportSheet";
+import type { messages as exportMessages } from "#/components/story/export/export.messages";
 import { Button } from "#/components/ui/button";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -25,6 +27,7 @@ import { setWords } from "./stats";
 
 type BrowseT = TypedT<typeof messages>;
 type MarksT = TypedT<typeof marksMessages>;
+type ExportT = TypedT<typeof exportMessages>;
 
 /**
  * WHAT THE CHAPTER IS AND WHERE THE READER IS IN IT, then the one thing they
@@ -107,7 +110,8 @@ export const MetaRow = memo(function MetaRow({ group, progress, gameRead }: { gr
                         ) : null}
                     </>
                 ) : null}
-                <div className="flex min-w-0 items-center max-sm:w-full sm:ml-auto">
+                <div className="flex min-w-0 flex-wrap items-center gap-2 max-sm:w-full sm:ml-auto">
+                    <ExportAction group={group} />
                     <MarkActions group={group} progress={progress} gameRead={gameRead} />
                 </div>
             </div>
@@ -166,6 +170,25 @@ function MarkActions({ group, progress, gameRead }: { group: LibGroup; progress:
                 {t("marks.clearAll")}
             </Button>
         </div>
+    );
+}
+
+/**
+ * SAVE THE CHAPTER TO READ OFFLINE. The sheet is mounted only while open, so
+ * a closed chapter sheet pays nothing for it. Absent on a chapter with no
+ * script to export.
+ */
+function ExportAction({ group }: { group: LibGroup }): React.ReactElement | null {
+    const t: ExportT = useT("story");
+    const [open, setOpen] = useState(false);
+    if (!group.stories.some((s) => s.hasScript)) return null;
+    return (
+        <>
+            <Button variant="outline" size="sm" className="max-sm:h-11" onClick={() => setOpen(true)} data-story-export>
+                {t("export.open")}
+            </Button>
+            {open ? <ExportSheet open={open} onOpenChange={setOpen} group={group} /> : null}
+        </>
     );
 }
 

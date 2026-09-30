@@ -15,6 +15,8 @@
  * control that lies about its own range.
  */
 import type React from "react";
+import type { messages as exportMessages } from "#/components/story/export/export.messages";
+import { Button } from "#/components/ui/button";
 import { Dialog, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Input } from "#/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
@@ -30,7 +32,7 @@ import type { messages } from "./reader.messages";
 import { SettingsFont } from "./SettingsFont";
 import { BoxPositionControl } from "./SettingsPosition";
 import { ProgressSection, ResetProgressDialog, useProgressActions } from "./SettingsProgress";
-import { Row, TOUCH_CLOSE, TOUCH_INPUT, TOUCH_SLIDER, TOUCH_SWITCH } from "./SettingsRow";
+import { Row, TOUCH_BUTTON, TOUCH_CLOSE, TOUCH_INPUT, TOUCH_SLIDER, TOUCH_SWITCH } from "./SettingsRow";
 import type { messages as styleMessages } from "./styles.messages";
 
 export interface ISettingsDialogProps {
@@ -38,10 +40,13 @@ export interface ISettingsDialogProps {
     onOpenChange: (open: boolean) => void;
     settings: StorySettings;
     onChange: (next: StorySettings) => void;
+    /** Opens the Export sheet; the phone's only way to it, since the toolbar has no room there. */
+    onExport?: () => void;
 }
 
-export function SettingsDialog({ open, onOpenChange, settings, onChange }: ISettingsDialogProps): React.ReactElement {
+export function SettingsDialog({ open, onOpenChange, settings, onChange, onExport }: ISettingsDialogProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("story");
+    const te: TypedT<typeof exportMessages> = useT("story");
     const ts: TypedT<typeof styleMessages> = useT("story");
     // The reading style is DERIVED on every write, never left behind: the five
     // fields a preset owns are ordinary settings, so editing one of them by
@@ -220,6 +225,13 @@ export function SettingsDialog({ open, onOpenChange, settings, onChange }: ISett
                             </Row>
                         ) : null}
 
+                        {onExport ? (
+                            <Row label={te("export.title")} hint={te("export.settingsHint")}>
+                                <Button variant="outline" size="sm" className={TOUCH_BUTTON} onClick={onExport} data-story-export>
+                                    {te("export.openStory")}
+                                </Button>
+                            </Row>
+                        ) : null}
                         <ProgressSection actions={progressActions} />
                         <div className="border-t pt-4">
                             <div className="mb-1 font-heading font-semibold text-sm">{t("settings.hotkeys.heading")}</div>

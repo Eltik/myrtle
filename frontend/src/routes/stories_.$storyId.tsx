@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { BookView } from "#/components/story/export/BookView";
 import type { messages as readerMessages } from "#/components/story/reader/reader.messages";
 import { StoryReader } from "#/components/story/reader/StoryReader";
 import { storyIndexQueryOptions, storyQueryOptions } from "#/lib/api/story";
@@ -8,6 +9,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { metaT } from "#/lib/meta";
 import { buildStoryOgData, defaultOgURL, localizedOgURL, storyOgId, warmOg } from "#/lib/og";
 import { seo } from "#/lib/seo";
+import type { BookGroup } from "#/lib/story/book/book";
 import { useStoryProgressSync } from "#/lib/story/sync";
 import type { StoryCategory } from "#/types/generated/StoryCategory";
 import type { StoryEntry } from "#/types/generated/StoryEntry";
@@ -39,6 +41,17 @@ export function placeStory(index: StoryIndex, storyId: string): Placement {
     return { entry: null, groupName: "", category: "sideContent", previous: null, next: null };
 }
 
+/**
+ * The set of stories the reader's Export offers "the chapter" from: the
+ * story's group, or for an operator record the operator's whole record set
+ * (keyed by `charId`, which the illustrations route also takes).
+ */
+export function exportGroupOf(index: StoryIndex, storyId: string): BookGroup | null {
+    const rec = index.records.find((r) => r.stories.some((s) => s.id === storyId));
+    if (rec) return { id: rec.charId, name: rec.name, stories: rec.stories };
+    return index.groups.find((g) => g.stories.some((s) => s.id === storyId)) ?? null;
+}
+
 export const Route = createFileRoute("/stories_/$storyId")({
     component: RouteComponent,
     errorComponent: RootErrorComponent,
@@ -55,8 +68,10 @@ export const Route = createFileRoute("/stories_/$storyId")({
     // count is the one the reader had before cutscenes shipped. Each is read as MISSING
     // rather than falsy: `Number(null)` is 0 and finite, which would pin the
     // ratio at zero and make every scene instant.
-    validateSearch: (search: Record<string, unknown>): { halt?: number; ratio?: number; legacyclamp?: boolean; mask?: boolean; canvas?: "stretch"; plate?: boolean; firstright?: boolean; video?: boolean } => {
-        const out: { halt?: number; ratio?: number; legacyclamp?: boolean; mask?: boolean; canvas?: "stretch"; plate?: boolean; firstright?: boolean; video?: boolean } = {};
+    // `?view=book` shows the story as one printable document (`BookView`) instead of the stage.
+    validateSearch: (search: Record<string, unknown>): { halt?: number; ratio?: number; legacyclamp?: boolean; mask?: boolean; canvas?: "stretch"; plate?: boolean; firstright?: boolean; video?: boolean; view?: "book" } => {
+        const out: { halt?: number; ratio?: number; legacyclamp?: boolean; mask?: boolean; canvas?: "stretch"; plate?: boolean; firstright?: boolean; video?: boolean; view?: "book" } = {};
+        if (search.view === "book") out.view = "book";
         const asNumber = (v: unknown): number => (typeof v === "number" ? v : typeof v === "string" && v.trim() !== "" ? Number(v) : Number.NaN);
         // The router's own search parser turns `?mask=1` into the NUMBER 1, so
         // a string compare alone reads every switch as absent.
@@ -118,7 +133,7 @@ function RootErrorComponent({ error }: { error: unknown }) {
 
 function RouteComponent() {
     const { storyId } = Route.useParams();
-    const { halt, ratio, legacyclamp, mask, canvas, plate, firstright, video } = Route.useSearch();
+    const { halt, ratio, legacyclamp, mask, canvas, plate, firstright, video, view } = Route.useSearch();
     const server = useGamedataServer();
     // Opening a story is a sync trigger, and the reader shows nothing for it:
     // the pull, the merge and the debounced push all run beside the reading.
@@ -133,12 +148,15 @@ function RouteComponent() {
     if (script === null || script === undefined) {
         return <p className="p-8 text-center text-muted-foreground">{placement.entry ? tr("reader.error.noScript") : tr("reader.error.notFound")}</p>;
     }
+    const exportGroup = exportGroupOf(index, storyId);
+    if (view === "book" && exportGroup) return <BookView script={script} group={exportGroup} server={server} />;
     return (
         <StoryReader
             key={storyId}
             script={script}
             entry={placement.entry}
             groupName={placement.groupName}
+            exportGroup={exportGroup}
             category={placement.category}
             previous={placement.previous}
             next={placement.next}

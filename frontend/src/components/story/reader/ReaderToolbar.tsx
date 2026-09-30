@@ -12,7 +12,7 @@
  * ways the chrome goes (theater mode, the deliberate "Hide toolbar", and the
  * opt-in idle fade) are all written up there.
  */
-import { ArrowLeftIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, EyeOffIcon, FastForwardIcon, HistoryIcon, MaximizeIcon, MinimizeIcon, PlayIcon, SettingsIcon, Volume2Icon, VolumeXIcon } from "lucide-react";
+import { ArrowLeftIcon, ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, DownloadIcon, EyeOffIcon, FastForwardIcon, HistoryIcon, MaximizeIcon, MinimizeIcon, PlayIcon, SettingsIcon, Volume2Icon, VolumeXIcon } from "lucide-react";
 import type React from "react";
 import { memo, useId, useRef } from "react";
 import { Button } from "#/components/ui/button";
@@ -24,10 +24,11 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { VolumeKey } from "#/lib/story/settings";
 import { cn } from "#/lib/utils";
+import type { messages as exportMessages } from "../export/export.messages";
 import { DARK_FOCUS, PILL, TOUCH_TARGET } from "./glass";
 import type { messages } from "./reader.messages";
 
-type ReaderT = TypedT<typeof messages>;
+type ReaderT = TypedT<typeof messages & typeof exportMessages>;
 
 /** The pill's fast setting, and the other half of its 1x/2x toggle. */
 export const FAST_RATIO = 2;
@@ -126,6 +127,12 @@ export interface IReaderToolbarProps {
     onNext: () => void;
     onSettings: () => void;
     onLog: () => void;
+    /**
+     * Opens the Export sheet. The button is on the pill at 640 px and up only:
+     * at 390 the two pills measure 374 of the 382 px the row has, and one more
+     * 32 px control would wrap them. Under 640 the Settings sheet carries it.
+     */
+    onExport?: () => void;
     theater: boolean;
     onTheater: () => void;
     onHideToolbar: () => void;
@@ -180,6 +187,11 @@ export function ReaderToolbar(p: IReaderToolbarProps): React.ReactElement {
                 <PillButton compact={compact} label={t("reader.toolbar.log")} onClick={p.onLog}>
                     <HistoryIcon />
                 </PillButton>
+                {p.onExport ? (
+                    <PillButton compact={compact} className="max-sm:hidden" label={t("export.openStory")} onClick={p.onExport} hook="export">
+                        <DownloadIcon />
+                    </PillButton>
+                ) : null}
                 {/* The eye with the slash, the client's own Hide. */}
                 <PillButton compact={compact} label={t("reader.toolbar.hide")} active={p.theater} onClick={p.onTheater}>
                     <EyeOffIcon />

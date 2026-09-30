@@ -1,0 +1,130 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Markdown and text > Markdown 1`] = `
+"# Evil Time Part 1
+
+## 0-1 Isolated Island
+
+*Before Operation*
+
+> Amiya wakes the Doctor.
+
+---
+
+**Amiya:** Doctor, can you hear me? *Please* wake up.
+
+![CG](https://cdn/textures/avg/imgs/cg_one.png)
+
+**Kal:** ...Where am I?
+
+The room is burning.
+
+**Choose:**
+
+> - Run.
+> - Stay & fight \\<here\\>.
+
+*If you chose “Run.”:*
+
+> **Amiya:** This way!
+
+*If you chose “Stay & fight \\<here\\>.”:*
+
+> ---
+
+> **Amiya:** Then we fight.
+
+*Chernobog\\
+11:47 A.M.*
+
+## 0-1 Isolated Island
+
+*After Operation*
+
+---
+
+**Ace:** Go, Kal!
+
+![CG](https://cdn/textures/avg/imgs/cg_one.png)
+
+![CG](https://cdn/textures/avg/imgs/cg_two.png)
+
+## Prologue \\<1\\>
+
+*Interlude*
+
+*Some time later.*
+
+A voice in the dark.
+
+---
+
+*Story text and art by Hypergryph and Yostar, from Arknights. Made with myrtle.moe.*
+"
+`;
+
+exports[`Markdown and text > text 1`] = `
+"Evil Time Part 1
+################
+
+0-1 ISOLATED ISLAND
+===================
+
+Before Operation
+
+Synopsis: Amiya wakes the Doctor.
+
+---
+
+Amiya: Doctor, can you hear me? Please wake up.
+
+[CG] https://cdn/textures/avg/imgs/cg_one.png
+
+Kal: ...Where am I?
+
+The room is burning.
+
+Choose:
+
+> Run.
+> Stay & fight <here>.
+
+If you chose “Run.”:
+
+  Amiya: This way!
+
+If you chose “Stay & fight <here>.”:
+
+  ---
+
+  Amiya: Then we fight.
+
+Chernobog
+11:47 A.M.
+
+0-1 ISOLATED ISLAND
+===================
+
+After Operation
+
+---
+
+Ace: Go, Kal!
+
+[CG] https://cdn/textures/avg/imgs/cg_one.png
+
+[CG] https://cdn/textures/avg/imgs/cg_two.png
+
+PROLOGUE <1>
+============
+
+Interlude
+
+Some time later.
+
+A voice in the dark.
+
+--
+Story text and art by Hypergryph and Yostar, from Arknights. Made with myrtle.moe.
+"
+`;

@@ -22,6 +22,7 @@ import { useMediaQuery } from "#/hooks/use-media-query";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { createStoryAudio, type StoryAudio } from "#/lib/story/audio";
+import type { BookGroup } from "#/lib/story/book/book";
 import type { CameraShake } from "#/lib/story/engine";
 import { clamp01 } from "#/lib/story/num";
 import { autoPlayDelaySec, type BoxPosition, resolveNickname, useStorySettings, type VolumeKey, withVolume } from "#/lib/story/settings";
@@ -30,6 +31,7 @@ import { cn } from "#/lib/utils";
 import type { StoryCategory } from "#/types/generated/StoryCategory";
 import type { StoryEntry } from "#/types/generated/StoryEntry";
 import type { StoryScript } from "#/types/generated/StoryScript";
+import { ExportSheet } from "../export/ExportSheet";
 import type { messages as sharedMessages } from "../shared.messages";
 import { BacklogDialog } from "./BacklogDialog";
 import { Cutscene } from "./Cutscene";
@@ -55,6 +57,8 @@ export interface IStoryReaderProps {
     script: StoryScript;
     entry: StoryEntry | null;
     groupName: string;
+    /** The chapter the Export sheet draws its scopes from; null hides Export. */
+    exportGroup?: BookGroup | null;
     category: StoryCategory;
     /** Neighbours within the same group, for the end card. */
     previous: StoryEntry | null;
@@ -83,7 +87,7 @@ export interface IStoryReaderProps {
 /** A stable empty slot map, so a frameless render does not hand the tint hook a new object every time. */
 const EMPTY_SLOTS = {};
 
-export function StoryReader({ script, entry, groupName, category, previous, next, initialHalt, ratioOverride, legacyClamp, mask, canvasMode, plateFromWire, firstNameRight, video }: IStoryReaderProps): React.ReactElement {
+export function StoryReader({ script, entry, groupName, exportGroup = null, category, previous, next, initialHalt, ratioOverride, legacyClamp, mask, canvasMode, plateFromWire, firstNameRight, video }: IStoryReaderProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("story");
     const tc: TypedT<typeof sharedMessages> = useT("story");
     const [settings, setSettings] = useStorySettings();
@@ -157,6 +161,7 @@ export function StoryReader({ script, entry, groupName, category, previous, next
     const [theater, setTheater] = useState(false);
     const [logOpen, setLogOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
+    const [exportOpen, setExportOpen] = useState(false);
     // The mute button's volume popover. It counts as a dialog: its sliders take
     // the arrow keys, which would otherwise turn the page under them.
     const [volumeOpen, setVolumeOpen] = useState(false);
@@ -215,7 +220,7 @@ export function StoryReader({ script, entry, groupName, category, previous, next
     const revealDone = revealDoneKey === revealKey;
     const [completeSignal, setCompleteSignal] = useState(0);
     const rootRef = useRef<HTMLDivElement>(null);
-    const dialogOpen = logOpen || settingsOpen || skip.open || volumeOpen;
+    const dialogOpen = logOpen || settingsOpen || skip.open || volumeOpen || exportOpen;
     // Under 1024 px the pills are icon-only and every label is a tooltip.
     const compact = useMediaQuery("(max-width: 1023px)");
 
@@ -433,6 +438,7 @@ export function StoryReader({ script, entry, groupName, category, previous, next
                         onNext={() => goNeighbour(next)}
                         onSettings={() => setSettingsOpen(true)}
                         onLog={() => setLogOpen(true)}
+                        onExport={exportGroup ? () => setExportOpen(true) : undefined}
                         theater={theater}
                         onTheater={() => setTheater((v) => nextTheater(v, "toggle"))}
                         onHideToolbar={toggleToolbar}
@@ -560,7 +566,21 @@ export function StoryReader({ script, entry, groupName, category, previous, next
                     setLogOpen(false);
                 }}
             />
-            <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} settings={settings} onChange={setSettings} />
+            <SettingsDialog
+                open={settingsOpen}
+                onOpenChange={setSettingsOpen}
+                settings={settings}
+                onChange={setSettings}
+                onExport={
+                    exportGroup
+                        ? () => {
+                              setSettingsOpen(false);
+                              setExportOpen(true);
+                          }
+                        : undefined
+                }
+            />
+            {exportGroup && exportOpen ? <ExportSheet open={exportOpen} onOpenChange={setExportOpen} group={exportGroup} storyId={script.id} /> : null}
             <SkipDialog open={skip.open} onCancel={() => onSkipEvent("cancel")} onConfirm={() => onSkipEvent("confirm")} title={title} node={skipNodeLine(entry, groupName)} synopsis={script.synopsis} />
         </div>
     );

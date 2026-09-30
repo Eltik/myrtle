@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-30T11:17:49.628Z",
+    "generatedAt": "2026-09-30T21:42:54.719Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -18801,6 +18801,94 @@
             "placeholders": []
         },
         {
+            "key": "story.book.choice",
+            "namespace": "story",
+            "source_text": "Choose",
+            "description": "Label printed above a decision's list of options inside an exported book.",
+            "placeholders": []
+        },
+        {
+            "key": "story.book.colophon",
+            "namespace": "story",
+            "source_text": "Colophon",
+            "description": "Name of the closing credits page inside an exported e-book.",
+            "placeholders": []
+        },
+        {
+            "key": "story.book.contents",
+            "namespace": "story",
+            "source_text": "Contents",
+            "description": "Heading of the table of contents inside an exported e-book.",
+            "placeholders": []
+        },
+        {
+            "key": "story.book.cover",
+            "namespace": "story",
+            "source_text": "Cover",
+            "description": "Name of the cover page inside an exported e-book (shown in the e-reader's navigation).",
+            "placeholders": []
+        },
+        {
+            "key": "story.book.credit",
+            "namespace": "story",
+            "source_text": "Story text and art by Hypergryph and Yostar, from Arknights.",
+            "description": "Credit line on the colophon page and at the end of an exported book.",
+            "placeholders": []
+        },
+        {
+            "key": "story.book.cutscene",
+            "namespace": "story",
+            "source_text": "Cutscene",
+            "description": "Marker printed where the story plays an animated cutscene, inside an exported book.",
+            "placeholders": []
+        },
+        {
+            "key": "story.book.earlier",
+            "namespace": "story",
+            "source_text": "If you had chosen {options}",
+            "description": "Heading over lines that depend on an EARLIER decision, inside an exported book. {options} is the quoted option text.",
+            "placeholders": [
+                "options"
+            ]
+        },
+        {
+            "key": "story.book.figureAlt",
+            "namespace": "story",
+            "source_text": "Illustration",
+            "description": "Alternative text of a CG illustration inside an exported book.",
+            "placeholders": []
+        },
+        {
+            "key": "story.book.ifChose",
+            "namespace": "story",
+            "source_text": "If you chose {options}",
+            "description": "Heading over the lines one option leads to, inside an exported book. {options} is the quoted option text, several joined by ' / '.",
+            "placeholders": [
+                "options"
+            ]
+        },
+        {
+            "key": "story.book.madeWith",
+            "namespace": "story",
+            "source_text": "Made with myrtle.moe.",
+            "description": "Line on the colophon page naming the site that made the file.",
+            "placeholders": []
+        },
+        {
+            "key": "story.book.rights",
+            "namespace": "story",
+            "source_text": "Arknights and all of its story text and art belong to Hypergryph and Yostar. This book is a personal reading copy.",
+            "description": "Rights line on the colophon page of an exported book.",
+            "placeholders": []
+        },
+        {
+            "key": "story.book.synopsis",
+            "namespace": "story",
+            "source_text": "Synopsis",
+            "description": "Label before a story's summary in a plain-text export.",
+            "placeholders": []
+        },
+        {
             "key": "story.browse.badge.event",
             "namespace": "story",
             "source_text": "EVENT",
@@ -19664,6 +19752,495 @@
             "namespace": "story",
             "source_text": "Community",
             "description": "Top-level tab of the story library holding what everyone else has read.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.blobWarning",
+            "namespace": "story",
+            "source_text": "This file will be about {size}. This browser builds it in memory before saving, which may fail on a phone; a smaller scope is safer.",
+            "description": "Warning above the Download button when the export is large and cannot be streamed to disk. {size} is like '180 MB'.",
+            "placeholders": [
+                "size"
+            ]
+        },
+        {
+            "key": "story.export.book.back",
+            "namespace": "story",
+            "source_text": "Back to the reader",
+            "description": "Button above the printable document view of a story, returning to the reader.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.book.open",
+            "namespace": "story",
+            "source_text": "Print this story",
+            "description": "Link in the export sheet (reader only) to the story as one printable page, for the browser's Print or Save as PDF.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.book.print",
+            "namespace": "story",
+            "source_text": "Print or save as PDF",
+            "description": "Button above the printable document view of a story; opens the browser's print dialog, where Save as PDF is a destination.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.branches",
+            "namespace": "story",
+            "source_text": "Choices",
+            "description": "Label of the export sheet's control for the story's decision branches.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.branches.all",
+            "namespace": "story",
+            "source_text": "Every branch",
+            "description": "Branch option: print every option the Doctor could pick, with what each one leads to.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.branches.path",
+            "namespace": "story",
+            "source_text": "My choices",
+            "description": "Branch option: print only the options the reader picked in the reader (the first option where they picked none).",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.cancel",
+            "namespace": "story",
+            "source_text": "Cancel",
+            "description": "Button that stops a running export.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.cancelled",
+            "namespace": "story",
+            "source_text": "Export cancelled.",
+            "description": "Status line after the reader cancelled an export.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.close",
+            "namespace": "story",
+            "source_text": "Close",
+            "description": "Button that closes the export sheet.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.done",
+            "namespace": "story",
+            "source_text": "Saved {file}.",
+            "description": "Status line after the file was saved. {file} is its file name.",
+            "placeholders": [
+                "file"
+            ]
+        },
+        {
+            "key": "story.export.doneDisk",
+            "namespace": "story",
+            "source_text": "Written to {file}.",
+            "description": "Status line after the file was written straight to the place the reader picked. {file} is its name.",
+            "placeholders": [
+                "file"
+            ]
+        },
+        {
+            "key": "story.export.doneMissing",
+            "namespace": "story",
+            "source_text": "{count, plural, one {# picture} other {# pictures}} could not be loaded and were left out.",
+            "description": "Second sentence of the status line after saving when some pictures failed to download.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.export.download",
+            "namespace": "story",
+            "source_text": "Download",
+            "description": "Button that builds the file and saves it.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.empty",
+            "namespace": "story",
+            "source_text": "Choose at least one story.",
+            "description": "Shown instead of the estimate when the checklist has nothing ticked.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.error",
+            "namespace": "story",
+            "source_text": "The export failed: {message}",
+            "description": "Error line when building the file failed. {message} is the technical reason.",
+            "placeholders": [
+                "message"
+            ]
+        },
+        {
+            "key": "story.export.estimate",
+            "namespace": "story",
+            "source_text": "{stories, plural, one {# story} other {# stories}} · {words, plural, one {# word} other {# words}} · about {time} · {images, plural, one {# picture} other {# pictures}} · about {size}",
+            "description": "The live size estimate above the Download button. {time} is a reading time like '5h 50m', {size} an estimated file size like '11.6 MB'.",
+            "placeholders": [
+                "images",
+                "size",
+                "stories",
+                "time",
+                "words"
+            ]
+        },
+        {
+            "key": "story.export.estimate.rough",
+            "namespace": "story",
+            "source_text": "The picture count is an estimate until the chapter's illustration list loads.",
+            "description": "Hint under the estimate when the image count is a fallback guess.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.format",
+            "namespace": "story",
+            "source_text": "Format",
+            "description": "Label of the export sheet's file format control.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.format.epub",
+            "namespace": "story",
+            "source_text": "EPUB",
+            "description": "Format option: an e-book file for Apple Books, Kobo, Google Play Books, Send to Kindle.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.format.markdown",
+            "namespace": "story",
+            "source_text": "Markdown",
+            "description": "Format option: a Markdown text file.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.format.pdf",
+            "namespace": "story",
+            "source_text": "PDF",
+            "description": "Format option: a paginated PDF with page numbers, a contents page and bookmarks.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.format.text",
+            "namespace": "story",
+            "source_text": "Text",
+            "description": "Format option: a plain text file.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.images",
+            "namespace": "story",
+            "source_text": "Pictures",
+            "description": "Label of the export sheet's image control: which pictures go into the file.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.images.cg",
+            "namespace": "story",
+            "source_text": "Illustrations",
+            "description": "Image option: only the story's CG illustrations.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.images.cgbg",
+            "namespace": "story",
+            "source_text": "Illustrations and scenes",
+            "description": "Image option: CG illustrations plus every scene background.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.images.count",
+            "namespace": "story",
+            "source_text": "This chapter has {cgs, plural, one {# illustration} other {# illustrations}} and {scenes, plural, one {# scene} other {# scenes}}.",
+            "description": "Hint under the pictures control: how many CG illustrations and scene backgrounds the whole chapter uses, from its illustration listing.",
+            "placeholders": [
+                "cgs",
+                "scenes"
+            ]
+        },
+        {
+            "key": "story.export.images.linked",
+            "namespace": "story",
+            "source_text": "Markdown and text link to pictures online instead of carrying them.",
+            "description": "Hint under the image control when Markdown or Text is chosen.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.images.none",
+            "namespace": "story",
+            "source_text": "None",
+            "description": "Image option: text only.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.name",
+            "namespace": "story",
+            "source_text": "Doctor's name",
+            "description": "Label of the field for the name printed wherever the story addresses the Doctor. Prefilled from the reader's setting.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.open",
+            "namespace": "story",
+            "source_text": "Export",
+            "description": "Button on the chapter sheet and in the reader that opens the export sheet (save stories as an e-book or a text file).",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.openStory",
+            "namespace": "story",
+            "source_text": "Export this story",
+            "description": "Accessible name of the reader's export control, which opens the export sheet with the current story selected.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.paper",
+            "namespace": "story",
+            "source_text": "Paper",
+            "description": "Label of the PDF paper-size control.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.paper.a4",
+            "namespace": "story",
+            "source_text": "A4",
+            "description": "Paper size option.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.paper.a5",
+            "namespace": "story",
+            "source_text": "A5",
+            "description": "Paper size option, the small book size.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.paper.letter",
+            "namespace": "story",
+            "source_text": "Letter",
+            "description": "Paper size option, US Letter.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.partial.kept",
+            "namespace": "story",
+            "source_text": "The unfinished file may still be on disk; this browser could not remove it.",
+            "description": "Added to the cancelled or failed line when a partly written file could not be deleted.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.partial.removed",
+            "namespace": "story",
+            "source_text": "The unfinished file was removed.",
+            "description": "Added to the cancelled or failed line when a file that was being written to disk was deleted again.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.progress.book",
+            "namespace": "story",
+            "source_text": "Writing {done} of {total} · {story}",
+            "description": "Progress line while the e-book is written, one story at a time, pictures included.",
+            "placeholders": [
+                "done",
+                "story",
+                "total"
+            ]
+        },
+        {
+            "key": "story.export.progress.finishing",
+            "namespace": "story",
+            "source_text": "Finishing the file…",
+            "description": "Progress line after the last story, while the file is closed and saved.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.progress.layout",
+            "namespace": "story",
+            "source_text": "Laying out pages…",
+            "description": "Progress line while the PDF is typeset, after every story and picture is loaded.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.progress.scripts",
+            "namespace": "story",
+            "source_text": "Loading {done} of {total} · {story}",
+            "description": "Progress line while the stories' scripts download. {story} is the story's code and title.",
+            "placeholders": [
+                "done",
+                "story",
+                "total"
+            ]
+        },
+        {
+            "key": "story.export.range.from",
+            "namespace": "story",
+            "source_text": "From",
+            "description": "Label of the first-group picker of a reading-order range.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.range.release",
+            "namespace": "story",
+            "source_text": "Release order",
+            "description": "Reading order mode for the range picker: by release date.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.range.storyline",
+            "namespace": "story",
+            "source_text": "Storyline order",
+            "description": "Reading order mode for the range picker: the Main Theme in chapter order, then the rest.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.range.to",
+            "namespace": "story",
+            "source_text": "To",
+            "description": "Label of the last-group picker of a reading-order range.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.scope",
+            "namespace": "story",
+            "source_text": "Stories",
+            "description": "Label of the export sheet's scope control: which stories go into the file.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.scope.arc",
+            "namespace": "story",
+            "source_text": "This arc",
+            "description": "Scope option: every chapter in the mainline arc this chapter belongs to (for example Hour of An Awakening).",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.scope.chapter",
+            "namespace": "story",
+            "source_text": "Whole chapter",
+            "description": "Scope option: every story in the chapter or event.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.scope.groups",
+            "namespace": "story",
+            "source_text": "{title}: {count, plural, one {# chapter or event} other {# chapters and events}}",
+            "description": "Line under a wide scope naming it and how many groups it covers. {title} is data (an arc or shelf name).",
+            "placeholders": [
+                "count",
+                "title"
+            ]
+        },
+        {
+            "key": "story.export.scope.range",
+            "namespace": "story",
+            "source_text": "Reading order…",
+            "description": "Scope option: pick a first and a last chapter or event in a reading order, and export everything between.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.scope.selection",
+            "namespace": "story",
+            "source_text": "Choose…",
+            "description": "Scope option: a checklist of the chapter's stories appears to pick from.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.scope.story",
+            "namespace": "story",
+            "source_text": "This story",
+            "description": "Scope option: only the story open in the reader.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.scope.storyline",
+            "namespace": "story",
+            "source_text": "This storyline",
+            "description": "Scope option: every event on the storyline shelf this event belongs to.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.selection.all",
+            "namespace": "story",
+            "source_text": "All",
+            "description": "Button above the story checklist that ticks every story.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.selection.count",
+            "namespace": "story",
+            "source_text": "{count, plural, one {# story} other {# stories}} chosen",
+            "description": "How many stories are ticked in the export checklist.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.export.selection.none",
+            "namespace": "story",
+            "source_text": "None",
+            "description": "Button above the story checklist that unticks every story.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.settingsHint",
+            "namespace": "story",
+            "source_text": "Save this story or its chapter as an e-book or a text file.",
+            "description": "Hint beside the Export button in the reader's settings sheet.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.subtitle",
+            "namespace": "story",
+            "source_text": "Save {group} to read offline, as an e-book or a text file.",
+            "description": "One-line description under the export sheet's title. {group} is the chapter or event name.",
+            "placeholders": [
+                "group"
+            ]
+        },
+        {
+            "key": "story.export.title",
+            "namespace": "story",
+            "source_text": "Export",
+            "description": "Title of the export sheet.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.typeface",
+            "namespace": "story",
+            "source_text": "Typeface",
+            "description": "Label of the export sheet's typeface control, embedded in the e-book.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.typeface.device",
+            "namespace": "story",
+            "source_text": "Reader's own",
+            "description": "Typeface option: embed no font, the e-reader's own typeface is used.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.typeface.inter",
+            "namespace": "story",
+            "source_text": "Inter",
+            "description": "Typeface option: the site's own sans-serif, embedded in the e-book.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.typeface.opendyslexic",
+            "namespace": "story",
+            "source_text": "OpenDyslexic",
+            "description": "Typeface option: a face designed for readers with dyslexia, embedded in the e-book.",
+            "placeholders": []
+        },
+        {
+            "key": "story.export.typeface.packagedOnly",
+            "namespace": "story",
+            "source_text": "Only an EPUB or a PDF carries a typeface.",
+            "description": "Hint under the typeface control when Markdown or Text is chosen.",
             "placeholders": []
         },
         {
