@@ -10,7 +10,7 @@ import { FlatHead, JumpBar, SectionHead, sectionTitle } from "./BrowseSections";
 import { BrowseToolbar, type IBrowseToolbarState, ToolbarButton } from "./BrowseToolbar";
 import { ChapterModal } from "./ChapterModal";
 import { glyphIndexFor, type IChipModel, sectionChapters } from "./chapters";
-import { groupSearchTarget, type IReadFraction, keepEqualFractions, LIBRARY_SORTS, type LibGroup, type LibIndex, type LibRecord, type LibrarySort, matchesReadState, prepareSearch, READ_FILTERS, type ReadFilter, readFraction, recordSearchTarget, searchList, sortLibrary } from "./derive";
+import { groupSearchTarget, type IReadFraction, keepEqualFractions, LIBRARY_SORTS, type LibGroup, type LibIndex, type LibRecord, type LibrarySort, matchesReadState, prepareSearch, READ_FILTERS, type ReadFilter, readFraction, readsFractions, recordSearchTarget, searchList, sortLibrary } from "./derive";
 import { GroupCard, GroupGrid, GroupRow, GroupRowList } from "./GroupCard";
 import { OperatorsTab } from "./OperatorsTab";
 import { browseOrder, chapterNeighbours, type FilterKey, RECORDS_ID, sectionFilterKey, sectionLibrary, type ViewMode } from "./sections";
@@ -24,6 +24,9 @@ const SORT_KEY = "story.library.sort";
 
 /** The bar's chips under a sort: none, as one constant so the bar's spy is not handed a fresh empty list every render. */
 const NO_CHIPS: readonly IChipModel[] = [];
+
+/** What a sort that reads no fraction is handed: `sortLibrary` never calls it for those sorts, which `readsFractions` pins in its test. */
+const NO_FRACTIONS = (group: LibGroup): IReadFraction => ({ read: 0, total: group.stories.length, listed: group.stories.length, done: false });
 
 /**
  * The three toggles are stored as the BARE token, not as JSON, which is the
@@ -112,8 +115,19 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
     }, [index.records, progress, gameRead]);
     const fractionOf = useCallback((group: LibGroup) => fractions.get(group.id) ?? readFraction(group.stories, live.current.progress, live.current.gameRead), [fractions]);
 
-    const keepGroup = useCallback((group: LibGroup) => matchedGroups.has(group.id) && matchesReadState(shownRead, fractionOf(group)), [matchedGroups, shownRead, fractionOf]);
-    const keepRecord = useCallback((record: LibRecord) => matchedRecords.has(record.charId) && matchesReadState(shownRead, recordFractions.get(record.charId) ?? readFraction(record.stories, live.current.progress, live.current.gameRead)), [matchedRecords, shownRead, recordFractions]);
+    // A READ TICK MOVES ONE FRACTION, and the shelves read fractions only under
+    // a read filter or a read sort (`readsFractions`). Otherwise the filter and
+    // the sort below are handed no fractions at all, so a tick in the
+    // chapter sheet leaves the sections, the chips and the sheet's neighbours
+    // the same objects and re-renders the one card whose fraction moved.
+    const reads = readsFractions(shownRead, shownSort);
+    const filterFractions = reads.filter ? fractionOf : null;
+    const filterRecordFractions = reads.filter ? recordFractions : null;
+    const keepGroup = useCallback((group: LibGroup) => matchedGroups.has(group.id) && (filterFractions === null || matchesReadState(shownRead, filterFractions(group))), [matchedGroups, shownRead, filterFractions]);
+    const keepRecord = useCallback(
+        (record: LibRecord) => matchedRecords.has(record.charId) && (filterRecordFractions === null || matchesReadState(shownRead, filterRecordFractions.get(record.charId) ?? readFraction(record.stories, live.current.progress, live.current.gameRead))),
+        [matchedRecords, shownRead, filterRecordFractions],
+    );
     const library = useMemo(() => sectionLibrary(index, shownFilter, keepGroup, keepRecord), [index, shownFilter, keepGroup, keepRecord]);
 
     /**
@@ -123,6 +137,7 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
      * whatever it says; one list is the only way the order is the thing the
      * reader sees. `null` is the default, and it keeps the sections.
      */
+    const sortFractions = reads.sort ? fractionOf : NO_FRACTIONS;
     const flat = useMemo(
         () =>
             shownSort === "default"
@@ -130,10 +145,10 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
                 : sortLibrary(
                       library.sections.flatMap((s) => s.groups),
                       shownSort,
-                      fractionOf,
+                      sortFractions,
                       collator,
                   ),
-        [library.sections, shownSort, fractionOf, collator],
+        [library.sections, shownSort, sortFractions, collator],
     );
 
     // A search or a records-only filter should not leave the 315 cards behind a Show button.
@@ -183,7 +198,25 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
     }, [library, t]);
 
     const chipById = useMemo(() => new Map(chips.map((c) => [c.id, c])), [chips]);
-    const toolbar: IBrowseToolbarState = { query, setQuery, filter, setFilter, readFilter, setReadFilter, sort, setSort, view, setView };
+    // The records head is memoised, and a button built inline here was a new
+    // element on every Browse render: the sheet opening, a swap and a read tick
+    // each re-rendered that head, its glyph and its icon for nothing.
+    const recordsAction = useMemo(
+        () =>
+            recordsForced ? null : (
+                <Button variant="ghost" size="sm" className="max-sm:min-h-11" onClick={() => setRecordsOpen((open) => !open)} aria-expanded={showRecords}>
+                    {showRecords ? t("browse.section.hide") : t("browse.section.show")}
+                </Button>
+            ),
+        [recordsForced, showRecords, t],
+    );
+    // One object per change of a control, not per render: the toolbar and the
+    // pinned bar's button are memoised on it, so opening, swapping and closing
+    // the chapter sheet (each a Browse render) no longer re-render the 41
+    // components of the head's controls twice over.
+    const toolbar: IBrowseToolbarState = useMemo(() => ({ query, setQuery, filter, setFilter, readFilter, setReadFilter, sort, setSort, view, setView }), [query, filter, readFilter, setReadFilter, sort, setSort, view, setView]);
+    const tools = useMemo(() => <ToolbarButton state={toolbar} />, [toolbar]);
+    const closeSheet = useCallback(() => setOpenId(null), []);
 
     return (
         <>
@@ -196,7 +229,7 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
             {/* The bar is pinned under a sort too, with no chips in it: it is the only
                 search and filter a scrolled reader has, and a sorted page is the one
                 most likely to want its sort changed back. */}
-            <JumpBar chips={flat === null ? chips : NO_CHIPS} tools={<ToolbarButton state={toolbar} />} />
+            <JumpBar chips={flat === null ? chips : NO_CHIPS} tools={tools} />
 
             {(flat === null ? library.sections.length === 0 : flat.length === 0) && library.records.length === 0 ? <div className="mt-6 rounded-[14px] border border-border border-dashed p-14 text-center font-sans text-[14px] text-muted-foreground">{t("browse.empty")}</div> : null}
 
@@ -218,24 +251,21 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
 
             {library.records.length > 0 ? (
                 <section id={RECORDS_ID} className="mt-7 scroll-mt-32 sm:scroll-mt-36">
-                    <SectionHead
-                        chip={chipById.get(RECORDS_ID)}
-                        count={t("browse.section.recordCount", { count: library.records.length })}
-                        action={
-                            recordsForced ? null : (
-                                <Button variant="ghost" size="sm" className="max-sm:min-h-11" onClick={() => setRecordsOpen((open) => !open)} aria-expanded={showRecords}>
-                                    {showRecords ? t("browse.section.hide") : t("browse.section.show")}
-                                </Button>
-                            )
-                        }
-                    />
+                    <SectionHead chip={chipById.get(RECORDS_ID)} count={t("browse.section.recordCount", { count: library.records.length })} action={recordsAction} />
                     {showRecords ? <OperatorsTab records={library.records} progress={progress} gameRead={gameRead} controls={false} paged pageKey={`${searched}|${shownFilter}|${shownRead}`} /> : null}
                 </section>
             ) : null}
 
-            {openGroupObject ? <ChapterModal group={openGroupObject} progress={progress} gameRead={gameRead} onClose={() => setOpenId(null)} prev={neighbours.prev} next={neighbours.next} onNavigate={setOpenId} /> : null}
+            {openGroupObject ? <ChapterModal group={openGroupObject} progress={progress} gameRead={gameRead} onClose={closeSheet} prev={neighbours.prev} next={neighbours.next} onNavigate={setOpenId} /> : null}
         </>
     );
+}
+
+interface ICardsProps {
+    groups: readonly LibGroup[];
+    view: ViewMode;
+    fractionOf: (group: LibGroup) => IReadFraction;
+    onOpen: (id: string) => void;
 }
 
 /**
@@ -246,9 +276,11 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
  *
  * MEMOISED ITSELF, because the urgent render of a keystroke or a pill press
  * re-renders Browse with the same deferred lists: the section's grid then
- * skips as a whole instead of walking its cards' props one by one.
+ * skips as a whole instead of walking its cards' props one by one. A read tick
+ * hands every grid a new `fractionOf`, so the comparison asks it for this
+ * section's own fractions and the grid renders only when one of them moved.
  */
-const Cards = memo(function Cards({ groups, view, fractionOf, onOpen }: { groups: readonly LibGroup[]; view: ViewMode; fractionOf: (group: LibGroup) => IReadFraction; onOpen: (id: string) => void }): React.ReactElement {
+const Cards = memo(function Cards({ groups, view, fractionOf, onOpen }: ICardsProps): React.ReactElement {
     if (view === "grid")
         return (
             <GroupGrid>
@@ -264,4 +296,11 @@ const Cards = memo(function Cards({ groups, view, fractionOf, onOpen }: { groups
             ))}
         </GroupRowList>
     );
-});
+}, sameCards);
+
+/** Equal when the grid would draw the same cards: same list, layout and handler, and the same fraction object for each of its groups (`keepEqualFractions` keeps the object of a group whose numbers did not move). */
+function sameCards(a: ICardsProps, b: ICardsProps): boolean {
+    if (a.groups !== b.groups || a.view !== b.view || a.onOpen !== b.onOpen) return false;
+    if (a.fractionOf === b.fractionOf) return true;
+    return a.groups.every((group) => a.fractionOf(group) === b.fractionOf(group));
+}

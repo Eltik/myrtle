@@ -229,6 +229,46 @@ export function isSounding(current: IPlayerState, key: string): boolean {
     return current.track?.key === key && !current.paused;
 }
 
+/** The channel with the playhead left out: everything the now-playing bar draws except the seek position. */
+export type IPlayerBarState = Omit<IPlayerState, "positionSeconds">;
+
+/**
+ * THE BAR'S SNAPSHOT, which keeps its identity while only the playhead moves.
+ * The clock writes `positionSeconds` once a frame while a cue sounds, and a
+ * bar that read the whole state re-rendered its title, its transport and its
+ * volume slider at the frame rate; only the seek reads the playhead now.
+ * Returns `prev` when nothing but the playhead changed.
+ */
+export function barSnapshot(prev: IPlayerBarState | null, current: IPlayerState): IPlayerBarState {
+    if (prev !== null && prev.track === current.track && prev.paused === current.paused && prev.volume === current.volume && prev.muted === current.muted && prev.introSeconds === current.introSeconds && prev.lengthSeconds === current.lengthSeconds) return prev;
+    const { positionSeconds: _playhead, ...bar } = current;
+    return bar;
+}
+
+let lastBar: IPlayerBarState | null = null;
+const SERVER_BAR: IPlayerBarState = barSnapshot(null, INITIAL);
+
+/** The bar's state, re-rendering only when something other than the playhead changes. */
+export function usePlayerBar(): IPlayerBarState {
+    return useSyncExternalStore(
+        subscribe,
+        () => {
+            lastBar = barSnapshot(lastBar, state);
+            return lastBar;
+        },
+        () => SERVER_BAR,
+    );
+}
+
+/** The playhead alone, for the seek slider. */
+export function usePlayhead(): number {
+    return useSyncExternalStore(
+        subscribe,
+        () => state.positionSeconds,
+        () => 0,
+    );
+}
+
 export function useLibraryPlayer(): IPlayerState {
     return useSyncExternalStore(subscribe, getState, getServerState);
 }

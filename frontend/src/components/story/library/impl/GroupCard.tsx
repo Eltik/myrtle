@@ -52,10 +52,22 @@ export function ReadMark({ state, className }: { state: ReadFilter; className?: 
     return <span aria-hidden="true" className={cn(styles.mark, state === "progress" && styles.markProgress, state === "done" && styles.markDone, className)} />;
 }
 
-/** The card grid. `auto-fill, minmax(200px, 1fr)` at a 12 px gap, which lands six 223.3 x 121.5 tickets across the 1,400 px column at 1440; under 640 the track is 160 px, two across a phone. */
+/**
+ * The card grid: what `auto-fill, minmax(200px, 1fr)` at a 12 px gap would
+ * lay out, on whole pixels (six 223 / 224 x 121 tickets across the 1,400 px
+ * column at 1440; under 640 a 160 px track, two 178 x 97 across a phone). The
+ * outer box is the container the column count is read from; see `.grid`.
+ */
 export function GroupGrid({ children }: { children: React.ReactNode }): React.ReactElement {
-    return <div className={styles.grid}>{children}</div>;
+    return (
+        <div className={styles.shelf}>
+            <div className={styles.grid}>{children}</div>
+        </div>
+    );
 }
+
+/** The page header's class for the whole-pixel title line; see `.shelfHead`. */
+export const SHELF_HEAD = styles.shelfHead;
 
 /** The list-mode stack. */
 export function GroupRowList({ children }: { children: React.ReactNode }): React.ReactElement {

@@ -16,7 +16,7 @@
 
 import { PauseIcon, PlayIcon } from "lucide-react";
 import type React from "react";
-import type { RefObject } from "react";
+import { memo, type RefObject } from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
 import { useParallaxProgress } from "#/components/operators/detail/impl/useParallaxProgress";
 import type { DialogTitle } from "#/components/ui/dialog";
@@ -67,7 +67,7 @@ type TitleComponent = typeof DialogTitle;
  * accessible title and nothing more; without one the fitted text IS the title
  * and is the same element.
  */
-export function Hero({ group, title: Title, audio, scrollRoot }: { group: LibGroup; title: TitleComponent; audio: IChapterAudio; scrollRoot: RefObject<HTMLElement | null> }): React.ReactElement {
+export const Hero = memo(function Hero({ group, title: Title, audio, scrollRoot }: { group: LibGroup; title: TitleComponent; audio: IChapterAudio; scrollRoot: RefObject<HTMLElement | null> }): React.ReactElement {
     const t: BrowseT = useT("story");
     const plate = plateSource(group);
     const art = plate.kind === "none" ? null : asset(plate.url);
@@ -133,7 +133,7 @@ export function Hero({ group, title: Title, audio, scrollRoot }: { group: LibGro
             </div>
         </div>
     );
-}
+});
 
 /**
  * THE CHAPTER'S THEME, on the picture it belongs to.

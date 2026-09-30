@@ -1,6 +1,6 @@
-import { useCallback, useMemo } from "react";
-import type { IThemeCue } from "./player";
-import { stop as stopPlayer, toggle as togglePlayer, useLibraryPlayer } from "./player";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
+import type { IPlayerState, IThemeCue } from "./player";
+import { getState, stop as stopPlayer, subscribe, toggle as togglePlayer } from "./player";
 
 export type { IThemeCue } from "./player";
 
@@ -10,6 +10,17 @@ export interface IChapterAudio {
     /** Start this cue, or pause it when it is the one already sounding. */
     toggle: (key: string, cue: IThemeCue, title: string | null) => void;
     stop: () => void;
+}
+
+/**
+ * The local key of this group's cue that is SOUNDING, or null: the one thing
+ * the sheet draws from the channel. A paused cue, an idle channel and a cue
+ * that belongs to another chapter are all null.
+ */
+export function playingKeyOf(state: IPlayerState, prefix: string): string | null {
+    const key = state.track?.key;
+    if (key === undefined || state.paused || !key.startsWith(prefix)) return null;
+    return key.slice(prefix.length);
 }
 
 /**
@@ -28,14 +39,17 @@ export interface IChapterAudio {
  * some other chapter.
  */
 export function useChapterAudio(group: { id: string; name: string }): IChapterAudio {
-    const state = useLibraryPlayer();
     const prefix = `${group.id}::`;
 
-    const playing = useMemo(() => {
-        const key = state.track?.key;
-        if (key === undefined || state.paused || !key.startsWith(prefix)) return null;
-        return key.slice(prefix.length);
-    }, [state.track, state.paused, prefix]);
+    // THE SHEET SUBSCRIBES TO ONE STRING, NOT TO THE CHANNEL. While a cue
+    // sounds, the now-playing bar samples the audio clock into the store once a
+    // frame (`useNowPlayingClock`), and a hook that read the whole state
+    // re-rendered the sheet at the frame rate for a playhead it never draws:
+    // hero, meta block and every row, 150 commits of 7,200 components in one
+    // second of Near Light's theme (preview, 1440, a 120 Hz panel). The
+    // snapshot here is the key or null, which React compares by value.
+    const read = useCallback(() => playingKeyOf(getState(), prefix), [prefix]);
+    const playing = useSyncExternalStore(subscribe, read, serverPlaying);
 
     const toggle = useCallback(
         (key: string, cue: IThemeCue, title: string | null) => {
@@ -44,5 +58,11 @@ export function useChapterAudio(group: { id: string; name: string }): IChapterAu
         [group.id, group.name],
     );
 
-    return { playing, toggle, stop: stopPlayer };
+    // One object per change, so the memoised bands that take it skip a render
+    // of the sheet that did not touch the music.
+    return useMemo(() => ({ playing, toggle, stop: stopPlayer }), [playing, toggle]);
+}
+
+function serverPlaying(): string | null {
+    return null;
 }

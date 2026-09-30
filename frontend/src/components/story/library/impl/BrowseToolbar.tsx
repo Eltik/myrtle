@@ -26,7 +26,7 @@
  */
 import { LayoutGridIcon, ListIcon, SearchIcon, SlidersHorizontalIcon } from "lucide-react";
 import type React from "react";
-import { useRef } from "react";
+import { memo, useRef } from "react";
 import { Button } from "#/components/ui/button";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { Sheet, SheetClose, SheetFooter, SheetHeader, SheetPanel, SheetPopup, SheetTitle, SheetTrigger } from "#/components/ui/sheet";
@@ -238,8 +238,8 @@ function CountBadge({ count, className }: { count: number; className?: string })
     );
 }
 
-/** The inline toolbar in the page head. */
-export function BrowseToolbar({ state }: { state: IBrowseToolbarState }): React.ReactElement {
+/** The inline toolbar in the page head. Memoised on the one state object Browse rebuilds only when a control changes, so the chapter sheet opening or swapping does not re-render it. */
+export const BrowseToolbar = memo(function BrowseToolbar({ state }: { state: IBrowseToolbarState }): React.ReactElement {
     const t: BrowseT = useT("story");
     const count = activeFilterCount(state);
     return (
@@ -277,7 +277,7 @@ export function BrowseToolbar({ state }: { state: IBrowseToolbarState }): React.
             </div>
         </div>
     );
-}
+});
 
 /**
  * The sticky bar's "Search and filters" button: a popover at 640 and up, a
@@ -289,7 +289,7 @@ export function BrowseToolbar({ state }: { state: IBrowseToolbarState }): React.
  * box takes focus when either opens: this is the only search a scrolled reader
  * has.
  */
-export function ToolbarButton({ state }: { state: IBrowseToolbarState }): React.ReactElement {
+export const ToolbarButton = memo(function ToolbarButton({ state }: { state: IBrowseToolbarState }): React.ReactElement {
     const t: BrowseT = useT("story");
     const count = activeFilterCount(state);
     const searching = state.query.trim() !== "";
@@ -335,4 +335,4 @@ export function ToolbarButton({ state }: { state: IBrowseToolbarState }): React.
             </Sheet>
         </>
     );
-}
+});

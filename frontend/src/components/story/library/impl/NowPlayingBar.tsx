@@ -9,7 +9,7 @@ import { sliderValue } from "#/lib/story/settings";
 import { cn } from "#/lib/utils";
 import type { messages as archiveMessages } from "./Archive.messages";
 import type { messages } from "./NowPlayingBar.messages";
-import { type IPlayerState, pause, resume, seek, setVolume, stop, useLibraryPlayer, useNowPlayingClock } from "./player";
+import { type IPlayerBarState, pause, resume, seek, setVolume, stop, useNowPlayingClock, usePlayerBar, usePlayhead } from "./player";
 
 type NowT = TypedT<typeof messages & typeof archiveMessages>;
 
@@ -37,13 +37,16 @@ type NowT = TypedT<typeof messages & typeof archiveMessages>;
  * the slider stays in place and disabled rather than moving under the reader.
  */
 export function NowPlayingBar(): React.ReactElement | null {
-    const state = useLibraryPlayer();
+    // Everything but the playhead: the clock writes that once a frame and only
+    // the seek slider draws it, so the title, the transport and the volume
+    // slider re-render when the cue or the levels change, not at 60 Hz.
+    const state = usePlayerBar();
     if (state.track === null) return null;
     return <Bar state={state} />;
 }
 
 /** Split out so the hooks below run only for a bar that exists. */
-function Bar({ state }: { state: IPlayerState }): React.ReactElement {
+function Bar({ state }: { state: IPlayerBarState }): React.ReactElement {
     const t: NowT = useT("story");
     const f = useFormatters();
     const track = state.track;
@@ -149,11 +152,12 @@ function Bar({ state }: { state: IPlayerState }): React.ReactElement {
  * the point the theme starts repeating from is visible rather than something
  * the listener discovers by waiting.
  */
-function Seek({ state, t, className }: { state: IPlayerState; t: NowT; className?: string }): React.ReactElement {
+function Seek({ state, t, className }: { state: IPlayerBarState; t: NowT; className?: string }): React.ReactElement {
     const [scrub, setScrub] = useState<number | null>(null);
+    const playhead = usePlayhead();
     const length = state.lengthSeconds;
     const ready = length > 0;
-    const live = ready ? Math.min(state.positionSeconds, length) : 0;
+    const live = ready ? Math.min(playhead, length) : 0;
     const value = scrub ?? live;
     const elapsed = clockTime(value);
     const total = clockTime(length);

@@ -9,7 +9,7 @@
  */
 import { Link } from "@tanstack/react-router";
 import type React from "react";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -35,7 +35,7 @@ type MarksT = TypedT<typeof marksMessages>;
  * appears when it would land somewhere else: on an untouched chapter the two
  * are the same story and a second button offering the same link is noise.
  */
-export function MetaRow({ group, progress, gameRead }: { group: LibGroup; progress: StoryProgress; gameRead: ReadonlySet<string> }): React.ReactElement {
+export const MetaRow = memo(function MetaRow({ group, progress, gameRead }: { group: LibGroup; progress: StoryProgress; gameRead: ReadonlySet<string> }): React.ReactElement {
     const t: BrowseT = useT("story");
     const f = useFormatters();
     const { wpm } = useReadingSpeed();
@@ -113,7 +113,7 @@ export function MetaRow({ group, progress, gameRead }: { group: LibGroup; progre
             </div>
         </div>
     );
-}
+});
 
 /**
  * MARK THE WHOLE CHAPTER, in one press.

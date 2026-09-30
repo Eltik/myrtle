@@ -15,6 +15,7 @@
 import { Link } from "@tanstack/react-router";
 import { FilmIcon } from "lucide-react";
 import type React from "react";
+import { memo, useCallback, useMemo, useRef } from "react";
 import { Badge } from "#/components/ui/badge";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -22,6 +23,7 @@ import { isStoryRead, type StoryProgress } from "#/lib/story/progress";
 import { cn } from "#/lib/utils";
 import type { messages } from "./Browse.messages";
 import { groupOperations, type IOperationRow, type IOperationSegment, type LibGroup, type StoryPhase } from "./derive";
+import { rowMarks } from "./marks";
 import { ReadToggle } from "./ReadToggle";
 import type { messages as storiesMessages } from "./StoriesTab.messages";
 
@@ -29,17 +31,47 @@ type BrowseT = TypedT<typeof messages>;
 type StoriesT = TypedT<typeof storiesMessages>;
 
 /** The chapter's operations, in the table's own order. */
-export function Entries({ group, progress, gameRead }: { group: LibGroup; progress: StoryProgress; gameRead: ReadonlySet<string> }): React.ReactElement {
-    const rows = groupOperations(group.stories);
+export const Entries = memo(function Entries({ group, progress, gameRead }: { group: LibGroup; progress: StoryProgress; gameRead: ReadonlySet<string> }): React.ReactElement {
+    const rows = useMemo(() => groupOperations(group.stories), [group.stories]);
+    // A row that skips a render keeps the document it last rendered with, so a
+    // tick reads the LATEST one at click time through this getter instead.
+    const latest = useRef(progress);
+    latest.current = progress;
+    const current = useCallback(() => latest.current, []);
     return (
         <ol className="m-0 flex list-none flex-col p-0">
             {rows.map((row) => (
                 <li key={row.key} className="border-border/60 border-b last:border-b-0">
-                    <OperationRow row={row} progress={progress} gameRead={gameRead} />
+                    <OperationRow
+                        row={row}
+                        marks={rowMarks(
+                            row.segments.map((seg) => seg.entry),
+                            progress,
+                            gameRead,
+                        )}
+                        progress={progress}
+                        gameRead={gameRead}
+                        current={current}
+                    />
                 </li>
             ))}
         </ol>
     );
+});
+
+interface IOperationRowProps {
+    row: IOperationRow;
+    /** `rowMarks` of this row's stories: everything the row draws from the document. */
+    marks: string;
+    progress: StoryProgress;
+    gameRead: ReadonlySet<string>;
+    /** The latest document, for a tick pressed on a row that skipped the last render. */
+    current: () => StoryProgress;
+}
+
+/** A row re-renders when ITS marks change, not when any story in the chapter does. `progress` and `gameRead` are left out of the comparison on purpose: `marks` is what the row draws from them, and a tick reads the document through `current`. */
+function sameRow(a: IOperationRowProps, b: IOperationRowProps): boolean {
+    return a.row === b.row && a.marks === b.marks && a.current === b.current;
 }
 
 /**
@@ -54,7 +86,7 @@ export function Entries({ group, progress, gameRead }: { group: LibGroup; progre
  * a word on a segment, the only colour is the tick and the hover, and a read
  * row is muted rather than tinted.
  */
-function OperationRow({ row, progress, gameRead }: { row: IOperationRow; progress: StoryProgress; gameRead: ReadonlySet<string> }): React.ReactElement {
+const OperationRow = memo(function OperationRow({ row, progress, gameRead, current }: IOperationRowProps): React.ReactElement {
     const t: BrowseT = useT("story");
     const ts: StoriesT = useT("story");
     const f = useFormatters();
@@ -108,7 +140,7 @@ function OperationRow({ row, progress, gameRead }: { row: IOperationRow; progres
                 >
                     {face}
                 </Link>
-                <ReadToggle story={solo.entry} size="lg" progress={progress} gameRead={gameRead} />
+                <ReadToggle story={solo.entry} size="lg" progress={progress} gameRead={gameRead} current={current} />
             </div>
         );
     }
@@ -118,12 +150,12 @@ function OperationRow({ row, progress, gameRead }: { row: IOperationRow; progres
             {face}
             <span className="flex shrink-0 items-center gap-2 max-sm:w-full max-sm:ps-17">
                 {row.segments.map((segment) => (
-                    <PhaseSegment key={segment.entry.id} segment={segment} title={row.title} progress={progress} gameRead={gameRead} />
+                    <PhaseSegment key={segment.entry.id} segment={segment} title={row.title} progress={progress} gameRead={gameRead} current={current} />
                 ))}
             </span>
         </div>
     );
-}
+}, sameRow);
 
 /**
  * ONE HALF OF AN OPERATION: a chip that opens it and a tick that marks it.
@@ -135,7 +167,7 @@ function OperationRow({ row, progress, gameRead }: { row: IOperationRow; progres
  * control, and the chip keeps the aria-label naming the operation, because
  * "Before" alone names nothing.
  */
-function PhaseSegment({ segment, title, progress, gameRead }: { segment: IOperationSegment; title: string; progress: StoryProgress; gameRead: ReadonlySet<string> }): React.ReactElement {
+function PhaseSegment({ segment, title, progress, gameRead, current }: { segment: IOperationSegment; title: string; progress: StoryProgress; gameRead: ReadonlySet<string>; current: () => StoryProgress }): React.ReactElement {
     const t: BrowseT = useT("story");
     const ts: StoriesT = useT("story");
     const phase: StoryPhase = segment.phase ?? "interlude";
@@ -166,7 +198,15 @@ function PhaseSegment({ segment, title, progress, gameRead }: { segment: IOperat
             >
                 {label}
             </Link>
-            <ReadToggle story={segment.entry} size="lg" label={t("chapter.segment.aria", { title, phase: label })} progress={progress} gameRead={gameRead} className={cn("rounded-s-none rounded-e-[8px] border", read ? "border-primary/55 bg-primary/12 hover:bg-primary/18" : "border-border bg-transparent")} />
+            <ReadToggle
+                story={segment.entry}
+                size="lg"
+                label={t("chapter.segment.aria", { title, phase: label })}
+                progress={progress}
+                gameRead={gameRead}
+                current={current}
+                className={cn("rounded-s-none rounded-e-[8px] border", read ? "border-primary/55 bg-primary/12 hover:bg-primary/18" : "border-border bg-transparent")}
+            />
         </span>
     );
 }

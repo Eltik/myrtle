@@ -9,7 +9,7 @@
  * what reaches the account sync. Nothing here touches storage.
  */
 
-import { isStoryRead, type StoryProgress, withRead, withUnread } from "#/lib/story/progress";
+import { isStoryRead, readSourceOf, type StoryProgress, withRead, withUnread } from "#/lib/story/progress";
 import type { LibEntry } from "./derive";
 
 /** The stories a mark can apply to. 90 of the 1,887 EN stories have no script, are never read, and are never counted in a fraction, so a bulk action must not mark them either. */
@@ -60,4 +60,18 @@ export function markedCount(stories: readonly LibEntry[], progress: StoryProgres
         if (isStoryRead(progress, gameRead, story.id)) count += 1;
     }
     return count;
+}
+
+/**
+ * EVERYTHING A ROW OF THE CHAPTER SHEET DRAWS FROM THE DOCUMENT, as one string:
+ * each story's read source, in order. A tick, the row's muted title and a
+ * segment's filled chip are all functions of `readSourceOf`, so two documents
+ * that give a row the same string render it the same, and the row can skip a
+ * tick made on another row. Measured in dev at 1440 before this: one tick in
+ * Near Light re-rendered 14 rows, 20 segments and 24 ticks.
+ */
+export function rowMarks(stories: readonly Pick<LibEntry, "id">[], progress: StoryProgress, gameRead: ReadonlySet<string>): string {
+    let out = "";
+    for (const story of stories) out += `${out === "" ? "" : "|"}${readSourceOf(progress, gameRead, story.id)}`;
+    return out;
 }

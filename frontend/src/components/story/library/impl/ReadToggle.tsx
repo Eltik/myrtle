@@ -20,6 +20,8 @@ export interface IReadToggleProps {
     /** `sm` is the 32 px tick on a pointer device and `md` 36 px; `lg` is the chapter sheet's 40 px, and only on a FINE pointer. All three are 44 px under 640, and `lg` is 44 px on a coarse pointer at every width. */
     size?: "sm" | "md" | "lg";
     className?: string;
+    /** The latest document, where a memoised parent can skip a render and leave `progress` behind. The mark is flipped on what this returns; `progress` still draws the tick. */
+    current?: () => StoryProgress;
 }
 
 /**
@@ -39,7 +41,7 @@ export interface IReadToggleProps {
  * There is no confirmation on a single toggle. It is one click to undo, and a
  * dialog per tick would cost more than the mistake.
  */
-export function ReadToggle({ story, progress, gameRead, label, size = "sm", className }: IReadToggleProps): React.ReactElement {
+export function ReadToggle({ story, progress, gameRead, label, size = "sm", className, current }: IReadToggleProps): React.ReactElement {
     const t: MarksT = useT("story");
     const read = isStoryRead(progress, gameRead, story.id);
     const source = readSourceOf(progress, gameRead, story.id);
@@ -59,7 +61,7 @@ export function ReadToggle({ story, progress, gameRead, label, size = "sm", clas
                 // fire when the tick is what was hit.
                 event.preventDefault();
                 event.stopPropagation();
-                saveProgress(toggleRead(progress, story.id, read));
+                saveProgress(toggleRead(current ? current() : progress, story.id, read));
             }}
             className={cn(
                 "flex pointer-coarse:size-11 size-11 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-secondary/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",

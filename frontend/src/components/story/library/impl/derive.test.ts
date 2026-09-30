@@ -10,6 +10,7 @@ import {
     groupSearchTarget,
     groupWords,
     keepEqualFractions,
+    LIBRARY_SORTS,
     type LibEntry,
     type LibGroup,
     type LibIndex,
@@ -22,6 +23,7 @@ import {
     READ_FILTERS,
     readFraction,
     readStateOf,
+    readsFractions,
     searchList,
     sortedStories,
     sortGroups,
@@ -473,5 +475,38 @@ describe("keepEqualFractions", () => {
         ).toBe(1);
         const first = new Map([["a", f(1)]]);
         expect(keepEqualFractions(null, first)).toBe(first);
+    });
+});
+
+describe("readsFractions", () => {
+    const shapes = [
+        { read: 0, total: 4, listed: 4, done: false },
+        { read: 2, total: 4, listed: 4, done: false },
+        { read: 4, total: 4, listed: 4, done: true },
+        { read: 0, total: 0, listed: 0, done: false },
+    ];
+    const groups = [group("b", { name: "Bravo", startTime: 2 }), group("a", { name: "Alpha", startTime: 1 }), group("c", { name: "Charlie", startTime: 3 })];
+
+    it("says a sort reads fractions exactly when sortLibrary calls fractionOf for it", () => {
+        for (const sort of LIBRARY_SORTS) {
+            let calls = 0;
+            sortLibrary(
+                groups,
+                sort,
+                () => {
+                    calls++;
+                    return shapes[1];
+                },
+                collator,
+            );
+            expect([sort, calls > 0]).toEqual([sort, readsFractions("any", sort).sort]);
+        }
+    });
+
+    it("says a filter reads fractions exactly when its verdict can depend on one", () => {
+        for (const filter of READ_FILTERS) {
+            const verdicts = new Set(shapes.map((shape) => matchesReadState(filter, shape)));
+            expect([filter, verdicts.size > 1]).toEqual([filter, readsFractions(filter, "default").filter]);
+        }
     });
 });

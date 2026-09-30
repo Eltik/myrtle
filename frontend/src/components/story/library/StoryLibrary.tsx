@@ -8,12 +8,14 @@ import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { emptyProgress, loadProgress, onProgressStorage, onProgressWritten, type StoryProgress } from "#/lib/story/progress";
 import { useStoryGameRead, useStoryProgressSync } from "#/lib/story/sync";
+import { cn } from "#/lib/utils";
 import { Browse } from "./impl/Browse";
 import { CommunityTab } from "./impl/CommunityTab";
 import type { messages as communityMessages } from "./impl/CommunityTab.messages";
 import { ContinueCard } from "./impl/ContinueCard";
 import type { LibIndex } from "./impl/derive";
 import { pickHero } from "./impl/derive";
+import { SHELF_HEAD } from "./impl/GroupCard";
 import { IllustrationsTab } from "./impl/IllustrationsTab";
 import { NowPlayingBar } from "./impl/NowPlayingBar";
 import { ProgressTab } from "./impl/ProgressTab";
@@ -45,6 +47,20 @@ export function StoryLibrary(): React.ReactElement {
     // clicking a tick that does not move. The same subscription carries the
     // account sync's own merges, which land here from outside React entirely.
     const [progress, setProgress] = useState<StoryProgress>(emptyProgress);
+    // `?halo=full` restores the four-shadow logotype halo for an A/B against
+    // the two-shadow default, and `?shelf=frac` the fractional card grid
+    // against the whole-pixel one (both GroupCard.module.css); read after
+    // mount so the server and the first client render agree.
+    const [halo, setHalo] = useState<"full" | undefined>(undefined);
+    const [shelf, setShelf] = useState<"frac" | undefined>(undefined);
+    // `?promote=0` drops the per-card compositor layer (GroupCard.module.css).
+    const [promote, setPromote] = useState<"off" | undefined>(undefined);
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("halo") === "full") setHalo("full");
+        if (params.get("shelf") === "frac") setShelf("frac");
+        if (params.get("promote") === "0") setPromote("off");
+    }, []);
     useEffect(() => {
         setProgress(loadProgress());
         // This tab's writes and another tab's writes are two seams; the
@@ -90,13 +106,13 @@ export function StoryLibrary(): React.ReactElement {
     }, [index]);
 
     return (
-        <div className="page-shell [--page-max:1400px]">
+        <div className="page-shell [--page-max:1400px]" data-halo={halo} data-shelf={shelf} data-promote={promote}>
             {/* THE BIG NUMBER IS A DESKTOP ORNAMENT. Under 640 it was a 130 px block of
                 its own over a 923 px head, so there it folds into the subhead as a
                 third count and the right-hand stat is hidden. At 640 and up the
                 subhead keeps its two counts and the number stays where it was. */}
             <PageHeader
-                className="mb-4 border-primary/70 border-b-2 pb-3"
+                className={cn("mb-4 border-primary/70 border-b-2 pb-3", SHELF_HEAD)}
                 breadcrumbLabel={t("library.breadcrumb")}
                 breadcrumb={[t("library.breadcrumb.archive"), t("library.breadcrumb.stories")]}
                 title={t("library.title")}

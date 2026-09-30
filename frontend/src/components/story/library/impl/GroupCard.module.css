@@ -22,7 +22,8 @@
 /* THE SHELF IS A CONTACT SHEET NOW, not four posters. The reader's ask was
    "a lot smaller, like the skin planner", whose card is 177 px wide on a 12 px
    gap; the track here bottoms out at 200 on a 12 px gap, which lands six
-   223.3 x 121.5 tickets across the 1,400 px column at 1440 (7 would need
+   223.3 x 121.5 tickets across the 1,400 px column at 1440 (223 / 224 x 121
+   on whole pixels, see below) (7 would need
    1,472), three 237.3 x 129.1 at 768 (a 736 column; 4 would need 836) and,
    under 640, two 178.0 x 96.8 across the 366 px column at 390 on a 160 px
    track. The 300 px track it replaces gave 4 / 2 / 1.
@@ -32,17 +33,132 @@
    and a bare 300 px track sat every ticket 4 px out into the right gutter. The
    same column takes ONE 296 px ticket under the 160 px track, since two need
    330. */
+
+/*
+ * THE SHELF SITS ON WHOLE PIXELS (2026-09-30). The track above was
+ * `repeat(auto-fill, minmax(min(200px, 100%), 1fr))`, which splits 1,340 px
+ * six ways into 223.333 px and puts the tickets at x = 255.328, 490.664, ...
+ * and 121.484 px tall. That costs nothing while the page is one layer, but
+ * it is why a promoted ticket could not be pixel-identical: a composited
+ * layer is placed on a whole device pixel and the fraction is thrown away
+ * (third perf pass, 407,934 px changed under `will-change: transform`).
+ *
+ * So the grid now computes the same layout on integers. `--cols` is what
+ * auto-fill would have picked (a column fits when n x 200 + (n - 1) x 12 is
+ * at most the width, 160 and 10 under 640), read off the shelf's own width by
+ * a container query; column k ends at round(k x inner / cols), so every
+ * boundary is within half a pixel of where 1fr put it and the widths come
+ * out 223 / 224 at 1440 (178 at 390). The ticket's height is the average
+ * column width x 272 / 500, rounded, the same for every card in a grid
+ * (121 at 1440, 97 at 390), so a row is still one height. The page column
+ * is capped at 1,400 px (`--page-max`), so six columns is the most it can
+ * hold; a seventh rule would never match.
+ *
+ * `?shelf=frac` on /stories sets `data-shelf="frac"` on the page root and
+ * restores the fractional track, height and tear for an A/B.
+ */
+@property --story-tile-h {
+    syntax: "auto | <length>";
+    inherits: true;
+    initial-value: auto;
+}
+
+.shelf {
+    container: story-shelf / inline-size;
+}
+
 .grid {
+    --gap: 12px;
+    --cols: 1;
+    --col: calc((100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols));
+    /* Column k spans [round((k - 1) x col), round(k x col)]. */
+    --c1: round(var(--col), 1px);
+    --c2: calc(round(2 * var(--col), 1px) - round(var(--col), 1px));
+    --c3: calc(round(3 * var(--col), 1px) - round(2 * var(--col), 1px));
+    --c4: calc(round(4 * var(--col), 1px) - round(3 * var(--col), 1px));
+    --c5: calc(round(5 * var(--col), 1px) - round(4 * var(--col), 1px));
+    --c6: calc(round(6 * var(--col), 1px) - round(5 * var(--col), 1px));
+    --story-tile-h: round(calc(var(--col) * 272 / 500), 1px);
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
-    gap: 12px;
+    grid-template-columns: var(--c1);
+    gap: var(--gap);
+}
+
+@container story-shelf (min-width: 412px) {
+    .grid {
+        --cols: 2;
+        grid-template-columns: var(--c1) var(--c2);
+    }
+}
+
+@container story-shelf (min-width: 624px) {
+    .grid {
+        --cols: 3;
+        grid-template-columns: var(--c1) var(--c2) var(--c3);
+    }
+}
+
+@container story-shelf (min-width: 836px) {
+    .grid {
+        --cols: 4;
+        grid-template-columns: var(--c1) var(--c2) var(--c3) var(--c4);
+    }
+}
+
+@container story-shelf (min-width: 1048px) {
+    .grid {
+        --cols: 5;
+        grid-template-columns: var(--c1) var(--c2) var(--c3) var(--c4) var(--c5);
+    }
+}
+
+@container story-shelf (min-width: 1260px) {
+    .grid {
+        --cols: 6;
+        grid-template-columns: var(--c1) var(--c2) var(--c3) var(--c4) var(--c5) var(--c6);
+    }
 }
 
 /* 639.98 so the grid and the title fit (`useMediaQuery("max-sm")`, under 640) switch at the same pixel. */
 @media (max-width: 639.98px) {
     .grid {
+        --gap: 10px;
+        --cols: 1;
+        grid-template-columns: var(--c1);
+    }
+
+    @container story-shelf (min-width: 330px) {
+        .grid {
+            --cols: 2;
+            grid-template-columns: var(--c1) var(--c2);
+        }
+    }
+
+    @container story-shelf (min-width: 500px) {
+        .grid {
+            --cols: 3;
+            grid-template-columns: var(--c1) var(--c2) var(--c3);
+        }
+    }
+}
+
+/* The page header's 24 px title under 640 sets a 26.4 px line (1.1), and that
+   0.398 px is what put every ticket below it off the half pixel (598.398 at
+   390). 26.5 moves the page under it by 0.102 px. */
+@media (max-width: 639.98px) {
+    :global(.page-shell:not([data-shelf="frac"])) .shelfHead h1 {
+        line-height: 26.5px;
+    }
+}
+
+:global([data-shelf="frac"]) .grid {
+    --story-tile-h: auto;
+    grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
+}
+
+@media (max-width: 639.98px) {
+    :global([data-shelf="frac"]) .grid {
         grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr));
-        gap: 10px;
     }
 }
 
@@ -71,6 +187,9 @@
     position: relative;
     display: block;
     width: 100%;
+    /* `--story-tile-h` is the grid's whole-pixel height; `auto` (the A/B, or a
+       ticket outside a grid) falls back to the aspect ratio. */
+    height: var(--story-tile-h);
     aspect-ratio: 500 / 272;
     /* The logotype's caps are expressed in cqw, so they stay proportional at every card width. */
     container-type: inline-size;
@@ -118,8 +237,13 @@
 }
 
 .body {
-    clip-path: inset(0 21% 0 0);
+    /* The tear on a whole pixel: 79% of a 223 px ticket is 176.17. */
+    clip-path: inset(0 calc(100% - round(79%, 1px)) 0 0);
     background: #08090d;
+}
+
+:global([data-shelf="frac"]) .body {
+    clip-path: inset(0 21% 0 0);
 }
 
 /*
@@ -200,8 +324,12 @@
 }
 
 .stubFace {
-    clip-path: inset(0 0 0 79%);
+    clip-path: inset(0 0 0 round(79%, 1px));
     background: #0a1418;
+}
+
+:global([data-shelf="frac"]) .stubFace {
+    clip-path: inset(0 0 0 79%);
 }
 
 /*
@@ -336,7 +464,20 @@
     object-position: left center;
     /* A 1 px edge under the soft halo: the halo alone gave the ink a dark
        ground but no OUTLINE, and thin strokes (the small caps of a subtitle)
-       still met light art at their own edge. */
+       still met light art at their own edge.
+       TWO SHADOWS, NOT FOUR (2026-09-30). The four-shadow halo (two 1 px
+       edges, a 6 px ground, an 18 px glow) was the GPU cost of scrolling the
+       library: every ticket entering the viewport re-blurs its logotype four
+       times, the 18 px pass the dearest. Measured with all four off: GPU per
+       wheel scroll 602.6 -> 229.7 ms, GPU-bound dropped frames 44.3 -> 20.7%.
+       This keeps one edge and the 6 px ground, which is the outline and the
+       dark ground; the second edge only doubled the first and the 18 px glow
+       was a faint darkening of art 20 px out. `?halo=full` on /stories
+       restores the four for an A/B. */
+    filter: drop-shadow(rgba(0, 0, 0, 1) 0 0 1px) drop-shadow(rgba(0, 0, 0, 0.9) 0 2px 6px);
+}
+
+:global([data-halo="full"]) .logotype {
     filter: drop-shadow(rgba(0, 0, 0, 1) 0 0 1px) drop-shadow(rgba(0, 0, 0, 1) 0 0 1px) drop-shadow(rgba(0, 0, 0, 0.9) 0 2px 6px) drop-shadow(rgba(0, 0, 0, 0.6) 0 0 18px);
 }
 
@@ -356,7 +497,14 @@
     color: #fff;
     text-transform: uppercase;
     overflow-wrap: var(--title-wrap, normal);
-    /* The same halo the logotype gets, as a text shadow. */
+    /* The same halo the logotype gets, as a text shadow: the edge and the
+       6 px ground (the two-shadow rule above); `?halo=full` restores the five. */
+    text-shadow:
+        rgba(0, 0, 0, 1) 0 0 1px,
+        rgba(0, 0, 0, 0.9) 0 2px 6px;
+}
+
+:global([data-halo="full"]) .title {
     text-shadow:
         rgba(0, 0, 0, 1) 0 0 1px,
         rgba(0, 0, 0, 1) 0 0 2px,
@@ -804,6 +952,19 @@
     position: relative;
     /* The glyph is placed in cqw of the TICKET's width, which is the wrapper's. */
     container-type: inline-size;
+    /* EVERY CARD IS ITS OWN LAYER (2026-09-30), a TRADE taken knowingly. A
+       scroll then moves 87 rastered tiles instead of re-rastering the masked,
+       shadowed tickets: preview 1440 wheel, dropped 8.4 -> 2.7%, GPU 222.3 ->
+       119.1 ms, raster 29.1 -> 4.0 ms (13 -> 100 layers, renderer tile memory
+       222.12 -> 217.30 MB). It is not pixel-identical: the shadow and caption
+       edges blend in their own surface and differ at max 3 (1440 top 14,143
+       px). It needs the whole-pixel shelf above; on the fractional one the
+       layers snap and 407,934 px change. `?promote=0` turns it off. */
+    will-change: transform;
+}
+
+:global([data-promote="off"]) .cardWrap {
+    will-change: auto;
 }
 
 /* The ticket lifts to z-index 5 on hover; the wrapper is its stacking context now. */

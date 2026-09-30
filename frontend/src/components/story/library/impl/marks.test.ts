@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { emptyProgress, isStoryRead, readSourceOf, type StoryProgress } from "#/lib/story/progress";
 import type { LibEntry } from "./derive";
 import { readFraction } from "./derive";
-import { clearMarks, markAllRead, markable, markedCount, toggleRead } from "./marks";
+import { clearMarks, markAllRead, markable, markedCount, rowMarks, toggleRead } from "./marks";
 
 function entry(id: string, over: Partial<LibEntry> = {}): LibEntry {
     return { id, name: id, sort: 1, groupId: "g", hasScript: true, requiredStages: [], ...over };
@@ -87,5 +87,32 @@ describe("markedCount", () => {
         const game: ReadonlySet<string> = new Set(["b", "d"]);
         const progress = markAllRead(emptyProgress(), [entry("a")]);
         expect(markedCount(stories, progress, game)).toBe(2);
+    });
+});
+
+describe("rowMarks", () => {
+    const a = entry("a");
+    const b = entry("b");
+
+    it("is one read source per story, in order", () => {
+        const game = new Set(["b"]);
+        expect(rowMarks([a, b], emptyProgress(), game)).toBe("none|game");
+        expect(rowMarks([a, b], toggleRead(emptyProgress(), "a", false, 1), game)).toBe("own|game");
+        expect(rowMarks([a, b], toggleRead(emptyProgress(), "b", true, 1), game)).toBe("none|cleared");
+    });
+
+    it("does not change for a row when a story in ANOTHER row is marked", () => {
+        const before = emptyProgress();
+        const after = toggleRead(before, "elsewhere", false, 1);
+        expect(after).not.toBe(before);
+        expect(rowMarks([a, b], after, NO_GAME)).toBe(rowMarks([a, b], before, NO_GAME));
+    });
+
+    it("changes whenever what the row draws changes: the tick, its source, and the muted title", () => {
+        const game = new Set(["a"]);
+        const states = [emptyProgress(), toggleRead(emptyProgress(), "a", false, 1), toggleRead(emptyProgress(), "a", true, 1)];
+        const drawn = states.map((p) => `${isStoryRead(p, game, "a")}:${readSourceOf(p, game, "a")}`);
+        const keys = states.map((p) => rowMarks([a], p, game));
+        expect(new Set(keys).size).toBe(new Set(drawn).size);
     });
 });

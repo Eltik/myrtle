@@ -227,7 +227,7 @@ function jumpBehavior(): ScrollBehavior {
  * `scrollIntoView`: that walks every scrollable ancestor and would drag the
  * PAGE to the section the reader has not asked for yet.
  */
-export function JumpBar({ chips, tools }: { chips: readonly IChipModel[]; tools: React.ReactNode }): React.ReactElement {
+export const JumpBar = memo(function JumpBar({ chips, tools }: { chips: readonly IChipModel[]; tools: React.ReactNode }): React.ReactElement {
     const t: BrowseT = useT("story");
     const active = useScrollSpy(useMemo(() => chips.map((chip) => chip.id), [chips]));
     const scroller = useRef<HTMLDivElement | null>(null);
@@ -318,7 +318,7 @@ export function JumpBar({ chips, tools }: { chips: readonly IChipModel[]; tools:
             </div>
         </nav>
     );
-}
+});
 
 /** The chapter run in the compact form, or the "includes" line for a themed shelf that holds mainline chapters. */
 function sectionRange(chip: IChipModel, t: BrowseT): string | null {
