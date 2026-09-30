@@ -11,6 +11,42 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-09-30.title": {
+        text: "Improved: One outfit planner, with rerun dates you can plan around",
+        description: "Title of the 2026-09-30 release note. 'Outfit' is the game's word for a skin; a 'rerun' is an outfit returning to the shop.",
+    },
+    "note.2026-09-30.lead": {
+        text: "The pull planner's Skins tab is folded into **the Planner**, which already lists every outfit under its event. The planner now fits your window with each pane scrolling on its own, picked outfits show their own art, and the summary lists only what you picked, with prices. Outfit rerun dates are estimated from each outfit's own shop history, so they land far closer to the real date, and the event shop and farming stages have moved to the Events tab.",
+        description: "Lead paragraph of the 2026-09-30 release note, rendered as Markdown. 'Skins', 'Planner' and 'Events' are tab names in the pull planner and must match their translations.",
+    },
+    "note.2026-09-30.hrefLabel": {
+        text: "Open the pull planner",
+        description: "Label of the 2026-09-30 release note's call to action, which opens the pull planner.",
+    },
+    "note.2026-09-30.item.1": {
+        text: "Recruitment results have a compact layout that fits each tag combination on one row, so a full set of results no longer needs a zoom-out. The detailed layout is still an option, and your choices are remembered.",
+        description: "Bullet in the 2026-09-30 release note, filed under 'New'. 'Recruitment' is the tag calculator tool; a 'tag combination' is a set of recruitment tags.",
+    },
+    "note.2026-09-30.item.2": {
+        text: "6★ and 5★ operators are easier to tell apart: 6★ is now orange and 5★ gold, everywhere on the site.",
+        description: "Bullet in the 2026-09-30 release note, filed under 'Improved'. The stars are operator rarity.",
+    },
+    "note.2026-09-30.item.3": {
+        text: '"Optimize this room only" in the base optimizer changes only that room, and never hands back a slower crew than the one already there.',
+        description: "Bullet in the 2026-09-30 release note, filed under 'Fixed'. \"Optimize this room only\" quotes the optimizer's own button and must match its translation.",
+    },
+    "note.2026-09-30.item.4": {
+        text: "An operator's first level 3 module no longer counts for more than the rest, so operators with several modules are graded evenly.",
+        description: "Bullet in the 2026-09-30 release note, filed under 'Fixed'. A 'module' is an operator equipment upgrade and keeps the game's name.",
+    },
+    "note.2026-09-30.item.5": {
+        text: "In the story reader, a radio call's portrait strip sits on the empty side of the stage instead of over the character speaking, and shows the character at the right size.",
+        description: "Bullet in the 2026-09-30 release note, filed under 'Fixed'. A 'radio call' is a story scene where a character speaks from a portrait strip at the side of the screen.",
+    },
+    "note.2026-09-30.item.6": {
+        text: "The pull planner shows Originite Prime with the gold hexagon from the game's top bar.",
+        description: "Bullet in the 2026-09-30 release note, filed under 'Fixed'. Originite Prime is a premium currency and keeps the game's name.",
+    },
     "note.2026-09-25-2.title": {
         text: "Improved: Skip shows the story's summary, and the library keeps up",
         description: "Title of the 2026-09-25-2 release note. 'Skip' is a story reader control and keeps its name; 'the library' is the story library page.",
