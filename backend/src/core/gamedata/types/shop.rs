@@ -52,8 +52,30 @@ pub struct SkinListing {
     pub start_time: i64,
     #[ts(type = "number")]
     pub end_time: i64,
+    /// The recommend entry's `TagId` (`tag_1022`). CN and EN number the
+    /// same entry with the same id, so a CN tag EN never carries is a
+    /// listing EN skipped; see `release::skipped`.
+    #[serde(default)]
+    pub tag_id: Option<String>,
     #[serde(flatten)]
     pub kind: ListingKind,
+}
+
+/// One recommend-panel entry of any kind (outfits, packs, furniture), by
+/// tag and start: the record of how far a server's shop has shipped.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RecommendTag {
+    pub tag_id: String,
+    pub start_time: i64,
+}
+
+/// The number in `tag_NNNN`; any other spelling is `None`.
+pub fn tag_number(tag_id: &str) -> Option<u32> {
+    let digits = tag_id.strip_prefix("tag_")?;
+    if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    digits.parse().ok()
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -91,6 +113,8 @@ struct TemplateParam {
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 struct Recommend {
+    #[serde(default)]
+    tag_id: String,
     #[serde(default)]
     start_datetime: i64,
     #[serde(default)]
@@ -197,6 +221,7 @@ impl ShopTableFile {
                 Some(SkinListing {
                     start_time: r.start_datetime,
                     end_time: r.end_datetime,
+                    tag_id: Some(r.tag_id.clone()).filter(|t| !t.is_empty()),
                     kind,
                 })
             })
@@ -206,8 +231,25 @@ impl ShopTableFile {
                 .cmp(&b.start_time)
                 .then(a.end_time.cmp(&b.end_time))
         });
-        out.dedup();
+        // The tag stays out of the comparison: two entries selling the same
+        // thing on the same dates were one listing before tags were read,
+        // and the first in table order keeps its tag.
+        out.dedup_by(|a, b| {
+            a.start_time == b.start_time && a.end_time == b.end_time && a.kind == b.kind
+        });
         out
+    }
+
+    /// Every recommend entry with a tag and a start, whatever it sells.
+    pub fn recommend_tags(&self) -> Vec<RecommendTag> {
+        self.recommend_list
+            .iter()
+            .filter(|r| !r.tag_id.is_empty() && r.start_datetime > 0)
+            .map(|r| RecommendTag {
+                tag_id: r.tag_id.clone(),
+                start_time: r.start_datetime,
+            })
+            .collect()
     }
 }
 
@@ -220,7 +262,7 @@ mod tests {
         let raw = serde_json::json!({
             "Carousels": [],
             "RecommendList": [
-                {"StartDatetime": 100, "EndDatetime": 200, "TagName": "Coral Coast/IX", "TemplateType": "DEFAULT",
+                {"TagId": "tag_1022", "StartDatetime": 100, "EndDatetime": 200, "TagName": "Coral Coast/IX", "TemplateType": "DEFAULT",
                  "GroupList": [{"DataList": [{"Cmd": "SKINSHOP", "SkinId": "char_a@summer#9", "Param1": "SS_char_a@summer#9_r5"}]}]},
                 {"StartDatetime": 300, "EndDatetime": 400, "TagName": "Rhodes Fashion Review", "TemplateType": "RETURNSKIN",
                  "TemplateParam": {"ReturnSkinParam": {"ShowStartTs": 300, "ShowEndTs": 400}},
@@ -230,12 +272,28 @@ mod tests {
                 {"StartDatetime": 500, "EndDatetime": 600, "TagName": "Test Collection/XIV", "TemplateType": "NORSKIN",
                  "TemplateParam": {"NormalSkinParam": {"SkinIds": ["char_b@sale#13"], "SkinGroupName": "Test Collection/XIV"}},
                  "GroupList": [{"DataList": [{"Cmd": "SKINSHOP"}]}]},
-                {"StartDatetime": 700, "EndDatetime": 800, "TagName": "Packs", "GroupList": [{"DataList": [{"Cmd": "GIFTPACKAGE"}]}]}
+                {"TagId": "tag_1027", "StartDatetime": 700, "EndDatetime": 800, "TagName": "Packs", "GroupList": [{"DataList": [{"Cmd": "GIFTPACKAGE"}]}]}
             ]
         });
         let file: ShopTableFile = serde_json::from_value(raw).unwrap();
         let l = file.into_skin_listings();
         assert_eq!(l.len(), 4);
+        assert_eq!(l[0].tag_id.as_deref(), Some("tag_1022"));
+        assert_eq!(l[1].tag_id, None, "an entry without a tag");
+        assert_eq!(
+            file.recommend_tags(),
+            vec![
+                RecommendTag {
+                    tag_id: "tag_1022".into(),
+                    start_time: 100
+                },
+                RecommendTag {
+                    tag_id: "tag_1027".into(),
+                    start_time: 700
+                },
+            ],
+            "every tagged entry, the gift pack included"
+        );
         assert_eq!(
             l[0].kind,
             ListingKind::Group {
@@ -258,6 +316,15 @@ mod tests {
                 img_id: None,
             }
         );
+    }
+
+    #[test]
+    fn only_tag_and_digits_is_a_tag_number() {
+        assert_eq!(tag_number("tag_1022"), Some(1022));
+        assert_eq!(tag_number("tag_0"), Some(0));
+        for bad in ["", "tag_", "tag_10a", "tag_-1", "Tag_10", "1022", "tag_ 10"] {
+            assert_eq!(tag_number(bad), None, "{bad:?}");
+        }
     }
 
     #[test]

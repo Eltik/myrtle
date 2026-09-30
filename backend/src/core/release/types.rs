@@ -44,6 +44,10 @@ pub enum Resolution {
         #[ts(type = "number")]
         hi: i64,
     },
+    /// A CN outfit-shop listing EN has shipped past without carrying: EN's
+    /// recommend panel has no entry with its tag, and holds a later tag
+    /// whose CN entry started at or after it. Never dated.
+    Unlisted,
     Unmodelled,
     Independent,
 }

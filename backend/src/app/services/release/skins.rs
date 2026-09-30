@@ -3,12 +3,13 @@ use std::collections::{HashMap, HashSet};
 use crate::{
     app::{error::ApiError, state::AppState},
     core::{
-        gamedata::types::{GameData, skin::Skin},
+        gamedata::types::{GameData, shop::SkinListing, skin::Skin},
         release::{
             BatchForecast, NewSkin, RerunForecast, Resolution, ReviewOutfit, ReviewWindow,
             SkinGroupArt, SkinTile, SkinsResponse, estimate, ledger, prices, resolve,
             resolve_reviews,
-            skins::{self, GroupHistory, RerunBasis},
+            skins::{self, CadenceModel, GroupHistory, RerunBasis},
+            skipped::{self, SkippedTags},
         },
         translate::{self, TranslationMemory},
     },
@@ -179,6 +180,7 @@ fn batches(
     names: &Names<'_>,
     en_batches: &[skins::Batch],
     cn_batches: &[skins::Batch],
+    skipped: &SkippedTags,
 ) -> Vec<BatchForecast> {
     let en_seen: HashSet<&str> = en_batches
         .iter()
@@ -192,7 +194,10 @@ fn batches(
             name_en_auto: translate::resolve(&names.memory, &b.name),
             cn_start: b.start_time,
             cn_end: b.end_time,
-            resolution: estimate::estimate(&p.models.general, b.start_time),
+            resolution: skipped::unless_passed(
+                estimate::estimate(&p.models.general, b.start_time),
+                skipped.passed(b.tag_id.as_deref(), b.start_time),
+            ),
         })
         .chain(
             en_batches
@@ -221,11 +226,33 @@ fn pooled_cadence() -> bool {
     std::env::var("RELEASE_POOLED_CADENCE").ok().as_deref() == Some("1")
 }
 
+/// A group's next EN rerun by its EN listing rhythm; `anchor` stands in when
+/// the group has no EN listing of its own to date from.
+fn by_cadence(
+    en_g: Option<&GroupHistory>,
+    cadence: &CadenceModel,
+    anchor: Option<i64>,
+) -> Option<(i64, Resolution, Option<f64>)> {
+    if pooled_cadence() {
+        let en_last = en_g.and_then(GroupHistory::last_seen).or(anchor)?;
+        Some((en_last, skins::next_by_cadence(en_last, cadence), None))
+    } else {
+        en_g.and_then(|e| skins::next_by_own_cadence(e, cadence))
+            .or_else(|| anchor.map(|a| (a, skins::next_by_cadence(a, cadence), None)))
+    }
+}
+
+/// `cn_kept` is the CN histories without the listings EN has passed (see
+/// `release::skipped`), `None` when there are none. A pending CN window that
+/// only those listings made is never dated from CN: EN's own rhythm dates
+/// the group as it does after a matched rerun, and a group with no EN
+/// listing to date from is Unlisted.
 fn reruns(
     p: &Planner,
     names: &Names<'_>,
     en_groups: &[GroupHistory],
     cn_groups: &[GroupHistory],
+    cn_kept: Option<&[GroupHistory]>,
     art: &mut GroupArt<'_>,
 ) -> Vec<RerunForecast> {
     let runs = estimate::StageRuns::build(&p.ctx.cn);
@@ -237,6 +264,8 @@ fn reruns(
         .iter()
         .map(|g| (g.skin_group_id.as_str(), g))
         .collect();
+    let kept_by_group: Option<HashMap<&str, &GroupHistory>> =
+        cn_kept.map(|k| k.iter().map(|g| (g.skin_group_id.as_str(), g)).collect());
     let cadence = skins::cadence_model(en_groups);
     let mut consumed: HashSet<(String, i64)> = HashSet::new();
     let mut out: Vec<RerunForecast> = Vec::new();
@@ -254,39 +283,46 @@ fn reruns(
             cn_end: pending.cn_window.end_time,
             anchor: anchor.as_ref().map(|hit| p.event_anchor(hit, names)),
         };
-        if let Some(w) = skins::match_en_listing(en_g, resolved_start(&next), &mut consumed) {
-            if w.end_time < p.now && cadence.n > 0 {
-                let (en_last, dated, own_gap_days) = if pooled_cadence() {
-                    let en_last = en_g
-                        .and_then(GroupHistory::last_seen)
-                        .unwrap_or(w.start_time);
-                    (en_last, skins::next_by_cadence(en_last, &cadence), None)
-                } else {
-                    en_g.and_then(|e| skins::next_by_own_cadence(e, &cadence))
-                        .unwrap_or_else(|| {
-                            (
-                                w.start_time,
-                                skins::next_by_cadence(w.start_time, &cadence),
-                                None,
-                            )
-                        })
-                };
-                next = dated;
-                basis = RerunBasis::Cadence {
-                    en_last,
-                    n: cadence.n,
-                    median_days: cadence.median_days,
-                    p25_days: cadence.p25_days,
-                    p75_days: cadence.p75_days,
-                    own_gap_days,
-                };
-            } else {
+        let passed = kept_by_group.as_ref().is_some_and(|k| {
+            !skins::listed_near(
+                k.get(g.skin_group_id.as_str()).copied(),
+                pending.cn_window.start_time,
+            )
+        });
+        let matched = skins::match_en_listing(en_g, resolved_start(&next), &mut consumed);
+        let dated = match matched {
+            Some(w) if w.end_time < p.now && cadence.n > 0 => {
+                by_cadence(en_g, &cadence, Some(w.start_time))
+            }
+            Some(w) => {
                 next = Resolution::Confirmed {
                     en_id: g.skin_group_id.clone(),
                     en_start: w.start_time,
                     en_end: w.end_time,
                 };
+                None
             }
+            None if passed => {
+                let dated = (cadence.n > 0)
+                    .then(|| by_cadence(en_g, &cadence, None))
+                    .flatten();
+                if dated.is_none() {
+                    next = Resolution::Unlisted;
+                }
+                dated
+            }
+            None => None,
+        };
+        if let Some((en_last, dated, own_gap_days)) = dated {
+            next = dated;
+            basis = RerunBasis::Cadence {
+                en_last,
+                n: cadence.n,
+                median_days: cadence.median_days,
+                p25_days: cadence.p25_days,
+                p75_days: cadence.p75_days,
+                own_gap_days,
+            };
         }
         art.touch(&g.skin_group_id);
         out.push(RerunForecast {
@@ -361,10 +397,11 @@ fn review_pool(p: &Planner, names: &Names<'_>) -> Vec<ReviewOutfit> {
     out
 }
 
-fn reviews(p: &Planner, names: &Names<'_>) -> Vec<ReviewWindow> {
+fn reviews(p: &Planner, names: &Names<'_>, skipped: &SkippedTags) -> Vec<ReviewWindow> {
     let cn = skins::review_windows(&p.ctx.cn);
     let en = skins::review_windows(&p.ctx.en);
-    let resolved = resolve_reviews(&cn, &en, &names.ov, &p.models.general);
+    let passed = skipped.review_starts(&p.ctx.cn);
+    let resolved = resolve_reviews(&cn, &en, &names.ov, &p.models.general, &passed);
     cn.iter()
         .zip(resolved)
         .map(|(&(cn_start, cn_end), resolution)| ReviewWindow {
@@ -382,26 +419,45 @@ pub async fn get_skins(state: &AppState) -> Result<SkinsResponse, ApiError> {
         return Ok(c);
     }
     let p = Planner::load(state).await?;
+    let out = build(&p);
+    state.cache.set(&key, &out).await;
+    Ok(out)
+}
+
+fn build(p: &Planner) -> SkinsResponse {
     let (cn, en) = (&*p.ctx.cn, &*p.ctx.en);
-    let names = Names::new(&p, TranslationMemory::build(cn, en, &HashMap::new()));
+    let names = Names::new(p, TranslationMemory::build(cn, en, &HashMap::new()));
     let mut art = GroupArt {
         ctx: &p.ctx,
         map: HashMap::new(),
     };
     let (en_groups, en_batches) = skins::group_histories(en, &skins::batch_families(en, cn));
-    let (cn_groups, cn_batches) = skins::group_histories(cn, &skins::batch_families(cn, en));
-    let review_pool = review_pool(&p, &names);
-    let out = SkinsResponse {
+    let cn_families = skins::batch_families(cn, en);
+    let (cn_groups, cn_batches) = skins::group_histories(cn, &cn_families);
+    let skipped = SkippedTags::build(cn, en);
+    let is_passed = |l: &SkinListing| skipped.passed(l.tag_id.as_deref(), l.start_time);
+    let cn_kept = cn
+        .skin_listings
+        .iter()
+        .any(is_passed)
+        .then(|| skins::group_histories_without(cn, &cn_families, is_passed).0);
+    let review_pool = review_pool(p, &names);
+    SkinsResponse {
         anniversaries: skins::anniversary_models(&en_groups, p.now),
-        batches: batches(&p, &names, &en_batches, &cn_batches),
-        new_skins: new_skins(&p, &names, &mut art),
-        rerun_forecasts: reruns(&p, &names, &en_groups, &cn_groups, &mut art),
-        reviews: reviews(&p, &names),
+        batches: batches(p, &names, &en_batches, &cn_batches, &skipped),
+        new_skins: new_skins(p, &names, &mut art),
+        rerun_forecasts: reruns(
+            p,
+            &names,
+            &en_groups,
+            &cn_groups,
+            cn_kept.as_deref(),
+            &mut art,
+        ),
+        reviews: reviews(p, &names, &skipped),
         review_pool,
         group_art: art.map,
         model: p.models.general.clone(),
         yearly: p.models.yearly.clone(),
-    };
-    state.cache.set(&key, &out).await;
-    Ok(out)
+    }
 }

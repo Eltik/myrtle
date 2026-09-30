@@ -17719,6 +17719,21 @@
           },
           {
             "type": "object",
+            "description": "A CN outfit-shop listing EN has shipped past without carrying: EN's\nrecommend panel has no entry with its tag, and holds a later tag\nwhose CN entry started at or after it. Never dated.",
+            "required": [
+              "status"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "unlisted"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
             "required": [
               "status"
             ],

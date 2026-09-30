@@ -54,6 +54,7 @@ fn load(server: &str) -> Option<GameData> {
     gd.skins = skin.into_skin_data();
     let shop: ShopTableFile = load_table(&dir, "shop_client_table").ok()?;
     gd.skin_listings = shop.into_skin_listings();
+    gd.recommend_tags = shop.recommend_tags();
     gd.skin_windows = shop.into_skin_windows();
     gd.event_shops = std::fs::read(event_shop_path(&root))
         .ok()
@@ -775,7 +776,13 @@ fn announced_review_override_yields_to_the_listing() {
     let idx = override_index(&rows);
     let none = override_index(&[]);
 
-    let before = resolve_reviews(&cn_windows, &skins::review_windows(&en), &none, &model);
+    let before = resolve_reviews(
+        &cn_windows,
+        &skins::review_windows(&en),
+        &none,
+        &model,
+        &std::collections::HashSet::new(),
+    );
     eprintln!("no override:   {}", status(&before));
     assert!(
         before[..at]
@@ -784,7 +791,13 @@ fn announced_review_override_yields_to_the_listing() {
     );
     assert!(matches!(before[at], Resolution::Estimated { .. }));
 
-    let announced = resolve_reviews(&cn_windows, &skins::review_windows(&en), &idx, &model);
+    let announced = resolve_reviews(
+        &cn_windows,
+        &skins::review_windows(&en),
+        &idx,
+        &model,
+        &std::collections::HashSet::new(),
+    );
     eprintln!("override:      {}", status(&announced));
     assert!(matches!(
         &announced[at],
@@ -800,7 +813,13 @@ fn announced_review_override_yields_to_the_listing() {
     // The next extract carries the listing; nobody touches the override.
     let shop = en_listings_with_review(en_start, en_end).expect("EN shop table");
     en.skin_listings = shop.into_skin_listings();
-    let landed = resolve_reviews(&cn_windows, &skins::review_windows(&en), &idx, &model);
+    let landed = resolve_reviews(
+        &cn_windows,
+        &skins::review_windows(&en),
+        &idx,
+        &model,
+        &std::collections::HashSet::new(),
+    );
     eprintln!("listing lands: {}", status(&landed));
     assert_eq!(
         landed[at],
@@ -814,5 +833,93 @@ fn announced_review_override_yields_to_the_listing() {
         landed[..at],
         before[..at],
         "older editions keep their pairs"
+    );
+}
+
+/// The same edition once EN ships past its tag. EN never listed `tag_1022`
+/// (it ran the edition as blind boxes, 2026-09-16 to 2026-09-30); its
+/// 2026-09-23 client carries `tag_1028`, which opened on CN 2026-04-25 and
+/// on EN 151 d later. The 2026 concert pack `tag_1027` opened on both
+/// servers within a day and must not count.
+#[test]
+fn skipped_review_turns_unlisted_once_en_ships_past_its_tag() {
+    use backend::core::gamedata::types::shop::tag_number;
+    use backend::core::release::{override_index, resolve_reviews, skipped::SkippedTags};
+
+    let (Some(cn), Some(en)) = (load("cn"), load("en")) else {
+        eprintln!("skipping: no extract");
+        return;
+    };
+    let cn_tags: Vec<(u32, i64)> = cn
+        .recommend_tags
+        .iter()
+        .filter_map(|t| Some((tag_number(&t.tag_id)?, t.start_time)))
+        .collect();
+    let cn_start = |tag: u32| cn_tags.iter().find(|t| t.0 == tag).map(|t| t.1);
+    let (Some(concert), Some(pack)) = (cn_start(1027), cn_start(1028)) else {
+        eprintln!("skipping: CN extract predates tag_1028");
+        return;
+    };
+    // EN as it stood before it reached the edition: nothing above tag_1022
+    // but the concert pack, 0.7 d after CN.
+    let en_before: Vec<(u32, i64)> = en
+        .recommend_tags
+        .iter()
+        .filter_map(|t| Some((tag_number(&t.tag_id)?, t.start_time)))
+        .filter(|&(tag, _)| tag < 1022)
+        .chain([(1027, concert + 60_480)])
+        .collect();
+    let mut en_after = en_before.clone();
+    en_after.push((1028, pack + 151 * 86_400));
+
+    let pairs = estimate::activity_pairs(&cn, &en);
+    let yearly_types = estimate::yearly_types(&pairs);
+    let (pairs, _) = estimate::split_yearly(&pairs, &yearly_types);
+    let model = estimate::build_lag_model(&pairs, 10);
+    let cn_windows = skins::review_windows(&cn);
+    let en_windows = skins::review_windows(&en);
+    let at = cn_windows
+        .iter()
+        .position(|&(s, _)| s == ANNOUNCED_CN_REVIEW)
+        .expect("the 2026-04-23 CN edition is in the extract");
+    let none = override_index(&[]);
+    let resolve = |tags: &SkippedTags| {
+        resolve_reviews(
+            &cn_windows,
+            &en_windows,
+            &none,
+            &model,
+            &tags.review_starts(&cn),
+        )
+    };
+    let baseline = resolve_reviews(
+        &cn_windows,
+        &en_windows,
+        &none,
+        &model,
+        &std::collections::HashSet::new(),
+    );
+
+    let early = SkippedTags::from_tags(cn_tags.clone(), en_before, true);
+    assert_eq!(
+        resolve(&early),
+        baseline,
+        "a global release does not move EN past anything"
+    );
+
+    let past = SkippedTags::from_tags(cn_tags.clone(), en_after.clone(), true);
+    let after = resolve(&past);
+    assert_eq!(after[at], Resolution::Unlisted);
+    for (i, (a, b)) in baseline.iter().zip(&after).enumerate() {
+        if i != at {
+            assert_eq!(a, b, "edition {i} moved");
+        }
+    }
+
+    let off = SkippedTags::from_tags(cn_tags, en_after, false);
+    assert_eq!(
+        resolve(&off),
+        baseline,
+        "the kill switch restores every row"
     );
 }

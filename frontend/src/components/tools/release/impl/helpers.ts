@@ -66,12 +66,15 @@ export function relativeDays(days: number, t: ReleaseHelperT = sourceT): string 
 }
 
 export function resolvedEnStart(r: Resolution): number | null {
-    return r.status === "unmodelled" || r.status === "independent" ? null : r.enStart;
+    return r.status === "unmodelled" || r.status === "independent" || r.status === "unlisted" ? null : r.enStart;
 }
 
 export function sortKey(r: Resolution, cnStart: number, model: LagModel | null | undefined): number {
     const en = resolvedEnStart(r);
     if (en !== null) return en;
+    // EN moved past an unlisted sale, so it sorts with the past at its CN
+    // start. CN start plus the median lag is the date it never ran.
+    if (r.status === "unlisted") return cnStart;
     return cnStart + (model?.medianDays ?? 0) * 86_400;
 }
 

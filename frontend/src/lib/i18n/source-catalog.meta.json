@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-30T10:37:58.771Z",
+    "generatedAt": "2026-09-30T11:17:49.628Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -30546,6 +30546,29 @@
             "placeholders": []
         },
         {
+            "key": "tools.release.badge.overdue",
+            "namespace": "tools",
+            "source_text": "Due now, not in EN yet",
+            "description": "Badge on a row whose estimated EN date has passed while the English game data still does not carry it. 'EN' is the English game server and stays as-is.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.badge.overdue.title",
+            "namespace": "tools",
+            "source_text": "The estimate has passed and EN has not run it yet.",
+            "description": "Tooltip on the 'Due now, not in EN yet' badge. 'EN' is the English game server.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.badge.overdue.was",
+            "namespace": "tools",
+            "source_text": "est. {date}",
+            "description": "Next to the 'Due now' badge: the date the estimate gave, already formatted. 'est.' abbreviates 'estimated'.",
+            "placeholders": [
+                "date"
+            ]
+        },
+        {
             "key": "tools.release.badge.overrideTitle",
             "namespace": "tools",
             "source_text": "{source}: {note}",
@@ -30588,6 +30611,20 @@
             "namespace": "tools",
             "source_text": "standing pool",
             "description": "Shown in place of a relative day for a banner that is permanently available. 'Standing' means always open.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.badge.unlisted",
+            "namespace": "tools",
+            "source_text": "Not in EN's shop",
+            "description": "Badge on an outfit sale the English server skipped: EN's shop has moved on to later sales without listing this one. 'EN' is the English game server.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.badge.unlisted.title",
+            "namespace": "tools",
+            "source_text": "EN moved past this sale without listing it in the outfit shop.",
+            "description": "Tooltip on the 'Not in EN's shop' badge. 'EN' is the English game server.",
             "placeholders": []
         },
         {
@@ -31399,12 +31436,28 @@
             ]
         },
         {
+            "key": "tools.release.planner.card.overdue",
+            "namespace": "tools",
+            "source_text": " · due now",
+            "description": "Appended after the date of a row whose estimated EN date has passed without EN running it; the date shown is today. Keep the leading space and middle dot.",
+            "placeholders": []
+        },
+        {
             "key": "tools.release.planner.card.picked",
             "namespace": "tools",
             "source_text": ", {count} picked",
             "description": "How many of a row's outfits are in the plan. Keep the leading comma and space.",
             "placeholders": [
                 "count"
+            ]
+        },
+        {
+            "key": "tools.release.planner.card.unlisted",
+            "namespace": "tools",
+            "source_text": "{date} on CN, not in EN's shop",
+            "description": "Date line of a Fashion Review edition the English server skipped. {date} is the already formatted date it opened on the Chinese server. 'CN' and 'EN' are the Chinese and English game servers.",
+            "placeholders": [
+                "date"
             ]
         },
         {

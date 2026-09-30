@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
+import { bannersDueNow, eventsDueNow, skinsDueNow } from "#/components/tools/release/impl/resolution";
 import { backendFetch } from "#/lib/fetch";
 import type { BannersResponse } from "#/types/generated/BannersResponse";
 import type { EventsResponse } from "#/types/generated/EventsResponse";
@@ -11,6 +12,13 @@ import type { SkinsResponse } from "#/types/generated/SkinsResponse";
 
 const STALE_MS = 60 * 60 * 1000;
 const GC_MS = 24 * 60 * 60 * 1000;
+
+// Every page reads release data through these, so an estimate whose day has
+// passed turns due-now here, once, against the browser's today. Module-level
+// functions keep the select stable, so it reruns only when the data changes.
+const selectEvents = (res: EventsResponse): EventsResponse => eventsDueNow(res);
+const selectBanners = (res: BannersResponse): BannersResponse => bannersDueNow(res);
+const selectSkins = (res: SkinsResponse): SkinsResponse => skinsDueNow(res);
 
 export const getReleaseEventsFn = createServerFn({ method: "GET" }).handler(async () => {
     const res = await backendFetch("/release/events");
@@ -40,6 +48,7 @@ export function releaseEventsQueryOptions() {
     return queryOptions({
         queryKey: ["release", "events"],
         queryFn: () => getReleaseEventsFn(),
+        select: selectEvents,
         staleTime: STALE_MS,
         gcTime: GC_MS,
     });
@@ -49,6 +58,7 @@ export function releaseBannersQueryOptions() {
     return queryOptions({
         queryKey: ["release", "banners"],
         queryFn: () => getReleaseBannersFn(),
+        select: selectBanners,
         staleTime: STALE_MS,
         gcTime: GC_MS,
     });
@@ -58,6 +68,7 @@ export function releaseSkinsQueryOptions() {
     return queryOptions({
         queryKey: ["release", "skins"],
         queryFn: () => getReleaseSkinsFn(),
+        select: selectSkins,
         staleTime: STALE_MS,
         gcTime: GC_MS,
     });

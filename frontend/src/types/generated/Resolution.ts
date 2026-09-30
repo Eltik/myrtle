@@ -4,5 +4,6 @@ export type Resolution =
     | { status: "confirmed"; enId: string; enStart: number; enEnd: number }
     | { status: "override"; enId: string | null; enStart: number; enEnd: number | null; source: string; note: string }
     | { status: "estimated"; enStart: number; lo: number; hi: number }
+    | { status: "unlisted" }
     | { status: "unmodelled" }
     | { status: "independent" };

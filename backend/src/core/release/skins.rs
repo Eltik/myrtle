@@ -5,7 +5,7 @@ use ts_rs::TS;
 
 use crate::core::gamedata::types::{
     GameData,
-    shop::{ListingKind, SkinWindow},
+    shop::{ListingKind, SkinListing, SkinWindow},
     skin::{Brand, Skin},
 };
 
@@ -111,6 +111,7 @@ pub struct Batch {
     pub img_id: Option<String>,
     pub start_time: i64,
     pub end_time: i64,
+    pub tag_id: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, TS, utoipa::ToSchema)]
@@ -277,6 +278,16 @@ pub fn group_histories(
     gd: &GameData,
     batch_families: &HashSet<String>,
 ) -> (Vec<GroupHistory>, Vec<Batch>) {
+    group_histories_without(gd, batch_families, |_| false)
+}
+
+/// [`group_histories`] as if the listings `skip` names did not exist; the
+/// carousel windows all stay.
+pub fn group_histories_without(
+    gd: &GameData,
+    batch_families: &HashSet<String>,
+    skip: impl Fn(&SkinListing) -> bool,
+) -> (Vec<GroupHistory>, Vec<Batch>) {
     let mut batches: Vec<Batch> = Vec::new();
     let mut groups: BTreeMap<String, GroupHistory> = BTreeMap::new();
     let mut skin_to_group: HashMap<&str, &str> = HashMap::new();
@@ -346,7 +357,7 @@ pub fn group_histories(
         m
     };
 
-    for l in &gd.skin_listings {
+    for l in gd.skin_listings.iter().filter(|l| !skip(l)) {
         let window = SaleWindow {
             start_time: l.start_time,
             end_time: l.end_time,
@@ -395,6 +406,7 @@ pub fn group_histories(
                             img_id: img_id.clone(),
                             start_time: l.start_time,
                             end_time: l.end_time,
+                            tag_id: l.tag_id.clone(),
                         });
                     } else if let Some(gs) = name_variants(&key)
                         .iter()
@@ -442,7 +454,10 @@ pub fn group_histories(
         g.windows.sort_by_key(|w| (w.start_time, w.end_time));
     }
     batches.sort_by_key(|b| (b.start_time, b.name.clone()));
-    batches.dedup();
+    batches.dedup_by(|a, b| {
+        (&a.name, &a.img_id, a.start_time, a.end_time)
+            == (&b.name, &b.img_id, b.start_time, b.end_time)
+    });
     (out, batches)
 }
 
@@ -706,6 +721,15 @@ pub fn pending_cn_reruns(
     out
 }
 
+/// Whether `group` has a listing window starting within the merge distance
+/// of `start`.
+pub fn listed_near(group: Option<&GroupHistory>, start: i64) -> bool {
+    group.is_some_and(|g| {
+        g.listings()
+            .any(|w| (w.start_time - start).abs() < SAME_WINDOW_SECS)
+    })
+}
+
 pub fn match_en_listing(
     en: Option<&GroupHistory>,
     expected_start: i64,
@@ -783,10 +807,7 @@ mod tests {
     }
 
     use super::*;
-    use crate::core::gamedata::types::{
-        shop::SkinListing,
-        skin::{Brand, BrandGroup, Skin},
-    };
+    use crate::core::gamedata::types::skin::{Brand, BrandGroup, Skin};
 
     const D: i64 = 86_400;
 
@@ -806,6 +827,7 @@ mod tests {
         SkinListing {
             start_time: start,
             end_time: start + 14 * D,
+            tag_id: None,
             kind,
         }
     }
@@ -891,6 +913,7 @@ mod tests {
         let l = |name: &str, img: &str, start: i64| SkinListing {
             start_time: start,
             end_time: start + 14 * D,
+            tag_id: None,
             kind: ListingKind::Group {
                 name: name.into(),
                 skin_ids: vec![],
@@ -959,6 +982,26 @@ mod tests {
         );
         assert!(g3.is_none(), "never listed, so no history");
         assert_eq!(g1.last_seen(), Some(1000 * D));
+    }
+
+    #[test]
+    fn a_skipped_listing_leaves_no_window_behind() {
+        let mut gd = game();
+        gd.skin_listings[3].tag_id = Some("tag_7".into());
+        let skip = |l: &SkinListing| l.tag_id.as_deref() == Some("tag_7");
+        let (all, _) = group_histories(&gd, &HashSet::new());
+        let (kept, _) = group_histories_without(&gd, &HashSet::new(), skip);
+        let g1 = |gs: &[GroupHistory]| gs.iter().find(|g| g.skin_group_id == "g1").cloned();
+        assert!(listed_near(g1(&all).as_ref(), 465 * D));
+        assert!(
+            !listed_near(g1(&kept).as_ref(), 465 * D),
+            "Coast/I at 465 d came only from the skipped listing"
+        );
+        assert!(
+            listed_near(g1(&kept).as_ref(), 100 * D),
+            "the carousel stays"
+        );
+        assert!(!listed_near(None, 100 * D));
     }
 
     fn history(windows: &[(i64, SaleKind)]) -> GroupHistory {

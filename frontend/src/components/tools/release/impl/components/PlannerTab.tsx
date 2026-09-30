@@ -17,6 +17,7 @@ import type { messages as helperMessages } from "../helpers.messages";
 import { balances, EMPTY_STATE, type IPlanRow, type IPlanSkin, type IPlanState, type IRowBalance, rowDeviates, rowExpense, rowIncome, rowPotential, type StageClears, type StageStatus, stageKey, stageOn, stageStatus, usePlanData } from "../plan";
 import type { messages as planMessages } from "../plan.messages";
 import { useStoredState } from "../planStore";
+import { isOverdue } from "../resolution";
 import type { messages } from "./PlannerTab.messages";
 import { Calcs, Op, OpIcon } from "./Primes";
 import { ResolutionBadge } from "./ResolutionBadge";
@@ -209,8 +210,8 @@ function EventCard({ row, total, state, hidden, active, onOpen, t, locale }: { r
                     <Tag className={row.kind === "listing" ? "text-fuchsia-400" : row.kind === "review" ? "text-teal-400" : undefined}>{rowTag(row, t)}</Tag>
                 </CnName>
                 <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
-                    {formatDate(row.enStart, locale)}
-                    {row.resolution.status === "estimated" ? t("release.planner.card.estimated") : ""}
+                    {row.resolution.status === "unlisted" ? t("release.planner.card.unlisted", { date: formatDate(row.enStart, locale) }) : formatDate(row.enStart, locale)}
+                    {isOverdue(row.resolution) ? t("release.planner.card.overdue") : row.resolution.status === "estimated" ? t("release.planner.card.estimated") : ""}
                     {outfits > 0 ? t("release.planner.card.outfits", { count: outfits }) : ""}
                     {picked > 0 ? t("release.planner.card.picked", { count: picked }) : ""}
                 </span>

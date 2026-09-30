@@ -126,6 +126,8 @@ pub struct GameData {
     pub skin_windows: Vec<SkinWindow>,
     /// Skin store listings from the recommend panel (the rerun record).
     pub skin_listings: Vec<SkinListing>,
+    /// Every recommend-panel entry's tag and start, outfits or not.
+    pub recommend_tags: Vec<shop::RecommendTag>,
     pub medals: MedalData,
     pub roguelike: RoguelikeGameData,
     pub enemies: EnemyHandbook,

@@ -6,6 +6,7 @@ import { cn } from "#/lib/utils";
 import type { Resolution } from "#/types/generated/Resolution";
 import { daysFromToday, formatDate, formatDateRange, relativeDays } from "../helpers";
 import type { messages as helperMessages } from "../helpers.messages";
+import { isOverdue } from "../resolution";
 import type { messages } from "./ResolutionBadge.messages";
 
 /** This badge renders its own chrome plus the date wording `helpers.ts` derives. */
@@ -20,22 +21,34 @@ interface IResolutionBadgeProps {
     className?: string;
 }
 
+/** The rows with no EN date to show: a label, and a tooltip where the label needs one. */
+function undated(status: "unmodelled" | "independent" | "unlisted", t: BadgeT): { label: string; hint?: string } {
+    switch (status) {
+        case "independent":
+            return { label: t("release.badge.independent"), hint: t("release.badge.independent.title") };
+        case "unlisted":
+            return { label: t("release.badge.unlisted"), hint: t("release.badge.unlisted.title") };
+        case "unmodelled":
+            return { label: t("release.badge.noEstimate") };
+    }
+}
+
 export function ResolutionBadge({ resolution, today, note, caption, standing, className }: IResolutionBadgeProps): React.ReactElement {
     const t: BadgeT = useT("tools");
     const locale = useLocale();
-    if (resolution.status === "unmodelled" || resolution.status === "independent") {
-        const independent = resolution.status === "independent";
+    if (resolution.status === "unmodelled" || resolution.status === "independent" || resolution.status === "unlisted") {
+        const { label, hint } = undated(resolution.status, t);
         return (
             <div className={cn("flex flex-col items-start gap-0.5 sm:items-end", className)}>
-                <Badge variant="secondary" className="text-muted-foreground" title={independent ? t("release.badge.independent.title") : undefined}>
-                    {independent ? t("release.badge.independent") : t("release.badge.noEstimate")}
+                <Badge variant="secondary" className="text-muted-foreground" title={hint}>
+                    {label}
                 </Badge>
                 {note && <span className="font-sans text-[11px] text-muted-foreground">{note}</span>}
             </div>
         );
     }
 
-    const rel = relativeDays(daysFromToday(resolution.enStart, today), t);
+    let rel = relativeDays(daysFromToday(resolution.enStart, today), t);
     let chip: React.ReactNode;
     let dateText: string;
     let title: string | undefined;
@@ -57,6 +70,13 @@ export function ResolutionBadge({ resolution, today, note, caption, standing, cl
             sub = <span className="truncate font-sans text-[11px] text-muted-foreground">{t("release.badge.per", { source: resolution.source })}</span>;
             break;
         case "estimated":
+            if (isOverdue(resolution)) {
+                title = t("release.badge.overdue.title");
+                chip = <Badge variant="warning">{t("release.badge.overdue")}</Badge>;
+                dateText = t("release.badge.overdue.was", { date: formatDate(resolution.estimatedStart, locale) });
+                rel = relativeDays(daysFromToday(resolution.estimatedStart, today), t);
+                break;
+            }
             chip = <Badge variant="outline">{t("release.badge.estimated")}</Badge>;
             dateText = formatDate(resolution.enStart, locale);
             sub = <span className="font-mono text-[11px] text-muted-foreground">{t("release.badge.range", { lo: formatDate(resolution.lo, locale), hi: formatDate(resolution.hi, locale) })}</span>;

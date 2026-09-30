@@ -27,6 +27,26 @@ export const messages = {
         text: "Estimated",
         description: "Badge on a row whose EN date is projected from how far behind EN usually runs.",
     },
+    "release.badge.overdue": {
+        text: "Due now, not in EN yet",
+        description: "Badge on a row whose estimated EN date has passed while the English game data still does not carry it. 'EN' is the English game server and stays as-is.",
+    },
+    "release.badge.overdue.title": {
+        text: "The estimate has passed and EN has not run it yet.",
+        description: "Tooltip on the 'Due now, not in EN yet' badge. 'EN' is the English game server.",
+    },
+    "release.badge.overdue.was": {
+        text: "est. {date}",
+        description: "Next to the 'Due now' badge: the date the estimate gave, already formatted. 'est.' abbreviates 'estimated'.",
+    },
+    "release.badge.unlisted": {
+        text: "Not in EN's shop",
+        description: "Badge on an outfit sale the English server skipped: EN's shop has moved on to later sales without listing this one. 'EN' is the English game server.",
+    },
+    "release.badge.unlisted.title": {
+        text: "EN moved past this sale without listing it in the outfit shop.",
+        description: "Tooltip on the 'Not in EN's shop' badge. 'EN' is the English game server.",
+    },
     "release.badge.overrideTitle": {
         text: "{source}: {note}",
         description: "Tooltip on an announced row: where the date came from, then the note left with it.",

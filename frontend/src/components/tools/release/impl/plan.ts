@@ -179,9 +179,12 @@ export function usePlanData(today: Date, showPast: boolean): IPlanData {
         }
         const pool = skins.data?.reviewPool ?? [];
         const reviews: IPlanRow[] = (skins.data?.reviews ?? []).flatMap((r) => {
-            const enStart = resolvedEnStart(r.resolution);
+            // An edition EN skipped sits with the past at its CN start, with
+            // nothing to pick: EN never sold it, so no plan can spend on it.
+            const unlisted = r.resolution.status === "unlisted";
+            const enStart = unlisted ? r.cnStart : resolvedEnStart(r.resolution);
             if (enStart === null) return [];
-            const outfits = reviewOutfits(r, pool);
+            const outfits = unlisted ? [] : reviewOutfits(r, pool);
             return [
                 {
                     key: `review:${r.cnStart}`,

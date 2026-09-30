@@ -115,6 +115,14 @@ export const messages = {
         text: " est.",
         description: "Appended after a date that is only an estimate. Abbreviation of 'estimated'; keep the leading space.",
     },
+    "release.planner.card.overdue": {
+        text: " · due now",
+        description: "Appended after the date of a row whose estimated EN date has passed without EN running it; the date shown is today. Keep the leading space and middle dot.",
+    },
+    "release.planner.card.unlisted": {
+        text: "{date} on CN, not in EN's shop",
+        description: "Date line of a Fashion Review edition the English server skipped. {date} is the already formatted date it opened on the Chinese server. 'CN' and 'EN' are the Chinese and English game servers.",
+    },
     "release.planner.card.outfits": {
         text: "{count, plural, one { · # outfit} other { · # outfits}}",
         description: "How many outfits arrive with a row, appended after its date. Keep the leading space and middle dot.",

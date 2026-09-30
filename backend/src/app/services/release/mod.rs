@@ -151,6 +151,6 @@ const fn resolved_start(r: &Resolution) -> i64 {
         Resolution::Confirmed { en_start, .. }
         | Resolution::Override { en_start, .. }
         | Resolution::Estimated { en_start, .. } => *en_start,
-        Resolution::Unmodelled | Resolution::Independent => i64::MAX,
+        Resolution::Unlisted | Resolution::Unmodelled | Resolution::Independent => i64::MAX,
     }
 }

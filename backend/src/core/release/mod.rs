@@ -4,9 +4,10 @@ pub mod estimate;
 pub mod ledger;
 pub mod prices;
 pub mod skins;
+pub mod skipped;
 pub mod types;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::database::queries::release::OverrideRow;
 
@@ -68,11 +69,14 @@ pub fn resolve(
 /// `KIND_REVIEW`, keyed by the CN start in unix seconds, stands in for the
 /// announced date. The listing still wins once the data carries it, so the
 /// row turns Confirmed on the next extract with nobody deleting the override.
+/// An edition whose CN start is in `passed` (EN shipped past its tag without
+/// carrying it, see [`skipped`]) is Unlisted where it would be estimated.
 pub fn resolve_reviews(
     cn: &[(i64, i64)],
     en: &[(i64, i64)],
     overrides: &HashMap<(String, String), &OverrideRow>,
     model: &LagModel,
+    passed: &HashSet<i64>,
 ) -> Vec<Resolution> {
     cn.iter()
         .zip(skins::pair_reviews(cn, en))
@@ -81,13 +85,16 @@ pub fn resolve_reviews(
             let confirmed = en_window
                 .zip(en_id.as_deref())
                 .map(|((en_start, en_end), id)| (id, en_start, en_end));
-            resolve(
-                ledger::KIND_REVIEW,
-                &cn_start.to_string(),
-                confirmed,
-                overrides,
-                model,
-                cn_start,
+            skipped::unless_passed(
+                resolve(
+                    ledger::KIND_REVIEW,
+                    &cn_start.to_string(),
+                    confirmed,
+                    overrides,
+                    model,
+                    cn_start,
+                ),
+                passed.contains(&cn_start),
             )
         })
         .collect()
@@ -133,7 +140,7 @@ mod tests {
         let before = [(180 * D, 208 * D)];
 
         let none = override_index(&[]);
-        let r = resolve_reviews(&cn, &before, &none, &m);
+        let r = resolve_reviews(&cn, &before, &none, &m, &HashSet::new());
         assert!(matches!(r[0], Resolution::Confirmed { en_start, .. } if en_start == 180 * D));
         assert!(
             matches!(r[1], Resolution::Estimated { .. }),
@@ -145,7 +152,7 @@ mod tests {
             ov(ledger::KIND_SKIN, "0", Some(1)),
         ];
         let idx = override_index(&rows);
-        let r = resolve_reviews(&cn, &before, &idx, &m);
+        let r = resolve_reviews(&cn, &before, &idx, &m, &HashSet::new());
         assert!(
             matches!(r[0], Resolution::Confirmed { en_start, .. } if en_start == 180 * D),
             "another kind's override never reaches a review"
@@ -153,7 +160,7 @@ mod tests {
         assert!(matches!(r[1], Resolution::Override { en_start, .. } if en_start == 350 * D));
 
         let after = [(180 * D, 208 * D), (352 * D, 380 * D)];
-        let r = resolve_reviews(&cn, &after, &idx, &m);
+        let r = resolve_reviews(&cn, &after, &idx, &m, &HashSet::new());
         assert_eq!(
             r[1],
             Resolution::Confirmed {
@@ -165,11 +172,46 @@ mod tests {
         );
 
         let blank = vec![ov(ledger::KIND_REVIEW, &key, None)];
-        let r = resolve_reviews(&cn, &before, &override_index(&blank), &m);
+        let r = resolve_reviews(&cn, &before, &override_index(&blank), &m, &HashSet::new());
         assert!(
             matches!(r[1], Resolution::Estimated { .. }),
             "an override without a start leaves the estimate"
         );
+    }
+
+    #[test]
+    fn a_passed_edition_is_unlisted_unless_listed_or_announced() {
+        const D: i64 = 86_400;
+        let m = model();
+        let cn = [(0, 28 * D), (200 * D, 228 * D), (300 * D, 328 * D)];
+        let en = [(180 * D, 208 * D)];
+        let passed: HashSet<i64> = [0, 200 * D].into_iter().collect();
+        let none = override_index(&[]);
+
+        let r = resolve_reviews(&cn, &en, &none, &m, &passed);
+        assert!(
+            matches!(r[0], Resolution::Confirmed { .. }),
+            "a listed edition stays Confirmed whatever its tag says"
+        );
+        assert_eq!(r[1], Resolution::Unlisted);
+        assert!(
+            matches!(r[2], Resolution::Estimated { .. }),
+            "EN has not shipped past it"
+        );
+
+        let key = (200 * D).to_string();
+        let rows = vec![ov(ledger::KIND_REVIEW, &key, Some(350 * D))];
+        let r = resolve_reviews(&cn, &en, &override_index(&rows), &m, &passed);
+        assert!(
+            matches!(r[1], Resolution::Override { en_start, .. } if en_start == 350 * D),
+            "an announcement outranks the tag"
+        );
+
+        let before = resolve_reviews(&cn, &en, &none, &m, &HashSet::new());
+        let r = resolve_reviews(&cn, &en, &none, &m, &passed);
+        for i in [0, 2] {
+            assert_eq!(r[i], before[i], "only the passed edition moves");
+        }
     }
 
     #[test]

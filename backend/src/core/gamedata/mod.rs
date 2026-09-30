@@ -484,6 +484,7 @@ pub fn init_game_data(
             event_shops,
             activity_skin_refs,
             skin_listings: shop_file.into_skin_listings(),
+            recommend_tags: shop_file.recommend_tags(),
             skin_windows: shop_file.into_skin_windows(),
             medals,
             roguelike,
