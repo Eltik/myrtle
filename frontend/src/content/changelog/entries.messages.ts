@@ -11,6 +11,42 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-10-01.title": {
+        text: "New: Tier lists for anything, and stories you can take with you",
+        description: "Title of the 2026-10-01 release note. 'Tier lists' are user-made rankings; 'stories you can take with you' means exporting the game's story to read elsewhere.",
+    },
+    "note.2026-10-01.lead": {
+        text: "Tier lists can now rank **any kind of entry**, not only operators: enemies, outfits, modules, skills, events, factions, Integrated Strategies collectibles and more, mixed in one list if you like. And any story, chapter, arc or reading-order range in the story library can be exported as an EPUB, PDF, Markdown or plain text, with every choice and its lines kept on the page.",
+        description: "Lead paragraph of the 2026-10-01 release note, rendered as Markdown. Integrated Strategies is the game's roguelike mode and keeps its name; EPUB and PDF are file formats.",
+    },
+    "note.2026-10-01.hrefLabel": {
+        text: "Open tier lists",
+        description: "Label of the 2026-10-01 release note's call to action, which opens the tier lists page.",
+    },
+    "note.2026-10-01.item.1": {
+        text: "Story radio calls open as their own small windows, like in the game, instead of filling the screen, and characters' faces change expression without a box drawn over their heads.",
+        description: "Bullet in the 2026-10-01 release note, filed under 'Improved'. A 'radio call' is a story scene where characters talk from small windows at the side of the screen.",
+    },
+    "note.2026-10-01.item.2": {
+        text: "The story library shows more chapters per screen and scrolls more smoothly.",
+        description: "Bullet in the 2026-10-01 release note, filed under 'Improved'.",
+    },
+    "note.2026-10-01.item.3": {
+        text: "Story lines that were never shown are back: parts of 1-3, 5-10 and one interlude were cut off after a choice, and sticker or subtitle lines no longer freeze the reader or print formatting tags.",
+        description: "Bullet in the 2026-10-01 release note, filed under 'Fixed'. 1-3 and 5-10 are story stage codes and keep the game's numbering.",
+    },
+    "note.2026-10-01.item.4": {
+        text: 'The pull planner no longer shows a passed estimate as a sale that already happened. An estimate whose day has gone by now reads "Due now", a CN sale EN skipped is no longer forecast, and an event EN has closed stops counting its Originite Prime.',
+        description: "Bullet in the 2026-10-01 release note, filed under 'Fixed'. \"Due now\" quotes the planner's badge and must match its translation; Originite Prime is a premium currency and keeps the game's name.",
+    },
+    "note.2026-10-01.item.5": {
+        text: "Il Siracusano's hub battle stages no longer show as missing or as needing a rerun, since they closed with the event.",
+        description: "Bullet in the 2026-10-01 release note, filed under 'Fixed'. Il Siracusano is an event and keeps the game's name; the 'hub' is that event's map of battle tasks.",
+    },
+    "note.2026-10-01.item.6": {
+        text: "An outfit's art sits centred in its detail popup, and the randomizer shows its title once.",
+        description: "Bullet in the 2026-10-01 release note, filed under 'Fixed'. 'Outfit' is the game's word for a skin.",
+    },
     "note.2026-09-30.title": {
         text: "Improved: One outfit planner, with rerun dates you can plan around",
         description: "Title of the 2026-09-30 release note. 'Outfit' is the game's word for a skin; a 'rerun' is an outfit returning to the shop.",
