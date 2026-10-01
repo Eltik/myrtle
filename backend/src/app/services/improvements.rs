@@ -2620,6 +2620,7 @@ mod stage_pool_tests {
             weight: 1.0,
             decay: 1.0,
             clear: *clear,
+            live_only: false,
         });
         build_stage_pool(stages, &game_data, |_: &str| None)
     }
@@ -2644,13 +2645,20 @@ mod stage_pool_tests {
     }
 
     #[test]
-    fn a_cleared_either_or_stage_is_held_to_the_same_three_star_bar() {
-        // The gate that drops an uncleared either/or stage lives in
-        // `PlayerPools`; once it is in the pool it is an ordinary row.
+    fn a_two_star_live_only_clear_is_not_a_three_star_gap() {
+        // Saluzzo Estate, an Il Siracusano hub task: the hub closed with the
+        // event, so no replay can raise the two stars it was cleared at.
         let two = record(2);
-        let pool = pool(&[("act21side_06_m", Some(&two))]);
-        assert_eq!((pool.total, pool.cleared, pool.three_starred), (1, 1, 0));
-        assert_eq!(ids(&pool.not_three_starred), vec!["act21side_06_m"]);
+        let stages = [PoolStage {
+            stage_id: "act21side_04_m1",
+            weight: 1.0,
+            decay: 1.0,
+            clear: Some(&two),
+            live_only: true,
+        }];
+        let pool = build_stage_pool(stages.into_iter(), &GameData::default(), |_: &str| None);
+        assert_eq!((pool.total, pool.cleared, pool.three_starred), (1, 1, 1));
+        assert!(pool.not_three_starred.is_empty());
     }
 
     #[test]
@@ -2663,6 +2671,7 @@ mod stage_pool_tests {
                 weight,
                 decay: 1.0,
                 clear: None,
+                live_only: false,
             });
         let pool = build_stage_pool(stages, &game_data, |_: &str| None);
         assert_eq!(ids(&pool.missing), vec!["heavy", "mid", "light"]);

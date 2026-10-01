@@ -25,6 +25,12 @@
 //! so it counts in numerator and denominator only when the player has cleared it
 //! (state >= 2), and it is never a gap. The set comes from
 //! `ActivityTableFile::optional_stage_ids`, which is where the derivation lives.
+//!
+//! An entry can also be LIVE-ONLY (`live_only: true`): it existed only while
+//! its event ran and the permanent archive does not carry it. It follows the
+//! same never-a-gap rule as an optional stage, and a clear earns full marks
+//! because its star count froze when the event closed. The set comes from
+//! `ActivityTableFile::live_only_stage_ids`.
 
 use serde::{Deserialize, Serialize};
 use std::{
@@ -47,6 +53,10 @@ pub struct UniverseEntry {
     /// once cleared and is never a gap. See the module doc.
     #[serde(default)]
     pub optional: bool,
+    /// Playable only while its event ran; counts only once cleared, never a
+    /// gap, and a clear earns full marks. See the module doc.
+    #[serde(default)]
+    pub live_only: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -66,6 +76,10 @@ pub struct EventEntry {
     /// once cleared and is never a gap. See the module doc.
     #[serde(default)]
     pub optional: bool,
+    /// Playable only while its event ran; counts only once cleared, never a
+    /// gap, and a clear earns full marks. See the module doc.
+    #[serde(default)]
+    pub live_only: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -83,6 +97,7 @@ impl StageUniverse {
         campaign: &CampaignRotations,
         retro_linked_acts: &HashSet<String>,
         optional: &HashSet<String>,
+        live_only: &HashSet<String>,
     ) -> Self {
         let mut sorted_activities: Vec<&ActivityBasicInfo> = activities.values().collect();
         sorted_activities.sort_by_key(|a| Reverse(a.id.len()));
@@ -109,6 +124,7 @@ impl StageUniverse {
 
             let weight = zone_weight * difficulty_multiplier(&stage.difficulty);
             let is_optional = optional.contains(&stage.stage_id);
+            let is_live_only = live_only.contains(&stage.stage_id);
 
             if let Some(window) = campaign.window(&stage.stage_id) {
                 event.push(EventEntry {
@@ -118,6 +134,7 @@ impl StageUniverse {
                     end_time: Some(window.end_ts),
                     is_permanent: false,
                     optional: is_optional,
+                    live_only: is_live_only,
                 });
                 continue;
             }
@@ -127,6 +144,7 @@ impl StageUniverse {
                     stage_id: stage.stage_id.clone(),
                     weight,
                     optional: is_optional,
+                    live_only: is_live_only,
                 });
             } else {
                 // Activity zones - event pool
@@ -157,15 +175,16 @@ impl StageUniverse {
                     end_time,
                     is_permanent,
                     optional: is_optional,
+                    live_only: is_live_only,
                 });
             }
         }
 
-        // An optional stage is only ever in the denominator for a player who
-        // cleared it, so it cannot belong to the pool-wide maximum.
+        // An optional or live-only stage is only ever in the denominator for a
+        // player who cleared it, so it cannot belong to the pool-wide maximum.
         let permanent_max: f64 = permanent
             .iter()
-            .filter(|e| !e.optional)
+            .filter(|e| !e.optional && !e.live_only)
             .map(|e| e.weight)
             .sum();
 

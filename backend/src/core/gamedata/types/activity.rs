@@ -176,6 +176,32 @@ impl ActivityTableFile {
             .map(|task| task.stage_id.clone())
             .collect()
     }
+
+    /// Stages that only existed while the event ran: the hub that hosted them
+    /// did not survive into the permanent archive, so after the event closed
+    /// they can be neither cleared nor replayed for stars. Not owning one says
+    /// nothing about the player, and a clear's star count froze with the event.
+    ///
+    /// Every Il Siracusano hub battle task qualifies (the 14 `IS-QT` stages).
+    /// The archive's own completion list (`retro_table` `RetroTrailList` for
+    /// `permanent_sidestory_17_Il_Siracusano`) names all of the event's
+    /// stages but none of these. On the 2026-10-01 local data the hub stages
+    /// sit at state 0 for ~1,300 of 2,630 users against 5 to 38 for the
+    /// archived stages, and their 2-star clears run as high as 41 of 1,195
+    /// (`06_t`) and 20 of 1,315 (`04_m1`, Saluzzo Estate) against at most 4
+    /// of 1,587 on the archived stages, which players can replay.
+    ///
+    /// The trail list is not a general rule: it also omits every `_tr` and
+    /// `_sp` stage and all of Babel. Derive each event's set here from its
+    /// own hub table, like [`Self::optional_stage_ids`].
+    pub fn live_only_stage_ids(&self) -> HashSet<String> {
+        self.siracusa_data
+            .battle_task_map
+            .values()
+            .filter(|task| !task.stage_id.is_empty())
+            .map(|task| task.stage_id.clone())
+            .collect()
+    }
 }
 
 /// One event mission (`MissionData`). Only the template and its parameters

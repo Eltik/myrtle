@@ -8,7 +8,9 @@
 //!   - the event window: a limited event that has not rerun counts only while
 //!     it is open (`event::event_is_gradeable`);
 //!   - the either/or gate: an optional stage (one arm of a hub choice that
-//!     locks the other arm for good) counts only once the player cleared it.
+//!     locks the other arm for good) counts only once the player cleared it;
+//!     a live-only stage (one the archive did not keep) passes the same gate,
+//!     and its clear counts as three stars because no replay can raise it.
 //!
 //! [`PlayerPools`] applies all three once, and every consumer walks the result:
 //! the weighted grade, the Score tab counts and the improvements gap lists all
@@ -31,6 +33,9 @@ pub struct PoolStage<'a> {
     pub decay: f64,
     /// The player's dungeon record, `None` when they never touched the stage.
     pub clear: Option<&'a StageClear>,
+    /// The stage existed only while its event ran, so a clear is final: it
+    /// counts as three stars whatever the record says.
+    pub live_only: bool,
 }
 
 impl PoolStage<'_> {
@@ -44,13 +49,21 @@ impl PoolStage<'_> {
     }
 
     pub fn is_three_starred(&self) -> bool {
+        if self.live_only {
+            return self.is_cleared();
+        }
         self.clear.is_some_and(StageClear::is_three_starred)
     }
 
     /// Weighted credit toward the pool grade: 1.0 for three stars, 0.7 for a
     /// clear, 0 otherwise, scaled by weight and decay.
     fn credit(&self) -> f64 {
-        self.clear.map_or(0.0, StageClear::clear_score) * self.weight * self.decay
+        let score = if self.is_three_starred() {
+            1.0
+        } else {
+            self.clear.map_or(0.0, StageClear::clear_score)
+        };
+        score * self.weight * self.decay
     }
 }
 
@@ -87,7 +100,7 @@ impl<'a> PlayerPools<'a> {
             .permanent
             .iter()
             .filter(|e| self.on_server(&e.stage_id))
-            .filter_map(|e| self.admit(&e.stage_id, e.weight, 1.0, e.optional))
+            .filter_map(|e| self.admit(&e.stage_id, e.weight, 1.0, e.optional, e.live_only))
     }
 
     /// The event pool: server gate, event window, either/or gate, with
@@ -99,7 +112,7 @@ impl<'a> PlayerPools<'a> {
             .filter(|e| event_is_gradeable(e, self.now, self.last_synced_ts, self.allowed))
             .filter_map(|e| {
                 let decay = decay_factor(e.end_time, self.now);
-                self.admit(&e.stage_id, e.weight, decay, e.optional)
+                self.admit(&e.stage_id, e.weight, decay, e.optional, e.live_only)
             })
     }
 
@@ -108,22 +121,25 @@ impl<'a> PlayerPools<'a> {
     }
 
     /// The either/or gate. An optional stage sits behind a choice the player
-    /// made once and cannot undo, so it joins the pool (numerator and
-    /// denominator alike) only once cleared, and is never a gap.
+    /// made once and cannot undo, and a live-only stage is gone with its
+    /// event, so either joins the pool (numerator and denominator alike) only
+    /// once cleared, and is never a gap.
     fn admit(
         &self,
         stage_id: &'a str,
         weight: f64,
         decay: f64,
         optional: bool,
+        live_only: bool,
     ) -> Option<PoolStage<'a>> {
         let stage = PoolStage {
             stage_id,
             weight,
             decay,
             clear: self.clears.get(stage_id),
+            live_only,
         };
-        (!optional || stage.is_cleared()).then_some(stage)
+        (!(optional || live_only) || stage.is_cleared()).then_some(stage)
     }
 }
 
@@ -170,6 +186,14 @@ mod tests {
             stage_id: stage_id.to_string(),
             weight: 1.0,
             optional,
+            live_only: false,
+        }
+    }
+
+    fn live_only_entry(stage_id: &str) -> UniverseEntry {
+        UniverseEntry {
+            live_only: true,
+            ..entry(stage_id, false)
         }
     }
 
@@ -293,6 +317,40 @@ mod tests {
         assert!(
             (score - 1.0).abs() < 1e-9,
             "expected 1.0 / 1.0, got {score}"
+        );
+    }
+
+    #[test]
+    fn a_live_only_stage_counts_only_once_cleared_and_a_clear_is_three_stars() {
+        // Saluzzo Estate: an Il Siracusano hub task, cleared at two stars
+        // while the event ran and never replayable since.
+        let universe = StageUniverse {
+            permanent: vec![
+                entry("main_01-01", false),
+                live_only_entry("act21side_04_m1"),
+                live_only_entry("act21side_02_t"),
+            ],
+            event: vec![],
+            permanent_max: 1.0,
+        };
+        let clears = clears(&[("main_01-01", 3), ("act21side_04_m1", 2)]);
+        let pools = PlayerPools::new(&universe, &clears, None, 0, None);
+
+        // The untouched hub task is not a gap; the 2-star one is not a
+        // 3-star gap.
+        assert_eq!(permanent_ids(&pools), vec!["main_01-01", "act21side_04_m1"]);
+        assert_eq!(
+            PoolCounts::of(pools.permanent()),
+            PoolCounts {
+                total: 2,
+                cleared: 2,
+                three_starred: 2
+            }
+        );
+        let score = weighted_score(pools.permanent());
+        assert!(
+            (score - 1.0).abs() < 1e-9,
+            "expected 2.0 / 2.0 = 1.0, got {score}"
         );
     }
 

@@ -159,3 +159,61 @@ fn or_ring_battle_stages_are_optional_never_gaps() {
          suffix is not the discriminator"
     );
 }
+
+/// The Il Siracusano hub's battle tasks (`IS-QT`) ran only while the event was
+/// live: the permanent archive's completion list carries every other stage of
+/// the event and none of these. A player who never ran the hub cannot reach
+/// them, and one who cleared them at two stars cannot raise it, so they must
+/// be in the pools as live-only: never a gap, and a clear is three stars.
+///
+/// The set is derived from the hub's battle-task table, so it is asserted
+/// whole. A new member means a new hub event; verify in game that its stages
+/// really are gone from the archive before widening this assertion.
+#[test]
+fn siracusa_hub_battle_stages_are_live_only() {
+    let gd = common::load_game_data();
+    let universe = &gd.stage_universe;
+
+    let mut live_only: Vec<&str> = universe
+        .permanent
+        .iter()
+        .filter(|e| e.live_only)
+        .map(|e| e.stage_id.as_str())
+        .chain(
+            universe
+                .event
+                .iter()
+                .filter(|e| e.live_only)
+                .map(|e| e.stage_id.as_str()),
+        )
+        .collect();
+    live_only.sort_unstable();
+    assert_eq!(
+        live_only,
+        vec![
+            "act21side_01_m",
+            "act21side_01_t",
+            "act21side_02_m",
+            "act21side_02_t",
+            "act21side_03_m1",
+            "act21side_03_m2",
+            "act21side_04_m1",
+            "act21side_04_m2",
+            "act21side_05_m1",
+            "act21side_05_m2",
+            "act21side_05_t",
+            "act21side_06_m",
+            "act21side_06_t",
+            "act21side_09_t",
+        ],
+        "the live-only set is the Siracusa hub's battle tasks; a new member is a new hub \
+         event and must be verified in game before this assertion is widened"
+    );
+    for id in &live_only {
+        assert_eq!(
+            gd.stages.get(*id).map(|s| s.code.as_str()),
+            Some("IS-QT"),
+            "{id} is a hub battle task and should carry the IS-QT code"
+        );
+    }
+}
