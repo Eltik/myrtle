@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-01T01:26:35.960Z",
+    "generatedAt": "2026-10-01T01:42:53.434Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -20072,6 +20072,17 @@
             "placeholders": []
         },
         {
+            "key": "story.export.progress.layoutStory",
+            "namespace": "story",
+            "source_text": "Laying out story {done} of {total} · {story}",
+            "description": "Progress line while the PDF is typeset, one story at a time. {story} is the story's code and title.",
+            "placeholders": [
+                "done",
+                "story",
+                "total"
+            ]
+        },
+        {
             "key": "story.export.progress.scripts",
             "namespace": "story",
             "source_text": "Loading {done} of {total} · {story}",
@@ -20198,6 +20209,26 @@
             "source_text": "Save this story or its chapter as an e-book or a text file.",
             "description": "Hint beside the Export button in the reader's settings sheet.",
             "placeholders": []
+        },
+        {
+            "key": "story.export.stalled",
+            "namespace": "story",
+            "source_text": "The export stopped making progress for {seconds} s at {story} and was stopped. Try a smaller scope.",
+            "description": "Error line when a PDF export went silent (no progress for a minute). {story} is where it was.",
+            "placeholders": [
+                "seconds",
+                "story"
+            ]
+        },
+        {
+            "key": "story.export.storyFailed",
+            "namespace": "story",
+            "source_text": "The export failed at {story}: {message}",
+            "description": "Error line when one story could not be laid out. {story} is its code and title, {message} the technical reason.",
+            "placeholders": [
+                "message",
+                "story"
+            ]
         },
         {
             "key": "story.export.subtitle",
@@ -24336,6 +24367,13 @@
             ]
         },
         {
+            "key": "tierLists.edit.change.kinds",
+            "namespace": "tierLists",
+            "source_text": "Pool kinds",
+            "description": "Pending change: the kinds of things the list's pool offers (operators, enemies, events...) were changed.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.change.listDetails",
             "namespace": "tierLists",
             "source_text": "List details",
@@ -24596,6 +24634,106 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.kinds.apply",
+            "namespace": "tierLists",
+            "source_text": "Apply",
+            "description": "Button that applies the ticked kinds to the editor. They are stored when the list is saved.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.kinds.atLeastOne",
+            "namespace": "tierLists",
+            "source_text": "A list offers at least one kind.",
+            "description": "Shown when the owner tries to untick the last remaining kind in the kinds dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.kinds.cancel",
+            "namespace": "tierLists",
+            "source_text": "Cancel",
+            "description": "Button that closes the kinds dialog without changing anything.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.kinds.desc.class",
+            "namespace": "tierLists",
+            "source_text": "The eight classes, Vanguard to Specialist",
+            "description": "One-line explanation under 'Classes' in the kinds dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.kinds.desc.enemy",
+            "namespace": "tierLists",
+            "source_text": "Every enemy in the handbook",
+            "description": "One-line explanation under 'Enemies' in the kinds dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.kinds.desc.event",
+            "namespace": "tierLists",
+            "source_text": "Side stories, vignettes and other events",
+            "description": "One-line explanation under 'Events' in the kinds dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.kinds.desc.faction",
+            "namespace": "tierLists",
+            "source_text": "Nations, groups and teams",
+            "description": "One-line explanation under 'Factions' in the kinds dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.kinds.desc.operator",
+            "namespace": "tierLists",
+            "source_text": "Playable characters",
+            "description": "One-line explanation under 'Operators' in the kinds dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.kinds.desc.stronghold_bond",
+            "namespace": "tierLists",
+            "source_text": "Faction and trait bonds from Stronghold Protocol",
+            "description": "One-line explanation under 'Stronghold bonds' in the kinds dialog. Stronghold Protocol is the game's auto-chess mode.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.kinds.desc.subclass",
+            "namespace": "tierLists",
+            "source_text": "Archetypes within a class",
+            "description": "One-line explanation under 'Subclasses' in the kinds dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.kinds.description",
+            "namespace": "tierLists",
+            "source_text": "Pick what the pool offers. A list can mix kinds. Changes save with your other edits.",
+            "description": "Subtitle of the kinds dialog. 'Save' refers to the editor's Save button; nothing is stored until then.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.kinds.groupLabel",
+            "namespace": "tierLists",
+            "source_text": "Kinds this list offers",
+            "description": "Accessible name of the group of checkboxes, one per kind, in the kinds dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.kinds.placed",
+            "namespace": "tierLists",
+            "source_text": "{count} placed",
+            "description": "Small count beside a kind in the kinds dialog: how many of that kind are on the board now.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tierLists.edit.kinds.title",
+            "namespace": "tierLists",
+            "source_text": "What this list ranks",
+            "description": "Title of the dialog where a list's owner picks which kinds of things (operators, enemies, events...) the editor's pool offers.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.missing.action",
             "namespace": "tierLists",
             "source_text": "Back to my lists",
@@ -24746,10 +24884,38 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.pool.dropArea.any",
+            "namespace": "tierLists",
+            "source_text": "Drag a tile here to unplace it",
+            "description": "Accessible name of the pool area for any kind other than operators; the area doubles as the target for taking a tile off the board.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.pool.dropToUnplace",
             "namespace": "tierLists",
             "source_text": "Drop to unplace",
             "description": "Badge over the pool while an operator is being dragged towards it.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.edition",
+            "namespace": "tierLists",
+            "source_text": "Edition",
+            "description": "Label of the filter that tells an event's first run from its reruns, in the pool dialog. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.edition.group",
+            "namespace": "tierLists",
+            "source_text": "Filter by edition",
+            "description": "Accessible name of the row of edition filter buttons.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.edition.original",
+            "namespace": "tierLists",
+            "source_text": "Original",
+            "description": "Edition filter option: the event's first run, as opposed to a rerun.",
             "placeholders": []
         },
         {
@@ -24778,6 +24944,48 @@
             "namespace": "tierLists",
             "source_text": "Open a larger pool view with all filters",
             "description": "Tooltip on the Expand button.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.grid.class",
+            "namespace": "tierLists",
+            "source_text": "Available classes",
+            "description": "Accessible name of the grid of classes tiles in the pool.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.grid.enemy",
+            "namespace": "tierLists",
+            "source_text": "Available enemies",
+            "description": "Accessible name of the grid of enemies tiles in the pool.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.grid.event",
+            "namespace": "tierLists",
+            "source_text": "Available events",
+            "description": "Accessible name of the grid of events tiles in the pool.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.grid.faction",
+            "namespace": "tierLists",
+            "source_text": "Available factions",
+            "description": "Accessible name of the grid of factions tiles in the pool.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.grid.stronghold_bond",
+            "namespace": "tierLists",
+            "source_text": "Available Stronghold bonds",
+            "description": "Accessible name of the grid of Stronghold bonds tiles in the pool.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.grid.subclass",
+            "namespace": "tierLists",
+            "source_text": "Available subclasses",
+            "description": "Accessible name of the grid of subclasses tiles in the pool.",
             "placeholders": []
         },
         {
@@ -24816,6 +25024,100 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.pool.kicker.class",
+            "namespace": "tierLists",
+            "source_text": "Class pool",
+            "description": "Small uppercase label above the pool of classes that can be dragged onto a tier; also the title of the larger pool dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.kicker.enemy",
+            "namespace": "tierLists",
+            "source_text": "Enemy pool",
+            "description": "Small uppercase label above the pool of enemies that can be dragged onto a tier; also the title of the larger pool dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.kicker.event",
+            "namespace": "tierLists",
+            "source_text": "Event pool",
+            "description": "Small uppercase label above the pool of events that can be dragged onto a tier; also the title of the larger pool dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.kicker.faction",
+            "namespace": "tierLists",
+            "source_text": "Faction pool",
+            "description": "Small uppercase label above the pool of factions that can be dragged onto a tier; also the title of the larger pool dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.kicker.stronghold_bond",
+            "namespace": "tierLists",
+            "source_text": "Stronghold bond pool",
+            "description": "Small uppercase label above the pool of Stronghold bonds that can be dragged onto a tier; also the title of the larger pool dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.kicker.subclass",
+            "namespace": "tierLists",
+            "source_text": "Subclass pool",
+            "description": "Small uppercase label above the pool of subclasses that can be dragged onto a tier; also the title of the larger pool dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.kinds",
+            "namespace": "tierLists",
+            "source_text": "Kinds",
+            "description": "Small button in the pool header that opens the settings for which kinds of things this list ranks.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.kindsHint",
+            "namespace": "tierLists",
+            "source_text": "Choose what this list ranks",
+            "description": "Tooltip on the Kinds button in the pool header.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.level",
+            "namespace": "tierLists",
+            "source_text": "Level",
+            "description": "Label of the faction-level filter (nation, group, team) in the pool dialog. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.level.group",
+            "namespace": "tierLists",
+            "source_text": "Filter by level",
+            "description": "Accessible name of the row of faction-level filter buttons.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.loadFailed",
+            "namespace": "tierLists",
+            "source_text": "This list did not load.",
+            "description": "Shown in the pool when a kind's list failed to load.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.loading",
+            "namespace": "tierLists",
+            "source_text": "Loading…",
+            "description": "Shown in the pool while a kind's list is still loading. Keep the single-character ellipsis.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.more",
+            "namespace": "tierLists",
+            "source_text": "Showing {shown} of {total}. Scroll for more.",
+            "description": "Under a long pool grid that renders in pages: how many tiles are on screen so far out of how many match. {shown} and {total} are numbers.",
+            "placeholders": [
+                "shown",
+                "total"
+            ]
+        },
+        {
             "key": "tierLists.edit.pool.nothingPlaced",
             "namespace": "tierLists",
             "source_text": "Nothing placed yet",
@@ -24837,6 +25139,20 @@
             "placeholders": [
                 "count"
             ]
+        },
+        {
+            "key": "tierLists.edit.pool.rank",
+            "namespace": "tierLists",
+            "source_text": "Rank",
+            "description": "Label of the enemy-rank filter (normal, elite, leader) in the pool dialog. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.rank.group",
+            "namespace": "tierLists",
+            "source_text": "Filter by rank",
+            "description": "Accessible name of the row of enemy-rank filter buttons.",
+            "placeholders": []
         },
         {
             "key": "tierLists.edit.pool.rarity",
@@ -24862,6 +25178,41 @@
             ]
         },
         {
+            "key": "tierLists.edit.pool.retry",
+            "namespace": "tierLists",
+            "source_text": "Try again",
+            "description": "Button that reloads a pool list that failed to load.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.search.class",
+            "namespace": "tierLists",
+            "source_text": "Search classes",
+            "description": "Accessible name of the pool's search box while it lists classes.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.search.enemy",
+            "namespace": "tierLists",
+            "source_text": "Search enemies",
+            "description": "Accessible name of the pool's search box while it lists enemies.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.search.event",
+            "namespace": "tierLists",
+            "source_text": "Search events",
+            "description": "Accessible name of the pool's search box while it lists events.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.search.faction",
+            "namespace": "tierLists",
+            "source_text": "Search factions",
+            "description": "Accessible name of the pool's search box while it lists factions.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.pool.search.label",
             "namespace": "tierLists",
             "source_text": "Search operators",
@@ -24873,6 +25224,41 @@
             "namespace": "tierLists",
             "source_text": "Search by name…",
             "description": "Placeholder in the pool's search box. Keep the single-character ellipsis.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.search.stronghold_bond",
+            "namespace": "tierLists",
+            "source_text": "Search Stronghold bonds",
+            "description": "Accessible name of the pool's search box while it lists Stronghold bonds.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.search.subclass",
+            "namespace": "tierLists",
+            "source_text": "Search subclasses",
+            "description": "Accessible name of the pool's search box while it lists subclasses.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.tabs",
+            "namespace": "tierLists",
+            "source_text": "What this pool lists",
+            "description": "Accessible name of the row of tabs that switch the pool between the kinds a list ranks (operators, enemies, events...).",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.type",
+            "namespace": "tierLists",
+            "source_text": "Type",
+            "description": "Label of the type filter (event category, or Stronghold bond type) in the pool dialog. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.type.group",
+            "namespace": "tierLists",
+            "source_text": "Filter by type",
+            "description": "Accessible name of the row of type filter buttons.",
             "placeholders": []
         },
         {
@@ -25295,6 +25681,28 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.tile.entityLabel",
+            "namespace": "tierLists",
+            "source_text": "{name}, {kind}{placed, select, true { - already placed} other {}}{noted, select, true { - has a description} other {}}",
+            "description": "Accessible name of a draggable tile that is not an operator (an enemy, an event, a faction...): its name from the game data and its kind, then whether it is already on a tier and whether it carries a note.",
+            "placeholders": [
+                "kind",
+                "name",
+                "noted",
+                "placed"
+            ]
+        },
+        {
+            "key": "tierLists.edit.tile.entityTitle",
+            "namespace": "tierLists",
+            "source_text": "{name}{noted, select, true { · has a description} other {}}",
+            "description": "Tooltip on a draggable tile that is not an operator: its name from the game data, then whether it carries a note. Keep the middle dot.",
+            "placeholders": [
+                "name",
+                "noted"
+            ]
+        },
+        {
             "key": "tierLists.edit.tile.label",
             "namespace": "tierLists",
             "source_text": "{name} ({rarity}★){placed, select, true { - already placed} other {}}{noted, select, true { - has a description} other {}}",
@@ -25432,6 +25840,212 @@
             "source_text": "Visibility failed",
             "description": "Toast title when changing the list's visibility failed.",
             "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.bondType.regular",
+            "namespace": "tierLists",
+            "source_text": "Trait bond",
+            "description": "Stronghold Protocol bond type: a bond built around a shared trait rather than a faction. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.bondType.season",
+            "namespace": "tierLists",
+            "source_text": "Faction bond",
+            "description": "Stronghold Protocol bond type: a bond that gathers operators of some factions. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.enemyLevel.boss",
+            "namespace": "tierLists",
+            "source_text": "Leader",
+            "description": "Enemy rank in the game's enemy handbook: a boss. The English game calls this rank 'Leader'. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.enemyLevel.elite",
+            "namespace": "tierLists",
+            "source_text": "Elite",
+            "description": "Enemy rank in the game's enemy handbook: an elite enemy. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.enemyLevel.normal",
+            "namespace": "tierLists",
+            "source_text": "Normal",
+            "description": "Enemy rank in the game's enemy handbook: an ordinary enemy. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.event.rerun",
+            "namespace": "tierLists",
+            "source_text": "Rerun",
+            "description": "Marks an event that is a rerun or retrospective of an earlier one. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.eventType.BRANCHLINE",
+            "namespace": "tierLists",
+            "source_text": "Intermezzo",
+            "description": "Event category as the game's Archives files it: a branch story between main chapters. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.eventType.MINISTORY",
+            "namespace": "tierLists",
+            "source_text": "Vignette",
+            "description": "Event category as the game's Archives files it: a short story collection event. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.eventType.NONE",
+            "namespace": "tierLists",
+            "source_text": "Other",
+            "description": "Event category for events the game's Archives does not file on a story shelf (modes, contracts, collaborations). Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.eventType.SIDESTORY",
+            "namespace": "tierLists",
+            "source_text": "Side Story",
+            "description": "Event category as the game's Archives files it: a full side story event. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.factionLevel.group",
+            "namespace": "tierLists",
+            "source_text": "Group",
+            "description": "Faction level: an organisation inside a nation, such as Rhine Lab. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.factionLevel.nation",
+            "namespace": "tierLists",
+            "source_text": "Nation",
+            "description": "Faction level: a nation or state, such as Victoria. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.factionLevel.team",
+            "namespace": "tierLists",
+            "source_text": "Team",
+            "description": "Faction level: a small team, such as Team Rainbow. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kind.class",
+            "namespace": "tierLists",
+            "source_text": "Class",
+            "description": "Singular kind label shown small above a class's name in its hover card.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kind.enemy",
+            "namespace": "tierLists",
+            "source_text": "Enemy",
+            "description": "Singular kind label shown small above an enemy's name in its hover card.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kind.event",
+            "namespace": "tierLists",
+            "source_text": "Event",
+            "description": "Singular kind label shown small above an event's name in its hover card.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kind.faction",
+            "namespace": "tierLists",
+            "source_text": "Faction",
+            "description": "Singular kind label shown small above a faction's name in its hover card.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kind.operator",
+            "namespace": "tierLists",
+            "source_text": "Operator",
+            "description": "Singular kind label shown small above an entity's name in its hover card.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kind.stronghold_bond",
+            "namespace": "tierLists",
+            "source_text": "Stronghold bond",
+            "description": "Singular kind label shown small above a Stronghold Protocol bond's name in its hover card.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kind.subclass",
+            "namespace": "tierLists",
+            "source_text": "Subclass",
+            "description": "Singular kind label shown small above a subclass's name in its hover card.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kinds.class",
+            "namespace": "tierLists",
+            "source_text": "Classes",
+            "description": "Name of a kind of thing a tier list can rank: the eight operator classes (Vanguard, Guard, and so on). Plural. Used on pool tabs and in the kinds settings.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kinds.enemy",
+            "namespace": "tierLists",
+            "source_text": "Enemies",
+            "description": "Name of a kind of thing a tier list can rank: enemies from the game's enemy handbook. Plural. Used on pool tabs and in the kinds settings.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kinds.event",
+            "namespace": "tierLists",
+            "source_text": "Events",
+            "description": "Name of a kind of thing a tier list can rank: in-game events (side stories, vignettes and the like). Plural. Used on pool tabs and in the kinds settings.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kinds.faction",
+            "namespace": "tierLists",
+            "source_text": "Factions",
+            "description": "Name of a kind of thing a tier list can rank: nations, groups and teams operators belong to. Plural. Used on pool tabs and in the kinds settings.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kinds.operator",
+            "namespace": "tierLists",
+            "source_text": "Operators",
+            "description": "Name of a kind of thing a tier list can rank: playable characters. Plural. Used on the editor's pool tabs and in the list of kinds a list offers.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kinds.stronghold_bond",
+            "namespace": "tierLists",
+            "source_text": "Stronghold bonds",
+            "description": "Name of a kind of thing a tier list can rank: the bonds of Stronghold Protocol, the game's auto-chess mode. Plural. Used on pool tabs and in the kinds settings.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kinds.subclass",
+            "namespace": "tierLists",
+            "source_text": "Subclasses",
+            "description": "Name of a kind of thing a tier list can rank: operator subclasses (archetypes such as Charger or Lord). Plural. Used on pool tabs and in the kinds settings.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.preview.open",
+            "namespace": "tierLists",
+            "source_text": "Open page",
+            "description": "Footer hint in an entity's hover card when clicking the tile opens the entity's own page. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.tile.label",
+            "namespace": "tierLists",
+            "source_text": "{name}, {kind}",
+            "description": "Accessible name of a non-operator tile: the entity's name from the game data, then its kind, e.g. 'Rhodes Island, Faction'.",
+            "placeholders": [
+                "kind",
+                "name"
+            ]
         },
         {
             "key": "tierLists.my.card.actions",

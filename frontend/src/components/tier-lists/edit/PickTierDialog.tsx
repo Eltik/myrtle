@@ -3,18 +3,17 @@ import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Field, FieldDescription, FieldLabel } from "#/components/ui/field";
 import { MarkdownEditor } from "#/components/ui/markdown-editor";
-import { OperatorAvatar } from "#/components/ui/operator-avatar";
-import type { ITierOperator } from "#/lib/api/tier-lists";
+import type { ITierEntity } from "#/lib/api/tier-entities";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { RARITY_HEX_MUTED } from "#/lib/utils";
 import { readableTextColor } from "../detail/contrast";
+import { EntityAvatar, entityAccent } from "../entities";
 import { PLACEMENT_DESCRIPTION_MAX } from "../shared";
 import type { messages } from "./PickTierDialog.messages";
 import type { IEditTier } from "./state";
 
 interface IPickTierDialogProps {
-    operator: ITierOperator | null;
+    entity: ITierEntity | null;
     currentTierId: string | null;
     description: string;
     tiers: IEditTier[];
@@ -23,24 +22,24 @@ interface IPickTierDialogProps {
     onDescriptionChange: (description: string) => void;
 }
 
-export function PickTierDialog({ operator, currentTierId, description, tiers, onClose, onPick, onDescriptionChange }: IPickTierDialogProps) {
+export function PickTierDialog({ entity, currentTierId, description, tiers, onClose, onPick, onDescriptionChange }: IPickTierDialogProps) {
     const t: TypedT<typeof messages> = useT("tierLists");
-    const accent = operator ? (RARITY_HEX_MUTED[operator.rarity] ?? RARITY_HEX_MUTED[1]) : null;
+    const accent = entity ? entityAccent(entity) : null;
     const descId = useId();
     const isPlaced = currentTierId !== null;
 
     return (
-        <Dialog open={operator !== null} onOpenChange={(o) => !o && onClose()}>
+        <Dialog open={entity !== null} onOpenChange={(o) => !o && onClose()}>
             <DialogPopup className="sm:max-w-sm">
                 <DialogHeader>
                     <DialogTitle>
                         <span className="inline-flex items-center gap-2.5">
-                            {operator && (
+                            {entity && (
                                 <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md border-2" style={{ borderColor: accent ?? undefined, background: "var(--muted)" }}>
-                                    <OperatorAvatar charId={operator.id} name={operator.name} />
+                                    <EntityAvatar entity={entity} />
                                 </span>
                             )}
-                            <span className="font-sans">{operator?.name ?? ""}</span>
+                            <span className="font-sans">{entity?.name ?? ""}</span>
                         </span>
                     </DialogTitle>
                     <DialogDescription>{t("edit.pick.description")}</DialogDescription>
@@ -73,7 +72,7 @@ export function PickTierDialog({ operator, currentTierId, description, tiers, on
                                         {tier.name.length <= 2 ? tier.name : tier.name.charAt(0)}
                                     </span>
                                     <span className="min-w-0 flex-1 truncate">{tier.name}</span>
-                                    <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{tier.operatorIds.length}</span>
+                                    <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{tier.entityKeys.length}</span>
                                     {isCurrent && <span className="font-bold font-mono text-[10px] text-primary uppercase tracking-wider">{t("edit.pick.current")}</span>}
                                 </button>
                             );

@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { readFileSync } from "node:fs";
+import { PDFArray, PDFDict, PDFDocument, type PDFHexString, PDFName, type PDFRef, type PDFString } from "pdf-lib";
 import { describe, expect, it } from "vitest";
 import { bookOf } from "./book";
 import { say, scriptOf } from "./fixtures";
@@ -24,37 +25,24 @@ function deps(): PdfDeps & { loads: string[] } {
     };
 }
 
-/** Outline titles in document order with their depth, read off the PDF's outline dictionaries. */
-function outline(bytes: Uint8Array): string[] {
-    const text = Buffer.from(bytes).toString("latin1");
-    const objects = new Map<number, string>();
-    for (const m of text.matchAll(/(\d+) 0 obj\s*([\s\S]*?)endobj/g)) objects.set(Number(m[1]), m[2]);
-    const decode = (raw: string): string => {
-        const hex = /^<([0-9a-fA-F]+)>$/.exec(raw);
-        if (hex) {
-            const b = Buffer.from(hex[1], "hex");
-            return b[0] === 0xfe && b[1] === 0xff ? b.subarray(2).swap16().toString("utf16le") : b.toString("latin1");
-        }
-        return raw.slice(1, -1);
-    };
-    const ref = (body: string, key: string) => {
-        const m = new RegExp(`/${key} (\\d+) 0 R`).exec(body);
-        return m ? Number(m[1]) : null;
-    };
-    const catalog = [...objects.values()].find((b) => /\/Type \/Catalog/.test(b)) ?? "";
-    const rootId = ref(catalog, "Outlines");
-    const root = rootId === null ? undefined : objects.get(rootId);
+/** The outline as `title -> p<1-based page>`, indented by depth, read back with pdf-lib. */
+async function outline(bytes: Uint8Array): Promise<string[]> {
+    const doc = await PDFDocument.load(bytes);
+    const pageIndex = new Map(doc.getPages().map((p, i) => [p.ref.toString(), i + 1]));
     const out: string[] = [];
-    const walk = (id: number | null, depth: number) => {
-        while (id !== null) {
-            const body = objects.get(id) ?? "";
-            const title = /\/Title (\([^)]*\)|<[0-9a-fA-F]+>)/.exec(body);
-            out.push(`${"  ".repeat(depth)}${title ? decode(title[1]) : "?"}`);
-            walk(ref(body, "First"), depth + 1);
-            id = ref(body, "Next");
+    const walk = (ref: PDFRef | undefined, depth: number) => {
+        let at = ref;
+        while (at) {
+            const node = doc.context.lookup(at, PDFDict);
+            const title = (node.lookup(PDFName.of("Title")) as PDFHexString | PDFString).decodeText();
+            const dest = node.lookup(PDFName.of("Dest"), PDFArray);
+            out.push(`${"  ".repeat(depth)}${title} -> p${pageIndex.get(dest.get(0).toString())}`);
+            walk(node.get(PDFName.of("First")) as PDFRef | undefined, depth + 1);
+            at = node.get(PDFName.of("Next")) as PDFRef | undefined;
         }
     };
-    if (root) walk(ref(root, "First"), 0);
+    const root = doc.catalog.lookup(PDFName.of("Outlines"), PDFDict);
+    walk(root.get(PDFName.of("First")) as PDFRef | undefined, 0);
     return out;
 }
 
@@ -63,30 +51,46 @@ async function build(scope: BookScope, options: Partial<BookOptions> = {}) {
     const d = deps();
     const result = await toPdf(book, { typeface: "inter", paper: "A5" }, d);
     const bytes = new Uint8Array(await result.blob.arrayBuffer());
-    const pages = (
-        Buffer.from(bytes)
-            .toString("latin1")
-            .match(/\/Type \/Page\b/g) ?? []
-    ).length;
+    const pages = (await PDFDocument.load(bytes)).getPageCount();
     return { bytes, pages, result, loads: d.loads };
 }
 
-describe("toPdf", () => {
-    it("a chapter: title, contents, one page per story, colophon; the outline nests Before/After under the operation", async () => {
+describe("toPdf, laid out per story and merged", () => {
+    it("a chapter: title, contents, the stories, colophon; the outline nests Before/After under the operation and points at the right pages", async () => {
         const { bytes, pages, result, loads } = await build({ kind: "group", groupId: "main_0" });
         expect(Buffer.from(bytes.subarray(0, 5)).toString()).toBe("%PDF-");
-        // Title, contents, the two 0-1 stories on four A5 sheets between them (CGs, scene thumbnails), the interlude, colophon.
-        expect(pages).toBe(8);
-        expect(outline(bytes)).toEqual(["Contents", "0-1 Isolated Island", "  Before Operation", "  After Operation", "Prologue <1>", "Colophon"]);
+        const [beg, end, int] = result.sections;
+        // Title p1, contents p2, then the stories back to back, then the colophon.
+        expect(beg.firstPage).toBe(3);
+        expect(end.firstPage).toBe(beg.firstPage + beg.pages);
+        expect(int.firstPage).toBe(end.firstPage + end.pages);
+        expect(pages).toBe(int.firstPage + int.pages);
+        expect(await outline(bytes)).toEqual(["Contents -> p2", `0-1 Isolated Island -> p${beg.firstPage}`, `  Before Operation -> p${beg.firstPage}`, `  After Operation -> p${end.firstPage}`, `Prologue <1> -> p${int.firstPage}`, `Colophon -> p${pages}`]);
         expect(loads).toEqual(["thumb /textures/avg/bg/room.png", "/textures/avg/imgs/cg_one.png", "thumb /textures/avg/bg/street.png", "/textures/avg/imgs/cg_two.png"]);
         expect(result.failedImages).toEqual([]);
-        expect(Buffer.from(bytes).toString("latin1")).toMatch(/\/BaseFont \/[A-Z]{6}\+Inter-Regular/);
     }, 30_000);
 
-    it("a selection across groups adds a part page per group and nests part > story", async () => {
-        const { pages, bytes } = await build({ kind: "selection", ids: ["x_1", "s_int"] }, { images: "cg" });
-        expect(pages).toBe(7);
-        expect(outline(bytes)).toEqual(["Contents", "Other & Co", "  X-1 Elsewhere", "Evil Time Part 1", "  Prologue <1>", "Colophon"]);
+    it("three books merge in order: a part page each, stories after it, the outline part > story with every target right", async () => {
+        const { bytes, pages, result } = await build({ kind: "selection", ids: ["x_1", "s_01_beg", "s_int"] }, { images: "cg" });
+        const [x, beg, int] = result.sections;
+        // Title, contents, part 1 (p3), X-1 (p4..), part 2, 0-1, the interlude, colophon.
+        expect(x.firstPage).toBe(4);
+        expect(beg.firstPage).toBe(x.firstPage + x.pages + 1);
+        expect(int.firstPage).toBe(beg.firstPage + beg.pages);
+        expect(pages).toBe(int.firstPage + int.pages);
+        expect(await outline(bytes)).toEqual(["Contents -> p2", "Other & Co -> p3", `  X-1 Elsewhere -> p${x.firstPage}`, `Evil Time Part 1 -> p${beg.firstPage - 1}`, `  0-1 Isolated Island -> p${beg.firstPage}`, `  Prologue <1> -> p${int.firstPage}`, `Colophon -> p${pages}`]);
+    }, 30_000);
+
+    it("a story that fails to lay out is named in the error", async () => {
+        const book = bookOf(sampleSource, { kind: "group", groupId: "main_0" }, { nickname: "Doctor", images: "none", branches: "all" });
+        await expect(toPdf(book, { typeface: "device", paper: "A5", failStoryId: "s_01_end" }, deps())).rejects.toMatchObject({ name: "PdfStoryError", story: "0-1 Isolated Island" });
+    }, 30_000);
+
+    it("reports progress per story, pictures then layout, then the merge", async () => {
+        const book = bookOf(sampleSource, { kind: "group", groupId: "main_0" }, { nickname: "Doctor", images: "none", branches: "all" });
+        const seen: string[] = [];
+        await toPdf(book, { typeface: "device", paper: "A5", onProgress: (p) => seen.push(`${p.phase} ${p.done}/${p.total} ${p.label}`) }, deps());
+        expect(seen).toEqual(["images 0/3 0-1 Isolated Island", "layout 0/3 0-1 Isolated Island", "images 1/3 0-1 Isolated Island", "layout 1/3 0-1 Isolated Island", "images 2/3 Prologue <1>", "layout 2/3 Prologue <1>", "merge 3/3 "]);
     }, 30_000);
 
     it("a story that runs over many sheets renders: the page number's line height does not compound per sheet", async () => {
@@ -99,11 +103,6 @@ describe("toPdf", () => {
         );
         const book = bookOf({ server: "en", index: { groups: [{ id: "g", name: "G", stories: [{ id: "long", name: "Long", sort: 1, hasScript: true }] }] }, scripts: new Map([["long", long]]) }, { kind: "group", groupId: "g" }, { nickname: "Doctor", images: "none", branches: "all" });
         const out = await toPdf(book, { typeface: "inter", paper: "A5" }, deps());
-        const pages = (
-            Buffer.from(await out.blob.arrayBuffer())
-                .toString("latin1")
-                .match(/\/Type \/Page\b/g) ?? []
-        ).length;
-        expect(pages).toBeGreaterThan(8);
+        expect(out.sections[0].pages).toBeGreaterThan(8);
     }, 30_000);
 });

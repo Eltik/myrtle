@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
+import { CardEntityAvatar, cardEntityKey } from "#/components/tier-lists/CardEntityAvatar";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
-import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { ROLE_CHIP_GRADIENT, ROLE_SOLID, type Role, tlAccentVars } from "#/lib/role-styles";
@@ -48,9 +48,16 @@ export default function TierListCard({ tl, onOpen }: { tl: ITierList; onOpen?: (
                         </div>
                         <div className="flex min-w-0 flex-wrap gap-1.5">
                             {topOps.map((op) => (
-                                <span key={op.id} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted py-0.75 pr-2.5 pl-0.75 font-medium font-sans text-[11.5px] text-foreground leading-none" title={t("card.opTitle", { name: op.name, role: op.role })}>
-                                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full font-bold font-sans text-[9.5px] text-white leading-none tracking-tight" style={{ background: ROLE_CHIP_GRADIENT[op.role as Role] }}>
-                                        <OperatorAvatar charId={op.id} name={op.name} />
+                                <span key={cardEntityKey(op)} className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted py-0.75 pr-2.5 pl-0.75 font-medium font-sans text-[11.5px] text-foreground leading-none" title={op.kind ? op.name : t("card.opTitle", { name: op.name, role: op.role })}>
+                                    <span
+                                        className={
+                                            op.kind
+                                                ? "inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded-full bg-card font-bold font-sans text-[8.5px] text-foreground leading-none tracking-tight"
+                                                : "inline-flex h-5 w-5 items-center justify-center rounded-full font-bold font-sans text-[9.5px] text-white leading-none tracking-tight"
+                                        }
+                                        style={op.kind ? undefined : { background: ROLE_CHIP_GRADIENT[op.role as Role] }}
+                                    >
+                                        <CardEntityAvatar op={op} />
                                     </span>
                                     <span>{op.name}</span>
                                 </span>
@@ -64,8 +71,13 @@ export default function TierListCard({ tl, onOpen }: { tl: ITierList; onOpen?: (
                         <span className="font-mono text-[11px] text-muted-foreground leading-none tracking-wide">{ghostLabel}</span>
                         <div className="flex items-center">
                             {ghostOps.map((op) => (
-                                <span key={`ghost-${op.id}`} className="-ml-1 h-3.5 w-3.5 rounded-full border-[1.5px] border-card opacity-60 first:ml-0" style={{ background: ROLE_SOLID[op.role as Role] }} title={op.name}>
-                                    <OperatorAvatar charId={op.id} name={op.name} />
+                                <span
+                                    key={`ghost-${cardEntityKey(op)}`}
+                                    className={op.kind ? "-ml-1 flex h-3.5 w-3.5 items-center justify-center overflow-hidden rounded-full border-[1.5px] border-card text-[0px] opacity-60 first:ml-0" : "-ml-1 h-3.5 w-3.5 rounded-full border-[1.5px] border-card opacity-60 first:ml-0"}
+                                    style={{ background: op.kind ? "var(--muted)" : ROLE_SOLID[op.role as Role] }}
+                                    title={op.name}
+                                >
+                                    <CardEntityAvatar op={op} />
                                 </span>
                             ))}
                             {restCount > MAX_GHOST_OPS && <span className="ml-1.5 font-medium font-mono text-[10.5px] text-muted-foreground leading-none tracking-tight">+{restCount - MAX_GHOST_OPS}</span>}

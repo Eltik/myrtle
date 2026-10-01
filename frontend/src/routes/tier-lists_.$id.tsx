@@ -1,6 +1,8 @@
 import { createFileRoute, notFound, stripSearchParams } from "@tanstack/react-router";
 import { TierListDetail } from "#/components/tier-lists/detail/TierListDetail";
-import { operatorsIndexQueryOptions } from "#/lib/api/operators";
+import { env } from "#/env";
+import { DEFAULT_GAMEDATA_SERVER } from "#/lib/api/gamedata";
+import { entityIconURL, isOperatorEntity } from "#/lib/api/tier-entities";
 import { type ITierListDetail, myTierListFavoriteQueryOptions, tierListDetailQueryOptions, tierListVersionsQueryOptions } from "#/lib/api/tier-lists";
 import { metaT } from "#/lib/meta";
 import type { ITierListOgData } from "#/lib/og/impl/templates/TierList";
@@ -17,25 +19,28 @@ function safeHex(color: string | null | undefined, fallback: string): string {
     return HEX_COLOR_RE.test(trimmed) ? trimmed : fallback;
 }
 
-function buildOgData(detail: ITierListDetail): ITierListOgData {
+/** `server` is the one the detail was resolved against, so every icon reads the same server's assets. */
+function buildOgData(detail: ITierListDetail, server: string | undefined): ITierListOgData {
+    const assetServer = server && server !== DEFAULT_GAMEDATA_SERVER ? server : undefined;
     const sortedTiers = [...detail.tiers].sort((a, b) => a.displayOrder - b.displayOrder);
     const tiers = sortedTiers.slice(0, 4).map((t, i) => {
         const fallback = FALLBACK_TIER_HEX[i % FALLBACK_TIER_HEX.length] as string;
-        const ops = [...t.operators].sort((a, b) => a.subOrder - b.subOrder);
+        // Unresolved placements stay off the image; every resolved kind shows its own icon.
+        const ops = [...t.entities].sort((a, b) => a.subOrder - b.subOrder).filter((e) => e.resolved);
         return {
             name: t.name,
             color: safeHex(t.color, fallback),
             operators: ops.slice(0, 5).map((op) => ({
                 id: op.id,
                 name: op.name,
-                rarity: op.rarity,
-                avatarURL: getAvatarById(op.id),
+                rarity: isOperatorEntity(op) ? op.rarity : 1,
+                avatarURL: isOperatorEntity(op) ? getAvatarById(op.id, assetServer) : op.icon ? entityIconURL(op.icon, env.VITE_BACKEND_URL ?? "", assetServer) : undefined,
             })),
-            operatorCount: t.operators.length,
+            operatorCount: t.entities.length,
         };
     });
 
-    const totalOperators = detail.tiers.reduce((sum, t) => sum + t.operators.length, 0);
+    const totalOperators = detail.tiers.reduce((sum, t) => sum + t.entities.length, 0);
     const flairColor = safeHex(detail.flair?.color, "");
     const updatedDate = new Date(detail.updatedAt);
     const updatedRelative = Number.isNaN(updatedDate.getTime()) ? undefined : updatedDate.toLocaleDateString("en-US", { month: "short", year: "numeric" });
@@ -83,9 +88,8 @@ export const Route = createFileRoute("/tier-lists_/$id")({
         if (context.user) {
             void context.queryClient.prefetchQuery(myTierListFavoriteQueryOptions(params.id, true));
         }
-        void context.queryClient.prefetchQuery(tierListVersionsQueryOptions(params.id));
-        void context.queryClient.prefetchQuery(operatorsIndexQueryOptions(context.i18n.gamedataServer));
-        warmOg("tier-list", detail.slug, buildOgData(detail));
+        void context.queryClient.prefetchQuery(tierListVersionsQueryOptions(params.id, context.i18n.gamedataServer));
+        warmOg("tier-list", detail.slug, buildOgData(detail, context.i18n.gamedataServer));
         return detail;
     },
     head: ({ loaderData, match, params }) => {
@@ -102,7 +106,7 @@ export const Route = createFileRoute("/tier-lists_/$id")({
             title: loaderData.title,
             description,
             path: `/tier-lists/${loaderData.slug}`,
-            image: ogURL("tier-list", loaderData.slug, buildOgData(loaderData)),
+            image: ogURL("tier-list", loaderData.slug, buildOgData(loaderData, match.context.i18n?.gamedataServer)),
             type: "article",
             preloadImage: true,
             locale,

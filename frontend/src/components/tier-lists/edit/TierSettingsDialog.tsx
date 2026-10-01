@@ -48,7 +48,7 @@ export function TierSettingsDialog({ tier, canDelete, onClose, onSave, onDelete,
         }
     }, [tier]);
 
-    const operatorCount = tier?.operatorIds.length ?? 0;
+    const operatorCount = tier?.entityKeys.length ?? 0;
 
     const trimmedName = name.trim();
     const validColor = isHexColor(color);

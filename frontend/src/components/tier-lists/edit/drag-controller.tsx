@@ -1,9 +1,8 @@
 import { Store, useStore } from "@tanstack/react-store";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
-import { OperatorAvatar } from "#/components/ui/operator-avatar";
-import type { ITierOperator } from "#/lib/api/tier-lists";
-import { RARITY_HEX_MUTED } from "#/lib/utils";
+import type { ITierEntity } from "#/lib/api/tier-entities";
+import { EntityAvatar, entityAccent, entityShape } from "../entities";
 
 const TOUCH_LONG_PRESS_MS = 220;
 const DRAG_THRESHOLD_PX = 6;
@@ -14,7 +13,7 @@ const SCROLL_VELOCITY_PX = 18;
 export type DragDropTarget = { kind: "tier"; tierId: string; index: number } | { kind: "pool" };
 
 export interface IDragState {
-    operatorId: string;
+    entityKey: string;
     pointerId: number;
     pointerType: string;
     startX: number;
@@ -30,19 +29,19 @@ export interface IDragState {
 
 interface IDragControllerCtx {
     store: Store<IDragState | null>;
-    startPress: (e: React.PointerEvent<HTMLElement>, operatorId: string) => void;
+    startPress: (e: React.PointerEvent<HTMLElement>, entityKey: string) => void;
 }
 
 const DragCtx = createContext<IDragControllerCtx | null>(null);
 
 interface IProviderProps {
-    operatorById: Record<string, ITierOperator>;
-    onPlace: (operatorId: string, tierId: string, index: number) => void;
-    onUnplace: (operatorId: string) => void;
+    entityByKey: Record<string, ITierEntity>;
+    onPlace: (entityKey: string, tierId: string, index: number) => void;
+    onUnplace: (entityKey: string) => void;
     children: React.ReactNode;
 }
 
-export function DragControllerProvider({ operatorById, onPlace, onUnplace, children }: IProviderProps) {
+export function DragControllerProvider({ entityByKey, onPlace, onUnplace, children }: IProviderProps) {
     const store = useMemo(() => new Store<IDragState | null>(null), []);
     const longPressTimerRef = useRef<number | null>(null);
     const sourceElRef = useRef<HTMLElement | null>(null);
@@ -195,7 +194,7 @@ export function DragControllerProvider({ operatorById, onPlace, onUnplace, child
     }, []);
 
     const startPress = useCallback(
-        (e: React.PointerEvent<HTMLElement>, operatorId: string) => {
+        (e: React.PointerEvent<HTMLElement>, entityKey: string) => {
             // Mouse uses the native HTML5 Drag-and-Drop path. Pointer-based drag
             // is only for touch / pen, which don't fire HTML5 drag events.
             if (e.pointerType !== "touch" && e.pointerType !== "pen") return;
@@ -204,7 +203,7 @@ export function DragControllerProvider({ operatorById, onPlace, onUnplace, child
             sourceElRef.current = target;
 
             store.setState(() => ({
-                operatorId,
+                entityKey,
                 pointerId: e.pointerId,
                 pointerType: e.pointerType,
                 startX: e.clientX,
@@ -275,7 +274,7 @@ export function DragControllerProvider({ operatorById, onPlace, onUnplace, child
             if (!m) return;
             const cur = store.state;
             if (!cur || !cur.isLifted) return;
-            const target = hitTest(m.x, m.y, cur.operatorId);
+            const target = hitTest(m.x, m.y, cur.entityKey);
             store.setState((prev) => (prev ? { ...prev, currentX: m.x, currentY: m.y, target } : prev));
             updateAutoScroll(m.y);
         };
@@ -326,9 +325,9 @@ export function DragControllerProvider({ operatorById, onPlace, onUnplace, child
             if (!cur) return;
             if (cur.isLifted && cur.target) {
                 if (cur.target.kind === "pool") {
-                    onUnplaceRef.current(cur.operatorId);
+                    onUnplaceRef.current(cur.entityKey);
                 } else {
-                    onPlaceRef.current(cur.operatorId, cur.target.tierId, cur.target.index);
+                    onPlaceRef.current(cur.entityKey, cur.target.tierId, cur.target.index);
                 }
             }
             reset();
@@ -384,7 +383,7 @@ export function DragControllerProvider({ operatorById, onPlace, onUnplace, child
     return (
         <DragCtx.Provider value={value}>
             {children}
-            <GhostPortal store={store} operatorById={operatorById} />
+            <GhostPortal store={store} entityByKey={entityByKey} />
         </DragCtx.Provider>
     );
 }
@@ -395,13 +394,13 @@ function useDragCtx(): IDragControllerCtx {
     return ctx;
 }
 
-export function useStartOperatorDrag(): IDragControllerCtx["startPress"] {
+export function useStartEntityDrag(): IDragControllerCtx["startPress"] {
     return useDragCtx().startPress;
 }
 
-export function useIsDragSource(operatorId: string): boolean {
+export function useIsDragSource(entityKey: string): boolean {
     const { store } = useDragCtx();
-    return useStore(store, (s) => s !== null && s.operatorId === operatorId && s.isLifted);
+    return useStore(store, (s) => s !== null && s.entityKey === entityKey && s.isLifted);
 }
 
 export function useTierDropIndex(tierId: string): number | null {
@@ -421,16 +420,16 @@ export function useAnyDragLifted(): boolean {
 
 interface IGhostPortalProps {
     store: Store<IDragState | null>;
-    operatorById: Record<string, ITierOperator>;
+    entityByKey: Record<string, ITierEntity>;
 }
 
-function GhostPortal({ store, operatorById }: IGhostPortalProps) {
-    const operatorId = useStore(store, (s) => (s?.isLifted ? s.operatorId : null));
+function GhostPortal({ store, entityByKey }: IGhostPortalProps) {
+    const entityKey = useStore(store, (s) => (s?.isLifted ? s.entityKey : null));
     const tileSize = useStore(store, (s) => (s?.isLifted ? s.tileSize : 0));
     const ghostRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
-        if (!operatorId) return;
+        if (!entityKey) return;
         const apply = () => {
             const s = store.state;
             const el = ghostRef.current;
@@ -442,21 +441,23 @@ function GhostPortal({ store, operatorById }: IGhostPortalProps) {
         apply();
         const sub = store.subscribe(apply);
         return () => sub.unsubscribe();
-    }, [operatorId, store]);
+    }, [entityKey, store]);
 
-    if (!operatorId || typeof document === "undefined") return null;
-    const op = operatorById[operatorId];
-    if (!op) return null;
+    if (!entityKey || typeof document === "undefined") return null;
+    const entity = entityByKey[entityKey];
+    if (!entity) return null;
 
     const size = tileSize > 0 ? tileSize : 64;
-    const accent = RARITY_HEX_MUTED[op.rarity] ?? RARITY_HEX_MUTED[1];
+    // `tileSize` is the source tile's longer side, so a wide event tile keeps its banner proportion.
+    const height = entityShape(entity) === "wide" ? Math.round(size / 2.1) : size;
+    const accent = entityAccent(entity);
 
     const style: React.CSSProperties = {
         position: "fixed",
         left: 0,
         top: 0,
         width: size,
-        height: size,
+        height,
         transformOrigin: "center center",
         borderRadius: 10,
         overflow: "hidden",
@@ -464,6 +465,14 @@ function GhostPortal({ store, operatorById }: IGhostPortalProps) {
         pointerEvents: "none",
         boxShadow: "0 14px 28px oklch(0 0 0 / 0.32), 0 0 0 1.5px var(--ring)",
         background: "oklch(0.22 0.005 285)",
+        // Centres an art-less face (initials, an event's name); an avatar image fills the box either way.
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "white",
+        fontFamily: "var(--font-sans)",
+        fontWeight: 700,
+        fontSize: Math.round(height * 0.4),
         willChange: "transform",
     };
 
@@ -477,7 +486,7 @@ function GhostPortal({ store, operatorById }: IGhostPortalProps) {
 
     return createPortal(
         <div ref={ghostRef} style={style} aria-hidden="true">
-            <OperatorAvatar charId={op.id} name={op.name} />
+            <EntityAvatar entity={entity} face="tile" tone="dark" />
             <span style={accentStyle} />
         </div>,
         document.body,

@@ -7,11 +7,13 @@ import { env } from "#/env";
 import { backendFetch } from "#/lib/fetch";
 import { sanitizeMarkdownForStorage, sanitizePlainName } from "#/lib/markdown/sanitize-input";
 import { formatRelative } from "#/lib/utils";
+import type { EntitySummary } from "#/types/generated/EntitySummary";
+import type { PlacementDetail } from "#/types/generated/PlacementDetail";
 import type { JsonValue } from "#/types/generated/serde_json/JsonValue";
 // The `IBackend*` types are the WIRE shapes, generated from
 // `backend/src/app/services/tier_list.rs` and `backend/src/database/models/tier_list.rs`.
-// The exported `I*` types below are FRONTEND VIEW MODELS: camelCase, joined
-// against the operator index by the `map*` functions. Do not conflate them.
+// The exported `I*` types below are FRONTEND VIEW MODELS: camelCase, built from
+// the entities the backend resolved by the `map*` functions. Do not conflate them.
 import type { Tier } from "#/types/generated/Tier";
 import type { TierDetail } from "#/types/generated/TierDetail";
 import type { TierList } from "#/types/generated/TierList";
@@ -19,10 +21,13 @@ import type { TierListDetail } from "#/types/generated/TierListDetail";
 import type { TierListFlair } from "#/types/generated/TierListFlair";
 import type { TierListVersion } from "#/types/generated/TierListVersion";
 import type { TierPlacement } from "#/types/generated/TierPlacement";
-import type { IOperatorIndexEntry, OperatorPosition, OperatorProfession, OperatorRarity } from "#/types/operators";
+import type { OperatorProfession } from "#/types/operators";
 import { type IBackendStatus, parseError } from "./_shared";
 import { requireSiteToken } from "./_shared.server";
-import { DEFAULT_GAMEDATA_SERVER, gamedataKey, gamedataPath, resolveGamedataServer } from "./gamedata";
+import { DEFAULT_GAMEDATA_SERVER, gamedataKey, resolveGamedataServer } from "./gamedata";
+import { DEFAULT_ENTITY_KINDS, type ITierEntity, isOperatorEntity, type TierEntityKind, toTierEntity } from "./tier-entities";
+
+export type { ITierEntity, ITierOperator, ITierUnresolvedEntity, TierEntityKind } from "./tier-entities";
 
 const VIEW_SESSION_COOKIE = "mtl_sid";
 
@@ -87,13 +92,26 @@ const FLAIR_ACCENT: Record<string, string> = {
 
 const FALLBACK_ACCENTS = ["coral", "mint", "amber", "violet"];
 
-function toCardOperator(entry: IOperatorIndexEntry): IOperator {
+/** `?server=` for a tier-list read: whose game data names the entities on it. */
+function serverQuery(server: string | undefined): string {
+    return `server=${encodeURIComponent(resolveGamedataServer(server))}`;
+}
+
+function placementEntity(p: PlacementDetail): ITierEntity {
+    return toTierEntity(p.entity_kind, p.entity_id, p.entity, { subOrder: p.sub_order, description: p.description, updatedAt: p.updated_at });
+}
+
+/** A card preview's tile: an operator as before, any other resolved kind with its own icon. A placement the served data does not know is left off the card. */
+function toCardOperator(p: PlacementDetail): IOperator | null {
+    const entity = placementEntity(p);
+    if (!entity.resolved) return null;
+    if (!isOperatorEntity(entity)) return { id: entity.id, name: entity.name, rarity: 1, role: "", arch: "", kind: entity.kind, icon: entity.icon };
     return {
-        id: entry.id,
-        name: entry.name,
-        rarity: entry.rarity,
-        role: PROFESSION_TO_ROLE[entry.profession] ?? "Specialist",
-        arch: entry.subProfessionId,
+        id: entity.id,
+        name: entity.name,
+        rarity: entity.rarity,
+        role: PROFESSION_TO_ROLE[entity.profession] ?? "Specialist",
+        arch: entity.subProfessionId,
     };
 }
 
@@ -109,7 +127,7 @@ function accentFromDetail(detail: IBackendTierListDetail, index: number): string
     return FALLBACK_ACCENTS[index % FALLBACK_ACCENTS.length] as string;
 }
 
-function mapTiers(tiers: IBackendTier[], opById: Record<string, IOperator>): ITierEntry[] {
+function mapTiers(tiers: IBackendTier[]): ITierEntry[] {
     return [...tiers]
         .sort((a, b) => a.display_order - b.display_order)
         .map((tier) => ({
@@ -117,12 +135,12 @@ function mapTiers(tiers: IBackendTier[], opById: Record<string, IOperator>): ITi
             color: tier.color,
             operators: [...tier.placements]
                 .sort((a, b) => a.sub_order - b.sub_order)
-                .map((p) => opById[p.operator_id])
+                .map(toCardOperator)
                 .filter((op): op is IOperator => Boolean(op)),
         }));
 }
 
-function mapDetail(detail: IBackendTierListDetail, index: number, opById: Record<string, IOperator>): ITierList {
+function mapDetail(detail: IBackendTierListDetail, index: number): ITierList {
     return {
         id: detail.id,
         slug: detail.slug,
@@ -139,7 +157,7 @@ function mapDetail(detail: IBackendTierListDetail, index: number, opById: Record
         comments: detail.stats?.views_last_7d ?? 0,
         hot: detail.stats?.is_trending ?? false,
         accent: accentFromDetail(detail, index),
-        tiers: mapTiers(detail.tiers, opById),
+        tiers: mapTiers(detail.tiers),
     };
 }
 
@@ -159,24 +177,19 @@ export const recordTierListViewFn = createServerFn({ method: "POST" })
         return (await res.json()) as { unique: boolean };
     });
 
-async function fetchTierListDetails(limit: number, server?: string): Promise<{ details: IBackendTierListDetail[]; opById: Record<string, IOperator> }> {
-    // The tier list itself is ours; the operator names on its cards are game
-    // data, so they follow the locale's server.
-    const [detailsRes, opsRes] = await Promise.all([backendFetch(`/tier-lists/details?limit=${limit}`), backendFetch(gamedataPath(server, "/operators/index"))]);
+async function fetchTierListDetails(limit: number, server?: string): Promise<IBackendTierListDetail[]> {
+    // The tier list itself is ours; the names on its cards are game data, so
+    // the backend resolves them against the locale's server.
+    const detailsRes = await backendFetch(`/tier-lists/details?limit=${limit}&${serverQuery(server)}`);
     if (!detailsRes.ok) throw new Error(`Failed to load tier lists: ${detailsRes.status}`);
-    if (!opsRes.ok) throw new Error(`Failed to load operators index: ${opsRes.status}`);
-
-    const details = (await detailsRes.json()) as IBackendTierListDetail[];
-    const operators = (await opsRes.json()) as IOperatorIndexEntry[];
-    const opById: Record<string, IOperator> = Object.fromEntries(operators.map((op) => [op.id, toCardOperator(op)]));
-    return { details, opById };
+    return (await detailsRes.json()) as IBackendTierListDetail[];
 }
 
 export const getHomeTierListsFn = createServerFn({ method: "GET" })
     .inputValidator((server: string | undefined) => server)
     .handler(async ({ data: server }): Promise<ITierList[]> => {
-        const { details, opById } = await fetchTierListDetails(HOME_TIER_LIST_LIMIT, server);
-        return details.map((detail, i) => mapDetail(detail, i, opById));
+        const details = await fetchTierListDetails(HOME_TIER_LIST_LIMIT, server);
+        return details.map((detail, i) => mapDetail(detail, i));
     });
 
 export function homeTierListsQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
@@ -206,8 +219,8 @@ export interface ITierListBrowseItem extends ITierList {
     isTrending: boolean;
 }
 
-function mapBrowseItem(detail: IBackendTierListDetail, index: number, opById: Record<string, IOperator>): ITierListBrowseItem {
-    const base = mapDetail(detail, index, opById);
+function mapBrowseItem(detail: IBackendTierListDetail, index: number): ITierListBrowseItem {
+    const base = mapDetail(detail, index);
     const listType: TierListType = detail.list_type === "official" ? "official" : "community";
     return {
         ...base,
@@ -230,8 +243,8 @@ function mapBrowseItem(detail: IBackendTierListDetail, index: number, opById: Re
 export const getBrowseTierListsFn = createServerFn({ method: "GET" })
     .inputValidator((server: string | undefined) => server)
     .handler(async ({ data: server }): Promise<ITierListBrowseItem[]> => {
-        const { details, opById } = await fetchTierListDetails(BROWSE_TIER_LIST_LIMIT, server);
-        return details.map((detail, i) => mapBrowseItem(detail, i, opById));
+        const details = await fetchTierListDetails(BROWSE_TIER_LIST_LIMIT, server);
+        return details.map((detail, i) => mapBrowseItem(detail, i));
     });
 
 export function browseTierListsQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
@@ -278,23 +291,8 @@ export interface ITierEntryFull {
     displayOrder: number;
     color: string | null;
     description: string | null;
-    operators: ITierOperator[];
-}
-
-export interface ITierOperator {
-    id: string;
-    name: string;
-    appellation: string | null;
-    rarity: OperatorRarity;
-    profession: OperatorProfession;
-    subProfessionId: string;
-    position: OperatorPosition;
-    nationId: string | null;
-    subOrder: number;
-    /** Editor-authored blurb explaining why this operator sits where it does. */
-    description: string | null;
-    /** ISO timestamp of when this placement was last updated. */
-    updatedAt: string;
+    /** Every placement, in `subOrder` order, resolved or not. */
+    entities: ITierEntity[];
 }
 
 export interface ITierListDetail {
@@ -305,6 +303,8 @@ export interface ITierListDetail {
     listType: TierListType;
     createdBy: string | null;
     isListed: boolean;
+    /** The kinds this list's editor offers. */
+    entityKinds: TierEntityKind[];
     flair: ITierListFlair | null;
     author: ITierListAuthor | null;
     stats: ITierListStats | null;
@@ -313,39 +313,21 @@ export interface ITierListDetail {
     updatedAt: string;
 }
 
-function mapTierDetail(detail: IBackendTierListDetail, opIndex: Record<string, IOperatorIndexEntry>): ITierListDetail {
-    const tiers: ITierEntryFull[] = [...detail.tiers]
+function mapTiersFull(raw: IBackendTier[]): ITierEntryFull[] {
+    return [...raw]
         .sort((a, b) => a.display_order - b.display_order)
-        .map((t) => {
-            const operators: ITierOperator[] = [...t.placements]
-                .sort((a, b) => a.sub_order - b.sub_order)
-                .map((p): ITierOperator | null => {
-                    const op = opIndex[p.operator_id];
-                    if (!op) return null;
-                    return {
-                        id: op.id,
-                        name: op.name,
-                        appellation: op.appellation || null,
-                        rarity: op.rarity,
-                        profession: op.profession,
-                        subProfessionId: op.subProfessionId,
-                        position: op.position,
-                        nationId: op.nationId || null,
-                        subOrder: p.sub_order,
-                        description: p.description,
-                        updatedAt: p.updated_at,
-                    };
-                })
-                .filter((x): x is ITierOperator => x !== null);
-            return {
-                id: t.id,
-                name: t.name,
-                displayOrder: t.display_order,
-                color: t.color,
-                description: t.description,
-                operators,
-            };
-        });
+        .map((t) => ({
+            id: t.id,
+            name: t.name,
+            displayOrder: t.display_order,
+            color: t.color,
+            description: t.description,
+            entities: [...t.placements].sort((a, b) => a.sub_order - b.sub_order).map(placementEntity),
+        }));
+}
+
+function mapTierDetail(detail: IBackendTierListDetail): ITierListDetail {
+    const tiers = mapTiersFull(detail.tiers);
 
     return {
         id: detail.id,
@@ -355,6 +337,7 @@ function mapTierDetail(detail: IBackendTierListDetail, opIndex: Record<string, I
         listType: detail.list_type === "official" ? "official" : "community",
         createdBy: detail.created_by,
         isListed: detail.is_listed ?? true,
+        entityKinds: detail.entity_kinds?.length ? detail.entity_kinds : [...DEFAULT_ENTITY_KINDS],
         flair: detail.flair
             ? {
                   id: detail.flair.id,
@@ -396,15 +379,10 @@ function mapTierDetail(detail: IBackendTierListDetail, opIndex: Record<string, I
 export const getTierListDetailFn = createServerFn({ method: "GET" })
     .inputValidator((data: { slug: string; server?: string }) => data)
     .handler(async ({ data: { slug, server } }): Promise<ITierListDetail | null> => {
-        const [listRes, opsRes] = await Promise.all([backendFetch(`/tier-lists/${encodeURIComponent(slug)}`), backendFetch(gamedataPath(server, "/operators/index"))]);
+        const listRes = await backendFetch(`/tier-lists/${encodeURIComponent(slug)}?${serverQuery(server)}`);
         if (listRes.status === 404) return null;
         if (!listRes.ok) throw new Error(`Failed to load tier list: ${listRes.status}`);
-        if (!opsRes.ok) throw new Error(`Failed to load operators index: ${opsRes.status}`);
-
-        const detail = (await listRes.json()) as IBackendTierListDetail;
-        const operators = (await opsRes.json()) as IOperatorIndexEntry[];
-        const opIndex: Record<string, IOperatorIndexEntry> = Object.fromEntries(operators.map((op) => [op.id, op]));
-        return mapTierDetail(detail, opIndex);
+        return mapTierDetail((await listRes.json()) as IBackendTierListDetail);
     });
 
 export function tierListDetailQueryOptions(slug: string, server: string = DEFAULT_GAMEDATA_SERVER) {
@@ -492,6 +470,8 @@ export interface IUpdateTierListInput {
     slug: string;
     name: string;
     description?: string | null;
+    /** The kinds the list's pool offers. Omitted: unchanged. */
+    entityKinds?: TierEntityKind[];
 }
 
 export interface ICreateTierInput {
@@ -511,30 +491,32 @@ export interface IDeleteTierInput {
     tierId: string;
 }
 
-export interface IAddPlacementInput {
+/** One placement's key on the wire: the kind and the id in that kind's space. */
+interface IPlacementTarget {
     slug: string;
+    kind: TierEntityKind;
+    entityId: string;
+}
+
+export interface IAddPlacementInput extends IPlacementTarget {
     tierId: string;
-    operatorId: string;
     subOrder?: number;
     description?: string | null;
 }
 
-export interface IUpdatePlacementDescriptionInput {
-    slug: string;
-    operatorId: string;
+export interface IUpdatePlacementDescriptionInput extends IPlacementTarget {
     description?: string | null;
 }
 
-export interface IRemovePlacementInput {
-    slug: string;
-    operatorId: string;
-}
+export type IRemovePlacementInput = IPlacementTarget;
 
-export interface IMovePlacementInput {
-    slug: string;
-    operatorId: string;
+export interface IMovePlacementInput extends IPlacementTarget {
     newTierId: string;
     subOrder?: number;
+}
+
+function placementPath({ slug, kind, entityId }: IPlacementTarget): string {
+    return `/tier-lists/${encodeURIComponent(slug)}/placements/${encodeURIComponent(kind)}/${encodeURIComponent(entityId)}`;
 }
 
 export interface ISetTierListFlairInput {
@@ -577,7 +559,8 @@ export interface ITierSummary {
 
 export interface ITierPlacementSummary {
     tierId: string;
-    operatorId: string;
+    kind: TierEntityKind;
+    entityId: string;
     subOrder: number;
     description: string | null;
     updatedAt: string;
@@ -627,7 +610,8 @@ function mapTierSummary(raw: IBackendTierRaw): ITierSummary {
 function mapPlacementSummary(raw: IBackendPlacement): ITierPlacementSummary {
     return {
         tierId: raw.tier_id,
-        operatorId: raw.operator_id,
+        kind: raw.entity_kind,
+        entityId: raw.entity_id,
         subOrder: raw.sub_order,
         description: raw.description,
         updatedAt: raw.updated_at,
@@ -673,6 +657,7 @@ export const updateTierListFn = createServerFn({ method: "POST" })
             body: JSON.stringify({
                 name: sanitizePlainName(data.name, LIST_NAME_LIMIT),
                 description: sanitizeMarkdownForStorage(data.description, { maxLength: LIST_DESCRIPTION_LIMIT, nullOnEmpty: true }),
+                ...(data.entityKinds ? { entity_kinds: data.entityKinds } : {}),
             }),
         });
         if (!res.ok) throw await parseError(res);
@@ -723,14 +708,9 @@ export const getFavoritedTierListsFn = createServerFn({ method: "GET" })
         const favorites = (await favRes.json()) as IBackendTierList[];
         if (favorites.length === 0) return [];
 
-        const opsRes = await backendFetch(gamedataPath(server, "/operators/index"));
-        if (!opsRes.ok) throw new Error(`Failed to load operators index: ${opsRes.status}`);
-        const operators = (await opsRes.json()) as IOperatorIndexEntry[];
-        const opById: Record<string, IOperator> = Object.fromEntries(operators.map((op) => [op.id, toCardOperator(op)]));
-
         const settled = await Promise.allSettled(
             favorites.map(async (tl) => {
-                const res = await backendFetch(`/tier-lists/${tl.slug}`, { bearerToken: token });
+                const res = await backendFetch(`/tier-lists/${tl.slug}?${serverQuery(server)}`, { bearerToken: token });
                 if (!res.ok) throw new Error(`Failed to load tier list ${tl.slug}: ${res.status}`);
                 return (await res.json()) as IBackendTierListDetail;
             }),
@@ -740,7 +720,7 @@ export const getFavoritedTierListsFn = createServerFn({ method: "GET" })
         for (const r of settled) {
             if (r.status === "fulfilled") details.push(r.value);
         }
-        return details.map((detail, i) => mapBrowseItem(detail, i, opById));
+        return details.map((detail, i) => mapBrowseItem(detail, i));
     });
 
 export function favoritedTierListsQueryOptions(authed: boolean, server: string = DEFAULT_GAMEDATA_SERVER) {
@@ -765,14 +745,9 @@ export const getMyTierListsDetailedFn = createServerFn({ method: "GET" })
         const mine = (await mineRes.json()) as IBackendTierList[];
         if (mine.length === 0) return [];
 
-        const opsRes = await backendFetch(gamedataPath(server, "/operators/index"));
-        if (!opsRes.ok) throw new Error(`Failed to load operators index: ${opsRes.status}`);
-        const operators = (await opsRes.json()) as IOperatorIndexEntry[];
-        const opById: Record<string, IOperator> = Object.fromEntries(operators.map((op) => [op.id, toCardOperator(op)]));
-
         const settled = await Promise.allSettled(
             mine.map(async (tl) => {
-                const res = await backendFetch(`/tier-lists/${tl.slug}`, { bearerToken: token });
+                const res = await backendFetch(`/tier-lists/${tl.slug}?${serverQuery(server)}`, { bearerToken: token });
                 if (!res.ok) throw new Error(`Failed to load tier list ${tl.slug}: ${res.status}`);
                 return (await res.json()) as IBackendTierListDetail;
             }),
@@ -782,7 +757,7 @@ export const getMyTierListsDetailedFn = createServerFn({ method: "GET" })
         for (const r of settled) {
             if (r.status === "fulfilled") details.push(r.value);
         }
-        return details.map((detail, i) => mapBrowseItem(detail, i, opById));
+        return details.map((detail, i) => mapBrowseItem(detail, i));
     });
 
 export function myTierListsDetailedQueryOptions(authed: boolean, server: string = DEFAULT_GAMEDATA_SERVER) {
@@ -849,7 +824,8 @@ export const addTierListPlacementFn = createServerFn({ method: "POST" })
             bearerToken: token,
             body: JSON.stringify({
                 tier_id: data.tierId,
-                operator_id: data.operatorId,
+                entity_kind: data.kind,
+                entity_id: data.entityId,
                 sub_order: data.subOrder ?? 0,
                 description: sanitizeMarkdownForStorage(data.description, { maxLength: PLACEMENT_DESCRIPTION_LIMIT, nullOnEmpty: true }),
             }),
@@ -858,12 +834,12 @@ export const addTierListPlacementFn = createServerFn({ method: "POST" })
         return mapPlacementSummary((await res.json()) as IBackendPlacement);
     });
 
-/** Update the editor-authored description of an existing placement, keyed by operator. */
+/** Update the editor-authored description of an existing placement, keyed by (kind, id). */
 export const updateTierListPlacementDescriptionFn = createServerFn({ method: "POST" })
     .inputValidator((data: IUpdatePlacementDescriptionInput) => data)
     .handler(async ({ data }): Promise<ITierPlacementSummary> => {
         const token = requireSiteToken();
-        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/placements/${encodeURIComponent(data.operatorId)}`, {
+        const res = await backendFetch(placementPath(data), {
             method: "PATCH",
             bearerToken: token,
             body: JSON.stringify({
@@ -878,7 +854,7 @@ export const removeTierListPlacementFn = createServerFn({ method: "POST" })
     .inputValidator((data: IRemovePlacementInput) => data)
     .handler(async ({ data }): Promise<IBackendStatus> => {
         const token = requireSiteToken();
-        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/placements/${encodeURIComponent(data.operatorId)}`, { method: "DELETE", bearerToken: token });
+        const res = await backendFetch(placementPath(data), { method: "DELETE", bearerToken: token });
         if (!res.ok) throw await parseError(res);
         return (await res.json()) as IBackendStatus;
     });
@@ -887,7 +863,7 @@ export const moveTierListPlacementFn = createServerFn({ method: "POST" })
     .inputValidator((data: IMovePlacementInput) => data)
     .handler(async ({ data }): Promise<ITierPlacementSummary> => {
         const token = requireSiteToken();
-        const res = await backendFetch(`/tier-lists/${encodeURIComponent(data.slug)}/placements/${encodeURIComponent(data.operatorId)}/move`, {
+        const res = await backendFetch(`${placementPath(data)}/move`, {
             method: "POST",
             bearerToken: token,
             body: JSON.stringify({
@@ -941,69 +917,58 @@ export const publishTierListVersionFn = createServerFn({ method: "POST" })
     });
 
 /**
- * Convert a published-version snapshot (raw backend JSON) into the same
- * shape the live detail view uses, resolving operator metadata from the
- * operator index. Returns [] for malformed snapshots.
+ * Convert a published-version snapshot into the same shape the live detail
+ * view uses. The backend serves every snapshot as `TierDetail[]` with each
+ * placement already resolved, whatever shape it was stored in. Returns [] for
+ * a snapshot it could not read.
  */
-export function snapshotToTiers(snapshot: TierListJsonValue, opIndex: Record<string, IOperatorIndexEntry>): ITierEntryFull[] {
+export function snapshotToTiers(snapshot: TierListJsonValue): ITierEntryFull[] {
     if (!Array.isArray(snapshot)) return [];
-    const tiers: ITierEntryFull[] = [];
-    for (const raw of snapshot) {
-        if (!raw || typeof raw !== "object" || Array.isArray(raw)) continue;
-        const t = raw as Record<string, TierListJsonValue>;
-        const id = typeof t.id === "string" ? t.id : "";
-        const name = typeof t.name === "string" ? t.name : "";
-        if (!id || !name) continue;
-        const displayOrder = typeof t.display_order === "number" ? t.display_order : 0;
-        const color = typeof t.color === "string" ? t.color : null;
-        const description = typeof t.description === "string" ? t.description : null;
-        const placementsRaw = Array.isArray(t.placements) ? t.placements : [];
-
-        const operators: ITierOperator[] = [];
-        for (const pRaw of placementsRaw) {
-            if (!pRaw || typeof pRaw !== "object" || Array.isArray(pRaw)) continue;
-            const p = pRaw as Record<string, TierListJsonValue>;
-            const operatorId = typeof p.operator_id === "string" ? p.operator_id : "";
-            if (!operatorId) continue;
-            const op = opIndex[operatorId];
-            if (!op) continue;
-            operators.push({
-                id: op.id,
-                name: op.name,
-                appellation: op.appellation || null,
-                rarity: op.rarity,
-                profession: op.profession,
-                subProfessionId: op.subProfessionId,
-                position: op.position,
-                nationId: op.nationId || null,
-                subOrder: typeof p.sub_order === "number" ? p.sub_order : 0,
-                description: typeof p.description === "string" ? p.description : null,
-                updatedAt: typeof p.updated_at === "string" ? p.updated_at : new Date(0).toISOString(),
-            });
-        }
-        operators.sort((a, b) => a.subOrder - b.subOrder);
-
-        tiers.push({ id, name, displayOrder, color, description, operators });
-    }
-    tiers.sort((a, b) => a.displayOrder - b.displayOrder);
-    return tiers;
+    const readable = snapshot.filter((t): t is TierListJsonValue & object => {
+        if (!t || typeof t !== "object" || Array.isArray(t)) return false;
+        const tier = t as Record<string, TierListJsonValue>;
+        return typeof tier.id === "string" && typeof tier.name === "string" && Array.isArray(tier.placements);
+    });
+    const tiers = readable as unknown as IBackendTier[];
+    return mapTiersFull(tiers.map((t) => ({ ...t, placements: t.placements.filter((p) => typeof p.entity_kind === "string" && typeof p.entity_id === "string") })));
 }
 
 export const getTierListVersionsFn = createServerFn({ method: "GET" })
-    .inputValidator((slug: string) => slug)
-    .handler(async ({ data: slug }): Promise<ITierListVersion[]> => {
-        const res = await backendFetch(`/tier-lists/${encodeURIComponent(slug)}/versions`);
+    .inputValidator((data: { slug: string; server?: string }) => data)
+    .handler(async ({ data: { slug, server } }): Promise<ITierListVersion[]> => {
+        const res = await backendFetch(`/tier-lists/${encodeURIComponent(slug)}/versions?${serverQuery(server)}`);
         if (!res.ok) throw await parseError(res);
         const raw = (await res.json()) as IBackendTierListVersion[];
         return raw.map(mapTierListVersion);
     });
 
-export function tierListVersionsQueryOptions(slug: string) {
+export function tierListVersionsQueryOptions(slug: string, server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["tier-lists", "versions", slug],
-        queryFn: () => getTierListVersionsFn({ data: slug }),
+        queryKey: ["tier-lists", "versions", slug, ...gamedataKey(server)],
+        queryFn: () => getTierListVersionsFn({ data: { slug, server: resolveGamedataServer(server) } }),
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
+    });
+}
+
+// --- Entity catalogue (what an editor may place) ----------------------------
+
+export const getTierEntityCatalogueFn = createServerFn({ method: "GET" })
+    .inputValidator((data: { kind: TierEntityKind; server?: string }) => data)
+    .handler(async ({ data: { kind, server } }): Promise<EntitySummary[]> => {
+        const res = await backendFetch(`/tier-lists/catalogue/${encodeURIComponent(kind)}?${serverQuery(server)}`);
+        if (!res.ok) throw new Error(`Failed to load the ${kind} catalogue: ${res.status}`);
+        return (await res.json()) as EntitySummary[];
+    });
+
+/** Static game data: one entry per kind and server, held as long as the operator index is. */
+export function tierEntityCatalogueQueryOptions(kind: TierEntityKind, server: string = DEFAULT_GAMEDATA_SERVER) {
+    return queryOptions({
+        // Outside the `tier-lists` root on purpose: a save invalidates that root, and this never changes with a list.
+        queryKey: ["tier-entity-catalogue", kind, ...gamedataKey(server)],
+        queryFn: () => getTierEntityCatalogueFn({ data: { kind, server: resolveGamedataServer(server) } }),
+        staleTime: 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
     });
 }
 

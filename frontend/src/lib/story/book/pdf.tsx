@@ -1,32 +1,40 @@
 /**
  * THE BOOK AS A PDF, through `@react-pdf/renderer`, from the same IR the EPUB
- * and the HTML render. One `<Page>` per story (it wraps onto as many sheets as
- * the story needs) with a running head (chapter · story) and a page number; a
- * title page with the composed cover; a contents page whose entries LINK to
- * the stories; a page per part when the book spans several groups; a colophon.
+ * and the HTML render: a title page with the composed cover, a contents page
+ * WITH PAGE NUMBERS, a page per part when the book spans several groups, each
+ * story on its own sheets with a running head (chapter · story) and a page
+ * number, a colophon, and an outline part > operation > story.
  *
- * BOOKMARKS nest part > operation > story like the EPUB nav. react-pdf nests
- * a bookmark under its nearest bookmarked ANCESTOR, and pages are siblings, so
- * a story page cannot sit under a part page by the tree alone. Its resolver
- * numbers bookmarks breadth-first and then SPREADS the bookmark object over
- * `{ ref, parent }` (`@react-pdf/layout`, `resolveBookmarks`), so a `parent`
- * written on a page's bookmark wins. Page-level bookmarks are numbered first,
- * in page order, so the ref of every earlier page's bookmark is known here and
- * `parent` is set to it. This leans on an internal: `pdf.test.tsx` checks the
- * outline, and a react-pdf upgrade that changes the resolver fails there.
+ * LAID OUT ONE STORY AT A TIME, THEN MERGED. react-pdf lays a document out in
+ * one synchronous pass and keeps the whole tree alive until it is written:
+ * over the SHADOW OF A DYING SUN arc (225 stories) that pass sat on "Laying
+ * out pages" for 60 s with no progress while the worker heap climbed from 20
+ * MB to 2,198 MB (register, 2026-10-01), and a worker that crosses the heap
+ * limit takes the whole tab down with it. So every story, every part page,
+ * the title page and the colophon are separate react-pdf documents, each
+ * copied into one `pdf-lib` document as soon as it is written and then
+ * dropped. The running head is given the story's page OFFSET, so the numbers
+ * run on across documents; the contents is laid out twice, once with blank
+ * numbers to learn its length (which fixes every later page number) and once
+ * at the end with the real ones, and slotted in after the title page. The
+ * outline is written by hand (`writeOutline`): pdf-lib copies pages, not
+ * bookmarks.
  *
  * Nothing here fetches: images, fonts and the cover come from `PdfDeps`, so
  * the same file renders in Node (tests), on the main thread and in a worker.
  */
-import { Document, type DocumentProps, Font, Image, Link, Page, pdf, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { Document, type DocumentProps, Font, Image, Page, pdf, StyleSheet, Text, View } from "@react-pdf/renderer";
+import { type PDFArray, type PDFDict, PDFDocument, PDFHexString, PDFName, PDFNull, PDFNumber, type PDFRef } from "pdf-lib";
 import type React from "react";
 import type { TextNode } from "../text";
 import { storyLabel } from "./book";
 import { type EpubImage, imageKey, imagePaths } from "./epub";
+import { PdfStoryError } from "./pdfError";
 import { type BookLabels, DEFAULT_LABELS } from "./render";
 import type { Block, Book, ChoiceBlock, ImageVariant, Section, Typeface } from "./types";
 
 export type PaperSize = "A4" | "LETTER" | "A5";
+export { PdfStoryError };
 
 export interface PdfFont {
     regular: Uint8Array;
@@ -43,6 +51,8 @@ export interface PdfDeps {
 }
 
 export interface PdfProgress {
+    /** `images`: a story's pictures are loading; `layout`: the story is being laid out; `merge`: the file is being written. */
+    phase: "images" | "layout" | "merge";
     done: number;
     total: number;
     label: string;
@@ -55,12 +65,17 @@ export interface PdfOptions {
     signal?: AbortSignal;
     onProgress?: (p: PdfProgress) => void;
     concurrency?: number;
+    /** Test hook (`?pdffail=<story id>`): laying out this story throws, to prove a failure reaches the sheet. */
+    failStoryId?: string;
 }
 
 export interface PdfResult {
     blob: Blob;
     images: number;
     failedImages: string[];
+    /** Where each story landed, 1-based, for the tests and the register. */
+    sections: { id: string; firstPage: number; pages: number }[];
+    pages: number;
 }
 
 function abortIfNeeded(signal?: AbortSignal): void {
@@ -145,7 +160,10 @@ function stylesFor(paper: PaperSize, family: string) {
         bigTitle: { fontSize: fs * 2.2, fontWeight: 700, textAlign: "center", marginTop: 16 },
         tocTitle: { fontSize: fs * 1.6, fontWeight: 700, marginBottom: 12 },
         tocPart: { fontWeight: 700, marginTop: 8, marginBottom: 3 },
-        tocItem: { marginBottom: 3, color: "#111", textDecoration: "none" },
+        tocItem: { marginBottom: 3, color: "#111" },
+        tocRow: { flexDirection: "row", alignItems: "flex-end" },
+        tocLabel: { flexGrow: 1, flexShrink: 1, paddingRight: 8 },
+        tocNumber: { width: 32, textAlign: "right" },
         small: { fontSize: fs * 0.85, color: "#444", marginBottom: 6 },
     });
 }
@@ -291,109 +309,55 @@ function blocks(list: readonly Block[], ctx: Ctx): React.ReactNode[] {
     return list.map((b) => block(b, ctx));
 }
 
-/** A react-pdf bookmark with an explicit parent ref (see the file head). */
-function mark(title: string, parent?: number): { title: string; parent?: number } {
-    return parent === undefined ? { title } : { title, parent };
+/** One entry of the outline, with the 0-based page it opens. */
+export interface OutlineNode {
+    title: string;
+    page: number;
+    children: OutlineNode[];
 }
 
-/** The document tree. Exported for the test, which renders it without deps. */
-export function pdfDocument(book: Book, opts: { paper: PaperSize; family: string; labels: BookLabels; cover: Blob | null; src: Ctx["src"] }): React.ReactElement<DocumentProps> {
-    const s = stylesFor(opts.paper, opts.family);
-    const ctx: Ctx = { s, labels: opts.labels, book, src: opts.src };
-    const multi = book.parts.length > 1;
-    const pages: React.ReactElement[] = [];
-    let ref = 0; // the next page-level bookmark's ref
-    const sectionId = (sec: Section) => `story-${sec.id.replace(/[^A-Za-z0-9_-]/g, "_")}`;
+function countOf(nodes: readonly OutlineNode[]): number {
+    return nodes.reduce((n, node) => n + 1 + countOf(node.children), 0);
+}
 
-    pages.push(
-        <Page key="title" size={opts.paper} style={s.page}>
-            <View style={s.center}>
-                {opts.cover ? <Image src={opts.cover} style={{ width: "100%", objectFit: "contain", maxHeight: "80%" }} /> : null}
-                <Text style={s.bigTitle}>{book.meta.title}</Text>
-            </View>
-        </Page>,
-    );
-    const contentsRef = ref++;
-    pages.push(
-        <Page key="toc" size={opts.paper} style={s.page} bookmark={mark(opts.labels.contents) as never}>
-            <Text style={s.tocTitle}>{opts.labels.contents}</Text>
-            {book.parts.map((part) => (
-                <View key={part.id}>
-                    {multi ? <Text style={s.tocPart}>{part.title}</Text> : null}
-                    {part.sections.map((sec) => (
-                        <Link key={sec.id} src={`#${sectionId(sec)}`} style={s.tocItem}>
-                            {`${multi ? "   " : ""}${storyLabel(sec)}${sec.tag ? ` · ${sec.tag}` : ""}`}
-                        </Link>
-                    ))}
-                </View>
-            ))}
-        </Page>,
-    );
-    void contentsRef;
-
-    for (const part of book.parts) {
-        let partRef: number | undefined;
-        if (multi) {
-            partRef = ref++;
-            const art = book.meta.partArt?.[part.id];
-            const artSrc = art ? opts.src(art) : null;
-            pages.push(
-                <Page key={`part-${part.id}`} size={opts.paper} style={s.page} bookmark={mark(part.title) as never}>
-                    <View style={s.center}>
-                        {artSrc ? <Image src={artSrc} style={{ width: "100%", objectFit: "contain", maxHeight: "70%" }} /> : null}
-                        <Text style={s.bigTitle}>{part.title}</Text>
-                    </View>
-                </Page>,
-            );
-        }
-        const list = part.sections;
-        for (let i = 0; i < list.length; i += 1) {
-            const code = list[i].code?.trim();
-            let j = i;
-            while (code && j + 1 < list.length && list[j + 1].code?.trim() === code) j += 1;
-            const group = list.slice(i, j + 1);
-            const grouped = group.length > 1;
-            const opRef = ref;
-            group.forEach((sec, gi) => {
-                const pageMark = grouped ? (gi === 0 ? mark(storyLabel(sec), partRef) : mark(sec.tag || sec.name, opRef)) : mark(storyLabel(sec), partRef);
-                ref += 1;
-                const eyebrow = [sec.code, sec.tag].filter(Boolean).join(" · ");
-                pages.push(
-                    <Page key={sec.id} size={opts.paper} style={s.page} wrap bookmark={pageMark as never}>
-                        <Text style={s.head} fixed>
-                            {`${part.title} · ${storyLabel(sec)}`}
-                        </Text>
-                        <View style={s.body}>
-                            <View id={sectionId(sec)} {...(grouped && gi === 0 ? ({ bookmark: sec.tag || sec.name } as object) : {})}>
-                                {eyebrow ? <Text style={s.eyebrow}>{eyebrow}</Text> : null}
-                                <Text style={s.title}>{sec.name}</Text>
-                                {sec.synopsis ? <Text style={s.synopsis}>{sec.synopsis}</Text> : null}
-                            </View>
-                            {blocks(sec.blocks, ctx)}
-                        </View>
-                        <Text style={s.foot} fixed render={({ pageNumber }) => String(pageNumber)} />
-                    </Page>,
-                );
-            });
-            i = j;
-        }
-    }
-
-    pages.push(
-        <Page key="colophon" size={opts.paper} style={s.page} bookmark={mark(opts.labels.colophon) as never}>
-            <Text style={s.tocTitle}>{book.meta.title}</Text>
-            <Text style={s.small}>{opts.labels.credit}</Text>
-            <Text style={s.small}>{opts.labels.rights}</Text>
-            <Text style={s.small}>{opts.labels.madeWith}</Text>
-            <Text style={s.small}>{book.meta.identifier}</Text>
-        </Page>,
-    );
-
-    return (
-        <Document title={book.meta.title} author="Hypergryph / Yostar (story text and art)" creator="myrtle.moe" producer="myrtle.moe" language={book.meta.language}>
-            {pages}
-        </Document>
-    );
+/**
+ * Write `/Outlines` into a pdf-lib document: one dictionary per entry with
+ * Title, Parent, Prev/Next, First/Last, Count and a `/XYZ` destination on its
+ * page. Every entry is open, so Count is its descendants.
+ */
+export function writeOutline(doc: PDFDocument, nodes: readonly OutlineNode[]): void {
+    const ctx = doc.context;
+    const pages = doc.getPages();
+    const rootRef = ctx.nextRef();
+    const build = (list: readonly OutlineNode[], parent: PDFRef): { first?: PDFRef; last?: PDFRef } => {
+        const refs = list.map(() => ctx.nextRef());
+        list.forEach((node, i) => {
+            const dict = ctx.obj({}) as PDFDict;
+            dict.set(PDFName.of("Title"), PDFHexString.fromText(node.title));
+            dict.set(PDFName.of("Parent"), parent);
+            const page = pages[Math.min(Math.max(node.page, 0), pages.length - 1)];
+            dict.set(PDFName.of("Dest"), ctx.obj([page.ref, PDFName.of("XYZ"), PDFNull, PDFNull, PDFNull]) as PDFArray);
+            if (i > 0) dict.set(PDFName.of("Prev"), refs[i - 1]);
+            if (i < list.length - 1) dict.set(PDFName.of("Next"), refs[i + 1]);
+            if (node.children.length > 0) {
+                const kids = build(node.children, refs[i]);
+                if (kids.first) dict.set(PDFName.of("First"), kids.first);
+                if (kids.last) dict.set(PDFName.of("Last"), kids.last);
+                dict.set(PDFName.of("Count"), PDFNumber.of(countOf(node.children)));
+            }
+            ctx.assign(refs[i], dict);
+        });
+        return { first: refs[0], last: refs[refs.length - 1] };
+    };
+    const root = ctx.obj({}) as PDFDict;
+    root.set(PDFName.of("Type"), PDFName.of("Outlines"));
+    const top = build(nodes, rootRef);
+    if (top.first) root.set(PDFName.of("First"), top.first);
+    if (top.last) root.set(PDFName.of("Last"), top.last);
+    root.set(PDFName.of("Count"), PDFNumber.of(countOf(nodes)));
+    ctx.assign(rootRef, root);
+    doc.catalog.set(PDFName.of("Outlines"), rootRef);
+    doc.catalog.set(PDFName.of("PageMode"), PDFName.of("UseOutlines"));
 }
 
 async function mapLimit<T>(items: readonly T[], limit: number, fn: (item: T) => Promise<void>): Promise<void> {
@@ -408,17 +372,66 @@ async function mapLimit<T>(items: readonly T[], limit: number, fn: (item: T) => 
     await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
 }
 
+async function bytesOf(doc: React.ReactElement<DocumentProps>): Promise<Uint8Array> {
+    const blob = await pdf(doc).toBlob();
+    return new Uint8Array(await blob.arrayBuffer());
+}
+
+/** Yield to the event loop, so progress messages and a cancel get through between stories. */
+const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+/** Consecutive stories sharing an operation code, as the EPUB nav groups them. */
+function operations(sections: readonly Section[]): Section[][] {
+    const out: Section[][] = [];
+    for (let i = 0; i < sections.length; i += 1) {
+        const code = sections[i].code?.trim();
+        let j = i;
+        while (code && j + 1 < sections.length && sections[j + 1].code?.trim() === code) j += 1;
+        out.push(sections.slice(i, j + 1));
+        i = j;
+    }
+    return out;
+}
+
 export async function toPdf(book: Book, opts: PdfOptions, deps: PdfDeps): Promise<PdfResult> {
     const { signal } = opts;
     const labels = opts.labels ?? DEFAULT_LABELS;
     const sections = book.parts.flatMap((p) => p.sections);
+    const multi = book.parts.length > 1;
     const font = opts.typeface === "device" ? null : await deps.loadFont(opts.typeface, signal);
-    const family = registerFont(font);
+    /**
+     * A FRESH font family for every document. react-pdf keeps a parsed face in
+     * its font store, and a face reused by a second document broke that
+     * document's line breaking (a word's first letter left on the line above:
+     * "fan t / he flames", 9-5 Critical Value) and its text layer ("Than- you"
+     * for "Thank you"); one document never showed it. `Font.reset()` does not
+     * help (the next render reads a null face: "reading 'unitsPerEm'"), so each
+     * document registers the same bytes under a new name and the old family is
+     * dropped from the store once its document is written.
+     */
+    let family = registerFont(font);
+    let s = stylesFor(opts.paper, family);
+    const fresh = () => {
+        const fonts = Font.getRegisteredFonts() as Record<string, unknown>;
+        if (family !== "Helvetica") delete fonts[family];
+        family = registerFont(font);
+        s = stylesFor(opts.paper, family);
+        ctx.s = s;
+        return s;
+    };
     const coverImage = await deps.cover(book, signal);
+    const doc = (children: React.ReactNode) => (
+        <Document title={book.meta.title} author="Hypergryph / Yostar (story text and art)" creator="myrtle.moe" producer="myrtle.moe" language={book.meta.language}>
+            {children}
+        </Document>
+    );
+
+    // Images, each distinct file once per book, loaded just before the first story that shows it.
     const blobs = new Map<string, Blob>();
     const failed: string[] = [];
     const load = async (key: string) => {
         abortIfNeeded(signal);
+        if (blobs.has(key) || failed.includes(key)) return;
         const variant: ImageVariant = key.startsWith("thumb:") ? "thumb" : "full";
         const path = variant === "thumb" ? key.slice("thumb:".length) : key;
         let image: EpubImage | null = null;
@@ -430,27 +443,177 @@ export async function toPdf(book: Book, opts: PdfOptions, deps: PdfDeps): Promis
         if (image) blobs.set(key, new Blob([image.bytes as BlobPart], { type: image.mime }));
         else failed.push(key);
     };
-    // Part pages carry each group's key visual.
-    const partArt = Object.values(book.meta.partArt ?? {}).filter((p): p is string => Boolean(p));
-    if (book.parts.length > 1) await mapLimit([...new Set(partArt)], opts.concurrency ?? 4, load);
+    const ctx: Ctx = { s, labels, book, src: (path, variant) => blobs.get(imageKey(path, variant)) ?? null };
+    /** Build a document against a fresh face, then write it. */
+    const render = (build: () => React.ReactElement<DocumentProps>) => {
+        fresh();
+        return bytesOf(build());
+    };
+
+    const merged = await PDFDocument.create();
+    const append = async (bytes: Uint8Array): Promise<number> => {
+        const src = await PDFDocument.load(bytes);
+        const copied = await merged.copyPages(src, src.getPageIndices());
+        for (const page of copied) merged.addPage(page);
+        return copied.length;
+    };
+
+    // The contents, with numbers once they are known and blanks before.
+    const contents = (numbers: Map<string, number> | null) =>
+        doc(
+            <Page size={opts.paper} style={s.page} wrap>
+                <Text style={s.tocTitle}>{labels.contents}</Text>
+                {book.parts.map((part) => (
+                    <View key={part.id}>
+                        {multi ? (
+                            <View style={s.tocRow} wrap={false}>
+                                <Text style={[s.tocPart, s.tocLabel]}>{part.title}</Text>
+                                <Text style={[s.tocPart, s.tocNumber]}>{numbers ? String(numbers.get(`part:${part.id}`) ?? "") : ""}</Text>
+                            </View>
+                        ) : null}
+                        {part.sections.map((sec) => (
+                            <View key={sec.id} style={s.tocRow} wrap={false}>
+                                <Text style={[s.tocItem, s.tocLabel]}>{`${multi ? "   " : ""}${storyLabel(sec)}${sec.tag ? ` · ${sec.tag}` : ""}`}</Text>
+                                <Text style={[s.tocItem, s.tocNumber]}>{numbers ? String(numbers.get(sec.id) ?? "") : ""}</Text>
+                            </View>
+                        ))}
+                    </View>
+                ))}
+                <View style={s.tocRow} wrap={false}>
+                    <Text style={[s.tocItem, s.tocLabel]}>{labels.colophon}</Text>
+                    <Text style={[s.tocItem, s.tocNumber]}>{numbers ? String(numbers.get("colophon") ?? "") : ""}</Text>
+                </View>
+            </Page>,
+        );
+
+    // 1. The title page.
+    await append(
+        await render(() =>
+            doc(
+                <Page size={opts.paper} style={s.page}>
+                    <View style={s.center}>
+                        {coverImage ? <Image src={new Blob([coverImage.bytes as BlobPart], { type: coverImage.mime })} style={{ width: "100%", objectFit: "contain", maxHeight: "80%" }} /> : null}
+                        <Text style={s.bigTitle}>{book.meta.title}</Text>
+                    </View>
+                </Page>,
+            ),
+        ),
+    );
+    // 2. The contents' LENGTH, which every later page number depends on.
+    const contentsPages = (await PDFDocument.load(await render(() => contents(null)))).getPageCount();
+    let next = 1 + contentsPages + 1; // the 1-based number of the next page to be written
+    const numbers = new Map<string, number>();
+    const placed: PdfResult["sections"] = [];
+    const outline: OutlineNode[] = [{ title: labels.contents, page: 1, children: [] }];
+
+    // 3. Parts and stories, one document each.
     let done = 0;
-    for (const section of sections) {
-        abortIfNeeded(signal);
-        opts.onProgress?.({ done, total: sections.length, label: storyLabel(section) });
-        const wanted = [...new Set(imagePaths(section.blocks, book.meta.options.images))].filter((k) => !blobs.has(k) && !failed.includes(k));
-        await mapLimit(wanted, opts.concurrency ?? 4, load);
-        done += 1;
+    for (const part of book.parts) {
+        let into = outline;
+        if (multi) {
+            abortIfNeeded(signal);
+            const art = book.meta.partArt?.[part.id];
+            if (art && book.meta.options.images !== "none") await load(art);
+            const artSrc = art ? blobs.get(art) : null;
+            numbers.set(`part:${part.id}`, next);
+            const n = await append(
+                await render(() =>
+                    doc(
+                        <Page size={opts.paper} style={s.page}>
+                            <View style={s.center}>
+                                {artSrc ? <Image src={artSrc} style={{ width: "100%", objectFit: "contain", maxHeight: "70%" }} /> : null}
+                                <Text style={s.bigTitle}>{part.title}</Text>
+                            </View>
+                        </Page>,
+                    ),
+                ),
+            );
+            const node: OutlineNode = { title: part.title, page: next - 1, children: [] };
+            outline.push(node);
+            into = node.children;
+            next += n;
+        }
+        for (const group of operations(part.sections)) {
+            const grouped = group.length > 1;
+            const opNode: OutlineNode | null = grouped ? { title: storyLabel(group[0]), page: next - 1, children: [] } : null;
+            if (opNode) into.push(opNode);
+            for (const sec of group) {
+                abortIfNeeded(signal);
+                opts.onProgress?.({ phase: "images", done, total: sections.length, label: storyLabel(sec) });
+                const wanted = [...new Set(imagePaths(sec.blocks, book.meta.options.images))];
+                await mapLimit(wanted, opts.concurrency ?? 4, load);
+                abortIfNeeded(signal);
+                opts.onProgress?.({ phase: "layout", done, total: sections.length, label: storyLabel(sec) });
+                await tick();
+                const offset = next - 1;
+                const eyebrow = [sec.code, sec.tag].filter(Boolean).join(" · ");
+                let n: number;
+                try {
+                    if (opts.failStoryId === sec.id) throw new Error("synthetic failure (?pdffail)");
+                    n = await append(
+                        await render(() =>
+                            doc(
+                                <Page size={opts.paper} style={s.page} wrap>
+                                    <Text style={s.head} fixed>
+                                        {`${part.title} · ${storyLabel(sec)}`}
+                                    </Text>
+                                    <View>
+                                        {eyebrow ? <Text style={s.eyebrow}>{eyebrow}</Text> : null}
+                                        <Text style={s.title}>{sec.name}</Text>
+                                        {sec.synopsis ? <Text style={s.synopsis}>{sec.synopsis}</Text> : null}
+                                    </View>
+                                    {blocks(sec.blocks, ctx)}
+                                    <Text style={s.foot} fixed render={({ pageNumber }) => String(offset + pageNumber)} />
+                                </Page>,
+                            ),
+                        ),
+                    );
+                } catch (err) {
+                    if (signal?.aborted) throw err;
+                    throw new PdfStoryError(storyLabel(sec), err);
+                }
+                numbers.set(sec.id, next);
+                placed.push({ id: sec.id, firstPage: next, pages: n });
+                const title = grouped ? sec.tag || sec.name : storyLabel(sec);
+                (opNode ? opNode.children : into).push({ title, page: next - 1, children: [] });
+                next += n;
+                done += 1;
+            }
+        }
     }
-    opts.onProgress?.({ done, total: sections.length, label: "" });
+
+    // 4. The colophon.
+    numbers.set("colophon", next);
+    outline.push({ title: labels.colophon, page: next - 1, children: [] });
+    await append(
+        await render(() =>
+            doc(
+                <Page size={opts.paper} style={s.page}>
+                    <Text style={s.tocTitle}>{book.meta.title}</Text>
+                    <Text style={s.small}>{labels.credit}</Text>
+                    <Text style={s.small}>{labels.rights}</Text>
+                    <Text style={s.small}>{labels.madeWith}</Text>
+                    <Text style={s.small}>{book.meta.identifier}</Text>
+                </Page>,
+            ),
+        ),
+    );
+
+    // 5. The contents, now with its numbers, after the title page.
+    opts.onProgress?.({ phase: "merge", done, total: sections.length, label: "" });
     abortIfNeeded(signal);
-    const doc = pdfDocument(book, {
-        paper: opts.paper,
-        family,
-        labels,
-        cover: coverImage ? new Blob([coverImage.bytes as BlobPart], { type: coverImage.mime }) : null,
-        src: (path, variant) => blobs.get(imageKey(path, variant)) ?? null,
+    const final = await PDFDocument.load(await render(() => contents(numbers)));
+    if (final.getPageCount() !== contentsPages) throw new Error(`contents changed length (${contentsPages} -> ${final.getPageCount()} pages)`);
+    const tocPages = await merged.copyPages(final, final.getPageIndices());
+    tocPages.forEach((page, i) => {
+        merged.insertPage(1 + i, page);
     });
-    const blob = await pdf(doc).toBlob();
-    abortIfNeeded(signal);
-    return { blob, images: blobs.size, failedImages: failed };
+    writeOutline(merged, outline);
+    merged.setTitle(book.meta.title);
+    merged.setAuthor("Hypergryph / Yostar (story text and art)");
+    merged.setCreator("myrtle.moe");
+    merged.setProducer("myrtle.moe");
+    merged.setLanguage(book.meta.language);
+    const out = await merged.save();
+    return { blob: new Blob([out as BlobPart], { type: "application/pdf" }), images: blobs.size, failedImages: failed, sections: placed, pages: merged.getPageCount() };
 }

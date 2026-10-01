@@ -2,8 +2,8 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Suspense } from "react";
 import { TierListEditor } from "#/components/tier-lists/edit/TierListEditor";
 import { Spinner } from "#/components/ui/spinner";
-import { operatorsIndexQueryOptions } from "#/lib/api/operators";
-import { tierListDetailQueryOptions } from "#/lib/api/tier-lists";
+import { DEFAULT_ENTITY_KINDS } from "#/lib/api/tier-entities";
+import { tierEntityCatalogueQueryOptions, tierListDetailQueryOptions } from "#/lib/api/tier-lists";
 import { metaT } from "#/lib/meta";
 import { seo } from "#/lib/seo";
 
@@ -12,8 +12,15 @@ export const Route = createFileRoute("/_authed/tier-lists_/my_/$id/edit")({
         if (!context.user) throw redirect({ to: "/", search: { auth: "1", next: location.href } });
     },
     loader: ({ context, params }) => {
-        void context.queryClient.prefetchQuery(tierListDetailQueryOptions(params.id, context.i18n.gamedataServer));
-        void context.queryClient.prefetchQuery(operatorsIndexQueryOptions(context.i18n.gamedataServer));
+        const server = context.i18n.gamedataServer;
+        // Warm the default kinds at once, then whatever else the list offers once its detail arrives. Not awaited: the editor suspends on the detail itself.
+        for (const kind of DEFAULT_ENTITY_KINDS) void context.queryClient.prefetchQuery(tierEntityCatalogueQueryOptions(kind, server));
+        void context.queryClient
+            .ensureQueryData(tierListDetailQueryOptions(params.id, server))
+            .then((detail) => {
+                for (const kind of detail?.entityKinds ?? []) void context.queryClient.prefetchQuery(tierEntityCatalogueQueryOptions(kind, server));
+            })
+            .catch(() => undefined);
     },
     component: RouteComponent,
     head: ({ match, params }) => {

@@ -23,10 +23,12 @@ import { toEpub } from "#/lib/story/book/epub";
 import type { BookFormat } from "#/lib/story/book/estimate";
 import type { PaperSize } from "#/lib/story/book/pdf";
 import type { PdfWorkerReply, PdfWorkerRequest } from "#/lib/story/book/pdf.worker";
+import { PdfStoryError } from "#/lib/story/book/pdfError";
 import { toMarkdown, toText } from "#/lib/story/book/plain";
 import type { BookLabels } from "#/lib/story/book/render";
 import type { Book, BookOptions, BookScope, Typeface } from "#/lib/story/book/types";
 import type { StoryScript } from "#/types/generated/StoryScript";
+import { createWatchdog, ExportStallError, STALL_MS } from "./watchdog";
 
 /** Scripts fetched at once. The median script is 61 KB; four keeps a chapter moving without a burst of 40 requests. */
 export const SCRIPT_CONCURRENCY = 4;
@@ -34,7 +36,7 @@ export const SCRIPT_CONCURRENCY = 4;
 export const BLOB_WARN_BYTES = 150_000_000;
 
 export interface ExportProgress {
-    phase: "scripts" | "book" | "layout";
+    phase: "scripts" | "book" | "layout" | "merge";
     done: number;
     total: number;
     label: string;
@@ -59,6 +61,10 @@ export interface ExportInput {
     target?: FileSystemFileHandle | null;
     /** `?pdfworker=0` renders the PDF on the main thread. */
     pdfWorker?: boolean;
+    /** `?pdffail=<story id>`: that story's layout throws, to prove the error line. */
+    pdfFailStory?: string;
+    /** Silence after which a PDF export fails; default `STALL_MS`. */
+    stallMs?: number;
     signal: AbortSignal;
     onProgress: (p: ExportProgress) => void;
     onPartial?: (state: PartialFile) => void;
@@ -101,40 +107,68 @@ async function fetchScripts(input: ExportInput): Promise<Map<string, StoryScript
     return scripts;
 }
 
-/** Lay the PDF out in a worker; any failure to START one falls back to the main thread. */
+/** The worker could not be started here (no module workers, a CSP): the main thread takes over. */
+class WorkerStartError extends Error {}
+
+/**
+ * Lay the PDF out in a worker. Only a failure to START falls back to the main
+ * thread; a story that fails, a stall and a cancel all propagate, because
+ * laying the same book out again on the main thread would freeze the page to
+ * reach the same error.
+ */
 function pdfInWorker(book: Book, input: ExportInput): Promise<{ blob: Blob; failedImages: string[]; renderMs: number }> {
     return new Promise((resolve, reject) => {
         let worker: Worker;
         try {
             worker = new Worker(new URL("../../../lib/story/book/pdf.worker.ts", import.meta.url), { type: "module" });
         } catch (err) {
-            reject(err);
+            reject(new WorkerStartError(err instanceof Error ? err.message : String(err)));
             return;
         }
+        let started = false;
+        let last = "";
         const stop = () => worker.postMessage({ type: "cancel" } satisfies PdfWorkerRequest);
         input.signal.addEventListener("abort", stop, { once: true });
+        const dog = createWatchdog(input.stallMs ?? STALL_MS, () => {
+            finish();
+            reject(new ExportStallError(last, Math.round((input.stallMs ?? STALL_MS) / 1000)));
+        });
         const finish = () => {
+            dog.stop();
             input.signal.removeEventListener("abort", stop);
             worker.terminate();
         };
         worker.onerror = (e) => {
             finish();
-            reject(new Error(e.message || "PDF worker failed"));
+            reject(started ? new Error(e.message || "PDF worker failed") : new WorkerStartError(e.message || "PDF worker did not start"));
+        };
+        worker.onmessageerror = () => {
+            finish();
+            reject(new Error("PDF worker sent a message that could not be read"));
         };
         worker.onmessage = (e: MessageEvent<PdfWorkerReply>) => {
             const msg = e.data;
-            if (msg.type === "progress") input.onProgress({ phase: msg.label === "" ? "layout" : "book", done: msg.done, total: msg.total, label: msg.label });
-            else if (msg.type === "done") {
+            dog.kick();
+            if (msg.type === "ready") started = true;
+            else if (msg.type === "progress") {
+                if (msg.label) last = msg.label;
+                input.onProgress(pdfProgress(msg));
+            } else if (msg.type === "done") {
                 finish();
                 resolve({ blob: msg.blob, failedImages: msg.failedImages, renderMs: msg.renderMs });
             } else {
                 finish();
-                reject(msg.aborted ? new DOMException("Export cancelled", "AbortError") : new Error(msg.message));
+                reject(msg.aborted ? new DOMException("Export cancelled", "AbortError") : msg.story ? new PdfStoryError(msg.story, new Error(msg.message)) : new Error(msg.message));
             }
         };
         const { ifChose: _i, earlier: _e, ...plainLabels } = input.labels;
-        worker.postMessage({ type: "start", book, typeface: input.typeface, paper: input.paper, labels: { ...plainLabels, ...input.labelTemplates } } satisfies PdfWorkerRequest);
+        worker.postMessage({ type: "start", book, typeface: input.typeface, paper: input.paper, labels: { ...plainLabels, ...input.labelTemplates }, failStoryId: input.pdfFailStory } satisfies PdfWorkerRequest);
     });
+}
+
+/** The PDF's own phases onto the sheet's: pictures loading is "book", laying out a story is "layout", writing the file is "merge". */
+function pdfProgress(p: { phase: "images" | "layout" | "merge"; done: number; total: number; label: string }): ExportProgress {
+    return { phase: p.phase === "images" ? "book" : p.phase, done: p.done, total: p.total, label: p.label };
 }
 
 export async function runExport(input: ExportInput): Promise<ExportOutput> {
@@ -166,9 +200,9 @@ export async function runExport(input: ExportInput): Promise<ExportOutput> {
                     failedImages = out.failedImages;
                     pdfInfo = { thread: "worker", renderMs: out.renderMs };
                 } catch (err) {
-                    if (signal.aborted) throw err;
+                    if (!(err instanceof WorkerStartError)) throw err;
                     // The worker could not run here; the same code runs on the main thread.
-                    console.warn("PDF worker failed, laying out on the main thread", err);
+                    console.warn("PDF worker did not start, laying out on the main thread", err);
                     onMain = true;
                 }
             }
@@ -176,7 +210,41 @@ export async function runExport(input: ExportInput): Promise<ExportOutput> {
                 const t = performance.now();
                 // Loaded on demand: react-pdf is ~1 MB of script, and a sheet that never makes a PDF on the main thread should not pay for it.
                 const { toPdf } = await import("#/lib/story/book/pdf");
-                const out = await toPdf(book, { typeface: input.typeface, paper: input.paper, labels: input.labels, signal, onProgress: (p) => onProgress({ phase: p.label === "" ? "layout" : "book", ...p }) }, browserPdfDeps);
+                // The same stall rule as the worker's; the layout yields between stories, so the timer can fire.
+                let last = "";
+                let stalled: ExportStallError | null = null;
+                const stallCtl = new AbortController();
+                const relay = () => stallCtl.abort();
+                signal.addEventListener("abort", relay, { once: true });
+                const dog = createWatchdog(input.stallMs ?? STALL_MS, () => {
+                    stalled = new ExportStallError(last, Math.round((input.stallMs ?? STALL_MS) / 1000));
+                    stallCtl.abort();
+                });
+                let out: Awaited<ReturnType<typeof toPdf>>;
+                try {
+                    out = await toPdf(
+                        book,
+                        {
+                            typeface: input.typeface,
+                            paper: input.paper,
+                            labels: input.labels,
+                            signal: stallCtl.signal,
+                            failStoryId: input.pdfFailStory,
+                            onProgress: (p) => {
+                                dog.kick();
+                                if (p.label) last = p.label;
+                                onProgress(pdfProgress(p));
+                            },
+                        },
+                        browserPdfDeps,
+                    );
+                } catch (err) {
+                    if (stalled) throw stalled;
+                    throw err;
+                } finally {
+                    dog.stop();
+                    signal.removeEventListener("abort", relay);
+                }
                 blob = out.blob;
                 failedImages = out.failedImages;
                 pdfInfo = { thread: "main", renderMs: Math.round(performance.now() - t) };

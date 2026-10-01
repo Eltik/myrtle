@@ -1,26 +1,27 @@
-import { useMutation, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { type UseQueryResult, useMutation, useQueries, useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useCallback, useMemo, useReducer, useState } from "react";
 import { Button } from "#/components/ui/button";
 import { useErrorMessage } from "#/components/ui/error-message";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
-import { operatorsIndexQueryOptions } from "#/lib/api/operators";
-import { type ITierListDetail, type ITierOperator, publishTierListVersionFn, setTierListFlairFn, setTierListVisibilityFn, tierListDetailQueryOptions, tierListFlairsQueryOptions, tierListVersionsQueryOptions } from "#/lib/api/tier-lists";
+import { type ITierEntity, parseEntityKey, type TierEntityKind, toTierEntity } from "#/lib/api/tier-entities";
+import { type ITierListDetail, publishTierListVersionFn, setTierListFlairFn, setTierListVisibilityFn, tierEntityCatalogueQueryOptions, tierListDetailQueryOptions, tierListFlairsQueryOptions, tierListVersionsQueryOptions } from "#/lib/api/tier-lists";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { indexEntryToTierOperator } from "../shared";
+import type { EntitySummary } from "#/types/generated/EntitySummary";
 import { DragControllerProvider } from "./drag-controller";
 import { EditHero } from "./EditHero";
 import styles from "./Editor.module.css";
 import { EditTierRow } from "./EditTierRow";
-import { OperatorPool } from "./OperatorPool";
+import { EntityPool, type IKindCatalogue } from "./EntityPool";
 import { PickTierDialog } from "./PickTierDialog";
+import { PoolKindsDialog } from "./PoolKindsDialog";
 import { PublishingPanel } from "./PublishingPanel";
 import { PublishVersionDialog } from "./PublishVersionDialog";
 import { type ISaveProgress, saveEdits } from "./save";
 import type { messages as saveMessages } from "./save.messages";
-import { detailToEditState, diffStates, editReducer, type IEditState, type IEditTier, type IPendingChange, nextFallbackTierColor, placedOperatorIds } from "./state";
+import { detailToEditState, diffStates, editReducer, type IEditState, type IEditTier, type IPendingChange, nextFallbackTierColor, offeredKinds, placedEntity, placedEntityKeys } from "./state";
 import type { messages as stateMessages } from "./state.messages";
 import type { messages } from "./TierListEditor.messages";
 import { TierSettingsDialog } from "./TierSettingsDialog";
@@ -38,7 +39,6 @@ export function TierListEditor({ slug }: ITierListEditorProps) {
 
     const gamedataServer = useGamedataServer();
     const { data: detail } = useSuspenseQuery(tierListDetailQueryOptions(slug, gamedataServer));
-    const { data: operators } = useSuspenseQuery(operatorsIndexQueryOptions(gamedataServer));
 
     if (!detail) return <EditorMissing />;
 
@@ -49,17 +49,19 @@ export function TierListEditor({ slug }: ITierListEditorProps) {
     const canEdit = isOwner || isTierListAdmin || canEditOfficial;
     if (!canEdit) return <EditorForbidden slug={slug} />;
 
-    return <EditorContent slug={slug} detail={detail} operators={operators ?? []} queryClient={queryClient} />;
+    return <EditorContent slug={slug} detail={detail} queryClient={queryClient} />;
 }
 
 interface IEditorContentProps {
     slug: string;
     detail: ITierListDetail;
-    operators: import("#/types/operators").IOperatorIndexEntry[];
     queryClient: ReturnType<typeof useQueryClient>;
 }
 
-function EditorContent({ slug, detail, operators, queryClient }: IEditorContentProps) {
+/** A catalogue entry is offered, not placed: no order, note or edit time of its own yet. */
+const UNPLACED = { subOrder: 0, description: null, updatedAt: new Date(0).toISOString() } as const;
+
+function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
     const t: EditorT = useT("tierLists");
     const describeError = useErrorMessage();
     // Same server the parent read the detail with, so the optimistic
@@ -69,58 +71,95 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
     const [originalState, setOriginalState] = useState<IEditState>(initial);
     const [state, dispatch] = useReducer(editReducer, initial);
     const [editingTier, setEditingTier] = useState<IEditTier | null>(null);
-    const [picker, setPicker] = useState<ITierOperator | null>(null);
+    const [picker, setPicker] = useState<ITierEntity | null>(null);
     const [saveError, setSaveError] = useState<string | null>(null);
     const [saveProgress, setSaveProgress] = useState<ISaveProgress | null>(null);
     const [publishOpen, setPublishOpen] = useState(false);
     const [publishError, setPublishError] = useState<string | null>(null);
+    const [kindsOpen, setKindsOpen] = useState(false);
 
     const { data: flairCatalog } = useQuery(tierListFlairsQueryOptions());
-    const { data: versions } = useQuery(tierListVersionsQueryOptions(slug));
+    const { data: versions } = useQuery(tierListVersionsQueryOptions(slug, gamedataServer));
+    // The kinds the pool offers follow the EDITED state, so a kind ticked in the
+    // kinds dialog gets its tab before the list is saved. Not suspended: a newly
+    // ticked kind loads inside its own tab instead of blanking the editor.
+    const kinds = useMemo(() => offeredKinds(state), [state]);
+    const combineCatalogues = useCallback(
+        (results: UseQueryResult<EntitySummary[]>[]) => {
+            const out: Partial<Record<TierEntityKind, IKindCatalogue>> = {};
+            kinds.forEach((kind, i) => {
+                const result = results[i];
+                out[kind] = {
+                    entities: result?.data?.map((summary) => toTierEntity(summary.kind, summary.id, summary, UNPLACED)),
+                    status: result?.status ?? "pending",
+                    refetch: () => void result?.refetch(),
+                };
+            });
+            return out;
+        },
+        [kinds],
+    );
+    const catalogues = useQueries({
+        queries: kinds.map((kind) => tierEntityCatalogueQueryOptions(kind, gamedataServer)),
+        combine: combineCatalogues,
+    });
     const flairOptions = useMemo(() => (flairCatalog ?? []).filter((f) => f.isActive), [flairCatalog]);
     const latestVersion = versions && versions.length > 0 ? Math.max(...versions.map((v) => v.version)) : null;
     const nextVersion = (latestVersion ?? 0) + 1;
 
-    const operatorById = useMemo(() => {
-        const merged = { ...state.operatorById };
-        for (const op of operators) {
-            if (merged[op.id]) continue;
-            merged[op.id] = indexEntryToTierOperator(op);
+    const entityByKey = useMemo(() => {
+        const merged = { ...state.entityByKey };
+        for (const catalogue of Object.values(catalogues)) {
+            for (const entity of catalogue?.entities ?? []) {
+                if (merged[entity.key]) continue;
+                merged[entity.key] = entity;
+            }
         }
         return merged;
-    }, [state.operatorById, operators]);
+    }, [state.entityByKey, catalogues]);
 
-    const placedIds = useMemo(() => placedOperatorIds(state), [state]);
-    const notedOperatorIds = useMemo(() => {
+    const placedKeys = useMemo(() => placedEntityKeys(state), [state]);
+    const placedByKind = useMemo(() => {
+        const counts: Partial<Record<TierEntityKind, number>> = {};
+        for (const key of placedKeys) {
+            const { kind } = parseEntityKey(key);
+            counts[kind] = (counts[kind] ?? 0) + 1;
+        }
+        return counts;
+    }, [placedKeys]);
+    const notedKeys = useMemo(() => {
         const set = new Set<string>();
-        for (const [id, desc] of Object.entries(state.descriptionByOperatorId)) {
+        for (const [id, desc] of Object.entries(state.descriptionByKey)) {
             if (desc.trim()) set.add(id);
         }
         return set;
-    }, [state.descriptionByOperatorId]);
+    }, [state.descriptionByKey]);
     const pendingChanges: IPendingChange[] = useMemo(() => diffStates(originalState, state, t), [originalState, state, t]);
-    const findCurrentTierId = useCallback((operatorId: string): string | null => state.tiers.find((t) => t.operatorIds.includes(operatorId))?.id ?? null, [state.tiers]);
+    const findCurrentTierId = useCallback((key: string): string | null => state.tiers.find((t) => t.entityKeys.includes(key))?.id ?? null, [state.tiers]);
 
-    const handlePlace = useCallback((operatorId: string, tierId: string, index: number) => {
-        dispatch({ type: "PLACE_OPERATOR", operatorId, tierId, index });
-    }, []);
+    const handlePlace = useCallback(
+        (key: string, tierId: string, index: number) => {
+            dispatch({ type: "PLACE_ENTITY", key, tierId, index, entity: entityByKey[key] });
+        },
+        [entityByKey],
+    );
 
-    const handleUnplace = useCallback((operatorId: string) => {
-        dispatch({ type: "PLACE_OPERATOR", operatorId, tierId: null });
+    const handleUnplace = useCallback((key: string) => {
+        dispatch({ type: "PLACE_ENTITY", key, tierId: null });
     }, []);
 
     const handleAddTier = useCallback(() => {
         dispatch({ type: "ADD_TIER", name: defaultTierName(state.tiers.length), color: nextFallbackTierColor(state.tiers.length), description: "" });
     }, [state.tiers.length]);
 
-    const handleActivateOperator = useCallback((operator: ITierOperator) => {
-        setPicker(operator);
+    const handleActivateEntity = useCallback((entity: ITierEntity) => {
+        setPicker(entity);
     }, []);
 
-    const handleOperatorDescriptionChange = useCallback(
+    const handleEntityDescriptionChange = useCallback(
         (description: string) => {
             if (!picker) return;
-            dispatch({ type: "SET_OPERATOR_DESCRIPTION", operatorId: picker.id, description });
+            dispatch({ type: "SET_ENTITY_DESCRIPTION", key: picker.key, description });
         },
         [picker],
     );
@@ -280,13 +319,13 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
     const handlePickTier = useCallback(
         (tierId: string | null) => {
             if (!picker) return;
-            dispatch({ type: "PLACE_OPERATOR", operatorId: picker.id, tierId });
+            dispatch({ type: "PLACE_ENTITY", key: picker.key, tierId, entity: picker });
         },
         [picker],
     );
 
     return (
-        <DragControllerProvider operatorById={operatorById} onPlace={handlePlace} onUnplace={handleUnplace}>
+        <DragControllerProvider entityByKey={entityByKey} onPlace={handlePlace} onUnplace={handleUnplace}>
             <main className="min-h-dvh pb-24">
                 <EditHero
                     slug={slug}
@@ -310,8 +349,8 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
                                 <EditTierRow
                                     key={tier.id}
                                     tier={tier}
-                                    operators={tier.operatorIds.map((id) => operatorById[id])}
-                                    notedOperatorIds={notedOperatorIds}
+                                    entities={tier.entityKeys.map((key) => placedEntity(entityByKey, key))}
+                                    notedKeys={notedKeys}
                                     canMoveUp={idx > 0}
                                     canMoveDown={idx < state.tiers.length - 1}
                                     onMoveUp={() => dispatch({ type: "MOVE_TIER", tierId: tier.id, direction: "up" })}
@@ -319,7 +358,7 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
                                     onOpenSettings={() => setEditingTier(tier)}
                                     onPlace={handlePlace}
                                     onUnplace={handleUnplace}
-                                    onActivateOperator={handleActivateOperator}
+                                    onActivateEntity={handleActivateEntity}
                                 />
                             ))}
                         </section>
@@ -347,13 +386,24 @@ function EditorContent({ slug, detail, operators, queryClient }: IEditorContentP
                             onSetVisibility={(next) => visibilityMutation.mutate(next)}
                             onOpenPublishDialog={handleOpenPublishDialog}
                         />
-                        <OperatorPool operators={operators} placedIds={placedIds} onUnplace={handleUnplace} onPickerActivate={handleActivateOperator} rootClassName="h-[70dvh] lg:h-auto lg:min-h-0 lg:flex-1" />
+                        <EntityPool kinds={kinds} catalogues={catalogues} placedKeys={placedKeys} onUnplace={handleUnplace} onPickerActivate={handleActivateEntity} onEditKinds={() => setKindsOpen(true)} rootClassName="h-[70dvh] lg:h-auto lg:min-h-0 lg:flex-1" />
                     </aside>
                 </div>
 
                 <TierSettingsDialog tier={editingTier} canDelete={state.tiers.length > 1} onClose={() => setEditingTier(null)} onSave={handleSaveTierSettings} onDelete={handleDeleteTier} onClear={handleClearTier} />
 
-                <PickTierDialog operator={picker} currentTierId={picker ? findCurrentTierId(picker.id) : null} description={picker ? (state.descriptionByOperatorId[picker.id] ?? "") : ""} tiers={state.tiers} onClose={() => setPicker(null)} onPick={handlePickTier} onDescriptionChange={handleOperatorDescriptionChange} />
+                <PickTierDialog entity={picker} currentTierId={picker ? findCurrentTierId(picker.key) : null} description={picker ? (state.descriptionByKey[picker.key] ?? "") : ""} tiers={state.tiers} onClose={() => setPicker(null)} onPick={handlePickTier} onDescriptionChange={handleEntityDescriptionChange} />
+
+                <PoolKindsDialog
+                    open={kindsOpen}
+                    kinds={kinds}
+                    placedByKind={placedByKind}
+                    onClose={() => setKindsOpen(false)}
+                    onApply={(next) => {
+                        dispatch({ type: "SET_ENTITY_KINDS", kinds: next });
+                        setKindsOpen(false);
+                    }}
+                />
 
                 <PublishVersionDialog open={publishOpen} publishing={publishMutation.isPending} latestVersion={latestVersion} nextVersion={nextVersion} publishError={publishError} onClose={handleClosePublishDialog} onPublish={handlePublish} />
             </main>

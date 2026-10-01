@@ -362,6 +362,23 @@
     gap: 4px;
 }
 
+/* Board: an event's banner is two square slots wide, so a row of mixed kinds keeps one height. */
+.opTile[data-shape="wide"] {
+    width: calc(var(--op-size) * 2 + var(--op-gap, 6px));
+}
+
+/* Pool: the grid sizes the tiles. A kind with no avatar photo still holds the square, and a banner spans two cells. */
+.poolGrid > .opTile[data-kind] {
+    width: auto;
+    height: auto;
+    aspect-ratio: 1;
+}
+
+.poolGrid > .opTile[data-shape="wide"] {
+    grid-column: span 2;
+    aspect-ratio: 2.1 / 1;
+}
+
 @media (min-width: 1024px) {
     .poolGrid {
         grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));

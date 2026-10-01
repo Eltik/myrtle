@@ -2,15 +2,15 @@ import { ArrowUpRight } from "lucide-react";
 import { useState } from "react";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { Dialog, DialogPopup } from "#/components/ui/dialog";
-import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
 import type { ITierEntryFull } from "#/lib/api/tier-lists";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { Markdown } from "#/lib/markdown";
 import { FALLBACK_TIER_COLORS, formatProfession } from "#/lib/utils";
+import { EntityAvatar } from "../entities";
 import { readableTextColor } from "./contrast";
-import { OperatorTile } from "./OperatorTile";
+import { EntityTile } from "./EntityTile";
 import { TierDetailsDialog } from "./TierDetailsDialog";
 import styles from "./TierListDetail.module.css";
 import type { messages } from "./TierRow.messages";
@@ -37,7 +37,7 @@ export function TierRow({ tier, index }: ITierRowProps) {
     const color = tier.color ?? FALLBACK_TIER_COLORS[index % FALLBACK_TIER_COLORS.length] ?? "var(--primary)";
     const textColor = readableTextColor(color);
     const labelledById = `tier-${tier.id}-label`;
-    const totalOps = tier.operators.length;
+    const totalOps = tier.entities.length;
     const hasDescription = Boolean(tier.description?.trim());
 
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -71,8 +71,8 @@ export function TierRow({ tier, index }: ITierRowProps) {
                 <div className={styles.emptyTier}>{t("detail.tier.empty")}</div>
             ) : (
                 <div className={styles.tierOps}>
-                    {tier.operators.map((op) => (
-                        <OperatorTile key={op.id} operator={op} />
+                    {tier.entities.map((entity) => (
+                        <EntityTile key={entity.key} entity={entity} />
                     ))}
                 </div>
             )}
@@ -98,7 +98,7 @@ function TierHoverCard({ tier, color, totalOps, hasDescription, onOpen }: IHover
     const t: TypedT<typeof messages> = useT("tierLists");
     const textColor = readableTextColor(color);
     const stats = computeTierStats(tier);
-    const previewOps = tier.operators.slice(0, 5);
+    const previewOps = tier.entities.slice(0, 5);
     const remaining = totalOps - previewOps.length;
 
     return (
@@ -138,8 +138,8 @@ function TierHoverCard({ tier, color, totalOps, hasDescription, onOpen }: IHover
                     <>
                         <div className="flex items-center -space-x-1.5">
                             {previewOps.map((op) => (
-                                <span key={op.id} className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-popover bg-muted font-semibold text-[10px] text-foreground" title={op.name}>
-                                    <OperatorAvatar charId={op.id} name={op.name} />
+                                <span key={op.key} className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-popover bg-muted font-semibold text-[10px] text-foreground" title={op.name}>
+                                    <EntityAvatar entity={op} />
                                 </span>
                             ))}
                             {remaining > 0 && <span className="flex h-7 shrink-0 items-center justify-center rounded-full border-2 border-popover bg-muted px-2 font-bold font-mono text-[10.5px] text-muted-foreground tabular-nums">+{remaining}</span>}

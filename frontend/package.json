@@ -54,6 +54,7 @@
     "html-to-image": "^1.11.13",
     "lucide-react": "^1.8.0",
     "mp4-muxer": "^5.2.2",
+    "pdf-lib": "^1.17.1",
     "pixi-spine": "4.0.6",
     "pixi.js": "7.4.3",
     "react": "^19.2.0",

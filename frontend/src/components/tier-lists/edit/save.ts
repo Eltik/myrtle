@@ -1,14 +1,10 @@
 import { addTierListPlacementFn, createTierFn, deleteTierFn, moveTierListPlacementFn, removeTierListPlacementFn, updateTierFn, updateTierListFn, updateTierListPlacementDescriptionFn } from "#/lib/api/tier-lists";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages as saveMessages } from "./save.messages";
-import { type IEditState, type IEditTier, isDraftId } from "./state";
+import { type IEditState, type IEditTier, isDraftId, kindsChanged, offeredKinds, planPlacementChanges } from "./state";
 
 /** The `t` `saveEdits` needs, narrowed to the step labels it can render. */
 export type EditSaveT = TypedT<typeof saveMessages>;
-
-function descFor(state: IEditState, operatorId: string): string {
-    return (state.descriptionByOperatorId[operatorId] ?? "").trim();
-}
 
 export interface ISaveProgress {
     step: number;
@@ -57,11 +53,14 @@ interface IExistingChange {
 export async function saveEdits({ slug, original, current, t, onProgress }: ISaveContext): Promise<void> {
     const operations: Array<{ label: string; run: () => Promise<void> }> = [];
 
-    if (original.title !== current.title || original.description !== current.description) {
+    const metaChanged = original.title !== current.title || original.description !== current.description;
+    const kinds = kindsChanged(original, current);
+    if (metaChanged || kinds) {
         operations.push({
             label: t("edit.save.listDetails"),
             run: async () => {
-                await updateTierListFn({ data: { slug, name: current.title, description: current.description || null } });
+                // Kinds ride along only when they changed; omitted, the backend keeps what it has.
+                await updateTierListFn({ data: { slug, name: current.title, description: current.description || null, ...(kinds ? { entityKinds: offeredKinds(current) } : {}) } });
             },
         });
     }
@@ -170,60 +169,48 @@ export async function saveEdits({ slug, original, current, t, onProgress }: ISav
         });
     }
 
-    const origPlacement = new Map<string, { tierId: string; subOrder: number }>();
-    for (const tier of original.tiers) {
-        for (const [i, opId] of tier.operatorIds.entries()) origPlacement.set(opId, { tierId: tier.id, subOrder: i });
-    }
+    const resolveTier = (tier: IEditTier): string => {
+        const resolved = isDraftId(tier.id) ? draftIdToReal.get(tier.id) : tier.id;
+        if (!resolved) throw new Error(`Tier "${tier.name}" wasn't created`);
+        return resolved;
+    };
 
-    const currPlacement = new Map<string, { tier: IEditTier; subOrder: number }>();
-    for (const tier of current.tiers) {
-        for (const [i, opId] of tier.operatorIds.entries()) currPlacement.set(opId, { tier, subOrder: i });
-    }
-
-    for (const [opId, then] of origPlacement) {
-        const now = currPlacement.get(opId);
-        if (!now) {
-            operations.push({
-                label: t("edit.save.removingOperator"),
-                run: async () => {
-                    await removeTierListPlacementFn({ data: { slug, operatorId: opId } });
-                },
-            });
-            continue;
+    for (const change of planPlacementChanges(original, current)) {
+        const target = { slug, kind: change.kind, entityId: change.id };
+        switch (change.op) {
+            case "remove":
+                operations.push({
+                    label: t("edit.save.removingOperator"),
+                    run: async () => {
+                        await removeTierListPlacementFn({ data: target });
+                    },
+                });
+                break;
+            case "move":
+                operations.push({
+                    label: t("edit.save.movingOperator"),
+                    run: async () => {
+                        await moveTierListPlacementFn({ data: { ...target, newTierId: resolveTier(change.tier), subOrder: change.subOrder } });
+                    },
+                });
+                break;
+            case "add":
+                operations.push({
+                    label: t("edit.save.placingOperator"),
+                    run: async () => {
+                        await addTierListPlacementFn({ data: { ...target, tierId: resolveTier(change.tier), subOrder: change.subOrder, description: change.description || null } });
+                    },
+                });
+                break;
+            case "describe":
+                operations.push({
+                    label: t("edit.save.updatingDescription"),
+                    run: async () => {
+                        await updateTierListPlacementDescriptionFn({ data: { ...target, description: change.description || null } });
+                    },
+                });
+                break;
         }
-        if (!isDraftId(now.tier.id) && now.tier.id === then.tierId && now.subOrder === then.subOrder) continue;
-        operations.push({
-            label: t("edit.save.movingOperator"),
-            run: async () => {
-                const resolvedTierId = isDraftId(now.tier.id) ? draftIdToReal.get(now.tier.id) : now.tier.id;
-                if (!resolvedTierId) throw new Error(`Tier "${now.tier.name}" wasn't created`);
-                await moveTierListPlacementFn({ data: { slug, operatorId: opId, newTierId: resolvedTierId, subOrder: now.subOrder } });
-            },
-        });
-    }
-
-    for (const [opId, now] of currPlacement) {
-        if (origPlacement.has(opId)) continue;
-        operations.push({
-            label: t("edit.save.placingOperator"),
-            run: async () => {
-                const resolvedTierId = isDraftId(now.tier.id) ? draftIdToReal.get(now.tier.id) : now.tier.id;
-                if (!resolvedTierId) throw new Error(`Tier "${now.tier.name}" wasn't created`);
-                await addTierListPlacementFn({ data: { slug, tierId: resolvedTierId, operatorId: opId, subOrder: now.subOrder, description: descFor(current, opId) || null } });
-            },
-        });
-    }
-
-    for (const [opId] of currPlacement) {
-        if (!origPlacement.has(opId)) continue;
-        const next = descFor(current, opId);
-        if (next === descFor(original, opId)) continue;
-        operations.push({
-            label: t("edit.save.updatingDescription"),
-            run: async () => {
-                await updateTierListPlacementDescriptionFn({ data: { slug, operatorId: opId, description: next || null } });
-            },
-        });
     }
 
     const total = operations.length;

@@ -33,6 +33,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { type BookGroup, type BookIndex, scopeFileName, storyLabel } from "#/lib/story/book/book";
 import { type BookFormat, estimateBook } from "#/lib/story/book/estimate";
 import type { PaperSize } from "#/lib/story/book/pdf";
+import { PdfStoryError } from "#/lib/story/book/pdfError";
 import { type BookLabels, DEFAULT_LABELS } from "#/lib/story/book/render";
 import { arcScope, rangeScope, storylineScope } from "#/lib/story/book/scopes";
 import type { BookScope, BranchMode, ImageMode, Typeface } from "#/lib/story/book/types";
@@ -44,6 +45,7 @@ import type { LibGroup } from "../library/impl/derive";
 import { READING_ORDER_MODES, type ReadingOrderMode, readingOrder } from "../library/impl/readingOrder";
 import type { messages } from "./export.messages";
 import { BLOB_WARN_BYTES, type ExportProgress, type PartialFile, pickTarget, runExport, saveBlob, savePicker } from "./run";
+import { ExportStallError } from "./watchdog";
 
 type ExportT = TypedT<typeof messages>;
 
@@ -220,6 +222,8 @@ function ExportBody({ group, storyId, open, running }: { group: BookGroup; story
     // `?exportstream=0` turns the disk stream off and downloads a Blob, the pre-2026-10-01 path.
     const streamOff = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("exportstream") === "0";
     const pdfWorker = typeof window === "undefined" || new URLSearchParams(window.location.search).get("pdfworker") !== "0";
+    // `?pdffail=<story id>`: that story's PDF layout throws, to check the error line end to end.
+    const pdfFailStory = typeof window === "undefined" ? undefined : (new URLSearchParams(window.location.search).get("pdffail") ?? undefined);
     const start = async () => {
         // The picker FIRST, while the click still counts as a user gesture.
         let target: FileSystemFileHandle | null = null;
@@ -246,6 +250,7 @@ function ExportBody({ group, storyId, open, running }: { group: BookGroup; story
                 labelTemplates,
                 target,
                 pdfWorker,
+                pdfFailStory,
                 signal: controller.signal,
                 onProgress: (progress) => setRun({ kind: "running", progress }),
                 onPartial: (state) => {
@@ -257,7 +262,16 @@ function ExportBody({ group, storyId, open, running }: { group: BookGroup; story
             setRun({ kind: "done", file: out.fileName, missing: out.failedImages.length, toDisk: out.blob === null });
         } catch (err) {
             if (controller.signal.aborted) setRun({ kind: "cancelled", partial });
-            else setRun({ kind: "error", message: err instanceof Error ? err.message : String(err), partial });
+            else {
+                const message =
+                    // An error line must say what happened even before `i18n:extract` carries a new key: a raw key falls back to English.
+                    err instanceof ExportStallError
+                        ? (book(t("export.stalled", { seconds: err.seconds, story: err.story || "…" }), "export.stalled") ?? `The export stopped making progress for ${err.seconds} s at ${err.story || "…"} and was stopped. Try a smaller scope.`)
+                        : err instanceof PdfStoryError
+                          ? (book(t("export.storyFailed", { story: err.story, message: err.message }), "export.storyFailed") ?? `The export failed at ${err.story}: ${err.message}`)
+                          : t("export.error", { message: err instanceof Error ? err.message : String(err) });
+                setRun({ kind: "error", message, partial });
+            }
         } finally {
             if (running.current === controller) running.current = null;
         }
@@ -266,7 +280,8 @@ function ExportBody({ group, storyId, open, running }: { group: BookGroup; story
     const mb = (bytes: number) => new Intl.NumberFormat(locale, { maximumFractionDigits: bytes < 10_000_000 ? 1 : 0 }).format(bytes / 1_000_000);
     const size = estimate.bytes < 1_000_000 ? `${f.number(Math.max(1, Math.round(estimate.bytes / 1000)))} KB` : `${mb(estimate.bytes)} MB`;
     const embedsFont = format === "epub" || format === "pdf";
-    const blobWarning = (!picker || streamOff) && estimate.bytes > BLOB_WARN_BYTES;
+    // A PDF is always built in memory (pdf-lib writes the merged file in one piece); an EPUB only without a picker.
+    const blobWarning = (format === "pdf" || !picker || streamOff) && estimate.bytes > BLOB_WARN_BYTES;
 
     return (
         <div className="mt-5 flex flex-col gap-5">
@@ -454,16 +469,20 @@ function Status({ run }: { run: RunState }): React.ReactElement | null {
     if (run.kind === "running") {
         const p = run.progress;
         // Scripts are the first 40% of the bar, the stories and their pictures the rest; the PDF's layout is the last step and has no count.
-        const value = !p || p.total === 0 ? 0 : p.phase === "scripts" ? (0.4 * p.done) / p.total : p.phase === "layout" ? 1 : 0.4 + (0.6 * p.done) / p.total;
+        const value = !p || p.total === 0 ? 0 : p.phase === "scripts" ? (0.4 * p.done) / p.total : p.phase === "merge" ? 1 : 0.4 + (0.6 * p.done) / p.total;
         const line = !p
             ? ""
             : p.phase === "scripts"
               ? t("export.progress.scripts", { done: Math.min(p.done + 1, p.total), total: p.total, story: p.label })
-              : p.phase === "layout"
-                ? t("export.progress.layout")
-                : p.label === ""
-                  ? t("export.progress.finishing")
-                  : t("export.progress.book", { done: p.done + 1, total: p.total, story: p.label });
+              : p.phase === "merge"
+                ? t("export.progress.finishing")
+                : p.phase === "layout"
+                  ? p.label === ""
+                      ? t("export.progress.layout")
+                      : t("export.progress.layoutStory", { done: Math.min(p.done + 1, p.total), total: p.total, story: p.label })
+                  : p.label === ""
+                    ? t("export.progress.finishing")
+                    : t("export.progress.book", { done: p.done + 1, total: p.total, story: p.label });
         return (
             <div className="flex flex-col gap-1.5" data-export-progress>
                 <Progress value={Math.round(value * 100)} aria-label={line} />
@@ -491,7 +510,7 @@ function Status({ run }: { run: RunState }): React.ReactElement | null {
         );
     return (
         <p className="text-destructive text-xs" role="alert" data-export-error>
-            {t("export.error", { message: run.message })}
+            {run.message}
             {partialLine(run.partial)}
         </p>
     );

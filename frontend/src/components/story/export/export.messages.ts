@@ -183,6 +183,18 @@ export const messages = {
         text: "The unfinished file may still be on disk; this browser could not remove it.",
         description: "Added to the cancelled or failed line when a partly written file could not be deleted.",
     },
+    "export.progress.layoutStory": {
+        text: "Laying out story {done} of {total} · {story}",
+        description: "Progress line while the PDF is typeset, one story at a time. {story} is the story's code and title.",
+    },
+    "export.stalled": {
+        text: "The export stopped making progress for {seconds} s at {story} and was stopped. Try a smaller scope.",
+        description: "Error line when a PDF export went silent (no progress for a minute). {story} is where it was.",
+    },
+    "export.storyFailed": {
+        text: "The export failed at {story}: {message}",
+        description: "Error line when one story could not be laid out. {story} is its code and title, {message} the technical reason.",
+    },
     "export.progress.layout": {
         text: "Laying out pages…",
         description: "Progress line while the PDF is typeset, after every story and picture is loaded.",

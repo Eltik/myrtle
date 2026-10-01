@@ -1,11 +1,11 @@
 import { ChevronDownIcon, ChevronUpIcon, SettingsIcon, XIcon } from "lucide-react";
 import { Fragment, useCallback, useRef, useState } from "react";
 import { Button } from "#/components/ui/button";
-import type { ITierOperator } from "#/lib/api/tier-lists";
+import type { ITierEntity } from "#/lib/api/tier-entities";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { readableTextColor } from "../detail/contrast";
-import { hasOperatorDrag, readOperatorDrag } from "./dnd";
+import { hasEntityDrag, readEntityDrag } from "./dnd";
 import { useTierDropIndex } from "./drag-controller";
 import { EditableOpTile } from "./EditableOpTile";
 import styles from "./Editor.module.css";
@@ -14,26 +14,26 @@ import type { IEditTier } from "./state";
 
 interface IEditTierRowProps {
     tier: IEditTier;
-    operators: (ITierOperator | undefined)[];
-    notedOperatorIds: Set<string>;
+    entities: ITierEntity[];
+    notedKeys: Set<string>;
     canMoveUp: boolean;
     canMoveDown: boolean;
     onMoveUp: () => void;
     onMoveDown: () => void;
     onOpenSettings: () => void;
-    onPlace: (operatorId: string, tierId: string, index: number) => void;
-    onUnplace: (operatorId: string) => void;
-    onActivateOperator: (operator: ITierOperator) => void;
+    onPlace: (entityKey: string, tierId: string, index: number) => void;
+    onUnplace: (entityKey: string) => void;
+    onActivateEntity: (entity: ITierEntity) => void;
 }
 
-export function EditTierRow({ tier, operators, notedOperatorIds, canMoveUp, canMoveDown, onMoveUp, onMoveDown, onOpenSettings, onPlace, onUnplace, onActivateOperator }: IEditTierRowProps) {
+export function EditTierRow({ tier, entities, notedKeys, canMoveUp, canMoveDown, onMoveUp, onMoveDown, onOpenSettings, onPlace, onUnplace, onActivateEntity }: IEditTierRowProps) {
     const t: TypedT<typeof messages> = useT("tierLists");
     const textColor = readableTextColor(tier.color);
     const touchDropIndex = useTierDropIndex(tier.id);
     const [mouseDropIndex, setMouseDropIndex] = useState<number | null>(null);
     const dropAreaRef = useRef<HTMLUListElement | null>(null);
 
-    const lastIndex = tier.operatorIds.length;
+    const lastIndex = tier.entityKeys.length;
     const dropIndex = touchDropIndex ?? mouseDropIndex;
 
     const pendingIdxRef = useRef<number | null>(null);
@@ -48,7 +48,7 @@ export function EditTierRow({ tier, operators, notedOperatorIds, canMoveUp, canM
 
     const handleOver = useCallback(
         (e: React.DragEvent) => {
-            if (!hasOperatorDrag(e)) return;
+            if (!hasEntityDrag(e)) return;
             e.preventDefault();
             e.dataTransfer.dropEffect = "move";
             if (mouseDropIndex === null) setMouseDropIndex(lastIndex);
@@ -64,27 +64,27 @@ export function EditTierRow({ tier, operators, notedOperatorIds, canMoveUp, canM
 
     const handleDrop = useCallback(
         (e: React.DragEvent) => {
-            const payload = readOperatorDrag(e);
+            const payload = readEntityDrag(e);
             setMouseDropIndex(null);
             if (!payload) return;
             e.preventDefault();
             const index = mouseDropIndex ?? lastIndex;
-            onPlace(payload.operatorId, tier.id, index);
+            onPlace(payload.entityKey, tier.id, index);
         },
         [mouseDropIndex, lastIndex, onPlace, tier.id],
     );
 
     const handleChipDragOver = useCallback(
-        (operatorId: string, side: "before" | "after") => {
-            const idx = tier.operatorIds.indexOf(operatorId);
+        (entityKey: string, side: "before" | "after") => {
+            const idx = tier.entityKeys.indexOf(entityKey);
             const next = idx < 0 ? lastIndex : side === "before" ? idx : idx + 1;
             pendingIdxRef.current = next;
             if (rafRef.current === null) rafRef.current = requestAnimationFrame(flushIdx);
         },
-        [lastIndex, tier.operatorIds, flushIdx],
+        [lastIndex, tier.entityKeys, flushIdx],
     );
 
-    const isEmpty = operators.length === 0;
+    const isEmpty = entities.length === 0;
     const labelledById = `tier-edit-${tier.id}-label`;
     const showMarker = (i: number) => dropIndex === i;
 
@@ -103,15 +103,12 @@ export function EditTierRow({ tier, operators, notedOperatorIds, canMoveUp, canM
             </button>
 
             <ul ref={dropAreaRef} data-tl-drop-tier={tier.id} className={styles.dropArea} data-empty={isEmpty || undefined} data-over={dropIndex !== null || undefined} onDragOver={handleOver} onDragLeave={handleLeave} onDrop={handleDrop} aria-label={t("edit.row.dropArea", { name: tier.name })}>
-                {operators.map((op, i) => {
-                    if (!op) return null;
-                    return (
-                        <Fragment key={op.id}>
-                            <li className={styles.dropMarker} data-active={showMarker(i) || undefined} aria-hidden="true" />
-                            <PlacedChip operator={op} tierName={tier.name} tierLabelId={labelledById} hasNote={notedOperatorIds.has(op.id)} onRemove={onUnplace} onDragOverChip={handleChipDragOver} onActivate={onActivateOperator} />
-                        </Fragment>
-                    );
-                })}
+                {entities.map((entity, i) => (
+                    <Fragment key={entity.key}>
+                        <li className={styles.dropMarker} data-active={showMarker(i) || undefined} aria-hidden="true" />
+                        <PlacedChip entity={entity} tierName={tier.name} tierLabelId={labelledById} hasNote={notedKeys.has(entity.key)} onRemove={onUnplace} onDragOverChip={handleChipDragOver} onActivate={onActivateEntity} />
+                    </Fragment>
+                ))}
                 <li className={styles.dropMarker} data-active={showMarker(lastIndex) || undefined} aria-hidden="true" />
             </ul>
 
@@ -131,14 +128,14 @@ export function EditTierRow({ tier, operators, notedOperatorIds, canMoveUp, canM
 }
 
 interface IPlacedChipProps {
-    operator: ITierOperator;
+    entity: ITierEntity;
     tierName: string;
     /** Focus target when the chip being removed was the last one in its row. */
     tierLabelId: string;
     hasNote: boolean;
-    onRemove: (operatorId: string) => void;
-    onDragOverChip: (operatorId: string, side: "before" | "after") => void;
-    onActivate: (operator: ITierOperator) => void;
+    onRemove: (entityKey: string) => void;
+    onDragOverChip: (entityKey: string, side: "before" | "after") => void;
+    onActivate: (entity: ITierEntity) => void;
 }
 
 /**
@@ -146,20 +143,20 @@ interface IPlacedChipProps {
  * button, not a child, because nested controls are invalid HTML; Delete and
  * Backspace on the focused tile remove it too.
  */
-function PlacedChip({ operator, tierName, tierLabelId, hasNote, onRemove, onDragOverChip, onActivate }: IPlacedChipProps) {
+function PlacedChip({ entity, tierName, tierLabelId, hasNote, onRemove, onDragOverChip, onActivate }: IPlacedChipProps) {
     const t: TypedT<typeof messages> = useT("tierLists");
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
         if (e.key !== "Delete" && e.key !== "Backspace") return;
         e.preventDefault();
         focusNeighbourChip(e.currentTarget, tierLabelId);
-        onRemove(operator.id);
+        onRemove(entity.key);
     };
 
     return (
         <li className={styles.chip}>
-            <EditableOpTile operator={operator} hasNote={hasNote} onDragOverChip={onDragOverChip} onActivate={onActivate} onKeyDown={handleKeyDown} />
-            <button type="button" className={styles.chipRemove} onClick={() => onRemove(operator.id)} aria-label={t("edit.row.removeOperator", { name: operator.name, tier: tierName })} title={t("edit.row.removeOperatorTitle")}>
+            <EditableOpTile entity={entity} hasNote={hasNote} onDragOverChip={onDragOverChip} onActivate={onActivate} onKeyDown={handleKeyDown} />
+            <button type="button" className={styles.chipRemove} onClick={() => onRemove(entity.key)} aria-label={t("edit.row.removeOperator", { name: entity.name, tier: tierName })} title={t("edit.row.removeOperatorTitle")}>
                 <XIcon aria-hidden="true" />
             </button>
         </li>
@@ -170,7 +167,7 @@ function PlacedChip({ operator, tierName, tierLabelId, hasNote, onRemove, onDrag
  * Removing the focused tile unmounts it, which would drop focus to `body`.
  * Move focus first: to the next tile in the row, else the previous one, else
  * the tier label when the row is about to be empty. Tiles are keyed by
- * operator id, so the neighbour survives the re-render.
+ * entity key, so the neighbour survives the re-render.
  */
 function focusNeighbourChip(tile: HTMLElement, tierLabelId: string) {
     const row = tile.closest("li")?.parentElement;

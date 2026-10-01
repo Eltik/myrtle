@@ -1,10 +1,10 @@
 import { Link } from "@tanstack/react-router";
 import { CopyIcon, ExternalLinkIcon, HeartIcon, LayoutGridIcon, MoreHorizontalIcon, PencilIcon, ShieldCheckIcon, TrashIcon } from "lucide-react";
 import { Menu, MenuItem, MenuPopup, MenuTrigger } from "#/components/ui/menu";
-import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { ITierListBrowseItem } from "#/lib/api/tier-lists";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { CardEntityAvatar, cardEntityKey } from "../CardEntityAvatar";
 import type { messages } from "./MyListRow.messages";
 
 interface IMyListRowProps {
@@ -38,8 +38,8 @@ export function MyListRow({ tl, onEdit, onDelete, onCopyLink }: IMyListRowProps)
                 ) : (
                     <>
                         {previewOps.map((op) => (
-                            <span key={op.id} className="inline-flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted" title={op.name}>
-                                <OperatorAvatar charId={op.id} name={op.name} />
+                            <span key={cardEntityKey(op)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted" title={op.name}>
+                                <CardEntityAvatar op={op} />
                             </span>
                         ))}
                         {overflow > 0 && <span className="inline-flex h-9 min-w-9 items-center justify-center rounded-md border border-border bg-muted/60 px-1 font-bold font-mono text-[11px] text-muted-foreground tabular-nums">+{overflow}</span>}

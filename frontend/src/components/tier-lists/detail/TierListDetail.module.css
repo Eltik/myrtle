@@ -195,6 +195,11 @@
     image-rendering: -webkit-optimize-contrast;
 }
 
+/* An event's banner: two square slots wide, so a row of mixed kinds keeps one height. */
+.opTile[data-shape="wide"] {
+    width: calc(var(--op-size) * 2 + var(--op-gap, 6px));
+}
+
 .opRarity {
     position: absolute;
     inset: auto 0 0 0;

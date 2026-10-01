@@ -1,9 +1,8 @@
 import type { IOperator } from "#/components/home/impl/data";
-import type { ITierListBrowseItem, ITierOperator } from "#/lib/api/tier-lists";
+import type { ITierListBrowseItem } from "#/lib/api/tier-lists";
 import { stripMarkdown } from "#/lib/markdown";
 import { normalizeForSearch } from "#/lib/search/fuzzy";
 import { FALLBACK_TIER_COLORS } from "#/lib/utils";
-import type { IOperatorIndexEntry } from "#/types/operators";
 
 export const LIST_NAME_MAX = 80;
 export const LIST_DESCRIPTION_MAX = 4000;
@@ -52,22 +51,6 @@ export function buildThumbRows(tl: ITierListBrowseItem): IThumbRow[] {
         const color = t.color ?? FALLBACK_TIER_COLORS[idx % FALLBACK_TIER_COLORS.length] ?? "var(--primary)";
         return { name: t.name, color, operators: t.operators, fallbackVisible };
     });
-}
-
-export function indexEntryToTierOperator(entry: IOperatorIndexEntry): ITierOperator {
-    return {
-        id: entry.id,
-        name: entry.name,
-        appellation: entry.appellation || null,
-        rarity: entry.rarity,
-        profession: entry.profession,
-        subProfessionId: entry.subProfessionId,
-        position: entry.position,
-        nationId: entry.nationId || null,
-        subOrder: 0,
-        description: null,
-        updatedAt: new Date().toISOString(),
-    };
 }
 
 export type BrowseListSort = "trending" | "recent" | "newest" | "alpha" | "views" | "favorites" | "shares";

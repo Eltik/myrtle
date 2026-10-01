@@ -1,6 +1,6 @@
 import { useRef } from "react";
-import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { useFittedOpCount } from "#/hooks/use-fitted-op-count";
+import { CardEntityAvatar, cardEntityKey } from "./CardEntityAvatar";
 import type { IThumbRow } from "./shared";
 
 interface IThumbTierRowProps {
@@ -27,8 +27,8 @@ export function ThumbTierRow({ row, styles, title }: IThumbTierRowProps) {
             </span>
             <div ref={opsRef} className={styles.tierOps}>
                 {visible.map((op) => (
-                    <span key={op.id} className={styles.op} title={op.name}>
-                        <OperatorAvatar charId={op.id} name={op.name} />
+                    <span key={cardEntityKey(op)} className={styles.op} title={op.name}>
+                        <CardEntityAvatar op={op} />
                     </span>
                 ))}
                 {overflow > 0 && <span className={styles.opOverflow}>+{overflow}</span>}

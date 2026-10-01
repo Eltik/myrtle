@@ -21,7 +21,7 @@ export function TierListBoard({ detail }: ITierListBoardProps) {
         );
     }
 
-    const totalOps = detail.tiers.reduce((acc, t) => acc + t.operators.length, 0);
+    const totalOps = detail.tiers.reduce((acc, t) => acc + t.entities.length, 0);
 
     return (
         <div className="space-y-3">

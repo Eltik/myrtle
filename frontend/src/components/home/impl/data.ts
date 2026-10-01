@@ -1,9 +1,15 @@
+import type { TierEntityKind } from "#/lib/api/tier-entities";
+
 export interface IOperator {
     id: string;
     name: string;
     rarity: number;
     role: string;
     arch: string;
+    /** Set for a non-operator placement (an enemy, an event...); absent for an operator. */
+    kind?: Exclude<TierEntityKind, "operator">;
+    /** The non-operator's resolved icon path, `null` when the extract has no art. */
+    icon?: string | null;
 }
 
 export interface ITierEntry {

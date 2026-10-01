@@ -1,12 +1,10 @@
 import { useQuery, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { Link, useParams } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef } from "react";
-import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { type ITierListDetail, recordTierListViewFn, snapshotToTiers, tierListDetailQueryOptions, tierListVersionsQueryOptions } from "#/lib/api/tier-lists";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { Route as DetailRoute } from "#/routes/tier-lists_.$id";
-import type { IOperatorIndexEntry } from "#/types/operators";
 import { TierListBoard } from "./TierListBoard";
 import type { messages } from "./TierListDetail.messages";
 import { TierListHero } from "./TierListHero";
@@ -19,8 +17,7 @@ export function TierListDetail() {
     const { v: requestedVersion } = DetailRoute.useSearch();
     const gamedataServer = useGamedataServer();
     const { data: detail } = useSuspenseQuery(tierListDetailQueryOptions(id, gamedataServer));
-    const { data: versionsData } = useQuery(tierListVersionsQueryOptions(id));
-    const { data: operatorsIndex } = useQuery(operatorsIndexQueryOptions(gamedataServer));
+    const { data: versionsData } = useQuery(tierListVersionsQueryOptions(id, gamedataServer));
     const queryClient = useQueryClient();
 
     const versions = useMemo(() => versionsData ?? [], [versionsData]);
@@ -29,9 +26,8 @@ export function TierListDetail() {
 
     const snapshotTiers = useMemo(() => {
         if (!selectedVersion) return null;
-        const opIndex: Record<string, IOperatorIndexEntry> = Object.fromEntries((operatorsIndex ?? []).map((op) => [op.id, op]));
-        return snapshotToTiers(selectedVersion.snapshot, opIndex);
-    }, [selectedVersion, operatorsIndex]);
+        return snapshotToTiers(selectedVersion.snapshot);
+    }, [selectedVersion]);
 
     const recordedRef = useRef<string | null>(null);
     const slug = detail?.slug;

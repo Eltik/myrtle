@@ -3,12 +3,14 @@ import { env } from "#/env";
 import { gamedataPath } from "#/lib/api/gamedata";
 import { deepCamelize, getOperatorsListFn } from "#/lib/api/operators";
 import { stagePreviewAssetPaths } from "#/lib/api/stages";
+import { entityIconURL } from "#/lib/api/tier-entities";
 import type { IRosterEntry } from "#/lib/api/user";
 import { backendFetch } from "#/lib/fetch";
 import { metaSourceForLocale } from "#/lib/meta";
 import { formatGroupId, formatNationId, formatNumber, formatTeamId, rarityToNumber, toAvatarStem } from "#/lib/utils";
+import type { PlacementDetail } from "#/types/generated/PlacementDetail";
 import type { StoryIndex } from "#/types/generated/StoryIndex";
-import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
+import type { IOperatorListItem } from "#/types/operators";
 import type { IStage, IZone } from "#/types/stages";
 import type { IUserProfile } from "#/types/user";
 import { ogHash } from "./hash";
@@ -381,17 +383,26 @@ interface IBackendTierListStats {
     is_trending: boolean;
 }
 
-interface IBackendTierListPlacement {
-    operator_id: string;
-    sub_order: number;
-}
-
 interface IBackendTierListTier {
     id: string;
     name: string;
     display_order: number;
     color: string | null;
-    placements: IBackendTierListPlacement[];
+    placements: PlacementDetail[];
+}
+
+/** A resolved placement as an OG tile: its own icon, and the operator's rarity when it has one. Unresolved placements are left off the image. */
+function entityPreview(p: PlacementDetail): ITierListOperatorPreview | null {
+    const entity = p.entity;
+    if (!entity) return null;
+    const base = backendBaseURL();
+    const rarity = entity.facets.rarity;
+    return {
+        id: entity.id,
+        name: entity.name,
+        rarity: (typeof rarity === "string" && Number(rarity)) || 1,
+        avatarURL: base && entity.icon ? entityIconURL(entity.icon, base) : "",
+    };
 }
 
 interface IBackendTierListResponse {
@@ -412,11 +423,9 @@ const tierListHandler = defineOgHandler<ITierListOgData>({
     hashVersion: TIER_LIST_HASH_VERSION,
     fetch: async (slug) => {
         const enc = encodeURIComponent(slug);
-        const [detailRes, opsRes] = await Promise.all([backendFetch(`/tier-lists/${enc}`), backendFetch("/operators/index")]);
+        const detailRes = await backendFetch(`/tier-lists/${enc}`);
         if (!detailRes.ok) return null;
         const detail = (await detailRes.json()) as IBackendTierListResponse;
-        const opIndex = opsRes.ok ? ((await opsRes.json()) as IOperatorIndexEntry[]) : [];
-        const opById = new Map<string, IOperatorIndexEntry>(opIndex.map((op) => [op.id, op]));
 
         const sortedTiers = [...detail.tiers].sort((a, b) => a.display_order - b.display_order);
 
@@ -425,16 +434,7 @@ const tierListHandler = defineOgHandler<ITierListOgData>({
             const placements = [...t.placements].sort((a, b) => a.sub_order - b.sub_order);
             const operators: ITierListOperatorPreview[] = placements
                 .slice(0, 5)
-                .map((p): ITierListOperatorPreview | null => {
-                    const op = opById.get(p.operator_id);
-                    if (!op) return null;
-                    return {
-                        id: op.id,
-                        name: op.name,
-                        rarity: op.rarity,
-                        avatarURL: avatarURL(op.id),
-                    };
-                })
+                .map(entityPreview)
                 .filter((x): x is ITierListOperatorPreview => x !== null);
             return {
                 name: t.name,
@@ -541,29 +541,16 @@ const tierListBoardImageHandler = defineOgHandler<ITierListBoardImageData>({
     hashVersion: TIER_LIST_BOARD_IMAGE_HASH_VERSION,
     fetch: async (slug) => {
         const enc = encodeURIComponent(slug);
-        const [detailRes, opsRes] = await Promise.all([backendFetch(`/tier-lists/${enc}`), backendFetch("/operators/index")]);
+        const detailRes = await backendFetch(`/tier-lists/${enc}`);
         if (!detailRes.ok) return null;
         const detail = (await detailRes.json()) as IBackendTierListResponse;
-        const opIndex = opsRes.ok ? ((await opsRes.json()) as IOperatorIndexEntry[]) : [];
-        const opById = new Map<string, IOperatorIndexEntry>(opIndex.map((op) => [op.id, op]));
 
         const sortedTiers = [...detail.tiers].sort((a, b) => a.display_order - b.display_order);
 
         const tiers: ITierListBoardImageTier[] = sortedTiers.map((t, i) => {
             const fallback = FALLBACK_TIER_HEX[i % FALLBACK_TIER_HEX.length] as string;
             const placements = [...t.placements].sort((a, b) => a.sub_order - b.sub_order);
-            const operators: ITierListBoardImageOperator[] = placements
-                .map((p): ITierListBoardImageOperator | null => {
-                    const op = opById.get(p.operator_id);
-                    if (!op) return null;
-                    return {
-                        id: op.id,
-                        name: op.name,
-                        rarity: op.rarity,
-                        avatarURL: avatarURL(op.id),
-                    };
-                })
-                .filter((x): x is ITierListBoardImageOperator => x !== null);
+            const operators: ITierListBoardImageOperator[] = placements.map(entityPreview).filter((x): x is ITierListOperatorPreview => x !== null);
             return {
                 name: t.name,
                 color: toHex(t.color, fallback),

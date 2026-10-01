@@ -12,6 +12,10 @@ export const messages = {
         text: "List details",
         description: "Pending change: the list's title or description was edited.",
     },
+    "edit.change.kinds": {
+        text: "Pool kinds",
+        description: "Pending change: the kinds of things the list's pool offers (operators, enemies, events...) were changed.",
+    },
     "edit.change.tierCreated": {
         text: 'New tier "{name}"',
         description: "Pending change: a tier was added. {name} is the label the author gave it; keep the quotes.",

@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
 import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { isOperatorEntity } from "#/lib/api/tier-entities";
 import type { ITierEntryFull } from "#/lib/api/tier-lists";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -9,6 +10,7 @@ import { Markdown } from "#/lib/markdown";
 import { formatArchetype, formatProfession, RARITY_LABELS } from "#/lib/utils";
 import type { OperatorRarity } from "#/types/operators";
 import { ExpandableDescription } from "../ExpandableDescription";
+import { EntityAvatar, entityAccent, useEntityLabels } from "../entities";
 import { operatorPlacementNote } from "../shared";
 import { type ReadableTextColor, readableTextColor } from "./contrast";
 import type { messages } from "./TierDetailsDialog.messages";
@@ -37,7 +39,8 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
     const f = useFormatters();
     const textColor = readableTextColor(color);
     const stats = computeTierStats(tier);
-    const ops = tier.operators;
+    const labels = useEntityLabels();
+    const ops = tier.entities;
     const total = stats.total;
 
     return (
@@ -80,7 +83,7 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
 
                 {total > 0 && (
                     <section aria-label={t("detail.tierDialog.overviewLabel")} className="grid grid-cols-3 gap-2">
-                        <Stat label={t("detail.tierDialog.stat.operators")} value={String(total)} />
+                        <Stat label={t("detail.tierDialog.stat.operators")} value={String(stats.operatorCount)} />
                         <Stat label={t("detail.tierDialog.stat.avgRarity")} value={stats.averageRarity ? stats.averageRarity.toFixed(1) : "-"} />
                         <Stat label={t("detail.tierDialog.stat.meleeRanged")} value={`${stats.position.melee} / ${stats.position.ranged}`} />
                     </section>
@@ -129,8 +132,39 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                         <ul className="m-0 grid grid-cols-1 gap-1 p-0 sm:grid-cols-2">
                             {ops.map((op) => {
                                 const note = operatorPlacementNote(op);
+                                if (!isOperatorEntity(op)) {
+                                    const detail = labels.detail(op);
+                                    const face = (
+                                        <>
+                                            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted font-semibold text-[11px] text-foreground" style={{ borderBottom: `2px solid ${entityAccent(op)}` }}>
+                                                <EntityAvatar entity={op} />
+                                            </span>
+                                            {op.resolved ? (
+                                                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                                    <span className="truncate font-sans font-semibold text-[13.5px] text-foreground tracking-[-0.005em] transition-colors group-hover:text-primary">{op.name}</span>
+                                                    <span className="truncate font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.08em]">{[labels.kind[op.kind], ...detail].join(" · ")}</span>
+                                                </span>
+                                            ) : (
+                                                <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-muted-foreground">{op.id}</span>
+                                            )}
+                                        </>
+                                    );
+                                    return (
+                                        <li key={op.key} className={op.resolved && op.kind === "enemy" ? "list-none rounded-lg border border-transparent transition-colors hover:border-border hover:bg-muted/40" : "list-none rounded-lg border border-transparent"}>
+                                            {op.resolved && op.kind === "enemy" ? (
+                                                <Link to="/enemies/$id" params={{ id: op.id }} className="group flex items-center gap-3 px-2 py-2 no-underline">
+                                                    {face}
+                                                    <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/0 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground" aria-hidden="true" />
+                                                </Link>
+                                            ) : (
+                                                <div className="flex items-center gap-3 px-2 py-2">{face}</div>
+                                            )}
+                                            {note && <ExpandableDescription text={note} markdown clampLines={2} threshold={140} className="border-border/60 border-t px-3 py-2 font-sans text-[12.5px] text-muted-foreground leading-[1.55]" />}
+                                        </li>
+                                    );
+                                }
                                 return (
-                                    <li key={op.id} className="list-none rounded-lg border border-transparent transition-colors hover:border-border hover:bg-muted/40">
+                                    <li key={op.key} className="list-none rounded-lg border border-transparent transition-colors hover:border-border hover:bg-muted/40">
                                         <Link to="/operators/$id" params={{ id: op.id }} className="group flex items-center gap-3 px-2 py-2 no-underline">
                                             <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted font-semibold text-[11px] text-foreground" style={{ borderBottom: `2px solid ${RARITY_VAR[op.rarity]}` }}>
                                                 <OperatorAvatar charId={op.id} name={op.name} />
