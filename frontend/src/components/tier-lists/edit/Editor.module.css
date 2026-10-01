@@ -367,14 +367,15 @@
     width: calc(var(--op-size) * 2 + var(--op-gap, 6px));
 }
 
-/* Pool: the grid sizes the tiles. A kind with no avatar photo still holds the square, and a banner spans two cells. */
-.poolGrid > .opTile[data-kind] {
+/* Pool: the grid sizes the tiles. A kind with no avatar photo still holds the square, and a banner spans two cells.
+   Descendant, not child: each tile sits in a `display: contents` list item, which a child selector never sees through. */
+.poolGrid .opTile[data-kind] {
     width: auto;
     height: auto;
     aspect-ratio: 1;
 }
 
-.poolGrid > .opTile[data-shape="wide"] {
+.poolGrid .opTile[data-shape="wide"] {
     grid-column: span 2;
     aspect-ratio: 2.1 / 1;
 }

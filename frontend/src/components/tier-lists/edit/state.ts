@@ -1,4 +1,4 @@
-import { DEFAULT_ENTITY_KINDS, type ITierEntity, parseEntityKey, type TierEntityKind, toTierEntity } from "#/lib/api/tier-entities";
+import { DEFAULT_ENTITY_KINDS, type ITierEntity, parseEntityKey, type TierEntityKind, toTierEntity, UNPLACED } from "#/lib/api/tier-entities";
 import type { ITierListDetail } from "#/lib/api/tier-lists";
 import type { TypedT } from "#/lib/i18n/messages";
 import { normalizeHexColor, operatorPlacementNote } from "../shared";
@@ -196,7 +196,7 @@ export function placedEntity(entityByKey: Record<string, ITierEntity>, key: stri
     const known = entityByKey[key];
     if (known) return known;
     const { kind, id } = parseEntityKey(key);
-    return toTierEntity(kind, id, null, { subOrder: 0, description: null, updatedAt: new Date(0).toISOString() });
+    return toTierEntity(kind, id, null, UNPLACED);
 }
 
 export function placedEntityKeys(state: IEditState): Set<string> {
@@ -225,6 +225,15 @@ export interface IPendingChange {
 /** The trimmed note on one placement, `""` when it has none. */
 export function entityDescription(state: IEditState, key: string): string {
     return (state.descriptionByKey[key] ?? "").trim();
+}
+
+/** Where each placed key sits: its tier and its index in that tier. */
+function placementsByKey(tiers: IEditTier[]): Map<string, { tier: IEditTier; subOrder: number }> {
+    const placements = new Map<string, { tier: IEditTier; subOrder: number }>();
+    for (const tier of tiers) {
+        for (const [i, key] of tier.entityKeys.entries()) placements.set(key, { tier, subOrder: i });
+    }
+    return placements;
 }
 
 export function diffStates(original: IEditState, current: IEditState, t: EditStateT): IPendingChange[] {
@@ -257,15 +266,8 @@ export function diffStates(original: IEditState, current: IEditState, t: EditSta
     const orderChanged = original.tiers.length === current.tiers.length && original.tiers.some((t, i) => current.tiers[i]?.id !== t.id);
     if (orderChanged) changes.push({ kind: "tier-move", label: t("edit.change.tiersReordered") });
 
-    const origPlacement = new Map<string, { tierId: string; subOrder: number }>();
-    for (const t of original.tiers) {
-        for (const [i, id] of t.entityKeys.entries()) origPlacement.set(id, { tierId: t.id, subOrder: i });
-    }
-
-    const currPlacement = new Map<string, { tierId: string; subOrder: number }>();
-    for (const t of current.tiers) {
-        for (const [i, id] of t.entityKeys.entries()) currPlacement.set(id, { tierId: t.id, subOrder: i });
-    }
+    const origPlacement = placementsByKey(original.tiers);
+    const currPlacement = placementsByKey(current.tiers);
 
     let added = 0;
     let removed = 0;
@@ -277,7 +279,7 @@ export function diffStates(original: IEditState, current: IEditState, t: EditSta
             added++;
             continue;
         }
-        if (then.tierId !== now.tierId) moved++;
+        if (then.tier.id !== now.tier.id) moved++;
         else if (then.subOrder !== now.subOrder) reordered++;
     }
     for (const id of origPlacement.keys()) {
@@ -315,19 +317,13 @@ export type PlacementChange =
  * Identity is the `${kind}:${id}` key, so two kinds sharing an id never collide.
  */
 export function planPlacementChanges(original: IEditState, current: IEditState): PlacementChange[] {
-    const origPlacement = new Map<string, { tierId: string; subOrder: number }>();
-    for (const tier of original.tiers) {
-        for (const [i, key] of tier.entityKeys.entries()) origPlacement.set(key, { tierId: tier.id, subOrder: i });
-    }
-    const currPlacement = new Map<string, { tier: IEditTier; subOrder: number }>();
-    for (const tier of current.tiers) {
-        for (const [i, key] of tier.entityKeys.entries()) currPlacement.set(key, { tier, subOrder: i });
-    }
+    const origPlacement = placementsByKey(original.tiers);
+    const currPlacement = placementsByKey(current.tiers);
 
     const currentTierIds = new Set(current.tiers.map((t) => t.id));
     // Keys whose original tier is gone: the save deletes that tier before placements, taking the row with it.
     const orphaned = new Set<string>();
-    for (const [key, then] of origPlacement) if (currPlacement.has(key) && !currentTierIds.has(then.tierId)) orphaned.add(key);
+    for (const [key, then] of origPlacement) if (currPlacement.has(key) && !currentTierIds.has(then.tier.id)) orphaned.add(key);
 
     const changes: PlacementChange[] = [];
     for (const [key, then] of origPlacement) {
@@ -338,7 +334,7 @@ export function planPlacementChanges(original: IEditState, current: IEditState):
             continue;
         }
         if (orphaned.has(key)) continue;
-        if (!isDraftId(now.tier.id) && now.tier.id === then.tierId && now.subOrder === then.subOrder) continue;
+        if (!isDraftId(now.tier.id) && now.tier.id === then.tier.id && now.subOrder === then.subOrder) continue;
         changes.push({ op: "move", kind, id, tier: now.tier, subOrder: now.subOrder });
     }
     for (const [key, now] of currPlacement) {

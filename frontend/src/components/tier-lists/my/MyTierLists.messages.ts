@@ -72,7 +72,7 @@ export const messages = {
         description: "Empty state heading when the player has no tier lists at all.",
     },
     "my.empty.body": {
-        text: "Create your first tier list to start ranking operators. You can publish it instantly and share it with anyone.",
+        text: "Create your first tier list to start ranking operators, enemies, events and more. You can publish it instantly and share it with anyone.",
         description: "Empty state body inviting the player to make their first list.",
     },
     "my.empty.action": {

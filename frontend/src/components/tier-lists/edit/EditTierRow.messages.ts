@@ -8,8 +8,8 @@ export const messages = {
         description: "Accessible name of a tier's label button in the editor, which opens its settings. {name} is the author's own tier label; keep the quotes.",
     },
     "edit.row.dropArea": {
-        text: "Operators in tier {name}",
-        description: "Accessible name of the area holding a tier's operators, which is also the drop target. {name} is the author's own tier label.",
+        text: "Entries in tier {name}",
+        description: "Accessible name of the area holding a tier's entries (operators, enemies, events or any other ranked thing), which is also the drop target. {name} is the author's own tier label.",
     },
     "edit.row.actions": {
         text: "Tier {name} actions",

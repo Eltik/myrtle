@@ -2,7 +2,7 @@ import { Store, useStore } from "@tanstack/react-store";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { ITierEntity } from "#/lib/api/tier-entities";
-import { EntityAvatar, entityAccent, entityShape } from "../entities";
+import { EntityAvatar, entityAccent, entityShape, WIDE_TILE_ASPECT } from "../entities";
 
 const TOUCH_LONG_PRESS_MS = 220;
 const DRAG_THRESHOLD_PX = 6;
@@ -449,7 +449,7 @@ function GhostPortal({ store, entityByKey }: IGhostPortalProps) {
 
     const size = tileSize > 0 ? tileSize : 64;
     // `tileSize` is the source tile's longer side, so a wide event tile keeps its banner proportion.
-    const height = entityShape(entity) === "wide" ? Math.round(size / 2.1) : size;
+    const height = entityShape(entity) === "wide" ? Math.round(size / WIDE_TILE_ASPECT) : size;
     const accent = entityAccent(entity);
 
     const style: React.CSSProperties = {

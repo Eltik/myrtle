@@ -12,7 +12,7 @@ import { Spinner } from "#/components/ui/spinner";
 import { Switch } from "#/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "#/components/ui/tooltip";
-import type { ITierEntity, TierEntityKind } from "#/lib/api/tier-entities";
+import { entityOwner, type ITierEntity, type TierEntityKind } from "#/lib/api/tier-entities";
 import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
@@ -22,11 +22,14 @@ import { useAnyDragLifted, usePoolIsOver } from "./drag-controller";
 import { EditableOpTile } from "./EditableOpTile";
 import styles from "./Editor.module.css";
 import type { messages } from "./KindPool.messages";
-import { type IPoolFacet, usePoolKind } from "./poolKinds";
+import { type IPoolFacet, type IPoolKind, usePoolKind } from "./poolKinds";
 
 /** A grid longer than this renders in pages of {@link PAGE} as it scrolls. The operator pool (~410) never pages; the enemy pool (~1,540) does. */
-export const PAGE_FROM = 600;
+const PAGE_FROM = 600;
+/** Tiles per page of a paged grid. */
 export const PAGE = 240;
+/** How far below the viewport the next page starts loading. */
+const LOAD_AHEAD_MARGIN = "320px 0px";
 
 export type CatalogueStatus = "pending" | "error" | "success";
 
@@ -58,46 +61,17 @@ const EMPTY: ITierEntity[] = [];
 export function KindPool({ kind, entities, status, onRetry, placedKeys, onUnplace, onPickerActivate, tabs, headerActions, rootClassName }: IKindPoolProps) {
     const t: TypedT<typeof messages> = useT("tierLists");
     const rt: TypedRichT<typeof messages> = useRichT("tierLists");
-    const config = usePoolKind(kind);
     const all = entities ?? EMPTY;
-    const [query, setQuery] = useState("");
-    const [selected, setSelected] = useState<Record<string, string[]>>({});
-    const [hideUsed, setHideUsed] = useState(true);
+    const config = usePoolKind(kind, all);
+    const { query, setQuery, selected, setFacet, hideUsed, setHideUsed, filtered, hasFilters, clearFilters } = usePoolFilters(all, config, placedKeys);
+    const { paged, visible, showMore } = usePages(filtered, `${query}\u0000${JSON.stringify(selected)}\u0000${hideUsed}`);
     const [expandedOpen, setExpandedOpen] = useState(false);
     const [mouseDragOver, setMouseDragOver] = useState(false);
-    const [limit, setLimit] = useState(PAGE);
     const dropRef = useRef<HTMLElement | null>(null);
     const touchIsOver = usePoolIsOver();
     const anyDragLifted = useAnyDragLifted();
     const isDragOver = touchIsOver || mouseDragOver;
-
-    const filtered = useMemo(() => {
-        const q = compactForSearch(query);
-        const matched = all.filter((entity) => {
-            for (const facet of config.facets) {
-                const want = selected[facet.id];
-                if (want && want.length > 0 && !want.includes(facet.valueOf(entity) ?? "")) return false;
-            }
-            if (hideUsed && placedKeys.has(entity.key)) return false;
-            if (q.length === 0) return true;
-            return config.searchTexts(entity).some((text) => Boolean(text) && compactForSearch(text ?? "").includes(q));
-        });
-        return config.compare ? matched.sort(config.compare) : matched;
-    }, [all, config, query, selected, hideUsed, placedKeys]);
-
-    // A new search or filter starts the pages over; placing a tile does not, so the grid never jumps back under a scrolling editor.
-    const filterKey = `${query}\u0000${JSON.stringify(selected)}\u0000${hideUsed}`;
-    // biome-ignore lint/correctness/useExhaustiveDependencies: `filterKey` is the trigger, not a value read inside
-    useEffect(() => setLimit(PAGE), [filterKey]);
-    const paged = filtered.length > PAGE_FROM;
-    const visible = paged ? filtered.slice(0, limit) : filtered;
-    const showMore = useCallback(() => setLimit((n) => n + PAGE), []);
-
     const totalAvailable = all.length;
-    const anySelected = Object.values(selected).some((v) => v.length > 0);
-    const hasFilters = query.length > 0 || anySelected || !hideUsed;
-
-    const setFacet = useCallback((id: string, values: string[]) => setSelected((prev) => ({ ...prev, [id]: values })), []);
 
     const handleOver = useCallback((e: React.DragEvent) => {
         if (!hasEntityDrag(e)) return;
@@ -123,52 +97,6 @@ export function KindPool({ kind, entities, status, onRetry, placedKeys, onUnplac
         [onUnplace],
     );
 
-    const handleClearFilters = useCallback(() => {
-        setQuery("");
-        setSelected({});
-        setHideUsed(true);
-    }, []);
-
-    const emptyState = (padding: string) => {
-        if (status === "pending") {
-            return (
-                <output className={cn("flex items-center justify-center gap-2 font-sans text-muted-foreground text-sm", padding)}>
-                    <Spinner />
-                    <span>{t("edit.pool.loading")}</span>
-                </output>
-            );
-        }
-        if (status === "error") {
-            return (
-                <Empty className={padding}>
-                    <EmptyHeader>
-                        <EmptyMedia variant="icon">
-                            <TriangleAlertIcon />
-                        </EmptyMedia>
-                        <EmptyTitle className="text-base">{t("edit.pool.loadFailed")}</EmptyTitle>
-                    </EmptyHeader>
-                    {onRetry && (
-                        <Button type="button" variant="outline" size="sm" onClick={onRetry}>
-                            <RotateCwIcon />
-                            {t("edit.pool.retry")}
-                        </Button>
-                    )}
-                </Empty>
-            );
-        }
-        return (
-            <Empty className={padding}>
-                <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                        <SearchIcon />
-                    </EmptyMedia>
-                    <EmptyTitle className="text-base">{t("edit.pool.emptyTitle")}</EmptyTitle>
-                    <EmptyDescription>{t("edit.pool.emptyBody")}</EmptyDescription>
-                </EmptyHeader>
-            </Empty>
-        );
-    };
-
     const pageFooter = paged && visible.length < filtered.length && (
         <LoadMore onVisible={showMore} shown={visible.length}>
             <p className="m-0 py-3 text-center font-mono text-[10.5px] text-muted-foreground tabular-nums">{t("edit.pool.more", { shown: visible.length, total: filtered.length })}</p>
@@ -188,7 +116,7 @@ export function KindPool({ kind, entities, status, onRetry, placedKeys, onUnplac
                     </div>
                     <div className="flex shrink-0 items-center gap-0.5">
                         {hasFilters && (
-                            <Button type="button" variant="ghost" size="xs" onClick={handleClearFilters} aria-label={t("edit.pool.clearFilters.label")}>
+                            <Button type="button" variant="ghost" size="xs" onClick={clearFilters} aria-label={t("edit.pool.clearFilters.label")}>
                                 <FilterXIcon />
                                 {t("edit.pool.clear")}
                             </Button>
@@ -210,15 +138,7 @@ export function KindPool({ kind, entities, status, onRetry, placedKeys, onUnplac
 
                 {tabs}
 
-                <Field>
-                    <FieldLabel className="sr-only">{config.searchLabel}</FieldLabel>
-                    <InputGroup>
-                        <InputGroupAddon>
-                            <SearchIcon aria-hidden="true" />
-                        </InputGroupAddon>
-                        <InputGroupInput value={query} onChange={(e) => setQuery((e.target as HTMLInputElement).value)} placeholder={t("edit.pool.search.placeholder")} type="search" aria-label={config.searchLabel} />
-                    </InputGroup>
-                </Field>
+                <PoolSearch label={config.searchLabel} value={query} onChange={setQuery} />
 
                 <section
                     ref={dropRef}
@@ -241,7 +161,7 @@ export function KindPool({ kind, entities, status, onRetry, placedKeys, onUnplac
                     )}
 
                     {filtered.length === 0 ? (
-                        emptyState("py-8")
+                        <PoolEmptyState status={status} onRetry={onRetry} className="py-8" />
                     ) : (
                         <ScrollArea scrollFade scrollbarGutter viewportClassName="p-2">
                             <ul className={styles.poolGrid} aria-label={config.gridLabel}>
@@ -275,15 +195,7 @@ export function KindPool({ kind, entities, status, onRetry, placedKeys, onUnplac
                     </DialogHeader>
 
                     <div className="flex flex-col gap-3 border-border border-y bg-muted/30 px-6 py-3">
-                        <Field>
-                            <FieldLabel className="sr-only">{config.searchLabel}</FieldLabel>
-                            <InputGroup>
-                                <InputGroupAddon>
-                                    <SearchIcon aria-hidden="true" />
-                                </InputGroupAddon>
-                                <InputGroupInput value={query} onChange={(e) => setQuery((e.target as HTMLInputElement).value)} placeholder={t("edit.pool.search.placeholder")} type="search" aria-label={config.searchLabel} autoFocus />
-                            </InputGroup>
-                        </Field>
+                        <PoolSearch label={config.searchLabel} value={query} onChange={setQuery} autoFocus />
 
                         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
                             {config.facets.map((facet) => (
@@ -302,12 +214,13 @@ export function KindPool({ kind, entities, status, onRetry, placedKeys, onUnplac
 
                     <div className="min-h-0 flex-1 overflow-hidden px-6 py-3">
                         {filtered.length === 0 ? (
-                            emptyState("py-16")
+                            <PoolEmptyState status={status} onRetry={onRetry} className="py-16" />
                         ) : (
                             <ScrollArea scrollFade={!anyDragLifted} scrollbarGutter viewportClassName="pr-2">
                                 <ul className={styles.poolGrid} aria-label={config.gridLabel}>
                                     {visible.map((entry) => {
                                         const placed = placedKeys.has(entry.key);
+                                        const owner = entityOwner(entry);
                                         return (
                                             <li key={entry.key} className="contents">
                                                 <Tooltip>
@@ -325,6 +238,7 @@ export function KindPool({ kind, entities, status, onRetry, placedKeys, onUnplac
                                                     />
                                                     <TooltipContent>
                                                         <span className="font-sans font-semibold text-xs">{entry.name}</span>
+                                                        {owner ? <span className="ms-1.5 font-sans text-xs opacity-70">{owner}</span> : null}
                                                         {placed ? <span className="ms-1.5 font-mono text-[10px] uppercase tracking-wider opacity-70">{t("edit.pool.placed")}</span> : null}
                                                     </TooltipContent>
                                                 </Tooltip>
@@ -338,7 +252,7 @@ export function KindPool({ kind, entities, status, onRetry, placedKeys, onUnplac
                     </div>
 
                     <DialogFooter className="justify-between border-border border-t px-6 py-3 sm:justify-between">
-                        <Button type="button" variant="ghost" size="sm" onClick={handleClearFilters} disabled={!hasFilters}>
+                        <Button type="button" variant="ghost" size="sm" onClick={clearFilters} disabled={!hasFilters}>
                             <FilterXIcon />
                             {t("edit.pool.clearFilters")}
                         </Button>
@@ -347,6 +261,113 @@ export function KindPool({ kind, entities, status, onRetry, placedKeys, onUnplac
                 </DialogPopup>
             </Dialog>
         </TooltipProvider>
+    );
+}
+
+/**
+ * The pool's search, facet selections and hide-placed switch, and the
+ * catalogue they leave, in the kind's pool order.
+ */
+function usePoolFilters(all: ITierEntity[], config: IPoolKind, placedKeys: Set<string>) {
+    const [query, setQuery] = useState("");
+    const [selected, setSelected] = useState<Record<string, string[]>>({});
+    const [hideUsed, setHideUsed] = useState(true);
+
+    const filtered = useMemo(() => {
+        const q = compactForSearch(query);
+        const matched = all.filter((entity) => {
+            for (const facet of config.facets) {
+                const want = selected[facet.id];
+                if (want && want.length > 0 && !want.includes(facet.valueOf(entity) ?? "")) return false;
+            }
+            if (hideUsed && placedKeys.has(entity.key)) return false;
+            if (q.length === 0) return true;
+            return config.searchTexts(entity).some((text) => Boolean(text) && compactForSearch(text ?? "").includes(q));
+        });
+        return config.compare ? matched.sort(config.compare) : matched;
+    }, [all, config, query, selected, hideUsed, placedKeys]);
+
+    const setFacet = useCallback((id: string, values: string[]) => setSelected((prev) => ({ ...prev, [id]: values })), []);
+    const clearFilters = useCallback(() => {
+        setQuery("");
+        setSelected({});
+        setHideUsed(true);
+    }, []);
+    const anySelected = Object.values(selected).some((v) => v.length > 0);
+    const hasFilters = query.length > 0 || anySelected || !hideUsed;
+
+    return { query, setQuery, selected, setFacet, hideUsed, setHideUsed, filtered, hasFilters, clearFilters };
+}
+
+/**
+ * The slice of a long grid rendered so far. A new `filterKey` (search or
+ * filter) starts the pages over; placing a tile does not, so the grid never
+ * jumps back under a scrolling editor.
+ */
+function usePages(filtered: ITierEntity[], filterKey: string) {
+    const [limit, setLimit] = useState(PAGE);
+    // biome-ignore lint/correctness/useExhaustiveDependencies: `filterKey` is the trigger, not a value read inside
+    useEffect(() => setLimit(PAGE), [filterKey]);
+    const paged = filtered.length > PAGE_FROM;
+    const visible = paged ? filtered.slice(0, limit) : filtered;
+    const showMore = useCallback(() => setLimit((n) => n + PAGE), []);
+    return { paged, visible, showMore };
+}
+
+function PoolSearch({ label, value, onChange, autoFocus }: { label: string; value: string; onChange: (value: string) => void; autoFocus?: boolean }) {
+    const t: TypedT<typeof messages> = useT("tierLists");
+    return (
+        <Field>
+            <FieldLabel className="sr-only">{label}</FieldLabel>
+            <InputGroup>
+                <InputGroupAddon>
+                    <SearchIcon aria-hidden="true" />
+                </InputGroupAddon>
+                <InputGroupInput value={value} onChange={(e) => onChange((e.target as HTMLInputElement).value)} placeholder={t("edit.pool.search.placeholder")} type="search" aria-label={label} autoFocus={autoFocus} />
+            </InputGroup>
+        </Field>
+    );
+}
+
+/** What the grid shows instead of tiles: the catalogue loading, failing, or nothing matching the filters. */
+function PoolEmptyState({ status, onRetry, className }: { status: CatalogueStatus; onRetry?: () => void; className: string }) {
+    const t: TypedT<typeof messages> = useT("tierLists");
+    if (status === "pending") {
+        return (
+            <output className={cn("flex items-center justify-center gap-2 font-sans text-muted-foreground text-sm", className)}>
+                <Spinner />
+                <span>{t("edit.pool.loading")}</span>
+            </output>
+        );
+    }
+    if (status === "error") {
+        return (
+            <Empty className={className}>
+                <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                        <TriangleAlertIcon />
+                    </EmptyMedia>
+                    <EmptyTitle className="text-base">{t("edit.pool.loadFailed")}</EmptyTitle>
+                </EmptyHeader>
+                {onRetry && (
+                    <Button type="button" variant="outline" size="sm" onClick={onRetry}>
+                        <RotateCwIcon />
+                        {t("edit.pool.retry")}
+                    </Button>
+                )}
+            </Empty>
+        );
+    }
+    return (
+        <Empty className={className}>
+            <EmptyHeader>
+                <EmptyMedia variant="icon">
+                    <SearchIcon />
+                </EmptyMedia>
+                <EmptyTitle className="text-base">{t("edit.pool.emptyTitle")}</EmptyTitle>
+                <EmptyDescription>{t("edit.pool.emptyBody")}</EmptyDescription>
+            </EmptyHeader>
+        </Empty>
     );
 }
 
@@ -397,7 +418,7 @@ function LoadMore({ onVisible, shown, children }: { onVisible: () => void; shown
             (entries) => {
                 if (entries.some((e) => e.isIntersecting)) onVisible();
             },
-            { rootMargin: "320px 0px" },
+            { rootMargin: LOAD_AHEAD_MARGIN },
         );
         io.observe(el);
         return () => io.disconnect();

@@ -1,13 +1,14 @@
 use axum::Json;
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::AuthUser;
 use crate::app::services::tier_list::find_and_authorize;
-use crate::app::services::tier_list::get_by_slug;
 use crate::app::services::tier_list::invalidate_detail;
+use crate::app::services::tier_list::load_detail;
+use crate::app::services::tier_list::{read_snapshot, resolve_snapshot, snapshot_of};
 use crate::app::state::AppState;
 use crate::core::auth::permissions::Permission;
 use crate::database::models::tier_list::TierListVersion;
@@ -16,13 +17,18 @@ use crate::database::queries::tier_lists::get_versions;
 use crate::database::queries::tier_lists::latest_version;
 
 /// Published snapshots of a tier list, newest first.
+///
+/// Every `snapshot` is served in the live detail's shape (`TierDetail[]`),
+/// each placement resolved against `server`'s game data, whatever shape it
+/// was stored in.
 #[utoipa::path(
     get,
     path = "/tier-lists/{slug}/versions",
     operation_id = "tier_list_versions_list",
     tag = "tier-lists",
     params(
-        ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
+        ("slug" = String, Path, description = "Tier list slug, as it appears in its URL."),
+        ("server" = Option<String>, Query, description = "Game server whose data resolves each placement's `entity`. Defaults to the deployment's default server.")
     ),
     responses(
         (status = 200, description = "Published versions.", body = Vec<TierListVersion>),
@@ -35,9 +41,26 @@ use crate::database::queries::tier_lists::latest_version;
 pub async fn list(
     State(state): State<AppState>,
     Path(slug): Path<String>,
+    Query(query): Query<super::ServerQuery>,
 ) -> Result<Json<Vec<TierListVersion>>, ApiError> {
     let tier_list = super::load_tier_list(&state, &slug).await?;
-    let versions = get_versions(&state.db, tier_list.id).await?;
+    let mut versions = get_versions(&state.db, tier_list.id).await?;
+    let server = query.or_default(&state);
+    let gd = state.game_data(server);
+    let assets = state.asset_index(server);
+    for v in &mut versions {
+        match read_snapshot(&v.snapshot) {
+            Ok(tiers) => {
+                v.snapshot = serde_json::to_value(resolve_snapshot(tiers, &gd, &assets))
+                    .map_err(|e| ApiError::Internal(e.into()))?;
+            }
+            // Served as stored rather than failing the whole history; the
+            // client skips a tier it cannot read.
+            Err(e) => {
+                tracing::warn!(slug, version = v.version, error = %e, "unreadable tier list snapshot");
+            }
+        }
+    }
     Ok(Json(versions))
 }
 
@@ -78,8 +101,9 @@ pub async fn publish(
     let user_id: Uuid = auth.user_uuid()?;
     let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Publish).await?;
 
-    let detail = get_by_slug(&state, &slug).await?;
-    let snapshot = serde_json::to_value(&detail.tiers).map_err(|e| ApiError::Internal(e.into()))?;
+    let detail = load_detail(&state, &slug).await?;
+    let snapshot = serde_json::to_value(snapshot_of(&detail.tiers))
+        .map_err(|e| ApiError::Internal(e.into()))?;
 
     let next_version = latest_version(&state.db, list.id).await?.unwrap_or(0) + 1;
 

@@ -16,7 +16,7 @@ use crate::app::validation::{
     LIST_DESCRIPTION_MAX, LIST_NAME_MAX, validate_length, validate_opt_length,
 };
 use crate::core::auth::permissions::Permission;
-use crate::database::models::tier_list::TierList;
+use crate::database::models::tier_list::{EntityKind, TierList};
 use crate::database::queries::tier_lists::delete_list;
 use crate::database::queries::tier_lists::find_all_active;
 use crate::database::queries::tier_lists::find_by_user;
@@ -35,7 +35,8 @@ fn validate_list_body(name: &str, description: Option<&str>) -> Result<(), ApiEr
     operation_id = "tier_list_get",
     tag = "tier-lists",
     params(
-        ("slug" = String, Path, description = "Tier list slug, as it appears in its URL.")
+        ("slug" = String, Path, description = "Tier list slug, as it appears in its URL."),
+        ("server" = Option<String>, Query, description = "Game server whose data resolves each placement's `entity`: `en`, `jp`, `kr`, `cn`, `tw` or `bili`. Defaults to the deployment's default server.")
     ),
     responses(
         (status = 200, description = "The list.", body = crate::app::services::tier_list::TierListDetail),
@@ -48,8 +49,9 @@ fn validate_list_body(name: &str, description: Option<&str>) -> Result<(), ApiEr
 pub async fn get(
     State(state): State<AppState>,
     Path(slug): Path<String>,
+    Query(query): Query<super::ServerQuery>,
 ) -> Result<Json<services::tier_list::TierListDetail>, ApiError> {
-    let detail = get_by_slug(&state, &slug).await?;
+    let detail = get_by_slug(&state, &slug, query.or_default(&state)).await?;
     Ok(Json(detail))
 }
 
@@ -74,6 +76,7 @@ pub async fn list(State(state): State<AppState>) -> Result<Json<Vec<TierList>>, 
 #[derive(Deserialize)]
 pub struct ListDetailsQuery {
     pub limit: Option<i64>,
+    pub server: Option<crate::core::hypergryph::constants::Server>,
 }
 
 /// Every listed tier list, with its tiers and placements resolved.
@@ -82,7 +85,8 @@ pub struct ListDetailsQuery {
     path = "/tier-lists/details",
     tag = "tier-lists",
     params(
-        ("limit" = Option<i64>, Query, description = "Maximum lists to return.")
+        ("limit" = Option<i64>, Query, description = "Maximum lists to return."),
+        ("server" = Option<String>, Query, description = "Game server whose data resolves each placement's `entity`. Defaults to the deployment's default server.")
     ),
     responses(
         (status = 200, description = "Tier lists with their contents.", body = Vec<crate::app::services::tier_list::TierListDetail>),
@@ -96,7 +100,8 @@ pub async fn list_details(
     Query(params): Query<ListDetailsQuery>,
 ) -> Result<Json<Vec<services::tier_list::TierListDetail>>, ApiError> {
     let limit = params.limit.unwrap_or(60).clamp(1, 200);
-    let details = services::tier_list::list_details(&state, limit).await?;
+    let server = params.server.unwrap_or(state.default_server);
+    let details = services::tier_list::list_details(&state, limit, server).await?;
     Ok(Json(details))
 }
 
@@ -231,9 +236,16 @@ pub async fn delete(
 pub struct UpdateRequest {
     pub name: String,
     pub description: Option<String>,
+    /// The kinds the list's editor offers, in pool tab order. Omitted keeps
+    /// the stored set; an empty set is a 400. Dropping a kind leaves every
+    /// placement of it on the list: the set is what the pool offers, not what
+    /// the list may hold.
+    #[serde(default)]
+    pub entity_kinds: Option<Vec<EntityKind>>,
 }
 
-/// Rename a tier list or change its description.
+/// Rename a tier list, change its description, or change the kinds its
+/// editor offers.
 /// Needs edit rights on the list: its owner, or a grant from
 /// `/tier-lists/{slug}/permissions`.
 #[utoipa::path(
@@ -273,6 +285,7 @@ pub async fn update(
         auth.role,
         &body.name,
         body.description.as_deref(),
+        body.entity_kinds.as_deref(),
     )
     .await?;
     invalidate_detail(&state, &slug).await;

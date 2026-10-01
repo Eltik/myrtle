@@ -32,7 +32,7 @@ export const messages = {
         description: "Field label for the tier's description.",
     },
     "edit.tierSettings.descriptionPlaceholder": {
-        text: "When should an operator land here?",
+        text: "What earns a place in this tier?",
         description: "Placeholder in the tier description field.",
     },
     "edit.tierSettings.descriptionHint": {
@@ -40,16 +40,16 @@ export const messages = {
         description: "Explains where the tier description appears: in the hover card and the tier details dialog.",
     },
     "edit.tierSettings.operatorCount": {
-        text: "{count, plural, one {operator} other {operators}} in this tier",
-        description: "Follows the operator count at the foot of the dialog; the number itself is rendered just before it.",
+        text: "{count, plural, one {entry} other {entries}} in this tier",
+        description: "Follows the count of entries (operators, enemies, events or any other ranked thing) at the foot of the dialog; the number itself is rendered just before it.",
     },
     "edit.tierSettings.clearConfirmPrompt": {
         text: "Remove all?",
         description: "Asks the author to confirm emptying the tier of every operator.",
     },
     "edit.tierSettings.clear": {
-        text: "Clear operators",
-        description: "Button that takes every operator out of this tier.",
+        text: "Clear tier",
+        description: "Button that takes every entry out of this tier and back into the pool.",
     },
     "edit.tierSettings.deleteConfirmPrompt": {
         text: "Delete this tier?",

@@ -21,5 +21,7 @@ pub mod stats;
 pub mod story;
 pub mod story_community;
 pub mod story_progress;
+pub mod story_sprite_thumb;
+pub mod tier_entity;
 pub mod tier_list;
 pub mod user;

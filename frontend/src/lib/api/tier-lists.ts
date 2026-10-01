@@ -25,9 +25,9 @@ import type { OperatorProfession } from "#/types/operators";
 import { type IBackendStatus, parseError } from "./_shared";
 import { requireSiteToken } from "./_shared.server";
 import { DEFAULT_GAMEDATA_SERVER, gamedataKey, resolveGamedataServer } from "./gamedata";
-import { DEFAULT_ENTITY_KINDS, type ITierEntity, isOperatorEntity, type TierEntityKind, toTierEntity } from "./tier-entities";
+import { DEFAULT_ENTITY_KINDS, entityArtFit, type ITierEntity, isOperatorEntity, type TierEntityKind, toTierEntity } from "./tier-entities";
 
-export type { ITierEntity, ITierOperator, ITierUnresolvedEntity, TierEntityKind } from "./tier-entities";
+export type { ITierEntity, ITierOperator, TierEntityKind } from "./tier-entities";
 
 const VIEW_SESSION_COOKIE = "mtl_sid";
 
@@ -101,11 +101,11 @@ function placementEntity(p: PlacementDetail): ITierEntity {
     return toTierEntity(p.entity_kind, p.entity_id, p.entity, { subOrder: p.sub_order, description: p.description, updatedAt: p.updated_at });
 }
 
-/** A card preview's tile: an operator as before, any other resolved kind with its own icon. A placement the served data does not know is left off the card. */
+/** A card preview's tile: an operator with its rarity and class, any other resolved kind with its own icon. A placement the served data does not know is left off the card. */
 function toCardOperator(p: PlacementDetail): IOperator | null {
     const entity = placementEntity(p);
     if (!entity.resolved) return null;
-    if (!isOperatorEntity(entity)) return { id: entity.id, name: entity.name, rarity: 1, role: "", arch: "", kind: entity.kind, icon: entity.icon };
+    if (!isOperatorEntity(entity)) return { id: entity.id, name: entity.name, rarity: 1, role: "", arch: "", kind: entity.kind, icon: entity.icon, fit: entityArtFit(entity) };
     return {
         id: entity.id,
         name: entity.name,

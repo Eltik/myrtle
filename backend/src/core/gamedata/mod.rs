@@ -52,6 +52,7 @@ use crate::core::startup;
 pub mod assets;
 pub mod enrich;
 pub mod profile;
+pub mod story_sprites;
 pub mod tables;
 pub mod types;
 
@@ -145,6 +146,7 @@ const BOOT_TABLES: &[&str] = &[
     "chapter_table",
     "gamedata_const",
     "mission_table",
+    "handbook_team_table",
 ];
 
 /// The steps [`AssetIndex::build`] reports, in order.
@@ -292,6 +294,10 @@ pub fn init_game_data(
     let mission_file: crate::core::gamedata::types::mission::MissionTableFile =
         load_table_or_warn(data_dir, "mission_table", &mut warnings);
     let missions = crate::core::gamedata::types::mission::MissionData::from_table(mission_file);
+    let team_file: crate::core::gamedata::types::handbook_team::HandbookTeamTableFile =
+        load_table_or_warn(data_dir, "handbook_team_table", &mut warnings);
+    let autochess_bonds =
+        crate::core::gamedata::types::autochess::load_autochess_bonds(data_dir, &mut warnings);
     // Layout-counted base resources (Wang's Influence/Territory) are defined
     // only in the term glossary; the base scorer reads them off building data.
     building_file.layout_terms =
@@ -500,6 +506,8 @@ pub fn init_game_data(
             campaign_rotations,
             consts,
             missions,
+            factions: team_file.teams,
+            autochess_bonds,
         },
         assets,
     ))

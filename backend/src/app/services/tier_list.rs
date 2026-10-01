@@ -1,9 +1,13 @@
 use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
+use crate::app::services::tier_entity::{self, EntitySummary};
 use crate::app::state::AppState;
 use crate::core::auth::permissions::{GlobalRole, Permission};
+use crate::core::gamedata::assets::AssetIndex;
+use crate::core::gamedata::types::GameData;
+use crate::core::hypergryph::constants::Server;
 use crate::database::models::tier_list::{
-    Tier, TierList, TierListFlair, TierListStats, TierPlacement,
+    EntityKind, Tier, TierList, TierListFlair, TierListStats, TierPlacement,
 };
 use crate::database::queries::tier_lists as queries;
 use crate::database::queries::tier_lists::count_by_user;
@@ -49,11 +53,132 @@ pub struct TierListAuthor {
 
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct TierDetail {
     #[serde(flatten)]
     pub tier: Tier,
+    pub placements: Vec<PlacementDetail>,
+}
+
+/// A stored placement and what it points at in the served game data.
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Clone, Serialize, Deserialize)]
+pub struct PlacementDetail {
+    #[serde(flatten)]
+    pub placement: TierPlacement,
+    /// `None` when the served game data has no such entity (a CN-only operator
+    /// read on EN, an id from a removed kind). The placement is still served,
+    /// so the client can show it rather than silently drop it.
+    pub entity: Option<EntitySummary>,
+}
+
+impl PlacementDetail {
+    const fn unresolved(placement: TierPlacement) -> Self {
+        Self {
+            placement,
+            entity: None,
+        }
+    }
+}
+
+/// One tier as a published version stores it: the rows, never the resolved
+/// entities, so a snapshot reads in whatever language and data it is served
+/// with. Snapshots written before entity kinds existed carry `operator_id` and
+/// no kind, which [`TierPlacement`]'s serde attributes read as operators.
+#[derive(Serialize, Deserialize)]
+pub struct TierSnapshot {
+    #[serde(flatten)]
+    pub tier: Tier,
     pub placements: Vec<TierPlacement>,
+}
+
+/// Parse a stored `tier_list_versions.snapshot`, old shape or new.
+///
+/// # Errors
+/// When the JSON is not a list of tiers with placements.
+pub fn read_snapshot(snapshot: &serde_json::Value) -> Result<Vec<TierSnapshot>, serde_json::Error> {
+    Vec::<TierSnapshot>::deserialize(snapshot)
+}
+
+/// The snapshot a publish stores for `tiers`.
+pub fn snapshot_of(tiers: &[TierDetail]) -> Vec<TierSnapshot> {
+    tiers
+        .iter()
+        .map(|t| TierSnapshot {
+            tier: t.tier.clone(),
+            placements: t.placements.iter().map(|p| p.placement.clone()).collect(),
+        })
+        .collect()
+}
+
+/// A snapshot in the live detail's shape, resolved against `gd` and `assets`.
+pub fn resolve_snapshot(
+    snapshot: Vec<TierSnapshot>,
+    gd: &GameData,
+    assets: &AssetIndex,
+) -> Vec<TierDetail> {
+    snapshot
+        .into_iter()
+        .map(|t| TierDetail {
+            tier: t.tier,
+            placements: t
+                .placements
+                .into_iter()
+                .map(|p| resolve_placement(p, gd, assets))
+                .collect(),
+        })
+        .collect()
+}
+
+fn resolve_entity(
+    placement: &TierPlacement,
+    gd: &GameData,
+    assets: &AssetIndex,
+) -> Option<EntitySummary> {
+    tier_entity::resolve(gd, assets, placement.entity_kind, &placement.entity_id)
+}
+
+fn resolve_placement(
+    placement: TierPlacement,
+    gd: &GameData,
+    assets: &AssetIndex,
+) -> PlacementDetail {
+    let entity = resolve_entity(&placement, gd, assets);
+    PlacementDetail { placement, entity }
+}
+
+/// Fill every placement's `entity` from `gd`, icons from `assets`.
+fn resolve_detail(detail: &mut TierListDetail, gd: &GameData, assets: &AssetIndex) {
+    for tier in &mut detail.tiers {
+        for p in &mut tier.placements {
+            p.entity = resolve_entity(&p.placement, gd, assets);
+        }
+    }
+}
+
+/// Reject a `(kind, id)` that no loaded server's game data (or, for a story
+/// sprite, asset extract) knows.
+///
+/// Any server, not only the default: a CN-locale editor places operators EN has
+/// not released, and the list must accept what that editor's pool offers.
+///
+/// # Errors
+/// `400` naming the kind and id.
+pub fn validate_entity(state: &AppState, kind: EntityKind, id: &str) -> Result<(), ApiError> {
+    let loaded: Vec<_> = state
+        .servers
+        .values()
+        .filter(|sd| sd.loaded.load(std::sync::atomic::Ordering::Acquire))
+        .map(|sd| (sd.game_data.load_full(), sd.asset_index.load_full()))
+        .collect();
+    tier_entity::validate(
+        loaded
+            .iter()
+            .map(|(gd, assets)| (gd.as_ref(), assets.as_ref())),
+        kind,
+        id,
+    )
 }
 
 fn assemble_details(
@@ -63,6 +188,7 @@ fn assemble_details(
     stats: Vec<TierListStats>,
     flairs: Vec<TierListFlair>,
     authors: Vec<TierListAuthor>,
+    (gd, assets): (&GameData, &AssetIndex),
 ) -> Vec<TierListDetail> {
     let mut tiers_by_list: HashMap<Uuid, Vec<Tier>> = HashMap::new();
     for tier in tiers {
@@ -97,7 +223,12 @@ fn assemble_details(
                 .unwrap_or_default()
                 .into_iter()
                 .map(|tier| {
-                    let placements = placements_by_tier.remove(&tier.id).unwrap_or_default();
+                    let placements = placements_by_tier
+                        .remove(&tier.id)
+                        .unwrap_or_default()
+                        .into_iter()
+                        .map(|p| resolve_placement(p, gd, assets))
+                        .collect();
                     TierDetail { tier, placements }
                 })
                 .collect();
@@ -161,7 +292,27 @@ pub async fn find_and_authorize(
     Ok(list)
 }
 
-pub async fn get_by_slug(state: &AppState, slug: &str) -> Result<TierListDetail, ApiError> {
+/// The list as `GET /tier-lists/{slug}` serves it, with every placement
+/// resolved against `server`'s game data (the default server's, when `server`
+/// is not loaded).
+pub async fn get_by_slug(
+    state: &AppState,
+    slug: &str,
+    server: Server,
+) -> Result<TierListDetail, ApiError> {
+    let mut detail = load_detail(state, slug).await?;
+    resolve_detail(
+        &mut detail,
+        &state.game_data(server),
+        &state.asset_index(server),
+    );
+    Ok(detail)
+}
+
+/// The stored list, cached, with no placement resolved. Resolution happens per
+/// request so one cache entry serves every server and follows a game-data
+/// reload.
+pub async fn load_detail(state: &AppState, slug: &str) -> Result<TierListDetail, ApiError> {
     let key = CacheKey::TierList { slug };
     if let Some(cached) = state.cache.get::<TierListDetail>(&key).await {
         return Ok(cached);
@@ -209,7 +360,12 @@ pub async fn get_by_slug(state: &AppState, slug: &str) -> Result<TierListDetail,
     let tiers = tiers
         .into_iter()
         .map(|tier| {
-            let placements = placement_map.remove(&tier.id).unwrap_or_default();
+            let placements = placement_map
+                .remove(&tier.id)
+                .unwrap_or_default()
+                .into_iter()
+                .map(PlacementDetail::unresolved)
+                .collect();
             TierDetail { tier, placements }
         })
         .collect();
@@ -225,7 +381,11 @@ pub async fn get_by_slug(state: &AppState, slug: &str) -> Result<TierListDetail,
     Ok(detail)
 }
 
-pub async fn list_details(state: &AppState, limit: i64) -> Result<Vec<TierListDetail>, ApiError> {
+pub async fn list_details(
+    state: &AppState,
+    limit: i64,
+    server: Server,
+) -> Result<Vec<TierListDetail>, ApiError> {
     let lists = find_all_active_limited(&state.db, limit).await?;
     let list_ids: Vec<Uuid> = lists.iter().map(|list| list.id).collect();
     let flair_ids: Vec<i16> = lists
@@ -264,7 +424,13 @@ pub async fn list_details(state: &AppState, limit: i64) -> Result<Vec<TierListDe
     let placements = get_placements_for_tiers(&state.db, &tier_ids).await?;
 
     Ok(assemble_details(
-        lists, tiers, placements, stats, flairs, authors,
+        lists,
+        tiers,
+        placements,
+        stats,
+        flairs,
+        authors,
+        (&state.game_data(server), &state.asset_index(server)),
     ))
 }
 
@@ -300,15 +466,37 @@ pub async fn update_list(
     role: GlobalRole,
     name: &str,
     description: Option<&str>,
+    entity_kinds: Option<&[EntityKind]>,
 ) -> Result<TierList, ApiError> {
+    let kinds = entity_kinds.map(offered_kinds).transpose()?;
     let list = find_by_slug(&state.db, slug)
         .await?
         .ok_or(ApiError::NotFound)?;
     check_permission(state, &list, user_id, role, Permission::Edit).await?;
-    let updated = update(&state.db, list.id, name, description)
+    let updated = update(&state.db, list.id, name, description, kinds.as_deref())
         .await
         .map_err(ApiError::from)?;
     Ok(updated)
+}
+
+/// A list's offered kinds as stored: first sighting kept, order kept.
+///
+/// # Errors
+/// `400` when the set is empty: a list's editor offers at least one kind.
+fn offered_kinds(kinds: &[EntityKind]) -> Result<Vec<String>, ApiError> {
+    let mut out: Vec<String> = Vec::with_capacity(kinds.len());
+    for kind in kinds {
+        let s = kind.as_str().to_owned();
+        if !out.contains(&s) {
+            out.push(s);
+        }
+    }
+    if out.is_empty() {
+        return Err(ApiError::BadRequest(
+            "entity_kinds: a list offers at least one kind".into(),
+        ));
+    }
+    Ok(out)
 }
 
 pub async fn invalidate_detail(state: &AppState, slug: &str) {
@@ -336,4 +524,87 @@ fn generate_slug(name: &str) -> String {
         })
         .collect();
     format!("{base}-{suffix}")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn offered_kinds_dedupe_in_order_and_refuse_none() {
+        let kinds = offered_kinds(&[EntityKind::Enemy, EntityKind::Operator, EntityKind::Enemy])
+            .expect("non-empty");
+        assert_eq!(kinds, ["enemy", "operator"]);
+        assert!(matches!(offered_kinds(&[]), Err(ApiError::BadRequest(_))));
+    }
+
+    #[test]
+    fn an_old_snapshot_reads_as_operators() {
+        let old = serde_json::json!([{
+            "id": "6f1d0c52-6f43-4a39-9d0e-6b8f0f6c1a01",
+            "tier_list_id": "6f1d0c52-6f43-4a39-9d0e-6b8f0f6c1a02",
+            "name": "S",
+            "display_order": 0,
+            "color": "#dc4d56",
+            "description": null,
+            "placements": [{
+                "tier_id": "6f1d0c52-6f43-4a39-9d0e-6b8f0f6c1a01",
+                "operator_id": "char_002_amiya",
+                "sub_order": 3,
+                "description": "why",
+                "updated_at": "2026-01-02T03:04:05Z"
+            }]
+        }]);
+        let tiers = read_snapshot(&old).expect("old snapshot parses");
+        let p = &tiers[0].placements[0];
+        assert_eq!(p.entity_kind, EntityKind::Operator);
+        assert_eq!(p.entity_id, "char_002_amiya");
+        assert_eq!(p.sub_order, 3);
+        assert_eq!(p.description.as_deref(), Some("why"));
+    }
+
+    #[test]
+    fn a_cache_entry_from_before_kinds_still_reads() {
+        // `PlacementDetail` flattens `TierPlacement`, so the alias and default
+        // have to survive serde's buffered flatten path, not only the direct one.
+        let old = serde_json::json!({
+            "tier_id": "6f1d0c52-6f43-4a39-9d0e-6b8f0f6c1a01",
+            "operator_id": "char_002_amiya",
+            "sub_order": 2,
+            "description": null,
+            "updated_at": "2026-01-02T03:04:05Z"
+        });
+        let p: PlacementDetail = serde_json::from_value(old).expect("old cache entry parses");
+        assert_eq!(p.placement.entity_kind, EntityKind::Operator);
+        assert_eq!(p.placement.entity_id, "char_002_amiya");
+        assert_eq!(p.placement.sub_order, 2);
+        assert!(p.entity.is_none());
+    }
+
+    #[test]
+    fn a_new_snapshot_round_trips_without_resolved_entities() {
+        let old = serde_json::json!([{
+            "id": "6f1d0c52-6f43-4a39-9d0e-6b8f0f6c1a01",
+            "tier_list_id": "6f1d0c52-6f43-4a39-9d0e-6b8f0f6c1a02",
+            "name": "S",
+            "display_order": 0,
+            "color": null,
+            "description": null,
+            "placements": [{
+                "tier_id": "6f1d0c52-6f43-4a39-9d0e-6b8f0f6c1a01",
+                "operator_id": "char_002_amiya",
+                "sub_order": 0,
+                "description": null,
+                "updated_at": "2026-01-02T03:04:05Z"
+            }]
+        }]);
+        let written = serde_json::to_value(read_snapshot(&old).expect("parses")).expect("writes");
+        let placement = &written[0]["placements"][0];
+        assert_eq!(placement["entity_kind"], "operator");
+        assert_eq!(placement["entity_id"], "char_002_amiya");
+        assert!(placement.get("operator_id").is_none());
+        assert!(placement.get("entity").is_none());
+        let again = read_snapshot(&written).expect("new shape parses");
+        assert_eq!(again[0].placements[0].entity_id, "char_002_amiya");
+    }
 }

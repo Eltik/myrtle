@@ -32,16 +32,16 @@ export const messages = {
         description: "Save step: writing a tier's edited label, colour or description. {name} is the author's own tier label; keep the quotes.",
     },
     "edit.save.removingOperator": {
-        text: "Removing operator",
-        description: "Save step: taking one operator off the board.",
+        text: "Removing entry",
+        description: "Save step: taking one entry (an operator, enemy, event or any other ranked thing) off the board.",
     },
     "edit.save.movingOperator": {
-        text: "Moving operator",
-        description: "Save step: moving one operator to another tier or another position.",
+        text: "Moving entry",
+        description: "Save step: moving one entry (an operator, enemy, event or any other ranked thing) to another tier or another position.",
     },
     "edit.save.placingOperator": {
-        text: "Placing operator",
-        description: "Save step: adding one operator to a tier.",
+        text: "Placing entry",
+        description: "Save step: adding one entry (an operator, enemy, event or any other ranked thing) to a tier.",
     },
     "edit.save.updatingDescription": {
         text: "Updating description",

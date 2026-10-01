@@ -1,4 +1,4 @@
-import type { TierEntityKind } from "#/lib/api/tier-entities";
+import type { ArtFit, TierEntityKind } from "#/lib/api/tier-entities";
 
 export interface IOperator {
     id: string;
@@ -10,6 +10,8 @@ export interface IOperator {
     kind?: Exclude<TierEntityKind, "operator">;
     /** The non-operator's resolved icon path, `null` when the extract has no art. */
     icon?: string | null;
+    /** How the non-operator's art sits in its tile, see `entityArtFit`. */
+    fit?: ArtFit;
 }
 
 export interface ITierEntry {

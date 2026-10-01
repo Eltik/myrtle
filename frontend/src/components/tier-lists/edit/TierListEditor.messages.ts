@@ -12,7 +12,7 @@ export const messages = {
         description: "Shown in place of the board when the list has no tiers.",
     },
     "edit.board.emptyBody": {
-        text: "Create your first tier to start ranking operators.",
+        text: "Create your first tier to start ranking.",
         description: "Second line of the empty board state in the editor.",
     },
     "edit.board.addTier": {

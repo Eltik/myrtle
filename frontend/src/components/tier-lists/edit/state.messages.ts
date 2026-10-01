@@ -33,20 +33,20 @@ export const messages = {
         description: "Pending change: the tiers were moved into a different order.",
     },
     "edit.change.placed": {
-        text: "{count, plural, one {# operator} other {# operators}} placed",
-        description: "Pending change: operators were added to a tier.",
+        text: "{count, plural, one {# entry} other {# entries}} placed",
+        description: "Pending change: entries (operators, enemies, events or any other ranked thing) were added to a tier.",
     },
     "edit.change.moved": {
-        text: "{count, plural, one {# operator} other {# operators}} moved",
-        description: "Pending change: operators were moved from one tier to another.",
+        text: "{count, plural, one {# entry} other {# entries}} moved",
+        description: "Pending change: entries were moved from one tier to another.",
     },
     "edit.change.reordered": {
-        text: "{count, plural, one {# operator} other {# operators}} reordered",
-        description: "Pending change: operators changed position within their own tier.",
+        text: "{count, plural, one {# entry} other {# entries}} reordered",
+        description: "Pending change: entries changed position within their own tier.",
     },
     "edit.change.unplaced": {
-        text: "{count, plural, one {# operator} other {# operators}} unplaced",
-        description: "Pending change: operators were taken off the board and back into the pool.",
+        text: "{count, plural, one {# entry} other {# entries}} unplaced",
+        description: "Pending change: entries were taken off the board and back into the pool.",
     },
     "edit.change.described": {
         text: "{count, plural, one {# description} other {# descriptions}} edited",

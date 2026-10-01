@@ -5,7 +5,7 @@ import { Button } from "#/components/ui/button";
 import { useErrorMessage } from "#/components/ui/error-message";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
-import { type ITierEntity, parseEntityKey, type TierEntityKind, toTierEntity } from "#/lib/api/tier-entities";
+import { countKeysByKind, type ITierEntity, type TierEntityKind, toTierEntity, UNPLACED } from "#/lib/api/tier-entities";
 import { type ITierListDetail, publishTierListVersionFn, setTierListFlairFn, setTierListVisibilityFn, tierEntityCatalogueQueryOptions, tierListDetailQueryOptions, tierListFlairsQueryOptions, tierListVersionsQueryOptions } from "#/lib/api/tier-lists";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -58,9 +58,6 @@ interface IEditorContentProps {
     queryClient: ReturnType<typeof useQueryClient>;
 }
 
-/** A catalogue entry is offered, not placed: no order, note or edit time of its own yet. */
-const UNPLACED = { subOrder: 0, description: null, updatedAt: new Date(0).toISOString() } as const;
-
 function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
     const t: EditorT = useT("tierLists");
     const describeError = useErrorMessage();
@@ -81,52 +78,17 @@ function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
     const { data: flairCatalog } = useQuery(tierListFlairsQueryOptions());
     const { data: versions } = useQuery(tierListVersionsQueryOptions(slug, gamedataServer));
     // The kinds the pool offers follow the EDITED state, so a kind ticked in the
-    // kinds dialog gets its tab before the list is saved. Not suspended: a newly
-    // ticked kind loads inside its own tab instead of blanking the editor.
+    // kinds dialog gets its tab before the list is saved.
     const kinds = useMemo(() => offeredKinds(state), [state]);
-    const combineCatalogues = useCallback(
-        (results: UseQueryResult<EntitySummary[]>[]) => {
-            const out: Partial<Record<TierEntityKind, IKindCatalogue>> = {};
-            kinds.forEach((kind, i) => {
-                const result = results[i];
-                out[kind] = {
-                    entities: result?.data?.map((summary) => toTierEntity(summary.kind, summary.id, summary, UNPLACED)),
-                    status: result?.status ?? "pending",
-                    refetch: () => void result?.refetch(),
-                };
-            });
-            return out;
-        },
-        [kinds],
-    );
-    const catalogues = useQueries({
-        queries: kinds.map((kind) => tierEntityCatalogueQueryOptions(kind, gamedataServer)),
-        combine: combineCatalogues,
-    });
+    const catalogues = useKindCatalogues(kinds, gamedataServer);
     const flairOptions = useMemo(() => (flairCatalog ?? []).filter((f) => f.isActive), [flairCatalog]);
     const latestVersion = versions && versions.length > 0 ? Math.max(...versions.map((v) => v.version)) : null;
     const nextVersion = (latestVersion ?? 0) + 1;
 
-    const entityByKey = useMemo(() => {
-        const merged = { ...state.entityByKey };
-        for (const catalogue of Object.values(catalogues)) {
-            for (const entity of catalogue?.entities ?? []) {
-                if (merged[entity.key]) continue;
-                merged[entity.key] = entity;
-            }
-        }
-        return merged;
-    }, [state.entityByKey, catalogues]);
+    const entityByKey = useMemo(() => withCatalogueEntities(state.entityByKey, catalogues), [state.entityByKey, catalogues]);
 
     const placedKeys = useMemo(() => placedEntityKeys(state), [state]);
-    const placedByKind = useMemo(() => {
-        const counts: Partial<Record<TierEntityKind, number>> = {};
-        for (const key of placedKeys) {
-            const { kind } = parseEntityKey(key);
-            counts[kind] = (counts[kind] ?? 0) + 1;
-        }
-        return counts;
-    }, [placedKeys]);
+    const placedByKind = useMemo(() => countKeysByKind(placedKeys), [placedKeys]);
     const notedKeys = useMemo(() => {
         const set = new Set<string>();
         for (const [id, desc] of Object.entries(state.descriptionByKey)) {
@@ -386,7 +348,7 @@ function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
                             onSetVisibility={(next) => visibilityMutation.mutate(next)}
                             onOpenPublishDialog={handleOpenPublishDialog}
                         />
-                        <EntityPool kinds={kinds} catalogues={catalogues} placedKeys={placedKeys} onUnplace={handleUnplace} onPickerActivate={handleActivateEntity} onEditKinds={() => setKindsOpen(true)} rootClassName="h-[70dvh] lg:h-auto lg:min-h-0 lg:flex-1" />
+                        <EntityPool kinds={kinds} catalogues={catalogues} placedKeys={placedKeys} placedByKind={placedByKind} onUnplace={handleUnplace} onPickerActivate={handleActivateEntity} onEditKinds={() => setKindsOpen(true)} rootClassName="h-[70dvh] lg:h-auto lg:min-h-0 lg:flex-1" />
                     </aside>
                 </div>
 
@@ -411,9 +373,46 @@ function EditorContent({ slug, detail, queryClient }: IEditorContentProps) {
     );
 }
 
+/**
+ * Each offered kind's catalogue. Not suspended: a newly ticked kind loads
+ * inside its own tab instead of blanking the editor.
+ */
+function useKindCatalogues(kinds: TierEntityKind[], gamedataServer: string): Partial<Record<TierEntityKind, IKindCatalogue>> {
+    const combine = useCallback(
+        (results: UseQueryResult<EntitySummary[]>[]) => {
+            const out: Partial<Record<TierEntityKind, IKindCatalogue>> = {};
+            kinds.forEach((kind, i) => {
+                const result = results[i];
+                out[kind] = {
+                    entities: result?.data?.map((summary) => toTierEntity(summary.kind, summary.id, summary, UNPLACED)),
+                    status: result?.status ?? "pending",
+                    refetch: () => void result?.refetch(),
+                };
+            });
+            return out;
+        },
+        [kinds],
+    );
+    return useQueries({ queries: kinds.map((kind) => tierEntityCatalogueQueryOptions(kind, gamedataServer)), combine });
+}
+
+/** Every entity a key on the board or in a pool can resolve to: the placed ones as the list holds them, then each catalogue's for keys not placed. */
+function withCatalogueEntities(placed: Record<string, ITierEntity>, catalogues: Partial<Record<TierEntityKind, IKindCatalogue>>): Record<string, ITierEntity> {
+    const merged = { ...placed };
+    for (const catalogue of Object.values(catalogues)) {
+        for (const entity of catalogue?.entities ?? []) {
+            if (merged[entity.key]) continue;
+            merged[entity.key] = entity;
+        }
+    }
+    return merged;
+}
+
+/** A new tier's name by how many tiers exist: the letter ladder, then `T8`, `T9`, ... */
+const TIER_NAME_LADDER = ["S", "A", "B", "C", "D", "E", "F"];
+
 function defaultTierName(existing: number): string {
-    const presets = ["S", "A", "B", "C", "D", "E", "F"];
-    return presets[existing] ?? `T${existing + 1}`;
+    return TIER_NAME_LADDER[existing] ?? `T${existing + 1}`;
 }
 
 function EditorMissing() {

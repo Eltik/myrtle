@@ -1,10 +1,11 @@
 import type { ComponentPropsWithoutRef, Ref } from "react";
 import { useRef, useState } from "react";
-import { type ITierEntity, isOperatorEntity } from "#/lib/api/tier-entities";
+import { entityOwner, type ITierEntity, isOperatorEntity } from "#/lib/api/tier-entities";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
-import { EntityAvatar, entityAccent, entityShape, useEntityLabels } from "../entities";
+import { EntityAvatar, entityAccent, kindTileAttributes } from "../entities";
+import { useEntityLabels } from "../kinds";
 import { setEntityDrag } from "./dnd";
 import { useIsDragSource, useStartEntityDrag } from "./drag-controller";
 import type { messages } from "./EditableOpTile.messages";
@@ -31,15 +32,22 @@ export function EditableOpTile({ entity, disabled, placed, hasNote, onActivate, 
     const t: TypedT<typeof messages> = useT("tierLists");
     const labels = useEntityLabels();
     const color = entityAccent(entity);
-    const isOperator = isOperatorEntity(entity);
-    // An operator keeps exactly the tile it always had; other kinds mark themselves for the pool grid and the wide event shape.
-    const kindAttrs = isOperator || !entity.resolved ? {} : { "data-kind": entity.kind, "data-shape": entityShape(entity) };
-    const label = isOperatorEntity(entity)
-        ? t("edit.tile.label", { name: entity.name, rarity: entity.rarity, placed: Boolean(placed), noted: Boolean(hasNote) })
-        : entity.resolved
-          ? t("edit.tile.entityLabel", { name: entity.name, kind: labels.kind[entity.kind], placed: Boolean(placed), noted: Boolean(hasNote) })
-          : entity.id;
-    const tooltip = isOperatorEntity(entity) ? t("edit.tile.title", { name: entity.name, rarity: entity.rarity, noted: Boolean(hasNote) }) : entity.resolved ? t("edit.tile.entityTitle", { name: entity.name, noted: Boolean(hasNote) }) : entity.id;
+    const noted = Boolean(hasNote);
+    let label: string;
+    let tooltip: string;
+    if (isOperatorEntity(entity)) {
+        label = t("edit.tile.label", { name: entity.name, rarity: entity.rarity, placed: Boolean(placed), noted });
+        tooltip = t("edit.tile.title", { name: entity.name, rarity: entity.rarity, noted });
+    } else if (!entity.resolved) {
+        label = entity.id;
+        tooltip = entity.id;
+    } else {
+        // A skin, module or skill names its operator too: "Stick and Sack" alone does not say whose it is.
+        const owner = entityOwner(entity);
+        const kind = labels.singular(entity.kind);
+        label = owner ? t("edit.tile.entityLabelOwned", { name: entity.name, owner, kind, placed: Boolean(placed), noted }) : t("edit.tile.entityLabel", { name: entity.name, kind, placed: Boolean(placed), noted });
+        tooltip = owner ? t("edit.tile.entityTitleOwned", { name: entity.name, owner, noted }) : t("edit.tile.entityTitle", { name: entity.name, noted });
+    }
     const isTouchDragging = useIsDragSource(entity.key);
     const startPress = useStartEntityDrag();
     const [isMouseDragging, setMouseDragging] = useState(false);
@@ -55,7 +63,7 @@ export function EditableOpTile({ entity, disabled, placed, hasNote, onActivate, 
     return (
         <button
             {...rest}
-            {...kindAttrs}
+            {...kindTileAttributes(entity)}
             ref={ref}
             type="button"
             data-tl-chip-id={entity.key}

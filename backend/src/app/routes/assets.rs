@@ -814,6 +814,88 @@ indexed_asset_routes!(
     " Skin brand logo."
 );
 
+async fn story_sprite_thumb_impl(
+    state: &AppState,
+    server: Server,
+    sprite_id: &str,
+    headers: &HeaderMap,
+) -> Result<Response, ApiError> {
+    use crate::app::services::story_sprite_thumb::ensure;
+    let mut servers = vec![server];
+    if server != state.default_server {
+        servers.push(state.default_server);
+    }
+    for srv in servers {
+        let Some(sd) = state.try_server_data(srv) else {
+            continue;
+        };
+        let found = sd
+            .asset_index
+            .load()
+            .story_sprites()
+            .get(sprite_id)
+            .map(|s| (s.body_path(), s.face_center));
+        let Some((body, face)) = found else {
+            continue;
+        };
+        let rel = ensure(&sd.assets_dir, sprite_id, &body, face).await?;
+        return serve_file(&sd.assets_dir, &rel, headers).await;
+    }
+    Err(ApiError::NotFound)
+}
+
+/// A story character's head-and-shoulders thumbnail, 160 px square, lossless
+/// WebP, cropped from the default body on first request and cached on disk.
+#[utoipa::path(
+    get,
+    path = "/story-sprite-thumb/{id}",
+    tag = "assets",
+    params(
+        ("id" = String, Path, description = "Story sprite id, e.g. `avg_npc_935`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes.")
+    ),
+    responses(
+        (status = 200, description = "The thumbnail, with an `ETag` and `Cache-Control: public, max-age=604800`.", content_type = "image/webp"),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
+pub async fn story_sprite_thumb(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    AxumPath(id): AxumPath<String>,
+) -> Result<Response, ApiError> {
+    story_sprite_thumb_impl(&state, state.default_server, &id, &headers).await
+}
+
+/// A story character's head-and-shoulders thumbnail, from one server's extract.
+#[utoipa::path(
+    get,
+    path = "/{server}/story-sprite-thumb/{id}",
+    tag = "assets",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("id" = String, Path, description = "Story sprite id, e.g. `avg_npc_935`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes.")
+    ),
+    responses(
+        (status = 200, description = "The thumbnail, with an `ETag` and `Cache-Control: public, max-age=604800`.", content_type = "image/webp"),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError)
+    )
+)]
+pub async fn story_sprite_thumb_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    AxumPath((server, id)): AxumPath<(Server, String)>,
+) -> Result<Response, ApiError> {
+    story_sprite_thumb_impl(&state, server, &id, &headers).await
+}
+
 async fn charart_impl(
     state: &AppState,
     server: Server,

@@ -27,6 +27,15 @@ export type EntitySummary = {
      * `start_time` (unix seconds) and, for a rerun, `rerun`; factions
      * `power_level` (`nation`, `group` or `team`); Stronghold bonds
      * `bond_type` (`season` or `regular`) and, for a season bond, `power_ids`.
+     * Skins carry `char_id`, `operator` (the wearer's name), `rarity`,
+     * `profession` and, when filed under one, `brand`; modules `char_id`,
+     * `operator`, `profession`, `module_type` (`X`, `Y`, `D`, `A`, `B`) and
+     * `type_code` (`SUM`); skills `char_id`, `operator`, `profession`, `slot`
+     * (`1` to `3`) and, when the skill has levels, `skill_type` and
+     * `sp_type`; Integrated Strategies entries `theme` (`rogue_N`,
+     * which is IS N+1) and `item_type` (`theme`, `relic`, `band`, ...);
+     * story sprites `source` (`operator` or `npc`), for an operator `char_id`,
+     * and, when the hub places the face, `face` (`x,y` fractions of the plate).
      */
     facets: { [key in string]?: FacetValue };
 };

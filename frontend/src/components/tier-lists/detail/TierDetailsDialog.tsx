@@ -10,7 +10,8 @@ import { Markdown } from "#/lib/markdown";
 import { formatArchetype, formatProfession, RARITY_LABELS } from "#/lib/utils";
 import type { OperatorRarity } from "#/types/operators";
 import { ExpandableDescription } from "../ExpandableDescription";
-import { EntityAvatar, entityAccent, useEntityLabels } from "../entities";
+import { EntityAvatar, entityAccent } from "../entities";
+import { entityPage, useEntityLabels } from "../kinds";
 import { operatorPlacementNote } from "../shared";
 import { type ReadableTextColor, readableTextColor } from "./contrast";
 import type { messages } from "./TierDetailsDialog.messages";
@@ -134,6 +135,7 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                                 const note = operatorPlacementNote(op);
                                 if (!isOperatorEntity(op)) {
                                     const detail = labels.detail(op);
+                                    const page = entityPage(op);
                                     const face = (
                                         <>
                                             <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted font-semibold text-[11px] text-foreground" style={{ borderBottom: `2px solid ${entityAccent(op)}` }}>
@@ -142,7 +144,7 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                                             {op.resolved ? (
                                                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                                                     <span className="truncate font-sans font-semibold text-[13.5px] text-foreground tracking-[-0.005em] transition-colors group-hover:text-primary">{op.name}</span>
-                                                    <span className="truncate font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.08em]">{[labels.kind[op.kind], ...detail].join(" · ")}</span>
+                                                    <span className="truncate font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.08em]">{[labels.singular(op.kind), ...detail].join(" · ")}</span>
                                                 </span>
                                             ) : (
                                                 <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-muted-foreground">{op.id}</span>
@@ -150,9 +152,9 @@ export function TierDetailsDialog({ tier, color }: ITierDetailsDialogProps) {
                                         </>
                                     );
                                     return (
-                                        <li key={op.key} className={op.resolved && op.kind === "enemy" ? "list-none rounded-lg border border-transparent transition-colors hover:border-border hover:bg-muted/40" : "list-none rounded-lg border border-transparent"}>
-                                            {op.resolved && op.kind === "enemy" ? (
-                                                <Link to="/enemies/$id" params={{ id: op.id }} className="group flex items-center gap-3 px-2 py-2 no-underline">
+                                        <li key={op.key} className={page !== null ? "list-none rounded-lg border border-transparent transition-colors hover:border-border hover:bg-muted/40" : "list-none rounded-lg border border-transparent"}>
+                                            {page !== null ? (
+                                                <Link to={page} params={{ id: op.id }} className="group flex items-center gap-3 px-2 py-2 no-underline">
                                                     {face}
                                                     <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/0 transition-all group-hover:translate-x-0.5 group-hover:text-muted-foreground" aria-hidden="true" />
                                                 </Link>

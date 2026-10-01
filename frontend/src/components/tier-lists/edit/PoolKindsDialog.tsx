@@ -6,7 +6,7 @@ import { ALL_ENTITY_KINDS, type TierEntityKind } from "#/lib/api/tier-entities";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
-import { useEntityLabels } from "../entities";
+import { useEntityLabels } from "../kinds";
 import type { messages } from "./PoolKindsDialog.messages";
 
 interface IPoolKindsDialogProps {
@@ -35,16 +35,6 @@ export function PoolKindsDialog({ open, kinds, placedByKind, onClose, onApply }:
         setDraft(new Set(kinds));
         setRefused(false);
     }, [open, kinds]);
-
-    const descriptions: Record<TierEntityKind, string> = {
-        operator: t("edit.kinds.desc.operator"),
-        class: t("edit.kinds.desc.class"),
-        subclass: t("edit.kinds.desc.subclass"),
-        faction: t("edit.kinds.desc.faction"),
-        enemy: t("edit.kinds.desc.enemy"),
-        event: t("edit.kinds.desc.event"),
-        stronghold_bond: t("edit.kinds.desc.stronghold_bond"),
-    };
 
     const toggle = (kind: TierEntityKind, on: boolean) => {
         if (!on && draft.size === 1 && draft.has(kind)) {
@@ -94,10 +84,10 @@ export function PoolKindsDialog({ open, kinds, placedByKind, onClose, onApply }:
                                         <Checkbox checked={checked} onCheckedChange={(on) => toggle(kind, on)} className="mt-0.5" />
                                         <span className="flex min-w-0 flex-1 flex-col gap-1">
                                             <span className="flex items-baseline justify-between gap-2">
-                                                <span className="font-medium font-sans text-[13.5px] text-foreground leading-none">{labels.kinds[kind]}</span>
+                                                <span className="font-medium font-sans text-[13.5px] text-foreground leading-none">{labels.plural(kind)}</span>
                                                 {placed > 0 && <span className="shrink-0 font-mono text-[10.5px] text-muted-foreground tabular-nums leading-none">{t("edit.kinds.placed", { count: placed })}</span>}
                                             </span>
-                                            <span className="font-sans text-[12px] text-muted-foreground leading-snug">{descriptions[kind]}</span>
+                                            <span className="font-sans text-[12px] text-muted-foreground leading-snug">{labels.description(kind)}</span>
                                         </span>
                                     </label>
                                 );

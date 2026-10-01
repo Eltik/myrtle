@@ -49,8 +49,6 @@ use std::{
     time::Instant,
 };
 
-// ─── argv ────────────────────────────────────────────────────────────────────
-
 struct Args {
     in_dir: PathBuf,
     out_dir: PathBuf,
@@ -83,8 +81,6 @@ fn parse_args() -> Result<Args> {
     })
 }
 
-// ─── output writer ───────────────────────────────────────────────────────────
-
 struct OutTable {
     writer: BufWriter<File>,
     rows: u64,
@@ -113,8 +109,6 @@ impl OutTable {
     }
 }
 
-// ─── main ────────────────────────────────────────────────────────────────────
-
 fn main() -> Result<()> {
     let args = parse_args()?;
     fs::create_dir_all(&args.out_dir).context("failed to create out dir")?;
@@ -128,7 +122,7 @@ fn main() -> Result<()> {
         tables.insert(t, OutTable::new(&args.out_dir.join(format!("{t}.jsonl")))?);
     }
 
-    // ── seed servers (v3 expects 0..5 to exist) ────────────────────────────
+    // v3 expects servers 0..5 to exist
     {
         let w = tables.get_mut("servers").unwrap();
         for (id, code, name) in [
@@ -143,7 +137,6 @@ fn main() -> Result<()> {
         }
     }
 
-    // ── tier_lists ─────────────────────────────────────────────────────────
     let tier_lists: Vec<Value> = read_array(&args.in_dir.join("tier_lists.json"))?;
     let known_tier_list_ids: HashSet<String> = tier_lists
         .iter()
@@ -177,7 +170,6 @@ fn main() -> Result<()> {
         }
     }
 
-    // ── tiers (collect FK universe) ────────────────────────────────────────
     let tiers: Vec<Value> = read_array(&args.in_dir.join("tiers.json"))?;
     let known_tier_ids: HashSet<String> = tiers
         .iter()
@@ -202,7 +194,7 @@ fn main() -> Result<()> {
         }
     }
 
-    // ── tier_placements (PK is (tier_id, operator_id) in v3, no `id`) ──────
+    // ── tier_placements (PK is (tier_id, entity_kind, entity_id) since v029, no `id`) ──
     {
         let w = tables.get_mut("tier_placements").unwrap();
         let mut seen: HashSet<(String, String)> = HashSet::new();
@@ -220,7 +212,8 @@ fn main() -> Result<()> {
             }
             w.write(&json!({
                 "tier_id": tier_id,
-                "operator_id": op_id,
+                "entity_kind": "operator",
+                "entity_id": op_id,
                 "sub_order": r.get("sub_order").and_then(serde_json::Value::as_i64).unwrap_or(0),
                 // Old `notes` maps to v3's `description`.
                 "description": r.get("notes"),
@@ -232,7 +225,6 @@ fn main() -> Result<()> {
     // tier_list_versions / tier_list_permissions: empty in source backups, so
     // their JSONL files stay empty (already created above).
 
-    // ── operator_notes ─────────────────────────────────────────────────────
     let op_notes: Vec<Value> = read_array(&args.in_dir.join("operator_notes.json"))?;
     // old PK was operator_id-UUID per row; build operator_id->note_id map so
     // the audit log can resolve note_id from the old operator_id-keyed rows.
@@ -268,7 +260,6 @@ fn main() -> Result<()> {
         }
     }
 
-    // ── operator_notes_audit_log ───────────────────────────────────────────
     {
         let w = tables.get_mut("operator_notes_audit_log").unwrap();
         let audit: Vec<Value> = read_array(&args.in_dir.join("operator_notes_audit_log.json"))?;
@@ -293,7 +284,7 @@ fn main() -> Result<()> {
         }
     }
 
-    // ── users + all child tables (streaming, multi-GB file) ────────────────
+    // users + child tables, streamed: users.json can be multi-GB
     println!("streaming users.json (this is the big one)...");
     let user_start = Instant::now();
     let mut user_ids: HashSet<String> = HashSet::new();
@@ -338,7 +329,6 @@ fn main() -> Result<()> {
             .and_then(|s| s.get("resume"))
             .and_then(|v| v.as_str());
 
-        // users
         tables.get_mut("users").unwrap().write(&json!({
             "id": id,
             "uid": uid,
@@ -365,11 +355,9 @@ fn main() -> Result<()> {
             "updated_at": obj.get("updated_at"),
         }))?;
 
-        // user_status
         let status_row = build_status_row(id, status);
         tables.get_mut("user_status").unwrap().write(&status_row)?;
 
-        // user_operators / skills / modules
         if let Some(troop) = data
             .and_then(|d| d.get("troop"))
             .and_then(|t| t.get("chars"))
@@ -452,7 +440,6 @@ fn main() -> Result<()> {
             }
         }
 
-        // user_skins
         if let Some(skins) = data
             .and_then(|d| d.get("skin"))
             .and_then(|s| s.get("characterSkins"))
@@ -473,7 +460,6 @@ fn main() -> Result<()> {
             }
         }
 
-        // user_stage_progress
         let stages = data
             .and_then(|d| d.get("dungeon"))
             .and_then(|d| d.get("stages"))
@@ -523,7 +509,6 @@ fn main() -> Result<()> {
                 "progress": sandbox,
             }))?;
 
-        // user_medals
         if let Some(medals) = data
             .and_then(|d| d.get("medal"))
             .and_then(|m| m.get("medals"))
@@ -544,7 +529,6 @@ fn main() -> Result<()> {
             }
         }
 
-        // user_building (full blob)
         let building = data
             .and_then(|d| d.get("building"))
             .cloned()
@@ -635,7 +619,6 @@ fn main() -> Result<()> {
         rewrite_user_settings(&args.out_dir, &overrides)?;
     }
 
-    // ── gacha_records ──────────────────────────────────────────────────────
     {
         let w = tables.get_mut("gacha_records").unwrap();
         let mut next_id: i64 = 1;
@@ -686,7 +669,6 @@ fn main() -> Result<()> {
 
     // audit_log stays empty (no equivalent rich source in old backup).
 
-    // ── flush + manifest ───────────────────────────────────────────────────
     for &name in TABLES {
         let t = tables.remove(name).unwrap();
         let rows = t.finish()?;
@@ -706,8 +688,6 @@ fn main() -> Result<()> {
     }
     Ok(())
 }
-
-// ─── helpers ─────────────────────────────────────────────────────────────────
 
 fn server_code_to_id(code: &str) -> i16 {
     match code.to_ascii_lowercase().as_str() {
@@ -802,7 +782,6 @@ where
     let mut reader = BufReader::with_capacity(8 << 20, f);
     let mut byte = [0u8; 1];
 
-    // skip until '['
     loop {
         let n = reader.read(&mut byte)?;
         if n == 0 {

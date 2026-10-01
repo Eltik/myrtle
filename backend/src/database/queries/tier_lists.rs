@@ -2,8 +2,8 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::database::models::tier_list::{
-    Tier, TierList, TierListFlair, TierListPermission, TierListStats, TierListVersion,
-    TierPlacement,
+    EntityRef, Tier, TierList, TierListFlair, TierListPermission, TierListStats, TierListVersion,
+    TierPlacement, TierPlacementRow,
 };
 
 pub async fn find_by_slug(pool: &PgPool, slug: &str) -> Result<Option<TierList>, sqlx::Error> {
@@ -122,12 +122,16 @@ pub async fn get_placements(
     pool: &PgPool,
     tier_id: Uuid,
 ) -> Result<Vec<TierPlacement>, sqlx::Error> {
-    sqlx::query_as::<_, TierPlacement>(
+    let rows = sqlx::query_as::<_, TierPlacementRow>(
         "SELECT * FROM tier_placements WHERE tier_id = $1 ORDER BY sub_order",
     )
     .bind(tier_id)
     .fetch_all(pool)
-    .await
+    .await?;
+    Ok(rows
+        .into_iter()
+        .filter_map(TierPlacementRow::into_known)
+        .collect())
 }
 
 pub async fn get_placements_for_tiers(
@@ -138,12 +142,16 @@ pub async fn get_placements_for_tiers(
         return Ok(Vec::new());
     }
 
-    sqlx::query_as::<_, TierPlacement>(
+    let rows = sqlx::query_as::<_, TierPlacementRow>(
         "SELECT * FROM tier_placements WHERE tier_id = ANY($1) ORDER BY tier_id, sub_order",
     )
     .bind(tier_ids)
     .fetch_all(pool)
-    .await
+    .await?;
+    Ok(rows
+        .into_iter()
+        .filter_map(TierPlacementRow::into_known)
+        .collect())
 }
 
 pub async fn create_version(
@@ -171,12 +179,19 @@ pub async fn update(
     id: Uuid,
     name: &str,
     description: Option<&str>,
+    entity_kinds: Option<&[String]>,
 ) -> Result<TierList, sqlx::Error> {
     sqlx::query_as::<_, TierList>(
-        "UPDATE tier_lists SET name = $2, description = $3, updated_at = NOW() WHERE id = $1 RETURNING *"
+        "UPDATE tier_lists SET name = $2, description = $3,
+            entity_kinds = COALESCE($4, entity_kinds), updated_at = NOW()
+          WHERE id = $1 RETURNING *",
     )
-    .bind(id).bind(name).bind(description)
-    .fetch_one(pool).await
+    .bind(id)
+    .bind(name)
+    .bind(description)
+    .bind(entity_kinds)
+    .fetch_one(pool)
+    .await
 }
 
 pub async fn find_by_user(pool: &PgPool, user_id: Uuid) -> Result<Vec<TierList>, sqlx::Error> {
@@ -267,7 +282,7 @@ pub async fn delete_list(pool: &PgPool, id: Uuid) -> Result<(), sqlx::Error> {
     Ok(())
 }
 
-/// Place an operator in a tier, scoped to the list that owns it.
+/// Place an entity in a tier, scoped to the list that owns it.
 ///
 /// The `INSERT ... SELECT` enforces the scope: the row only materialises when
 /// `tier_id` belongs to `tier_list_id`, so a tier from another list selects
@@ -276,15 +291,15 @@ pub async fn add_placement(
     pool: &PgPool,
     tier_list_id: Uuid,
     tier_id: Uuid,
-    operator_id: &str,
+    entity: EntityRef<'_>,
     sub_order: i16,
     description: Option<&str>,
 ) -> Result<Option<TierPlacement>, sqlx::Error> {
     sqlx::query_as::<_, TierPlacement>(
-        "INSERT INTO tier_placements (tier_id, operator_id, sub_order, description)
-          SELECT t.id, $3, $4, $5 FROM tiers t
+        "INSERT INTO tier_placements (tier_id, entity_kind, entity_id, sub_order, description)
+          SELECT t.id, $3, $4, $5, $6 FROM tiers t
            WHERE t.id = $2 AND t.tier_list_id = $1
-          ON CONFLICT (tier_id, operator_id)
+          ON CONFLICT (tier_id, entity_kind, entity_id)
           DO UPDATE SET sub_order = EXCLUDED.sub_order,
                         description = EXCLUDED.description,
                         updated_at = NOW()
@@ -292,7 +307,8 @@ pub async fn add_placement(
     )
     .bind(tier_list_id)
     .bind(tier_id)
-    .bind(operator_id)
+    .bind(entity.kind.as_str())
+    .bind(entity.id)
     .bind(sub_order)
     .bind(description)
     .fetch_optional(pool)
@@ -300,26 +316,28 @@ pub async fn add_placement(
 }
 
 /// Update just the editor-facing description of a placement, identified by the
-/// owning tier list + operator. Uses a join so we avoid loading every tier to
-/// locate the placement. Returns the updated row, or `None` if the operator is
+/// owning tier list + entity. Uses a join so we avoid loading every tier to
+/// locate the placement. Returns the updated row, or `None` if the entity is
 /// not placed on this list.
 pub async fn set_placement_description(
     pool: &PgPool,
     tier_list_id: Uuid,
-    operator_id: &str,
+    entity: EntityRef<'_>,
     description: Option<&str>,
 ) -> Result<Option<TierPlacement>, sqlx::Error> {
     sqlx::query_as::<_, TierPlacement>(
         "UPDATE tier_placements tp
-            SET description = $3, updated_at = NOW()
+            SET description = $4, updated_at = NOW()
           FROM tiers t
           WHERE tp.tier_id = t.id
             AND t.tier_list_id = $1
-            AND tp.operator_id = $2
+            AND tp.entity_kind = $2
+            AND tp.entity_id = $3
           RETURNING tp.*",
     )
     .bind(tier_list_id)
-    .bind(operator_id)
+    .bind(entity.kind.as_str())
+    .bind(entity.id)
     .bind(description)
     .fetch_optional(pool)
     .await
@@ -333,19 +351,21 @@ pub async fn remove_placement(
     pool: &PgPool,
     tier_list_id: Uuid,
     tier_id: Uuid,
-    operator_id: &str,
+    entity: EntityRef<'_>,
 ) -> Result<(), sqlx::Error> {
     sqlx::query(
         "DELETE FROM tier_placements tp
           USING tiers t
           WHERE tp.tier_id = t.id
             AND tp.tier_id = $2
-            AND tp.operator_id = $3
+            AND tp.entity_kind = $3
+            AND tp.entity_id = $4
             AND t.tier_list_id = $1",
     )
     .bind(tier_list_id)
     .bind(tier_id)
-    .bind(operator_id)
+    .bind(entity.kind.as_str())
+    .bind(entity.id)
     .execute(pool)
     .await?;
     Ok(())
@@ -363,7 +383,7 @@ pub async fn move_placement(
     tier_list_id: Uuid,
     old_tier_id: Uuid,
     new_tier_id: Uuid,
-    operator_id: &str,
+    entity: EntityRef<'_>,
     sub_order: i16,
 ) -> Result<Option<TierPlacement>, sqlx::Error> {
     let mut tx = pool.begin().await?;
@@ -380,16 +400,18 @@ pub async fn move_placement(
     }
 
     // Re-insert rather than UPDATE the primary key, so the upsert's conflict
-    // handling applies when the operator is already in the target tier; the
+    // handling applies when the entity is already in the target tier; the
     // existing description is carried across the move.
     let existing = sqlx::query_as::<_, TierPlacement>(
         "SELECT tp.* FROM tier_placements tp
            JOIN tiers t ON t.id = tp.tier_id
-          WHERE tp.tier_id = $2 AND tp.operator_id = $3 AND t.tier_list_id = $1",
+          WHERE tp.tier_id = $2 AND tp.entity_kind = $3 AND tp.entity_id = $4
+            AND t.tier_list_id = $1",
     )
     .bind(tier_list_id)
     .bind(old_tier_id)
-    .bind(operator_id)
+    .bind(entity.kind.as_str())
+    .bind(entity.id)
     .fetch_optional(&mut *tx)
     .await?;
 
@@ -398,27 +420,30 @@ pub async fn move_placement(
           USING tiers t
           WHERE tp.tier_id = t.id
             AND tp.tier_id = $2
-            AND tp.operator_id = $3
+            AND tp.entity_kind = $3
+            AND tp.entity_id = $4
             AND t.tier_list_id = $1",
     )
     .bind(tier_list_id)
     .bind(old_tier_id)
-    .bind(operator_id)
+    .bind(entity.kind.as_str())
+    .bind(entity.id)
     .execute(&mut *tx)
     .await?;
 
     let description = existing.as_ref().and_then(|p| p.description.as_deref());
     let moved = sqlx::query_as::<_, TierPlacement>(
-        "INSERT INTO tier_placements (tier_id, operator_id, sub_order, description)
-          VALUES ($1,$2,$3,$4)
-          ON CONFLICT (tier_id, operator_id)
+        "INSERT INTO tier_placements (tier_id, entity_kind, entity_id, sub_order, description)
+          VALUES ($1,$2,$3,$4,$5)
+          ON CONFLICT (tier_id, entity_kind, entity_id)
           DO UPDATE SET sub_order = EXCLUDED.sub_order,
                         description = EXCLUDED.description,
                         updated_at = NOW()
           RETURNING *",
     )
     .bind(new_tier_id)
-    .bind(operator_id)
+    .bind(entity.kind.as_str())
+    .bind(entity.id)
     .bind(sub_order)
     .bind(description)
     .fetch_one(&mut *tx)

@@ -3,6 +3,8 @@ use std::{
     path::Path,
 };
 
+use super::story_sprites::StorySprites;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum AssetKind {
     Avatar,       // textures/spritepack/ui_char_avatar_N/
@@ -50,6 +52,30 @@ pub enum AssetKind {
     /// to `act_3` (4 arc icons) and the shelf backgrounds. Keyed by the id
     /// `stage_table` names, which is the PNG stem.
     StorylineArt,
+    /// `textures/arts/ui/[uc]charcommon/icon_profession_{profession}.png`:
+    /// the class glyphs. Keyed by the stem.
+    ProfessionIcon,
+    /// `textures/spritepack/ui_sub_profession_icon_hub_h2_N/sub_{id}_icon.png`.
+    SubProfessionIcon,
+    /// `textures/spritepack/ui_camp_logo_N/logo_{power_id}.png`: nation and
+    /// group logos. Keyed by the LOWERCASED stem, because the pack spells two
+    /// of them `logo_Laterano` and `logo_Leithanien` against lowercase ids.
+    CampLogo,
+    /// `textures/spritepack/ui_team_icon_h2_N/org_{power_id}_tiny.png`.
+    TeamIcon,
+    /// `textures/ui/autochess/[uc]autochesscommon/{icon}.png`: Stronghold
+    /// Protocol art, bond icons among it, keyed by the stem the table names.
+    AutoChessIcon,
+    /// Integrated Strategies item art: `textures/spritepack/ui_roguelike_topic_item_*`
+    /// (relics, tools, Foldartals, Thoughts, Tongbao) and `textures/ui/rglktopic/rogue_N*/`
+    /// (squads, Plays, Wraths). Keyed by stem; the spritepack wins a clash.
+    RoguelikeItem,
+    /// `textures/spritepack/ui_zone_home_theme_rogue_N_entry_display_K/`: an
+    /// Integrated Strategies theme's home-screen key visual, keyed by stem.
+    RoguelikeTheme,
+    /// `textures/spritepack/ui_equip_type_direction_hub_*/{type_icon}.png`:
+    /// the module type badges (`sum-x`), keyed by the `typeIcon` stem.
+    ModuleType,
 }
 
 const ALL_KINDS: &[AssetKind] = &[
@@ -70,6 +96,14 @@ const ALL_KINDS: &[AssetKind] = &[
     AssetKind::BrandLogo,
     AssetKind::FurnitureIcon,
     AssetKind::StorylineArt,
+    AssetKind::ProfessionIcon,
+    AssetKind::SubProfessionIcon,
+    AssetKind::CampLogo,
+    AssetKind::TeamIcon,
+    AssetKind::AutoChessIcon,
+    AssetKind::RoguelikeItem,
+    AssetKind::RoguelikeTheme,
+    AssetKind::ModuleType,
 ];
 
 #[derive(Debug, Clone, Default)]
@@ -90,6 +124,8 @@ pub struct AssetIndex {
     /// Every relative audio path under `sound_beta_2/` (verbatim, unencoded).
     /// Used to confirm voice-bark assets, which resolve by direct path.
     audio_paths: HashSet<String>,
+    /// One entry per story character, see [`StorySprites`].
+    story_sprites: StorySprites,
 }
 
 impl AssetIndex {
@@ -102,6 +138,9 @@ impl AssetIndex {
 
         let textures_dir = assets_dir.join("textures");
         let portraits_dir = assets_dir.join("portraits");
+
+        // `textures/avg/characters/<folder>/` -> the folder's PNG stems.
+        let mut avg_folders: HashMap<String, Vec<String>> = HashMap::new();
 
         // No cheap count for these walks (~90k textures, ~73k audio per server),
         // so the bar interpolates across three steps.
@@ -137,12 +176,24 @@ impl AssetIndex {
                         .strip_prefix("storyEntryPic_")
                         .unwrap_or(stem)
                         .to_owned(),
+                    AssetKind::CampLogo => stem.to_ascii_lowercase(),
                     _ => stem.to_owned(),
                 };
                 idx.map
                     .get_mut(&kind)
                     .unwrap()
                     .insert(key, rel_path.clone());
+            } else if grandparent_name(path) == Some("rglktopic") {
+                idx.map
+                    .get_mut(&AssetKind::RoguelikeItem)
+                    .unwrap()
+                    .entry(stem.to_owned())
+                    .or_insert_with(|| rel_path.clone());
+            } else if is_story_character_png(path) {
+                avg_folders
+                    .entry(parent.to_owned())
+                    .or_default()
+                    .push(stem.to_owned());
             }
 
             // chararts/{char_id}/{char_id}_{suffix}.png
@@ -191,6 +242,8 @@ impl AssetIndex {
                 }
             }
         }
+
+        idx.story_sprites = StorySprites::build(assets_dir, &avg_folders);
 
         crate::core::startup::step("portraits");
         if let Ok(entries) = std::fs::read_dir(&portraits_dir) {
@@ -383,6 +436,11 @@ impl AssetIndex {
     pub fn skinpack_paths(&self, char_id: &str) -> Option<&[String]> {
         self.skinpacks.get(char_id).map(std::vec::Vec::as_slice)
     }
+
+    /// Story character sprites, one per character.
+    pub const fn story_sprites(&self) -> &StorySprites {
+        &self.story_sprites
+    }
 }
 
 fn classify_dir(dir_name: &str) -> Option<AssetKind> {
@@ -425,6 +483,22 @@ fn classify_dir(dir_name: &str) -> Option<AssetKind> {
         Some(AssetKind::FurnitureIcon)
     } else if dir_name.starts_with("mixstory_") {
         Some(AssetKind::StorylineArt)
+    } else if dir_name == "[uc]charcommon" {
+        Some(AssetKind::ProfessionIcon)
+    } else if dir_name.starts_with("ui_sub_profession_icon_hub_") {
+        Some(AssetKind::SubProfessionIcon)
+    } else if dir_name.starts_with("ui_camp_logo_") {
+        Some(AssetKind::CampLogo)
+    } else if dir_name.starts_with("ui_team_icon_h2_") {
+        Some(AssetKind::TeamIcon)
+    } else if dir_name == "[uc]autochesscommon" {
+        Some(AssetKind::AutoChessIcon)
+    } else if dir_name.starts_with("ui_roguelike_topic_item_") {
+        Some(AssetKind::RoguelikeItem)
+    } else if dir_name.starts_with("ui_zone_home_theme_rogue_") {
+        Some(AssetKind::RoguelikeTheme)
+    } else if dir_name.starts_with("ui_equip_type_direction_hub_") {
+        Some(AssetKind::ModuleType)
     } else {
         None
     }
@@ -462,6 +536,18 @@ fn audio_url(rel: &str) -> String {
 
 fn grandparent_name(path: &Path) -> Option<&str> {
     path.parent()?.parent()?.file_name()?.to_str()
+}
+
+/// `.../avg/characters/<folder>/<stem>.png`: a story character sprite.
+fn is_story_character_png(path: &Path) -> bool {
+    grandparent_name(path) == Some("characters")
+        && path
+            .parent()
+            .and_then(Path::parent)
+            .and_then(Path::parent)
+            .and_then(Path::file_name)
+            .and_then(|n| n.to_str())
+            == Some("avg")
 }
 
 fn png_stem(entry: &std::fs::DirEntry) -> Option<String> {

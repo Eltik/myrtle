@@ -1154,7 +1154,7 @@
           "admin"
         ],
         "summary": "`PUT /admin/users/{user_id}/role`",
-        "description": "Until now the only way to change a role was the interactive\n`manage_permissions` CLI, so the admin panel could display a role but never\nassign one. Granting the Translator role has to be possible from the panel,\nwhich is what this route is for.\n\nSuper-admin only, and it refuses to change a super-admin's own row: an\naccidental self-demotion here would need the CLI to undo.\n\nNote the role reaches `AuthUser` from the JWT, so the target user keeps\ntheir old privileges until their token refreshes. Per-locale translation\ngrants deliberately do not work this way - they are read from the database\nper request and take effect immediately.",
+        "description": "The admin panel could display a role but never assign one; this is that\nroute (the Translator grant needs it).\n\nSuper-admin only, and it refuses to change a super-admin's own row: an\naccidental self-demotion here would need the CLI to undo.\n\nThe role reaches `AuthUser` from the JWT, so the target keeps their old\nprivileges until their token refreshes. Per-locale translation grants are\nread from the database per request and take effect immediately.",
         "operationId": "set_user_role",
         "parameters": [
           {
@@ -1294,7 +1294,7 @@
           "auth"
         ],
         "summary": "Forget the stored game credentials for the caller's own account.",
-        "description": "The site session stays valid and the already-synced data stays put; what is\nrevoked is our ability to reach Yostar on their behalf. Re-syncing then\nneeds a fresh email code, which is the point. Before this, the only way to\nwithdraw that access was to email us and have the whole account deleted.\n\nIdempotent: disconnecting twice is not an error. `removed` reports whether\nthere was anything stored to remove.",
+        "description": "The site session stays valid and the already-synced data stays put; what is\nrevoked is our ability to reach Yostar on their behalf. Re-syncing then\nneeds a fresh email code, which is the point.\n\nIdempotent: disconnecting twice is not an error. `removed` reports whether\nthere was anything stored to remove.",
         "operationId": "disconnect",
         "responses": {
           "200": {
@@ -2208,7 +2208,7 @@
           "dps"
         ],
         "summary": "The simulation is pure CPU on an unauthenticated route, so the body is\nbounds-checked first and the work then runs on the blocking pool under\nadmission control.",
-        "description": "Memoised, because this is the ideal candidate for it: the result is a pure\nfunction of the body and the loaded game data, with no clock, no RNG and no\nuser scoping, so two people posting the same configuration must get the same\nthree floats. The UI compares configurations by firing a burst of these at\nonce, which is what was filling the admission queue; a burst of repeats now\ncosts one simulation.\n\nValidation stays AHEAD of the cache read so an out-of-range body is rejected\nrather than keyed, and the cache read sits ahead of `cpu::run` so a hit never\nconsumes a permit.",
+        "description": "Memoised: the result is a pure function of the body and the loaded game\ndata (no clock, no RNG, no user scoping), so two people posting the same\nconfiguration get the same three floats. The UI compares configurations by\nfiring a burst of these at once, which was filling the admission queue; a\nburst of repeats costs one simulation.\n\nValidation stays AHEAD of the cache read so an out-of-range body is rejected\nrather than keyed, and the cache read sits ahead of `cpu::run` so a hit never\nconsumes a permit.",
         "operationId": "calculate",
         "requestBody": {
           "content": {
@@ -2383,7 +2383,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /enemies/{id}` - one enemy handbook record plus the race lookup table\n(default server). Replaces the enemy-detail page's full `/static/enemies`\nfetch.",
+        "summary": "`GET /enemies/{id}` - one enemy handbook record plus the race lookup table\n(default server).",
         "operationId": "enemy_detail",
         "parameters": [
           {
@@ -2438,7 +2438,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /enemies/{id}/stages` - the \"Appears In\" list for one enemy (default\nserver). Replaces the full `/static/enemy-stages` map fetch.",
+        "summary": "`GET /enemies/{id}/stages` - the \"Appears In\" list for one enemy (default server).",
         "operationId": "enemy_stages",
         "parameters": [
           {
@@ -6576,7 +6576,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /skins/index` - slim `skinId -> {charId, displaySkin{...}}` map over all\nskins (default server), for the profile Stats tab's skin count + browser.\nReplaces the full `/static/skins` fetch on that tab.",
+        "summary": "`GET /skins/index` - slim `skinId -> {charId, displaySkin{...}}` map over all\nskins (default server), for the profile Stats tab's skin count + browser.",
         "operationId": "skins_index",
         "parameters": [
           {
@@ -6890,6 +6890,58 @@
           },
           "503": {
             "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/story-sprite-thumb/{id}": {
+      "get": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "A story character's head-and-shoulders thumbnail, 160 px square, lossless\nWebP, cropped from the default body on first request and cached on disk.",
+        "operationId": "story_sprite_thumb",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Story sprite id, e.g. `avg_npc_935`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "Echo a previous response's `ETag` to get a 304 instead of the bytes.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The thumbnail, with an `ETag` and `Cache-Control: public, max-age=604800`.",
+            "content": {
+              "image/webp": {}
+            }
+          },
+          "304": {
+            "description": "The caller's `If-None-Match` matched; no body is sent."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
           }
         }
       }
@@ -7269,6 +7321,62 @@
         ]
       }
     },
+    "/api/tier-lists/catalogue/{kind}": {
+      "get": {
+        "tags": [
+          "tier-lists"
+        ],
+        "summary": "Everything of one kind a tier list editor may place, in pool order.\nStatic game data: the same for every list and every caller.",
+        "operationId": "get",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "description": "Entity kind, e.g. `operator`.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityKind"
+            }
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "description": "Game server whose data to read: `en`, `jp`, `kr`, `cn`, `tw` or `bili`. Defaults to the deployment's default server.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The kind's placeable entities, with `Cache-Control: public, max-age=300`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntitySummary"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
     "/api/tier-lists/details": {
       "get": {
         "tags": [
@@ -7285,6 +7393,15 @@
             "schema": {
               "type": "integer",
               "format": "int64"
+            }
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "description": "Game server whose data resolves each placement's `entity`. Defaults to the deployment's default server.",
+            "required": false,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -7418,6 +7535,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "description": "Game server whose data resolves each placement's `entity`: `en`, `jp`, `kr`, `cn`, `tw` or `bili`. Defaults to the deployment's default server.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -7449,7 +7575,7 @@
         "tags": [
           "tier-lists"
         ],
-        "summary": "Rename a tier list or change its description.\nNeeds edit rights on the list: its owner, or a grant from\n`/tier-lists/{slug}/permissions`.",
+        "summary": "Rename a tier list, change its description, or change the kinds its\neditor offers.\nNeeds edit rights on the list: its owner, or a grant from\n`/tier-lists/{slug}/permissions`.",
         "operationId": "tier_list_update",
         "parameters": [
           {
@@ -7968,7 +8094,7 @@
         "tags": [
           "tier-lists"
         ],
-        "summary": "Place an operator into a tier.\nNeeds edit rights on the list: its owner, or a grant from\n`/tier-lists/{slug}/permissions`.",
+        "summary": "Place an entity of any kind into a tier.\nThe `(entity_kind, entity_id)` must exist in some loaded server's game data.\nNeeds edit rights on the list: its owner, or a grant from\n`/tier-lists/{slug}/permissions`.",
         "operationId": "add",
         "parameters": [
           {
@@ -8037,12 +8163,12 @@
         ]
       }
     },
-    "/api/tier-lists/{slug}/placements/{operator_id}": {
+    "/api/tier-lists/{slug}/placements/{kind}/{id}": {
       "delete": {
         "tags": [
           "tier-lists"
         ],
-        "summary": "Take an operator out of the list.\nNeeds edit rights on the list: its owner, or a grant from\n`/tier-lists/{slug}/permissions`.",
+        "summary": "Take an entity out of the list.\nNeeds edit rights on the list: its owner, or a grant from\n`/tier-lists/{slug}/permissions`.",
         "operationId": "remove",
         "parameters": [
           {
@@ -8055,9 +8181,18 @@
             }
           },
           {
-            "name": "operator_id",
+            "name": "kind",
             "in": "path",
-            "description": "Operator id, e.g. `char_002_amiya`.",
+            "description": "Entity kind, e.g. `operator`.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityKind"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Entity id in that kind's space, e.g. `char_002_amiya`.",
             "required": true,
             "schema": {
               "type": "string"
@@ -8120,9 +8255,18 @@
             }
           },
           {
-            "name": "operator_id",
+            "name": "kind",
             "in": "path",
-            "description": "Operator id, e.g. `char_002_amiya`.",
+            "description": "Entity kind, e.g. `operator`.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityKind"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Entity id in that kind's space, e.g. `char_002_amiya`.",
             "required": true,
             "schema": {
               "type": "string"
@@ -8182,12 +8326,12 @@
         ]
       }
     },
-    "/api/tier-lists/{slug}/placements/{operator_id}/move": {
+    "/api/tier-lists/{slug}/placements/{kind}/{id}/move": {
       "post": {
         "tags": [
           "tier-lists"
         ],
-        "summary": "Move an operator to a different tier, or reorder it within one.\nNeeds edit rights on the list: its owner, or a grant from\n`/tier-lists/{slug}/permissions`.",
+        "summary": "Move an entity to a different tier, or reorder it within one.\nNeeds edit rights on the list: its owner, or a grant from\n`/tier-lists/{slug}/permissions`.",
         "operationId": "move_to",
         "parameters": [
           {
@@ -8200,9 +8344,18 @@
             }
           },
           {
-            "name": "operator_id",
+            "name": "kind",
             "in": "path",
-            "description": "Operator id, e.g. `char_002_amiya`.",
+            "description": "Entity kind, e.g. `operator`.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/EntityKind"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Entity id in that kind's space, e.g. `char_002_amiya`.",
             "required": true,
             "schema": {
               "type": "string"
@@ -8605,6 +8758,7 @@
           "tier-lists"
         ],
         "summary": "Published snapshots of a tier list, newest first.",
+        "description": "Every `snapshot` is served in the live detail's shape (`TierDetail[]`),\neach placement resolved against `server`'s game data, whatever shape it\nwas stored in.",
         "operationId": "tier_list_versions_list",
         "parameters": [
           {
@@ -8612,6 +8766,15 @@
             "in": "path",
             "description": "Tier list slug, as it appears in its URL.",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "description": "Game server whose data resolves each placement's `entity`. Defaults to the deployment's default server.",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -10941,6 +11104,67 @@
         }
       }
     },
+    "/api/{server}/story-sprite-thumb/{id}": {
+      "get": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "A story character's head-and-shoulders thumbnail, from one server's extract.",
+        "operationId": "story_sprite_thumb_srv",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "description": "Game server: `en`, `jp`, `kr`, `cn` or `tw`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Story sprite id, e.g. `avg_npc_935`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "Echo a previous response's `ETag` to get a 304 instead of the bytes.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The thumbnail, with an `ETag` and `Cache-Control: public, max-age=604800`.",
+            "content": {
+              "image/webp": {}
+            }
+          },
+          "304": {
+            "description": "The caller's `If-None-Match` matched; no body is sent."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
     "/api/{server}/story/community": {
       "get": {
         "tags": [
@@ -11314,7 +11538,8 @@
         "type": "object",
         "required": [
           "tier_id",
-          "operator_id"
+          "entity_kind",
+          "entity_id"
         ],
         "properties": {
           "description": {
@@ -11323,8 +11548,12 @@
               "null"
             ]
           },
-          "operator_id": {
-            "type": "string"
+          "entity_id": {
+            "type": "string",
+            "description": "Id in the kind's own space, e.g. `char_002_amiya` for an operator."
+          },
+          "entity_kind": {
+            "$ref": "#/components/schemas/EntityKind"
           },
           "sub_order": {
             "type": [
@@ -12676,7 +12905,6 @@
       },
       "CharacterSprite": {
         "type": "object",
-        "description": "A resolved character sprite.",
         "required": [
           "bodyUrl"
         ],
@@ -13502,6 +13730,76 @@
           }
         }
       },
+      "EntityKind": {
+        "type": "string",
+        "description": "What a tier list placement ranks. The id space of each kind is its own, so a\nplacement is keyed by (kind, id), and the variants are the allow-list: an\nunknown kind fails to parse at the route and never reaches the database.",
+        "enum": [
+          "operator",
+          "class",
+          "subclass",
+          "enemy",
+          "event",
+          "faction",
+          "stronghold_bond",
+          "skin",
+          "module",
+          "skill",
+          "integrated_strategies",
+          "story_sprite"
+        ]
+      },
+      "EntityKinds": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/EntityKind"
+        },
+        "description": "A list's offered kinds, as stored in `tier_lists.entity_kinds`."
+      },
+      "EntitySummary": {
+        "type": "object",
+        "description": "The display form of one entity: enough for a tile, a pool filter and a link.",
+        "required": [
+          "kind",
+          "id",
+          "name",
+          "facets"
+        ],
+        "properties": {
+          "facets": {
+            "type": "object",
+            "description": "Kind-specific tags the tile and the pool filters read. Operators carry\n`rarity`, `profession`, `sub_profession_id`, `position`, and, when set,\n`nation_id` and `appellation`. Subclasses carry `profession`; enemies\n`enemy_level` and `enemy_index`; events `display_type`, `type`,\n`start_time` (unix seconds) and, for a rerun, `rerun`; factions\n`power_level` (`nation`, `group` or `team`); Stronghold bonds\n`bond_type` (`season` or `regular`) and, for a season bond, `power_ids`.\nSkins carry `char_id`, `operator` (the wearer's name), `rarity`,\n`profession` and, when filed under one, `brand`; modules `char_id`,\n`operator`, `profession`, `module_type` (`X`, `Y`, `D`, `A`, `B`) and\n`type_code` (`SUM`); skills `char_id`, `operator`, `profession`, `slot`\n(`1` to `3`) and, when the skill has levels, `skill_type` and\n`sp_type`; Integrated Strategies entries `theme` (`rogue_N`,\nwhich is IS N+1) and `item_type` (`theme`, `relic`, `band`, ...);\nstory sprites `source` (`operator` or `npc`), for an operator `char_id`,\nand, when the hub places the face, `face` (`x,y` fractions of the plate).",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FacetValue"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "href": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Site route for the entity's own page, when it has one."
+          },
+          "icon": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Image path under the API root (`/avatar/char_002_amiya`), server-neutral:\nthe client prefixes its own base and server. `None` when the extract\nholds no art for the entity."
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/EntityKind"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
       "ErrorBody": {
         "type": "object",
         "description": "The single error envelope every failing endpoint returns.\n\nPublic because it is the documented error schema: `openapi.rs` registers it\nas a component and handlers reference it from their `responses(...)` lists.",
@@ -13805,6 +14103,20 @@
             "format": "float"
           }
         }
+      },
+      "FacetValue": {
+        "oneOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        ],
+        "description": "One facet value: a single tag, or several (an enemy's several levels, an\nevent's several factions)."
       },
       "FacilityOutputDto": {
         "type": "object",
@@ -16028,7 +16340,7 @@
           },
           "hasOffensiveRecovery": {
             "type": "boolean",
-            "description": "Randomizer challenge-filter booleans, precomputed so the randomizer no\nlonger needs the full `/static/operators` table. `hasOffensiveRecovery` /\n`hasDefensiveRecovery`: any skill level with the matching `spType`.\n`allSkillsManual`: has >=1 skill and every skill's first level is manual."
+            "description": "Randomizer challenge-filter booleans, precomputed so the randomizer\ndoesn't need the full `/static/operators` table. `hasOffensiveRecovery` /\n`hasDefensiveRecovery`: any skill level with the matching `spType`.\n`allSkillsManual`: has >=1 skill and every skill's first level is manual."
           },
           "id": {
             "type": "string"
@@ -16607,6 +16919,30 @@
           "LOADING_PANEL",
           "UNKNOWN"
         ]
+      },
+      "PlacementDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TierPlacement"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "entity": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/EntitySummary",
+                    "description": "`None` when the served game data has no such entity (a CN-only operator\nread on EN, an id from a removed kind). The placement is still served,\nso the client can show it rather than silently drop it."
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "description": "A stored placement and what it points at in the served game data."
       },
       "PlanGroup": {
         "type": "object",
@@ -18409,7 +18745,7 @@
           },
           "disposition": {
             "$ref": "#/components/schemas/LineDisposition",
-            "description": "How to read a zero-marginal line. The enum serializes to the same\nstrings the hand-written match produced, but the generated TS binding\nis now a union instead of `string`."
+            "description": "How to read a zero-marginal line."
           },
           "from_control_center": {
             "type": "boolean",
@@ -20281,7 +20617,7 @@
               "placements": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/TierPlacement"
+                  "$ref": "#/components/schemas/PlacementDetail"
                 }
               }
             }
@@ -20317,6 +20653,10 @@
               "string",
               "null"
             ]
+          },
+          "entity_kinds": {
+            "$ref": "#/components/schemas/EntityKinds",
+            "description": "The kinds the list's editor offers. Lists cached or snapshotted before\nthe column existed read as operator-only, which is what they were."
           },
           "flair_id": {
             "type": [
@@ -20580,7 +20920,7 @@
         "type": "object",
         "required": [
           "tier_id",
-          "operator_id",
+          "entity_id",
           "sub_order",
           "updated_at"
         ],
@@ -20591,8 +20931,13 @@
               "null"
             ]
           },
-          "operator_id": {
-            "type": "string"
+          "entity_id": {
+            "type": "string",
+            "description": "Was `operator_id`; old snapshots still spell it that way."
+          },
+          "entity_kind": {
+            "$ref": "#/components/schemas/EntityKind",
+            "description": "Absent from snapshots and cache entries written before kinds existed,\nall of which were operators."
           },
           "sub_order": {
             "type": "integer",
@@ -21004,6 +21349,16 @@
               "string",
               "null"
             ]
+          },
+          "entity_kinds": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/EntityKind"
+            },
+            "description": "The kinds the list's editor offers, in pool tab order. Omitted keeps\nthe stored set; an empty set is a 400. Dropping a kind leaves every\nplacement of it on the list: the set is what the pool offers, not what\nthe list may hold."
           },
           "name": {
             "type": "string"

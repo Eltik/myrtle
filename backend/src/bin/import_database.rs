@@ -29,7 +29,9 @@
 
 use anyhow::{Context, Result, bail};
 use backend::database::run_migrations;
-use backend::db_export::{FORMAT_VERSION, MANIFEST_FILE, SERIAL_COLUMNS, TABLES};
+use backend::db_export::{
+    FORMAT_VERSION, MANIFEST_FILE, SERIAL_COLUMNS, TABLES, upgrade_legacy_row,
+};
 use dotenv::dotenv;
 use serde::Deserialize;
 use serde_json::Value;
@@ -172,8 +174,9 @@ async fn main() -> Result<()> {
             if line.trim().is_empty() {
                 continue;
             }
-            let v: Value = serde_json::from_str(&line)
+            let mut v: Value = serde_json::from_str(&line)
                 .with_context(|| format!("invalid JSON row in {}", path.display()))?;
+            upgrade_legacy_row(table, &mut v);
             // Flush BEFORE this row would push the payload past the byte cap,
             // so every shipped batch stays under it (a lone oversized row
             // still ships by itself).

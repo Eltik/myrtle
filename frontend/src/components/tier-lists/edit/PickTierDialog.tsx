@@ -3,7 +3,7 @@ import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { Field, FieldDescription, FieldLabel } from "#/components/ui/field";
 import { MarkdownEditor } from "#/components/ui/markdown-editor";
-import type { ITierEntity } from "#/lib/api/tier-entities";
+import { entityOwner, type ITierEntity } from "#/lib/api/tier-entities";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { readableTextColor } from "../detail/contrast";
@@ -27,6 +27,8 @@ export function PickTierDialog({ entity, currentTierId, description, tiers, onCl
     const accent = entity ? entityAccent(entity) : null;
     const descId = useId();
     const isPlaced = currentTierId !== null;
+    const hasTiers = tiers.length > 0;
+    const owner = entity ? entityOwner(entity) : null;
 
     return (
         <Dialog open={entity !== null} onOpenChange={(o) => !o && onClose()}>
@@ -39,15 +41,19 @@ export function PickTierDialog({ entity, currentTierId, description, tiers, onCl
                                     <EntityAvatar entity={entity} />
                                 </span>
                             )}
-                            <span className="font-sans">{entity?.name ?? ""}</span>
+                            <span className="flex min-w-0 flex-col">
+                                <span className="font-sans">{entity?.name ?? ""}</span>
+                                {owner && <span className="font-normal font-sans text-muted-foreground text-xs leading-snug">{t("edit.pick.owner", { name: owner })}</span>}
+                            </span>
                         </span>
                     </DialogTitle>
-                    <DialogDescription>{t("edit.pick.description")}</DialogDescription>
+                    <DialogDescription>{hasTiers ? t("edit.pick.description") : t("edit.pick.descriptionNoTiers")}</DialogDescription>
                 </DialogHeader>
 
                 <DialogPanel className="flex flex-col gap-4">
                     <div className="flex flex-col gap-1.5">
                         <p className="m-0 font-bold font-mono text-[10.5px] text-muted-foreground/80 uppercase leading-none tracking-[0.16em]">{t("edit.pick.placement")}</p>
+                        {!hasTiers && <p className="m-0 rounded-lg border border-border border-dashed px-3 py-3 text-muted-foreground text-sm">{t("edit.pick.noTiers")}</p>}
                         {tiers.map((tier) => {
                             const isCurrent = tier.id === currentTierId;
                             const fg = readableTextColor(tier.color);
@@ -87,7 +93,7 @@ export function PickTierDialog({ entity, currentTierId, description, tiers, onCl
                             </span>
                         </FieldLabel>
                         <MarkdownEditor id={descId} value={description} onChange={onDescriptionChange} placeholder={t("edit.pick.notePlaceholder")} rows={4} maxLength={PLACEMENT_DESCRIPTION_MAX} showHint={false} />
-                        <FieldDescription>{isPlaced ? t("edit.pick.noteHintPlaced") : t("edit.pick.noteHintUnplaced")}</FieldDescription>
+                        <FieldDescription>{isPlaced ? t("edit.pick.noteHintPlaced") : hasTiers ? t("edit.pick.noteHintUnplaced") : t("edit.pick.noteHintNoTiers")}</FieldDescription>
                     </Field>
                 </DialogPanel>
 

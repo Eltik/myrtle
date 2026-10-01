@@ -12,8 +12,8 @@ export const messages = {
         description: "Accessible name of a tier's label button when the author wrote a description for it. Both {name} and {description} are the author's own words.",
     },
     "detail.tier.empty": {
-        text: "No operators in this tier yet.",
-        description: "Shown in a tier row the author has placed no operators in.",
+        text: "Nothing in this tier yet.",
+        description: "Shown in a tier row the author has placed nothing in.",
     },
     "detail.tier.openDetails": {
         text: "Open tier {name} details",

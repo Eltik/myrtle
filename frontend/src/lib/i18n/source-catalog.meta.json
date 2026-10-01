@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-01T01:42:53.434Z",
+    "generatedAt": "2026-10-01T03:22:12.701Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -23776,8 +23776,8 @@
         {
             "key": "tierLists.detail.board.operatorCount",
             "namespace": "tierLists",
-            "source_text": "{count, plural, one {operator} other {operators}} placed",
-            "description": "Follows the operator count under the board; the number itself is rendered just before it.",
+            "source_text": "{count, plural, one {entry} other {entries}} placed",
+            "description": "Follows the count of placed entries (operators, enemies, events or any other ranked thing) under the board; the number itself is rendered just before it.",
             "placeholders": [
                 "count"
             ]
@@ -24091,8 +24091,8 @@
         {
             "key": "tierLists.detail.tier.empty",
             "namespace": "tierLists",
-            "source_text": "No operators in this tier yet.",
-            "description": "Shown in a tier row the author has placed no operators in.",
+            "source_text": "Nothing in this tier yet.",
+            "description": "Shown in a tier row the author has placed nothing in.",
             "placeholders": []
         },
         {
@@ -24184,22 +24184,22 @@
         {
             "key": "tierLists.detail.tierDialog.operatorsEmpty",
             "namespace": "tierLists",
-            "source_text": "No operators have been placed in this tier yet.",
-            "description": "Empty state in place of the operator list when the tier holds none.",
+            "source_text": "Nothing has been placed in this tier yet.",
+            "description": "Empty state in place of the list of entries when the tier holds none.",
             "placeholders": []
         },
         {
             "key": "tierLists.detail.tierDialog.operatorsHeading",
             "namespace": "tierLists",
-            "source_text": "Operators",
-            "description": "Heading of the list of the tier's operators. Rendered uppercase.",
+            "source_text": "Entries",
+            "description": "Heading of the list of the tier's entries (operators, enemies, events or any other ranked thing). Rendered uppercase.",
             "placeholders": []
         },
         {
             "key": "tierLists.detail.tierDialog.operatorsLabel",
             "namespace": "tierLists",
-            "source_text": "Operators in this tier",
-            "description": "Accessible name of the list of the tier's operators.",
+            "source_text": "Entries in this tier",
+            "description": "Accessible name of the list of the tier's entries.",
             "placeholders": []
         },
         {
@@ -24240,8 +24240,8 @@
         {
             "key": "tierLists.detail.tierDialog.stat.operators",
             "namespace": "tierLists",
-            "source_text": "Operators",
-            "description": "Summary tile label: how many operators sit in this tier. Rendered uppercase.",
+            "source_text": "Entries",
+            "description": "Summary tile label: how many entries (operators, enemies, events or any other ranked thing) sit in this tier. Rendered uppercase.",
             "placeholders": []
         },
         {
@@ -24337,7 +24337,7 @@
         {
             "key": "tierLists.edit.board.emptyBody",
             "namespace": "tierLists",
-            "source_text": "Create your first tier to start ranking operators.",
+            "source_text": "Create your first tier to start ranking.",
             "description": "Second line of the empty board state in the editor.",
             "placeholders": []
         },
@@ -24383,8 +24383,8 @@
         {
             "key": "tierLists.edit.change.moved",
             "namespace": "tierLists",
-            "source_text": "{count, plural, one {# operator} other {# operators}} moved",
-            "description": "Pending change: operators were moved from one tier to another.",
+            "source_text": "{count, plural, one {# entry} other {# entries}} moved",
+            "description": "Pending change: entries were moved from one tier to another.",
             "placeholders": [
                 "count"
             ]
@@ -24392,8 +24392,8 @@
         {
             "key": "tierLists.edit.change.placed",
             "namespace": "tierLists",
-            "source_text": "{count, plural, one {# operator} other {# operators}} placed",
-            "description": "Pending change: operators were added to a tier.",
+            "source_text": "{count, plural, one {# entry} other {# entries}} placed",
+            "description": "Pending change: entries (operators, enemies, events or any other ranked thing) were added to a tier.",
             "placeholders": [
                 "count"
             ]
@@ -24401,8 +24401,8 @@
         {
             "key": "tierLists.edit.change.reordered",
             "namespace": "tierLists",
-            "source_text": "{count, plural, one {# operator} other {# operators}} reordered",
-            "description": "Pending change: operators changed position within their own tier.",
+            "source_text": "{count, plural, one {# entry} other {# entries}} reordered",
+            "description": "Pending change: entries changed position within their own tier.",
             "placeholders": [
                 "count"
             ]
@@ -24444,8 +24444,8 @@
         {
             "key": "tierLists.edit.change.unplaced",
             "namespace": "tierLists",
-            "source_text": "{count, plural, one {# operator} other {# operators}} unplaced",
-            "description": "Pending change: operators were taken off the board and back into the pool.",
+            "source_text": "{count, plural, one {# entry} other {# entries}} unplaced",
+            "description": "Pending change: entries were taken off the board and back into the pool.",
             "placeholders": [
                 "count"
             ]
@@ -24683,10 +24683,45 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.kinds.desc.integrated_strategies",
+            "namespace": "tierLists",
+            "source_text": "Themes, collectibles, squads and more",
+            "description": "One-line explanation under 'Integrated Strategies' in the kinds dialog: the roguelike mode's themes and the items collected in them.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.kinds.desc.module",
+            "namespace": "tierLists",
+            "source_text": "Every operator module",
+            "description": "One-line explanation under 'Modules' in the kinds dialog.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.kinds.desc.operator",
             "namespace": "tierLists",
             "source_text": "Playable characters",
             "description": "One-line explanation under 'Operators' in the kinds dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.kinds.desc.skill",
+            "namespace": "tierLists",
+            "source_text": "Each operator's skills, slot by slot",
+            "description": "One-line explanation under 'Skills' in the kinds dialog. A skill shared by several operators is one entry per operator.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.kinds.desc.skin",
+            "namespace": "tierLists",
+            "source_text": "Outfits from the store and event rewards",
+            "description": "One-line explanation under 'Skins' in the kinds dialog. Default and Elite 2 art are not offered.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.kinds.desc.story_sprite",
+            "namespace": "tierLists",
+            "source_text": "Operators and NPCs as the story draws them",
+            "description": "One-line explanation under 'Story characters' in the kinds dialog. NPC means a non-playable character.",
             "placeholders": []
         },
         {
@@ -24758,14 +24793,21 @@
             "key": "tierLists.edit.pick.current",
             "namespace": "tierLists",
             "source_text": "Current",
-            "description": "Badge on the tier the operator already sits in. Rendered uppercase.",
+            "description": "Badge on the tier the entry already sits in. Rendered uppercase.",
             "placeholders": []
         },
         {
             "key": "tierLists.edit.pick.description",
             "namespace": "tierLists",
-            "source_text": "Choose a tier, then add an optional note. You can also drag operators directly onto a tier.",
-            "description": "Explains the dialog for placing one operator on a tier.",
+            "source_text": "Choose a tier, then add an optional note. You can also drag tiles straight onto a tier.",
+            "description": "Explains the dialog for placing one entry (an operator, enemy, event or any other ranked thing) on a tier.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pick.descriptionNoTiers",
+            "namespace": "tierLists",
+            "source_text": "This list has no tiers yet, so there is nowhere to place this.",
+            "description": "Replaces the dialog's explanation when the list being edited has no tiers at all.",
             "placeholders": []
         },
         {
@@ -24776,45 +24818,82 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.pick.noTiers",
+            "namespace": "tierLists",
+            "source_text": "No tiers yet. Close this dialog and add a tier to the board first.",
+            "description": "Shown in place of the list of tiers when the list being edited has none. 'Add a tier' refers to the editor's own button for creating a tier.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pick.noteHintNoTiers",
+            "namespace": "tierLists",
+            "source_text": "A note is saved with a placement, so add a tier first.",
+            "description": "Explains the note field while the list has no tiers, so the note has nothing to attach to.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.pick.noteHintPlaced",
             "namespace": "tierLists",
-            "source_text": "Optional. Shown to viewers on this operator's tile.",
-            "description": "Explains the note field once the operator is on a tier.",
+            "source_text": "Optional. Shown to viewers on this tile.",
+            "description": "Explains the note field once the entry is on a tier.",
             "placeholders": []
         },
         {
             "key": "tierLists.edit.pick.noteHintUnplaced",
             "namespace": "tierLists",
             "source_text": "Pick a tier above to save this note with the placement.",
-            "description": "Explains the note field while the operator is not on any tier, so the note has nothing to attach to.",
+            "description": "Explains the note field while the entry is not on any tier, so the note has nothing to attach to.",
             "placeholders": []
         },
         {
             "key": "tierLists.edit.pick.noteLabel",
             "namespace": "tierLists",
             "source_text": "Description",
-            "description": "Label of the field holding the note shown with this operator's placement.",
+            "description": "Label of the field holding the note shown with this entry's placement.",
             "placeholders": []
         },
         {
             "key": "tierLists.edit.pick.notePlaceholder",
             "namespace": "tierLists",
-            "source_text": "Why does this operator land here?",
+            "source_text": "Why does this land here?",
             "description": "Placeholder in the placement note field.",
             "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pick.owner",
+            "namespace": "tierLists",
+            "source_text": "Operator: {name}",
+            "description": "Second line under the name of a skin, module or skill in the placement dialog's title: the operator it belongs to. The name comes from the game data.",
+            "placeholders": [
+                "name"
+            ]
         },
         {
             "key": "tierLists.edit.pick.placement",
             "namespace": "tierLists",
             "source_text": "Placement",
-            "description": "Small uppercase label above the list of tiers to place the operator on.",
+            "description": "Small uppercase label above the list of tiers to place the entry on.",
             "placeholders": []
         },
         {
             "key": "tierLists.edit.pick.unplace",
             "namespace": "tierLists",
             "source_text": "Unplace",
-            "description": "Button that takes the operator off its tier and back into the pool.",
+            "description": "Button that takes the entry off its tier and back into the pool.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.brand",
+            "namespace": "tierLists",
+            "source_text": "Brand",
+            "description": "Label of the filter by outfit brand (the store line an outfit belongs to, such as EPOQUE) in the pool dialog. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.brand.group",
+            "namespace": "tierLists",
+            "source_text": "Filter by brand",
+            "description": "Accessible name of the row of outfit-brand filter buttons.",
             "placeholders": []
         },
         {
@@ -24975,6 +25054,41 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.pool.grid.integrated_strategies",
+            "namespace": "tierLists",
+            "source_text": "Available Integrated Strategies entries",
+            "description": "Accessible name of the grid of Integrated Strategies theme and item tiles in the pool.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.grid.module",
+            "namespace": "tierLists",
+            "source_text": "Available modules",
+            "description": "Accessible name of the grid of module tiles in the pool.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.grid.skill",
+            "namespace": "tierLists",
+            "source_text": "Available skills",
+            "description": "Accessible name of the grid of skill tiles in the pool.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.grid.skin",
+            "namespace": "tierLists",
+            "source_text": "Available skins",
+            "description": "Accessible name of the grid of outfit tiles in the pool.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.grid.story_sprite",
+            "namespace": "tierLists",
+            "source_text": "Available story characters",
+            "description": "Accessible name of the grid of story character tiles in the pool.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.pool.grid.stronghold_bond",
             "namespace": "tierLists",
             "source_text": "Available Stronghold bonds",
@@ -25049,6 +25163,41 @@
             "namespace": "tierLists",
             "source_text": "Faction pool",
             "description": "Small uppercase label above the pool of factions that can be dragged onto a tier; also the title of the larger pool dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.kicker.integrated_strategies",
+            "namespace": "tierLists",
+            "source_text": "Integrated Strategies pool",
+            "description": "Small uppercase label above the pool of Integrated Strategies themes and items that can be dragged onto a tier; also the title of the larger pool dialog. Keep the game's own name for the mode.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.kicker.module",
+            "namespace": "tierLists",
+            "source_text": "Module pool",
+            "description": "Small uppercase label above the pool of operator modules that can be dragged onto a tier; also the title of the larger pool dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.kicker.skill",
+            "namespace": "tierLists",
+            "source_text": "Skill pool",
+            "description": "Small uppercase label above the pool of operator skills that can be dragged onto a tier; also the title of the larger pool dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.kicker.skin",
+            "namespace": "tierLists",
+            "source_text": "Skin pool",
+            "description": "Small uppercase label above the pool of operator outfits that can be dragged onto a tier; also the title of the larger pool dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.kicker.story_sprite",
+            "namespace": "tierLists",
+            "source_text": "Story character pool",
+            "description": "Small uppercase label above the pool of story character sprites that can be dragged onto a tier; also the title of the larger pool dialog.",
             "placeholders": []
         },
         {
@@ -25213,6 +25362,13 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.pool.search.integrated_strategies",
+            "namespace": "tierLists",
+            "source_text": "Search Integrated Strategies",
+            "description": "Accessible name of the pool's search box while it lists Integrated Strategies themes and items.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.pool.search.label",
             "namespace": "tierLists",
             "source_text": "Search operators",
@@ -25220,10 +25376,38 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.pool.search.module",
+            "namespace": "tierLists",
+            "source_text": "Search modules",
+            "description": "Accessible name of the pool's search box while it lists modules. It matches the module and the operator.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.pool.search.placeholder",
             "namespace": "tierLists",
             "source_text": "Search by name…",
             "description": "Placeholder in the pool's search box. Keep the single-character ellipsis.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.search.skill",
+            "namespace": "tierLists",
+            "source_text": "Search skills",
+            "description": "Accessible name of the pool's search box while it lists skills. It matches the skill and the operator.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.search.skin",
+            "namespace": "tierLists",
+            "source_text": "Search skins",
+            "description": "Accessible name of the pool's search box while it lists operator outfits. It matches the outfit, the operator and the brand.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.search.story_sprite",
+            "namespace": "tierLists",
+            "source_text": "Search story characters",
+            "description": "Accessible name of the pool's search box while it lists story characters.",
             "placeholders": []
         },
         {
@@ -25241,10 +25425,94 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.pool.slot",
+            "namespace": "tierLists",
+            "source_text": "Slot",
+            "description": "Label of the filter by skill slot (S1, S2, S3) in the pool dialog. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.slot.group",
+            "namespace": "tierLists",
+            "source_text": "Filter by skill slot",
+            "description": "Accessible name of the row of skill-slot filter buttons.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.source",
+            "namespace": "tierLists",
+            "source_text": "Source",
+            "description": "Label of the filter that tells operator sprites from non-playable characters in the story character pool. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.source.group",
+            "namespace": "tierLists",
+            "source_text": "Filter by source",
+            "description": "Accessible name of the row of story-character source filter buttons.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.sp",
+            "namespace": "tierLists",
+            "source_text": "SP",
+            "description": "Label of the filter by how a skill recovers SP (over time, on attack, when hit) in the pool dialog. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.sp.auto",
+            "namespace": "tierLists",
+            "source_text": "Auto",
+            "description": "SP-recovery filter option: the skill charges over time.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.sp.defensive",
+            "namespace": "tierLists",
+            "source_text": "Defensive",
+            "description": "SP-recovery filter option: the skill charges when the operator is hit.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.sp.group",
+            "namespace": "tierLists",
+            "source_text": "Filter by SP recovery",
+            "description": "Accessible name of the row of SP-recovery filter buttons.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.sp.offensive",
+            "namespace": "tierLists",
+            "source_text": "Offensive",
+            "description": "SP-recovery filter option: the skill charges when the operator attacks.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.sp.passive",
+            "namespace": "tierLists",
+            "source_text": "Passive",
+            "description": "SP-recovery filter option: a passive skill, which has no SP to recover.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.pool.tabs",
             "namespace": "tierLists",
             "source_text": "What this pool lists",
             "description": "Accessible name of the row of tabs that switch the pool between the kinds a list ranks (operators, enemies, events...).",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.theme",
+            "namespace": "tierLists",
+            "source_text": "Theme",
+            "description": "Label of the filter by Integrated Strategies theme (IS2, IS3...) in the pool dialog. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.theme.group",
+            "namespace": "tierLists",
+            "source_text": "Filter by theme",
+            "description": "Accessible name of the row of Integrated Strategies theme filter buttons.",
             "placeholders": []
         },
         {
@@ -25417,8 +25685,8 @@
         {
             "key": "tierLists.edit.row.dropArea",
             "namespace": "tierLists",
-            "source_text": "Operators in tier {name}",
-            "description": "Accessible name of the area holding a tier's operators, which is also the drop target. {name} is the author's own tier label.",
+            "source_text": "Entries in tier {name}",
+            "description": "Accessible name of the area holding a tier's entries (operators, enemies, events or any other ranked thing), which is also the drop target. {name} is the author's own tier label.",
             "placeholders": [
                 "name"
             ]
@@ -25498,22 +25766,22 @@
         {
             "key": "tierLists.edit.save.movingOperator",
             "namespace": "tierLists",
-            "source_text": "Moving operator",
-            "description": "Save step: moving one operator to another tier or another position.",
+            "source_text": "Moving entry",
+            "description": "Save step: moving one entry (an operator, enemy, event or any other ranked thing) to another tier or another position.",
             "placeholders": []
         },
         {
             "key": "tierLists.edit.save.placingOperator",
             "namespace": "tierLists",
-            "source_text": "Placing operator",
-            "description": "Save step: adding one operator to a tier.",
+            "source_text": "Placing entry",
+            "description": "Save step: adding one entry (an operator, enemy, event or any other ranked thing) to a tier.",
             "placeholders": []
         },
         {
             "key": "tierLists.edit.save.removingOperator",
             "namespace": "tierLists",
-            "source_text": "Removing operator",
-            "description": "Save step: taking one operator off the board.",
+            "source_text": "Removing entry",
+            "description": "Save step: taking one entry (an operator, enemy, event or any other ranked thing) off the board.",
             "placeholders": []
         },
         {
@@ -25560,8 +25828,8 @@
         {
             "key": "tierLists.edit.tierSettings.clear",
             "namespace": "tierLists",
-            "source_text": "Clear operators",
-            "description": "Button that takes every operator out of this tier.",
+            "source_text": "Clear tier",
+            "description": "Button that takes every entry out of this tier and back into the pool.",
             "placeholders": []
         },
         {
@@ -25623,7 +25891,7 @@
         {
             "key": "tierLists.edit.tierSettings.descriptionPlaceholder",
             "namespace": "tierLists",
-            "source_text": "When should an operator land here?",
+            "source_text": "What earns a place in this tier?",
             "description": "Placeholder in the tier description field.",
             "placeholders": []
         },
@@ -25660,8 +25928,8 @@
         {
             "key": "tierLists.edit.tierSettings.operatorCount",
             "namespace": "tierLists",
-            "source_text": "{count, plural, one {operator} other {operators}} in this tier",
-            "description": "Follows the operator count at the foot of the dialog; the number itself is rendered just before it.",
+            "source_text": "{count, plural, one {entry} other {entries}} in this tier",
+            "description": "Follows the count of entries (operators, enemies, events or any other ranked thing) at the foot of the dialog; the number itself is rendered just before it.",
             "placeholders": [
                 "count"
             ]
@@ -25693,6 +25961,19 @@
             ]
         },
         {
+            "key": "tierLists.edit.tile.entityLabelOwned",
+            "namespace": "tierLists",
+            "source_text": "{name} ({owner}), {kind}{placed, select, true { - already placed} other {}}{noted, select, true { - has a description} other {}}",
+            "description": "Accessible name of a draggable skin, module or skill tile: its name from the game data, the operator it belongs to in parentheses, its kind, then whether it is already on a tier and whether it carries a note.",
+            "placeholders": [
+                "kind",
+                "name",
+                "noted",
+                "owner",
+                "placed"
+            ]
+        },
+        {
             "key": "tierLists.edit.tile.entityTitle",
             "namespace": "tierLists",
             "source_text": "{name}{noted, select, true { · has a description} other {}}",
@@ -25700,6 +25981,17 @@
             "placeholders": [
                 "name",
                 "noted"
+            ]
+        },
+        {
+            "key": "tierLists.edit.tile.entityTitleOwned",
+            "namespace": "tierLists",
+            "source_text": "{name} ({owner}){noted, select, true { · has a description} other {}}",
+            "description": "Tooltip on a draggable skin, module or skill tile: its name from the game data and the operator it belongs to in parentheses, then whether it carries a note. Keep the middle dot.",
+            "placeholders": [
+                "name",
+                "noted",
+                "owner"
             ]
         },
         {
@@ -25933,6 +26225,85 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.entity.isItem.active_tool",
+            "namespace": "tierLists",
+            "source_text": "Tool",
+            "description": "Integrated Strategies item type: a deployable support tool. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.isItem.band",
+            "namespace": "tierLists",
+            "source_text": "Squad",
+            "description": "Integrated Strategies item type: a starting squad. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.isItem.capsule",
+            "namespace": "tierLists",
+            "source_text": "Play",
+            "description": "Integrated Strategies item type: a Play performed by the troupe in the Phantom & Crimson Solitaire theme. The English game calls these Plays. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.isItem.copper",
+            "namespace": "tierLists",
+            "source_text": "Tongbao",
+            "description": "Integrated Strategies item type: a Tongbao coin from the Sui's Garden of Grotesqueries theme. Keep the game's own term. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.isItem.explore_tool",
+            "namespace": "tierLists",
+            "source_text": "Exploration tool",
+            "description": "Integrated Strategies item type: an exploration tool from the Expeditioner's Joklumarkar theme. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.isItem.fragment",
+            "namespace": "tierLists",
+            "source_text": "Thought",
+            "description": "Integrated Strategies item type: a Thought from the Sarkaz's Furnaceside Fables theme. The English game calls these Thoughts. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.isItem.relic",
+            "namespace": "tierLists",
+            "source_text": "Collectible",
+            "description": "Integrated Strategies item type: a collectible (relic) found during a run. The English game calls these Collectibles. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.isItem.theme",
+            "namespace": "tierLists",
+            "source_text": "Theme",
+            "description": "Integrated Strategies entry type: the theme (season) itself rather than an item in it. Used as a pool filter.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.isItem.totem",
+            "namespace": "tierLists",
+            "source_text": "Foldartal",
+            "description": "Integrated Strategies item type: a Foldartal from the Expeditioner's Joklumarkar theme. Keep the game's own term. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.isItem.wrath",
+            "namespace": "tierLists",
+            "source_text": "Wrath",
+            "description": "Integrated Strategies item type: a Wrath from the Sui's Garden of Grotesqueries theme. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.isTheme",
+            "namespace": "tierLists",
+            "source_text": "IS{number}",
+            "description": "Short name of one Integrated Strategies theme by its number, e.g. 'IS3' for Mizuki & Caerula Arbor. Used as a pool filter and in hover cards. {number} is a number.",
+            "placeholders": [
+                "number"
+            ]
+        },
+        {
             "key": "tierLists.entity.kind.class",
             "namespace": "tierLists",
             "source_text": "Class",
@@ -25961,10 +26332,45 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.entity.kind.integrated_strategies",
+            "namespace": "tierLists",
+            "source_text": "Integrated Strategies",
+            "description": "Singular kind label shown small above the name of an Integrated Strategies theme or item in its hover card. Keep the game's own name for the mode.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kind.module",
+            "namespace": "tierLists",
+            "source_text": "Module",
+            "description": "Singular kind label shown small above a module's name in its hover card.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.entity.kind.operator",
             "namespace": "tierLists",
             "source_text": "Operator",
             "description": "Singular kind label shown small above an entity's name in its hover card.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kind.skill",
+            "namespace": "tierLists",
+            "source_text": "Skill",
+            "description": "Singular kind label shown small above a skill's name in its hover card.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kind.skin",
+            "namespace": "tierLists",
+            "source_text": "Skin",
+            "description": "Singular kind label shown small above an outfit's name in its hover card.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kind.story_sprite",
+            "namespace": "tierLists",
+            "source_text": "Story character",
+            "description": "Singular kind label shown small above a story character's name in its hover card.",
             "placeholders": []
         },
         {
@@ -26010,10 +26416,45 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.entity.kinds.integrated_strategies",
+            "namespace": "tierLists",
+            "source_text": "Integrated Strategies",
+            "description": "Name of a kind of thing a tier list can rank: the game's roguelike mode, its themes and their items (collectibles, squads, Foldartals and the like). Keep the game's own name for the mode. Used on pool tabs and in the kinds settings.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kinds.module",
+            "namespace": "tierLists",
+            "source_text": "Modules",
+            "description": "Name of a kind of thing a tier list can rank: operator modules (equipment that adds an X, Y or other branch to an operator). Plural. Used on pool tabs and in the kinds settings.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.entity.kinds.operator",
             "namespace": "tierLists",
             "source_text": "Operators",
             "description": "Name of a kind of thing a tier list can rank: playable characters. Plural. Used on the editor's pool tabs and in the list of kinds a list offers.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kinds.skill",
+            "namespace": "tierLists",
+            "source_text": "Skills",
+            "description": "Name of a kind of thing a tier list can rank: operator skills, one per operator and skill slot. Plural. Used on pool tabs and in the kinds settings.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kinds.skin",
+            "namespace": "tierLists",
+            "source_text": "Skins",
+            "description": "Name of a kind of thing a tier list can rank: operator outfits from the store and event rewards. Plural. Used on pool tabs and in the kinds settings.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.kinds.story_sprite",
+            "namespace": "tierLists",
+            "source_text": "Story characters",
+            "description": "Name of a kind of thing a tier list can rank: the character sprites drawn in the game's story scenes, operators and non-playable characters alike. Plural. Used on pool tabs and in the kinds settings.",
             "placeholders": []
         },
         {
@@ -26038,6 +26479,29 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.entity.skill.slot",
+            "namespace": "tierLists",
+            "source_text": "Skill {slot}",
+            "description": "Which of an operator's skill slots a skill fills, e.g. 'Skill 2'. Shown in hover cards. {slot} is a number from 1 to 3.",
+            "placeholders": [
+                "slot"
+            ]
+        },
+        {
+            "key": "tierLists.entity.spriteSource.npc",
+            "namespace": "tierLists",
+            "source_text": "NPC",
+            "description": "Story character source: the sprite belongs to a non-playable character. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.spriteSource.operator",
+            "namespace": "tierLists",
+            "source_text": "Operator",
+            "description": "Story character source: the sprite belongs to a playable operator. Used as a pool filter and in hover cards.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.entity.tile.label",
             "namespace": "tierLists",
             "source_text": "{name}, {kind}",
@@ -26045,6 +26509,17 @@
             "placeholders": [
                 "kind",
                 "name"
+            ]
+        },
+        {
+            "key": "tierLists.entity.tile.labelOwned",
+            "namespace": "tierLists",
+            "source_text": "{name} ({owner}), {kind}",
+            "description": "Accessible name of a skin, module or skill tile: its name from the game data, the operator it belongs to in parentheses, then its kind, e.g. 'Stick and Sack (Hoshiguma), Module'.",
+            "placeholders": [
+                "kind",
+                "name",
+                "owner"
             ]
         },
         {
@@ -26092,8 +26567,8 @@
         {
             "key": "tierLists.my.card.emptyThumb",
             "namespace": "tierLists",
-            "source_text": "No operators placed yet",
-            "description": "Stand-in inside the card thumbnail when the list holds no operators.",
+            "source_text": "Nothing placed yet",
+            "description": "Stand-in inside the card thumbnail when the list holds no entries.",
             "placeholders": []
         },
         {
@@ -26326,7 +26801,7 @@
         {
             "key": "tierLists.my.empty.body",
             "namespace": "tierLists",
-            "source_text": "Create your first tier list to start ranking operators. You can publish it instantly and share it with anyone.",
+            "source_text": "Create your first tier list to start ranking operators, enemies, events and more. You can publish it instantly and share it with anyone.",
             "description": "Empty state body inviting the player to make their first list.",
             "placeholders": []
         },

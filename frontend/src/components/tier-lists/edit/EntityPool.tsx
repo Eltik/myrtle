@@ -1,12 +1,12 @@
 import { SlidersHorizontalIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Button } from "#/components/ui/button";
 import { Tabs, TabsList, TabsTab } from "#/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
-import { type ITierEntity, parseEntityKey, type TierEntityKind } from "#/lib/api/tier-entities";
+import type { ITierEntity, TierEntityKind } from "#/lib/api/tier-entities";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { useEntityLabels } from "../entities";
+import { useEntityLabels } from "../kinds";
 import { type CatalogueStatus, KindPool } from "./KindPool";
 import type { messages } from "./KindPool.messages";
 
@@ -22,6 +22,8 @@ interface IEntityPoolProps {
     /** Each offered kind's catalogue, from `GET /tier-lists/catalogue/{kind}`. */
     catalogues: Partial<Record<TierEntityKind, IKindCatalogue>>;
     placedKeys: Set<string>;
+    /** How many placements of each kind are on the board, for the tab counts. */
+    placedByKind: Partial<Record<TierEntityKind, number>>;
     onUnplace: (entityKey: string) => void;
     onPickerActivate: (entity: ITierEntity) => void;
     /** Opens the settings for which kinds the list offers. Absent: no Kinds button. */
@@ -33,22 +35,13 @@ interface IEntityPoolProps {
  * The editor's pool of placeable entities: one tab per kind the list offers
  * (no tab bar when it offers one), each with its own search and filters.
  */
-export function EntityPool({ kinds, catalogues, placedKeys, onUnplace, onPickerActivate, onEditKinds, rootClassName }: IEntityPoolProps) {
+export function EntityPool({ kinds, catalogues, placedKeys, placedByKind, onUnplace, onPickerActivate, onEditKinds, rootClassName }: IEntityPoolProps) {
     const t: TypedT<typeof messages> = useT("tierLists");
     const labels = useEntityLabels();
     const [chosen, setChosen] = useState<TierEntityKind | null>(null);
     // A kind dropped from the list's settings takes its tab with it; fall back to the first offered.
     const active: TierEntityKind = chosen && kinds.includes(chosen) ? chosen : (kinds[0] ?? "operator");
     const catalogue = catalogues[active];
-
-    const placedByKind = useMemo(() => {
-        const counts: Partial<Record<TierEntityKind, number>> = {};
-        for (const key of placedKeys) {
-            const { kind } = parseEntityKey(key);
-            counts[kind] = (counts[kind] ?? 0) + 1;
-        }
-        return counts;
-    }, [placedKeys]);
 
     const tabs =
         kinds.length > 1 ? (
@@ -58,7 +51,7 @@ export function EntityPool({ kinds, catalogues, placedKeys, onUnplace, onPickerA
                         const placed = placedByKind[kind] ?? 0;
                         return (
                             <TabsTab key={kind} value={kind} className="h-8 grow-0 px-2 font-sans text-[12.5px] sm:h-8 sm:text-[12.5px]">
-                                {labels.kinds[kind]}
+                                {labels.plural(kind)}
                                 {placed > 0 && <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{placed}</span>}
                             </TabsTab>
                         );

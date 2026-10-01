@@ -12,8 +12,8 @@ export const messages = {
         description: "Corner badge marking a list maintained for the site's own team. Rendered uppercase.",
     },
     "my.card.emptyThumb": {
-        text: "No operators placed yet",
-        description: "Stand-in inside the card thumbnail when the list holds no operators.",
+        text: "Nothing placed yet",
+        description: "Stand-in inside the card thumbnail when the list holds no entries.",
     },
     "my.card.tier": {
         text: "Tier {name}",

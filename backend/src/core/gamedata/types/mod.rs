@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 pub mod activity;
 pub mod audio;
+pub mod autochess;
 pub mod building;
 pub mod campaign;
 pub mod chapter;
@@ -14,6 +15,7 @@ pub mod event_shop;
 pub mod gacha;
 pub mod gacha_detail;
 pub mod handbook;
+pub mod handbook_team;
 pub mod level;
 pub mod material;
 pub mod medal;
@@ -24,6 +26,7 @@ pub mod operator;
 pub mod range;
 pub mod retro;
 pub mod roguelike;
+pub mod roguelike_entries;
 pub mod sandbox_universe;
 pub mod serde_helpers;
 pub mod shop;
@@ -144,6 +147,10 @@ pub struct GameData {
     pub consts: GameDataConst,
     /// Daily and weekly mission chests (the LMD an account earns from dailies).
     pub missions: mission::MissionData,
+    /// `handbook_team_table`: nations, groups and teams, keyed by power id.
+    pub factions: HashMap<String, handbook_team::HandbookTeam>,
+    /// Stronghold Protocol bonds, keyed by bond id, see [`autochess`].
+    pub autochess_bonds: HashMap<String, autochess::AutoChessBond>,
     /// Tables that failed to deserialize and fell back to `T::default()`.
     /// One entry per table, `"<table>: <error>"`. Empty on a clean load.
     ///

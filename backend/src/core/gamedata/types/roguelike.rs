@@ -10,6 +10,9 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, Default)]
 pub struct RoguelikeGameData {
     pub themes: HashMap<String, RoguelikeThemeGameData>,
+    /// Themes and their collectible items as tier list entries, see
+    /// [`super::roguelike_entries`].
+    pub entries: super::roguelike_entries::RoguelikeEntries,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -18,11 +21,9 @@ pub struct RoguelikeThemeGameData {
     pub theme_id: String,
     pub theme_name: String,
     pub max_endings: i32,
-    /// Total relics available (`relic_ids.len()`)
     pub max_relics: i32,
-    /// Total capsules available (only `rogue_1` has these; `capsule_ids.len()`)
+    /// Only `rogue_1` has capsules.
     pub max_capsules: i32,
-    /// Total bands available (`band_ids.len()`)
     pub max_bands: i32,
     /// Archive relic ids (`ArchiveComp.Relic.Relic`). This is the in-game
     /// collectible archive, and it is NOT the same set as the keys the client
@@ -71,7 +72,13 @@ impl RoguelikeGameData {
     /// - `FlatBuffer` export: `PascalCase`, `[{key, value}]` arrays
     /// - CN-gamedata: camelCase, `{key: value}` dicts
     pub fn from_table(table: &RoguelikeTopicTableFile) -> Self {
-        let mut data = Self::default();
+        let mut data = Self {
+            entries: super::roguelike_entries::RoguelikeEntries::from_tables(
+                &table.topics,
+                &table.details,
+            ),
+            ..Self::default()
+        };
 
         let topics = kv_to_map(&table.topics);
         let details = kv_to_map(&table.details);

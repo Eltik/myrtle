@@ -19,6 +19,14 @@ export const messages = {
         text: "{name}{noted, select, true { · has a description} other {}}",
         description: "Tooltip on a draggable tile that is not an operator: its name from the game data, then whether it carries a note. Keep the middle dot.",
     },
+    "edit.tile.entityLabelOwned": {
+        text: "{name} ({owner}), {kind}{placed, select, true { - already placed} other {}}{noted, select, true { - has a description} other {}}",
+        description: "Accessible name of a draggable skin, module or skill tile: its name from the game data, the operator it belongs to in parentheses, its kind, then whether it is already on a tier and whether it carries a note.",
+    },
+    "edit.tile.entityTitleOwned": {
+        text: "{name} ({owner}){noted, select, true { · has a description} other {}}",
+        description: "Tooltip on a draggable skin, module or skill tile: its name from the game data and the operator it belongs to in parentheses, then whether it carries a note. Keep the middle dot.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

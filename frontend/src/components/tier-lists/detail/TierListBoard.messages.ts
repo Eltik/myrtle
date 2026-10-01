@@ -20,8 +20,8 @@ export const messages = {
         description: "Follows the tier count under the board; the number itself is rendered just before it.",
     },
     "detail.board.operatorCount": {
-        text: "{count, plural, one {operator} other {operators}} placed",
-        description: "Follows the operator count under the board; the number itself is rendered just before it.",
+        text: "{count, plural, one {entry} other {entries}} placed",
+        description: "Follows the count of placed entries (operators, enemies, events or any other ranked thing) under the board; the number itself is rendered just before it.",
     },
 } satisfies MessageMap;
 

@@ -24,8 +24,8 @@ export const messages = {
         description: "Accessible name of the three summary tiles at the top of the dialog.",
     },
     "detail.tierDialog.stat.operators": {
-        text: "Operators",
-        description: "Summary tile label: how many operators sit in this tier. Rendered uppercase.",
+        text: "Entries",
+        description: "Summary tile label: how many entries (operators, enemies, events or any other ranked thing) sit in this tier. Rendered uppercase.",
     },
     "detail.tierDialog.stat.avgRarity": {
         text: "Avg ★",
@@ -52,16 +52,16 @@ export const messages = {
         description: "Heading of the section counting the tier's operators by class. Rendered uppercase.",
     },
     "detail.tierDialog.operatorsLabel": {
-        text: "Operators in this tier",
-        description: "Accessible name of the list of the tier's operators.",
+        text: "Entries in this tier",
+        description: "Accessible name of the list of the tier's entries.",
     },
     "detail.tierDialog.operatorsHeading": {
-        text: "Operators",
-        description: "Heading of the list of the tier's operators. Rendered uppercase.",
+        text: "Entries",
+        description: "Heading of the list of the tier's entries (operators, enemies, events or any other ranked thing). Rendered uppercase.",
     },
     "detail.tierDialog.operatorsEmpty": {
-        text: "No operators have been placed in this tier yet.",
-        description: "Empty state in place of the operator list when the tier holds none.",
+        text: "Nothing has been placed in this tier yet.",
+        description: "Empty state in place of the list of entries when the tier holds none.",
     },
 } satisfies MessageMap;
 

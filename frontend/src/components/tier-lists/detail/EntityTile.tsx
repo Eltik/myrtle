@@ -2,7 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
 import { type ITierEntity, isOperatorEntity } from "#/lib/api/tier-entities";
 import { stripMarkdown } from "#/lib/markdown";
-import { EntityAvatar, entityAccent, entityShape, useEntityLabels } from "../entities";
+import { EntityAvatar, entityAccent, entityShape, kindTileAttributes } from "../entities";
+import { entityPage, useEntityLabels } from "../kinds";
 import { operatorPlacementNote } from "../shared";
 import { OperatorTile } from "./OperatorTile";
 import styles from "./TierListDetail.module.css";
@@ -30,8 +31,7 @@ export function EntityTile({ entity }: { entity: ITierEntity }) {
     const tileProps = {
         className: styles.opTile,
         style: { ["--rarity-color" as string]: accent },
-        "data-kind": entity.kind,
-        "data-shape": entityShape(entity),
+        ...kindTileAttributes(entity),
         "aria-label": labels.tileLabel(entity),
     };
     const face = (
@@ -40,10 +40,10 @@ export function EntityTile({ entity }: { entity: ITierEntity }) {
             <span className={styles.opRarity} aria-hidden="true" />
         </>
     );
-    // Only enemies have a page of their own today; a kind that gains one sets `href` in the backend and lands here.
+    const page = entityPage(entity);
     const trigger =
-        entity.kind === "enemy" ? (
-            <Link to="/enemies/$id" params={{ id: entity.id }} {...tileProps}>
+        page !== null ? (
+            <Link to={page} params={{ id: entity.id }} {...tileProps}>
                 {face}
             </Link>
         ) : (
@@ -57,7 +57,7 @@ export function EntityTile({ entity }: { entity: ITierEntity }) {
         <HoverCard>
             <HoverCardTrigger render={trigger} />
             <HoverCardContent className="w-max max-w-[calc(100vw-2rem)] p-0" sideOffset={6}>
-                <EntityPreview entity={entity} linked={entity.kind === "enemy"} />
+                <EntityPreview entity={entity} linked={page !== null} />
             </HoverCardContent>
         </HoverCard>
     );
@@ -84,7 +84,7 @@ export function EntityPreview({ entity, linked }: { entity: ITierEntity; linked:
                     </div>
                 )}
                 <div className={previewStyles.title}>
-                    {entity.resolved && <div className="font-bold font-mono text-[9.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{labels.kind[entity.kind]}</div>}
+                    {entity.resolved && <div className="font-bold font-mono text-[9.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{labels.singular(entity.kind)}</div>}
                     <div className={previewStyles.name}>{entity.name}</div>
                     {detail.length > 0 && <div className={previewStyles.subtitle}>{detail.join(" · ")}</div>}
                 </div>

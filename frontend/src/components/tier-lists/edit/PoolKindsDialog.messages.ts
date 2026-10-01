@@ -15,34 +15,6 @@ export const messages = {
         text: "Kinds this list offers",
         description: "Accessible name of the group of checkboxes, one per kind, in the kinds dialog.",
     },
-    "edit.kinds.desc.operator": {
-        text: "Playable characters",
-        description: "One-line explanation under 'Operators' in the kinds dialog.",
-    },
-    "edit.kinds.desc.class": {
-        text: "The eight classes, Vanguard to Specialist",
-        description: "One-line explanation under 'Classes' in the kinds dialog.",
-    },
-    "edit.kinds.desc.subclass": {
-        text: "Archetypes within a class",
-        description: "One-line explanation under 'Subclasses' in the kinds dialog.",
-    },
-    "edit.kinds.desc.faction": {
-        text: "Nations, groups and teams",
-        description: "One-line explanation under 'Factions' in the kinds dialog.",
-    },
-    "edit.kinds.desc.enemy": {
-        text: "Every enemy in the handbook",
-        description: "One-line explanation under 'Enemies' in the kinds dialog.",
-    },
-    "edit.kinds.desc.event": {
-        text: "Side stories, vignettes and other events",
-        description: "One-line explanation under 'Events' in the kinds dialog.",
-    },
-    "edit.kinds.desc.stronghold_bond": {
-        text: "Faction and trait bonds from Stronghold Protocol",
-        description: "One-line explanation under 'Stronghold bonds' in the kinds dialog. Stronghold Protocol is the game's auto-chess mode.",
-    },
     "edit.kinds.placed": {
         text: "{count} placed",
         description: "Small count beside a kind in the kinds dialog: how many of that kind are on the board now.",

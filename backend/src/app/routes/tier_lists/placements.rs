@@ -8,10 +8,11 @@ use crate::app::extractors::auth::AuthUser;
 use crate::app::routes::{StatusOk, ok_status};
 use crate::app::services::tier_list::find_and_authorize;
 use crate::app::services::tier_list::invalidate_detail;
+use crate::app::services::tier_list::validate_entity;
 use crate::app::state::AppState;
 use crate::app::validation::{PLACEMENT_DESCRIPTION_MAX, validate_opt_length};
 use crate::core::auth::permissions::Permission;
-use crate::database::models::tier_list::TierPlacement;
+use crate::database::models::tier_list::{EntityKind, EntityRef, TierPlacement};
 use crate::database::queries::tier_lists::add_placement;
 use crate::database::queries::tier_lists::get_placements;
 use crate::database::queries::tier_lists::get_tiers;
@@ -22,12 +23,15 @@ use crate::database::queries::tier_lists::set_placement_description;
 #[derive(Deserialize, utoipa::ToSchema)]
 pub struct AddPlacementRequest {
     pub tier_id: Uuid,
-    pub operator_id: String,
+    pub entity_kind: EntityKind,
+    /// Id in the kind's own space, e.g. `char_002_amiya` for an operator.
+    pub entity_id: String,
     pub sub_order: Option<i16>,
     pub description: Option<String>,
 }
 
-/// Place an operator into a tier.
+/// Place an entity of any kind into a tier.
+/// The `(entity_kind, entity_id)` must exist in some loaded server's game data.
 /// Needs edit rights on the list: its owner, or a grant from
 /// `/tier-lists/{slug}/permissions`.
 #[utoipa::path(
@@ -64,6 +68,11 @@ pub async fn add(
     )?;
     let user_id: Uuid = auth.user_uuid()?;
     let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit).await?;
+    validate_entity(&state, body.entity_kind, &body.entity_id)?;
+    let entity = EntityRef {
+        kind: body.entity_kind,
+        id: &body.entity_id,
+    };
 
     // `body.tier_id` comes from the request and the permission was checked
     // against `slug`, so the insert is scoped to `list.id`: a tier on another
@@ -72,7 +81,7 @@ pub async fn add(
         &state.db,
         list.id,
         body.tier_id,
-        &body.operator_id,
+        entity,
         body.sub_order.unwrap_or(0),
         body.description.as_deref(),
     )
@@ -92,11 +101,12 @@ pub struct UpdateDescriptionRequest {
 /// `/tier-lists/{slug}/permissions`.
 #[utoipa::path(
     patch,
-    path = "/tier-lists/{slug}/placements/{operator_id}",
+    path = "/tier-lists/{slug}/placements/{kind}/{id}",
     tag = "tier-lists",
     params(
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL."),
-        ("operator_id" = String, Path, description = "Operator id, e.g. `char_002_amiya`.")
+        ("kind" = EntityKind, Path, description = "Entity kind, e.g. `operator`."),
+        ("id" = String, Path, description = "Entity id in that kind's space, e.g. `char_002_amiya`.")
     ),
     request_body = UpdateDescriptionRequest,
     security(("bearer_auth" = []), ("service_key" = [])),
@@ -114,7 +124,7 @@ pub struct UpdateDescriptionRequest {
 pub async fn update_description(
     State(state): State<AppState>,
     auth: AuthUser,
-    Path((slug, operator_id)): Path<(String, String)>,
+    Path((slug, kind, id)): Path<(String, EntityKind, String)>,
     Json(body): Json<UpdateDescriptionRequest>,
 ) -> Result<Json<TierPlacement>, ApiError> {
     validate_opt_length(
@@ -128,7 +138,7 @@ pub async fn update_description(
     let placement = set_placement_description(
         &state.db,
         list.id,
-        &operator_id,
+        EntityRef { kind, id: &id },
         body.description.as_deref(),
     )
     .await?
@@ -137,16 +147,17 @@ pub async fn update_description(
     Ok(Json(placement))
 }
 
-/// Take an operator out of the list.
+/// Take an entity out of the list.
 /// Needs edit rights on the list: its owner, or a grant from
 /// `/tier-lists/{slug}/permissions`.
 #[utoipa::path(
     delete,
-    path = "/tier-lists/{slug}/placements/{operator_id}",
+    path = "/tier-lists/{slug}/placements/{kind}/{id}",
     tag = "tier-lists",
     params(
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL."),
-        ("operator_id" = String, Path, description = "Operator id, e.g. `char_002_amiya`.")
+        ("kind" = EntityKind, Path, description = "Entity kind, e.g. `operator`."),
+        ("id" = String, Path, description = "Entity id in that kind's space, e.g. `char_002_amiya`.")
     ),
     security(("bearer_auth" = []), ("service_key" = [])),
     responses(
@@ -162,19 +173,20 @@ pub async fn update_description(
 pub async fn remove(
     State(state): State<AppState>,
     auth: AuthUser,
-    Path((slug, operator_id)): Path<(String, String)>,
+    Path((slug, kind, id)): Path<(String, EntityKind, String)>,
 ) -> Result<Json<StatusOk>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
     let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit).await?;
 
-    // Find which tier this operator is in, then remove. Idempotent: if the
+    // Find which tier this entity is in, then remove. Idempotent: if the
     // placement is already gone (e.g. cascade-deleted by a prior tier delete in
     // the same save batch), report success rather than NotFound.
+    let entity = EntityRef { kind, id: &id };
     let tiers = get_tiers(&state.db, list.id).await?;
     for tier in &tiers {
         let placements = get_placements(&state.db, tier.id).await?;
-        if placements.iter().any(|p| p.operator_id == operator_id) {
-            remove_placement(&state.db, list.id, tier.id, &operator_id).await?;
+        if placements.iter().any(|p| p.entity() == entity) {
+            remove_placement(&state.db, list.id, tier.id, entity).await?;
             invalidate_detail(&state, &slug).await;
             break;
         }
@@ -188,16 +200,17 @@ pub struct MovePlacementRequest {
     pub sub_order: Option<i16>,
 }
 
-/// Move an operator to a different tier, or reorder it within one.
+/// Move an entity to a different tier, or reorder it within one.
 /// Needs edit rights on the list: its owner, or a grant from
 /// `/tier-lists/{slug}/permissions`.
 #[utoipa::path(
     post,
-    path = "/tier-lists/{slug}/placements/{operator_id}/move",
+    path = "/tier-lists/{slug}/placements/{kind}/{id}/move",
     tag = "tier-lists",
     params(
         ("slug" = String, Path, description = "Tier list slug, as it appears in its URL."),
-        ("operator_id" = String, Path, description = "Operator id, e.g. `char_002_amiya`.")
+        ("kind" = EntityKind, Path, description = "Entity kind, e.g. `operator`."),
+        ("id" = String, Path, description = "Entity id in that kind's space, e.g. `char_002_amiya`.")
     ),
     request_body = MovePlacementRequest,
     security(("bearer_auth" = []), ("service_key" = [])),
@@ -215,25 +228,26 @@ pub struct MovePlacementRequest {
 pub async fn move_to(
     State(state): State<AppState>,
     auth: AuthUser,
-    Path((slug, operator_id)): Path<(String, String)>,
+    Path((slug, kind, id)): Path<(String, EntityKind, String)>,
     Json(body): Json<MovePlacementRequest>,
 ) -> Result<Json<TierPlacement>, ApiError> {
     let user_id: Uuid = auth.user_uuid()?;
     let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit).await?;
 
+    let entity = EntityRef { kind, id: &id };
     let tiers = get_tiers(&state.db, list.id).await?;
     for tier in &tiers {
         let placements = get_placements(&state.db, tier.id).await?;
-        if placements.iter().any(|p| p.operator_id == operator_id) {
+        if placements.iter().any(|p| p.entity() == entity) {
             // `body.new_tier_id` comes from the request, so the move is
-            // scoped to `list.id` and cannot place the operator on another
+            // scoped to `list.id` and cannot place the entity on another
             // list. `None` is that case, with nothing deleted.
             let result = move_placement(
                 &state.db,
                 list.id,
                 tier.id,
                 body.new_tier_id,
-                &operator_id,
+                entity,
                 body.sub_order.unwrap_or(0),
             )
             .await?
