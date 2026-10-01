@@ -1,31 +1,23 @@
-//! Login via the Bilibili channel's `BiliGame` publisher SDK, used by the CN
-//! Bilibili client (as opposed to the CN official/Hypergryph client, see
-//! `passport.rs`).
+//! Login via the `BiliGame` publisher SDK, used by the CN Bilibili client
+//! (the CN official client goes through `passport.rs`).
 //!
-//! This is not `passport.bilibili.com` OAuth: it is a direct login against a
-//! `BiliGame` merchant endpoint scoped to Arknights's own merchant/game/server
-//! ids on Bilibili's platform. The username/password path (`issue/cipher/v3`
-//! and `login/v3`, RSA-encrypted password) is a reverse-engineered protocol
-//! fact documented by thesadru/arkprts (GPL-3.0) and confirmed against a real
-//! biligame response; this module is an independent reimplementation from
-//! that documented protocol, not a copy of arkprts's source.
+//! Not `passport.bilibili.com` OAuth: a direct login against a `BiliGame`
+//! merchant endpoint scoped to Arknights's merchant/game/server ids. The
+//! password path (`issue/cipher/v3` + `login/v3`, RSA-encrypted password)
+//! follows the protocol documented by thesadru/arkprts (GPL-3.0), confirmed
+//! against a real biligame response. Independent reimplementation, not a copy
+//! of arkprts's source.
 //!
-//! [`send_sms_code`] and [`login_sms`] are NOT from arkprts (it has no SMS
-//! path at all) and are NOT confirmed against a real response; probed
-//! 2026-09-15, `issue/sms_code/v3` answers 404, so the site's SMS login
-//! route does not work until the real endpoint is found. The actual
-//! Bilibili Arknights client does offer SMS-code login (this was checked;
-//! see the module's accompanying report), but no endpoint for it has
-//! surfaced anywhere in research. These two functions are a structural guess
-//! that mirrors the confirmed password endpoints as closely as possible:
-//! same merchant/game/server ids, same signing, an `issue/sms_code/v3` sibling
-//! to `issue/cipher/v3`, and a `login/sms/v3` sibling to `login/v3` with a
-//! plaintext `sms_code` field standing in for the RSA-encrypted `pwd` (a
-//! short-lived SMS code has no obvious reason to need RSA encryption the way
-//! a reusable password does). Treat a failure here as "wrong path or field
-//! name," not "bad code": if it 404s or comes back with an unexpected shape,
-//! the fix is to see the actual request errors and recognize which
-//! assumption to correct.
+//! [`send_sms_code`] and [`login_sms`] are a GUESS: arkprts has no SMS path and
+//! neither is confirmed against a real response. Probed 2026-09-15,
+//! `issue/sms_code/v3` answers 404, so the site's SMS login doesn't work until
+//! the real endpoint turns up. The Bilibili client does offer SMS login, but no
+//! endpoint for it has surfaced. The guess mirrors the password endpoints: same
+//! ids, same signing, `issue/sms_code/v3` beside `issue/cipher/v3`,
+//! `login/sms/v3` beside `login/v3`, and a plaintext `sms_code` in place of the
+//! RSA `pwd` (a short-lived code has no obvious need for RSA). A 404 or an odd
+//! shape means a wrong path or field name, not bad code: read the actual error
+//! and fix that assumption.
 
 use std::time::Duration;
 

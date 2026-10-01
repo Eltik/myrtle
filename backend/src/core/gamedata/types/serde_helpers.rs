@@ -62,7 +62,7 @@ where
         .collect())
 }
 
-/// Deserialize a value that may be `null`, using `Default` when null/missing.
+/// `null` or missing -> `Default`.
 pub fn deserialize_null_default<'de, D, T>(deserializer: D) -> Result<T, D::Error>
 where
     D: Deserializer<'de>,

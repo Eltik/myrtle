@@ -73,12 +73,12 @@ export type Operator = {
      */
     audio: Array<OperatorAudio>;
     /**
-     * Small portrait image (headshot) - /upk/arts/charportraits/{pack}/{id}_{1|2}.png
+     * Headshot: /upk/arts/charportraits/{pack}/{id}_{1|2}.png
      */
     portrait: string | null;
     /**
-     * Full character art (large illustration) - /upk/chararts/{id}/{id}_{1|2}.png
-     * None if not available (use portrait as fallback)
+     * Full illustration: /upk/chararts/{id}/{id}_{1|2}.png. `None` if absent
+     * (portrait is the fallback).
      */
     skin: string | null;
     /**

@@ -1,6 +1,3 @@
-//! Medal game data types
-//!
-
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -645,8 +642,6 @@ mod tests {
         d
     }
 
-    // ── Permanent ────────────────────────────────────────────────────────────
-
     #[test]
     fn no_expire_times_is_permanent() {
         let d = data_with(vec![mk_medal("medal_perm", "", &[])]);
@@ -672,8 +667,6 @@ mod tests {
             Obtainability::Permanent
         );
     }
-
-    // ── Tower / seasonal windows ─────────────────────────────────────────────
 
     #[test]
     fn tower_in_season_is_active_event() {
@@ -709,8 +702,6 @@ mod tests {
         let d = data_with_tower_windows(Vec::new());
         assert_eq!(d.obtainability("medal_t", NOW), Obtainability::Unobtainable);
     }
-
-    // ── One-time competitive modes ───────────────────────────────────────────
 
     #[test]
     fn one_time_mode_active_is_event() {
@@ -778,8 +769,6 @@ mod tests {
             }
         );
     }
-
-    // ── Operator locks ───────────────────────────────────────────────────────
 
     #[test]
     fn link_operator_locks_catches_collab_only() {

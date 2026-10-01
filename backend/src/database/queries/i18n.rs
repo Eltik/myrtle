@@ -6,8 +6,6 @@ use crate::database::models::i18n::{
     UiMessageAuditEntry, UiMessageAuditEntryWithContext,
 };
 
-// ---------------------------------------------------------------- locales
-
 pub async fn list_locales(pool: &PgPool, enabled_only: bool) -> Result<Vec<Locale>, sqlx::Error> {
     let sql = if enabled_only {
         "SELECT code, english_name, native_name, fallback_locale, gamedata_server, enabled, sort_order, is_source
@@ -67,12 +65,10 @@ pub async fn upsert_locale(
     .await
 }
 
-// ---------------------------------------------------------------- catalog
-//
-// One resolution rule, written once and shared by the catalog read and the
-// manifest fingerprint so the two can never disagree about what is in a
-// catalog: this locale's value, else the fallback locale's value, else the key
-// is absent and the client renders the bundled English source.
+// One resolution rule shared by the catalog read and the manifest fingerprint, so
+// they cannot disagree about a catalog's contents: this locale's value, else the
+// fallback locale's, else the key is absent and the client renders the bundled
+// English source.
 
 const RESOLVED: &str = r"
     SELECT k.key AS key,
@@ -132,8 +128,6 @@ pub async fn list_namespaces(pool: &PgPool) -> Result<Vec<String>, sqlx::Error> 
     Ok(rows.into_iter().map(|(n,)| n).collect())
 }
 
-// ---------------------------------------------------------------- key sync
-
 /// Bulk-upsert extracted keys. `source_text`/`source_hash` always win: the
 /// code is authoritative for what the English *source* is, even though the
 /// database is authoritative for what is *rendered*.
@@ -186,8 +180,6 @@ pub async fn deactivate_missing_keys(
     .await?;
     Ok(res.rows_affected())
 }
-
-// ---------------------------------------------------------------- editor
 
 /// The source locale has no `ui_messages` rows - its text lives in
 /// `ui_message_keys.source_text` - so it needs `source_text` projected as the
@@ -340,8 +332,6 @@ pub async fn delete_message(pool: &PgPool, key: &str, locale: &str) -> Result<()
     Ok(())
 }
 
-// ---------------------------------------------------------------- audit
-
 pub async fn insert_audit(
     pool: &PgPool,
     message_key: &str,
@@ -433,8 +423,6 @@ pub async fn count_audit_log(pool: &PgPool, locale: Option<&str>) -> Result<i64,
     Ok(count)
 }
 
-// ---------------------------------------------------------------- progress
-
 /// `(locale, total_active_keys, translated, stale)` - drives the admin
 /// sidebar badge and the per-locale progress bars.
 pub async fn locale_progress(pool: &PgPool) -> Result<Vec<(String, i64, i64, i64)>, sqlx::Error> {
@@ -462,8 +450,6 @@ pub async fn locale_progress(pool: &PgPool) -> Result<Vec<(String, i64, i64, i64
     .fetch_all(pool)
     .await
 }
-
-// ---------------------------------------------------------------- grants
 
 pub async fn list_permissions(
     pool: &PgPool,
@@ -541,8 +527,6 @@ pub async fn revoke_permission(
     Ok(())
 }
 
-// ---------------------------------------------------------------- overrides
-
 pub async fn list_overrides(
     pool: &PgPool,
     locale: &str,
@@ -599,8 +583,6 @@ pub async fn delete_override(
         .await?;
     Ok(())
 }
-
-// ---------------------------------------------------------------- documents
 
 pub async fn get_document(
     pool: &PgPool,

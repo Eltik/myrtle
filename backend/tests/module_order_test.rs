@@ -1,16 +1,13 @@
 //! Module ordering and identity.
 //!
-//! `get_operator_modules` builds each operator's list by iterating
-//! `equip_dict`, a `HashMap`. Rust seeds those per process, so before this was
-//! sorted the same operator came back in a different order after every restart:
-//! stable while the process lived, different the next time it started. Anything
-//! downstream reading position - a default selection, a dropdown, a "Mod N"
-//! label - therefore named a different module on each deploy.
+//! `get_operator_modules` iterates `equip_dict`, a `HashMap` seeded per
+//! process, so an unsorted list came back in a different order after every
+//! restart. Anything reading position (a default selection, a dropdown, a
+//! "Mod N" label) then named a different module on each deploy.
 //!
-//! The fix is a total order, so these tests assert the property that makes the
-//! output reproducible rather than any one arrangement: a total order has
-//! exactly one valid sequence, so asserting the list already matches it proves
-//! the result cannot vary with the hash seed.
+//! These tests assert the total order itself, not one arrangement: a total
+//! order has exactly one valid sequence, so a list already matching it cannot
+//! vary with the hash seed.
 
 mod common;
 

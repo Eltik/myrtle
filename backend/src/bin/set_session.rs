@@ -136,7 +136,6 @@ async fn main() -> Result<()> {
         bail!("--server bili logs in with --bili-user / --bili-pass or --import, not --email");
     }
 
-    // Step 2: exchange the code for a durable session.
     if let Some(code) = flag("--code") {
         let result = session::login(&client, &email, &code, server)
             .await
@@ -145,7 +144,6 @@ async fn main() -> Result<()> {
         return persist(&out, &result.session, server);
     }
 
-    // Step 1: ask Yostar to email a code.
     send_code(&client, &email, server)
         .await
         .map_err(|e| anyhow::anyhow!("send_code failed: {e:?}"))?;

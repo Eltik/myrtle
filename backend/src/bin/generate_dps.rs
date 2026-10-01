@@ -47,8 +47,6 @@ use std::io::{BufWriter, Write};
 use std::process::{Command, Stdio};
 use std::sync::LazyLock;
 
-// ── Shared types ────────────────────────────────────────────────────────
-
 #[derive(Deserialize, Serialize, Clone)]
 struct OperatorFormula {
     name: String,
@@ -93,9 +91,7 @@ struct TestCase {
     res_shred_flat: f64,
 }
 
-// ── Generator modes ─────────────────────────────────────────────────────
-
-/// Selects which upstream source + which output shape we're targeting.
+/// Upstream source and output shape.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 enum Mode {
     /// DPS: `damage_formulas.py`, `skill_dps`, single-f64 output.
@@ -577,7 +573,6 @@ fn generate_expected_dps(repo_path: &str, formulas: &HashMap<String, OperatorFor
     let mut skipped_modules = 0u64;
 
     for (char_id, formula) in formulas {
-        // Check if ALL formula modules exist in game data.
         // Python's talent resolution cross-references talent data from ALL modules
         // (e.g., uniequip_004's talent data can affect talent values when uniequip_003
         // is equipped). If any module is missing, talent data will diverge.
@@ -754,8 +749,6 @@ fn make_test_key(
         base
     }
 }
-
-// ── HPS fixture generation ──────────────────────────────────────────────
 
 #[derive(Serialize)]
 struct HpsTestCase {
@@ -1168,8 +1161,6 @@ fn build_dispatch_mod(
     out
 }
 
-// ── Transpilation ───────────────────────────────────────────────────────
-
 const RUST_KEYWORDS: &[(&str, &str)] = &[
     ("crate", "crate_val"),
     ("type", "type_val"),
@@ -1545,7 +1536,6 @@ fn extract_and_transpile_init_mutations(init_body: &str) -> InitMutations {
         for &(_field, decl) in bool_fields {
             shadow_decls.push(format!("    {decl}"));
         }
-        // Add all bool fields to modified_fields so body replacement works
         for &(field, _) in bool_fields {
             modified_fields.insert(field.to_string());
         }
@@ -1733,7 +1723,6 @@ fn transpile_skill_dps(
 
         let tab_count = py_line.chars().take_while(|&c| c == '\t').count();
 
-        // Skip try: line (keep its body)
         if trimmed == "try:" {
             continue;
         }
@@ -2230,7 +2219,6 @@ fn transpile_line(py: &str, declared: &mut std::collections::HashSet<String>) ->
 
     line = transpile_expressions(&line, declared);
 
-    // Add semicolons to statements
     let t = line.trim();
     let is_block_open = t.ends_with('{') && !t.contains("else");
     let is_standalone_close = t == "}";
@@ -2510,7 +2498,6 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
     if s.ends_with("self.skill") {
         s = s[..s.len() - 10].to_string() + "skillf";
     }
-    // Cast i32 fields to f64 for arithmetic
     s = s.replace("self.elite", "(unit.elite as f64)");
     s = s.replace("self.module_lvl", "(unit.module_level as f64)");
     s = s.replace("self.module", "unit.module_index");
@@ -2744,7 +2731,6 @@ fn transpile_expressions(line: &str, declared: &mut std::collections::HashSet<St
         }
     }
 
-    // Clean up artifacts
     s = s.replace(":;", " {");
     s = s.replace(";;", ";");
 
@@ -2759,8 +2745,6 @@ fn escape_keyword(var: &str) -> String {
     }
     var.to_string()
 }
-
-// ── Helpers ─────────────────────────────────────────────────────────────
 
 fn extract_method(class_body: &str, method_name: &str) -> String {
     let pattern = format!("def {method_name}(");

@@ -120,18 +120,15 @@ pub struct SetRoleRequest {
 
 /// `PUT /admin/users/{user_id}/role`
 ///
-/// Until now the only way to change a role was the interactive
-/// `manage_permissions` CLI, so the admin panel could display a role but never
-/// assign one. Granting the Translator role has to be possible from the panel,
-/// which is what this route is for.
+/// The admin panel could display a role but never assign one; this is that
+/// route (the Translator grant needs it).
 ///
 /// Super-admin only, and it refuses to change a super-admin's own row: an
 /// accidental self-demotion here would need the CLI to undo.
 ///
-/// Note the role reaches `AuthUser` from the JWT, so the target user keeps
-/// their old privileges until their token refreshes. Per-locale translation
-/// grants deliberately do not work this way - they are read from the database
-/// per request and take effect immediately.
+/// The role reaches `AuthUser` from the JWT, so the target keeps their old
+/// privileges until their token refreshes. Per-locale translation grants are
+/// read from the database per request and take effect immediately.
 #[utoipa::path(
     put,
     path = "/admin/users/{user_id}/role",

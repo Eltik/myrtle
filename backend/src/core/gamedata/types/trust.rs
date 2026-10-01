@@ -37,12 +37,9 @@ pub struct Favor {
 }
 
 impl Favor {
-    /// Resolves a raw favor-point count to its trust percent (0-200) using the
-    /// frame thresholds shipped with the game. Returns 0.0 if the table is
-    /// empty (e.g. game data not loaded).
-    ///
-    /// Frames are sorted ascending by level in the source data; we scan in
-    /// reverse to grab the highest threshold the player has reached.
+    /// Raw favor-point count -> trust percent (0-200) using the game's frame
+    /// thresholds; 0.0 when the table is empty (game data not loaded). Frames
+    /// ascend by level, so scan in reverse for the highest one reached.
     pub fn trust_pct(&self, favor_point: i32) -> f64 {
         self.favor_frames
             .iter()

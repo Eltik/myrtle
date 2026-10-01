@@ -30,10 +30,9 @@ use ts_rs::TS;
 
 type HmacSha256 = Hmac<Sha256>;
 
-/// Derive the stored anonymous-dedupe key from a client-supplied session id.
-/// The DB column is `CHAR(64)`, matching the hex-encoded HMAC-SHA256 length.
-/// Keying with `jwt_secret` (treated here as a server-side pepper) ensures a
-/// DB dump alone can't be cross-referenced with a stolen `mtl_sid` cookie.
+/// Stored anonymous-dedupe key for a client-supplied session id.
+/// The column is `CHAR(64)`, the hex length of HMAC-SHA256. `jwt_secret` acts as a
+/// server-side pepper so a DB dump alone cannot be matched to a stolen `mtl_sid` cookie.
 fn hash_session_id(secret: &str, session_id: &str) -> String {
     let mut mac =
         HmacSha256::new_from_slice(secret.as_bytes()).expect("HMAC accepts keys of any length");

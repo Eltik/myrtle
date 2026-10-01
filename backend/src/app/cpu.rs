@@ -262,9 +262,8 @@ mod tests {
         }
     }
 
-    /// The behaviour this module exists to provide now: over the limit, a caller
-    /// WAITS and is served when a permit comes back, rather than taking a 503
-    /// while the box still has work capacity a moment later.
+    /// Over the limit, a caller WAITS and is served when a permit comes back,
+    /// rather than taking a 503 while the box still has capacity a moment later.
     #[tokio::test]
     async fn a_waiter_is_served_when_a_permit_returns() {
         let _pool = POOL.lock().await;

@@ -50,8 +50,7 @@ pub struct EncounteredEnemiesResponse {
 }
 
 /// `GET /enemies/{id}` - one enemy handbook record plus the race lookup table
-/// (default server). Replaces the enemy-detail page's full `/static/enemies`
-/// fetch.
+/// (default server).
 #[utoipa::path(
     get,
     path = "/enemies/{id}",
@@ -108,8 +107,7 @@ pub async fn enemy_detail_srv(
     Ok(json_response(body, &headers))
 }
 
-/// `GET /enemies/{id}/stages` - the "Appears In" list for one enemy (default
-/// server). Replaces the full `/static/enemy-stages` map fetch.
+/// `GET /enemies/{id}/stages` - the "Appears In" list for one enemy (default server).
 #[utoipa::path(
     get,
     path = "/enemies/{id}/stages",

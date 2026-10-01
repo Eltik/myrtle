@@ -527,9 +527,7 @@ pub struct SkillLineDto {
     #[serde(default)]
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub from_control_center: bool,
-    /// How to read a zero-marginal line. The enum serializes to the same
-    /// strings the hand-written match produced, but the generated TS binding
-    /// is now a union instead of `string`.
+    /// How to read a zero-marginal line.
     pub disposition: crate::core::grade::base::skill_ledger::LineDisposition,
     /// A reading aid for marginals spread over other lines (count skills).
     #[serde(default)]
@@ -813,14 +811,11 @@ async fn build_improvements(
         build_base_improvements(&state.db, user_id, &roster, Arc::clone(&game_data)),
     )?;
 
-    // The permit covers ONLY this line, which is the only synchronous work in the
-    // function: one pass over the roster doing table lookups and arithmetic.
-    // Previously the whole handler ran under a permit, so a permit was occupied
-    // for the length of five database round-trips with the CPU idle, and two
-    // permits therefore capped the endpoint at two concurrent callers for a
-    // reason that was mostly not CPU. Held this tightly, the queue in `cpu`
-    // should almost never engage for this route, and remains a real floor
-    // under the base optimizer and DPS, which it was written for.
+    // The permit covers only this line, the one synchronous step: a pass over the
+    // roster doing table lookups and arithmetic. Holding it across the five DB
+    // round-trips capped the endpoint at two callers for a reason that was mostly
+    // not CPU. Held this tightly, the queue in `cpu` rarely engages here; it stays
+    // a real floor under the base optimizer and DPS.
     let operators = {
         let _admission = cpu::admit("user_improvements").await?;
         build_operator_improvements(&roster, &game_data, &support_ids)
@@ -1283,8 +1278,8 @@ pub fn build_operator_improvements(
     game_data: &GameData,
     support_ids: &HashSet<&str>,
 ) -> OperatorImprovements {
-    // Total weight across all graded operators - used to translate per-op
-    // score deltas into a contribution against operator_grade.
+    // Total weight across graded operators; turns per-op score deltas into a
+    // contribution against operator_grade.
     let total_weight = total_roster_weight(roster, game_data);
     let mut below_milestone: Vec<OperatorGap> = Vec::new();
     for entry in roster {
@@ -1644,8 +1639,7 @@ fn compute_base_improvements(
 /// plus the generator seats the plan reserved. `None` when the plan committed
 /// no economy. Sustained scales the peak by the mean uptime of the plan's
 /// OTHER pinned generators - the pool only stays full while they work; the
-/// consumer's own co-present share counts in full. A coarser factor than the
-/// old per-contribution weighting, from the same uptime inputs.
+/// consumer's own co-present share counts in full.
 #[allow(clippy::too_many_arguments)]
 fn native_economy_dto(
     base_registry: &HashMap<String, BuffResolutionStrategy>,
@@ -2257,8 +2251,6 @@ pub fn shift_rotation_to_dto(
             rooms: room_dtos,
         });
     }
-    // Validate the recommended rhythm with the game-true morale simulation and
-    // ship the verdict alongside the plan.
     let targeted = targeted_morale_effects(
         &game_data.building.buffs,
         &build_name_to_char(&game_data.operators),
@@ -2347,7 +2339,6 @@ pub(crate) fn base_assignment_to_dto(
 ) -> BaseAssignmentDto {
     use crate::core::grade::base::yield_model::BaseFlows;
 
-    // Realized output with the gold->trade coupling (LMD = min(made, sold) × 500).
     let mut flows = BaseFlows::default();
     for r in &asn.rooms {
         flows.add_room(

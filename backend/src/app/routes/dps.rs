@@ -54,12 +54,11 @@ fn body_hash(body: &services::dps::CalculateRequest) -> u64 {
 /// bounds-checked first and the work then runs on the blocking pool under
 /// admission control.
 ///
-/// Memoised, because this is the ideal candidate for it: the result is a pure
-/// function of the body and the loaded game data, with no clock, no RNG and no
-/// user scoping, so two people posting the same configuration must get the same
-/// three floats. The UI compares configurations by firing a burst of these at
-/// once, which is what was filling the admission queue; a burst of repeats now
-/// costs one simulation.
+/// Memoised: the result is a pure function of the body and the loaded game
+/// data (no clock, no RNG, no user scoping), so two people posting the same
+/// configuration get the same three floats. The UI compares configurations by
+/// firing a burst of these at once, which was filling the admission queue; a
+/// burst of repeats costs one simulation.
 ///
 /// Validation stays AHEAD of the cache read so an out-of-range body is rejected
 /// rather than keyed, and the cache read sits ahead of `cpu::run` so a hit never

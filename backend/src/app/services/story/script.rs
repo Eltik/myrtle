@@ -30,9 +30,8 @@ pub async fn get_story(
     let assets_dir = std::path::PathBuf::from(&server_data.assets_dir);
     let live_assets = server_data.asset_index.load_full();
     let id = story_id.to_owned();
-    // The parse is milliseconds (measured 2026-09-21: the longest EN script
-    // parses in under 10 ms), but the first call also builds the asset index,
-    // one walk over ~90k files, so the whole thing runs off the async worker.
+    // first call also builds the asset index (one walk over ~90k files), so this
+    // runs off the async worker; the parse itself is <10 ms (measured 2026-09-21)
     cpu::run("story_parse", move || {
         load_and_parse(&assets_dir, &live_assets, &id, &story_ref)
     })

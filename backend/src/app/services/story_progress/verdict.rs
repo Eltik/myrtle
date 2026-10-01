@@ -214,7 +214,6 @@ pub fn parse_game_story_read(
     };
     let mut merged: BTreeMap<String, GameStoryRead> = BTreeMap::new();
 
-    // Source (a): the client's played-script flags, mapped through the index.
     if let Some(flags) = user
         .get("status")
         .and_then(|s| s.get("flags"))

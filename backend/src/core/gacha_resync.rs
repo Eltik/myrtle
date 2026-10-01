@@ -1,15 +1,10 @@
 //! Reconcile stored `gacha_records.rarity` against the latest game data.
 //!
-//! When a gacha record is fetched from Yostar's API, the canonical rarity is
-//! read from `character_table` (via `rarity_from_gamedata`). If game data is
-//! missing the `char_id` at fetch time - typically because the operator is
-//! brand-new and the asset pipeline hasn't caught up yet - the code falls
-//! back to the API's `star` field, which has historically been wrong/stale.
-//!
-//! Once game data catches up (post hot-reload), those fallback rows can carry
-//! the wrong rarity. This module rewrites them. It's cheap: distinct
-//! `(char_id, rarity)` pairs are bounded by the operator count (few hundred),
-//! and the UPDATE is a single unnest-driven batch.
+//! Rarity is read from `character_table` (`rarity_from_gamedata`). When the
+//! `char_id` is missing at fetch time (brand-new operator, asset pipeline behind),
+//! it falls back to the API's `star`, which has been wrong/stale. After a
+//! hot-reload those rows are rewritten here: one unnest-driven UPDATE, bounded by
+//! the distinct `(char_id, rarity)` pairs (a few hundred).
 
 use std::collections::HashSet;
 

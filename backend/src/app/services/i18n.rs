@@ -32,8 +32,6 @@ fn source_hash(text: &str) -> String {
     hex::encode(Sha256::digest(text.as_bytes()))[..16].to_owned()
 }
 
-// ---------------------------------------------------------------- manifest
-
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -107,8 +105,6 @@ pub async fn get_manifest(state: &AppState) -> Result<CachedJson, ApiError> {
     .await
 }
 
-// ---------------------------------------------------------------- catalog
-
 /// Whether the hash a client asked for is still the current one. A request for
 /// a superseded hash is answered with current content but WITHOUT
 /// `immutable`, so a stale URL can never be pinned in a cache forever.
@@ -148,8 +144,6 @@ pub async fn get_catalog(
         is_current: requested_hash == current,
     })
 }
-
-// ---------------------------------------------------------------- authorization
 
 /// The two-part check: the global role is the ticket into the feature, and a
 /// row in `translation_permissions` says which locales. `SuperAdmin` skips the
@@ -239,8 +233,6 @@ pub async fn writable_locales(state: &AppState, auth: &AuthUser) -> Result<Vec<S
     Ok(codes)
 }
 
-// ---------------------------------------------------------------- validation
-
 /// Collect the placeholder names a message references.
 ///
 /// This has to be structural rather than a brace scan. In ICU the braces
@@ -249,13 +241,11 @@ pub async fn writable_locales(state: &AppState, auth: &AuthUser) -> Result<Vec<S
 /// `{count, plural, one {tier} other {tiers}}` the only placeholder is
 /// `count`, while `tier` and `tiers` are literal text.
 ///
-/// Reading the first token after every `{` collected those too, so a message
-/// whose branch body opens with a word was rejected against its own declared
-/// placeholders - 42 catalogue entries could not be translated at all,
-/// because even pasting the English source verbatim came back as "unknown
-/// placeholder(s)". The old scan tracked brace depth but never consulted it,
-/// which is what hid this: `{# operator}` is fine, `{tier}` is not, and every
-/// test case happened to start with `#`.
+/// A naive "first token after every `{`" scan took those too, so a message whose
+/// branch body opens with a word was rejected against its own declared
+/// placeholders: 42 catalogue entries could not be translated, even pasting the
+/// English source verbatim failed with "unknown placeholder(s)". `{# operator}`
+/// passes that scan, `{tier}` does not, and every old test case started with `#`.
 ///
 /// Mirrors the parse `format.ts` performs on the client, so the validator and
 /// the renderer agree about what a message references.
@@ -440,8 +430,6 @@ fn validate_message(value: &str, declared: &serde_json::Value) -> Result<(), Api
     }
 }
 
-// ---------------------------------------------------------------- reads
-
 pub async fn list_locales(state: &AppState, enabled_only: bool) -> Result<Vec<Locale>, ApiError> {
     queries::list_locales(&state.db, enabled_only)
         .await
@@ -612,8 +600,6 @@ pub async fn get_global_audit_log(
     Ok(TranslationAuditResponse { entries, total })
 }
 
-// ---------------------------------------------------------------- writes
-
 /// Write one translation. Validates against the key's declared placeholders,
 /// stamps the source hash it was translated against, writes one audit row when
 /// the value actually changed, and drops the i18n cache so the manifest
@@ -698,8 +684,6 @@ pub async fn clear_message(
     Ok(())
 }
 
-// ---------------------------------------------------------------- key sync
-
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct SourceEntry {
     pub key: String,
@@ -767,8 +751,6 @@ pub async fn sync_source_catalog(
     })
 }
 
-// ---------------------------------------------------------------- grants
-
 pub async fn list_permissions(
     state: &AppState,
     locale: Option<&str>,
@@ -806,8 +788,6 @@ pub async fn revoke_permission(
         .await
         .map_err(std::convert::Into::into)
 }
-
-// ---------------------------------------------------------------- overrides
 
 pub async fn list_overrides(
     state: &AppState,

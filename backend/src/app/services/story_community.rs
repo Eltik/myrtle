@@ -59,10 +59,6 @@ pub const MAX_AGE: Duration = Duration::from_hours(6);
 /// large enough that `spawn_blocking` overhead is noise against the parse.
 const BATCH: usize = 128;
 
-// ============================================================================
-// The wire shape
-// ============================================================================
-
 /// One story and how many accounts have read it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, TS, utoipa::ToSchema)]
 #[serde(rename_all = "camelCase")]
@@ -126,10 +122,6 @@ pub struct StoryCommunity {
     /// in index order.
     pub groups: Vec<StoryGroupReaders>,
 }
-
-// ============================================================================
-// The plan: the library index reduced to what the fold needs
-// ============================================================================
 
 /// One group as the fold sees it: its stories as dense indices, and the subset
 /// of them that has a script.
@@ -254,10 +246,6 @@ impl CommunityPlan {
         self.groups.len()
     }
 }
-
-// ============================================================================
-// The fold
-// ============================================================================
 
 /// One account's three sources, unparsed. The jsonb columns arrive as text so
 /// the JSON parse lands on the blocking pool with the rest of the work rather
@@ -499,10 +487,6 @@ impl Tally {
     }
 }
 
-// ============================================================================
-// The compute
-// ============================================================================
-
 /// The privacy gate, as one SQL predicate.
 ///
 /// Both flags default to true and both are an opt-out, so an account is
@@ -622,10 +606,6 @@ pub async fn compute(
     let out = total.finish(&plan, computed_at);
     Ok((out, total.census, started.elapsed().as_millis()))
 }
-
-// ============================================================================
-// The cache
-// ============================================================================
 
 /// The aggregate's own slot, on the same [`ServerCache`] the library index
 /// uses. It differs from the index's only in that a value also ages out: the

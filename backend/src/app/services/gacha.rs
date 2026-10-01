@@ -271,10 +271,6 @@ pub async fn get_global_stats(state: &AppState) -> Result<GlobalGachaStats, ApiE
     Ok(result)
 }
 
-// ============================================
-// Enhanced global stats (port from old backend)
-// ============================================
-
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Serialize, Deserialize, Clone)]
@@ -481,7 +477,6 @@ pub async fn get_enhanced_stats(
         })
         .collect();
 
-    // naive: total pulls / count
     let average_pulls_to_six_star = if collective.total_six_stars > 0 {
         collective.total_pulls as f64 / collective.total_six_stars as f64
     } else {
@@ -714,10 +709,6 @@ pub async fn get_stats(state: &AppState, user_id: Uuid) -> Result<GachaStats, Ap
         .await?
         .ok_or(ApiError::NotFound)
 }
-
-// ============================================
-// Port: GachaRecords (grouped) + history envelope + settings
-// ============================================
 
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]

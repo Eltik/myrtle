@@ -1,9 +1,9 @@
 //! The story reader against the real EN tree: every library story and every
-//! operator record is probed, loaded, parsed and asset-resolved, and the
-//! counts the phase 1 report quotes are printed. Skips when the EN scripts are
-//! not on disk. CI's `game-data` artifact carries the tables and the story
-//! scripts but no textures, audio or video, so the tests that count resolved
-//! art, clips or themes also skip without the media tree.
+//! operator record is probed, loaded, parsed and asset-resolved, and the counts the
+//! story reader docs quote are printed. Skips when the EN scripts are not on disk.
+//! CI's `game-data` artifact carries the tables and the story scripts but no
+//! textures, audio or video, so the tests that count resolved art, clips or themes
+//! also skip without the media tree.
 //!
 //! Run with `cargo test --test story_real_data_test -- --nocapture`.
 
@@ -60,7 +60,6 @@ fn every_en_story_parses_and_the_library_resolves() {
     );
     let asset_index = Arc::new(AssetIndex::build(&dir));
 
-    // The library.
     let cache = build_index(gd, &asset_index, &dir);
     let index = &cache.index;
     let total_stories: usize = index.groups.iter().map(|g| g.stories.len()).sum();
@@ -101,7 +100,6 @@ fn every_en_story_parses_and_the_library_resolves() {
             stories
         );
     }
-    // The game's own themed shelves, and what they cover.
     {
         let known: HashSet<&str> = index.groups.iter().map(|g| g.id.as_str()).collect();
         let mut shelved: HashSet<&str> = HashSet::new();
@@ -477,7 +475,6 @@ fn every_en_story_parses_and_the_library_resolves() {
         .count();
     assert_eq!(zones, main_groups, "every main group should carry a zone");
 
-    // Every script: probe, load, parse, resolve.
     let story_assets = StoryAssetIndex::for_dir(&dir, &asset_index);
     let (bg_n, img_n, spr_n, aud_n) = story_assets.counts();
     println!(
@@ -1603,7 +1600,7 @@ fn engine_coverage_over_every_script_file() {
         .filter(|(k, _)| !handled.contains(k.as_str()))
         .collect();
     rest.sort_by(|a, b| b.1.cmp(a.1).then_with(|| a.0.cmp(b.0)));
-    // The phase 2 set, so the before -> after is on ONE basis.
+    // The set measured before and after the parser change, so before -> after is on ONE basis.
     const PHASE_2: &[&str] = &[
         "name",
         "text",
@@ -1834,9 +1831,8 @@ fn the_archive_resolves_every_picture_and_every_track() {
         })
     };
 
-    // The counts the audit fixed. `act13side` also carries a 15-entry
-    // `Timeline` slot, which no section exposes: it is DROPPED, and its news,
-    // pictures and files are all served on their own.
+    // `act13side` also carries a 15-entry `Timeline` slot, which no section exposes:
+    // it is DROPPED, and its news, pictures and files are all served on their own.
     let Some(StoryArchiveSection::Landmarks { count, landmarks }) =
         section("act17side", "landmarks")
     else {

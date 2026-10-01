@@ -64,8 +64,6 @@ const TICK: Duration = Duration::from_millis(100);
 /// Column the bars line up on; a longer label pushes its own bar right.
 const LABEL_WIDTH: usize = 22;
 
-// ── the plan ────────────────────────────────────────────────────────────────
-
 /// One step of a phase: a stable key, which is also the display label, and what
 /// to assume it costs with no history for it.
 #[derive(Clone)]
@@ -140,8 +138,6 @@ pub fn table_hint_ms(path: &std::path::Path) -> Option<f64> {
     Some(bytes / (NOMINAL_PARSE_MB_PER_S * 1024.0 * 1024.0) * 1000.0)
 }
 
-// ── remembered timings ──────────────────────────────────────────────────────
-
 #[derive(Serialize, Deserialize)]
 struct TimingFile {
     /// Bumped when the keys change meaning, so an old file is discarded rather
@@ -190,8 +186,6 @@ fn write_timings(path: &std::path::Path, steps: &HashMap<String, f64>) {
     }
 }
 
-// ── formatting ──────────────────────────────────────────────────────────────
-
 fn secs(ms: f64) -> String {
     let s = ms / 1000.0;
     if s >= 60.0 {
@@ -202,8 +196,6 @@ fn secs(ms: f64) -> String {
         format!("{s:.2}s")
     }
 }
-
-// ── live state ──────────────────────────────────────────────────────────────
 
 /// The in-flight boot, if any. Set for the lifetime of a [`Boot`].
 static ACTIVE: ArcSwapOption<Inner> = ArcSwapOption::const_empty();
@@ -341,8 +333,6 @@ impl Inner {
     }
 }
 
-// ── reporting from the work ─────────────────────────────────────────────────
-
 /// Current resident set size in MiB, or `None` if it can't be read.
 ///
 /// Linux: `/proc/self/statm`'s second field is the resident page count; the
@@ -474,8 +464,6 @@ fn close_current(p: &mut PhaseInner, phase_key: &str) {
     p.current += 1;
 }
 
-// ── log routing ─────────────────────────────────────────────────────────────
-
 /// A `tracing` writer that clears the bars before a log line goes out.
 ///
 /// Without it the startup `info!`/`warn!` lines - the game data warnings, the
@@ -510,8 +498,6 @@ impl<'a> tracing_subscriber::fmt::MakeWriter<'a> for ProgressWriter {
         *self
     }
 }
-
-// ── the boot ────────────────────────────────────────────────────────────────
 
 /// A boot in progress. Hold it for the length of startup, open one
 /// [`PhaseGuard`] per phase, and [`finish`](Boot::finish) before serving.
@@ -824,8 +810,6 @@ impl Drop for PhaseGuard {
         self.inner.paint();
     }
 }
-
-// ── styles ──────────────────────────────────────────────────────────────────
 
 fn phase_style(width: usize) -> ProgressStyle {
     ProgressStyle::with_template(&format!(

@@ -135,7 +135,6 @@ async fn async_main() {
     let servers = load_server_map(&config, |key| boot.phase(key));
     let default_server = config.default_server;
 
-    // Database (pool + migrations + seeding)
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let db = {
         let _phase = boot.phase("database");
@@ -144,7 +143,6 @@ async fn async_main() {
             .expect("failed to initialize database")
     };
 
-    // Cache (Redis or in-memory fallback)
     let cache_phase = boot.phase("cache");
     startup::step("connect");
     let cache = if let Ok(url) = std::env::var("REDIS_URL") {

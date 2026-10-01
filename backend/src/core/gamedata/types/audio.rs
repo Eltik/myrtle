@@ -3,17 +3,12 @@ use ts_rs::TS;
 
 use super::voice::LangType;
 
-// ============================================================================
-// Raw types (audio_data.json)
-// ============================================================================
-//
-// `audio_data.json` holds many sections (BgmBanks, Musics, BattleVoice, ...);
-// two of them are read here. The SoundFX banks map battle events to playable
-// assets: every bank is named `<scope>.<EVENT>.<entity>[.<sub>...][@LANG]`,
-// e.g. `battle.ON_UNIT_BORN.char_101_sora` or
-// `battle.ON_SKILL_START.skchr_amiya_2`. `Musics` + `BgmBanks` + `BankAlias`
-// are the SOUNDTRACK, which the Archives serve per story group and per
-// archived track; see [`MusicBanks`].
+// `audio_data.json` holds many sections (BgmBanks, Musics, BattleVoice, ...); two
+// are read here. The SoundFX banks map battle events to playable assets, each bank
+// named `<scope>.<EVENT>.<entity>[.<sub>...][@LANG]`, e.g.
+// `battle.ON_UNIT_BORN.char_101_sora` or `battle.ON_SKILL_START.skchr_amiya_2`.
+// `Musics` + `BgmBanks` + `BankAlias` are the SOUNDTRACK, which the Archives serve
+// per story group and per archived track; see [`MusicBanks`].
 
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct RawAudioData {

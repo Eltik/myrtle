@@ -615,9 +615,8 @@ fn extract_originite(raw: &serde_json::Value) -> Option<i64> {
     }
 }
 
-/// Pull `nickNumber` out of the raw syncData. Tolerates string,
-/// integer, or absent values, and probes the few paths Arknights has
-/// been observed to put it under.
+/// `nickNumber` from the raw syncData: string, integer or absent, at any of the
+/// paths seen in the wild.
 fn extract_nick_number(raw: &serde_json::Value) -> Option<String> {
     let candidates = [
         raw.pointer("/user/status/nickNumber"),
@@ -1132,9 +1131,6 @@ fn merge_campaign_clears(
     }
 }
 
-/// The client drops a closed event's battle records; fold in what the
-/// account's surviving mission, medal, story-flag and unlock records still
-/// prove about those stages (see `stage_evidence`).
 /// Copy each `dungeon.cowLevel` first-open time onto its stage record as
 /// `cowFirstTs`.
 ///
@@ -1168,6 +1164,9 @@ fn merge_cow_level(stages: &mut serde_json::Value, raw: &serde_json::Value) {
     }
 }
 
+/// The client drops a closed event's battle records; fold in what the
+/// account's surviving mission, medal, story-flag and unlock records still
+/// prove about those stages (see `stage_evidence`).
 fn merge_inferred_clears(
     stages: &mut serde_json::Value,
     raw: &serde_json::Value,

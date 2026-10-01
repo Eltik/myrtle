@@ -49,10 +49,9 @@ const POLISH_PASSES: usize = 4;
 /// `BASE_POOL + POOL_PER_EXTRA_TEAM × (teams − 1)` operators (~72 at 5 rooms),
 /// so ~216 distinct operators at the extreme.
 ///
-/// This replaced a bare `u128`, whose 128-bit budget the union across all three
-/// groups could exceed - every candidate team containing an operator past the
-/// budget was then silently discarded, shrinking the pool the rotation could
-/// draw on without any signal that it had happened.
+/// A bare `u128` was too small: the union across all three groups could pass
+/// 128, and every candidate team holding an operator past it was silently
+/// dropped, shrinking the pool with no signal.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct OpMask([u64; 4]);
 
@@ -446,9 +445,8 @@ fn select_balanced_teams(
     memo: &EnumerationMemo,
 ) -> Vec<PlannedGroup> {
     let op_index = build_op_index(operators);
-    // Phase A: enumerate candidate teams per group (once per group - this replaces
-    // the old per-room searches). Team size is bounded by the group's SMALLEST room
-    // so any team fits any room its block spans.
+    // Enumerate candidate teams per group, once per group. Team size is bounded
+    // by the group's SMALLEST room so any team fits any room its block spans.
     let per_group: Vec<Vec<CandidateTeam>> = specs
         .iter()
         .map(|spec| {

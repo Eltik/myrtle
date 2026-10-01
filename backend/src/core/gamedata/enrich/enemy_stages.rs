@@ -1,11 +1,11 @@
-//! Build the enemy -> stages inverted index.
+//! Enemy -> stages inverted index.
 //!
-//! This walks every level file under `gamedata/levels/`, tallies the enemies it
-//! references (`EnemyDbRefs[].Id` plus `Waves[].Fragments[].Actions[]` SPAWN
-//! keys/counts), classifies the level via [`StageClassifier`], and inverts the
-//! result into `enemy_id -> Vec<EnemyStageRef>`. It also folds in boss-only
-//! declarations from `activity_table` (some bosses never appear in a level
-//! file). All stage taxonomy/labelling lives in [`super::stage_class`].
+//! Walks every level file under `gamedata/levels/`, tallies referenced enemies
+//! (`EnemyDbRefs[].Id` plus `Waves[].Fragments[].Actions[]` SPAWN keys/counts),
+//! classifies the level via [`StageClassifier`] and inverts to
+//! `enemy_id -> Vec<EnemyStageRef>`. Boss-only declarations from `activity_table`
+//! are folded in too (some bosses never appear in a level file). Taxonomy and
+//! labelling live in [`super::stage_class`].
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};

@@ -339,15 +339,15 @@ pub async fn verify(
 
     let role = db_role.unwrap_or_else(|| auth.role.to_string());
 
-    // The same gate the `/admin` route tree uses, answered here so the two
-    // cannot disagree. It is computed from the DB role above - not the JWT
-    // claim, which freezes at login - OR from holding any translation grant,
-    // which is enough on its own: a locale grant would be unusable if its
-    // holder could not open the screen that spends it.
+    // The same gate the `/admin` route tree uses, so the two cannot disagree.
+    // Computed from the DB role above (not the JWT claim, which freezes at
+    // login) OR from holding any translation grant, which is enough on its own:
+    // a locale grant would be unusable if its holder could not open the screen
+    // that spends it.
     //
-    // Before this, the session was built from `/get-user` (live DB role) while
-    // every admin route read the JWT, so a freshly promoted user was let into
-    // the panel and then 403'd by everything inside it.
+    // `/get-user` supplied the live DB role while every admin route read the
+    // JWT, so a freshly promoted user got into the panel and was 403'd by
+    // everything inside.
     let can_access_admin_panel = role
         .parse::<GlobalRole>()
         .unwrap_or_default()
@@ -418,8 +418,7 @@ pub async fn update_settings(
 ///
 /// The site session stays valid and the already-synced data stays put; what is
 /// revoked is our ability to reach Yostar on their behalf. Re-syncing then
-/// needs a fresh email code, which is the point. Before this, the only way to
-/// withdraw that access was to email us and have the whole account deleted.
+/// needs a fresh email code, which is the point.
 ///
 /// Idempotent: disconnecting twice is not an error. `removed` reports whether
 /// there was anything stored to remove.

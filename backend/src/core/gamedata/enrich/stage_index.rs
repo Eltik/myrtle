@@ -382,7 +382,6 @@ pub fn build_stage_index(
     // procedural-mode stage that has no stage_table entry.
     let mut mode_levels: HashMap<String, String> = HashMap::new();
 
-    // 1. Every stage_table stage, classified into its authoritative group.
     startup::step("stage index · stages");
     let total = stages.len() as u64;
     for (done, stage) in stages.values().enumerate() {

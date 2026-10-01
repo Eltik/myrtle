@@ -139,8 +139,6 @@ async fn connect() -> Result<PgPool> {
         .context("failed to connect to database")
 }
 
-// ── export ──────────────────────────────────────────────────────────────────
-
 struct ExportArgs {
     uid: Option<String>,
     user_id: Option<Uuid>,
@@ -339,8 +337,6 @@ async fn fetch_table(
         .with_context(|| format!("failed to parse rows of {}", table.name))?;
     Ok(rows)
 }
-
-// ── import ──────────────────────────────────────────────────────────────────
 
 struct ImportArgs {
     file: PathBuf,
@@ -686,8 +682,6 @@ fn server_id_field(row: &Map<String, Value>, key: &str) -> Result<i16> {
         .with_context(|| format!("export's users row is missing an integer `{key}`"))?;
     i16::try_from(raw).with_context(|| format!("`{key}` is out of range for smallint: {raw}"))
 }
-
-// ── argument parsing ────────────────────────────────────────────────────────
 
 fn parse_export_args(argv: &[String]) -> Result<ExportArgs> {
     let mut args = ExportArgs {

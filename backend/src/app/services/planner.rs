@@ -1130,10 +1130,9 @@ mod tests {
         reqs.iter().find(|r| r.id == id).unwrap()
     }
 
-    /// Regression for the Rephasic Enantiomer report: required 10, have 7, every
-    /// ingredient either owned outright or craftable one tier down. The old code
-    /// reserved ingredient inventory against the global requirement aggregate and
-    /// reported Craftable 0 / Missing 3.
+    /// Regression (Rephasic Enantiomer): required 10, have 7, every ingredient
+    /// owned outright or craftable one tier down. Reserving ingredient inventory
+    /// against the global requirement aggregate reported Craftable 0 / Missing 3.
     #[test]
     fn parent_craftable_when_ingredients_owned_or_craftable() {
         let mut fx = Fixture::new(&[("t5", 7), ("t4", 5), ("t3", 30), ("t2a", 39), ("t2b", 4)]);

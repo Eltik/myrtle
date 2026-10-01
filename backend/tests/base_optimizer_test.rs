@@ -777,8 +777,8 @@ fn lemuen_conditional_bonus_with_exusiai_is_counted() {
     // Lemuen's "Amicus": base +20% order efficiency, PLUS +25% more when Exusiai
     // shares the post - phrased "if <Exusiai> is assigned to the same Trading
     // Post" (name BEFORE "same"), unlike Texas's "...same Post as <Lappland>".
-    // The +25% bonus was previously dropped, leaving the team at ~+85% (which the
-    // user saw as ~92%). With it counted: Lemuen 45 + Exusiai 35 + Quartz 30 = 110.
+    // The +25% was once dropped, leaving the team at ~+85% (reported as ~92%).
+    // With it counted: Lemuen 45 + Exusiai 35 + Quartz 30 = 110.
     let gd = load_game_data();
     let team = vec![
         profile(gd, "char_4193_lemuen"),
@@ -3909,8 +3909,8 @@ fn owning_fiammetta_proactively_sustains_the_best_trading_operator() {
     let building = UserBuilding {
         rooms: vec![room("tp", "TRADING", 3), room("d0", "DORMITORY", 5)],
     };
-    // Six trading BODIES besides the manager: Fiammetta is reserved into the
-    // dorms by the rotation itself now, so she must not double as a filler.
+    // Six trading BODIES besides the manager: the rotation reserves Fiammetta into
+    // the dorms itself, so she must not double as a filler.
     let roster: Vec<_> = [
         SHAMARE,
         TEQUILA,
@@ -5328,8 +5328,7 @@ fn viviana_synergy_flips_the_cc_to_a_block_aligned_with_her_knights() {
         .enumerate()
         .filter(|(_, s)| {
             s.rooms.iter().any(|r| {
-                // A dorm cell is REST, not work - the Knight rightly rests
-                // shift 3 in a dormitory now that the rotation shows it.
+                // A dorm cell is REST, not work: the Knight rests shift 3 in a dormitory.
                 r.active
                     && r.room_type != "DORMITORY"
                     && r.recommended.iter().any(|o| o == WILD_MANE)
@@ -6610,7 +6609,7 @@ fn cc_base_wide_recovery_stretches_swap_clocks() {
 /// Waaifu's Team Spirit makes her IMMUNE to teammates' room morale auras
 /// (Shu's -0.1/hr factory aura passes her by, in either direction), and
 /// Cement's Vlog cuts her drain by 0.25/hr only while the factory produces
-/// Battle Records - both now charged by the sustainability sim.
+/// Battle Records. The sustainability sim charges both.
 #[test]
 fn aura_immunity_and_formula_drain_shape_the_sim() {
     use backend::core::grade::base::buff_registry::targeted_morale_effects;
@@ -7035,8 +7034,7 @@ fn rotation_seats_economy_pins_and_credits_payoffs() {
         "the pinned generator holds the Squad-1 share: 2 of 3 shifts"
     );
     for shift in &rot.shifts {
-        // A dormitory cell is REST, not a seat spent - the generator rightly
-        // rests her off shift there now that the rotation shows it.
+        // A dormitory cell is REST, not a seat spent: the generator rests off shift there.
         for room in shift
             .rooms
             .iter()
@@ -7545,19 +7543,13 @@ fn recommended_rotation_survives_its_own_morale_sim() {
                 .collect::<Vec<_>>(),
             report.dorm_overflow,
         );
-        // Dorm pressure, not dorm comfort. This asserted exactly 0 until the
-        // empty-team backfill landed: the 5-factory case used to leave one
-        // factory unstaffed, and an empty room needs no beds - so the old zero
-        // was partly an artefact of the bug. Staffing it adds a crew that has
-        // to rest somewhere, and 4xL5 dorms (20 beds) run short at peak - one
-        // bed for the extra crew, one more for Fiammetta's permanent seat now
-        // that the rotation genuinely parks her in a dormitory. The invariant
-        // that matters is the verdict above (nobody actually runs dry over the
-        // week); overflow is a pressure gauge, so hold it to a small bound.
-        // A third bed since the order-mix model: Shamare's printer now out-values
-        // Proviso's team, so Fiammetta pins HER 24/7 - and her post cycles two
-        // fresh bodies every shift instead of one three-op team per block, so
-        // more distinct operators need a bed at peak.
+        // Dorm pressure, not dorm comfort. The invariant that matters is the verdict above
+        // (nobody runs dry over the week); overflow is a pressure gauge, so hold it to a
+        // small bound. 4xL5 dorms (20 beds) run short at peak: one bed for the crew the
+        // empty-team backfill now staffs (an empty room needs no beds, so the old 0 was
+        // partly a bug artefact), one for Fiammetta's permanent dorm seat, and a third
+        // since the order-mix model: Shamare's printer out-values Proviso's team, so
+        // Fiammetta pins HER 24/7 and her post cycles two fresh bodies every shift.
         assert!(
             report.dorm_overflow <= 3,
             "{factories}-factory dorms are {} beds short at peak",
@@ -7631,8 +7623,7 @@ fn morale_sim_flags_underbuilt_dorms() {
 /// maxed 243's level sum) and her E2 consumer converts every 8 robots into +5%
 /// productivity, floored. Generator and consumer travel together, so the pool
 /// settles room-locally from the layout alone: on a maxed base she is a
-/// +40% solo factory operator; on a smaller base the value floors down. These
-/// buffs scored ZERO before (unresolved) - honest, but she was invisible.
+/// +40% solo factory operator; on a smaller base the value floors down.
 #[test]
 fn minimalist_engineering_robots_settle_from_the_layout() {
     use backend::core::grade::base::clause::{ClauseKind, build_clauses};
@@ -7846,9 +7837,8 @@ fn dorm_fed_pools_and_conversion_chains_settle() {
         eff(&with0, "mf0")
     );
 
-    // Cross-operator chain: 4 resting -> 4 WP is below the 5-per-crystal
-    // ratio (floor 0), so the witch factory gains nothing yet... but with all
-    // seven ops resting? Use the four bodies + swap Rosmontis into the dorm:
+    // Cross-operator chain: 4 resting -> 4 WP is below the 5-per-crystal ratio
+    // (floor 0), so the witch factory gains nothing. Swap Rosmontis into the dorm:
     // 5 resting -> 5 WP -> 1 Witchcraft Crystal -> +2% on the witch's factory.
     let mut five: Vec<&str> = BODIES.to_vec();
     five.push(ROSMONTIS);
@@ -9755,7 +9745,7 @@ fn durin_compound_text_is_a_whole_dorm_aura() {
             other => panic!("{id}: expected MoraleModifier, got {other:?}"),
         }
     }
-    // Dorm staffing can now see her: she prices at her max-tier aura value.
+    // Dorm staffing sees her: she prices at her max-tier aura value.
     let durin = profile(gd, "char_501_durin");
     let v = dorm_aura_value(&durin, &registry, &gd.building);
     assert!((v - 0.25).abs() < 1e-9, "Durin's staffing value, got {v}");

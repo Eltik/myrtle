@@ -80,8 +80,6 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-// ─── User browsing / role updates ───────────────────────────────────────────
-
 async fn search_users(pool: &PgPool) -> Result<()> {
     println!("\n--- Search Users ---");
     print!("Enter search term (uid, nickname, or blank for recent 20): ");
@@ -149,8 +147,6 @@ async fn update_user_role(pool: &PgPool) -> Result<()> {
     println!("\nRole updated successfully!\n");
     Ok(())
 }
-
-// ─── Tier list permissions ──────────────────────────────────────────────────
 
 async fn manage_tier_list_permissions(pool: &PgPool, operator: Option<Uuid>) -> Result<()> {
     println!("\n--- Manage Tier List Permissions ---");
@@ -296,8 +292,6 @@ async fn revoke_permission(
     Ok(())
 }
 
-// ─── Tier list listing / visibility ─────────────────────────────────────────
-
 async fn list_tier_lists(pool: &PgPool) -> Result<()> {
     println!("\n--- Tier Lists ---");
     let lists = sqlx::query_as::<_, TierListDetailRow>(
@@ -380,8 +374,6 @@ async fn toggle_visibility(pool: &PgPool) -> Result<()> {
     Ok(())
 }
 
-// ─── Lookup + presentation helpers ──────────────────────────────────────────
-
 /// Resolves either a UUID or an Arknights UID to a single `UserRow`. When the
 /// same Arknights UID exists on multiple servers we return the first match by
 /// `created_at` - collisions are rare and the operator can re-search by UUID
@@ -458,8 +450,6 @@ fn print_permission_table(perms: &[PermissionRow]) {
     }
 }
 
-// ─── Generic prompt helpers ────────────────────────────────────────────────
-
 fn read_line() -> Result<String> {
     let mut buf = String::new();
     io::stdin()
@@ -472,9 +462,8 @@ fn confirm() -> Result<bool> {
     Ok(read_line()?.eq_ignore_ascii_case("y"))
 }
 
-/// Render a numbered menu of `T: Display` and return the user's selection. The
-/// caller supplies a `describe` function so each option can carry a short help
-/// blurb. Returns `None` on `c`/`cancel`/blank input.
+/// Numbered menu of `T: Display`; `describe` supplies each option's help blurb.
+/// `None` on `c`/`cancel`/blank input.
 fn prompt_choice<T: Copy + std::fmt::Display>(
     header: &str,
     options: &[T],
@@ -556,8 +545,6 @@ fn truncate(s: &str, max_len: usize) -> String {
 const fn yesno(b: bool) -> &'static str {
     if b { "Yes" } else { "No" }
 }
-
-// ─── Row types + canonical user SELECTs ─────────────────────────────────────
 
 // All four user-lookup statements parse into `UserRow`, so they share the
 // same projection. Each is a single literal so sqlx can statically validate.

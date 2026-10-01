@@ -73,23 +73,18 @@ impl SandboxUniverse {
     /// Count the explorable map nodes for a *single playthrough*.
     ///
     /// `MapData` does NOT hold one node list per region. It holds:
-    ///   - the persistent overworld map(s) (`sandbox_1_main`, ≈127 nodes) - the
-    ///     map the player actually explores, mirrored in user progress under
-    ///     `main.map.node`; and
-    ///   - dozens of randomized layout *variants* of instanced hunt/rift
-    ///     encounters (`sandbox_1_hunt_normal_1` .. `_10`, etc.), only one of
-    ///     which is ever loaded at a time.
+    ///   - the persistent overworld map(s) (`sandbox_1_main`, ≈127 nodes), mirrored in
+    ///     user progress under `main.map.node`; and
+    ///   - dozens of randomized layout *variants* of instanced hunt/rift encounters
+    ///     (`sandbox_1_hunt_normal_1` .. `_10`, etc.), only one of which is ever loaded.
     ///
-    /// The old code summed Nodes across *every* entry, producing ≈1032 across 59
-    /// variants - the bogus ">1,000" total. That figure both showed up as the
-    /// "Map nodes" UI total and made the exploration sub-score impossible to
-    /// fill (its denominator was 10× too large), deflating the whole RA grade.
+    /// Summing Nodes across every entry gives ≈1032 across 59 variants, the bogus
+    /// ">1,000" total: it showed as the "Map nodes" UI total and left the exploration
+    /// sub-score unfillable (denominator 10x too large), deflating the whole RA grade.
     ///
-    /// Since the exploration score is keyed off the overworld (`main.map.node`),
-    /// we count the overworld map(s) - keys containing `_main`. If none are
-    /// present (defensive, e.g. data shape changes), we fall back to summing one
-    /// representative variant per layout group so we never regress to the old
-    /// over-count.
+    /// Counts the overworld map(s), keys containing `_main`, since exploration is keyed
+    /// off `main.map.node`. With none present (data shape change), falls back to one
+    /// representative variant per layout group so it never regresses to the over-count.
     fn count_map_nodes(sandbox_data: &Value) -> usize {
         let Some(map_data) = sandbox_data.get("MapData").and_then(|v| v.as_array()) else {
             return 0;

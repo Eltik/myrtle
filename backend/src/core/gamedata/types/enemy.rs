@@ -112,10 +112,6 @@ pub struct AbilityInfo {
     pub text_format: String,
 }
 
-// ============================================================================
-// Enemy Stats (from enemy_database.json)
-// ============================================================================
-
 /// Wrapper for optional values in `enemy_database.json`
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -224,10 +220,6 @@ pub struct RawEnemyDatabaseEntry {
 pub struct EnemyDatabaseFile {
     pub enemies: Vec<RawEnemyDatabaseEntry>,
 }
-
-// ============================================================================
-// Enriched Enemy Stats (output format)
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -339,10 +331,6 @@ pub struct EnemyHandbook {
     pub enemy_data: HashMap<String, Enemy>,
     pub race_data: HashMap<String, RaceData>,
 }
-
-// ============================================================================
-// Table File Wrapper (for loading from FlatBuffer JSON)
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]

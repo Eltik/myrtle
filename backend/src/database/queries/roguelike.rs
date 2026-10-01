@@ -1,8 +1,7 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
-/// Returns all roguelike theme progress rows for a user.
-/// Each row: (`theme_id`, progress JSONB)
+/// One `(theme_id, progress JSONB)` row per roguelike theme for a user.
 pub async fn get_roguelike_progress(
     pool: &PgPool,
     user_id: Uuid,

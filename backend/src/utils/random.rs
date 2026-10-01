@@ -22,8 +22,6 @@ pub fn fill_random(buf: &mut [u8]) {
     compile_error!("unsupported platform: only linux, macos, and windows are supported");
 }
 
-// ── Linux ────────────────────────────────────────────────────────────────────
-
 #[cfg(target_os = "linux")]
 mod platform {
     use std::sync::atomic::{AtomicI32, Ordering};
@@ -130,8 +128,6 @@ mod platform {
         }
     }
 
-    // ── Syscall / libc bindings ───────────────────────────────────────────
-
     unsafe fn sys_getrandom(buf: *mut u8, len: usize, flags: u32) -> i64 {
         #[cfg(target_arch = "x86_64")]
         const NR: i64 = 318;
@@ -193,8 +189,6 @@ mod platform {
     }
 }
 
-// ── macOS ────────────────────────────────────────────────────────────────────
-
 #[cfg(target_os = "macos")]
 mod platform {
     pub fn fill(buf: &mut [u8]) {
@@ -210,8 +204,6 @@ mod platform {
         }
     }
 }
-
-// ── Windows ──────────────────────────────────────────────────────────────────
 
 #[cfg(target_os = "windows")]
 mod platform {

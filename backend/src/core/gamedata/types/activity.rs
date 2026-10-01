@@ -1,4 +1,4 @@
-//! Acitivty table types, used for event start/end times
+//! Activity table types, used for event start/end times
 
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};

@@ -32,9 +32,7 @@ export type SkillLineDto = {
      */
     from_control_center?: boolean;
     /**
-     * How to read a zero-marginal line. The enum serializes to the same
-     * strings the hand-written match produced, but the generated TS binding
-     * is now a union instead of `string`.
+     * How to read a zero-marginal line.
      */
     disposition: LineDisposition;
     /**

@@ -1,28 +1,17 @@
-//! Pins the generated OpenAPI document, so a change to the public API surface
-//! shows up as a reviewable diff at the moment it is made.
+//! Pins the generated OpenAPI document so an API surface change shows up as a reviewable diff.
 //!
-//! This is the third instance of a pattern already in this directory:
-//! `api_shape_test` pins the JSON shape of the `/static` payloads and
-//! `bindings_shape_test` pins the generated TypeScript. All three exist for the
-//! same reason: the contract with consumers is not checked by any compiler, so
-//! it has to be checked by a snapshot.
+//! Sibling of `api_shape_test` (JSON shape of the `/static` payloads) and
+//! `bindings_shape_test` (generated TypeScript): no compiler checks the consumer
+//! contract, so a snapshot does.
 //!
-//! What lands in the diff:
+//! The diff covers new endpoints with their parameters and responses, renamed or
+//! removed fields on any schema (a disappearing line breaks every consumer of that
+//! field), and path or method changes (read from the same `#[utoipa::path]` that
+//! registers the route). Nothing is outside it: `every_route_is_documented` asserts
+//! no route uses a plain `.route(..)`.
 //!
-//! * A new documented endpoint, its parameters, and its responses.
-//! * A renamed or removed field on any request or response schema. A line
-//!   disappearing from the snapshot is a breaking change for every consumer of
-//!   that field, the same rule as `api_shape_test`.
-//! * A path or method changing, because both are read from the same
-//!   `#[utoipa::path]` annotation that registers the route.
-//!
-//! Nothing is outside it. `every_route_is_documented` below asserts that no
-//! route is registered with a plain `.route(..)`, so every endpoint the server
-//! serves is an endpoint this snapshot pins.
-//!
-//! Refresh after an intentional change:
+//! Refresh after an intentional change, and review the diff in the PR:
 //!   UPDATE_OPENAPI=1 cargo test --test openapi_snapshot_test
-//! and review the diff as part of the PR.
 
 use std::fs;
 use std::path::PathBuf;
@@ -161,18 +150,15 @@ fn documented_operations_declare_their_auth_posture() {
     }
 }
 
-/// Every route is documented, and this is what keeps it that way.
+/// Every route is documented.
 ///
-/// The budget started at 155 and is now zero: there is no route in the API
-/// reached through a plain `.route(..)`, so there is no endpoint the OpenAPI
-/// document omits. That is a stronger guarantee than "the docs are current",
-/// because it does not rely on anyone remembering: a handler registered with
-/// `.route(..)` instead of `.routes(routes!(..))` has no `#[utoipa::path]` to
+/// The budget was 155 and is now zero: no route is reached through a plain
+/// `.route(..)`, so the OpenAPI document omits no endpoint. A handler registered
+/// with `.route(..)` instead of `.routes(routes!(..))` has no `#[utoipa::path]` to
 /// take its path and method from, and fails here.
 ///
-/// Do not raise this to land an endpoint quickly. Annotating a handler is four
-/// lines and `src/app/openapi.rs` lists the steps; a raised budget is a silent
-/// undocumented endpoint, which is the thing this file exists to prevent.
+/// Do not raise the budget to land an endpoint quickly. Annotating a handler is
+/// four lines, and `src/app/openapi.rs` lists the steps.
 #[test]
 fn every_route_is_documented() {
     /// Zero, and it should stay zero.

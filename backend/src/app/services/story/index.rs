@@ -176,13 +176,11 @@ pub fn build_index(
     let mut by_txt: HashMap<String, String> = HashMap::new();
     let mut gates: HashMap<String, Vec<StoryRequiredStage>> = HashMap::new();
     let mut probe_time = std::time::Duration::ZERO;
-    // One read per DISTINCT `StoryTxt`. The read is now the whole file plus a
-    // parse rather than a 16-byte head, because the word count is computed
-    // here, ONCE, instead of on every `GET /story/{id}`: on EN that is 1,887
+    // One read per DISTINCT `StoryTxt`: whole file plus a parse, because the word count
+    // is computed here, ONCE, not on every `GET /story/{id}`. On EN that is 1,887
     // distinct paths over 2,254 calls (1,887 library stories plus 367 record
     // stories, which the 364 `record` groups already list), so the memo saves
-    // 367 loads and the pass costs 5,793 ms where the probe cost 53 ms, both
-    // measured in a debug build.
+    // 367 loads. Debug build: this pass 5,793 ms, the old 16-byte-head probe 53 ms.
     let mut measured: HashMap<String, Option<ScriptFacts>> = HashMap::new();
     let mut probe = |story_txt: &str| -> Option<ScriptFacts> {
         if let Some(hit) = measured.get(story_txt) {

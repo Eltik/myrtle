@@ -50,10 +50,9 @@ const DEFAULT_MAX_FAILURES: u32 = 5;
 /// Flush the sidecar every N successful fetches.
 ///
 /// An abort inside the loop already falls through to the final write, so this
-/// exists for the ungraceful cases -- a crash, a kill, a redeploy mid-walk --
-/// where nothing would otherwise reach disk. Because the next run only asks for
-/// pools it has no entry for, a checkpoint is all that is needed to make a cold
-/// backfill resumable.
+/// is for the ungraceful cases (a crash, a kill, a redeploy mid-walk) where
+/// nothing would otherwise reach disk. The next run only asks for pools it has
+/// no entry for, so a checkpoint is enough to make a cold backfill resumable.
 const DEFAULT_CHECKPOINT_EVERY: usize = 50;
 
 fn env_or<T: std::str::FromStr>(key: &str, fallback: T) -> T {
@@ -207,7 +206,7 @@ pub async fn refresh(state: &AppState, server: Server) -> anyhow::Result<usize> 
         }
 
         if checkpoint_every > 0 && since_checkpoint >= checkpoint_every {
-            // A failed checkpoint is not fatal -- the entries are still in
+            // A failed checkpoint is not fatal: the entries are still in
             // memory and the next checkpoint, or the final write, carries them.
             match commit_sidecar(&path, &mut file, server, now) {
                 Ok(()) => {

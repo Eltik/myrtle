@@ -19,10 +19,6 @@ use std::collections::HashMap;
 use super::enemy::{DamageType, Enemy, EnemyHandbook, EnemyLevel};
 use super::stage::Stage;
 
-// ============================================================================
-// Raw source shape (level_*.json)
-// ============================================================================
-
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 struct RawLevel {
@@ -189,10 +185,6 @@ struct RawAction {
 struct RawDbRef {
     id: String,
 }
-
-// ============================================================================
-// Normalized output shape (what the API returns)
-// ============================================================================
 
 #[derive(Debug, Clone, Copy, Serialize)]
 pub struct Point {
@@ -361,7 +353,6 @@ pub fn parse_stage_map(
     let matrix = &raw.map_data.map.matrix_data;
     let rows = matrix.len() / cols;
 
-    // ── Tiles (row 0 = top, matching Matrix_data layout) ──────────────────
     let tiles: Vec<Vec<TileCell>> = (0..rows)
         .map(|y| {
             (0..cols)
@@ -376,7 +367,6 @@ pub fn parse_stage_map(
         })
         .collect();
 
-    // ── Routes -> screen-space polylines ───────────────────────────────────
     let to_point = |p: RawPos| Point {
         x: f64::from(p.col),
         y: f64::from((rows as i32 - 1).max(0) - p.row),
@@ -508,7 +498,6 @@ pub fn parse_stage_map(
         .fold(0.0_f64, f64::max);
     let duration = last_arrival.max(clock).max(10.0) + 2.0;
 
-    // ── Roster, sorted by threat then count ───────────────────────────────
     let mut roster: Vec<RosterEntry> = counts
         .into_iter()
         .map(|(id, count)| {

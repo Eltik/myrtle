@@ -396,10 +396,6 @@ pub struct Materials {
     pub char_voucher_items: HashMap<String, CharVoucherItem>,
 }
 
-// ============================================================================
-// Table File Wrapper (for loading from FlatBuffer JSON)
-// ============================================================================
-
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ItemTableFile {

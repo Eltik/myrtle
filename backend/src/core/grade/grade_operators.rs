@@ -236,10 +236,9 @@ pub fn grade_operators_in(
     }
 }
 
-/// Returns the sum of rarity weights across all roster entries that count
-/// toward `operator_grade` - i.e. the same set that `grade_operators` iterates.
-/// Used by the improvements builder to translate per-operator score deltas
-/// into a contribution against the user's overall Operators subscore.
+/// Sum of rarity weights over the roster entries that count toward
+/// `operator_grade` (the set `grade_operators` iterates). The improvements
+/// builder uses it to turn per-operator deltas into a subscore contribution.
 pub fn total_roster_weight(roster: &[RosterEntry], game_data: &GameData) -> f64 {
     total_roster_weight_in(roster, game_data, ScoreModel::from_env())
 }
@@ -588,18 +587,12 @@ fn module_share_floored(reached: usize, slots: usize) -> f64 {
     module_share(reached, slots).max(0.50)
 }
 
-/// Returns 0.0-1.0 based on trust progress.
+/// Trust progress, 0.0-1.0.
 ///
-/// The target trust depends on whether the operator is currently published as
-/// a support unit:
-///   - Ordinary roster ops: full score at `TRUST_MILESTONE_PCT` (100% trust).
-///     Trust beyond doesn't help - 100 is "complete".
-///   - Support-unit ops: full score only at the favor table's max (typically
-///     200% trust). Falls linearly below that, so a published op at 100 trust
-///     scores ~0.5 and drags the dimension down.
-///
-/// All thresholds derive from the favor table so the curve adjusts
-/// automatically if the game ships a different max trust.
+/// Ordinary ops: full score at `TRUST_MILESTONE_PCT` (100%), nothing extra beyond.
+/// Support-unit ops: full score only at the favor table's max (typically
+/// 200%), linear below, so a published op at 100 trust scores ~0.5.
+/// Thresholds derive from the favor table, so a new game max carries through.
 fn trust_milestone_score(roster: &RosterEntry, favor: &Favor, is_support: bool) -> f64 {
     let trust_pct = favor.trust_pct(roster.favor_point);
     let max_pct = favor.max_trust_pct();
@@ -687,11 +680,7 @@ fn log_curve_ratio(t: f64) -> f64 {
     (1.0 + t).ln() / 2.0_f64.ln()
 }
 
-/// Score gain from a single upgrade path.
-///
-/// All deltas are reported as non-negative - if simulating the milestone would
-/// somehow not improve the score (shouldn't happen with the current model,
-/// but defensive), the delta is clamped to 0.
+/// Score gain from a single upgrade path, clamped to non-negative.
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize)]

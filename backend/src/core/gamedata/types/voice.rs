@@ -295,7 +295,6 @@ pub struct Voice {
     pub lock_description: Option<String>,
     pub place_type: PlaceType,
     pub voice_asset: String,
-    // Added fields
     pub id: Option<String>,
     pub data: Option<Vec<VoiceData>>,
     pub languages: Option<Vec<LangType>>,

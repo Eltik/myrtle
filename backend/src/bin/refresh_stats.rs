@@ -119,19 +119,14 @@ async fn build_state() -> Result<AppState> {
         .await
         .context("failed to initialize database")?;
 
-    // Attach to the SAME cache the server uses, when one is configured.
+    // Attach to the SAME cache the server uses, when one is configured. A private
+    // in-memory cache would make the prefix invalidations several tasks end with a
+    // no-op, so a running server keeps serving the pre-refresh answer until its TTL
+    // lapses (an hour for the ownership key). Invalidation is by prefix, so sharing
+    // evicts only the entries this run made stale.
     //
-    // An in-memory cache here would be worse than useless: several tasks finish
-    // by dropping cached responses under a prefix, and against a private cache
-    // that call invalidates nothing. A running server would keep serving the
-    // pre-refresh answer until its TTL lapsed, an hour for the ownership key,
-    // which defeats the point of forcing a refresh at all. Invalidation is by
-    // prefix and therefore targeted, so sharing the cache evicts exactly the
-    // entries this run made stale and nothing else.
-    //
-    // Falling back to memory when Redis is absent or unreachable keeps the tool
-    // usable on a box with no cache; the refresh still lands in Postgres, and
-    // only the eviction is lost.
+    // No Redis, or unreachable: fall back to memory. The refresh still lands in
+    // Postgres; only the eviction is lost.
     let cache = match std::env::var("REDIS_URL") {
         Ok(url) => match redis::Client::open(url) {
             Ok(client) => match redis::aio::ConnectionManager::new(client).await {

@@ -89,10 +89,6 @@ pub struct Skill {
     pub levels: Vec<SkillLevel>,
 }
 
-// ============================================================================
-// Table File Wrapper (for loading from FlatBuffer JSON)
-// ============================================================================
-
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct SkillTableFile {

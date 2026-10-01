@@ -182,8 +182,7 @@ impl CacheStore {
         matches!(self, Self::Redis(_))
     }
 
-    /// Spawn a background task that sweeps expired entries every 60 seconds.
-    /// Only meaningful for the Memory variant.
+    /// Sweeps expired entries every 60 seconds on a background task. Memory variant only.
     pub fn spawn_cleanup(&self) {
         if let Self::Memory { entries } = self {
             let entries = Arc::clone(entries);

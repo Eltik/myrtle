@@ -193,10 +193,6 @@ pub struct StageData {
     pub stages: HashMap<String, Stage>,
 }
 
-// ============================================================================
-// Storylines (the Archives' own shelves)
-// ============================================================================
-
 /// `StorylineLocation.MainlineSplitData`: the arc header the game draws
 /// between two runs of mainline chapters (`HOUR OF AN AWAKENING`).
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -320,10 +316,6 @@ where
     let items: Vec<FbKeyValue<String, V>> = Vec::deserialize(deserializer)?;
     Ok(items.into_iter().map(|kv| kv.value).collect())
 }
-
-// ============================================================================
-// Table File Wrapper (for loading from FlatBuffer JSON)
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]

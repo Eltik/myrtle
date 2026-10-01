@@ -85,10 +85,6 @@ pub struct StoryReviewGroup {
     pub info_unlock_datas: Vec<StoryUnlockData>,
 }
 
-// ============================================================================
-// Table File Wrapper (for loading from FlatBuffer JSON)
-// ============================================================================
-
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct StoryReviewTableFile {
     /// The unpacker writes this key as `Story_reviews`, not `StoryReviews`.

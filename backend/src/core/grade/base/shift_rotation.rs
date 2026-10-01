@@ -749,7 +749,6 @@ fn rotation_core(
         );
     }
 
-    // ── Second squads for the two-squad rooms ────────────────────────────────────
     let mut used: HashSet<String> = cc_plan.squad1.iter().cloned().collect();
     for g in &groups {
         for t in &g.teams {
@@ -1294,7 +1293,6 @@ fn rotation_core(
         }
     }
 
-    // ── Emit the three shifts ────────────────────────────────────────────────────
     let team_letter = |ordinal: usize| -> String {
         char::from(b'A' + u8::try_from(ordinal % 26).unwrap_or(0)).to_string()
     };

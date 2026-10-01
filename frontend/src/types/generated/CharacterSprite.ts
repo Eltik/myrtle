@@ -3,9 +3,6 @@ import type { BodySize } from "./BodySize";
 import type { FacePos } from "./FacePos";
 import type { PlateRect } from "./PlateRect";
 
-/**
- * A resolved character sprite.
- */
 export type CharacterSprite = {
     bodyUrl: string;
     faceUrl?: string;

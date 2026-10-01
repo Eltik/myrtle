@@ -510,21 +510,19 @@ pub async fn get_battle_replay(
 
 /// Pacing for [`harvest_replays`].
 ///
-/// A single session must call `getBattleReplay` sequentially - the auth `seqnum`
-/// is a monotonic counter, so concurrent calls on the same `AuthSession` would
-/// race and invalidate it. Different sessions are independent rate-limit
-/// buckets on the server side, so for many-players-at-once throughput, spawn
-/// one task per player and let them run in parallel.
+/// One session must call `getBattleReplay` sequentially: the auth `seqnum` is a
+/// monotonic counter, so concurrent calls on one `AuthSession` race and
+/// invalidate it. Sessions are separate rate-limit buckets server-side, so spawn
+/// one task per player for throughput.
 ///
-/// `interval` is intentionally small by default (100ms). The server tolerates
-/// back-to-back requests on a single session well; the pause exists mainly to
-/// keep one runaway loop from starving other tasks on the same tokio runtime.
-/// Set to `Duration::ZERO` for max throughput.
+/// `interval` defaults to 100ms. The server tolerates back-to-back requests on a
+/// session; the pause mostly keeps a runaway loop from starving the tokio
+/// runtime. `Duration::ZERO` for max throughput.
 ///
-/// **Build a target list from `account/syncData`** rather than enumerating
-/// every stage in your gamedata. The live client only calls `getBattleReplay`
-/// on stages the player has saved a replay for; a stream of 5516 misses is the
-/// kind of anomalous traffic anti-abuse systems can fingerprint.
+/// Build the target list from `account/syncData`, not by enumerating every stage
+/// in gamedata. The live client only calls `getBattleReplay` on stages with a
+/// saved replay; a stream of 5516 misses is traffic anti-abuse systems can
+/// fingerprint.
 #[derive(Debug, Clone)]
 pub struct ReplayHarvestOptions {
     pub min_interval: Duration,
@@ -604,13 +602,11 @@ where
     Ok(())
 }
 
-/// Fetch the player's full state blob. Single authenticated call returning the
-/// raw JSON; callers extract whatever subset they need.
+/// The player's full state blob as raw JSON, from one authenticated call.
 ///
-/// Body of `{"platform": 1}` matches what `ArkPRTS` and the existing roster
-/// refresh send. Response is large (often megabytes for endgame accounts);
-/// each call is independent of other sessions, so for many-players-at-once
-/// throughput spawn one task per player.
+/// Body `{"platform": 1}` matches what `ArkPRTS` and the roster refresh send.
+/// Often megabytes for endgame accounts; sessions are independent, so fan out
+/// one task per player.
 pub async fn sync_data_raw(
     client: &Client,
     session: &mut AuthSession,

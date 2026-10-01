@@ -15,8 +15,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::app::state::AppState;
 
-// ── Configuration ───────────────────────────────────────────────────────
-
 struct DpsWatcherConfig {
     poll_interval: u64,
     upstream_repo: String,
@@ -40,8 +38,6 @@ impl DpsWatcherConfig {
         })
     }
 }
-
-// ── Persisted state ─────────────────────────────────────────────────────
 
 #[derive(Serialize, Deserialize, Default)]
 struct WatcherState {
@@ -69,8 +65,6 @@ fn save_state(path: &str, state: &WatcherState) {
         let _ = std::fs::remove_file(&tmp);
     }
 }
-
-// ── GitHub polling ──────────────────────────────────────────────────────
 
 enum CheckResult {
     NoChange,
@@ -153,8 +147,6 @@ async fn check_upstream(
     }
 }
 
-// ── Poll loop ───────────────────────────────────────────────────────────
-
 /// Cap on the exponential backoff applied after repeated check failures, so a
 /// GitHub outage degrades to one poll an hour instead of hammering it.
 const MAX_BACKOFF_SECS: u64 = 3600;
@@ -226,8 +218,6 @@ async fn poll_loop(config: DpsWatcherConfig, state: AppState) {
         }
     }
 }
-
-// ── Public API ──────────────────────────────────────────────────────────
 
 pub fn spawn(state: AppState) {
     let Some(config) = DpsWatcherConfig::from_env() else {

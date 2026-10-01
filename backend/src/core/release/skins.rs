@@ -303,9 +303,9 @@ pub fn group_histories_without(
     }
     let keep_unsold = keep_unsold_skins();
     // Earliest release among a group's outfits the Fashion Review stocks. A
-    // review window belongs to a group only once that outfit has aged into
-    // the review's pool; before this every review went on every older group,
-    // Test Collection/XV included, though neither of its outfits is eligible.
+    // review window belongs to a group only once that outfit has aged into the
+    // review's pool; otherwise it lands on every older group, Test
+    // Collection/XV included, though neither of its outfits is eligible.
     let mut review_from: HashMap<&str, i64> = HashMap::new();
     for s in gd.skins.char_skins.values() {
         let gid = s.display_skin.skin_group_id.as_str();

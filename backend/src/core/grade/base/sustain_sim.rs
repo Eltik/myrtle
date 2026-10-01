@@ -195,7 +195,6 @@ pub fn project_morale(
         .collect()
 }
 
-/// Simulate the rotation's login rhythm over [`SIM_HORIZON_HOURS`].
 pub fn simulate_rotation(
     rotation: &ShiftRotation,
     profiles: &[OperatorBaseProfile],

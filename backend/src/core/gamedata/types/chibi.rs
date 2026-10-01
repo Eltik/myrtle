@@ -3,10 +3,6 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use ts_rs::TS;
 
-// ============================================================================
-// Chibi Types - Spine animation data for operators
-// ============================================================================
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -70,10 +66,6 @@ pub struct ChibiCharacter {
     pub path: String,
     pub skins: Vec<ChibiSkin>,
 }
-
-// ============================================================================
-// Internal crawling types (not serialized to frontend)
-// ============================================================================
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]

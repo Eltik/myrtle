@@ -90,13 +90,12 @@ pub async fn ensure_fresh(
     Ok(session)
 }
 
-/// Forget a user's game session entirely: the live copy in the cache and the
-/// durable credentials behind it.
+/// Forget a user's game session: the cached copy and the durable credentials
+/// behind it.
 ///
-/// This is the user-facing "disconnect" action. Afterwards we cannot reach the
-/// account again without a fresh email code, which is the point: it is the
-/// self-serve revocation that account deletion used to be the only route to.
-/// Their already-synced data is untouched.
+/// The user-facing "disconnect". Afterwards the account is unreachable without
+/// a fresh email code, which is the point (self-serve revocation; account
+/// deletion was the only route before). Synced data is untouched.
 pub async fn disconnect(state: &AppState, uid: &str, user_id: Uuid) -> Result<bool, ApiError> {
     state.cache.invalidate(&CacheKey::GameSession { uid }).await;
     state

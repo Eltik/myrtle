@@ -54,9 +54,8 @@ async fn main() -> Result<()> {
     fs::create_dir_all(&args.out_dir)
         .with_context(|| format!("failed to create output dir {}", args.out_dir.display()))?;
 
-    // A single connection is enough - one streaming query at a time inside one
-    // transaction. Avoid the shared pool so we don't compete with a running
-    // server (this binary is intended for offline use, but be polite anyway).
+    // One connection: one streaming query at a time inside one transaction. Skips the
+    // shared pool so an offline export does not compete with a running server.
     let pool = PgPoolOptions::new()
         .max_connections(1)
         .acquire_timeout(Duration::from_secs(10))
@@ -66,7 +65,6 @@ async fn main() -> Result<()> {
 
     let mut conn = pool.acquire().await?;
 
-    // Snapshot isolation across the whole export.
     sqlx::query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY")
         .execute(&mut *conn)
         .await

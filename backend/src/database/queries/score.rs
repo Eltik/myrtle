@@ -6,8 +6,7 @@ use crate::database::models::score::{
     LeaderboardEntry, LeaderboardMover, PlayerStanding, ScoreHistoryPoint, ServerShare, UserScore,
 };
 
-/// Fetch the full score row for one user by `uid` (external 10-digit id).
-/// Returns `None` if the user has never been scored.
+/// Full score row for one user by `uid` (external 10-digit id); `None` if never scored.
 pub async fn get_score_by_uid(pool: &PgPool, uid: &str) -> Result<Option<UserScore>, sqlx::Error> {
     sqlx::query_as::<_, UserScore>(
         r"
@@ -311,7 +310,7 @@ pub async fn latest_leaderboard_snapshot_at(
         .await
 }
 
-/// Snapshot the current leaderboard. Returns the new snapshot id.
+/// Returns the new snapshot id.
 pub async fn take_leaderboard_snapshot(pool: &PgPool) -> Result<i64, sqlx::Error> {
     let mut tx = pool.begin().await?;
 

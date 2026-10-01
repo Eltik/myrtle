@@ -10,8 +10,8 @@ use std::path::Path;
 use std::sync::OnceLock;
 
 /// The game data, loaded ONCE per test binary and shared by every test in it.
-/// Each load is hundreds of MB; the old per-test loading held several copies in
-/// flight under parallel test threads and dominated both memory and runtime.
+/// Each load is hundreds of MB; per-test loads held several copies in flight under
+/// parallel test threads and dominated memory and runtime.
 pub fn load_game_data() -> &'static GameData {
     shared_game_data_ref()
 }

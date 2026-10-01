@@ -490,7 +490,6 @@ pub struct RawOperator {
     pub favor_key_frames: Option<Vec<AttributeKeyFrame>>,
     #[serde(default)]
     pub all_skill_lvlup: Vec<AllSkillLevelUp>,
-    // Extra fields in unpacked data
     #[serde(default)]
     pub sort_index: Option<i32>,
     #[serde(default)]
@@ -594,10 +593,10 @@ pub struct Operator {
     /// URLs. Empty for operators with no battle audio (and for drones).
     #[serde(default)]
     pub audio: Vec<OperatorAudio>,
-    /// Small portrait image (headshot) - /upk/arts/charportraits/{pack}/{id}_{1|2}.png
+    /// Headshot: /upk/arts/charportraits/{pack}/{id}_{1|2}.png
     pub portrait: Option<String>,
-    /// Full character art (large illustration) - /upk/chararts/{id}/{id}_{1|2}.png
-    /// None if not available (use portrait as fallback)
+    /// Full illustration: /upk/chararts/{id}/{id}_{1|2}.png. `None` if absent
+    /// (portrait is the fallback).
     pub skin: Option<String>,
     /// All template ids for operators that have alternate forms (Amiya only,
     /// at time of writing). `None` for normal operators. Each id in this list

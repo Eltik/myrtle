@@ -1,16 +1,12 @@
-//! Mark a tier list as official, or strip the official designation from it.
+//! Mark a tier list official (`list_type` = `"official"`) or community (`"community"`), looked up
+//! by slug.
 //!
-//! A tier list's `list_type` column is what decides whether it is presented as
-//! official (`"official"`) or as a user-created community list (`"community"`).
-//! This tool flips that flag for a single list, looked up by slug.
+//! Usage: cargo run --release --bin set-tier-list-official -- <slug> --official cargo run
+//! --release --bin set-tier-list-official -- <slug> --community cargo run --release --bin
+//! set-tier-list-official -- <slug> --official --yes   # skip confirm
 //!
-//! Usage:
-//!   cargo run --release --bin set-tier-list-official -- <slug> --official
-//!   cargo run --release --bin set-tier-list-official -- <slug> --community
-//!   cargo run --release --bin set-tier-list-official -- <slug> --official --yes   # skip confirm
-//!
-//! `--community` is the "remove official" action: it returns the list to a
-//! community list. Reads `DATABASE_URL` from the environment (or `.env`).
+//! `--community` is the "remove official" action. Reads `DATABASE_URL` from the environment (or
+//! `.env`).
 
 use anyhow::{Context, Result, bail};
 use backend::database::queries;

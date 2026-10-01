@@ -112,7 +112,7 @@ impl IntoResponse for ApiError {
         let body = ErrorBody {
             error: ErrorDetail {
                 code,
-                message: self.to_string(), // uses thiserror Display
+                message: self.to_string(),
                 details,
             },
         };

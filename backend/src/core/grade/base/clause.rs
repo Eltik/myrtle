@@ -39,8 +39,7 @@ pub enum Metric {
     /// Morale recovered per hour. `base_wide` = reaches operators outside the
     /// owner's room (Control-Center "all other facilities" auras).
     MoraleRecovery { base_wide: bool },
-    /// Morale drain modifier per hour (replaces the old `morale_drains` side-map;
-    /// positive = drains faster).
+    /// Morale drain modifier per hour (positive = drains faster).
     MoraleDrainDelta,
     /// A room-wide drain modifier: EVERY occupant of the owner's room drains
     /// `value` more (negative = slower) per hour while the owner is seated

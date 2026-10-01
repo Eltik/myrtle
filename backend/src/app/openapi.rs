@@ -12,10 +12,9 @@
 //!
 //! Routes registered with plain `.route()` still serve but never reach the
 //! spec, which let the annotation pass run incrementally rather than as a
-//! 166-handler flag day. There are now none left:
-//! `tests/openapi_snapshot_test.rs` asserts that count is zero, and pins the
-//! generated document, so both a new endpoint and any drift in an existing one
-//! land in a PR as a reviewable diff.
+//! 166-handler flag day. None are left: `tests/openapi_snapshot_test.rs` asserts that count is
+//! zero and pins the generated document, so both a new endpoint and any drift
+//! in an existing one land in a PR as a reviewable diff.
 //!
 //! # Adding an endpoint to the spec
 //!

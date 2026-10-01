@@ -593,10 +593,9 @@ impl DraftRoom {
     }
 }
 
-/// Reject a draft before it reaches the engine. A layout is client-supplied, so
-/// it gets the same scepticism as any other request body: rooms the game has no
-/// definition for, impossible levels, and crews larger than the room's seats are
-/// all refused by name rather than silently producing a nonsense score.
+/// Reject a draft before it reaches the engine: rooms the game has no definition for,
+/// impossible levels, and crews larger than the room's seats are refused by name
+/// rather than producing a nonsense score from a client-supplied layout.
 fn validate(layout: &[DraftRoom], game_data: &GameData) -> Result<(), ApiError> {
     if layout.is_empty() {
         return Err(ApiError::BadRequest("layout is empty".into()));

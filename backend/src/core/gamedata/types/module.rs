@@ -373,10 +373,6 @@ pub struct RawModules {
 
 pub type BattleEquip = HashMap<String, ModuleData>;
 
-// ============================================================================
-// Table File Wrappers (for loading from FlatBuffer JSON)
-// ============================================================================
-
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct UniequipTableFile {

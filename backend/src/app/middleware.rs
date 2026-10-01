@@ -33,8 +33,6 @@ fn now_secs() -> u64 {
     START.elapsed().as_secs()
 }
 
-// ── Observation ─────────────────────────────────────────────────────────
-
 /// Ceiling on how long a handler may take to produce a response.
 ///
 /// This bounds the handler future, not the response body: a streamed response
@@ -143,8 +141,6 @@ fn timeout_response() -> Response {
     )
         .into_response()
 }
-
-// ── Rate limiting ───────────────────────────────────────────────────────
 
 /// How many proxies sit in front of this process.
 ///

@@ -48,10 +48,9 @@ pub async fn get_user_improvements(
     // `get_improvements`, so a cached body can never be served to a viewer who
     // would not have been allowed to build it.
     let uid = resolve_uid(&state, &auth, params.uid.as_deref()).await?;
-    // Admission control lives inside the service now, around the one synchronous
-    // pass that actually burns CPU. Taking it here held a permit across five
-    // database round-trips too, which is not what it is for and is what made this
-    // route shed under trivial concurrency.
+    // Admission control lives in the service, around the one synchronous pass
+    // that burns CPU. Taking it here held a permit across five database
+    // round-trips and made this route shed under trivial concurrency.
     let cached = get_improvements(&state, &uid).await?;
     Ok(json_response(cached, &headers))
 }

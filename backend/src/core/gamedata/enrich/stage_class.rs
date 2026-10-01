@@ -39,10 +39,6 @@ pub struct StageInfo {
     pub is_hard: bool,
 }
 
-// ============================================================================
-// Raw gamedata reading
-// ============================================================================
-
 /// Read `data_dir/<name>.json` as a loose JSON value.
 ///
 /// Some tables (e.g. `roguelike_topic_table`, `activity_table`) carry invalid
@@ -293,10 +289,6 @@ fn collect_boss_stages(v: &Value, out: &mut Vec<(String, String)>) {
     }
 }
 
-// ============================================================================
-// Pure classification helpers
-// ============================================================================
-
 fn is_hard_path(level_id: &str) -> bool {
     let l = level_id.to_lowercase();
     l.contains("tough") || l.contains("/hard/") || l.contains("_hard_")
@@ -389,10 +381,6 @@ const fn mode_type_label(zone_type: Option<&ZoneType>) -> Option<&'static str> {
         _ => None,
     }
 }
-
-// ============================================================================
-// Classifier
-// ============================================================================
 
 /// Holds the gamedata tables needed to classify any stage/level. Build once,
 /// then call `classify_level` / `classify_stage_id` per item.

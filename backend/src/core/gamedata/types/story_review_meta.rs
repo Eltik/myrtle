@@ -20,10 +20,6 @@ use serde::Deserialize;
 
 use super::serde_helpers::{FbKeyValue, deserialize_fb_map_or_default};
 
-// ============================================================================
-// Layout (`ActArchiveData`)
-// ============================================================================
-
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct StoryReviewMetaTableFile {
     #[serde(alias = "ActArchiveData", default)]
@@ -121,10 +117,6 @@ pub struct ArchiveLogChapter {
     #[serde(alias = "UnlockDes", alias = "UnlockDesc", default)]
     pub unlock_des: String,
 }
-
-// ============================================================================
-// Content (`ActArchiveResData`)
-// ============================================================================
 
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct ActArchiveResData {

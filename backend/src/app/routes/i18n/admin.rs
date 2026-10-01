@@ -25,8 +25,6 @@ async fn assert_can_read(state: &AppState, auth: &AuthUser) -> Result<(), ApiErr
     }
 }
 
-// ---------------------------------------------------------------- locales
-
 /// Every locale, enabled or not.
 /// Needs a translation grant on the locale, or a role that can open the admin
 /// panel.
@@ -130,8 +128,6 @@ pub async fn upsert_locale(
     state.cache.invalidate_by_prefix("i18n:").await;
     Ok(Json(locale))
 }
-
-// ---------------------------------------------------------------- messages
 
 #[derive(Deserialize)]
 pub struct ListMessagesQuery {
@@ -276,8 +272,6 @@ pub async fn clear_message(
     Ok(ok_status())
 }
 
-// ---------------------------------------------------------------- progress + audit
-
 /// `GET /admin/i18n/namespaces` - the full namespace list, independent of
 /// whatever page of messages the editor happens to be showing.
 #[utoipa::path(
@@ -412,8 +406,6 @@ pub async fn entry_audit_log(
     ))
 }
 
-// ---------------------------------------------------------------- sync
-
 #[derive(Deserialize, utoipa::ToSchema)]
 pub struct SyncRequest {
     pub entries: Vec<service::SourceEntry>,
@@ -454,8 +446,6 @@ pub async fn sync(
         service::sync_source_catalog(&state, &body.entries).await?,
     ))
 }
-
-// ---------------------------------------------------------------- overrides
 
 #[derive(Deserialize)]
 pub struct OverridesQuery {

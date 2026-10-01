@@ -238,7 +238,6 @@ static RE_GLOBAL_POOL_B: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
-/// Global-target label -> internal room type ("Trading Posts" / "Factories").
 fn room_type_from_global_label(label: &str) -> &'static str {
     if label.starts_with("Trading") {
         "TRADING"
@@ -933,8 +932,8 @@ pub enum BuffResolutionStrategy {
     /// feeds operators whose output scales with the room's total order/capacity limit.
     CapacityOnly { order_limit: i32 },
 
-    /// Non-production facilities (workshop, HR, training, reception).
-    /// Store the efficiency or parsed value for secondary scoring.
+    /// Non-production facilities (workshop, HR, training, reception); `value`
+    /// is the parsed efficiency, scored secondarily.
     NonProduction { value: f64 },
 
     /// A Control-Center skill that boosts a NON-PRODUCTION facility metric
@@ -1070,8 +1069,6 @@ pub enum BuffResolutionStrategy {
 
 pub fn build_registry(
     buffs: &HashMap<String, Buff>,
-    // Lowercased operator display name -> char_id, used to resolve named-teammate
-    // conditional buffs (e.g. Texas's "...same Trading Post as Lappland").
     name_to_char: &HashMap<String, String>,
 ) -> (
     HashMap<String, BuffResolutionStrategy>,
@@ -1085,7 +1082,6 @@ pub fn build_registry(
     let defaulted_below = defaulted_trade_threshold(buffs);
 
     for (buff_id, buff) in buffs {
-        // Strip the tier suffix: "manu_prod_spd&power[000]" -> "manu_prod_spd&power".
         let prefix = buff_family(buff_id);
 
         // Morale-drain extraction runs FIRST, before any parse branch can
@@ -1556,7 +1552,6 @@ pub fn build_registry(
                             formula_bonuses: Vec::new(),
                         }
                     } else {
-                        // Unconditional global ("all Trading Posts +7%").
                         BuffResolutionStrategy::GlobalEffect {
                             target_room: target_room.to_string(),
                             bonus_pct: bonus,
@@ -2258,7 +2253,6 @@ fn parse_skill_conversion(desc: &str) -> Option<(Vec<String>, String)> {
     Some((from.to_vec(), to_token.clone()))
 }
 
-/// Optional "max +X%" cap on a scaling buff.
 fn parse_scaling_cap(desc: &str) -> Option<f64> {
     let lower = desc.to_lowercase();
     let idx = lower.find("max")?;

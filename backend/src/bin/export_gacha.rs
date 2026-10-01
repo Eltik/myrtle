@@ -1,8 +1,7 @@
 //! Export a single user's gacha history to a JSON file.
 //!
-//! Resolves the user by Arknights UID or by internal database UUID, then writes
-//! every row in `gacha_records` to disk. The output is a single JSON object
-//! containing the resolved user info and the records array.
+//! Resolves the user by Arknights UID or internal database UUID; the output is
+//! one JSON object with the user info and every `gacha_records` row.
 //!
 //! Usage:
 //!   cargo run --release --bin export-gacha -- --uid 123456789

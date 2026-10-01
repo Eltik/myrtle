@@ -6,8 +6,6 @@ use serde::Deserialize;
 
 use super::serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default};
 
-// ─── Root ────────────────────────────────────────────────────────────────────
-
 /// Root structure for `building_data.json`.
 ///
 /// Only the fields needed for base grading are deserialized; the rest are
@@ -105,8 +103,6 @@ pub struct Furniture {
     pub rarity: i32,
 }
 
-// ─── Layout ──────────────────────────────────────────────────────────────────
-
 /// One base floorplan: where every slot sits, and which storey it belongs to.
 ///
 /// This is the board's geometry. A player's `roomSlots` says what is *built*
@@ -157,8 +153,6 @@ pub struct StoreyDef {
     pub y_offset: i32,
 }
 
-// ─── Buffs ───────────────────────────────────────────────────────────────────
-
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Buff {
@@ -187,8 +181,6 @@ pub struct Buff {
     #[serde(default)]
     pub text_color: String,
 }
-
-// ─── Chars (operator base skills) ────────────────────────────────────────────
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
@@ -234,8 +226,6 @@ impl BuffUnlockCondition {
         }
     }
 }
-
-// ─── Rooms ───────────────────────────────────────────────────────────────────
 
 /// A facility type definition (e.g. CONTROL, MANUFACTURE, TRADING).
 #[derive(Debug, Clone, Deserialize)]
@@ -294,8 +284,6 @@ pub struct BuildCostItem {
     pub count: i32,
 }
 
-// ─── Room unlock conditions ──────────────────────────────────────────────────
-
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct RoomUnlockCond {
@@ -313,8 +301,6 @@ pub struct RoomUnlockReq {
     pub count: i32,
     pub level: i32,
 }
-
-// ─── Facility mechanics ──────────────────────────────────────────────────────
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]

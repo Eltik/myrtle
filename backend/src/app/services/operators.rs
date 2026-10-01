@@ -32,7 +32,6 @@ pub struct OperatorIndexEntry {
     pub tag_list: Vec<String>,
     pub nation_id: String,
     pub is_not_obtainable: bool,
-    // ---- Extended fields for the operators list page + randomizer ----
     /// Faction group id (list page "factions" filter + faction-logo fallback).
     pub group_id: Option<String>,
     /// Sub-faction / team id (same faction filter + logo fallback).
@@ -49,8 +48,8 @@ pub struct OperatorIndexEntry {
     /// Max-level, max-elite base stats, flattened so the list page can sort
     /// without pulling `phases`/`attributesKeyFrames`.
     pub stats: OperatorIndexStats,
-    /// Randomizer challenge-filter booleans, precomputed so the randomizer no
-    /// longer needs the full `/static/operators` table. `hasOffensiveRecovery` /
+    /// Randomizer challenge-filter booleans, precomputed so the randomizer
+    /// doesn't need the full `/static/operators` table. `hasOffensiveRecovery` /
     /// `hasDefensiveRecovery`: any skill level with the matching `spType`.
     /// `allSkillsManual`: has >=1 skill and every skill's first level is manual.
     pub has_offensive_recovery: bool,

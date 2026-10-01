@@ -158,7 +158,6 @@ pub struct ImageSize {
     pub ppu_assumed: Option<bool>,
 }
 
-/// A resolved character sprite.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
@@ -461,9 +460,7 @@ fn is_alpha_companion(file_name: &str) -> bool {
     file_name.contains("[alpha]") || normalized_stem(file_name) == "alpha"
 }
 
-/// A face or body index with leading zeros cut (`01` -> `1`); all zeros stay `0`.
-/// A sprite index with its leading zeros trimmed (`"01"` -> `"1"`), which is
-/// how the client reads one. `"0"` stays `"0"`.
+/// Leading zeros trimmed, as the client reads an index (`"01"` -> `"1"`); `"0"` stays `"0"`.
 #[must_use]
 pub(crate) fn trim_index(raw: &str) -> &str {
     let t = raw.trim_start_matches('0');
