@@ -307,6 +307,29 @@ describe("semantics on hand-built scripts", () => {
         expect(e.unhandledKinds).toEqual({ "charslot:slot=all": 1 });
     });
 
+    it("a bare [Predicate] reconverges: the lines after it run on every branch", () => {
+        // `_ExecutePredicate` stores NULL when `references` is absent, which nulls
+        // the filter; main_01-03_beg line 41 hid 109 lines when it was read as [""].
+        const s = script([
+            { kind: "decision", args: { options: "a;b", values: "1;2" } },
+            { kind: "predicate", args: { references: "1" } },
+            { kind: "text", text: "only one" },
+            { kind: "predicate", args: {} },
+            { kind: "text", text: "after the bare gate" },
+            { kind: "predicate", args: { references: "" } },
+            { kind: "text", text: "after the blank gate" },
+        ]);
+        const e = createEngine(s, { nickname: "Doctor" });
+        expect(e.step().halt.kind).toBe("decision");
+        const seen: string[] = [];
+        let r = e.step("2");
+        while (r.halt.kind === "line") {
+            seen.push(r.halt.text);
+            r = e.step();
+        }
+        expect(seen).toEqual(["after the bare gate", "after the blank gate"]);
+    });
+
     it("decision then predicates: only the chosen block runs, a full-list predicate reconverges, decisions are remembered by ordinal", () => {
         const s = script([
             { kind: "decision", args: { options: "a;b", values: "1;2" } },

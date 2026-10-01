@@ -353,10 +353,18 @@ function build(script: StoryScript, options: EngineOptions, total: number): Engi
             // Branching runs before the skip check: a predicate can end a skipped block.
             if (kind === "predicate") {
                 const chosen = choices[decisionOrdinal];
-                if (chosen === undefined) {
+                // A BARE `[Predicate]` RECONVERGES. `_ExecutePredicate` (0x4a89fcc)
+                // splits `references` on `;` and stores the array, or stores NULL
+                // when the argument is absent (0x4a8a0d0), which nulls the filter.
+                // Reading the absent argument as `[""]` gated everything after it
+                // until the next gate or decision: three EN scripts carry one
+                // (main_01-03_beg line 41, main_05-10_beg line 558, st_05-01) and
+                // up to 109 lines were never shown ("Sounds good." onward in 1-3).
+                const raw = (a.references ?? "").trim();
+                if (chosen === undefined || raw === "") {
                     skipping = false;
                 } else {
-                    const refs = (a.references ?? "").split(";").map((s) => s.trim());
+                    const refs = raw.split(";").map((s) => s.trim());
                     skipping = !refs.includes(chosen);
                 }
                 continue;
