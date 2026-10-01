@@ -68,7 +68,6 @@ export function StageList() {
                 }
             />
 
-            {/* Featured hero */}
             {!searching && tree.featured && (filter === "all" || filter === tree.featured.group) && (
                 <FeaturedHero
                     event={tree.featured}
@@ -102,7 +101,6 @@ export function StageList() {
                 </div>
             </div>
 
-            {/* Filter pills */}
             <div className="msv-scroll mb-8 flex gap-1.5 overflow-x-auto pb-1.5">
                 <FilterPill label={t("list.filter.all")} count={tree.totalZones} tone="var(--primary)" active={filter === "all"} onClick={() => setFilter("all")} />
                 {tree.groups.map((g) => (

@@ -252,10 +252,9 @@ export function ReaderToolbar(p: IReaderToolbarProps): React.ReactElement {
 }
 
 /**
- * The MUTE pill with the volume under it. A click on the pill still mutes; the
- * two sliders (the same Music and Sound volumes Settings has) sit in a popover
- * that opens on HOVER and on keyboard focus for a fine pointer, so turning a
- * loud story down no longer needs the settings dialog.
+ * The MUTE pill with the volume under it. A click on the pill mutes; the two sliders (the same
+ * Music and Sound volumes Settings has) sit in a popover that opens on HOVER and on keyboard
+ * focus for a fine pointer, so a loud story can be turned down without the settings dialog.
  *
  * A touch screen has no hover, so there a tap is the mute it always was and a
  * small chevron beside it, 44 px tall like every coarse target in the reader,

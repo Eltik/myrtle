@@ -23,10 +23,6 @@ export function countWords(text: string | null | undefined): number {
     return plain.split(/\s+/).length;
 }
 
-// =============================================================================
-// Files: the handbook's `storyTextAudio` sections
-// =============================================================================
-
 /** The handbook shape this module needs, structurally: `HandbookItem.storyTextAudio`. */
 export interface IHandbookSectionSource {
     storyTitle: string;
@@ -65,10 +61,6 @@ export function fileSections(sections: readonly IHandbookSectionSource[] | null 
     }
     return out;
 }
-
-// =============================================================================
-// Modules: `uniEquipDesc`, which is the module's story, not its stat block
-// =============================================================================
 
 /** The module shape this module needs, structurally: `OperatorModule`. */
 export interface IModuleSource {
@@ -123,10 +115,6 @@ export function moduleSections(modules: readonly IModuleSource[] | null | undefi
             ];
         });
 }
-
-// =============================================================================
-// Voice lines
-// =============================================================================
 
 export interface IVoiceLine {
     key: string;
@@ -190,10 +178,6 @@ export function voiceLanguages(lines: readonly IVoiceLine[], order: readonly Lan
     for (const lang of present) if (!ordered.includes(lang)) ordered.push(lang);
     return ordered;
 }
-
-// =============================================================================
-// Tab counts
-// =============================================================================
 
 export type OperatorTabKey = "records" | "files" | "modules" | "voices";
 

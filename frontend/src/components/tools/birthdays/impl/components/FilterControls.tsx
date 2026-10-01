@@ -21,7 +21,6 @@ interface IFilterControlsProps {
     nations: [string, string][];
 }
 
-/** The filter form: search · class · rarity · nation. */
 export function FilterControls({ filters, onChange, nations }: IFilterControlsProps): React.ReactElement {
     const t: FilterT = useT("tools");
     const toggleRarity = (r: number) => {

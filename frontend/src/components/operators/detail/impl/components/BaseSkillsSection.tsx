@@ -46,8 +46,7 @@ export function BaseSkillsSection({ skills, server }: IBaseSkillsSectionProps) {
 
     if (!skills || skills.length === 0) return null;
 
-    // Sort by unlock order: elite ASC, then level ASC. The source data is already
-    // grouped by slot, but explicit sort makes the ladder obvious.
+    // Sort by unlock order: elite ASC, then level ASC.
     const sorted = [...skills].sort((a, b) => a.unlockElite - b.unlockElite || a.unlockLevel - b.unlockLevel);
 
     return (

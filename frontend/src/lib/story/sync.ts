@@ -60,11 +60,9 @@ export type GameImport = { count: number; archived: number; at: number | null } 
  */
 export { DEFAULT_SYNC_POLICY, merge, SYNC_POLICY_KEY, type SyncChoice, type SyncConflictSummary, type SyncPolicy, type SyncSideSummary, sameProgress } from "./syncMerge";
 
-// ---------------------------------------------------------------------------
 // The engine. One per browser session, not one per component: the reader and
 // the library both mount the hook and must share a debounce, a state and an
 // in-flight request.
-// ---------------------------------------------------------------------------
 
 const OFF: SyncState = { kind: "off" };
 
@@ -421,8 +419,8 @@ function onVisibilityChange(): void {
 /**
  * A tab regaining focus or visibility pulls again when its last pull is older
  * than {@link REPULL_AFTER_MS}: a merge decided in another tab, a story read
- * on another device, or a "Sync now" pressed elsewhere used to stay invisible
- * here until a reload, which read as the merge not happening.
+ * on another device, or a "Sync now" pressed elsewhere stays invisible here
+ * until then.
  */
 function onReturn(): void {
     if (!enabled || pullInFlight) return;

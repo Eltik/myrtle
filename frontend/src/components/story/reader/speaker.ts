@@ -1,12 +1,11 @@
 /**
  * WHICH SPRITE IS SPEAKING, and what colour that makes the speaker plate.
  *
- * The user asked for "the main colour scheme for each character". The source
- * is NOT the skin table's colour list: that list is per OUTFIT, so it has one
- * answer for every story sprite of a skin and no answer at all for the sprites
- * a character wears in a story where she is not in that costume. The source is
- * the STORY SPRITE ON SCREEN, sampled from the body PNG the stage has already
- * fetched (`#/lib/story/palette`, `spritePalette`).
+ * Colour source: NOT the skin table's colour list, which is per OUTFIT, so it
+ * has one answer for every story sprite of a skin and none for the sprites a
+ * character wears in a story where she is not in that costume. It is the STORY
+ * SPRITE ON SCREEN, sampled from the body PNG the stage has already fetched
+ * (`#/lib/story/palette`, `spritePalette`).
  *
  * The join from the halt's `speaker` to a sprite is the SCENE, because nothing
  * on the wire connects the two: a `[name="Amiya"]` line carries a display name

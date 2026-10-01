@@ -210,9 +210,7 @@ describe("merge and the game's mis-imported marks", () => {
     });
 });
 
-// ---------------------------------------------------------------------------
 // The engine: what actually reaches the account, and how often.
-// ---------------------------------------------------------------------------
 
 const pullAnswer = (over: Partial<{ progress: StoryProgress | null; updatedAt: number | null; gameRead: string[]; gameUnread: string[]; gameArchived: number; gameSyncedAt: number | null }> = {}) => ({
     ok: true as const,
@@ -242,7 +240,7 @@ describe("the sync engine", () => {
         vi.useRealTimers();
     });
 
-    // The game's verdict is now read BESIDE the document. Nothing it says
+    // The game's verdict is read BESIDE the document. Nothing it says
     // enters `read`, which is what lets the backend correct it later; the
     // library still shows those stories read, through `isStoryRead`.
     it("keeps the game's read marks out of the document and writes nothing for them", async () => {
@@ -377,9 +375,7 @@ describe("the sync engine", () => {
     });
 });
 
-// ---------------------------------------------------------------------------
 // Conflicts: the pull that refuses to decide for the reader.
-// ---------------------------------------------------------------------------
 
 describe("a conflict between the browser and the account", () => {
     /** A local document written STRAIGHT to storage, so the write listener never schedules a push behind the assertion. */
@@ -405,8 +401,7 @@ describe("a conflict between the browser and the account", () => {
         vi.useRealTimers();
     });
 
-    // What a browser that has never opened the setting does, which is what the
-    // sync did before any of this existed.
+    // A browser that has never opened the setting: plain merge, no prompt.
     it("merges two differing sides without asking, by default", async () => {
         window.localStorage.removeItem(SYNC_POLICY_KEY);
         __resetStorySyncForTests();

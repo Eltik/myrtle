@@ -40,10 +40,8 @@ export function UserProfile() {
     const t: TypedT<typeof messages> = useT("user");
     const rt: TypedRichT<typeof messages> = useRichT("user");
     const { id } = useParams({ from: "/user/$id" });
-    // The tab a visitor is on survives leaving the page. Tabs used to reset to
-    // Stats on every mount, so anyone who navigated away from Roster and back
-    // landed somewhere they did not choose. Stored per browser, not per
-    // profile: the tab is a way of reading a profile, not a fact about one.
+    // Survives leaving the page, so going away from Roster and back does not reset to Stats.
+    // Stored per browser, not per profile: the tab is a way of reading a profile.
     const [activeTab, setActiveTab] = useLocalStorageState<TabId>("user:profile:tab", "stats", {
         parse: (raw) => (isTabId(raw) ? raw : undefined),
         serialize: (v) => v,

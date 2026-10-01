@@ -1,22 +1,17 @@
 import { type RefObject, useEffect, useRef } from "react";
 
 /**
- * SCROLL PROGRESS ACROSS ONE ELEMENT, written to a custom property the CSS
- * reads. 0 while the element's top edge is at the scroller's top edge, 1 once
- * a full element height has gone past it.
+ * SCROLL PROGRESS ACROSS ONE ELEMENT, written to a custom property the CSS reads. 0 while the
+ * element's top edge is at the scroller's top edge, 1 once a full element height has gone past.
  *
- * `scrollRoot` is the one option and it names WHICH scroller. The default is
- * the window, which is what the operator page has always listened on and what
- * every existing call site gets by passing nothing. A dialog is the case that
- * needs the other answer: its content box scrolls and the window does not
- * move at all, so a window listener would fire never and the progress would
- * stay pinned at 0. With a root the offset is measured against THAT box
- * (`rect.top - root.top`) rather than against the viewport, because the
- * element's viewport-relative top does not change when a scroller inside the
- * viewport moves.
+ * `scrollRoot` names WHICH scroller; the default is the window. A dialog needs the other
+ * answer: its content box scrolls and the window does not move, so a window listener would
+ * never fire and the progress would stay pinned at 0. With a root the offset is measured
+ * against THAT box (`rect.top - root.top`), because the element's viewport-relative top does
+ * not change when a scroller inside the viewport moves.
  *
- * `prefers-reduced-motion` pins the property at 0 and attaches nothing at all,
- * so the whole mechanism, listener and observer included, is inert.
+ * `prefers-reduced-motion` pins the property at 0 and attaches nothing, so the listener and
+ * observer are inert too.
  */
 export function useParallaxProgress<T extends HTMLElement>(cssVar = "--parallax-progress", scrollRoot?: RefObject<HTMLElement | null>): RefObject<T | null> {
     const ref = useRef<T>(null);

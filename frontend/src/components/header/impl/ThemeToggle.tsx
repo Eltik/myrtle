@@ -49,7 +49,7 @@ export default function ThemeToggle() {
                         whatever its label needed, so a word wider than the cell
                         broke inside the fixed h-8 box and spilled out of it:
                         French "Sombre" rendered as "Sombr" over "e". The row is
-                        now content-sized with the slack shared out, so each
+                        content-sized with the slack shared out, so each
                         button is at least as wide as its own word and the labels
                         never wrap. */}
                     <div className="flex gap-1">

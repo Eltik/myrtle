@@ -62,10 +62,7 @@ function checkAborted(signal?: AbortSignal): void {
     }
 }
 
-/**
- * Snapshot of mutable spine state that we need to restore after recording.
- * Captured once, restored once - no scattered originalX/originalY locals.
- */
+/** Spine state to restore after recording. Captured once, restored once. */
 interface ISpineSnapshot {
     timeScale: number;
     autoUpdate: boolean;
@@ -105,9 +102,8 @@ function restoreSpine(spine: Spine, snapshot: ISpineSnapshot, liveApp: PIXI.Appl
 }
 
 /**
- * Configures spine + an offscreen PIXI app for export. Returns both so the
- * caller can render and clean up. Any failure here is the caller's
- * responsibility to handle via the returned cleanup function.
+ * Spine plus an offscreen PIXI app for export. Setup failures are the caller's to handle
+ * through the returned cleanup.
  */
 interface IRenderContext {
     app: PIXI.Application;
@@ -345,8 +341,7 @@ export async function recordAsVideo(options: IRecordingOptions): Promise<IRecord
             framerate: settings.fps,
         });
 
-        // VideoFrame can take the WebGL canvas directly - the extra 2D context
-        // copy in the original code was pure overhead.
+        // VideoFrame takes the WebGL canvas directly, no 2D context copy needed.
         const canvas = ctx.app.view as HTMLCanvasElement;
 
         for (let frame = 0; frame < totalFrames; frame++) {

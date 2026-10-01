@@ -306,10 +306,6 @@ function HandbookText({ text }: { text: string }): React.ReactElement {
     );
 }
 
-// =============================================================================
-// Voice lines
-// =============================================================================
-
 /** One `<audio>` element for the whole shelf, so opening a second line stops the first. */
 function useOneShotPlayer() {
     const ref = useRef<HTMLAudioElement | null>(null);

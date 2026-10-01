@@ -82,18 +82,12 @@ export const LevelBreakdown = memo(function LevelBreakdown({ buckets, total, tit
                                             {bucket.users > 0 && (
                                                 <span
                                                     className={cn("block h-full rounded-full", isNone ? "bg-muted-foreground/45" : bucket.level === 3 ? "bg-primary" : "bg-primary/55")}
-                                                    // Width is the share of the
-                                                    // WHOLE cohort, the same
-                                                    // quantity the percentage
-                                                    // beside it names, so bar
-                                                    // length and number cannot
-                                                    // disagree. The floor is a
-                                                    // pixel minimum rather than
-                                                    // a percentage one: it keeps
-                                                    // a 2% bucket legible as a
-                                                    // bar instead of a dot,
-                                                    // without restating the
-                                                    // proportion as a lie.
+                                                    // Share of the WHOLE cohort, the same
+                                                    // quantity as the percentage beside it,
+                                                    // so bar and number cannot disagree.
+                                                    // The floor is a pixel minimum, not a
+                                                    // percentage one: it keeps a 2% bucket
+                                                    // a bar instead of a dot.
                                                     style={{ width: `${pct}%`, minWidth: "0.625rem" }}
                                                 />
                                             )}

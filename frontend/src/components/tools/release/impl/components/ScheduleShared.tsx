@@ -40,19 +40,15 @@ function occLabel(occ: string, t: ScheduleSharedT): string {
 /**
  * Per-kind colour, in three roles.
  *
- * `pill` was 12-15% alpha, which is where "the calendar colours are too dim"
- * came from: at that strength a sky pill and a pink pill are both essentially
- * the page background, and the only full-strength reference to the hue was a
- * 2px dot that is suppressed on any segment continuing from the week before.
- * The tints are now 22-30% with a matching 1px INSET RING at 45-55%, so a pill
- * carries its hue on its own edge whether or not it drew a dot. Inset ring, not
- * border: the calendar lane is a fixed 22px (`my-0.5` plus `leading-[18px]`)
- * and a border would add 2px to every pill and overflow it.
+ * `pill` tints are 22-30% with a matching 1px INSET RING at 45-55%, so a pill carries its hue on
+ * its own edge whether or not it drew a dot. At 12-15% a sky pill and a pink pill were both
+ * essentially the page background, and the only full-strength hue was a 2px dot that is
+ * suppressed on any segment continuing from the week before. Inset ring, not border: the
+ * calendar lane is a fixed 22px (`my-0.5` plus `leading-[18px]`) and a border would add 2px to
+ * every pill and overflow it.
  *
- * `swatch` is NEW and is what the legend uses. The legend used to paint `dot`,
- * a fully opaque square, next to pills tinted at 12%: technically the same hue,
- * visibly a different colour, which is the mismatch that was reported. The
- * legend now paints the pill's own tint inside the pill's own border.
+ * `swatch` is what the legend uses: the pill's own tint inside the pill's own border. A fully
+ * opaque `dot` square beside 12% pills is the same hue and visibly a different colour.
  */
 export const KIND_STYLE: Record<ScheduleKind, { pill: string; swatch: string; dot: string; text: string }> = {
     event: {
@@ -127,9 +123,9 @@ export function ScheduleControls({ kinds, onKindsChange, stageOnly, onStageOnlyC
                 );
             })}
             <ToggleField id="schedule-stage-only" label={t("release.controls.stageOnly")} checked={stageOnly} onChange={onStageOnlyChange} />
-            {/* Was 11px `text-muted-foreground`. It explains the one mark on the
-                calendar that separates a confirmed date from an estimated one, so
-                it is not secondary text: 14px, at the body foreground's 80%. */}
+            {/* Not 11px `text-muted-foreground`: it explains the one mark on the calendar that
+                separates a confirmed date from an estimated one, so it is not secondary text:
+                14px, at the body foreground's 80%. */}
             <span className="font-sans text-[14px] text-foreground/80">{t("release.controls.dotLegend")}</span>
         </div>
     );

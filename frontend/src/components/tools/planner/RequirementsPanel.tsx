@@ -37,7 +37,7 @@ import {
 } from "./requirements";
 import type { messages as requirementMessages } from "./requirements.messages";
 
-/** This panel renders its own chrome plus the labels `requirements.ts` carries. */
+/** Own keys plus the labels `requirements.ts` carries. */
 type ReqT = TypedT<typeof messages & typeof requirementMessages>;
 
 interface PlannerRequirementRowProps {

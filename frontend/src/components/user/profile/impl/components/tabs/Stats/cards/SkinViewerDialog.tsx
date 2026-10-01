@@ -582,8 +582,6 @@ function SkinDetailDialog({ card, owned, color, popularity }: ISkinDetailDialogP
     );
 }
 
-// ─── Sectioning by brand + acquisition channel ─────────────────────────────
-
 /** Visual tag shown on a section header to indicate how the brand is acquired.
  *  Maps the underlying `displayTagId` (or absence of one) into a short label. */
 type SectionChannel = "collab" | "event" | "is" | "seasonal" | "special-pack" | "code-exchange" | "store";
@@ -705,8 +703,6 @@ function buildSections(filtered: ICardData[], mode: SortMode, popularity: Map<st
         return a.title.localeCompare(b.title);
     });
 }
-
-// ─── Pricing model ─────────────────────────────────────────────────────────
 
 /** Per-skin Originite Prime cost overrides. Keyed by **skinId** (most specific -
  *  e.g. `char_002_amiya@witch#1`) or **skinGroupId** (e.g. `2024#witch` - applies

@@ -1,5 +1,5 @@
 /**
- * Voice types - re-exported from the ts-rs bindings generated out of
+ * Voice types, re-exported from the ts-rs bindings generated out of
  * `backend/src/core/gamedata/types/voice.rs`.
  *
  * These were hand-written until a field renamed on one side only (`voiceUrl` ->

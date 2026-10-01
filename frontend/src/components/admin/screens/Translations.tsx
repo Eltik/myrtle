@@ -140,25 +140,18 @@ export function Translations(): React.ReactElement {
         return () => window.clearTimeout(id);
     }, [searchInput]);
 
-    // Any change to what is being listed resets the pager and the open editor.
-    //
-    // The dependency array was empty, so this only ran on mount and the offset
-    // survived every filter change: switching to `untranslated` from page 30 of
-    // `all` left the offset at 30 and rendered an empty "no match" page for a
-    // filter with thousands of rows. That reads exactly like the list failing
-    // to load until you page further.
+    // Any change to what is being listed resets the pager and the open editor. Without the
+    // reset the offset survived filter changes: `untranslated` from page 30 of `all` rendered
+    // an empty "no match" page that looked like the list failing to load.
     // biome-ignore lint/correctness/useExhaustiveDependencies: the setters are the effect's body, not inputs; these four are what "what is being listed" means
     useEffect(() => {
         setPage(1);
         setSelectedKey(null);
     }, [locale, filter, namespace, search]);
 
-    // Turning a page leaves the reader wherever they were, but the page under
-    // them has changed height: the rows are a different size and the open editor
-    // unmounts, because `selected` is resolved out of the rows now on screen. The
-    // result is landing in the middle of the new page, or past the end of it.
-    // Paging puts the top of the list back under the reader, the way the
-    // leaderboard and user search already do.
+    // Turning a page changes the height under the reader and unmounts the open editor
+    // (`selected` resolves out of the rows on screen), landing mid-page or past the end.
+    // Paging puts the top of the list back, as the leaderboard and user search do.
     useEffect(() => {
         if (page === 1) return;
         listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -174,9 +167,8 @@ export function Translations(): React.ReactElement {
     };
     const listQuery = useQuery(translationsListQueryOptions(listInput, isAuthenticated));
 
-    // The namespace list is a property of the catalog, not of the open page, so
-    // it comes from its own endpoint - the options are the same whichever page
-    // or locale is being read.
+    // The namespace list is a property of the catalog, not the open page, so it comes from its
+    // own endpoint: the options are the same whichever page or locale is being read.
     const namespaces = useMemo(() => [...(namespacesQuery.data ?? [])].sort((a, b) => a.localeCompare(b)), [namespacesQuery.data]);
 
     const canWrite = writable.includes(locale);
@@ -360,8 +352,6 @@ export function Translations(): React.ReactElement {
     );
 }
 
-// ---------------------------------------------------------------- progress
-
 function ProgressStrip({ pending, rows, locales, active, onSelect }: { pending: boolean; rows: { locale: string; total: number; translated: number; stale: number }[]; locales: { code: string; native_name: string }[]; active: string; onSelect: (code: string) => void }): React.ReactElement {
     const t: TranslationsT = useT("admin");
     const fmt = useFormatters();
@@ -417,8 +407,6 @@ function ProgressStrip({ pending, rows, locales, active, onSelect }: { pending: 
     );
 }
 
-// ---------------------------------------------------------------- list row
-
 function MessageRow({ entry, active, onOpen }: { entry: TranslationEntry; active: boolean; onOpen: () => void }): React.ReactElement {
     const t: TranslationsT = useT("admin");
     const fmt = useFormatters();
@@ -441,8 +429,6 @@ function MessageRow({ entry, active, onOpen }: { entry: TranslationEntry; active
         </button>
     );
 }
-
-// ---------------------------------------------------------------- editor
 
 function MessageEditor({ locale, localeName, entry, canWrite, onClose, onOpenHistory }: { locale: string; localeName: string; entry: TranslationEntry; canWrite: boolean; onClose: () => void; onOpenHistory: () => void }): React.ReactElement {
     const t: TranslationsT = useT("admin");
@@ -620,15 +606,10 @@ function MessageEditor({ locale, localeName, entry, canWrite, onClose, onOpenHis
     );
 }
 
-// ---------------------------------------------------------------- source change
-
 /**
- * What the English used to say, against what it says now.
- *
- * `translated_source_text` is `null` for any row written before the snapshot
- * column existed, and that is worth saying out loud rather than rendering an
- * empty comparison: the difference between "nothing changed" and "we never
- * recorded it" is the difference between a glance and a re-read.
+ * What the English used to say, against what it says now. `translated_source_text` is `null`
+ * for any row written before the snapshot column existed; say so rather than render an empty
+ * comparison.
  */
 function SourceChange({ before, after }: { before: string | null; after: string }): React.ReactElement {
     const t: TranslationsT = useT("admin");
@@ -658,8 +639,6 @@ function SourceChange({ before, after }: { before: string | null; after: string 
         </>
     );
 }
-
-// ---------------------------------------------------------------- arguments
 
 /**
  * The literal `t()` calls matter: the extractor only sees keys written out in
@@ -709,10 +688,9 @@ interface IFormRow {
 /**
  * One row per wording the translator has to think about.
  *
- * The required set comes from the TARGET locale rather than from English,
- * which is the whole point: English declares `one` and `other`, Russian needs
- * `one`, `few`, `many` and `other`, and a Russian translation that stops at
- * two forms is silently wrong in a way the old chip row could not express.
+ * The required set comes from the TARGET locale, not English: English declares `one` and
+ * `other`, Russian needs `one`, `few`, `many` and `other`, and a Russian translation that
+ * stops at two forms is silently wrong.
  */
 function formRows(arg: IMessageArgument, written: IMessageArgument | null, locale: string, started: boolean): IFormRow[] {
     const numeric = arg.type === "plural" || arg.type === "selectordinal";
@@ -788,8 +766,6 @@ function ArgumentCard({ arg, written, started, locale, localeName }: { arg: IMes
     );
 }
 
-// ---------------------------------------------------------------- history drawer
-
 function HistoryDrawer({ locale, messageKey, canWrite, authed, onClose }: { locale: string; messageKey: string; canWrite: boolean; authed: boolean; onClose: () => void }): React.ReactElement {
     const t: TranslationsT = useT("admin");
     const describeError = useErrorMessage();
@@ -864,8 +840,6 @@ function HistoryDrawer({ locale, messageKey, canWrite, authed, onClose }: { loca
     );
 }
 
-// ---------------------------------------------------------------- grants
-
 function GrantsSection({ locale, userId, role, authed, onGrant }: { locale: string; userId: string | null; role: string | null; authed: boolean; onGrant: () => void }): React.ReactElement | null {
     const t: TranslationsT = useT("admin");
     const describeError = useErrorMessage();
@@ -875,9 +849,8 @@ function GrantsSection({ locale, userId, role, authed, onGrant }: { locale: stri
     const permsQuery = useQuery(translationPermissionsQueryOptions(locale || undefined, authed));
     const perms = permsQuery.data ?? [];
 
-    // The backend needs `admin` on the locale to hand out grants, and
-    // `writable-locales` only reports edit-level access - so the own-row lookup
-    // is what tells the UI whether the manage controls are usable.
+    // The backend needs `admin` on the locale to hand out grants, and `writable-locales` only
+    // reports edit-level access, so the own-row lookup tells the UI whether manage works.
     const canManage = isSuperAdmin(role) || (userId !== null && perms.some((p) => p.user_id === userId && p.permission === "admin"));
 
     const revoke = useMutation({

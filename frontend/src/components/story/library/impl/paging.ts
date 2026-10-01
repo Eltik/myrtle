@@ -2,7 +2,7 @@
  * THE RECORDS GRID MOUNTS A PAGE AT A TIME. A search forces the operator
  * records section open, and "a" matched 286 record sets, which mounted 286
  * cards (about 5,000 elements) in the keystroke's own task: the DOM went from
- * 2,192 elements to 7,257 and the keystroke took 570 ms. The grid now mounts
+ * 2,192 elements to 7,257 and the keystroke took 570 ms. The grid mounts
  * {@link RECORD_PAGE} and a "Show more" button adds the next page.
  */
 
@@ -11,7 +11,7 @@
  * the records grid takes (2, 3, 4, 5, 6), so no page ends on a ragged row (40
  * left two orphans at six columns). It costs about 400 elements over the 40
  * measured at 2,911 on the broadest one-letter query, against a keystroke
- * that now takes ~30 ms.
+ * that takes ~30 ms.
  */
 export const RECORD_PAGE = 60;
 

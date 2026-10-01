@@ -72,7 +72,6 @@ export function AdminSidebar({ open, onClose }: IAdminSidebarProps): React.React
     const pathname = useRouterState({ select: (s) => s.location.pathname });
     const isActive = (to: string) => (to === "/admin" ? pathname === "/admin" : pathname.startsWith(to));
 
-    // Live counts
     // `staff` gates the three counts that belong to screens a translator never
     // sees: fetching them would 403 and fill their console for a badge that is
     // not rendered. Locale and progress stay - those feed the one nav row they
@@ -121,7 +120,6 @@ export function AdminSidebar({ open, onClose }: IAdminSidebarProps): React.React
           ]
         : [];
 
-    // Close the mobile drawer on Escape and lock body scroll while open.
     useEffect(() => {
         if (!open) return;
         const onKey = (e: KeyboardEvent) => {
@@ -138,7 +136,6 @@ export function AdminSidebar({ open, onClose }: IAdminSidebarProps): React.React
 
     return (
         <>
-            {/* Mobile backdrop */}
             <button type="button" aria-label={t("sidebar.closeBackdrop")} onClick={onClose} className={cn("fixed inset-0 z-40 cursor-default bg-black/36 backdrop-blur-[2px] transition-opacity duration-200 lg:hidden", open ? "opacity-100" : "pointer-events-none opacity-0")} />
 
             <aside

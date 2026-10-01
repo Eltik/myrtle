@@ -21,7 +21,7 @@ import type { IBuildConfig, ICalcBuffs, ICalcConditionals, IInstance } from "./t
 import { useOperatorDetail } from "./useOperatorDetail";
 import type { messages as detailMessages } from "./useOperatorDetail.messages";
 
-/** This card renders its own chrome plus the labels `skill.ts` derives. */
+/** Own chrome plus the labels `skill.ts` derives. */
 type CardT = TypedT<typeof messages & typeof skillMessages & typeof detailMessages>;
 
 interface IInstanceCardProps {

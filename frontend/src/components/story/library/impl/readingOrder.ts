@@ -8,8 +8,7 @@
  * `story_review_table` dates a story inside Terra, and inventing one would be a
  * curation we cannot check. Its tab renders an explanation and no list.
  *
- * THE MAINLINE IS PARTLY DATED NOW, which retracts what the head of this file
- * used to say. Measured against :3060 on 2026-09-24 over 451 groups: 70 of the
+ * THE MAINLINE IS PARTLY DATED. Measured against :3060 on 2026-09-24 over 451 groups: 70 of the
  * 87 story groups (the 50 side and 20 vignette ones) carry a real `startTime`,
  * and so do 5 of the 17 mainline chapters, `main_10` 1666180800 through
  * `main_14` 1730394000, because the backend now reads

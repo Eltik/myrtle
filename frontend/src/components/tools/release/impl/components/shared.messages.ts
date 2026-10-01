@@ -3,7 +3,7 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 /**
  * Shared chrome for the release planner.
  *
- * The `AutoTag` labels explain where a guessed English name came from - the
+ * The `AutoTag` labels explain where a guessed English name came from; the
  * name itself is game data. A row whose name is still only in Chinese keeps
  * its `lang="zh-CN"` marker and its raw Chinese text: that marker is the
  * planner's source-language signal for the reader's own translator, not a

@@ -901,8 +901,6 @@ export const setTierListVisibilityFn = createServerFn({ method: "POST" })
         return (await res.json()) as { is_listed: boolean };
     });
 
-// --- Versions (publish snapshots) -------------------------------------------
-
 export const publishTierListVersionFn = createServerFn({ method: "POST" })
     .inputValidator((data: IPublishTierListVersionInput) => data)
     .handler(async ({ data }): Promise<ITierListVersion> => {
@@ -950,8 +948,6 @@ export function tierListVersionsQueryOptions(slug: string, server: string = DEFA
         gcTime: 5 * 60 * 1000,
     });
 }
-
-// --- Entity catalogue (what an editor may place) ----------------------------
 
 export const getTierEntityCatalogueFn = createServerFn({ method: "GET" })
     .inputValidator((data: { kind: TierEntityKind; server?: string }) => data)

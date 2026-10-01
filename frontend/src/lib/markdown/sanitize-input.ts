@@ -1,10 +1,9 @@
 /**
  * Server-side input sanitizer for markdown fields.
  *
- * Runs on TanStack Start server functions (Node/Nitro) before forwarding to
- * the backend. Defense in depth - even though the Markdown renderer is XSS-safe
- * by construction (no `dangerouslySetInnerHTML`), we strip dangerous content
- * at the storage boundary so:
+ * Runs on TanStack Start server functions (Node/Nitro) before forwarding to the backend.
+ * Defense in depth: the Markdown renderer is already XSS-safe by construction (no
+ * `dangerouslySetInnerHTML`), but we strip dangerous content at the storage boundary so:
  *   - third-party consumers of our API can't be tricked by raw HTML in our data
  *   - the stored value never contains active payloads (`<script>`, `javascript:` …)
  *   - data integrity stays clean (no NULs / control characters)
@@ -79,7 +78,6 @@ export function sanitizeMarkdownForStorage(input: string | null | undefined, opt
     // Normalize line endings first so subsequent regexes only deal with \n.
     s = s.replace(/\r\n?/g, "\n");
 
-    // Drop ASCII control chars (NUL, ESC, etc.). Keep newlines and tabs.
     s = s.replace(CONTROL_CHARS_RE, "");
 
     // Strip HTML structures. Order matters: comments and CDATA can wrap arbitrary
@@ -89,22 +87,18 @@ export function sanitizeMarkdownForStorage(input: string | null | undefined, opt
     s = s.replace(PROCESSING_INSTRUCTION_RE, "");
     s = s.replace(HTML_TAG_RE, "");
 
-    // Neutralize dangerous markdown link targets.
     s = s.replace(MARKDOWN_LINK_TARGET_RE, (_match, rawURL: string, title: string | undefined) => {
         const decoded = decodeEntities(rawURL);
         return isAllowedLinkTarget(decoded) ? `](${rawURL}${title ?? ""})` : "](#)";
     });
 
-    // Neutralize autolinks with bad schemes.
     s = s.replace(/<([a-zA-Z][a-zA-Z0-9+.-]*):([^>\s]+)>/g, (match, scheme: string) => {
         const lower = `${scheme.toLowerCase()}:`;
         return ALLOWED_LINK_SCHEMES.has(lower) ? match : "";
     });
 
-    // Collapse 3+ consecutive blank lines into 2 (one blank line between paragraphs).
     s = s.replace(/\n{3,}/g, "\n\n");
 
-    // Trim leading/trailing whitespace (full unicode-aware not needed; ASCII whitespace covers our cases).
     s = s.replace(/^\s+|\s+$/g, "");
 
     if (s.length > max) s = s.slice(0, max).replace(/\s+$/, "");
@@ -130,7 +124,6 @@ function isAllowedLinkTarget(href: string): boolean {
     if (!trimmed) return false;
     // Relative URLs, anchors, query-only - always safe.
     if (trimmed.startsWith("/") || trimmed.startsWith("#") || trimmed.startsWith("?") || trimmed.startsWith("./") || trimmed.startsWith("../")) return true;
-    // Scheme check
     const schemeMatch = /^([a-z][a-z0-9+.-]*):/i.exec(trimmed);
     if (schemeMatch?.[1]) {
         return ALLOWED_LINK_SCHEMES.has(`${schemeMatch[1].toLowerCase()}:`);

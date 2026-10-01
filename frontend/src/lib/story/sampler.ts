@@ -2,12 +2,10 @@
  * ONE IMAGE, SAMPLED ONCE, KEPT IN THREE PLACES.
  *
  * The story feature samples two different kinds of picture, a ticket's cover
- * art and a character's body PNG, and it used to do it with two hand-written
- * copies of the same pipeline: a memory map, an in-flight map, a localStorage
- * record, an `Image` load, a `drawImage` into an offscreen canvas, and a
- * `getImageData` into the rule that reads it. The two differed in four values
- * and in nothing else, so they are one factory now and the four values are its
- * arguments.
+ * art and a character's body PNG, through one pipeline: a memory map, an
+ * in-flight map, a localStorage record, an `Image` load, a `drawImage` into an
+ * offscreen canvas, and a `getImageData` into the rule that reads it. The two
+ * kinds differ in four values, which are the factory's arguments.
  *
  * THREE CACHES, and each answers a different question. `hot` is memory only and
  * is what a React initial state may read, because localStorage on the client

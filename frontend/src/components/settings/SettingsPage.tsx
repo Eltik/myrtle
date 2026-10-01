@@ -20,9 +20,7 @@ import { type SettingsSectionId, SettingsShell } from "./SettingsShell";
  * this table can stay a module constant; `SettingsPage` resolves them.
  */
 const NAV = [
-    // "Profile" and "Account & data" were one section split in two: both carried
-    // the same re-sync button, and "Profile" restated the identity header's own
-    // nickname, level and server underneath it. Merged, first, and the default.
+    // First and the default.
     { id: "account" as const, labelKey: "nav.account" as const, Icon: UserRoundIcon },
     { id: "appearance" as const, labelKey: "nav.appearance" as const, Icon: PaletteIcon },
     { id: "privacy" as const, labelKey: "nav.privacy" as const, Icon: ShieldIcon },

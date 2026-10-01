@@ -279,10 +279,9 @@ function kneeParam(): number {
  *  0.02), and it brightens rather than darkens, so the corpus risk is highlight clipping rather
  *  than crush. See the saturation sweep recorded alongside it before widening the range further.
  *
- *  The old note here said replacing these needed "a fourth and fifth reference CAPTURE". That is
- *  no longer the binding constraint - the entrance is capturable for ANY skin, owned or not, via
- *  the FLOT Lookbook viewer's play button, so the calibration set can now be extended by capture
- *  rather than by inference. */
+ *  Extending the set no longer needs another reference capture: the entrance is capturable for
+ *  ANY skin, owned or not, via the FLOT Lookbook viewer's play button, so the calibration set
+ *  grows by capture rather than inference. */
 const GAMMA_CAL: readonly (readonly [number, number])[] = [
     [1000, 1.04], // Skadi the Corrupting Heart
     [1050, 1.02], // Virtuosa
@@ -387,7 +386,7 @@ const GAMMA_CAL: readonly (readonly [number, number])[] = [
  * she and Mlynar are ELEVEN pixels apart in camera size and want exponents 0.09 apart. No
  * smooth function of this key can do that, so camera size is confirmed as a proxy rather than
  * a cause, exactly as the section above suspected. Seven of the eight measured skins want
- * 1.02–1.04; Mlynar alone wants 0.93.
+ * 1.02-1.04; Mlynar alone wants 0.93.
  *
  * Muelsyse is added as a measured point rather than smoothed over: she is the ONLY capture at
  * 1100, and the alternative is to keep predicting a value her own reference refutes. That makes

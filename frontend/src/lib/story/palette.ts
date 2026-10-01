@@ -374,16 +374,11 @@ export function useTicketPalette(url: string | null): ITicketPalette {
     return palette;
 }
 
-/* ------------------------------------------------------------------------ *
- * The STORY SPRITE palette.
- *
- * The reader inks a speaker plate in the colours of the sprite ON SCREEN, and
- * the source is that sprite's own body PNG, not the skin table. The skin
- * table's colour list is per OUTFIT: one entry covers every story sprite of
- * that skin and none of the sprites a character wears in a story she appears
- * in out of costume, so it answers a question nobody asked. The pixels on
- * stage are the ground truth and they are already fetched.
- * ------------------------------------------------------------------------ */
+/*
+ * The STORY SPRITE palette. The reader inks a speaker plate from the sprite on stage, sampled from
+ * its own body PNG, not the skin table: that table is per OUTFIT, so it misses every sprite a
+ * character wears out of costume in a story.
+ */
 
 /** The versioned localStorage key for sampled sprites. A bump invalidates every cached body at once. */
 export const SPRITE_CACHE_KEY = "myrtle.story.spritePalette.v1";

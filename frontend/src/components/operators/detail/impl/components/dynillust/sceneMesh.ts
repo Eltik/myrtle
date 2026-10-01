@@ -5,17 +5,13 @@ import { baseTextureOf, maskTextureOf } from "../chibi/helpers";
 /**
  * Live renderer for a dynamic illustration's BACKGROUND mesh layers.
  *
- * Most L2D skins bake their whole scene into the spine, but some author the
- * painted backdrop (sky/water/tree/…) as separate Unity mesh layers that live
- * alongside - not inside - the character spine. Those are exported by the
- * unpacker to a `…[scene].json` (+ `…[scene]/<n>.png` textures). This module
- * rebuilds the mesh layers in Pixi and composites them behind (and, for the few
- * foreground layers, in front of) the spine, so the operator animates over its
- * real background instead of a void.
+ * Some L2D skins author the painted backdrop (sky/water/tree/...) as separate Unity mesh
+ * layers beside the character spine, not inside it. The unpacker exports them to
+ * `...[scene].json` (+ `...[scene]/<n>.png`). This rebuilds them in Pixi behind (and, for
+ * the few foreground layers, in front of) the spine.
  *
- * Layer coordinates are authored in "spine-authored pixels, Y-up, origin at the
- * skeleton root" - the SAME space as the spine - so the meshes and the spine
- * align directly once both are framed to the authored camera (`cameraSizePx`).
+ * Layer coordinates are "spine-authored pixels, Y-up, origin at the skeleton root", the
+ * SAME space as the spine, so both align once framed to the authored camera (`cameraSizePx`).
  */
 
 /** A scene layer's Ram-family (`Torappu/Particles-L2D/Ram/…`) dissolve + disturb masking,
@@ -1722,14 +1718,12 @@ function buildLayerMesh(layer: ISceneLayer, tex: ISceneTex, ramTex: IRamSceneTex
     // `EFFECT_SCENE_GAIN` tames small caustic overlays (they'd otherwise over-cover);
     // but an additive LIGHT-GLOW sheet (fullGain) must contribute its full energy - the
     // HDR float target + tonemap handle the peaks - else it can't lift the backdrop.
-    // A LARGE (non-effect) additive layer was previously always full-gain (1), uncapped
-    // even on a scene that owns its own dark backdrop (`temperLargeAdditive`, threaded from
-    // the scene-level `hasDarkBackdrop` flag below) - that's exactly the studio-gradient
-    // fallback scenario `EFFECT_SCENE_GAIN` exists to tame in the first place (a large
-    // additive sheet summing against the now-always-on grey fallback, see `loadSceneMeshes`
-    // / `hasDarkBackdrop`). Fold it into the same tamed-gain bucket, still exempting
-    // `fullGain` layers (light-glow sheets / animated colour curves) - a no-op for every
-    // scene that doesn't own a dark backdrop (every skin except Virtuosa today).
+    // A LARGE (non-effect) additive layer, otherwise full-gain (1), is tamed too
+    // (`temperLargeAdditive`, from the scene-level `hasDarkBackdrop` flag below), else it sums
+    // against the always-on grey fallback: the studio-gradient case `EFFECT_SCENE_GAIN` exists
+    // for (see `loadSceneMeshes` / `hasDarkBackdrop`). `fullGain` layers (light-glow sheets /
+    // animated colour curves) stay exempt. No-op unless the scene owns a dark backdrop (every
+    // skin except Virtuosa today).
     // A painted SURFACE is never an overlay, whatever its texture measures (see
     // SURFACE_OPAQUE_MIN): its alpha carries coverage, not intensity, so scaling it only
     // reveals the void behind.

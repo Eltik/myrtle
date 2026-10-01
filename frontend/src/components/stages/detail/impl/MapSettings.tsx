@@ -7,13 +7,10 @@ import type { messages } from "./MapSettings.messages";
 import { Kicker } from "./primitives";
 
 export interface IMapSettings {
-    /** Draw the enemy route lines. */
     showRoutes: boolean;
-    /** Show the enemy's icon on its route. */
     showEnemyIcons: boolean;
     /** Animate the enemy icon walking along its route (vs. parked at its spawn). */
     showMovement: boolean;
-    /** Render the wait-timer badges on routes. */
     showTimers: boolean;
     /** In 3D view, render the enemy's animated chibi walking the route. */
     walkingChibis: boolean;

@@ -1,8 +1,7 @@
 /**
- * A STALL DETECTOR. `kick()` on every sign of life; if none comes for `ms`,
- * `onStall` runs once. It exists because a PDF layout that stops making
- * progress used to leave the sheet on "Laying out pages" with no end, and a
- * silent export must fail with words instead.
+ * A STALL DETECTOR. `kick()` on every sign of life; if none comes for `ms`, `onStall` runs once.
+ * A PDF layout that stops making progress otherwise leaves the sheet on "Laying out pages" with
+ * no end, and a silent export must fail with words instead.
  */
 export interface Watchdog {
     kick: () => void;

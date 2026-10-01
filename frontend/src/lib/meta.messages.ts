@@ -5,20 +5,17 @@ export const namespace = "meta";
 /**
  * Page titles and descriptions passed to `seo()` from every route's `head()`.
  *
- * These live here rather than next to the routes for one mechanical reason:
- * `src/routes/**` is a file-based route tree, so a `*.messages.ts` dropped in
- * there would be read as a route module. `lib/meta.ts` is the one module every
- * route's `head()` goes through to resolve them, so the text sits next to it.
+ * They live here, not next to the routes, because `src/routes/**` is a file-based route tree
+ * and a `*.messages.ts` dropped in there would be read as a route module. `lib/meta.ts` is the
+ * one module every `head()` resolves them through, so the text sits next to it.
  *
- * `dynamic: true` is not about how the keys are *written* - the call sites are
- * plain literals, `t("enemies.title")`. It is about what the extractor can
- * see: `scripts/i18n-extract.mjs` collects usage from bindings initialised by
- * `useT(...)`, and `head()` is not a React component, so it resolves through
- * `metaT()` instead. Without this flag every key below would be reported as
- * defined-but-unused and the real dead keys would be lost in the noise.
+ * `dynamic: true` is about what the extractor can see, not how keys are written (the call
+ * sites are plain literals, `t("enemies.title")`): `scripts/i18n-extract.mjs` collects usage
+ * from bindings initialised by `useT(...)`, and `head()` is not a component, so it resolves
+ * through `metaT()`. Without the flag every key below is reported defined-but-unused and the
+ * real dead keys are lost in the noise.
  */
 export const messages = {
-    // ----------------------------------------------------------------- root
     "root.title": {
         text: "Myrtle",
         description: "Site name, used as the default document title and in the `X • Myrtle` suffix.",
@@ -28,7 +25,6 @@ export const messages = {
         description: "Site-wide meta description, used on any page that does not set its own.",
     },
 
-    // ----------------------------------------------------------------- home
     "home.title": {
         text: "Myrtle",
         description: "Document title of the landing page. The site name on its own, deliberately.",
@@ -38,7 +34,6 @@ export const messages = {
         description: "Meta description of the landing page.",
     },
 
-    // ------------------------------------------------------------ operators
     "operators.title": {
         text: "Operators",
         description: "Document title of the operator index.",
@@ -52,7 +47,6 @@ export const messages = {
         description: "Document title of an operator page whose data failed to load, so no operator name is known.",
     },
 
-    // -------------------------------------------------------------- enemies
     "enemies.title": {
         text: "Enemies",
         description: "Document title of the enemy index.",
@@ -70,7 +64,6 @@ export const messages = {
         description: "Meta description of an enemy page that has no description text of its own. `{index}` is the in-game enemy code, e.g. `B1`.",
     },
 
-    // -------------------------------------------------------------- stories
     "stories.title": {
         text: "Stories",
         description: "Document title of the story library (the Archives reader).",
@@ -88,7 +81,6 @@ export const messages = {
         description: "Meta description of one story. `{name}` is the group and story name from game data.",
     },
 
-    // --------------------------------------------------------------- stages
     "stages.title": {
         text: "Stages",
         description: "Document title of the stage index.",
@@ -106,7 +98,6 @@ export const messages = {
         description: "Meta description of one stage. `{name}` is the stage code and name from game data.",
     },
 
-    // ----------------------------------------------------------- tier lists
     "tierLists.title": {
         text: "Tier Lists",
         description: "Document title of the tier-list browser.",
@@ -140,7 +131,6 @@ export const messages = {
         description: "Meta description of the tier-list editor.",
     },
 
-    // ----------------------------------------------------------------- user
     "user.fallbackTitle": {
         text: "Player",
         description: "Document title of a player profile whose data failed to load. `Doctor` is what Arknights calls the player.",
@@ -166,7 +156,6 @@ export const messages = {
         description: "Meta description of player search.",
     },
 
-    // ---------------------------------------------------------------- gacha
     "gachaCommunity.title": {
         text: "Gacha · Community",
         description: "Document title of community-wide gacha statistics. The separator is a middle dot.",
@@ -184,7 +173,6 @@ export const messages = {
         description: "Meta description of the signed-in user's own gacha history.",
     },
 
-    // ---------------------------------------------------------------- stats
     "stats.title": {
         text: "Stats",
         description: "Document title of the site-wide index counts page.",
@@ -194,7 +182,6 @@ export const messages = {
         description: "Meta description of the site-wide index counts page.",
     },
 
-    // ------------------------------------------------------------ changelog
     "changelog.title": {
         text: "Changelog",
         description: "Document title of the changelog.",
@@ -204,7 +191,6 @@ export const messages = {
         description: "Meta description of the changelog.",
     },
 
-    // ------------------------------------------------------------- settings
     "settings.title": {
         text: "Settings",
         description: "Document title of account settings.",
@@ -214,7 +200,6 @@ export const messages = {
         description: "Meta description of account settings.",
     },
 
-    // ---------------------------------------------------------------- legal
     "privacy.title": {
         text: "Privacy Policy",
         description: "Document title of the privacy policy.",
@@ -232,7 +217,6 @@ export const messages = {
         description: "Meta description of the terms of service.",
     },
 
-    // ---------------------------------------------------------------- tools
     "toolsDps.title": {
         text: "DPS Calculator",
         description: "Document title of the damage-per-second calculator.",
@@ -290,7 +274,6 @@ export const messages = {
         description: "Meta description of the CN-to-EN release tracker. CN and EN are the Chinese and English game servers.",
     },
 
-    // ---------------------------------------------------------------- admin
     "admin.title": {
         text: "myrtle.moe · admin",
         description: "Document title of the internal operations console. `myrtle.moe` is the domain and stays as-is; the separator is a middle dot.",

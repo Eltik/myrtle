@@ -10,8 +10,7 @@
  * Two rules keep this from breaking English:
  *
  * 1. {@link gamedataPath} returns the *unprefixed* path for the default server,
- *    so an English render issues byte-identical requests to what it issued
- *    before this module existed.
+ *    so an English render's requests carry no server segment.
  * 2. {@link gamedataKey} contributes the server to every game-data query key -
  *    and contributes *nothing* for the default server, so English cache entries
  *    keep the keys they already had while `ja` (-> `jp`) can never be served out
@@ -25,8 +24,7 @@ export type GamedataServer = (typeof GAMEDATA_SERVERS)[number];
 
 /**
  * The server reached by the unprefixed routes. This is `en` because that is
- * what the deployment's `SERVERS`/`BIN_SERVER` default to and what every call
- * site assumed before `gamedata_server` was wired up.
+ * what the deployment's `SERVERS`/`BIN_SERVER` default to.
  */
 export const DEFAULT_GAMEDATA_SERVER: GamedataServer = "en";
 
@@ -62,9 +60,8 @@ export function gamedataPath(server: string | null | undefined, path: string): s
  * The server segment of a query key.
  *
  * Spread it into the key (`["operators", "index", ...gamedataKey(server)]`).
- * It is empty for the default server on purpose - that keeps every English key
- * byte-identical to the one it had before servers were threaded through, while
- * still guaranteeing that no two servers can share a cache entry.
+ * It is empty for the default server on purpose: English keys carry no server
+ * segment, while no two servers can still share a cache entry.
  */
 export function gamedataKey(server: string | null | undefined): readonly GamedataServer[] {
     const resolved = resolveGamedataServer(server);

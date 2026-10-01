@@ -45,8 +45,7 @@ export function PullsBanners({ rows, totals, lookup, charNames, today, onAllocat
     const f = useFormatters();
     const events = useQuery(releaseEventsQueryOptions());
     const planned = totals.allocated > 0;
-    // Said once for the whole list rather than repeated on every row, which is what
-    // made the caveat louder than the data it was qualifying.
+    // Said once for the whole list, not per row.
     const inferred = rows.filter((r) => r.model.inferred).length;
 
     // A banner often ships no art of its own and borrows the event it is anchored to,
@@ -114,16 +113,11 @@ function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT;
     const worstTail = Math.max(estimate.specific.unresolved, estimate.both?.unresolved ?? 0, maxPot.unresolved, goalEstimate?.unresolved ?? 0);
 
     /**
-     * What each row actually measures, said in the row's own words.
-     *
-     * "Either one / This operator / Both / Max pot" was written for a two-rate-up
-     * banner and read as nonsense on an Orienteering pool of six: "Either one" of six,
-     * and a "Both" that sat 9 rolls above "This operator" when reaching six operators
-     * cannot be 9 rolls dearer than reaching one. The figures were never wrong; the
-     * labels were describing a different banner. `odds.ts` tracks the NAMED operator
-     * against the rest of the rate-up pool as a group, so `both` is "the named one and
-     * at least one other", which is what it says here on a pool of more than two, and
-     * `maxPot` is six copies of the named one rather than of every one.
+     * What each row measures, in the row's own words. `odds.ts` tracks the NAMED operator
+     * against the rest of the rate-up pool as a group, so `both` is "the named one and at
+     * least one other" on a pool of more than two, and `maxPot` is six copies of the named
+     * one rather than of every one. (A fixed "Either one / Both" read as nonsense on an
+     * Orienteering pool of six: "Both" sat 9 rolls above "This operator".)
      */
     const goals: { key: string; label: string; value: number }[] = [];
     if (goalEstimate) goals.push({ key: "yours", label: t("release.pulls.plan.yourGoal"), value: goalEstimate.p50 });
@@ -136,14 +130,11 @@ function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT;
     goals.push({ key: "maxPot", label: t("release.pulls.plan.goal.maxPot"), value: maxPot.p50 });
 
     /**
-     * Which goal the panel is describing, derived from the committed count rather than
-     * stored. Clicking a row sets the count to that row's figure, so the match picks it
-     * up and the highlight, the average and the unlucky figure all follow the row you
-     * pressed. Before this, pressing Max pot set 397 rolls and then went on describing
-     * "this operator" at 57, which is the wrong goal answered confidently.
-     *
-     * Typing a count that matches no goal leaves none active, which is honest: the
-     * panel then has no particular question to be answering.
+     * Which goal the panel describes, derived from the committed count rather than stored.
+     * Clicking a row sets the count to that row's figure, so the highlight, the average and the
+     * unlucky figure follow it. Without this, Max pot set 397 rolls and the panel went on
+     * describing "this operator" at 57: the wrong goal, answered confidently. A count that
+     * matches no goal leaves none active.
      */
     const byGoal = new Map<string, IGoalEstimate>([
         ["yours", goalEstimate ?? estimate.specific],
@@ -157,18 +148,14 @@ function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT;
     /** `active` is an ESTIMATE; the collapsed heading needs the goal row's own wording. */
     const activeLabel = goals.find((g) => g.key === activeKey)?.label ?? null;
     /**
-     * Measured against what will actually be thrown at the banner, not against what
-     * was typed. Typing 397 into a row the bank can only pay 339 of used to print
-     * "Your 397 covers it" in green directly beside "58 pulls short" in amber, which
-     * is the same row contradicting itself. Free rolls count here because they are
-     * spent on the banner too.
+     * Measured against what will actually be thrown at the banner, not what was typed: 397
+     * typed into a row the bank can only pay 339 of printed "Your 397 covers it" in green beside
+     * "58 pulls short" in amber. Free rolls count because they are spent on the banner too.
      */
     const gap = active.p50 - row.totalPulls;
 
-    /* The goal list folds away. Open by default: it is this panel's own control, and
-       hiding a tool's primary affordance for everyone is a bigger change than the
-       report asked for. The heading carries the active goal while closed, so a folded
-       panel still answers the question it is there to answer. */
+    /* Goal list folds away; open by default since it is this panel's own control. The heading
+       carries the active goal while closed. */
     return (
         <Collapsible defaultOpen className="flex w-full min-w-0 flex-col gap-1 rounded-lg border border-border bg-muted/20 px-2.5 py-2">
             <CollapsibleTrigger className="group flex w-full items-baseline justify-between gap-3 text-left">
@@ -187,13 +174,9 @@ function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT;
                                 type="button"
                                 aria-pressed={g.key === activeKey}
                                 aria-label={t("release.pulls.plan.goalPick", { count: f.number(g.value), goal: g.label })}
-                                /* A preset DROPS the potential picks. Before this, pressing
-                               "Six of a specific rate-up" set the count and left the picks
-                               standing, so "Your goal" stayed in the list, still describing
-                               the operators, while the count beside it described something
-                               else. Whichever panel sets the count is the one that gets to
-                               say what the count is for. "Your goal" is the picks' own row
-                               and is the one preset that keeps them. */
+                                /* A preset DROPS the potential picks, so the panel that sets the
+                                   count is the one describing it. "Your goal" is the picks' own
+                                   row and the one preset that keeps them. */
                                 onClick={() => (g.key === "yours" ? onAllocate(row.key, g.value) : onPreset(row.key, g.value))}
                                 className={cn(
                                     "flex w-full cursor-pointer items-baseline justify-between gap-3 rounded border px-2 py-1 text-left transition-colors hover:bg-accent/50",
@@ -211,21 +194,16 @@ function Estimated({ row, t, onPreset, onAllocate }: { row: IPlanRow; t: PullsT;
                 </ul>
             </CollapsiblePanel>
 
-            {/* A p90 of zero is a SENTINEL, not a pull count: it means the curve never
-                reached nine runs in ten inside the horizon. Printed raw it came out as
-                "358 on average, 0 if unlucky", which reads as the unlucky case being
-                free. The mean is truncated at the same horizon and so is a floor, which
-                is what the plus marks. */}
+            {/* A p90 of zero is a SENTINEL, not a pull count: the curve never reached nine runs
+                in ten inside the horizon. Printed raw it read "358 on average, 0 if unlucky".
+                The mean is truncated at the same horizon, so it is a floor (the plus). */}
             <span className="font-mono text-[12px] text-muted-foreground tabular-nums">
                 {active.p90 > 0 ? t("release.pulls.plan.estimatedDetail", { mean: f.number(Math.round(active.mean)), p90: f.number(active.p90) }) : t("release.pulls.plan.estimatedDetailOpen", { mean: f.number(Math.round(active.mean)), horizon: f.number(estimate.horizon) })}
             </span>
             {worstTail >= 0.005 && <span className="font-sans text-[12px] text-muted-foreground">{t("release.pulls.plan.estimatedTail", { percent: pct(worstTail, 1), horizon: f.number(estimate.horizon) })}</span>}
-            {/* The arithmetic is shown rather than performed silently. This line counts
-                the banner's own free rolls, the budget line above it cannot (free rolls
-                never enter the pool), so the two used to print different numbers for
-                what looked like the same question: "40 short" above, "16 under" here.
-                Spelling out 30 + 24 free = 54 makes them two facts instead of a
-                contradiction. */}
+            {/* The arithmetic is shown, not performed silently. This line counts the banner's own
+                free rolls and the budget line above cannot (free rolls never enter the pool), so
+                they printed "40 short" vs "16 under". "30 + 24 free = 54" makes them two facts. */}
             {row.totalPulls > 0 && (
                 <span className={cn("font-mono text-[12px] tabular-nums", gap > 0 ? "text-amber-500" : "text-emerald-500")}>
                     {row.freePulls > 0
@@ -310,12 +288,9 @@ interface IPlanRowProps {
 /**
  * One banner.
  *
- * The hierarchy is deliberate and was not here at first: an earlier version gave the
- * budget, the odds and the caveats identical weight, so a row of eight equal figures
- * said nothing at a glance. There is ONE number a planner wants per banner, the chance
- * the current commitment buys, so that is the only thing set large. Everything else is
- * either a control or a muted supporting line, and the two sentences that used to
- * repeat on every row now appear once above the list.
+ * ONE number a planner wants per banner: the chance the current commitment buys, so that is
+ * the only thing set large. Everything else is a control or a muted supporting line, and the
+ * caveats that would repeat per row appear once above the list.
  */
 function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSetTarget, onClearRow, eventArt }: IPlanRowProps): React.ReactElement {
     const locale = useLocale();
@@ -324,22 +299,16 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
     const { banner, model } = row;
 
     /**
-     * The banner's own art, or the art of the event it is ANCHORED to. Nothing else.
-     *
-     * A third source used to sit here: any event opening on the same CN day that had
-     * a stage and a picture. That is a coincidence of the calendar, not a relation,
-     * and it put another event's key art on banners it had nothing to do with, which
-     * is the wrong image reported in #ui-ux. A banner with no art of its own and no
-     * anchor now shows its operators instead, which is at least about this banner.
+     * The banner's own art, or the art of the event it is ANCHORED to. Nothing else: an event
+     * merely opening the same CN day is a calendar coincidence and put the wrong key art on
+     * banners. With neither, the row shows its operators.
      */
     const anchor = banner.anchorActivity ? eventArt.get(banner.anchorActivity) : undefined;
     const art = useArt(banner.imagePath ?? anchor?.imagePath ?? null);
     const alt = resolveName(banner.nameCn, null, banner.nameEnAuto, autoOn).text;
-    // Every rate-up operator, not the first three. An Orienteering pool features six
-    // and the strip silently dropped half of them.
+    // Every rate-up operator, not the first three: an Orienteering pool features six.
     const faces = art.src ? [] : row.featured;
-    // On a phone the art is a wide thin strip rather than a square that would eat
-    // half the row; it carries no information the name does not.
+    // On a phone the art is a wide thin strip, not a square that eats half the row.
     const visual = art.src ? <img src={art.src} alt={alt} loading="lazy" onError={art.onError} className="aspect-[5/2] w-full rounded-md bg-muted object-cover" /> : faces.length > 0 ? <FaceStrip ids={faces} lookup={lookup} /> : null;
 
     const tagLabel = useReleaseTagLabel();
@@ -368,42 +337,29 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
         <div className="grid grid-cols-1 gap-x-4 gap-y-3 border-border border-t py-4 first:border-t-0 md:grid-cols-[180px_minmax(0,1fr)] md:items-start xl:grid-cols-[200px_minmax(0,1fr)_236px]">
             <div className="min-w-0">{visual}</div>
             <div className="flex min-w-0 flex-col gap-2">
-                {/* Baseline, not centred. `ResolutionBadge` is two lines tall whenever it
-                carries a range or a source, and centring a one-line name against it
-                dropped the name and the date nine pixels, so they sat between the
-                badge's two lines and lined up with neither. On a baseline the name,
-                the tag, the date and the badge's first line share one line and the
-                badge's second line hangs below, which is what it is. */}
+                {/* Baseline, not centred: `ResolutionBadge` is two lines tall with a range or a
+                    source, and centring a one-line name against it dropped name and date nine
+                    pixels, between the badge's lines. On a baseline they share its first line. */}
                 <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                     <CnName cn={banner.nameCn} auto={banner.nameEnAuto} primaryClassName="font-sans font-semibold text-[13px] text-foreground" compact>
                         <Tag>{tagLabel(banner.ruleType)}</Tag>
                     </CnName>
-                    {/* The badge prints the start date itself for every status that has
-                        one, so this printed "Dec 16, 2026" immediately before the badge
-                        printed "Dec 16, 2026" again. It stays only for the two statuses
-                        whose badge is a bare chip with no date in it. */}
+                    {/* The badge prints the start date for every status that has one, so this
+                        printed "Dec 16, 2026" twice. It stays only for the two statuses whose
+                        badge is a bare chip. */}
                     {banner.resolution.status === "unmodelled" || banner.resolution.status === "independent" ? <span className="font-mono text-[12px] text-muted-foreground tabular-nums">{formatDate(row.enStart, locale)}</span> : null}
                     <ResolutionBadge resolution={banner.resolution} today={today} />
                 </div>
 
-                {/* The row's anchor is its BUDGET, not its odds.
-                    A percentage sat here first, and it was the wrong thing to set large:
-                    it answered a question the Estimated panel beside it already answers
-                    better, in rolls rather than in a probability nobody can act on.
+                {/* The row's anchor is its BUDGET, not its odds: a percentage answered what the
+                    Estimated panel beside it answers better, in rolls.
 
-                    Which budget figure leads switches with the state, and deliberately.
-                    Before anything is committed the only question is what the banner has,
-                    so that is the headline. Once a count is typed the question becomes
-                    whether it can be paid for, so the headline is THAT COUNT, the same
-                    number as the input below it.
-
-                    Two earlier versions led with a derived figure instead and both went
-                    wrong the same way. The leftover pins to zero on every overcommitted
-                    row, so five overruns meant five identical large zeroes. Then the bank
-                    led and the clause quoted `spent`, a capped number the user never
-                    typed, so a row where 397 was entered announced "spending 339" and the
-                    reader had to hunt for where 397 went. A headline that echoes the
-                    control cannot drift from it. */}
+                    The leading figure switches with state. Nothing committed: what the banner
+                    has. Count typed: THAT COUNT, the same number as the input below it. A
+                    derived figure failed twice: leftover pins to zero on every overcommitted
+                    row (five identical zeroes), and a clause quoting capped `spent` announced
+                    "spending 339" where 397 was entered. A headline that echoes the control
+                    cannot drift from it. */}
                 <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
                     {row.allocated > 0 ? (
                         <>
@@ -423,8 +379,8 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
                     )}
                 </div>
 
-                {/* Only rendered when it has something to say. An always-present empty
-                line still costs the column's `gap-2` and pushed every row apart. */}
+                {/* Only rendered when non-empty: an always-present empty line still
+                costs the column's `gap-2` and pushed every row apart. */}
                 {(row.freePulls > 0 || (row.sparkMet && model.spark !== null)) && (
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 font-mono text-[12px] text-muted-foreground tabular-nums">
                         {row.freePulls > 0 && <span>{t("release.pulls.plan.freeOnBanner", { count: row.freePulls })}</span>}
@@ -468,15 +424,13 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
                     </div>
 
                     <div className="flex min-w-0 flex-wrap items-center gap-1">
-                        {/* The presets carry a label because a bare number beside them reads
-                        as another statistic rather than a button. */}
-                        {/* Label and first button travel together: as siblings in a wrap
-                        container they separate at narrow widths, leaving a bare number
-                        that reads as another statistic. */}
-                        {/* Each preset says what it IS, not just what it equals. Three bare
-                            numbers under a "SET TO" kicker read as three unexplained figures,
-                            which is how they were reported: "the numbers seem random". They
-                            are the bank, the exchange and the guarantee, so they say so. */}
+                        {/* Presets carry a label: a bare number beside them reads as another
+                            statistic, not a button. */}
+                        {/* Label and first button travel together: as wrap siblings they separate
+                            at narrow widths, leaving a bare number. */}
+                        {/* Each preset says what it IS (the bank, the exchange, the
+                            guarantee), not just what it equals: three bare numbers under a
+                            "SET TO" kicker read as unexplained ("the numbers seem random"). */}
                         <span className="inline-flex items-center gap-1">
                             <span className="font-sans text-[11.5px] text-muted-foreground uppercase tracking-[0.06em]">{t("release.pulls.plan.setTo")}</span>
                             <Button size="sm" variant="outline" className="h-7 px-2 font-mono text-[12px]" onClick={() => onPreset(row.key, targets.max)} disabled={targets.max === 0} aria-label={t("release.pulls.plan.max")} title={t("release.pulls.plan.maxTitle", { count: f.number(targets.max) })}>
@@ -505,9 +459,9 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
                                 {t("release.pulls.plan.guarantee", { count: targets.guarantee })}
                             </Button>
                         )}
-                        {/* Clears the potential picks too. Clearing only the count left the
-                            operators still marked P6 with nothing committed to them, and the
-                            next rebuild priced that goal and put the count straight back. */}
+                        {/* Clears the potential picks too, else operators stay marked P6 with
+                            nothing committed and the next rebuild prices that goal and restores
+                            the count. */}
                         {(row.allocated > 0 || row.totalCopies > 0) && (
                             <Button size="sm" variant="ghost" className="h-7 px-2 font-mono text-[12px]" onClick={() => onClearRow(row.key)} title={t("release.pulls.plan.clearTitle")}>
                                 {t("release.pulls.plan.clear")}
@@ -526,10 +480,9 @@ function PlanRow({ row, lookup, charNames, today, t, onAllocate, onPreset, onSet
 /**
  * The banner's rate-up operators, for a banner with no art to show.
  *
- * Four and up letterbox rather than crop. An Orienteering pool features six and the
- * strip used to take the first three and drop the rest, which read as a banner with
- * half its roster missing; at six a cropping square shows a sliver of each face, so
- * past three the faces keep their whole width and share the strip instead.
+ * Four and up letterbox rather than crop. An Orienteering pool features six; at six a cropping
+ * square shows a sliver of each face, so past three the faces keep their whole width and share
+ * the strip instead.
  */
 function FaceStrip({ ids, lookup }: { ids: string[]; lookup: OperatorLookup }): React.ReactElement {
     const many = ids.length > 3;

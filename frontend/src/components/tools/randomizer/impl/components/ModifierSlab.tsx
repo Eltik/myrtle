@@ -8,7 +8,7 @@ import type { ChallengeKind, IChallenge } from "../types";
 import type { messages } from "./ModifierSlab.messages";
 import { SlabFrame } from "./SlabFrame";
 
-/** This panel renders its own chrome plus the challenge text from `challenges.ts`. */
+/** Own chrome plus the challenge text from `challenges.ts`. */
 type ModifierT = TypedT<typeof messages & typeof challengeMessages>;
 
 interface IModifierSlabProps {

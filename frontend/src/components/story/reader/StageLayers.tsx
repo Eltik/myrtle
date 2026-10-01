@@ -26,7 +26,7 @@ import { renderStoryNodes } from "./TextBox";
  * arguments, so 1,856 of them (8.46%, 665 backgrounds and 1,191 images) take
  * the skipped arm.
  *
- * The skipped arm is now MEASURED (`docs/story-reader-captures.md`, 1). Both
+ * The skipped arm is MEASURED (`docs/story-reader-captures.md`, 1). Both
  * readings the reader carried are refuted: `bg_cher_1` is drawn 1500.7 x 843.5
  * canvas px before its script's 1.1, where the prefab's own 1280x720 rect and
  * `SetNativeSize` at ppu 80 both compute 1280x720, out by 17.2%. What fits is
@@ -138,9 +138,9 @@ export function Panels({ panels, sec, focus }: { panels: PanelLayer; sec: number
  * draws a slot: the prefab's `cutin_charslot` anchors bottom-centre in the
  * mask at (0,0), so the plate sits centred on the strip with its bottom edge
  * `plate.y - plate.h/2` from the canvas bottom, the figure at stage scale
- * with its knees below the mask. The old plate stretched the whole body into
- * the strip (`object-cover`), a small full-length figure where the game
- * shows the head and shoulders at the size of everyone else on stage.
+ * with its knees below the mask. Stretching the whole body into the strip
+ * (`object-cover`) gave a small full-length figure where the game shows the
+ * head and shoulders at the size of everyone else on stage.
  */
 export function CutinPlate({ cutin, sec }: { cutin: Cutin; sec: number }): React.ReactElement {
     const plate = bodyPlate(cutin.sprite as { plate?: unknown });
@@ -154,12 +154,12 @@ export function CutinPlate({ cutin, sec }: { cutin: Cutin; sec: number }): React
 /**
  * `curtain`: a solid fill covering `fill` of the canvas from one edge. The
  * AXIS is read: `w8 = 1 << direction` against `tst w8, #0xbb` puts directions 2
- * and 6 on WIDTH and 0, 1, 3, 4, 5 and 7 on HEIGHT. The two WIDTH edges are now
+ * and 6 on WIDTH and 0, 1, 3, 4, 5 and 7 on HEIGHT. The two WIDTH edges are
  * MEASURED (`docs/story-reader-captures.md`, 4): at `direction=6` the visible
  * columns inside the mask run 0..1919, 1472..1919, 1677..1919, 1813..1919,
  * 1890..1919, so black grows from the LEFT; at `direction=2` they run 0..1919,
  * 0..1584, 0..1259, 0..447, 0..106, 0..29, so black grows from the RIGHT. Both
- * match what this table already shipped, so nothing moves.
+ * match this table, so nothing moves.
  *
  * 0 = top and 4 = bottom stay the reader's compass guess: the corpus always
  * issues them as a PAIR on one halt (`main_14-17_end` lines 7 and 8,

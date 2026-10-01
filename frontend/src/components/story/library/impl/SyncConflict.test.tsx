@@ -2,11 +2,10 @@
  * The conflict panel as the reader meets it: three ways out, each quoting what
  * it costs, and the standing policy under them.
  *
- * The panel was never seen on a real page while it was written, because it
- * only exists for a signed-in account whose document disagrees with the
- * browser's and the harness here is signed out. This test is what stands in
- * for that: the summary is fixed, so every number on screen is one this file
- * chose.
+ * The panel cannot be seen on a real page from the harness: it only exists for a
+ * signed-in account whose document disagrees with the browser's, and the harness
+ * is signed out. This test stands in for that: the summary is fixed, so every
+ * number on screen is one this file chose.
  */
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";

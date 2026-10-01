@@ -96,8 +96,7 @@ export const TEXT_SWATCHES: readonly TextSwatch[] = [
 /**
  * The stored `textColor` to a CSS colour, or `undefined` for "leave the box's
  * own colour alone". The empty string is the DEFAULT and the kill switch: it
- * returns undefined, so the box keeps `text-white` / `text-neutral-900`
- * exactly as it shipped.
+ * returns undefined, so the box keeps `text-white` / `text-neutral-900`.
  */
 export function resolveTextColor(value: string, light: boolean): string | undefined {
     if (value === "") return undefined;

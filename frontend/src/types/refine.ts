@@ -21,9 +21,6 @@
  */
 export type Refine<T, R> = keyof R extends keyof T ? Omit<T, keyof R> & R : never;
 
-// ---------------------------------------------------------------------------
-// Compile-time assertions.
-// ---------------------------------------------------------------------------
 type _Base = { kind: string; count: number };
 
 // A refined key that exists narrows the field and leaves the rest alone.

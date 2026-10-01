@@ -17,7 +17,7 @@ export interface IDefaultOgPreset {
     titleKey: string;
     subtitleKey?: string;
     /**
-     * Which section chip the card highlights. NOT display text - it is matched
+     * Which section chip the card highlights. NOT display text: it is matched
      * against {@link DEFAULT_OG_TAGS} by identity, and the visible label comes
      * from `og.tag.*`, so this stays English however the card is translated.
      *

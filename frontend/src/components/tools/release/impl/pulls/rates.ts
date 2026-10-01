@@ -118,8 +118,8 @@ function scopeFor(ruleType: string): PityScope {
  *     LINKAGE          handover within 120                      6 of 6
  *     NORMAL, CLASSIC, FESCLASSIC, LIMITED, ATTAIN, CLASSIC_ATTAIN: no such text
  *
- * SINGLE is the one that is easy to get wrong, and this code did get it wrong at
- * first. Its text reads "if you make 150 headhunting attempts without receiving the
+ * SINGLE is the one that is easy to get wrong. Its text reads "if you make 150
+ * headhunting attempts without receiving the
  * current rate-up 6-star operator, the next 6-star operator received is guaranteed to
  * be the current rate-up 6-star operator", which is the same threshold the two-rate-up
  * pools use, on a banner with only one operator to force. LIMITED, by contrast,
@@ -212,11 +212,9 @@ export const FREE_TEN_ROLL = 10;
  * banner rather than as income. The daily single expires at the next daily reset and
  * the permits expire with the banner, so an unspent free pull is simply lost.
  *
- * An earlier version of this comment flagged reruns as an open question, on the
- * grounds that a rerun would pay none of this and the feed carries no rerun flag.
- * SETTLED: Limited banners do not rerun, so every Limited pool is a first run and
- * every one of them pays. The data agrees, in that all 26 Limited pools in CN carry
- * their own `limitedCharId`, a debut operator.
+ * Limited banners do not rerun, so every Limited pool is a first run and every one
+ * of them pays. All 26 Limited pools in CN carry their own `limitedCharId`, a debut
+ * operator.
  */
 export function freePullsFor(ruleType: string, openTime: number, endTime: number): number {
     const days = Math.max(1, Math.round((endTime - openTime) / 86_400));

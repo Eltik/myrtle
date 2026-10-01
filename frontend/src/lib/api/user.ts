@@ -241,8 +241,6 @@ export function userCheckinQueryOptions(uid: string, bearerToken?: string) {
     });
 }
 
-// ─── User improvements ──────────────────────────────────────────────────────
-
 export type IStageRotation = Refine<RotationInfo, { status: "active" | "past" | "future" }>;
 
 export type IStageGap = StageGap;

@@ -73,9 +73,8 @@ export function Hero({ profile }: IHeroProps) {
                 }}
             />
 
-            {/* Mobile-first: stacked grid; on sm+ becomes the original 3-column row */}
+            {/* Stacked grid on mobile, 3 columns from sm up */}
             <div className="relative grid grid-cols-[auto_1fr] items-start gap-4 px-5 pt-5 pb-5 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:gap-6 sm:px-7 sm:pt-7 sm:pb-6 lg:gap-7 lg:px-8 lg:pt-8 lg:pb-7">
-                {/* Avatar */}
                 <div className="relative">
                     <div
                         className="relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl shadow-[inset_0_1px_0_rgb(255_255_255/0.45),inset_0_-2px_0_rgb(0_0_0/0.18),0_0_0_1px_rgb(255_255_255/0.06),0_8px_24px_rgb(0_0_0/0.12)] sm:h-24 sm:w-24 sm:rounded-[22px] lg:h-30 lg:w-30 lg:rounded-[26px]"

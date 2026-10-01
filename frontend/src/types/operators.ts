@@ -1,5 +1,5 @@
 /**
- * Operator types - derived from the ts-rs bindings generated out of
+ * Operator types, derived from the ts-rs bindings generated out of
  * `backend/src/core/gamedata/types/`.
  *
  * The operator endpoints serve the `character_table`-mirroring structs with

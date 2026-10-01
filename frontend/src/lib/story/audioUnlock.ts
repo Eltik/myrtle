@@ -7,7 +7,7 @@
  * resolves nor rejects, `state` stays "suspended" and `currentTime` is frozen
  * at 0, so every source the reader schedules lands on a dead clock while the
  * instrument still reports `playing: true` with a join. Measured 2026-09-22 on
- * `?halt=43` in the user's own Chrome: resume() still pending after 800 ms,
+ * `?halt=43` in Chrome: resume() still pending after 800 ms,
  * `currentTime` 0.000 across a 1.0 s wall-clock window, RMS 0.000 at `musicBus`
  * over 2.0 s, and `musicBus` left at gain 1 instead of the 0.4 the settings
  * asked for, because the `setTargetAtTime` was scheduled on that frozen clock.

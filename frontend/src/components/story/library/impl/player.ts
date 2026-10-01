@@ -48,12 +48,10 @@ const INITIAL: IPlayerState = { track: null, paused: false, volume: DEFAULT_SETT
 /**
  * THE LIBRARY'S OWN MUSIC CHANNEL, one per page rather than one per sheet.
  *
- * The channel used to live inside the chapter sheet, so a theme died the
- * moment the sheet closed and browsing on with the music playing was
- * impossible. It is a module singleton now: the sheet, the ticket cards, the
- * list rows and the bar at the foot of the page are four controls over ONE
- * cue, which is why a second group's theme replaces the first instead of
- * layering over it.
+ * A module singleton, not per-sheet state: a theme must outlive the chapter sheet so browsing can
+ * go on with the music playing. The sheet, the ticket cards, the list rows and the bar at the
+ * foot of the page are four controls over ONE cue, which is why a second group's theme replaces
+ * the first instead of layering over it.
  *
  * Volume is the reader's `musicVolume` and there is no second key for it. The
  * settings document publishes no write notification (unlike `onProgressWritten`

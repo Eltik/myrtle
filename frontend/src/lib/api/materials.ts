@@ -48,8 +48,8 @@ export const getMaterialsFn = createServerFn({ method: "GET" })
 
 export function materialsQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        // This key already carried the server, so it keeps that exact shape -
-        // `["materials", "en"]` is what an English render used before and after.
+        // This key already carried the server, so it keeps that exact shape:
+        // `["materials", "en"]` for English.
         queryKey: ["materials", resolveGamedataServer(server)],
         queryFn: () => getMaterialsFn({ data: resolveGamedataServer(server) }),
         staleTime: 60 * 60 * 1000,

@@ -25,11 +25,9 @@ function yearlyLabel(types: string[], t: ModelT): string {
 /**
  * The methodology paragraph, behind a disclosure.
  *
- * This is three dense statistical sentences - medians, percentiles, backtest
- * absolute error, band hit rate - and it sat open at the top of both the Events
- * and Banners tabs, before the reader had asked anything. It is the answer to a
- * question ("how are these estimates calculated?"), so it is now shaped like
- * one: closed by default, with the question as the control.
+ * Three dense statistical sentences (medians, percentiles, backtest absolute error, band hit
+ * rate). They answer "how are these estimates calculated?", so they are closed by default with
+ * the question as the control, not open at the top of the Events and Banners tabs.
  *
  * `<details>`/`<summary>` rather than a popover: it must stay readable with no
  * JavaScript, stay findable by in-page search, and print.

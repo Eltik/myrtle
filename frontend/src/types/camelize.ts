@@ -4,7 +4,7 @@
  * The operator endpoints serve the `character_table`-mirroring structs with
  * PascalCase and trailing-underscore keys (`AttributesKeyFrames`, `MaxHp`,
  * `Type_`), and `deepCamelize` normalizes them at the fetch boundary. So the
- * ts-rs bindings - which describe the WIRE shape - can't be used directly by
+ * ts-rs bindings, which describe the WIRE shape, can't be used directly by
  * components, which see the normalized shape.
  *
  * `Camelize<T>` applies the same transform in the type system, letting the
@@ -23,10 +23,8 @@ export type CamelKey<K extends string> = LowerFirst<StripTrailing<K>>;
  */
 export type Camelize<T> = T extends readonly (infer U)[] ? Camelize<U>[] : T extends object ? { [K in keyof T as CamelKey<K & string>]: Camelize<T[K]> } : T;
 
-// ---------------------------------------------------------------------------
-// Compile-time assertions. These are the test: if the transform regresses, the
-// build fails here rather than somewhere downstream.
-// ---------------------------------------------------------------------------
+// Compile-time assertions: if the transform regresses, the build fails here
+// rather than somewhere downstream.
 type Assert<A, B> = [A] extends [B] ? ([B] extends [A] ? true : never) : never;
 
 type _Sample = {

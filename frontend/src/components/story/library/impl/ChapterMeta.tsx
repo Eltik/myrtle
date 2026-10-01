@@ -199,10 +199,9 @@ function Rule(): React.ReactElement {
 
 /**
  * The chapter's handle, as its ticket prints it: "Chapter 0" for the mainline
- * and the operation code for everything else. The meta line used to print
- * `cardCode`, which for the mainline is the zone's own third name, EPISODE 00,
- * capitals in the data itself; with the mono and the uppercase gone that was
- * the one word still shouting, and the ticket already calls it Chapter 0.
+ * and the operation code for everything else. `cardCode` is not used here: for
+ * the mainline it is the zone's own third name, EPISODE 00, capitals in the data
+ * itself, and the ticket already calls it Chapter 0.
  */
 function sheetCode(group: LibGroup, t: BrowseT): string {
     const model = specModel(group, cardCode(group));

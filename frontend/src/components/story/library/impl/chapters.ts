@@ -9,10 +9,10 @@
  * fallback and the label are testable without a DOM.
  *
  * `StoryGroup.chapterNumber`, `Storyline.chapterRange` and
- * `StorylineArc.chapterRange` now arrive on the wire. Every rule here still
- * reads them DEFENSIVELY and derives the same answer from the group ids when
- * they are missing, because an older backend, a filtered section and a shelf
- * the table does not span all reach these functions with nothing to read.
+ * `StorylineArc.chapterRange` arrive on the wire. Every rule here reads them
+ * DEFENSIVELY and derives the same answer from the group ids when they are
+ * missing, because an older backend, a filtered section and a shelf the table
+ * does not span all reach these functions with nothing to read.
  */
 
 import { BookMarkedIcon, CompassIcon, DramaIcon, FeatherIcon, FlameIcon, LeafIcon, MoonStarIcon, MountainSnowIcon, ShipIcon, SnowflakeIcon, SwordsIcon, WavesIcon } from "lucide-react";
@@ -60,14 +60,14 @@ export interface IChapterRange {
 /**
  * WHAT A SECTION'S CHAPTER NUMBERS ARE ALLOWED TO SAY ABOUT IT.
  *
- * Two different claims, and the page used to make only the first: a section IS
+ * Two different claims, not one: a section IS
  * a run of main story chapters, or a section merely HOLDS some. The `mainLine`
  * shelf and its four arcs are the first; every themed `ssLine_*` shelf is at
  * most the second.
  *
- * The defect this replaces: `Storyline.chapterRange` was taken as an override
- * wherever the wire sent one, so the 6 themed shelves that carry a range wore a
- * mainline label. "The Blessed" headed "Main story · Chapter 15", "Wildfire"
+ * Trap: `Storyline.chapterRange` taken as an override wherever the wire sends one
+ * gave the 6 themed shelves that carry a range a mainline label. "The Blessed"
+ * headed "Main story · Chapter 15", "Wildfire"
  * chipped "Chapter 1 / WILDFIRE" and "The Ark" chipped "Chapters 7 to 14 / THE
  * ARK". A themed shelf's primary label is its NAME.
  *
@@ -125,7 +125,8 @@ export function glyphIndexFor(id: string): number {
     return hashKey(id) % SECTION_GLYPHS.length;
 }
 
-/** What a jump chip and a section heading print. The NAME is the primary line on both and the chapter range is the secondary, which is the reverse of what shipped first. */
+/** What a jump chip and a section heading print. The NAME is the primary line on both, the chapter
+ * range the secondary. */
 export interface IChipModel {
     id: string;
     /** `null` on a section the chapter numbers do not describe, which is every themed shelf; the caller then prints {@link IChipModel.name} alone. */
@@ -187,8 +188,8 @@ export function splitActOrdinal(name: string): { ordinal: string | null; name: s
  * once a section is the one they are in, and the form the tooltip shows on
  * hover for every collapsed chip.
  *
- * A THEMED SHELF NOW COLLAPSES TO ITS MONOGRAM TOO, which is a correction. It
- * kept its name in both forms on the grounds that a 108x108 logo is a monogram
+ * A THEMED SHELF COLLAPSES TO ITS MONOGRAM TOO. Keeping its name in both forms
+ * on the grounds that a 108x108 logo is a monogram
  * (RL, UR, LA) and names nothing, and that left the twelve EN shelves printing
  * 1,881.0 px of names inside a 2,877 px rail against a 1,400 px viewport at
  * 1440. The name is not dropped, it moves to the tooltip and to the chip's

@@ -21,9 +21,8 @@ interface IProps {
 }
 
 /**
- * Dispatches to the right detail panel based on which subscore card the user
- * expanded. Renders a skeleton while improvements load (the query is shared
- * across all cards so the wait cost is paid once).
+ * Detail panel for the expanded subscore card. The improvements query is shared across all
+ * cards, so the skeleton wait is paid once.
  */
 export function ImprovementsPanel({ sub, improvements, isLoading, score }: IProps) {
     const t: TypedT<typeof messages> = useT("user");

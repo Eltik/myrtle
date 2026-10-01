@@ -26,7 +26,7 @@ interface ISkinsContentProps {
     operator: IOperatorListItem;
 }
 
-/** This tab renders its own chrome plus the stand-ins `skins.ts` fills in. */
+/** Own keys plus the stand-ins `skins.ts` fills in. */
 type SkinsT = TypedT<typeof messages & typeof skinMessages>;
 
 export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsContentProps) {

@@ -49,7 +49,6 @@ export function EventDetailDialog({ event, onClose, onBrowse }: { event: IEventV
             }}
         >
             <DialogPopup className="max-w-2xl gap-0 overflow-hidden p-0" closeProps={{ className: "absolute end-2 top-2 text-white/85 hover:bg-white/15 hover:text-white" }}>
-                {/* Enlarged banner */}
                 <div className="relative h-40 flex-none overflow-hidden sm:h-64">
                     <PreviewFallback tone={ev.tone} group={ev.group} iconClassName="h-9 w-9" />
                     {cover && <StagePreview src={cover} />}
@@ -71,7 +70,6 @@ export function EventDetailDialog({ event, onClose, onBrowse }: { event: IEventV
                     </div>
                 </div>
 
-                {/* Category details */}
                 <div className="flex flex-col gap-4 p-4.5 pt-4 sm:gap-4.5 sm:p-6 sm:pt-5">
                     <DialogDescription className="text-pretty font-sans text-[13px] leading-[1.6]">{tNav(STAGE_GROUP_DESCRIPTION_KEY[ev.group])}</DialogDescription>
 

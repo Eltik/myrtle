@@ -22,10 +22,6 @@ export function PageHeader({ data, isLoading }: IPageHeaderProps) {
 
     return (
         <div className="flex flex-col gap-3.5">
-            {/* The page ran its own 32/38/44px hero title behind a kicker while
-                every other page ran the shared 24/30px header, which is the
-                inconsistency raised in #ui-ux. It uses the shared
-                with-description design now; the freshness chips stay below. */}
             <BasePageHeader
                 breadcrumbLabel={t("community.breadcrumb.label")}
                 breadcrumb={[t("community.breadcrumb.gacha"), t("community.breadcrumb.current")]}

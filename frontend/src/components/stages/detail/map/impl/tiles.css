@@ -1,19 +1,19 @@
-/* Tile colour palette + 3D box faces — the part of the board that can't be Tailwind utilities:
- * a CSS-variable colour system and per-face 3D transforms (rotateX/translate3d with vars) whose
- * appearance is selected by multi-class combinators (.tile.tile_block.tile_deployable, etc.).
+/* Tile colour palette + 3D box faces: the part of the board Tailwind utilities can't express
+ * (a CSS-variable colour system and per-face 3D transforms selected by multi-class
+ * combinators like .tile.tile_block.tile_deployable).
  *
- * Class names are the PLAIN (un-hashed) names emitted by Tile.tsx (`type.render_as || key`, plus
+ * Class names are the PLAIN (un-hashed) ones emitted by Tile.tsx (`type.render_as || key`, plus
  * tile_block/tile_box/tile_hole/tile_fence/tile_deployable and the tile_box_* faces). Extracted
- * from prts-map-tanstack/src/map/map.css:455–814.
+ * from prts-map-tanstack/src/map/map.css:455-814.
  *
- * Hover extrusion: the original gated on `.map_render_hover .tile_rows__RpOzY …`. That class no
- * longer exists — Board now toggles a `map-hovered` marker on the rows container, so those rules
- * are re-gated to `.map-hovered …`. Layout (flex/size/position/transform-3d) lives in Tailwind on
- * the elements themselves; this file only adds borders, colours and the 3D box geometry.
+ * Hover extrusion is gated on `.map-hovered`, which Board toggles on the rows container (the
+ * original `.map_render_hover .tile_rows__RpOzY` class is gone). Layout (flex/size/position/
+ * transform-3d) lives in Tailwind on the elements; this file only adds borders, colours and
+ * the 3D box geometry.
  *
  * Imported unlayered so it wins over Tailwind utilities / preflight (which zeroes border-width). */
 
-/* === palette (map.css:455–479) === */
+/* palette (map.css:455-479) */
 :root {
     --tile-size: 48px;
     --tile-box-half-height: 23px;
@@ -40,7 +40,7 @@
     --tile-bgcolor-end: rgba(53, 157, 222, 0.1);
 }
 
-/* === tile base border/colour cascade (map.css:535–573) === */
+/* tile base border/colour cascade (map.css:535-573) */
 .tile {
     border: 1px solid var(--tile-border-color-default);
     border-radius: 1px;
@@ -67,7 +67,7 @@
     background-color: var(--tile-bgcolor-default);
 }
 
-/* === box top face (map.css:574–643) === */
+/* box top face (map.css:574-643) */
 .tile_box_top {
     align-items: center;
     border: 1px solid var(--tile-border-color-default);
@@ -115,7 +115,7 @@
     background-color: var(--tile-bgcolor-default);
 }
 
-/* === box side faces (map.css:644–689) === */
+/* box side faces (map.css:644-689) */
 .tile_box_left,
 .tile_box_right {
     background-color: var(--tile-bgcolor-ignore);
@@ -157,7 +157,8 @@
     border-color: transparent;
 }
 
-/* === hover extrusion (map.css:707–736) — re-gated from `.map_render_hover .tile_rows` to `.map-hovered` === */
+/* hover extrusion (map.css:707-736), re-gated from `.map_render_hover .tile_rows`
+ * to `.map-hovered` */
 .map-hovered .tile_block .tile_box_top {
     transform: translateZ(calc(var(--tile-size) * 0.4));
 }
@@ -185,7 +186,7 @@
     opacity: 1;
 }
 
-/* === fence (map.css:737–746) === */
+/* fence (map.css:737-746) */
 .tile.tile_fence,
 .tile.tile_fence .tile_box_left,
 .tile.tile_fence .tile_box_right {
@@ -197,7 +198,7 @@
     border-width: 6px;
 }
 
-/* === start / fly start (map.css:752–765) === */
+/* start / fly start (map.css:752-765) */
 .tile.tile_flystart,
 .tile.tile_flystart .tile_box_left,
 .tile.tile_flystart .tile_box_right,
@@ -213,7 +214,7 @@
     border-width: 1px;
 }
 
-/* === end (map.css:766–772) === */
+/* end (map.css:766-772) */
 .tile.tile_end .tile_box_left,
 .tile.tile_end .tile_box_right,
 .tile.tile_end .tile_box_top,
@@ -222,7 +223,7 @@
     border-color: var(--tile-border-color-end);
 }
 
-/* === crate (map.css:773–784) === */
+/* crate (map.css:773-784) */
 .tile.tile_box.tile_crate {
     background-color: var(--tile-block-base-bgcolor-crate);
 }
@@ -236,7 +237,7 @@
     border-color: var(--tile-block-border-color-crate);
 }
 
-/* === hole / deep water (map.css:785–805) === */
+/* hole / deep water (map.css:785-805) */
 .tile_hole {
     border-color: rgba(51, 51, 51, 0.2);
 }
@@ -253,7 +254,7 @@
     border-color: rgba(23, 76, 130, 0.4);
 }
 
-/* === deployable borders (map.css:806–810; the .small variant is omitted — never emitted here) === */
+/* deployable borders (map.css:806-810); the .small variant is omitted, never emitted here */
 .tile.tile_deployable .tile_box_top,
 .tile:not(.tile_block).tile_deployable {
     border-color: var(--tile-border-color-deployable);

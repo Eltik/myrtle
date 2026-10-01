@@ -24,7 +24,6 @@ export function professionClass(profession: OperatorProfession): string {
     }
 }
 
-/** Human-readable profession label. */
 export function professionLabel(profession: OperatorProfession): string {
     switch (profession) {
         case "PIONEER":

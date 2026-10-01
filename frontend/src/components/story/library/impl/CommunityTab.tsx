@@ -101,11 +101,10 @@ function Empty({ text }: { text: string }): React.ReactElement {
  * The shared grid: rank, name, readers, finished. One definition so the two
  * group lists and the story list line up column for column.
  *
- * UNDER 640 IT IS TWO COLUMNS AND THE FIGURES TAKE A SECOND LINE. The `auto`
- * third track is the readers-plus-finished block, which measures about 200 px;
- * on a 390 px phone that left the name 68 px and "Necessary Solutions" read as
- * "Necessa...". The figures now sit under the name in the same column, which
- * gives the title the full 270.
+ * UNDER 640 IT IS TWO COLUMNS AND THE FIGURES TAKE A SECOND LINE. The `auto` third track is the
+ * readers-plus-finished block (about 200 px); on a 390 px phone that left the name 68 px and
+ * "Necessary Solutions" read as "Necessa...". The figures sit under the name in the same
+ * column, which gives the title the full 270.
  */
 const ROW = "grid w-full grid-cols-[1.75rem_minmax(0,1fr)] items-center gap-x-3 gap-y-1.5 rounded-md px-2 py-2 text-left max-sm:min-h-11 sm:grid-cols-[1.75rem_minmax(0,1fr)_auto] sm:gap-y-0.5";
 

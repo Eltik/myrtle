@@ -233,7 +233,6 @@ export async function toEpub(book: Book, opts: EpubOptions, deps: EpubDeps): Pro
         }
     }
 
-    // The cover.
     const cover = await deps.cover(book, signal);
     if (cover) {
         const ext = cover.mime === "image/png" ? "png" : "jpg";
@@ -308,7 +307,6 @@ export async function toEpub(book: Book, opts: EpubOptions, deps: EpubDeps): Pro
     }
     opts.onProgress?.({ done, total: sections.length, label: "" });
 
-    // Colophon.
     const modified = modifiedStamp(opts.modified ?? new Date());
     put("OEBPS/text/colophon.xhtml", xhtml(lang, labels.colophon, [el("section", { class: "colophon", "epub:type": "colophon" }, el("h1", {}, book.meta.title), el("p", {}, labels.credit), el("p", {}, labels.rights), el("p", {}, labels.madeWith), el("p", {}, `${book.meta.identifier} · ${modified.slice(0, 10)}`))]));
     manifest.push({ id: "colophon", href: "text/colophon.xhtml", type: "application/xhtml+xml" });
@@ -318,7 +316,6 @@ export async function toEpub(book: Book, opts: EpubOptions, deps: EpubDeps): Pro
     put("OEBPS/css/book.css", bookCss(opts.typeface, faces, colors));
     manifest.push({ id: "css", href: "css/book.css", type: "text/css" });
 
-    // Navigation.
     const toc = tocOf(book, hrefOf, (i) => partHrefs[i] ?? null);
     const tocWithColophon = [...toc, { label: labels.colophon, href: "text/colophon.xhtml", children: [] }];
     const first = sections[0];

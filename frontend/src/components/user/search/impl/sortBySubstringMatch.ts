@@ -1,11 +1,9 @@
 import type { DisplayUser } from "./types";
 
 /**
- * `locale` is optional and defaults to `undefined`, which is what
- * `Intl.Collator` reads as "the browser's locale" - the behaviour this module
- * has always had. This file is a pure sort helper with no access to hooks, so
- * the page's locale has to arrive as an argument: the calling component passes
- * `useLocale()`, and any other caller keeps the old behaviour by omitting it.
+ * `locale` defaults to `undefined`, which `Intl.Collator` reads as the browser's locale. This is
+ * a pure helper with no hooks, so the page's locale arrives as an argument (callers pass
+ * `useLocale()`).
  */
 export function sortBySubstringMatch(users: DisplayUser[], query: string, locale?: string): DisplayUser[] {
     const q = query.trim().toLowerCase();

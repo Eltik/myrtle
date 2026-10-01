@@ -15,7 +15,6 @@ import type { messages as utilMessages } from "../utils.messages";
 import { FieldGroup, SwitchRow } from "./FilterControls";
 import type { messages } from "./StageFiltersPanel.messages";
 
-/** This panel renders its own chrome plus the group labels `utils.ts` derives. */
 type StageFiltersT = TypedT<typeof messages & typeof utilMessages>;
 
 interface IStageFiltersPanelProps {
@@ -57,10 +56,8 @@ export function StageFiltersPanel({ settings, onChange, hasProfile, stages, zone
     const visibleGroups = React.useMemo(() => {
         let pool = groups;
         if (settings.onlyAvailableStages) pool = pool.filter((g) => g.isOpen);
-        // A view filter, like `onlyAvailableStages`: it hides uncleared stages
-        // and leaves `deselectedStageIds` alone, so turning it off restores the
-        // pool. (It once wrote every uncleared stage into the deselection, which
-        // nothing undid.)
+        // A view filter, like `onlyAvailableStages`: it hides uncleared stages and leaves
+        // `deselectedStageIds` alone, so turning it off restores the pool.
         if (settings.onlyCompletedStages) {
             pool = pool.map((group) => ({ ...group, stages: group.stages.filter((s) => isStageCleared(s.stageId, stageClears)) }) satisfies IStageGroup).filter((group) => group.stages.length > 0);
         }

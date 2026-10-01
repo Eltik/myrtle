@@ -10,7 +10,7 @@ import styles from "./CommunityPage.module.css";
 import { fmtPct } from "./format";
 import type { messages } from "./TimingPanel.messages";
 
-/** This panel renders its own chrome plus the shared banner-bucket labels. */
+/** Own keys plus the shared banner-bucket labels. */
 type TimingT = TypedT<typeof messages & typeof gachaConstantsMessages>;
 
 interface ITimingPanelProps {

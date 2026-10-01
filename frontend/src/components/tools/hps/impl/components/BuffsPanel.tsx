@@ -12,7 +12,6 @@ import type { messages as hpsConstantsMessages } from "../constants.messages";
 import type { IHpsBuffConfig } from "../types";
 import type { messages } from "./BuffsPanel.messages";
 
-/** This panel renders its own chrome plus the preset labels from `constants.ts`. */
 type BuffsT = TypedT<typeof messages & typeof hpsConstantsMessages>;
 
 interface IBuffsPanelProps {

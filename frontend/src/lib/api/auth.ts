@@ -44,8 +44,7 @@ export const disconnectGameAccountFn = createServerFn({ method: "POST" }).handle
         const text = await res.text().catch(() => "");
         throw new Error(text || `Failed to disconnect: ${res.status}`);
     }
-    // `removed` is required on the generated type, so the `?? false` this used
-    // to carry is gone: the backend always sends it.
+    // `removed` is required on the generated type; the backend always sends it.
     const body = (await res.json()) as DisconnectResult;
     return { removed: body.removed };
 });

@@ -107,9 +107,9 @@ export function storyArchiveQueryOptions(groupId: string, server: string = DEFAU
 /**
  * What the COMMUNITY has read, or `null` when the running backend does not
  * serve the route (404). It is the same first-class null the archive and the
- * illustrations queries give, and it is not hypothetical here: the binary on
- * :3060 while this shipped answers 404, so the tab must render its own empty
- * state rather than throw a query error at the page.
+ * illustrations queries give, and it is not hypothetical: the binary on :3060 can
+ * answer 404, so the tab must render its own empty state rather than throw a
+ * query error at the page.
  *
  * The backend caches the aggregate for 6 hours, so a shorter staleTime here
  * would only re-fetch a document that cannot have changed.

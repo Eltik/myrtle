@@ -7,7 +7,6 @@ export interface IStageCardVM {
     stageId: string;
     /** Short code shown in the badge, when the stage has one (null for IS/RA/Paradox nodes). */
     badge: string | null;
-    /** Display title. */
     title: string;
     apCost: number;
     boss: boolean;

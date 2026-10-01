@@ -1,19 +1,15 @@
 /**
  * WHICH PICTURE EACH SURFACE DRAWS, as a pure choice over the wire fields.
  *
- * The game ships four different images per story set and they are not
- * interchangeable (`docs/story-reader.md` section 2, "Story Collection art"):
- * `bannerUrl` is the KEY VISUAL, the authored plate the game's own Story
- * Collection draws; `titleImageUrl` is the 516x260 title LOGOTYPE, which is
- * the card's TITLE; `iconUrl` on a
- * group is the 56x68 chapter DECO glyph and exists on the 17 mainline chapters
- * alone; `coverUrl` is the Archives entry picture or a derived first
- * background, which is a different thing again and is what the page drew
- * before any of the three existed.
+ * The game ships four different images per story set and they are not interchangeable
+ * (`docs/story-reader.md` section 2, "Story Collection art"): `bannerUrl` is the KEY VISUAL,
+ * the authored plate the game's own Story Collection draws; `titleImageUrl` is the 516x260
+ * title LOGOTYPE, the card's TITLE; `iconUrl` on a group is the 56x68 chapter DECO glyph and
+ * exists on the 17 mainline chapters alone; `coverUrl` is the Archives entry picture or a
+ * derived first background, a different thing again.
  *
- * Every rule here is a source CHOICE with its fallback, kept out of the
- * components so the branch that fires can be pinned in a test rather than read
- * off a screenshot.
+ * Every rule here is a source CHOICE with its fallback, kept out of the components so the
+ * branch that fires can be pinned in a test rather than read off a screenshot.
  */
 
 import type { LibGroup } from "./derive";
@@ -88,16 +84,14 @@ export function plateCrop(group: Pick<LibGroup, "category">): string {
 }
 
 /**
- * Which glyph a section's chip and heading draw. An ARC has its own 184x52
- * banner icon and it is the more specific of the three, so it beats the
- * shelf's; a shelf without an arc draws its 108x108 LOGO (`StorylineLogoId`,
- * 14 of 14 EN shelves), the emblem the game's Story Collection gives it, and
- * only a shelf with no logo falls to its 44x36 abbreviation; a section the
- * wire names none of these for draws the lucide glyph its id hashes to.
+ * Which glyph a section's chip and heading draw. An ARC has its own 184x52 banner icon, the
+ * most specific, so it beats the shelf's; a shelf without an arc draws its 108x108 LOGO
+ * (`StorylineLogoId`, 14 of 14 EN shelves), the emblem the game's Story Collection gives it,
+ * and only a shelf with no logo falls to its 44x36 abbreviation; a section the wire names none
+ * of these for draws the lucide glyph its id hashes to.
  *
- * The logo outranks the abbreviation since 2026-09-24: the bar drew "RL",
- * "UR", "LA" beside four arc logotypes, and a reader saw two kinds of mark and
- * asked for one. The abbreviation is still the ChapterModal's deco.
+ * The logo outranks the abbreviation since 2026-09-24: the bar drew "RL", "UR", "LA" beside
+ * four arc logotypes, two kinds of mark. The abbreviation is still the ChapterModal's deco.
  */
 export type ISectionIconSource = { kind: "arc"; url: string } | { kind: "logo"; url: string } | { kind: "shelf"; url: string } | { kind: "glyph" };
 

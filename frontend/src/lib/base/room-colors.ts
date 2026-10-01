@@ -1,8 +1,8 @@
 /**
  * Canonical in-game RIIC room accent colours, taken verbatim from
  * `building_data.json` (each buff's `BuffColor`, themed to the room it targets).
- * These are the real base-UI hues - Trading Post blue, Factory gold, Power Plant
- * green, Control Center deep teal - so the plan reads like the game.
+ * The real base-UI hues: Trading Post blue, Factory gold, Power Plant green,
+ * Control Center deep teal. The plan reads like the game.
  */
 const ROOM_COLORS: Record<string, string> = {
     TRADING: "#0075a9", // blue

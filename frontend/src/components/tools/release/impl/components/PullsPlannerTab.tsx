@@ -79,20 +79,18 @@ export function PullsPlannerTab({ today }: IPullsPlannerTabProps): React.ReactEl
         [setSettings],
     );
     /**
-     * Setting a potential is the fast path into a plan: it says what the user wants
-     * out of the banner, and the pull count follows from that rather than being typed.
+     * Setting a potential is the fast path into a plan: the pull count follows from the
+     * operators wanted rather than being typed.
      *
-     * The count is SET to the joint estimate rather than summed per operator, because
-     * medians DO NOT add, and they fail to add in both directions. Two copies of one
-     * rate-up is 171 rolls against twice-70 of 140, dearer, because the median of a
-     * sum is pulled toward the mean of a right-skewed wait. One copy of each is 126,
-     * cheaper than 140, because the two operators share the six-star pool. Only the
-     * joint walk gets either case right.
+     * The count is SET to the joint estimate rather than summed per operator, because medians
+     * DO NOT add, in either direction. Two copies of one rate-up is 171 rolls against
+     * twice-70 of 140, dearer, because the median of a sum is pulled toward the mean of a
+     * right-skewed wait. One copy of each is 126, cheaper than 140, because the two operators
+     * share the six-star pool. Only the joint walk gets both cases right.
      *
-     * The walk runs HERE, on the click, rather than in an effect watching the plan.
-     * The effect version rewrote the count on every rebuild, so pressing Spark or
-     * Guarantee set the number and then had it snatched back a frame later. Pricing
-     * it once on the click leaves every other way of setting the count alone.
+     * The walk runs HERE, on the click, not in an effect watching the plan: that version
+     * rewrote the count on every rebuild, so pressing Spark or Guarantee set the number and had
+     * it snatched back a frame later.
      */
     const setTarget = React.useCallback(
         (key: string, charId: string, copies: number) => {
@@ -106,12 +104,10 @@ export function PullsPlannerTab({ today }: IPullsPlannerTabProps): React.ReactEl
             else delete current[charId];
 
             /**
-             * The walk runs HERE, before the state update, not inside the updater.
-             * React may call an updater more than once for one dispatch, and this walk
-             * is up to 297 ms, which is the delay reported between pressing a plus and
-             * seeing the number move. It is also memoised now, so the rebuild that
-             * follows asks the same question and gets the cached answer rather than
-             * paying for the same walk a second time.
+             * The walk runs HERE, before the state update, not inside the updater: React may
+             * call an updater more than once per dispatch and the walk is up to 297 ms (the
+             * delay between pressing a plus and seeing the number move). It is memoised, so the
+             * rebuild that follows gets the cached answer.
              */
             const wanted = Object.keys(current).length > 0;
             const priced =
@@ -143,14 +139,10 @@ export function PullsPlannerTab({ today }: IPullsPlannerTabProps): React.ReactEl
     );
 
     /**
-     * A preset from the goal list or the Set-to row: commit that many pulls AND drop
-     * this banner's potential picks.
-     *
-     * Clearing them is the point. A pick sets the count through `setTarget`, so a
-     * banner carrying picks has a count that MEANS those picks; committing a different
-     * figure on top of them left the row claiming two different goals at once, and the
-     * "Your goal" line went on describing the operators while every other line
-     * described the new count.
+     * A preset from the goal list or the Set-to row: commit that many pulls AND drop this
+     * banner's potential picks. A pick sets the count through `setTarget`, so a count with
+     * picks MEANS those picks; committing another figure on top left the row claiming two
+     * goals at once, with "Your goal" still describing the operators.
      */
     const preset = React.useCallback(
         (key: string, pulls: number) =>

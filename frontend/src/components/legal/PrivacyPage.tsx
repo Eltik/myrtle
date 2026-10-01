@@ -130,7 +130,6 @@ export function PrivacyPage() {
 
     return (
         <LegalContainer ambient>
-            {/* Hero */}
             <header className="relative z-1 mb-12 flex flex-col items-center text-center">
                 <div className="mb-5.5 inline-flex size-18 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <ShieldIcon className="size-10" strokeWidth={1.8} />
@@ -147,14 +146,12 @@ export function PrivacyPage() {
                 </div>
             </header>
 
-            {/* TL;DR */}
             <Alert className="mb-10 border-[color-mix(in_srgb,var(--primary)_32%,transparent)] bg-[color-mix(in_srgb,var(--primary)_5%,transparent)] [&>svg]:text-primary">
                 <Eye strokeWidth={2} />
                 <AlertTitle className="text-[15px] text-foreground">{t("privacy.tldr.title")}</AlertTitle>
                 <AlertDescription className="text-[15px] text-muted-foreground leading-[1.55]">{t("privacy.tldr.body")}</AlertDescription>
             </Alert>
 
-            {/* Principles */}
             <section className="my-12">
                 <h2 className="m-0 mb-5 text-center font-semibold text-[26px] text-foreground leading-[1.2] tracking-[-0.02em]">{t("privacy.principles.heading")}</h2>
                 <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
@@ -166,7 +163,6 @@ export function PrivacyPage() {
 
             <LegalDivider />
 
-            {/* Yostar OAuth */}
             <Section id="yostar">
                 <SectionHead icon={<KeyRound className="size-5" strokeWidth={1.8} />} title={t("privacy.yostar.heading")} subtitle={t("privacy.yostar.subheading")} />
                 <div className="pl-13 max-sm:pl-0">
@@ -198,7 +194,6 @@ export function PrivacyPage() {
 
             <LegalDivider />
 
-            {/* Information We Collect */}
             <Section id="information-we-collect">
                 <SectionHead icon={<Database className="size-5" strokeWidth={1.8} />} title={t("privacy.collect.heading")} subtitle={t("privacy.collect.subheading")} />
                 <div className="pl-13 max-sm:pl-0">
@@ -243,7 +238,6 @@ export function PrivacyPage() {
 
             <LegalDivider />
 
-            {/* How we use info */}
             <Section id="how-we-use">
                 <SectionHead icon={<Eye className="size-5" strokeWidth={1.8} />} title={t("privacy.use.heading")} subtitle={t("privacy.use.subheading")} />
                 <div className="pl-13 max-sm:pl-0">
@@ -258,7 +252,6 @@ export function PrivacyPage() {
 
             <LegalDivider />
 
-            {/* Settings & visibility */}
             <Section id="settings">
                 <SectionHead icon={<SettingsIcon className="size-5" strokeWidth={1.8} />} title={t("privacy.settings.heading")} subtitle={t("privacy.settings.subheading")} />
                 <div className="pl-13 max-sm:pl-0">
@@ -309,7 +302,6 @@ export function PrivacyPage() {
 
             <LegalDivider />
 
-            {/* Security */}
             <Section id="security">
                 <SectionHead icon={<Lock className="size-5" strokeWidth={1.8} />} title={t("privacy.security.heading")} subtitle={t("privacy.security.subheading")} />
                 <div className="pl-13 max-sm:pl-0">
@@ -350,7 +342,6 @@ export function PrivacyPage() {
 
             <LegalDivider />
 
-            {/* Rights */}
             <Section id="rights">
                 <SectionHead icon={<UserCog className="size-5" strokeWidth={1.8} />} title={t("privacy.rights.heading")} subtitle={t("privacy.rights.subheading")} />
                 <div className="pl-13 max-sm:pl-0">
@@ -364,7 +355,6 @@ export function PrivacyPage() {
 
             <LegalDivider />
 
-            {/* Third-party */}
             <Section id="third-party">
                 <H2Plain>{t("privacy.thirdParty.heading")}</H2Plain>
                 <P>{t("privacy.thirdParty.intro")}</P>
@@ -384,7 +374,6 @@ export function PrivacyPage() {
 
             <LegalDivider />
 
-            {/* Children */}
             <Section id="children">
                 <H2Plain>{t("privacy.children.heading")}</H2Plain>
                 <P>{t("privacy.children.body")}</P>
@@ -392,7 +381,6 @@ export function PrivacyPage() {
 
             <LegalDivider />
 
-            {/* Changes */}
             <Section id="changes">
                 <H2Plain>{t("privacy.changes.heading")}</H2Plain>
                 <P>{t("privacy.changes.p1")}</P>
@@ -401,7 +389,6 @@ export function PrivacyPage() {
 
             <LegalDivider />
 
-            {/* Contact */}
             <Section id="contact">
                 <SectionHead icon={<Mail className="size-5" strokeWidth={1.8} />} title={t("privacy.contact.heading")} subtitle={t("privacy.contact.subheading")} />
                 <div className="pl-13 max-sm:pl-0">
@@ -433,7 +420,6 @@ export function PrivacyPage() {
                 </div>
             </Section>
 
-            {/* Footer CTA */}
             <div className="my-12 rounded-2xl border border-border bg-linear-to-b from-[color-mix(in_srgb,var(--muted)_50%,transparent)] to-transparent p-8 text-center">
                 <h3 className="m-0 mb-2 font-semibold text-[22px] text-foreground leading-[1.3] tracking-[-0.01em]">{t("privacy.cta.title")}</h3>
                 <p className="m-0 mx-auto max-w-[56ch] text-balance font-sans text-[15px] text-muted-foreground leading-[1.55]">{t("privacy.cta.body")}</p>

@@ -134,8 +134,6 @@ export function OperatorsList() {
     });
     const toggleFilters = () => setFiltersVisible((v) => !v);
 
-    // Defaults to "owned", which reproduces the badge exactly as it was before
-    // the E2 metric existed.
     const [statMetric, setStatMetric] = useLocalStorageState<StatMetric>(STAT_METRIC_KEY, "owned", {
         parse: (raw) => (STAT_METRICS.has(raw as StatMetric) ? (raw as StatMetric) : undefined),
         serialize: (v) => v,

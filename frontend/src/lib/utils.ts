@@ -71,12 +71,10 @@ export function parseOperatorName(name: string): { displayName: string; subtitle
 
 /** Locale number formatting - "1,234,567".
  *
- *  `locale` defaults to the source locale, which keeps every existing call
- *  site rendering exactly what it rendered before i18n: `Intl.NumberFormat`
- *  under `en` and `Number#toLocaleString("en-US")` produce identical output
- *  for grouping and decimals (verified across 0, 1, 999, 1e3, 1234, 1.23e6,
- *  1e9 and negatives). Components with a locale in hand should prefer
- *  `useFormatters()` from `#/lib/i18n/formatters`. */
+ *  `locale` defaults to the source locale: `Intl.NumberFormat` under `en` and
+ *  `Number#toLocaleString("en-US")` give identical output for grouping and decimals (checked
+ *  across 0, 1, 999, 1e3, 1234, 1.23e6, 1e9 and negatives). Components with a locale in hand
+ *  should prefer `useFormatters()` from `#/lib/i18n/formatters`. */
 export function formatNumber(n: number | null | undefined, locale: string = DEFAULT_LOCALE): string {
     return new Intl.NumberFormat(locale).format(Number(n ?? 0));
 }
@@ -452,11 +450,9 @@ export function formatRelative(iso: string | null | undefined, locale: string = 
     if (days < 7) return relative(locale, -days, "day", "auto", style);
 
     const weeks = Math.floor(days / 7);
-    // The one place Intl and this site's existing copy disagree: `auto` gives
-    // "last wk." where this site says "last week". Every other branch is
-    // byte-identical to the hand-written version it replaced, verified across
-    // 16 sampled offsets from 30s to 800d. Preserved for English only; other
-    // locales get their own correct wording from Intl.
+    // The one place Intl and this site's copy disagree: `auto` gives "last wk." where the site
+    // says "last week". Every other branch matched the old hand-written version across 16
+    // sampled offsets from 30s to 800d. English only; other locales take Intl's own wording.
     if (weeks === 1 && locale.startsWith("en")) return "last week";
     // Long style: Intl already says "3 weeks ago" rather than "3 wk. ago", so
     // nothing below needs an English override.

@@ -9,8 +9,6 @@ import { compactForSearch } from "#/lib/search/fuzzy";
 import { cn } from "#/lib/utils";
 import type { messages } from "./EnemyLocationFilter.messages";
 
-// ── Tree types ──────────────────────────────────────────────────────────────
-
 export interface IRawStage {
     stageId: string;
     code: string;
@@ -71,8 +69,6 @@ export function buildLocationTree(zones: IRawZone[]): IGroupNode[] {
     }));
 }
 
-// ── Component ────────────────────────────────────────────────────────────────
-
 interface IProps {
     tree: IGroupNode[];
     selected: string[];
@@ -98,7 +94,6 @@ export function EnemyLocationFilter({ tree, selected, onChange }: IProps) {
         return m;
     }, [tree]);
 
-    // Search-filter the tree.
     const visible = useMemo<IGroupNode[]>(() => {
         const q = compactForSearch(query);
         if (!q) return tree;

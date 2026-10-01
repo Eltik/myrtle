@@ -1,11 +1,7 @@
 import { tokenize } from "./tokenize";
 import type { BlockNode, InlineNode } from "./types";
 
-/**
- * Renders markdown source to a plain-text string, useful for search indexing,
- * line-clamped previews, OG image alt text, and any other context where
- * formatting markers shouldn't leak through.
- */
+/** Markdown source to plain text, for search indexing and line-clamped previews. */
 export function stripMarkdown(src: string): string {
     if (!src) return "";
     const blocks = tokenize(src);

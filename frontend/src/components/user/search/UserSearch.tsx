@@ -73,8 +73,7 @@ export function UserSearch() {
     }, []);
 
     const offset = (currentPage - 1) * PAGE_SIZE;
-    // The default sort and direction travel as absences, so a plain search
-    // hits the endpoint exactly as it did before sorting existed.
+    // The default sort and direction travel as absences, so a plain search is unchanged.
     const searchQuery = useQuery(
         searchUsersQueryOptions({
             q: debouncedQuery || undefined,

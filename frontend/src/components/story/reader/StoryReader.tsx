@@ -1,19 +1,12 @@
 /**
- * THE READER SHELL: the state every surface over the stage reads, and nothing
- * that draws.
+ * THE READER SHELL: the state every surface over the stage reads, nothing that draws.
  *
- * What this file OWNS is the wiring. The settings document, the audio module,
- * the player, the skip state machine, the chrome's idle timer and the peek
- * grace all live here because they are shared, and each of them has its rule in
- * a pure sibling that is tested without a DOM: `chrome.ts` decides whether the
- * chrome is up, `skip.ts` what a skip press does next, `scrub.ts` where a fraction
- * lands, `settings.ts` what a stored document means.
- *
- * What draws lives beside it: `ReaderToolbar` (both pills and the reveal
- * handle), `Scrubber`, `ReaderCards` (the title and end cards), `TextBox`,
- * `Stage`, `Cutscene`, and `useReaderHotkeys` for the key switch. The measured
- * history behind each of those decisions is in `docs/story-reader.md` and the
- * capture notes it links, not repeated here.
+ * Shared wiring lives here (settings document, audio module, player, skip state machine,
+ * chrome idle timer, peek grace). Each rule lives in a pure sibling tested without a DOM:
+ * `chrome.ts` (is the chrome up), `skip.ts` (what a skip press does next), `scrub.ts` (where a
+ * fraction lands), `settings.ts` (what a stored document means). Drawing is in `ReaderToolbar`,
+ * `Scrubber`, `ReaderCards`, `TextBox`, `Stage`, `Cutscene` and `useReaderHotkeys`. The measured
+ * history behind those decisions is in `docs/story-reader.md` and the capture notes it links.
  */
 import { Link, useNavigate } from "@tanstack/react-router";
 import type React from "react";

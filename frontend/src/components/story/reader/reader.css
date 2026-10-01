@@ -148,12 +148,10 @@
     }
 }
 
-/* ---------------------------------------------------------------------------
-   Layout. `--story-header` is the site header the reader has to sit under: the
-   header is `h-14` (3.5rem) below 640 px and `sm:h-16` (4rem) above it, and the
-   reader used a flat 3.5rem, so every viewport at or above 640 px overshot the
-   viewport by 8 px and the page scrolled. The value now follows the header.
-   --------------------------------------------------------------------------- */
+/* Layout. `--story-header` is the site header the reader has to sit under: the
+      header is `h-14` (3.5rem) below 640 px and `sm:h-16` (4rem) above it. A flat
+      3.5rem overshot the viewport by 8 px from 640 px up and the page scrolled, so
+      the value follows the header. */
 
 [data-story-reader] {
     --story-header: 3.5rem;
@@ -185,11 +183,11 @@
     }
 }
 
-/* No rule hides a control by viewport height any more. The chrome is TWO pills,
-   the client's own left and right clusters, and they are one flex row at every
-   width: at 375 px the ten controls measure 367 px end to end (32x44 each, two
-   168 px pills, a 31 px gap), so nothing wraps and nothing is dropped. The
-   volume slider left the bar for Settings; the bar keeps a mute button. */
+/* No rule hides a control by viewport height. The chrome is TWO pills, the
+      client's own left and right clusters, one flex row at every width: at 375 px
+      the ten controls measure 367 px end to end (32x44 each, two 168 px pills, a
+      31 px gap), so nothing wraps and nothing is dropped. The volume slider lives
+      in Settings; the bar keeps a mute button. */
 
 /* Safe areas. A notched phone puts the toolbar under the status bar in landscape
    and the text box under the home indicator in portrait; these are 0 px on every

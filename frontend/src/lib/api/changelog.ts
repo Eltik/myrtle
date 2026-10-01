@@ -24,7 +24,6 @@ export interface IChangelogCommit {
     /** Whether the commit subject was flagged as a breaking change (`feat!:`). */
     breaking: boolean;
     url: string;
-    /** ISO author date. */
     date: string;
     author: IChangelogAuthor;
     verified: boolean;

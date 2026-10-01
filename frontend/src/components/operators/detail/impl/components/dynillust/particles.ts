@@ -5,21 +5,15 @@ import { baseTextureOf, maskTextureOf } from "../chibi/helpers";
 import { pooledTextureURL, sampleColorCurve } from "./sceneMesh";
 
 /**
- * Live particle simulator for a dynamic illustration's Unity ParticleSystems.
- *
- * The `dyn_illust_*` prefabs drive most of their motion with ParticleSystems
- * (bubbles, sparkles, embers, drifting motes) rather than mesh animation. The
- * unpacker exports an approximation of each emitter to `…[particles].json`
- * (+ `…[particles]/<n>.png`); we re-simulate them here as billboarded sprites in
- * the SAME "spine-authored pixels, Y-up, origin at skeleton root" space as the
- * scene meshes, so they composite correctly with the backdrop and the spine.
- *
- * This is an approximation of Unity's system, tuned for the common modules
- * (emission, shape, start speed/size/colour, colour/size-over-life, velocity,
- * rotation). A hard global particle cap keeps it cheap.
+ * Live simulator for the Unity ParticleSystems in `dyn_illust_*` prefabs (bubbles, sparkles,
+ * embers, motes). The unpacker exports an approximation of each emitter to
+ * `…[particles].json` (+ `…[particles]/<n>.png`); re-simulated here as billboarded sprites in
+ * the same space as the scene meshes (spine-authored px, Y-up, origin at skeleton root).
+ * Covers emission, shape, start speed/size/colour, colour/size-over-life, velocity, rotation.
+ * A hard global particle cap keeps it cheap.
  */
 
-// ---- exported JSON value shapes (see assets/.../particle_export_spec.md) ----
+// Exported JSON value shapes, see assets/.../particle_export_spec.md
 
 export type MMScalar = { mode: "const"; v: number } | { mode: "range"; min: number; max: number } | { mode: "curve"; curve: ICurvePoint[] } | { mode: "rangeCurve"; min: ICurvePoint[]; max: ICurvePoint[] };
 
@@ -360,8 +354,6 @@ export interface IParticlesData {
     systems: IParticleSystemData[];
 }
 
-// ---------------------------------------------------------------------------
-
 /** `?ramaddalpha=0` restores the old behaviour (additive Ram fragments writing their alpha
  *  into the HDR target, where it occludes the environment). Diagnostic/revert only. */
 function ramAdditiveAlphaFix(): boolean {
@@ -494,7 +486,7 @@ function ptclRotMat2(deg: number): [number, number, number, number] {
 
 /** Route the PLAIN `Disturb/` family through the Ram port. **DEFAULT OFF**, `?plaindisturb=1`
  *  enables. The exporter now emits a ram block for them (`kind: "plainDisturb"`); with this off
- *  they fall through to the plain sprite path exactly as before, so the default is
+ *  they fall through to the plain sprite path, so the default is
  *  bit-identical and one export serves both arms of the A/B.
  *
  *  Read as a MISSING parameter rather than a falsy one. */
@@ -921,7 +913,7 @@ function loopAccReset(): boolean {
 /** Floor on a spawned particle's lifetime (s), guarding degenerate authored data. */
 const MIN_PARTICLE_LIFE = 0.05;
 
-/** M-c: opacity for a world-space ambient system (rain) promoted IN FRONT of the
+/** Opacity for a world-space ambient system (rain) promoted IN FRONT of the
  *  character to un-occlude it (see `unoccludeOverlap`). Drawn over the body at full
  *  strength it reads as prominent streaks; the game shows only a faint sheen there, so
  *  the over-body copy is dimmed to this while the background rain stays untouched. */
@@ -1363,8 +1355,8 @@ function worldForceOverLife(d: IParticleSystemData): { x: number; y: number } | 
     if (!f || (f.x === 0 && f.y === 0)) return null;
     // Only the world-aligned spaces are usable. A legacy `space:"local"` export shipped the
     // RAW emitter-local axes with no basis to interpret them, so consuming it would apply an
-    // arbitrarily rotated acceleration; those exports stay inert (exactly as before this
-    // module was read at all) until the skin is re-extracted.
+    // arbitrarily rotated acceleration; those exports stay inert until the skin is
+    // re-extracted.
     if (f.space !== "screen" && f.space !== "world") return null;
     return { x: f.x, y: f.y };
 }
@@ -1528,7 +1520,6 @@ function driftWithBone(container: PIXI.Container, chain: string[] | undefined, p
         container.transform.setFromMatrix(b.append(haloMatrix(halo, ct ?? 0)));
         return;
     }
-    // No scale-in: preserve the original behaviour exactly (untouched when no bone).
     if (!base) return;
     container.transform.setFromMatrix(base);
 }
@@ -1688,8 +1679,8 @@ class Emitter {
     private readonly volWorld: { x: number; y: number } | null;
     /** Per-lifetime velocityOverLifetime vector (px/s, world-aligned), when the exporter
      *  couldn't represent the authored curves as one constant - see
-     *  {@link IParticleSystemData.velocityOverLife}. Null -> the constant `volWorld` is used,
-     *  exactly as before. Gated on `volWorld` so the same short-life/streak rules apply. */
+     *  {@link IParticleSystemData.velocityOverLife}. Null -> the constant `volWorld` is used.
+     *  Gated on `volWorld` so the same short-life/streak rules apply. */
     private readonly volCurve: { t: number; x: number; y: number }[] | null;
     /** Bone-follow state so the effect drifts with its parent bone (see {@link driftWithBone}). */
     private readonly boneAnchor: IBoneAnchor = { resolved: false, boneName: null, ref: null };
@@ -1745,7 +1736,6 @@ class Emitter {
         this.volWorld = worldVelocityOverLife(data);
         this.volCurve = this.volWorld && data.velocityOverLife?.curve?.length ? data.velocityOverLife.curve : null;
         this.rate = data.emission?.rate ? sampleScalar(data.emission.rate, 0.5, 0) : 0;
-        // Trails render behind the particle heads.
         this.trailLayer = data.trail ? new PIXI.Container() : null;
         if (this.trailLayer) this.container.addChild(this.trailLayer);
         // Ribbon mode is one polyline through the whole system, not a ribbon per
@@ -1924,7 +1914,6 @@ class Emitter {
         const rot = sampleScalar(d.startRotation ?? { mode: "const", v: 0 }, Math.random(), nt);
         const startCol = sampleColor(d.startColor, nt);
 
-        // Rotate the local offset + direction by the emitter's world rotation.
         const lx = ox + posOff[0];
         const ly = oy + posOff[1];
         const wx = d.pos[0] + lx * cos - ly * sin;
@@ -2029,8 +2018,7 @@ class Emitter {
         p.startCol = startCol;
         p.sprite.visible = true;
 
-        // Trail: give this particle a ribbon if the system trails and the ratio
-        // roll passes; otherwise ensure any pooled rope stays hidden.
+        // Pooled ropes stay hidden unless this particle rolls a trail.
         const trail = d.trail;
         if (trail && trail.mode !== "ribbon" && this.trailLayer && Math.random() < (trail.ratio ?? 1)) {
             if (!p.trailPts || !p.rope) {
@@ -2145,7 +2133,6 @@ class Emitter {
             this.free.push(p);
         }
 
-        // Emission (rate + bursts), only while the system is "playing".
         const playing = d.looping || this.time <= d.duration;
         // `rateOverDistance`: trail emission per px of emitter travel (the container
         // moves when the rig rides a bone - Virtuosa's comet sheds dust down the
@@ -2196,7 +2183,6 @@ class Emitter {
                 continue;
             }
             const lf = p.age / p.life;
-            // gravity pulls -Y (down) in our Y-up space.
             p.vy -= grav * dt;
             if (force) {
                 p.vx += force.x * dt;
@@ -2220,7 +2206,6 @@ class Emitter {
             const vol = volCurve ? sampleVolCurve(volCurve, lf) : volConst;
             p.x += (p.vx + (vol?.x ?? 0)) * dt;
             p.y += (p.vy + (vol?.y ?? 0)) * dt;
-            // Noise: an organic wander sampled from a time-scrolling field.
             if (noise) {
                 const f = noise.frequency * 0.002;
                 const ph = this.time * noise.scrollSpeed;
@@ -2709,7 +2694,6 @@ class RibbonTrail {
         this.count = Math.max(1, Math.min(8, trail.ribbonCount ?? 1));
         type BufArg = ConstructorParameters<typeof PIXI.Buffer>[0];
         for (let r = 0; r < this.count; r++) {
-            // Two vertices (±half-width across the ribbon) per control point.
             const nv = this.cap * 2;
             const pos = new Float32Array(nv * 2);
             const uv = new Float32Array(nv * 2);
@@ -2762,7 +2746,6 @@ class RibbonTrail {
         const sizeAffects = t.sizeAffectsWidth ?? true;
         for (let r = 0; r < this.count; r++) {
             const mesh = this.meshes[r];
-            // Interleave: this ribbon takes every `count`-th particle.
             const pts: IParticle[] = [];
             for (let i = r; i < live.length && pts.length < this.cap; i += this.count) pts.push(live[i]);
             // A single point has no segment to draw across.
@@ -2946,18 +2929,12 @@ class MeshEmitter extends Emitter {
     }
 }
 
-// ---- Ram-shader emitter (faithful GLSL port) -----------------------------
+// Ram-shader emitter: GLSL port of the game's ramp-tint + dissolve + UV-disturb compositor
+// (extracted from its GLES3 shader blob). A plain tinted billboard loses the per-pixel ramp
+// (`_RamTex`), the soft dissolve edge (`_DissolveTex` + `_Amount`/`_BorderWidth`) and the flow
+// disturbance (`_DisturbTex`), so each emitter's live particles draw as one PIXI.Mesh.
 //
-// The "Ram" (ramp) shader family is a ramp-tint + dissolve + UV-disturb sprite
-// compositor (extracted from the game's GLES3 shader blob). A plain tinted
-// billboard loses everything that makes these effects read as crisp cyan energy:
-// the per-pixel colour RAMP (`_RamTex`), the soft dissolve edge (`_DissolveTex`
-// + `_Amount`/`_BorderWidth`), and the flow UV disturbance (`_DisturbTex`). We
-// render each Ram emitter's live particles as a single PIXI.Mesh whose fragment
-// shader is a direct port of the game shader, so the real look is reproduced.
-//
-// Vertex-disturb displacement (a vertex texture-fetch wobble) is approximated as
-// the identity - the dominant look is the fragment compositor, which is shared.
+// Vertex-disturb displacement (vertex texture-fetch wobble) is approximated as the identity.
 
 const RAM_VERT = `
 precision highp float;
@@ -3717,12 +3694,11 @@ class RamEmitter {
         const noise = d.noise;
         const vol = this.volWorld;
 
-        // Step + cull, compacting the array in place.
         let w = 0;
         for (let r = 0; r < this.particles.length; r++) {
             const p = this.particles[r];
             p.age += dt;
-            if (p.age >= p.life) continue; // drop
+            if (p.age >= p.life) continue;
             p.vy -= grav * dt;
             if (force) {
                 p.vx += force.x * dt;
@@ -3950,7 +3926,7 @@ class RamEmitter {
             const dInt = customUVOn() && d.ramDisturbIntensityCurve ? sampleCurve(d.ramDisturbIntensityCurve, lf) : 0;
             // Per-particle UV offsets, decoded positionally out of the CustomData payload
             // (1,2 -> main · 3,4 -> dissolve · 7,8 -> disturb). All default to 0, so a system
-            // that authors none renders exactly as before.
+            // that authors none is unchanged.
             const uvAt = (c: [number, number, number][] | null | undefined): [number, number] => {
                 if (!c?.length) return [0, 0];
                 let a = c[0];
@@ -5209,7 +5185,7 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         // original sort-driven bucketing untouched.
         const wouldBeBackground = behindCharacter(sys, data) || isBackdropParticle;
         const unoccludeOverlap = wouldBeBackground && !isBackdropParticle && sys.simulationSpace === "world" && overlapsCharacter(sys);
-        // M-c: the un-occlude promotion draws this ambient system (Mlynar's torso rain) IN
+        // The un-occlude promotion draws this ambient system (Mlynar's torso rain) IN
         // FRONT of the character. At full strength its streaks read as prominent/"weird" over
         // his coat at the tight entrance zoom; the game shows only a faint sheen. Dim just the
         // promoted over-body copy - the background rain (and every other system) is untouched.
@@ -5270,7 +5246,6 @@ export async function loadParticles(url: string, textureBaseURL: string, bust = 
         hazeBehind,
         foreground,
         update(dt: number, findBone?: FindBone, restBone?: RestBone, displayBox?: IAnimationBounds | null, restAtt?: RestAttachment) {
-            // Recompute the shared live count once per frame for the budget.
             liveEstimate = 0;
             for (const e of emitters) liveEstimate += e.liveCount();
             for (const e of emitters) e.update(dt, findBone, restBone, displayBox, restAtt);

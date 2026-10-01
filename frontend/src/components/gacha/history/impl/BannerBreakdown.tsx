@@ -11,7 +11,7 @@ import { BANNER_GROUP_LABEL_KEYS, BANNER_RULE_TYPE_LABEL_KEYS, BANNER_STATUS_LAB
 import type { messages as gachaConstantsMessages } from "../../constants.messages";
 import type { messages } from "./BannerBreakdown.messages";
 
-/** This panel renders its own chrome plus the shared banner bucket, status and rule-type labels. */
+/** Own chrome plus the shared banner bucket, status and rule-type labels. */
 type BreakdownT = TypedT<typeof messages & typeof gachaConstantsMessages>;
 
 interface IBannerBreakdownProps {

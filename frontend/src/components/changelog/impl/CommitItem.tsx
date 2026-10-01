@@ -28,7 +28,6 @@ export function CommitItem({ commit }: { commit: IChangelogCommit }) {
 
     return (
         <li className="group/item relative grid grid-cols-[1.25rem_minmax(0,1fr)] gap-x-3 pb-5 last:pb-0 sm:grid-cols-[1.5rem_minmax(0,1fr)] sm:gap-x-4">
-            {/* Timeline rail */}
             <div className="relative flex justify-center">
                 <span aria-hidden="true" className="absolute top-4 -bottom-5 w-px bg-linear-to-b from-border to-border/50 group-last/item:hidden" />
                 <span className="relative z-1 mt-1 size-3.5 rounded-full bg-background ring-3 ring-background">
@@ -36,7 +35,6 @@ export function CommitItem({ commit }: { commit: IChangelogCommit }) {
                 </span>
             </div>
 
-            {/* Commit body */}
             <div className="min-w-0 rounded-xl border border-border bg-card px-3.5 py-3 transition-colors hover:border-border/70 sm:px-4">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
                     <span className={cn("inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 font-medium text-[11px] uppercase leading-none tracking-wide ring-1 ring-inset", style.pillClass)}>

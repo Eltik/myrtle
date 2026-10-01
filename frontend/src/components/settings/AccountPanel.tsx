@@ -24,23 +24,16 @@ interface IAccountPanelProps {
 }
 
 /**
- * The single account section, replacing the old "Profile" and "Account & data"
- * pair.
+ * The single account section: the identity header, ONE re-sync, the assistant
+ * operator (the one game-synced fact the public profile does not show), and the
+ * data and linked-account cards.
  *
- * Both of those carried a re-sync button wired to the same mutation, and
- * "Profile" restated in read-only text boxes what the identity header one card
- * above it already showed - nickname, level and server, with server appearing
- * twice on the SAME panel. None of those boxes was editable; they were `<Input
- * readOnly>` with no `onChange`, which reads as "type here" and does nothing.
- *
- * What survives is the identity header (with level now a badge rather than a
- * text box), ONE re-sync, the assistant operator (the one game-synced fact the
- * public profile does not show), and the data and linked-account cards.
+ * No read-only `<Input>` boxes restating the header: with no `onChange` they read
+ * as "type here" and do nothing.
  */
 export function AccountPanel({ user, onResync, syncing, onSignOut, signingOut, onDisconnect, disconnecting }: IAccountPanelProps) {
-    // The re-sync labels and the data/linked-account copy are declared by the
-    // two panels this one replaces; the keys are unchanged so no translation is
-    // invalidated by the merge.
+    // The re-sync labels and the data/linked-account copy keep the keys of the two
+    // panels this one merged, so no translation is invalidated.
     const t: TypedT<typeof profileMessages & typeof dataMessages> = useT("settings");
     const display = user.nickname ?? "Player";
     const nickNum = user.nick_number ? `#${user.nick_number}` : "";

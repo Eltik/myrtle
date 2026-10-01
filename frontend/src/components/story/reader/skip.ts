@@ -2,13 +2,12 @@
  * SKIP, the client's own: the button opens the story's SUMMARY, and confirming
  * it goes straight to the end. Nothing is fast-forwarded.
  *
- * This replaced a ratio-0 fast-forward (every scene duration times zero, one
- * advance per 16 ms frame, stopped by a decision, the end or a click) that
- * stepped visibly through the whole script. The game does not do that: its Skip
- * shows the story summary (`story_review_table.infoUnlockDatas[].storyInfo`,
- * served as the script's `synopsis`) with a skip and a cancel, and the skip
- * lands on the end. Every press shows the sheet, so the old once-per-session
- * confirm has nothing left to guard and is gone with it.
+ * Not a ratio-0 fast-forward (every scene duration times zero, one advance per 16 ms frame,
+ * stopped by a decision, the end or a click): that stepped visibly through the whole script and
+ * the game does not do it. Its Skip shows the story summary
+ * (`story_review_table.infoUnlockDatas[].storyInfo`, served as the script's `synopsis`) with a
+ * skip and a cancel, and the skip lands on the end. Every press shows the sheet, so there is no
+ * once-per-session confirm.
  *
  * Pure, so the rule is tested without a DOM.
  */

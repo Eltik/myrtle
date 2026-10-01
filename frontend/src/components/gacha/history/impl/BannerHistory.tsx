@@ -11,7 +11,7 @@ import { BANNER_GROUP_LABEL_KEYS, type GachaMessageKey } from "../../constants";
 import type { messages as gachaConstantsMessages } from "../../constants.messages";
 import type { messages } from "./BannerHistory.messages";
 
-/** This panel renders its own chrome plus the shared banner-bucket labels. */
+/** Own chrome plus the shared banner-bucket labels. */
 type BannerHistoryT = TypedT<typeof messages & typeof gachaConstantsMessages>;
 
 interface IBannerHistoryProps {

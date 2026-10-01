@@ -24,15 +24,13 @@ export interface IContinueCardProps {
 /**
  * ONE ROW under the page head: the story last opened, its breadcrumb, its
  * group's read fraction and the two buttons. The reference page has no
- * continue affordance at all; this keeps ours but stops it eating the fold,
- * which the old cover-art hero did at 1440 (it was 268 px tall over a page
- * whose first card then started below the fold).
+ * continue affordance at all; ours must not eat the fold, which a cover-art
+ * hero did at 1440 (268 px tall, pushing the first card below the fold).
  *
- * ON A PHONE IT IS ONE ROW TOO. The three buttons used to wrap under the text
- * there and the card measured 191 px at 390; under 640 the text column now
- * stacks beside ONE primary button, and "From the start" and "View chapter"
- * move into a menu at the row's end rather than off the page. At 640 and up
- * nothing changes.
+ * ON A PHONE IT IS ONE ROW TOO. Three buttons wrapped under the text and the
+ * card measured 191 px at 390; under 640 the text column stacks beside ONE
+ * primary button, and "From the start" and "View chapter" move into a menu at
+ * the row's end. At 640 and up the buttons stay inline.
  */
 export function ContinueCard({ pick, progress, gameRead, onViewChapter }: IContinueCardProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("story");

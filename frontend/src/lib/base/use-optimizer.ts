@@ -46,7 +46,7 @@ export interface IOptimizerAPI {
     /** Plan with every operator's highest base skills, promoted or not. */
     ignorePromotion: boolean;
     setIgnorePromotion: (value: boolean) => void;
-    /** Recruit slots purchased beyond the initial one (0-3) - an account fact
+    /** Recruit slots purchased beyond the initial one (0-3), an account fact
      *  the sync cannot read; prices Lin-style per-slot HR skills. */
     openRecruitSlots: number;
     setOpenRecruitSlots: (value: number) => void;
@@ -120,7 +120,7 @@ export function useOptimizer(uid: string): IOptimizerAPI {
     const ignorePromotion = persisted.ignorePromotion ?? false;
     const setIgnorePromotion = useCallback((value: boolean) => setPersisted((prev) => ({ ...prev, ignorePromotion: value })), [setPersisted]);
     // The server-saved value is the store; an edit THIS SESSION overrides it
-    // as a what-if and also saves best-effort - only the profile owner's
+    // as a what-if and also saves best-effort; only the profile owner's
     // token succeeds, which is the point: saved facts feed every scorer,
     // viewers get a session-local what-if. (Deliberately NOT persisted
     // client-side: a stale localStorage value must never shadow the saved one.)

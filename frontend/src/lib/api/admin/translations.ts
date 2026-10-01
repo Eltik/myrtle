@@ -80,8 +80,6 @@ interface IValidationErrorBody {
     };
 }
 
-// ---------------------------------------------------------------- locales
-
 export const getLocalesFn = createServerFn({ method: "GET" }).handler(async (): Promise<Locale[]> => {
     const token = requireSiteToken();
     const res = await backendFetch("/admin/i18n/locales", { bearerToken: token });
@@ -148,8 +146,6 @@ export function writableLocalesQueryOptions(authed: boolean) {
     });
 }
 
-// ---------------------------------------------------------------- messages
-
 export const listTranslationsFn = createServerFn({ method: "GET" })
     .inputValidator((data: IListTranslationsInput) => data)
     .handler(async ({ data }): Promise<TranslationListResponse> => {
@@ -210,8 +206,6 @@ export const clearTranslationFn = createServerFn({ method: "POST" })
         return (await res.json()) as IBackendStatus;
     });
 
-// ---------------------------------------------------------------- namespaces
-
 /**
  * `GET /admin/i18n/namespaces`. The whole namespace list, read from
  * `ui_message_keys` and independent of paging - a namespace list derived from
@@ -236,8 +230,6 @@ export function translationNamespacesQueryOptions(authed: boolean) {
         gcTime: 30 * 60 * 1000,
     });
 }
-
-// ---------------------------------------------------------------- progress + audit
 
 export const getTranslationProgressFn = createServerFn({ method: "GET" }).handler(async (): Promise<LocaleProgress[]> => {
     const token = requireSiteToken();
@@ -304,8 +296,6 @@ export function translationEntryAuditQueryOptions(input: IEntryAuditInput, authe
     });
 }
 
-// ---------------------------------------------------------------- per-locale grants
-
 export const getTranslationPermissionsFn = createServerFn({ method: "GET" })
     .inputValidator((locale: string | undefined) => locale)
     .handler(async ({ data: locale }): Promise<TranslationPermission[]> => {
@@ -351,8 +341,6 @@ export const revokeTranslationPermissionFn = createServerFn({ method: "POST" })
         if (!res.ok) throw await parseError(res);
         return (await res.json()) as IBackendStatus;
     });
-
-// ---------------------------------------------------------------- global role
 
 /**
  * `PUT /admin/users/{user_id}/role`. Super-admin only, and the backend

@@ -1,14 +1,13 @@
 /**
  * Challenge registry. Each challenge is one of three kinds (PLAIN / SQUAD_FILTER / STAGE).
  *
- * To add a new challenge, just push an entry into the appropriate section.
+ * To add one, push an entry into the right section:
  *  - Plain: cosmetic / honor-system rule.
  *  - Squad filter: predicate over the slim IRandomizerOperator; restricts the squad pool.
  *  - Stage: predicate over IStage; only eligible when the rolled stage matches.
  *
- * The picker handles eligibility (stage match, sufficient pool size for filters)
- * and weighted random selection automatically - adding an entry here is the only
- * step needed.
+ * The picker handles eligibility (stage match, pool size for filters) and weighted random
+ * selection; an entry here is the only step needed.
  */
 
 import type { messages as challengeMessages } from "./challenges.messages";

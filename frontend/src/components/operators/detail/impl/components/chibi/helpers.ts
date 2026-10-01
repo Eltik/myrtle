@@ -113,8 +113,8 @@ export function maskTextureOf(img: DecodedImage, options?: PIXI.IBaseTextureOpti
  * thirds scale and leaves the atlas at authored coordinates, which is 939 of 4880 CN pages.
  * Larger is rare but real: `build_char_4214_cairn` declares 572x572 and ships a 696x696 PNG,
  * a uniform 1.2168x upscale of the same atlas (its regions reach 570x570, inside the declared
- * box). That page used to take the early return and render every UV at 572/696 of where it
- * belongs, because this only ever corrected the undersized case.
+ * box). That page took the early return and rendered every UV at 572/696 of where it
+ * belongs: only the undersized case was corrected.
  */
 function buildPageTexture(img: DecodedImage, declaredW: number, declaredH: number): PIXI.BaseTexture {
     const [w, h] = decodedSize(img);
@@ -134,9 +134,6 @@ function buildPageTexture(img: DecodedImage, declaredW: number, declaredH: numbe
     return PIXI.BaseTexture.from(canvas, { mipmap: ATLAS_MIPMAP });
 }
 
-/**
- * Parse atlas text and return a map of page filename -> declared size.
- */
 function parseAtlasPages(atlasText: string): Map<string, { declaredW: number; declaredH: number }> {
     const pages = new Map<string, { declaredW: number; declaredH: number }>();
     ATLAS_PAGE_RE.lastIndex = 0;
@@ -171,7 +168,6 @@ export async function loadSpineWithEncodedURLs(skelPath: string, atlasPath: stri
 
     const [skelData, atlasText] = await Promise.all([skelResponse.arrayBuffer(), atlasResponse.text()]);
 
-    // Resolve texture page filenames relative to the atlas URL.
     const atlasBaseDir = atlasURL.slice(0, atlasURL.lastIndexOf("/") + 1);
     const pageInfo = parseAtlasPages(atlasText);
 
@@ -226,11 +222,7 @@ export async function loadSpineWithEncodedURLs(skelPath: string, atlasPath: stri
     return spine;
 }
 
-/**
- * Resolve which skin to use given a requested name, falling back to "default"
- * and finally to the first available skin. Centralized so callers don't
- * duplicate the lookup logic.
- */
+/** Requested skin, else "default", else the first available. */
 function resolveSkin(chibi: IChibiCharacter, skinName: string): IChibiSkin | undefined {
     const skins = chibi.skins;
     if (skins.length === 0) return undefined;
@@ -342,7 +334,6 @@ export interface ISpineFit {
      * fullscreen dialog alike (`cover` on a square box would inflate the subject with aspect).
      */
     mode: SpineFitMode;
-    /** Vertical anchor of the illustration within the box. */
     align: SpineAlign;
 }
 

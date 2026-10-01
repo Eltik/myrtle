@@ -79,9 +79,8 @@ describe("story settings", () => {
     });
 
     it("the letterbox defaults OFF, survives a round trip and refuses a non-boolean", () => {
-        // The trade: the client paints the stage outside its 16:9 box black,
-        // and the user asked for the reader to span the full width, so the
-        // default extends the background across it instead. This switch takes
+        // The trade: the client paints the stage outside its 16:9 box black, but the reader should
+        // span the full width, so the default extends the background across it. This switch takes
         // the client's own black back.
         expect(DEFAULT_SETTINGS.letterbox).toBe(false);
         expect(coerceSettings({}).letterbox).toBe(false);

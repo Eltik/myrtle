@@ -55,8 +55,8 @@ function humanAge(days: number, t: CardT): string {
 
 /** "3 weeks ago", "yesterday", etc., in the page's locale. */
 function relativeTime(date: Date, f: IFormatters): string {
-    // `relativeLong`, not `relative`: this card previously built its own
-    // `Intl.RelativeTimeFormat` with the DEFAULT (long) style, so it read
+    // `relativeLong`, not `relative`: this card's wording is the DEFAULT (long)
+    // `Intl.RelativeTimeFormat` style, so it reads
     // "3 weeks ago". The shared `relative` is the narrow style used in dense
     // UI ("3 wk. ago"), which would have silently reworded this card.
     return f.relativeLong(date.toISOString());

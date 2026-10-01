@@ -22,14 +22,12 @@ type BrowseT = TypedT<typeof messages>;
 type ThemeT = TypedT<typeof archiveMessages>;
 
 /**
- * ONE NEUTRAL PILL FOR EVERY KIND, and that is a correction, not a preference.
- * The badge used to be tinted per kind on themed surfaces and printed in the
- * cover's own sampled ink on a ticket, so a card's most legible label changed
- * with its art: Stormwatch's c1 came back #4a4a26, and MAIN STORY on it was
- * the reviewer's "poor readability". A label that names a taxonomy has no
- * business carrying a per-card colour, so it is now black on white in light
- * mode and white on near-black in dark mode, which are the two highest
- * contrast ratios the page has.
+ * ONE NEUTRAL PILL FOR EVERY KIND. It was tinted per kind on themed surfaces and
+ * printed in the cover's own sampled ink on a ticket, so the most legible label
+ * changed with its art: Stormwatch's c1 came back #4a4a26 and MAIN STORY on it
+ * read poorly. A label that names a taxonomy has no business carrying a
+ * per-card colour: black on white in light mode, white on near-black in dark,
+ * the two highest contrast ratios the page has.
  */
 export function KindBadge({ kind, className }: { kind: StoryKind; className?: string }): React.ReactElement {
     const t: BrowseT = useT("story");
@@ -95,11 +93,10 @@ export interface IGroupCardProps {
 /**
  * The inks, as inline custom properties the module's rules read.
  *
- * ONLY TWO THINGS ARE INKED NOW. The tape band that used to print all three
- * across the top of every card is gone: it was the reviewer's "palettes at the
- * top of every card", and it was chrome carrying a swatch rather than
- * information. What survives is the spec row's DOT and the progress fill,
- * which the reviewer liked, and nothing else on the card reads `--ticket-c*`.
+ * ONLY TWO THINGS ARE INKED. The tape band that printed all three across the top
+ * of every card is gone: chrome carrying a swatch, not information. What
+ * survives is the spec row's DOT and the progress fill, and nothing else on the
+ * card reads `--ticket-c*`.
  */
 // The list row carries its inks on the button, because the row's own left
 // rule reads `--ticket-c1`. The ticket does not: see `InkDot`.
@@ -187,8 +184,8 @@ function FittedTitle({ name }: { name: string }): React.ReactElement {
 
 /**
  * One chapter as a ticket. The silhouette, the tear at 79%, the notches, the
- * stub's hover tear-away and the drop shadow are the reference page's and are
- * untouched; what is inside them is now the GAME's card.
+ * stub's hover tear-away and the drop shadow are the reference page's; what is
+ * inside them is the GAME's card.
  *
  * `ui/[uc]mixstory.ab` draws a story set as its KEY VISUAL cover-fitted over
  * the whole card (`stage_mix_story_overall_group_item_view`: a 282x204 image
@@ -232,10 +229,9 @@ export const GroupCard = memo(function GroupCard({ group, fraction, onOpen, inde
                     <span aria-hidden="true" className={styles.stub}>
                         <span className={cn(styles.half, styles.stubFace)}>{art ? <img src={art} alt="" crossOrigin="anonymous" loading="lazy" decoding="async" className={styles.stubImage} /> : <span className={styles.stubBlank} style={NO_ART_INK} />}</span>
                     </span>
-                    {/* THE BOOKMARK SAYS WHAT IT MEANS NOW. It is amber part-read and green
-                        finished, and it carried neither a name nor a number, so the colour
-                        was a code with no key. `role="img"` plus the fraction gives it one,
-                        and the native `title` shows the same words on hover; the card's own
+                    {/* The bookmark is amber part-read and green finished, so it needs a
+                        name and a number: `role="img"` plus the fraction gives it one, and
+                        the native `title` shows the same words on hover. The card's own
                         `aria-label` already carries the fraction, so this adds no tab stop
                         and no second announcement of the same number. */}
                     {pct > 0 ? <span role="img" aria-label={t("chapter.readFraction", { read: fraction.read, total: fraction.total })} title={t("chapter.readFraction", { read: fraction.read, total: fraction.total })} className={cn(styles.bookmark, fraction.done && styles.bookmarkDone)} /> : null}

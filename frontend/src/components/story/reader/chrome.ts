@@ -97,7 +97,7 @@ export function chromeShown(o: ChromeInputs): boolean {
  * two ends of an `inset-x-2` row, so at 1440 the nearest pill edge is roughly
  * 640 px away and every one of those pixels is STAGE. `pointerleave` on the
  * handle fired the instant the pointer started moving and the bar went with
- * it. The peek is now held over the UNION of the handle and the pills, and the
+ * it. The peek is held over the UNION of the handle and the pills, and the
  * grace covers the stage between them: 300 ms is a comfortable crossing at any
  * speed a pointer actually travels and short enough that a pointer that left
  * for good does not leave the bar hanging.

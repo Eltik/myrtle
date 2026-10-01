@@ -25,7 +25,7 @@ interface ISkillsContentProps {
     operator: IOperatorListItem;
 }
 
-/** This tab renders both its own chrome and the labels `helpers.ts` derives. */
+/** Own chrome plus the labels `helpers.ts` derives. */
 type SkillsT = TypedT<typeof messages & typeof helperMessages>;
 
 export const SkillsContent = memo(function SkillsContent({ operator }: ISkillsContentProps) {

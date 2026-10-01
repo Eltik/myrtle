@@ -486,7 +486,6 @@ export async function toPdf(book: Book, opts: PdfOptions, deps: PdfDeps): Promis
             </Page>,
         );
 
-    // 1. The title page.
     await append(
         await render(() =>
             doc(
@@ -506,7 +505,6 @@ export async function toPdf(book: Book, opts: PdfOptions, deps: PdfDeps): Promis
     const placed: PdfResult["sections"] = [];
     const outline: OutlineNode[] = [{ title: labels.contents, page: 1, children: [] }];
 
-    // 3. Parts and stories, one document each.
     let done = 0;
     for (const part of book.parts) {
         let into = outline;
@@ -582,7 +580,6 @@ export async function toPdf(book: Book, opts: PdfOptions, deps: PdfDeps): Promis
         }
     }
 
-    // 4. The colophon.
     numbers.set("colophon", next);
     outline.push({ title: labels.colophon, page: next - 1, children: [] });
     await append(
@@ -599,7 +596,6 @@ export async function toPdf(book: Book, opts: PdfOptions, deps: PdfDeps): Promis
         ),
     );
 
-    // 5. The contents, now with its numbers, after the title page.
     opts.onProgress?.({ phase: "merge", done, total: sections.length, label: "" });
     abortIfNeeded(signal);
     const final = await PDFDocument.load(await render(() => contents(numbers)));

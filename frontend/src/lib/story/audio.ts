@@ -245,7 +245,6 @@ export function createStoryAudio(): StoryAudio {
         return introSeconds + ((offsetSec - introSeconds) % loopSeconds);
     }
 
-    // ---- DEV instrument ----
     const ledger: AudioLedgerRow[] = [];
     let haltNow = -1;
     let musicAnalyser: AnalyserNode | null = null;
@@ -296,7 +295,7 @@ export function createStoryAudio(): StoryAudio {
     /**
      * A `dispose()` is a TEARDOWN, not a tombstone: the next `arm()` builds a
      * new context, new buses and new analysers, and republishes the dev
-     * handles. Measured 2026-09-23 in the user's own Chrome, entering the
+     * handles. Measured 2026-09-23 in Chrome, entering the
      * reader by a CLIENT-SIDE navigation from `/stories`: a property setter on
      * `window.__storyAudio` recorded exactly two writes 15 ms apart, one
      * function and one undefined, and no third. The module is created ONCE in

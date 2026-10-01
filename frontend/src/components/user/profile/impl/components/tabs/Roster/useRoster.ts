@@ -46,11 +46,10 @@ export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndex
     const toggleFilters = () => setFiltersVisible((v) => !v);
     const isDesktop = useMediaQuery("(min-width: 768px)");
 
-    // The responsive default is a FIRST-VISIT default, not a reset. This ran on
-    // every mount and overwrote the stored `viewMode` unconditionally, so any
-    // visitor who chose icons got full art back the moment they left the tab
-    // and came back (roster -> stats -> roster remounts this hook). It now only
-    // fires when localStorage carried no view mode at all.
+    // The responsive default is a FIRST-VISIT default, not a reset. Running it on every mount
+    // overwrote the stored `viewMode`, so a visitor who chose icons got full art back after
+    // roster -> stats -> roster (remounts this hook). Fires only when localStorage had no
+    // view mode at all.
     const didInit = useRef(false);
     useEffect(() => {
         if (didInit.current) return;

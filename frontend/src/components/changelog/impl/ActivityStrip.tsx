@@ -12,7 +12,6 @@ interface IBucket {
     count: number;
 }
 
-/** A compact commits-per-day bar strip across the active range. */
 export function ActivityStrip({ commits, days }: { commits: IChangelogCommit[]; days: number }) {
     const t: TypedT<typeof messages> = useT("changelog");
     const f = useFormatters();

@@ -15,7 +15,6 @@ export interface IExportField<T> {
     label: string;
     /** Optional grouping label rendered in the field-selection UI. */
     group?: string;
-    /** Whether the field is enabled by default. */
     defaultEnabled?: boolean;
     /** Pull the value off the source row. Returning `undefined`/`null` yields an empty cell. */
     accessor: (row: T) => unknown;
@@ -36,13 +35,10 @@ export interface IExportOptions {
     format: ExportFormat;
     /** Field IDs to include, in the order in which they should appear. */
     fieldIds: string[];
-    /** Pretty-print JSON/XML/YAML (indented). */
     pretty: boolean;
-    /** JSON indent width when pretty. */
     jsonIndent: JsonIndent;
     /** CSV/TSV delimiter override. Defaults to comma for CSV, tab for TSV. */
     csvDelimiter: string;
-    /** Include header row in CSV/TSV. */
     csvHeaders: boolean;
     /** Prepend UTF-8 BOM (helps Excel detect UTF-8 in CSV). */
     csvBom: boolean;
@@ -52,9 +48,7 @@ export interface IExportOptions {
     arrayMode: ArrayJoinMode;
     /** Separator used when arrayMode is "join". */
     arraySeparator: string;
-    /** Markdown: include a numeric row-index column. */
     markdownRowIndex: boolean;
-    /** XML root element name. */
     xmlRoot: string;
     /** XML row element name (defaults to schema.itemName). */
     xmlItem: string;

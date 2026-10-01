@@ -52,7 +52,7 @@ export function FlatHead({ title, count }: { title: string; count: string }): Re
  * "Chapters 0 to 3", or "Chapter 9", as a reader says it. The wording is the
  * caller's, so the range rule stays pure in impl/chapters.ts.
  *
- * This is the UNABBREVIATED form and it is now the tooltip's alone: a bar that
+ * This is the UNABBREVIATED form and it is the tooltip's alone: a bar that
  * overflows by 2,011 px at 1440 cannot afford "Chapters 0 to 3" eighteen
  * times, and a reader who wants the words gets them on hover.
  */
@@ -60,7 +60,10 @@ function rangeLabel(range: IChapterRange, t: BrowseT): string {
     return rangeIsSingle(range) ? t("browse.chip.rangeOne", { n: range.from }) : t("browse.chip.range", { from: range.from, to: range.to });
 }
 
-/** "Ch. 4-8", or "Ch. 9" over one chapter: the compact mono form every printed range now takes. A plain hyphen, not an en dash, because it sits in a monospace run beside digits. */
+/**
+ * "Ch. 4-8", or "Ch. 9" over one chapter: the compact mono form every printed range takes. A plain
+ * hyphen, not an en dash, because it sits in a monospace run beside digits.
+ */
 function compactLabel(range: IChapterRange, t: BrowseT): string {
     return rangeIsSingle(range) ? t("browse.chip.compactOne", { n: range.from }) : t("browse.chip.compact", { from: range.from, to: range.to });
 }
@@ -94,12 +97,10 @@ function chipLabel(chip: IChipModel, t: BrowseT): string {
  * logo is a 108x108 emblem in a 22/28 px square, and a shelf abbreviation is
  * 44x36 in a 20/24 px one.
  *
- * THE BANNER CAME DOWN AND THE MONOGRAM STAYED PUT, which is a correction. At
- * 24/32 the banner rendered 84.9 px wide in a chip and 113.2 in a heading
- * against a 22/28 px monogram beside it, so RL, UR and LA read as a lesser
- * kind of mark than the four act banners. The banner now measures 70.8 px in a
- * chip and 92.0 in a heading, and the monogram is the LARGER of the two by
- * height in both places.
+ * BANNER SIZED DOWN, MONOGRAM UNCHANGED. At 24/32 the banner rendered 84.9 px
+ * wide in a chip and 113.2 in a heading against a 22/28 px monogram beside it,
+ * so RL, UR and LA read as a lesser mark than the four act banners. Now 70.8 px
+ * in a chip and 92.0 in a heading; the monogram is the LARGER by height in both.
  *
  * A MONOGRAM ALONE IN A CHIP IS 24 PX, not the 22 it is beside a name. A
  * collapsed shelf chip is the logo and nothing else, and at 22 px in a 36 px

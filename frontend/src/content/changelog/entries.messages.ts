@@ -1,7 +1,7 @@
 import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 
 /**
- * The hand-written release notes' own prose. Keyed at entry granularity - one
+ * The hand-written release notes' own prose. Keyed at entry granularity: one
  * key per title, one per lead, one per bullet - because this is document
  * content, not UI chrome: a translator works through a whole entry at once and
  * the entry is what goes stale when it is rewritten.

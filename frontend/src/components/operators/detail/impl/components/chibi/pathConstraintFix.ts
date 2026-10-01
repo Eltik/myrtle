@@ -15,7 +15,7 @@
  * driven by Chain-mode path constraints (`ZL_Pelvis*` -> `ZL_*_Leg_A_Path`).
  * runtime-4.1 ships the correct code, so this only touches the 3.8 class.
  *
- * We patch the prototype of the ACTUAL class the loaded skeleton uses (grabbed
+ * Patches the prototype of the ACTUAL class the loaded skeleton uses (grabbed
  * off a live instance), so it's immune to how the loader-uni bundles runtimes,
  * and gated to the 3.8 signature (`rotateMix`/`translateMix`, vs 4.x's
  * `mixRotate`/`mixX`/`mixY`) so a 4.x skeleton is never touched. Runs once.

@@ -124,7 +124,6 @@ export function OperatorTemplate(data: IOperatorOgData) {
                             </svg>
                             <div style={{ display: "flex" }}>{rarity}</div>
                         </div>
-                        {/* profession as icon + text */}
                         {profession ? (
                             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                 {professionIconURL ? (

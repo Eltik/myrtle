@@ -27,7 +27,6 @@ export function parseInline(src: string): InlineNode[] {
             continue;
         }
 
-        // Inline code: `text`
         if (c === "`") {
             const end = src.indexOf("`", i + 1);
             if (end > i) {
@@ -38,7 +37,6 @@ export function parseInline(src: string): InlineNode[] {
             }
         }
 
-        // Strong: **text**
         if (c === "*" && src.charAt(i + 1) === "*") {
             const end = findClosing(src, i + 2, "**");
             if (end > 0) {
@@ -49,7 +47,6 @@ export function parseInline(src: string): InlineNode[] {
             }
         }
 
-        // Emphasis: *text* or _text_
         if ((c === "*" || c === "_") && !isWordChar(src.charAt(i - 1))) {
             const marker = c;
             const end = findEmphasisEnd(src, i + 1, marker);
@@ -61,7 +58,6 @@ export function parseInline(src: string): InlineNode[] {
             }
         }
 
-        // Link: [text](href)
         if (c === "[") {
             const link = parseLink(src, i);
             if (link) {
@@ -72,7 +68,6 @@ export function parseInline(src: string): InlineNode[] {
             }
         }
 
-        // Autolink: <http://...> or <mailto:...>
         if (c === "<") {
             const end = src.indexOf(">", i + 1);
             if (end > i) {

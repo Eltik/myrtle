@@ -163,12 +163,10 @@ function cmpByKey(a: IDisplayEntry, b: IDisplayEntry, key: SortKey): number {
 /**
  * Ties break by investment, then rarity, then name.
  *
- * This used to break straight to `name.localeCompare`, which put an alphabetic
- * accident between two operators the player thinks of as very differently
- * invested: inside one rarity band, a maxed operator and an E0 1 operator sat
- * wherever their names fell. Each key's own secondary term is dropped from
- * `cmpByKey` for the same reason - the chain below is now the single place tie
- * order is decided, so every key gets the same one.
+ * A bare `name.localeCompare` tie-break put an alphabetic accident between two operators the
+ * player thinks of as very differently invested: inside one rarity band, a maxed operator and an
+ * E0 1 operator sat wherever their names fell. Each key's own secondary term is dropped from
+ * `cmpByKey` for the same reason: this chain is the single place tie order is decided.
  */
 export function sortEntries(entries: IDisplayEntry[], key: SortKey, order: SortOrder): IDisplayEntry[] {
     const dir = order === "asc" ? 1 : -1;

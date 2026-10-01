@@ -25,10 +25,9 @@ export interface IReadToggleProps {
 }
 
 /**
- * THE TICK IS A CONTROL, not a verdict printed beside a link. Clicking it marks
- * the story read, and clicking a filled one withdraws the mark, which is the
- * whole of the "it should be easy" ask: a reader who finished a chapter in the
- * game two years ago has no other way to say so.
+ * THE TICK IS A CONTROL, not a verdict printed beside a link. Clicking it marks the story read,
+ * and clicking a filled one withdraws the mark. A reader who finished a chapter in the game two
+ * years ago has no other way to say so.
  *
  * The SOURCE of a mark is drawn, because the three are not the same claim. A
  * filled tick is the reader's own mark; a filled tick with a controller glyph

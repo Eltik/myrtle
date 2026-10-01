@@ -63,8 +63,8 @@ export const GOLD_PERMIT_LADDER: { certs: number; permits: number }[] = [
  * worth offering rather than assuming: at the 20 certificates a week that weekly
  * missions pay, a player banks about 87 a month and never reaches phase 2 at all.
  *
- * Within phase 1 the permit and the Orundum are exactly equal value, which is worth
- * knowing before agonising over the order: 240 certificates buys either one permit or
+ * Within phase 1 the permit and the Orundum are exactly equal value, so the order
+ * does not matter: 240 certificates buys either one permit or
  * 600 Orundum, and a permit IS 600 Orundum. Permits are bought first only because a
  * whole pull is easier to reason about than a part of one.
  */
@@ -278,7 +278,7 @@ export interface IOriginiteWarning {
  * Whether the outfit picks can be paid for at all.
  *
  * The pull projection already reserves the outfit cost before converting anything
- * (`projectIncome`), so pulls and outfits no longer compete: the only thing left to
+ * (`projectIncome`), so pulls and outfits do not compete: the only thing left to
  * say is when the outfits alone cost more Originite Prime than the player will ever
  * hold over the horizon, in which case no amount of not-pulling fixes it.
  */

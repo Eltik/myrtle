@@ -195,10 +195,9 @@ describe("StoryReader", () => {
     });
 
     it("a cutscene halt draws the video layer, ducks the music, and Skip advances past it", () => {
-        // The bare element is what this case is about, so it is CHOSEN rather
-        // than assumed: the shipped default is the full player, a lazy module
-        // that draws no element of ours, and `simple` is that default's kill
-        // switch. Every other assertion here is the one this test always made.
+        // The bare element is what this case is about, so it is CHOSEN rather than assumed: the
+        // default is the full player, a lazy module that draws no element of ours, and `simple`
+        // is its kill switch.
         window.localStorage.setItem("myrtle.story.settings", JSON.stringify({ cutscenePlayer: "simple" }));
         renderReader(cutsceneScript());
         // The title card: the first press starts the story on the cutscene.

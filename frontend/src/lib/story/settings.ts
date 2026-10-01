@@ -19,37 +19,24 @@ export const READING_STYLES = [...READING_PRESETS, "custom"] as const;
 export type ReadingStyle = (typeof READING_STYLES)[number];
 
 /**
- * Where the speaker's own colour goes: nowhere, on the line and the plate, or
- * on the plate alone.
+ * Where the speaker's colour goes: nowhere, the line and the plate, or the plate alone.
  *
- * `off` is the DEFAULT and the kill switch: the djb2 hue over the speaker's
- * name that the reader shipped with, seven curated tints per surface, and a
- * line in the reader's own text colour. The other two SAMPLE the body PNG of
- * the lit sprite on stage and ink that character's own dominant colour, which
- * is what the user asked for: the skin table's colour list is per OUTFIT and
- * says nothing about the sprite actually on screen, so the pixels are the
- * source.
+ * `off` is the DEFAULT and the kill switch: djb2 hue over the speaker's name, seven curated
+ * tints per surface, line in the reader's own text colour. The other two SAMPLE the body PNG
+ * of the lit sprite on stage and ink that character's dominant colour (the skin table's
+ * colour list is per OUTFIT and says nothing about the sprite on screen).
  *
- * `text` is the one the user asked for by name, "I wanted it to change the
- * text colour, not the speaker colour": the DIALOGUE LINE takes the ink and
- * the plate takes it with her, because a line in one colour under a plate in
- * another reads as two speakers. `name` is the plate alone, which is the
- * smaller change and what the first pass shipped as `sprite`.
+ * `text`: the DIALOGUE LINE takes the ink and the plate with it, because a line in one colour
+ * under a plate in another reads as two speakers. `name` is the plate alone.
  */
 export const SPEAKER_TINTS = ["off", "text", "name"] as const;
 export type SpeakerTint = (typeof SPEAKER_TINTS)[number];
 
 /**
- * The stored `speakerTint`, INCLUDING the two-control shape this replaced.
- *
- * The first pass stored `"hash" | "sprite"` beside a `colorDialogue` switch,
- * so the three states a reader could actually be in map one to one onto the
- * three the select now offers: `sprite` with the switch ON was the line and
- * the plate (`text`), `sprite` with it off was the plate alone (`name`), and
- * `hash` was neither (`off`). A missing field, an unknown string and a
- * `colorDialogue` that is not a boolean all land on `off`, which is the
- * shipped default, so junk can never hand a reader a colour they did not ask
- * for.
+ * The stored `speakerTint`, including the older two-control shape: `"hash" | "sprite"` beside
+ * a `colorDialogue` switch. `sprite` + switch on is `text`, `sprite` + off is `name`, `hash` is
+ * `off`. A missing field, an unknown string or a non-boolean `colorDialogue` lands on `off`,
+ * so junk never hands a reader a colour they did not ask for.
  */
 export function coerceSpeakerTint(raw: { speakerTint?: unknown; colorDialogue?: unknown }): SpeakerTint {
     const v = String(raw.speakerTint);
@@ -59,19 +46,14 @@ export function coerceSpeakerTint(raw: { speakerTint?: unknown; colorDialogue?: 
 }
 
 /**
- * WHICH controls a cutscene carries, and it is three layers over the same clip.
+ * WHICH controls a cutscene carries: three layers over the same clip.
  *
- * `simple` is the layer the reader shipped with: a bare `<video>`, no controls
- * at all, and one Skip pill. It is the KILL SWITCH for both of the others and
- * it is byte-for-byte the element that shipped, so picking it restores the
- * reader that existed before this setting.
+ * `simple`: a bare `<video>`, no controls, one Skip pill. Kill switch for the other two.
  *
- * `native` is that same element with the browser's own controls attribute, so
- * scrubbing, volume, fullscreen and picture-in-picture are whatever Chrome,
- * Safari or Firefox each offer; nothing is downloaded to get them.
+ * `native`: the same element with the browser's own controls attribute (scrub, volume,
+ * fullscreen, PiP are whatever the browser offers); nothing extra is downloaded.
  *
- * `vidstack` is the full player, lazily loaded, and it costs a chunk the
- * reader does not otherwise fetch.
+ * `vidstack`: the full player, lazily loaded, a chunk the reader does not otherwise fetch.
  */
 export const CUTSCENE_PLAYERS = ["simple", "native", "vidstack"] as const;
 export type CutscenePlayer = (typeof CUTSCENE_PLAYERS)[number];
@@ -178,12 +160,10 @@ export interface StorySettings {
     boxY: number;
     boxX: number;
     /**
-     * The toolbar's auto-hide, now OPT-IN: with it on the pills and the
-     * scrubber fade after `CHROME_IDLE_MS` of no pointer and no key, and any
-     * movement or key brings them back. Off by default, because the client
-     * never hides its own story chrome (`docs/story-reader.md`, the reader
-     * chrome paragraphs). This is the inverse of the `v: 1` field
-     * `alwaysShowToolbar`, whose value is deliberately NOT carried over.
+     * Toolbar auto-hide, OPT-IN: pills and scrubber fade after `CHROME_IDLE_MS` with no pointer
+     * or key; any movement or key brings them back. Off by default because the client never
+     * hides its own story chrome (`docs/story-reader.md`, reader chrome paragraphs). Inverse of
+     * the `v: 1` field `alwaysShowToolbar`, whose value is deliberately NOT carried over.
      */
     autoHideToolbar: boolean;
     /**

@@ -29,7 +29,8 @@ import { useDpsCurves } from "./impl/useDpsCurves";
 import { useDpsResults } from "./impl/useDpsResults";
 import { useDpsState } from "./impl/useDpsState";
 
-/** This page renders its own chrome, the axis/metric labels from `constants.ts`, and the build-summary labels `useOperatorDetail.ts` derives. */
+/** The page's own chrome, the axis/metric labels from `constants.ts`, and the build-summary labels
+ * `useOperatorDetail.ts` derives. */
 type DpsT = TypedT<typeof messages & typeof dpsConstantsMessages & typeof detailMessages>;
 type DpsRichT = TypedRichT<typeof messages>;
 

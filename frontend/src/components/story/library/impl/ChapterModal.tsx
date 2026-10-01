@@ -1,28 +1,25 @@
 /**
  * ONE CHAPTER AS A SHEET, headed by the picture the game itself draws for it.
  *
- * The old popup was a letterboxed banner strip, a "MAIN STORY" eyebrow, a
- * 26 px "CHAPTER 1 · EVIL TIME PART 2" heading, and then one 10%-tinted row
- * per story, which printed "Isolated Island" twice because the table stores an
- * operation as a `_beg` and an `_end` script. Three things changed and each is
- * a claim about the content rather than a preference: the LOGOTYPE is the title
- * (`art.titleSource`, authored per event, on the wire for 81 of the 87
- * non-record groups), the row is an OPERATION rather than a script
- * (`derive.groupOperations`, 523 of 525 repeated codes merge), and the only
- * colour left is on the ticks and the hover, because the per-phase washes were
- * what read as ugly.
+ * Replaces a letterboxed banner strip, a "MAIN STORY" eyebrow, a 26 px
+ * "CHAPTER 1 · EVIL TIME PART 2" heading and one 10%-tinted row per story.
+ * Title is the LOGOTYPE (`art.titleSource`, authored per event, on the wire for
+ * 81 of the 87 non-record groups). A row is an OPERATION rather than a script
+ * (`derive.groupOperations`, 523 of 525 repeated codes merge), because the table
+ * stores an operation as a `_beg` and an `_end` script and a row per script
+ * printed "Isolated Island" twice. The only colour is on the ticks and the
+ * hover: per-phase washes read as ugly.
  *
  * WHAT THIS FILE OWNS is the shell and the two decisions in it. The first is
  * which shell: a Dialog above 640 px and a bottom Sheet under it, the same
  * rule the operator panel uses. The second is where the scrolling happens, and
- * there is exactly ONE place. The responsive pass gave the entries list a
- * `max-h-[46dvh] overflow-y-auto` of its own INSIDE `DialogPanel`, which is
- * already a `ScrollArea`, so at 1440x900 with 25 rows the right edge carried
- * two stacked scrollbars, the primitive's styled one and the native one the
- * class added. The panel is gone: the popup holds one scrolling content box,
+ * there is exactly ONE place. A `max-h-[46dvh] overflow-y-auto` on the entries
+ * list INSIDE `DialogPanel`, which is already a `ScrollArea`, gave two stacked
+ * scrollbars at 1440x900 with 25 rows: the primitive's styled one and the
+ * native one the class added. So the popup holds one scrolling content box,
  * the hero scrolls away inside it, and the meta block sticks to its top. The
  * bands inside are `ChapterHero`, `ChapterMeta` and `ChapterEntries`, with the
- * archive's own panel beside them. It still changes no route: the URL stays on
+ * archive's own panel beside them. It changes no route: the URL stays on
  * `/stories` so the browse position survives the back button.
  */
 import { useQuery } from "@tanstack/react-query";
@@ -74,32 +71,14 @@ function typingInto(target: EventTarget | null): boolean {
     return target.closest(ARROW_OWNERS) !== null;
 }
 
-/**
- * ONE CHAPTER AS A SHEET, headed by the picture the game itself draws for it.
- *
- * The old popup was a letterboxed banner strip, a "MAIN STORY" eyebrow, a
- * 26 px "CHAPTER 1 · EVIL TIME PART 2" heading, and then one 10%-tinted row
- * per story, which printed "Isolated Island" twice because the table stores an
- * operation as a `_beg` and an `_end` script. Three things changed and each is
- * a claim about the content rather than a preference: the LOGOTYPE is the
- * title (`art.titleSource`, authored per event, on the wire for 81 of the 87
- * non-record groups), the row is an OPERATION rather than a script
- * (`derive.groupOperations`, 523 of 525 repeated codes merge), and the only
- * colour left is on the ticks and the hover, because the per-phase washes were
- * what read as ugly.
- *
- * It stays a Dialog above 640 px and a bottom Sheet under it, the same rule
- * the operator panel uses, and it still changes no route: the URL stays on
- * `/stories` so the browse position survives the back button.
- */
 export function ChapterModal({ group, progress, gameRead, onClose, prev = null, next = null, onNavigate }: IChapterModalProps): React.ReactElement {
     const t: BrowseT = useT("story");
     const phone = useMediaQuery("max-sm");
     const server = useGamedataServer();
     // The library's one music channel, seen from this chapter. The hero's theme
     // button and the archive's music rows share it, and so does every ticket on
-    // the page behind the sheet: closing the sheet no longer stops the theme,
-    // leaving `/stories` does.
+    // the page behind the sheet: closing the sheet leaves the theme playing,
+    // leaving `/stories` stops it.
     const audio = useChapterAudio(group);
     // The sheet's ONE scroller. The hero's parallax listens on this box rather
     // than on the window, which never moves while a dialog is open.
@@ -205,13 +184,11 @@ export function ChapterModal({ group, progress, gameRead, onClose, prev = null, 
 }
 
 /**
- * THE ONE WAY OUT, ALWAYS REACHABLE. It used to sit on the hero, which was
- * fine while the hero could not move; now the hero scrolls away and a close
- * button that goes with it would leave the escape route 25 rows up. It is
- * pinned to the POPUP instead, outside the scroller, so it holds the same
- * corner at every scroll position. The black pill and the blur are the hero's,
- * unchanged, because it still has to read on a bright key visual at the top of
- * the scroll.
+ * THE ONE WAY OUT, ALWAYS REACHABLE. The hero scrolls away, and a close button
+ * that went with it would leave the escape route 25 rows up. It is pinned to
+ * the POPUP instead, outside the scroller, so it holds the same corner at every
+ * scroll position. The black pill and the blur are the hero's, because it has
+ * to read on a bright key visual at the top of the scroll.
  */
 function PinnedClose({ close: Close, label }: { close: typeof DialogClose; label: string }): React.ReactElement {
     return (

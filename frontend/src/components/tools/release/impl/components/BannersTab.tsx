@@ -167,12 +167,10 @@ function BannerRow({ banner, lookup, charNames, eventNames, eventsByDay, eventTi
                 <div className="flex flex-wrap items-center gap-x-2 font-sans text-[11px] text-muted-foreground">
                     {align && <span>{align}</span>}
                     {/* `anchor` alignment is the 21-day-window heuristic in
-                        `backend/src/core/release/align.rs`: it takes the most recent CN
-                        activity that started within 21 days before the pool opened, with
-                        no check that the two are related. When it misfires it names a
-                        real but unrelated event, and "with X" asserted that as fact. The
-                        heuristic case now says it is a guess in the phrase itself rather
-                        than only in a separate label beside it. */}
+                        `backend/src/core/release/align.rs`: the most recent CN activity that
+                        started within 21 days before the pool opened, with no check that the two
+                        are related. A misfire names a real but unrelated event, so the heuristic
+                        case says "guess" in the phrase itself, not only in a label beside it. */}
                     {banner.anchorActivity && (
                         <span title={banner.anchorActivity}>
                             {banner.alignment.method === "anchor" ? rt("release.banners.probablyWith", { event: <span className={anchor ? "text-foreground/80" : "font-mono"}>{anchorName}</span> }) : rt("release.banners.with", { event: <span className={anchor ? "text-foreground/80" : "font-mono"}>{anchorName}</span> })}

@@ -156,8 +156,6 @@ function validate(t: LocalesT, form: IFormState, locales: Locale[], isNew: boole
     return errors;
 }
 
-// ---------------------------------------------------------------- section
-
 export function LocalesSection({ role, authed }: { role: string | null; authed: boolean }): React.ReactElement {
     const t: LocalesT = useT("admin");
     const rt: LocalesRichT = useRichT("admin");
@@ -274,8 +272,6 @@ function LocaleRow({ locale, progress, canWrite, onEdit }: { locale: Locale; pro
         </tr>
     );
 }
-
-// ---------------------------------------------------------------- editor
 
 function LocaleDialog({ locale, locales, nextSortOrder, onClose }: { locale: Locale | null; locales: Locale[]; nextSortOrder: number; onClose: () => void }): React.ReactElement {
     const t: LocalesT = useT("admin");

@@ -1,15 +1,12 @@
 import type { MessageValues } from "./format";
 
 /**
- * The declaration side of the runtime: where a string's English text actually
- * lives.
+ * The declaration side of the runtime: where a string's English text actually lives.
  *
- * `t("pagination.previous")` at a call site says which string to render but
- * not what it says, which is useless as the source of a source catalog. Rather
- * than smuggling the English into a third argument at every call site - where
- * it would be duplicated across the several components that share a key, and
- * would have to be kept in sync by hand - the text lives once in a
- * `*.messages.ts` module colocated with the components that use it:
+ * `t("pagination.previous")` says which string to render, not what it says, so it can't be
+ * the source of the catalog. Rather than a third argument duplicated at every call site and
+ * kept in sync by hand, the text lives once in a `*.messages.ts` module colocated with the
+ * components that use it:
  *
  * ```ts
  * // pagination.messages.ts
@@ -22,11 +19,10 @@ import type { MessageValues } from "./format";
  * export const { keys } = defineMessages({ namespace, messages });
  * ```
  *
- * The extractor then has two independent sources it can cross-check: these
- * modules say what text exists, and the `t()` call sites say what text is
- * used. Either one without the other is a warning - a defined key nobody
- * renders is dead weight in the translators' queue, and a rendered key nobody
- * defined would fall through to showing its own raw identifier.
+ * The extractor cross-checks two sources: these modules say what text exists, the `t()` call
+ * sites say what text is used. Either one without the other is a warning: a defined key nobody
+ * renders is dead weight in the translators' queue, and a rendered key nobody defined would
+ * fall through to showing its own raw identifier.
  */
 export interface IMessageDefinition {
     /** English source text, in the ICU subset `format.ts` implements. */
@@ -47,16 +43,14 @@ export interface IDefineMessagesInput<TMessages extends MessageMap> {
     namespace?: string;
     messages: TMessages;
     /**
-     * Set on a module whose keys are rendered through a variable rather than a
-     * literal - a registry or constants table that stores `labelKey` and lets
-     * a component resolve it with `t(item.labelKey)`.
+     * Set on a module whose keys are rendered through a variable, not a literal: a registry or
+     * constants table that stores `labelKey` and lets a component resolve it with
+     * `t(item.labelKey)`.
      *
-     * The extractor cross-checks declared keys against literal `t("...")` call
-     * sites, which is what catches a typo and a dead key. That check cannot
-     * see an indirect call, so without this flag every registry key reports
-     * as unused and the real dead keys get lost in the noise. This says "the
-     * usage of these keys is not statically visible; do not expect to find
-     * it".
+     * The extractor cross-checks declared keys against literal `t("...")` call sites, which
+     * catches typos and dead keys. It cannot see an indirect call, so without this flag every
+     * registry key reports as unused and the real dead keys get lost in the noise. Says "usage of
+     * these keys is not statically visible; do not expect to find it".
      */
     dynamic?: boolean;
 }

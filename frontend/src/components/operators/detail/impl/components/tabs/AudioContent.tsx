@@ -25,7 +25,7 @@ const ALL_CATEGORY_ID = "all";
 
 type AudioMode = "voice" | "sfx";
 
-/** This tab renders its own chrome plus the language, category and event taxonomies. */
+/** Own keys plus the language, category and event taxonomies. */
 type AudioT = TypedT<typeof messages & typeof detailConstantsMessages>;
 
 function sanitizeFilename(name: string): string {
@@ -65,11 +65,9 @@ function voiceCategoryLabelKey(bucket: string) {
     return VOICE_CATEGORY_LABEL_KEY[bucket] ?? "voice.category.other";
 }
 
-// =============================================================================
-// Shared audio engine - a single <audio> element + transport state reused by
-// both the voice-lines and battle-SFX panels so only one clip plays at a time
-// and the volume setting persists when switching between them.
-// =============================================================================
+// Shared audio engine: a single <audio> element + transport state reused by both the
+// voice-lines and battle-SFX panels, so only one clip plays at a time and the volume setting
+// persists when switching between them.
 
 interface IPlayer {
     playingId: string | null;
@@ -253,10 +251,6 @@ function VolumeControl({ volume, setVolume, isMuted, setIsMuted }: { volume: num
     );
 }
 
-// =============================================================================
-// Shared row primitives
-// =============================================================================
-
 /** Small uppercase status/category badge. */
 function Pill({ children, className }: { children: ReactNode; className?: string }) {
     return <span className={cn("rounded bg-secondary/60 px-1.5 py-0.5 text-[10px] text-muted-foreground uppercase tracking-wide", className)}>{children}</span>;
@@ -381,10 +375,6 @@ function AudioRow({ isPlaying, isUnavailable, isDownloading, progress, downloadL
         </div>
     );
 }
-
-// =============================================================================
-// Voice lines (from the /static/voices endpoint)
-// =============================================================================
 
 interface IVoiceCategory {
     id: string;
@@ -613,10 +603,6 @@ function VoiceLineRow({ voice, isPlaying, progress, isDownloading, isUnavailable
         </AudioRow>
     );
 }
-
-// =============================================================================
-// Battle SFX (from operator.audio - resolved from the game's FSB5 banks)
-// =============================================================================
 
 interface ISfxLanguageTrack {
     lang: LangType;

@@ -1,18 +1,11 @@
 /**
  * The ledger that turns a list of banners into a plan.
  *
- * Without this the tab could only answer "how many rolls will I have by date X",
- * which it answered identically for every banner, as though spending on one had no
- * bearing on the next. A plan is the opposite claim: rolls are a single pool, and
- * committing them to an early banner is exactly what makes a later one unaffordable.
- *
- * Two things are carried forward down the timeline. Rolls, which is the obvious one.
- * And PITY, which is not: a banner sharing a counter with the one before it does not
- * start where the user's account started, it starts wherever the previous banner left
- * off. That leftover is a distribution rather than a number, because after spending
- * sixty rolls the player is somewhere across a spread of counters, and collapsing it
- * to its mean would throw away the soft-pity curvature that makes those rolls worth
- * what they are worth. `odds.ts` hands the distribution back for exactly this.
+ * Rolls are a single pool: committing them to an early banner is what makes a later one
+ * unaffordable. Two things carry forward down the timeline, rolls and PITY. A banner sharing
+ * a counter with the one before it starts where that one left off. The leftover is a
+ * distribution, not a number: collapsing it to its mean loses the soft-pity curvature.
+ * `odds.ts` hands the distribution back for this.
  */
 
 import type { LagModel } from "#/types/generated/LagModel";
@@ -102,14 +95,11 @@ const MAX_POT_CACHE = new Map<string, IGoalEstimate>();
 /**
  * A pity distribution's CONTENT, as a string.
  *
- * The goal walk is the dearest thing on this tab, up to 297 ms for six copies of
- * each, and it was being run twice for every press of a potential stepper: once in
- * the click handler to price the new goal, then again by the rebuild that followed.
- * Nothing could be cached across the two because the walk's third input is a
- * `Float64Array` that the rebuild hands back as an equal-but-NEW object, so identity
- * said "different question" where the content said "same question". Hashing the bytes
- * costs ~800 imuls against a walk of 297 ms, and the `WeakMap` means each array is
- * hashed once however many goals are priced against it.
+ * The goal walk is the dearest thing on this tab, up to 297 ms for six copies of each, and the
+ * rebuild after a stepper press repeated it. The walk's third input is a `Float64Array` that
+ * the rebuild hands back as an equal-but-NEW object, so identity said "different question"
+ * where content said "same". Hashing the bytes costs ~800 imuls against 297 ms, and the
+ * `WeakMap` hashes each array once however many goals are priced against it.
  */
 const DIST_KEYS = new WeakMap<Float64Array, string>();
 
@@ -211,13 +201,10 @@ export function featuredOf(banner: ReleaseBanner): string[] {
 /**
  * The bank a banner has to draw on, read on the day it opens.
  *
- * A banner that has ALREADY opened and is still running falls back to today, which it
- * did not before: `dayAt` has no day earlier than today to return, so a live banner
- * read as zero available no matter what the player was holding. Everything committed
- * to it was then an overrun that never left the pool, and the next banner down the
- * list went on reporting the same figure however much was poured into the live one.
- * Today is the honest answer for a banner already in progress: it is what the player
- * can actually spend on it right now.
+ * A banner already open and still running falls back to today: `dayAt` has no day earlier than
+ * today, so a live banner read as zero available whatever the player held, every commitment
+ * to it was an overrun that never left the pool, and the next banner reported the same figure.
+ * Today is what the player can spend on it right now.
  */
 function bankAt(days: IProjectedDay[], at: number, spendOriginite: boolean): number {
     const day = dayAt(days, at) ?? days[0];
@@ -370,12 +357,10 @@ export function buildPlan({ banners, days, model, today, pity, allocations, targ
  * `spark` is the outright exchange where one exists, `guarantee` the roll at which a
  * forced rate-up binds, and `max` everything still in the bank.
  *
- * Both thresholds count every roll made on the banner, free ones included: `sparkMet`
- * above tests `spent + freePulls >= spark`, and the odds are read at `totalPulls`.
- * The presets did NOT, so a LIMITED banner handing out 24 free rolls offered "Spark
- * 300" and then reported 300 + 24 free = 324 against a 300-roll exchange, 24 rolls of
- * Orundum spent on nothing. What the player has to COMMIT is the threshold less what
- * the banner gives them, which is what these are now.
+ * Both thresholds count every roll made on the banner, free ones included: `sparkMet` above
+ * tests `spent + freePulls >= spark`, and the odds are read at `totalPulls`. What the player
+ * has to COMMIT is the threshold less what the banner gives them (a LIMITED banner with 24
+ * free rolls would otherwise offer "Spark 300" and spend 324 against a 300-roll exchange).
  */
 export function planTargets(row: IPlanRow): { spark: number | null; guarantee: number | null; max: number } {
     const g = row.model.guarantee;

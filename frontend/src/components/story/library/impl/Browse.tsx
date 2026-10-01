@@ -97,7 +97,7 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
     // A NEW DOCUMENT IS NOT NEW FRACTIONS: `keepEqualFractions` hands back the
     // previous map when no group's numbers moved, so the load-time swap from the
     // empty first-render document to the stored one (and any sync merge that
-    // changes nothing on screen) no longer re-renders the 87 cards, the 18 chips
+    // changes nothing on screen) does not re-render the 87 cards, the 18 chips
     // and the section heads. Measured at 1440 (dev): that swap was a 140 ms
     // whole-library commit 400 ms after the first one. The latest document is
     // read through a ref by the fallback, which no group in the index reaches.
@@ -212,7 +212,7 @@ export function Browse({ index, progress, gameRead, openGroup, onOpenHandled }: 
     );
     // One object per change of a control, not per render: the toolbar and the
     // pinned bar's button are memoised on it, so opening, swapping and closing
-    // the chapter sheet (each a Browse render) no longer re-render the 41
+    // the chapter sheet (each a Browse render) do not re-render the 41
     // components of the head's controls twice over.
     const toolbar: IBrowseToolbarState = useMemo(() => ({ query, setQuery, filter, setFilter, readFilter, setReadFilter, sort, setSort, view, setView }), [query, filter, readFilter, setReadFilter, sort, setSort, view, setView]);
     const tools = useMemo(() => <ToolbarButton state={toolbar} />, [toolbar]);
@@ -269,7 +269,8 @@ interface ICardsProps {
 }
 
 /**
- * The cards of one section, in whichever layout the toggle is on. Both branches were written out twice and the flat list would have made it three times.
+ * The cards of one section, in whichever layout the toggle is on, so the grid and list branches
+ * live once.
  *
  * `fractionOf` hands each card the fraction Browse already holds, so the
  * memoised card sees the SAME object until its own fraction changes and skips.

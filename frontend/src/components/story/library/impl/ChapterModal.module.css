@@ -29,12 +29,10 @@
     background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--ticket-c1) 22%, transparent) 0, transparent 65%), #0d0f16;
 }
 
-/* The veil ramps the picture DOWN INTO THE GROUND and only then into the sheet.
-   The old ramp washed `--card` straight over the raw image, which is what made
-   the bottom of a bright plate go pale. Reading from the bottom edge up: the
-   last 4% is the sheet's own surface, #0d0f16 owns 16%, and the ground gives
-   out at 84%, so the art meets the sheet through the dark rather than through
-   white. */
+/* The veil ramps the picture DOWN INTO THE GROUND and only then into the sheet. Washing `--card`
+   straight over the raw image made the bottom of a bright plate go pale. From the bottom edge
+   up: the last 4% is the sheet's own surface, #0d0f16 owns 16%, and the ground gives out at
+   84%, so the art meets the sheet through the dark rather than through white. */
 .veil {
     background: linear-gradient(to top, var(--card) 0%, var(--card) 4%, #0d0f16 16%, rgba(13, 15, 22, 0.62) 42%, rgba(13, 15, 22, 0.18) 66%, transparent 84%);
 }
@@ -95,18 +93,15 @@
     }
 }
 
-/* THE TWO PILLS ON THE HERO ARE ONE FAMILY, which is what they were not.
-   "MAIN STORY" was the ticket's badge, `GroupCard.module.css .kindBadge`: a
-   white pill, black `--font-heading` at 9px/700, 80.73 x 16.80 measured on
-   main_8. "CHAPTER 8" beside it was a dark translucent pill, white
-   `--font-mono` at 10px/400, 77.20 x 21.00. Two shapes, two faces, two grounds,
-   6.6 px of height between them, and nothing about the content asks for the
-   difference: both are one word about what this chapter IS.
+/* THE TWO PILLS ON THE HERO ARE ONE FAMILY. "MAIN STORY" was the ticket's badge
+   (`GroupCard.module.css .kindBadge`): a white pill, black `--font-heading` at 9px/700, 80.73 x
+   16.80 measured on main_8. "CHAPTER 8" was a dark translucent pill, white `--font-mono` at
+   10px/400, 77.20 x 21.00. Two shapes, faces and grounds, 6.6 px of height apart, for two
+   words about what the chapter IS.
 
-   They are the mono pill now, at a flat 24 px so the pair has one height and
-   the row has one baseline. The ticket keeps its white badge untouched: a card
-   sits in a grid on the page's own surface and needs the contrast, a hero pill
-   sits on a key visual and the dark ground is what carries it there. */
+   Both are the mono pill, at a flat 24 px so the pair has one height and the row one baseline.
+   The ticket keeps its white badge: a card sits in a grid on the page's surface and needs the
+   contrast, a hero pill sits on a key visual and the dark ground carries it there. */
 .badge {
     display: inline-flex;
     align-items: center;
@@ -126,16 +121,14 @@
     white-space: nowrap;
 }
 
-/* THE PARALLAX IS THE OPERATOR HERO'S, to the pixel: the same 80 px drift, the
-   same 1.1 scale, the same 40 px lift on the content over an opacity ramp.
-   What differs is only where the progress comes from, because the sheet's
-   scroller is its own content box rather than the window, and that is the
-   whole of what `useParallaxProgress`'s second argument buys.
+/* THE PARALLAX IS THE OPERATOR HERO'S, to the pixel: the same 80 px drift, the same 1.1 scale,
+   the same 40 px lift on the content over an opacity ramp. Only the source of the progress
+   differs, because the sheet's scroller is its own content box, not the window (the
+   `useParallaxProgress` second argument).
 
-   `--parallax-progress` is declared here so the layers have a value before the
-   hook's first frame and after `prefers-reduced-motion` pins it: at 0 the
-   plate's transform is the identity matrix and the content is unmoved and
-   fully opaque, which is the previous rendering exactly. */
+   `--parallax-progress` is declared here so the layers have a value before the hook's first
+   frame and after `prefers-reduced-motion` pins it: at 0 the plate's transform is the identity
+   matrix and the content is unmoved and fully opaque. */
 .parallax {
     --parallax-progress: 0;
 }

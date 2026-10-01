@@ -47,7 +47,6 @@ describe("real fixtures", () => {
         expect(halts.filter((h) => h.halt.kind === "decision")).toHaveLength(6);
         expect(e.totalHalts).toBe(122);
         expect(e.atEnd).toBe(true);
-        // imagetween 3 moved out of this list when the tween shipped.
         // `imageSize:missing` is a DIAGNOSTIC, not an unhandled command. The
         // fixture is dumped from a backend that carries `imageSizes` for every
         // referenced name (2,174 of 2,174 over the corpus), so none of its 12
@@ -94,7 +93,6 @@ describe("real fixtures", () => {
         expect(lines).toHaveLength(167);
         expect(lines.filter((h) => h.halt.kind === "line" && h.halt.surface === "sticker")).toHaveLength(7);
         expect(halts.filter((h) => h.halt.kind === "decision")).toHaveLength(47);
-        // focusout 4 and imagetween 1 moved out of this list when they shipped.
         expect(e.unhandledKinds).toEqual({ cgitem: 2, hidecgitem: 2 });
         for (const k of Object.keys(e.unhandledKinds)) expect(HANDLED_KINDS.has(k)).toBe(false);
     });

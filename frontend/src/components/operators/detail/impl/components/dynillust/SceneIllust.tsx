@@ -369,7 +369,7 @@ function panelArtAtRestOn(): boolean {
  *  Lin's `summer#19`, Ascalon's `iteration#4`) rendered with NO particles at all: 7 keys, 303
  *  authored systems, 222 of them looping at rest (Entelechia's 67, Lin's 50), never built. The
  *  particle set is its own file with its own sort scale and needs nothing from the scene but the
- *  dark-backdrop hint, so it now loads whenever the composite reaches the scene branch. Every
+ *  dark-backdrop hint, so it loads whenever the composite reaches the scene branch. Every
  *  key with a scene is untouched by construction. `?sceneless=0` restores the old gate. */
 function scenelessParticlesOn(): boolean {
     if (typeof window === "undefined") return true;
@@ -838,8 +838,8 @@ function inflateBounds(bounds: IAnimationBounds | null, factor: number): IAnimat
  *  and would have been recorded as a refutation. 0.30 and 0.45 moved, which is the only reason
  *  it was caught.
  *
- *  Absence is now tested explicitly and a non-finite parse is rejected on its own terms. The
- *  default is unchanged for every value that was previously expressible. */
+ *  Absence is tested explicitly; a non-finite parse is rejected. The
+ *  default is unchanged for every value that was expressible before. */
 function calibrationParam(name: string, fallback: number): number {
     try {
         const raw = new URLSearchParams(window.location.search).get(name);
@@ -1700,7 +1700,7 @@ function pageBgOn(): boolean {
  *  "Interact" clip when touched and returns to the idle; the card here never did, which is the
  *  raised-sword slash Ian's SilverAsh Alter clip shows at 26..29 s and ours never reached (the
  *  Special interleave is a different clip and already fires when the game's does). A click or
- *  tap on the viewer now plays it on the settled main composite. `?tapinteract=0` reverts to
+ *  tap on the viewer plays it on the settled main composite. `?tapinteract=0` reverts to
  *  an inert surface. Read as the string "0". */
 function tapInteractOn(): boolean {
     if (typeof window === "undefined") return true;
@@ -1831,7 +1831,7 @@ interface ISeparatorWash {
  *  849 children by t=17 against ~329 slots, one leaked per frame. Fix the leak before
  *  re-enabling; the 15.190 measurement below was taken WITH the leak active.
  *
- *  Previously shipped (`?sepwash=0` disables). At cello t=2 the deficit region goes 114.0 -> 173.8
+ *  Shipped (`?sepwash=0` disables). At cello t=2 the deficit region goes 114.0 -> 173.8
  *  against the game's 193.8 with NO ghosting (her darks 26.8 vs the game's 25.5; undemoting
  *  gives 151.9). Seating all four sheets regressed the frame (21.969 -> 24.671) - the fix was
  *  to bind each sheet by SORT to the parts' own depths (see `sheetTarget` in particles.ts),
@@ -2758,8 +2758,8 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     // against the capture - at t=4.0 the multiplier is 0.669 where the measured
                     // width/camera-scale ratio is 0.667. `?apscale=0` restores the frozen radius.
                     if (ap.scaleCurve?.length && apertureScaleOn()) {
-                        // Per axis now that the curve carries both. The rim is a circle whose x and
-                        // y were previously assumed equal; where they are, this is bit-identical.
+                        // Per axis, the curve carries both. The rim is a circle whose x and
+                        // y used to be assumed equal; where they are, this is bit-identical.
                         const [mx, my] = sampleScale2(ap.scaleCurve, tt);
                         if (Number.isFinite(mx) && mx > 0 && Number.isFinite(my) && my > 0) eseq.apertureMask.scale.set(mx, my);
                     }
@@ -4661,7 +4661,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                 // the game's authored `_adjustes` px into the render/vis space the mesh + spine are
                 // measured in. It was RE-CALIBRATED (0.606 -> 0.78) against the Mlynar/Virtuosa/Skadi2
                 // settle recordings: the old value framed ~1.3× too tight (Mlynar cropped to the
-                // waist, Virtuosa waist-up), so the character now reads at the game's wider,
+                // waist, Virtuosa waist-up), so the character reads at the game's wider,
                 // pillar-boxed size (Mlynar knees-up, Virtuosa full-ish body low in the frame, the
                 // scene filling around them). Combined with the "height" fit (see `fitRef`), the
                 // crop height maps to the container height, so the finite scene art leaves the
@@ -5985,7 +5985,7 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
                     // on every surface; only where it ENDS differs. A non-entrance skin settles at
                     // `whole = main.contentBounds` fitted `mode: "contain"`, which is what
                     // letterboxes, while the entrance settle height-fits through `fitRef` and crops
-                    // the width into full bleed. On a panel the entrance now lands in the same box
+                    // the width into full bleed. On a panel the entrance lands in the same box
                     // the 69 non-entrance skins already use, so the idle after the cinematic
                     // matches the idle without one.
                     //

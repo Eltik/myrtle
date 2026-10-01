@@ -15,7 +15,6 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "legal";
 
 export const messages = {
-    // Hero
     "privacy.hero.title": {
         text: "Privacy Policy",
         description: "Page title of the privacy policy.",
@@ -33,7 +32,6 @@ export const messages = {
         description: "Badge giving the policy's revision number. {version} is a bare version string such as '2.0'.",
     },
 
-    // TL;DR
     "privacy.tldr.title": {
         text: "TL;DR - Quick Summary",
         description: "Title of the summary banner. 'TL;DR' is internet shorthand for 'too long; didn't read'.",
@@ -43,7 +41,6 @@ export const messages = {
         description: "The whole summary banner, one paragraph. 'Yostar' is the game's publisher; OAuth is the sign-in standard.",
     },
 
-    // Principles
     "privacy.principles.heading": {
         text: "Our Privacy Principles",
         description: "Heading over the three principle tiles.",
@@ -73,7 +70,6 @@ export const messages = {
         description: "Body of the Your Control tile.",
     },
 
-    // Yostar OAuth
     "privacy.yostar.heading": {
         text: "Yostar Account Integration",
         description: "Section heading for the game-account sync section.",
@@ -115,7 +111,6 @@ export const messages = {
         description: "The bolded navigation path through this site's own settings screen, substituted into privacy.yostar.revoke.body as {path}. Use the same wording as those settings labels; the arrows and ampersand are literal.",
     },
 
-    // Information we collect
     "privacy.collect.heading": {
         text: "Information We Collect",
         description: "Section heading for the data-collection inventory.",
@@ -233,7 +228,6 @@ export const messages = {
         description: "Highlighted note, following the bolded 'Note:' lead-in.",
     },
 
-    // How we use it
     "privacy.use.heading": {
         text: "How We Use Your Information",
         description: "Section heading for the purposes of processing.",
@@ -275,7 +269,6 @@ export const messages = {
         description: "Body of the Security panel.",
     },
 
-    // Settings & visibility
     "privacy.settings.heading": {
         text: "User Settings & Profile Visibility",
         description: "Section heading for the visibility controls. The ampersand is literal.",
@@ -345,7 +338,6 @@ export const messages = {
         description: "List item under What's Always Private.",
     },
 
-    // Security
     "privacy.security.heading": {
         text: "Data Security & Storage",
         description: "Section heading for the security measures. The ampersand is literal.",
@@ -407,7 +399,6 @@ export const messages = {
         description: "Text of the link substituted into privacy.security.openSource as {link}. Product name, stays as-is.",
     },
 
-    // Rights
     "privacy.rights.heading": {
         text: "Your Rights & Choices",
         description: "Section heading for the visitor's data rights. The ampersand is literal.",
@@ -453,7 +444,6 @@ export const messages = {
         description: "Body of the Account Deletion panel. {email} is the contact address, rendered as a mail link; move it wherever the sentence needs it.",
     },
 
-    // Third parties
     "privacy.thirdParty.heading": {
         text: "Third-Party Services",
         description: "Section heading for the list of outside services.",
@@ -491,7 +481,6 @@ export const messages = {
         description: "Closing paragraph of the third-party section, set in muted text.",
     },
 
-    // Children
     "privacy.children.heading": {
         text: "Children's Privacy",
         description: "Section heading for the minimum-age policy.",
@@ -501,7 +490,6 @@ export const messages = {
         description: "The whole minimum-age section, one paragraph.",
     },
 
-    // Changes
     "privacy.changes.heading": {
         text: "Changes to This Policy",
         description: "Section heading for how the policy is revised.",
@@ -515,7 +503,6 @@ export const messages = {
         description: "Second paragraph of the changes section.",
     },
 
-    // Contact
     "privacy.contact.heading": {
         text: "Contact Us",
         description: "Section heading for the contact details.",
@@ -557,7 +544,6 @@ export const messages = {
         description: "Text of the link into the settings screen.",
     },
 
-    // Footer CTA
     "privacy.cta.title": {
         text: "Your Privacy is Our Priority",
         description: "Heading of the closing panel.",

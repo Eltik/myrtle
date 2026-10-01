@@ -19,7 +19,7 @@ const DAY_HEADER_PX = 26;
 const LANE_PX = 22;
 const MIN_WEEK_PX = DAY_HEADER_PX + 3 * LANE_PX;
 /**
- * The calendar card's own height, as it always was: at least its content, and
+ * The calendar card's own height: at least its content, and
  * at least the viewport minus a nominal clearance.
  *
  * RULED OUT BY MEASUREMENT: shrinking this card to the space actually left
@@ -28,9 +28,8 @@ const MIN_WEEK_PX = DAY_HEADER_PX + 3 * LANE_PX;
  * 1001px viewport a fitted card gives each of five weeks about 70px,
  * `floor((70 - 26 - 2) / 22) = 1` visible lane, and `shownLanes = 1 - 1 = 0`.
  * Every pill disappears and nothing renders in their place. The card overflowing
- * is the cost of showing three lanes a week; what was actually wrong is that the
- * month switcher scrolled away with it, and that is fixed by pinning the header
- * rather than by resizing the grid.
+ * is the cost of showing three lanes a week; the month switcher is kept in
+ * view by pinning the header instead of resizing the grid.
  */
 const NAV_CLEARANCE_REM = 5.5;
 

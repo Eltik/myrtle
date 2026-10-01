@@ -201,7 +201,7 @@ const SORT_METRIC_LABEL_KEYS: Record<Exclude<Sort, "timeline">, RunsMessageKey> 
 function Segmented<T extends string>({ label, options, value, onChange }: { label: string; options: ReadonlyArray<{ key: T; label: string }>; value: T; onChange: (key: T) => void }) {
     return (
         // Mobile: label stacked above a full-width, equal-column control. ≥sm:
-        // compact inline row, as before.
+        // compact inline row.
         <div className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-2">
             <span className="font-mono text-[9.5px] text-muted-foreground/70 uppercase tracking-[0.14em]">{label}</span>
             <div className="grid auto-cols-fr grid-flow-col gap-1 rounded-lg border border-border bg-muted p-0.75 sm:inline-flex sm:gap-1.5 sm:rounded-[10px]">

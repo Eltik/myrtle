@@ -114,7 +114,6 @@ export function ChangelogPage() {
         <main className="relative overflow-x-clip">
             <div className={styles.pageAmbient} aria-hidden="true" />
             <div className="page-gutter py-12 [--page-max:820px] sm:py-14">
-                {/* Hero */}
                 <header className="relative mb-8">
                     <div className={styles.heroGlow} aria-hidden="true" />
                     <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -150,7 +149,6 @@ export function ChangelogPage() {
                     <ReleaseNotesList />
                 ) : (
                     <>
-                        {/* Summary + activity */}
                         <section className="mb-7 overflow-hidden rounded-2xl border border-border bg-card">
                             <div className="grid grid-cols-3 divide-x divide-border max-[560px]:grid-cols-1 max-[560px]:divide-x-0 max-[560px]:divide-y">
                                 <StatCell icon={<ScrollText strokeWidth={1.8} />} label={t("page.stat.commits", { range: t(RANGE_KEYS[range.id].lower) })} value={isLoading ? "-" : counts[range.id]} />
@@ -167,7 +165,6 @@ export function ChangelogPage() {
                                 </div>
                             ) : null}
                         </section>
-                        {/* Range tabs */}
                         <Tabs value={rangeId} onValueChange={(v) => setPicked(v as ChangelogRangeId)} className="mb-7">
                             <TabsList className="w-full max-[560px]:overflow-x-auto">
                                 {CHANGELOG_RANGES.map((r) => (
@@ -180,7 +177,6 @@ export function ChangelogPage() {
                             </TabsList>
                         </Tabs>
 
-                        {/* Timeline */}
                         {isLoading ? (
                             <TimelineSkeleton />
                         ) : groups.length === 0 ? (

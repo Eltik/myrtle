@@ -34,7 +34,6 @@ export function weekdayNames(locale: string): string[] {
     return Array.from({ length: 7 }, (_, i) => fmt.format(new Date(Date.UTC(2021, 7, 1 + i))));
 }
 
-/** Numeric rarity (1-6) for an operator. */
 export function operatorRarity(operator: IOperatorListItem): number {
     return rarityToNumber(operator.rarity);
 }
@@ -44,12 +43,11 @@ export function rarityVar(rarity: number): string {
     return `var(--rarity-${rarity})`;
 }
 
-/** Count of operators with a parseable birthday. */
 export function countKnown(birthdays: IOperatorBirthday[]): number {
     return birthdays.reduce((n, b) => n + (b.known ? 1 : 0), 0);
 }
 
-/** Drop summons and map hazards - they aren't operators with birthdays. */
+/** Drop summons and map hazards: not operators with birthdays. */
 export function isCalendarOperator(operator: IOperatorListItem): boolean {
     return !NON_OPERATOR_PROFESSIONS.has(operator.profession);
 }
@@ -98,7 +96,6 @@ export function createEmptyFilters(): IBirthdayFilters {
     return { query: "", rarities: new Set(), professions: new Set(), nations: new Set() };
 }
 
-/** How many filter facets are currently active. */
 export function countActiveFilters(filters: IBirthdayFilters): number {
     return filters.rarities.size + filters.professions.size + filters.nations.size + (filters.query.trim() ? 1 : 0);
 }
@@ -120,7 +117,6 @@ export function dayKey(month: number, day: number): string {
     return `${month}-${day}`;
 }
 
-/** Birthdays falling on a given month/day in a grouped map, or an empty list. */
 export function opsOn(byDay: Map<string, IOperatorBirthday[]>, month: number, day: number): IOperatorBirthday[] {
     return byDay.get(dayKey(month, day)) ?? [];
 }

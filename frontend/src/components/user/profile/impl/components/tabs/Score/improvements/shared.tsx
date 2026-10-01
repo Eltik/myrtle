@@ -4,11 +4,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/component
 import { useFormatters } from "#/lib/i18n";
 import { cn } from "#/lib/utils";
 
-// ─── Layout ─────────────────────────────────────────────────────────────────
-
 export const PANEL_PADDING = "px-4 pb-4 sm:px-5 sm:pb-5";
 
-// ─── Typography ─────────────────────────────────────────────────────────────
 // One scale across every improvement panel. Keep these in sync; new sizes
 // don't go inline - extend the scale here.
 
@@ -22,7 +19,6 @@ export const TEXT_META = "text-[10.5px] leading-snug";
 /** Body - list rows, descriptions, default content size. */
 export const TEXT_BODY = "text-[11.5px] leading-tight";
 
-// ─── Color palette ──────────────────────────────────────────────────────────
 // Shared rarity scheme so the Operator and Medal panels read with the same
 // visual language. Hue picks roughly match Arknights' in-game color tiers
 // (gold -> purple -> blue -> gray).
@@ -68,8 +64,6 @@ export function medalRarityColor(rarity: string): string {
 
 /** Urgency color for time-bound items (event medals running out). */
 export const URGENT_COLOR = "oklch(0.65 0.22 30)";
-
-// ─── Reusable primitives ────────────────────────────────────────────────────
 
 /**
  * Mini-section header inside an expanded subscore panel.

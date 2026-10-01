@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { fitOperatorCount } from "./use-fitted-op-count";
 
 // A browse-card row at 4-5 tiers: 236px wide, 22px tiles, 1px gap. The
-// expected counts were measured in the browser after the fix shipped.
+// expected counts were measured in the browser.
 const row = { width: 236, tile: 22, gap: 1 };
 
 describe("fitOperatorCount", () => {

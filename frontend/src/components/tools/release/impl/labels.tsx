@@ -8,20 +8,15 @@ type LabelsT = TypedT<typeof messages>;
 /**
  * Turns a raw gamedata tag into something a player recognises.
  *
- * The planner shows three different vocabularies through one `<Tag>`: an
- * event's `activityType`, a banner's `ruleType`, and the calendar's own literal
- * tags. All three went through `humanizeTag`, which lowercases and swaps
- * underscores and nothing else, so the strip read "TYPE ACTIVITYSIDESTORY",
- * "TYPE ACT9D0" and "MULTIPLAY V3".
+ * The planner shows three vocabularies through one `<Tag>`: an event's `activityType`, a
+ * banner's `ruleType`, and the calendar's own literal tags. `humanizeTag` alone only
+ * lowercases and swaps underscores ("TYPE ACTIVITYSIDESTORY", "TYPE ACT9D0", "MULTIPLAY V3").
  *
- * Event types are the hard half: the per-event codes (`TYPE_ACT46SIDE`,
- * `TYPE_ACT9D0`) name a content TEMPLATE, one per event, so no table can
- * enumerate them. They are classified by the suffix the game reuses across
- * them instead, which is why the matching below is ordered and pattern-based
- * rather than a lookup.
+ * Event types are the hard half: per-event codes (`TYPE_ACT46SIDE`, `TYPE_ACT9D0`) name a
+ * content TEMPLATE, one per event, so no table can enumerate them. They are classified by the
+ * suffix the game reuses across them, hence ordered pattern matching rather than a lookup.
  *
- * Anything unrecognised falls through to `humanizeTag`, so this can only ever
- * improve a label, never lose one.
+ * Anything unrecognised falls through to `humanizeTag`, so a label is never lost.
  */
 export function useReleaseTagLabel(): (raw: string | null | undefined) => string {
     const t: LabelsT = useT("tools");
@@ -71,7 +66,6 @@ export function useReleaseTagLabel(): (raw: string | null | undefined) => string
             .replace(/^TYPE_/, "");
 
         const exact: Record<string, string> = {
-            // Banner rule types.
             LIMITED: L.bannerLimited,
             SINGLE: L.bannerSingle,
             DOUBLE: L.bannerDouble,
@@ -82,11 +76,9 @@ export function useReleaseTagLabel(): (raw: string | null | undefined) => string
             CLASSIC_ATTAIN: L.bannerClassicAttain,
             FESCLASSIC: L.bannerFesClassic,
             SPECIAL: L.bannerAttain,
-            // Calendar's own literal tags.
             NEW_SKINS: L.newSkins,
             FASHION_REVIEW: L.fashionReview,
             RERUN: L.rerun,
-            // Activity categories that are their own name.
             ACTIVITY_SIDESTORY: L.sideStory,
             ACTIVITYSIDESTORY: L.sideStory,
             ACTIVITY_MINISTORY: L.miniStory,
@@ -140,14 +132,11 @@ export function useReleaseTagLabel(): (raw: string | null | undefined) => string
             if (suffix.includes("IME")) return L.intermezzi;
             if (suffix.includes("SIDE") || suffix.startsWith("D0") || suffix.startsWith("D1")) return L.sideStory;
             if (suffix.includes("FUN")) return L.minigame;
-            // An unrecognised suffix is NOT guessed at. Calling it a side story
-            // would be a category claim the code cannot support; the caller
-            // gets the de-prefixed code instead, which is still strictly less
-            // noise than before.
+            // An unrecognised suffix is NOT guessed at: calling it a side story would be a
+            // category claim the code cannot support. It gets the de-prefixed code instead.
         }
 
-        // `key`, not `raw`: the `TYPE_` prefix is dropped even when nothing
-        // else matched, so the fallback is never worse than what it replaced.
+        // `key`, not `raw`: the `TYPE_` prefix is dropped even when nothing else matched.
         return humanizeTag(key);
     };
 }

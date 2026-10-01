@@ -15,12 +15,10 @@ const GRADE_STYLES: Record<string, string> = {
 
 /**
  * The grade bands, as percentages, mirroring `score_to_grade` in
- * `backend/src/core/grade/calculate.rs`. Kept in the same order the backend
- * matches them, so a change there is easy to mirror here.
+ * `backend/src/core/grade/calculate.rs`. Same order the backend matches them, so a change
+ * there is easy to mirror here.
  *
- * "SS" used to be styled here and the backend never emits it; D and F did NOT
- * have a style and do get emitted, so both fell through to the generic grey.
- * That is now the other way round.
+ * The backend never emits "SS" but does emit D and F, so those two carry styles and SS does not.
  */
 const GRADE_BANDS: ReadonlyArray<{ grade: string; from: number; to: number }> = [
     { grade: "S+", from: 90, to: 100 },

@@ -93,8 +93,8 @@ describe("the ledger", () => {
         expect(some.rows[0].spent).toBe(60);
         expect(some.rows[1].available).toBe(none.rows[1].available - 60);
         expect(some.rows[2].available).toBe(none.rows[2].available - 60);
-        // This is the whole point of the change: without the ledger every banner
-        // reported the same bank, as though spending had no consequence.
+        // Without the ledger every banner reported the same bank, as though spending
+        // had no consequence.
         expect(none.rows[1].available).toBe(none.rows[1].available);
     });
 
@@ -360,7 +360,7 @@ describe("free pulls a banner gives away", () => {
 
     it("pays every Limited banner, because they do not rerun", () => {
         // No rerun means no case where a Limited pool pays nothing, so the rule needs
-        // no rerun flag to consult and there is nothing here left open.
+        // no rerun flag to consult.
         expect(freePullsFor("LIMITED", 0, 14 * 86_400)).toBeGreaterThan(0);
     });
 

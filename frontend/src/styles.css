@@ -150,12 +150,11 @@ pre code {
   --animate-toast-success-even: toast-success-even 0.32s cubic-bezier(0.5, 1, 0.89, 1);
   --animate-toast-error-odd: toast-error-odd 0.28s cubic-bezier(0.5, 1, 0.89, 1);
   --animate-toast-error-even: toast-error-even 0.28s cubic-bezier(0.5, 1, 0.89, 1);
-  /* The three font stacks used to be redeclared here as well. `@theme inline`
-     is for values that resolve through another variable (the --color-* map
-     below); a font stack is a literal, and having it in both places meant this
-     copy quietly won and the @theme block's ui-sans-serif, system-ui,
-     ui-monospace and SFMono-Regular fallbacks never applied. One declaration,
-     at the top of the file. */
+  /* No font stacks here. `@theme inline` is for values that resolve through
+     another variable (the --color-* map below); a font stack is a literal, and
+     declaring it in both places made this copy quietly win, so the @theme
+     block's ui-sans-serif, system-ui, ui-monospace and SFMono-Regular
+     fallbacks never applied. One declaration, at the top of the file. */
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-sidebar-primary: var(--sidebar-primary);

@@ -23,11 +23,10 @@ export interface IPageHeaderProps {
  * or a title with a description under it. Both carry the same breadcrumb, the
  * same type scale and the same trailing-action slot.
  *
- * Before this existed every page wrote its own: the tools family ran a
- * `24px -> 30px` title, the collection and player lists ran a flat `30px`, and
- * Stages ran a `27px -> 34px` title behind a kicker rule. The three read as
- * three different sites. A page now chooses BETWEEN THE TWO shapes here and
- * nothing else; anything that needs more goes in `actions`.
+ * Replaces per-page headers: the tools family ran a `24px -> 30px` title, the collection and
+ * player lists a flat `30px`, Stages a `27px -> 34px` title behind a kicker rule. The three read
+ * as three different sites. A page chooses BETWEEN THE TWO shapes here and nothing else;
+ * anything that needs more goes in `actions`.
  */
 export function PageHeader({ breadcrumb, breadcrumbLabel, title, description, titleAdornment, actions, className }: IPageHeaderProps): React.ReactElement {
     return (

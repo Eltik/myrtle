@@ -26,7 +26,6 @@ interface IOperatorPlannerDialogProps {
     initialOperatorId?: string;
 }
 
-/** Modal dialog for creating or editing one operator's plan targets. */
 export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }: IOperatorPlannerDialogProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("tools");
     const operatorName = useOperatorName();
@@ -73,7 +72,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
         if (open && initialOperatorId) setSelectedOperatorId(initialOperatorId);
     }, [open, initialOperatorId]);
 
-    // Declared after the two effects above so its own reset and seeding effects run after them, as they did inline.
+    // Declared after the two effects above so its reset and seeding effects run after them.
     const targets = usePlanTargets({
         open,
         operator: selectedOperator,

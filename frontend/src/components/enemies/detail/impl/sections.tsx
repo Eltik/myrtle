@@ -16,10 +16,6 @@ import type { messages } from "./sections.messages";
 /** A key in `sections.messages.ts`; resolved by whichever block renders it. */
 type SectionsMessageKey = keyof typeof messages & string;
 
-// ============================================================================
-// Hero
-// ============================================================================
-
 export function EnemyHero({ enemy }: { enemy: IEnemyView }) {
     const tConst: TypedT<typeof listConstantsMessages> = useT("enemies");
     const [imgError, setImgError] = useState(false);
@@ -67,10 +63,6 @@ export function EnemyHero({ enemy }: { enemy: IEnemyView }) {
     );
 }
 
-// ============================================================================
-// Shared primitives
-// ============================================================================
-
 function Kicker({ children }: { children: React.ReactNode }) {
     return <span className="font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]">{children}</span>;
 }
@@ -92,10 +84,6 @@ function Meta({ label, value }: { label: string; value: string }) {
         </div>
     );
 }
-
-// ============================================================================
-// Overview
-// ============================================================================
 
 interface IAbilityGroup {
     title: string | null;
@@ -177,10 +165,6 @@ export function OverviewTab({ enemy }: { enemy: IEnemyView }) {
         </div>
     );
 }
-
-// ============================================================================
-// Stats
-// ============================================================================
 
 function PhaseHeader({ phase, label }: { phase: IEnemyLevelStats; label: string }) {
     return (
@@ -389,10 +373,6 @@ export function StatsTab({ enemy }: { enemy: IEnemyView }) {
         </div>
     );
 }
-
-// ============================================================================
-// Skills
-// ============================================================================
 
 function skillsAreEqual(a: IEnemySkill[], b: IEnemySkill[]): boolean {
     if (a.length !== b.length) return false;

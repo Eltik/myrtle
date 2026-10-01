@@ -2,10 +2,9 @@
  * Word-level diff between the English a translation was written against and
  * the English it faces now.
  *
- * A stale row previously showed a badge and the NEW source, which tells a
- * translator that something moved but not what: on a long string the only safe
- * response was to re-translate the whole sentence. A diff turns most stale
- * rows into a one-word re-read.
+ * A badge plus the NEW source tells a translator that something moved but not
+ * what: on a long string the only safe response was to re-translate the whole
+ * sentence. A diff turns most stale rows into a one-word re-read.
  *
  * Tokens are words plus their trailing whitespace, so reassembling the spans
  * reproduces the original text exactly and a punctuation-only change still

@@ -113,9 +113,9 @@ async function requestCode(path: string, body: Record<string, string>): Promise<
 //
 // Failures propagate as `APIError` (status + the backend's own message and
 // code) or `BackendUnreachableError` from `backendFetch`, so the dialog can say
-// WHICH thing failed. This used to throw a bare "Invalid credentials" for every
-// non-2xx login response, which hid a backend outage (503), a rate limit (429)
-// and Yostar's own reason for rejecting a code (400) behind the same words.
+// WHICH thing failed. A bare "Invalid credentials" for every non-2xx login response hid a
+// backend outage (503), a rate limit (429) and Yostar's own reason for rejecting a code (400)
+// behind the same words.
 async function completeLogin(loginRes: Response): Promise<ISession> {
     if (!loginRes.ok) throw await parseError(loginRes);
     const { token } = (await loginRes.json()) as LoginResponse;

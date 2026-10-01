@@ -48,18 +48,15 @@ export function LocaleSwitcher({ className }: { className?: string }): React.Rea
 }
 
 /**
- * The one place that knows how to change language: remember the choice, then
- * leave the page for the new locale's copy of the current URL.
+ * The one place that knows how to change language: remember the choice, then leave the page for
+ * the new locale's copy of the current URL.
  *
- * Shared by the three controls that offer the choice - the footer switcher
- * above, the header's globe menu, and the Language section of the appearance
- * settings - so that the cookie write and the full-document navigation are
- * written once. The navigation is not an accident of the first implementation:
- * see the note on {@link LocaleSwitcher} for why a client-side one is wrong
- * here.
+ * Shared by the footer switcher above, the header's globe menu and the Language section of the
+ * appearance settings, so the cookie write and the full-document navigation are written once.
+ * See {@link LocaleSwitcher} for why a client-side navigation is wrong here.
  *
- * Returns a callback rather than a component because the three call sites want
- * three different pieces of chrome around the same behaviour.
+ * Returns a callback rather than a component because the three call sites want three different
+ * pieces of chrome around the same behaviour.
  */
 export function useLocaleSwitch(): (code: string) => void {
     const pathname = useRouterState({ select: (s) => s.location.pathname });

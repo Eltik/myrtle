@@ -51,7 +51,6 @@ export const messages = {
         description: "Accessible name of the row of type filter buttons.",
     },
 
-    // operator
     "entity.kinds.operator": {
         text: "Operators",
         description: "Name of a kind of thing a tier list can rank: playable characters. Plural. Used on the editor's pool tabs and in the list of kinds a list offers.",
@@ -85,7 +84,6 @@ export const messages = {
         description: "Accessible name of the pool area, which doubles as the target for taking an operator off the board.",
     },
 
-    // skill
     "entity.kinds.skill": {
         text: "Skills",
         description: "Name of a kind of thing a tier list can rank: operator skills, one per operator and skill slot. Plural. Used on pool tabs and in the kinds settings.",
@@ -147,7 +145,6 @@ export const messages = {
         description: "SP-recovery filter option: a passive skill, which has no SP to recover.",
     },
 
-    // module
     "entity.kinds.module": {
         text: "Modules",
         description: "Name of a kind of thing a tier list can rank: operator modules (equipment that adds an X, Y or other branch to an operator). Plural. Used on pool tabs and in the kinds settings.",
@@ -173,7 +170,6 @@ export const messages = {
         description: "Accessible name of the grid of module tiles in the pool.",
     },
 
-    // skin
     "entity.kinds.skin": {
         text: "Skins",
         description: "Name of a kind of thing a tier list can rank: operator outfits from the store and event rewards. Plural. Used on pool tabs and in the kinds settings.",
@@ -207,7 +203,6 @@ export const messages = {
         description: "Accessible name of the row of outfit-brand filter buttons.",
     },
 
-    // class
     "entity.kinds.class": {
         text: "Classes",
         description: "Name of a kind of thing a tier list can rank: the eight operator classes (Vanguard, Guard, and so on). Plural. Used on pool tabs and in the kinds settings.",
@@ -233,7 +228,6 @@ export const messages = {
         description: "Accessible name of the grid of classes tiles in the pool.",
     },
 
-    // subclass
     "entity.kinds.subclass": {
         text: "Subclasses",
         description: "Name of a kind of thing a tier list can rank: operator subclasses (archetypes such as Charger or Lord). Plural. Used on pool tabs and in the kinds settings.",
@@ -259,7 +253,6 @@ export const messages = {
         description: "Accessible name of the grid of subclasses tiles in the pool.",
     },
 
-    // faction
     "entity.kinds.faction": {
         text: "Factions",
         description: "Name of a kind of thing a tier list can rank: nations, groups and teams operators belong to. Plural. Used on pool tabs and in the kinds settings.",
@@ -305,7 +298,6 @@ export const messages = {
         description: "Accessible name of the row of faction-level filter buttons.",
     },
 
-    // enemy
     "entity.kinds.enemy": {
         text: "Enemies",
         description: "Name of a kind of thing a tier list can rank: enemies from the game's enemy handbook. Plural. Used on pool tabs and in the kinds settings.",
@@ -351,7 +343,6 @@ export const messages = {
         description: "Accessible name of the row of enemy-rank filter buttons.",
     },
 
-    // event
     "entity.kinds.event": {
         text: "Events",
         description: "Name of a kind of thing a tier list can rank: in-game events (side stories, vignettes and the like). Plural. Used on pool tabs and in the kinds settings.",
@@ -409,7 +400,6 @@ export const messages = {
         description: "Edition filter option: the event's first run, as opposed to a rerun.",
     },
 
-    // integrated_strategies
     "entity.kinds.integrated_strategies": {
         text: "Integrated Strategies",
         description: "Name of a kind of thing a tier list can rank: the game's roguelike mode, its themes and their items (collectibles, squads, Foldartals and the like). Keep the game's own name for the mode. Used on pool tabs and in the kinds settings.",
@@ -487,7 +477,6 @@ export const messages = {
         description: "Accessible name of the row of Integrated Strategies theme filter buttons.",
     },
 
-    // stronghold_bond
     "entity.kinds.stronghold_bond": {
         text: "Stronghold bonds",
         description: "Name of a kind of thing a tier list can rank: the bonds of Stronghold Protocol, the game's auto-chess mode. Plural. Used on pool tabs and in the kinds settings.",
@@ -521,7 +510,6 @@ export const messages = {
         description: "Stronghold Protocol bond type: a bond built around a shared trait rather than a faction. Used as a pool filter and in hover cards.",
     },
 
-    // story_sprite
     "entity.kinds.story_sprite": {
         text: "Story characters",
         description: "Name of a kind of thing a tier list can rank: the character sprites drawn in the game's story scenes, operators and non-playable characters alike. Plural. Used on pool tabs and in the kinds settings.",

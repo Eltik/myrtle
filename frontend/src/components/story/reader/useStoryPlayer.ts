@@ -107,8 +107,8 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
     const [revealKey, setRevealKey] = useState(0);
     // `saved` is localStorage, which the server cannot read. Reading it in the
     // first render made the server send the title card and the client the resume
-    // card, which is the hydration mismatch React logged on every title screen.
-    // Both now render the title card and the resume offer arrives after mount.
+    // card: a hydration mismatch on every title screen. Both render the title card
+    // and the resume offer arrives after mount.
     const [saved, setSaved] = useState<StoryPosition | null>(null);
     const [phase, setPhase] = useState<Phase>(initialHalt !== undefined ? "reading" : "title");
     const timer = useRef<number | null>(null);

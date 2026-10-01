@@ -9,7 +9,6 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "legal";
 
 export const messages = {
-    // Page head
     "terms.hero.title": {
         text: "Terms of Service",
         description: "Page title of the terms of service.",
@@ -35,7 +34,6 @@ export const messages = {
         description: "Banner above the terms, summarising that use implies agreement.",
     },
 
-    // Table of contents
     "terms.toc.nav": {
         text: "Table of contents",
         description: "Accessible name of the contents navigation block.",
@@ -81,7 +79,6 @@ export const messages = {
         description: "Contents entry for section 9.",
     },
 
-    // 1. Acceptance
     "terms.s1.heading": {
         text: "1. Acceptance of Terms",
         description: "Heading of section 1. Keep the leading number.",
@@ -99,7 +96,6 @@ export const messages = {
         description: "Third paragraph of section 1. The quoted words define terms used throughout; note the commas sit inside the quotation marks.",
     },
 
-    // 2. Account
     "terms.s2.heading": {
         text: "2. Account Registration and Security",
         description: "Heading of section 2. Keep the leading number.",
@@ -149,7 +145,6 @@ export const messages = {
         description: "Paragraph under 2.4, one paragraph. 'Roster' is the set of operators the player owns.",
     },
 
-    // 3. Usage
     "terms.s3.heading": {
         text: "3. Acceptable Use Policy",
         description: "Heading of section 3. Keep the leading number.",
@@ -195,7 +190,6 @@ export const messages = {
         description: "Closing paragraph of section 3.",
     },
 
-    // 4. Content
     "terms.s4.heading": {
         text: "4. User Content and Submissions",
         description: "Heading of section 4. Keep the leading number.",
@@ -237,7 +231,6 @@ export const messages = {
         description: "Closing paragraph of section 4.",
     },
 
-    // 5. Intellectual property
     "terms.s5.heading": {
         text: "5. Intellectual Property Rights",
         description: "Heading of section 5. Keep the leading number.",
@@ -279,7 +272,6 @@ export const messages = {
         description: "Text of the link substituted into terms.s5.thirdParty.body as {link}. A project name, stays as-is.",
     },
 
-    // 6. Termination
     "terms.s6.heading": {
         text: "6. Termination and Suspension",
         description: "Heading of section 6. Keep the leading number.",
@@ -297,7 +289,6 @@ export const messages = {
         description: "Third paragraph of section 6.",
     },
 
-    // 7. Liability
     "terms.s7.heading": {
         text: "7. Limitation of Liability",
         description: "Heading of section 7. Keep the leading number.",
@@ -327,7 +318,6 @@ export const messages = {
         description: "Liability list item.",
     },
 
-    // 8. Changes
     "terms.s8.heading": {
         text: "8. Changes to Terms",
         description: "Heading of section 8. Keep the leading number.",
@@ -341,7 +331,6 @@ export const messages = {
         description: "Second paragraph of section 8.",
     },
 
-    // 9. Contact
     "terms.s9.heading": {
         text: "9. Contact Information",
         description: "Heading of section 9. Keep the leading number.",

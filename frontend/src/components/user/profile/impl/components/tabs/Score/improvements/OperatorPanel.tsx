@@ -113,7 +113,6 @@ export function OperatorPanel({ improvements, accent }: IProps) {
         return gains;
     }, [ops]);
 
-    // Apply the active filter (if any), then group what's left by rarity.
     const buckets = useMemo(() => {
         const filtered = activeFilter ? ops.filter((op) => op.missing.includes(activeFilter)) : ops;
         const byRarity = new Map<number, IOperatorGap[]>();
@@ -150,7 +149,7 @@ export function OperatorPanel({ improvements, accent }: IProps) {
 
             <SectionHeader title={t("score.improvements.operator.title")} count={t("score.improvements.operator.count", { n: ops.length, gain: totalOverallGainPct.toFixed(1) })} accent={accent} />
 
-            {/* By upgrade type - also acts as a filter for the rarity buckets below. */}
+            {/* Doubles as the filter for the rarity buckets below. */}
             <div className="flex flex-col gap-2">
                 <span className={cn(TEXT_KICKER, "text-muted-foreground/70")}>{t("score.improvements.operator.byType")}</span>
                 <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-6">
@@ -167,11 +166,8 @@ export function OperatorPanel({ improvements, accent }: IProps) {
                 )}
             </div>
 
-            {/* Per-rarity collapsible buckets. */}
             <div className="flex flex-col gap-1.5">{buckets.length === 0 ? <EmptyHint>{t("score.improvements.operator.noMatch")}</EmptyHint> : buckets.map(([rarity, list], idx) => <RarityBucket key={rarity} rarity={rarity} ops={list} defaultOpen={idx === 0} accent={accent} />)}</div>
 
-            {/* Footnote: explain the units the user is reading so they don't
-                have to hunt down the math. */}
             <p className={cn(TEXT_BADGE, "text-muted-foreground/60 leading-relaxed")}>
                 {rt("score.improvements.operator.footnote", {
                     gain: <span className="text-foreground/80">{t("score.improvements.operator.footnote.headerGain", { gain: totalOverallGainPct.toFixed(1) })}</span>,
@@ -328,7 +324,6 @@ const OperatorRow = memo(function OperatorRow({ op, color, accent }: { op: IOper
 
     return (
         <div className="flex items-start gap-2.5 rounded-md border border-border/30 bg-card/60 px-2.5 py-2">
-            {/* Avatar - slightly larger (size-9) to balance with the multi-line content beside it. */}
             <span className="relative size-9 shrink-0 overflow-hidden rounded-md border border-border/40" style={{ background: `color-mix(in oklch, ${color} 12%, transparent)` }}>
                 <OperatorAvatar charId={op.operator_id} name={op.name} />
             </span>

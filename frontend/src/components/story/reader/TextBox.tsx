@@ -162,9 +162,8 @@ export function TextBox({ speaker, text, isNarration, revealKey, armed, settings
     // this name, the hashed hue otherwise. Both are already conditioned for the
     // surface the box is on, so the plate reads either way.
     const plateColor = speaker ? (speakerTint ?? speakerColor(speaker, light)) : "";
-    // Every one of these four is a SETTING now, written together by a reading
-    // style and editable one at a time afterwards, so there is no second
-    // rendering path a preset can disagree with.
+    // These four are all SETTINGS, written together by a reading style and editable one at a
+    // time after, so there is no second rendering path a preset can disagree with.
     const fontFamily = fontFamilyFor(settings.font, PRESET_FONT_FAMILY, customFontLoaded);
     // The speaker plate keeps its own hue: the colour setting is the reader's
     // choice for the PROSE, and a plate recoloured with it stops identifying
@@ -263,8 +262,8 @@ export function TextBox({ speaker, text, isNarration, revealKey, armed, settings
     const centred = position.x === 0;
 
     // The box never takes more than 40% of the stage: `story-textbox` caps the
-    // wrapper at 40% and the line scrolls inside it. A long multiline that used
-    // to push the sprites off the stage now stays inside its own frame.
+    // wrapper at 40% and the line scrolls inside it, so a long multiline cannot push the sprites
+    // off the stage.
     return (
         <div
             ref={wrapRef}
@@ -309,8 +308,8 @@ export function TextBox({ speaker, text, isNarration, revealKey, armed, settings
                     letterSpacing: `${settings.letterSpacing}em`,
                 }}
             >
-                {/* The grab affordance. The whole frame is the handle now, so
-                    this is what SHOWS that: a pill that appears on hover or
+                {/* The grab affordance. The whole frame is the handle, so this is what
+                    SHOWS that: a pill that appears on hover or
                     focus and is always there on a coarse pointer, inside a
                     16 px target that grows to the 44 px touch minimum.
                     `touch-none` is what stops the drag scrolling the page. */}

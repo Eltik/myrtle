@@ -84,8 +84,8 @@ export function useT(namespace?: string): TFunction {
 
 /**
  * A formatter bound to the active locale, for the places that format numbers
- * and dates rather than messages. Everything in `lib/utils.ts` that used to
- * hardcode `en-US` takes its locale from here.
+ * and dates rather than messages. The formatters in `lib/utils.ts` take their
+ * locale from here instead of hardcoding `en-US`.
  */
 export function useLocale(): string {
     return useI18n().locale;

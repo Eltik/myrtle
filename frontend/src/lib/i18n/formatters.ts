@@ -28,14 +28,11 @@ export interface IFormatters {
 /**
  * The locale-bound counterparts of the formatters in `lib/utils.ts`.
  *
- * Those stay pure functions taking an optional locale, so the ~160 existing
- * call sites keep compiling and keep rendering exactly what they render today.
- * This hook is what converted components should use instead: it closes over
- * the active locale, so a component never has to remember to pass it.
+ * Those stay pure functions taking an optional locale (~160 call sites). Converted components
+ * use this hook instead: it closes over the active locale, so nobody has to remember to pass it.
  *
- * The bug this exists to kill: 138 call sites in this codebase reach for a
- * bare `.toLocaleString()`, which silently takes the *browser's* locale rather
- * than the page's. On a Japanese page opened in an English browser those
+ * Exists because 138 call sites reach for a bare `.toLocaleString()`, which silently takes the
+ * *browser's* locale rather than the page's. On a Japanese page in an English browser those
  * disagree, and nothing in the type system notices.
  */
 export function useFormatters(): IFormatters {

@@ -111,8 +111,8 @@ const operatorHandler = defineOgHandler<IOperatorOgData>({
     kind: "operator",
     hashVersion: OPERATOR_HASH_VERSION,
     fetch: async (id) => {
-        // `/operators/{id}` resolves across every loaded server -- default first,
-        // then CN -- and tags the response with the server it was found on. The
+        // `/operators/{id}` resolves across every loaded server, default first,
+        // then CN, and tags the response with the server it was found on. The
         // operators list is Global-only, so going through it would leave every
         // CN-exclusive operator without an embed.
         const res = await backendFetch(`/operators/${encodeURIComponent(id)}`);

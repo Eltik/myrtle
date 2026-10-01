@@ -3,7 +3,7 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 /**
  * The three promotion tiers. The rows are a plain constant, so they hold
  * message KEYS and the card resolves them with `t()`. 'Elite' is the game's own
- * promotion tier - a translation should follow the game's wording.
+ * promotion tier: a translation should follow the game's wording.
  */
 export const namespace = "user";
 

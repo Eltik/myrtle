@@ -155,7 +155,6 @@ function ChibiWalkerSprite({ walker, padY, tilt, onEnemyHover }: { walker: IChib
             const dt = Math.min((now - last) / 1000, 0.1);
             last = now;
 
-            // Advance along the path, pausing for the enemy's wait points.
             const moving = waitTimer <= 0;
             if (!moving) {
                 waitTimer -= dt;

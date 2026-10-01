@@ -65,14 +65,12 @@ function readRowMetrics(el: HTMLElement, width: number): IRowMetrics | null {
 }
 
 /**
- * How many fixed-size avatars fit on one thumbnail row, measured from the
- * row's rendered width. The avatar size comes from the row's inherited
- * `--op-size` and the gap from its `column-gap`, so the CSS that sizes the
- * tiles stays the only place those numbers live.
+ * How many fixed-size avatars fit on one thumbnail row, measured from the row's rendered width.
+ * The avatar size comes from the row's inherited `--op-size` and the gap from its `column-gap`,
+ * so the CSS that sizes the tiles stays the only place those numbers live.
  *
- * Returns `fallback` until the element has been measured (server render and
- * the first client paint), so the pre-measurement output is identical to the
- * fixed cap the cards used before.
+ * Returns `fallback` until the element has been measured (server render and the first client
+ * paint).
  */
 export function useFittedOpCount(ref: RefObject<HTMLElement | null>, total: number, fallback: number): number {
     const [fitted, setFitted] = useState<number | null>(null);

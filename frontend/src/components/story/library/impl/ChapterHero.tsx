@@ -10,7 +10,7 @@
  * THE HERO SCROLLS AWAY. It is neither fixed nor sticky: it is the first band
  * in the sheet's one scroller and it leaves with the scroll, and the parallax
  * is only that the picture goes slower than the box it is in. The close button
- * left with it and now lives on the popup, outside the scroller, because an
+ * lives on the popup, outside the scroller, because an
  * escape route 25 rows up is not one.
  */
 

@@ -5,10 +5,9 @@ import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./FilterToggleButton.messages";
 
 /**
- * Toolbar toggle for the filter panel. Below md it is the compact 24px chevron the
- * /operators toolbar has always shown on phones; from md up it is the 36px "Filter"
- * button with the funnel icon introduced on 2026-09-03 for desktop. Both surfaces
- * (the /operators page and the profile roster) render this one element.
+ * Toolbar toggle for the filter panel. Below md it is the compact 24px chevron; from md up it is
+ * the 36px "Filter" button with the funnel icon (desktop, since 2026-09-03). Both surfaces (the
+ * /operators page and the profile roster) render this one element.
  */
 export function FilterToggleButton({ visible, onToggle, activeCount }: { visible: boolean; onToggle: () => void; activeCount: number }) {
     const t: TypedT<typeof messages> = useT("operators");

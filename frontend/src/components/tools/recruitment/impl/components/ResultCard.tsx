@@ -52,17 +52,14 @@ function floorLabel(rarity: number, t: ResultT): string {
 }
 
 /**
- * The guaranteed worst case, shown on every card because it is the key the list
- * is ranked by - leaving it off the cards below a 5★ lock meant the ordering was
- * driven by a value the reader could not see.
+ * The guaranteed worst case, shown on every card because the list is ranked by it (hiding it
+ * below a 5★ lock made the ordering depend on a value the reader could not see).
  *
- * A 5★/6★ lock keeps the filled badge it always had: that is a genuinely
- * different thing, a combination that cannot miss. Everything else gets a quiet
- * label - no fill, no border, colour only on the value - so the floor is legible
- * at a glance without competing with the lock.
+ * A 5★/6★ lock keeps the filled badge: a combination that cannot miss is a different thing.
+ * Everything else gets a quiet label (no fill, no border, colour only on the value).
  *
- * `layout` only changes the alignment: the compact row pushes the badge right
- * on phones, the detailed card header pushes the quiet label right at every width.
+ * `layout` only changes alignment: the compact row pushes the badge right on phones, the
+ * detailed card header pushes the quiet label right at every width.
  */
 export function GuaranteedBadge({ result, layout }: { result: ITagCombinationResult; layout: ResultLayout }): React.ReactElement {
     const t: ResultT = useT("tools");

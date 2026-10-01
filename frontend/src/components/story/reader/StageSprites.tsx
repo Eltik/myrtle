@@ -119,8 +119,8 @@ export function Body({ state, sec, mode }: { state: Pick<SlotState, "sprite" | "
  * scaled duration when the same sprite changes focus.
  */
 export function Sprite({ slot, state, sec, focus }: { slot: Slot; state: SlotState; sec: number; focus?: number }): React.ReactElement {
-    // The wire field is not in the generated binding yet, so the cast is
-    // where the backend agent's `plate` lands; `bodyPlate` validates it.
+    // The wire field is not in the generated binding yet, so the cast is where `plate` lands;
+    // `bodyPlate` validates it.
     const plate = bodyPlate(state.sprite as { plate?: unknown });
     const outgoing = useOutgoing(state, `${state.swap}`, sec);
     // -1 is "not here a frame ago", so the first render of a slot applies the

@@ -68,7 +68,6 @@ export function TermsPage() {
 
     return (
         <LegalContainer>
-            {/* Page head */}
             <header className="mb-12 border-border border-b pb-8">
                 <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
@@ -94,13 +93,11 @@ export function TermsPage() {
                 </div>
             </header>
 
-            {/* TL;DR alert */}
             <Alert className="mb-10 border-[color-mix(in_srgb,var(--primary)_32%,transparent)] bg-[color-mix(in_srgb,var(--primary)_5%,transparent)] [&>svg]:text-primary">
                 <ShieldIcon strokeWidth={1.8} />
                 <AlertDescription className="text-[15px] text-muted-foreground leading-[1.55]">{t("terms.tldr")}</AlertDescription>
             </Alert>
 
-            {/* Table of contents */}
             <nav aria-label={t("terms.toc.nav")} className="mb-12 rounded-xl border border-border bg-[color-mix(in_srgb,var(--muted)_50%,var(--card))] p-6">
                 <h2 className="m-0 mb-3.5 font-semibold text-[18px] text-foreground leading-[1.3]">{t("terms.toc.heading")}</h2>
                 <ol className="m-0 list-decimal pl-6 font-sans text-[14.5px] leading-[1.6]">
@@ -114,7 +111,6 @@ export function TermsPage() {
                 </ol>
             </nav>
 
-            {/* 1. Acceptance */}
             <Section id="acceptance">
                 <div className="mb-4 flex items-center gap-3">
                     <div className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -131,7 +127,6 @@ export function TermsPage() {
 
             <LegalDivider />
 
-            {/* 2. Account */}
             <Section id="account">
                 <H2>{t("terms.s2.heading")}</H2>
                 <H3>{t("terms.s2.oauth.heading")}</H3>
@@ -151,7 +146,6 @@ export function TermsPage() {
 
             <LegalDivider />
 
-            {/* 3. Usage */}
             <Section id="usage">
                 <H2>{t("terms.s3.heading")}</H2>
                 <P>{t("terms.s3.intro")}</P>
@@ -170,7 +164,6 @@ export function TermsPage() {
 
             <LegalDivider />
 
-            {/* 4. Content */}
             <Section id="content">
                 <H2>{t("terms.s4.heading")}</H2>
                 <P>{t("terms.s4.p1")}</P>
@@ -188,7 +181,6 @@ export function TermsPage() {
 
             <LegalDivider />
 
-            {/* 5. IP */}
             <Section id="intellectual">
                 <H2>{t("terms.s5.heading")}</H2>
                 <H3>{t("terms.s5.code.heading")}</H3>
@@ -218,7 +210,6 @@ export function TermsPage() {
 
             <LegalDivider />
 
-            {/* 6. Termination */}
             <Section id="termination">
                 <H2>{t("terms.s6.heading")}</H2>
                 <P>{t("terms.s6.p1")}</P>
@@ -228,7 +219,6 @@ export function TermsPage() {
 
             <LegalDivider />
 
-            {/* 7. Liability */}
             <Section id="liability">
                 <H2>{t("terms.s7.heading")}</H2>
                 <P>{t("terms.s7.p1")}</P>
@@ -243,7 +233,6 @@ export function TermsPage() {
 
             <LegalDivider />
 
-            {/* 8. Changes */}
             <Section id="changes">
                 <H2>{t("terms.s8.heading")}</H2>
                 <P>{t("terms.s8.p1")}</P>
@@ -252,7 +241,6 @@ export function TermsPage() {
 
             <LegalDivider />
 
-            {/* 9. Contact */}
             <Section id="contact">
                 <H2>{t("terms.s9.heading")}</H2>
                 <P>{t("terms.s9.intro")}</P>

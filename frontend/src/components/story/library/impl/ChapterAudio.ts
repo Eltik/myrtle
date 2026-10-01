@@ -26,10 +26,9 @@ export function playingKeyOf(state: IPlayerState, prefix: string): string | null
 /**
  * THE CHAPTER SHEET'S VIEW OF THE LIBRARY'S ONE CHANNEL.
  *
- * The hook used to own an audio channel and the reader's volume outright,
- * which is why a theme stopped the moment the sheet unmounted. Both moved to
- * `player.ts`, a module singleton the ticket cards, the list rows and the
- * now-playing bar press on as well; what is left here is the naming.
+ * The audio channel and the reader's volume live in `player.ts`, a module singleton the ticket
+ * cards, the list rows and the now-playing bar press on as well, so a theme survives the sheet
+ * unmounting. What is left here is the naming.
  *
  * Keys are LOCAL on this side and global in the store. The hero button asks
  * for `theme` and a music row for `track:{id}`, which two chapters would

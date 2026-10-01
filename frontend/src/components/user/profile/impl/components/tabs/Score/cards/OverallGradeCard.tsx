@@ -105,7 +105,6 @@ function GradeLadder({ total, color }: { total: number; color: string }) {
                         return <div key={g.grade} className="h-full border-background/70 border-r last:border-r-0" style={{ width: `${width}%`, background: reached ? gradeColor(g.grade) : "transparent", opacity: reached ? 0.55 : 1 }} />;
                     })}
                 </div>
-                {/* Position marker */}
                 <div className="absolute -top-0.75 h-3.5 w-0.75 -translate-x-1/2 rounded-full" style={{ left: `${pos}%`, background: color, boxShadow: "0 0 0 2px var(--background)" }} />
             </div>
             <div className="relative h-3.5">

@@ -79,9 +79,9 @@ export default function Footer() {
                         ),
                     })}
                 </span>
-                {/* No language picker here. It was the third copy of one control,
-                    after the header trigger and the mobile drawer, and the footer is
-                    the least likely of the three to be where anyone looks for it. */}
+                {/* No language picker here: it would be the third copy of one control, after the
+                    header trigger and the mobile drawer, and the footer is the least likely
+                    place anyone looks for it. */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <span className="font-medium font-mono text-[11px] text-muted-foreground leading-none tracking-wide opacity-70">{t("footer.builtOn")}</span>
                 </div>

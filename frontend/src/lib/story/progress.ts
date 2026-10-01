@@ -160,7 +160,7 @@ export function onProgressWritten(fn: ProgressListener): () => void {
  * Called when ANOTHER TAB writes the document, with what it wrote.
  *
  * `saveProgress` notifies only its own tab: the reader open in one tab and
- * the library in another used to disagree until a reload. The browser's
+ * the library in another would disagree until a reload. The browser's
  * `storage` event is the bridge, and it is a SEPARATE seam from
  * `onProgressWritten` on purpose: the writing tab already pushed that
  * document to the account, so the sync must not treat the echo as a write of

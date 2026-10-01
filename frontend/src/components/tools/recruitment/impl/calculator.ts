@@ -103,10 +103,6 @@ function getCombinations<T>(arr: T[], maxSize: number): T[][] {
     return result;
 }
 
-// ============================================================================
-// Ranking precedence
-// ============================================================================
-//
 // THE ORDER OF `rankingFor` BELOW IS THE DECISION. Read this before changing it.
 //
 //   1. PRIMARY  - the guaranteed floor. What is the WORST this combination can
@@ -170,8 +166,7 @@ function rankCombinations(mode: OperatorSortMode): ResultComparator {
 }
 
 /**
- * The regression guard. There are deliberately no test files in this frontend,
- * so the invariant lives here and runs in dev instead: two combinations where
+ * The regression guard, run in dev so a swap fails loudly: two combinations where
  * the floor and the 5★ share disagree - a Robot-floored pool with no 5★s
  * against a 3★-floored pool that is half 5★ - must rank the better floor first.
  * This is the exact comparison that has regressed three times.

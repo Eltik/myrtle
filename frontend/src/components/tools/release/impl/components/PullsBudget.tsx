@@ -201,8 +201,8 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
                     <PullsNumber id="pulls-permits" label={<CurrencyLabel name="permit">{t("release.pulls.resources.permits")}</CurrencyLabel>} flash={flash} value={settings.permits} onChange={(v) => setSettings((s) => ({ ...s, permits: v, manual: true }))} className="w-20" />
                     <PullsNumber id="pulls-ten" label={<CurrencyLabel name="tenPermit">{t("release.pulls.resources.tenPermits")}</CurrencyLabel>} flash={flash} value={settings.tenPermits} onChange={(v) => setSettings((s) => ({ ...s, tenPermits: v, manual: true }))} className="w-20" />
                     <PullsNumber id="pulls-op" label={<CurrencyLabel name="originite">{t("release.pulls.resources.originite")}</CurrencyLabel>} flash={flash} value={settings.originite} onChange={(v) => setSettings((s) => ({ ...s, originite: v, manual: true }))} className="w-24" />
-                    {/* The note that used to sit at the bottom of this card hangs off the
-                        field it is about. It was read as a note about the whole card. */}
+                    {/* The note hangs off the field it is about. At the bottom of the
+                        card it read as a note about the whole card. */}
                     <PullsNumber
                         id="pulls-pity"
                         label={
@@ -330,8 +330,8 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
             <Card className="flex flex-col gap-4 p-4">
                 <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
                     {/* The "with Originite Prime" sub-lines and the weekly Orundum figure
-                        were marked for icons; the currency sits in front of the number it
-                        belongs to rather than being spelled out again in words. */}
+                        get icons: the currency sits in front of its number instead of
+                        being spelled out in words. */}
                     <Stat
                         label={t("release.pulls.summary.now")}
                         value={f.number(first?.pulls ?? 0)}

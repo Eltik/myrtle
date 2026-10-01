@@ -27,7 +27,7 @@ import { groupNewSkins } from "./skins";
 /** A key in `plan.messages.ts`; resolved by whichever component renders it. */
 export type PlanMessageKey = keyof typeof planMessages & string;
 
-/** This module derives the store-sale name and the review year headings. */
+/** Store-sale name and review year headings. */
 type PlanT = TypedT<typeof planMessages & typeof reviewMessages>;
 
 export interface IPlanSkin {

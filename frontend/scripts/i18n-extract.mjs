@@ -54,7 +54,6 @@ const SKIP_DIRS = new Set([".git", ".nitro", ".output", ".vite", "dist", "node_m
 /** Generated or declaration-only files that cannot contain a call site. */
 const SKIP_FILES = new Set(["routeTree.gen.ts"]);
 
-// ----------------------------------------------------------------- placeholders
 
 /**
  * The ICU argument names a source string references.
@@ -190,7 +189,6 @@ function scanArg(src, start, out) {
     return i;
 }
 
-// ----------------------------------------------------------------- tree walk
 
 function* walk(dir) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
@@ -254,7 +252,6 @@ function propertyName(prop) {
     return null;
 }
 
-// ----------------------------------------------------------------- definitions
 
 /**
  * Read one `*.messages.ts` module.
@@ -369,7 +366,6 @@ function readMessagesModule(file, problems) {
     return defined;
 }
 
-// ----------------------------------------------------------------- call sites
 
 /**
  * The key a `t(...)` first argument names, or `null` if it cannot be known
@@ -467,7 +463,6 @@ function readUsage(file, problems) {
     return uses;
 }
 
-// ----------------------------------------------------------------- extraction
 
 function extract() {
     const problems = [];
@@ -509,7 +504,6 @@ function extract() {
     return { entries, namespaces, unused, missing, problems, useCount: uses.length };
 }
 
-// ----------------------------------------------------------------- output
 
 function renderCatalog(entries) {
     const catalog = {};
@@ -556,7 +550,6 @@ function readIfExists(file) {
     }
 }
 
-// ----------------------------------------------------------------- sync
 
 async function sync(entries) {
     if (entries.length === 0) {
@@ -627,7 +620,6 @@ async function sync(entries) {
     return 0;
 }
 
-// ----------------------------------------------------------------- main
 
 async function main() {
     const args = new Set(process.argv.slice(2));

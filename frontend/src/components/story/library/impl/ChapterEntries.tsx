@@ -6,11 +6,9 @@
  * repeated codes merge, which is why the old list printed "Isolated Island"
  * twice.
  *
- * The surface is NEUTRAL. The phase used to be a 10% wash of a palette token
- * across the row plus a full-strength left rule, three hues down a list of
- * thirty-nine, and that is what the page was called ugly for. The phase is now
- * a word on a segment, the only colour is the tick and the hover, and a read
- * row is muted rather than tinted.
+ * The surface is NEUTRAL. A 10% palette-token wash plus a full-strength left rule, three hues
+ * down a list of thirty-nine, read as ugly. The phase is a word on a segment, the only colour is
+ * the tick and the hover, and a read row is muted rather than tinted.
  */
 import { Link } from "@tanstack/react-router";
 import { FilmIcon } from "lucide-react";
@@ -78,13 +76,6 @@ function sameRow(a: IOperationRowProps, b: IOperationRowProps): boolean {
  * ONE OPERATION. A merged row is not a link: its two halves are, each with its
  * own tick, because they are two different places to go. A lone entry has one
  * place to go and the whole row is that link, which is the larger target and
- * the one a thumb finds.
- *
- * The surface is NEUTRAL. The phase used to be a 10% wash of a palette token
- * across the row plus a full-strength left rule, three hues down a list of
- * thirty-nine, and that is what the page was called ugly for. The phase is now
- * a word on a segment, the only colour is the tick and the hover, and a read
- * row is muted rather than tinted.
  */
 const OperationRow = memo(function OperationRow({ row, progress, gameRead, current }: IOperationRowProps): React.ReactElement {
     const t: BrowseT = useT("story");
@@ -173,8 +164,8 @@ function PhaseSegment({ segment, title, progress, gameRead, current }: { segment
     const phase: StoryPhase = segment.phase ?? "interlude";
     const label = t(`chapter.phase.${phase}`);
     const read = isStoryRead(progress, gameRead, segment.entry.id);
-    // 40 px on a fine pointer from 640 up and 44 px everywhere else. The chip was
-    // 32 px of 10 px uppercase mono, and the reader asked for these to be bigger.
+    // 40 px on a fine pointer from 640 up and 44 px everywhere else. The old chip was 32 px of
+    // 10 px uppercase mono, too small.
     const shell = "flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-[8px] border px-3 font-medium font-sans text-[13px] transition-colors max-sm:flex-1 sm:pointer-fine:h-10";
 
     if (!segment.entry.hasScript)

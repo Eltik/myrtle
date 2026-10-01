@@ -41,12 +41,10 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
         : [];
 
     return (
-        /* The badges hang off the card's edges by design. They used to hang into
-           an asymmetric MARGIN on a `w-min` card, which left the card floating at
-           the left of a `1fr` track with the rest of the track empty: at a 700px
-           roster that was four cards where five fit. The overhang is reserved here,
-           on the grid item, so the card itself can be `w-full` and the track sets
-           the card size rather than the card ignoring the track. */
+        /* The badges hang off the card's edges by design. The overhang is reserved here, on the
+           grid item (an asymmetric MARGIN on a `w-min` card left it floating at the left of a
+           `1fr` track: four cards at a 700px roster where five fit), so the card itself can be
+           `w-full` and the track sets the card size. */
         <div ref={lastRef ?? undefined} className="pt-0.5 pr-2.5 pb-2.5 pl-2.5">
             <Dialog>
                 {/* `w-full`: a `display: block` button still sizes to its content, so the
@@ -60,13 +58,11 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
                             boxShadow: maxed ? `0 0 10px ${rarityColor}, 0 0 20px ${rarityColor}80` : "0 1px 3px 0 rgb(0 0 0 / 0.1)",
                         }}
                     >
-                        {/* The box reserved 17px (20px at `sm`) for two lines that ask for
-                            25px and 27px: `leading-loose` alone gives the subtitle 18px at
-                            9px type. With `overflow-hidden` and `justify-center` that ate
-                            the top of the alternate name on every operator that has one,
-                            which is what "not enough vertical space" was. The height is
-                            the sum of the two line boxes now, and stays fixed so cards in
-                            a row keep their portraits on one line whether or not the
+                        {/* The box reserved 17px (20px at `sm`) for two lines that ask for 25px
+                            and 27px: `leading-loose` alone gives the subtitle 18px at 9px type,
+                            and with `overflow-hidden` and `justify-center` that ate the top of
+                            the alternate name. The height is the sum of the two line boxes and
+                            stays fixed so portraits in a row line up whether or not the
                             operator has an alternate name. */}
                         <div className="ml-px flex h-6.25 min-w-0 flex-col justify-center overflow-hidden text-left sm:h-6.75">
                             {subtitle && <span className="z-10 truncate text-[0.4375rem] text-foreground leading-[10px] sm:text-[0.5625rem] sm:leading-[12px]">{subtitle}</span>}
@@ -83,10 +79,9 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
 
                         <div
                             /* The portrait follows the TRACK, which follows the grid. A fixed
-                               80px (then 120px at `sm`) portrait set the card's width and left
-                               every track partly empty, and needed a viewport calc to fit three
-                               on a phone. The grid decides the density now and the card fills
-                               whatever it is given. */
+                               80px (120px at `sm`) portrait set the card's width, left every
+                               track partly empty and needed a viewport calc to fit three on a
+                               phone. The grid decides density and the card fills what it gets. */
                             className="relative box-content aspect-square w-full"
                             style={{
                                 borderBottom: `4px solid ${rarityColor}`,
@@ -132,10 +127,9 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
                             </div>
                         )}
 
-                        {/* `top-8` put the bottom of a three-skill column into the module
-                            row in the corner below it. The portrait's top right is empty,
-                            so the column starts there and clears the modules at every
-                            card size the grid produces. */}
+                        {/* The portrait's top right is empty, so the skill column starts there and
+                            clears the modules at every card size (`top-8` put a three-skill
+                            column's bottom into the module row below). */}
                         {!maxed && entry.skill_level > 1 && skillCount > 0 && (
                             <div className="absolute top-1 right-0 z-10 flex flex-col gap-0.5 sm:-right-2.5">
                                 {Array.from({ length: skillCount }).map((_, idx) => {
@@ -150,15 +144,16 @@ export function CompactCard({ entry, lastRef }: ICompactCardProps) {
                                             title={hasM ? t("profile.roster.compact.skillMastery", { n: idx + 1, mastery }) : t("profile.roster.compact.skillLevel", { n: idx + 1, level: entry.skill_level })}
                                         >
                                             {hasM ? (
-                                                /* NOT `icon-theme-aware`. That filter is `invert(1)
-                                                   hue-rotate(180deg)`, which is right for the white line
-                                                   art of the potential and promotion sprites and wrong
-                                                   here: the mastery sprite's filled triangles are gold,
-                                                   and inverting gold gives the black-with-pink-corners
-                                                   that got reported. The sprite sits on the same
-                                                   `bg-secondary` chip its own skill-level sibling and the
-                                                   module badges use, which is what makes it readable on
-                                                   the light theme without touching its hue. */
+                                                /* NOT `icon-theme-aware`: that filter is
+                                                   `invert(1) hue-rotate(180deg)`, right for the
+                                                   white line art of the potential and promotion
+                                                   sprites, wrong here: the mastery sprite's
+                                                   filled triangles are gold, and inverting gold
+                                                   gives black with pink corners. It sits on the
+                                                   same `bg-secondary` chip its skill-level
+                                                   sibling and the module badges use, which keeps
+                                                   it readable on the light theme without
+                                                   touching its hue. */
                                                 <div className="flex h-full w-full items-center justify-center rounded bg-secondary">
                                                     <img alt={t("profile.roster.card.masteryAlt", { mastery })} className="h-[86%] w-[86%] object-contain" decoding="async" height={24} loading="lazy" src={specializedIcon(mastery)} width={24} />
                                                 </div>

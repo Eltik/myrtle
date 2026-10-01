@@ -6,27 +6,20 @@ import type { messages } from "./meta.messages";
 /**
  * Resolving `meta` messages without a React hook.
  *
- * A route's `head()` is the one place in this app that renders user-facing
- * text outside React: it is a plain function the router calls while building a
- * match's assets, so `useT()` - and every other hook - is unavailable there.
- * What `head()` *does* get is the match, and `match.context` is the fully
- * resolved route context, which carries the `i18n` bootstrap the root route's
- * `beforeLoad` already loaded (locale + the whole catalog). The router runs
- * every `beforeLoad` and loader before any `head()`, so that value is always
- * present by then.
- *
- * So no fetch, no second catalog and no duplicated locale negotiation: the
- * catalog is already in hand and this file is just the lookup half of
- * `useT()`, written as a plain function.
+ * A route's `head()` renders user-facing text outside React: a plain function the router calls
+ * while building a match's assets, so `useT()` and every other hook is unavailable. `head()`
+ * does get the match, and `match.context` carries the `i18n` bootstrap (locale + whole catalog)
+ * the root route's `beforeLoad` already loaded; the router runs every `beforeLoad` and loader
+ * before any `head()`. So no fetch, no second catalog, no duplicated locale negotiation: this
+ * is the lookup half of `useT()` as a plain function.
  *
  *     head: ({ match }) => {
  *         const t = metaT(match.context.i18n);
  *         return seo({ title: t("operators.title") });
  *     }
  *
- * `metaSourceForLocale` is the exception: the OG image handlers render on the
- * server with no router match at all, only a locale read off the request, so
- * they fetch the catalog themselves.
+ * `metaSourceForLocale` is the exception: the OG image handlers render on the server with no
+ * router match, only a locale read off the request, so they fetch the catalog themselves.
  */
 
 /** The `meta` namespace, matching `meta.messages.ts` and the README's table. */
@@ -68,10 +61,8 @@ export function metaT(source?: IMetaSource | null): TypedT<typeof messages> {
 /**
  * The catalog for one locale, fetched rather than taken from a route context.
  *
- * For the source locale this returns `null` - the bundled source catalog is
- * already the answer, and skipping the round trip keeps the English OG cards
- * byte-identical to what they were before any of this existed. An unknown or
- * un-served locale resolves the same way.
+ * For the source locale this returns `null`: the bundled source catalog is already the
+ * answer, so the round trip is skipped. An unknown or un-served locale resolves the same way.
  */
 export async function metaSourceForLocale(locale?: string | null): Promise<IMetaSource | null> {
     if (!locale || locale === DEFAULT_LOCALE) return null;

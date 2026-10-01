@@ -207,8 +207,7 @@ export function stageIndexQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER)
 /**
  * Everything the stage-detail page needs for a single stage, served by
  * `GET /stages/{stageId}/detail`: the stage record, its zone, its level data,
- * and only the enemies / materials referenced by that stage. Replaces the old
- * approach of loading the full stages/zones/enemies/materials tables. Procedural
+ * and only the enemies / materials referenced by that stage. Procedural
  * IS/RA/CC nodes (no `stage_table` entry) return 404 -> the route falls back to
  * the stage index.
  */

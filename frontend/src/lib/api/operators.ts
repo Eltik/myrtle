@@ -52,10 +52,9 @@ const OPERATORS_LIST_TTL_MS = 30 * 60 * 1000;
 /**
  * SSR-process cache of the whole operator table, per game server.
  *
- * Keyed by server: it used to be keyed by nothing at all, which was fine while
- * every render read the same client, and is a cross-locale data leak the moment
- * one locale is pinned to `jp` - the first render to warm the entry would decide
- * what language every other locale's operator names came out in for 30 minutes.
+ * Keyed by server. Unkeyed, one locale pinned to `jp` is a cross-locale data leak: the first
+ * render to warm the entry would decide what language every other locale's operator names came
+ * out in for 30 minutes.
  */
 const operatorsListCache = new Map<string, { promise: Promise<IOperatorListItem[]>; expiresAt: number }>();
 

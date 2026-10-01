@@ -11,16 +11,14 @@
  * the list row's surface and furniture are themed, and so is the kind badge,
  * which is the one element that must be legible before it is decorative.
  *
- * WHAT LEFT. The striped tape band across the top of every card is gone. It
- * printed all three sampled inks as five hard stripes and read as a palette
- * swatch stapled to the art. The inks survive on exactly two elements, the
- * spec row's dot and the progress fill; --ticket-c3 is no longer drawn at all.
- * The decorative ring blob is gone with it: it was legible over a flat
- * gradient and is noise over a photograph.
+ * No tape band: it printed all three sampled inks as five hard stripes and read as a palette
+ * swatch stapled to the art. The inks survive on the spec row's dot and the progress fill only;
+ * --ticket-c3 is not drawn at all. No ring blob either: it was legible over a flat gradient and
+ * is noise over a photograph.
  */
 
-/* THE SHELF IS A CONTACT SHEET NOW, not four posters. The reader's ask was
-   "a lot smaller, like the skin planner", whose card is 177 px wide on a 12 px
+/* THE SHELF IS A CONTACT SHEET, not four posters: as small as the skin planner's card,
+   177 px wide on a 12 px
    gap; the track here bottoms out at 200 on a 12 px gap, which lands six
    223.3 x 121.5 tickets across the 1,400 px column at 1440 (223 / 224 x 121
    on whole pixels, see below) (7 would need
@@ -259,13 +257,11 @@
 /*
  * The scrim, over the TEXT CORNER and nowhere else.
  *
- * The first cut darkened the whole card: a 100deg ramp from 88% black at the
- * left to nothing at 92%, plus a bottom band at 72%. It read as a dark card
- * with a picture faintly behind it, which is not what the game's card is and
- * is not what the reviewer asked for. The gradients are now anchored at the
- * BOTTOM LEFT corner, where the logotype and the spec row sit, and the top
- * right two thirds of the art is untouched. The badge needs none of it: it is
- * an opaque pill with its own ground.
+ * The gradients are anchored at the BOTTOM LEFT corner, where the logotype and the spec row sit;
+ * the top right two thirds of the art is untouched. A whole-card ramp (100deg, 88% black at the
+ * left to nothing at 92%, plus a bottom band at 72%) read as a dark card with a picture faintly
+ * behind it, which is not the game's card. The badge needs none of it: it is an opaque pill with
+ * its own ground.
  *
  * No blur has ever been applied to the card art and none is applied now:
  * `filter` and `backdrop-filter` compute `none` on the key visual, the scrim
@@ -282,8 +278,8 @@
     /* Reach, second cut (2026-09-24): the logotype is bound by HEIGHT and its
        right end lands 70.5% across the card, where the first radial had faded
        to 0.14 and a light plate (`main_1`, `main_2`) showed through the white
-       ink. The ellipse is wider and holds 0.55 to 40%, 0.26 to 64%; the top
-       right of the card is still clear past 84%. */
+       ink. The ellipse is wider: 0.55 to 40%, 0.26 to 64%; the top right of
+       the card is still clear past 84%. */
     background: radial-gradient(150% 112% at 0% 100%, rgba(4, 6, 10, 0.86) 0, rgba(4, 6, 10, 0.55) 40%, rgba(4, 6, 10, 0.26) 64%, rgba(4, 6, 10, 0) 84%), linear-gradient(to top, rgba(4, 6, 10, 0.6) 0, rgba(4, 6, 10, 0) 30%);
 }
 
@@ -311,11 +307,10 @@
 }
 
 /*
- * THE QUARTER TURN IS THE OTHER WAY, and that is the whole fix for the
- * reviewer's rotated wordmark. The recipe (190% cover, a quarter turn, the 21%
- * masked stub) is unchanged; only the SIGN moved, from -90 to +90.
+ * THE QUARTER TURN IS rotate(90), not rotate(-90): the whole fix for the rotated wordmark.
+ * Recipe is 190% cover, a quarter turn, the 21% masked stub.
  *
- * Why it was there: at 190% cover the stub samples a narrow band of the source
+ * Why -90 was wrong: at 190% cover the stub samples a narrow band of the source
  * running from 78.0% to 98.4% across the rotated image, and under rotate(-90)
  * the screen's right edge is the image's BOTTOM. On a 632x456 event plate that
  * is source rows 0.711..0.865 and on a 432x432 mainline poster rows
@@ -323,8 +318,7 @@
  * typeset. Under rotate(90) the same band is the image's TOP instead, rows
  * 0.135..0.289 and 0.237..0.348, which is art on all 81 plates.
  *
- * And the premise behind the question is wrong, which is worth writing down:
- * the key visuals do NOT carry a burnt-in wordmark. The 64 event plates
+ * The key visuals do NOT carry a burnt-in wordmark. The 64 event plates
  * (632x456 and 532x456) are paintings with a feathered vignette and no type in
  * them at all; only the 17 mainline 432x432 posters are typeset, and those are
  * the ones the old sign was reading.
@@ -404,9 +398,8 @@
 }
 
 /*
- * THE TITLE IS THE GAME'S LOGOTYPE, which is also the answer to "use a
- * different font for the title matching the theme": the 516x260 plate is
- * authored per event, so its typography already is the event's.
+ * THE TITLE IS THE GAME'S LOGOTYPE: the 516x260 plate is authored per event, so its typography
+ * already is the event's.
  *
  * SIZE. The caps are 72% of the card's width and 60% of its height, against
  * the game's 82.1% and 57.2% (`image_title` 197x103 on a 240x180 card). The
@@ -629,8 +622,6 @@
 .markDone {
     background: var(--story-mark-done);
 }
-
-/* ---- list mode ------------------------------------------------------- */
 
 .rows {
     display: flex;

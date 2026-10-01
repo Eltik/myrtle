@@ -7,7 +7,7 @@ import { parseLocaleFromPath } from "./locale";
  * unprefixed default.
  *
  * Server-only, and named `.server.ts` so the bundler keeps
- * `@tanstack/react-start/server` out of the client graph - the same convention
+ * `@tanstack/react-start/server` out of the client graph; the same convention
  * `lib/api/_shared.server.ts` already uses for its cookie reads.
  */
 export function requestLocale(): string | null {

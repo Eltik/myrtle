@@ -14,7 +14,7 @@ import type { messages as dpsConstantsMessages } from "../constants.messages";
 import type { IEnemyConfig } from "../types";
 import type { messages } from "./EnemyPanel.messages";
 
-/** This panel renders its own chrome plus the preset labels from `constants.ts`. */
+/** Own chrome plus the preset labels from `constants.ts`. */
 type EnemyT = TypedT<typeof messages & typeof dpsConstantsMessages>;
 
 interface IEnemyPanelProps {

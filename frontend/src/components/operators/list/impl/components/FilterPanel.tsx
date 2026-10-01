@@ -26,8 +26,8 @@ interface IFilterPanelProps {
 }
 
 /**
- * Ensures every operator-list surface shares one sidebar/sheet chrome instead of
- * re-deriving the breakpoint, inert handling, and header.
+ * One sidebar/sheet chrome for every operator-list surface, so none re-derives
+ * the breakpoint, inert handling and header.
  */
 export function FilterPanel(props: IFilterPanelProps) {
     const t: TypedT<typeof messages> = useT("operators");

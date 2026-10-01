@@ -21,14 +21,12 @@ export function tokenize(src: string): Root {
             continue;
         }
 
-        // HR
         if (HR_RE.test(line) && !UNORDERED_RE.test(line)) {
             blocks.push({ type: "hr" });
             i++;
             continue;
         }
 
-        // ATX heading
         const headingMatch = HEADING_RE.exec(line);
         if (headingMatch) {
             const hashes = headingMatch[1] ?? "";
@@ -39,7 +37,6 @@ export function tokenize(src: string): Root {
             continue;
         }
 
-        // Fenced code
         const fenceMatch = FENCE_RE.exec(line);
         if (fenceMatch) {
             const lang = fenceMatch[1] || null;
@@ -52,7 +49,6 @@ export function tokenize(src: string): Root {
             continue;
         }
 
-        // Blockquote
         if (BLOCKQUOTE_RE.test(line)) {
             const collected: string[] = [];
             while (i < lines.length) {
@@ -74,7 +70,6 @@ export function tokenize(src: string): Root {
             continue;
         }
 
-        // List
         const listResult = tryParseList(lines, i);
         if (listResult) {
             blocks.push(listResult.list);
@@ -82,7 +77,6 @@ export function tokenize(src: string): Root {
             continue;
         }
 
-        // Paragraph
         const paraStart = i;
         const paraLines: string[] = [line];
         i++;

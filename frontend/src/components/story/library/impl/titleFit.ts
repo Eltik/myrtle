@@ -1,27 +1,21 @@
 /**
  * HOW A TITLE IS SET WHEN THERE IS NO LOGOTYPE TO DRAW.
  *
- * This module used to fit the ghost echo behind a ticket. The ghost is gone
- * (the authored logotype is the title now), and what survives is the
- * measurement underneath it, generalised: given a box and a way to measure a
- * line, answer the largest size at which the title sets WITHOUT a mid-word
- * cut.
+ * Given a box and a way to measure a line, answer the largest size at which the title sets
+ * WITHOUT a mid-word cut.
  *
- * WHY MEASURE AT ALL. The reviewer's case was "Grani and the Knights'
- * Treasure" printing as GRANI AND THE KNIGHTS'... : a fixed 28 px title with a
- * two-line clamp and an ellipsis drops the one word that names the story. CSS
- * cannot decide this, because a container unit scales with the CARD and never
- * with the title, so one `font-size` prints COLLAPSE and NECESSARY SOLUTIONS
- * alike. The title's own advance width only comes from a measurement.
+ * WHY MEASURE AT ALL. "Grani and the Knights' Treasure" printed as GRANI AND THE KNIGHTS'...:
+ * a fixed 28 px title with a two-line clamp and an ellipsis drops the one word that names the
+ * story. CSS cannot decide this, because a container unit scales with the CARD and never with
+ * the title, so one `font-size` prints COLLAPSE and NECESSARY SOLUTIONS alike. The title's own
+ * advance width only comes from a measurement.
  *
- * THE ORDER OF CONCESSIONS is fixed and is what the reviewer asked for: shrink
- * first, from the ceiling down to a floor, and only at the floor take another
- * line. `overflow-wrap: anywhere` is the last resort and fires only when a
- * single WORD is still wider than the box at the floor.
+ * THE ORDER OF CONCESSIONS is fixed: shrink first, from the ceiling down to a floor, and only
+ * at the floor take another line. `overflow-wrap: anywhere` is the last resort and fires only
+ * when a single WORD is still wider than the box at the floor.
  *
- * `widthEm` returns a line's width at font-size 1, so the caller owns the
- * measurement and this stays pure. Sizes and the box are in the SAME unit,
- * whatever the caller chooses.
+ * `widthEm` returns a line's width at font-size 1, so the caller owns the measurement and this
+ * stays pure. Sizes and the box are in the SAME unit, whatever the caller chooses.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -54,12 +48,11 @@ export interface IFitBounds {
  * THE TICKET'S TEXT-TITLE BOX, for the 6 groups with no logotype, re-derived
  * for the smaller ticket (2026-09-29).
  *
- * The box is the content box's width on the NARROWEST card each grid can make,
- * because a fit measured on a wider card overflows a narrower one. The content
- * box is the card less 23% and 10 px, so above 640 the 200 px track floor gives
- * 144 px, and under 640 the 160 px track floor gives 113 px. The ceiling and the
- * floor keep the ratio the old 216 px box had (32 / 216 = 0.148, 21 / 216 =
- * 0.097): 21 and 14 px for 144, 16.5 and 11 px for 113. The old bounds were
+ * The box is the content box's width on the NARROWEST card each grid can make, because a fit
+ * measured on a wider card overflows a narrower one. The content box is the card less 23% and
+ * 10 px, so above 640 the 200 px track floor gives 144 px, and under 640 the 160 px track
+ * floor gives 113 px. Ceiling and floor keep the ratio of the old 216 px box (32 / 216 =
+ * 0.148, 21 / 216 = 0.097): 21 and 14 px for 144, 16.5 and 11 px for 113. The old bounds were
  * `{ box: 216, max: 32, min: 21 }` against a 300 px track floor.
  */
 export const TICKET_FIT: IFitBounds = { box: 144, max: 21, min: 14, lines: 2, floorLines: 3 };
