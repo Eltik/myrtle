@@ -32207,6 +32207,13 @@
             "placeholders": []
         },
         {
+            "key": "tools.release.planner.stages.ended",
+            "namespace": "tools",
+            "source_text": "Event ended: its stages pay again only if it reruns",
+            "description": "Shown in place of the select-all link once an event has closed on the English server; its Originite Prime no longer counts in the plan.",
+            "placeholders": []
+        },
+        {
             "key": "tools.release.planner.stages.income",
             "namespace": "tools",
             "source_text": "{income} of {potential}",
@@ -32214,6 +32221,15 @@
             "placeholders": [
                 "income",
                 "potential"
+            ]
+        },
+        {
+            "key": "tools.release.planner.stages.missed",
+            "namespace": "tools",
+            "source_text": "{count} missed",
+            "description": "Part of the stage tally on an event that has ended: stages short of three stars, whose reward can no longer be earned.",
+            "placeholders": [
+                "count"
             ]
         },
         {
@@ -32301,6 +32317,13 @@
             "namespace": "tools",
             "source_text": "Three-starred on your account: its Originite Prime is already claimed",
             "description": "Tooltip on a stage the player has fully cleared.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.release.planner.status.ended",
+            "namespace": "tools",
+            "source_text": "The event has ended: this stage's Originite Prime is out of reach until a rerun",
+            "description": "Tooltip on a stage of a closed event that the player had not three-starred.",
             "placeholders": []
         },
         {

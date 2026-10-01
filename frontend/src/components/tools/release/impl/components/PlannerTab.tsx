@@ -293,7 +293,7 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
                             <span className="font-sans text-[11px] text-muted-foreground" title={tally.unknown > 0 ? t("release.planner.stages.unknownTitle", { count: tally.unknown }) : undefined}>
                                 {[
                                     tally.claimed > 0 && t("release.planner.stages.claimed", { count: tally.claimed }),
-                                    tally.open > 0 && t("release.planner.stages.open", { count: tally.open }),
+                                    tally.open > 0 && (row.ended ? t("release.planner.stages.missed", { count: tally.open }) : t("release.planner.stages.open", { count: tally.open })),
                                     tally.unrated > 0 && t("release.planner.stages.unrated", { count: tally.unrated }),
                                     tally.unknown > 0 && t("release.planner.stages.unknown", { count: tally.unknown }),
                                 ]
@@ -301,7 +301,9 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
                                     .join(t("release.planner.stages.tallyJoin"))}
                             </span>
                         )}
-                        {deviates ? (
+                        {row.ended ? (
+                            <span className="font-sans text-[11.5px] text-muted-foreground">{t("release.planner.stages.ended")}</span>
+                        ) : deviates ? (
                             <button type="button" onClick={() => onResetStages(row)} title={clears ? t("release.planner.stages.resetAccount") : t("release.planner.stages.resetDefaults")} className="cursor-pointer font-sans text-[11.5px] text-primary hover:underline">
                                 {t("release.planner.stages.resetAll")}
                             </button>
@@ -315,15 +317,18 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
                         {row.opStages.map((st) => {
                             const on = stageOn(row, st, state, clears);
                             const status = stageStatus(st, clears);
+                            const missed = row.ended && status !== "claimed";
+                            const titleKey = missed ? "release.planner.status.ended" : STATUS_TITLE_KEYS[status];
                             return (
                                 <button
                                     key={stageKey(st)}
                                     type="button"
                                     aria-pressed={on}
+                                    disabled={row.ended}
                                     onClick={() => onStage(row, stageKey(st), !on)}
-                                    title={STATUS_TITLE_KEYS[status] ? t(STATUS_TITLE_KEYS[status]) : undefined}
+                                    title={titleKey ? t(titleKey) : undefined}
                                     className={cn(
-                                        "inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[11px] transition-colors",
+                                        "inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-2 py-1 font-mono text-[11px] transition-colors disabled:cursor-default",
                                         on ? "border-primary/50 bg-primary/10 text-foreground" : "border-border/60 bg-muted/30 text-muted-foreground",
                                         st.challenge && "border-dashed",
                                         status === "claimed" && !on && "line-through opacity-70",

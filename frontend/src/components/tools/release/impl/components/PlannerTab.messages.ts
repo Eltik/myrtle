@@ -151,6 +151,10 @@ export const messages = {
         text: "{count} open",
         description: "Part of the stage tally: stages whose reward is still available.",
     },
+    "release.planner.stages.missed": {
+        text: "{count} missed",
+        description: "Part of the stage tally on an event that has ended: stages short of three stars, whose reward can no longer be earned.",
+    },
     "release.planner.stages.unrated": {
         text: "{count} cleared, rating not on record",
         description: "Part of the stage tally: stages cleared, but with no star rating recorded.",
@@ -162,6 +166,10 @@ export const messages = {
     "release.planner.stages.tallyJoin": {
         text: " · ",
         description: "Separator between the parts of the stage tally. Keep the spaces around the middle dot.",
+    },
+    "release.planner.stages.ended": {
+        text: "Event ended: its stages pay again only if it reruns",
+        description: "Shown in place of the select-all link once an event has closed on the English server; its Originite Prime no longer counts in the plan.",
     },
     "release.planner.stages.resetAccount": {
         text: "Back to what your account shows",
@@ -190,6 +198,10 @@ export const messages = {
     "release.planner.stages.multiplier": {
         text: " ×{count}",
         description: "Appended to a stage that pays more than one Originite Prime. Keep the leading space and the multiplication sign.",
+    },
+    "release.planner.status.ended": {
+        text: "The event has ended: this stage's Originite Prime is out of reach until a rerun",
+        description: "Tooltip on a stage of a closed event that the player had not three-starred.",
     },
     "release.planner.status.claimed": {
         text: "Three-starred on your account: its Originite Prime is already claimed",

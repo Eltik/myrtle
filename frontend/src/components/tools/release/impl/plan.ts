@@ -54,6 +54,8 @@ export interface IPlanRow {
     imagePath: string | null;
     enStart: number;
     resolution: Resolution;
+    /** EN has closed the event: its stages pay nothing more until a rerun. */
+    ended: boolean;
     opStages: OpStage[];
     farmStages: FarmStage[];
     missionTokens: number;
@@ -130,6 +132,7 @@ export function usePlanData(today: Date, showPast: boolean): IPlanData {
         const model = events.data?.model ?? skins.data?.model ?? null;
         const byEvent = new Map<string, IPlanRow>();
         const listings: IPlanRow[] = [];
+        const nowSecs = today.getTime() / 1000;
         for (const e of events.data?.events ?? []) {
             if (!e.hasStage && e.opStages.length === 0) continue;
             const enStart = resolvedEnStart(e.resolution);
@@ -144,6 +147,7 @@ export function usePlanData(today: Date, showPast: boolean): IPlanData {
                 imagePath: e.imagePath,
                 enStart,
                 resolution: e.resolution,
+                ended: enEnded(e.resolution, nowSecs),
                 opStages: e.opStages,
                 farmStages: e.farmStages,
                 missionTokens: e.missionTokens,
@@ -160,7 +164,7 @@ export function usePlanData(today: Date, showPast: boolean): IPlanData {
             const key = `sale:${cnDay(cnStart)}`;
             const existing = listings.find((l) => l.key === key);
             if (existing) return existing;
-            const row: IPlanRow = { key, kind: "listing", cnId: null, nameCn: "商店上架", nameEn: t("release.plan.storeSale"), nameAuto: null, imagePath: null, enStart: resolvedEnStart(resolution) ?? 0, resolution, opStages: [], farmStages: [], missionTokens: 0, shop: null, rerun: false, skins: [] };
+            const row: IPlanRow = { key, kind: "listing", cnId: null, nameCn: "商店上架", nameEn: t("release.plan.storeSale"), nameAuto: null, imagePath: null, enStart: resolvedEnStart(resolution) ?? 0, resolution, ended: false, opStages: [], farmStages: [], missionTokens: 0, shop: null, rerun: false, skins: [] };
             listings.push(row);
             return row;
         };
@@ -196,6 +200,7 @@ export function usePlanData(today: Date, showPast: boolean): IPlanData {
                     imagePath: null,
                     enStart,
                     resolution: r.resolution,
+                    ended: false,
                     opStages: [],
                     farmStages: [],
                     missionTokens: 0,
@@ -216,6 +221,12 @@ export function usePlanData(today: Date, showPast: boolean): IPlanData {
         isPending: events.isPending || skins.isPending,
         error: events.error ?? skins.error ?? null,
     };
+}
+
+/** Only a known EN end closes an event; an estimate has none, and one dated before today is moved to today. */
+export function enEnded(r: Resolution, nowSecs: number): boolean {
+    const end = r.status === "confirmed" || r.status === "override" ? r.enEnd : null;
+    return end !== null && end <= nowSecs;
 }
 
 export interface IRowBalance {
@@ -268,12 +279,13 @@ export function stageDefault(row: IPlanRow, stage: OpStage, clears: StageClears)
 }
 
 export function stageOn(row: IPlanRow, stage: OpStage, state: IPlanState, clears: StageClears): boolean {
+    if (row.ended) return false;
     return stagePick(state.stages[row.key], stage) ?? stageDefault(row, stage, clears);
 }
 
 export function rowDeviates(row: IPlanRow, state: IPlanState, clears: StageClears): boolean {
     const chosen = state.stages[row.key];
-    if (!chosen) return false;
+    if (!chosen || row.ended) return false;
     return row.opStages.some((st) => {
         const pick = stagePick(chosen, st);
         return pick !== undefined && pick !== stageDefault(row, st, clears);
