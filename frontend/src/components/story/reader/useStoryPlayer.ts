@@ -77,12 +77,8 @@ interface Options {
      * the reader keeps its place.
      */
     animateRatio: number;
-    /** `?legacyclamp=1`: the pre-parity 1.5 s clamps, for A/B only. */
-    legacyClamp?: boolean;
-    /** `?firstright=1`: the pre-capture legacy `[character]` sides, first name on the right. */
-    firstNameRight?: boolean;
     /**
-     * `?video=0` and the "Play cutscene videos" setting. Default on; only an
+     * The "Play cutscene videos" setting. Default on; only an
      * explicit `false` turns cutscenes off. It rebuilds the engine, because
      * the halt COUNT changes with it.
      */
@@ -93,11 +89,11 @@ interface Options {
     onShake?: (shake: CameraShake) => void;
 }
 
-export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, animateRatio, legacyClamp, firstNameRight, videos, cutsceneLabel, onShake }: Options): StoryPlayer {
+export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, animateRatio, videos, cutsceneLabel, onShake }: Options): StoryPlayer {
     // The ratio is a LIVE property, not a build argument: rebuilding the engine
     // on a settings change would reset the reader to command 0.
     const ratioRef = useRef(animateRatio);
-    const engine = useMemo<Engine>(() => createEngine(script, { nickname, animateRatio: ratioRef.current, legacyClamp, firstNameRight, videos }), [script, nickname, legacyClamp, firstNameRight, videos]);
+    const engine = useMemo<Engine>(() => createEngine(script, { nickname, animateRatio: ratioRef.current, videos }), [script, nickname, videos]);
     useEffect(() => {
         engine.animateRatio = animateRatio;
         ratioRef.current = animateRatio;
@@ -417,7 +413,7 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
     useEffect(() => {
         if (!import.meta.env.DEV || typeof window === "undefined") return;
         const w = window as unknown as { __storyEngine?: () => unknown };
-        w.__storyEngine = () => ({ storyId, haltIndex: engine.haltIndex, totalHalts: engine.totalHalts, animateRatio: engine.animateRatio, legacyClamp: engine.legacyClamp, unhandledKinds: { ...engine.unhandledKinds }, unresolvedAssets: [...engine.unresolvedAssets] });
+        w.__storyEngine = () => ({ storyId, haltIndex: engine.haltIndex, totalHalts: engine.totalHalts, animateRatio: engine.animateRatio, unhandledKinds: { ...engine.unhandledKinds }, unresolvedAssets: [...engine.unresolvedAssets] });
         return () => {
             w.__storyEngine = undefined;
         };

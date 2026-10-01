@@ -303,10 +303,6 @@ export const messages = {
         text: "Play cutscene videos",
         description: "Setting: play the cutscene clip a story's [Video] command names. Off skips every cutscene.",
     },
-    "settings.playVideosHint": {
-        text: "The URL can turn them off too, with ?video=0.",
-        description: "Hint under the cutscene setting, naming the search parameter that does the same thing.",
-    },
     "settings.cutscenePlayer": {
         text: "Cutscene player",
         description: "Setting: which controls a playing cutscene carries. Sits under the toggle that turns cutscenes on.",

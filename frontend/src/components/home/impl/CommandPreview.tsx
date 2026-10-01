@@ -83,7 +83,13 @@ export default function CommandPreview({ onOpenCommand }: ICommandPreviewProps) 
                 <span>
                     <Kbd>↵</Kbd> {t("cmd.toSelect")}
                 </span>
-                <span className={styles.right}>{t("cmd.poweredBy")}</span>
+                <span className={styles.right}>
+                    {t("cmd.poweredBy")}
+                    <span aria-hidden="true">·</span>
+                    <Link to="/help-me" className={styles.cmdFooterLink}>
+                        {t("cmd.helpMe")}
+                    </Link>
+                </span>
             </div>
         </div>
     );

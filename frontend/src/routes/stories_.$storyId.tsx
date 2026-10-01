@@ -56,39 +56,15 @@ export const Route = createFileRoute("/stories_/$storyId")({
     component: RouteComponent,
     errorComponent: RootErrorComponent,
     // `?halt=N` resumes at halt N (0-based); absent means the title card, or the
-    // resume prompt. `?ratio=` overrides the Playback speed for a debugging run
-    // and `?legacyclamp=1` restores the pre-parity 1.5 s clamps. The capture
-    // pass adds four: `?mask=1` paints the client's black outside the 16:9
-    // canvas box instead of the extend fill, `?canvas=stretch` restores the
-    // pre-capture mapping where the canvas width was the stage width,
-    // `?plate=0` draws every body at the 1024-at-203 slot template instead of
-    // its own wire plate, and `?firstright=1` puts the legacy `[character]`
-    // pair back with the first name on the right. `?video=0` is the kill
-    // switch for the cutscene layer: every `[Video]` is skipped and the halt
-    // count is the one the reader had before cutscenes shipped. Each is read as MISSING
-    // rather than falsy: `Number(null)` is 0 and finite, which would pin the
-    // ratio at zero and make every scene instant.
+    // resume prompt. It is read as MISSING rather than falsy: `Number(null)` is
+    // 0 and finite, which would pin every visit to halt 0.
     // `?view=book` shows the story as one printable document (`BookView`) instead of the stage.
-    validateSearch: (search: Record<string, unknown>): { halt?: number; ratio?: number; legacyclamp?: boolean; mask?: boolean; canvas?: "stretch"; plate?: boolean; firstright?: boolean; video?: boolean; view?: "book" } => {
-        const out: { halt?: number; ratio?: number; legacyclamp?: boolean; mask?: boolean; canvas?: "stretch"; plate?: boolean; firstright?: boolean; video?: boolean; view?: "book" } = {};
+    validateSearch: (search: Record<string, unknown>): { halt?: number; view?: "book" } => {
+        const out: { halt?: number; view?: "book" } = {};
         if (search.view === "book") out.view = "book";
         const asNumber = (v: unknown): number => (typeof v === "number" ? v : typeof v === "string" && v.trim() !== "" ? Number(v) : Number.NaN);
-        // The router's own search parser turns `?mask=1` into the NUMBER 1, so
-        // a string compare alone reads every switch as absent.
-        const asFlag = (v: unknown): boolean => v === true || v === 1 || v === "1" || v === "true";
-        const asOff = (v: unknown): boolean => v === false || v === 0 || v === "0" || v === "false";
         const halt = asNumber(search.halt);
         if (Number.isFinite(halt) && halt >= 0) out.halt = Math.floor(halt);
-        const ratio = asNumber(search.ratio);
-        if (Number.isFinite(ratio) && ratio >= 0 && ratio <= 20) out.ratio = ratio;
-        if (asFlag(search.legacyclamp)) out.legacyclamp = true;
-        if (asFlag(search.mask)) out.mask = true;
-        if (String(search.canvas ?? "").toLowerCase() === "stretch") out.canvas = "stretch";
-        // `?plate=0` is an OFF switch, so only an explicit zero counts.
-        if (asOff(search.plate)) out.plate = false;
-        if (asFlag(search.firstright)) out.firstright = true;
-        // `?video=0` is an OFF switch, so only an explicit zero counts.
-        if (asOff(search.video)) out.video = false;
         return out;
     },
     loader: async ({ context, params }) => {
@@ -133,7 +109,7 @@ function RootErrorComponent({ error }: { error: unknown }) {
 
 function RouteComponent() {
     const { storyId } = Route.useParams();
-    const { halt, ratio, legacyclamp, mask, canvas, plate, firstright, video, view } = Route.useSearch();
+    const { halt, view } = Route.useSearch();
     const server = useGamedataServer();
     // Opening a story is a sync trigger, and the reader shows nothing for it:
     // the pull, the merge and the debounced push all run beside the reading.
@@ -150,24 +126,5 @@ function RouteComponent() {
     }
     const exportGroup = exportGroupOf(index, storyId);
     if (view === "book" && exportGroup) return <BookView script={script} group={exportGroup} server={server} />;
-    return (
-        <StoryReader
-            key={storyId}
-            script={script}
-            entry={placement.entry}
-            groupName={placement.groupName}
-            exportGroup={exportGroup}
-            category={placement.category}
-            previous={placement.previous}
-            next={placement.next}
-            initialHalt={halt}
-            ratioOverride={ratio}
-            legacyClamp={legacyclamp}
-            mask={mask}
-            canvasMode={canvas === "stretch" ? "stretch" : "box"}
-            plateFromWire={plate}
-            firstNameRight={firstright}
-            video={video}
-        />
-    );
+    return <StoryReader key={storyId} script={script} entry={placement.entry} groupName={placement.groupName} exportGroup={exportGroup} category={placement.category} previous={placement.previous} next={placement.next} initialHalt={halt} />;
 }

@@ -63,10 +63,9 @@ export function bodyTextureSize(sprite: { bodySize?: unknown }): BodyTextureSize
  * of 1090 to 0.16%. The character's OWN prefab rect wins. It rides the wire as
  * `CharacterSprite.plate` and is read DEFENSIVELY, because the running backend
  * predates the binding: without it the slot template 1024 at (0,203) is what
- * shipped, and `?plate=0` forces that arm for an A/B.
+ * shipped.
  */
-export function bodyPlate(sprite: { plate?: unknown }, fromWire = true): BodyPlate {
-    if (!fromWire) return BODY_PLATE;
+export function bodyPlate(sprite: { plate?: unknown }): BodyPlate {
     const raw = sprite.plate as { x?: unknown; y?: unknown; w?: unknown; h?: unknown } | undefined | null;
     if (!raw || typeof raw !== "object") return BODY_PLATE;
     const n = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : Number.NaN);
@@ -119,10 +118,10 @@ export function Body({ state, sec, mode }: { state: Pick<SlotState, "sprite" | "
  * lighting multiply is applied INSTANTLY on a new sprite and tweened over the
  * scaled duration when the same sprite changes focus.
  */
-export function Sprite({ slot, state, sec, focus, plateFromWire }: { slot: Slot; state: SlotState; sec: number; focus?: number; plateFromWire: boolean }): React.ReactElement {
+export function Sprite({ slot, state, sec, focus }: { slot: Slot; state: SlotState; sec: number; focus?: number }): React.ReactElement {
     // The wire field is not in the generated binding yet, so the cast is
     // where the backend agent's `plate` lands; `bodyPlate` validates it.
-    const plate = bodyPlate(state.sprite as { plate?: unknown }, plateFromWire);
+    const plate = bodyPlate(state.sprite as { plate?: unknown });
     const outgoing = useOutgoing(state, `${state.swap}`, sec);
     // -1 is "not here a frame ago", so the first render of a slot applies the
     // multiply instantly, which is what `SetFocus` does on a new sprite.

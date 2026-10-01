@@ -35,7 +35,7 @@ import type { VideoSources } from "#/types/generated/VideoSources";
 import { adaptOf, bool, channel01, key, num, slotOf } from "./args";
 import { CANVAS_H, CANVAS_W, interludeMask, LEGACY_SLOT } from "./canvas";
 import { EASE_LINEAR, EASE_OUT_CUBIC, easeOf } from "./ease";
-import { clamp, clamp01 } from "./num";
+import { clamp01 } from "./num";
 import { cloneState, type FocusOut, type Frame, type ImageLayer, type InterludePanel, initialState, layerFrom, nativeSizeOf, overlayFrom, type SceneState, type Slot } from "./scene";
 import { substitute } from "./text";
 
@@ -92,18 +92,7 @@ export interface EngineOptions {
      */
     animateRatio?: number;
     /**
-     * `?legacyclamp=1`: restore the pre-parity 1.5 s clamps on transitions and
-     * holds and ignore the ratio. Kill switch for the timing change.
-     */
-    legacyClamp?: boolean;
-    /**
-     * `?firstright=1`: put the legacy `[character]` pair back the way the
-     * reader shipped it, with the FIRST name on the right. Kill switch for the
-     * side swap measured in `docs/story-reader-captures.md`, 2.
-     */
-    firstNameRight?: boolean;
-    /**
-     * `?video=0` and the "Play cutscene videos" setting. Default on; an
+     * The "Play cutscene videos" setting. Default on; an
      * explicit `false` is the OFF switch, so a missing option is never read as
      * off. With it off a `[Video]` is skipped and counted as `video:off`, and
      * the reader has exactly the halt count it had before cutscenes shipped.
@@ -153,12 +142,7 @@ export interface Engine {
     readonly currentSfxLevels: Record<string, number>;
     /** The live `animateRatio`; a settings change retunes the engine without rebuilding it. */
     animateRatio: number;
-    readonly legacyClamp: boolean;
 }
-
-/** Only the `?legacyclamp=1` path uses these; the client clamps nothing. */
-export const MAX_TRANSITION_SEC = 1.5;
-export const MAX_HOLD_SEC = 1.5;
 
 /** The command kinds the engine models. `unhandledKinds` never lists one of these. */
 export const HANDLED_KINDS: ReadonlySet<string> = new Set([
@@ -206,8 +190,6 @@ export const HANDLED_KINDS: ReadonlySet<string> = new Set([
 function build(script: StoryScript, options: EngineOptions, total: number): Engine {
     const commands = script.commands;
     const nickname = options.nickname.trim() === "" ? "Doctor" : options.nickname;
-    const legacyClamp = options.legacyClamp === true;
-    const firstNameRight = options.firstNameRight === true;
     const legacyInterlude = options.legacyInterlude === true;
     let animateRatio = Number.isFinite(options.animateRatio) ? Math.max(0, options.animateRatio as number) : 1;
     const unhandledKinds: Record<string, number> = {};
@@ -238,7 +220,7 @@ function build(script: StoryScript, options: EngineOptions, total: number): Engi
      */
     const scaleSec = (raw: number): number => {
         if (!Number.isFinite(raw) || raw <= 0) return 0;
-        return legacyClamp ? Math.min(raw, MAX_TRANSITION_SEC) : raw * animateRatio;
+        return raw * animateRatio;
     };
 
     const unhandled = (kind: string) => {
@@ -323,7 +305,7 @@ function build(script: StoryScript, options: EngineOptions, total: number): Engi
         const hold = (sec: number) => {
             if (timeline.length === 0) frame(0, true);
             const last = timeline[timeline.length - 1];
-            last.holdSec = legacyClamp ? clamp(last.holdSec + sec, 0, MAX_HOLD_SEC) : last.holdSec + scaleSec(sec);
+            last.holdSec += scaleSec(sec);
         };
         const finish = (halt: Halt): StepResult => {
             // The halt itself shows or hides the box; the last frame must carry that.
@@ -525,10 +507,8 @@ function build(script: StoryScript, options: EngineOptions, total: number): Engi
                         // Amiya as `name` and Dobermann as `name2`, their ink
                         // centres are canvas x -175.3 and +228.3, so slot 1 is
                         // the LEFT figure at -200 and slot 2 the right at +200.
-                        // The reader shipped them mirrored off the
-                        // `_GenPosition` read; `?firstright=1` puts that back.
-                        put(LEGACY_SLOT[firstNameRight ? 2 : 1], name1, lit1);
-                        put(LEGACY_SLOT[firstNameRight ? 1 : 2], name2, lit2);
+                        put(LEGACY_SLOT[1], name1, lit1);
+                        put(LEGACY_SLOT[2], name2, lit2);
                     } else {
                         put("m", (name1 ?? name2) as string, lit1);
                     }
@@ -1165,9 +1145,6 @@ function build(script: StoryScript, options: EngineOptions, total: number): Engi
         },
         set animateRatio(next: number) {
             animateRatio = Number.isFinite(next) ? Math.max(0, next) : 1;
-        },
-        get legacyClamp() {
-            return legacyClamp;
         },
     };
 

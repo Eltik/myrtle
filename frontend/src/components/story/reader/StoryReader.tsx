@@ -44,7 +44,7 @@ import type { messages } from "./reader.messages";
 import { Scrubber } from "./Scrubber";
 import { SettingsDialog } from "./SettingsDialog";
 import { SkipDialog } from "./SkipDialog";
-import { type CanvasMode, Stage } from "./Stage";
+import { Stage } from "./Stage";
 import { nextShownLine, type ShownLine } from "./shownLine";
 import { nextSkip, SKIP_CLOSED, type SkipEvent, type SkipState, skipAvailable, skipNodeLine } from "./skip";
 import { useSpeakerTint } from "./speaker";
@@ -64,30 +64,12 @@ export interface IStoryReaderProps {
     previous: StoryEntry | null;
     next: StoryEntry | null;
     initialHalt?: number;
-    /** `?ratio=`: overrides the Playback speed setting for a debugging run. */
-    ratioOverride?: number;
-    /** `?legacyclamp=1`: the pre-parity 1.5 s clamps, for an A/B against this build. */
-    legacyClamp?: boolean;
-    /** `?mask=1`: the client's own black outside the 16:9 canvas box, instead of the extend fill. */
-    mask?: boolean;
-    /** `?canvas=stretch`: the pre-capture canvas mapping, canvas width = stage width. */
-    canvasMode?: CanvasMode;
-    /** `?plate=0`: draw every body at the 1024-at-203 slot template instead of its own wire plate. */
-    plateFromWire?: boolean;
-    /** `?firstright=1`: the pre-capture legacy `[character]` sides, first name on the right. */
-    firstNameRight?: boolean;
-    /**
-     * `?video=0`: never play a cutscene, skip every `[Video]`. Kill switch for
-     * the cutscene layer, and it sits UNDER the settings toggle: either one off
-     * turns cutscenes off.
-     */
-    video?: boolean;
 }
 
 /** A stable empty slot map, so a frameless render does not hand the tint hook a new object every time. */
 const EMPTY_SLOTS = {};
 
-export function StoryReader({ script, entry, groupName, exportGroup = null, category, previous, next, initialHalt, ratioOverride, legacyClamp, mask, canvasMode, plateFromWire, firstNameRight, video }: IStoryReaderProps): React.ReactElement {
+export function StoryReader({ script, entry, groupName, exportGroup = null, category, previous, next, initialHalt }: IStoryReaderProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("story");
     const tc: TypedT<typeof sharedMessages> = useT("story");
     const [settings, setSettings] = useStorySettings();
@@ -114,12 +96,12 @@ export function StoryReader({ script, entry, groupName, exportGroup = null, cate
     const onShake = useCallback((params: CameraShake) => setShake((s) => ({ seq: (s?.seq ?? 0) + 1, params })), []);
     // SKIP: the synopsis sheet, and a jump to the end on confirm (`skip.ts`).
     const [skip, setSkip] = useState<SkipState>(SKIP_CLOSED);
-    const animateRatio = ratioOverride ?? settings.animateRatio;
-    // Cutscenes are on unless the URL or the setting says otherwise; the check
-    // is against an explicit `false`, so a missing search param is never off.
-    const videosOn = video !== false && settings.playVideos !== false;
+    const animateRatio = settings.animateRatio;
+    // Cutscenes are on unless the setting says otherwise; the check is against
+    // an explicit `false`, so a missing stored value is never off.
+    const videosOn = settings.playVideos !== false;
     const cutsceneLabel = t("reader.cutscene.label");
-    const player = useStoryPlayer({ script, storyId: script.id, nickname, audio, initialHalt, animateRatio, legacyClamp, firstNameRight, videos: videosOn, cutsceneLabel, onShake });
+    const player = useStoryPlayer({ script, storyId: script.id, nickname, audio, initialHalt, animateRatio, videos: videosOn, cutsceneLabel, onShake });
     const { phase, halt, frame, playing, haltIndex, totalHalts, backlog, revealKey, advance, choose, back, start, resume, restart, savedHalt, haltSummaries, jumpTo, skipToEnd } = player;
     // One place every skip event goes through, so the button, `S` and the
     // sheet's two answers cannot disagree about what a press means.
@@ -378,7 +360,7 @@ export function StoryReader({ script, entry, groupName, exportGroup = null, cate
         // largest 16:9 box, centred, which is what `fit_mode="BLACK_MASK"` makes
         // (`docs/story-reader-captures.md`, 0). The region outside that box is our
         // named trade, extended background by default and the client's black under
-        // `?mask=1`; `?canvas=stretch` puts the pre-capture mapping back.
+        // the "Letterbox like the game" setting.
         <div
             ref={rootRef}
             data-story-reader
@@ -400,9 +382,9 @@ export function StoryReader({ script, entry, groupName, exportGroup = null, cate
                 is the largest 16:9 box, centred, which is what the client's
                 `BLACK_MASK` makes. Outside that box the stage extends the
                 background blurred, or paints the client's black under
-                `?mask=1` and the "Letterbox like the game" setting. */}
+                the "Letterbox like the game" setting. */}
             <div className="relative w-full">
-                <Stage frame={frame} shake={shake} canvasMode={canvasMode} fill={mask || settings.letterbox ? "mask" : "extend"} plateFromWire={plateFromWire} onClick={onStageClick} onContextMenu={onContextMenu} label={t("reader.stage.label")} className="h-[var(--story-avail)]">
+                <Stage frame={frame} shake={shake} fill={settings.letterbox ? "mask" : "extend"} onClick={onStageClick} onContextMenu={onContextMenu} label={t("reader.stage.label")} className="h-[var(--story-avail)]">
                     {settings.progressBar ? (
                         <Scrubber
                             shown={chromeOn}

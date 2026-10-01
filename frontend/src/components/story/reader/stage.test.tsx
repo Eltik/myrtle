@@ -79,14 +79,6 @@ describe("stage geometry", () => {
         expect([box.style.left, box.style.top, box.style.translate]).toEqual(["50%", "50%", "-50% -50%"]);
     });
 
-    it("?canvas=stretch restores the pre-capture mapping: the canvas IS the stage", () => {
-        const { container } = render(<Stage frame={frame()} label="stage" canvasMode="stretch" />);
-        const stage = container.querySelector("[data-story-stage]") as HTMLElement;
-        expect(stage.style.getPropertyValue("--story-cpx")).toBe("0.078125cqw");
-        const box = container.querySelector("[data-story-canvas]") as HTMLElement;
-        expect([box.style.width, box.style.height]).toEqual(["100%", "100%"]);
-    });
-
     it("the scene, the blocker, the curtain and the overlays all live INSIDE the box; the reader's chrome does not", () => {
         const { container } = render(
             <Stage frame={frame({ curtain: { direction: 0, fill: 0.5, grad: false }, subtitle: { text: "sub", x: 0, y: 0, width: 1280, size: 24, alignment: "left" } })} label="stage">
@@ -103,7 +95,7 @@ describe("stage geometry", () => {
         expect(container.querySelector('[data-testid="chrome"]')).not.toBeNull();
     });
 
-    it("the trade: extend redraws the background across the whole stage, ?mask=1 gives the client's black", () => {
+    it("the trade: extend redraws the background across the whole stage, the letterbox setting gives the client's black", () => {
         const bg = { name: "bg", url: "/bg.png", x: 0, y: 0, xScale: 1, yScale: 1, adapt: "coverall" as const, widthMul: 1, heightMul: 1, rotate: 0 };
         const stage = renderStage(frame({ background: bg }));
         const fillImg = stage.querySelector("[data-story-extend-fill]") as HTMLImageElement;
@@ -116,11 +108,6 @@ describe("stage geometry", () => {
         cleanup();
         // Nothing behind the scene is nothing to continue: the stage stays black.
         expect(renderStage(frame()).querySelector("[data-story-extend-fill]")).toBeNull();
-        cleanup();
-        // Under `?canvas=stretch` the canvas IS the stage, so there is no region
-        // outside it and no fill is drawn.
-        const stretched = render(<Stage frame={frame({ background: bg })} label="stage" canvasMode="stretch" />);
-        expect(stretched.container.querySelector("[data-story-extend-fill]")).toBeNull();
     });
 
     it("a body draws at its OWN wire plate, and falls back to the 1024-at-203 slot template", () => {
@@ -138,9 +125,9 @@ describe("stage geometry", () => {
         expect(right.style.width).toBe("calc(957 * var(--story-cpx, min(0.078125cqw, 0.1388889cqh)))");
         expect(right.style.height).toBe("calc(957 * var(--story-cpx, min(0.078125cqw, 0.1388889cqh)))");
         cleanup();
-        // `?plate=0` and a backend with no `plate` both take the template.
-        const off = render(<Stage frame={frame({ slots: { l: slot(AMIYA_PLATE, "amiya", true) } })} label="stage" plateFromWire={false} />);
-        expect((off.container.querySelector('[data-story-slot="l"]') as HTMLElement).style.width).toBe("calc(1024 * var(--story-cpx, min(0.078125cqw, 0.1388889cqh)))");
+        // A backend with no `plate` takes the template.
+        const off = renderStage(frame({ slots: { l: slot(LEGACY, "amiya", true) } }));
+        expect((off.querySelector('[data-story-slot="l"]') as HTMLElement).style.width).toBe("calc(1024 * var(--story-cpx, min(0.078125cqw, 0.1388889cqh)))");
     });
 
     it("a plate offset moves the figure sideways inside its slot", () => {

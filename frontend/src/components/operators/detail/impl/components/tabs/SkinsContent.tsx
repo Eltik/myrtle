@@ -17,7 +17,7 @@ import type { IOperatorListItem } from "#/types/operators";
 import { buildOperatorSkinList, chibiSkinKey, type IUISkin } from "../../skins";
 import type { messages as skinMessages } from "../../skins.messages";
 import { DynamicChibiViewer } from "../chibi/ChibiViewer.lazy";
-import { DEFAULT_SPINE_FIT, type ISpineFit } from "../chibi/helpers";
+import { DEFAULT_SPINE_FIT } from "../chibi/helpers";
 import type { ISceneIllustHandle } from "../dynillust/SceneIllust";
 import { SceneIllustPlayer } from "../dynillust/SceneIllust.lazy";
 import type { messages } from "./SkinsContent.messages";
@@ -291,14 +291,6 @@ const MAX_ZOOM = 5;
  *  entrance hand-off and a resize; the read is a few multiplications). */
 const FIT_POLL_MS = 500;
 
-/** The fit the fullscreen L2D opens on. `contain` shows the whole authored composition;
- *  the renderer's own default under authored framing is `height`, which keeps the subject
- *  a constant fraction of the frame height across card shapes and CROPS the sides of a wide
- *  dialog, which read as "starts way too zoomed-in". `?dialogfit=height` restores that. */
-function dialogFit(): ISpineFit {
-    if (typeof window === "undefined") return DEFAULT_SPINE_FIT;
-    return new URLSearchParams(window.location.search).get("dialogfit") === "height" ? { mode: "height", align: "center" } : DEFAULT_SPINE_FIT;
-}
 const ZOOM_STEP = 0.25;
 const ZOOM_WHEEL_SENSITIVITY = 0.0015;
 const BASE_SCALE = 1.15;
@@ -606,8 +598,11 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
                         {dynamic ? (
                             // Fullscreen L2D with the game's authored (`_adjustes`) framing -
                             // the large, roughly-square viewport where the full-scene
-                            // composition looks right (unlike the narrow card).
-                            <SceneIllustPlayer files={dynamic.files} server={dynamic.server} framing="authored" fit={dialogFit()} backdrop={imageSrc} onHandle={setHandle} />
+                            // composition looks right (unlike the narrow card). It opens on the
+                            // `contain` fit, the whole composition: the renderer's `height` default
+                            // under authored framing crops the sides of a wide dialog, which read as
+                            // "starts way too zoomed-in".
+                            <SceneIllustPlayer files={dynamic.files} server={dynamic.server} framing="authored" fit={DEFAULT_SPINE_FIT} backdrop={imageSrc} onHandle={setHandle} />
                         ) : (
                             <img alt={skinName} className="h-full w-full object-contain" decoding="async" draggable={false} src={imageSrc} />
                         )}

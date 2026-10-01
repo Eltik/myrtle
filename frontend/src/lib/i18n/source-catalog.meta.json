@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-09-30T21:42:54.719Z",
+    "generatedAt": "2026-10-01T01:26:35.960Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -8738,6 +8738,13 @@
             "namespace": "home",
             "source_text": "Tools",
             "description": "Group heading above the sample tools (calculators, planners) in the command-palette mockup.",
+            "placeholders": []
+        },
+        {
+            "key": "home.cmd.helpMe",
+            "namespace": "home",
+            "source_text": "Help Me",
+            "description": "Small link at the end of the command-palette mockup footer, after the COSS UI attribution. Opens the deliberately ugly joke page that begs for UI design help.",
             "placeholders": []
         },
         {
@@ -22513,13 +22520,6 @@
             "namespace": "story",
             "source_text": "Play cutscene videos",
             "description": "Setting: play the cutscene clip a story's [Video] command names. Off skips every cutscene.",
-            "placeholders": []
-        },
-        {
-            "key": "story.settings.playVideosHint",
-            "namespace": "story",
-            "source_text": "The URL can turn them off too, with ?video=0.",
-            "description": "Hint under the cutscene setting, naming the search parameter that does the same thing.",
             "placeholders": []
         },
         {

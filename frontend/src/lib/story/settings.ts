@@ -95,7 +95,7 @@ export interface StorySettings {
      * (`fit_mode="BLACK_MASK"`, `docs/story-reader-captures.md`, 0); our
      * default instead extends the background across it blurred and darkened,
      * so a wide screen sees a continuation. This switch takes the client's
-     * black back, and `?mask=1` does the same for one run.
+     * black back.
      */
     letterbox: boolean;
     /**
@@ -115,8 +115,7 @@ export interface StorySettings {
     progressBar: boolean;
     /**
      * "Play cutscene videos": a `[Video]` halts the reader and plays its clip.
-     * ON by default, which is what the game does. Off skips every cutscene,
-     * and so does `?video=0`, which is the URL half of the same switch.
+     * ON by default, which is what the game does. Off skips every cutscene.
      */
     playVideos: boolean;
     /**

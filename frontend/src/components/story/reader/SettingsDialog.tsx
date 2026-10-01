@@ -132,7 +132,7 @@ export function SettingsDialog({ open, onOpenChange, settings, onChange, onExpor
                         <Row label={t("settings.progressBar")}>
                             <Switch className={TOUCH_SWITCH} checked={settings.progressBar} onCheckedChange={(c) => set("progressBar", c)} />
                         </Row>
-                        <Row label={t("settings.playVideos")} hint={t("settings.playVideosHint")}>
+                        <Row label={t("settings.playVideos")}>
                             <Switch className={TOUCH_SWITCH} checked={settings.playVideos} onCheckedChange={(c) => set("playVideos", c)} />
                         </Row>
                         {/* Under the toggle that turns cutscenes on, because it is a

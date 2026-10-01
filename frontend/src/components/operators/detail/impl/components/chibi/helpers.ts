@@ -3,7 +3,6 @@ import type { Spine } from "pixi-spine";
 import { env } from "#/env";
 import { type IChibiCharacter, type IChibiSkin, type IChibiSpineFiles, isCompleteSpineFiles } from "#/lib/api/chibis";
 import { type DecodedImage, decodedSize, loadDecoded, uploadSource } from "#/lib/utils";
-import { patchBakedIkRedundancy } from "./bakedIkFix";
 import { CHIBI_OFFSET_X, CHIBI_OFFSET_Y, CHIBI_SCALE, DYNAMIC_FIT_MARGIN, EXPORT_HEIGHT, EXPORT_PADDING, EXPORT_WIDTH, MAX_EXPORT_DIM, type ViewType } from "./constants";
 import { patchSpine38NoScaleUnderFlattenedParent } from "./noScaleFix";
 import { patchSpine38PathConstraint } from "./pathConstraintFix";
@@ -224,11 +223,6 @@ export async function loadSpineWithEncodedURLs(skelPath: string, atlasPath: stri
     // Repair the runtime-3.8 NoScale handedness flip under a zero-scale parent (see noScaleFix):
     // Angelina "Mellow Wish" head-turn rig, her face folded over her eyes and mouth.
     patchSpine38NoScaleUnderFlattenedParent(spine, settings.yDown);
-    // Dynamic-illustration L2D only: their animations are fully baked, so redundant
-    // IK constraints that pixi-spine mis-solves (Archetto's arms) must yield to the
-    // authoritative FK. Gated to DynIllust so battle/dorm chibis (IK-driven) are
-    // untouched. (see bakedIkFix)
-    if (skelPath.includes("DynIllust")) patchBakedIkRedundancy(spine);
     return spine;
 }
 

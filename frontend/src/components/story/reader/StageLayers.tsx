@@ -140,8 +140,8 @@ export function Panels({ panels, sec, focus }: { panels: PanelLayer; sec: number
  * the strip (`object-cover`), a small full-length figure where the game
  * shows the head and shoulders at the size of everyone else on stage.
  */
-export function CutinPlate({ cutin, sec, plateFromWire = true }: { cutin: Cutin; sec: number; plateFromWire?: boolean }): React.ReactElement {
-    const plate = bodyPlate(cutin.sprite as { plate?: unknown }, plateFromWire);
+export function CutinPlate({ cutin, sec }: { cutin: Cutin; sec: number }): React.ReactElement {
+    const plate = bodyPlate(cutin.sprite as { plate?: unknown });
     return (
         <div data-story-cutin={cutin.name} className="absolute overflow-hidden" style={{ left: `calc(50% + ${cpx(cutin.x)})`, top: `calc(50% - ${cpx(cutin.y)})`, width: cpx(cutin.width), height: cpx(cutin.height), transform: "translate(-50%, -50%)", ...fade("in", Math.max(0, sec)) }}>
             <img src={asset(cutin.sprite.bodyUrl)} alt={cutin.name} draggable={false} className="absolute max-w-none select-none" style={{ left: `calc(50% + ${cpx(plate.x)})`, bottom: cpx(plate.y - plate.h / 2), width: cpx(plate.w), height: cpx(plate.h), transform: "translateX(-50%)" }} />
@@ -208,10 +208,10 @@ export function CurtainFill({ curtain, sec }: { curtain: Curtain; sec: number })
  * window's `img_unknown` "UNKNOWN" plate is not drawn. One capture of a
  * two-way call (15-04 halt 211) decides all three.
  */
-export function InterludePanels({ panels, sec, plateFromWire = true }: { panels: Record<string, InterludePanel>; sec: number; plateFromWire?: boolean }): React.ReactElement | null {
+export function InterludePanels({ panels, sec }: { panels: Record<string, InterludePanel>; sec: number }): React.ReactElement | null {
     const rows = Object.entries(panels);
     if (rows.length === 0) return null;
-    return <>{rows.map(([channel, p]) => (p.legacy ? <LegacyInterlude key={channel} channel={channel} legacy={p.legacy} sec={sec} /> : <InterludeWindow key={channel} channel={channel} panel={p} sec={sec} plateFromWire={plateFromWire} />))}</>;
+    return <>{rows.map(([channel, p]) => (p.legacy ? <LegacyInterlude key={channel} channel={channel} legacy={p.legacy} sec={sec} /> : <InterludeWindow key={channel} channel={channel} panel={p} sec={sec} />))}</>;
 }
 
 function LegacyInterlude({ channel, legacy, sec }: { channel: string; legacy: NonNullable<InterludePanel["legacy"]>; sec: number }): React.ReactElement {
@@ -227,12 +227,12 @@ function LegacyInterlude({ channel, legacy, sec }: { channel: string; legacy: No
     );
 }
 
-function InterludeWindow({ channel, panel: p, sec, plateFromWire }: { channel: string; panel: InterludePanel; sec: number; plateFromWire: boolean }): React.ReactElement {
+function InterludeWindow({ channel, panel: p, sec }: { channel: string; panel: InterludePanel; sec: number }): React.ReactElement {
     const framed = p.frameW !== p.contentW || p.frameH !== p.contentH;
     // The content rect's centre IS the window centre, so a point at canvas
     // (cx, cy) with y up sits at (cw/2 + cx - x, ch/2 - (cy - y)) inside it.
     const ch = p.character;
-    const plate = ch ? bodyPlate(ch.sprite as { plate?: unknown }, plateFromWire) : null;
+    const plate = ch ? bodyPlate(ch.sprite as { plate?: unknown }) : null;
     const img = p.image;
     const move = { transitionProperty: "left, top, transform, opacity", transitionDuration: `${sec}s`, transitionTimingFunction: "ease-out" };
     return (

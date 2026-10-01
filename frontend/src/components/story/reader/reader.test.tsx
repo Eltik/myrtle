@@ -234,16 +234,6 @@ describe("StoryReader", () => {
         expect(ducked[ducked.length - 1]).toBe(false);
     });
 
-    it("?video=0 skips the cutscene entirely: one halt, no layer", () => {
-        renderReader(cutsceneScript(), { video: false });
-        pressSpace();
-        tick(1600);
-        expect(document.querySelector("[data-story-cutscene]")).toBeNull();
-        expect(haltLabel()).toBe("0");
-        expect(currentLine()).toContain("after the clip");
-        expect(ducked).toEqual([]);
-    });
-
     it("Skip shows the story summary, and confirming lands on the end card with the story marked read", () => {
         renderReader({ ...welcome, synopsis: "The Doctor wakes.\nAmiya is there." });
         pressSpace();

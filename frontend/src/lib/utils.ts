@@ -551,8 +551,7 @@ export type DecodedImage = HTMLImageElement | ImageBitmap;
  *  decoding inside the calling task). `createImageBitmap(blob)` is the platform's off-thread
  *  decode, the path PixiJS's own bitmap loader takes; the bitmap's pixels then serve canvas
  *  reads and the GPU upload without another decode. Any failure on that path falls back to
- *  the element loader, whose error is the one callers report. `?syncdecode=1` takes the
- *  element path directly for A/B measurement. */
+ *  the element loader, whose error is the one callers report. */
 export function loadDecoded(url: string, what: string, signal?: AbortSignal): Promise<DecodedImage> {
     const element = () =>
         new Promise<HTMLImageElement>((resolve, reject) => {
@@ -562,7 +561,7 @@ export function loadDecoded(url: string, what: string, signal?: AbortSignal): Pr
             img.onerror = () => reject(new Error(`Failed to load ${what}: ${url}`));
             img.src = url;
         });
-    if (typeof createImageBitmap !== "function" || typeof fetch !== "function" || syncDecodeOn()) return element();
+    if (typeof createImageBitmap !== "function" || typeof fetch !== "function") return element();
     return (
         fetch(url, { mode: "cors", signal })
             .then((r) => {
@@ -603,11 +602,6 @@ export function uploadSource(img: DecodedImage): DecodedImage {
 export function decodedSize(img: DecodedImage): [number, number] {
     if (img instanceof HTMLImageElement) return [img.naturalWidth || img.width, img.naturalHeight || img.height];
     return [img.width, img.height];
-}
-
-function syncDecodeOn(): boolean {
-    if (typeof window === "undefined") return false;
-    return new URLSearchParams(window.location.search).get("syncdecode") === "1";
 }
 
 export function rarityGradient(rarity: number): string {

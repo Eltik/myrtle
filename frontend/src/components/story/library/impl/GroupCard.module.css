@@ -53,9 +53,6 @@
  * (121 at 1440, 97 at 390), so a row is still one height. The page column
  * is capped at 1,400 px (`--page-max`), so six columns is the most it can
  * hold; a seventh rule would never match.
- *
- * `?shelf=frac` on /stories sets `data-shelf="frac"` on the page root and
- * restores the fractional track, height and tear for an A/B.
  */
 @property --story-tile-h {
     syntax: "auto | <length>";
@@ -146,19 +143,8 @@
    0.398 px is what put every ticket below it off the half pixel (598.398 at
    390). 26.5 moves the page under it by 0.102 px. */
 @media (max-width: 639.98px) {
-    :global(.page-shell:not([data-shelf="frac"])) .shelfHead h1 {
+    .shelfHead h1 {
         line-height: 26.5px;
-    }
-}
-
-:global([data-shelf="frac"]) .grid {
-    --story-tile-h: auto;
-    grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
-}
-
-@media (max-width: 639.98px) {
-    :global([data-shelf="frac"]) .grid {
-        grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr));
     }
 }
 
@@ -242,10 +228,6 @@
     background: #08090d;
 }
 
-:global([data-shelf="frac"]) .body {
-    clip-path: inset(0 21% 0 0);
-}
-
 /*
  * THE KEY VISUAL IS THE CARD. The game's own card draws it at 113.0% of the
  * size that would just cover (`image_ss_kv` 282x204 on a 240x180 card,
@@ -326,10 +308,6 @@
 .stubFace {
     clip-path: inset(0 0 0 round(79%, 1px));
     background: #0a1418;
-}
-
-:global([data-shelf="frac"]) .stubFace {
-    clip-path: inset(0 0 0 79%);
 }
 
 /*
@@ -472,13 +450,8 @@
        wheel scroll 602.6 -> 229.7 ms, GPU-bound dropped frames 44.3 -> 20.7%.
        This keeps one edge and the 6 px ground, which is the outline and the
        dark ground; the second edge only doubled the first and the 18 px glow
-       was a faint darkening of art 20 px out. `?halo=full` on /stories
-       restores the four for an A/B. */
+       was a faint darkening of art 20 px out. */
     filter: drop-shadow(rgba(0, 0, 0, 1) 0 0 1px) drop-shadow(rgba(0, 0, 0, 0.9) 0 2px 6px);
-}
-
-:global([data-halo="full"]) .logotype {
-    filter: drop-shadow(rgba(0, 0, 0, 1) 0 0 1px) drop-shadow(rgba(0, 0, 0, 1) 0 0 1px) drop-shadow(rgba(0, 0, 0, 0.9) 0 2px 6px) drop-shadow(rgba(0, 0, 0, 0.6) 0 0 18px);
 }
 
 /* The 6 groups with no logotype set their name instead, at the size impl/titleFit.ts
@@ -498,19 +471,10 @@
     text-transform: uppercase;
     overflow-wrap: var(--title-wrap, normal);
     /* The same halo the logotype gets, as a text shadow: the edge and the
-       6 px ground (the two-shadow rule above); `?halo=full` restores the five. */
+       6 px ground (the two-shadow rule above). */
     text-shadow:
         rgba(0, 0, 0, 1) 0 0 1px,
         rgba(0, 0, 0, 0.9) 0 2px 6px;
-}
-
-:global([data-halo="full"]) .title {
-    text-shadow:
-        rgba(0, 0, 0, 1) 0 0 1px,
-        rgba(0, 0, 0, 1) 0 0 2px,
-        rgba(0, 0, 0, 0.9) 0 2px 6px,
-        rgba(0, 0, 0, 0.6) 0 0 18px,
-        rgba(0, 0, 0, 0.5) 2px 2px 0;
 }
 
 .titleLine {
@@ -958,13 +922,9 @@
        119.1 ms, raster 29.1 -> 4.0 ms (13 -> 100 layers, renderer tile memory
        222.12 -> 217.30 MB). It is not pixel-identical: the shadow and caption
        edges blend in their own surface and differ at max 3 (1440 top 14,143
-       px). It needs the whole-pixel shelf above; on the fractional one the
-       layers snap and 407,934 px change. `?promote=0` turns it off. */
+       px). It needs the whole-pixel shelf above; on a fractional one the
+       layers snap and 407,934 px change. */
     will-change: transform;
-}
-
-:global([data-promote="off"]) .cardWrap {
-    will-change: auto;
 }
 
 /* The ticket lifts to z-index 5 on hover; the wrapper is its stacking context now. */

@@ -10,17 +10,6 @@ import type { ModuleLevelStats } from "#/types/generated/ModuleLevelStats";
 import type { SkillMasteryStats } from "#/types/generated/SkillMasteryStats";
 import type { IOperatorListItem } from "#/types/operators";
 
-/**
- * Kill switch. `?defaults=0` on `/operators/{id}` restores the pre-feature
- * openings exactly: the last skill on the Skills tab, the first non-INITIAL
- * module on Information. Checked for an explicit "0" rather than falsiness,
- * because an absent parameter and a disabled one are different states.
- */
-function communityDefaultsEnabled(): boolean {
-    if (typeof window === "undefined") return true;
-    return new URLSearchParams(window.location.search).get("defaults") !== "0";
-}
-
 /** `RosterEntry.masteries` and `.modules` arrive as raw `jsonb_agg` output, so
  *  they are typed as unknown JSON. Narrow them to row objects once, here,
  *  rather than casting at every read. */
@@ -81,23 +70,6 @@ export interface ICommunityDefaults {
     ownModuleLevels: ReadonlyMap<string, number>;
 }
 
-const NONE: ICommunityDefaults = {
-    ownSkillIndex: null,
-    ownModuleId: null,
-    communitySkillIndex: null,
-    communitySkillShare: null,
-    communityModuleId: null,
-    communityModuleShare: null,
-    skillShares: new Map(),
-    skillTotal: 0,
-    moduleShares: new Map(),
-    moduleTotal: 0,
-    masteries: new Map(),
-    moduleLevels: new Map(),
-    ownMasteries: new Map(),
-    ownModuleLevels: new Map(),
-};
-
 /**
  * What this operator's tabs should open on.
  *
@@ -112,23 +84,20 @@ const NONE: ICommunityDefaults = {
  * did before" rather than substituting a zero.
  */
 export function useCommunityDefaults(operator: IOperatorListItem): ICommunityDefaults {
-    const enabled = communityDefaultsEnabled();
     const operatorId = operator.id ?? "";
     const { user } = useAuth();
     const localeServer = useGamedataServer();
 
     const { data: stats } = useQuery({
         ...operatorBuildStatsQueryOptions(operatorId, operatorGamedataServer(operator.server, localeServer)),
-        enabled: enabled && operatorId.length > 0,
+        enabled: operatorId.length > 0,
     });
     const { data: own } = useQuery({
         ...userRosterOperatorQueryOptions(user?.uid ?? "", operatorId),
-        enabled: enabled && !!user?.uid && operatorId.length > 0,
+        enabled: !!user?.uid && operatorId.length > 0,
     });
 
     return useMemo(() => {
-        if (!enabled) return NONE;
-
         const skills = operator.skills ?? [];
         const modules = operator.modules ?? [];
 
@@ -219,5 +188,5 @@ export function useCommunityDefaults(operator: IOperatorListItem): ICommunityDef
             ownMasteries,
             ownModuleLevels,
         };
-    }, [enabled, operator, own, stats]);
+    }, [operator, own, stats]);
 }

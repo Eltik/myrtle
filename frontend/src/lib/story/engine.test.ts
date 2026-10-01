@@ -9,7 +9,7 @@ import type { StoryScript } from "#/types/generated/StoryScript";
 import welcomeJson from "./__fixtures__/main_0_0_welcome_to_guide.json";
 import epilogueJson from "./__fixtures__/main_15_level_main_15-08_end.json";
 import { EASE_LINEAR, EASE_OUT_CUBIC } from "./ease";
-import { countHalts, createEngine, type Engine, HANDLED_KINDS, MAX_HOLD_SEC, MAX_TRANSITION_SEC, type StepResult } from "./engine";
+import { countHalts, createEngine, type Engine, HANDLED_KINDS, type StepResult } from "./engine";
 
 const welcome = welcomeJson as StoryScript;
 const epilogue = epilogueJson as StoryScript;
@@ -99,7 +99,7 @@ describe("real fixtures", () => {
         for (const k of Object.keys(e.unhandledKinds)) expect(HANDLED_KINDS.has(k)).toBe(false);
     });
 
-    it("no duration is clamped, every duration is ONE multiply by animateRatio, and `?legacyclamp=1` restores the 1.5 s pair byte for byte", () => {
+    it("no duration is clamped, every duration is ONE multiply by animateRatio", () => {
         // The client scales and never clamps: `CalculateFadetime` is a load, a
         // read of `animateRatio` and an `fmul`, and the eleven call sites carry
         // no `fmin`, `fmax` or constant compare between them.
@@ -107,7 +107,6 @@ describe("real fixtures", () => {
             const plain = runAll(createEngine(s, { nickname: "Doctor" }));
             const half = runAll(createEngine(s, { nickname: "Doctor", animateRatio: 0.5 }));
             const skip = runAll(createEngine(s, { nickname: "Doctor", animateRatio: 0 }));
-            const legacy = runAll(createEngine(s, { nickname: "Doctor", legacyClamp: true }));
             expect(half).toHaveLength(plain.length);
             for (let i = 0; i < plain.length; i++) {
                 for (let f = 0; f < plain[i].timeline.length; f++) {
@@ -117,15 +116,9 @@ describe("real fixtures", () => {
                     expect(half[i].timeline[f].holdSec).toBeCloseTo(one.holdSec / 2, 10);
                     expect(skip[i].timeline[f].transitionSec).toBe(0);
                     expect(skip[i].timeline[f].holdSec).toBe(0);
-                    // The kill switch is the OLD pair, clamp included.
-                    expect(legacy[i].timeline[f].transitionSec).toBe(Math.min(one.transitionSec, MAX_TRANSITION_SEC));
-                    expect(legacy[i].timeline[f].holdSec).toBeLessThanOrEqual(MAX_HOLD_SEC);
                 }
             }
         }
-        // Something in each fixture is ABOVE the old clamp, so the switch is not inert by accident.
-        const longest = Math.max(...runAll(createEngine(welcome, { nickname: "Doctor" })).flatMap((r) => r.timeline.map((f) => f.transitionSec)));
-        expect(longest).toBeGreaterThan(MAX_TRANSITION_SEC);
     });
 
     it("15-08_end: the third decision diverges on references 1 and 2 and reconverges", () => {
@@ -252,20 +245,6 @@ describe("semantics on hand-built scripts", () => {
         // focus=-1 is EXACTLY focus=1: slot 2 takes the dim colour.
         expect(last()).toEqual({ l: expect.objectContaining({ name: "A", lit: true }), r: expect.objectContaining({ name: "B", lit: false }) });
         expect(last()).toEqual({});
-    });
-
-    it("?firstright=1 puts the pre-capture legacy sides back, first name on the right", () => {
-        const s = script(
-            [
-                { kind: "character", args: { name: "A", name2: "B", focus: "1" } },
-                { kind: "text", text: "1" },
-            ],
-            { characters: { A: SPRITE_A, B: SPRITE_B } },
-        );
-        const e = createEngine(s, { nickname: "D", firstNameRight: true });
-        const r = e.step();
-        const slots = r.timeline[r.timeline.length - 1].state.slots;
-        expect(slots).toEqual({ r: expect.objectContaining({ name: "A", lit: true }), l: expect.objectContaining({ name: "B", lit: false }) });
     });
 
     it("[charslot] with no focus lights ALL THREE, a named focus dims the rest, n/none dims all, bare clears, odd slots are logged", () => {
@@ -1036,7 +1015,7 @@ describe("cutscenes", () => {
         expect(e.totalHalts).toBe(1);
     });
 
-    it("videos: false is the kill switch, and the halt count is the one without cutscenes", () => {
+    it("videos: false (the setting off) skips every cutscene, and the halt count is the one without them", () => {
         const e = createEngine(withClip(), { nickname: "Doctor", videos: false });
         const halts = runAll(e);
         expect(halts).toHaveLength(1);

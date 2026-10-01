@@ -29,18 +29,13 @@ export function operatorElite2(opId: string, skin: string | null, portrait: stri
  *  never shows more than that. Opening a Skins tab loaded 17.4 MB of full-size art for two
  *  cards on kalts before any skin was chosen (register, "PERFORMANCE, FIFTH RUN"). Where no
  *  `b` variant exists the card's onError falls back to the full art. Elite arts have no
- *  reduced variant and keep the full one. `?fullthumb=1` restores the full art everywhere. */
+ *  reduced variant and keep the full one. */
 export function skinThumbnail(opId: string, skinId: string, server?: AssetServer): string {
-    if (skinId.includes("@") && !fullThumbOn()) {
+    if (skinId.includes("@")) {
         const file = skinId.replaceAll("@", "_").replaceAll("#", "%23");
         return asset(`/textures/skinpack/${opId}/${file}b.png`, server);
     }
     return skinTexture(opId, skinId, server);
-}
-
-function fullThumbOn(): boolean {
-    if (typeof window === "undefined") return false;
-    return new URLSearchParams(window.location.search).get("fullthumb") === "1";
 }
 
 export function skinTexture(opId: string, skinId: string, server?: AssetServer): string {

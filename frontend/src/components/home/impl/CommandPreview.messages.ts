@@ -31,6 +31,10 @@ export const messages = {
         text: "powered by COSS UI",
         description: "Attribution in the command-palette mockup footer. 'COSS UI' is a product name and stays as-is.",
     },
+    "cmd.helpMe": {
+        text: "Help Me",
+        description: "Small link at the end of the command-palette mockup footer, after the COSS UI attribution. Opens the deliberately ugly joke page that begs for UI design help.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

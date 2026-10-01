@@ -24,7 +24,7 @@
  * nearest ancestor whose matrix is not degenerate, the way a non-flattened parent would have
  * handed it down, and re-run pixi-spine's own NoScale arithmetic with that answer. Everything
  * else is untouched: the original runs first, and a parent with a non-zero determinant is left
- * exactly as it computed it. `?noscalefix=0` reverts. Patches the prototype of the ACTUAL Bone
+ * exactly as it computed it. Patches the prototype of the ACTUAL Bone
  * class off a live instance (immune to how the bundle wires runtimes), gated to the 3.8
  * signature (`matrix` + applied `arotation`, vs 4.x's `a`/`b`/`c`/`d` fields), once.
  */
@@ -56,12 +56,6 @@ const NO_SCALE = 3;
 const EPS = 1e-5;
 const PATCH_FLAG = "__myrtleNoScaleFix38";
 const DEG_RAD = Math.PI / 180;
-
-let enabled: boolean | null = null;
-function noScaleFixOn(): boolean {
-    if (enabled === null) enabled = typeof window === "undefined" ? true : new URLSearchParams(window.location.search).get("noscalefix") !== "0";
-    return enabled;
-}
 
 const det = (m: Matrix38): number => m.a * m.d - m.b * m.c;
 
@@ -117,7 +111,7 @@ export function patchSpine38NoScaleUnderFlattenedParent(spine: unknown, yDown: b
     const original = proto.updateWorldTransformWith as Bone38["updateWorldTransformWith"];
     proto.updateWorldTransformWith = function (this: Bone38, x: number, y: number, rotation: number, scaleX: number, scaleY: number, shearX: number, shearY: number): void {
         original.call(this, x, y, rotation, scaleX, scaleY, shearX, shearY);
-        if (this.data.transformMode !== NO_SCALE || !this.parent || !noScaleFixOn()) return;
+        if (this.data.transformMode !== NO_SCALE || !this.parent) return;
         if (Math.abs(det(this.parent.matrix)) > EPS) return;
         recomputeNoScale(this, this.parent, yDown);
     };

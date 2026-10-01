@@ -38,13 +38,6 @@ export const CANVAS_H = 720;
  */
 export const CPX_BOX = "min(0.078125cqw, 0.1388889cqh)";
 
-/**
- * `?canvas=stretch`: the pre-capture mapping, where the canvas width was the
- * whole STAGE width at every aspect. Kept as a kill switch so the earlier
- * sprite and layer rects can be reproduced side by side.
- */
-export const CPX_STRETCH = "0.078125cqw";
-
 /** One canvas pixel in CSS, against the stage container. */
 export const CPX = `var(--story-cpx, ${CPX_BOX})`;
 
