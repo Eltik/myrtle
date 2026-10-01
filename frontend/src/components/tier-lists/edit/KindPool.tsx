@@ -371,12 +371,47 @@ function PoolEmptyState({ status, onRetry, className }: { status: CatalogueStatu
     );
 }
 
+const EDGE_FADE_PX = 24;
+
+/**
+ * Fades whichever edge of a horizontal scroller has chips hidden past it. The
+ * scrollbar is hidden, so without this a cut-off row looks complete.
+ */
+function useEdgeFade<T extends HTMLElement>() {
+    const ref = useRef<T>(null);
+    const [edges, setEdges] = useState({ start: false, end: false });
+    useEffect(() => {
+        const el = ref.current;
+        if (!el) return;
+        const update = () => {
+            const start = el.scrollLeft > 1;
+            const end = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+            setEdges((prev) => (prev.start === start && prev.end === end ? prev : { start, end }));
+        };
+        update();
+        el.addEventListener("scroll", update, { passive: true });
+        // The row's own box stays the same width when its chips change, so watch the content too.
+        const observer = new ResizeObserver(update);
+        observer.observe(el);
+        if (el.firstElementChild) observer.observe(el.firstElementChild);
+        return () => {
+            el.removeEventListener("scroll", update);
+            observer.disconnect();
+        };
+    }, []);
+    if (!edges.start && !edges.end) return { ref, style: undefined };
+    const mask = `linear-gradient(to right, ${edges.start ? "transparent" : "black"}, black ${EDGE_FADE_PX}px, black calc(100% - ${EDGE_FADE_PX}px), ${edges.end ? "transparent" : "black"})`;
+    return { ref, style: { maskImage: mask, WebkitMaskImage: mask } };
+}
+
 /** One facet's row of toggles in the pool dialog. */
 function FacetFilter({ facet, value, onChange }: { facet: IPoolFacet; value: string[]; onChange: (next: string[]) => void }) {
+    const fade = useEdgeFade<HTMLDivElement>();
     return (
-        <Field className="gap-1.5 sm:flex-row sm:items-center sm:gap-2">
+        // min-w-0: a long facet (24 skin brands) has to shrink to the dialog so its row scrolls instead of overflowing.
+        <Field className="min-w-0 max-w-full gap-1.5 sm:flex-row sm:items-center sm:gap-2">
             <FieldLabel className="whitespace-nowrap font-bold font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.16em]">{facet.label}</FieldLabel>
-            <div className="-mx-1 flex overflow-x-auto px-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div ref={fade.ref} style={fade.style} className="-mx-1 flex min-w-0 overflow-x-auto px-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <ToggleGroup value={value} onValueChange={(v) => onChange(v as string[])} aria-label={facet.groupLabel} multiple variant="outline" size="sm" className="flex-nowrap">
                     {facet.options.map((option) =>
                         facet.variant === "icon" ? (
