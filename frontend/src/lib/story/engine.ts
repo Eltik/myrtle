@@ -308,8 +308,16 @@ function build(script: StoryScript, options: EngineOptions, total: number): Engi
             last.holdSec += scaleSec(sec);
         };
         const finish = (halt: Halt): StepResult => {
-            // The halt itself shows or hides the box; the last frame must carry that.
-            if (timeline.length === 0 || timeline[timeline.length - 1].state.dialogVisible !== state.dialogVisible) frame(0, true);
+            // The halt itself shows or hides the box; the last frame must carry
+            // that. A SUBTITLE OR STICKER HALT ALWAYS GETS ITS OWN FRAME: the
+            // overlay is written to `state` by the command, and when frames were
+            // already queued (a blocker fade, a delay) with the box hidden on both
+            // sides, nothing re-captured the state, so the halt's last frame
+            // predated the overlay and the reader showed a black stage with the
+            // text only in the hidden box (act41side_st01 halt 0, 2026-10-01).
+            const last = timeline[timeline.length - 1];
+            const overlayHalt = halt.kind === "line" && halt.surface !== "box";
+            if (last === undefined || last.state.dialogVisible !== state.dialogVisible || overlayHalt) frame(0, true);
             if (halt.kind !== "end") haltIndex += 1;
             // `{@nickname}`, `{@nbs}` and literal `\n` are resolved here so the
             // backlog, the auto-play timer and the text box all read one string.

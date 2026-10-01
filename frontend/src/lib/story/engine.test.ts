@@ -286,6 +286,23 @@ describe("semantics on hand-built scripts", () => {
         expect(e.unhandledKinds).toEqual({ "charslot:slot=all": 1 });
     });
 
+    it("a subtitle after queued frames carries its overlay in the halt's own frame", () => {
+        // act41side_st01 opens with a blocker fade and delays before its first
+        // subtitle; the last frame predated the overlay and the stage stayed black.
+        const s = script([
+            { kind: "blocker", args: { a: "1", r: "0", g: "0", b: "0", fadetime: "1", block: "true" } },
+            { kind: "delay", args: { time: "1" } },
+            { kind: "subtitle", args: { text: "<i>first</i>", x: "300", y: "370", width: "700", size: "24", alignment: "center" } },
+            { kind: "subtitle", args: { text: "second", x: "300", y: "370", width: "700", size: "24", alignment: "center" } },
+        ]);
+        const e = createEngine(s, { nickname: "Doctor" });
+        const first = e.step();
+        expect(first.halt).toMatchObject({ kind: "line", surface: "subtitle" });
+        expect(first.timeline[first.timeline.length - 1].state.subtitle?.text).toBe("<i>first</i>");
+        const second = e.step();
+        expect(second.timeline[second.timeline.length - 1].state.subtitle?.text).toBe("second");
+    });
+
     it("a bare [Predicate] reconverges: the lines after it run on every branch", () => {
         // `_ExecutePredicate` stores NULL when `references` is absent, which nulls
         // the filter; main_01-03_beg line 41 hid 109 lines when it was read as [""].

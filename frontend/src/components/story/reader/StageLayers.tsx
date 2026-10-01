@@ -12,9 +12,11 @@ import type React from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
 import { CANVAS_H, CANVAS_W, cpx } from "#/lib/story/canvas";
 import type { Curtain, Cutin, ImageLayer, InterludePanel, Overlay, PanelLayer } from "#/lib/story/scene";
+import { parseStoryText } from "#/lib/story/text";
 import { cn } from "#/lib/utils";
 import { Body, bodyPlate } from "./StageSprites";
 import { fade, focusFilter, useOutgoing } from "./stageFx";
+import { renderStoryNodes } from "./TextBox";
 
 /**
  * `screenadapt` (`docs/story-reader-il2cpp-scene.md`, 4): `coverall` covers,
@@ -309,7 +311,10 @@ export function OverlayText({ overlay, kind }: { overlay: Overlay; kind: "subtit
             // and drew it over the sticker below.
             style={{ left: cpx(overlay.x), top: cpx(overlay.y), width: cpx(overlay.width), fontSize: cpx(overlay.size), lineHeight: 1.25, textAlign: overlay.alignment, ...fade("in", 0.25) }}
         >
-            {overlay.text}
+            {/* Overlay text carries the same markup as a line: `<i>` on 487
+                stickers and subtitles, `<color>` on 142 (act41side_st01 printed
+                the tags). The nickname is already substituted by the engine. */}
+            {renderStoryNodes(parseStoryText(overlay.text))}
         </div>
     );
 }

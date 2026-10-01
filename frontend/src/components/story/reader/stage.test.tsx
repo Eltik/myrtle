@@ -319,6 +319,14 @@ describe("stage layers and overlays", () => {
         expect((stage.querySelector('[data-story-layer="background"]') as HTMLElement).style.filter).toBe("blur(12.00px)");
     });
 
+    it("overlay text renders its markup: <i> is an italic element, never the literal tag", () => {
+        // act41side_st01's first subtitle is wrapped in <i>...</i> and printed the tags.
+        const stage = renderStage(frame({ subtitle: { text: "<i>The red dragon</i> breathed", x: 300, y: 370, width: 700, size: 24, alignment: "center" } }));
+        const node = stage.querySelector('[data-story-overlay="subtitle"]') as HTMLElement;
+        expect(node.textContent).toBe("The red dragon breathed");
+        expect(node.querySelector("i, em")?.textContent).toBe("The red dragon");
+    });
+
     it("a subtitle is anchored top-left with y DOWNWARD, sized in canvas pixels", () => {
         const stage = renderStage(frame({ subtitle: { text: "sub", x: 300, y: 370, width: 700, size: 24, alignment: "center" } }));
         const node = stage.querySelector('[data-story-overlay="subtitle"]') as HTMLElement;
