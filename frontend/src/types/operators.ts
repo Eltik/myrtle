@@ -175,7 +175,17 @@ export interface IOperatorIndexEntry {
     hasOffensiveRecovery: boolean;
     hasDefensiveRecovery: boolean;
     allSkillsManual: boolean;
+    /** Every `cvName` across the operator's voice languages, deduplicated. */
+    voiceActors: string[];
+    /** `maxLevel` per elite phase; the length is the phase count. */
+    phaseMaxLevels: number[];
+    skillCount: number;
+    potentialRankCount: number;
+    modules: IOperatorIndexModule[];
 }
+
+/** The module fields the profile Stats tab reads, named as on `IModule`. */
+export type IOperatorIndexModule = Pick<IModule, "uniEquipId" | "typeName1" | "typeName2" | "type">;
 
 /**
  * One operator as the detail endpoints serve it: the Rust `Operator` plus the

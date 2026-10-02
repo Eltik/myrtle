@@ -15963,6 +15963,14 @@
           }
         }
       },
+      "ModuleType": {
+        "type": "string",
+        "enum": [
+          "INITIAL",
+          "ADVANCED",
+          "UNKNOWN"
+        ]
+      },
       "MoraleTimelineDto": {
         "type": "object",
         "required": [
@@ -16308,7 +16316,12 @@
           "stats",
           "hasOffensiveRecovery",
           "hasDefensiveRecovery",
-          "allSkillsManual"
+          "allSkillsManual",
+          "voiceActors",
+          "phaseMaxLevels",
+          "skillCount",
+          "potentialRankCount",
+          "modules"
         ],
         "properties": {
           "allSkillsManual": {
@@ -16348,11 +16361,25 @@
           "isNotObtainable": {
             "type": "boolean"
           },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OperatorIndexModule"
+            }
+          },
           "name": {
             "type": "string"
           },
           "nationId": {
             "type": "string"
+          },
+          "phaseMaxLevels": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "`maxLevel` per elite phase; its length is the phase count. With\n`skillCount`, `potentialRankCount` and `modules`, this is what the\nprofile Stats tab reads instead of the `/static/operators` table."
           },
           "placeOfBirth": {
             "$ref": "#/components/schemas/OperatorBirthPlace"
@@ -16367,6 +16394,10 @@
           "position": {
             "$ref": "#/components/schemas/OperatorPosition"
           },
+          "potentialRankCount": {
+            "type": "integer",
+            "minimum": 0
+          },
           "profession": {
             "$ref": "#/components/schemas/OperatorProfession"
           },
@@ -16377,6 +16408,10 @@
             "type": "integer",
             "format": "int32",
             "description": "1-6. Converts from the game's `TIER_N` enum so the frontend doesn't have to.",
+            "minimum": 0
+          },
+          "skillCount": {
+            "type": "integer",
             "minimum": 0
           },
           "stats": {
@@ -16398,6 +16433,39 @@
               "null"
             ],
             "description": "Sub-faction / team id (same faction filter + logo fallback)."
+          },
+          "voiceActors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Every `cvName` across the operator's voice languages, deduplicated, so\nthe list page's voice-actor filter doesn't need the `/static/voices` table."
+          }
+        }
+      },
+      "OperatorIndexModule": {
+        "type": "object",
+        "description": "The module fields the profile Stats tab reads: id to match the roster, type\nto pick the advanced ones, type names for the gap-list label.",
+        "required": [
+          "uniEquipId",
+          "typeName1",
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/ModuleType"
+          },
+          "typeName1": {
+            "type": "string"
+          },
+          "typeName2": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "uniEquipId": {
+            "type": "string"
           }
         }
       },

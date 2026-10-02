@@ -8,6 +8,7 @@ use crate::app::cache::{CachedJson, cached_json};
 use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::core::gamedata::types::handbook::{OperatorBirthPlace, OperatorGender, OperatorRace};
+use crate::core::gamedata::types::module::ModuleType;
 use crate::core::gamedata::types::operator::{
     Operator, OperatorPosition, OperatorProfession, OperatorRarity,
 };
@@ -55,6 +56,28 @@ pub struct OperatorIndexEntry {
     pub has_offensive_recovery: bool,
     pub has_defensive_recovery: bool,
     pub all_skills_manual: bool,
+    /// Every `cvName` across the operator's voice languages, deduplicated, so
+    /// the list page's voice-actor filter doesn't need the `/static/voices` table.
+    pub voice_actors: Vec<String>,
+    /// `maxLevel` per elite phase; its length is the phase count. With
+    /// `skillCount`, `potentialRankCount` and `modules`, this is what the
+    /// profile Stats tab reads instead of the `/static/operators` table.
+    pub phase_max_levels: Vec<i32>,
+    pub skill_count: usize,
+    pub potential_rank_count: usize,
+    pub modules: Vec<OperatorIndexModule>,
+}
+
+/// The module fields the profile Stats tab reads: id to match the roster, type
+/// to pick the advanced ones, type names for the gap-list label.
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct OperatorIndexModule {
+    pub uni_equip_id: String,
+    pub type_name1: String,
+    pub type_name2: Option<String>,
+    #[serde(rename = "type")]
+    pub module_type: ModuleType,
 }
 
 /// Flattened final-phase base stats for the operators list sorters.
@@ -69,7 +92,27 @@ pub struct OperatorIndexStats {
     pub block: i32,
 }
 
-fn to_index_entry(id: &str, op: &Operator) -> OperatorIndexEntry {
+/// Voice actors for `char_id`: every language's `cvName`, first occurrence wins.
+/// Languages are walked in key order because the dict is a `HashMap`; the
+/// frontend walked its serialized order, which was arbitrary per process.
+fn voice_actors(voices: &Voices, char_id: &str) -> Vec<String> {
+    let Some(entry) = voices.voice_lang_dict.get(char_id) else {
+        return Vec::new();
+    };
+    let mut langs: Vec<_> = entry.dict.iter().collect();
+    langs.sort_unstable_by_key(|(key, _)| key.as_str());
+
+    let mut seen = HashSet::new();
+    langs
+        .into_iter()
+        .flat_map(|(_, lang)| &lang.cv_name)
+        .filter(|name| seen.insert(name.as_str()))
+        .cloned()
+        .collect()
+}
+
+fn to_index_entry(id: &str, op: &Operator, voices: &Voices) -> OperatorIndexEntry {
+    let id = op.id.clone().unwrap_or_else(|| id.to_string());
     let stats = op
         .phases
         .last()
@@ -116,7 +159,8 @@ fn to_index_entry(id: &str, op: &Operator) -> OperatorIndexEntry {
         });
 
     OperatorIndexEntry {
-        id: op.id.clone().unwrap_or_else(|| id.to_string()),
+        voice_actors: voice_actors(voices, &id),
+        id,
         name: op.name.clone(),
         appellation: op.appellation.clone(),
         rarity: rarity_to_stars(&op.rarity),
@@ -137,6 +181,19 @@ fn to_index_entry(id: &str, op: &Operator) -> OperatorIndexEntry {
         has_offensive_recovery,
         has_defensive_recovery,
         all_skills_manual,
+        phase_max_levels: op.phases.iter().map(|p| p.max_level).collect(),
+        skill_count: op.skills.len(),
+        potential_rank_count: op.potential_ranks.len(),
+        modules: op
+            .modules
+            .iter()
+            .map(|m| OperatorIndexModule {
+                uni_equip_id: m.module.uni_equip_id.clone(),
+                type_name1: m.module.type_name1.clone(),
+                type_name2: m.module.type_name2.clone(),
+                module_type: m.module.module_type.clone(),
+            })
+            .collect(),
     }
 }
 
@@ -159,7 +216,7 @@ pub async fn get_index(
     let mut entries: Vec<OperatorIndexEntry> = gd
         .operators
         .iter()
-        .map(|(id, op)| to_index_entry(id, op))
+        .map(|(id, op)| to_index_entry(id, op, &gd.voices))
         .collect();
     entries.sort_by(|a, b| b.rarity.cmp(&a.rarity).then_with(|| a.name.cmp(&b.name)));
 
@@ -525,7 +582,7 @@ pub async fn get_upcoming(
         .operators
         .iter()
         .filter(|(id, _)| !base_ids.contains(id.as_str()))
-        .map(|(id, op)| to_index_entry(id, op))
+        .map(|(id, op)| to_index_entry(id, op, &src.voices))
         .collect();
     entries.sort_by(|a, b| b.rarity.cmp(&a.rarity).then_with(|| a.name.cmp(&b.name)));
 
@@ -697,5 +754,55 @@ pub const fn rarity_to_stars(rarity: &OperatorRarity) -> u8 {
         OperatorRarity::ThreeStar => 3,
         OperatorRarity::TwoStar => 2,
         OperatorRarity::OneStar => 1,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    use super::voice_actors;
+    use crate::core::gamedata::types::voice::{LangType, VoiceLang, VoiceLangDictEntry, Voices};
+
+    fn lang(voice_lang_type: LangType, cv_name: &[&str]) -> VoiceLangDictEntry {
+        VoiceLangDictEntry {
+            voice_lang_type,
+            cv_name: cv_name.iter().map(|s| (*s).to_string()).collect(),
+            ..Default::default()
+        }
+    }
+
+    // Same input the TS `extractVoiceActors` was checked against: it yields
+    // ["Hanazawa Kana", "Wang Yaxin", "Li Jiaxin", "Kana Hanazawa"].
+    #[test]
+    fn voice_actors_dedupe_across_languages_in_key_order() {
+        let dict = HashMap::from([
+            ("JP".to_string(), lang(LangType::Jp, &["Hanazawa Kana"])),
+            (
+                "CN_MANDARIN".to_string(),
+                lang(LangType::CnMandarin, &["Hanazawa Kana", "Wang Yaxin"]),
+            ),
+            (
+                "EN".to_string(),
+                lang(LangType::En, &["Li Jiaxin", "Kana Hanazawa", "Li Jiaxin"]),
+            ),
+        ]);
+        let voices = Voices {
+            voice_lang_dict: HashMap::from([(
+                "char_002_amiya".to_string(),
+                VoiceLang {
+                    char_id: "char_002_amiya".to_string(),
+                    dict,
+                    ..Default::default()
+                },
+            )]),
+            ..Default::default()
+        };
+
+        assert_eq!(
+            voice_actors(&voices, "char_002_amiya"),
+            ["Hanazawa Kana", "Wang Yaxin", "Li Jiaxin", "Kana Hanazawa"]
+        );
+        assert!(voice_actors(&voices, "char_999_none").is_empty());
     }
 }
