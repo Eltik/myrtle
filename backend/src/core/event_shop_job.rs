@@ -5,7 +5,9 @@
 //! has a service account, asks `templateShop/getGoodList` for the shop of each
 //! activity that names one (`template_shop_id`), has started on that server
 //! and is not cached yet (or is still open and could change), writes the
-//! answers beside that server's gamedata and triggers a reload.
+//! answers beside that server's gamedata and triggers a reload. The write and
+//! the reload happen only on a change against the file the run started from
+//! (see [`super::sidecar`]).
 //!
 //! A listed shop the server nevertheless refuses is remembered with the time
 //! of the attempt and not asked for again.
@@ -28,6 +30,7 @@ use crate::{
             constants::Server,
             fetch::{FetchError, upstream_code},
         },
+        sidecar::{self, Snapshot},
     },
 };
 
@@ -92,6 +95,10 @@ pub async fn refresh(state: &AppState, server: Server) -> anyhow::Result<usize> 
     let server_data = state.server_data(server);
     let path = event_shop_path(Path::new(&server_data.assets_dir));
     let mut file = read_sidecar(&path);
+    // The loader reads only `shops`, so that alone decides the reload; the
+    // refusal log is persisted but never needs one.
+    let loaded_shops = Snapshot::of(&file.shops);
+    let on_disk = stored_data(&file);
     let now = chrono::Utc::now().timestamp();
 
     let mut wanted: Vec<(String, String, i64)> = state
@@ -173,14 +180,40 @@ pub async fn refresh(state: &AppState, server: Server) -> anyhow::Result<usize> 
         tokio::time::sleep(delay).await;
     }
 
+    let always = sidecar::reload_always();
     file.version = EVENT_SHOP_FILE_VERSION;
     file.fetched_at = now;
     file.server = server.as_str().to_owned();
-    write_sidecar(&path, &file)?;
-    if fetched > 0 {
+    if always || stored_data(&file).differs(&on_disk) {
+        write_sidecar(&path, &file)?;
+    }
+    let reload = if always {
+        fetched > 0
+    } else {
+        Snapshot::of(&file.shops).differs(&loaded_shops) || sidecar::is_pending(server)
+    };
+    if reload {
+        sidecar::mark_pending(server);
+        tracing::info!(
+            server = server.as_str(),
+            fetched,
+            "event shops changed, reloading"
+        );
         asset_watcher::perform_reload(state, server, None).await;
+    } else if fetched > 0 {
+        tracing::info!(
+            server = server.as_str(),
+            fetched,
+            "event shops unchanged, reload skipped"
+        );
     }
     Ok(fetched)
+}
+
+/// Everything the sidecar persists except the run metadata (`fetched_at`
+/// changes every run).
+fn stored_data(file: &EventShopFile) -> Snapshot {
+    Snapshot::of(&(&file.shops, &file.absent))
 }
 
 fn read_sidecar(path: &Path) -> EventShopFile {
@@ -208,4 +241,47 @@ fn write_sidecar(path: &Path, file: &EventShopFile) -> anyhow::Result<()> {
     std::fs::write(&tmp, serde_json::to_vec(file)?)?;
     std::fs::rename(&tmp, path)?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn shop(price: i32) -> EventShopData {
+        serde_json::from_value(json!({
+            "shopId": "s", "shopName": "n", "tokenId": "t",
+            "startTime": 1, "endTime": 2, "maxPrice": price, "goods": []
+        }))
+        .unwrap()
+    }
+
+    #[test]
+    fn run_metadata_is_not_a_change() {
+        let mut a = EventShopFile::default();
+        a.shops.insert("act1side".into(), shop(10));
+        let mut b = a.clone();
+        b.fetched_at = a.fetched_at + 21_600;
+        b.server = "en".into();
+        assert!(!stored_data(&a).differs(&stored_data(&b)));
+        assert!(!Snapshot::of(&a.shops).differs(&Snapshot::of(&b.shops)));
+    }
+
+    #[test]
+    fn a_refusal_is_stored_but_does_not_touch_shops() {
+        let mut a = EventShopFile::default();
+        a.shops.insert("act1side".into(), shop(10));
+        let mut b = a.clone();
+        b.absent.insert("act2side".into(), 5);
+        assert!(stored_data(&a).differs(&stored_data(&b)));
+        assert!(!Snapshot::of(&a.shops).differs(&Snapshot::of(&b.shops)));
+    }
+
+    #[test]
+    fn a_changed_shop_is_a_change() {
+        let mut a = EventShopFile::default();
+        a.shops.insert("act1side".into(), shop(10));
+        let mut b = a.clone();
+        b.shops.insert("act1side".into(), shop(11));
+        assert!(Snapshot::of(&a.shops).differs(&Snapshot::of(&b.shops)));
+    }
 }

@@ -4,7 +4,9 @@
 //! `gacha_table.json` (see [`super::gamedata::types::gacha_detail`]).
 //! This job walks every server that has a service account, fetches the pool
 //! details it is missing, writes them beside that server's gamedata, and
-//! triggers a reload so the running process picks them up.
+//! triggers a reload so the running process picks them up. The write and the
+//! reload happen only when the pools differ from the file the run started
+//! from (see [`super::sidecar`]).
 //!
 //! # Cost
 //!
@@ -33,6 +35,7 @@ use crate::{
             GachaPoolDetail, POOL_DETAIL_FILE_VERSION, PoolDetailFile, pool_detail_path,
         },
         hypergryph::{constants::Server, fetch::FetchError},
+        sidecar::{self, Snapshot},
     },
 };
 
@@ -132,6 +135,11 @@ pub async fn refresh(state: &AppState, server: Server) -> anyhow::Result<usize> 
     let path = pool_detail_path(Path::new(&server_data.assets_dir));
 
     let mut file = read_sidecar(&path);
+    // The running game data was built from this file, so only a change against
+    // it warrants a reload; `on_disk` tracks what the checkpoints have written.
+    let loaded = pool_data(&file);
+    let mut on_disk = loaded.clone();
+    let always = sidecar::reload_always();
     let now = chrono::Utc::now().timestamp();
 
     // A pool needs fetching if it has never been seen, or if it is still live
@@ -208,11 +216,16 @@ pub async fn refresh(state: &AppState, server: Server) -> anyhow::Result<usize> 
         if checkpoint_every > 0 && since_checkpoint >= checkpoint_every {
             // A failed checkpoint is not fatal: the entries are still in
             // memory and the next checkpoint, or the final write, carries them.
-            match commit_sidecar(&path, &mut file, server, now) {
-                Ok(()) => {
-                    tracing::debug!(pools = file.pools.len(), "pool detail checkpoint written");
+            let current = pool_data(&file);
+            if always || current.differs(&on_disk) {
+                match commit_sidecar(&path, &mut file, server, now) {
+                    Ok(()) => {
+                        on_disk = current;
+                        sidecar::mark_pending(server);
+                        tracing::debug!(pools = file.pools.len(), "pool detail checkpoint written");
+                    }
+                    Err(e) => tracing::warn!(error = %e, "pool detail checkpoint failed"),
                 }
-                Err(e) => tracing::warn!(error = %e, "pool detail checkpoint failed"),
             }
             since_checkpoint = 0;
         }
@@ -224,15 +237,38 @@ pub async fn refresh(state: &AppState, server: Server) -> anyhow::Result<usize> 
         return Ok(0);
     }
 
-    commit_sidecar(&path, &mut file, server, now)?;
+    let current = pool_data(&file);
+    if always || current.differs(&on_disk) {
+        commit_sidecar(&path, &mut file, server, now)?;
+        sidecar::mark_pending(server);
+    }
 
     // The loader reads this file, so a reload is what makes the new rate-ups
     // visible on the static endpoints. Deliberately not done per checkpoint:
     // a reload rebuilds every table for the server and is far too heavy to
     // repeat mid-walk.
-    asset_watcher::perform_reload(state, server, None).await;
+    if always || current.differs(&loaded) || sidecar::is_pending(server) {
+        tracing::info!(
+            server = server.as_str(),
+            fetched,
+            "pool details changed, reloading"
+        );
+        asset_watcher::perform_reload(state, server, None).await;
+    } else {
+        tracing::info!(
+            server = server.as_str(),
+            fetched,
+            "pool details unchanged, reload skipped"
+        );
+    }
 
     Ok(fetched)
+}
+
+/// The part of the sidecar the loader uses. The run metadata is left out:
+/// `fetched_at` changes every run.
+fn pool_data(file: &PoolDetailFile) -> Snapshot {
+    Snapshot::of(&file.pools)
 }
 
 /// Stamp the run's metadata onto the sidecar and write it.
@@ -283,4 +319,40 @@ fn write_sidecar(path: &Path, file: &PoolDetailFile) -> anyhow::Result<()> {
     std::fs::rename(&tmp, path)?;
     tracing::debug!(path = %path.display(), pools = file.pools.len(), "wrote pool detail sidecar");
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn detail(has_rate_up: bool) -> GachaPoolDetail {
+        GachaPoolDetail {
+            has_rate_up,
+            ..GachaPoolDetail::default()
+        }
+    }
+
+    #[test]
+    fn run_metadata_is_not_a_change() {
+        let mut a = PoolDetailFile::default();
+        a.pools.insert("LIMITED_1".into(), detail(true));
+        let mut b = a.clone();
+        b.fetched_at = a.fetched_at + 21_600;
+        b.server = "en".into();
+        b.version = POOL_DETAIL_FILE_VERSION + 1;
+        assert!(!pool_data(&a).differs(&pool_data(&b)));
+    }
+
+    #[test]
+    fn a_refetched_pool_with_new_contents_is_a_change() {
+        let mut a = PoolDetailFile::default();
+        a.pools.insert("LIMITED_1".into(), detail(true));
+        let mut b = a.clone();
+        b.pools.insert("LIMITED_1".into(), detail(false));
+        assert!(pool_data(&a).differs(&pool_data(&b)));
+
+        let mut c = a.clone();
+        c.pools.insert("NORM_2".into(), detail(false));
+        assert!(pool_data(&a).differs(&pool_data(&c)));
+    }
 }

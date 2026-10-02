@@ -15,6 +15,14 @@ use crate::core::hypergryph::loaders::reload;
 const DEBOUNCE_SECS: u64 = 5;
 const MAX_BACKOFF: Duration = Duration::from_secs(30);
 
+/// One game data build at a time, process-wide. Each build holds a second
+/// `GameData` resident until its swap, and the sidecar jobs run every server
+/// concurrently, so unguarded their reloads stack builds. Serialising build and
+/// swap together also keeps swaps in build order: an older build can no longer
+/// land after a newer one. Bilibili shares CN's cell, another reason the lock is
+/// global rather than per server.
+static RELOAD_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
 /// Spawn one hot-reload watcher per configured server WebSocket.
 ///
 /// Each server's asset pipeline runs its own WS (typically a distinct port), so
@@ -159,6 +167,19 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server, res_version
     let http_client = state.http_client.clone();
     let is_default = server == state.default_server;
 
+    let reload_guard = if let Ok(guard) = RELOAD_LOCK.try_lock() {
+        guard
+    } else {
+        tracing::info!(
+            server = server.as_str(),
+            "another game data reload is running, waiting for it"
+        );
+        RELOAD_LOCK.lock().await
+    };
+    // Taken before the build reads the files, so a sidecar written while it
+    // runs stays pending for the next job run; re-marked below on failure.
+    crate::core::sidecar::take_pending(server);
+
     let result = tokio::task::spawn_blocking(move || {
         let (game_data, asset_index) =
             init_game_data(Path::new(&data_dir), Path::new(&assets_dir))?;
@@ -171,6 +192,9 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server, res_version
             let op_count = game_data.operators.len();
             state.swap_game_data(server, game_data);
             state.swap_asset_index(server, asset_index);
+            // Everything after the swap reads the new data and may wait on the
+            // network; none of it needs the lock.
+            drop(reload_guard);
             let warnings = state
                 .server_data(server)
                 .game_data
@@ -254,6 +278,7 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server, res_version
             }
         }
         Ok(Err(e)) => {
+            crate::core::sidecar::mark_pending(server);
             tracing::error!(
                 server = server.as_str(),
                 error = %e,
@@ -261,6 +286,7 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server, res_version
             );
         }
         Err(e) => {
+            crate::core::sidecar::mark_pending(server);
             tracing::error!(
                 server = server.as_str(),
                 error = %e,

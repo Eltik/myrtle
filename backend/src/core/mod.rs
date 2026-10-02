@@ -16,6 +16,7 @@ pub mod refresh;
 pub mod regrade_job;
 pub mod release;
 pub mod service_account;
+pub mod sidecar;
 pub mod startup;
 pub mod story;
 pub mod translate;

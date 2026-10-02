@@ -563,6 +563,7 @@ Tier-list operations use a 4-level hierarchy - **View → Edit → Publish → A
 | `GACHA_DETAIL_CALL_DELAY_MS` | `120` | Delay between pool-detail calls |
 | `GACHA_DETAIL_MAX_FAILURES` | `5` | Failures before the job backs off |
 | `GACHA_DETAIL_CHECKPOINT_EVERY` | `50` | Pools per checkpoint write |
+| `SIDECAR_RELOAD_ALWAYS` | - | `1` makes the pool-detail and event-shop jobs write and reload on every run that fetched anything (unset: only when the data changed, or after a failed reload; `fetched_at` in the sidecar then records the last change, not the last run) |
 | `DEVICE_ID` · `DEVICE_ID2` · `DEVICE_ID3` | - | Pin the Arknights device identity |
 | `DEVICE_IDS_FILE` | `device_ids.json` | Device-identity persistence when not pinned |
 | `HYPERGRYPH_CN_APP_CODE` | built-in | CN passport app code override |
