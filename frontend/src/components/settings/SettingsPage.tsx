@@ -7,6 +7,7 @@ import { useAuth } from "#/hooks/use-auth";
 import { disconnectGameAccountFn, type IUpdateUserSettingsInput, refreshRosterFn, updateUserSettingsFn } from "#/lib/api/auth";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { forgetSession } from "#/lib/root-context";
 import type { IUserProfile } from "#/types/user";
 import { AccountPanel } from "./AccountPanel";
 import { AppearancePanel } from "./AppearancePanel";
@@ -56,6 +57,8 @@ export function SettingsPage({ user }: { user: IUserProfile | null }) {
     const settingsMutation = useMutation({
         mutationFn: (next: IUpdateUserSettingsInput) => updateUserSettingsFn({ data: next }),
         onSuccess: () => {
+            // The session carries the profile row, so the next navigation must refetch it.
+            forgetSession();
             queryClient.invalidateQueries({ queryKey: ["user"] });
             toastManager.add({
                 id: `settings-saved-${Date.now()}`,
@@ -78,6 +81,7 @@ export function SettingsPage({ user }: { user: IUserProfile | null }) {
     const resyncMutation = useMutation({
         mutationFn: () => refreshRosterFn(),
         onSuccess: () => {
+            forgetSession();
             queryClient.invalidateQueries({ queryKey: ["user"] });
             toastManager.add({
                 id: `resync-${Date.now()}`,
@@ -98,6 +102,7 @@ export function SettingsPage({ user }: { user: IUserProfile | null }) {
     const disconnectMutation = useMutation({
         mutationFn: () => disconnectGameAccountFn(),
         onSuccess: ({ removed }) => {
+            forgetSession();
             toastManager.add({
                 id: `disconnect-${Date.now()}`,
                 title: removed ? t("toast.disconnected.title") : t("toast.nothingToDisconnect.title"),

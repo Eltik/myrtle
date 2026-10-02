@@ -10,6 +10,7 @@ import { userStageClearsQueryOptions } from "#/lib/api/stages";
 import { userQueryOptions } from "#/lib/api/user";
 import { useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { forgetSession } from "#/lib/root-context";
 import { cn, getAvatarById } from "#/lib/utils";
 import { useAutoTranslate } from "../autoTranslate";
 import { formatDate } from "../helpers";
@@ -56,7 +57,11 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
     const queryClient = useQueryClient();
     const resync = useMutation({
         mutationFn: () => refreshRosterFn(),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["user"] }),
+        onSuccess: () => {
+            // The session carries the profile row a resync rewrites.
+            forgetSession();
+            return queryClient.invalidateQueries({ queryKey: ["user"] });
+        },
     });
     React.useEffect(() => {
         if (accountPrimes !== null && !state.initialManual && state.initial !== accountPrimes) setState((s) => ({ ...s, initial: accountPrimes }));

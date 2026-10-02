@@ -9,6 +9,7 @@ import { useAuth } from "#/hooks/use-auth";
 import { refreshRosterFn } from "#/lib/api/auth";
 import { userQueryOptions } from "#/lib/api/user";
 import { type TypedRichT, useFormatters, useLocale, useRichT, useT } from "#/lib/i18n";
+import { forgetSession } from "#/lib/root-context";
 import { cn } from "#/lib/utils";
 import { formatDate } from "../helpers";
 import { ANNIHILATION_CAPS, DAILY_MISSION_ORUNDUM, dayAt, type GreenCertShop, type IProjectedDay, MONTHLY_CARD_ORUNDUM, originiteWarning, WEEKLY_MISSION_ORUNDUM } from "../pulls/income";
@@ -81,7 +82,11 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
     const queryClient = useQueryClient();
     const resync = useMutation({
         mutationFn: () => refreshRosterFn(),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey: ["user"] }),
+        onSuccess: () => {
+            // The session carries the profile row a resync rewrites.
+            forgetSession();
+            return queryClient.invalidateQueries({ queryKey: ["user"] });
+        },
     });
 
     const first = days[0];

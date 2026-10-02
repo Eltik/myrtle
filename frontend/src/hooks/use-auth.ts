@@ -4,6 +4,7 @@ import { useStore } from "@tanstack/react-store";
 import type { BilibiliLoginInput, BilibiliSmsLoginInput, CnLoginInput, LoginInput } from "#/lib/auth/login";
 import { getSessionFn, loginBilibiliFn, loginBilibiliSmsFn, loginCnFn, loginFn, logoutFn } from "#/lib/auth/server";
 import { authActions, authStore } from "#/lib/auth/store";
+import { forgetSession, primeSession } from "#/lib/root-context";
 
 export function useAuth() {
     const router = useRouter();
@@ -30,9 +31,16 @@ export function useAuth() {
             // Drop any cached anon views - server fns now auto-attach the session
             // token, so the next fetch should return owner-scoped data.
             queryClient.removeQueries({ queryKey: ["user"] });
+            // The login response is the session, built as a page load builds it. Priming with
+            // it rather than refetching keeps a cookie the browser has not committed yet from
+            // being memoized as a signed-out null that later navigations would reuse.
+            primeSession(u);
             await router.invalidate();
             return u;
         } catch (err) {
+            // A failed login can still have set the cookie (a roster sync that fails after
+            // sign-in), so the memoized session is no longer known to be current.
+            forgetSession();
             authActions.clear();
             throw err;
         }
@@ -43,6 +51,7 @@ export function useAuth() {
     const finishLogin = async (u: Awaited<ReturnType<typeof loginFn>>) => {
         authActions.setUser(u);
         queryClient.removeQueries({ queryKey: ["user"] });
+        primeSession(u);
         await router.invalidate();
         return u;
     };
@@ -52,6 +61,7 @@ export function useAuth() {
         try {
             return await finishLogin(await loginBilibiliFn({ data }));
         } catch (err) {
+            forgetSession();
             authActions.clear();
             throw err;
         }
@@ -64,6 +74,7 @@ export function useAuth() {
         try {
             return await finishLogin(await loginBilibiliSmsFn({ data }));
         } catch (err) {
+            forgetSession();
             authActions.clear();
             throw err;
         }
@@ -76,6 +87,7 @@ export function useAuth() {
         try {
             return await finishLogin(await loginCnFn({ data }));
         } catch (err) {
+            forgetSession();
             authActions.clear();
             throw err;
         }
@@ -87,11 +99,14 @@ export function useAuth() {
         // Evict any private data fetched while authenticated so it can't leak
         // to subsequent anon views on the same browser.
         queryClient.removeQueries({ queryKey: ["user"] });
+        // Known signed out, for the same cookie-commit reason `login` primes.
+        primeSession(null);
         await router.invalidate();
     };
 
     const fetchUser = async () => {
         const u = await getSessionFn();
+        primeSession(u);
         authActions.setUser(u);
         return u;
     };

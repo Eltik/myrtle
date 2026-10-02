@@ -12,6 +12,7 @@ import type { IBootstrap } from "#/lib/i18n";
 import { DEFAULT_LOCALE, directionForLocale, I18nProvider } from "#/lib/i18n";
 import { getI18nBootstrapFn } from "#/lib/i18n/server";
 import { metaT } from "#/lib/meta";
+import { memoBootstrap, memoSession, seedRootContext } from "#/lib/root-context";
 import { absolute, localizedPath, seo } from "#/lib/seo";
 import Footer from "../components/Footer";
 import Header from "../components/header/Header";
@@ -39,8 +40,10 @@ else if(raw.indexOf('c:')===0){var hex=raw.slice(2);if(/^#[0-9a-fA-F]{6}$/.test(
 export const Route = createRootRouteWithContext<IMyRouterContext>()({
     beforeLoad: async (): Promise<{ user: Awaited<ReturnType<typeof getSessionFn>> } & IRootContext> => {
         // One round trip, not two: the catalog is needed for the very first
-        // painted character, so it must not queue behind the session.
-        const [user, i18n] = await Promise.all([getSessionFn(), getI18nBootstrapFn()]);
+        // painted character, so it must not queue behind the session. Both are
+        // memoized on the client, where this runs on every navigation and every
+        // hover preload; see `lib/root-context.ts` for what drops them.
+        const [user, i18n] = await Promise.all([memoSession(() => getSessionFn()), memoBootstrap(() => getI18nBootstrapFn())]);
 
         // The URL claimed a locale the backend does not serve. `href` rather
         // than `to`, because `to` would be rebuilt through the router's
@@ -68,11 +71,15 @@ export const Route = createRootRouteWithContext<IMyRouterContext>()({
 });
 
 function RootComponent() {
-    const { user } = Route.useRouteContext();
+    const { user, i18n } = Route.useRouteContext();
 
     useEffect(() => {
         authActions.setUserFromRoute(user ?? null);
     }, [user]);
+
+    useEffect(() => {
+        seedRootContext(user ?? null, i18n);
+    }, [user, i18n]);
 
     return (
         <>
