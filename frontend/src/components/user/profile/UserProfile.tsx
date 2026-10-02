@@ -47,13 +47,16 @@ export function UserProfile() {
     });
 
     // Genuinely-global data: the profile record + roster power the hero, stat
-    // strip, and several tab counts, and the full operator table feeds the
-    // default (Stats) tab, so both stay eager. Everything else is gated to the
-    // tab that needs it and fetched only once that tab first becomes active.
+    // strip, and several tab counts, so both stay eager. Everything else is
+    // gated to the tab that needs it and fetched only once that tab first
+    // becomes active.
     const { data, isLoading } = useQuery(userQueryOptions(id));
     const { data: roster } = useQuery(userRosterQueryOptions(id));
     const gamedataServer = useGamedataServer();
-    const { data: operatorsStatic } = useQuery(operatorsListQueryOptions(gamedataServer));
+    // The default Stats tab reads only the slim index, so the full table (23.9 MB
+    // raw) waits for a tab that renders phases, skills or template ids.
+    const { data: operatorsIndex } = useQuery({ ...operatorsIndexQueryOptions(gamedataServer), enabled: activeTab === "stats" || activeTab === "roster" });
+    const { data: operatorsStatic } = useQuery({ ...operatorsListQueryOptions(gamedataServer), enabled: activeTab === "roster" || activeTab === "plans" || activeTab === "optimizer" });
 
     const { data: inventory } = useQuery({ ...userInventoryQueryOptions(id), enabled: activeTab === "inventory" });
     const { data: score, isLoading: isScoreLoading } = useQuery({ ...userScoreQueryOptions(id), enabled: activeTab === "score" });
@@ -65,7 +68,6 @@ export function UserProfile() {
         enabled: activeTab === "score",
     });
     const { data: encounteredEnemies, isLoading: isEnemiesLoading } = useQuery({ ...userEncounteredEnemiesQueryOptions(id), enabled: activeTab === "enemies" });
-    const { data: operatorsIndex } = useQuery({ ...operatorsIndexQueryOptions(gamedataServer), enabled: activeTab === "roster" });
 
     const tabs = useMemo(
         () => [
@@ -179,7 +181,7 @@ export function UserProfile() {
                 {activeTab === "inventory" && <ItemsTab inventory={inventory ?? []} />}
                 {activeTab === "plans" && <PlansTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
                 {activeTab === "enemies" && <EnemiesTab encountered={encounteredEnemies} isLoading={isEnemiesLoading} />}
-                {activeTab === "stats" && <StatsTab nonDefaultSkinCount={data.non_default_skin_count} operatorsStatic={operatorsStatic ?? []} roster={roster ?? []} server={data.server} uid={id} />}
+                {activeTab === "stats" && <StatsTab nonDefaultSkinCount={data.non_default_skin_count} operatorsIndex={operatorsIndex ?? []} roster={roster ?? []} server={data.server} uid={id} />}
                 {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} uid={id} server={data.server} />}
                 {activeTab === "optimizer" && <OptimizerTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
             </main>

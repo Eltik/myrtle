@@ -9,7 +9,7 @@ import { type ISkinIndexEntry, skinPopularityQueryOptions } from "#/lib/api/skin
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, getAvatarById } from "#/lib/utils";
-import type { IOperatorListItem } from "#/types/operators";
+import type { IOperatorIndexEntry } from "#/types/operators";
 import type { messages } from "./SkinViewerDialog.messages";
 
 type ViewerT = TypedT<typeof messages>;
@@ -32,7 +32,7 @@ interface ISkinViewerDialogProps {
     /** Authoritative owned count from the user profile. Used for the header display
      *  so it's correct even before the per-skin ownership list finishes loading. */
     profileOwnedCount: number;
-    operatorsMap: Map<string, IOperatorListItem>;
+    operatorsMap: Map<string, IOperatorIndexEntry>;
     color: string;
 }
 
@@ -73,7 +73,7 @@ const VIRTUAL_ROW_OVERSCAN = 4;
 
 interface ICardData {
     skin: ISkinIndexEntry;
-    op: IOperatorListItem | undefined;
+    op: IOperatorIndexEntry | undefined;
     opName: string;
     skinName: string;
     searchable: string;

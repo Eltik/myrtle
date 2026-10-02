@@ -3,12 +3,15 @@ import type { IRosterEntry } from "#/lib/api/user";
 import { DEFAULT_LOCALE, formatMessage, sourceMessage } from "#/lib/i18n";
 import { fullMessageKey, type TypedT } from "#/lib/i18n/messages";
 import { getAvatarById, lerpByLevel } from "#/lib/utils";
-import type { IAttributeKeyFrame, IModule, IOperatorListItem, IPotentialRank } from "#/types/operators";
+import type { IAttributeKeyFrame, IModule, IOperatorIndexEntry, IOperatorIndexModule, IOperatorListItem, IPotentialRank } from "#/types/operators";
 import type { messages as cardMessages } from "./helpers.card.messages";
 import type { IOwnedEntry } from "./types";
 
 /** The `t` these labels need, narrowed to the keys they can render. */
 export type CardT = TypedT<typeof cardMessages>;
+
+/** The build ceilings the completeness score reads, all served by `/operators/index`. */
+export type IOperatorBuildCeilings = Pick<IOperatorIndexEntry, "phaseMaxLevels" | "skillCount" | "potentialRankCount" | "modules">;
 
 /**
  * Default `t` for a caller outside an `I18nProvider`. It resolves against the
@@ -157,11 +160,10 @@ function logCurveRatio(t: number): number {
 }
 
 /** Cumulative level progress across all elite phases, log-compressed. */
-function cumulativeLevelProgress(entry: IRosterEntry, op: IOperatorListItem): number {
+function cumulativeLevelProgress(entry: IRosterEntry, op: IOperatorBuildCeilings): number {
     let progress = 0;
     let total = 0;
-    (op.phases ?? []).forEach((phase, i) => {
-        const maxLvl = phase.maxLevel;
+    op.phaseMaxLevels.forEach((maxLvl, i) => {
         total += maxLvl;
         if (i < entry.elite) progress += maxLvl;
         else if (i === entry.elite) progress += entry.level;
@@ -212,17 +214,17 @@ function moduleLadder(reached: number, slots: number): number {
  * *every* operator: a P1 operator genuinely isn't "complete", and gating it off
  * made a fully-built P6 alter read below 100% while a P5 standard op read 100%.
  */
-function maxPotential(op: IOperatorListItem): number {
-    return op.potentialRanks?.length ?? 0;
+function maxPotential(op: IOperatorBuildCeilings): number {
+    return op.potentialRankCount;
 }
 
 /** Advanced (non-default) modules - the only ones that count (`advanced_modules`). */
-function advancedModules(op: IOperatorListItem) {
-    return (op.modules ?? []).filter((m) => m.type === "ADVANCED");
+function advancedModules(op: IOperatorBuildCeilings) {
+    return op.modules.filter((m) => m.type === "ADVANCED");
 }
 
 /** The roster's levels for the operator's advanced modules (`advanced_module_levels`). */
-function advancedModuleLevels(entry: IRosterEntry, advanced: IModule[]): number[] {
+function advancedModuleLevels(entry: IRosterEntry, advanced: IOperatorIndexModule[]): number[] {
     const advancedIds = new Set(advanced.map((m) => m.uniEquipId));
     return entry.modules.filter((m) => advancedIds.has(m.id)).map((m) => m.level);
 }
@@ -239,11 +241,10 @@ type Dimension = [weight: number, score: number];
  * always uses the ordinary 100% target; and trust % comes from the linear
  * {@link getTrustPercent} approximation rather than the favor table.
  */
-function operatorDimensions(entry: IRosterEntry, op: IOperatorListItem, rarity: number): Dimension[] {
-    const phases = op.phases ?? [];
-    const maxElite = phases.length - 1;
-    const numSkills = op.skills?.length ?? 0;
-    const canMaster = numSkills > 0 && phases.length >= 3;
+function operatorDimensions(entry: IRosterEntry, op: IOperatorBuildCeilings, rarity: number): Dimension[] {
+    const maxElite = op.phaseMaxLevels.length - 1;
+    const numSkills = op.skillCount;
+    const canMaster = numSkills > 0 && op.phaseMaxLevels.length >= 3;
     const advanced = advancedModules(op);
 
     const dims: Dimension[] = [];
@@ -286,7 +287,7 @@ function operatorDimensions(entry: IRosterEntry, op: IOperatorListItem, rarity: 
  * don't apply are skipped (a 3★ has no E2/mastery/module), so a fully-built
  * low-rarity op still reaches 1.0.
  */
-export function operatorCompleteness(entry: IRosterEntry, op: IOperatorListItem, rarity: number): number {
+export function operatorCompleteness(entry: IRosterEntry, op: IOperatorBuildCeilings, rarity: number): number {
     const dims = operatorDimensions(entry, op, rarity);
     const totalWeight = dims.reduce((s, [w]) => s + w, 0);
     if (totalWeight <= 0) return 0;
@@ -307,12 +308,11 @@ export interface IOperatorGap {
  * the *next* step), this reports every remaining sub-goal: e.g. how many skills
  * still need M3, not just "M3" once one skill is mastered.
  */
-export function operatorMissing(entry: IRosterEntry, op: IOperatorListItem, t: CardT = sourceT): IOperatorGap[] {
-    const phases = op.phases ?? [];
-    const maxElite = Math.max(0, phases.length - 1);
-    const maxLevelAtCurrentElite = phases[entry.elite]?.maxLevel ?? 0;
-    const numSkills = op.skills?.length ?? 0;
-    const canMaster = numSkills > 0 && phases.length >= 3;
+export function operatorMissing(entry: IRosterEntry, op: IOperatorBuildCeilings, t: CardT = sourceT): IOperatorGap[] {
+    const maxElite = Math.max(0, op.phaseMaxLevels.length - 1);
+    const maxLevelAtCurrentElite = op.phaseMaxLevels[entry.elite] ?? 0;
+    const numSkills = op.skillCount;
+    const canMaster = numSkills > 0 && op.phaseMaxLevels.length >= 3;
     const advanced = advancedModules(op);
 
     const masteryLevels = entry.masteries.map((m) => m.mastery);

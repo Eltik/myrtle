@@ -20,7 +20,7 @@ export const Route = createFileRoute("/user/$id")({
     loader: async ({ context, params }) => {
         // Warm only what the header + default (Stats) tab need for SSR: the profile
         // record and the roster. Per-tab data (score, inventory, plans, enemies,
-        // operators index) is fetched lazily when its tab first becomes active.
+        // operator tables) is fetched lazily when its tab first becomes active.
         const [user] = await Promise.all([context.queryClient.ensureQueryData(userQueryOptions(params.id)), context.queryClient.prefetchQuery(userRosterQueryOptions(params.id))]);
         if (user) warmOg("user", params.id, buildOgData(user));
         return user;

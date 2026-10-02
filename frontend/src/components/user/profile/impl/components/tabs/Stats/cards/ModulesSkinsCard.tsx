@@ -4,7 +4,7 @@ import type { ISkinIndexEntry } from "#/lib/api/skins";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
-import type { IOperatorListItem } from "#/types/operators";
+import type { IOperatorIndexEntry } from "#/types/operators";
 import type { IModuleGapDetails } from "../helpers";
 import { PALETTE } from "../palette";
 import { CARD_PADDING, GapList, type IGapItem, Kicker, MetricRow, StatCard, Tile } from "../primitives";
@@ -16,18 +16,18 @@ interface IModulesSkinsCardProps {
     skins: { totalOwned: number; totalAvailable: number; percentage: number };
     charSkins: Record<string, ISkinIndexEntry>;
     ownedSkinIds: Set<string>;
-    operatorsStatic: IOperatorListItem[];
+    operatorsIndex: IOperatorIndexEntry[];
 }
 
-export function ModulesSkinsCard({ modules, skins, charSkins, ownedSkinIds, operatorsStatic }: IModulesSkinsCardProps) {
+export function ModulesSkinsCard({ modules, skins, charSkins, ownedSkinIds, operatorsIndex }: IModulesSkinsCardProps) {
     const t: TypedT<typeof messages> = useT("user");
     const operatorsMap = useMemo(() => {
-        const map = new Map<string, IOperatorListItem>();
-        for (const op of operatorsStatic) {
+        const map = new Map<string, IOperatorIndexEntry>();
+        for (const op of operatorsIndex) {
             if (op.id) map.set(op.id, op);
         }
         return map;
-    }, [operatorsStatic]);
+    }, [operatorsIndex]);
 
     const allSkins = useMemo(() => Object.values(charSkins), [charSkins]);
     const moduleUnlockPct = modules.totalAvailable > 0 ? (modules.unlocked / modules.totalAvailable) * 100 : 0;

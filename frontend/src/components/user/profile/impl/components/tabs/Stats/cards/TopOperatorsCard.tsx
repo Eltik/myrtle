@@ -7,7 +7,7 @@ import type { IRosterEntry } from "#/lib/api/user";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { rarityToNumber } from "#/lib/utils";
-import type { IOperatorListItem } from "#/types/operators";
+import type { IOperatorIndexEntry } from "#/types/operators";
 import type { messages } from "./TopOperatorsCard.messages";
 
 /** The remaining-work labels are declared once, in `Roster/helpers.card.messages.ts`. */
@@ -22,7 +22,7 @@ const TOP_OPERATOR_LIMIT = 8;
 
 interface IRanked {
     entry: IRosterEntry;
-    op: IOperatorListItem;
+    op: IOperatorIndexEntry;
     rarity: number;
     completeness: number;
     score: number;
@@ -30,14 +30,14 @@ interface IRanked {
 
 interface ITopOperatorsCardProps {
     roster: IRosterEntry[];
-    operatorsStatic: IOperatorListItem[];
+    operatorsIndex: IOperatorIndexEntry[];
 }
 
-export function TopOperatorsCard({ roster, operatorsStatic }: ITopOperatorsCardProps) {
+export function TopOperatorsCard({ roster, operatorsIndex }: ITopOperatorsCardProps) {
     const t: TypedT<typeof messages> = useT("user");
     const top = useMemo<IRanked[]>(() => {
-        const opMap = new Map<string, IOperatorListItem>();
-        for (const op of operatorsStatic) if (op.id) opMap.set(op.id, op);
+        const opMap = new Map<string, IOperatorIndexEntry>();
+        for (const op of operatorsIndex) if (op.id) opMap.set(op.id, op);
 
         const ranked: IRanked[] = [];
         for (const entry of roster) {
@@ -49,7 +49,7 @@ export function TopOperatorsCard({ roster, operatorsStatic }: ITopOperatorsCardP
         }
         ranked.sort((a, b) => b.score - a.score);
         return ranked.slice(0, TOP_OPERATOR_LIMIT);
-    }, [roster, operatorsStatic]);
+    }, [roster, operatorsIndex]);
 
     if (top.length === 0) return null;
 

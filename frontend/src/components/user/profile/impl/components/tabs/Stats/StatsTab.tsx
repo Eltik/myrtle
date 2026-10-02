@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { skinsIndexQueryOptions, userSkinsQueryOptions } from "#/lib/api/skins";
 import { type IRosterEntry, userCheckinQueryOptions } from "#/lib/api/user";
 import { useGamedataServer } from "#/lib/i18n";
-import type { IOperatorListItem } from "#/types/operators";
+import type { IOperatorIndexEntry } from "#/types/operators";
 import { ClassBreakdownCard } from "./cards/ClassBreakdownCard";
 import { CollectionCard } from "./cards/CollectionCard";
 import { ElitePromotionCard } from "./cards/ElitePromotionCard";
@@ -18,18 +18,18 @@ interface IStatsTabProps {
     uid: string;
     server: string;
     roster: IRosterEntry[];
-    operatorsStatic: IOperatorListItem[];
+    operatorsIndex: IOperatorIndexEntry[];
     nonDefaultSkinCount: number | null;
 }
 
 const EMPTY_OWNED_SKINS = new Set<string>();
 
-export function StatsTab({ uid, server, roster, operatorsStatic, nonDefaultSkinCount }: IStatsTabProps) {
+export function StatsTab({ uid, server, roster, operatorsIndex, nonDefaultSkinCount }: IStatsTabProps) {
     const { data: charSkins } = useQuery(skinsIndexQueryOptions(useGamedataServer()));
     const { data: ownedSkins } = useQuery(userSkinsQueryOptions(uid));
     const { data: checkin } = useQuery(userCheckinQueryOptions(uid));
 
-    const stats = useMemo(() => computeUserStats(roster, operatorsStatic, charSkins, nonDefaultSkinCount), [roster, operatorsStatic, charSkins, nonDefaultSkinCount]);
+    const stats = useMemo(() => computeUserStats(roster, operatorsIndex, charSkins, nonDefaultSkinCount), [roster, operatorsIndex, charSkins, nonDefaultSkinCount]);
 
     const ownedSkinIds = useMemo(() => (ownedSkins ? new Set(ownedSkins.map((s) => s.skin_id)) : EMPTY_OWNED_SKINS), [ownedSkins]);
 
@@ -41,8 +41,8 @@ export function StatsTab({ uid, server, roster, operatorsStatic, nonDefaultSkinC
             <ElitePromotionCard eliteBreakdown={stats.eliteBreakdown} />
             <ClassBreakdownCard professions={stats.professions} />
             <MasteryCard masteries={stats.masteries} />
-            <ModulesSkinsCard charSkins={charSkins} modules={stats.modules} operatorsStatic={operatorsStatic} ownedSkinIds={ownedSkinIds} skins={stats.skins} />
-            <TopOperatorsCard operatorsStatic={operatorsStatic} roster={roster} />
+            <ModulesSkinsCard charSkins={charSkins} modules={stats.modules} operatorsIndex={operatorsIndex} ownedSkinIds={ownedSkinIds} skins={stats.skins} />
+            <TopOperatorsCard operatorsIndex={operatorsIndex} roster={roster} />
             <SignInOverviewCard checkin={checkin} server={server} />
             <SignInCalendarCard checkin={checkin} server={server} />
         </div>

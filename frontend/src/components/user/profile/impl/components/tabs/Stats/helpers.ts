@@ -2,7 +2,7 @@ import { CLASS_SORT_ORDER, CLASSES } from "#/components/operators/list/impl/cons
 import type { ISkinIndexEntry } from "#/lib/api/skins";
 import type { IRosterEntry } from "#/lib/api/user";
 import { formatProfession, formatSubProfession } from "#/lib/utils";
-import type { IOperatorListItem } from "#/types/operators";
+import type { IOperatorIndexEntry } from "#/types/operators";
 
 interface IProfessionStats {
     profession: string;
@@ -63,17 +63,17 @@ interface IUserStats {
     collectionPercentage: number;
 }
 
-export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOperatorListItem[], skins: Record<string, ISkinIndexEntry> | undefined, nonDefaultSkinCount: number | null): IUserStats {
+export function computeUserStats(roster: IRosterEntry[], operatorsIndex: IOperatorIndexEntry[], skins: Record<string, ISkinIndexEntry> | undefined, nonDefaultSkinCount: number | null): IUserStats {
     const EXCLUDED_PROFESSIONS = new Set(["TOKEN", "TRAP"]);
     const EXCLUDED_MODULE_KEYS = ["uniequip_000", "uniequip_001"];
     const pct = (owned: number, total: number) => (total > 0 ? (owned / total) * 100 : 0);
 
-    const operators = new Map<string, IOperatorListItem>();
+    const operators = new Map<string, IOperatorIndexEntry>();
     const totalByProfession: Record<string, number> = {};
     const totalBySubProfession: Record<string, Record<string, number>> = {};
     let totalAvailable = 0;
 
-    for (const op of operatorsStatic) {
+    for (const op of operatorsIndex) {
         if (!op.id || op.isNotObtainable || EXCLUDED_PROFESSIONS.has(op.profession)) continue;
 
         operators.set(op.id, op);
@@ -140,14 +140,13 @@ export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOpera
             maxPossibleMasteryLevels += masteries.length * 3;
 
             if (masteries.length > 0) {
-                const rarityNum = parseRarity(staticOp.rarity);
                 const masterySub = formatMasterySummary(masteries);
                 const baseGap: IOperatorGapItem = {
                     id: entry.operator_id,
                     operatorId: entry.operator_id,
                     name: staticOp.name,
                     charId: entry.operator_id,
-                    rarity: rarityNum,
+                    rarity: staticOp.rarity,
                     sub: masterySub,
                 };
                 if (skillsAtM3 === 0) pendingM3.push(baseGap);
@@ -169,14 +168,14 @@ export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOpera
             }
 
             if (isLocked || isBelowMax) {
-                const staticMod = staticOp.modules?.find((m) => m.uniEquipId === mod.id);
+                const staticMod = staticOp.modules.find((m) => m.uniEquipId === mod.id);
                 const moduleLabel = staticMod ? `${staticMod.typeName1}${staticMod.typeName2 ? `-${staticMod.typeName2}` : ""}` : "Module";
                 const item: IOperatorGapItem = {
                     id: `${entry.operator_id}:${mod.id}`,
                     operatorId: entry.operator_id,
                     name: staticOp.name,
                     charId: entry.operator_id,
-                    rarity: parseRarity(staticOp.rarity),
+                    rarity: staticOp.rarity,
                     sub: isLocked ? `${moduleLabel} • Locked` : `${moduleLabel} • Lv ${mod.level}/3`,
                 };
                 if (isLocked) lockedModules.push(item);
@@ -260,19 +259,6 @@ export function computeUserStats(roster: IRosterEntry[], operatorsStatic: IOpera
         totalAvailable,
         collectionPercentage: pct(totalOwned, totalAvailable),
     };
-}
-
-const RARITY_TIER_MAP: Record<string, number> = {
-    TIER_1: 1,
-    TIER_2: 2,
-    TIER_3: 3,
-    TIER_4: 4,
-    TIER_5: 5,
-    TIER_6: 6,
-};
-
-function parseRarity(rarity: string): number {
-    return RARITY_TIER_MAP[rarity] ?? 0;
 }
 
 function formatMasterySummary(masteries: IRosterEntry["masteries"]): string {
