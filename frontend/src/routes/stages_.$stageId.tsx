@@ -1,9 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { StageDetail } from "#/components/stages/detail/StageDetail";
-import { enemiesQueryOptions } from "#/lib/api/enemies";
-import { levelQueryOptions } from "#/lib/api/level";
-import { materialsQueryOptions } from "#/lib/api/materials";
-import { stageDetailQueryOptions, stageIndexQueryOptions, syntheticStageFromIndex } from "#/lib/api/stages";
+import { stageDetailQueryOptions } from "#/lib/api/stages";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { buildStageOgData } from "#/lib/og/impl/templates/Stage";
@@ -15,34 +12,16 @@ export const Route = createFileRoute("/stages_/$stageId")({
     component: RouteComponent,
     errorComponent: RootErrorComponent,
     loader: async ({ context, params }) => {
-        // Primary path: one slim endpoint returns the stage + zone + level + only
-        // the enemies/materials this stage references.
-        const server = context.i18n.gamedataServer;
-        const detail = await context.queryClient.ensureQueryData(stageDetailQueryOptions(params.stageId, server));
-        if (detail) {
-            const zone = detail.zone ?? null;
-            warmOg("stage", params.stageId, buildStageOgData(detail.stage, zone ?? undefined));
-            return { stage: detail.stage as IStage | null, zone, level: detail.levelData ?? null, enemyData: detail.enemies, materials: detail.materials, hasOg: true };
-        }
-
-        // Fallback: procedural IS/RA/CC nodes have no stage_table entry (404). Build a
-        // synthetic stage from the stage index (fetched lazily, only here) and load the
-        // full enemy/material tables for the map.
-        const [index, level, handbook, materials] = await Promise.all([
-            context.queryClient.ensureQueryData(stageIndexQueryOptions(server)),
-            context.queryClient.ensureQueryData(levelQueryOptions(params.stageId, server)),
-            context.queryClient.ensureQueryData(enemiesQueryOptions(server)),
-            context.queryClient.ensureQueryData(materialsQueryOptions(server)),
-        ]);
-        const entry = index.find((e) => e.stageId === params.stageId);
-        let stage: IStage | null = null;
-        let zone: IZone | null = null;
-        if (entry) {
-            const synthetic = syntheticStageFromIndex(entry);
-            stage = synthetic.stage;
-            zone = synthetic.zone;
-        }
-        return { stage, zone, level: level ?? null, enemyData: handbook.enemyData, materials: materials.items, hasOg: false };
+        // One slim endpoint returns the stage + zone + level + only the
+        // enemies/materials this stage references. Procedural IS/RA/CC nodes
+        // included: the backend builds their stage from the stage index.
+        const detail = await context.queryClient.ensureQueryData(stageDetailQueryOptions(params.stageId, context.i18n.gamedataServer));
+        if (!detail) return { stage: null as IStage | null, zone: null as IZone | null, level: null, enemyData: {}, materials: {}, hasOg: false };
+        const zone = detail.zone ?? null;
+        // A procedural node has no sanity, EXP or LMD to put on the stage card.
+        const hasOg = !detail.synthetic;
+        if (hasOg) warmOg("stage", params.stageId, buildStageOgData(detail.stage, zone ?? undefined));
+        return { stage: detail.stage as IStage | null, zone, level: detail.levelData ?? null, enemyData: detail.enemies, materials: detail.materials, hasOg };
     },
     head: ({ loaderData, match, params }) => {
         const t = metaT(match.context.i18n);

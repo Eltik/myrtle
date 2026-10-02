@@ -135,58 +135,6 @@ export function assetURL(path: string): string {
     return `${base}/api/assets/${path.replace(/^\/+/, "")}`;
 }
 
-/**
- * A minimal {@link IStage}/{@link IZone} synthesized from a stage-index entry,
- * for procedural-mode stages (IS / RA / CC / Paradox) that have no `stage_table`
- * entry but are still viewable (their level file resolves via the mode map).
- */
-export function syntheticStageFromIndex(e: IStageIndexEntry): { stage: IStage; zone: IZone } {
-    return {
-        stage: {
-            stageId: e.stageId,
-            zoneId: e.zoneId,
-            code: e.code,
-            name: e.name,
-            description: null,
-            levelId: e.levelId,
-            stageType: "ACTIVITY",
-            difficulty: e.difficulty,
-            apCost: e.apCost,
-            canPractice: false,
-            canBattleReplay: false,
-            canMultipleBattle: false,
-            isStoryOnly: false,
-            isPredefined: false,
-            dangerLevel: null,
-            dangerPoint: 0,
-            expGain: 0,
-            goldGain: 0,
-            diamondOnceDrop: 0,
-            appearanceStyle: null,
-            hardStagedId: null,
-            mainStageId: null,
-            unlockCondition: [],
-            loadingPicId: null,
-            bossMark: e.boss,
-            stageDropInfo: null,
-        },
-        zone: {
-            zoneId: e.zoneId,
-            zoneIndex: e.zoneOrder,
-            type: "ACTIVITY",
-            zoneNameFirst: null,
-            zoneNameSecond: e.zoneName,
-            zoneNameTitleCurrent: null,
-            zoneNameTitleUnCurrent: null,
-            zoneNameTitleEx: null,
-            zoneNameThird: null,
-            lockedText: null,
-            canPreview: false,
-            hasAdditionalPanel: false,
-        },
-    };
-}
-
 export const getStageIndexFn = createServerFn({ method: "GET" })
     .inputValidator((server: string | undefined) => server)
     .handler(async ({ data: server }) => {
@@ -208,8 +156,8 @@ export function stageIndexQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER)
  * Everything the stage-detail page needs for a single stage, served by
  * `GET /stages/{stageId}/detail`: the stage record, its zone, its level data,
  * and only the enemies / materials referenced by that stage. Procedural
- * IS/RA/CC nodes (no `stage_table` entry) return 404 -> the route falls back to
- * the stage index.
+ * IS/RA/CC nodes (no `stage_table` entry) get a stage and zone the backend
+ * builds from the stage index, flagged `synthetic`.
  */
 export interface IStageDetail {
     stage: IStage;
@@ -219,6 +167,8 @@ export interface IStageDetail {
     enemies: Record<string, IEnemy>;
     /** Only the non-CHAR drop items referenced by this stage, keyed by itemId. */
     materials: Record<string, IMaterialItem>;
+    /** The stage and zone were built from the stage index for a procedural IS/RA/CC node. Absent from bodies cached before the field existed. */
+    synthetic?: boolean;
 }
 
 export const getStageDetailFn = createServerFn({ method: "GET" })
