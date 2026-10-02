@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
@@ -11,12 +11,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { Hero } from "./impl/components/Hero";
 import { ProfileTabs } from "./impl/components/ProfileTabs";
 import { StatStrip } from "./impl/components/StatStrip";
-import { EnemiesTab } from "./impl/components/tabs/Enemies/EnemiesTab";
-import { ItemsTab } from "./impl/components/tabs/Items/ItemsTab";
-import { OptimizerTab } from "./impl/components/tabs/Optimizer/OptimizerTab";
-import { PlansTab } from "./impl/components/tabs/Plans/PlansTab";
-import { RosterTab } from "./impl/components/tabs/Roster/RosterTab";
-import { ScoreTab } from "./impl/components/tabs/Score/ScoreTab";
+import { ScoreTabSkeleton } from "./impl/components/tabs/Score/ScoreTabSkeleton";
 import { StatsTab } from "./impl/components/tabs/Stats/StatsTab";
 import { DynamicArtProvider } from "./impl/dynamic-art";
 import { isTabId, type TabId } from "./impl/types";
@@ -34,6 +29,25 @@ const SKELETON_TAG_WIDTHS = [
 ] as const;
 
 const SKELETON_GRID_IDS = Array.from({ length: 20 }, (_, i) => `grid-${i}`);
+
+// Stats is the default tab and stays in the route chunk; the rest load on first visit so
+// their dependencies (recharts via the Score history card, above all) stay out of it.
+const EnemiesTab = lazy(() => import("./impl/components/tabs/Enemies/EnemiesTab").then((m) => ({ default: m.EnemiesTab })));
+const ItemsTab = lazy(() => import("./impl/components/tabs/Items/ItemsTab").then((m) => ({ default: m.ItemsTab })));
+const OptimizerTab = lazy(() => import("./impl/components/tabs/Optimizer/OptimizerTab").then((m) => ({ default: m.OptimizerTab })));
+const PlansTab = lazy(() => import("./impl/components/tabs/Plans/PlansTab").then((m) => ({ default: m.PlansTab })));
+const RosterTab = lazy(() => import("./impl/components/tabs/Roster/RosterTab").then((m) => ({ default: m.RosterTab })));
+const ScoreTab = lazy(() => import("./impl/components/tabs/Score/ScoreTab").then((m) => ({ default: m.ScoreTab })));
+
+function GridSkeleton() {
+    return (
+        <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
+            {SKELETON_GRID_IDS.map((id) => (
+                <Skeleton className="aspect-3/4 w-full rounded-xl" key={id} />
+            ))}
+        </div>
+    );
+}
 
 export function UserProfile() {
     const t: TypedT<typeof messages> = useT("user");
@@ -151,11 +165,7 @@ export function UserProfile() {
                         ))}
                     </div>
                 </div>
-                <div className="grid grid-cols-4 gap-2.5 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
-                    {SKELETON_GRID_IDS.map((id) => (
-                        <Skeleton className="aspect-3/4 w-full rounded-xl" key={id} />
-                    ))}
-                </div>
+                <GridSkeleton />
             </main>
         );
     }
@@ -177,13 +187,17 @@ export function UserProfile() {
                 <Hero profile={data} />
                 <StatStrip profile={data} rosterCount={roster?.length} />
                 <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
-                {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} />}
-                {activeTab === "inventory" && <ItemsTab inventory={inventory ?? []} />}
-                {activeTab === "plans" && <PlansTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
-                {activeTab === "enemies" && <EnemiesTab encountered={encounteredEnemies} isLoading={isEnemiesLoading} />}
                 {activeTab === "stats" && <StatsTab nonDefaultSkinCount={data.non_default_skin_count} operatorsIndex={operatorsIndex ?? []} roster={roster ?? []} server={data.server} uid={id} />}
-                {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} uid={id} server={data.server} />}
-                {activeTab === "optimizer" && <OptimizerTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
+                {activeTab !== "stats" && (
+                    <Suspense fallback={activeTab === "score" ? <ScoreTabSkeleton /> : <GridSkeleton />}>
+                        {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} />}
+                        {activeTab === "inventory" && <ItemsTab inventory={inventory ?? []} />}
+                        {activeTab === "plans" && <PlansTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
+                        {activeTab === "enemies" && <EnemiesTab encountered={encounteredEnemies} isLoading={isEnemiesLoading} />}
+                        {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} uid={id} server={data.server} />}
+                        {activeTab === "optimizer" && <OptimizerTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
+                    </Suspense>
+                )}
             </main>
         </DynamicArtProvider>
     );
