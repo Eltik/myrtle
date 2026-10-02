@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo } from "react";
 
-import type { Catalog } from "./catalog";
+import type { Catalog, IAvailableLocale } from "./catalog";
 import { formatMessage, type MessageValues } from "./format";
 import { DEFAULT_LOCALE, directionForLocale } from "./locale";
 import { SOURCE_CATALOG } from "./source";
@@ -8,7 +8,7 @@ import { SOURCE_CATALOG } from "./source";
 export interface II18nValue {
     locale: string;
     dir: "ltr" | "rtl";
-    available: Array<{ code: string; nativeName: string }>;
+    available: IAvailableLocale[];
     messages: Catalog;
     /**
      * The game-data server this locale reads operator/skill/stage text from
@@ -29,7 +29,7 @@ const I18nContext = createContext<II18nValue>({
 
 export interface II18nProviderProps {
     locale: string;
-    available: Array<{ code: string; nativeName: string }>;
+    available: IAvailableLocale[];
     messages: Catalog;
     /** Defaults to `en`, which is the default-endpoint (unprefixed) server. */
     gamedataServer?: string;

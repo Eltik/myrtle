@@ -10,4 +10,13 @@ export type I18nManifestLocale = {
      * component of the catalog URL.
      */
     namespaces: { [key in string]?: string };
+    /**
+     * Active keys with a current (not stale) translation. Equals `total` for
+     * the source locale.
+     */
+    translated: number;
+    /**
+     * Active keys in the source catalog.
+     */
+    total: number;
 };

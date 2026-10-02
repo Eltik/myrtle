@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -43,6 +43,13 @@ pub struct I18nManifestLocale {
     /// namespace -> current content hash. The hash is the cache-busting path
     /// component of the catalog URL.
     pub namespaces: BTreeMap<String, String>,
+    /// Active keys with a current (not stale) translation. Equals `total` for
+    /// the source locale.
+    #[ts(type = "number")]
+    pub translated: i64,
+    /// Active keys in the source catalog.
+    #[ts(type = "number")]
+    pub total: i64,
 }
 
 #[derive(TS, utoipa::ToSchema)]
@@ -60,6 +67,11 @@ pub async fn get_manifest(state: &AppState) -> Result<CachedJson, ApiError> {
     cached_json(state, &CacheKey::I18nManifest, || async {
         let locales = queries::list_locales(&state.db, true).await?;
         let namespaces = queries::list_namespaces(&state.db).await?;
+        let completion: HashMap<String, (i64, i64)> = queries::locale_completion(&state.db)
+            .await?
+            .into_iter()
+            .map(|(code, translated, total)| (code, (translated, total)))
+            .collect();
 
         let mut out = Vec::with_capacity(locales.len());
         for locale in locales {
@@ -76,12 +88,15 @@ pub async fn get_manifest(state: &AppState) -> Result<CachedJson, ApiError> {
                 let hash = queries::catalog_hash(&state.db, &locale.code, ns).await?;
                 map.insert(ns.clone(), hash);
             }
+            let (translated, total) = completion.get(&locale.code).copied().unwrap_or((0, 0));
             out.push(I18nManifestLocale {
                 code: locale.code,
                 native_name: locale.native_name,
                 english_name: locale.english_name,
                 gamedata_server: locale.gamedata_server,
                 namespaces: map,
+                translated,
+                total,
             });
         }
 

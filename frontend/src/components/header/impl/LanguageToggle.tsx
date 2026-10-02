@@ -1,4 +1,4 @@
-import { useLocaleSwitch } from "#/components/LocaleSwitcher";
+import { LocaleOptionLabel, useLocaleSwitch } from "#/components/LocaleSwitcher";
 import type { messages as localeSwitcherMessages } from "#/components/LocaleSwitcher.messages";
 import { Button } from "#/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from "#/components/ui/menu";
@@ -54,7 +54,7 @@ export default function LanguageToggle(): React.ReactElement | null {
                     </Button>
                 }
             />
-            <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuContent align="end" className="w-52">
                 {/* `DropdownMenuLabel` is a GROUP label in this primitive set,
                     so it must sit inside a group or base-ui throws for a
                     missing MenuGroupRootContext. */}
@@ -69,7 +69,7 @@ export default function LanguageToggle(): React.ReactElement | null {
                 >
                     {available.map((entry) => (
                         <DropdownMenuRadioItem key={entry.code} value={entry.code} lang={entry.code} className="cursor-pointer">
-                            {entry.nativeName}
+                            <LocaleOptionLabel entry={entry} />
                         </DropdownMenuRadioItem>
                     ))}
                 </DropdownMenuRadioGroup>

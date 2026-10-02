@@ -2,6 +2,7 @@ import { useRouterState } from "@tanstack/react-router";
 import { useCallback } from "react";
 
 import { basepathForLocale, LOCALE_COOKIE, useI18n, useT } from "#/lib/i18n";
+import type { IAvailableLocale } from "#/lib/i18n/catalog";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { messages } from "./LocaleSwitcher.messages";
@@ -44,6 +45,21 @@ export function LocaleSwitcher({ className }: { className?: string }): React.Rea
                 ))}
             </div>
         </fieldset>
+    );
+}
+
+/**
+ * A locale's name with how much of the site it translates, for the menus that
+ * have room for both. The percentage is formatted in the reader's locale, so
+ * French reads "45 %".
+ */
+export function LocaleOptionLabel({ entry }: { entry: IAvailableLocale }): React.ReactElement {
+    const { locale } = useI18n();
+    return (
+        <span className="flex items-baseline justify-between gap-3">
+            <span className="truncate">{entry.nativeName}</span>
+            {entry.completion !== undefined ? <span className="shrink-0 text-muted-foreground text-xs tabular-nums">{new Intl.NumberFormat(locale, { style: "percent" }).format(entry.completion)}</span> : null}
+        </span>
     );
 }
 

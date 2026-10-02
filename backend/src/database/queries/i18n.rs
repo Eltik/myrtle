@@ -423,6 +423,30 @@ pub async fn count_audit_log(pool: &PgPool, locale: Option<&str>) -> Result<i64,
     Ok(count)
 }
 
+/// `(locale, current, total)`: active keys whose translation is present and
+/// not stale, against every active key. Drives the percentage in the public
+/// language switcher, so a stale row does not count: its text describes an
+/// English string that no longer exists. The source locale is complete by
+/// definition, for the reason `locale_progress` gives.
+pub async fn locale_completion(pool: &PgPool) -> Result<Vec<(String, i64, i64)>, sqlx::Error> {
+    sqlx::query_as::<_, (String, i64, i64)>(
+        r"
+        WITH total AS (SELECT COUNT(*) AS n FROM ui_message_keys WHERE is_active)
+        SELECT l.code,
+               CASE WHEN l.is_source THEN total.n
+                    ELSE COUNT(k.key) FILTER (WHERE m.source_hash IS NULL OR m.source_hash = k.source_hash) END,
+               total.n
+        FROM locales l
+        CROSS JOIN total
+        LEFT JOIN ui_messages m ON m.locale = l.code
+        LEFT JOIN ui_message_keys k ON k.key = m.key AND k.is_active
+        GROUP BY l.code, l.is_source, total.n
+        ",
+    )
+    .fetch_all(pool)
+    .await
+}
+
 /// `(locale, total_active_keys, translated, stale)` - drives the admin
 /// sidebar badge and the per-locale progress bars.
 pub async fn locale_progress(pool: &PgPool) -> Result<Vec<(String, i64, i64, i64)>, sqlx::Error> {

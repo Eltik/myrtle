@@ -1,6 +1,6 @@
 import { LanguagesIcon, MonitorIcon, MoonIcon, PaletteIcon, RotateCcwIcon, SunIcon } from "lucide-react";
 import { useId } from "react";
-import { useLocaleSwitch } from "#/components/LocaleSwitcher";
+import { LocaleOptionLabel, useLocaleSwitch } from "#/components/LocaleSwitcher";
 import type { messages as localeSwitcherMessages } from "#/components/LocaleSwitcher.messages";
 import { Button } from "#/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "#/components/ui/card";
@@ -152,7 +152,7 @@ function LanguageCard(): React.ReactElement | null {
                         <SelectContent>
                             {available.map((entry) => (
                                 <SelectItem key={entry.code} value={entry.code} lang={entry.code}>
-                                    {entry.nativeName}
+                                    <LocaleOptionLabel entry={entry} />
                                 </SelectItem>
                             ))}
                         </SelectContent>

@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronDown, Cog, ExternalLinkIcon, Heart, LayoutList, LogOut, MenuIcon, UserIcon } from "lucide-react";
-import { useLocaleSwitch } from "#/components/LocaleSwitcher";
+import { LocaleOptionLabel, useLocaleSwitch } from "#/components/LocaleSwitcher";
 import type { messages as localeSwitcherMessages } from "#/components/LocaleSwitcher.messages";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
 import { Button } from "#/components/ui/button";
@@ -116,7 +116,7 @@ export function MobileNav({ items }: IMobileNavProps) {
                                     >
                                         {available.map((entry) => (
                                             <DrawerMenuRadioItem key={entry.code} value={entry.code} lang={entry.code}>
-                                                {entry.nativeName}
+                                                <LocaleOptionLabel entry={entry} />
                                             </DrawerMenuRadioItem>
                                         ))}
                                     </DrawerMenuRadioGroup>

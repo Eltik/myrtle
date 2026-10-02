@@ -98,8 +98,8 @@ export interface IBootstrap {
      * not apply" and is exactly how that failure was first reported.
      */
     redirectTo: string | null;
-    /** `code` and `nativeName` for the switcher. */
-    available: Array<{ code: string; nativeName: string }>;
+    /** The switcher's entries. */
+    available: IAvailableLocale[];
     messages: Catalog;
     /** The hash the messages came from, so the client can refetch by URL. */
     hash: string;
@@ -112,6 +112,17 @@ export interface IBootstrap {
     gamedataServer: string;
 }
 
+export interface IAvailableLocale {
+    code: string;
+    nativeName: string;
+    /**
+     * Share of the source catalog this locale translates, 0 to 1, floored to a
+     * whole percent so an unfinished locale never reads as 100%. Absent for the
+     * source locale, which is not a translation of anything.
+     */
+    completion?: number;
+}
+
 /**
  * Everything a render needs to show text in one locale. Falls back to an empty
  * catalog - not an error - when the backend cannot be reached, because the
@@ -120,10 +131,14 @@ export interface IBootstrap {
 export async function loadBootstrap(requested: string, fallback: string, claimedPath?: string): Promise<IBootstrap> {
     const manifest = await fetchManifest();
 
-    const available = (manifest?.locales ?? []).map((l) => ({
-        code: l.code,
-        nativeName: l.native_name,
-    }));
+    const available = (manifest?.locales ?? []).map(
+        (l): IAvailableLocale => ({
+            code: l.code,
+            nativeName: l.native_name,
+            // `!l.total` also covers a backend older than these fields.
+            completion: l.code === manifest?.default_locale || !l.total ? undefined : Math.floor((l.translated / l.total) * 100) / 100,
+        }),
+    );
 
     const entry = manifest?.locales.find((l) => l.code === requested) ?? manifest?.locales.find((l) => l.code === fallback);
 
