@@ -10,7 +10,7 @@
  */
 import { Link, useNavigate } from "@tanstack/react-router";
 import type React from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -24,7 +24,6 @@ import { cn } from "#/lib/utils";
 import type { StoryCategory } from "#/types/generated/StoryCategory";
 import type { StoryEntry } from "#/types/generated/StoryEntry";
 import type { StoryScript } from "#/types/generated/StoryScript";
-import { ExportSheet } from "../export/ExportSheet";
 import type { messages as sharedMessages } from "../shared.messages";
 import { BacklogDialog } from "./BacklogDialog";
 import { Cutscene } from "./Cutscene";
@@ -45,6 +44,9 @@ import { TextBox } from "./TextBox";
 import { useReaderHotkeys } from "./useReaderHotkeys";
 import { useStoryPlayer } from "./useStoryPlayer";
 import "./reader.css";
+
+// Only mounted once opened, so the PDF and EPUB exporters stay out of the reader chunk.
+const ExportSheet = lazy(() => import("../export/ExportSheet").then((m) => ({ default: m.ExportSheet })));
 
 export interface IStoryReaderProps {
     script: StoryScript;
@@ -555,7 +557,11 @@ export function StoryReader({ script, entry, groupName, exportGroup = null, cate
                         : undefined
                 }
             />
-            {exportGroup && exportOpen ? <ExportSheet open={exportOpen} onOpenChange={setExportOpen} group={exportGroup} storyId={script.id} /> : null}
+            {exportGroup && exportOpen ? (
+                <Suspense fallback={null}>
+                    <ExportSheet open={exportOpen} onOpenChange={setExportOpen} group={exportGroup} storyId={script.id} />
+                </Suspense>
+            ) : null}
             <SkipDialog open={skip.open} onCancel={() => onSkipEvent("cancel")} onConfirm={() => onSkipEvent("confirm")} title={title} node={skipNodeLine(entry, groupName)} synopsis={script.synopsis} />
         </div>
     );

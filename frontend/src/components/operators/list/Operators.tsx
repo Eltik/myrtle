@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { ArrowDown, ArrowUp, Download, LayoutGrid, LayoutList, Rows3, Search } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ExportDialog } from "#/components/export/ExportDialog";
+import { DynamicExportDialog } from "#/components/export/ExportDialog.lazy";
 import { PageHeader } from "#/components/ui/page-header";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { useOperatorName } from "#/hooks/use-operator-name";
@@ -522,7 +522,7 @@ export function OperatorsList() {
                     <Pagination currentPage={page} totalPages={totalPages} onPageChange={handlePageChange} />
                 </main>
             </div>
-            <ExportDialog open={exportOpen} onOpenChange={setExportOpen} schema={operatorsExportSchema} allRows={exportAllRows} filteredRows={exportFilteredRows} pageRows={exportPageRows} title={t("list.export.dialogTitle")} />
+            <DynamicExportDialog open={exportOpen} onOpenChange={setExportOpen} schema={operatorsExportSchema} allRows={exportAllRows} filteredRows={exportFilteredRows} pageRows={exportPageRows} title={t("list.export.dialogTitle")} />
         </div>
     );
 }

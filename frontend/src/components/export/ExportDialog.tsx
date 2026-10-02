@@ -16,7 +16,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { messages } from "./ExportDialog.messages";
 
-interface IExportDialogProps<T> {
+export interface IExportDialogProps<T> {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     schema: IExportSchema<T>;

@@ -9,8 +9,7 @@
  */
 import { Link } from "@tanstack/react-router";
 import type React from "react";
-import { memo, useState } from "react";
-import { ExportSheet } from "#/components/story/export/ExportSheet";
+import { lazy, memo, Suspense, useState } from "react";
 import type { messages as exportMessages } from "#/components/story/export/export.messages";
 import { Button } from "#/components/ui/button";
 import { useFormatters, useT } from "#/lib/i18n";
@@ -28,6 +27,9 @@ import { setWords } from "./stats";
 type BrowseT = TypedT<typeof messages>;
 type MarksT = TypedT<typeof marksMessages>;
 type ExportT = TypedT<typeof exportMessages>;
+
+// Only mounted once opened, so the PDF and EPUB exporters stay out of the library chunk.
+const ExportSheet = lazy(() => import("#/components/story/export/ExportSheet").then((m) => ({ default: m.ExportSheet })));
 
 /**
  * WHAT THE CHAPTER IS AND WHERE THE READER IS IN IT, then the one thing they
@@ -187,7 +189,11 @@ function ExportAction({ group }: { group: LibGroup }): React.ReactElement | null
             <Button variant="outline" size="sm" className="max-sm:h-11" onClick={() => setOpen(true)} data-story-export>
                 {t("export.open")}
             </Button>
-            {open ? <ExportSheet open={open} onOpenChange={setOpen} group={group} /> : null}
+            {open ? (
+                <Suspense fallback={null}>
+                    <ExportSheet open={open} onOpenChange={setOpen} group={group} />
+                </Suspense>
+            ) : null}
         </>
     );
 }
