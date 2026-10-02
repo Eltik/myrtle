@@ -17,7 +17,9 @@ import type { EnemyInfoList } from "#/types/generated/EnemyInfoList";
 import type { EnemyLevel } from "#/types/generated/EnemyLevel";
 import type { EnemyLevelStats } from "#/types/generated/EnemyLevelStats";
 import type { EnemySkill } from "#/types/generated/EnemySkill";
+import type { EnemyStageInfo } from "#/types/generated/EnemyStageInfo";
 import type { EnemyStageRef } from "#/types/generated/EnemyStageRef";
+import type { EnemyStageTable } from "#/types/generated/EnemyStageTable";
 import type { EnemyStats } from "#/types/generated/EnemyStats";
 import type { RaceData } from "#/types/generated/RaceData";
 import type { SkillBlackboardEntry } from "#/types/generated/SkillBlackboardEntry";
@@ -95,22 +97,32 @@ export type IEnemyStageRef = Refine<
     }
 >;
 
-/** `enemyId -> stages it appears in`. */
-export type IEnemyStageIndex = Record<string, IEnemyStageRef[]>;
+/** One stage of the enemy -> stages table: an {@link IEnemyStageRef} without the per-enemy `count`. */
+export type IEnemyStageInfo = Refine<EnemyStageInfo, { category: IEnemyStageRef["category"]; group: StageGroupKey }>;
 
-export const getEnemyStagesFn = createServerFn({ method: "GET" })
+/**
+ * The enemy -> stages index with each stage written once: `refs[enemyId]` is a
+ * list of `[index into stages, count]`.
+ */
+export type IEnemyStageTable = Refine<EnemyStageTable, { stages: IEnemyStageInfo[] }>;
+
+export const getEnemyStageTableFn = createServerFn({ method: "GET" })
     .inputValidator((server: string | undefined) => server)
     .handler(async ({ data: server }) => {
-        const res = await backendFetch(gamedataPath(server, "/static/enemy-stages"));
+        const res = await backendFetch(gamedataPath(server, "/static/enemy-stage-table"));
         if (!res.ok) throw new Error(`Failed to load enemy stages: ${res.status}`);
-        return (await res.json()) as IEnemyStageIndex;
+        return (await res.json()) as IEnemyStageTable;
     });
 
-/** Full enemy -> stages index. Fetch once and look up by enemy id client-side. */
-export function enemyStagesQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
+/**
+ * Every enemy's stages, for the list's "Appears In" filter. Not loaded by the
+ * route: the filter is the only reader, so it arrives after hydration instead
+ * of inside the HTML.
+ */
+export function enemyStageTableQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
     return queryOptions({
-        queryKey: ["enemies", "stages", ...gamedataKey(server)],
-        queryFn: () => getEnemyStagesFn({ data: resolveGamedataServer(server) }),
+        queryKey: ["enemies", "stage-table", ...gamedataKey(server)],
+        queryFn: () => getEnemyStageTableFn({ data: resolveGamedataServer(server) }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });

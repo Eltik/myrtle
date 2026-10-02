@@ -5,9 +5,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DynamicExportDialog } from "#/components/export/ExportDialog.lazy";
 import { PageHeader } from "#/components/ui/page-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
+import { Skeleton } from "#/components/ui/skeleton";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
-import { enemiesQueryOptions, enemyStagesQueryOptions } from "#/lib/api/enemies";
+import { enemiesQueryOptions, enemyStageTableQueryOptions } from "#/lib/api/enemies";
 import { enemiesExportSchema } from "#/lib/export";
 import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -55,16 +56,20 @@ export function EnemiesList() {
             .map((r) => ({ id: r.id, label: r.raceName }));
     }, [handbook, enriched]);
 
-    // Location index ("Appears In" filter), derived from the enemy-stage data.
-    const { data: stageIndex } = useQuery(enemyStagesQueryOptions(server));
+    // Location index ("Appears In" filter), derived from the enemy-stage table.
+    // The route does not load it, so it is fetched here after hydration.
+    const { data: stageTable } = useQuery(enemyStageTableQueryOptions(server));
     const { locationIndex, locationTree } = useMemo(() => {
         const zonesByEnemy = new Map<string, Set<string>>();
         const stagesByEnemy = new Map<string, Set<string>>();
         const zoneTmp = new Map<string, { name: string; group: StageGroupKey; stages: Map<string, IRawStage> }>();
-        for (const [enemyId, refs] of Object.entries(stageIndex ?? {})) {
+        const stageList = stageTable?.stages ?? [];
+        for (const [enemyId, refs] of Object.entries(stageTable?.refs ?? {})) {
             const zones = new Set<string>();
             const stages = new Set<string>();
-            for (const r of refs) {
+            for (const [stageIndex] of refs ?? []) {
+                const r = stageList[stageIndex];
+                if (!r) continue;
                 zones.add(r.zoneId);
                 stages.add(r.stageId);
                 let z = zoneTmp.get(r.zoneId);
@@ -79,7 +84,7 @@ export function EnemiesList() {
         }
         const rawZones: IRawZone[] = [...zoneTmp].map(([zoneId, z]) => ({ zoneId, name: z.name, group: z.group, stages: [...z.stages.values()] }));
         return { locationIndex: { zonesByEnemy, stagesByEnemy } satisfies IEnemyLocationIndex, locationTree: buildLocationTree(rawZones) };
-    }, [stageIndex]);
+    }, [stageTable]);
 
     // The page number round-trips through the URL, so browser back from an enemy
     // lands on the page you left rather than restarting at one.
@@ -302,7 +307,11 @@ export function EnemiesList() {
                     </div>
                 </div>
 
-                {filteredEnemies.length === 0 ? (
+                {filteredEnemies.length === 0 && stageTable === undefined && filters.appearsIn.length > 0 ? (
+                    // A restored "Appears In" filter matches nothing until the stage table arrives;
+                    // show loading rather than an empty state whose clear button would wipe it.
+                    <LocationsLoading />
+                ) : filteredEnemies.length === 0 ? (
                     <EmptyState onClear={clearFilters} />
                 ) : viewMode === "grid" ? (
                     <div className="grid grid-cols-2 gap-2.5 min-[1100px]:grid-cols-6 min-[420px]:grid-cols-3 min-[640px]:grid-cols-4 min-[860px]:grid-cols-5 min-[1280px]:gap-4">
@@ -329,6 +338,17 @@ export function EnemiesList() {
             </main>
 
             <DynamicExportDialog open={exportOpen} onOpenChange={setExportOpen} schema={enemiesExportSchema} allRows={enriched} filteredRows={filteredEnemies} pageRows={paginated} title={t("list.export.dialogTitle")} />
+        </div>
+    );
+}
+
+function LocationsLoading() {
+    return (
+        <div className="grid grid-cols-2 gap-2.5 min-[1100px]:grid-cols-6 min-[420px]:grid-cols-3 min-[640px]:grid-cols-4 min-[860px]:grid-cols-5 min-[1280px]:gap-4" aria-busy="true">
+            {Array.from({ length: 12 }, (_, i) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: static placeholder tiles
+                <Skeleton key={i} className="aspect-[3/4] rounded-lg" />
+            ))}
         </div>
     );
 }
