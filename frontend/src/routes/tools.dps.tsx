@@ -4,7 +4,6 @@ import { DpsCalculator } from "#/components/tools/dps/DpsCalculator";
 import { Button } from "#/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { dpsOperatorsQueryOptions } from "#/lib/api/dps";
-import { operatorsListQueryOptions } from "#/lib/api/operators";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
@@ -12,7 +11,9 @@ import { seo } from "#/lib/seo";
 export const Route = createFileRoute("/tools/dps")({
     component: RouteComponent,
     errorComponent: DpsErrorComponent,
-    loader: ({ context: { queryClient, i18n } }) => Promise.all([queryClient.prefetchQuery(dpsOperatorsQueryOptions()), queryClient.prefetchQuery(operatorsListQueryOptions(i18n.gamedataServer))]),
+    // Per-operator detail (skill names, module icons) is fetched when an operator
+    // is picked, by `useOperatorDetail`; nothing operator-wide is needed to render.
+    loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(dpsOperatorsQueryOptions()),
     head: ({ match }) => {
         const t = metaT(match.context.i18n);
         const { meta, links } = seo({

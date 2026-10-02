@@ -2,10 +2,9 @@ import { DEFAULT_LOCALE, formatMessage, sourceMessage } from "#/lib/i18n";
 import { fullMessageKey, type TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import { formatNationId, rarityToNumber } from "#/lib/utils";
-import type { IOperatorListItem } from "#/types/operators";
 import { NON_OPERATOR_PROFESSIONS } from "./constants";
 import type { messages as helperMessages } from "./helpers.messages";
-import type { CalendarScale, IBirthdayFilters, IOperatorBirthday, ISelectedDay } from "./types";
+import type { CalendarScale, IBirthdayFilters, IBirthdayOperator, IOperatorBirthday, ISelectedDay } from "./types";
 
 /** The `t` the range-title helper needs, narrowed to the keys it can render. */
 export type BirthdayHelperT = TypedT<typeof helperMessages>;
@@ -34,7 +33,7 @@ export function weekdayNames(locale: string): string[] {
     return Array.from({ length: 7 }, (_, i) => fmt.format(new Date(Date.UTC(2021, 7, 1 + i))));
 }
 
-export function operatorRarity(operator: IOperatorListItem): number {
+export function operatorRarity(operator: Pick<IBirthdayOperator, "rarity">): number {
     return rarityToNumber(operator.rarity);
 }
 
@@ -48,7 +47,7 @@ export function countKnown(birthdays: IOperatorBirthday[]): number {
 }
 
 /** Drop summons and map hazards: not operators with birthdays. */
-export function isCalendarOperator(operator: IOperatorListItem): boolean {
+export function isCalendarOperator(operator: Pick<IBirthdayOperator, "profession">): boolean {
     return !NON_OPERATOR_PROFESSIONS.has(operator.profession);
 }
 
@@ -138,7 +137,7 @@ export function groupByDay(birthdays: IOperatorBirthday[]): Map<string, IOperato
 }
 
 /** Distinct nations present in the data, as `[nationId, label]` sorted by label. */
-export function deriveNations(operators: IOperatorListItem[]): [string, string][] {
+export function deriveNations(operators: IBirthdayOperator[]): [string, string][] {
     const ids = new Set<string>();
     for (const op of operators) {
         if (op.nationId) ids.add(op.nationId);

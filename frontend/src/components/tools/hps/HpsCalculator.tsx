@@ -17,7 +17,7 @@ import { PageHeader } from "#/components/ui/page-header";
 import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { hpsOperatorsQueryOptions, type IHpsOperatorListEntry } from "#/lib/api/hps";
-import { operatorsListQueryOptions } from "#/lib/api/operators";
+import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { type TypedRichT, useGamedataServer, useLocale, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { messages } from "./HpsCalculator.messages";
@@ -65,7 +65,8 @@ export function HpsCalculator(): React.ReactElement {
     const onResetAll = React.useCallback(() => dispatch({ type: "RESET_INSTANCES" }), [dispatch]);
     const onToggleCollapseAll = React.useCallback(() => dispatch({ type: "SET_ALL_COLLAPSED", collapsed: !allCollapsed }), [allCollapsed, dispatch]);
 
-    const { data: staticOps } = useQuery(operatorsListQueryOptions(useGamedataServer()));
+    // The export only needs each module's type names, which the index carries.
+    const { data: indexOps } = useQuery(operatorsIndexQueryOptions(useGamedataServer()));
     const chartContainerRef = React.useRef<HTMLDivElement>(null);
     const [isExporting, setIsExporting] = React.useState(false);
     const onExportChart = React.useCallback(async () => {
@@ -84,7 +85,7 @@ export function HpsCalculator(): React.ReactElement {
                 inst.config.moduleIndex > 0
                     ? t("hps.export.moduleSummary", {
                           module: moduleShortLabel(
-                              staticOps?.find((o) => o.id === inst.op.id),
+                              indexOps?.find((o) => o.id === inst.op.id),
                               inst.op,
                               inst.config.moduleIndex,
                               t,
@@ -119,7 +120,7 @@ export function HpsCalculator(): React.ReactElement {
         } finally {
             setIsExporting(false);
         }
-    }, [state.xAxis, state.yMetric, state.instances, state.buffs, atkPct, snapshots, staticOps, t, locale]);
+    }, [state.xAxis, state.yMetric, state.instances, state.buffs, atkPct, snapshots, indexOps, t, locale]);
 
     const { data: latestOps } = useQuery(hpsOperatorsQueryOptions());
     React.useEffect(() => {

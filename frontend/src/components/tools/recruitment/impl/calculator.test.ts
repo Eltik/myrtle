@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { IOperatorListItem } from "#/types/operators";
 import { calculateResults } from "./calculator";
-import { buildPotentials } from "./derive";
+import { buildPotentials, type IRecruitmentSourceOperator } from "./derive";
 import type { IRecruitableOperator } from "./types";
 
 const MELEE = { id: 9, name: "Melee" };
@@ -55,16 +54,18 @@ describe("potential-asc operator sort", () => {
 });
 
 describe("buildPotentials", () => {
-    // The shape `/static/operators` hands the server fn after deepCamelize.
-    const stat = (attributeType: string, value: number) => ({ type_: "BUFF", description: "", buff: { attributes: { attributeModifiers: [{ attributeType, value }] } } });
-    const custom = (description: string) => ({ type_: "CUSTOM", description, buff: null });
-    const talent = (ranks: number[]) => ({ candidates: ranks.map((requiredPotentialRank) => ({ requiredPotentialRank })) });
+    // The shape `/operators/recruitment` serves.
+    const stat = (attributeType: string, value: number) => ({ description: "", modifier: { attributeType, value } });
+    const custom = (description: string) => ({ description, modifier: null });
 
     it("reads BUFF ranks off the modifier and CUSTOM ranks off the talent candidates", () => {
         const operator = {
             potentialRanks: [stat("COST", -1), custom("Improves Second Talent"), stat("ATK", 28), custom("Improves First Talent"), stat("COST", -1)],
-            talents: [talent([0, 4]), talent([0, 2])],
-        } as unknown as IOperatorListItem;
+            talentPotentialRanks: [
+                [0, 4],
+                [0, 2],
+            ],
+        } satisfies Partial<IRecruitmentSourceOperator>;
         expect(buildPotentials(operator)).toEqual([
             { kind: "stat", attribute: "COST", value: -1 },
             { kind: "talent", index: 1, of: 2 },
@@ -75,11 +76,11 @@ describe("buildPotentials", () => {
     });
 
     it("keeps the description when neither a modifier nor a talent candidate explains the rank", () => {
-        const operator = { potentialRanks: [custom("Something new")], talents: [talent([0])] } as unknown as IOperatorListItem;
+        const operator = { potentialRanks: [custom("Something new")], talentPotentialRanks: [[0]] } satisfies Partial<IRecruitmentSourceOperator>;
         expect(buildPotentials(operator)).toEqual([{ kind: "text", text: "Something new" }]);
     });
 
     it("is empty for an operator without ranks", () => {
-        expect(buildPotentials({} as IOperatorListItem)).toEqual([]);
+        expect(buildPotentials({})).toEqual([]);
     });
 });

@@ -1,6 +1,9 @@
-import type { IOperatorListItem, OperatorProfession } from "#/types/operators";
+import type { IOperatorIndexEntry, OperatorProfession } from "#/types/operators";
 
-export type IOperatorBirthday = { operator: IOperatorListItem; known: false; raw: string } | { operator: IOperatorListItem; known: true; raw: string; month: number; day: number };
+/** Every operator field the birthday calendar reads, all on the `/operators/index` entry. */
+export type IBirthdayOperator = Pick<IOperatorIndexEntry, "id" | "name" | "rarity" | "profession" | "nationId" | "dateOfBirth">;
+
+export type IOperatorBirthday = { operator: IBirthdayOperator; known: false; raw: string } | { operator: IBirthdayOperator; known: true; raw: string; month: number; day: number };
 
 export type BirthdayView = "calendar" | "list" | "upcoming";
 

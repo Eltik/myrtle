@@ -4,7 +4,6 @@ import { HpsCalculator } from "#/components/tools/hps/HpsCalculator";
 import { Button } from "#/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
 import { hpsOperatorsQueryOptions } from "#/lib/api/hps";
-import { operatorsListQueryOptions } from "#/lib/api/operators";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
@@ -12,7 +11,9 @@ import { seo } from "#/lib/seo";
 export const Route = createFileRoute("/tools/hps")({
     component: RouteComponent,
     errorComponent: HpsErrorComponent,
-    loader: ({ context: { queryClient, i18n } }) => Promise.all([queryClient.prefetchQuery(hpsOperatorsQueryOptions()), queryClient.prefetchQuery(operatorsListQueryOptions(i18n.gamedataServer))]),
+    // Per-operator detail (skill names, module icons) is fetched when an operator
+    // is picked, by `useOperatorDetail`; nothing operator-wide is needed to render.
+    loader: ({ context: { queryClient } }) => queryClient.prefetchQuery(hpsOperatorsQueryOptions()),
     head: ({ match }) => {
         const t = metaT(match.context.i18n);
         const { meta, links } = seo({

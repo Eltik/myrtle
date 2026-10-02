@@ -1,8 +1,8 @@
 import type * as React from "react";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { cn } from "#/lib/utils";
-import type { IOperatorListItem } from "#/types/operators";
 import { operatorRarity, rarityVar } from "../helpers";
+import type { IBirthdayOperator } from "../types";
 
 type OpChipSize = "sm" | "default" | "lg" | "xl";
 
@@ -14,7 +14,7 @@ const SIZE_CLASS: Record<OpChipSize, string> = {
 };
 
 interface IOpChipProps {
-    operator: IOperatorListItem;
+    operator: IBirthdayOperator;
     size?: OpChipSize;
     className?: string;
 }

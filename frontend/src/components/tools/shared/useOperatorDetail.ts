@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { operatorsListQueryOptions } from "#/lib/api/operators";
+import { operatorQueryOptions } from "#/lib/api/operators";
 import { DEFAULT_LOCALE, formatMessage, sourceMessage, useGamedataServer, useT } from "#/lib/i18n";
 import { fullMessageKey, type TypedT } from "#/lib/i18n/messages";
 import type { IEnrichedSkill, IOperatorListItem, IOperatorModule } from "#/types/operators";
@@ -37,21 +37,14 @@ export interface IOperatorDetail {
 
 /**
  * Look up enrichment data (skill names, module names, potential text) for the
- * operator that the DPS calculator already knows by id. Backed by the global
- * operator list query so all instances share a single fetch.
+ * operator that the DPS calculator already knows by id. One `/operators/{id}`
+ * fetch per picked operator, shared by every card showing it, instead of the
+ * whole operator table up front.
  */
 export function useOperatorDetail(entry: IOperatorListEntry | undefined): IOperatorDetail {
-    const { data: operators } = useQuery(operatorsListQueryOptions(useGamedataServer()));
+    const { data: op } = useQuery({ ...operatorQueryOptions(entry?.id ?? "", useGamedataServer()), enabled: !!entry });
     const t: DetailT = useT("tools");
-    return useMemo(
-        () =>
-            buildDetail(
-                operators?.find((op) => op.id === entry?.id),
-                entry,
-                t,
-            ),
-        [operators, entry, t],
-    );
+    return useMemo(() => buildDetail(op, entry, t), [op, entry, t]);
 }
 
 function buildDetail(op: IOperatorListItem | undefined, entry: IOperatorListEntry | undefined, t: DetailT): IOperatorDetail {
@@ -96,15 +89,18 @@ function buildDetail(op: IOperatorListItem | undefined, entry: IOperatorListEntr
     };
 }
 
+/** The module fields `resolveModule` and `moduleDesignator` read; the full operator and the index entry both carry them. */
+type IModuleRef = Pick<IOperatorModule, "uniEquipId" | "typeName1" | "typeName2" | "type">;
+
 /** `SUM-X` and friends, or null for the badge and for malformed rows. */
-export function moduleDesignator(mod: IOperatorModule | undefined): string | null {
+export function moduleDesignator(mod: Pick<IModuleRef, "typeName1" | "typeName2"> | undefined): string | null {
     const t1 = mod?.typeName1?.trim();
     const t2 = mod?.typeName2?.trim();
     if (!t1 || !t2) return null;
     return `${t1}-${t2}`;
 }
 
-export function resolveModule(op: IOperatorListItem | undefined, moduleIndex: number, entry: IOperatorListEntry | undefined): IOperatorModule | undefined {
+export function resolveModule<M extends IModuleRef>(op: { modules?: readonly M[] } | undefined, moduleIndex: number, entry: IOperatorListEntry | undefined): M | undefined {
     if (moduleIndex <= 0) return undefined;
 
     // Join on identity: the DPS payload names the `uniEquipId` that each module
@@ -129,7 +125,7 @@ export function resolveModule(op: IOperatorListItem | undefined, moduleIndex: nu
  * Compact module label for chart exports: the in-game designator when it can be
  * resolved, the engine's own index only when it cannot.
  */
-export function moduleShortLabel(op: IOperatorListItem | undefined, entry: IOperatorListEntry | undefined, moduleIndex: number, t: DetailT = sourceT): string {
+export function moduleShortLabel(op: { modules?: readonly IModuleRef[] } | undefined, entry: IOperatorListEntry | undefined, moduleIndex: number, t: DetailT = sourceT): string {
     if (moduleIndex <= 0) return t("calc.detail.noModuleLower");
     return moduleDesignator(resolveModule(op, moduleIndex, entry)) ?? t("calc.detail.moduleFallbackShort", { index: moduleIndex });
 }

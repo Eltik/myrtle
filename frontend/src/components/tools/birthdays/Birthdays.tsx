@@ -4,7 +4,6 @@ import { PageHeader } from "#/components/ui/page-header";
 import { Tabs, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import type { IOperatorListItem } from "#/types/operators";
 import type { messages } from "./Birthdays.messages";
 import { calculateBirthdays } from "./impl/calculate";
 import { CalendarView } from "./impl/components/CalendarView";
@@ -15,10 +14,10 @@ import { ListView } from "./impl/components/ListView";
 import { TodayCallout } from "./impl/components/TodayCallout";
 import { UpcomingView } from "./impl/components/UpcomingView";
 import { applyFilters, countActiveFilters, countKnown, createEmptyFilters, deriveNations, groupByDay, isCalendarOperator, opsOn } from "./impl/helpers";
-import type { BirthdayView, CalendarScale, IBirthdayFilters, ISelectedDay } from "./impl/types";
+import type { BirthdayView, CalendarScale, IBirthdayFilters, IBirthdayOperator, ISelectedDay } from "./impl/types";
 
 interface IBirthdaysProps {
-    operators: IOperatorListItem[];
+    operators: IBirthdayOperator[];
 }
 
 export function Birthdays({ operators }: IBirthdaysProps): React.ReactElement {

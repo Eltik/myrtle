@@ -1,5 +1,4 @@
-import type { IOperatorListItem } from "#/types/operators";
-import type { IOperatorBirthday } from "./types";
+import type { IBirthdayOperator, IOperatorBirthday } from "./types";
 
 const BIRTHDAY_RE = /^([a-z]+)\.?\s+(\d{1,2})$/i;
 
@@ -27,9 +26,10 @@ function parseBirthday(raw: string): { month: number; day: number } | null {
     return { month, day };
 }
 
-export function calculateBirthdays(operators: IOperatorListItem[]): IOperatorBirthday[] {
+export function calculateBirthdays(operators: IBirthdayOperator[]): IOperatorBirthday[] {
     return operators.map((operator) => {
-        const raw = operator.profile?.basicInfo.dateOfBirth?.trim() ?? "";
+        // An index cached by a backend older than this field has no dateOfBirth.
+        const raw = (operator.dateOfBirth ?? "").trim();
         const parsed = raw ? parseBirthday(raw) : null;
         return parsed ? { operator, known: true, raw, ...parsed } : { operator, known: false, raw };
     });

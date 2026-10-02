@@ -4,7 +4,7 @@ import { AlertTriangle } from "lucide-react";
 import { Birthdays } from "#/components/tools/birthdays/Birthdays";
 import { Button } from "#/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "#/components/ui/empty";
-import { operatorsListQueryOptions } from "#/lib/api/operators";
+import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { useGamedataServer } from "#/lib/i18n";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
@@ -13,7 +13,7 @@ import { seo } from "#/lib/seo";
 export const Route = createFileRoute("/tools/birthdays")({
     component: RouteComponent,
     errorComponent: BirthdaysErrorComponent,
-    loader: ({ context: { queryClient, i18n } }) => queryClient.ensureQueryData(operatorsListQueryOptions(i18n.gamedataServer)),
+    loader: ({ context: { queryClient, i18n } }) => queryClient.ensureQueryData(operatorsIndexQueryOptions(i18n.gamedataServer)),
     head: ({ match }) => {
         const t = metaT(match.context.i18n);
         const { meta, links } = seo({
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/tools/birthdays")({
 
 function RouteComponent() {
     const server = useGamedataServer();
-    const { data: operators = [] } = useQuery(operatorsListQueryOptions(server));
+    const { data: operators = [] } = useQuery(operatorsIndexQueryOptions(server));
     return <Birthdays operators={operators} />;
 }
 

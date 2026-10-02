@@ -182,6 +182,8 @@ export interface IOperatorIndexEntry {
     skillCount: number;
     potentialRankCount: number;
     modules: IOperatorIndexModule[];
+    /** The profile's `dateOfBirth` verbatim (e.g. "October 4"); empty when there is no profile. */
+    dateOfBirth: string;
 }
 
 /** The module fields the profile Stats tab reads, named as on `IModule`. */
