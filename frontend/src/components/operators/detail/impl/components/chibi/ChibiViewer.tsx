@@ -171,7 +171,11 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
                 antialias: true,
                 resolution: typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
                 autoDensity: true,
+                // The tick below updates and renders; PIXI's own ticker would draw the stage a
+                // second time every frame.
+                autoStart: false,
             });
+            app.ticker.stop();
 
             if (currentLoadId !== loadIdRef.current || !mountedRef.current) {
                 app.destroy(true, { children: true, texture: true });
@@ -186,10 +190,10 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
                 if (!mountedRef.current) return;
                 const dt = Math.min((now - lastTick) / 1000, 0.1);
                 lastTick = now;
-                if (!recordingRef.current) {
-                    if (spineRef.current) spineRef.current.update(dt);
-                    if (appRef.current?.renderer) appRef.current.renderer.render(appRef.current.stage);
-                }
+                if (!recordingRef.current && spineRef.current) spineRef.current.update(dt);
+                // Rendered while recording too, as PIXI's ticker did: the recorder has moved the
+                // spine onto its own app, so the live canvas shows it gone, not a frozen frame.
+                if (appRef.current?.renderer) appRef.current.renderer.render(appRef.current.stage);
                 animationFrameId = requestAnimationFrame(tick);
             };
             animationFrameId = requestAnimationFrame(tick);

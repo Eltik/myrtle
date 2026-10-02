@@ -87,7 +87,10 @@ function acquireChibiApp(): PIXI.Application {
         pooled.renderer.render(pooled.stage); // clear to transparent before reuse
         return pooled;
     }
-    const app = new PIXI.Application({ width: SPRITE_W, height: SPRITE_H, backgroundAlpha: 0, antialias: true, resolution: window.devicePixelRatio || 1, autoDensity: true });
+    // Each walker's own tick renders its app; PIXI's ticker would draw every frame a second
+    // time, and keep drawing an empty stage for as long as the app sits in the pool.
+    const app = new PIXI.Application({ width: SPRITE_W, height: SPRITE_H, backgroundAlpha: 0, antialias: true, resolution: window.devicePixelRatio || 1, autoDensity: true, autoStart: false });
+    app.ticker.stop();
     app.renderer.render(app.stage);
     return app;
 }
