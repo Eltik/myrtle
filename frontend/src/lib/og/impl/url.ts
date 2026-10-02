@@ -1,16 +1,14 @@
 import { DEFAULT_LOCALE } from "#/lib/i18n";
 import type { IMetaSource } from "#/lib/meta";
 import { OG_CONFIG } from "./config";
+import { type OgData, type OgKind, ogHashers } from "./hashers";
 import { DEFAULT_OG_PRESETS, type DefaultOgPresetSlug, resolveDefaultOgPreset } from "./presets";
-import { type OgKind, ogRegistry } from "./registry";
 
 const MAX_WARMED_URLS = 5_000;
 const warmedOgURLs = new Set<string>();
 
-export function ogURL<K extends OgKind>(kind: K, id: string, data: Parameters<(typeof ogRegistry)[K]["template"]>[0]): string {
-    const handler = ogRegistry[kind];
-    // biome-ignore lint/suspicious/noExplicitAny: bridging typed registry to runtime
-    const hash = handler.hash(data as any);
+export function ogURL<K extends OgKind>(kind: K, id: string, data: OgData<K>): string {
+    const hash = ogHashers[kind].hash(data);
     return `${OG_CONFIG.siteURL}/api/og/${kind}/${encodeURIComponent(id)}?v=${hash}`;
 }
 
@@ -20,12 +18,12 @@ export function ogURL<K extends OgKind>(kind: K, id: string, data: Parameters<(t
  * resolves the same catalog the page hashed. The source locale adds nothing,
  * so an English URL is exactly `ogURL`'s.
  */
-export function localizedOgURL<K extends OgKind>(kind: K, id: string, data: Parameters<(typeof ogRegistry)[K]["template"]>[0], locale?: string | null): string {
+export function localizedOgURL<K extends OgKind>(kind: K, id: string, data: OgData<K>, locale?: string | null): string {
     const url = ogURL(kind, id, data);
     return !locale || locale === DEFAULT_LOCALE ? url : `${url}&locale=${encodeURIComponent(locale)}`;
 }
 
-export function warmOg<K extends OgKind>(kind: K, id: string, data: Parameters<(typeof ogRegistry)[K]["template"]>[0], locale?: string | null): void {
+export function warmOg<K extends OgKind>(kind: K, id: string, data: OgData<K>, locale?: string | null): void {
     if (typeof window !== "undefined") return;
     const url = localizedOgURL(kind, id, data, locale);
     if (warmedOgURLs.has(url)) return;

@@ -13,16 +13,16 @@ import type { StoryIndex } from "#/types/generated/StoryIndex";
 import type { IOperatorListItem } from "#/types/operators";
 import type { IStage, IZone } from "#/types/stages";
 import type { IUserProfile } from "#/types/user";
-import { ogHash } from "./hash";
+import { type IOgHasher, type OgData, type OgKind, ogHashers } from "./hashers";
 import { defaultOgPreset, defaultOgTagLabels, resolveDefaultOgPreset } from "./presets";
 import type { IRenderDimensions } from "./render";
-import { buildStoryOgData, type IStoryOgData, parseStoryOgId, storyOgHashParts } from "./story";
+import { buildStoryOgData, type IStoryOgData, parseStoryOgId } from "./story";
 import { DefaultTemplate, type IDefaultOgData } from "./templates/Default";
 import { type IOperatorOgData, OperatorTemplate } from "./templates/Operator";
 import { buildStageOgData, type IStageOgData, StageTemplate } from "./templates/Stage";
 import { StoryTemplate } from "./templates/Story";
 import { type ITierListOgData, type ITierListOperatorPreview, type ITierListTierPreview, TierListTemplate } from "./templates/TierList";
-import { type ITierListBoardImageData, type ITierListBoardImageOperator, type ITierListBoardImageTier, TIER_LIST_BOARD_IMAGE_LAYOUT, TierListBoardImageTemplate, tierListBoardImageDimensions } from "./templates/TierListBoardImage";
+import { type ITierListBoardImageData, type ITierListBoardImageOperator, type ITierListBoardImageTier, TierListBoardImageTemplate, tierListBoardImageDimensions } from "./templates/TierListBoardImage";
 import { type IUserOgData, type IUserSupportModule, type IUserSupportSkill, type IUserSupportUnit, UserTemplate } from "./templates/User";
 
 export interface IOgHandler<TData> {
@@ -38,25 +38,21 @@ export interface IOgHandler<TData> {
     dimensions?: (data: TData) => IRenderDimensions;
 }
 
-// A handler declares its `kind` and `hashVersion` once; `hash` and `cacheVersion` are
-// derived from them so neither the kind string nor the version constant is restated.
-// Both feed ogHash the same leading `[kind, hashVersion, ...]`, so the resulting cache
-// keys are byte-identical to hand-written signatures.
+// The hash half of every handler comes from `ogHashers`, which the client imports
+// alone to build og:image URLs. Each handler below is marked pure because the bundler
+// reads `def.fetch` and friends as possible getter side effects and would otherwise keep
+// every template in any bundle that so much as imports this module.
 interface IOgHandlerDef<TData> {
-    kind: string;
-    hashVersion: string;
     fetch: (id: string, locale?: string) => Promise<TData | null>;
-    hashParts: (data: TData) => unknown[];
     template: (data: TData) => ReactNode;
     dimensions?: (data: TData) => IRenderDimensions;
 }
 
-function defineOgHandler<TData>(def: IOgHandlerDef<TData>): IOgHandler<TData> {
-    const { kind, hashVersion } = def;
+function defineOgHandler<TData>(hasher: IOgHasher<TData>, def: IOgHandlerDef<TData>): IOgHandler<TData> {
     return {
         fetch: def.fetch,
-        hash: (data) => ogHash([kind, hashVersion, ...def.hashParts(data)]),
-        cacheVersion: (id, version) => version || ogHash([kind, hashVersion, id]),
+        hash: hasher.hash,
+        cacheVersion: hasher.cacheVersion,
         template: def.template,
         dimensions: def.dimensions,
     };
@@ -105,11 +101,7 @@ const secretaryArtURL = (operatorId: string, skinId: string | null, op?: IOperat
 };
 const professionIconURL = (profession: string, server?: AssetServer) => assetURL(`/textures/arts/ui/%5Buc%5Dcharcommon/icon_profession_${profession.toLowerCase()}.png`, server);
 
-const OPERATOR_HASH_VERSION = "v9";
-
-const operatorHandler = defineOgHandler<IOperatorOgData>({
-    kind: "operator",
-    hashVersion: OPERATOR_HASH_VERSION,
+const operatorHandler = /* @__PURE__ */ defineOgHandler<IOperatorOgData>(ogHashers.operator, {
     fetch: async (id) => {
         // `/operators/{id}` resolves across every loaded server, default first,
         // then CN, and tags the response with the server it was found on. The
@@ -151,13 +143,8 @@ const operatorHandler = defineOgHandler<IOperatorOgData>({
             server,
         };
     },
-    // `server` participates so an operator that graduates from CN to Global
-    // re-renders against the Global asset tree instead of serving a stale card.
-    hashParts: (data) => [data.name, data.appellation, data.profession, data.rarity, data.subProfession, data.position, data.nationId, data.factionLabel ?? "", data.professionIconURL ?? "", (data.stats ?? []).map((s) => `${s.label}=${s.value}`).join("|"), data.server ?? ""],
     template: (data) => OperatorTemplate(data),
 });
-
-const USER_HASH_VERSION = "v15";
 
 interface ISupportUnitResponse {
     slot: number;
@@ -253,9 +240,7 @@ function topRosterPicks(roster: IRosterEntry[], opByIdMap: Map<string, IOperator
         );
 }
 
-const userHandler = defineOgHandler<IUserOgData>({
-    kind: "user",
-    hashVersion: USER_HASH_VERSION,
+const userHandler = /* @__PURE__ */ defineOgHandler<IUserOgData>(ogHashers.user, {
     fetch: async (uid) => {
         const enc = encodeURIComponent(uid);
         const [userRes, supportsRes, rosterRes, operators] = await Promise.all([backendFetch(`/get-user?uid=${enc}`), backendFetch(`/get-user-supports?uid=${enc}`), backendFetch(`/roster?uid=${enc}`), getOperatorsListFn().catch(() => [] as IOperatorListItem[])]);
@@ -324,32 +309,8 @@ const userHandler = defineOgHandler<IUserOgData>({
             rarityCounts: hasRarityCounts ? rarityCounts : undefined,
         };
     },
-    hashParts: (data) => [
-        data.nickname,
-        data.nickNumber ?? "",
-        data.uid,
-        data.level,
-        data.grade,
-        data.totalScore,
-        data.operatorCount,
-        data.skinCount,
-        data.itemCount,
-        data.lmd,
-        data.secretaryArtURL ?? "",
-        data.supportUnitsKind ?? "",
-        (data.supportUnits ?? [])
-            .map((u) => {
-                const sk = (u.skills ?? []).map((s) => `${s.mastery}.${s.skillLevel}`).join(",");
-                const md = (u.modules ?? []).map((m) => m.level).join(",");
-                return `${u.id}:${u.elite}:${u.level}:s${sk}:m${md}`;
-            })
-            .join("|"),
-        data.rarityCounts ? [6, 5, 4, 3, 2, 1].map((r) => `${r}=${data.rarityCounts?.[r] ?? 0}`).join(",") : "",
-    ],
     template: (data) => UserTemplate(data),
 });
-
-const TIER_LIST_HASH_VERSION = "v3";
 
 const HEX_COLOR_RE = /^#([0-9a-fA-F]{6})$/;
 const FALLBACK_TIER_HEX = ["#dc4d56", "#e0834a", "#d8b54a", "#5dbf86", "#5aa9d9", "#9b73d4", "#8a8a8a"];
@@ -418,9 +379,7 @@ interface IBackendTierListResponse {
     tiers: IBackendTierListTier[];
 }
 
-const tierListHandler = defineOgHandler<ITierListOgData>({
-    kind: "tier-list",
-    hashVersion: TIER_LIST_HASH_VERSION,
+const tierListHandler = /* @__PURE__ */ defineOgHandler<ITierListOgData>(ogHashers["tier-list"], {
     fetch: async (slug) => {
         const enc = encodeURIComponent(slug);
         const detailRes = await backendFetch(`/tier-lists/${enc}`);
@@ -470,36 +429,15 @@ const tierListHandler = defineOgHandler<ITierListOgData>({
             tiers,
         };
     },
-    hashParts: (data) => [
-        data.title,
-        data.slug,
-        data.description ?? "",
-        data.listType,
-        data.flairLabel ?? "",
-        data.flairColor ?? "",
-        data.authorName ?? "",
-        data.authorAvatarURL ?? "",
-        data.views ?? 0,
-        data.favorites ?? 0,
-        data.isTrending ? 1 : 0,
-        data.updatedRelative ?? "",
-        data.totalOperators,
-        data.tierCount,
-        data.tiers.map((t) => `${t.name}:${t.color}:${t.operatorCount}:${t.operators.map((o) => o.id).join(",")}`).join("|"),
-    ],
     template: (data) => TierListTemplate(data),
 });
-
-const DEFAULT_HASH_VERSION = "v6";
 
 // Canonical id for the site-wide fallback OG image. Slugs registered in
 // DEFAULT_OG_PRESETS resolve to their preset; anything else is treated as a
 // literal (URL-encoded) title for one-off pages.
 export const DEFAULT_OG_ID = "_root";
 
-const defaultHandler = defineOgHandler<IDefaultOgData>({
-    kind: "default",
-    hashVersion: DEFAULT_HASH_VERSION,
+const defaultHandler = /* @__PURE__ */ defineOgHandler<IDefaultOgData>(ogHashers.default, {
     // The only handler whose text is authored rather than fetched, so the only
     // one that needs a catalog. There is no React tree and no router match
     // here - satori is handed a plain element tree on the server - so the
@@ -513,15 +451,8 @@ const defaultHandler = defineOgHandler<IDefaultOgData>({
         // Not a registered slug: the id IS the title, for one-off pages.
         return { title: decodeURIComponent(id), tagLabels: defaultOgTagLabels(source) };
     },
-    // `tagLabels` are deliberately absent: they are the same five words on
-    // every card in a given locale, and the locale is already in the cache key
-    // (see `ogResponse`). Hashing them would change every English URL for no
-    // change in the image.
-    hashParts: (data) => [data.title, data.subtitle ?? "", data.activeTag ?? ""],
     template: (data) => DefaultTemplate(data),
 });
-
-const TIER_LIST_BOARD_IMAGE_HASH_VERSION = "v12";
 
 async function fetchToDataURI(url: string): Promise<string | undefined> {
     if (!url) return undefined;
@@ -536,9 +467,7 @@ async function fetchToDataURI(url: string): Promise<string | undefined> {
     }
 }
 
-const tierListBoardImageHandler = defineOgHandler<ITierListBoardImageData>({
-    kind: "tier-list-image",
-    hashVersion: TIER_LIST_BOARD_IMAGE_HASH_VERSION,
+const tierListBoardImageHandler = /* @__PURE__ */ defineOgHandler<ITierListBoardImageData>(ogHashers["tier-list-image"], {
     fetch: async (slug) => {
         const enc = encodeURIComponent(slug);
         const detailRes = await backendFetch(`/tier-lists/${enc}`);
@@ -564,12 +493,10 @@ const tierListBoardImageHandler = defineOgHandler<ITierListBoardImageData>({
             tiers,
         };
     },
-    hashParts: (data) => [TIER_LIST_BOARD_IMAGE_LAYOUT.width, data.title, data.slug, data.tiers.map((t) => `${t.name}:${t.color}:${t.operators.map((o) => `${o.id}.${o.rarity}`).join(",")}`).join("|")],
     template: (data) => TierListBoardImageTemplate(data),
     dimensions: (data) => tierListBoardImageDimensions(data),
 });
 
-const STAGE_HASH_VERSION = "v1";
 const STATIC_STAGE_TTL_MS = 30 * 60 * 1000;
 let stagesCache: { promise: Promise<IStage[]>; expiresAt: number } | null = null;
 let zonesCache: { promise: Promise<IZone[]>; expiresAt: number } | null = null;
@@ -625,9 +552,7 @@ async function resolveStagePreview(paths: string[]): Promise<string | undefined>
     return undefined;
 }
 
-const stageHandler = defineOgHandler<IStageOgData>({
-    kind: "stage",
-    hashVersion: STAGE_HASH_VERSION,
+const stageHandler = /* @__PURE__ */ defineOgHandler<IStageOgData>(ogHashers.stage, {
     fetch: async (stageId) => {
         const [stages, zones] = await Promise.all([getCachedStages().catch(() => [] as IStage[]), getCachedZones().catch(() => [] as IZone[])]);
         const stage = stages.find((s) => s.stageId === stageId);
@@ -638,11 +563,9 @@ const stageHandler = defineOgHandler<IStageOgData>({
 
         return buildStageOgData(stage, zone, previewImageURL);
     },
-    hashParts: (data) => [data.code, data.name, data.description ?? "", data.zoneName, data.typeLabel, data.difficultyLabel ?? "", data.bossMark ? 1 : 0, data.stats.map((s) => `${s.label}=${s.value}`).join("|")],
     template: (data) => StageTemplate(data),
 });
 
-const STORY_HASH_VERSION = "v2";
 /**
  * The library index is 706,075 bytes on EN (451 groups, 315 records, measured
  * 2026-09-25), and a card needs one entry of it. It is cached per server for
@@ -667,9 +590,7 @@ function getCachedStoryIndex(server: string): Promise<StoryIndex> {
     return promise;
 }
 
-const storyHandler = defineOgHandler<IStoryOgData>({
-    kind: "story",
-    hashVersion: STORY_HASH_VERSION,
+const storyHandler = /* @__PURE__ */ defineOgHandler<IStoryOgData>(ogHashers.story, {
     fetch: async (id, locale) => {
         const { server, storyId, explicit } = parseStoryOgId(id);
         const source = await metaSourceForLocale(locale);
@@ -689,11 +610,10 @@ const storyHandler = defineOgHandler<IStoryOgData>({
         }
         return null;
     },
-    hashParts: (data) => storyOgHashParts(data),
     template: (data) => StoryTemplate(data),
 });
 
-export const ogRegistry = {
+export const ogRegistry: { [K in OgKind]: IOgHandler<OgData<K>> } = {
     operator: operatorHandler,
     user: userHandler,
     "tier-list": tierListHandler,
@@ -703,7 +623,7 @@ export const ogRegistry = {
     default: defaultHandler,
 };
 
-export type OgKind = keyof typeof ogRegistry;
+export type { OgKind };
 
 // biome-ignore lint/suspicious/noExplicitAny: registry erases per-kind data type at lookup
 export type IAnyOgHandler = IOgHandler<any>;
