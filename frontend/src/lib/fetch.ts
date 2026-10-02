@@ -6,12 +6,18 @@ export async function backendFetch(path: string, init: RequestInit & { bearerTok
     // `BACKEND_URL` is a server-only var: t3-env THROWS if it's read in the
     // browser. Gate by runtime so client-side (re)fetches use the client-exposed
     // `VITE_BACKEND_URL` and resolve to an absolute URL instead of throwing.
-    const base = (typeof window === "undefined" ? env.BACKEND_URL : env.VITE_BACKEND_URL) ?? "";
+    const isServer = typeof window === "undefined";
+    const base = (isServer ? env.BACKEND_URL : env.VITE_BACKEND_URL) ?? "";
+    // Server side, BACKEND_URL is a local-network hop (localhost:3060 or the compose network):
+    // a compressed response is decompressed at once, so it costs CPU on both ends for no
+    // bandwidth worth saving. A caller's own Accept-Encoding still wins.
+    const identity = isServer && !(headers && new Headers(headers).has("accept-encoding"));
     try {
         return await fetch(`${base}/api${path}`, {
             ...rest,
             headers: {
                 "Content-Type": "application/json",
+                ...(identity ? { "Accept-Encoding": "identity" } : {}),
                 ...(bearerToken ? { Authorization: `Bearer ${bearerToken}` } : {}),
                 ...headers,
             },
