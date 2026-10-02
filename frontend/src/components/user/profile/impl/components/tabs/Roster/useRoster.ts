@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { extractVoiceActors } from "#/components/operators/list/impl/enrich";
 import { buildFilterOptions, countSharedFilters, EMPTY_SHARED_FILTERS, toFilterSets } from "#/components/operators/list/impl/shared-filters";
 import type { ArrayFilterKey, ISharedFilters } from "#/components/operators/list/impl/types";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { useMediaQuery } from "#/hooks/use-media-query";
 import type { IRosterEntry } from "#/lib/api/user";
 import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
-import type { IVoices } from "#/types/voices";
 import { filterEntries, sortEntries } from "./helpers";
 import { type IDisplayEntry, type IRosterFilterState, OWNED_ONLY_SORTS, type ViewMode } from "./types";
 
@@ -22,7 +20,7 @@ const INITIAL: IRosterFilterState = {
 
 const PAGE_SIZE: Record<ViewMode, number> = { detailed: 24, compact: 48 };
 
-export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndexEntry[], operatorsStatic: IOperatorListItem[], voices: IVoices | undefined) {
+export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndexEntry[], operatorsStatic: IOperatorListItem[]) {
     // This key predates classes and subclasses, so the merge prevents missing arrays
     // from throwing when returning visitors use the new filters.
     // `hadStoredViewMode` records whether the visitor has ever chosen a view
@@ -70,7 +68,7 @@ export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndex
         return m;
     }, [operatorsIndex]);
 
-    const filterOptions = useMemo(() => buildFilterOptions(operatorsIndex.map((op) => ({ ...op, voiceActors: extractVoiceActors(op.id, voices) }))), [operatorsIndex, voices]);
+    const filterOptions = useMemo(() => buildFilterOptions(operatorsIndex), [operatorsIndex]);
 
     const ownedIds = useMemo(() => new Set(roster.map((r) => r.operator_id)), [roster]);
 
@@ -90,7 +88,7 @@ export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndex
                 static: staticMap.get(r.operator_id) ?? null,
                 name: meta?.name ?? r.operator_id,
                 rarity: meta?.rarity ?? 1,
-                voiceActors: extractVoiceActors(r.operator_id, voices),
+                voiceActors: meta?.voiceActors ?? [],
             };
         });
         if (filters.ownership === "owned") return owned;
@@ -103,10 +101,10 @@ export function useRoster(roster: IRosterEntry[], operatorsIndex: IOperatorIndex
             // follows the base - never show a branch in the "unowned" list.
             const staticOp = staticMap.get(op.id);
             if (staticOp?.tmplDefault && staticOp.tmplDefault !== op.id) continue;
-            unowned.push({ isOwned: false, operator_id: op.id, name: op.name, rarity: op.rarity, meta: op, static: staticOp ?? null, voiceActors: extractVoiceActors(op.id, voices) });
+            unowned.push({ isOwned: false, operator_id: op.id, name: op.name, rarity: op.rarity, meta: op, static: staticOp ?? null, voiceActors: op.voiceActors });
         }
         return filters.ownership === "unowned" ? unowned : [...owned, ...unowned];
-    }, [roster, operatorsIndex, indexMap, staticMap, ownedIds, filters.ownership, voices]);
+    }, [roster, operatorsIndex, indexMap, staticMap, ownedIds, filters.ownership]);
 
     const sets = useMemo(() => toFilterSets(filters), [filters]);
     const filtered = useMemo(() => filterEntries(allEntries, filters.search, sets, filters.source), [allEntries, filters.search, sets, filters.source]);

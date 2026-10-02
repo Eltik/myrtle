@@ -6,7 +6,6 @@ import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
 import { publicPlansQueryOptions } from "#/lib/api/planner";
 import { userEncounteredEnemiesQueryOptions, userImprovementsQueryOptions, userInventoryQueryOptions, userQueryOptions, userRosterQueryOptions, userScoreQueryOptions } from "#/lib/api/user";
-import { voicesQueryOptions } from "#/lib/api/voices";
 import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { Hero } from "./impl/components/Hero";
@@ -67,7 +66,6 @@ export function UserProfile() {
     });
     const { data: encounteredEnemies, isLoading: isEnemiesLoading } = useQuery({ ...userEncounteredEnemiesQueryOptions(id), enabled: activeTab === "enemies" });
     const { data: operatorsIndex } = useQuery({ ...operatorsIndexQueryOptions(gamedataServer), enabled: activeTab === "roster" });
-    const { data: voices } = useQuery({ ...voicesQueryOptions(gamedataServer), enabled: activeTab === "roster" });
 
     const tabs = useMemo(
         () => [
@@ -177,7 +175,7 @@ export function UserProfile() {
                 <Hero profile={data} />
                 <StatStrip profile={data} rosterCount={roster?.length} />
                 <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
-                {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} voices={voices} />}
+                {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} />}
                 {activeTab === "inventory" && <ItemsTab inventory={inventory ?? []} />}
                 {activeTab === "plans" && <PlansTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
                 {activeTab === "enemies" && <EnemiesTab encountered={encounteredEnemies} isLoading={isEnemiesLoading} />}

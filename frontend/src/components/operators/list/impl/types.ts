@@ -36,12 +36,10 @@ export interface IOperatorOwnershipInfo {
 
 /**
  * View-model consumed by operator list UI. Built from the slim operators index
- * (which already carries flattened `gender`/`race`/`placeOfBirth`/`stats`) and
- * augmented with voice-actor data from `/api/static/voices`, per-user notes, and
- * population ownership.
+ * (which already carries flattened `gender`/`race`/`placeOfBirth`/`stats` and
+ * `voiceActors`) and augmented with per-user notes and population ownership.
  */
 export interface IOperatorView extends IOperatorIndexEntry {
-    voiceActors: string[];
     hasNotes: boolean;
     /** Population-level ownership, or `null` when ownership data is unavailable
      *  (still loading) or the operator has no recorded owners. */
@@ -99,7 +97,7 @@ export interface IFilterOptions {
     voiceActors: string[];
 }
 
-/** The per-operator fields the shared predicate and option builder read. `IOperatorView` satisfies it directly; the roster builds one from an index entry plus the voices table. */
+/** The per-operator fields the shared predicate and option builder read. `IOperatorView` satisfies it directly; the roster spreads one from an index entry. */
 export interface IFilterSubject {
     profession: string;
     subProfessionId: string;

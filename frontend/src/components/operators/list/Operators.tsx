@@ -9,7 +9,6 @@ import { useOperatorName } from "#/hooks/use-operator-name";
 import { noteHasContent, operatorNotesListQueryOptions } from "#/lib/api/operator-notes";
 import { operatorOwnershipQueryOptions, operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
 import { upcomingQueryOptions } from "#/lib/api/upcoming";
-import { voicesQueryOptions } from "#/lib/api/voices";
 import { operatorsExportSchema } from "#/lib/export";
 import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -46,7 +45,6 @@ export function OperatorsList() {
     const rt: TypedRichT<typeof messages> = useRichT("operators");
     const server = useGamedataServer();
     const { data: operators = [] } = useQuery(operatorsIndexQueryOptions(server));
-    const { data: voices } = useQuery(voicesQueryOptions(server));
     const { data: notes } = useQuery(operatorNotesListQueryOptions());
     const { data: ownership } = useQuery(operatorOwnershipQueryOptions(server));
     const notedIds = useMemo(() => {
@@ -75,7 +73,7 @@ export function OperatorsList() {
         }
         return map;
     }, [ownership, operators]);
-    const enriched = useMemo(() => enrichOperators(operators, voices, notedIds, ownershipMap), [operators, voices, notedIds, ownershipMap]);
+    const enriched = useMemo(() => enrichOperators(operators, notedIds, ownershipMap), [operators, notedIds, ownershipMap]);
 
     const {
         filters,

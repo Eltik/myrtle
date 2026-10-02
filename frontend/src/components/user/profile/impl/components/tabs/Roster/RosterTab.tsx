@@ -11,7 +11,6 @@ import type { IRosterEntry } from "#/lib/api/user";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
-import type { IVoices } from "#/types/voices";
 import { CompactCard } from "./CompactCard";
 import { DetailedCard } from "./DetailedCard";
 import { RosterFilters } from "./RosterFilters";
@@ -24,7 +23,6 @@ interface IRosterTabProps {
     roster: IRosterEntry[];
     operatorsIndex: IOperatorIndexEntry[];
     operatorsStatic: IOperatorListItem[];
-    voices?: IVoices;
 }
 
 /** A key in `RosterTab.messages.ts`; resolved by the toolbar below. */
@@ -45,9 +43,9 @@ const SOURCE_CHIP_LABELS: Record<Exclude<SourceFilter, "any">, MessageKey> = {
     welfare: "profile.roster.chips.source.welfare",
 };
 
-export function RosterTab({ roster, operatorsIndex, operatorsStatic, voices }: IRosterTabProps) {
+export function RosterTab({ roster, operatorsIndex, operatorsStatic }: IRosterTabProps) {
     const t: TypedT<typeof messages> = useT("user");
-    const { filters, set, toggleSortOrder, visible, totalCount, displayCount, lastRef, filtersVisible, toggleFilters, filterOptions, removeFrom, setShared, clearFilters, activeFilterCount, hasActiveFilters } = useRoster(roster, operatorsIndex, operatorsStatic, voices);
+    const { filters, set, toggleSortOrder, visible, totalCount, displayCount, lastRef, filtersVisible, toggleFilters, filterOptions, removeFrom, setShared, clearFilters, activeFilterCount, hasActiveFilters } = useRoster(roster, operatorsIndex, operatorsStatic);
     const { search, ownership, sortBy, sortOrder, viewMode } = filters;
     const activeChips = useMemo(() => {
         const chips = buildSharedChips(filters, removeFrom);
