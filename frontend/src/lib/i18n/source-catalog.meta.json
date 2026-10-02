@@ -31194,13 +31194,6 @@
             ]
         },
         {
-            "key": "tools.randomizer.preview.download",
-            "namespace": "tools",
-            "source_text": "Download",
-            "description": "Accessible name and tooltip of the button that saves the map image.",
-            "placeholders": []
-        },
-        {
             "key": "tools.randomizer.preview.expand",
             "namespace": "tools",
             "source_text": "Expand {stage} map preview",
@@ -31219,13 +31212,6 @@
             ]
         },
         {
-            "key": "tools.randomizer.preview.resetView",
-            "namespace": "tools",
-            "source_text": "Reset view",
-            "description": "Accessible name and tooltip of the button that returns the map viewer to its starting zoom and position.",
-            "placeholders": []
-        },
-        {
             "key": "tools.randomizer.preview.stageLabel",
             "namespace": "tools",
             "source_text": "{code} - {name}",
@@ -31234,20 +31220,6 @@
                 "code",
                 "name"
             ]
-        },
-        {
-            "key": "tools.randomizer.preview.zoomIn",
-            "namespace": "tools",
-            "source_text": "Zoom in",
-            "description": "Accessible name and tooltip of the zoom-in button in the map viewer.",
-            "placeholders": []
-        },
-        {
-            "key": "tools.randomizer.preview.zoomOut",
-            "namespace": "tools",
-            "source_text": "Zoom out",
-            "description": "Accessible name and tooltip of the zoom-out button in the map viewer.",
-            "placeholders": []
         },
         {
             "key": "tools.randomizer.roster.all",

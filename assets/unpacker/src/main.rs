@@ -49,7 +49,7 @@ use export::avg_hub;
 use export::avg_sprites;
 use export::portrait;
 use export::spine;
-use export::stage_preview::{self, StageAspectMap};
+use export::stage_preview;
 use export::story_art;
 use export::text_asset::export_text_asset;
 use export::texture::{decode_texture_object, save_decoded_texture};
@@ -864,20 +864,6 @@ fn cmd_extract(args: &cli::ExtractArgs) {
     let extract_portrait = args.extract_all() || args.portrait;
     let merge_alpha = !args.no_merge && extract_image;
 
-    // Pre-pass: build the stage_id → tile-grid-dims map needed to unsquash
-    // `stage_mappreview_h2_*` thumbnails back to their natural aspect. Skipped
-    // entirely when image extraction is off or when the input has no
-    // mappreview bundles.
-    let stage_aspects: StageAspectMap =
-        if extract_image && stage_preview::input_has_mappreview_bundles(&files) {
-            println!("Scanning level data for mappreview aspect ratios...");
-            let map = stage_preview::build_stage_aspect_map(&files);
-            println!("  found {} stage(s) with grid metadata", map.len());
-            map
-        } else {
-            std::sync::Arc::new(std::collections::HashMap::new())
-        };
-
     // Pre-pass: resolve shader names from any shader bundles in the input, so
     // dynchar particle materials (whose shader is an external ref into
     // `[uc]shaders.ab`) can be classified — notably the procedural
@@ -940,7 +926,6 @@ fn cmd_extract(args: &cli::ExtractArgs) {
             extract_spine,
             extract_portrait,
             merge_alpha,
-            &stage_aspects,
             &shader_map,
             &fx_textures,
         );
@@ -1284,7 +1269,6 @@ fn process_bundle(
     extract_spine: bool,
     extract_portrait: bool,
     merge_alpha: bool,
-    stage_aspects: &StageAspectMap,
     shader_map: &export::shader_map::ShaderMap,
     fx_textures: &export::fx_textures::FxTextures,
 ) -> usize {
@@ -1875,9 +1859,8 @@ fn process_bundle(
                 groups.entry(sub).or_default().insert(name, tex);
             }
 
-            // Unsquash stage mappreview thumbnails to their natural aspect.
-            // Arknights packs these as 512×512 squares; we resize back using
-            // the level's tile grid dims (with a 16:9 fallback).
+            // Unsquash stage mappreview thumbnails: Arknights packs these as
+            // 512×512 squares of 16:9 renders.
             let is_mappreview = stage_preview::detect_mappreview_bundle(&bundle_subdir);
 
             // An AVG character's faces take their alpha from the hub's
@@ -1895,7 +1878,7 @@ fn process_bundle(
 
                 if is_mappreview {
                     for tex in texs.values_mut() {
-                        stage_preview::unsquash_mappreview_texture(tex, stage_aspects);
+                        stage_preview::unsquash_mappreview_texture(tex);
                     }
                 }
 

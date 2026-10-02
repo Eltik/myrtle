@@ -46,9 +46,8 @@ const MASK: &[u8; 32] = b"UITpAi82pHAWwnzqHRMCwPonJLIB3WCl";
 /// `FlatBuffer` with optional 128-byte RSA header). Returns `None` if no
 /// decode path yields structured data — e.g. plain text or invalid payloads.
 ///
-/// Used by callers that need the parsed JSON in-memory rather than written
-/// to disk — for example the mappreview pre-scan that reads each level's
-/// tile grid dimensions to compute its display aspect.
+/// For callers that need the parsed JSON in-memory rather than written to
+/// disk.
 #[must_use]
 pub fn parse_text_asset_json(obj: &Value) -> Option<Value> {
     let script = obj.get("m_Script")?.as_str()?;
