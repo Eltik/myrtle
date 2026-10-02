@@ -36,6 +36,8 @@ pub struct StageClearDto {
 /// `GET /stages/{stageId}/detail` - one stage plus its zone, level data, the
 /// enemies it references and its drop materials (default server). Replaces the
 /// stage-detail page's full stages/zones/enemies/materials table fetches.
+/// Procedural IS / RA / CC / Paradox nodes, which have no `stage_table` entry,
+/// get a stage and zone built from their stage-index entry.
 #[utoipa::path(
     get,
     path = "/stages/{stage_id}/detail",

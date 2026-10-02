@@ -6804,7 +6804,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /stages/{stageId}/detail` - one stage plus its zone, level data, the\nenemies it references and its drop materials (default server). Replaces the\nstage-detail page's full stages/zones/enemies/materials table fetches.",
+        "summary": "`GET /stages/{stageId}/detail` - one stage plus its zone, level data, the\nenemies it references and its drop materials (default server). Replaces the\nstage-detail page's full stages/zones/enemies/materials table fetches.\nProcedural IS / RA / CC / Paradox nodes, which have no `stage_table` entry,\nget a stage and zone built from their stage-index entry.",
         "operationId": "stage_detail",
         "parameters": [
           {

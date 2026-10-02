@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 
 use serde::Serialize;
@@ -14,8 +15,9 @@ use crate::core::gamedata::types::enemy::{Enemy, RaceData};
 use crate::core::gamedata::types::enemy_stages::{EnemyStageRef, EnemyStageTable};
 use crate::core::gamedata::types::material::Item;
 use crate::core::gamedata::types::skin::DisplaySkin;
-use crate::core::gamedata::types::stage::Stage;
-use crate::core::gamedata::types::zone::Zone;
+use crate::core::gamedata::types::stage::{Stage, StageType};
+use crate::core::gamedata::types::stage_index::StageIndexEntry;
+use crate::core::gamedata::types::zone::{Zone, ZoneType};
 use crate::core::hypergryph::constants::Server;
 
 pub async fn get_resource(
@@ -83,14 +85,17 @@ const fn cache_key(resource: &str, server: Server) -> CacheKey<'_> {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct StageDetailResponse<'a> {
-    stage: &'a Stage,
-    zone: Option<&'a Zone>,
+    stage: Cow<'a, Stage>,
+    zone: Option<Cow<'a, Zone>>,
     level_data: Option<Value>,
     /// Handbook records for every enemy referenced by the level (declared in
     /// `enemyDbRefs` or spawned by a wave action), keyed by enemy id.
     enemies: HashMap<&'a str, &'a Enemy>,
     /// Item records for every non-`CHAR` drop in `stageDropInfo`, keyed by id.
     materials: HashMap<&'a str, &'a Item>,
+    /// True when `stage` and `zone` were built from the stage index for a
+    /// procedural node, so the page can keep such nodes off the stage OG card.
+    synthetic: bool,
 }
 
 /// Enemy ids referenced by a (camelCased) level: everything declared in
@@ -126,6 +131,33 @@ fn collect_level_enemy_ids(level: &Value) -> HashSet<String> {
     ids
 }
 
+/// A stage and zone for a procedural IS / RA / CC / Paradox node, which has no
+/// `stage_table` entry, built from its stage-index entry. Field for field what
+/// the frontend's `syntheticStageFromIndex` built before this endpoint served
+/// these nodes.
+fn procedural_stage(entry: &StageIndexEntry) -> (Stage, Zone) {
+    let stage = Stage {
+        stage_id: entry.stage_id.clone(),
+        level_id: entry.level_id.clone(),
+        zone_id: entry.zone_id.clone(),
+        code: entry.code.clone(),
+        name: entry.name.clone(),
+        stage_type: StageType::Activity,
+        difficulty: entry.difficulty.clone(),
+        ap_cost: entry.ap_cost,
+        boss_mark: entry.boss,
+        ..Stage::default()
+    };
+    let zone = Zone {
+        zone_id: entry.zone_id.clone(),
+        zone_index: i32::try_from(entry.zone_order).unwrap_or(i32::MAX),
+        zone_type: ZoneType::Activity,
+        zone_name_second: entry.zone_name.clone(),
+        ..Zone::default()
+    };
+    (stage, zone)
+}
+
 pub async fn get_stage_detail(
     state: &AppState,
     server: Server,
@@ -138,7 +170,8 @@ pub async fn get_stage_detail(
     cached_json(state, &key, move || async move {
         {
             let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
-            if !sd.game_data.load_full().stages.contains_key(stage_id) {
+            let gd = sd.game_data.load_full();
+            if !gd.stages.contains_key(stage_id) && !gd.mode_levels.contains_key(stage_id) {
                 return Err(ApiError::NotFound);
             }
         }
@@ -148,9 +181,21 @@ pub async fn get_stage_detail(
 
         let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
         let gd = sd.game_data.load_full();
-        let stage = gd.stages.get(stage_id).ok_or(ApiError::NotFound)?;
-
-        let zone = gd.zones.get(&stage.zone_id);
+        let synthetic = !gd.stages.contains_key(stage_id);
+        let (stage, zone) = if let Some(stage) = gd.stages.get(stage_id) {
+            (
+                Cow::Borrowed(stage),
+                gd.zones.get(&stage.zone_id).map(Cow::Borrowed),
+            )
+        } else {
+            let entry = gd
+                .stage_index
+                .iter()
+                .find(|e| e.stage_id == stage_id)
+                .ok_or(ApiError::NotFound)?;
+            let (stage, zone) = procedural_stage(entry);
+            (Cow::Owned(stage), Some(Cow::Owned(zone)))
+        };
 
         let mut enemies: HashMap<&str, &Enemy> = HashMap::new();
         if let Some(level) = &level_data {
@@ -179,6 +224,7 @@ pub async fn get_stage_detail(
             level_data,
             enemies,
             materials,
+            synthetic,
         })
         .map_err(|e| ApiError::Internal(e.into()))
     })
