@@ -66,6 +66,10 @@ pub struct OperatorIndexEntry {
     pub skill_count: usize,
     pub potential_rank_count: usize,
     pub modules: Vec<OperatorIndexModule>,
+    /// The profile's `dateOfBirth` verbatim (e.g. "October 4"), empty when the
+    /// operator has no profile. A plain string rather than an `Option` so a
+    /// cached index from before this field fails to deserialize and is rebuilt.
+    pub date_of_birth: String,
 }
 
 /// The module fields the profile Stats tab reads: id to match the roster, type
@@ -126,13 +130,14 @@ fn to_index_entry(id: &str, op: &Operator, voices: &Voices) -> OperatorIndexEntr
             block: kf.data.block_cnt,
         });
 
-    let (gender, race, place_of_birth) = op.profile.as_ref().map_or_else(
-        <(OperatorGender, OperatorRace, OperatorBirthPlace)>::default,
+    let (gender, race, place_of_birth, date_of_birth) = op.profile.as_ref().map_or_else(
+        <(OperatorGender, OperatorRace, OperatorBirthPlace, String)>::default,
         |pr| {
             (
                 pr.basic_info.gender.clone(),
                 pr.basic_info.race.clone(),
                 pr.basic_info.place_of_birth.clone(),
+                pr.basic_info.date_of_birth.clone(),
             )
         },
     );
@@ -194,6 +199,7 @@ fn to_index_entry(id: &str, op: &Operator, voices: &Voices) -> OperatorIndexEntr
                 module_type: m.module.module_type.clone(),
             })
             .collect(),
+        date_of_birth,
     }
 }
 

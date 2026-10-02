@@ -11,6 +11,7 @@ use crate::app::services::operators::{
     get_index, get_operator_json, get_operator_skins, get_operator_voices, get_ownership,
     get_upcoming, resolve_operator_json,
 };
+use crate::app::services::recruitment::get_recruitment;
 use crate::app::{error::ApiError, state::AppState};
 use crate::core::gamedata::types::skin::SkinData;
 use crate::core::gamedata::types::voice::Voices;
@@ -57,6 +58,61 @@ pub async fn index_srv(
     Path(server): Path<Server>,
 ) -> Result<Json<Vec<OperatorIndexEntry>>, ApiError> {
     Ok(Json(get_index(&state, server).await?))
+}
+
+/// `GET /operators/recruitment` - the recruitment calculator's tags and
+/// recruitable operators (default server), reduced to the fields it reads.
+#[utoipa::path(
+    get,
+    path = "/operators/recruitment",
+    tag = "gamedata",
+    params(
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the body.")
+    ),
+    responses(
+        (status = 200, description = "Recruitment tags and operators. Served from cache with an `ETag` and `Cache-Control: public, max-age=300`.", content_type = "application/json"),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn recruitment(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+) -> Result<Response, ApiError> {
+    let body = get_recruitment(&state, state.default_server).await?;
+    Ok(json_response(body, &headers))
+}
+
+/// `GET /{server}/operators/recruitment` - per-server recruitment data.
+/// The `/{server}` form reads that server's game data; the bare form reads the
+/// default server.
+#[utoipa::path(
+    get,
+    path = "/{server}/operators/recruitment",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the body.")
+    ),
+    responses(
+        (status = 200, description = "Recruitment tags and operators. Served from cache with an `ETag` and `Cache-Control: public, max-age=300`.", content_type = "application/json"),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn recruitment_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(server): Path<Server>,
+) -> Result<Response, ApiError> {
+    let body = get_recruitment(&state, server).await?;
+    Ok(json_response(body, &headers))
 }
 
 /// `GET /operators/ownership` - default-server operator ownership rates.

@@ -12,6 +12,7 @@ pub mod max_level;
 pub mod operator_notes;
 pub mod operators;
 pub mod planner;
+pub mod recruitment;
 pub mod release;
 pub mod roster;
 pub mod search;

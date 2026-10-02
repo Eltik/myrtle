@@ -5148,6 +5148,52 @@
         }
       }
     },
+    "/api/operators/recruitment": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "`GET /operators/recruitment` - the recruitment calculator's tags and\nrecruitable operators (default server), reduced to the fields it reads.",
+        "operationId": "recruitment",
+        "parameters": [
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "Echo a previous response's `ETag` to get a 304 instead of the body.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recruitment tags and operators. Served from cache with an `ETag` and `Cache-Control: public, max-age=300`.",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "304": {
+            "description": "The caller's `If-None-Match` matched; no body is sent."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
     "/api/operators/{id}": {
       "get": {
         "tags": [
@@ -10519,6 +10565,61 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/{server}/operators/recruitment": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "`GET /{server}/operators/recruitment` - per-server recruitment data.\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "operationId": "recruitment_srv",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "description": "Game server: `en`, `jp`, `kr`, `cn` or `tw`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "Echo a previous response's `ETag` to get a 304 instead of the body.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recruitment tags and operators. Served from cache with an `ETag` and `Cache-Control: public, max-age=300`.",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "304": {
+            "description": "The caller's `If-None-Match` matched; no body is sent."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -16321,7 +16422,8 @@
           "phaseMaxLevels",
           "skillCount",
           "potentialRankCount",
-          "modules"
+          "modules",
+          "dateOfBirth"
         ],
         "properties": {
           "allSkillsManual": {
@@ -16336,6 +16438,10 @@
               "type": "string"
             },
             "description": "Illustrator names (list page \"artists\" filter)."
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "description": "The profile's `dateOfBirth` verbatim (e.g. \"October 4\"), empty when the\noperator has no profile. A plain string rather than an `Option` so a\ncached index from before this field fails to deserialize and is rebuilt."
           },
           "gender": {
             "$ref": "#/components/schemas/OperatorGender",
