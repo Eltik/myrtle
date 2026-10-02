@@ -170,6 +170,7 @@ const RESOURCES: &[&str] = &[
     "retro_acts",
     "enemies",
     "enemy-stages",
+    "enemy-stage-table",
     "stage-index",
     "gacha",
     "banners",
@@ -197,6 +198,11 @@ fn resource_value(gd: &backend::core::gamedata::types::GameData, name: &str) -> 
         "retro_acts" => serde_json::to_value(&gd.retro_acts),
         "enemies" => serde_json::to_value(&gd.enemies),
         "enemy-stages" => serde_json::to_value(&gd.enemy_stage_index),
+        "enemy-stage-table" => serde_json::to_value(
+            backend::core::gamedata::types::enemy_stages::EnemyStageTable::from_index(
+                &gd.enemy_stage_index,
+            ),
+        ),
         "stage-index" => serde_json::to_value(&gd.stage_index),
         "gacha" => serde_json::to_value(&gd.gacha),
         "banners" => serde_json::to_value(&gd.gacha.gacha_pool_client),

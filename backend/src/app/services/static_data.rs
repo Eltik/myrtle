@@ -11,7 +11,7 @@ use crate::app::state::AppState;
 use crate::core::gamedata::types::GameData;
 use crate::core::gamedata::types::chibi::ChibiCharacter;
 use crate::core::gamedata::types::enemy::{Enemy, RaceData};
-use crate::core::gamedata::types::enemy_stages::EnemyStageRef;
+use crate::core::gamedata::types::enemy_stages::{EnemyStageRef, EnemyStageTable};
 use crate::core::gamedata::types::material::Item;
 use crate::core::gamedata::types::skin::DisplaySkin;
 use crate::core::gamedata::types::stage::Stage;
@@ -44,7 +44,13 @@ fn serialize_resource(data: &GameData, resource: &str) -> Result<String, ApiErro
         "activities" => serde_json::to_string(&data.activities),
         "retro_acts" => serde_json::to_string(&data.retro_acts),
         "enemies" => serde_json::to_string(&data.enemies),
+        // The full per-appearance index. Nothing in this repo reads it after
+        // the /enemies list moved to `enemy-stage-table`; it stays so a
+        // frontend still running the old build keeps working across a deploy.
         "enemy-stages" => serde_json::to_string(&data.enemy_stage_index),
+        "enemy-stage-table" => {
+            serde_json::to_string(&EnemyStageTable::from_index(&data.enemy_stage_index))
+        }
         "stage-index" => serde_json::to_string(&data.stage_index),
         "gacha" => serde_json::to_string(&data.gacha),
         "banners" => serde_json::to_string(&data.gacha.gacha_pool_client),
