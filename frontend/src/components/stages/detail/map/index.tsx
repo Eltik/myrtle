@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Box, ChevronLeft, ChevronRight } from "lucide-react";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { getChibiSkinData } from "#/components/operators/detail/impl/components/chibi/helpers";
+import { getChibiSkinData } from "#/components/operators/detail/impl/components/chibi/skin-data";
 import { Button } from "#/components/ui/button";
 import { enemyChibisQueryOptions, type IChibiCharacter } from "#/lib/api/chibis";
 import type { IEnemy } from "#/lib/api/enemies";

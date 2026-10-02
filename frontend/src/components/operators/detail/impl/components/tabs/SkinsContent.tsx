@@ -17,7 +17,7 @@ import type { IOperatorListItem } from "#/types/operators";
 import { buildOperatorSkinList, chibiSkinKey, type IUISkin } from "../../skins";
 import type { messages as skinMessages } from "../../skins.messages";
 import { DynamicChibiViewer } from "../chibi/ChibiViewer.lazy";
-import { DEFAULT_SPINE_FIT } from "../chibi/helpers";
+import { DEFAULT_SPINE_FIT } from "../chibi/skin-data";
 import type { ISceneIllustHandle } from "../dynillust/SceneIllust";
 import { SceneIllustPlayer } from "../dynillust/SceneIllust.lazy";
 import type { messages } from "./SkinsContent.messages";
