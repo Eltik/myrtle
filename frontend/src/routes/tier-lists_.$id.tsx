@@ -108,7 +108,6 @@ export const Route = createFileRoute("/tier-lists_/$id")({
             path: `/tier-lists/${loaderData.slug}`,
             image: ogURL("tier-list", loaderData.slug, buildOgData(loaderData, match.context.i18n?.gamedataServer)),
             type: "article",
-            preloadImage: true,
             locale,
         });
     },

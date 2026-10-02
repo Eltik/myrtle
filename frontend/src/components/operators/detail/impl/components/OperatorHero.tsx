@@ -25,6 +25,8 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
     const rarityColor = RARITY_COLORS[operator.rarity] ?? RARITY_COLORS.TIER_1;
     const rarityGlow = RARITY_GLOW[operator.rarity] ?? RARITY_GLOW.TIER_1;
 
+    // The page's LCP. Both breakpoint copies share this URL, so the one request is marked
+    // high priority whichever copy the viewport shows.
     const img = operatorHero(operator.id ?? "", operator.skin, operator.portrait, operator.server);
 
     const factionId = operator.nationId?.length ? operator.nationId : operator.teamId?.length ? operator.teamId : operator.groupId?.length ? operator.groupId : null;
@@ -36,7 +38,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                     <div aria-hidden className={cn("backface-hidden absolute inset-x-0 top-0 will-change-transform contain-paint", styles["parallax-image"])}>
                         <div className="flex items-start justify-center pt-0">
                             <div className="relative h-120 w-[85vw] max-w-95 sm:h-135 sm:w-110 sm:max-w-none">
-                                <img alt={name} className={cn("h-full w-full object-contain object-top", rarityGlow)} decoding="async" loading="eager" src={img} />
+                                <img alt={name} className={cn("h-full w-full object-contain object-top", rarityGlow)} decoding="async" fetchPriority="high" loading="eager" src={img} />
                             </div>
                         </div>
                     </div>
@@ -85,7 +87,7 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                     <div aria-hidden className={cn("backface-hidden absolute inset-x-0 top-0 will-change-transform contain-paint", styles["parallax-image"])}>
                         <div className="flex items-start justify-end pr-[5%] lg:pr-[10%]">
                             <div className="relative h-155 w-130 lg:h-180 lg:w-150">
-                                <img alt={name} className={cn("h-full w-full object-contain object-top", rarityGlow)} decoding="async" loading="eager" src={img} />
+                                <img alt={name} className={cn("h-full w-full object-contain object-top", rarityGlow)} decoding="async" fetchPriority="high" loading="eager" src={img} />
                             </div>
                         </div>
                     </div>

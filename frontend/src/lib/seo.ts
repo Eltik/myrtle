@@ -8,9 +8,6 @@ export interface ISeoInput {
     path?: string;
     type?: "website" | "article" | "profile";
     noindex?: boolean;
-    // Emit a `<link rel="preload" as="image">` for the og:image. Use on pages
-    // that supply their own image; skip when falling back to the site default.
-    preloadImage?: boolean;
     /** The locale this page is rendered in. Defaults to the source locale. */
     locale?: string;
     /**
@@ -66,9 +63,10 @@ export function seo(input: ISeoInput): ISeoOutput {
     // `RootDocument` has both the locale and the pathname, so it emits exactly
     // one canonical, one `og:url` and the full `hreflang` set for every route.
     // See `routes/__root.tsx`.
+    //
+    // The og:image is deliberately not preloaded: the page never renders it, so a
+    // preload only spends bandwidth that the real LCP image competes for.
     const links: ISeoOutput["links"] = [];
-
-    if (input.preloadImage && input.image) links.push({ rel: "preload", as: "image", href: image });
 
     return { meta, links };
 }

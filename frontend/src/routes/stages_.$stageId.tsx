@@ -60,7 +60,6 @@ export const Route = createFileRoute("/stages_/$stageId")({
             description: t("stage.description", { name }),
             path: `/stages/${params.stageId}`,
             image,
-            preloadImage: stage != null && hasOg,
             locale: match.context.i18n?.locale,
         });
         return {

@@ -61,7 +61,6 @@ export const Route = createFileRoute("/operators_/$id")({
             image: ogURL("operator", params.id, ogData),
             path: `/operators/${params.id}`,
             type: "profile",
-            preloadImage: true,
             locale,
         });
     },
