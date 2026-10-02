@@ -11,6 +11,26 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-10-02.title": {
+        text: "Improved: The operators page and profiles load faster",
+        description: "Title of the 2026-10-02 release note. 'Profiles' are player profile pages.",
+    },
+    "note.2026-10-02.lead": {
+        text: "The operators list and a player profile's Stats and Roster tabs no longer download the game's full operator and voice tables before showing anything. They read a small index instead, so they open **much faster**, especially on phones and slow connections.",
+        description: "Lead paragraph of the 2026-10-02 release note, rendered as Markdown. 'Stats' and 'Roster' are tab names on a player profile and must match their translations.",
+    },
+    "note.2026-10-02.hrefLabel": {
+        text: "Open operators",
+        description: "Label of the 2026-10-02 release note's call to action, which opens the operators list.",
+    },
+    "note.2026-10-02.item.1": {
+        text: "Tier names save up to 40 characters. Longer names were cut off at 24 without a warning; a name that was already cut stays that way until you re-enter it.",
+        description: "Bullet in the 2026-10-02 release note, filed under 'Fixed'. A 'tier' is a row of a tier list.",
+    },
+    "note.2026-10-02.item.2": {
+        text: "A long filter row in the tier list editor, such as outfit brands, scrolls inside the dialog and fades at the edge where more is hidden.",
+        description: "Bullet in the 2026-10-02 release note, filed under 'Fixed'. 'Outfit brands' are the game's skin lines.",
+    },
     "note.2026-10-01.title": {
         text: "New: Tier lists for anything, and stories you can take with you",
         description: "Title of the 2026-10-01 release note. 'Tier lists' are user-made rankings; 'stories you can take with you' means exporting the game's story to read elsewhere.",
