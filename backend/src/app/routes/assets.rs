@@ -20,6 +20,67 @@ const ALLOWED_EXTENSIONS: &[&str] = &[
 ];
 static CANONICAL_BASES: OnceLock<RwLock<HashMap<PathBuf, PathBuf>>> = OnceLock::new();
 
+/// Top-level directories `/assets/{*path}` serves. Each server's assets root also
+/// holds `gamedata/` (the raw excel tables, `activity_table.json` alone is 2.3 GB)
+/// and `derived/` (the job sidecars), and both were downloadable, brotli-encoded per
+/// request. Every path the frontend builds or the backend emits for this route
+/// starts with one of these; the indexed routes resolve their own paths and are not
+/// filtered.
+const PUBLIC_ASSET_ROOTS: &[&str] = &["textures", "spine", "audio", "video", "portraits"];
+
+/// `ASSETS_ALLOW_ALL_DIRS=1` serves every directory again, exactly as before the
+/// allowlist. Unset or any other value keeps the allowlist.
+fn allow_all_dirs() -> bool {
+    static ALLOW_ALL: OnceLock<bool> = OnceLock::new();
+    *ALLOW_ALL.get_or_init(|| {
+        parse_allow_all_dirs(std::env::var("ASSETS_ALLOW_ALL_DIRS").ok().as_deref())
+    })
+}
+
+fn parse_allow_all_dirs(raw: Option<&str>) -> bool {
+    match raw {
+        None => false,
+        Some(v) => v.trim() == "1",
+    }
+}
+
+/// True when `requested` lies under a [`PUBLIC_ASSET_ROOTS`] entry. Rejects any
+/// non-plain component itself rather than trusting the later traversal check.
+fn is_public_asset_path(requested: &str) -> bool {
+    let rel = Path::new(requested.trim_start_matches('/'));
+    if !rel
+        .components()
+        .all(|c| matches!(c, Component::Normal(_) | Component::CurDir))
+    {
+        return false;
+    }
+    match rel.components().find(|c| !matches!(c, Component::CurDir)) {
+        Some(Component::Normal(first)) => first
+            .to_str()
+            .is_some_and(|f| PUBLIC_ASSET_ROOTS.contains(&f)),
+        _ => false,
+    }
+}
+
+/// Read size per streamed chunk. The default reader stream reads 4 KiB at a time,
+/// one blocking-pool round trip each, so a 4 MB image took about 1,024 of them.
+/// `ASSET_STREAM_CHUNK_BYTES=4096` restores the old size exactly.
+const DEFAULT_STREAM_CHUNK_BYTES: usize = 64 * 1024;
+
+fn stream_chunk_bytes() -> usize {
+    static CHUNK: OnceLock<usize> = OnceLock::new();
+    *CHUNK.get_or_init(|| {
+        parse_stream_chunk_bytes(std::env::var("ASSET_STREAM_CHUNK_BYTES").ok().as_deref())
+    })
+}
+
+fn parse_stream_chunk_bytes(raw: Option<&str>) -> usize {
+    match raw.map(|v| v.trim().parse::<usize>()) {
+        Some(Ok(n)) if n > 0 => n,
+        None | Some(_) => DEFAULT_STREAM_CHUNK_BYTES,
+    }
+}
+
 fn canonical_base_dir(base_dir: &Path) -> Result<PathBuf, ApiError> {
     let cache = CANONICAL_BASES.get_or_init(|| RwLock::new(HashMap::new()));
     let cached = cache
@@ -967,6 +1028,10 @@ async fn generic_impl(
     asset_path: &str,
     headers: &HeaderMap,
 ) -> Result<Response, ApiError> {
+    // 404, not 403: a refusal must not confirm the file exists.
+    if !allow_all_dirs() && !is_public_asset_path(asset_path) {
+        return Err(ApiError::NotFound);
+    }
     if let Some(sd) = state.try_server_data(server)
         && let Ok(resp) = serve_file(&sd.assets_dir, asset_path, headers).await
     {
@@ -982,8 +1047,8 @@ async fn generic_impl(
 
 /// Any asset by its path under the server's assets directory.
 ///
-/// The path is validated against directory traversal and restricted to a
-/// fixed extension allowlist; anything else is a 400.
+/// The path must lie under `textures`, `spine`, `audio`, `video` or `portraits`;
+/// anything else, traversal included, is a 404. Other extensions are a 403.
 #[utoipa::path(
     get,
     path = "/assets/{*path}",
@@ -1013,8 +1078,8 @@ pub async fn generic(
 
 /// Any asset by its path under the server's assets directory.
 ///
-/// The path is validated against directory traversal and restricted to a
-/// fixed extension allowlist; anything else is a 400.
+/// The path must lie under `textures`, `spine`, `audio`, `video` or `portraits`;
+/// anything else, traversal included, is a 404. Other extensions are a 403.
 #[utoipa::path(
     get,
     path = "/{server}/assets/{*path}",
@@ -1132,7 +1197,7 @@ async fn serve_file(
         file.seek(std::io::SeekFrom::Start(start))
             .await
             .map_err(|_| ApiError::NotFound)?;
-        let stream = ReaderStream::new(file.take(len));
+        let stream = ReaderStream::with_capacity(file.take(len), stream_chunk_bytes());
         let body = axum::body::Body::from_stream(stream);
 
         return Ok((
@@ -1150,7 +1215,7 @@ async fn serve_file(
             .into_response());
     }
 
-    let stream = ReaderStream::new(file);
+    let stream = ReaderStream::with_capacity(file, stream_chunk_bytes());
     let body = axum::body::Body::from_stream(stream);
 
     Ok((
@@ -1202,4 +1267,70 @@ fn parse_range(value: &str, size: u64) -> Option<(u64, u64)> {
         return None;
     }
     Some((start, end))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn spine_and_texture_paths_are_public() {
+        assert!(is_public_asset_path(
+            "/spine/char_002_amiya/char_002_amiya/char_002_amiya.skel"
+        ));
+        assert!(is_public_asset_path("spine/x/y[scene].json"));
+        assert!(is_public_asset_path("./textures/chararts/a/a_2.png"));
+        assert!(is_public_asset_path("/audio/audio/sound_beta_2/x.ogg"));
+        assert!(is_public_asset_path("/video/main_10/main_10_enter.mp4"));
+        assert!(is_public_asset_path("/portraits/char_002_amiya_1.png"));
+    }
+
+    #[test]
+    fn data_dirs_are_not_public() {
+        assert!(!is_public_asset_path("/gamedata/excel/activity_table.json"));
+        assert!(!is_public_asset_path(
+            "gamedata/levels/obt/main/level_main_00-01.json"
+        ));
+        assert!(!is_public_asset_path("/derived/gacha_pool_details.json"));
+        assert!(!is_public_asset_path("/Textures/x.png"));
+        assert!(!is_public_asset_path("/texturesx/x.png"));
+        assert!(!is_public_asset_path(""));
+        assert!(!is_public_asset_path("/"));
+    }
+
+    #[test]
+    fn traversal_is_rejected_by_both_checks() {
+        for p in [
+            "/textures/../gamedata/excel/activity_table.json",
+            "../textures/x.png",
+            "textures/../../etc/passwd.txt",
+        ] {
+            assert!(!is_public_asset_path(p), "{p}");
+            assert!(
+                matches!(
+                    validate_asset_path(Path::new("."), p),
+                    Err(ApiError::BadRequest(_))
+                ),
+                "{p}"
+            );
+        }
+    }
+
+    #[test]
+    fn allow_all_switch_needs_an_explicit_one() {
+        assert!(!parse_allow_all_dirs(None));
+        assert!(!parse_allow_all_dirs(Some("")));
+        assert!(!parse_allow_all_dirs(Some("0")));
+        assert!(!parse_allow_all_dirs(Some("true")));
+        assert!(parse_allow_all_dirs(Some("1")));
+        assert!(parse_allow_all_dirs(Some(" 1 ")));
+    }
+
+    #[test]
+    fn chunk_size_defaults_to_64_kib() {
+        assert_eq!(parse_stream_chunk_bytes(None), 65_536);
+        assert_eq!(parse_stream_chunk_bytes(Some("")), 65_536);
+        assert_eq!(parse_stream_chunk_bytes(Some("0")), 65_536);
+        assert_eq!(parse_stream_chunk_bytes(Some("4096")), 4096);
+    }
 }

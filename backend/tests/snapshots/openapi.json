@@ -1226,7 +1226,7 @@
           "assets"
         ],
         "summary": "Any asset by its path under the server's assets directory.",
-        "description": "The path is validated against directory traversal and restricted to a\nfixed extension allowlist; anything else is a 400.",
+        "description": "The path must lie under `textures`, `spine`, `audio`, `video` or `portraits`;\nanything else, traversal included, is a 404. Other extensions are a 403.",
         "operationId": "generic",
         "parameters": [
           {
@@ -9378,7 +9378,7 @@
           "assets"
         ],
         "summary": "Any asset by its path under the server's assets directory.",
-        "description": "The path is validated against directory traversal and restricted to a\nfixed extension allowlist; anything else is a 400.",
+        "description": "The path must lie under `textures`, `spine`, `audio`, `video` or `portraits`;\nanything else, traversal included, is a 404. Other extensions are a 403.",
         "operationId": "generic_srv",
         "parameters": [
           {

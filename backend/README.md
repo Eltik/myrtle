@@ -549,6 +549,8 @@ Tier-list operations use a 4-level hierarchy - **View → Edit → Publish → A
 | `RUST_LOG` | `backend=info,tower_http=info` | Tracing filter |
 | `DISABLE_BACKGROUND_JOBS` | - | `1`/`true`/`yes` skips every watcher and cron job |
 | `DISCORD_ALERT_WEBHOOK` | - | Posts an alert when a game-data table fails to deserialize |
+| `ASSETS_ALLOW_ALL_DIRS` | - | `1` lets `/api/assets/*` serve every directory again (unset: only `textures`, `spine`, `audio`, `video`, `portraits`) |
+| `ASSET_STREAM_CHUNK_BYTES` | `65536` | Read size per streamed asset chunk; `4096` is the previous size |
 
 ### Game accounts and gacha
 
