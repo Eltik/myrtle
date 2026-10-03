@@ -6,9 +6,8 @@
  * does; this file owns how a section ANNOUNCES itself, which is a separate
  * question and the one most of the measured layout notes below are about.
  *
- * The jump bar carries a scroll spy, so it is the one piece here that is not
- * pure: `useScrollSpy` watches the headings through an IntersectionObserver
- * inset by the sticky header's own height.
+ * The jump bar is the one piece here that is not pure, and its behaviour (the
+ * scroll spy, the click hold, the rail's slide) is in `./jumpBar`.
  *
  * THE SPY LIVES IN THE BAR, NOT IN THE PAGE. It used to sit in `Browse`, so
  * every section change re-rendered the page, every card on it and the
@@ -20,7 +19,7 @@
  */
 import { ChevronDownIcon } from "lucide-react";
 import type React from "react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 import { asset } from "#/components/operators/detail/impl/assets";
 import { Sheet, SheetHeader, SheetPanel, SheetPopup, SheetTitle, SheetTrigger } from "#/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "#/components/ui/tooltip";
@@ -31,8 +30,8 @@ import { cn } from "#/lib/utils";
 import { GLYPH_INK } from "./art";
 import type { messages } from "./Browse.messages";
 import { chipLines, type IChapterRange, type IChipLines, type IChipModel, rangeIsSingle, SECTION_GLYPHS } from "./chapters";
+import { jumpBehavior, useJumpHold, useRailEdges, useRailSlide, useScrollSpy } from "./jumpBar";
 import { type ISection, underLine } from "./sections";
-import { scrollBehaviorFor } from "./toolbar";
 
 type BrowseT = TypedT<typeof messages>;
 
@@ -85,9 +84,19 @@ function includesLabel(range: IChapterRange, t: BrowseT): string {
     return rangeIsSingle(range) ? t("browse.chip.includesOne", { n: range.from }) : t("browse.chip.includes", { from: range.from, to: range.to });
 }
 
+/** The chapter run in the compact form, or the "includes" line for a themed shelf that holds mainline chapters. */
+function sectionRange(chip: IChipModel, t: BrowseT): string | null {
+    return chip.range ? compactLabel(chip.range, t) : chip.includes ? includesLabel(chip.includes, t) : null;
+}
+
+/** `sectionRange` with the run in full words, for the tooltip and the label of a chip that does not print it. */
+function sectionRangeInWords(chip: IChipModel, t: BrowseT): string | null {
+    return chip.range ? rangeLabel(chip.range, t) : chip.includes ? includesLabel(chip.includes, t) : null;
+}
+
 /** What a collapsed chip is called for a reader who cannot read the mark it collapsed to: the tooltip's own pair, in one line. */
 function chipLabel(chip: IChipModel, t: BrowseT): string {
-    return underLine([chip.name, chip.range ? rangeLabel(chip.range, t) : chip.includes ? includesLabel(chip.includes, t) : null]);
+    return underLine([chip.name, sectionRangeInWords(chip, t)]);
 }
 
 /**
@@ -107,13 +116,27 @@ function chipLabel(chip: IChipModel, t: BrowseT): string {
  * pill it read as an icon rather than as the shelf's mark.
  *
  * INK. The game art is monochrome and is flattened to the theme's ink
- * (`GLYPH_INK`); on the ACTIVE chip, which is a filled primary pill, that ink
- * would be black on red, so the active chip inks the glyph white instead.
+ * (`GLYPH_INK`). On a LIT jump chip, a filled primary pill, that ink would be
+ * black on red, so `lit` inks it white. A jump chip passes `lit` either way,
+ * and gets BOTH inks stacked and crossfaded with its 200 ms colour transition:
+ * a filter swap cannot transition, so a chip turning on went white at once
+ * over a background still fading in from near-white, and its banner blinked
+ * out for the length of the fade.
  */
-export function SectionGlyph({ chip, place, className, ink = "theme", alone = false }: { chip: IChipModel; place: "chip" | "head"; className?: string; ink?: "theme" | "white"; alone?: boolean }): React.ReactElement {
+export function SectionGlyph({ chip, place, className, lit, alone = false }: { chip: IChipModel; place: "chip" | "head"; className?: string; lit?: boolean; alone?: boolean }): React.ReactElement {
     if (chip.iconUrl) {
         const size = chip.iconWide ? (place === "chip" ? "h-5 w-auto max-w-19.5" : "h-6.5 w-auto max-w-22 sm:max-w-26") : chip.iconLogo ? (place === "chip" ? (alone ? "size-6" : "size-5.5") : "size-7") : place === "chip" ? "size-5" : "size-6";
-        return <img src={asset(chip.iconUrl)} alt="" loading="lazy" decoding="async" className={cn("shrink-0 object-contain", size, ink === "white" ? "brightness-0 invert" : GLYPH_INK, className)} />;
+        const src = asset(chip.iconUrl);
+        const image = (ink: string, extra?: string) => <img src={src} alt="" loading="lazy" decoding="async" className={cn("shrink-0 object-contain", size, ink, extra)} />;
+        if (lit === undefined) return image(GLYPH_INK, className);
+        // The fade is on a wrapper per layer, because `GLYPH_INK` carries its own opacity.
+        const layer = "col-start-1 row-start-1 flex items-center justify-center transition-opacity duration-200";
+        return (
+            <span className={cn("grid shrink-0", className)}>
+                <span className={cn(layer, lit ? "opacity-0" : "opacity-100")}>{image(GLYPH_INK)}</span>
+                <span className={cn(layer, lit ? "opacity-100" : "opacity-0")}>{image(WHITE_INK)}</span>
+            </span>
+        );
     }
     const Glyph = SECTION_GLYPHS[chip.glyph] ?? SECTION_GLYPHS[0];
     return <Glyph className={cn("shrink-0", place === "chip" ? "size-4" : "size-4.5", className)} aria-hidden="true" />;
@@ -136,8 +159,7 @@ export const SectionHead = memo(function SectionHead({ chip, count, action }: { 
     if (!chip) return null;
     const heading = chip.name;
     const kind = chip.filter ? t(`browse.filter.${chip.filter}`) : null;
-    const chapters = chip.range ? compactLabel(chip.range, t) : chip.includes ? includesLabel(chip.includes, t) : null;
-    const under = underLine([kind, chapters, count]);
+    const under = underLine([kind, sectionRange(chip, t), count]);
     return (
         <div className="mb-3 flex items-end justify-between gap-3 border-border border-b pb-2">
             <div className="flex min-w-0 items-center gap-2.5">
@@ -157,13 +179,11 @@ export const SectionHead = memo(function SectionHead({ chip, count, action }: { 
     );
 });
 
+/** The glyph ink on a lit chip's primary fill. */
+const WHITE_INK = "brightness-0 invert";
+
 /** How much of the scroller is faded at each edge once there is something to scroll to. */
 const FADE = 28;
-
-/** `smooth`, or instant for a reader whose system asks for reduced motion. Read at the moment of the jump, so a setting changed mid-visit is honoured. */
-function jumpBehavior(): ScrollBehavior {
-    return scrollBehaviorFor(typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-}
 
 /**
  * The sticky jump bar, and THE PAGE'S ONLY PINNED ROW. Above 640 px it is a
@@ -224,67 +244,16 @@ function jumpBehavior(): ScrollBehavior {
  * 201.7 px and takes the row to 1,519.2. The reader is looking at the section
  * that chip names, and the bar centres it.
  *
- * The active chip is centred by writing `scrollLeft` directly, never by
- * `scrollIntoView`: that walks every scrollable ancestor and would drag the
- * PAGE to the section the reader has not asked for yet.
+ * How the bar moves (the spy, the held chip on a click, the rail's slide and
+ * its fade edges) lives in `./jumpBar`; this component is the markup.
  */
 export const JumpBar = memo(function JumpBar({ chips, tools }: { chips: readonly IChipModel[]; tools: React.ReactNode }): React.ReactElement {
     const t: BrowseT = useT("story");
-    const active = useScrollSpy(useMemo(() => chips.map((chip) => chip.id), [chips]));
+    const spied = useScrollSpy(useMemo(() => chips.map((chip) => chip.id), [chips]));
+    const { active, jump } = useJumpHold(spied);
     const scroller = useRef<HTMLDivElement | null>(null);
-    const [edges, setEdges] = useState<{ start: boolean; end: boolean }>({ start: false, end: false });
-
-    // The rail fires a scroll event per frame while a chip is being centred, and
-    // a fresh object each time re-rendered the bar per frame for two booleans
-    // that had not changed; the previous state is kept unless one flips.
-    const measure = useCallback(() => {
-        const node = scroller.current;
-        if (!node) return;
-        const start = node.scrollLeft > 2;
-        const end = node.scrollLeft + node.clientWidth < node.scrollWidth - 2;
-        setEdges((prev) => (prev.start === start && prev.end === end ? prev : { start, end }));
-    }, []);
-
-    useEffect(() => {
-        measure();
-        window.addEventListener("resize", measure);
-        return () => window.removeEventListener("resize", measure);
-    }, [measure]);
-
-    // Where the row belongs: the active chip centred, or the start when nothing
-    // is active. Above the first section nothing is, and the row goes back to
-    // scrollLeft 0; returning early there left it wherever the last active chip
-    // had centred it (406 at 768, the first chip at -390 under the mask).
-    const activeRef = useRef(active);
-    const align = useCallback((behavior: ScrollBehavior) => {
-        const node = scroller.current;
-        if (!node) return;
-        const id = activeRef.current;
-        const chip = id ? node.querySelector<HTMLElement>(`[data-chip="${CSS.escape(id)}"]`) : null;
-        const left = chip ? Math.max(0, chip.offsetLeft - (node.clientWidth - chip.offsetWidth) / 2) : 0;
-        if (Math.abs(node.scrollLeft - left) > 0.5) node.scrollTo({ left, behavior });
-    }, []);
-
-    useEffect(() => {
-        activeRef.current = active;
-        align(jumpBehavior());
-    }, [active, align]);
-
-    // A RELOAD RESTORES THE ROW'S OLD SCROLLLEFT AFTER THE EFFECT ABOVE HAS RUN.
-    // Chrome's history restoration puts nested scrollers back too, so a reload
-    // at the top of the page came up at 406 with nothing active and no effect
-    // left to correct it. The row is re-aligned, instantly, once the document
-    // has loaded and on every `pageshow` (the back-forward cache).
-    useEffect(() => {
-        const settle = () => requestAnimationFrame(() => align("auto"));
-        if (document.readyState === "complete") settle();
-        else window.addEventListener("load", settle, { once: true });
-        window.addEventListener("pageshow", settle);
-        return () => {
-            window.removeEventListener("load", settle);
-            window.removeEventListener("pageshow", settle);
-        };
-    }, [align]);
+    const { edges, measure } = useRailEdges(scroller);
+    useRailSlide(scroller, active);
 
     const fade = `linear-gradient(to right, transparent 0, #000 ${edges.start ? FADE : 0}px, #000 calc(100% - ${edges.end ? FADE : 0}px), transparent 100%)`;
     // Before the spy has fired (and on the server) the reader is at the top, which is the first section.
@@ -307,9 +276,15 @@ export const JumpBar = memo(function JumpBar({ chips, tools }: { chips: readonly
                 ) : (
                     <>
                         {pickerCurrent ? <SectionPicker chips={chips} current={pickerCurrent} t={t} /> : null}
-                        <div ref={scroller} onScroll={measure} className="msv-scroll -my-1 hidden min-w-0 flex-1 gap-1 overflow-x-auto py-1 sm:flex" style={{ maskImage: fade, WebkitMaskImage: fade }}>
+                        {/* `overflow-x-scroll`, NOT `auto`: the rail's 8 px scrollbar is a classic
+                            one that takes layout space, and under `auto` it came and went with the
+                            overflow, which the EXPANDED chip decides. At a section boundary the new
+                            chip tipped the row over, the bar grew 8 px, the page under it moved the
+                            heading back out of the spy's band, the old chip returned and the row
+                            fit again: a flicker loop. The track is now always reserved. */}
+                        <div ref={scroller} onScroll={measure} className="msv-scroll -my-1 hidden min-w-0 flex-1 gap-1 overflow-x-scroll py-1 sm:flex" style={{ maskImage: fade, WebkitMaskImage: fade }}>
                             {chips.map((chip) => (
-                                <JumpChip key={chip.id} chip={chip} on={active === chip.id} t={t} />
+                                <JumpChip key={chip.id} chip={chip} on={active === chip.id} onJump={jump} t={t} />
                             ))}
                         </div>
                         <span aria-hidden="true" className="hidden h-6 w-px shrink-0 bg-border sm:block" />
@@ -320,11 +295,6 @@ export const JumpBar = memo(function JumpBar({ chips, tools }: { chips: readonly
         </nav>
     );
 });
-
-/** The chapter run in the compact form, or the "includes" line for a themed shelf that holds mainline chapters. */
-function sectionRange(chip: IChipModel, t: BrowseT): string | null {
-    return chip.range ? compactLabel(chip.range, t) : chip.includes ? includesLabel(chip.includes, t) : null;
-}
 
 /**
  * The phone's section picker: a pill naming the section the reader is in,
@@ -424,7 +394,7 @@ const SectionPicker = memo(function SectionPicker({ chips, current, t }: { chips
  * "Ch. 4-8" shorthand. An expanded chip is already showing both, so tipping it
  * would repeat the screen.
  */
-const JumpChip = memo(function JumpChip({ chip, on, t }: { chip: IChipModel; on: boolean; t: BrowseT }): React.ReactElement {
+const JumpChip = memo(function JumpChip({ chip, on, onJump, t }: { chip: IChipModel; on: boolean; onJump: (id: string) => void; t: BrowseT }): React.ReactElement {
     const lines = chipLines(chip, on);
     const mono = monoLabel(lines, t);
     // A chip that prints nothing is a square around its mark, and the 10 px of
@@ -438,13 +408,19 @@ const JumpChip = memo(function JumpChip({ chip, on, t }: { chip: IChipModel; on:
             href={`#${chip.id}`}
             aria-current={on ? "true" : undefined}
             aria-label={lines.name === null ? chipLabel(chip, t) : undefined}
+            onClick={(event) => {
+                // A modified click is the reader's own (a new tab, a copied link).
+                if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                event.preventDefault();
+                onJump(chip.id);
+            }}
             className={cn(
-                "flex shrink-0 items-center gap-2 rounded-[10px] border py-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-ring/60",
+                "flex shrink-0 items-center gap-2 rounded-[10px] border py-1.5 transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-ring/60",
                 bare ? "px-2" : "px-2.5",
                 on ? "border-primary bg-primary text-primary-foreground" : "border-transparent text-muted-foreground hover:border-border hover:bg-secondary/50 hover:text-foreground",
             )}
         >
-            <SectionGlyph chip={chip} place="chip" alone={bare} ink={on ? "white" : "theme"} className={on ? "opacity-95" : "opacity-70"} />
+            <SectionGlyph chip={chip} place="chip" alone={bare} lit={on} className={cn("transition-opacity duration-200", on ? "opacity-95" : "opacity-70")} />
             {bare ? null : (
                 <span className="flex min-w-0 flex-col items-start leading-none">
                     {lines.name ? <span className="whitespace-nowrap font-sans font-semibold text-[13px]">{lines.name}</span> : null}
@@ -455,14 +431,16 @@ const JumpChip = memo(function JumpChip({ chip, on, t }: { chip: IChipModel; on:
             {on ? <span className="shrink-0 font-mono text-[10px] tabular-nums opacity-80">{chip.count}</span> : null}
         </a>
     );
-    if (on) return link;
+    // The tooltip is DISABLED on the active chip, never unwrapped: returning the
+    // bare link swapped the element tree, so every chip that turned on or off
+    // was remounted and its colour change snapped instead of transitioning.
     return (
-        <Tooltip>
+        <Tooltip disabled={on}>
             <TooltipTrigger render={link} />
             <TooltipContent>
                 <span className="flex flex-col gap-0.5 py-0.5">
                     <span className="font-semibold">{chip.name}</span>
-                    <span className="font-sans text-[12px] text-muted-foreground tabular-nums">{underLine([chip.range ? rangeLabel(chip.range, t) : chip.includes ? includesLabel(chip.includes, t) : null, t("browse.section.count", { count: chip.count })])}</span>
+                    <span className="font-sans text-[12px] text-muted-foreground tabular-nums">{underLine([sectionRangeInWords(chip, t), t("browse.section.count", { count: chip.count })])}</span>
                 </span>
             </TooltipContent>
         </Tooltip>
@@ -481,82 +459,4 @@ export function sectionTitle(section: ISection, t: BrowseT): string {
         default:
             return section.title;
     }
-}
-
-/**
- * Which section the reader is in. The observer's root is inset from the top by
- * the sticky header plus the chip row, so a section counts as current once its
- * heading clears the furniture rather than while it is still under it.
- *
- * The LAST section is a special case: the collapsed records section is 62 px
- * tall at the very bottom of the page, and no amount of scrolling can push it
- * into the band, so the spy left the previous chip lit on a page scrolled all
- * the way down. At the bottom the last chip wins outright.
- */
-export function useScrollSpy(ids: readonly string[]): string | null {
-    const [active, setActive] = useState<string | null>(null);
-    const idsKey = ids.join("|");
-    const visible = useRef<Set<string>>(new Set());
-    // The last id handed to React. `pick` runs on every scroll event, and a
-    // setter called with an unchanged value still costs a bail-out render once
-    // the hook has updated before, so the spy only calls it on a change.
-    const last = useRef<string | null>(null);
-
-    useEffect(() => {
-        if (typeof IntersectionObserver === "undefined") return;
-        const list = idsKey === "" ? [] : idsKey.split("|");
-        visible.current = new Set();
-        const atBottom = () => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4;
-        const set = (id: string | null) => {
-            if (last.current === id) return;
-            last.current = id;
-            setActive(id);
-        };
-        const pick = () => {
-            if (atBottom() && list.length > 0) {
-                set(list[list.length - 1] ?? null);
-                return;
-            }
-            // ABOVE THE FIRST SECTION THE FIRST SECTION IS CURRENT. The spy used
-            // to keep whichever section it last saw, so a reader who scrolled back
-            // to the head found the phone's section pill naming a shelf far down
-            // the page ("The Blessed" over the top of Act 0). A first cut made
-            // "nothing" current up there, and that FLAPPED: the 2026-09-25
-            // recording shows the first chip expanding and collapsing every few
-            // frames as the heading crossed the band's lower edge (40% down the
-            // viewport, the `-60%` below), each flip re-laying out the whole row.
-            // The first section is the right answer on both sides of that line,
-            // so nothing changes when it is crossed. Between headings, mid-page,
-            // the last heading that passed the band stays current, which is the
-            // section the reader is in.
-            const head = list[0] ? document.getElementById(list[0]) : null;
-            if (head && head.getBoundingClientRect().top >= window.innerHeight * 0.4) {
-                set(list[0] ?? null);
-                return;
-            }
-            const first = list.find((id) => visible.current.has(id));
-            if (first) set(first);
-        };
-        const observer = new IntersectionObserver(
-            (entries) => {
-                for (const entry of entries) {
-                    if (entry.isIntersecting) visible.current.add(entry.target.id);
-                    else visible.current.delete(entry.target.id);
-                }
-                pick();
-            },
-            { rootMargin: "-140px 0px -60% 0px", threshold: 0 },
-        );
-        for (const id of list) {
-            const node = document.getElementById(id);
-            if (node) observer.observe(node);
-        }
-        window.addEventListener("scroll", pick, { passive: true });
-        return () => {
-            observer.disconnect();
-            window.removeEventListener("scroll", pick);
-        };
-    }, [idsKey]);
-
-    return active;
 }
