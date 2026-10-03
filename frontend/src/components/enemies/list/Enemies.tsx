@@ -124,6 +124,9 @@ export function EnemiesList() {
     const resetPage = useCallback(() => goToPage(1, false), [goToPage]);
 
     const { filters, filteredEnemies, setSearchQuery, setLevels, setDamageTypes, setAttackTypes, setRaces, setAppearsIn, setSortBy, setSortOrder, clearFilters, activeFilterCount } = useEnemyFilters(enriched, locationIndex, resetPage);
+    // A restored "Appears In" filter matches nothing until the stage table arrives,
+    // so the counter and the grid show loading rather than a result of zero.
+    const locationsPending = stageTable === undefined && filters.appearsIn.length > 0;
 
     const [viewMode, setViewMode] = useLocalStorageState<ViewMode>(VIEW_MODE_KEY, "grid", {
         parse: (raw) => (VIEW_MODES.has(raw as ViewMode) ? (raw as ViewMode) : undefined),
@@ -287,11 +290,15 @@ export function EnemiesList() {
 
                 <div className="flex flex-wrap items-center justify-between gap-3 font-medium font-sans text-[12.5px] text-muted-foreground leading-none">
                     <span>
-                        {rt("list.showing", {
-                            from: <strong className="text-foreground">{fromIndex}</strong>,
-                            to: <strong className="text-foreground">{toIndex}</strong>,
-                            total: <strong className="text-foreground">{filteredEnemies.length}</strong>,
-                        })}
+                        {locationsPending ? (
+                            <Skeleton className="inline-block h-3 w-40 align-middle" aria-hidden="true" />
+                        ) : (
+                            rt("list.showing", {
+                                from: <strong className="text-foreground">{fromIndex}</strong>,
+                                to: <strong className="text-foreground">{toIndex}</strong>,
+                                total: <strong className="text-foreground">{filteredEnemies.length}</strong>,
+                            })
+                        )}
                         {activeFilterCount > 0 && (
                             <>
                                 {" · "}
@@ -307,9 +314,8 @@ export function EnemiesList() {
                     </div>
                 </div>
 
-                {filteredEnemies.length === 0 && stageTable === undefined && filters.appearsIn.length > 0 ? (
-                    // A restored "Appears In" filter matches nothing until the stage table arrives;
-                    // show loading rather than an empty state whose clear button would wipe it.
+                {locationsPending ? (
+                    // Not the empty state: its clear button would wipe the restored filter.
                     <LocationsLoading />
                 ) : filteredEnemies.length === 0 ? (
                     <EmptyState onClear={clearFilters} />
