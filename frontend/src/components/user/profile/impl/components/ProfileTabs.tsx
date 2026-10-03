@@ -16,6 +16,8 @@ interface IProfileTabsProps {
     tabs: ITab[];
     active: string;
     onChange: Dispatch<SetStateAction<TabId>>;
+    /** Called when a tab is about to be chosen (hover, focus, press), to prefetch it. */
+    onIntent?: (id: TabId) => void;
 }
 
 /**
@@ -27,7 +29,7 @@ interface IProfileTabsProps {
  */
 export const PROFILE_STICKY_OFFSET_PX = 64 + 44;
 
-export function ProfileTabs({ tabs, active, onChange }: IProfileTabsProps) {
+export function ProfileTabs({ tabs, active, onChange, onIntent }: IProfileTabsProps) {
     const t: TypedT<typeof messages> = useT("user");
     const wrapRef = useRef<HTMLDivElement>(null);
     const [indicator, setIndicator] = useState({ left: 0, width: 0 });
@@ -45,7 +47,18 @@ export function ProfileTabs({ tabs, active, onChange }: IProfileTabsProps) {
         <div className={cn(styles.tabs, "overflow-y-hidden")} role="tablist" aria-label={t("profile.tabs.label")}>
             <div className={styles.inner} ref={wrapRef}>
                 {tabs.map((tab) => (
-                    <button key={tab.id} type="button" role="tab" aria-selected={active === tab.id} data-tab={tab.id} className={cn(styles.tab, active === tab.id && styles.tabActive)} onClick={() => onChange(tab.id as SetStateAction<TabId>)}>
+                    <button
+                        key={tab.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={active === tab.id}
+                        data-tab={tab.id}
+                        className={cn(styles.tab, active === tab.id && styles.tabActive)}
+                        onPointerEnter={() => onIntent?.(tab.id as TabId)}
+                        onPointerDown={() => onIntent?.(tab.id as TabId)}
+                        onFocus={() => onIntent?.(tab.id as TabId)}
+                        onClick={() => onChange(tab.id as SetStateAction<TabId>)}
+                    >
                         {tab.label}
                         {tab.count != null && <span className={cn(styles.count, "tabular-nums")}>{tab.count}</span>}
                     </button>

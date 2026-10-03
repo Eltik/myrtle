@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
-import { lazy, Suspense, useMemo } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Skeleton } from "#/components/ui/skeleton";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
@@ -32,12 +32,30 @@ const SKELETON_GRID_IDS = Array.from({ length: 20 }, (_, i) => `grid-${i}`);
 
 // Stats is the default tab and stays in the route chunk; the rest load on first visit so
 // their dependencies (recharts via the Score history card, above all) stay out of it.
-const EnemiesTab = lazy(() => import("./impl/components/tabs/Enemies/EnemiesTab").then((m) => ({ default: m.EnemiesTab })));
-const ItemsTab = lazy(() => import("./impl/components/tabs/Items/ItemsTab").then((m) => ({ default: m.ItemsTab })));
-const OptimizerTab = lazy(() => import("./impl/components/tabs/Optimizer/OptimizerTab").then((m) => ({ default: m.OptimizerTab })));
-const PlansTab = lazy(() => import("./impl/components/tabs/Plans/PlansTab").then((m) => ({ default: m.PlansTab })));
-const RosterTab = lazy(() => import("./impl/components/tabs/Roster/RosterTab").then((m) => ({ default: m.RosterTab })));
-const ScoreTab = lazy(() => import("./impl/components/tabs/Score/ScoreTab").then((m) => ({ default: m.ScoreTab })));
+const loadEnemiesTab = () => import("./impl/components/tabs/Enemies/EnemiesTab");
+const loadItemsTab = () => import("./impl/components/tabs/Items/ItemsTab");
+const loadOptimizerTab = () => import("./impl/components/tabs/Optimizer/OptimizerTab");
+const loadPlansTab = () => import("./impl/components/tabs/Plans/PlansTab");
+const loadRosterTab = () => import("./impl/components/tabs/Roster/RosterTab");
+const loadScoreTab = () => import("./impl/components/tabs/Score/ScoreTab");
+const EnemiesTab = lazy(() => loadEnemiesTab().then((m) => ({ default: m.EnemiesTab })));
+const ItemsTab = lazy(() => loadItemsTab().then((m) => ({ default: m.ItemsTab })));
+const OptimizerTab = lazy(() => loadOptimizerTab().then((m) => ({ default: m.OptimizerTab })));
+const PlansTab = lazy(() => loadPlansTab().then((m) => ({ default: m.PlansTab })));
+const RosterTab = lazy(() => loadRosterTab().then((m) => ({ default: m.RosterTab })));
+const ScoreTab = lazy(() => loadScoreTab().then((m) => ({ default: m.ScoreTab })));
+
+const TAB_CHUNKS: Partial<Record<TabId, () => Promise<unknown>>> = {
+    enemies: loadEnemiesTab,
+    inventory: loadItemsTab,
+    optimizer: loadOptimizerTab,
+    plans: loadPlansTab,
+    roster: loadRosterTab,
+    score: loadScoreTab,
+};
+
+/** Tabs that render phases, skills or template ids and so need the full operator table. */
+const FULL_TABLE_TABS: ReadonlySet<TabId> = new Set<TabId>(["roster", "plans", "optimizer"]);
 
 function GridSkeleton() {
     return (
@@ -70,11 +88,36 @@ export function UserProfile() {
     // The default Stats tab reads only the slim index, so the full table (23.9 MB
     // raw) waits for a tab that renders phases, skills or template ids.
     const { data: operatorsIndex } = useQuery({ ...operatorsIndexQueryOptions(gamedataServer), enabled: activeTab === "stats" || activeTab === "roster" });
-    const { data: operatorsStatic } = useQuery({ ...operatorsListQueryOptions(gamedataServer), enabled: activeTab === "roster" || activeTab === "plans" || activeTab === "optimizer" });
+    // A tab's chunk loads before the full table is asked for. bun blocks for about 2 s
+    // while it serializes the table, and a chunk requested alongside it queues behind
+    // that, so the tab could not render until the table had arrived. Hover or focus
+    // starts the chunk early; the table itself waits for the click, so passing the
+    // pointer over a tab does not download it.
+    const [loadedChunks, setLoadedChunks] = useState<ReadonlySet<TabId>>(() => new Set());
+    const loadTabChunk = useCallback((tab: TabId) => {
+        const load = TAB_CHUNKS[tab];
+        if (!load) return;
+        void load().then(() => setLoadedChunks((prev) => (prev.has(tab) ? prev : new Set(prev).add(tab))));
+    }, []);
+    useEffect(() => {
+        loadTabChunk(activeTab);
+    }, [activeTab, loadTabChunk]);
+    const prefetchTab = useCallback(
+        (tab: TabId) => {
+            if (tab !== activeTab) loadTabChunk(tab);
+        },
+        [activeTab, loadTabChunk],
+    );
 
     const { data: inventory } = useQuery({ ...userInventoryQueryOptions(id), enabled: activeTab === "inventory" });
     const { data: score, isLoading: isScoreLoading } = useQuery({ ...userScoreQueryOptions(id), enabled: activeTab === "score" });
-    const { data: publicPlans } = useQuery({ ...publicPlansQueryOptions(id), enabled: activeTab === "plans" });
+    const { data: publicPlans, isFetched: plansFetched } = useQuery({ ...publicPlansQueryOptions(id), enabled: activeTab === "plans" });
+    // Plans renders from its own small request, which would also queue behind the
+    // table on bun, so on that tab the table waits for it too (fetched or failed).
+    const { data: operatorsStatic } = useQuery({
+        ...operatorsListQueryOptions(gamedataServer),
+        enabled: FULL_TABLE_TABS.has(activeTab) && loadedChunks.has(activeTab) && (activeTab !== "plans" || plansFetched),
+    });
     // Improvements only fire while the Score tab is mounted - it's a heavier
     // payload than the headline score, so don't pay for it on every profile view.
     const { data: improvements, isLoading: isImprovementsLoading } = useQuery({
@@ -186,7 +229,7 @@ export function UserProfile() {
             <main className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
                 <Hero profile={data} />
                 <StatStrip profile={data} rosterCount={roster?.length} />
-                <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
+                <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} onIntent={prefetchTab} />
                 {activeTab === "stats" && <StatsTab nonDefaultSkinCount={data.non_default_skin_count} operatorsIndex={operatorsIndex ?? []} roster={roster ?? []} server={data.server} uid={id} />}
                 {activeTab !== "stats" && (
                     <Suspense fallback={activeTab === "score" ? <ScoreTabSkeleton /> : <GridSkeleton />}>
