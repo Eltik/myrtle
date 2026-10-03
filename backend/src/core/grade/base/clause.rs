@@ -140,6 +140,10 @@ pub enum CondScope {
     /// Anywhere the operator is actively WORKING (any non-dormitory room of the
     /// deployment - Hoederer's "assigned to any Work Area").
     BaseWorkArea,
+    /// Anywhere in the base, a dormitory included ("when Vigil is in the Base,
+    /// excluding Assistants and Activity Room users"). Resolved by registry
+    /// rewrite (`resolve_base_wide`) once the deployment is known.
+    BaseAnywhere,
     /// A specific room TYPE elsewhere in the base ("if Kal'tsit is assigned to
     /// the Control Center"). The optimizer resolves these by registry rewrite
     /// (`resolve_room_presence`) once the deployment is known; a context-free
@@ -611,6 +615,7 @@ pub fn clauses_from_strategy(
             required_char_ids,
             base_efficiency,
             bonus_efficiency,
+            anywhere,
         } => {
             if *base_efficiency != 0.0 {
                 out.push(Clause::base(
@@ -628,7 +633,11 @@ pub fn clauses_from_strategy(
                     speed(),
                     ClauseKind::RequiresChar {
                         chars: required_char_ids.clone(),
-                        scope: CondScope::BaseWorkArea,
+                        scope: if *anywhere {
+                            CondScope::BaseAnywhere
+                        } else {
+                            CondScope::BaseWorkArea
+                        },
                     },
                     *bonus_efficiency,
                 ));
@@ -931,9 +940,16 @@ pub fn clauses_from_strategy(
             }
         }
 
+        // A crew-gated global compiles like the plain global; its gate lives
+        // in the Control-Center bonus accumulator, where the crew is known.
         S::GlobalEffect {
             target_room,
             bonus_pct,
+        }
+        | S::GlobalEffectWithCrewTag {
+            target_room,
+            bonus_pct,
+            ..
         } => {
             let mut c = Clause::base(
                 buff_id,
@@ -1646,6 +1662,7 @@ mod tests {
                 required_char_ids: vec!["char_4087_ines".into(), "char_113_cqbw".into()],
                 base_efficiency: 30.0,
                 bonus_efficiency: 5.0,
+                anywhere: false,
             },
         );
         assert_eq!(set.len(), 2);

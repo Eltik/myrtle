@@ -250,7 +250,7 @@ impl LedgerCtx<'_> {
                 _ => self.op_index.get(id.as_str()).copied(),
             };
             if let Some(op) = profile {
-                acc.add(&cc_bonuses(op, self.registry, self.building_data));
+                acc.add_from(op, &cc_bonuses(op, self.registry, self.building_data));
             }
         }
         acc.finish()
@@ -378,10 +378,13 @@ pub(crate) fn production_room_ledger(
             if l.bonus.room != room_type {
                 continue;
             }
-            let claims = l.bonus.stacks
-                || winners.get(&(l.bonus.room.clone(), l.bonus.family.clone())) == Some(&i);
+            let claims = !l.gate_unmet
+                && (l.bonus.stacks
+                    || winners.get(&(l.bonus.room.clone(), l.bonus.family.clone())) == Some(&i));
             let (value, disposition) = if claims {
                 (l.bonus.bonus, LineDisposition::Contributes)
+            } else if l.gate_unmet {
+                (0.0, LineDisposition::Inactive)
             } else {
                 (0.0, LineDisposition::Covered)
             };
@@ -392,7 +395,9 @@ pub(crate) fn production_room_ledger(
                 value_pct: 0.0,
                 from_control_center: true,
                 disposition,
-                note: None,
+                note: l.gate_unmet.then(|| {
+                    "Needs another operator of its group in the Control Center.".to_string()
+                }),
             });
             continue;
         }
@@ -501,6 +506,9 @@ struct CcBonusLine {
     operator_id: String,
     buff_id: String,
     bonus: super::assignment::CcBonus,
+    /// A crew-gated global whose gate this crew does not meet (Hoshiguma
+    /// without another L.G.D. operator in the center): inactive, not covered.
+    gate_unmet: bool,
 }
 
 /// Gather every CC member's bonus-bearing CONTROL buff, plus the winner of
@@ -513,6 +521,11 @@ fn cc_bonus_lines(
     ctx: &LedgerCtx,
     cc_ops: &[String],
 ) -> (Vec<CcBonusLine>, HashMap<(String, String), usize>) {
+    let crew: Vec<(String, Vec<String>)> = cc_ops
+        .iter()
+        .filter_map(|id| ctx.op_index.get(id.as_str()))
+        .map(|op| (op.char_id.clone(), op.match_tags.clone()))
+        .collect();
     let mut lines = Vec::new();
     for id in cc_ops {
         let Some(op) = ctx.op_index.get(id.as_str()) else {
@@ -522,20 +535,31 @@ fn cc_bonus_lines(
             let Some(buff) = ctx.building_data.buffs.get(buff_id) else {
                 continue;
             };
-            if let Some(bonus) =
+            if let Some(mut bonus) =
                 super::assignment::cc_bonus_for(buff_id, buff, ctx.registry.get(buff_id))
             {
+                // A crew gate is settled here, where the crew is known: met,
+                // the line carries the gate's full value like any global.
+                let gate_unmet = match bonus.crew_gate.take() {
+                    None => false,
+                    Some(gate) if gate.met(id, &crew) => {
+                        bonus.bonus = gate.bonus_pct;
+                        false
+                    }
+                    Some(_) => true,
+                };
                 lines.push(CcBonusLine {
                     operator_id: (*id).clone(),
                     buff_id: buff_id.clone(),
                     bonus,
+                    gate_unmet,
                 });
             }
         }
     }
     let mut winners: HashMap<(String, String), usize> = HashMap::new();
     for (i, l) in lines.iter().enumerate() {
-        if l.bonus.stacks || l.bonus.conditional.is_some() {
+        if l.bonus.stacks || l.bonus.conditional.is_some() || l.gate_unmet {
             continue;
         }
         let key = (l.bonus.room.clone(), l.bonus.family.clone());

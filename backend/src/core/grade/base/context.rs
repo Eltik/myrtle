@@ -9,7 +9,7 @@ use std::collections::HashMap;
 
 use crate::core::gamedata::types::GameData;
 use crate::core::grade::base::buff_registry::{
-    BuffResolutionStrategy, build_name_to_char, build_registry, faction_tags_of,
+    BuffResolutionStrategy, build_name_to_char, build_registry, faction_tags_for, glossary_tags,
 };
 use crate::core::grade::base::types::OperatorBaseProfile;
 use crate::database::models::roster::RosterEntry;
@@ -28,12 +28,16 @@ impl BaseContext {
     /// `ignore_promotion` plans with every operator's highest base skills,
     /// whether or not the player has promoted them that far.
     pub fn build(roster: &[RosterEntry], game_data: &GameData, ignore_promotion: bool) -> Self {
+        let name_to_char = build_name_to_char(&game_data.operators);
+        let glossary = glossary_tags(&game_data.consts, &name_to_char);
         let profiles: Vec<OperatorBaseProfile> = roster
             .iter()
             .filter_map(|entry| {
                 let bc = game_data.building.chars.get(&entry.operator_id)?;
                 let static_op = game_data.operators.get(&entry.operator_id);
-                let faction_tags = static_op.map(faction_tags_of).unwrap_or_default();
+                let faction_tags = static_op
+                    .map(|op| faction_tags_for(&entry.operator_id, op, &glossary))
+                    .unwrap_or_default();
                 let rarity = static_op.map_or(0, |o| o.rarity.to_star_int());
                 Some(OperatorBaseProfile::build(
                     entry,
@@ -46,7 +50,6 @@ impl BaseContext {
             })
             .collect();
 
-        let name_to_char = build_name_to_char(&game_data.operators);
         let (registry, morale_drains) = build_registry(&game_data.building.buffs, &name_to_char);
 
         Self {

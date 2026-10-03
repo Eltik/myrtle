@@ -57,6 +57,20 @@ fn full_roster(gd: &GameData) -> Vec<OperatorBaseProfile> {
         .collect()
 }
 
+/// Faction tags plus the game's glossary tags (`cc.tag.knight` lists Gravel,
+/// Viviana, the Nearls...), the way `BaseContext::build` derives them.
+fn faction_tags_with_glossary(
+    gd: &GameData,
+    char_id: &str,
+    op: &backend::core::gamedata::types::operator::Operator,
+) -> Vec<String> {
+    let glossary = backend::core::grade::base::buff_registry::glossary_tags(
+        &gd.consts,
+        &build_name_to_char(&gd.operators),
+    );
+    backend::core::grade::base::buff_registry::faction_tags_for(char_id, op, &glossary)
+}
+
 /// A minimal E2-max `RosterEntry` for an operator (for the high-level `grade_base`).
 fn roster_entry(operator_id: &str) -> RosterEntry {
     RosterEntry {
@@ -95,7 +109,7 @@ fn profile(gd: &GameData, char_id: &str) -> OperatorBaseProfile {
     let faction_tags = gd
         .operators
         .get(char_id)
-        .map(backend::core::grade::base::buff_registry::faction_tags_of)
+        .map(|op| faction_tags_with_glossary(gd, char_id, op))
         .unwrap_or_default();
     let match_tags = backend::core::grade::base::types::compute_match_tags(
         &faction_tags,
@@ -137,7 +151,7 @@ fn profile_at(gd: &GameData, char_id: &str, elite: i32) -> OperatorBaseProfile {
     let faction_tags = gd
         .operators
         .get(char_id)
-        .map(backend::core::grade::base::buff_registry::faction_tags_of)
+        .map(|op| faction_tags_with_glossary(gd, char_id, op))
         .unwrap_or_default();
     let match_tags = backend::core::grade::base::types::compute_match_tags(
         &faction_tags,
@@ -2287,6 +2301,175 @@ fn a_scoped_proposal_leaves_every_other_room_as_drafted_and_never_worsens_the_ro
         "the scoped room never reads worse than its draft: {:.1} -> {:.1}",
         before.total_efficiency,
         after.total_efficiency
+    );
+}
+
+#[test]
+fn gravel_counts_as_a_knight_for_vivianas_glimmer() {
+    // "All Knight Operators assigned to Factories gain productivity +7%"
+    // (Viviana). Who a Knight is comes from the game's term glossary
+    // (`cc.tag.knight`: Nearl, Blemishine, Whislash, ..., Gravel, Viviana),
+    // not from a faction id: Gravel is Kazimierz with no group, and the old
+    // Pinus-only alias missed her (user-verified in game 2026-10-03: a
+    // Gravel gold factory reads +1.11, our 101 lacked the 7).
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    const GRAVEL: &str = "char_237_gravel";
+    const VIVIANA: &str = "char_4098_vvana";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let factory_with_cc = |cc: &[&str]| {
+        let mut control = room("cc", "CONTROL", 5);
+        control.current_operators = cc.iter().map(|s| (*s).to_string()).collect();
+        let mut mf = room("mf", "MANUFACTURE", 3);
+        mf.current_formula = Some("F_GOLD".into());
+        mf.current_operators = vec![GRAVEL.into()];
+        let building = UserBuilding {
+            rooms: vec![control, mf],
+        };
+        let roster: Vec<_> = cc
+            .iter()
+            .copied()
+            .chain([GRAVEL])
+            .map(|id| profile(gd, id))
+            .collect();
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == "mf")
+            .map_or(0.0, |r| r.total_efficiency)
+    };
+    let with = factory_with_cc(&[VIVIANA]);
+    let without = factory_with_cc(&[]);
+    assert!(
+        (with - without - 7.0).abs() < 1e-6,
+        "Viviana's +7 reaches Gravel: {without:.1} -> {with:.1}"
+    );
+}
+
+#[test]
+fn hoshigumas_camaraderie_fires_beside_another_lgd_operator() {
+    // "When this Operator is assigned together with other L.G.D. Operators to
+    // the Control Center, all Factories' productivity +3%" (Hoshiguma the
+    // Breacher). The gate is on the center's crew: Swire (group L.G.D.)
+    // meets it, Amiya does not, and Swire the Elegant Wit - no group - does
+    // not either. It used to be read as "+3% to each L.G.D. operator in
+    // Factories" and never fired (user report 2026-10-03).
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    use backend::core::grade::base::skill_ledger::LineDisposition;
+    const HOSHI: &str = "char_1044_hsgma2";
+    const SWIRE: &str = "char_308_swire";
+    const SWIRE_ALT: &str = "char_1033_swire2";
+    const AMIYA: &str = "char_002_amiya";
+    const GRAVEL: &str = "char_237_gravel";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let factory_with_cc = |cc: &[&str]| {
+        let mut control = room("cc", "CONTROL", 5);
+        control.current_operators = cc.iter().map(|s| (*s).to_string()).collect();
+        let mut mf = room("mf", "MANUFACTURE", 3);
+        mf.current_formula = Some("F_GOLD".into());
+        mf.current_operators = vec![GRAVEL.into()];
+        let building = UserBuilding {
+            rooms: vec![control, mf],
+        };
+        let roster: Vec<_> = cc
+            .iter()
+            .copied()
+            .chain([GRAVEL])
+            .map(|id| profile(gd, id))
+            .collect();
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        let mf = asn
+            .rooms
+            .iter()
+            .find(|r| r.slot_id == "mf")
+            .expect("the factory");
+        let hoshi_line = mf
+            .ledger
+            .iter()
+            .find(|l| l.operator_id == HOSHI && l.buff_id.starts_with("control_token_prod_spd3"))
+            .map(|l| (l.disposition, l.speed_pct));
+        (mf.total_efficiency, hoshi_line)
+    };
+    let base = factory_with_cc(&[]).0;
+    let (with_swire, line) = factory_with_cc(&[HOSHI, SWIRE]);
+    assert!(
+        (with_swire - base - 3.0).abs() < 1e-6,
+        "Hoshiguma beside Swire grants the factories +3: {base:.1} -> {with_swire:.1}"
+    );
+    assert!(
+        matches!(line, Some((LineDisposition::Contributes, v)) if (v - 3.0).abs() < 1e-6),
+        "her line carries the full +3 when the gate is met: {line:?}"
+    );
+    let (with_amiya, line) = factory_with_cc(&[HOSHI, AMIYA]);
+    assert!(
+        (with_amiya - base).abs() < 1e-6,
+        "Amiya is not L.G.D.: {base:.1} -> {with_amiya:.1}"
+    );
+    assert!(
+        matches!(line, Some((LineDisposition::Inactive, _))),
+        "her line reads inactive without another L.G.D. operator: {line:?}"
+    );
+    let (with_alt, _) = factory_with_cc(&[HOSHI, SWIRE_ALT]);
+    assert!(
+        (with_alt - base).abs() < 1e-6,
+        "Swire the Elegant Wit carries no group and does not count: {base:.1} -> {with_alt:.1}"
+    );
+}
+
+#[test]
+fn bellones_rider_fires_with_vigil_resting_in_a_dormitory() {
+    // "+30%; when Vigil is in the Base (excluding Assistants and Activity
+    // Room users), +10%" (Bellone; Underflow's Envoy To Land is the same
+    // shape on Ulpianus). "In the Base" counts a dormitory, unlike the "any
+    // Work Area" gates: the rider used to be dropped outright, and a resting
+    // partner must count (user-verified in game 2026-10-03).
+    use backend::core::grade::base::assignment::compute_current_assignment;
+    const BELLONE: &str = "char_4037_demetr";
+    const VIGIL: &str = "char_427_vigil";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let post_with = |vigil_in: Option<&str>| {
+        let mut post = room("tp", "TRADING", 3);
+        post.current_operators = vec![BELLONE.into()];
+        let mut dorm = room("d0", "DORMITORY", 5);
+        let mut mf = room("mf", "MANUFACTURE", 3);
+        mf.current_formula = Some("F_EXP".into());
+        match vigil_in {
+            Some("d0") => dorm.current_operators = vec![VIGIL.into()],
+            Some("mf") => mf.current_operators = vec![VIGIL.into()],
+            _ => {}
+        }
+        let building = UserBuilding {
+            rooms: vec![post, mf, dorm],
+        };
+        let roster = vec![profile(gd, BELLONE), profile(gd, VIGIL)];
+        let asn =
+            compute_current_assignment(&roster, &building, &gd.building, &registry, &drains, None);
+        asn.rooms
+            .iter()
+            .find(|r| r.slot_id == "tp")
+            .map_or(0.0, |r| r.total_efficiency)
+    };
+    let without = post_with(None);
+    let resting = post_with(Some("d0"));
+    let working = post_with(Some("mf"));
+    assert!(
+        (without - 30.0).abs() < 1e-6,
+        "Bellone alone reads her base: {without:.1}"
+    );
+    assert!(
+        (resting - 40.0).abs() < 1e-6,
+        "Vigil resting in a dormitory is in the Base: {resting:.1}"
+    );
+    assert!(
+        (working - 40.0).abs() < 1e-6,
+        "Vigil working counts too: {working:.1}"
     );
 }
 
@@ -5611,7 +5794,7 @@ fn real_base_repro() {
             let bc = gd.building.chars.get(&entry.operator_id)?;
             let static_op = gd.operators.get(&entry.operator_id);
             let faction_tags = static_op
-                .map(backend::core::grade::base::buff_registry::faction_tags_of)
+                .map(|op| faction_tags_with_glossary(gd, &entry.operator_id, op))
                 .unwrap_or_default();
             let rarity = static_op.map_or(0, |o| o.rarity.to_star_int());
             Some(OperatorBaseProfile::build(
@@ -8125,7 +8308,7 @@ fn reference_parity_252() {
             let bc = gd.building.chars.get(&entry.operator_id)?;
             let static_op = gd.operators.get(&entry.operator_id);
             let faction_tags = static_op
-                .map(backend::core::grade::base::buff_registry::faction_tags_of)
+                .map(|op| faction_tags_with_glossary(gd, &entry.operator_id, op))
                 .unwrap_or_default();
             let rarity = static_op.map_or(0, |o| o.rarity.to_star_int());
             Some(OperatorBaseProfile::build(
@@ -8421,7 +8604,7 @@ fn ledger_probe() {
             let bc = gd.building.chars.get(&entry.operator_id)?;
             let static_op = gd.operators.get(&entry.operator_id);
             let faction_tags = static_op
-                .map(backend::core::grade::base::buff_registry::faction_tags_of)
+                .map(|op| faction_tags_with_glossary(gd, &entry.operator_id, op))
                 .unwrap_or_default();
             let rarity = static_op.map_or(0, |o| o.rarity.to_star_int());
             Some(OperatorBaseProfile::build(
@@ -8492,7 +8675,7 @@ fn planner_probe() {
             let bc = gd.building.chars.get(&entry.operator_id)?;
             let static_op = gd.operators.get(&entry.operator_id);
             let faction_tags = static_op
-                .map(backend::core::grade::base::buff_registry::faction_tags_of)
+                .map(|op| faction_tags_with_glossary(gd, &entry.operator_id, op))
                 .unwrap_or_default();
             let rarity = static_op.map_or(0, |o| o.rarity.to_star_int());
             // IGNORE_PROMOTION=0 plans at real elite levels; default E2-max.

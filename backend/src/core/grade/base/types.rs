@@ -306,21 +306,10 @@ pub fn compute_match_tags(
             }
         }
     }
-    // Base-skill tag aliases: some Control Center buffs target a curated base tag
-    // ("all Knight Operators") rather than a single faction id. Pinus Sylvestris
-    // is literally the "Knightclub", so its members count as Knights (e.g. Wild
-    // Mane benefits from Viviana's "+7% Knights in Factories").
-    for (faction, alias) in FACTION_BASE_TAG_ALIASES {
-        if tags.iter().any(|t| t == faction) && !tags.iter().any(|t| t == alias) {
-            tags.push((*alias).to_string());
-        }
-    }
+    // Curated base tags ("all Knight Operators") come in with the faction
+    // tags, from the game's term glossary (`buff_registry::glossary_tags`).
     tags
 }
-
-/// Maps a faction id to the curated base tag its members carry, for Control
-/// Center buffs that target base tags rather than factions.
-const FACTION_BASE_TAG_ALIASES: &[(&str, &str)] = &[("pinus", "knight")];
 
 #[derive(Clone, Default)]
 pub struct RoomAssignment {

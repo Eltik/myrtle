@@ -477,9 +477,10 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                         CondScope::BaseWorkArea => ev
                             .deployed_work_area
                             .is_some_and(|d| chars.iter().any(|req| d.contains(req))),
-                        // Resolved by registry rewrite (resolve_room_presence)
-                        // before scoring; context-free passes credit 0.
-                        CondScope::RoomTypeElsewhere => false,
+                        // Resolved by registry rewrite (resolve_base_wide /
+                        // resolve_room_presence) before scoring; context-free
+                        // passes credit 0.
+                        CondScope::BaseAnywhere | CondScope::RoomTypeElsewhere => false,
                     };
                     if present {
                         entries.push(Entry {
@@ -496,7 +497,7 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                             .iter()
                             .enumerate()
                             .any(|(j, _)| j != i && tags[j].iter().any(|t| t == tag)),
-                        CondScope::BaseWorkArea => false,
+                        CondScope::BaseWorkArea | CondScope::BaseAnywhere => false,
                         // Resolved by registry rewrite (resolve_room_presence)
                         // before scoring; context-free passes credit 0.
                         CondScope::RoomTypeElsewhere => false,

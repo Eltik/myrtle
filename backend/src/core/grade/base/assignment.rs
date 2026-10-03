@@ -100,7 +100,8 @@ pub(crate) fn base_wide_relevant(
 /// already-resolved efficiency.
 pub(crate) fn resolve_base_wide(
     registry: &HashMap<String, BuffResolutionStrategy>,
-    present: &HashSet<String>,
+    working: &HashSet<String>,
+    stationed_anywhere: &HashSet<String>,
 ) -> HashMap<String, BuffResolutionStrategy> {
     registry
         .iter()
@@ -110,7 +111,16 @@ pub(crate) fn resolve_base_wide(
                     required_char_ids,
                     base_efficiency,
                     bonus_efficiency,
+                    anywhere,
                 } => {
+                    // "is in the Base" counts a partner resting in a dormitory
+                    // (Bellone's Vigil, Underflow's Ulpianus); "any Work Area"
+                    // does not.
+                    let present = if *anywhere {
+                        stationed_anywhere
+                    } else {
+                        working
+                    };
                     let bonus = if required_char_ids.iter().any(|c| present.contains(c)) {
                         *bonus_efficiency
                     } else {
@@ -125,6 +135,15 @@ pub(crate) fn resolve_base_wide(
             (id.clone(), resolved)
         })
         .collect()
+}
+
+/// The operators the player has resting in dormitories.
+pub(crate) fn dorm_residents(building: &UserBuilding) -> impl Iterator<Item = String> + '_ {
+    building
+        .rooms
+        .iter()
+        .filter(|r| r.room_type == "DORMITORY")
+        .flat_map(|r| r.current_operators.iter().cloned())
 }
 
 /// True when the roster owns a room-presence gate that could fire: a named partner is in the
@@ -465,7 +484,7 @@ fn optimal_inner(
     // Pass 1: bonuses off, to learn who actually ends up deployed where.
     let empty_rooms = HashMap::new();
     let pass1_registry = resolve_room_presence(
-        &resolve_base_wide(registry, &HashSet::new()),
+        &resolve_base_wide(registry, &HashSet::new(), &HashSet::new()),
         &empty_rooms,
         operators,
     );
@@ -487,6 +506,13 @@ fn optimal_inner(
         .iter()
         .flat_map(|r| r.operators.iter().cloned())
         .collect();
+    // "In the Base" partners count from a dormitory too: the plan leaves the
+    // player's resters where they are unless it seats them.
+    let anywhere: HashSet<String> = deployed
+        .iter()
+        .cloned()
+        .chain(dorm_residents(building))
+        .collect();
     // The same deployment keyed by room type, for room-presence gates
     // ("if Kal'tsit is assigned to the Control Center").
     let deployed_rooms: HashMap<String, String> = pass1
@@ -500,7 +526,7 @@ fn optimal_inner(
         .collect();
     // Pass 2: re-optimize with the bonuses credited for the partners pass 1 deployed.
     let pass2_registry = resolve_room_presence(
-        &resolve_base_wide(registry, &deployed),
+        &resolve_base_wide(registry, &deployed, &anywhere),
         &deployed_rooms,
         operators,
     );
@@ -2117,8 +2143,9 @@ pub fn compute_live_assignment(
                         .map(|op| (op, r.room_type.clone()))
                 })
                 .collect();
+            let anywhere: HashSet<String> = stationed.keys().cloned().collect();
             resolved = resolve_room_presence(
-                &resolve_base_wide(&resolved, &working),
+                &resolve_base_wide(&resolved, &working, &anywhere),
                 &stationed,
                 operators,
             );
@@ -2140,7 +2167,7 @@ pub fn compute_live_assignment(
         .iter()
         .filter_map(|id| op_index.get(id.as_str()).copied())
     {
-        acc.add(&cc_bonuses(op, registry, building_data));
+        acc.add_from(op, &cc_bonuses(op, registry, building_data));
     }
     let (global_bonuses, mut cc_conditions) = acc.finish();
     cc_conditions.extend(seat_grant_conditions(registry));
@@ -2900,6 +2927,7 @@ pub(crate) fn other_room_skill_count(
 /// same-room clause-bearing buffs (only the strongest applies), while clause-less
 /// buffs (Sakiko's Precious-Metal productivity, Viviana's faction buff, etc.)
 /// always `stacks` on top.
+#[derive(Clone)]
 pub(crate) struct CcBonus {
     pub(crate) room: String,
     pub(crate) family: String,
@@ -2910,6 +2938,29 @@ pub(crate) struct CcBonus {
     /// faction condition - credited per-room, not flat. `bonus` above is then a
     /// discounted *selection* weight, not the value actually granted.
     pub(crate) conditional: Option<CcCondition>,
+    /// `Some` when the bonus fires only beside other Control-Center crew of a
+    /// tag (Hoshiguma the Breacher's "together with other L.G.D. Operators").
+    /// `bonus` above is a discounted selection weight; the accumulator grants
+    /// the gate's full value once it knows the crew.
+    pub(crate) crew_gate: Option<CrewGate>,
+}
+
+/// A Control-Center global's gate on the center's own crew.
+#[derive(Clone)]
+pub(crate) struct CrewGate {
+    pub(crate) tag: String,
+    pub(crate) min_others: usize,
+    pub(crate) bonus_pct: f64,
+}
+
+impl CrewGate {
+    /// Met when `min_others` crew members other than `owner` carry the tag.
+    pub(crate) fn met(&self, owner: &str, crew: &[(String, Vec<String>)]) -> bool {
+        crew.iter()
+            .filter(|(id, tags)| id != owner && tags.contains(&self.tag))
+            .count()
+            >= self.min_others
+    }
 }
 
 /// A Control Center bonus that is gated on a production room's team composition.
@@ -3037,14 +3088,23 @@ pub(crate) struct CcBonusAccumulator {
     stacked: HashMap<String, f64>,
     conditions: HashMap<(String, String), CcCondition>,
     cond_families: HashSet<(String, String)>,
+    /// The crew folded in so far, `(char_id, match tags)`: what a crew gate
+    /// (Hoshiguma's "other L.G.D. Operators") is resolved against.
+    crew: Vec<(String, Vec<String>)>,
+    /// Crew-gated bonuses with their owners, resolved at `finish`, once the
+    /// whole crew is known.
+    gated: Vec<(String, CcBonus)>,
 }
 
 impl CcBonusAccumulator {
     /// The marginal flat gain from adding `bonuses` - a stacking buff always counts
     /// fully; a non-stacking one counts only what it exceeds its family's strongest.
+    /// A crew-gated bonus counts its full value when the crew folded in so far
+    /// meets its gate, nothing otherwise.
     pub(crate) fn marginal(&self, bonuses: &[CcBonus]) -> f64 {
         bonuses
             .iter()
+            .filter_map(|b| self.resolve_gate(b, ""))
             .map(|b| {
                 if b.stacks && b.conditional.is_none() {
                     b.bonus
@@ -3060,10 +3120,41 @@ impl CcBonusAccumulator {
             .sum()
     }
 
+    /// A crew-gated bonus at its full value when `crew` meets the gate, an
+    /// ungated bonus as it is, `None` for an unmet gate.
+    fn resolve_gate(&self, b: &CcBonus, owner: &str) -> Option<CcBonus> {
+        match &b.crew_gate {
+            None => Some(b.clone()),
+            Some(gate) if gate.met(owner, &self.crew) => Some(CcBonus {
+                bonus: gate.bonus_pct,
+                crew_gate: None,
+                ..b.clone()
+            }),
+            Some(_) => None,
+        }
+    }
+
+    /// Fold one operator's bonuses in, remembering who they are: a crew-gated
+    /// bonus waits for `finish`, when the whole crew is known.
+    pub(crate) fn add_from(&mut self, op: &OperatorBaseProfile, bonuses: &[CcBonus]) {
+        self.crew.push((op.char_id.clone(), op.match_tags.clone()));
+        for b in bonuses {
+            if b.crew_gate.is_some() {
+                self.gated.push((op.char_id.clone(), b.clone()));
+            } else {
+                self.add(std::slice::from_ref(b));
+            }
+        }
+    }
+
     /// Fold one operator's bonuses in: clause-less buffs add to the room total,
-    /// clause-bearing ones keep only the strongest per family.
+    /// clause-bearing ones keep only the strongest per family. A crew-gated
+    /// bonus is skipped here (no crew to resolve it against - use `add_from`).
     pub(crate) fn add(&mut self, bonuses: &[CcBonus]) {
         for b in bonuses {
+            if b.crew_gate.is_some() {
+                continue;
+            }
             if b.stacks && b.conditional.is_none() {
                 *self.stacked.entry(b.room.clone()).or_insert(0.0) += b.bonus;
                 continue;
@@ -3090,7 +3181,13 @@ impl CcBonusAccumulator {
 
     /// `(flat per-room totals, faction-gated conditions)`. Conditional families are
     /// kept out of the flat totals - they're applied per room against the team.
-    pub(crate) fn finish(self) -> (HashMap<String, f64>, Vec<CcCondition>) {
+    pub(crate) fn finish(mut self) -> (HashMap<String, f64>, Vec<CcCondition>) {
+        let gated = std::mem::take(&mut self.gated);
+        for (owner, b) in &gated {
+            if let Some(resolved) = self.resolve_gate(b, owner) {
+                self.add(std::slice::from_ref(&resolved));
+            }
+        }
         let mut global = self.stacked;
         for ((room, family), bonus) in &self.best {
             if !self.cond_families.contains(&(room.clone(), family.clone())) {
@@ -3127,6 +3224,7 @@ pub(crate) fn cc_bonus_for(
                 bonus: *bonus_pct,
                 stacks,
                 conditional: None,
+                crew_gate: None,
             })
         }
         Some(BuffResolutionStrategy::TagBased {
@@ -3141,6 +3239,7 @@ pub(crate) fn cc_bonus_for(
             bonus: bonus_pct * 0.5,
             stacks: true,
             conditional: None,
+            crew_gate: None,
         }),
         Some(BuffResolutionStrategy::ConditionalGlobalEffect {
             target_room,
@@ -3167,6 +3266,26 @@ pub(crate) fn cc_bonus_for(
                 bonus_pct: *bonus_pct,
                 order_limit: f64::from(*order_limit),
                 formula_bonuses: formula_bonuses.clone(),
+            }),
+            crew_gate: None,
+        }),
+        Some(BuffResolutionStrategy::GlobalEffectWithCrewTag {
+            target_room,
+            bonus_pct,
+            tag,
+            min_others,
+        }) => Some(CcBonus {
+            room: target_room.clone(),
+            family: format!("{target_room}#global"),
+            // Selection weight only: the gate may not be met. The accumulator
+            // grants `bonus_pct` in full beside the right crew.
+            bonus: bonus_pct * 0.5,
+            stacks: cc_buff_stacks(buff),
+            conditional: None,
+            crew_gate: Some(CrewGate {
+                tag: tag.clone(),
+                min_others: *min_others,
+                bonus_pct: *bonus_pct,
             }),
         }),
         Some(BuffResolutionStrategy::NamedCharRoomGrants { grants }) => {
@@ -3195,6 +3314,7 @@ pub(crate) fn cc_bonus_for(
                         order_limit: g.order_limit,
                         formula_bonuses: Vec::new(),
                     }),
+                    crew_gate: None,
                 })
         }
         _ => None,
@@ -3232,7 +3352,7 @@ pub(crate) fn cc_marginal_over(
             continue;
         }
         if let Some(op) = op_index.get(id.as_str()) {
-            acc.add(&cc_bonuses(op, registry, building_data));
+            acc.add_from(op, &cc_bonuses(op, registry, building_data));
         }
     }
     op_index.get(candidate_id).map_or(0.0, |op| {
@@ -3405,7 +3525,7 @@ pub(crate) fn assign_control_center(
                         .is_none_or(|c| cc_condition_feasible(c, operators, building_data))
                 })
                 .collect();
-            seed.add(&bonuses);
+            seed.add_from(op, &bonuses);
         }
     }
 

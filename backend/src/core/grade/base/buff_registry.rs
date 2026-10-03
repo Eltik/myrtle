@@ -9,6 +9,7 @@ use crate::core::gamedata::types::operator::Operator;
 use super::clause::{PEER_STAGE_FIXED_LIMIT, PEER_STAGE_NET_LIMIT};
 use super::pools::ROBOTS_IN_POWER;
 use super::util::buff_family;
+use crate::core::gamedata::types::consts::GameDataConst;
 
 /// Build a lowercased operator-name -> `char_id` lookup, used to resolve
 /// named-teammate conditional buffs (the buff text references operators by
@@ -618,6 +619,11 @@ pub enum BuffResolutionStrategy {
         required_char_ids: Vec<String>,
         base_efficiency: f64,
         bonus_efficiency: f64,
+        /// "When Vigil is in the Base (excluding Assistants and Activity
+        /// Room users)" (Bellone, Underflow): the partner counts wherever
+        /// they are stationed, a dormitory included. False = the "Work
+        /// Area" phrasing, where a resting partner does not count.
+        anywhere: bool,
     },
 
     /// Deployment-context gate: the bonus applies only while a named operator (or enough
@@ -828,6 +834,20 @@ pub enum BuffResolutionStrategy {
     GlobalEffect {
         target_room: String, // "MANUFACTURE", "TRADING"
         bonus_pct: f64,
+    },
+
+    /// Control Center global gated on the CENTER's own crew: "assigned
+    /// together with other L.G.D. Operators to the Control Center, all
+    /// Factories' productivity +3%" (Hoshiguma the Breacher). Fires when at
+    /// least `min_others` OTHER seated operators carry `tag` - the group id
+    /// is the game's own membership (Swire counts, Swire the Elegant Wit, who
+    /// carries no group, does not). Resolved by the CC bonus accumulator once
+    /// the crew is known; alone it is worth nothing.
+    GlobalEffectWithCrewTag {
+        target_room: String,
+        bonus_pct: f64,
+        tag: String,
+        min_others: usize,
     },
 
     /// Control Center buff that boosts a production room ONLY when its team
@@ -1388,6 +1408,8 @@ pub fn build_registry(
                     branch
                 } else if let Some(gated) = parse_room_presence_gated_global(&buff.description) {
                     gated
+                } else if let Some(crew_gated) = parse_crew_tag_global(&buff.description) {
+                    crew_gated
                 }
                 // Pool-scaled globals next, so the plain-global branches below
                 // don't claim them at their flat base value. Audited 2026-08-13:
@@ -1614,9 +1636,9 @@ pub fn build_registry(
                 // (vs the same-room "...same Trading Post as <op>"). Carries the base, the bonus %
                 // stated after the named list, and the required operators; the optimizer credits the
                 // bonus only once it knows who is deployed in a work area.
-                let base_wide = buff
-                    .description
-                    .contains("Work Area")
+                let in_work_area = buff.description.contains("Work Area");
+                let in_base_anywhere = buff.description.contains("is in the Base");
+                let base_wide = (in_work_area || in_base_anywhere)
                     .then(|| find_all_operator_char_ids(&buff.description, name_to_char))
                     .filter(|(ids, _)| !ids.is_empty());
                 // Deployment-context gate: the bonus needs a specific operator (or faction)
@@ -1662,6 +1684,7 @@ pub fn build_registry(
                         required_char_ids,
                         base_efficiency,
                         bonus_efficiency,
+                        anywhere: !in_work_area,
                     }
                 }
                 // Named-teammate conditional. Handles both phrasings:
@@ -2332,6 +2355,90 @@ fn first_token(s: &str) -> String {
         .next()
         .unwrap_or("")
         .to_lowercase()
+}
+
+/// "assigned together with other <$cc.g.lgd>L.G.D.</> Operators to the
+/// Control Center" - a Control-Center global gated on the center's own crew.
+static RE_CC_WITH_OTHER_TAG: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"assigned together with other <\$cc\.(?:g|tag)\.([A-Za-z0-9_]+)>").unwrap()
+});
+
+/// Hoshiguma the Breacher's Camaraderie: "together with other L.G.D.
+/// Operators to the Control Center, all Factories' productivity +3%". The
+/// gate is on the Control Center's crew, the payload a plain room-type
+/// global; one other operator of the tag is enough ("Operators" names no
+/// count). Parsed BEFORE the per-operator faction branch, which read the
+/// same text as "+3% to each L.G.D. operator in Factories" and never fired.
+fn parse_crew_tag_global(desc: &str) -> Option<BuffResolutionStrategy> {
+    let tag = RE_CC_WITH_OTHER_TAG.captures(desc)?[1].to_lowercase();
+    let lower = plain_text(desc).to_lowercase();
+    if !lower.contains("to the control center") {
+        return None;
+    }
+    let target_room = if lower.contains("all factories") {
+        "MANUFACTURE"
+    } else if lower.contains("all trading posts") {
+        "TRADING"
+    } else {
+        return None;
+    };
+    Some(BuffResolutionStrategy::GlobalEffectWithCrewTag {
+        target_room: target_room.to_string(),
+        bonus_pct: parse_first_pct(desc)?,
+        tag,
+        min_others: 1,
+    })
+}
+
+/// Operators the game's term glossary lists under a base TAG: `cc.tag.knight`
+/// reads "Includes the following operators / Nearl the Radiant Knight, Nearl,
+/// Blemishine, ..., Gravel, Viviana". A curated tag has no character field
+/// behind it - the glossary is its only definition - so this is where "all
+/// Knight Operators" (Viviana) learns who a Knight is. `char_id` -> tags.
+pub fn glossary_tags(
+    consts: &GameDataConst,
+    name_to_char: &HashMap<String, String>,
+) -> HashMap<String, Vec<String>> {
+    let mut out: HashMap<String, Vec<String>> = HashMap::new();
+    for entry in &consts.term_description_dict {
+        let Some(tag) = entry.key.strip_prefix("cc.tag.") else {
+            continue;
+        };
+        let desc = plain_text(&entry.value.description);
+        let Some((_, names)) = desc.split_once("following") else {
+            continue;
+        };
+        for name in names.split([',', '\n']) {
+            let name = name
+                .trim()
+                .trim_matches(|c| c == '\'' || c == '"' || c == ':')
+                .trim()
+                .to_lowercase();
+            if let Some(id) = name_to_char.get(&name) {
+                let tags = out.entry(id.clone()).or_default();
+                let tag = tag.to_lowercase();
+                if !tags.contains(&tag) {
+                    tags.push(tag);
+                }
+            }
+        }
+    }
+    out
+}
+
+/// [`faction_tags_of`] plus the glossary tags the operator is listed under.
+pub fn faction_tags_for(
+    char_id: &str,
+    op: &Operator,
+    glossary: &HashMap<String, Vec<String>>,
+) -> Vec<String> {
+    let mut tags = faction_tags_of(op);
+    for tag in glossary.get(char_id).into_iter().flatten() {
+        if !tags.contains(tag) {
+            tags.push(tag.clone());
+        }
+    }
+    tags
 }
 
 /// The buff families a skill takes priority over: "(This effect does not

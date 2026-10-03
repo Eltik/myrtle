@@ -393,7 +393,7 @@ pub fn recommend_shift_rotation(
         super::assignment::resolve_layout_branches(registry, building, building_data);
     let registry = &layout_registry;
     let pass1_registry = resolve_room_presence(
-        &resolve_base_wide(registry, &HashSet::new()),
+        &resolve_base_wide(registry, &HashSet::new(), &HashSet::new()),
         &HashMap::new(),
         operators,
     );
@@ -425,7 +425,15 @@ pub fn recommend_shift_rotation(
         })
         .collect();
     let pass2_registry = resolve_room_presence(
-        &resolve_base_wide(registry, &deployed),
+        &resolve_base_wide(
+            registry,
+            &deployed,
+            &deployed
+                .iter()
+                .cloned()
+                .chain(super::assignment::dorm_residents(building))
+                .collect(),
+        ),
         &deployed_rooms,
         operators,
     );

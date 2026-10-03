@@ -2025,7 +2025,11 @@ pub fn shift_rotation_to_dto(
             .map(|(op, _)| op.clone())
             .collect();
         let shift_registry = crate::core::grade::base::assignment::resolve_room_presence(
-            &crate::core::grade::base::assignment::resolve_base_wide(&layout_registry, &working),
+            &crate::core::grade::base::assignment::resolve_base_wide(
+                &layout_registry,
+                &working,
+                &shift_seats.keys().cloned().collect(),
+            ),
             &shift_seats,
             profiles,
         );
