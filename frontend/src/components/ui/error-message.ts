@@ -41,6 +41,7 @@ function describeHttp(f: IFailure, t: TypedT<typeof messages>): string {
     // `code` is the backend's `ApiError` discriminator (backend/src/app/error.rs);
     // `SYNC_FAILED` is ours, minted in `lib/auth/server.ts` `completeLogin`.
     if (f.code === "SYNC_FAILED") return t("errorMessage.syncFailed", { status });
+    if (f.code === "GAME_LOGIN_REQUIRED") return t("errorMessage.gameLoginRequired");
     if (status === 429 || f.code === "RATE_LIMITED") return t("errorMessage.rateLimited");
     if (status === 503 || f.code === "SERVICE_UNAVAILABLE") return t("errorMessage.unavailable", { status });
     if (status >= 500) return t("errorMessage.serverError", { status });

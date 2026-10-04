@@ -1,16 +1,15 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ListChecks, RotateCcw, X } from "lucide-react";
 import * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { useAuth } from "#/hooks/use-auth";
-import { refreshRosterFn } from "#/lib/api/auth";
+import { useResyncRoster } from "#/hooks/use-resync-roster";
 import { userSkinsQueryOptions } from "#/lib/api/skins";
 import { userStageClearsQueryOptions } from "#/lib/api/stages";
 import { userQueryOptions } from "#/lib/api/user";
 import { useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { forgetSession } from "#/lib/root-context";
 import { cn, getAvatarById } from "#/lib/utils";
 import { useAutoTranslate } from "../autoTranslate";
 import { formatDate } from "../helpers";
@@ -54,15 +53,7 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
     const ownedQuery = useQuery({ ...userSkinsQueryOptions(uid ?? ""), enabled: !!uid && hideOwned });
     const hidden = React.useMemo<ReadonlySet<string>>(() => (hideOwned && ownedQuery.data ? new Set(ownedQuery.data.map((s) => s.skin_id)) : NO_HIDDEN), [hideOwned, ownedQuery.data]);
     const accountPrimes = profile.data?.originite ?? null;
-    const queryClient = useQueryClient();
-    const resync = useMutation({
-        mutationFn: () => refreshRosterFn(),
-        onSuccess: () => {
-            // The session carries the profile row a resync rewrites.
-            forgetSession();
-            return queryClient.invalidateQueries({ queryKey: ["user"] });
-        },
-    });
+    const resync = useResyncRoster();
     React.useEffect(() => {
         if (accountPrimes !== null && !state.initialManual && state.initial !== accountPrimes) setState((s) => ({ ...s, initial: accountPrimes }));
     }, [accountPrimes, state.initialManual, state.initial, setState]);

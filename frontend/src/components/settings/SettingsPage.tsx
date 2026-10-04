@@ -1,10 +1,12 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { PaletteIcon, ShieldIcon, TriangleAlertIcon, UserRoundIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { useErrorMessage } from "#/components/ui/error-message";
 import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
-import { disconnectGameAccountFn, type IUpdateUserSettingsInput, refreshRosterFn, updateUserSettingsFn } from "#/lib/api/auth";
+import { useInvalidateProfile, useResyncRoster } from "#/hooks/use-resync-roster";
+import { disconnectGameAccountFn, type IUpdateUserSettingsInput, updateUserSettingsFn } from "#/lib/api/auth";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { forgetSession } from "#/lib/root-context";
@@ -39,8 +41,8 @@ function initialSettings(user: IUserProfile | null): IUpdateUserSettingsInput {
 export function SettingsPage({ user }: { user: IUserProfile | null }) {
     const navigate = useNavigate();
     const { logout } = useAuth();
-    const queryClient = useQueryClient();
     const t: TypedT<typeof messages> = useT("settings");
+    const describeError = useErrorMessage();
 
     // Appearance is a client-side preference (theme, accent, dynamic art) and
     // is available to everyone; the account sections require signing in.
@@ -54,69 +56,35 @@ export function SettingsPage({ user }: { user: IUserProfile | null }) {
         setSettings(initialSettings(user));
     }, [user]);
 
+    const invalidateProfile = useInvalidateProfile();
+    const toastSuccess = (id: string, title: string, description: string) => toastManager.add({ id: `${id}-${Date.now()}`, title, description, type: "success" });
+    const toastError = (id: string, title: string, err: unknown) => toastManager.add({ id: `${id}-err-${Date.now()}`, title, description: describeError(err), type: "error" });
+
     const settingsMutation = useMutation({
         mutationFn: (next: IUpdateUserSettingsInput) => updateUserSettingsFn({ data: next }),
         onSuccess: () => {
-            // The session carries the profile row, so the next navigation must refetch it.
-            forgetSession();
-            queryClient.invalidateQueries({ queryKey: ["user"] });
-            toastManager.add({
-                id: `settings-saved-${Date.now()}`,
-                title: t("toast.saved.title"),
-                description: t("toast.saved.body"),
-                type: "success",
-            });
+            void invalidateProfile();
+            toastSuccess("settings-saved", t("toast.saved.title"), t("toast.saved.body"));
         },
         onError: (err: unknown) => {
             setSettings(initialSettings(user));
-            toastManager.add({
-                id: `settings-err-${Date.now()}`,
-                title: t("toast.saveFailed.title"),
-                description: err instanceof Error ? err.message : String(err),
-                type: "error",
-            });
+            toastError("settings", t("toast.saveFailed.title"), err);
         },
     });
 
-    const resyncMutation = useMutation({
-        mutationFn: () => refreshRosterFn(),
-        onSuccess: () => {
-            forgetSession();
-            queryClient.invalidateQueries({ queryKey: ["user"] });
-            toastManager.add({
-                id: `resync-${Date.now()}`,
-                title: t("toast.resynced.title"),
-                description: t("toast.resynced.body"),
-                type: "success",
-            });
-        },
-        onError: (err: unknown) =>
-            toastManager.add({
-                id: `resync-err-${Date.now()}`,
-                title: t("toast.resyncFailed.title"),
-                description: err instanceof Error ? err.message : String(err),
-                type: "error",
-            }),
+    const resyncMutation = useResyncRoster({
+        onSuccess: () => toastSuccess("resync", t("toast.resynced.title"), t("toast.resynced.body")),
+        onError: (err) => toastError("resync", t("toast.resyncFailed.title"), err),
     });
 
     const disconnectMutation = useMutation({
         mutationFn: () => disconnectGameAccountFn(),
         onSuccess: ({ removed }) => {
             forgetSession();
-            toastManager.add({
-                id: `disconnect-${Date.now()}`,
-                title: removed ? t("toast.disconnected.title") : t("toast.nothingToDisconnect.title"),
-                description: removed ? t("toast.disconnected.body") : t("toast.nothingToDisconnect.body"),
-                type: "success",
-            });
+            if (removed) toastSuccess("disconnect", t("toast.disconnected.title"), t("toast.disconnected.body"));
+            else toastSuccess("disconnect", t("toast.nothingToDisconnect.title"), t("toast.nothingToDisconnect.body"));
         },
-        onError: (err: unknown) =>
-            toastManager.add({
-                id: `disconnect-err-${Date.now()}`,
-                title: t("toast.disconnectFailed.title"),
-                description: err instanceof Error ? err.message : String(err),
-                type: "error",
-            }),
+        onError: (err: unknown) => toastError("disconnect", t("toast.disconnectFailed.title"), err),
     });
 
     const handleSettingsChange = (next: IUpdateUserSettingsInput) => {
@@ -131,12 +99,7 @@ export function SettingsPage({ user }: { user: IUserProfile | null }) {
             await navigate({ to: "/" });
         } catch (err) {
             setSigningOut(false);
-            toastManager.add({
-                id: `signout-err-${Date.now()}`,
-                title: t("toast.signOutFailed.title"),
-                description: err instanceof Error ? err.message : String(err),
-                type: "error",
-            });
+            toastError("signout", t("toast.signOutFailed.title"), err);
         }
     };
 

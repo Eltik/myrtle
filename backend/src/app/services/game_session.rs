@@ -9,10 +9,6 @@ use crate::{
     database::queries::{game_credentials, users},
 };
 
-/// Shown whenever no session can be established from either the cache or the
-/// durable store. Reaching this genuinely does require a new email code.
-const NEEDS_LOGIN: &str = "no game session - login again";
-
 /// Load a user's cached game session. Fails if absent or unparseable.
 ///
 /// Cache-only by design: this serves paths that run after [`ensure_fresh`] has
@@ -24,7 +20,7 @@ pub async fn load(state: &AppState, user_id: &str) -> Result<AuthSession, ApiErr
         .get(&CacheKey::GameSession { uid: user_id })
         .await;
 
-    let json = json.ok_or(ApiError::BadRequest(NEEDS_LOGIN.into()))?;
+    let json = json.ok_or(ApiError::GameLoginRequired)?;
 
     serde_json::from_str(&json).map_err(|_| ApiError::BadRequest("invalid game session".into()))
 }
@@ -52,11 +48,11 @@ pub async fn save(state: &AppState, user_id: &str, session: &AuthSession) {
 async fn restore(state: &AppState, uid: &str, server: Server) -> Result<AuthSession, ApiError> {
     let user = users::find_raw_by_uid(&state.db, uid, server.index() as i16)
         .await?
-        .ok_or_else(|| ApiError::BadRequest(NEEDS_LOGIN.into()))?;
+        .ok_or(ApiError::GameLoginRequired)?;
 
     let credential = game_credentials::load(&state.db, &state.config.game_credential_key, user.id)
         .await?
-        .ok_or_else(|| ApiError::BadRequest(NEEDS_LOGIN.into()))?;
+        .ok_or(ApiError::GameLoginRequired)?;
 
     Ok(AuthSession {
         uid: uid.into(),
@@ -74,7 +70,8 @@ async fn restore(state: &AppState, uid: &str, server: Server) -> Result<AuthSess
 /// The cache is an optimisation here, not the source of truth. A miss, an
 /// eviction, a backend restart, or a cached value that no longer parses all
 /// land on the same path: rebuild from `user_game_credentials`, so a user
-/// only sees `NEEDS_LOGIN` when we genuinely hold nothing for them.
+/// only sees [`ApiError::GameLoginRequired`] when we genuinely hold nothing
+/// for them.
 pub async fn ensure_fresh(
     state: &AppState,
     user_id: &str,

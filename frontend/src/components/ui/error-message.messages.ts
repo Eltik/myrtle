@@ -46,6 +46,10 @@ export const messages = {
         text: "Signed in, but the first roster sync failed ({status}). Reload the page: your account is connected, and you can sync again from your profile.",
         description: "Error toast body after a successful sign-in whose immediate roster download failed. {status} is the HTTP status number.",
     },
+    "errorMessage.gameLoginRequired": {
+        text: "Your Yostar login has expired. Sign out, then sign back in with a new email code.",
+        description: "Error toast body when the site no longer holds the visitor's game login (it expired, or they chose not to keep it), so a game action cannot run. 'Yostar' is the game's publisher; 'email code' is the one-time code Yostar emails at sign-in.",
+    },
     "errorMessage.rejected": {
         text: "The request was rejected ({status}).",
         description: "Error toast body when the server refused the request and gave no readable reason. {status} is the HTTP status number.",

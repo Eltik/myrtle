@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import * as React from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -6,10 +6,9 @@ import { Button } from "#/components/ui/button";
 import { Card } from "#/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { useAuth } from "#/hooks/use-auth";
-import { refreshRosterFn } from "#/lib/api/auth";
+import { useResyncRoster } from "#/hooks/use-resync-roster";
 import { userQueryOptions } from "#/lib/api/user";
 import { type TypedRichT, useFormatters, useLocale, useRichT, useT } from "#/lib/i18n";
-import { forgetSession } from "#/lib/root-context";
 import { cn } from "#/lib/utils";
 import { formatDate } from "../helpers";
 import { ANNIHILATION_CAPS, DAILY_MISSION_ORUNDUM, dayAt, type GreenCertShop, type IProjectedDay, MONTHLY_CARD_ORUNDUM, originiteWarning, WEEKLY_MISSION_ORUNDUM } from "../pulls/income";
@@ -79,15 +78,7 @@ export function PullsBudget({ settings, setSettings, days, committed, freePulls,
     const { user } = useAuth();
     const uid = user?.uid ?? null;
     const profile = useQuery({ ...userQueryOptions(uid ?? ""), enabled: !!uid });
-    const queryClient = useQueryClient();
-    const resync = useMutation({
-        mutationFn: () => refreshRosterFn(),
-        onSuccess: () => {
-            // The session carries the profile row a resync rewrites.
-            forgetSession();
-            return queryClient.invalidateQueries({ queryKey: ["user"] });
-        },
-    });
+    const resync = useResyncRoster();
 
     const first = days[0];
     const last = days[days.length - 1];

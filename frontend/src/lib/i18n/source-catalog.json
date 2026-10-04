@@ -789,6 +789,7 @@
     "common.drawer.checked": "Checked",
     "common.drawer.close": "Close",
     "common.drawer.selected": "Selected",
+    "common.errorMessage.gameLoginRequired": "Your Yostar login has expired. Sign out, then sign back in with a new email code.",
     "common.errorMessage.offline": "You're offline. Check your connection and try again.",
     "common.errorMessage.rateLimited": "Too many attempts. Wait a minute and try again.",
     "common.errorMessage.rejected": "The request was rejected ({status}).",

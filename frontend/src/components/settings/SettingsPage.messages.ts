@@ -29,7 +29,7 @@ export const messages = {
     },
     "toast.saveFailed.title": {
         text: "Couldn't save settings",
-        description: "Error toast title when storing a privacy switch failed. The body is the server's own message.",
+        description: "Error toast title when storing a privacy switch failed. The body explains why (offline, signed out, or the server's own reason).",
     },
     "toast.resynced.title": {
         text: "Roster re-synced",
@@ -41,7 +41,7 @@ export const messages = {
     },
     "toast.resyncFailed.title": {
         text: "Couldn't re-sync",
-        description: "Error toast title when pulling fresh game data failed. The body is the server's own message.",
+        description: "Error toast title when pulling fresh game data failed. The body explains why (offline, signed out, or the server's own reason).",
     },
     "toast.disconnected.title": {
         text: "Game account disconnected",
@@ -61,11 +61,11 @@ export const messages = {
     },
     "toast.disconnectFailed.title": {
         text: "Couldn't disconnect",
-        description: "Error toast title when deleting the stored game token failed. The body is the server's own message.",
+        description: "Error toast title when deleting the stored game token failed. The body explains why (offline, signed out, or the server's own reason).",
     },
     "toast.signOutFailed.title": {
         text: "Couldn't sign out",
-        description: "Error toast title when ending the browser session failed. The body is the server's own message.",
+        description: "Error toast title when ending the browser session failed. The body explains why (offline, signed out, or the server's own reason).",
     },
 } satisfies MessageMap;
 

@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-02T00:45:32.780Z",
+    "generatedAt": "2026-10-04T01:15:24.850Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -5787,6 +5787,13 @@
             "namespace": "common",
             "source_text": "Selected",
             "description": "Accessible name of the checkmark drawn beside the chosen drawer menu radio item. A state, not a verb.",
+            "placeholders": []
+        },
+        {
+            "key": "common.errorMessage.gameLoginRequired",
+            "namespace": "common",
+            "source_text": "Your Yostar login has expired. Sign out, then sign back in with a new email code.",
+            "description": "Error toast body when the site no longer holds the visitor's game login (it expired, or they chose not to keep it), so a game action cannot run. 'Yostar' is the game's publisher; 'email code' is the one-time code Yostar emails at sign-in.",
             "placeholders": []
         },
         {
@@ -16530,7 +16537,7 @@
             "key": "settings.toast.disconnectFailed.title",
             "namespace": "settings",
             "source_text": "Couldn't disconnect",
-            "description": "Error toast title when deleting the stored game token failed. The body is the server's own message.",
+            "description": "Error toast title when deleting the stored game token failed. The body explains why (offline, signed out, or the server's own reason).",
             "placeholders": []
         },
         {
@@ -16565,7 +16572,7 @@
             "key": "settings.toast.resyncFailed.title",
             "namespace": "settings",
             "source_text": "Couldn't re-sync",
-            "description": "Error toast title when pulling fresh game data failed. The body is the server's own message.",
+            "description": "Error toast title when pulling fresh game data failed. The body explains why (offline, signed out, or the server's own reason).",
             "placeholders": []
         },
         {
@@ -16586,7 +16593,7 @@
             "key": "settings.toast.saveFailed.title",
             "namespace": "settings",
             "source_text": "Couldn't save settings",
-            "description": "Error toast title when storing a privacy switch failed. The body is the server's own message.",
+            "description": "Error toast title when storing a privacy switch failed. The body explains why (offline, signed out, or the server's own reason).",
             "placeholders": []
         },
         {
@@ -16607,7 +16614,7 @@
             "key": "settings.toast.signOutFailed.title",
             "namespace": "settings",
             "source_text": "Couldn't sign out",
-            "description": "Error toast title when ending the browser session failed. The body is the server's own message.",
+            "description": "Error toast title when ending the browser session failed. The body explains why (offline, signed out, or the server's own reason).",
             "placeholders": []
         },
         {

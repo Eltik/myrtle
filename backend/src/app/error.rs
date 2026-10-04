@@ -10,6 +10,12 @@ use crate::core::hypergryph::fetch::FetchError;
 pub enum ApiError {
     #[error("{0}")]
     BadRequest(String),
+    /// We hold no game session for the user, from the cache or the durable
+    /// store, so only a fresh sign-in with an email code can recover. A 400
+    /// with its own code: clients branch on `GAME_LOGIN_REQUIRED` to tell the
+    /// user what to do instead of showing the prose.
+    #[error("no game session - login again")]
+    GameLoginRequired,
     #[error("unauthorized")]
     Unauthorized,
     #[error("forbidden")]
@@ -41,6 +47,7 @@ impl ApiError {
     pub fn shared_copy(&self) -> Self {
         match self {
             Self::BadRequest(m) => Self::BadRequest(m.clone()),
+            Self::GameLoginRequired => Self::GameLoginRequired,
             Self::Unauthorized => Self::Unauthorized,
             Self::Forbidden => Self::Forbidden,
             Self::NotFound => Self::NotFound,
@@ -90,6 +97,7 @@ impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let (status, code, details) = match &self {
             Self::BadRequest(_) => (StatusCode::BAD_REQUEST, "BAD_REQUEST", None),
+            Self::GameLoginRequired => (StatusCode::BAD_REQUEST, "GAME_LOGIN_REQUIRED", None),
             Self::Unauthorized => (StatusCode::UNAUTHORIZED, "UNAUTHORIZED", None),
             Self::Forbidden => (StatusCode::FORBIDDEN, "FORBIDDEN", None),
             Self::NotFound | Self::NotFoundMessage(_) => (StatusCode::NOT_FOUND, "NOT_FOUND", None),
