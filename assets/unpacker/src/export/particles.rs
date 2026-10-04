@@ -228,13 +228,13 @@ fn curve_eval(curve: &Value, t: f64) -> f64 {
             fd(k, "outSlope", 0.0),
         )
     };
-    let Some(first) = keys.first().map(&read) else {
+    let Some(first) = keys.first().map(read) else {
         return 0.0;
     };
     if t <= first.0 {
         return first.1;
     }
-    let last = keys.last().map_or(first, &read);
+    let last = keys.last().map_or(first, read);
     if t >= last.0 {
         return last.1;
     }

@@ -7098,7 +7098,7 @@ fn export_scene(
         {
             use std::hash::{Hash, Hasher};
             let mut h = std::collections::hash_map::DefaultHasher::new();
-            let mut q = |v: f32| (f64::from(v) * 1000.0).round() as i64;
+            let q = |v: f32| (f64::from(v) * 1000.0).round() as i64;
             quad.tex_pid.hash(&mut h);
             quad.sort.hash(&mut h);
             quad.additive.hash(&mut h);
@@ -7118,8 +7118,8 @@ fn export_scene(
             // root) and once cross-root-gated (idle root). Those are the same artwork
             // and collapsing them is the whole point of this pass; keeping both would
             // draw the layer twice from the transform beat onward.
-            quad.active_from.map(&mut q).hash(&mut h);
-            quad.active_until.map(&mut q).hash(&mut h);
+            quad.active_from.map(q).hash(&mut h);
+            quad.active_until.map(q).hash(&mut h);
             // Animation identity: the colour and UV curves drive what the layer shows
             // over time, so two quads running different curves are never duplicates.
             if let Some(cc) = &quad.color_curve {

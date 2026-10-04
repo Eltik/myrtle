@@ -184,7 +184,7 @@ impl<R: Read> SanitizingReader<R> {
 
     fn finish(&mut self) {
         self.decode_lossy(&[], true);
-        debug_assert!(self.utf8_tail.is_empty());
+        debug_assert_eq!(self.utf8_tail, b"");
         let tail = std::str::from_utf8(&self.sanitize_tail).expect("lossy output is valid UTF-8");
         self.output
             .extend_from_slice(sanitize_lone_surrogates(tail).as_bytes());

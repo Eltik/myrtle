@@ -1,10 +1,13 @@
 //! Every tier list entity kind's catalogue, read off the real EN extract.
 //!
-//! Pins the counts the kinds were specified against (EN tables of 2026-09-05):
-//! a count that moves means the game data or an inclusion rule changed, and
-//! either one is worth a look before the pool silently grows or shrinks. Also
-//! proves every offered entity resolves and validates, and prints how many
-//! have no art, which the client draws as a placeholder.
+//! Floors each kind at the count it was specified against (EN tables of
+//! 2026-09-05): game updates only add entities, so a count below its floor means
+//! an inclusion rule dropped some. The floors are not exact because CI runs
+//! against the newest `game-data` artifact, not the extract they were measured
+//! on. Also proves every offered entity resolves and validates, and prints how
+//! many have no art, which the client draws as a placeholder. CI's artifact
+//! carries no textures, so story sprites are only counted where the sprite tree
+//! is on disk.
 
 mod common;
 
@@ -16,8 +19,16 @@ use backend::app::services::tier_entity::{FacetValue, catalogue, known, resolve,
 use backend::core::gamedata::assets::AssetIndex;
 use backend::database::models::tier_list::EntityKind;
 
+fn en_dir() -> std::path::PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("../assets/output/en")
+}
+
 fn en_assets() -> AssetIndex {
-    AssetIndex::build(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../assets/output/en"))
+    AssetIndex::build(&en_dir())
+}
+
+fn story_sprites_present() -> bool {
+    en_dir().join("textures/avg/characters").is_dir()
 }
 
 fn facet<'a>(facets: &'a BTreeMap<String, FacetValue>, name: &str) -> Option<&'a str> {
@@ -28,11 +39,11 @@ fn facet<'a>(facets: &'a BTreeMap<String, FacetValue>, name: &str) -> Option<&'a
 }
 
 #[test]
-fn every_kind_catalogue_matches_the_measured_counts() {
+fn every_kind_catalogue_reaches_the_measured_counts() {
     let gd = common::load_game_data();
     let assets = en_assets();
 
-    let expected: [(EntityKind, usize); 11] = [
+    let floors: [(EntityKind, usize); 11] = [
         (EntityKind::Class, 8),
         (EntityKind::Subclass, 71),
         (EntityKind::Enemy, 1541),
@@ -79,11 +90,14 @@ fn every_kind_catalogue_matches_the_measured_counts() {
             no_icon.len(),
             no_icon.iter().take(40).collect::<Vec<_>>()
         );
-        if let Some((_, want)) = expected.iter().find(|(k, _)| *k == kind)
-            && cat.len() != *want
+        if kind == EntityKind::StorySprite && !story_sprites_present() {
+            continue;
+        }
+        if let Some((_, floor)) = floors.iter().find(|(k, _)| *k == kind)
+            && cat.len() < *floor
         {
             failures.push(format!(
-                "{}: {} offered, expected {want}",
+                "{}: {} offered, expected at least {floor}",
                 kind.as_str(),
                 cat.len()
             ));
@@ -115,10 +129,18 @@ fn the_event_pool_by_display_type() {
     for (display, (n, no_icon)) in &by_display {
         println!("  {display:<12} {n:>4} ({no_icon} without art)");
     }
-    assert_eq!(by_display.get("SIDESTORY").map(|c| c.0), Some(64));
-    assert_eq!(by_display.get("MINISTORY").map(|c| c.0), Some(20));
-    assert_eq!(by_display.get("BRANCHLINE").map(|c| c.0), Some(6));
-    assert_eq!(by_display.get("NONE").map(|c| c.0), Some(48));
+    for (display, floor) in [
+        ("SIDESTORY", 64),
+        ("MINISTORY", 20),
+        ("BRANCHLINE", 6),
+        ("NONE", 48),
+    ] {
+        let n = by_display.get(display).map_or(0, |c| c.0);
+        assert!(
+            n >= floor,
+            "{display}: {n} events, expected at least {floor}"
+        );
+    }
 }
 
 #[test]
@@ -226,7 +248,7 @@ fn the_integrated_strategies_pool_by_theme_and_type() {
             .all(|e| facet(&e.facets, "item_type") != Some("recruit_ticket"))
     );
     let total: usize = by.values().map(|c| c.0).sum();
-    assert_eq!(total, 1681);
+    assert!(total >= 1681, "{total} entries, expected at least 1681");
 }
 
 #[test]
@@ -271,6 +293,13 @@ fn default_skins_and_original_modules_are_not_offered() {
 
 #[test]
 fn story_sprites_are_one_per_character_and_mostly_named() {
+    if !story_sprites_present() {
+        eprintln!(
+            "no EN story sprite tree at {}, skipping",
+            en_dir().display()
+        );
+        return;
+    }
     let gd = common::load_game_data();
     let started = std::time::Instant::now();
     let assets = en_assets();

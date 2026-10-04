@@ -560,7 +560,7 @@ fn build_storylines(
                     .as_deref()
                     .and_then(|set_id| gd.storyline_story_sets.get(set_id))
                     .and_then(|set| set.group_id())
-                    .and_then(&resolve)
+                    .and_then(resolve)
                 else {
                     continue;
                 };

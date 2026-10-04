@@ -110,7 +110,7 @@ jobs:
       # "Game data for backend CI" block there). The artifact root is the contents
       # of `output/en/gamedata/`, so it lands at the same path a local install uses.
       - name: Download game data from assets pipeline
-        uses: dawidd6/action-download-artifact@v6
+        uses: dawidd6/action-download-artifact@v27
         with:
           workflow: assets-ci.yml
           name: game-data

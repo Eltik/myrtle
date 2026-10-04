@@ -163,19 +163,19 @@ mod platform {
 
     unsafe fn libc_open(path: *const u8, flags: i32) -> i32 {
         unsafe extern "C" {
-            fn open(path: *const u8, flags: i32, ...) -> i32;
+            fn open(path: *const core::ffi::c_char, flags: i32, ...) -> i32;
         }
         // SAFETY: the caller passes a NUL-terminated `path`; `open` reads it and
         // returns an fd or negative error code.
-        unsafe { open(path, flags) }
+        unsafe { open(path.cast(), flags) }
     }
 
     unsafe fn libc_read(fd: i32, buf: *mut u8, count: usize) -> isize {
         unsafe extern "C" {
-            fn read(fd: i32, buf: *mut u8, count: usize) -> isize;
+            fn read(fd: i32, buf: *mut core::ffi::c_void, count: usize) -> isize;
         }
         // SAFETY: the caller passes a valid `fd` and a writable (buf, count) region.
-        unsafe { read(fd, buf, count) }
+        unsafe { read(fd, buf.cast(), count) }
     }
 
     unsafe fn libc_close(fd: i32) {
