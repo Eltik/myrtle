@@ -11,6 +11,34 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-10-04.title": {
+        text: "Improved: Pages across the site load faster",
+        description: "Title of the 2026-10-04 release note.",
+    },
+    "note.2026-10-04.lead": {
+        text: "Many pages stopped downloading data they never show. The enemies list, birthdays, the DPS, HPS and recruitment tools, stage pages and a profile's Roster, Plans and Optimizer tabs are now **much lighter**, so they open sooner, especially on phones and slow connections.",
+        description: "Lead paragraph of the 2026-10-04 release note, rendered as Markdown. DPS and HPS are damage and healing calculators; Roster, Plans and Optimizer are tab names on a player profile and must match their translations.",
+    },
+    "note.2026-10-04.item.1": {
+        text: "The language menu shows how much of the site each language has been translated.",
+        description: "Bullet in the 2026-10-04 release note, filed under 'New'.",
+    },
+    "note.2026-10-04.item.2": {
+        text: "The base optimizer reads group bonuses the way the game defines them: Gravel counts as a Knight, Hoshiguma the Breacher's Control Center bonus applies, and skills that ask whether an operator is in the base count operators resting in dormitories.",
+        description: "Bullet in the 2026-10-04 release note, filed under 'Fixed'. Gravel and Hoshiguma the Breacher are operators and keep the game's names; the Knights are a faction; the Control Center and dormitories are RIIC rooms.",
+    },
+    "note.2026-10-04.item.3": {
+        text: "Stage map previews are no longer squashed, and the randomizer's stage thumbnail grows when you hover it.",
+        description: "Bullet in the 2026-10-04 release note, filed under 'Fixed'.",
+    },
+    "note.2026-10-04.item.4": {
+        text: "An expired game login now says so plainly when you resync, instead of showing a raw error.",
+        description: "Bullet in the 2026-10-04 release note, filed under 'Fixed'. 'Resync' is the button that refreshes a profile from the game.",
+    },
+    "note.2026-10-04.item.5": {
+        text: "On phones, tapping the story reader's collapsed toolbar opens it, and the story library's chapter bar no longer flickers when you jump.",
+        description: "Bullet in the 2026-10-04 release note, filed under 'Fixed'.",
+    },
     "note.2026-10-02.title": {
         text: "Improved: The operators page and profiles load faster",
         description: "Title of the 2026-10-02 release note. 'Profiles' are player profile pages.",
