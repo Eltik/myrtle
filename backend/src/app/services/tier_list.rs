@@ -434,6 +434,10 @@ pub async fn list_details(
     ))
 }
 
+/// How many active tier lists a regular user may own. Tier-list staff are
+/// exempt: they curate lists for the site rather than for themselves.
+const MAX_LISTS_PER_USER: i64 = 10;
+
 pub async fn create(
     state: &AppState,
     user_id: Uuid,
@@ -442,10 +446,12 @@ pub async fn create(
     description: Option<&str>,
     list_type: &str,
 ) -> Result<TierList, ApiError> {
-    if list_type == "community" {
+    if list_type == "community" && !role.is_any_admin_role() {
         let count = count_by_user(&state.db, user_id).await?;
-        if count >= 10 {
-            return Err(ApiError::Conflict("maximum 10 tier lists per user".into()));
+        if count >= MAX_LISTS_PER_USER {
+            return Err(ApiError::Conflict(format!(
+                "maximum {MAX_LISTS_PER_USER} tier lists per user"
+            )));
         }
     }
 
