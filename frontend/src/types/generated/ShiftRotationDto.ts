@@ -15,6 +15,11 @@ export type ShiftRotationDto = {
      */
     sustained: Array<AssignedOperator>;
     /**
+     * Operators seated as zero-morale tokens (the "dead Lancet"): kept in
+     * their room every shift, never rested. The frontend badges them.
+     */
+    parked: Array<AssignedOperator>;
+    /**
      * A week-long morale simulation of the recommended rhythm: does it hold up?
      */
     sustainability: SustainabilityDto;

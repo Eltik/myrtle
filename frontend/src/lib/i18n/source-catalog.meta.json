@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-04T10:57:01.000Z",
+    "generatedAt": "2026-10-04T13:43:25.564Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -37687,6 +37687,20 @@
             "namespace": "user",
             "source_text": "Optimized",
             "description": "Label on the before-and-after figures of a room the optimizer changed. Rendered uppercase by CSS.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.base.room.parked",
+            "namespace": "user",
+            "source_text": "Parked",
+            "description": "Tag on an operator deliberately kept at zero morale in a room (the 'dead Lancet' trick). Rendered uppercase by CSS.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.base.room.parked.tooltip",
+            "namespace": "user",
+            "source_text": "Kept at zero morale on purpose: a Control Center skill still counts them as assigned here, while a plant-count skill that excludes working robots no longer sees them, so both bonuses apply. Never rotate or rest them; their own skill is forfeited.",
+            "description": "Tooltip on the 'Parked' tag.",
             "placeholders": []
         },
         {

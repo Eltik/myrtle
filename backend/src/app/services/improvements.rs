@@ -577,6 +577,12 @@ pub struct AssignedOperator {
     #[serde(default)]
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     pub bench: bool,
+    /// True for a PARKED token: seated at zero morale on purpose so a named
+    /// plant-count gate and a robot-exclusion gate both apply (the "dead
+    /// Lancet"). Never rotated; its own skills are not live.
+    #[serde(default)]
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub parked: bool,
 }
 
 /// An operator leaving a cell for another room in the SAME shift.
@@ -601,6 +607,9 @@ pub struct ShiftRotationDto {
     /// Operators the player runs 24/7 with a morale-swap manager (Fiammetta) - kept working every
     /// shift instead of resting the middle one. The frontend badges these as "24/7 - Fiammetta".
     pub sustained: Vec<AssignedOperator>,
+    /// Operators seated as zero-morale tokens (the "dead Lancet"): kept in
+    /// their room every shift, never rested. The frontend badges them.
+    pub parked: Vec<AssignedOperator>,
     /// A week-long morale simulation of the recommended rhythm: does it hold up?
     pub sustainability: SustainabilityDto,
 }
@@ -1894,6 +1903,7 @@ pub fn static_sustainability(
             })
             .collect(),
         sustained: Vec::new(),
+        parked: Vec::new(),
         bench: Vec::new(),
     };
     let targeted = targeted_morale_effects(
@@ -1970,6 +1980,8 @@ pub fn shift_rotation_to_dto(
     };
     let bench_ids: std::collections::HashSet<&str> =
         rotation.bench.iter().map(String::as_str).collect();
+    let parked_ids: std::collections::HashSet<&str> =
+        rotation.parked.iter().map(String::as_str).collect();
     // Order-independent pairing of each recommended cell to the player's closest current team.
     let matched = match_current_teams(rotation);
     // The shifts each operator is RECOMMENDED to work (their "home" shifts). A main-team operator
@@ -2212,7 +2224,10 @@ pub fn shift_rotation_to_dto(
             } else if crate::core::grade::base::util::is_production_room(&room.room_type) {
                 crate::core::grade::base::skill_ledger::production_room_ledger(
                     &ledger_ctx,
-                    &room.recommended,
+                    &crate::core::grade::base::assignment::working_crew(
+                        &room.recommended,
+                        &rotation.parked.iter().cloned().collect(),
+                    ),
                     &room.room_type,
                     room.formula_type.as_deref(),
                     &shift_cc,
@@ -2235,6 +2250,7 @@ pub fn shift_rotation_to_dto(
                     let mut v = ops(&room.recommended);
                     for o in &mut v {
                         o.bench = bench_ids.contains(o.operator_id.as_str());
+                        o.parked = parked_ids.contains(o.operator_id.as_str());
                     }
                     v
                 },
@@ -2331,6 +2347,7 @@ pub fn shift_rotation_to_dto(
     ShiftRotationDto {
         shifts: shift_dtos,
         sustained: ops(&rotation.sustained),
+        parked: ops(&rotation.parked),
         sustainability,
     }
 }
@@ -2381,6 +2398,7 @@ pub(crate) fn assigned_operator(id: &str, game_data: &GameData) -> AssignedOpera
             .get(id)
             .map_or_else(|| id.to_string(), |o| o.name.clone()),
         bench: false,
+        parked: false,
     }
 }
 
@@ -2553,6 +2571,7 @@ mod shift_match_tests {
                 ],
             }],
             sustained: vec![],
+            parked: vec![],
             bench: vec![],
         };
         let m = match_current_teams(&rotation);
@@ -2581,6 +2600,7 @@ mod shift_match_tests {
                 ],
             }],
             sustained: vec![],
+            parked: vec![],
             bench: vec![],
         };
         let m = match_current_teams(&rotation);

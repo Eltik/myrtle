@@ -754,8 +754,15 @@ fn optimal_inner_core(
             if crew.is_empty() {
                 continue;
             }
+            // A parked token's own skills are not live (it sits at zero morale).
+            let seats: HashMap<String, String> = rooms
+                .iter()
+                .flat_map(|r| r.operators.iter().map(|o| (o.clone(), r.room_type.clone())))
+                .chain(crew.iter().map(|o| (o.clone(), "POWER".to_string())))
+                .collect();
+            let parked = parked_tokens(&seats, operators, registry);
             let (speed, _) = compute_team_efficiency(
-                &crew,
+                &working_crew(&crew, &parked),
                 "POWER",
                 None,
                 None,
@@ -2397,14 +2404,83 @@ pub(crate) fn effective_facility_counts(
     building_data: &BuildingDataFile,
     seats: &HashMap<String, String>,
 ) -> HashMap<String, usize> {
+    // A plan's seats carry their parked tokens (the "dead Lancet"): counted as
+    // assigned, not as working robots.
+    let parked = parked_tokens(seats, operators, registry);
     effective_facility_counts_with_inert(
         building,
         operators,
         registry,
         building_data,
         seats,
-        &HashSet::new(),
+        &parked,
     )
+}
+
+/// Operators a plan seats as a zero-morale TOKEN - the community's "dead
+/// Lancet". A named facility-count gate reads its operator as ASSIGNED whatever
+/// their morale (Eunectes' "if Lancet-2 is assigned to a Power Plant": +2
+/// plants), while a robot-exclusion gate in the same room type (Greyy the
+/// Lightningbearer's "no Operation Platforms in other Power Plants": +1) stops
+/// reading them once they are dead. Parked, both counts apply and only the
+/// token's own skills are forfeited. A token is parked when `seats` holds its
+/// gate's holder in the holder's room, the token (a robot) in the gated room,
+/// and an exclusion-gate holder in that room type; without the exclusion the
+/// token is better off working. Derived from the gates alone - no operator is
+/// named here.
+pub(crate) fn parked_tokens(
+    seats: &HashMap<String, String>,
+    operators: &[OperatorBaseProfile],
+    registry: &HashMap<String, BuffResolutionStrategy>,
+) -> HashSet<String> {
+    use super::buff_registry::FacilityGate;
+    let is_robot = |id: &str| {
+        operators
+            .iter()
+            .find(|o| o.char_id == id)
+            .is_some_and(|o| o.match_tags.iter().any(|t| t == "robot"))
+    };
+    let modifiers = || {
+        operators.iter().flat_map(|op| {
+            op.available_buffs
+                .iter()
+                .filter_map(move |b| match registry.get(b) {
+                    Some(BuffResolutionStrategy::FacilityCountModifier {
+                        target_room,
+                        owner_room,
+                        gate,
+                        amount,
+                    }) if *amount > 0 && seats.get(&op.char_id) == Some(owner_room) => {
+                        Some((target_room, gate))
+                    }
+                    _ => None,
+                })
+        })
+    };
+    let exclusion_rooms: HashSet<&String> = modifiers()
+        .filter(|(_, gate)| matches!(gate, FacilityGate::NoRobotsInOtherRooms))
+        .map(|(room, _)| room)
+        .collect();
+    modifiers()
+        .filter_map(|(_, gate)| match gate {
+            FacilityGate::NamedCharInRoom { char_id, room }
+                if seats.get(char_id) == Some(room)
+                    && exclusion_rooms.contains(room)
+                    && is_robot(char_id) =>
+            {
+                Some(char_id.clone())
+            }
+            _ => None,
+        })
+        .collect()
+}
+
+/// `crew` without its parked tokens: the operators whose skills are live.
+pub(crate) fn working_crew(crew: &[String], parked: &HashSet<String>) -> Vec<String> {
+    crew.iter()
+        .filter(|id| !parked.contains(*id))
+        .cloned()
+        .collect()
 }
 
 /// [`effective_facility_counts`] with `inert`: operators whose morale is at

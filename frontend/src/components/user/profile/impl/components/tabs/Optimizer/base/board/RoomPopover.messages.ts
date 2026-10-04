@@ -128,6 +128,14 @@ export const messages = {
         text: "Spare seat: this operator fills a free seat at the lowest opportunity cost. They were not chosen for their skills - any effect that still applies is a bonus.",
         description: "Tooltip on the 'Bench' tag.",
     },
+    "profile.base.room.parked": {
+        text: "Parked",
+        description: "Tag on an operator deliberately kept at zero morale in a room (the 'dead Lancet' trick). Rendered uppercase by CSS.",
+    },
+    "profile.base.room.parked.tooltip": {
+        text: "Kept at zero morale on purpose: a Control Center skill still counts them as assigned here, while a plant-count skill that excludes working robots no longer sees them, so both bonuses apply. Never rotate or rest them; their own skill is forfeited.",
+        description: "Tooltip on the 'Parked' tag.",
+    },
     "profile.base.room.replaced": {
         text: "replaced",
         description: "Marker on a lower tier of a base skill that a promotion has superseded. Lowercase, rendered uppercase by CSS.",

@@ -2474,6 +2474,152 @@ fn bellones_rider_fires_with_vigil_resting_in_a_dormitory() {
 }
 
 #[test]
+fn a_robot_token_is_parked_dead_when_its_gate_and_an_exclusion_gate_both_pay() {
+    // The community's "dead Lancet": Eunectes in the Control Center reads
+    // Lancet-2 as assigned to a Power Plant whatever his morale (+2 plants),
+    // and Greyy the Lightningbearer's "no Operation Platforms in other Power
+    // Plants" stops seeing him once he is dead (+1). Parked at zero morale he
+    // is worth both counts and forfeits only his own +10% drone recovery. The
+    // plan seats him and Greyy in different plants with Eunectes in the
+    // center, the rotation keeps him there every shift without rest, and the
+    // morale simulation does not report him as running dry (user report
+    // 2026-10-04).
+    use backend::core::grade::base::pools::{optimal_with_bundles, search_economy};
+    use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
+    use backend::core::grade::base::sustain_sim::simulate_rotation;
+    const EUNECTES: &str = "char_416_zumama";
+    const LANCET: &str = "char_285_medic2";
+    const GREYY_ALT: &str = "char_1027_greyy2";
+    let gd = load_game_data();
+    let name_to_char = build_name_to_char(&gd.operators);
+    let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
+    let roster: Vec<OperatorBaseProfile> = [
+        EUNECTES,
+        LANCET,
+        GREYY_ALT,
+        "char_400_weedy",
+        "char_4004_pudd",
+        "char_002_amiya",
+        "char_2027_wang",
+        "char_1020_reed2",
+        "char_4098_vvana",
+        "char_107_liskam",
+        "char_1011_lava2",
+        "char_427_vigil",
+        "char_123_fang",
+        "char_133_mm",
+        "char_237_gravel",
+        "char_141_nights",
+        "char_240_wyvern",
+        "char_235_jesica",
+        TEXAS,
+        LAPPLAND,
+        EXUSIAI,
+        "char_4032_provs",
+        "char_486_takila",
+        "char_215_mantic",
+        "char_290_vigna",
+        "char_193_frostl",
+        "char_159_peacok",
+        "char_1502_crosly",
+        "char_1032_excu2",
+    ]
+    .iter()
+    .filter(|id| gd.building.chars.contains_key(**id))
+    .map(|id| profile(gd, id))
+    .collect();
+    let factory = |slot: &str, formula: &str| {
+        let mut r = room(slot, "MANUFACTURE", 3);
+        r.current_formula = Some(formula.into());
+        r
+    };
+    let building = UserBuilding {
+        rooms: vec![
+            room("cc", "CONTROL", 5),
+            room("tp0", "TRADING", 3),
+            room("tp1", "TRADING", 3),
+            factory("mf0", "F_GOLD"),
+            factory("mf1", "F_GOLD"),
+            factory("mf2", "F_EXP"),
+            room("pp0", "POWER", 3),
+            room("pp1", "POWER", 3),
+            room("d0", "DORMITORY", 5),
+            room("d1", "DORMITORY", 5),
+        ],
+    };
+    let economy = search_economy(&roster, &building, &gd.building, &registry);
+    // As the rotation service does: the rotation plans with the economy the
+    // bundle trials accepted (registry and pins).
+    let accepted = optimal_with_bundles(
+        &roster,
+        &building,
+        &gd.building,
+        &registry,
+        &economy.registry,
+        &drains,
+        &economy.pins,
+    );
+    let plan = &accepted.optimal;
+    let room_of = |a: &backend::core::grade::base::types::BaseAssignment, id: &str| {
+        a.rooms
+            .iter()
+            .find(|r| r.operators.iter().any(|o| o == id))
+            .map(|r| (r.slot_id.clone(), r.room_type.clone()))
+    };
+    assert_eq!(
+        room_of(plan, EUNECTES).map(|(_, rt)| rt).as_deref(),
+        Some("CONTROL"),
+        "Eunectes holds the center"
+    );
+    let lancet = room_of(plan, LANCET).expect("Lancet-2 is seated");
+    let greyy = room_of(plan, GREYY_ALT).expect("Greyy is seated");
+    assert!(
+        lancet.1 == "POWER" && greyy.1 == "POWER" && lancet.0 != greyy.0,
+        "the token and the exclusion holder sit in different plants: {lancet:?} vs {greyy:?}"
+    );
+
+    let rot = recommend_shift_rotation(
+        &roster,
+        &building,
+        &gd.building,
+        &accepted.registry,
+        &drains,
+        &accepted.pins,
+    );
+    assert_eq!(
+        rot.parked,
+        vec![LANCET.to_string()],
+        "Lancet-2 is the parked token"
+    );
+    for shift in &rot.shifts {
+        let seat = shift
+            .rooms
+            .iter()
+            .find(|r| r.recommended.iter().any(|o| o == LANCET))
+            .map(|r| r.room_type.clone());
+        assert_eq!(
+            seat.as_deref(),
+            Some("POWER"),
+            "shift {} keeps the parked token in a plant",
+            shift.index
+        );
+    }
+    let report = simulate_rotation(
+        &rot,
+        &roster,
+        &building,
+        &gd.building,
+        &accepted.registry,
+        &drains,
+        &std::collections::HashMap::new(),
+    );
+    assert!(
+        !report.depleted.iter().any(|d| d.char_id == LANCET),
+        "a parked token is not reported as running dry"
+    );
+}
+
+#[test]
 fn dead_conditional_cc_operator_is_dropped_after_assignment() {
     // The roster HAS three Kjerag traders, so SilverAsh's gate passes the roster
     // feasibility check and he is initially seated in the CC. But stronger non-Kjerag
@@ -3831,6 +3977,7 @@ fn rest_shift_does_not_keep_a_main_team_operator_working() {
         ],
     };
     let rotation = ShiftRotation {
+        parked: Vec::new(),
         shifts: vec![main(1), rest, main(3)],
         sustained: vec![],
         bench: vec![],
@@ -3908,6 +4055,7 @@ fn power_plant_is_equivalent_when_drone_recovery_matches() {
     let profiles: Vec<_> = [PUDDING, INDIGO].iter().map(|id| profile(gd, id)).collect();
     let building = UserBuilding { rooms: vec![] };
     let rotation = ShiftRotation {
+        parked: Vec::new(),
         shifts: vec![Shift {
             index: 1,
             rooms: vec![ShiftRoom {
@@ -5554,6 +5702,7 @@ fn leniency_marks_a_close_team_equivalent_and_surfaces_the_gap() {
         team_label: None,
     };
     let rotation = ShiftRotation {
+        parked: Vec::new(),
         shifts: vec![Shift {
             index: 1,
             rooms: vec![
@@ -6578,6 +6727,7 @@ fn dorm_levels_and_staffed_boosters_shape_recovery() {
         team_label: None,
     };
     let mk = |staff: Vec<String>| ShiftRotation {
+        parked: Vec::new(),
         shifts: (1..=3)
             .map(|index| Shift {
                 index,
@@ -6810,6 +6960,7 @@ fn aura_immunity_and_formula_drain_shape_the_sim() {
     };
     // A 36h unbroken factory stretch: depletion hour = 24 / effective drain.
     let mk = |crew: Vec<&str>, formula: &str| ShiftRotation {
+        parked: Vec::new(),
         shifts: (1..=3)
             .map(|index| Shift {
                 index,
@@ -6891,6 +7042,7 @@ fn targeted_morale_effects_follow_co_seating() {
     };
     // A 36h unbroken CC stretch, so depletion hour = 24 / effective drain.
     let mk = |crew: Vec<&str>| ShiftRotation {
+        parked: Vec::new(),
         shifts: (1..=3)
             .map(|index| Shift {
                 index,
@@ -6990,6 +7142,7 @@ fn cc_recovery_auras_offset_cc_workers_drain_only() {
     // Everyone works ALL THREE shifts (36h unbroken): a neutral 1.0/hr drain
     // depletes at exactly 24h; a -0.05 aura stretches that to 24/0.95 ≈ 25.3h.
     let mk = |cc_crew: Vec<String>| ShiftRotation {
+        parked: Vec::new(),
         shifts: (1..=3)
             .map(|index| Shift {
                 index,
@@ -8448,6 +8601,7 @@ fn morale_auras_change_the_sustainability_arithmetic() {
     // A hand-built 3-shift rotation: the trio works shifts 1+2 (a 24h block)
     // and rests shift 3 - the exact rhythm the planner emits.
     let mk_rotation = |crew: Vec<String>| ShiftRotation {
+        parked: Vec::new(),
         shifts: (1..=3)
             .map(|index| Shift {
                 index,
@@ -8932,6 +9086,7 @@ fn sim_facility_totals_count_dark_shifts_as_idle() {
     );
     const BODY: &str = "char_103_angel";
     let rotation = ShiftRotation {
+        parked: Vec::new(),
         shifts: (1..=3)
             .map(|index| Shift {
                 index,

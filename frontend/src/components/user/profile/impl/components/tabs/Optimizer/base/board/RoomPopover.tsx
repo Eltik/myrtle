@@ -100,6 +100,9 @@ export function RoomPopover({ tile }: { tile: ITile }) {
     // The rotation's 24/7 pick: held at full morale by a morale-swap manager
     // (Fiammetta), so never rotated out. A plan fact, shown on every view.
     const sustained = new Set((api.rotation?.rotation.sustained ?? []).map((o) => o.operator_id));
+    // Parked tokens: seated at zero morale on purpose (a named plant-count
+    // gate reads them as assigned, a robot-exclusion gate stops reading them).
+    const parked = new Set((api.rotation?.rotation.parked ?? []).map((o) => o.operator_id));
 
     // The per-skill breakdown for whatever crew is displayed: the shift cell's
     // own ledger when a shift tab is active, else the evaluated draft's.
@@ -154,6 +157,11 @@ export function RoomPopover({ tile }: { tile: ITile }) {
                                 {benched.has(op.id) && (
                                     <TileTooltip label={<span className="block max-w-56">{t("profile.base.room.bench.tooltip")}</span>}>
                                         <span className="shrink-0 rounded border border-border px-1 py-px text-[9px] text-muted-foreground uppercase tracking-wider">{t("profile.base.room.bench")}</span>
+                                    </TileTooltip>
+                                )}
+                                {parked.has(op.id) && (
+                                    <TileTooltip label={<span className="block max-w-56">{t("profile.base.room.parked.tooltip")}</span>}>
+                                        <span className="shrink-0 rounded border border-amber-500/50 bg-amber-500/10 px-1 py-px font-mono text-[9px] text-amber-500 uppercase tracking-wider">{t("profile.base.room.parked")}</span>
                                     </TileTooltip>
                                 )}
                             </div>

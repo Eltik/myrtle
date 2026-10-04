@@ -5072,6 +5072,8 @@
     "user.profile.base.room.nonProducing": "Only producing rooms report an efficiency. This crew contributes through the bonuses they cast elsewhere.",
     "user.profile.base.room.optimizeOne": "Optimize this room only",
     "user.profile.base.room.optimized": "Optimized",
+    "user.profile.base.room.parked": "Parked",
+    "user.profile.base.room.parked.tooltip": "Kept at zero morale on purpose: a Control Center skill still counts them as assigned here, while a plant-count skill that excludes working robots no longer sees them, so both bonuses apply. Never rotate or rest them; their own skill is forfeited.",
     "user.profile.base.room.power": "{kw} kW",
     "user.profile.base.room.producing": "Producing",
     "user.profile.base.room.replaced": "replaced",

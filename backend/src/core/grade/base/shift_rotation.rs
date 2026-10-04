@@ -65,6 +65,12 @@ pub struct ShiftRotation {
     /// gated skill text on a benchwarmer doesn't read as the optimizer's
     /// reasoning.
     pub bench: Vec<String>,
+    /// Operators seated as zero-morale TOKENS (the "dead Lancet"): a named
+    /// plant-count gate reads them as assigned whatever their morale, and a
+    /// robot-exclusion gate stops reading them once dead, so both counts
+    /// apply. Kept in their room every shift, never rested, their own skills
+    /// forfeited; the morale simulation leaves them at zero by design.
+    pub parked: Vec<String>,
 }
 
 pub struct Shift {
@@ -473,6 +479,7 @@ fn rotation_core(
 ) -> ShiftRotation {
     let facility_counts =
         effective_facility_counts(building, operators, registry, building_data, seats);
+    let parked = super::assignment::parked_tokens(seats, operators, registry);
     let total_dorm_levels = building.total_dorm_levels();
     let production_rooms: Vec<&UserRoom> = building
         .rooms
@@ -514,6 +521,8 @@ fn rotation_core(
     if let Some(m) = &manager_resident {
         pinned_ids.insert(m.clone());
     }
+    // Parked tokens hold their seat in every shift: out of every working pool.
+    pinned_ids.extend(parked.iter().cloned());
 
     // Control Center Squad 1 (with its global bonuses / faction conditions) and the
     // balanced production teams, re-selecting the CC when one of its operators turns
@@ -853,6 +862,7 @@ fn rotation_core(
         &facility_counts,
         &assigned,
         morale_drains,
+        &parked,
     );
     for plant in &power_plan {
         assigned.extend(plant.main.iter().cloned());
@@ -1383,7 +1393,11 @@ fn rotation_core(
                 &plant.backup
             };
             let active = (squad == 0 || !plant.backup.is_empty()) && !crew.is_empty();
-            let efficiency = crew_efficiency(crew, "POWER", None);
+            let efficiency = crew_efficiency(
+                &super::assignment::working_crew(crew, &parked),
+                "POWER",
+                None,
+            );
             rooms.push(ShiftRoom {
                 slot_id: plant.slot_id.clone(),
                 room_type: "POWER".to_string(),
@@ -1468,7 +1482,7 @@ fn rotation_core(
                     continue;
                 }
                 let (speed, _) = compute_team_efficiency(
-                    &r.recommended,
+                    &super::assignment::working_crew(&r.recommended, &parked),
                     &r.room_type,
                     r.formula_type.as_deref(),
                     None,
@@ -1613,6 +1627,7 @@ fn rotation_core(
         shifts,
         sustained: sustained_label,
         bench: bench.into_iter().collect(),
+        parked: parked.into_iter().collect(),
     }
 }
 
@@ -1681,6 +1696,7 @@ fn build_power_plan(
     facility_counts: &HashMap<String, usize>,
     used: &HashSet<String>,
     morale_drains: &HashMap<String, f64>,
+    parked: &HashSet<String>,
 ) -> Vec<PowerPlant> {
     let power_rooms: Vec<&UserRoom> = building
         .rooms
@@ -1708,7 +1724,20 @@ fn build_power_plan(
         .iter()
         .map(|r| max_stationed_at_level(building_data, "POWER", r.level).max(1) as usize)
         .collect();
-    let per_squad: usize = slots.iter().sum();
+    // Parked tokens hold a seat in BOTH squads: plant by plant, first seat
+    // free. Filling a plant's only seat sends the specialists - the exclusion
+    // gate's holder among them - to the OTHER plants, which is where that gate
+    // wants them.
+    let mut reserved: Vec<Vec<String>> = vec![Vec::new(); power_rooms.len()];
+    let mut tokens: Vec<&String> = parked.iter().collect();
+    tokens.sort();
+    for token in tokens {
+        if let Some(i) = (0..power_rooms.len()).find(|&i| reserved[i].len() < slots[i]) {
+            reserved[i].push(token.clone());
+        }
+    }
+    let per_squad: usize =
+        slots.iter().sum::<usize>() - reserved.iter().map(Vec::len).sum::<usize>();
 
     // Even split: strongest first, each into the squad with the lower running total
     // (a squad stops accepting once its plant slots are full). With 25/20/20/20/20/15
@@ -1750,10 +1779,27 @@ fn build_power_plan(
     power_rooms
         .iter()
         .zip(&slots)
-        .map(|(r, n)| PowerPlant {
-            slot_id: r.slot_id.clone(),
-            main: (0..*n).filter_map(|_| squad1.next()).collect(),
-            backup: (0..*n).filter_map(|_| squad2.next()).collect(),
+        .zip(reserved)
+        .map(|((r, n), held)| {
+            let free = n - held.len();
+            PowerPlant {
+                slot_id: r.slot_id.clone(),
+                main: held
+                    .iter()
+                    .cloned()
+                    .chain((0..free).filter_map(|_| squad1.next()))
+                    .collect(),
+                backup: {
+                    let picks: Vec<String> = (0..free).filter_map(|_| squad2.next()).collect();
+                    // A plant held only by its token has no second squad to
+                    // rest it dark; it keeps the token.
+                    if picks.is_empty() && held.is_empty() {
+                        Vec::new()
+                    } else {
+                        held.iter().cloned().chain(picks).collect()
+                    }
+                },
+            }
         })
         .collect()
 }

@@ -468,6 +468,11 @@ pub fn simulate_rotation_from(
     for id in &rotation.sustained {
         schedules.remove(id);
     }
+    // A parked token sits at zero morale by design: it neither drains nor
+    // runs dry, and its seat never needs a bed.
+    for id in &rotation.parked {
+        schedules.remove(id);
+    }
 
     // The base's dorms, best first - the neediest rester always gets the
     // highest-recovery dorm, exactly the assignment a player makes. Per (dorm,

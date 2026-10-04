@@ -12141,6 +12141,10 @@
           },
           "operator_id": {
             "type": "string"
+          },
+          "parked": {
+            "type": "boolean",
+            "description": "True for a PARKED token: seated at zero morale on purpose so a named\nplant-count gate and a robot-exclusion gate both apply (the \"dead\nLancet\"). Never rotated; its own skills are not live."
           }
         }
       },

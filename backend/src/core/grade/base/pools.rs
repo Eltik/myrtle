@@ -995,6 +995,31 @@ fn facility_count_bundles(
                         continue;
                     }
                     pins.push((char_id.clone(), room.clone()));
+                    // A robot token can be PARKED at zero morale so a robot-
+                    // exclusion count in the same room type fires beside it
+                    // (`assignment::parked_tokens`): seat that gate's holders
+                    // too, and let the oracle price the combination.
+                    let token_is_robot = profiles
+                        .iter()
+                        .find(|p| &p.char_id == char_id)
+                        .is_some_and(|p| p.match_tags.iter().any(|t| t == "robot"));
+                    if token_is_robot {
+                        for holder in profiles {
+                            let excludes_here = holder.available_buffs.iter().any(|b| {
+                                matches!(
+                                    registry.get(b),
+                                    Some(BuffResolutionStrategy::FacilityCountModifier {
+                                        owner_room: o,
+                                        gate: FacilityGate::NoRobotsInOtherRooms,
+                                        ..
+                                    }) if o == room
+                                )
+                            });
+                            if excludes_here && !pins.iter().any(|(id, _)| id == &holder.char_id) {
+                                pins.push((holder.char_id.clone(), room.clone()));
+                            }
+                        }
+                    }
                 }
                 FacilityGate::None | FacilityGate::NoRobotsInOtherRooms => {}
             }

@@ -10,4 +10,10 @@ export type AssignedOperator = {
      * benchwarmer doesn't read as the optimizer's reasoning.
      */
     bench?: boolean;
+    /**
+     * True for a PARKED token: seated at zero morale on purpose so a named
+     * plant-count gate and a robot-exclusion gate both apply (the "dead
+     * Lancet"). Never rotated; its own skills are not live.
+     */
+    parked?: boolean;
 };
