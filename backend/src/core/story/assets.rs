@@ -1208,10 +1208,41 @@ impl StoryAssetIndex {
             format!("{fname}#1"),
             format!("{fname}_1#1"),
         ];
-        let file = by_face
-            .iter()
-            .chain(defaults.iter())
-            .find_map(|c| folder.files.get(c))?;
+        // 2a. THE HUB'S OWN ORDER DECIDES `#N`, not the file's numeric suffix.
+        // `_TryParseIndex` decrements the 1-based `#N` and indexes the hub
+        // group's sprite list, and a legacy hub lists whole sprites in an
+        // order of its own: `avg_npc_043_1` (Nine) lists [`_2`, `_1`], so `#2`
+        // is `avg_npc_043_1`, her lit art, used 342 times, and `#1` the dark
+        // silhouette used twice at her reveals; the suffix rule served the
+        // silhouette everywhere (2026-10-05). 41 of the 233 multi-sprite legacy
+        // hubs order differently from their suffixes (Shwaz, Grani, Homura,
+        // Skadi, Meteor, W among them). Only a SENTINEL group lists whole
+        // sprites; a group with a real `facePos` lists face patches (`1`..`6`
+        // beside one body), which must never be picked as the body. A hub
+        // with several groups, one sprite, or an index past its list falls
+        // through to the file-name rules below, as does a list that names a
+        // bare numbered patch (`avg_4000_jnight_1` lists its body and `2`..`5`).
+        let hub_pick = folder
+            .hub
+            .first()
+            .filter(|g| {
+                folder.hub.len() == 1
+                    && g.is_sentinel()
+                    && g.sprites.len() >= 2
+                    && g.sprites
+                        .iter()
+                        .all(|s| !s.name.bytes().all(|b| b.is_ascii_digit()))
+            })
+            .and_then(|g| {
+                let n = face.parse::<usize>().ok()?.checked_sub(1)?;
+                folder.files.get(g.sprites.get(n)?.name.as_str())
+            });
+        let file = hub_pick.or_else(|| {
+            by_face
+                .iter()
+                .chain(defaults.iter())
+                .find_map(|c| folder.files.get(c))
+        })?;
         // The old hub layout's bare `<face>.png` patch rides on either body;
         // a folder with faces baked into the body has no bare patch to find.
         let body_stem = normalized_stem(file);
@@ -1699,6 +1730,38 @@ mod tests {
         assert_eq!(s.face_url, None);
         // Case-insensitive.
         assert!(idx.resolve_character("AVG_225_Haak_1#1$1").is_some());
+    }
+
+    #[test]
+    fn legacy_hub_order_decides_the_face_index_not_the_file_suffix() {
+        // Nine's real hub: the list is [_2, _1], so `#2` is `_1` and `#1` is `_2`.
+        let hub = r#"{"groups":[{"facePos":{"x":-1.0,"y":-1.0},"faceSize":{"w":0.0,"h":0.0},"sprites":[{"name":"avg_npc_043_2","alias":"","isWholeBody":false,"size":{"w":1024.0,"h":1024.0}},{"name":"avg_npc_043_1","alias":"","isWholeBody":false,"size":{"w":1024.0,"h":1024.0}}]}],"legacy":true,"root":{"x":-70.0,"y":190.0,"w":1024.0,"h":1024.0}}"#;
+        let idx = index_with(vec![with_hub(
+            folder("avg_npc_043_1", &["avg_npc_043_1.png", "avg_npc_043_2.png"]),
+            hub,
+        )]);
+        let lit = idx.resolve_character("avg_npc_043_1#2").unwrap();
+        assert_eq!(
+            lit.body_url,
+            "/textures/avg/characters/avg_npc_043_1/avg_npc_043_1.png"
+        );
+        let dark = idx.resolve_character("avg_npc_043_1#1").unwrap();
+        assert_eq!(
+            dark.body_url,
+            "/textures/avg/characters/avg_npc_043_1/avg_npc_043_2.png"
+        );
+        // A missing index is index 0, the first listed sprite.
+        let bare = idx.resolve_character("avg_npc_043_1").unwrap();
+        assert_eq!(
+            bare.body_url,
+            "/textures/avg/characters/avg_npc_043_1/avg_npc_043_2.png"
+        );
+        // Past the list: the file-name rules take over (here the folder default).
+        let past = idx.resolve_character("avg_npc_043_1#7").unwrap();
+        assert_eq!(
+            past.body_url,
+            "/textures/avg/characters/avg_npc_043_1/avg_npc_043_1.png"
+        );
     }
 
     #[test]
