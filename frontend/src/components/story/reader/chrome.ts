@@ -117,6 +117,21 @@ export function nextPeek(e: PeekEvent): boolean {
     return e === "enter";
 }
 
+/**
+ * Whether this pointer may PEEK at a collapsed toolbar. Only a mouse hovers, so
+ * only a mouse peeks; a touch or a pen goes straight to the tap that opens it.
+ *
+ * Peeking on a touch broke the handle on iOS. A touch's `pointerenter` fires at
+ * touchstart, so the peek faded the pills in before the finger lifted, and
+ * WebKit treats a tap whose hover made content visible as that hover and
+ * SWALLOWS the click. The click was the open; without it the finger's
+ * `pointerleave` started the grace timer and the peek ran out, so the toolbar
+ * appeared for 300 ms and collapsed again on every tap.
+ */
+export function peeksOn(pointerType: string): boolean {
+    return pointerType === "mouse";
+}
+
 /** Whether the top-edge reveal handle is on screen: only a collapsed toolbar has one. */
 export function revealHandleShown(o: Pick<ChromeInputs, "theater" | "collapsed">): boolean {
     return o.collapsed && !o.theater;

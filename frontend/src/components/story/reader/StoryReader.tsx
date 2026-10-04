@@ -27,7 +27,7 @@ import type { StoryScript } from "#/types/generated/StoryScript";
 import type { messages as sharedMessages } from "../shared.messages";
 import { BacklogDialog } from "./BacklogDialog";
 import { Cutscene } from "./Cutscene";
-import { chromeIdleMs, chromeShown, nextPeek, nextTheater, PEEK_GRACE_MS, revealHandleShown, revealsChrome, theaterConsumes } from "./chrome";
+import { chromeIdleMs, chromeShown, nextPeek, nextTheater, PEEK_GRACE_MS, peeksOn, revealHandleShown, revealsChrome, theaterConsumes } from "./chrome";
 import { loadCustomFont, registerCustomFont } from "./fonts";
 import { DARK_FOCUS } from "./glass";
 import { EndCard, TitleCard } from "./ReaderCards";
@@ -181,6 +181,19 @@ export function StoryReader({ script, entry, groupName, exportGroup = null, cate
         window.clearTimeout(peekTimer.current);
         peekTimer.current = window.setTimeout(() => setPointerOverHandle(nextPeek("expire")), PEEK_GRACE_MS);
     }, []);
+    /** The handle's own enter and leave: a peek for a mouse, nothing for a touch (`peeksOn`). */
+    const onHandleEnter = useCallback(
+        (e: React.PointerEvent) => {
+            if (peeksOn(e.pointerType)) holdPeek();
+        },
+        [holdPeek],
+    );
+    const onHandleLeave = useCallback(
+        (e: React.PointerEvent) => {
+            if (peeksOn(e.pointerType)) releasePeek();
+        },
+        [releasePeek],
+    );
     const endPeek = useCallback(() => {
         window.clearTimeout(peekTimer.current);
         setPointerOverHandle(nextPeek("open"));
@@ -400,13 +413,13 @@ export function StoryReader({ script, entry, groupName, exportGroup = null, cate
                         compact={compact}
                         shown={chromeOn}
                         barRef={toolbarRef}
-                        onPointerEnter={() => {
+                        onPointerEnter={(e) => {
                             setPointerOverChrome(true);
-                            if (settings.toolbarHidden) holdPeek();
+                            if (settings.toolbarHidden) onHandleEnter(e);
                         }}
-                        onPointerLeave={() => {
+                        onPointerLeave={(e) => {
                             setPointerOverChrome(false);
-                            releasePeek();
+                            onHandleLeave(e);
                         }}
                         backLink={<Link to="/stories" />}
                         hasPrevious={Boolean(previous)}
@@ -439,8 +452,8 @@ export function StoryReader({ script, entry, groupName, exportGroup = null, cate
 
                     {handleOn ? (
                         <ToolbarHandle
-                            onPointerEnter={holdPeek}
-                            onPointerLeave={releasePeek}
+                            onPointerEnter={onHandleEnter}
+                            onPointerLeave={onHandleLeave}
                             onClick={() => {
                                 endPeek();
                                 setSettings({ ...settings, toolbarHidden: false });

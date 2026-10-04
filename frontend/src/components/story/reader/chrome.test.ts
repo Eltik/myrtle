@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CHROME_IDLE_MS, CHROME_REVEAL_BAND_PX, type ChromeInputs, chromeIdleMs, chromeShown, clampTooltipLeft, nextPeek, nextTheater, PEEK_GRACE_MS, revealHandleShown, revealsChrome, theaterConsumes } from "./chrome";
+import { CHROME_IDLE_MS, CHROME_REVEAL_BAND_PX, type ChromeInputs, chromeIdleMs, chromeShown, clampTooltipLeft, nextPeek, nextTheater, PEEK_GRACE_MS, peeksOn, revealHandleShown, revealsChrome, theaterConsumes } from "./chrome";
 
 const reading: ChromeInputs = { theater: false, collapsed: false, alwaysShow: false, dialogOpen: false, pointerOverChrome: false, pointerOverHandle: false, phase: "reading", idle: false };
 
@@ -157,5 +157,13 @@ describe("the collapsed toolbar's peek", () => {
         const base = { theater: false, collapsed: true, alwaysShow: true, dialogOpen: false, pointerOverChrome: true, phase: "reading", idle: false };
         expect(chromeShown({ ...base, pointerOverHandle: true })).toBe(true);
         expect(chromeShown({ ...base, pointerOverHandle: false })).toBe(false);
+    });
+});
+
+describe("peeksOn", () => {
+    it("only a mouse peeks: a touch's enter fires at touchstart, and a peek there swallowed the tap that opens the toolbar on iOS", () => {
+        expect(peeksOn("mouse")).toBe(true);
+        expect(peeksOn("touch")).toBe(false);
+        expect(peeksOn("pen")).toBe(false);
     });
 });

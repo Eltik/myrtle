@@ -117,8 +117,8 @@ export interface IReaderToolbarProps {
     shown: boolean;
     /** The scrubber measures the bar's bottom edge off this to place its tooltip. */
     barRef: React.Ref<HTMLDivElement>;
-    onPointerEnter: () => void;
-    onPointerLeave: () => void;
+    onPointerEnter: (e: React.PointerEvent) => void;
+    onPointerLeave: (e: React.PointerEvent) => void;
     /** The link back to the library, so the toolbar needs no router of its own. */
     backLink: React.ReactElement;
     hasPrevious: boolean;
@@ -356,7 +356,7 @@ const VolumeControl = memo(function VolumeControl(p: IVolumeControlProps): React
  * (`z-50`) so revealing the chrome under the pointer does not hand the pointer
  * to the track and drop the reveal again.
  */
-export function ToolbarHandle({ onPointerEnter, onPointerLeave, onClick }: { onPointerEnter: () => void; onPointerLeave: () => void; onClick: () => void }): React.ReactElement {
+export function ToolbarHandle({ onPointerEnter, onPointerLeave, onClick }: { onPointerEnter: (e: React.PointerEvent) => void; onPointerLeave: (e: React.PointerEvent) => void; onClick: () => void }): React.ReactElement {
     const t: ReaderT = useT("story");
     return (
         <button
