@@ -24,6 +24,9 @@
 //! - [`music`]: the theme a group plays over its Archives entry.
 //! - [`art`]: every `AssetIndex` lookup that becomes a served URL.
 //! - [`script`]: loading and parsing one story.
+//! - [`sprites`]: the character gallery, every sprite folder with its names
+//!   and expressions.
+//! - [`sprite_thumbs`]: one expression composed and scaled, cached on disk.
 //!
 //! The measured census behind every number quoted in here, and the wire
 //! contract itself, are in `docs/story-reader.md`, sections "1. What is true
@@ -39,6 +42,8 @@ mod illustrations;
 mod index;
 mod music;
 mod script;
+pub mod sprite_thumbs;
+mod sprites;
 
 pub use archive::{build_archives, get_group_archive};
 pub use cache::{ServerCache, cached_index, get_story_index, index_builds, spawn_warm};
@@ -48,6 +53,10 @@ pub use illustrations::{
 };
 pub use index::{StoryIndexCache, StoryRef, build_index};
 pub use script::{get_story, load_and_parse};
+pub use sprites::{
+    OperatorIds, SpriteCensus, StorySpriteCache, build_sprite_index, cached_sprites,
+    get_story_sprite, get_story_sprites, get_variant_thumb, sprite_index_builds,
+};
 
 /// A game table's string as an optional field: trimmed, and absent when it is
 /// empty. The archive and music tables write "no value" as an empty string or

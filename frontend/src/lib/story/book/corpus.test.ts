@@ -14,7 +14,8 @@ import type { Block, SectionStats } from "./types";
 import { sectionOf } from "./walk";
 
 const DIR = process.env.STORY_CORPUS_DIR ?? "/private/tmp/claude-501/-Users-eltik-Documents-Coding-myrtle/e756f466-3684-428a-a841-00e255473b3e/scratchpad/bookcensus/st";
-const present = existsSync(DIR);
+// Present AND non-empty: a swept scratch folder is an empty directory, not a corpus.
+const present = existsSync(DIR) && readdirSync(DIR).some((f) => f.endsWith(".json"));
 
 const n = (bag: Record<string, number | undefined>, ...keys: string[]) => keys.reduce((t, k) => t + (bag[k] ?? 0), 0);
 

@@ -1024,6 +1024,52 @@ impl StoryAssetIndex {
             .or_else(|| self.characters.get(&format!("{key}_1")))
     }
 
+    /// The folder a sprite name lands in, as spelled on disk, by the same
+    /// `base` / `base_1` lookup [`Self::resolve_character`] starts from. It
+    /// reads no file, so a walk over every line of every script can ask it.
+    #[must_use]
+    pub fn sprite_folder_name(&self, raw: &str) -> Option<&str> {
+        self.sprite_folder(parse_sprite_name(raw).base)
+            .map(|f| f.name.as_str())
+    }
+
+    /// Every sprite folder under `textures/avg/characters/`, as spelled on
+    /// disk, in name order.
+    #[must_use]
+    pub fn sprite_folder_names(&self) -> Vec<&str> {
+        let mut names: Vec<&str> = self.characters.values().map(|f| f.name.as_str()).collect();
+        names.sort_unstable();
+        names
+    }
+
+    /// Every `#N$M` a folder OFFERS, enumerated from its hub rather than from
+    /// the scripts, so an expression no script uses is still listed. Group k
+    /// of the hub is body `$k+1` and its sprite list is what `#N` indexes
+    /// (1-based), the same decrement [`Self::resolve_character`] reads. A
+    /// folder with no hub offers one `#N$1` per non-alpha PNG, the most any
+    /// index could reach by file name. Keys are NOT deduplicated here: two
+    /// keys that resolve to the same pair of files are one expression, and
+    /// only the resolver can say so.
+    #[must_use]
+    pub fn sprite_variant_keys(&self, folder: &str) -> Vec<String> {
+        let Some(f) = self.sprite_folder(folder) else {
+            return Vec::new();
+        };
+        let mut keys = Vec::new();
+        if f.hub.is_empty() {
+            for n in 1..=f.files.len().max(1) {
+                keys.push(format!("#{n}$1"));
+            }
+            return keys;
+        }
+        for (k, group) in f.hub.iter().enumerate() {
+            for n in 1..=group.sprites.len().max(1) {
+                keys.push(format!("#{n}${}", k + 1));
+            }
+        }
+        keys
+    }
+
     fn sprite_url(folder: &SpriteFolder, file: &str) -> String {
         format!(
             "/textures/avg/characters/{}/{}",

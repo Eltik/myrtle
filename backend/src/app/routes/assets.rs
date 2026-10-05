@@ -1136,7 +1136,7 @@ fn validate_asset_path(base_dir: &Path, requested: &str) -> Result<PathBuf, ApiE
     Ok(full)
 }
 
-async fn serve_file(
+pub(crate) async fn serve_file(
     assets_dir: &str,
     rel_path: &str,
     request_headers: &HeaderMap,

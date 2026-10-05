@@ -1,6 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import type React from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { PageHeader } from "#/components/ui/page-header";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "#/components/ui/tabs";
 import { storyIndexQueryOptions } from "#/lib/api/story";
@@ -9,6 +10,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { emptyProgress, loadProgress, onProgressStorage, onProgressWritten, type StoryProgress } from "#/lib/story/progress";
 import { useStoryGameRead, useStoryProgressSync } from "#/lib/story/sync";
 import { cn } from "#/lib/utils";
+import type { messages as spriteMessages } from "../sprites/CharactersTab.messages";
 import { Browse } from "./impl/Browse";
 import { CommunityTab } from "./impl/CommunityTab";
 import type { messages as communityMessages } from "./impl/CommunityTab.messages";
@@ -23,6 +25,14 @@ import { useLibraryPlayerLifetime } from "./impl/player";
 import { ReadingOrderTab } from "./impl/ReadingOrderTab";
 import type { messages } from "./StoryLibrary.messages";
 
+/** The library's tabs, in strip order. `browse` is the default and never written to the URL. */
+export const LIBRARY_TABS = ["browse", "reading", "illustrations", "progress", "community", "characters"] as const;
+export type LibraryTab = (typeof LIBRARY_TABS)[number];
+
+// The Characters tab is its own chunk: Browse's bundle and first load do not
+// carry the gallery, and nothing of it is fetched until the tab is opened.
+const CharactersTab = lazy(() => import("../sprites/CharactersTab"));
+
 /**
  * The library at `/stories`: a page head, a compact continue row, one mode row,
  * and then a single continuous browse surface cut into the game's own storyline
@@ -35,7 +45,7 @@ import type { messages } from "./StoryLibrary.messages";
  * one, so there is nothing for hydration to disagree about.
  */
 export function StoryLibrary(): React.ReactElement {
-    const t: TypedT<typeof messages & typeof communityMessages> = useT("story");
+    const t: TypedT<typeof messages & typeof communityMessages & typeof spriteMessages> = useT("story");
     const f = useFormatters();
     const { data } = useSuspenseQuery(storyIndexQueryOptions(useGamedataServer()));
     const index = data as unknown as LibIndex;
@@ -76,12 +86,30 @@ export function StoryLibrary(): React.ReactElement {
     // sound at once.
     useLibraryPlayerLifetime();
 
-    const [tab, setTab] = useState("browse");
+    // The tab is the URL's `?tab=`, so a link can open one; `?sprite=` is read
+    // by the Characters tab itself and never here, so opening a sheet does not
+    // re-render the library.
+    const tab: LibraryTab = useSearch({ from: "/stories", select: (search) => search.tab ?? "browse" });
+    const navigate = useNavigate({ from: "/stories" });
+    const setTab = useCallback(
+        (next: string) => {
+            const value = (LIBRARY_TABS as readonly string[]).includes(next) ? (next as LibraryTab) : "browse";
+            void navigate({ search: (prev) => ({ ...prev, tab: value === "browse" ? undefined : value, sprite: value === "characters" ? prev.sprite : undefined }), replace: true, resetScroll: false });
+        },
+        [navigate],
+    );
+    // Mounted on first open and KEPT, so switching to Browse and back keeps the
+    // search text, the filters, the page count and the scroll of the grid.
+    const [charactersSeen, setCharactersSeen] = useState(tab === "characters");
+    if (tab === "characters" && !charactersSeen) setCharactersSeen(true);
     const [openGroup, setOpenGroup] = useState<string | null>(null);
-    const viewChapter = useCallback((groupId: string) => {
-        setTab("browse");
-        setOpenGroup(groupId);
-    }, []);
+    const viewChapter = useCallback(
+        (groupId: string) => {
+            setTab("browse");
+            setOpenGroup(groupId);
+        },
+        [setTab],
+    );
     const onOpenHandled = useCallback(() => setOpenGroup(null), []);
 
     const storyGroups = useMemo(() => index.groups.filter((g) => g.category !== "record"), [index]);
@@ -136,6 +164,9 @@ export function StoryLibrary(): React.ReactElement {
                         <TabsTab value="community" className="shrink-0 max-sm:min-h-11">
                             {t("community.tab")}
                         </TabsTab>
+                        <TabsTab value="characters" className="shrink-0 max-sm:min-h-11">
+                            {t("sprites.tab")}
+                        </TabsTab>
                     </TabsList>
                 </div>
                 <TabsPanel value="browse" className="pt-4">
@@ -155,6 +186,13 @@ export function StoryLibrary(): React.ReactElement {
                     over rather than teaching a second surface to mount the sheet. */}
                 <TabsPanel value="community">
                     <CommunityTab index={index} onViewChapter={viewChapter} />
+                </TabsPanel>
+                <TabsPanel value="characters" keepMounted={charactersSeen}>
+                    {charactersSeen ? (
+                        <Suspense fallback={null}>
+                            <CharactersTab />
+                        </Suspense>
+                    ) : null}
                 </TabsPanel>
             </Tabs>
 

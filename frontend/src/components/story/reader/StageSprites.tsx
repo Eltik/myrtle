@@ -79,9 +79,12 @@ export function bodyPlate(sprite: { plate?: unknown }): BodyPlate {
 
 /**
  * The body texture with its face patch composited at `facePos`. Exported for
- * the interlude window, which draws a character exactly as a slot does.
+ * the interlude window, which draws a character exactly as a slot does, and
+ * for the character gallery, which draws every expression of a folder the
+ * same way. `lazy` defers both images until they near the viewport, for a grid
+ * of hundreds; the stage never sets it, so its images load exactly as before.
  */
-export function Body({ state, sec, mode }: { state: Pick<SlotState, "sprite" | "name">; sec: number; mode: "in" | "hold" | "out" }): React.ReactElement {
+export function Body({ state, sec, mode, lazy = false }: { state: Pick<SlotState, "sprite" | "name">; sec: number; mode: "in" | "hold" | "out"; lazy?: boolean }): React.ReactElement {
     const face = facePlacement(state.sprite);
     const declared = bodyTextureSize(state.sprite);
     // A backend that predates `bodySize` sends none, so the texture is
@@ -101,9 +104,18 @@ export function Body({ state, sec, mode }: { state: Pick<SlotState, "sprite" | "
     };
     return (
         <div className="absolute inset-0" style={mode === "hold" ? undefined : fade(mode, sec)}>
-            <img ref={measure} onLoad={(e) => measure(e.currentTarget)} src={asset(state.sprite.bodyUrl)} alt={state.name} draggable={false} data-story-sprite={state.name} className="absolute inset-0 size-full select-none" />
+            <img ref={measure} onLoad={(e) => measure(e.currentTarget)} src={asset(state.sprite.bodyUrl)} alt={state.name} draggable={false} data-story-sprite={state.name} loading={lazy ? "lazy" : undefined} decoding={lazy ? "async" : undefined} className="absolute inset-0 size-full select-none" />
             {face && size && state.sprite.faceUrl ? (
-                <img src={asset(state.sprite.faceUrl)} alt="" draggable={false} data-story-face={state.name} className="absolute select-none" style={{ left: `${(face.x / size.w) * 100}%`, top: `${(face.y / size.h) * 100}%`, width: `${(face.w / size.w) * 100}%`, height: `${(face.h / size.h) * 100}%` }} />
+                <img
+                    src={asset(state.sprite.faceUrl)}
+                    alt=""
+                    draggable={false}
+                    data-story-face={state.name}
+                    loading={lazy ? "lazy" : undefined}
+                    decoding={lazy ? "async" : undefined}
+                    className="absolute select-none"
+                    style={{ left: `${(face.x / size.w) * 100}%`, top: `${(face.y / size.h) * 100}%`, width: `${(face.w / size.w) * 100}%`, height: `${(face.h / size.h) * 100}%` }}
+                />
             ) : null}
         </div>
     );

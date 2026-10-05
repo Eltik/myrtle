@@ -13,6 +13,7 @@
 
 pub mod assets;
 pub mod parser;
+pub mod speakers;
 pub mod variables;
 
 use std::collections::BTreeMap;

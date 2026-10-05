@@ -1,18 +1,22 @@
 //! `GET /story/index`, `GET /story/{story_id}`,
 //! `GET /story/group/{group_id}/illustrations`,
-//! `GET /story/group/{group_id}/archive` and `GET /story/community`: the
-//! Archives library, one parsed script, one group's art, one group's archive
-//! and what the community has read. See `docs/story-reader.md` for the wire
-//! contract.
+//! `GET /story/group/{group_id}/archive`, `GET /story/community`,
+//! `GET /story/sprites` and `GET /story/sprites/{base}`: the Archives
+//! library, one parsed script, one group's art, one group's archive, what the
+//! community has read, and the character gallery with one folder's
+//! expression sheet. See `docs/story-reader.md` for the wire contract.
 
 use axum::{
     Json,
     extract::{Path, State},
+    http::HeaderMap,
+    response::Response,
 };
 
 use crate::app::services::story::{
-    StoryArchive, StoryIllustrations, StoryIndex, get_group_archive, get_group_illustrations,
-    get_story, get_story_index,
+    StoryArchive, StoryIllustrations, StoryIndex, StorySpriteDetail, StorySpriteIndex,
+    get_group_archive, get_group_illustrations, get_story, get_story_index, get_story_sprite,
+    get_story_sprites, get_variant_thumb,
 };
 use crate::app::services::story_community::{self, StoryCommunity};
 use crate::app::{error::ApiError, state::AppState};
@@ -298,4 +302,173 @@ pub async fn community_srv(
     Ok(Json(
         (*story_community::cached(&state, server).await?).clone(),
     ))
+}
+
+/// Every story sprite folder on the default server, one entry each: the
+/// names the scripts speak it under (each named line attributed to the
+/// sprite LIT when it is spoken), how many lines and stories, its operator
+/// when it draws one, and the expression its card shows. Built once per game
+/// data load and asset tree, off the request path's own work.
+#[utoipa::path(
+    get,
+    path = "/story/sprites",
+    operation_id = "story_sprites",
+    tag = "gamedata",
+    responses(
+        (status = 200, description = "Every story sprite folder.", body = StorySpriteIndex),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn sprites(State(state): State<AppState>) -> Result<Json<StorySpriteIndex>, ApiError> {
+    Ok(Json(get_story_sprites(&state, state.default_server).await?))
+}
+
+/// `GET /{server}/story/sprites` - the same from `{server}`. The `/{server}`
+/// form reads that server's game data; the bare form reads the default
+/// server.
+#[utoipa::path(
+    get,
+    path = "/{server}/story/sprites",
+    operation_id = "story_sprites_srv",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`.")
+    ),
+    responses(
+        (status = 200, description = "Every story sprite folder.", body = StorySpriteIndex),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn sprites_srv(
+    State(state): State<AppState>,
+    Path(server): Path<Server>,
+) -> Result<Json<StorySpriteIndex>, ApiError> {
+    Ok(Json(get_story_sprites(&state, server).await?))
+}
+
+/// One sprite folder's EXPRESSION SHEET on the default server: every `#N$M`
+/// it offers resolved to body and face (unused ones included), and every
+/// story it appears in with the lines attributed to it there. `base` is the
+/// folder name, case-insensitive.
+#[utoipa::path(
+    get,
+    path = "/story/sprites/{base}",
+    operation_id = "story_sprite_detail",
+    tag = "gamedata",
+    params(
+        ("base" = String, Path, description = "Sprite folder (`avg_npc_043_1`).")
+    ),
+    responses(
+        (status = 200, description = "The folder's expression sheet.", body = StorySpriteDetail),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn sprite_detail(
+    State(state): State<AppState>,
+    Path(base): Path<String>,
+) -> Result<Json<StorySpriteDetail>, ApiError> {
+    Ok(Json(
+        get_story_sprite(&state, state.default_server, &base).await?,
+    ))
+}
+
+/// `GET /{server}/story/sprites/{base}` - the same from `{server}`. The
+/// `/{server}` form reads that server's game data; the bare form reads the
+/// default server.
+#[utoipa::path(
+    get,
+    path = "/{server}/story/sprites/{base}",
+    operation_id = "story_sprite_detail_srv",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("base" = String, Path, description = "Sprite folder (`avg_npc_043_1`).")
+    ),
+    responses(
+        (status = 200, description = "The folder's expression sheet.", body = StorySpriteDetail),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn sprite_detail_srv(
+    State(state): State<AppState>,
+    Path((server, base)): Path<(Server, String)>,
+) -> Result<Json<StorySpriteDetail>, ApiError> {
+    Ok(Json(get_story_sprite(&state, server, &base).await?))
+}
+
+/// One listed expression of a sprite folder as a small image, on the default
+/// server: body plate plus face patch composed exactly as the reader draws
+/// them, 320 px high (width by the plate's aspect), lossless WebP. Rendered
+/// on first request and cached under `derived/sprite-thumbs/`; served with
+/// the same `ETag` and week-long `Cache-Control` as `/api/assets`. `variant`
+/// is the expression's key as the sheet lists it (`#2$1`), URL-encoded.
+#[utoipa::path(
+    get,
+    path = "/story/sprites/{base}/thumb/{variant}",
+    operation_id = "story_sprite_thumb_variant",
+    tag = "gamedata",
+    params(
+        ("base" = String, Path, description = "Sprite folder (`avg_npc_043_1`)."),
+        ("variant" = String, Path, description = "Expression key, URL-encoded (`%232%241` for `#2$1`)."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes.")
+    ),
+    responses(
+        (status = 200, description = "The thumbnail, with an `ETag` and `Cache-Control: public, max-age=604800`.", content_type = "image/webp"),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn sprite_variant_thumb(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path((base, variant)): Path<(String, String)>,
+) -> Result<Response, ApiError> {
+    let (dir, rel) = get_variant_thumb(&state, state.default_server, &base, &variant).await?;
+    crate::app::routes::assets::serve_file(&dir, &rel, &headers).await
+}
+
+/// `GET /{server}/story/sprites/{base}/thumb/{variant}` - the same from
+/// `{server}`. The `/{server}` form reads that server's game data; the bare
+/// form reads the default server.
+#[utoipa::path(
+    get,
+    path = "/{server}/story/sprites/{base}/thumb/{variant}",
+    operation_id = "story_sprite_thumb_variant_srv",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("base" = String, Path, description = "Sprite folder (`avg_npc_043_1`)."),
+        ("variant" = String, Path, description = "Expression key, URL-encoded (`%232%241` for `#2$1`)."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes.")
+    ),
+    responses(
+        (status = 200, description = "The thumbnail, with an `ETag` and `Cache-Control: public, max-age=604800`.", content_type = "image/webp"),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn sprite_variant_thumb_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path((server, base, variant)): Path<(Server, String, String)>,
+) -> Result<Response, ApiError> {
+    let (dir, rel) = get_variant_thumb(&state, server, &base, &variant).await?;
+    crate::app::routes::assets::serve_file(&dir, &rel, &headers).await
 }

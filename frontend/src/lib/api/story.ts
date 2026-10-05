@@ -6,6 +6,8 @@ import type { StoryCommunity } from "#/types/generated/StoryCommunity";
 import type { StoryIllustrations } from "#/types/generated/StoryIllustrations";
 import type { StoryIndex } from "#/types/generated/StoryIndex";
 import type { StoryScript } from "#/types/generated/StoryScript";
+import type { StorySpriteDetail } from "#/types/generated/StorySpriteDetail";
+import type { StorySpriteIndex } from "#/types/generated/StorySpriteIndex";
 import { DEFAULT_GAMEDATA_SERVER, gamedataPath, resolveGamedataServer } from "./gamedata";
 
 /** The Archives library: every story group and every operator's records. See `docs/story-reader.md`. */
@@ -128,6 +130,52 @@ export function storyCommunityQueryOptions(server: string = DEFAULT_GAMEDATA_SER
         queryKey: ["story", "community", resolveGamedataServer(server)],
         queryFn: () => getStoryCommunityFn({ data: resolveGamedataServer(server) }),
         staleTime: 6 * 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+    });
+}
+
+/**
+ * The CHARACTER GALLERY's list: every story sprite folder with the names the
+ * scripts speak it under, or `null` when the running backend does not serve
+ * the route (404). Null is first-class for the same reason it is on the
+ * archive and community queries: the route ships after the binary on :3060
+ * was built, and a page that threw would take the whole route down until a
+ * restart. The backend builds it once per game data load, so an hour of
+ * staleness costs nothing.
+ */
+export const getStorySpritesFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string) => server)
+    .handler(async ({ data: server }) => {
+        const res = await backendFetch(gamedataPath(server, "/story/sprites"));
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error(`Failed to load story sprites: ${res.status}`);
+        return (await res.json()) as StorySpriteIndex;
+    });
+
+export function storySpritesQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
+    return queryOptions({
+        queryKey: ["story", "sprites", resolveGamedataServer(server)],
+        queryFn: () => getStorySpritesFn({ data: resolveGamedataServer(server) }),
+        staleTime: 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+    });
+}
+
+/** One sprite folder's expression sheet, or `null` when the folder is unknown or the backend predates the route (both 404). */
+export const getStorySpriteFn = createServerFn({ method: "GET" })
+    .inputValidator((data: { base: string; server: string }) => data)
+    .handler(async ({ data: { base, server } }) => {
+        const res = await backendFetch(gamedataPath(server, `/story/sprites/${encodeURIComponent(base)}`));
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error(`Failed to load story sprite: ${res.status}`);
+        return (await res.json()) as StorySpriteDetail;
+    });
+
+export function storySpriteQueryOptions(base: string, server: string = DEFAULT_GAMEDATA_SERVER) {
+    return queryOptions({
+        queryKey: ["story", "sprite", resolveGamedataServer(server), base.toLowerCase()],
+        queryFn: () => getStorySpriteFn({ data: { base, server: resolveGamedataServer(server) } }),
+        staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });
 }

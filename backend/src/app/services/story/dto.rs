@@ -669,3 +669,143 @@ pub struct StoryArchive {
     pub group_id: String,
     pub sections: Vec<StoryArchiveSection>,
 }
+
+/// Whether a sprite folder draws an operator or a member of the cast.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub enum StorySpriteKind {
+    /// The folder names a `char_*` id the character table holds:
+    /// `char_002_amiya_1`, and the story-only sets of an operator such as
+    /// `avg_474_gladiia_1`.
+    Operator,
+    /// Everyone else: `avg_npc_*`, `npc_*` and any numbered set with no
+    /// character-table row.
+    Npc,
+}
+
+/// One display name the scripts speak a sprite under, and how many lines.
+/// `count` is WEIGHTED: a line with two lit sprites counts half for each, so
+/// it is a number with at most two decimals rather than an integer.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct StorySpriteName {
+    pub name: String,
+    pub count: f64,
+}
+
+/// One expression a sprite folder OFFERS: a `#N$M` key and the files it
+/// resolves to, by the same resolver `GET /story/{id}` uses. Two keys that
+/// land on the same body and face are one expression, listed under the first
+/// key that reaches it. `wholeBody` is true when no face patch is composited:
+/// the body plate IS the expression (a legacy whole sprite, or a hub entry
+/// flagged `isWholeBody`). `uses` counts how often the scripts PUT this
+/// expression up (a slot, a cut-in, a window).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct StorySpriteVariant {
+    pub key: String,
+    #[serde(flatten)]
+    #[ts(flatten)]
+    pub sprite: crate::core::story::CharacterSprite,
+    pub whole_body: bool,
+    pub uses: u32,
+}
+
+/// One sprite folder in the gallery list: who it is, what the scripts call
+/// it, how much it speaks, and the one expression its card shows.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct StorySpriteEntry {
+    /// The folder under `textures/avg/characters/`, as spelled on disk.
+    pub base: String,
+    pub kind: StorySpriteKind,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub char_id: Option<String>,
+    /// The character table's name for `charId`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub operator_name: Option<String>,
+    /// What the folder adds after the `char_*` id: the set number (`1`) or
+    /// an outfit tag (`ex`). Never part of the name.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub variant: Option<String>,
+    /// The names the scripts speak this sprite under, most lines first. Empty
+    /// when no named line was ever attributed to it.
+    pub names: Vec<StorySpriteName>,
+    /// Weighted named lines attributed to this sprite over the library.
+    pub lines: f64,
+    /// Distinct library stories that put this sprite up.
+    pub story_count: u32,
+    /// The earliest `startTime` (unix seconds) of a group that shows it,
+    /// counting only dated groups; mainline groups carry none.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional, type = "number")]
+    pub first_seen: Option<i64>,
+    /// The first story, in library order, that shows it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub first_story: Option<String>,
+    /// That story's position in library order, for a stable sort.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub first_order: Option<u32>,
+    /// How many distinct expressions the folder offers.
+    pub variant_count: u32,
+    /// The expression the card shows: the most used one, else the first.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub thumb: Option<StorySpriteVariant>,
+}
+
+/// Every story sprite folder, one entry each, in folder-name order.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct StorySpriteIndex {
+    pub sprites: Vec<StorySpriteEntry>,
+}
+
+/// One story a sprite appears in, with the lines attributed to it there.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct StorySpriteStory {
+    pub id: String,
+    pub name: String,
+    /// The story's `avgTag` ("Before Operation", "After Operation"), which
+    /// tells apart the two halves of one stage that share a name.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub tag: Option<String>,
+    pub group_id: String,
+    pub group_name: String,
+    /// Weighted named lines attributed to the sprite in this story; 0 when
+    /// it is on stage but never the speaker.
+    pub lines: f64,
+    /// How often the story puts the sprite up.
+    pub uses: u32,
+}
+
+/// One sprite folder's expression sheet: its list entry, every expression
+/// it offers, and every story it appears in, in library order.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct StorySpriteDetail {
+    pub sprite: StorySpriteEntry,
+    pub variants: Vec<StorySpriteVariant>,
+    pub stories: Vec<StorySpriteStory>,
+}

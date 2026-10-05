@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-05T00:26:30.844Z",
+    "generatedAt": "2026-10-05T01:04:32.337Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -22978,6 +22978,354 @@
             "namespace": "story",
             "source_text": "How long the controls wait with no pointer movement.",
             "description": "Hint under the auto-hide delay slider.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.badge.npc",
+            "namespace": "story",
+            "source_text": "NPC",
+            "description": "Badge on a character card whose sprite is a non-playable character.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.badge.operator",
+            "namespace": "story",
+            "source_text": "Operator",
+            "description": "Badge on a character card whose sprite belongs to a playable operator.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.card.aliases",
+            "namespace": "story",
+            "source_text": "{count, plural, one {+# name} other {+# names}}",
+            "description": "On a character card: how many other names the scripts give this character.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.sprites.card.open",
+            "namespace": "story",
+            "source_text": "Open {name}'s expressions",
+            "description": "Accessible name of a character card, which opens its expression sheet.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "story.sprites.card.stories",
+            "namespace": "story",
+            "source_text": "{count, plural, one {# story} other {# stories}}",
+            "description": "On a character card: how many stories this sprite appears in.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.sprites.empty",
+            "namespace": "story",
+            "source_text": "No character matches that search.",
+            "description": "Empty state of the character gallery grid.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.failed",
+            "namespace": "story",
+            "source_text": "The character list could not be loaded.",
+            "description": "Error state of the character gallery.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.kind.all",
+            "namespace": "story",
+            "source_text": "All",
+            "description": "Kind filter showing every story sprite.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.kind.aria",
+            "namespace": "story",
+            "source_text": "Show",
+            "description": "Accessible name of the row of kind filters (All, Operators, NPCs) on the character gallery.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.kind.npc",
+            "namespace": "story",
+            "source_text": "NPCs",
+            "description": "Kind filter showing only non-playable story characters.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.kind.operator",
+            "namespace": "story",
+            "source_text": "Operators",
+            "description": "Kind filter showing only sprites of playable operators.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.loading",
+            "namespace": "story",
+            "source_text": "Loading characters",
+            "description": "Accessible label of the character gallery's loading placeholders.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.results",
+            "namespace": "story",
+            "source_text": "{count, plural, one {# character} other {# characters}}",
+            "description": "Count of characters the current search and filter show.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.sprites.search.aria",
+            "namespace": "story",
+            "source_text": "Search characters",
+            "description": "Accessible name of the character gallery's search box.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.search.placeholder",
+            "namespace": "story",
+            "source_text": "Search a name, an operator or a sprite id",
+            "description": "Placeholder of the search box above the character gallery grid.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.sheet.body",
+            "namespace": "story",
+            "source_text": "Body {body}",
+            "description": "Heading of one group of expressions that share a body pose (the $M index).",
+            "placeholders": [
+                "body"
+            ]
+        },
+        {
+            "key": "story.sprites.sheet.close",
+            "namespace": "story",
+            "source_text": "Close",
+            "description": "Button that closes the expression sheet dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.sheet.download",
+            "namespace": "story",
+            "source_text": "Download sheet",
+            "description": "Button that saves every expression of the character as one PNG.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.sheet.downloadFailed",
+            "namespace": "story",
+            "source_text": "The sheet could not be drawn.",
+            "description": "Shown when composing the expression sheet PNG fails.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.sheet.downloading",
+            "namespace": "story",
+            "source_text": "Composing…",
+            "description": "Label of the download button while the PNG is being drawn.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.sheet.expressions",
+            "namespace": "story",
+            "source_text": "{count, plural, one {# expression} other {# expressions}}",
+            "description": "Heading of the expression grid on a character's sheet.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.sprites.sheet.firstSeen",
+            "namespace": "story",
+            "source_text": "First seen {date}",
+            "description": "The release date of the first event that shows this character.",
+            "placeholders": [
+                "date"
+            ]
+        },
+        {
+            "key": "story.sprites.sheet.folder",
+            "namespace": "story",
+            "source_text": "Sprite {base}",
+            "description": "The sprite folder id shown on a character's sheet.",
+            "placeholders": [
+                "base"
+            ]
+        },
+        {
+            "key": "story.sprites.sheet.gridAria",
+            "namespace": "story",
+            "source_text": "Expressions. Arrow keys move between them.",
+            "description": "Accessible name of the expression grid, which arrow keys navigate.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.sheet.lineCount",
+            "namespace": "story",
+            "source_text": "{count, plural, one {# line} other {# lines}}",
+            "description": "Line count beside a name or a story on a character's sheet. Counts can be fractional when two characters were lit at once.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.sprites.sheet.loading",
+            "namespace": "story",
+            "source_text": "Loading expressions",
+            "description": "Accessible label of the expression sheet's loading placeholders.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.sheet.names",
+            "namespace": "story",
+            "source_text": "Called",
+            "description": "Heading of the list of display names the scripts give a character, with line counts.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.sheet.noNames",
+            "namespace": "story",
+            "source_text": "No named line is spoken while this sprite is lit.",
+            "description": "Shown instead of the names list when no line was attributed to the sprite.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.sheet.notFound",
+            "namespace": "story",
+            "source_text": "There is no story sprite called {base}.",
+            "description": "Shown on a character page whose sprite id is unknown.",
+            "placeholders": [
+                "base"
+            ]
+        },
+        {
+            "key": "story.sprites.sheet.onStage",
+            "namespace": "story",
+            "source_text": "on stage",
+            "description": "Beside a story in which the character appears but never speaks.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.sheet.operator",
+            "namespace": "story",
+            "source_text": "Operator page",
+            "description": "Link from a character's sheet to the operator's own page.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.sheet.stories",
+            "namespace": "story",
+            "source_text": "Appears in",
+            "description": "Heading of the list of stories a character appears in.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.sheet.uses",
+            "namespace": "story",
+            "source_text": "{count, plural, =0 {unused} one {used once} other {used # times}}",
+            "description": "How often the scripts put this expression on stage.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.sprites.sheet.variant",
+            "namespace": "story",
+            "source_text": "Set {variant}",
+            "description": "The operator's sprite set or outfit tag (for example 1, 2 or ex) shown on a character's sheet.",
+            "placeholders": [
+                "variant"
+            ]
+        },
+        {
+            "key": "story.sprites.sheet.variantAria",
+            "namespace": "story",
+            "source_text": "Expression {key}",
+            "description": "Accessible name of one expression in the sheet's grid; key is the script code such as #3$1.",
+            "placeholders": [
+                "key"
+            ]
+        },
+        {
+            "key": "story.sprites.sheet.wholeBody",
+            "namespace": "story",
+            "source_text": "whole body",
+            "description": "Marks an expression drawn as its own full plate rather than a face patch on a shared body.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.showMore",
+            "namespace": "story",
+            "source_text": "Show {count} more ({remaining} left)",
+            "description": "Button under the character grid that mounts the next page of cards.",
+            "placeholders": [
+                "count",
+                "remaining"
+            ]
+        },
+        {
+            "key": "story.sprites.sort.appearances",
+            "namespace": "story",
+            "source_text": "Most stories",
+            "description": "Sort option: characters that appear in the most stories first.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.sort.aria",
+            "namespace": "story",
+            "source_text": "Sort by",
+            "description": "Accessible name of the sort control on the character gallery.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.sort.firstSeen",
+            "namespace": "story",
+            "source_text": "First seen",
+            "description": "Sort option: characters in the order their first event released; characters only in main chapters come last.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.sort.name",
+            "namespace": "story",
+            "source_text": "Name",
+            "description": "Sort option: alphabetical by the character's display name.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.subtitle",
+            "namespace": "story",
+            "source_text": "{count} story sprites: {operators} operator sets and {npcs} other characters, named by who speaks while they are on stage.",
+            "description": "Line under the character gallery heading. The counts are preformatted numbers.",
+            "placeholders": [
+                "count",
+                "npcs",
+                "operators"
+            ]
+        },
+        {
+            "key": "story.sprites.tab",
+            "namespace": "story",
+            "source_text": "Characters",
+            "description": "Story library tab listing every story sprite, operators and NPCs, with their expressions.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.unavailable",
+            "namespace": "story",
+            "source_text": "The character gallery is not available yet.",
+            "description": "Shown when the backend does not serve the character gallery route.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.unavailableNote",
+            "namespace": "story",
+            "source_text": "The server answering this page predates it; it appears after the next backend restart.",
+            "description": "Second line under the gallery's unavailable state, for a backend that predates the route.",
             "placeholders": []
         },
         {

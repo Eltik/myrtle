@@ -36,6 +36,7 @@ import { Route as ToolsHpsRouteImport } from './routes/tools.hps'
 import { Route as ToolsDpsRouteImport } from './routes/tools.dps'
 import { Route as ToolsBirthdaysRouteImport } from './routes/tools.birthdays'
 import { Route as TierListsIdRouteImport } from './routes/tier-lists_.$id'
+import { Route as StoriesSpritesRouteImport } from './routes/stories_.sprites'
 import { Route as StoriesStoryIdRouteImport } from './routes/stories_.$storyId'
 import { Route as StagesStageIdRouteImport } from './routes/stages_.$stageId'
 import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
@@ -44,6 +45,7 @@ import { Route as GachaCommunityRouteImport } from './routes/gacha.community'
 import { Route as EnemiesIdRouteImport } from './routes/enemies_.$id'
 import { Route as AuthedAdminRouteImport } from './routes/_authed/admin'
 import { Route as AuthedAdminIndexRouteImport } from './routes/_authed/admin/index'
+import { Route as StoriesSpritesBaseRouteImport } from './routes/stories_.sprites_.$base'
 import { Route as ApiOgDefaultRouteImport } from './routes/api/og/default'
 import { Route as AuthedTierListsMyRouteImport } from './routes/_authed/tier-lists_.my'
 import { Route as AuthedAdminUsersRouteImport } from './routes/_authed/admin/users'
@@ -192,6 +194,11 @@ const TierListsIdRoute = TierListsIdRouteImport.update({
   path: '/tier-lists/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoriesSpritesRoute = StoriesSpritesRouteImport.update({
+  id: '/stories_/sprites',
+  path: '/stories/sprites',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StoriesStoryIdRoute = StoriesStoryIdRouteImport.update({
   id: '/stories_/$storyId',
   path: '/stories/$storyId',
@@ -231,6 +238,11 @@ const AuthedAdminIndexRoute = AuthedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthedAdminRoute,
+} as any)
+const StoriesSpritesBaseRoute = StoriesSpritesBaseRouteImport.update({
+  id: '/stories_/sprites_/$base',
+  path: '/stories/sprites/$base',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiOgDefaultRoute = ApiOgDefaultRouteImport.update({
   id: '/api/og/default',
@@ -323,6 +335,7 @@ export interface FileRoutesByFullPath {
   '/operators/$id': typeof OperatorsIdRoute
   '/stages/$stageId': typeof StagesStageIdRoute
   '/stories/$storyId': typeof StoriesStoryIdRoute
+  '/stories/sprites': typeof StoriesSpritesRoute
   '/tier-lists/$id': typeof TierListsIdRoute
   '/tools/birthdays': typeof ToolsBirthdaysRoute
   '/tools/dps': typeof ToolsDpsRoute
@@ -344,6 +357,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AuthedAdminUsersRoute
   '/tier-lists/my': typeof AuthedTierListsMyRoute
   '/api/og/default': typeof ApiOgDefaultRoute
+  '/stories/sprites/$base': typeof StoriesSpritesBaseRoute
   '/admin/': typeof AuthedAdminIndexRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
   '/api/tier-lists/$slug/image': typeof ApiTierListsSlugImageRoute
@@ -371,6 +385,7 @@ export interface FileRoutesByTo {
   '/operators/$id': typeof OperatorsIdRoute
   '/stages/$stageId': typeof StagesStageIdRoute
   '/stories/$storyId': typeof StoriesStoryIdRoute
+  '/stories/sprites': typeof StoriesSpritesRoute
   '/tier-lists/$id': typeof TierListsIdRoute
   '/tools/birthdays': typeof ToolsBirthdaysRoute
   '/tools/dps': typeof ToolsDpsRoute
@@ -392,6 +407,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AuthedAdminUsersRoute
   '/tier-lists/my': typeof AuthedTierListsMyRoute
   '/api/og/default': typeof ApiOgDefaultRoute
+  '/stories/sprites/$base': typeof StoriesSpritesBaseRoute
   '/admin': typeof AuthedAdminIndexRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
   '/api/tier-lists/$slug/image': typeof ApiTierListsSlugImageRoute
@@ -422,6 +438,7 @@ export interface FileRoutesById {
   '/operators_/$id': typeof OperatorsIdRoute
   '/stages_/$stageId': typeof StagesStageIdRoute
   '/stories_/$storyId': typeof StoriesStoryIdRoute
+  '/stories_/sprites': typeof StoriesSpritesRoute
   '/tier-lists_/$id': typeof TierListsIdRoute
   '/tools/birthdays': typeof ToolsBirthdaysRoute
   '/tools/dps': typeof ToolsDpsRoute
@@ -443,6 +460,7 @@ export interface FileRoutesById {
   '/_authed/admin/users': typeof AuthedAdminUsersRoute
   '/_authed/tier-lists_/my': typeof AuthedTierListsMyRoute
   '/api/og/default': typeof ApiOgDefaultRoute
+  '/stories_/sprites_/$base': typeof StoriesSpritesBaseRoute
   '/_authed/admin/': typeof AuthedAdminIndexRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
   '/api/tier-lists/$slug/image': typeof ApiTierListsSlugImageRoute
@@ -473,6 +491,7 @@ export interface FileRouteTypes {
     | '/operators/$id'
     | '/stages/$stageId'
     | '/stories/$storyId'
+    | '/stories/sprites'
     | '/tier-lists/$id'
     | '/tools/birthdays'
     | '/tools/dps'
@@ -494,6 +513,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/tier-lists/my'
     | '/api/og/default'
+    | '/stories/sprites/$base'
     | '/admin/'
     | '/api/og/$kind/$id'
     | '/api/tier-lists/$slug/image'
@@ -521,6 +541,7 @@ export interface FileRouteTypes {
     | '/operators/$id'
     | '/stages/$stageId'
     | '/stories/$storyId'
+    | '/stories/sprites'
     | '/tier-lists/$id'
     | '/tools/birthdays'
     | '/tools/dps'
@@ -542,6 +563,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/tier-lists/my'
     | '/api/og/default'
+    | '/stories/sprites/$base'
     | '/admin'
     | '/api/og/$kind/$id'
     | '/api/tier-lists/$slug/image'
@@ -571,6 +593,7 @@ export interface FileRouteTypes {
     | '/operators_/$id'
     | '/stages_/$stageId'
     | '/stories_/$storyId'
+    | '/stories_/sprites'
     | '/tier-lists_/$id'
     | '/tools/birthdays'
     | '/tools/dps'
@@ -592,6 +615,7 @@ export interface FileRouteTypes {
     | '/_authed/admin/users'
     | '/_authed/tier-lists_/my'
     | '/api/og/default'
+    | '/stories_/sprites_/$base'
     | '/_authed/admin/'
     | '/api/og/$kind/$id'
     | '/api/tier-lists/$slug/image'
@@ -621,6 +645,7 @@ export interface RootRouteChildren {
   OperatorsIdRoute: typeof OperatorsIdRoute
   StagesStageIdRoute: typeof StagesStageIdRoute
   StoriesStoryIdRoute: typeof StoriesStoryIdRoute
+  StoriesSpritesRoute: typeof StoriesSpritesRoute
   TierListsIdRoute: typeof TierListsIdRoute
   ToolsBirthdaysRoute: typeof ToolsBirthdaysRoute
   ToolsDpsRoute: typeof ToolsDpsRoute
@@ -633,6 +658,7 @@ export interface RootRouteChildren {
   UserLeaderboardRoute: typeof UserLeaderboardRoute
   UserSearchRoute: typeof UserSearchRoute
   ApiOgDefaultRoute: typeof ApiOgDefaultRoute
+  StoriesSpritesBaseRoute: typeof StoriesSpritesBaseRoute
   ApiOgKindIdRoute: typeof ApiOgKindIdRoute
   ApiTierListsSlugImageRoute: typeof ApiTierListsSlugImageRoute
 }
@@ -828,6 +854,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TierListsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/stories_/sprites': {
+      id: '/stories_/sprites'
+      path: '/stories/sprites'
+      fullPath: '/stories/sprites'
+      preLoaderRoute: typeof StoriesSpritesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/stories_/$storyId': {
       id: '/stories_/$storyId'
       path: '/stories/$storyId'
@@ -883,6 +916,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthedAdminIndexRouteImport
       parentRoute: typeof AuthedAdminRoute
+    }
+    '/stories_/sprites_/$base': {
+      id: '/stories_/sprites_/$base'
+      path: '/stories/sprites/$base'
+      fullPath: '/stories/sprites/$base'
+      preLoaderRoute: typeof StoriesSpritesBaseRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/og/default': {
       id: '/api/og/default'
@@ -1044,6 +1084,7 @@ const rootRouteChildren: RootRouteChildren = {
   OperatorsIdRoute: OperatorsIdRoute,
   StagesStageIdRoute: StagesStageIdRoute,
   StoriesStoryIdRoute: StoriesStoryIdRoute,
+  StoriesSpritesRoute: StoriesSpritesRoute,
   TierListsIdRoute: TierListsIdRoute,
   ToolsBirthdaysRoute: ToolsBirthdaysRoute,
   ToolsDpsRoute: ToolsDpsRoute,
@@ -1056,6 +1097,7 @@ const rootRouteChildren: RootRouteChildren = {
   UserLeaderboardRoute: UserLeaderboardRoute,
   UserSearchRoute: UserSearchRoute,
   ApiOgDefaultRoute: ApiOgDefaultRoute,
+  StoriesSpritesBaseRoute: StoriesSpritesBaseRoute,
   ApiOgKindIdRoute: ApiOgKindIdRoute,
   ApiTierListsSlugImageRoute: ApiTierListsSlugImageRoute,
 }
