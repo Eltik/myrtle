@@ -27,6 +27,10 @@ const PAGE_SIZE = 180;
  * open of a new one; a fresh page now opens on the grid's first allowed type.
  */
 let lastKind: TierEntityKind | null = null;
+/** Where the Operators tab finds operators the reader's server has not released yet. */
+const PREVIEW_SERVER = "cn";
+/** Servers that already serve CN's roster: no preview operators to add. */
+const CN_ROSTER_SERVERS: readonly string[] = [PREVIEW_SERVER, "bili"];
 
 interface IEntityPickerDialogProps {
     /** The cell being picked for, `null` when closed. */
@@ -34,7 +38,8 @@ interface IEntityPickerDialogProps {
     /** The grid's allowed types: the only tabs offered, in `ALL_ENTITY_KINDS` order. */
     kinds: readonly TierEntityKind[];
     onClose: () => void;
-    onPick: (entity: ITierEntity) => void;
+    /** `server` is where the pick came from when it is not the reader's server (a CN-only operator), else `null`. */
+    onPick: (entity: ITierEntity, server: string | null) => void;
     onClear: () => void;
 }
 
@@ -62,7 +67,7 @@ export function EntityPickerDialog({ target, kinds, onClose, onPick, onClear }: 
     );
 }
 
-function PickerBody({ kinds, current, onPick }: { kinds: readonly TierEntityKind[]; current: ITierEntity | null; onPick: (entity: ITierEntity) => void }) {
+function PickerBody({ kinds, current, onPick }: { kinds: readonly TierEntityKind[]; current: ITierEntity | null; onPick: (entity: ITierEntity, server: string | null) => void }) {
     const t: TypedT<typeof messages> = useT("grids");
     const labels = useEntityLabels();
     const server = useGamedataServer();
@@ -72,14 +77,30 @@ function PickerBody({ kinds, current, onPick }: { kinds: readonly TierEntityKind
     const [limit, setLimit] = useState(PAGE_SIZE);
 
     const catalogue = useQuery(tierEntityCatalogueQueryOptions(kind, server));
-    const entities = useMemo(() => catalogue.data?.map((summary) => toTierEntity(summary.kind, summary.id, summary, UNPLACED)) ?? [], [catalogue.data]);
+    // The Operators tab also offers what CN has released and this server has not, after the rest. A failed load leaves the tab as it was.
+    const withPreview = kind === "operator" && !CN_ROSTER_SERVERS.includes(server);
+    const previewCatalogue = useQuery({ ...tierEntityCatalogueQueryOptions("operator", PREVIEW_SERVER), enabled: withPreview });
+    const released = useMemo(() => catalogue.data?.map((summary) => toTierEntity(summary.kind, summary.id, summary, UNPLACED)) ?? [], [catalogue.data]);
+    const preview = useMemo(() => {
+        if (!withPreview || !catalogue.data || !previewCatalogue.data) return [];
+        const known = new Set(released.map((entity) => entity.key));
+        return previewCatalogue.data.map((summary) => toTierEntity(summary.kind, summary.id, summary, UNPLACED)).filter((entity) => !known.has(entity.key));
+    }, [withPreview, catalogue.data, previewCatalogue.data, released]);
+    // A CN-only operator's name is Chinese; outside CN its romanized appellation names it, as the saved grid's resolver does, and the Chinese name stays searchable.
+    const previewNames = useMemo(() => new Map(preview.map((entity) => [entity.key, entity.name])), [preview]);
+    const previewTiles = useMemo(() => preview.map((entity) => (entity.resolved && entity.kind === "operator" && entity.appellation?.trim() ? { ...entity, name: entity.appellation } : entity)), [preview]);
+    const entities = useMemo(() => (previewTiles.length > 0 ? [...released, ...previewTiles] : released), [released, previewTiles]);
     const pool = usePoolKind(kind, entities);
 
     const filtered = useMemo(() => {
         const q = compactForSearch(query);
-        const matched = q.length === 0 ? entities : entities.filter((entity) => pool.searchTexts(entity).some((text) => Boolean(text) && compactForSearch(text ?? "").includes(q)));
-        return pool.compare ? [...matched].sort(pool.compare) : matched;
-    }, [entities, pool, query]);
+        const matches = (entity: ITierEntity) => q.length === 0 || [...pool.searchTexts(entity), previewNames.get(entity.key) ?? null].some((text) => Boolean(text) && compactForSearch(text ?? "").includes(q));
+        const ordered = (list: ITierEntity[]) => {
+            const matched = list.filter(matches);
+            return pool.compare ? matched.sort(pool.compare) : matched;
+        };
+        return [...ordered(released), ...ordered(previewTiles)];
+    }, [released, previewTiles, previewNames, pool, query]);
 
     // A new tab or search starts the pages over.
     // biome-ignore lint/correctness/useExhaustiveDependencies: `kind` and `query` are the triggers, not values read inside
@@ -120,6 +141,7 @@ function PickerBody({ kinds, current, onPick }: { kinds: readonly TierEntityKind
                 </InputGroupAddon>
                 <InputGroupInput value={query} onChange={(e) => setQuery((e.target as HTMLInputElement).value)} placeholder={t("picker.searchPlaceholder", { kind: labels.plural(kind) })} type="search" aria-label={pool.searchLabel} />
             </InputGroup>
+            {previewTiles.length > 0 && <p className="m-0 -mt-1 font-sans text-muted-foreground text-xs">{t("picker.previewHint", { badge: t("picker.previewBadge") })}</p>}
 
             <div className="relative min-h-0 flex-1">
                 {catalogue.status === "pending" ? (
@@ -142,18 +164,25 @@ function PickerBody({ kinds, current, onPick }: { kinds: readonly TierEntityKind
                         <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(76px,1fr))] gap-2 p-0 pe-2">
                             {visible.map((entity) => {
                                 const selected = current?.key === entity.key;
+                                const fromPreview = previewNames.has(entity.key);
+                                const label = fromPreview ? t("picker.previewLabel", { name: labels.tileLabel(entity) }) : labels.tileLabel(entity);
                                 return (
                                     <li key={entity.key}>
                                         <button
                                             type="button"
-                                            onClick={() => onPick(entity)}
-                                            aria-label={labels.tileLabel(entity)}
+                                            onClick={() => onPick(entity, fromPreview ? PREVIEW_SERVER : null)}
+                                            aria-label={label}
                                             aria-pressed={selected}
-                                            title={labels.tileLabel(entity)}
+                                            title={label}
                                             className={cn("group flex w-full cursor-pointer flex-col overflow-hidden rounded-md border bg-card text-start transition-colors hover:border-primary", selected ? "border-primary ring-2 ring-primary/40" : "border-border")}
                                         >
                                             <span className="relative flex aspect-square w-full items-center justify-center overflow-hidden bg-[oklch(0.2_0.005_285)] text-lg text-white">
-                                                <EntityAvatar entity={entity} face="tile" tone="dark" />
+                                                <EntityAvatar entity={entity} face="tile" tone="dark" server={fromPreview ? PREVIEW_SERVER : undefined} />
+                                                {fromPreview && (
+                                                    <span className="absolute top-1 left-1 rounded-sm bg-black/70 px-1 py-px font-sans font-semibold text-[9px] text-white uppercase leading-none tracking-wide" aria-hidden="true">
+                                                        {t("picker.previewBadge")}
+                                                    </span>
+                                                )}
                                             </span>
                                             <span className="line-clamp-2 min-h-[2.4em] px-1 py-1 text-center font-medium font-sans text-[10.5px] text-foreground leading-tight">{entity.name}</span>
                                         </button>

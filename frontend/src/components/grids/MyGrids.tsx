@@ -1,17 +1,14 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { EyeOffIcon, PencilIcon, Trash2Icon } from "lucide-react";
-import { useState } from "react";
+import { EyeOffIcon, PencilIcon } from "lucide-react";
 import { Button } from "#/components/ui/button";
-import { useErrorMessage } from "#/components/ui/error-message";
 import { Kicker } from "#/components/ui/kicker";
 import { Skeleton } from "#/components/ui/skeleton";
-import { toastManager } from "#/components/ui/toast";
 import { useAuth } from "#/hooks/use-auth";
-import { deleteGridFn, type IGridSummary, myGridsQueryOptions } from "#/lib/api/grids";
+import { myGridsQueryOptions } from "#/lib/api/grids";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { ConfirmDialog } from "./ConfirmDialog";
+import { DeleteGridButton } from "./DeleteGrid";
 import { GridCard } from "./GridCard";
 import type { messages } from "./MyGrids.messages";
 import { NewGridButton } from "./NewGridButton";
@@ -19,28 +16,10 @@ import { DEFAULT_GRIDS_SEARCH, GRIDS_PER_USER_MAX } from "./shared";
 
 export function MyGrids() {
     const t: TypedT<typeof messages> = useT("grids");
-    const describeError = useErrorMessage();
-    const queryClient = useQueryClient();
     const server = useGamedataServer();
     const { user } = useAuth();
     const options = myGridsQueryOptions(user?.id ?? null, server);
     const { data, isPending, isError, refetch, isFetching } = useQuery(options);
-    const [deleting, setDeleting] = useState<IGridSummary | null>(null);
-    const [deleteError, setDeleteError] = useState<string | null>(null);
-
-    const remove = useMutation({
-        mutationFn: (slug: string) => deleteGridFn({ data: slug }),
-        onSuccess: (_, slug) => {
-            const title = deleting?.title ?? "";
-            queryClient.setQueryData<IGridSummary[]>(options.queryKey, (prev) => prev?.filter((g) => g.slug !== slug));
-            void queryClient.invalidateQueries({ queryKey: ["grids"] });
-            setDeleting(null);
-            setDeleteError(null);
-            toastManager.add({ id: `grid-delete-${Date.now()}`, title: t("my.toast.deleted", { title }), type: "success" });
-        },
-        onError: (err: unknown) => setDeleteError(describeError(err)),
-    });
-
     const grids = data ?? [];
 
     return (
@@ -101,19 +80,7 @@ export function MyGrids() {
                                             <PencilIcon />
                                             {t("my.edit")}
                                         </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon-sm"
-                                            aria-label={t("my.delete", { title: grid.title })}
-                                            title={t("my.delete", { title: grid.title })}
-                                            onClick={() => {
-                                                setDeleteError(null);
-                                                setDeleting(grid);
-                                            }}
-                                        >
-                                            <Trash2Icon />
-                                        </Button>
+                                        <DeleteGridButton grid={grid} />
                                     </>
                                 }
                             />
@@ -121,19 +88,6 @@ export function MyGrids() {
                     </div>
                 )}
             </div>
-
-            <ConfirmDialog
-                open={deleting !== null}
-                title={t("my.deleteDialog.title")}
-                body={t("my.deleteDialog.body", { title: deleting?.title ?? "" })}
-                confirmLabel={t("my.deleteDialog.confirm")}
-                cancelLabel={t("my.deleteDialog.cancel")}
-                destructive
-                pending={remove.isPending}
-                errorMessage={deleteError}
-                onCancel={() => setDeleting(null)}
-                onConfirm={() => deleting && remove.mutate(deleting.slug)}
-            />
         </main>
     );
 }

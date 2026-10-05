@@ -7,8 +7,9 @@
  */
 
 import { DEFAULT_GAMEDATA_SERVER, type GamedataServer, isGamedataServer, resolveGamedataServer } from "#/lib/api/gamedata";
-import { type ArtFit, entityArtFit, entityIconURL, entityKey, toTierEntity, UNPLACED } from "#/lib/api/tier-entities";
+import { type ArtFit, entityArtFit, entityKey, toTierEntity, UNPLACED } from "#/lib/api/tier-entities";
 import type { Grid } from "#/types/generated/Grid";
+import { ogEntityIconURL } from "./art";
 
 export interface IGridImageCell {
     label: string;
@@ -17,6 +18,8 @@ export interface IGridImageCell {
     /** The pick's name, drawn as initials when it has no art. */
     name: string | null;
     artURL: string | null;
+    /** The server the art is read from when it is not {@link IGridImageData.server}: a pick only that server knows. Part of the hash, since it decides whether the cell has art. */
+    artServer: string | null;
     fit: ArtFit;
 }
 
@@ -37,15 +40,17 @@ export function buildGridImageData(grid: Pick<Grid, "title" | "slug" | "rows" | 
     for (let i = 0; i < grid.rows * grid.cols; i++) {
         const cell = grid.cells[i];
         if (!cell?.entity_kind || !cell.entity_id) {
-            cells.push({ label: cell?.label ?? "", key: null, name: null, artURL: null, fit: "cover" });
+            cells.push({ label: cell?.label ?? "", key: null, name: null, artURL: null, artServer: null, fit: "cover" });
             continue;
         }
         const entity = toTierEntity(cell.entity_kind, cell.entity_id, cell.entity, UNPLACED);
+        const artServer = cell.entity ? cell.entity_server : null;
         cells.push({
             label: cell.label,
             key: entityKey(cell.entity_kind, cell.entity_id),
             name: entity.name,
-            artURL: entity.icon && iconBase ? entityIconURL(entity.icon, iconBase, server) : null,
+            artURL: entity.icon && iconBase ? ogEntityIconURL(entity.icon, iconBase, artServer ?? server) : null,
+            artServer,
             fit: entityArtFit(entity),
         });
     }

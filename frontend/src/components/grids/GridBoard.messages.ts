@@ -23,6 +23,10 @@ export const messages = {
         text: "{name} in row {row}, column {col}. Change it",
         description: "Accessible name of a filled cell's art area in the grid editor. {name} is the picked entity's name and kind from the game data.",
     },
+    "cell.clear": {
+        text: "Remove {name} from row {row}, column {col}",
+        description: "Accessible name and tooltip of the small x button on a filled cell in the grid editor. It removes the pick at once and keeps the cell's label. {name} is the picked entity's name.",
+    },
     "cell.editLabel": {
         text: "Label of row {row}, column {col}: {label}. Edit it",
         description: "Accessible name of a cell's label strip in the grid editor, which turns into a text field when clicked. {label} is the current label.",

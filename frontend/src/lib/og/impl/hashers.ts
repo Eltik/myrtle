@@ -74,7 +74,7 @@ const userHasher = defineOgHasher<IUserOgData>({
     ],
 });
 
-const TIER_LIST_HASH_VERSION = "v3";
+const TIER_LIST_HASH_VERSION = "v4";
 
 const tierListHasher = defineOgHasher<ITierListOgData>({
     kind: "tier-list",
@@ -98,7 +98,7 @@ const tierListHasher = defineOgHasher<ITierListOgData>({
     ],
 });
 
-const TIER_LIST_BOARD_IMAGE_HASH_VERSION = "v12";
+const TIER_LIST_BOARD_IMAGE_HASH_VERSION = "v13";
 
 const tierListBoardImageHasher = defineOgHasher<ITierListBoardImageData>({
     kind: "tier-list-image",
@@ -106,12 +106,12 @@ const tierListBoardImageHasher = defineOgHasher<ITierListBoardImageData>({
     hashParts: (data) => [TIER_LIST_BOARD_IMAGE_LAYOUT.width, data.title, data.slug, data.tiers.map((t) => `${t.name}:${t.color}:${t.operators.map((o) => `${o.id}.${o.rarity}`).join(",")}`).join("|")],
 });
 
-const GRID_IMAGE_HASH_VERSION = "v2";
+const GRID_IMAGE_HASH_VERSION = "v4";
 
 const gridImageHasher = defineOgHasher<IGridImageData>({
     kind: "grid-image",
     hashVersion: GRID_IMAGE_HASH_VERSION,
-    hashParts: (data) => [GRID_IMAGE_LAYOUT.width, data.title, data.slug, data.server, data.rows, data.cols, data.cells.map((c) => `${c.label}=${c.key ?? ""}`).join("|")],
+    hashParts: (data) => [GRID_IMAGE_LAYOUT.width, data.title, data.slug, data.server, data.rows, data.cols, data.cells.map((c) => `${c.label}=${c.key ?? ""}@${c.artServer ?? ""}`).join("|")],
 });
 
 const STAGE_HASH_VERSION = "v1";

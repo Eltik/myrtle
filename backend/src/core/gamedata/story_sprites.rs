@@ -4,11 +4,13 @@
 //! The story stage draws characters from `textures/avg/characters/<folder>/`
 //! (1,636 folders on EN 2026-10-01). A folder is one sprite set, and a
 //! character with several sets numbers them (`avg_npc_935_1`, `_2`), so the
-//! entry is the folder with its trailing `_N` cut: 1,446 characters on EN.
+//! entry is the folder with its trailing `_N` cut, unless that number is the
+//! character's own (see [`character_ids`]): 1,633 characters on EN
+//! (2026-10-05).
 //! The entry's art is the set's default body, picked by the same rule the
 //! story reader uses for a sprite named with no face or body index
-//! (`core::story::assets`, rule 3), from the lowest-numbered set that has
-//! one. Bodies carry their default face, so the whole plate reads on its own.
+//! (`core::story::assets`, rule 3, else the hub's first sprite as its rules
+//! 2a and 2b do), from the lowest-numbered set that has one. Bodies carry their default face, so the whole plate reads on its own.
 //!
 //! Where the face sits comes from the set's `hub.json` (`facePos` and
 //! `faceSize` of the first group, in body pixels from the top-left), so a
@@ -23,7 +25,10 @@
 //! scripts: every `[name="..."]` line spoken while exactly one sprite is on
 //! stage, or while a `focus` picks one, votes for that sprite's character,
 //! and the winner is kept when it holds at least half the votes and two of
-//! them. On EN that names 1,216 of the 1,446.
+//! them. On EN that names 1,339 of the 1,633. The other names a named
+//! character is spoken under often enough are kept as its aliases (see
+//! [`ALIAS_MIN_VOTES`]): Maria Nearl's sprite wins as "Maria" and also
+//! carries "Blemishine".
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::Path;
@@ -41,6 +46,9 @@ pub struct StorySprite {
     pub face_center: Option<(f32, f32)>,
     /// The speaker the scripts name this character, when one wins the vote.
     pub speaker: Option<String>,
+    /// Other names the scripts speak this character under, most votes first;
+    /// empty when there is no `speaker`.
+    pub aliases: Vec<String>,
 }
 
 impl StorySprite {
@@ -80,16 +88,18 @@ impl StorySprites {
     /// folder's `hub.json` and for the scripts under `gamedata/story`.
     pub fn build(assets_dir: &Path, folders: &HashMap<String, Vec<String>>) -> Self {
         let chars_dir = assets_dir.join("textures/avg/characters");
-        let lower_folders: HashSet<String> =
-            folders.keys().map(|f| f.to_ascii_lowercase()).collect();
+        let ids = character_ids(folders);
 
-        let speakers = scan_speakers(&assets_dir.join("gamedata/story"), &lower_folders);
+        let speakers = scan_speakers(&assets_dir.join("gamedata/story"), &ids);
 
         let mut sprites = BTreeMap::new();
-        for (base, sets) in sets_by_character(folders) {
+        for (base, sets) in sets_by_character(folders, &ids) {
             // The lowest-numbered set that has a default body.
             let found = sets.iter().find_map(|&(_, folder)| {
-                default_body(folder, folders.get(folder)?).map(|body| (folder, body))
+                let stems = folders.get(folder)?;
+                default_body(folder, stems)
+                    .or_else(|| hub_body(&chars_dir.join(folder).join("hub.json"), stems))
+                    .map(|body| (folder, body))
             });
             let Some((folder, body)) = found else {
                 continue;
@@ -102,7 +112,11 @@ impl StorySprites {
             sprites.insert(
                 base.clone(),
                 StorySprite {
-                    speaker: speakers.get(&base).cloned(),
+                    speaker: speakers.get(&base).map(|n| n.speaker.clone()),
+                    aliases: speakers
+                        .get(&base)
+                        .map(|n| n.aliases.clone())
+                        .unwrap_or_default(),
                     id: base,
                     folder: folder.to_owned(),
                     body,
@@ -114,16 +128,99 @@ impl StorySprites {
     }
 }
 
-/// Character id -> its sets' folders, lowest set number first.
-fn sets_by_character(folders: &HashMap<String, Vec<String>>) -> BTreeMap<String, Vec<(u32, &str)>> {
+/// Lowercased folder -> the character id it belongs to.
+///
+/// The id is the folder with its trailing set number cut (`avg_npc_935_1` ->
+/// `avg_npc_935`), except where that number is the CHARACTER's own: 188
+/// folders on EN and CN are a bare `avg_npc_NNN` with no set suffix, and
+/// cutting `_NNN` left the one id `avg_npc` for all of them, so Maria Nearl
+/// (`avg_npc_061`, 772 lines as "Maria") and 185 other cast members the
+/// scripts put on stage had no entry (2026-10-05). A cut that leaves a head
+/// with no digit in it, shared by more than one folder, is taken to have
+/// eaten a character number, and each such folder is its own id.
+///
+/// Two numberings meet here. Four bare folders share their number with a
+/// set-numbered character, and they are different people: bare `avg_npc_208`
+/// is spoken as "Cannot" (272 lines), `avg_npc_208_1` as "Monique" (291);
+/// `213` is Mrs. Selis against Toland, `102` the Withered Knight against the
+/// Corrupted Knight, `058` Shieldguard on both. The reader resolves the bare
+/// name to the bare folder first. The set-numbered character already holds
+/// the id `avg_npc_208`, so the bare one takes `avg_npc_208_0`: a TRADE for id
+/// stability, as no folder id ends in `_0` (a real `_0` set cuts to its head).
+///
+/// The one folder the old rule kept, the lowest-numbered with a default body
+/// (`avg_npc_001`), keeps the id `avg_npc` it was saved under, and a
+/// digitless head with a single folder (`avg_doc_1`, `npc_10002`) is left as
+/// it was, so no saved grid or tier list loses or changes an entry.
+fn character_ids(folders: &HashMap<String, Vec<String>>) -> HashMap<String, String> {
+    let mut by_head: HashMap<&str, Vec<(u32, &str, String)>> = HashMap::new();
+    let mut ids = HashMap::new();
+    let lowered: Vec<(String, &String)> = folders
+        .keys()
+        .map(|f| (f.to_ascii_lowercase(), f))
+        .collect();
+    for (lower, folder) in &lowered {
+        let (head, n) = split_set_number(lower);
+        match n {
+            Some(n) if !head.bytes().any(|b| b.is_ascii_digit()) => by_head
+                .entry(head)
+                .or_default()
+                .push((n, folder.as_str(), lower.clone())),
+            _ => {
+                ids.insert(lower.clone(), head.to_owned());
+            }
+        }
+    }
+    let taken: HashSet<String> = ids.values().cloned().collect();
+    for (head, mut members) in by_head {
+        if members.len() == 1 {
+            ids.insert(members.remove(0).2, head.to_owned());
+            continue;
+        }
+        members.sort_unstable();
+        let kept = members
+            .iter()
+            .find(|(_, folder, _)| {
+                folders
+                    .get(*folder)
+                    .is_some_and(|stems| default_body(folder, stems).is_some())
+            })
+            .map(|(_, _, lower)| lower.clone());
+        for (_, _, lower) in members {
+            let id = if kept.as_ref() == Some(&lower) {
+                head.to_owned()
+            } else if taken.contains(&lower) {
+                format!("{lower}_0")
+            } else {
+                lower.clone()
+            };
+            ids.insert(lower, id);
+        }
+    }
+    ids
+}
+
+/// Character id -> its sets' folders, lowest set number first; a folder
+/// that is its character's id sorts as set 0.
+fn sets_by_character<'a>(
+    folders: &'a HashMap<String, Vec<String>>,
+    ids: &HashMap<String, String>,
+) -> BTreeMap<String, Vec<(u32, &'a str)>> {
     let mut by_base: BTreeMap<String, Vec<(u32, &str)>> = BTreeMap::new();
     for folder in folders.keys() {
         let lower = folder.to_ascii_lowercase();
-        let (base, n) = split_set_number(&lower);
+        let Some(id) = ids.get(&lower) else {
+            continue;
+        };
+        let n = if *id == lower {
+            0
+        } else {
+            split_set_number(&lower).1.unwrap_or(0)
+        };
         by_base
-            .entry(base.to_owned())
+            .entry(id.clone())
             .or_default()
-            .push((n.unwrap_or(0), folder.as_str()));
+            .push((n, folder.as_str()));
     }
     for sets in by_base.values_mut() {
         sets.sort_unstable();
@@ -162,6 +259,26 @@ fn default_body(folder: &str, stems: &[String]) -> Option<String> {
             .find(|stem| stem.eq_ignore_ascii_case(want))
             .cloned()
     })
+}
+
+/// The body the story reader falls back to when no file-name rule spells
+/// one (`core::story::assets`, rules 2a and 2b for a bare name): the first
+/// hub group's first sprite. Gives `char_242_mayer` (only `#2`..`#5` on disk),
+/// `char_253_greyy` (`_na_N`) and `char_2006_weiywfmzuki_1` (one
+/// `char_2006_fmzuki_1`) an entry: 878 script lines on EN name those three.
+fn hub_body(hub: &Path, stems: &[String]) -> Option<String> {
+    let text = std::fs::read_to_string(hub).ok()?;
+    let hub: serde_json::Value = serde_json::from_str(&text).ok()?;
+    let name = hub
+        .get("groups")?
+        .as_array()?
+        .first()?
+        .get("sprites")?
+        .as_array()?
+        .first()?
+        .get("name")?
+        .as_str()?;
+    stems.iter().find(|stem| stem.as_str() == name).cloned()
 }
 
 /// The first hub group's face centre as fractions of the body plate, `(x, y)`.
@@ -207,8 +324,76 @@ fn png_size(path: &Path) -> Option<(u32, u32)> {
 /// the votes its character got: one stray line does not name anyone.
 const MIN_VOTES: u32 = 2;
 
-/// Character id -> the speaker name the scripts give it, by vote.
-fn scan_speakers(story_dir: &Path, lower_folders: &HashSet<String>) -> HashMap<String, String> {
+/// A runner-up name is an alias when it holds at least this many votes and
+/// at least `1 / ALIAS_MIN_SHARE_DENOM` of the winner's: `avg_npc_061` wins as "Maria"
+/// (772 EN lines) and keeps "Blemishine", while a name heard once or twice
+/// over a sprite is a guard or a narrator, not another name for the
+/// character.
+const ALIAS_MIN_VOTES: u32 = 5;
+/// The fraction of the winner's votes an alias needs, as `1 / N`.
+const ALIAS_MIN_SHARE_DENOM: u32 = 10;
+/// No more aliases than this per character.
+const MAX_ALIASES: usize = 4;
+
+/// The names the vote gives one character.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct Names {
+    speaker: String,
+    aliases: Vec<String>,
+}
+
+/// One character's votes -> its name and aliases, or `None` when no name
+/// wins (see [`MIN_VOTES`]). Aliases are the runner-ups holding at least
+/// `max(ALIAS_MIN_VOTES, winner / ALIAS_MIN_SHARE_DENOM)` votes, most votes
+/// first (ties by name), at most [`MAX_ALIASES`]. A name is skipped when its
+/// [`alias_key`] is empty (`???`: 38 sprites on EN carried it, a speaker the
+/// script hides, not a name) or repeats the winner's or an earlier alias's
+/// (`Talulah?`, `'Cora'`).
+fn pick_names(names: HashMap<String, u32>) -> Option<Names> {
+    let total: u32 = names.values().sum();
+    let mut ranked: Vec<(String, u32)> = names.into_iter().collect();
+    ranked.sort_unstable_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
+    let mut ranked = ranked.into_iter();
+    let (speaker, count) = ranked.next()?;
+    if count < MIN_VOTES || count * 2 < total {
+        return None;
+    }
+    // `count >= x / 10` without the integer division's rounding down.
+    let floor = |votes: u32| votes >= ALIAS_MIN_VOTES && votes * ALIAS_MIN_SHARE_DENOM >= count;
+    let mut seen = vec![alias_key(&speaker)];
+    let mut aliases = Vec::new();
+    for (name, votes) in ranked {
+        if aliases.len() == MAX_ALIASES || !floor(votes) {
+            break;
+        }
+        let key = alias_key(&name);
+        if key.is_empty() || seen.contains(&key) {
+            continue;
+        }
+        seen.push(key);
+        aliases.push(name);
+    }
+    Some(Names { speaker, aliases })
+}
+
+/// A speaker name compared as an alias: lowercased, with the quotes and
+/// question marks the scripts wrap an uncertain or assumed name in trimmed;
+/// empty when no letter or digit is left.
+fn alias_key(name: &str) -> String {
+    let key = name
+        .trim_matches(|c: char| {
+            c.is_whitespace() || matches!(c, '?' | '\'' | '"' | '\u{2018}' | '\u{2019}')
+        })
+        .to_lowercase();
+    if key.chars().any(char::is_alphanumeric) {
+        key
+    } else {
+        String::new()
+    }
+}
+
+/// Character id -> the names the scripts give it, by vote.
+fn scan_speakers(story_dir: &Path, ids: &HashMap<String, String>) -> HashMap<String, Names> {
     let mut votes: HashMap<String, HashMap<String, u32>> = HashMap::new();
     for entry in walkdir::WalkDir::new(story_dir).into_iter().flatten() {
         let path = entry.path();
@@ -218,17 +403,11 @@ fn scan_speakers(story_dir: &Path, lower_folders: &HashSet<String>) -> HashMap<S
         let Ok(text) = std::fs::read_to_string(path) else {
             continue;
         };
-        vote_script(&text, lower_folders, &mut votes);
+        vote_script(&text, ids, &mut votes);
     }
     votes
         .into_iter()
-        .filter_map(|(base, names)| {
-            let total: u32 = names.values().sum();
-            let (name, count) = names
-                .into_iter()
-                .max_by(|a, b| a.1.cmp(&b.1).then_with(|| b.0.cmp(&a.0)))?;
-            (count >= MIN_VOTES && count * 2 >= total).then_some((base, name))
-        })
+        .filter_map(|(base, names)| pick_names(names).map(|n| (base, n)))
         .collect()
 }
 
@@ -298,7 +477,7 @@ impl Stage {
 /// One script's votes: who is on stage when each named line is spoken.
 fn vote_script(
     text: &str,
-    lower_folders: &HashSet<String>,
+    ids: &HashMap<String, String>,
     votes: &mut HashMap<String, HashMap<String, u32>>,
 ) {
     let mut stage = Stage::default();
@@ -323,7 +502,7 @@ fn vote_script(
             }
             let Some(base) = stage
                 .speaker_sprite()
-                .and_then(|sprite| sprite_base(sprite, lower_folders))
+                .and_then(|sprite| sprite_base(sprite, ids))
             else {
                 continue;
             };
@@ -341,24 +520,18 @@ fn vote_script(
 }
 
 /// A script sprite name (`avg_npc_935_1#2$1`) -> its character id, when the
-/// extract has the folder it names.
-fn sprite_base(sprite: &str, lower_folders: &HashSet<String>) -> Option<String> {
+/// extract has the folder it names (`base`, else `base_1`, as the reader
+/// looks it up).
+fn sprite_base(sprite: &str, ids: &HashMap<String, String>) -> Option<String> {
     let raw = sprite
         .split(['#', '$'])
         .next()
         .unwrap_or(sprite)
         .trim()
         .to_ascii_lowercase();
-    let folder = if lower_folders.contains(&raw) {
-        raw
-    } else {
-        let with_set = format!("{raw}_1");
-        if !lower_folders.contains(&with_set) {
-            return None;
-        }
-        with_set
-    };
-    Some(split_set_number(&folder).0.to_owned())
+    ids.get(&raw)
+        .or_else(|| ids.get(&format!("{raw}_1")))
+        .cloned()
 }
 
 /// The first value of `key` among a command's [`args`].
@@ -421,8 +594,136 @@ fn args(head: &str) -> Vec<(String, String)> {
 mod tests {
     use super::*;
 
-    fn folders(names: &[&str]) -> HashSet<String> {
-        names.iter().map(|n| n.to_ascii_lowercase()).collect()
+    /// Folders that each hold a body spelled like the folder itself.
+    fn tree(names: &[&str]) -> HashMap<String, Vec<String>> {
+        names
+            .iter()
+            .map(|n| ((*n).to_owned(), vec![(*n).to_owned()]))
+            .collect()
+    }
+
+    fn folders(names: &[&str]) -> HashMap<String, String> {
+        character_ids(&tree(names))
+    }
+
+    #[test]
+    fn a_bare_avg_npc_number_is_the_character_not_a_set() {
+        let t = tree(&[
+            "avg_npc_001",
+            "avg_npc_061",
+            "avg_npc_102",
+            "avg_npc_102_2",
+            "avg_npc_935_1",
+            "avg_npc_935_2",
+            "avg_doc_1",
+            "npc_10002",
+            "char_003_kalts_1",
+            "char_242_mayer",
+        ]);
+        let ids = character_ids(&t);
+        let id = |f: &str| ids[f].as_str();
+        // Maria Nearl's folder is hers, not one set of a shared `avg_npc`.
+        assert_eq!(id("avg_npc_061"), "avg_npc_061");
+        // The folder the old rule kept keeps the id it was saved under.
+        assert_eq!(id("avg_npc_001"), "avg_npc");
+        // A bare folder whose number a set-numbered character already holds
+        // is someone else: the sets keep the id, the bare folder takes `_0`.
+        assert_eq!(id("avg_npc_102_2"), "avg_npc_102");
+        assert_eq!(id("avg_npc_102"), "avg_npc_102_0");
+        let sets = sets_by_character(&t, &ids);
+        assert_eq!(sets["avg_npc_102"], vec![(2, "avg_npc_102_2")]);
+        assert_eq!(sets["avg_npc_102_0"], vec![(102, "avg_npc_102")]);
+        // Everything else cuts its set number as before.
+        assert_eq!(id("avg_npc_935_2"), "avg_npc_935");
+        assert_eq!(id("avg_doc_1"), "avg_doc");
+        assert_eq!(id("npc_10002"), "npc");
+        assert_eq!(id("char_003_kalts_1"), "char_003_kalts");
+        assert_eq!(id("char_242_mayer"), "char_242_mayer");
+        assert_eq!(sets.len(), 9);
+    }
+
+    #[test]
+    fn a_line_spoken_over_a_bare_avg_npc_votes_for_that_character() {
+        let ids = folders(&[
+            "avg_npc_001",
+            "avg_npc_061",
+            "avg_npc_120",
+            "avg_npc_208",
+            "avg_npc_208_1",
+        ]);
+        let mut votes = HashMap::new();
+        vote_script(
+            "[Character(name=\"avg_npc_061#2\",fadetime=1,block=true)]\n[name=\"Maria\"]  Hi, everyone!\n\
+             [Character(name=\"avg_npc_120\", name2=\"avg_npc_061#7\", focus=2)]\n[name=\"Maria\"]  ......\n\
+             [Character(name=\"avg_npc_208\")]\n[name=\"Cannot\"]  Huh.\n\
+             [Character(name=\"avg_npc_208_1#2\")]\n[name=\"Monique\"]  Hm.\n",
+            &ids,
+            &mut votes,
+        );
+        assert_eq!(votes["avg_npc_061"]["Maria"], 2);
+        assert!(!votes.contains_key("avg_npc"));
+        assert_eq!(votes["avg_npc_208_0"]["Cannot"], 1);
+        assert_eq!(votes["avg_npc_208"]["Monique"], 1);
+    }
+
+    #[test]
+    fn runner_up_names_over_the_floor_are_aliases() {
+        let votes = |v: &[(&str, u32)]| -> HashMap<String, u32> {
+            v.iter().map(|(n, c)| ((*n).to_owned(), *c)).collect()
+        };
+        let names = |v: &[(&str, u32)]| pick_names(votes(v));
+        // avg_npc_061 on EN: Maria wins, Blemishine (93 lines) clears 10% of 772.
+        let maria = names(&[("Maria", 772), ("Blemishine", 93), ("Guard", 4)]).unwrap();
+        assert_eq!(maria.speaker, "Maria");
+        assert_eq!(maria.aliases, vec!["Blemishine".to_owned()]);
+        // The floor is max(5, winner / 10), inclusive on both, unrounded.
+        let small = names(&[("A", 20), ("B", 5), ("C", 4)]).unwrap();
+        assert_eq!(small.aliases, vec!["B".to_owned()]);
+        let big = names(&[("A", 101), ("B", 11), ("C", 10)]).unwrap();
+        assert_eq!(big.aliases, vec!["B".to_owned()]);
+        // Never the winner again, in any case or wrapping; never a letterless
+        // `???`; most votes first, ties by name, at most four.
+        let messy = names(&[
+            ("Talulah", 500),
+            ("talulah?", 90),
+            ("???", 80),
+            ("'Deathless Black Snake'", 60),
+            ("E", 50),
+            ("D", 50),
+            ("F", 50),
+            ("G", 50),
+            ("H", 40),
+        ])
+        .unwrap();
+        assert_eq!(
+            messy.aliases,
+            vec!["'Deathless Black Snake'", "D", "E", "F"]
+        );
+        // No winner, no aliases.
+        assert_eq!(names(&[("A", 10), ("B", 9), ("C", 9)]), None);
+        assert_eq!(names(&[("A", 1)]), None);
+        assert!(names(&[("A", 30)]).unwrap().aliases.is_empty());
+    }
+
+    #[test]
+    fn a_folder_no_file_rule_spells_falls_back_to_its_hub() {
+        let dir = std::env::temp_dir().join(format!("story_sprites_hub_{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let hub = dir.join("hub.json");
+        std::fs::write(
+            &hub,
+            r#"{"groups":[{"facePos":{"x":-1,"y":-1},"sprites":[{"name":"char_2006_fmzuki_1"}]}]}"#,
+        )
+        .unwrap();
+        let stems = vec!["char_2006_fmzuki_1".to_owned(), "hub".to_owned()];
+        assert_eq!(default_body("char_2006_weiywfmzuki_1", &stems), None);
+        assert_eq!(
+            hub_body(&hub, &stems),
+            Some("char_2006_fmzuki_1".to_owned())
+        );
+        // A hub naming a file the folder lacks gives nothing.
+        assert_eq!(hub_body(&hub, &["other".to_owned()]), None);
+        std::fs::remove_dir_all(&dir).ok();
     }
 
     #[test]

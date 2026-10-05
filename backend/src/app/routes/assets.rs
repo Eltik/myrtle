@@ -3,7 +3,7 @@ use std::path::{Component, Path, PathBuf};
 use std::sync::{OnceLock, RwLock};
 use std::time::UNIX_EPOCH;
 
-use axum::extract::{Path as AxumPath, State};
+use axum::extract::{Path as AxumPath, Query, State};
 use axum::http::{HeaderMap, header};
 use axum::response::{IntoResponse, Response};
 use reqwest::StatusCode;
@@ -868,13 +868,35 @@ indexed_asset_routes!(
     " Skin brand logo."
 );
 
+/// `?format=` on the story sprite thumbnail routes.
+#[derive(Debug, Clone, Copy, Default, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum StorySpriteThumbFormat {
+    #[default]
+    Webp,
+    Png,
+}
+
+#[derive(Debug, Default, serde::Deserialize)]
+pub struct StorySpriteThumbParams {
+    #[serde(default)]
+    pub format: StorySpriteThumbFormat,
+}
+
 async fn story_sprite_thumb_impl(
     state: &AppState,
     server: Server,
     sprite_id: &str,
+    format: StorySpriteThumbFormat,
     headers: &HeaderMap,
 ) -> Result<Response, ApiError> {
-    use crate::app::services::story_sprite_thumb::ensure;
+    use crate::app::services::story_sprite_thumb::{ThumbFormat, ensure};
+    let (format, etag_prefix) = match format {
+        StorySpriteThumbFormat::Webp => (ThumbFormat::Webp, ""),
+        // A PNG and a WebP of one id could share a size and mtime, so the
+        // PNG's ETag carries its own prefix and never revalidates the WebP.
+        StorySpriteThumbFormat::Png => (ThumbFormat::Png, "png-"),
+    };
     let mut servers = vec![server];
     if server != state.default_server {
         servers.push(state.default_server);
@@ -892,24 +914,26 @@ async fn story_sprite_thumb_impl(
         let Some((body, face)) = found else {
             continue;
         };
-        let rel = ensure(&sd.assets_dir, sprite_id, &body, face).await?;
-        return serve_file(&sd.assets_dir, &rel, headers).await;
+        let rel = ensure(&sd.assets_dir, sprite_id, &body, face, format).await?;
+        return serve_file_tagged(&sd.assets_dir, &rel, headers, etag_prefix).await;
     }
     Err(ApiError::NotFound)
 }
 
 /// A story character's head-and-shoulders thumbnail, 160 px square, lossless
-/// WebP, cropped from the default body on first request and cached on disk.
+/// WebP (or PNG with `format=png`), cropped from the default body on first
+/// request and cached on disk.
 #[utoipa::path(
     get,
     path = "/story-sprite-thumb/{id}",
     tag = "assets",
     params(
         ("id" = String, Path, description = "Story sprite id, e.g. `avg_npc_935`."),
+        ("format" = Option<String>, Query, description = "`webp` (the default) or `png`. PNG carries the same pixels, for renderers that cannot decode WebP; each format is cached and tagged separately."),
         ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes.")
     ),
     responses(
-        (status = 200, description = "The thumbnail, with an `ETag` and `Cache-Control: public, max-age=604800`.", content_type = "image/webp"),
+        (status = 200, description = "The thumbnail, with an `ETag` and `Cache-Control: public, max-age=604800`.", content(("image/webp"), ("image/png"))),
         (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
         (status = 404, response = crate::app::openapi::responses::NotFound),
         (status = 429, response = crate::app::openapi::responses::RateLimited),
@@ -920,8 +944,9 @@ pub async fn story_sprite_thumb(
     State(state): State<AppState>,
     headers: HeaderMap,
     AxumPath(id): AxumPath<String>,
+    Query(params): Query<StorySpriteThumbParams>,
 ) -> Result<Response, ApiError> {
-    story_sprite_thumb_impl(&state, state.default_server, &id, &headers).await
+    story_sprite_thumb_impl(&state, state.default_server, &id, params.format, &headers).await
 }
 
 /// A story character's head-and-shoulders thumbnail, from one server's extract.
@@ -932,10 +957,11 @@ pub async fn story_sprite_thumb(
     params(
         ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
         ("id" = String, Path, description = "Story sprite id, e.g. `avg_npc_935`."),
+        ("format" = Option<String>, Query, description = "`webp` (the default) or `png`. PNG carries the same pixels, for renderers that cannot decode WebP; each format is cached and tagged separately."),
         ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes.")
     ),
     responses(
-        (status = 200, description = "The thumbnail, with an `ETag` and `Cache-Control: public, max-age=604800`.", content_type = "image/webp"),
+        (status = 200, description = "The thumbnail, with an `ETag` and `Cache-Control: public, max-age=604800`.", content(("image/webp"), ("image/png"))),
         (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
         (status = 404, response = crate::app::openapi::responses::NotFound),
         (status = 429, response = crate::app::openapi::responses::RateLimited),
@@ -946,8 +972,9 @@ pub async fn story_sprite_thumb_srv(
     State(state): State<AppState>,
     headers: HeaderMap,
     AxumPath((server, id)): AxumPath<(Server, String)>,
+    Query(params): Query<StorySpriteThumbParams>,
 ) -> Result<Response, ApiError> {
-    story_sprite_thumb_impl(&state, server, &id, &headers).await
+    story_sprite_thumb_impl(&state, server, &id, params.format, &headers).await
 }
 
 async fn charart_impl(
@@ -1134,6 +1161,17 @@ pub(crate) async fn serve_file(
     rel_path: &str,
     request_headers: &HeaderMap,
 ) -> Result<Response, ApiError> {
+    serve_file_tagged(assets_dir, rel_path, request_headers, "").await
+}
+
+/// [`serve_file`] with `etag_prefix` inside the `ETag`'s quotes, for two
+/// files that may share a size and mtime but must never revalidate each other.
+async fn serve_file_tagged(
+    assets_dir: &str,
+    rel_path: &str,
+    request_headers: &HeaderMap,
+    etag_prefix: &str,
+) -> Result<Response, ApiError> {
     let base = Path::new(assets_dir);
     let full_path = validate_asset_path(base, rel_path)?;
 
@@ -1148,7 +1186,7 @@ pub(crate) async fn serve_file(
         .map_or(0, |d| d.as_secs());
 
     let size = metadata.len();
-    let etag = format!("\"{size}-{mtime}\"");
+    let etag = format!("\"{etag_prefix}{size}-{mtime}\"");
 
     if let Some(inm) = request_headers
         .get(header::IF_NONE_MATCH)

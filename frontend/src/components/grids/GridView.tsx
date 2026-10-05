@@ -13,6 +13,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { gridImageFilename } from "#/lib/og/impl/grid";
 import { cn, downloadBlob } from "#/lib/utils";
 import { KindChips } from "./AllowedKinds";
+import { DeleteGridButton } from "./DeleteGrid";
 import { GridBoard } from "./GridBoard";
 import { GridNotice } from "./GridNotice";
 import type { messages } from "./GridView.messages";
@@ -162,6 +163,7 @@ function GridActions({ grid }: { grid: IGrid }) {
                     <span className="hidden sm:inline">{t("view.edit")}</span>
                 </Link>
             )}
+            {grid.can_edit && <DeleteGridButton grid={grid} variant="labelled" collapse className="h-11 min-w-11 rounded-lg px-3 sm:h-9 sm:min-w-0" onDeleted={() => navigate({ to: "/grids/my", replace: true })} />}
             <button type="button" onClick={handleDownload} disabled={downloading} className={ACTION_CLASS} aria-label={t("view.download")}>
                 <Download className={cn("h-4 w-4", downloading && "animate-pulse")} aria-hidden="true" />
                 <span className="hidden sm:inline">{downloading ? t("view.downloading") : t("view.download")}</span>

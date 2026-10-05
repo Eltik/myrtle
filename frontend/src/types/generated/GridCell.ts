@@ -7,8 +7,15 @@ export type GridCell = {
     entity_kind: EntityKind | null;
     entity_id: string | null;
     /**
-     * `None` when the cell is empty, or when the served game data has no such
-     * entity; the raw `entity_kind` and `entity_id` are still sent.
+     * `None` when the cell is empty, or when no loaded server's game data has
+     * such an entity; the raw `entity_kind` and `entity_id` are still sent.
      */
     entity: EntitySummary | null;
+    /**
+     * The server `entity` was resolved on when the reader's server does not
+     * know it (an operator only CN has released), so its icon is fetched
+     * from that server. `None` when it resolved on the reader's server, or
+     * did not resolve.
+     */
+    entity_server: string | null;
 };

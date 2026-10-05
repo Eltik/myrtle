@@ -56,7 +56,7 @@ describe("resize keeps every cell at its (row, col)", () => {
 
 describe("cell actions", () => {
     it("swap exchanges two whole cells, label and pick together", () => {
-        let state = gridReducer(labelled(2, 2), { type: "setEntity", index: 0, entity: amiya });
+        let state = gridReducer(labelled(2, 2), { type: "setEntity", index: 0, entity: amiya, server: null });
         state = gridReducer(state, { type: "swap", from: 0, to: 3 });
         expect(labelsOf(state)).toEqual(["1,1", "0,1", "1,0", "0,0"]);
         expect(state.cells[3]?.id).toBe("char_002_amiya");
@@ -70,7 +70,7 @@ describe("cell actions", () => {
     });
 
     it("setEntity then clearEntity keeps the label", () => {
-        let state = gridReducer(labelled(1, 1), { type: "setEntity", index: 0, entity: amiya });
+        let state = gridReducer(labelled(1, 1), { type: "setEntity", index: 0, entity: amiya, server: null });
         expect(state.cells[0]).toMatchObject({ label: "0,0", kind: "operator", id: "char_002_amiya" });
         state = gridReducer(state, { type: "clearEntity", index: 0 });
         expect(state.cells[0]).toEqual({ ...EMPTY_CELL, label: "0,0" });
@@ -91,10 +91,10 @@ describe("toGridInput", () => {
         rows: 1,
         cols: 3,
         cells: [
-            { label: "Favorite", entity_kind: "operator", entity_id: "char_002_amiya", entity: { kind: "operator", id: "char_002_amiya", name: "Amiya", icon: "/avatar/char_002_amiya", href: null, facets: {} } },
+            { label: "Favorite", entity_kind: "operator", entity_id: "char_002_amiya", entity: { kind: "operator", id: "char_002_amiya", name: "Amiya", icon: "/avatar/char_002_amiya", href: null, facets: {} }, entity_server: null },
             // A pick the served data no longer resolves: kept through the round trip.
-            { label: "Gone", entity_kind: "skin", entity_id: "char_x#1", entity: null },
-            { label: "", entity_kind: null, entity_id: null, entity: null },
+            { label: "Gone", entity_kind: "skin", entity_id: "char_x#1", entity: null, entity_server: null },
+            { label: "", entity_kind: null, entity_id: null, entity: null, entity_server: null },
         ],
         is_listed: false,
         // Out of order on purpose: the backend's canonical order is not the tabs' order.
@@ -124,6 +124,23 @@ describe("toGridInput", () => {
             is_listed: false,
             entity_kinds: ["operator", "skin"],
         });
+    });
+
+    it("carries a CN-only pick's server to the tile and leaves it out of the saved document", () => {
+        const cnOnly = { kind: "operator", id: "char_4999_cnonly", name: "Preview", icon: "/avatar/char_4999_cnonly", href: null, facets: {} } as const;
+        const loaded = gridToState({ ...grid, cells: [{ label: "New", entity_kind: "operator", entity_id: "char_4999_cnonly", entity: cnOnly, entity_server: "cn" }, ...grid.cells.slice(1)] } as IGrid);
+        expect(loaded.cells[0]).toMatchObject({ kind: "operator", id: "char_4999_cnonly", server: "cn" });
+        expect(loaded.cells[0]?.entity?.resolved).toBe(true);
+        expect(toGridInput(loaded).cells[0]).toEqual({ label: "New", entity_kind: "operator", entity_id: "char_4999_cnonly" });
+
+        // Picked in the editor: the tile reads CN art before the save, the save sends the bare ref, and the server answers the same pick.
+        const entity = toTierEntity("operator", cnOnly.id, cnOnly, UNPLACED);
+        const picked = gridReducer(gridToState(grid), { type: "setEntity", index: 2, entity, server: "cn" });
+        expect(picked.cells[2]).toMatchObject({ id: "char_4999_cnonly", server: "cn" });
+        expect(toGridInput(picked).cells[2]).toEqual({ label: "", entity_kind: "operator", entity_id: "char_4999_cnonly" });
+        expect(isGridDirty(gridToState(grid), picked)).toBe(true);
+        expect(isGridDirty(loaded, { ...loaded, cells: loaded.cells.map((c) => ({ ...c, server: null })) })).toBe(false);
+        expect(gridReducer(picked, { type: "clearEntity", index: 2 }).cells[2]).toEqual(EMPTY_CELL);
     });
 
     it("a loaded grid is clean until something changes", () => {
@@ -172,8 +189,8 @@ describe("allowed types", () => {
 
     function picked(): IGridEditState {
         let state = labelled(1, 3);
-        state = gridReducer(state, { type: "setEntity", index: 0, entity: amiya });
-        state = gridReducer(state, { type: "setEntity", index: 2, entity: skin });
+        state = gridReducer(state, { type: "setEntity", index: 0, entity: amiya, server: null });
+        state = gridReducer(state, { type: "setEntity", index: 2, entity: skin, server: null });
         return state;
     }
 
@@ -277,7 +294,7 @@ describe("pickerTarget", () => {
 
     it("describes the cell: position, trimmed label, current pick, and whether Clear applies", () => {
         const state = labelled(2, 3);
-        state.cells[4] = { label: "  Fav  ", kind: "operator", id: "char_unknown", entity: null };
+        state.cells[4] = { label: "  Fav  ", kind: "operator", id: "char_unknown", entity: null, server: null };
         expect(pickerTarget(state, 4)).toEqual({ index: 4, row: 2, col: 2, label: "Fav", current: null, hasPick: true });
         expect(pickerTarget(state, 0)).toEqual({ index: 0, row: 1, col: 1, label: "0,0", current: null, hasPick: false });
     });

@@ -56,7 +56,7 @@ function GridThumb({ grid }: { grid: IGridSummary }) {
     const server = useGamedataServer();
     const rows = Math.min(grid.rows, THUMB_MAX);
     const cols = Math.min(grid.cols, THUMB_MAX);
-    const previews = grid.preview.slice(0, 4).map((icon) => entityIconURL(icon, env.VITE_BACKEND_URL ?? "", server));
+    const previews = grid.preview.slice(0, 4).map((p) => entityIconURL(p.icon, env.VITE_BACKEND_URL ?? "", p.server ?? server));
 
     return (
         <div className="flex h-36 items-center justify-center bg-[oklch(0.13_0.004_285)] p-3">

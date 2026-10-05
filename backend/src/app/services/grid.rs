@@ -3,8 +3,14 @@
 //!
 //! A grid is read and written whole. Cells are stored as `(kind, id)` only and
 //! resolved per request against the reader's server, like tier list
-//! placements, so a pick the served data does not know comes back with
-//! `entity: None` and its raw ref, and an edit round-trip keeps it.
+//! placements. A pick that server does not know is tried on the other loaded
+//! servers, CN first, so an operator only CN has released still shows, with
+//! `entity_server` naming where it came from. A pick no loaded server knows
+//! comes back with `entity: None` and its raw ref, and an edit round-trip
+//! keeps it.
+
+use std::sync::Arc;
+use std::sync::atomic::Ordering;
 
 use serde::{Deserialize, Serialize};
 use sqlx::types::chrono::{DateTime, Utc};
@@ -12,7 +18,7 @@ use ts_rs::TS;
 use uuid::Uuid;
 
 use crate::app::error::ApiError;
-use crate::app::services::tier_entity::{self, EntitySummary};
+use crate::app::services::tier_entity::{self, EntitySummary, FacetValue};
 use crate::app::services::tier_list::{generate_slug, validate_entity};
 use crate::app::state::AppState;
 use crate::app::validation::{validate_length, validate_opt_length};
@@ -75,9 +81,29 @@ pub struct GridCell {
     pub label: String,
     pub entity_kind: Option<EntityKind>,
     pub entity_id: Option<String>,
-    /// `None` when the cell is empty, or when the served game data has no such
-    /// entity; the raw `entity_kind` and `entity_id` are still sent.
+    /// `None` when the cell is empty, or when no loaded server's game data has
+    /// such an entity; the raw `entity_kind` and `entity_id` are still sent.
     pub entity: Option<EntitySummary>,
+    /// The server `entity` was resolved on when the reader's server does not
+    /// know it (an operator only CN has released), so its icon is fetched
+    /// from that server. `None` when it resolved on the reader's server, or
+    /// did not resolve.
+    #[ts(type = "string | null")]
+    #[schema(value_type = Option<String>)]
+    pub entity_server: Option<Server>,
+}
+
+/// One card-thumbnail icon: the path, and the server to fetch it from when it
+/// is not the reader's, with [`GridCell::entity_server`]'s meaning.
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct GridPreviewIcon {
+    /// Same form as [`EntitySummary::icon`].
+    pub icon: String,
+    #[ts(type = "string | null")]
+    #[schema(value_type = Option<String>)]
+    pub server: Option<Server>,
 }
 
 #[derive(TS, utoipa::ToSchema)]
@@ -144,9 +170,9 @@ pub struct GridSummary {
     /// The kinds a cell may hold, in canonical order.
     pub entity_kinds: Vec<EntityKind>,
     pub updated_at: DateTime<Utc>,
-    /// Up to four icon paths from the first filled cells, in cell order, for a
-    /// card thumbnail. Same form as [`EntitySummary::icon`].
-    pub preview: Vec<String>,
+    /// Up to four icons from the first filled cells with one, in cell order,
+    /// for a card thumbnail.
+    pub preview: Vec<GridPreviewIcon>,
 }
 
 #[derive(TS, utoipa::ToSchema)]
@@ -171,8 +197,7 @@ pub async fn get(
     viewer: Viewer,
 ) -> Result<Grid, ApiError> {
     let row = load(state, slug).await?;
-    let (gd, assets) = (state.game_data(server), state.asset_index(server));
-    Ok(to_grid(row, viewer, &gd, &assets))
+    Ok(to_grid(row, viewer, &Resolver::new(state, server)))
 }
 
 /// One page of listed grids, `q` matching anywhere in the title.
@@ -519,7 +544,7 @@ fn owner_of(row: &GridRow) -> GridOwner {
     }
 }
 
-fn to_grid(row: GridRow, viewer: Viewer, gd: &GameData, assets: &AssetIndex) -> Grid {
+fn to_grid(row: GridRow, viewer: Viewer, resolver: &Resolver) -> Grid {
     let owner = owner_of(&row);
     let can_edit = may_edit(row.created_by, viewer);
     let entity_kinds = row.kinds();
@@ -534,7 +559,7 @@ fn to_grid(row: GridRow, viewer: Viewer, gd: &GameData, assets: &AssetIndex) -> 
         .cells
         .0
         .into_iter()
-        .map(|cell| to_cell(cell, gd, assets))
+        .map(|cell| to_cell(cell, resolver))
         .collect();
     Grid {
         id: row.id,
@@ -556,20 +581,108 @@ fn to_grid(row: GridRow, viewer: Viewer, gd: &GameData, assets: &AssetIndex) -> 
     }
 }
 
-fn to_cell(cell: StoredCell, gd: &GameData, assets: &AssetIndex) -> GridCell {
+fn to_cell(cell: StoredCell, resolver: &Resolver) -> GridCell {
     // A kind this build does not know is dropped with its id, so the editor
     // never sends back half a pick.
     let pick = cell.entity().map(|(kind, id)| (kind, id.to_owned()));
-    let entity = pick
+    let (entity, entity_server) = pick
         .as_ref()
-        .and_then(|(kind, id)| tier_entity::resolve(gd, assets, *kind, id));
+        .and_then(|(kind, id)| resolver.resolve(*kind, id))
+        .unzip();
     let (entity_kind, entity_id) = pick.unzip();
     GridCell {
         label: cell.label,
         entity_kind,
         entity_id,
         entity,
+        entity_server: entity_server.flatten(),
     }
+}
+
+/// Game data to resolve picks against: the reader's server first, then every
+/// other loaded server in [`fallback_order`].
+struct Resolver {
+    /// `None` marks the reader's own server.
+    sources: Vec<(Option<Server>, Arc<GameData>, Arc<AssetIndex>)>,
+}
+
+impl Resolver {
+    fn new(state: &AppState, server: Server) -> Self {
+        let own = state.server_data(server);
+        let mut tried = vec![Arc::clone(&own)];
+        let mut sources = vec![(None, own.game_data.load_full(), own.asset_index.load_full())];
+        for other in fallback_order(server, &state.config.servers) {
+            // Bilibili shares CN's cell; a server already tried adds nothing.
+            let Some(data) = state
+                .servers
+                .get(&other)
+                .filter(|d| d.loaded.load(Ordering::Acquire))
+            else {
+                continue;
+            };
+            if tried.iter().any(|t| Arc::ptr_eq(t, data)) {
+                continue;
+            }
+            tried.push(Arc::clone(data));
+            sources.push((
+                Some(other),
+                data.game_data.load_full(),
+                data.asset_index.load_full(),
+            ));
+        }
+        Self { sources }
+    }
+
+    /// The pick's summary and, when it is not the reader's, the server that
+    /// knew it.
+    fn resolve(&self, kind: EntityKind, id: &str) -> Option<(EntitySummary, Option<Server>)> {
+        first_resolved(self.sources.iter(), |(server, gd, assets)| {
+            tier_entity::resolve(gd, assets, kind, id)
+                .map(|e| (romanize_cn_operator(e, *server), *server))
+        })
+    }
+}
+
+/// An operator only CN-family data knows, read by a viewer on another server,
+/// is named by its `appellation` (`char_1015_aglna2`: `Angelina the Mellow
+/// Wish`, not `予愿安洁莉娜`). The appellation is the romanized name, or for a
+/// few the Cyrillic one (`Вий`), and either reads better than Chinese outside
+/// CN. `from` is [`Resolver`]'s marker: `None` for the viewer's own server, so
+/// a CN viewer keeps the Chinese name.
+fn romanize_cn_operator(mut entity: EntitySummary, from: Option<Server>) -> EntitySummary {
+    if entity.kind == EntityKind::Operator
+        && matches!(from, Some(Server::CN | Server::Bilibili))
+        && let Some(FacetValue::One(appellation)) = entity.facets.get("appellation")
+        && !appellation.trim().is_empty()
+    {
+        entity.name = appellation.clone();
+    }
+    entity
+}
+
+/// The servers a pick the reader's `server` does not know is tried on: CN
+/// first, since it releases everything first, then the rest of `configured`
+/// in its order, without `server` and without repeats.
+fn fallback_order(server: Server, configured: &[Server]) -> Vec<Server> {
+    let mut out = Vec::with_capacity(configured.len());
+    let cn_first = configured
+        .contains(&Server::CN)
+        .then_some(Server::CN)
+        .into_iter();
+    for s in cn_first.chain(configured.iter().copied()) {
+        if s != server && !out.contains(&s) {
+            out.push(s);
+        }
+    }
+    out
+}
+
+/// The first source, in order, that `resolve` answers for.
+fn first_resolved<S, T>(
+    sources: impl IntoIterator<Item = S>,
+    resolve: impl FnMut(S) -> Option<T>,
+) -> Option<T> {
+    sources.into_iter().find_map(resolve)
 }
 
 /// An unlisted source's slug is shown only to its owner.
@@ -577,15 +690,15 @@ fn template_visible(listed: Option<bool>, owner: Option<Uuid>, viewer: Viewer) -
     listed.unwrap_or(false) || viewer.is_some_and(|(id, _)| Some(id) == owner)
 }
 
-/// Card summaries of `rows`, previews resolved against `server`.
+/// Card summaries of `rows`, previews resolved against `server` first.
 fn summaries(state: &AppState, rows: Vec<GridRow>, server: Server) -> Vec<GridSummary> {
-    let (gd, assets) = (state.game_data(server), state.asset_index(server));
+    let resolver = Resolver::new(state, server);
     rows.into_iter()
-        .map(|row| to_summary(row, &gd, &assets))
+        .map(|row| to_summary(row, &resolver))
         .collect()
 }
 
-fn to_summary(row: GridRow, gd: &GameData, assets: &AssetIndex) -> GridSummary {
+fn to_summary(row: GridRow, resolver: &Resolver) -> GridSummary {
     let owner = owner_of(&row);
     let entity_kinds = row.kinds();
     let preview = row
@@ -593,7 +706,13 @@ fn to_summary(row: GridRow, gd: &GameData, assets: &AssetIndex) -> GridSummary {
         .0
         .iter()
         .filter_map(StoredCell::entity)
-        .filter_map(|(kind, id)| tier_entity::resolve(gd, assets, kind, id)?.icon)
+        .filter_map(|(kind, id)| {
+            let (entity, server) = resolver.resolve(kind, id)?;
+            Some(GridPreviewIcon {
+                icon: entity.icon?,
+                server,
+            })
+        })
         .take(PREVIEW_LEN)
         .collect();
     GridSummary {
@@ -888,6 +1007,45 @@ mod tests {
     }
 
     #[test]
+    fn a_cn_only_operator_is_named_by_its_appellation_off_cn() {
+        let summary = |kind, appellation: Option<&str>| EntitySummary {
+            kind,
+            id: "char_1015_aglna2".into(),
+            name: "予愿安洁莉娜".into(),
+            icon: None,
+            href: None,
+            facets: appellation
+                .map(|a| ("appellation".to_owned(), FacetValue::One(a.to_owned())))
+                .into_iter()
+                .collect(),
+        };
+        let mellow = Some("Angelina the Mellow Wish");
+        let name = |e: EntitySummary, from| romanize_cn_operator(e, from).name;
+        assert_eq!(
+            name(summary(EntityKind::Operator, mellow), Some(Server::CN)),
+            "Angelina the Mellow Wish"
+        );
+        assert_eq!(
+            name(
+                summary(EntityKind::Operator, mellow),
+                Some(Server::Bilibili)
+            ),
+            "Angelina the Mellow Wish"
+        );
+        // The viewer's own server (a CN viewer), another fallback server, a
+        // missing or blank appellation and a non-operator keep the name.
+        for (e, from) in [
+            (summary(EntityKind::Operator, mellow), None),
+            (summary(EntityKind::Operator, mellow), Some(Server::JP)),
+            (summary(EntityKind::Operator, None), Some(Server::CN)),
+            (summary(EntityKind::Operator, Some(" ")), Some(Server::CN)),
+            (summary(EntityKind::Skin, mellow), Some(Server::CN)),
+        ] {
+            assert_eq!(name(e, from), "予愿安洁莉娜");
+        }
+    }
+
+    #[test]
     fn an_unlisted_template_is_shown_to_its_owner_only() {
         let owner = Uuid::from_u128(1);
         let other = Uuid::from_u128(2);
@@ -903,6 +1061,43 @@ mod tests {
             Some(owner),
             Some((owner, GlobalRole::User))
         ));
+    }
+
+    #[test]
+    fn fallback_tries_cn_first_then_the_configured_order() {
+        use Server::{CN, EN, JP, KR};
+        assert_eq!(fallback_order(EN, &[EN, JP, CN, KR]), vec![CN, JP, KR]);
+        assert_eq!(fallback_order(JP, &[EN, JP]), vec![EN]);
+        assert_eq!(fallback_order(CN, &[EN, CN, KR]), vec![EN, KR]);
+        assert_eq!(fallback_order(EN, &[EN]), Vec::<Server>::new());
+        assert_eq!(fallback_order(EN, &[EN, CN, CN]), vec![CN]);
+    }
+
+    #[test]
+    fn the_first_server_that_knows_a_pick_wins() {
+        let sources = [
+            (None, "en"),
+            (Some(Server::CN), "cn"),
+            (Some(Server::JP), "jp"),
+        ];
+        let knows = |set: &'static [&'static str]| {
+            move |&(server, name): &(Option<Server>, &'static str)| {
+                set.contains(&name).then_some((name, server))
+            }
+        };
+        assert_eq!(
+            first_resolved(sources.iter(), knows(&["en", "cn"])),
+            Some(("en", None))
+        );
+        assert_eq!(
+            first_resolved(sources.iter(), knows(&["cn", "jp"])),
+            Some(("cn", Some(Server::CN)))
+        );
+        assert_eq!(
+            first_resolved(sources.iter(), knows(&["jp"])),
+            Some(("jp", Some(Server::JP)))
+        );
+        assert_eq!(first_resolved(sources.iter(), knows(&[])), None);
     }
 
     #[test]

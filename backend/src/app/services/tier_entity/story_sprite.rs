@@ -69,6 +69,16 @@ fn summary(gd: &GameData, s: &StorySprite) -> EntitySummary {
         .map(|(_, op)| op.name.clone())
         .or_else(|| s.speaker.clone())
         .unwrap_or_else(|| s.id.clone());
+    // The other names the scripts speak them under, for search; an
+    // operator's roster name may be one of them, and is the name already.
+    let lower = name.to_lowercase();
+    let aliases: Vec<String> = s
+        .aliases
+        .iter()
+        .filter(|a| a.to_lowercase() != lower)
+        .cloned()
+        .collect();
+    let facets = facets.many("aliases", &aliases);
     EntitySummary {
         kind: EntityKind::StorySprite,
         id: s.id.clone(),

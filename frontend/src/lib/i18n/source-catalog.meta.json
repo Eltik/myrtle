@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-05T10:15:19.139Z",
+    "generatedAt": "2026-10-05T11:15:26.067Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -9017,6 +9017,17 @@
             ]
         },
         {
+            "key": "grids.cell.clear",
+            "namespace": "grids",
+            "source_text": "Remove {name} from row {row}, column {col}",
+            "description": "Accessible name and tooltip of the small x button on a filled cell in the grid editor. It removes the pick at once and keeps the cell's label. {name} is the picked entity's name.",
+            "placeholders": [
+                "col",
+                "name",
+                "row"
+            ]
+        },
+        {
             "key": "grids.cell.editLabel",
             "namespace": "grids",
             "source_text": "Label of row {row}, column {col}: {label}. Edit it",
@@ -9166,6 +9177,13 @@
             "namespace": "grids",
             "source_text": "New grid",
             "description": "Title of the create-grid dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.delete.action",
+            "namespace": "grids",
+            "source_text": "Delete",
+            "description": "Labelled button on a grid's page and in its editor that deletes the grid (after a confirmation). May show as an icon only on narrow screens.",
             "placeholders": []
         },
         {
@@ -9734,6 +9752,31 @@
             "source_text": "Loading…",
             "description": "Shown in the picker while the current tab's list loads.",
             "placeholders": []
+        },
+        {
+            "key": "grids.picker.previewBadge",
+            "namespace": "grids",
+            "source_text": "CN",
+            "description": "Short badge on a picker tile for an operator released on the Chinese server but not yet on the reader's. Keep it to two or three letters.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.picker.previewHint",
+            "namespace": "grids",
+            "source_text": "Operators marked {badge} are out on the Chinese server and not yet on yours.",
+            "description": "Line under the picker's search box on the Operators tab when it lists operators not yet released on the reader's server. {badge} is the badge text, e.g. 'CN'.",
+            "placeholders": [
+                "badge"
+            ]
+        },
+        {
+            "key": "grids.picker.previewLabel",
+            "namespace": "grids",
+            "source_text": "{name}, not yet released on your server",
+            "description": "Accessible name and tooltip of a picker tile for an operator only the Chinese server has released. {name} is the operator's name.",
+            "placeholders": [
+                "name"
+            ]
         },
         {
             "key": "grids.picker.retry",

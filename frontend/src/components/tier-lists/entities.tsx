@@ -50,11 +50,11 @@ export function entityInitials(name: string): string {
     return `${Array.from(first)[0] ?? ""}${Array.from(second)[0] ?? ""}`.toUpperCase();
 }
 
-/** An entity's icon as a URL on this deployment, read from the reader's game server. */
-function useIconURL(icon: string | null): string | null {
-    const server = useGamedataServer();
+/** An entity's icon as a URL on this deployment, read from `server` when given, else the reader's game server. */
+function useIconURL(icon: string | null, server?: string): string | null {
+    const readerServer = useGamedataServer();
     if (!icon) return null;
-    return entityIconURL(icon, env.VITE_BACKEND_URL ?? "", server);
+    return entityIconURL(icon, env.VITE_BACKEND_URL ?? "", server ?? readerServer);
 }
 
 interface IEntityAvatarProps {
@@ -66,13 +66,15 @@ interface IEntityAvatarProps {
     face?: "chip" | "tile";
     /** `dark` when the wrapper is dark in both themes (the drag ghost), so a glyph is never inverted onto it. */
     tone?: "theme" | "dark";
+    /** The server to read the art from when it is not the reader's, e.g. `cn` for an operator only CN has released. */
+    server?: string;
 }
 
 /** The tile's face. Drop it inside a sized wrapper, like {@link OperatorAvatar}. */
-export function EntityAvatar({ entity, face = "chip", tone = "theme" }: IEntityAvatarProps) {
-    if (entity.resolved && entity.kind === "operator") return <OperatorAvatar charId={entity.id} name={entity.name} />;
+export function EntityAvatar({ entity, face = "chip", tone = "theme", server }: IEntityAvatarProps) {
+    if (entity.resolved && entity.kind === "operator") return <OperatorAvatar charId={entity.id} name={entity.name} server={server} />;
     if (!entity.resolved) return <span className="line-clamp-3 break-all px-1 text-center font-mono text-[9px] leading-tight opacity-80">{entity.id}</span>;
-    return <EntityIcon kind={entity.kind} name={entity.name} icon={entity.icon} face={face} tone={tone} fit={entityArtFit(entity)} />;
+    return <EntityIcon kind={entity.kind} name={entity.name} icon={entity.icon} face={face} tone={tone} fit={entityArtFit(entity)} server={server} />;
 }
 
 interface IEntityIconProps {
@@ -84,11 +86,13 @@ interface IEntityIconProps {
     tone?: "theme" | "dark";
     /** How the art sits in the tile; the kind's own fit when absent. */
     fit?: ArtFit;
+    /** The server to read the art from; the reader's when absent. */
+    server?: string;
 }
 
 /** A non-operator's art from its resolved icon path, or a typeset stand-in when it has none or the image fails. Used where only the summary fields travel (card previews). */
-export function EntityIcon({ kind, name, icon, face = "chip", tone = "theme", fit = kindArtFit(kind) }: IEntityIconProps) {
-    const src = useIconURL(icon);
+export function EntityIcon({ kind, name, icon, face = "chip", tone = "theme", fit = kindArtFit(kind), server }: IEntityIconProps) {
+    const src = useIconURL(icon, server);
     const [failed, setFailed] = useState(false);
     if (!src || failed) {
         if (face === "tile" && KIND_DEFINITIONS[kind].shape === "wide") {

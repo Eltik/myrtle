@@ -3,7 +3,6 @@ import { env } from "#/env";
 import { gamedataPath } from "#/lib/api/gamedata";
 import { deepCamelize, getOperatorsListFn } from "#/lib/api/operators";
 import { stagePreviewAssetPaths } from "#/lib/api/stages";
-import { entityIconURL } from "#/lib/api/tier-entities";
 import type { IRosterEntry } from "#/lib/api/user";
 import { backendFetch } from "#/lib/fetch";
 import { metaSourceForLocale } from "#/lib/meta";
@@ -14,6 +13,7 @@ import type { StoryIndex } from "#/types/generated/StoryIndex";
 import type { IOperatorListItem } from "#/types/operators";
 import type { IStage, IZone } from "#/types/stages";
 import type { IUserProfile } from "#/types/user";
+import { fetchToDataURI, inlineArt, ogEntityIconURL } from "./art";
 import { buildGridImageData, type IGridImageData, parseGridOgId } from "./grid";
 import { type IOgHasher, type OgData, type OgKind, ogHashers } from "./hashers";
 import { defaultOgPreset, defaultOgTagLabels, resolveDefaultOgPreset } from "./presets";
@@ -365,7 +365,7 @@ function entityPreview(p: PlacementDetail): ITierListOperatorPreview | null {
         id: entity.id,
         name: entity.name,
         rarity: (typeof rarity === "string" && Number(rarity)) || 1,
-        avatarURL: base && entity.icon ? entityIconURL(entity.icon, base) : "",
+        avatarURL: base && entity.icon ? ogEntityIconURL(entity.icon, base) : "",
     };
 }
 
@@ -429,7 +429,7 @@ const tierListHandler = /* @__PURE__ */ defineOgHandler<ITierListOgData>(ogHashe
             updatedRelative,
             totalOperators,
             tierCount: detail.tiers.length,
-            tiers,
+            tiers: await inlineTierAvatars(tiers),
         };
     },
     template: (data) => TierListTemplate(data),
@@ -457,17 +457,10 @@ const defaultHandler = /* @__PURE__ */ defineOgHandler<IDefaultOgData>(ogHashers
     template: (data) => DefaultTemplate(data),
 });
 
-async function fetchToDataURI(url: string): Promise<string | undefined> {
-    if (!url) return undefined;
-    try {
-        const res = await fetch(url);
-        if (!res.ok) return undefined;
-        const contentType = res.headers.get("content-type") ?? "image/png";
-        const buf = Buffer.from(await res.arrayBuffer());
-        return `data:${contentType};base64,${buf.toString("base64")}`;
-    } catch {
-        return undefined;
-    }
+/** Inline every tile's art, so satori is never handed a URL it would fetch and fail to decode (see `./art`). */
+async function inlineTierAvatars<T extends { operators: ITierListOperatorPreview[] }>(tiers: T[]): Promise<T[]> {
+    const art = await inlineArt(tiers.flatMap((t) => t.operators.map((o) => o.avatarURL)));
+    return tiers.map((t) => ({ ...t, operators: t.operators.map((o) => ({ ...o, avatarURL: o.avatarURL ? art.get(o.avatarURL) : undefined })) }));
 }
 
 const tierListBoardImageHandler = /* @__PURE__ */ defineOgHandler<ITierListBoardImageData>(ogHashers["tier-list-image"], {
@@ -493,7 +486,7 @@ const tierListBoardImageHandler = /* @__PURE__ */ defineOgHandler<ITierListBoard
         return {
             title: detail.name,
             slug: detail.slug,
-            tiers,
+            tiers: await inlineTierAvatars(tiers),
         };
     },
     template: (data) => TierListBoardImageTemplate(data),
@@ -505,7 +498,9 @@ const gridImageHandler = /* @__PURE__ */ defineOgHandler<IGridImageData>(ogHashe
         const { server, slug } = parseGridOgId(id);
         const res = await backendFetch(`/grids/${encodeURIComponent(slug)}?server=${encodeURIComponent(server)}`);
         if (!res.ok) return null;
-        return buildGridImageData((await res.json()) as Grid, backendBaseURL(), server);
+        const data = buildGridImageData((await res.json()) as Grid, backendBaseURL(), server);
+        const art = await inlineArt(data.cells.map((c) => c.artURL));
+        return { ...data, cells: data.cells.map((c) => ({ ...c, artURL: c.artURL ? (art.get(c.artURL) ?? null) : null })) };
     },
     template: (data) => GridImageTemplate(data),
     dimensions: (data) => gridImageDimensions(data),

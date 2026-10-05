@@ -14,8 +14,10 @@ export interface IGridEditCell {
     label: string;
     kind: TierEntityKind | null;
     id: string | null;
-    /** What the pick resolves to, for the tile. `null` with a kind and id set means the served data does not know it: kept, never dropped. */
+    /** What the pick resolves to, for the tile. `null` with a kind and id set means no loaded server knows it: kept, never dropped. */
     entity: ITierEntity | null;
+    /** The server `entity` came from when it is not the reader's (an operator only CN has released), for its art. Shown, never saved. */
+    server: string | null;
 }
 
 export interface IGridEditState {
@@ -36,14 +38,15 @@ export type GridEditAction =
     | { type: "setListed"; isListed: boolean }
     | { type: "resize"; rows: number; cols: number }
     | { type: "setLabel"; index: number; label: string }
-    | { type: "setEntity"; index: number; entity: ITierEntity }
+    /** `server` is where the pick came from when it is not the reader's server, else `null`. */
+    | { type: "setEntity"; index: number; entity: ITierEntity; server: string | null }
     | { type: "clearEntity"; index: number }
     | { type: "swap"; from: number; to: number }
     /** Replace the allowed types. Picks of a type no longer allowed are cleared, labels kept. An empty set is refused. */
     | { type: "setKinds"; kinds: readonly TierEntityKind[] }
     | { type: "load"; state: IGridEditState };
 
-export const EMPTY_CELL: IGridEditCell = { label: "", kind: null, id: null, entity: null };
+export const EMPTY_CELL: IGridEditCell = { label: "", kind: null, id: null, entity: null, server: null };
 
 /** A cell holding something a shrink would throw away: a label or a pick. */
 function cellHasContent(cell: IGridEditCell): boolean {
@@ -108,9 +111,9 @@ export function gridReducer(state: IGridEditState, action: GridEditAction): IGri
         case "setLabel":
             return updateCell(state, action.index, (cell) => ({ ...cell, label: truncateCodePoints(action.label, GRID_LABEL_MAX) }));
         case "setEntity":
-            return updateCell(state, action.index, (cell) => ({ ...cell, kind: action.entity.kind, id: action.entity.id, entity: action.entity }));
+            return updateCell(state, action.index, (cell) => ({ ...cell, kind: action.entity.kind, id: action.entity.id, entity: action.entity, server: action.server }));
         case "clearEntity":
-            return updateCell(state, action.index, (cell) => ({ ...cell, kind: null, id: null, entity: null }));
+            return updateCell(state, action.index, (cell) => ({ ...cell, kind: null, id: null, entity: null, server: null }));
         case "swap": {
             const { from, to } = action;
             const a = state.cells[from];
@@ -124,7 +127,7 @@ export function gridReducer(state: IGridEditState, action: GridEditAction): IGri
         case "setKinds": {
             const kinds = orderKinds(action.kinds);
             if (kinds.length === 0) return state;
-            const cells = state.cells.map((cell) => (cell.kind !== null && !kinds.includes(cell.kind) ? { ...cell, kind: null, id: null, entity: null } : cell));
+            const cells = state.cells.map((cell) => (cell.kind !== null && !kinds.includes(cell.kind) ? { ...cell, kind: null, id: null, entity: null, server: null } : cell));
             return { ...state, entityKinds: kinds, cells };
         }
         case "load":
@@ -169,6 +172,7 @@ export function gridToState(grid: IGrid): IGridEditState {
             kind: picked ? cell.entity_kind : null,
             id: picked ? cell.entity_id : null,
             entity: cellEntity(cell),
+            server: cell.entity ? cell.entity_server : null,
         });
     }
     return { title: grid.title, description: grid.description ?? "", isListed: grid.is_listed, rows, cols, cells, entityKinds: orderKinds(grid.entity_kinds) };

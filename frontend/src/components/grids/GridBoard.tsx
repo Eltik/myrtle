@@ -1,4 +1,5 @@
-import { type CSSProperties, type KeyboardEvent, useState } from "react";
+import { XIcon } from "lucide-react";
+import { type CSSProperties, type KeyboardEvent, useRef, useState } from "react";
 import { EntityAvatar } from "#/components/tier-lists/entities";
 import { useEntityLabels } from "#/components/tier-lists/kinds";
 import { useT } from "#/lib/i18n";
@@ -10,13 +11,17 @@ import { cellPosition, GRID_LABEL_MAX } from "./shared";
 import type { IGridEditCell } from "./state";
 
 // The board both the view page and the editor draw. In the editor each cell's
-// art opens the picker, its strip edits the label in place, and a cell
-// dragged onto another swaps the two. The view draws the same cells inert.
+// art opens the picker, its strip edits the label in place, a filled cell's
+// corner button (or Delete / Backspace on its art) removes the pick at once,
+// and a cell dragged onto another swaps the two. The view draws the same
+// cells inert.
 
 const CELL_DRAG_MIME = "application/x-grid-cell";
 
 export interface IGridBoardEditor {
     onPick: (index: number) => void;
+    /** Remove the cell's pick, keeping its label. No confirmation: the save is the commit. */
+    onClear: (index: number) => void;
     onLabelChange: (index: number, label: string) => void;
     onSwap: (from: number, to: number) => void;
 }
@@ -85,8 +90,11 @@ function GridCellView({ cell, index, cols, editor, dragging, dropTarget, onDragF
     const picked = cell.kind !== null && cell.id !== null;
     const position = cellPosition(index, cols);
     const entityName = cell.entity ? labels.tileLabel(cell.entity) : null;
+    const artRef = useRef<HTMLButtonElement>(null);
+    // Set while the clear button is pressed, so a press that wanders does not drag the whole cell.
+    const pressingClear = useRef(false);
 
-    const art = cell.entity ? <EntityAvatar entity={cell.entity} face="tile" tone="dark" /> : editor ? <span className={styles.addItem}>{t("cell.addItem")}</span> : null;
+    const art = cell.entity ? <EntityAvatar entity={cell.entity} face="tile" tone="dark" server={cell.server ?? undefined} /> : editor ? <span className={styles.addItem}>{t("cell.addItem")}</span> : null;
 
     if (!editor) {
         return (
@@ -115,6 +123,10 @@ function GridCellView({ cell, index, cols, editor, dragging, dropTarget, onDragF
             data-drop-target={dropTarget || undefined}
             draggable
             onDragStart={(e) => {
+                if (pressingClear.current) {
+                    e.preventDefault();
+                    return;
+                }
                 e.dataTransfer.effectAllowed = "move";
                 e.dataTransfer.setData(CELL_DRAG_MIME, String(index));
                 e.dataTransfer.setData("text/plain", cell.label);
@@ -136,9 +148,55 @@ function GridCellView({ cell, index, cols, editor, dragging, dropTarget, onDragF
                 editor.onSwap(from, index);
             }}
         >
-            <button type="button" className={styles.art} data-empty={!picked || undefined} onClick={() => editor.onPick(index)} aria-label={entityName ? t("cell.change", { name: entityName, ...position }) : t("cell.pick", position)} title={entityName ?? undefined}>
+            <button
+                ref={artRef}
+                type="button"
+                className={styles.art}
+                data-empty={!picked || undefined}
+                onClick={() => editor.onPick(index)}
+                onKeyDown={(e) => {
+                    if (!picked || (e.key !== "Delete" && e.key !== "Backspace")) return;
+                    e.preventDefault();
+                    editor.onClear(index);
+                }}
+                aria-label={entityName ? t("cell.change", { name: entityName, ...position }) : t("cell.pick", position)}
+                aria-keyshortcuts={picked ? "Delete Backspace" : undefined}
+                title={entityName ?? undefined}
+            >
                 {art}
             </button>
+            {picked && (
+                <button
+                    type="button"
+                    className={styles.clear}
+                    draggable={false}
+                    onPointerDown={(e) => {
+                        e.stopPropagation();
+                        pressingClear.current = true;
+                    }}
+                    onPointerUp={() => {
+                        pressingClear.current = false;
+                    }}
+                    onPointerCancel={() => {
+                        pressingClear.current = false;
+                    }}
+                    onDragStart={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        pressingClear.current = false;
+                        editor.onClear(index);
+                        // The button goes with the pick; keep focus on the cell.
+                        artRef.current?.focus();
+                    }}
+                    aria-label={t("cell.clear", { name: entityName ?? cell.id ?? "", ...position })}
+                    title={t("cell.clear", { name: entityName ?? cell.id ?? "", ...position })}
+                >
+                    <XIcon aria-hidden="true" />
+                </button>
+            )}
             <LabelStrip label={cell.label} position={position} onChange={(label) => editor.onLabelChange(index, label)} />
         </div>
     );

@@ -4,6 +4,7 @@ import { entityOwner, type ITierEntity, type ITierEntityOf, integratedStrategies
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { formatProfession, RARITY_HEX_MUTED } from "#/lib/utils";
+import type { FacetValue } from "#/types/generated/FacetValue";
 import type { OperatorProfession } from "#/types/operators";
 import type { messages } from "./kinds.messages";
 
@@ -189,6 +190,12 @@ function isItemLabel(t: KindT, itemType: string): string {
         default:
             return itemType;
     }
+}
+
+/** Every value of a facet that may hold one or several. */
+function facetList(value: FacetValue | undefined): string[] {
+    if (value === undefined) return [];
+    return typeof value === "string" ? [value] : value;
 }
 
 function spriteSourceLabel(t: KindT, source: ITierEntityOf<"story_sprite">["source"]): string {
@@ -504,7 +511,8 @@ export const KIND_DEFINITIONS: { [K in TierEntityKind]: IKindDefinition<K> } = {
                     valueOf: (e) => e.source,
                 },
             ],
-            searchTexts: (e) => [e.name, e.id],
+            // The other names the scripts speak a character under: avg_npc_061 is "Maria" and also "Blemishine".
+            searchTexts: (e) => [e.name, e.id, ...facetList(e.facets.aliases)],
         }),
     },
 };

@@ -22,10 +22,12 @@ use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 use std::time::SystemTime;
 
-use image::{ImageEncoder, RgbaImage, imageops};
+use image::{RgbaImage, imageops};
 use tokio::sync::Semaphore;
 
 use crate::app::error::ApiError;
+pub use crate::app::services::story::sprite_thumbs::ThumbFormat;
+use crate::app::services::story::sprite_thumbs::encode;
 
 /// Output side in pixels: the largest tile is 72 px (the board at its widest
 /// breakpoint), so 160 covers it at 2x DPR with room for the pool's `1fr`
@@ -117,26 +119,24 @@ fn alpha_head(img: &RgbaImage) -> Option<(f32, f32)> {
 }
 
 /// Crop `png` (a story sprite body) to its head and scale it to `px` square,
-/// encoded as lossless WebP.
+/// encoded as lossless WebP or PNG. Both carry the same pixels.
 ///
 /// The resize runs on premultiplied colour: a sprite's fully transparent
 /// pixels carry arbitrary RGB, and filtering them straight bleeds a dark (or
 /// coloured) fringe into the figure's edge.
-pub fn render(png: &[u8], face: Option<(f32, f32)>, px: u32) -> anyhow::Result<Vec<u8>> {
+pub fn render(
+    png: &[u8],
+    face: Option<(f32, f32)>,
+    px: u32,
+    format: ThumbFormat,
+) -> anyhow::Result<Vec<u8>> {
     let img = image::load_from_memory_with_format(png, image::ImageFormat::Png)?.to_rgba8();
     let (left, top, side) = crop_rect(&img, face);
     let mut crop = imageops::crop_imm(&img, left, top, side, side).to_image();
     premultiply(&mut crop);
     let mut out = imageops::resize(&crop, px, px, imageops::FilterType::Lanczos3);
     unpremultiply(&mut out);
-    let mut bytes = Vec::new();
-    image::codecs::webp::WebPEncoder::new_lossless(&mut bytes).write_image(
-        out.as_raw(),
-        px,
-        px,
-        image::ExtendedColorType::Rgba8,
-    )?;
-    Ok(bytes)
+    encode(&out, format)
 }
 
 fn premultiply(img: &mut RgbaImage) {
@@ -167,8 +167,8 @@ fn unpremultiply(img: &mut RgbaImage) {
 
 /// The cached thumbnail's path relative to the assets root: what the asset
 /// route serves.
-pub fn cache_rel_path(id: &str) -> String {
-    format!("{CACHE_DIR}/{VERSION}/{id}.webp")
+pub fn cache_rel_path(id: &str, format: ThumbFormat) -> String {
+    format!("{CACHE_DIR}/{VERSION}/{id}.{}", format.ext())
 }
 
 fn modified(path: &Path) -> Option<SystemTime> {
@@ -180,6 +180,8 @@ fn modified(path: &Path) -> Option<SystemTime> {
 /// serve, relative to `assets_dir`.
 ///
 /// `body_rel` is the body PNG relative to `assets_dir` (`/textures/avg/...`).
+/// Each format is its own cached file, rendered from the body on its first
+/// request.
 /// The file is written to a temporary name and renamed into place, so a
 /// reader never sees a half-written thumbnail and two racing renders of the
 /// same id both leave a whole one.
@@ -188,13 +190,14 @@ pub async fn ensure(
     id: &str,
     body_rel: &str,
     face: Option<(f32, f32)>,
+    format: ThumbFormat,
 ) -> Result<String, ApiError> {
     if id.is_empty() || id.contains(['/', '\\', '\0']) || id.starts_with('.') {
         return Err(ApiError::NotFound);
     }
     let root = PathBuf::from(assets_dir);
     let source = root.join(body_rel.trim_start_matches('/'));
-    let rel = cache_rel_path(id);
+    let rel = cache_rel_path(id, format);
     let target = root.join(&rel);
 
     let fresh = |target: &Path| match (modified(target), modified(&source)) {
@@ -216,13 +219,14 @@ pub async fn ensure(
     // Unique per process and request thread, so racing renders never share
     // a temporary file.
     let tmp_name = format!(
-        "{id}.{}.{:?}.tmp",
+        "{id}.{}.{}.{:?}.tmp",
+        format.ext(),
         std::process::id(),
         std::thread::current().id()
     );
     crate::app::cpu::offload("story_sprite_thumb", move || -> anyhow::Result<()> {
         let png = std::fs::read(&source)?;
-        let bytes = render(&png, face, THUMB_PX)?;
+        let bytes = render(&png, face, THUMB_PX, format)?;
         write_atomically(&target, &tmp_name, &bytes)
     })
     .await?
@@ -251,6 +255,8 @@ fn write_atomically(target: &Path, tmp_name: &str, bytes: &[u8]) -> anyhow::Resu
 
 #[cfg(test)]
 mod tests {
+    use image::ImageEncoder;
+
     use super::*;
 
     fn plate(w: u32, h: u32, figure: impl Fn(u32, u32) -> bool) -> RgbaImage {
@@ -295,12 +301,35 @@ mod tests {
         image::DynamicImage::ImageRgba8(img)
             .write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png)
             .unwrap();
-        let webp = render(&png, Some((0.5, 0.5)), 64).unwrap();
+        let webp = render(&png, Some((0.5, 0.5)), 64, ThumbFormat::Webp).unwrap();
         let out = image::load_from_memory(&webp).unwrap().to_rgba8();
         assert_eq!(out.dimensions(), (64, 64));
         for p in out.pixels().filter(|p| p[3] > 0) {
             assert!(p[1] < 140, "green bled into the edge: {p:?}");
         }
+    }
+
+    #[test]
+    fn png_and_webp_carry_the_same_pixels() {
+        let img = plate(400, 400, |x, y| x < 200 && y > 50);
+        let mut png = Vec::new();
+        image::DynamicImage::ImageRgba8(img)
+            .write_to(&mut std::io::Cursor::new(&mut png), image::ImageFormat::Png)
+            .unwrap();
+        let webp = render(&png, None, 64, ThumbFormat::Webp).unwrap();
+        let out_png = render(&png, None, 64, ThumbFormat::Png).unwrap();
+        assert_eq!(
+            image::guess_format(&out_png).unwrap(),
+            image::ImageFormat::Png
+        );
+        assert_eq!(
+            image::load_from_memory(&webp).unwrap().to_rgba8(),
+            image::load_from_memory(&out_png).unwrap().to_rgba8()
+        );
+        assert_ne!(
+            cache_rel_path("avg_npc_1", ThumbFormat::Webp),
+            cache_rel_path("avg_npc_1", ThumbFormat::Png)
+        );
     }
 
     /// Renders four real sprites from the local EN extract through [`ensure`]
@@ -338,10 +367,14 @@ mod tests {
             let assets_dir = tmp_root.to_string_lossy().into_owned();
 
             let t0 = std::time::Instant::now();
-            let rel = ensure(&assets_dir, folder, &body_rel, face).await.unwrap();
+            let rel = ensure(&assets_dir, folder, &body_rel, face, ThumbFormat::Webp)
+                .await
+                .unwrap();
             let cold = t0.elapsed();
             let t1 = std::time::Instant::now();
-            let rel_again = ensure(&assets_dir, folder, &body_rel, face).await.unwrap();
+            let rel_again = ensure(&assets_dir, folder, &body_rel, face, ThumbFormat::Webp)
+                .await
+                .unwrap();
             let warm = t1.elapsed();
             assert_eq!(rel, rel_again);
 

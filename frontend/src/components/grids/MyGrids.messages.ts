@@ -27,10 +27,6 @@ export const messages = {
         text: "Edit",
         description: "Opens the grid in the editor.",
     },
-    "my.delete": {
-        text: "Delete {title}",
-        description: "Accessible name and tooltip of a card's delete icon button. {title} is the grid's title.",
-    },
     "my.error": {
         text: "Your grids could not be loaded.",
         description: "Shown when the user's grids failed to load.",
@@ -46,26 +42,6 @@ export const messages = {
     "my.emptyBody": {
         text: "Make one from scratch, or open any grid and use it as a template.",
         description: "Body of the empty state of the user's grids.",
-    },
-    "my.deleteDialog.title": {
-        text: "Delete this grid?",
-        description: "Title of the delete confirmation.",
-    },
-    "my.deleteDialog.body": {
-        text: '"{title}" will be deleted for good. Grids made from it keep their own copy.',
-        description: "Body of the delete confirmation. {title} is the grid's title; keep the quotes.",
-    },
-    "my.deleteDialog.confirm": {
-        text: "Delete",
-        description: "Confirms deleting the grid.",
-    },
-    "my.deleteDialog.cancel": {
-        text: "Cancel",
-        description: "Closes the delete confirmation.",
-    },
-    "my.toast.deleted": {
-        text: 'Deleted "{title}"',
-        description: "Toast after a grid was deleted. {title} is its title; keep the quotes.",
     },
 } satisfies MessageMap;
 

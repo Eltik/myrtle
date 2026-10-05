@@ -43,6 +43,18 @@ export const messages = {
         text: "Show more ({shown} of {total})",
         description: "Button under a long picker list that renders the next batch. {shown} is how many are shown, {total} how many match.",
     },
+    "picker.previewBadge": {
+        text: "CN",
+        description: "Short badge on a picker tile for an operator released on the Chinese server but not yet on the reader's. Keep it to two or three letters.",
+    },
+    "picker.previewHint": {
+        text: "Operators marked {badge} are out on the Chinese server and not yet on yours.",
+        description: "Line under the picker's search box on the Operators tab when it lists operators not yet released on the reader's server. {badge} is the badge text, e.g. 'CN'.",
+    },
+    "picker.previewLabel": {
+        text: "{name}, not yet released on your server",
+        description: "Accessible name and tooltip of a picker tile for an operator only the Chinese server has released. {name} is the operator's name.",
+    },
     "picker.clear": {
         text: "Clear",
         description: "Button in the picker that removes the cell's current pick, keeping its label.",

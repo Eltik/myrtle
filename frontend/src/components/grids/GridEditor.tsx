@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Link, useBlocker } from "@tanstack/react-router";
+import { Link, useBlocker, useNavigate } from "@tanstack/react-router";
 import { CheckIcon, ExternalLinkIcon, LockIcon, RotateCcwIcon } from "lucide-react";
 import { useCallback, useId, useMemo, useReducer, useRef, useState } from "react";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "#/components/ui/breadcrumb";
@@ -19,6 +19,7 @@ import { truncateCodePoints } from "#/lib/markdown/sanitize-input";
 import { AllowedKindsDialog, KindChips } from "./AllowedKinds";
 import type { messages as kindsMessages } from "./AllowedKinds.messages";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { DeleteGridButton } from "./DeleteGrid";
 import { EntityPickerDialog } from "./EntityPickerDialog";
 import { GridBoard, type IGridBoardEditor } from "./GridBoard";
 import type { messages } from "./GridEditor.messages";
@@ -43,6 +44,7 @@ function EditorContent({ grid, viewerId }: { grid: IGrid; viewerId: string | nul
     const t: EditorT = useT("grids");
     const tk: KindsT = useT("grids");
     const slug = grid.slug;
+    const navigate = useNavigate();
 
     const initial = useMemo(() => gridToState(grid), [grid]);
     const [state, dispatch] = useReducer(gridReducer, initial);
@@ -56,8 +58,10 @@ function EditorContent({ grid, viewerId }: { grid: IGrid; viewerId: string | nul
     const titleValid = trimmedTitle.length > 0 && Array.from(trimmedTitle).length <= GRID_TITLE_MAX;
 
     // Leaving with unsaved changes, or while a save is still in flight, asks in-app first. The ref keeps the check current without re-registering the blocker each render.
+    // A deleted grid has nothing left to keep, so the navigation after a delete is never blocked.
+    const deletedRef = useRef(false);
     const blockRef = useRef(false);
-    blockRef.current = dirty || saving;
+    blockRef.current = !deletedRef.current && (dirty || saving);
     const blocker = useBlocker({ shouldBlockFn: () => blockRef.current, enableBeforeUnload: () => blockRef.current, withResolver: true });
 
     const handleSave = useCallback(() => {
@@ -91,15 +95,16 @@ function EditorContent({ grid, viewerId }: { grid: IGrid; viewerId: string | nul
     const boardEditor: IGridBoardEditor = useMemo(
         () => ({
             onPick: (index) => setPickIndex(index),
+            onClear: (index) => dispatch({ type: "clearEntity", index }),
             onLabelChange: (index, label) => dispatch({ type: "setLabel", index, label }),
             onSwap: (from, to) => dispatch({ type: "swap", from, to }),
         }),
         [],
     );
 
-    const handlePick = (entity: ITierEntity) => {
+    const handlePick = (entity: ITierEntity, server: string | null) => {
         if (pickIndex === null) return;
-        dispatch({ type: "setEntity", index: pickIndex, entity });
+        dispatch({ type: "setEntity", index: pickIndex, entity, server });
         setPickIndex(null);
     };
 
@@ -126,6 +131,12 @@ function EditorContent({ grid, viewerId }: { grid: IGrid; viewerId: string | nul
                 onChangeKinds={() => setKindsOpen(true)}
                 onSave={handleSave}
                 onDiscard={discard}
+                savedTitle={grid.title}
+                onDeleted={async () => {
+                    deletedRef.current = true;
+                    blockRef.current = false;
+                    await navigate({ to: "/grids/my", replace: true });
+                }}
             />
 
             <div className="page-gutter mt-6 [--page-max:1180px]">
@@ -186,9 +197,12 @@ interface IEditorHeaderProps {
     onChangeKinds: () => void;
     onSave: () => void;
     onDiscard: () => void;
+    /** The title as last saved: what the delete confirmation names. */
+    savedTitle: string;
+    onDeleted: () => Promise<void>;
 }
 
-function EditorHeader({ slug, state, dirty, titleValid, saving, saveError, onTitleChange, onDescriptionChange, onListedChange, onResize, kindsLocked, onChangeKinds, onSave, onDiscard }: IEditorHeaderProps) {
+function EditorHeader({ slug, state, dirty, titleValid, saving, saveError, onTitleChange, onDescriptionChange, onListedChange, onResize, kindsLocked, onChangeKinds, onSave, onDiscard, savedTitle, onDeleted }: IEditorHeaderProps) {
     const t: EditorT = useT("grids");
     const tk: KindsT = useT("grids");
     const titleId = useId();
@@ -298,6 +312,7 @@ function EditorHeader({ slug, state, dirty, titleValid, saving, saveError, onTit
                             <Button type="button" variant="ghost" render={<Link to="/grids/$slug" params={{ slug }} target="_blank" rel="noreferrer" />} size="icon" aria-label={t("edit.openPublic")} title={t("edit.openPublic")}>
                                 <ExternalLinkIcon />
                             </Button>
+                            <DeleteGridButton grid={{ slug, title: savedTitle }} variant="labelled" collapse disabled={saving} onDeleted={onDeleted} />
                         </div>
                     </div>
                 </div>

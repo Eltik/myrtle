@@ -7621,7 +7621,7 @@
         "tags": [
           "assets"
         ],
-        "summary": "A story character's head-and-shoulders thumbnail, 160 px square, lossless\nWebP, cropped from the default body on first request and cached on disk.",
+        "summary": "A story character's head-and-shoulders thumbnail, 160 px square, lossless\nWebP (or PNG with `format=png`), cropped from the default body on first\nrequest and cached on disk.",
         "operationId": "story_sprite_thumb",
         "parameters": [
           {
@@ -7629,6 +7629,15 @@
             "in": "path",
             "description": "Story sprite id, e.g. `avg_npc_935`.",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "description": "`webp` (the default) or `png`. PNG carries the same pixels, for renderers that cannot decode WebP; each format is cached and tagged separately.",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -7650,7 +7659,8 @@
           "200": {
             "description": "The thumbnail, with an `ETag` and `Cache-Control: public, max-age=604800`.",
             "content": {
-              "image/webp": {}
+              "image/webp": {},
+              "image/png": {}
             }
           },
           "304": {
@@ -12046,6 +12056,15 @@
             }
           },
           {
+            "name": "format",
+            "in": "query",
+            "description": "`webp` (the default) or `png`. PNG carries the same pixels, for renderers that cannot decode WebP; each format is cached and tagged separately.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "If-None-Match",
             "in": "header",
             "description": "Echo a previous response's `ETag` to get a 304 instead of the bytes.",
@@ -12062,7 +12081,8 @@
           "200": {
             "description": "The thumbnail, with an `ETag` and `Cache-Control: public, max-age=604800`.",
             "content": {
-              "image/webp": {}
+              "image/webp": {},
+              "image/png": {}
             }
           },
           "304": {
@@ -16088,7 +16108,7 @@
               },
               {
                 "$ref": "#/components/schemas/EntitySummary",
-                "description": "`None` when the cell is empty, or when the served game data has no such\nentity; the raw `entity_kind` and `entity_id` are still sent."
+                "description": "`None` when the cell is empty, or when no loaded server's game data has\nsuch an entity; the raw `entity_kind` and `entity_id` are still sent."
               }
             ]
           },
@@ -16107,6 +16127,13 @@
                 "$ref": "#/components/schemas/EntityKind"
               }
             ]
+          },
+          "entity_server": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The server `entity` was resolved on when the reader's server does not\nknow it (an operator only CN has released), so its icon is fetched\nfrom that server. `None` when it resolved on the reader's server, or\ndid not resolve."
           },
           "label": {
             "type": "string"
@@ -16234,6 +16261,25 @@
           }
         }
       },
+      "GridPreviewIcon": {
+        "type": "object",
+        "description": "One card-thumbnail icon: the path, and the server to fetch it from when it\nis not the reader's, with [`GridCell::entity_server`]'s meaning.",
+        "required": [
+          "icon"
+        ],
+        "properties": {
+          "icon": {
+            "type": "string",
+            "description": "Same form as [`EntitySummary::icon`]."
+          },
+          "server": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
       "GridSummary": {
         "type": "object",
         "required": [
@@ -16273,9 +16319,9 @@
           "preview": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/GridPreviewIcon"
             },
-            "description": "Up to four icon paths from the first filled cells, in cell order, for a\ncard thumbnail. Same form as [`EntitySummary::icon`]."
+            "description": "Up to four icons from the first filled cells with one, in cell order,\nfor a card thumbnail."
           },
           "rows": {
             "type": "integer",
