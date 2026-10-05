@@ -2,8 +2,8 @@
 
 use std::cmp::Reverse;
 
-use super::{EntitySummary, Facets, KindSource, in_key_order, non_empty};
-use crate::core::gamedata::assets::AssetIndex;
+use super::{EntitySummary, Facets, KindSource, asset_url, in_key_order, non_empty};
+use crate::core::gamedata::assets::{AssetIndex, AssetKind};
 use crate::core::gamedata::types::GameData;
 use crate::core::gamedata::types::activity::ActivityBasicInfo;
 use crate::database::models::tier_list::EntityKind;
@@ -15,7 +15,9 @@ pub(super) const SOURCE: KindSource = KindSource {
 };
 
 fn resolve(gd: &GameData, assets: &AssetIndex, id: &str) -> Option<EntitySummary> {
-    gd.activities.get(id).map(|info| summary(assets, id, info))
+    gd.activities
+        .get(id)
+        .map(|info| summary(gd, assets, id, info))
 }
 
 fn known(gd: &GameData, _: &AssetIndex, id: &str) -> bool {
@@ -28,7 +30,12 @@ fn catalogue(gd: &GameData, assets: &AssetIndex) -> Vec<EntitySummary> {
         gd.activities
             .iter()
             .filter(|(_, info)| is_rankable(info))
-            .map(|(id, info)| ((Reverse(info.start_time), id), summary(assets, id, info)))
+            .map(|(id, info)| {
+                (
+                    (Reverse(info.start_time), id),
+                    summary(gd, assets, id, info),
+                )
+            })
             .collect(),
     )
 }
@@ -59,15 +66,30 @@ fn is_rankable(info: &ActivityBasicInfo) -> bool {
         && !is_filler(&info.activity_type)
 }
 
-fn summary(assets: &AssetIndex, id: &str, info: &ActivityBasicInfo) -> EntitySummary {
+/// The event's art: its banner by activity id, else the Archives cover its
+/// story group names. Grani's `1stact` files its cover as `act1d0`, so the
+/// activity-id lookup alone misses it.
+fn icon(gd: &GameData, assets: &AssetIndex, id: &str) -> Option<String> {
+    if assets.event_banner_path(id).is_some() {
+        return Some(format!("/event-image/{id}"));
+    }
+    let pic = gd.story_reviews.get(id)?.story_entry_pic_id.as_deref()?;
+    let key = pic.strip_prefix("storyEntryPic_").unwrap_or(pic);
+    assets.path(AssetKind::StoryEntryPic, key).map(asset_url)
+}
+
+fn summary(
+    gd: &GameData,
+    assets: &AssetIndex,
+    id: &str,
+    info: &ActivityBasicInfo,
+) -> EntitySummary {
     let display = non_empty(&info.display_type).unwrap_or("NONE");
     EntitySummary {
         kind: EntityKind::Event,
         id: id.to_owned(),
         name: info.name.clone(),
-        icon: assets
-            .event_banner_path(id)
-            .map(|_| format!("/event-image/{id}")),
+        icon: icon(gd, assets, id),
         // No page of its own: the site has no event route.
         href: None,
         facets: Facets::default()

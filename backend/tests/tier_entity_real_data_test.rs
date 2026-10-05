@@ -130,6 +130,19 @@ fn the_event_pool_by_display_type() {
     for (display, (n, no_icon)) in &by_display {
         println!("  {display:<12} {n:>4} ({no_icon} without art)");
     }
+    // Grani's event files its Archives cover under `act1d0`, not its activity id.
+    let grani = events
+        .iter()
+        .find(|e| e.id == "1stact")
+        .expect("1stact offered");
+    assert!(
+        grani
+            .icon
+            .as_deref()
+            .is_some_and(|i| i.ends_with("storyEntryPic_act1d0.png")),
+        "1stact icon: {:?}",
+        grani.icon
+    );
     for (display, floor) in [
         ("SIDESTORY", 64),
         ("MINISTORY", 20),
