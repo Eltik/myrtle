@@ -1,9 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { CircleCheck } from "lucide-react";
 
 import { eliteIcon, moduleIconURL, skillIconURL } from "#/components/operators/detail/impl/assets";
-import { Badge } from "#/components/ui/badge";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { useOperatorName } from "#/hooks/use-operator-name";
 import { type IOperatorPlanResponse, publicPlansQueryOptions } from "#/lib/api/planner";
 import type { IRosterEntry } from "#/lib/api/user";
 import { useT } from "#/lib/i18n";
@@ -27,6 +26,7 @@ interface IPlanCardProps {
 }
 
 function PlanCard({ p, roster }: IPlanCardProps) {
+    const operatorName = useOperatorName();
     const t: TypedT<typeof messages> = useT("user");
     const op = p.operator;
     if (!op) return null;
@@ -46,15 +46,7 @@ function PlanCard({ p, roster }: IPlanCardProps) {
                     <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" server={op.server} />
                 </span>
                 <div className="min-w-0 flex-1">
-                    <div className="flex min-w-0 items-center gap-2">
-                        <h3 className="truncate font-bold text-foreground text-sm leading-tight">{op.name}</h3>
-                        {p.met && (
-                            <Badge variant="success" size="sm">
-                                <CircleCheck aria-hidden="true" />
-                                {t("profile.plans.complete")}
-                            </Badge>
-                        )}
-                    </div>
+                    <h3 className="truncate font-bold text-foreground text-sm leading-tight">{operatorName(op)}</h3>
                     <p className="mt-0.5 truncate text-muted-foreground text-xs leading-normal">
                         {rarityToNumber(op.rarity)}★ {formatSubProfession(op.subProfessionId)}
                     </p>

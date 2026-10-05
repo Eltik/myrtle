@@ -25,6 +25,7 @@ export const DEFAULT_PRESET_TARGET: PresetTarget = {
     skill_level: MAX_SKILL_LEVEL,
     masteries: [0, 0, 0],
     module_stage: 0,
+    display_on_profile: false,
 };
 
 /** The promotion, level, skill and module fields of a plan upsert. */
@@ -50,7 +51,7 @@ export function normalizePresetTarget(target: PresetTarget): PresetTarget {
     const canMaster = elite === 2 && skillLevel === MAX_SKILL_LEVEL;
     const masteries = target.masteries.map((m) => (canMaster ? Math.min(Math.max(0, m), 3) : 0)) as PresetTarget["masteries"];
     const moduleStage = elite === 2 ? Math.min(Math.max(0, target.module_stage), 3) : 0;
-    return { elite, level, skill_level: skillLevel, masteries, module_stage: moduleStage };
+    return { elite, level, skill_level: skillLevel, masteries, module_stage: moduleStage, display_on_profile: target.display_on_profile ?? false };
 }
 
 type PresetChange = { field: "elite"; value: number } | { field: "level"; value: number | null } | { field: "skill_level"; value: number } | { field: "mastery"; index: number; value: number } | { field: "module_stage"; value: number };

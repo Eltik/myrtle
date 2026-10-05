@@ -12,6 +12,7 @@ import { Skeleton } from "#/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
+import { useOperatorName } from "#/hooks/use-operator-name";
 import { type IOperatorPlanResponse, type IPlanRequirementItem, plansQueryOptions } from "#/lib/api/planner";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -255,6 +256,7 @@ interface ByOperatorSectionProps {
 }
 
 function ByOperatorSection({ plan, predicate, isLoading, requirements, collapsed, onToggle, expandedPaths, onToggleExpand }: ByOperatorSectionProps) {
+    const operatorName = useOperatorName();
     const t: ReqT = useT("tools");
     const op = plan.operator;
     const filtered = requirements.filter(predicate);
@@ -267,7 +269,7 @@ function ByOperatorSection({ plan, predicate, isLoading, requirements, collapsed
                     <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" server={op.server} />
                 </span>
                 <div className="min-w-0 flex-1">
-                    <span className="block truncate font-semibold text-foreground text-xs leading-tight">{op.name}</span>
+                    <span className="block truncate font-semibold text-foreground text-xs leading-tight">{operatorName(op)}</span>
                     <span className="block truncate text-[11px] text-muted-foreground leading-normal">{formatPlanTarget(plan, t)}</span>
                 </div>
                 {!isLoading && <span className="shrink-0 text-[11px] text-muted-foreground">{formatSubtotal(subtotal(filtered), t)}</span>}

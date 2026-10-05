@@ -4,6 +4,7 @@ import { AlertDialog, AlertDialogClose, AlertDialogDescription, AlertDialogFoote
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { useOperatorName } from "#/hooks/use-operator-name";
 import type { IOperatorPlanResponse } from "#/lib/api/planner";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -24,6 +25,7 @@ interface ICompletedPlansDialogProps {
 }
 
 export function CompletedPlansDialog({ plans, onOpenChange, onDelete, onKeep, isSubmitting, errorMessage }: ICompletedPlansDialogProps) {
+    const operatorName = useOperatorName();
     const t: CompletedT = useT("tools");
     const open = plans !== null;
 
@@ -56,32 +58,34 @@ export function CompletedPlansDialog({ plans, onOpenChange, onDelete, onKeep, is
                         </span>
                         <div className="flex min-w-0 flex-col gap-1">
                             <AlertDialogTitle>{t("planner.completed.title", { count: shown.length })}</AlertDialogTitle>
-                            <AlertDialogDescription>{t("planner.completed.desc")}</AlertDialogDescription>
+                            <AlertDialogDescription>{shown.length === 0 ? t("planner.completed.empty") : t("planner.completed.desc")}</AlertDialogDescription>
                         </div>
                     </div>
                 </AlertDialogHeader>
 
-                <ul className="mx-6 mb-2 flex max-h-[min(50vh,360px)] flex-col divide-y divide-border/40 overflow-y-auto rounded-lg border border-border/60">
-                    {shown.map((p) => {
-                        const op = p.operator;
-                        const checked = !unchecked.has(p.operator_id);
-                        return (
-                            <li key={p.operator_id}>
-                                {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox component internally renders the input control */}
-                                <label className="flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-muted/30">
-                                    <Checkbox checked={checked} onCheckedChange={() => toggle(p.operator_id)} disabled={isSubmitting} />
-                                    <span aria-hidden="true" className="relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/70">
-                                        {op && <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" server={op.server} />}
-                                    </span>
-                                    <span className="min-w-0 flex-1">
-                                        <span className="block truncate font-semibold text-foreground text-xs leading-tight">{op?.name ?? p.operator_id}</span>
-                                        <span className="block truncate text-[11px] text-muted-foreground leading-normal">{formatPlanTarget(p, t)}</span>
-                                    </span>
-                                </label>
-                            </li>
-                        );
-                    })}
-                </ul>
+                {shown.length > 0 && (
+                    <ul className="mx-6 mb-2 flex max-h-[min(50vh,360px)] flex-col divide-y divide-border/40 overflow-y-auto rounded-lg border border-border/60">
+                        {shown.map((p) => {
+                            const op = p.operator;
+                            const checked = !unchecked.has(p.operator_id);
+                            return (
+                                <li key={p.operator_id}>
+                                    {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox component internally renders the input control */}
+                                    <label className="flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-muted/30">
+                                        <Checkbox checked={checked} onCheckedChange={() => toggle(p.operator_id)} disabled={isSubmitting} />
+                                        <span aria-hidden="true" className="relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/70">
+                                            {op && <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" server={op.server} />}
+                                        </span>
+                                        <span className="min-w-0 flex-1">
+                                            <span className="block truncate font-semibold text-foreground text-xs leading-tight">{op ? operatorName(op) : p.operator_id}</span>
+                                            <span className="block truncate text-[11px] text-muted-foreground leading-normal">{formatPlanTarget(p, t)}</span>
+                                        </span>
+                                    </label>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                )}
 
                 {errorMessage && (
                     <div role="alert" className="mx-6 mb-2 rounded-lg border border-destructive/30 bg-destructive/8 px-3 py-2 font-sans text-destructive-foreground text-xs">
@@ -90,10 +94,16 @@ export function CompletedPlansDialog({ plans, onOpenChange, onDelete, onKeep, is
                 )}
 
                 <AlertDialogFooter>
-                    <AlertDialogClose render={<Button type="button" variant="outline" disabled={isSubmitting} onClick={onKeep} />}>{t("planner.completed.keep")}</AlertDialogClose>
-                    <Button type="button" variant="destructive" loading={isSubmitting} disabled={checkedIds.length === 0} onClick={() => onDelete(checkedIds)}>
-                        {t("planner.completed.delete", { count: checkedIds.length })}
-                    </Button>
+                    {shown.length === 0 ? (
+                        <AlertDialogClose render={<Button type="button" variant="outline" />}>{t("planner.completed.close")}</AlertDialogClose>
+                    ) : (
+                        <>
+                            <AlertDialogClose render={<Button type="button" variant="outline" disabled={isSubmitting} onClick={onKeep} />}>{t("planner.completed.keep")}</AlertDialogClose>
+                            <Button type="button" variant="destructive" loading={isSubmitting} disabled={checkedIds.length === 0} onClick={() => onDelete(checkedIds)}>
+                                {t("planner.completed.delete", { count: checkedIds.length })}
+                            </Button>
+                        </>
+                    )}
                 </AlertDialogFooter>
             </AlertDialogPopup>
         </AlertDialog>

@@ -51,10 +51,6 @@ export const messages = {
         text: "Level",
         description: "Label over the target level field.",
     },
-    "planner.bulk.levelMax": {
-        text: "Max",
-        description: "Switch beside the level field: when on, each operator targets the highest level at its promotion.",
-    },
     "planner.bulk.levelCapNote": {
         text: "Up to {max} here. Lower rarities stop at their own cap.",
         description: "Hint under the level field. {max} is the highest level the chosen promotion allows for any operator.",
@@ -107,12 +103,16 @@ export const messages = {
         text: "Delete preset",
         description: "Accessible name of the button that deletes the chosen preset.",
     },
+    "planner.bulk.displayOnProfile.desc": {
+        text: "Show these plans on your public profile. Plans already shown there stay shown.",
+        description: "Hint under the bulk dialog's 'Display on profile' switch.",
+    },
     "planner.bulk.overwrite": {
         text: "Replace existing plans",
         description: "Switch label: when on, operators that already have a plan get the new target.",
     },
     "planner.bulk.overwrite.desc": {
-        text: "When off, operators that already have a plan are skipped.",
+        text: "When off, operators that already have a plan are hidden from the picker.",
         description: "Hint under the replace-existing-plans switch.",
     },
     "planner.bulk.preview": {

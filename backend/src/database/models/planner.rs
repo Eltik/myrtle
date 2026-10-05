@@ -173,6 +173,10 @@ pub struct PresetTarget {
     pub masteries: [i16; 3],
     /// Stage for every module, 0 to 3.
     pub module_stage: i16,
+    /// Whether plans made from it show on the public profile. Absent in
+    /// presets saved before this field existed, which read as private.
+    #[serde(default)]
+    pub display_on_profile: bool,
 }
 
 #[derive(TS, utoipa::ToSchema)]

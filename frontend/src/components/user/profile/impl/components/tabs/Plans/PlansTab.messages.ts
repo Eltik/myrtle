@@ -47,10 +47,6 @@ export const messages = {
         text: "Skill {n}",
         description: "Stand-in name for a skill the game data does not name; {n} counts from 1.",
     },
-    "profile.plans.complete": {
-        text: "Complete",
-        description: "Badge on a plan card whose targets the player's roster has already reached.",
-    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

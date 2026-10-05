@@ -139,17 +139,9 @@ export const messages = {
         text: "Unpin {name}",
         description: "Accessible name and tooltip of the button that unpins a pinned group; {name} is the player's own group name.",
     },
-    "planner.completed.notice": {
-        text: "{count, plural, one {# plan is complete} other {# plans are complete}}",
-        description: "Notice at the top of the planner when the last roster sync shows plans whose targets are all reached.",
-    },
-    "planner.completed.review": {
-        text: "Review",
-        description: "Button in the completed-plans notice that opens the list of completed plans.",
-    },
-    "planner.completed.badge": {
-        text: "Complete",
-        description: "Badge on a plan card whose targets the player's roster has already reached.",
+    "planner.completed.check": {
+        text: "Completed plans",
+        description: "Header button that lists the plans whose targets the last roster sync shows as reached, whether or not the notice is showing.",
     },
 } satisfies MessageMap;
 

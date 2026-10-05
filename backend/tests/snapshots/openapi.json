@@ -7361,6 +7361,144 @@
         }
       }
     },
+    "/api/story/sprites": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "Every story sprite folder on the default server, one entry each: the\nnames the scripts speak it under (each named line attributed to the\nsprite LIT when it is spoken), how many lines and stories, its operator\nwhen it draws one, and the expression its card shows. Built once per game\ndata load and asset tree, off the request path's own work.",
+        "operationId": "story_sprites",
+        "responses": {
+          "200": {
+            "description": "Every story sprite folder.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorySpriteIndex"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/story/sprites/{base}": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "One sprite folder's EXPRESSION SHEET on the default server: every `#N$M`\nit offers resolved to body and face (unused ones included), and every\nstory it appears in with the lines attributed to it there. `base` is the\nfolder name, case-insensitive.",
+        "operationId": "story_sprite_detail",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "Sprite folder (`avg_npc_043_1`).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The folder's expression sheet.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorySpriteDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/story/sprites/{base}/thumb/{variant}": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "One listed expression of a sprite folder as a small image, on the default\nserver: body plate plus face patch composed exactly as the reader draws\nthem, 320 px high (width by the plate's aspect), lossless WebP. Rendered\non first request and cached under `derived/sprite-thumbs/`; served with\nthe same `ETag` and week-long `Cache-Control` as `/api/assets`. `variant`\nis the expression's key as the sheet lists it (`#2$1`), URL-encoded.",
+        "operationId": "story_sprite_thumb_variant",
+        "parameters": [
+          {
+            "name": "base",
+            "in": "path",
+            "description": "Sprite folder (`avg_npc_043_1`).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variant",
+            "in": "path",
+            "description": "Expression key, URL-encoded (`%232%241` for `#2$1`).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "Echo a previous response's `ETag` to get a 304 instead of the bytes.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The thumbnail, with an `ETag` and `Cache-Control: public, max-age=604800`.",
+            "content": {
+              "image/webp": {}
+            }
+          },
+          "304": {
+            "description": "The caller's `If-None-Match` matched; no body is sent."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
     "/api/story/{story_id}": {
       "get": {
         "tags": [
@@ -11664,6 +11802,176 @@
                 }
               }
             }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/{server}/story/sprites": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "`GET /{server}/story/sprites` - the same from `{server}`. The `/{server}`\nform reads that server's game data; the bare form reads the default\nserver.",
+        "operationId": "story_sprites_srv",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "description": "Game server: `en`, `jp`, `kr`, `cn` or `tw`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every story sprite folder.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorySpriteIndex"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/{server}/story/sprites/{base}": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "`GET /{server}/story/sprites/{base}` - the same from `{server}`. The\n`/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "operationId": "story_sprite_detail_srv",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "description": "Game server: `en`, `jp`, `kr`, `cn` or `tw`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "base",
+            "in": "path",
+            "description": "Sprite folder (`avg_npc_043_1`).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The folder's expression sheet.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorySpriteDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/{server}/story/sprites/{base}/thumb/{variant}": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "`GET /{server}/story/sprites/{base}/thumb/{variant}` - the same from\n`{server}`. The `/{server}` form reads that server's game data; the bare\nform reads the default server.",
+        "operationId": "story_sprite_thumb_variant_srv",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "description": "Game server: `en`, `jp`, `kr`, `cn` or `tw`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "base",
+            "in": "path",
+            "description": "Sprite folder (`avg_npc_043_1`).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variant",
+            "in": "path",
+            "description": "Expression key, URL-encoded (`%232%241` for `#2$1`).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "Echo a previous response's `ETag` to get a 304 instead of the bytes.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The thumbnail, with an `ETag` and `Cache-Control: public, max-age=604800`.",
+            "content": {
+              "image/webp": {}
+            }
+          },
+          "304": {
+            "description": "The caller's `If-None-Match` matched; no body is sent."
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
@@ -17745,6 +18053,10 @@
           "module_stage"
         ],
         "properties": {
+          "display_on_profile": {
+            "type": "boolean",
+            "description": "Whether plans made from it show on the public profile. Absent in\npresets saved before this field existed, which read as private."
+          },
           "elite": {
             "type": "integer",
             "format": "int32",
@@ -20762,6 +21074,376 @@
             "minimum": 0
           }
         }
+      },
+      "StorySpriteDetail": {
+        "type": "object",
+        "description": "One sprite folder's expression sheet: its list entry, every expression\nit offers, and every story it appears in, in library order.",
+        "required": [
+          "sprite",
+          "names",
+          "strayNames",
+          "variants",
+          "stories"
+        ],
+        "properties": {
+          "names": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorySpriteNameDetail"
+            },
+            "description": "The kept names of `sprite.names`, in the same order, each with where it\nis spoken and example lines."
+          },
+          "sprite": {
+            "$ref": "#/components/schemas/StorySpriteEntry"
+          },
+          "stories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorySpriteStory"
+            }
+          },
+          "strayNames": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorySpriteNameDetail"
+            },
+            "description": "The names the alias threshold CUT (`sprite.noise` is their weight),\nmost lines first, with the same detail: mostly someone else speaking\nwhile this sprite stays lit. Never searched and never a chip of their\nown; the sheet lists them behind a disclosure."
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorySpriteVariant"
+            }
+          }
+        }
+      },
+      "StorySpriteEntry": {
+        "type": "object",
+        "description": "One sprite folder in the gallery list: who it is, what the scripts call\nit, how much it speaks, and the one expression its card shows.",
+        "required": [
+          "base",
+          "kind",
+          "names",
+          "noise",
+          "lines",
+          "storyCount",
+          "variantCount"
+        ],
+        "properties": {
+          "base": {
+            "type": "string",
+            "description": "The folder under `textures/avg/characters/`, as spelled on disk."
+          },
+          "charId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "firstOrder": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "That story's position in library order, for a stable sort.",
+            "minimum": 0
+          },
+          "firstSeen": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "The earliest `startTime` (unix seconds) of a group that shows it,\ncounting only dated groups; mainline groups carry none."
+          },
+          "firstStory": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The first story, in library order, that shows it."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/StorySpriteKind"
+          },
+          "lines": {
+            "type": "number",
+            "format": "double",
+            "description": "Weighted named lines attributed to this sprite over the library."
+          },
+          "names": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorySpriteName"
+            },
+            "description": "The names the scripts speak this sprite under, most lines first. Empty\nwhen no named line was ever attributed to it. Only ALIASES are listed:\na name needs 3 weighted lines and 2% of the folder's named lines, the\nprimary excepted; what the cut drops is `noise`."
+          },
+          "noise": {
+            "type": "number",
+            "format": "double",
+            "description": "Weighted named lines whose names fell under the alias threshold:\nmostly someone else speaking while this sprite stays lit."
+          },
+          "operatorName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The character table's name for `charId`."
+          },
+          "storyCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Distinct library stories that put this sprite up.",
+            "minimum": 0
+          },
+          "thumb": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StorySpriteVariant",
+                "description": "The expression the card shows: the most used one, else the first."
+              }
+            ]
+          },
+          "variant": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What the folder adds after the `char_*` id: the set number (`1`) or\nan outfit tag (`ex`). Never part of the name."
+          },
+          "variantCount": {
+            "type": "integer",
+            "format": "int32",
+            "description": "How many distinct expressions the folder offers.",
+            "minimum": 0
+          }
+        }
+      },
+      "StorySpriteExample": {
+        "type": "object",
+        "description": "One line spoken under a name while the sprite is lit. `line` is the\nscript's own line (`StoryCommand.line`), which the reader resolves to a\nhalt with `?line=`; `text` is as written, rich-text tags and\n`{@nickname}` intact.",
+        "required": [
+          "storyId",
+          "storyName",
+          "line",
+          "text"
+        ],
+        "properties": {
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "line": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "storyId": {
+            "type": "string"
+          },
+          "storyName": {
+            "type": "string"
+          },
+          "tag": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "StorySpriteIndex": {
+        "type": "object",
+        "description": "Every story sprite folder, one entry each, in folder-name order.",
+        "required": [
+          "sprites"
+        ],
+        "properties": {
+          "sprites": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorySpriteEntry"
+            }
+          }
+        }
+      },
+      "StorySpriteKind": {
+        "type": "string",
+        "description": "Whether a sprite folder draws an operator or a member of the cast.",
+        "enum": [
+          "operator",
+          "npc"
+        ]
+      },
+      "StorySpriteName": {
+        "type": "object",
+        "description": "One display name the scripts speak a sprite under, and how many lines.\n`count` is WEIGHTED: a line with two lit sprites counts half for each, so\nit is a number with at most two decimals rather than an integer.",
+        "required": [
+          "name",
+          "count"
+        ],
+        "properties": {
+          "count": {
+            "type": "number",
+            "format": "double"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "StorySpriteNameDetail": {
+        "type": "object",
+        "description": "One kept name of a sprite folder, for the sheet's name popover: its\nweighted lines, the stories that use it (most lines first, at most 5, and\nhow many more), and up to 3 example lines, spread over different stories\nwhere the name is spoken in more than one.",
+        "required": [
+          "name",
+          "count",
+          "stories",
+          "moreStories",
+          "examples"
+        ],
+        "properties": {
+          "count": {
+            "type": "number",
+            "format": "double"
+          },
+          "examples": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorySpriteExample"
+            }
+          },
+          "moreStories": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "name": {
+            "type": "string"
+          },
+          "stories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorySpriteNameStory"
+            }
+          }
+        }
+      },
+      "StorySpriteNameStory": {
+        "type": "object",
+        "description": "One story that speaks a sprite under one name.",
+        "required": [
+          "id",
+          "name",
+          "lines"
+        ],
+        "properties": {
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "number",
+            "format": "double",
+            "description": "Weighted lines under this name in this story."
+          },
+          "name": {
+            "type": "string"
+          },
+          "tag": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "StorySpriteStory": {
+        "type": "object",
+        "description": "One story a sprite appears in, with the lines attributed to it there.",
+        "required": [
+          "id",
+          "name",
+          "groupId",
+          "groupName",
+          "lines",
+          "uses"
+        ],
+        "properties": {
+          "groupId": {
+            "type": "string"
+          },
+          "groupName": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "lines": {
+            "type": "number",
+            "format": "double",
+            "description": "Weighted named lines attributed to the sprite in this story; 0 when\nit is on stage but never the speaker."
+          },
+          "name": {
+            "type": "string"
+          },
+          "tag": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The story's `avgTag` (\"Before Operation\", \"After Operation\"), which\ntells apart the two halves of one stage that share a name."
+          },
+          "uses": {
+            "type": "integer",
+            "format": "int32",
+            "description": "How often the story puts the sprite up.",
+            "minimum": 0
+          }
+        }
+      },
+      "StorySpriteVariant": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/CharacterSprite"
+          },
+          {
+            "type": "object",
+            "required": [
+              "key",
+              "wholeBody",
+              "uses"
+            ],
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "uses": {
+                "type": "integer",
+                "format": "int32",
+                "minimum": 0
+              },
+              "wholeBody": {
+                "type": "boolean"
+              }
+            }
+          }
+        ],
+        "description": "One expression a sprite folder OFFERS: a `#N$M` key and the files it\nresolves to, by the same resolver `GET /story/{id}` uses. Two keys that\nland on the same body and face are one expression, listed under the first\nkey that reaches it. `wholeBody` is true when no face patch is composited:\nthe body plate IS the expression (a legacy whole sprite, or a hub entry\nflagged `isWholeBody`). `uses` counts how often the scripts PUT this\nexpression up (a slot, a cut-in, a window)."
       },
       "StoryTotals": {
         "type": "object",

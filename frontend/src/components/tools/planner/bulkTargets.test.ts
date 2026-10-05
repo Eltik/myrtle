@@ -21,7 +21,7 @@ function operator(rarity: number, skills: { masteries: boolean }[], modules: { i
     } as unknown as IOperatorListItem;
 }
 
-const FULL: PresetTarget = { elite: 2, level: 90, skill_level: 7, masteries: [3, 3, 3], module_stage: 3 };
+const FULL: PresetTarget = { elite: 2, level: 90, skill_level: 7, masteries: [3, 3, 3], module_stage: 3, display_on_profile: false };
 
 const threeStar = operator(3, [{ masteries: false }]);
 const fourStar = operator(4, [{ masteries: true }, { masteries: true }], [{ id: "mod_4", level: 30 }]);
@@ -94,18 +94,18 @@ describe("clampPresetForOperator", () => {
         const preset = { ...FULL, level: null };
         expect(clampPresetForOperator(preset, sixStar).targetLevel).toBe(90);
         expect(clampPresetForOperator(preset, fourStar).targetLevel).toBe(70);
-        expect(clampPresetForOperator({ ...preset, elite: 1, masteries: [0, 0, 0], module_stage: 0 }, sixStar).targetLevel).toBe(80);
+        expect(clampPresetForOperator({ ...preset, elite: 1, masteries: [0, 0, 0], module_stage: 0, display_on_profile: false }, sixStar).targetLevel).toBe(80);
     });
 
     it("leaves masteries out below skill level 7", () => {
-        const target = clampPresetForOperator({ elite: 1, level: null, skill_level: 6, masteries: [3, 3, 3], module_stage: 0 }, sixStar);
+        const target = clampPresetForOperator({ elite: 1, level: null, skill_level: 6, masteries: [3, 3, 3], module_stage: 0, display_on_profile: false }, sixStar);
         expect(target.targetSkillLevel).toBe(6);
         expect(target.targetSkills.every((s) => s.mastery_level === 0)).toBe(true);
     });
 });
 
 describe("raiseToRoster", () => {
-    const target = clampPresetForOperator({ elite: 2, level: 60, skill_level: 7, masteries: [1, 0, 0], module_stage: 1 }, sixStar);
+    const target = clampPresetForOperator({ elite: 2, level: 60, skill_level: 7, masteries: [1, 0, 0], module_stage: 1, display_on_profile: false }, sixStar);
 
     it("returns the target untouched for an operator not on the roster", () => {
         expect(raiseToRoster(target, undefined)).toEqual({ target, isReached: false });
@@ -141,7 +141,7 @@ describe("raiseToRoster", () => {
     });
 
     it("treats a higher promotion as ahead even at a lower level", () => {
-        const e1 = clampPresetForOperator({ elite: 1, level: 80, skill_level: 7, masteries: [0, 0, 0], module_stage: 0 }, sixStar);
+        const e1 = clampPresetForOperator({ elite: 1, level: 80, skill_level: 7, masteries: [0, 0, 0], module_stage: 0, display_on_profile: false }, sixStar);
         const merged = raiseToRoster(e1, roster({ elite: 2, level: 1, skill_level: 7 }));
         expect(merged.target.targetElite).toBe(2);
         expect(merged.target.targetLevel).toBe(1);
@@ -150,17 +150,17 @@ describe("raiseToRoster", () => {
 });
 
 describe("withPresetChange", () => {
-    const base: PresetTarget = { elite: 0, level: null, skill_level: 1, masteries: [0, 0, 0], module_stage: 0 };
+    const base: PresetTarget = { elite: 0, level: null, skill_level: 1, masteries: [0, 0, 0], module_stage: 0, display_on_profile: false };
 
     it("lifts promotion and skill level for a mastery, and promotion for a module", () => {
-        expect(withPresetChange(base, { field: "mastery", index: 1, value: 2 })).toEqual({ elite: 2, level: null, skill_level: 7, masteries: [0, 2, 0], module_stage: 0 });
+        expect(withPresetChange(base, { field: "mastery", index: 1, value: 2 })).toEqual({ elite: 2, level: null, skill_level: 7, masteries: [0, 2, 0], module_stage: 0, display_on_profile: false });
         expect(withPresetChange(base, { field: "module_stage", value: 3 }).elite).toBe(2);
         expect(withPresetChange(base, { field: "skill_level", value: 5 }).elite).toBe(1);
     });
 
     it("drops masteries, modules and the level past the cap when promotion falls", () => {
-        const full: PresetTarget = { elite: 2, level: 90, skill_level: 7, masteries: [3, 3, 3], module_stage: 3 };
-        expect(withPresetChange(full, { field: "elite", value: 0 })).toEqual({ elite: 0, level: 50, skill_level: 4, masteries: [0, 0, 0], module_stage: 0 });
+        const full: PresetTarget = { elite: 2, level: 90, skill_level: 7, masteries: [3, 3, 3], module_stage: 3, display_on_profile: false };
+        expect(withPresetChange(full, { field: "elite", value: 0 })).toEqual({ elite: 0, level: 50, skill_level: 4, masteries: [0, 0, 0], module_stage: 0, display_on_profile: false });
         expect(withPresetChange(full, { field: "skill_level", value: 6 }).masteries).toEqual([0, 0, 0]);
     });
 });

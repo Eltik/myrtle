@@ -111,6 +111,15 @@ export function BulkPlanDialog({ open, onOpenChange }: IBulkPlanDialogProps): Re
         queries: selected.map((op) => ({ ...operatorQueryOptions(op.id, server), enabled: open })),
     });
 
+    // Planned operators only matter when their plans are being replaced.
+    const plannedIds = React.useMemo(() => new Set((plannerData?.plans ?? []).map((p) => p.operator_id)), [plannerData?.plans]);
+    const pickableOptions = React.useMemo(() => (overwrite ? options : options.filter((op) => !plannedIds.has(op.id))), [options, overwrite, plannedIds]);
+
+    const handleOverwriteChange = (checked: boolean) => {
+        setOverwrite(checked);
+        if (!checked) setSelected((prev) => prev.filter((op) => !plannedIds.has(op.id)));
+    };
+
     const groupNames = React.useMemo(() => (plannerData?.groups ?? []).map((g) => g.name), [plannerData?.groups]);
 
     const rows = React.useMemo<IPreviewRow[]>(() => {
@@ -148,8 +157,8 @@ export function BulkPlanDialog({ open, onOpenChange }: IBulkPlanDialogProps): Re
                     data: {
                         operatorId: option.id,
                         ...status.target,
-                        // A replaced plan keeps its profile flag and gains the chosen groups.
-                        displayOnProfile: status.existing?.display_on_profile ?? false,
+                        // A replaced plan gains the chosen groups, and switching the profile off never hides one already shown.
+                        displayOnProfile: target.display_on_profile || (status.existing?.display_on_profile ?? false),
                         groups: [...new Set([...(status.existing?.groups ?? []), ...groups])],
                     },
                 }),
@@ -189,15 +198,8 @@ export function BulkPlanDialog({ open, onOpenChange }: IBulkPlanDialogProps): Re
                             <PresetRow target={target} onLoad={setTarget} />
                             <TargetForm target={target} onChange={setTarget} />
                             <PlanGroupsField groupNames={groupNames} selectedGroups={groups} onSelectedGroupsChange={setGroups} />
-                            <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card/40 p-4">
-                                <div className="space-y-0.5">
-                                    <label htmlFor="bulk-overwrite" className="cursor-pointer font-semibold text-foreground text-sm">
-                                        {t("planner.bulk.overwrite")}
-                                    </label>
-                                    <p className="text-muted-foreground text-xs">{t("planner.bulk.overwrite.desc")}</p>
-                                </div>
-                                <Switch id="bulk-overwrite" checked={overwrite} onCheckedChange={setOverwrite} />
-                            </div>
+                            <SwitchRow id="bulk-display-on-profile" label={t("planner.dialog.displayOnProfile")} description={t("planner.bulk.displayOnProfile.desc")} checked={target.display_on_profile} onCheckedChange={(checked) => setTarget((prev) => ({ ...prev, display_on_profile: checked }))} />
+                            <SwitchRow id="bulk-overwrite" label={t("planner.bulk.overwrite")} description={t("planner.bulk.overwrite.desc")} checked={overwrite} onCheckedChange={handleOverwriteChange} />
                         </div>
 
                         <div className="flex min-w-0 flex-col gap-3">
@@ -212,7 +214,7 @@ export function BulkPlanDialog({ open, onOpenChange }: IBulkPlanDialogProps): Re
                                     </Button>
                                 )}
                             </div>
-                            <OperatorMultiSelector options={options} selectedOptions={selected} isLoading={isOptionsLoading} onSelectedChange={setSelected} searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} />
+                            <OperatorMultiSelector options={pickableOptions} selectedOptions={selected} isLoading={isOptionsLoading} onSelectedChange={setSelected} searchQuery={searchQuery} onSearchQueryChange={setSearchQuery} />
 
                             {failureCount > 0 && (
                                 <div role="alert" className="rounded-lg border border-destructive/30 bg-destructive/8 px-3 py-2 text-destructive-foreground text-xs">
@@ -358,11 +360,32 @@ interface ITargetFormProps {
     onChange: (target: IPresetTarget) => void;
 }
 
-/** The rarity-free target: promotion, level or Max, shared skill level, a mastery per skill slot and one module stage. */
+interface ISwitchRowProps {
+    id: string;
+    label: string;
+    description: string;
+    checked: boolean;
+    onCheckedChange: (checked: boolean) => void;
+}
+
+function SwitchRow({ id, label, description, checked, onCheckedChange }: ISwitchRowProps): React.ReactElement {
+    return (
+        <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card/40 p-4">
+            <div className="space-y-0.5">
+                <label htmlFor={id} className="cursor-pointer font-semibold text-foreground text-sm">
+                    {label}
+                </label>
+                <p className="text-muted-foreground text-xs">{description}</p>
+            </div>
+            <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} />
+        </div>
+    );
+}
+
+/** The rarity-free target: promotion, level, shared skill level, a mastery per skill slot and one module stage. */
 function TargetForm({ target, onChange }: ITargetFormProps): React.ReactElement {
     const t: BulkT = useT("tools");
     const cap = PRESET_LEVEL_CAPS[target.elite] ?? 90;
-    const isMax = target.level === null;
 
     const changeLevel = (raw: number) => onChange(withPresetChange(target, { field: "level", value: Number.isNaN(raw) ? 1 : raw }));
 
@@ -388,13 +411,7 @@ function TargetForm({ target, onChange }: ITargetFormProps): React.ReactElement 
                 </FieldBlock>
 
                 <FieldBlock label={t("planner.bulk.level")}>
-                    <div className="flex items-center gap-3">
-                        <Input type="number" min={1} max={cap} value={target.level ?? cap} disabled={isMax} onChange={(e) => changeLevel(Number.parseInt(e.target.value, 10))} className="w-20 text-center font-mono" aria-label={t("planner.bulk.level")} />
-                        <label htmlFor="bulk-level-max" className="flex cursor-pointer items-center gap-2 text-foreground text-sm">
-                            <Switch id="bulk-level-max" checked={isMax} onCheckedChange={(checked) => onChange(withPresetChange(target, { field: "level", value: checked ? null : cap }))} />
-                            {t("planner.bulk.levelMax")}
-                        </label>
-                    </div>
+                    <Input type="number" min={1} max={cap} value={target.level ?? cap} onChange={(e) => changeLevel(Number.parseInt(e.target.value, 10))} className="w-20 text-center font-mono" aria-label={t("planner.bulk.level")} />
                     <p className="text-muted-foreground text-xs">{t("planner.bulk.levelCapNote", { max: cap })}</p>
                 </FieldBlock>
             </div>

@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-05T06:23:44.747Z",
+    "generatedAt": "2026-10-05T07:08:42.641Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -30096,6 +30096,13 @@
             "placeholders": []
         },
         {
+            "key": "tools.planner.bulk.displayOnProfile.desc",
+            "namespace": "tools",
+            "source_text": "Show these plans on your public profile. Plans already shown there stay shown.",
+            "description": "Hint under the bulk dialog's 'Display on profile' switch.",
+            "placeholders": []
+        },
+        {
             "key": "tools.planner.bulk.failed",
             "namespace": "tools",
             "source_text": "{count, plural, one {# plan was not saved.} other {# plans were not saved.}} The reason is on each row.",
@@ -30119,13 +30126,6 @@
             "placeholders": [
                 "max"
             ]
-        },
-        {
-            "key": "tools.planner.bulk.levelMax",
-            "namespace": "tools",
-            "source_text": "Max",
-            "description": "Switch beside the level field: when on, each operator targets the highest level at its promotion.",
-            "placeholders": []
         },
         {
             "key": "tools.planner.bulk.masteries",
@@ -30165,7 +30165,7 @@
         {
             "key": "tools.planner.bulk.overwrite.desc",
             "namespace": "tools",
-            "source_text": "When off, operators that already have a plan are skipped.",
+            "source_text": "When off, operators that already have a plan are hidden from the picker.",
             "description": "Hint under the replace-existing-plans switch.",
             "placeholders": []
         },
@@ -30485,10 +30485,17 @@
             "placeholders": []
         },
         {
-            "key": "tools.planner.completed.badge",
+            "key": "tools.planner.completed.check",
             "namespace": "tools",
-            "source_text": "Complete",
-            "description": "Badge on a plan card whose targets the player's roster has already reached.",
+            "source_text": "Completed plans",
+            "description": "Header button that lists the plans whose targets the last roster sync shows as reached, whether or not the notice is showing.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.completed.close",
+            "namespace": "tools",
+            "source_text": "Close",
+            "description": "Button that closes the completed-plans dialog when it has nothing to list.",
             "placeholders": []
         },
         {
@@ -30508,32 +30515,23 @@
             "placeholders": []
         },
         {
-            "key": "tools.planner.completed.keep",
+            "key": "tools.planner.completed.empty",
             "namespace": "tools",
-            "source_text": "Keep them",
-            "description": "Button that closes the completed-plans dialog without deleting anything and hides the notice until another plan completes.",
+            "source_text": "As of your last sync, no plan has reached its target yet.",
+            "description": "Body of the completed-plans dialog when the player opens it and no plan is complete.",
             "placeholders": []
         },
         {
-            "key": "tools.planner.completed.notice",
+            "key": "tools.planner.completed.keep",
             "namespace": "tools",
-            "source_text": "{count, plural, one {# plan is complete} other {# plans are complete}}",
-            "description": "Notice at the top of the planner when the last roster sync shows plans whose targets are all reached.",
-            "placeholders": [
-                "count"
-            ]
-        },
-        {
-            "key": "tools.planner.completed.review",
-            "namespace": "tools",
-            "source_text": "Review",
-            "description": "Button in the completed-plans notice that opens the list of completed plans.",
+            "source_text": "Keep them",
+            "description": "Button that closes the completed-plans dialog without deleting anything.",
             "placeholders": []
         },
         {
             "key": "tools.planner.completed.title",
             "namespace": "tools",
-            "source_text": "{count, plural, one {Completed plan} other {Completed plans}}",
+            "source_text": "{count, plural, =0 {No completed plans} one {Completed plan} other {Completed plans}}",
             "description": "Title of the dialog listing plans whose targets are all reached.",
             "placeholders": [
                 "count"
@@ -39683,13 +39681,6 @@
             "namespace": "user",
             "source_text": "Operator plans",
             "description": "Accessible name of the plans section of a profile.",
-            "placeholders": []
-        },
-        {
-            "key": "user.profile.plans.complete",
-            "namespace": "user",
-            "source_text": "Complete",
-            "description": "Badge on a plan card whose targets the player's roster has already reached.",
             "placeholders": []
         },
         {

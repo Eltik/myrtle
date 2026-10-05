@@ -25,4 +25,9 @@ export type PresetTarget = {
      * Stage for every module, 0 to 3.
      */
     module_stage: number;
+    /**
+     * Whether plans made from it show on the public profile. Absent in
+     * presets saved before this field existed, which read as private.
+     */
+    display_on_profile: boolean;
 };
