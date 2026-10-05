@@ -108,8 +108,40 @@ export const messages = {
         description: "Heading of one group of expressions that share a body pose (the $M index).",
     },
     "sprites.sheet.names": {
-        text: "Called",
-        description: "Heading of the list of display names the scripts give a character, with line counts.",
+        text: "Named in scripts",
+        description: "Heading of the list of display names the scripts give a character, primary name first, with line counts.",
+    },
+    "sprites.name.open": {
+        text: "Where {name} is spoken",
+        description: "Accessible name of a name chip on a character's sheet, which opens the stories and example lines for that name.",
+    },
+    "sprites.name.count": {
+        text: "{count, plural, one {# line} other {# lines}}",
+        description: "In a name's popover: how many lines the scripts speak under this name while the character is lit.",
+    },
+    "sprites.name.share": {
+        text: "{share} of {owner}'s lines",
+        description: "In a name's popover: this name's share of the character's named lines; share is a formatted percentage, owner the character's primary name.",
+    },
+    "sprites.name.stories": {
+        text: "Stories",
+        description: "Heading of the stories that use this name, in a name's popover.",
+    },
+    "sprites.name.more": {
+        text: "+{count} more",
+        description: "Under the five stories listed in a name's popover: how many more stories use the name.",
+    },
+    "sprites.name.examples": {
+        text: "Lines",
+        description: "Heading of up to three example lines spoken under this name, each linking into the reader at that line.",
+    },
+    "sprites.stray.toggle": {
+        text: "{lines, plural, one {# stray line} other {# stray lines}} under {names, plural, one {# other name} other {# other names}}",
+        description: "Disclosure under a character's names: lines spoken under names too rare to be aliases, mostly someone else talking while this character stays highlighted. Opens the list of those names.",
+    },
+    "sprites.stray.more": {
+        text: "+{count} more",
+        description: "At the end of the first 30 stray names: shows the rest.",
     },
     "sprites.sheet.noNames": {
         text: "No named line is spoken while this sprite is lit.",
@@ -161,7 +193,11 @@ export const messages = {
     },
     "sprites.sheet.download": {
         text: "Download sheet",
-        description: "Button that saves every expression of the character as one PNG.",
+        description: "Button that saves every expression of the character, at full resolution, as one PNG.",
+    },
+    "sprites.sheet.scaled": {
+        text: "This character has too many expressions for a full-size image, so the sheet was saved smaller.",
+        description: "Note after a download whose sheet was scaled down to stay inside the browser's image size limit.",
     },
     "sprites.sheet.downloading": {
         text: "Composing…",

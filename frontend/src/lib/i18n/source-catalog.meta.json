@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-05T01:04:32.337Z",
+    "generatedAt": "2026-10-05T02:41:26.597Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -23071,6 +23071,57 @@
             "placeholders": []
         },
         {
+            "key": "story.sprites.name.count",
+            "namespace": "story",
+            "source_text": "{count, plural, one {# line} other {# lines}}",
+            "description": "In a name's popover: how many lines the scripts speak under this name while the character is lit.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.sprites.name.examples",
+            "namespace": "story",
+            "source_text": "Lines",
+            "description": "Heading of up to three example lines spoken under this name, each linking into the reader at that line.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.name.more",
+            "namespace": "story",
+            "source_text": "+{count} more",
+            "description": "Under the five stories listed in a name's popover: how many more stories use the name.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.sprites.name.open",
+            "namespace": "story",
+            "source_text": "Where {name} is spoken",
+            "description": "Accessible name of a name chip on a character's sheet, which opens the stories and example lines for that name.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "story.sprites.name.share",
+            "namespace": "story",
+            "source_text": "{share} of {owner}'s lines",
+            "description": "In a name's popover: this name's share of the character's named lines; share is a formatted percentage, owner the character's primary name.",
+            "placeholders": [
+                "owner",
+                "share"
+            ]
+        },
+        {
+            "key": "story.sprites.name.stories",
+            "namespace": "story",
+            "source_text": "Stories",
+            "description": "Heading of the stories that use this name, in a name's popover.",
+            "placeholders": []
+        },
+        {
             "key": "story.sprites.results",
             "namespace": "story",
             "source_text": "{count, plural, one {# character} other {# characters}}",
@@ -23113,7 +23164,7 @@
             "key": "story.sprites.sheet.download",
             "namespace": "story",
             "source_text": "Download sheet",
-            "description": "Button that saves every expression of the character as one PNG.",
+            "description": "Button that saves every expression of the character, at full resolution, as one PNG.",
             "placeholders": []
         },
         {
@@ -23183,8 +23234,8 @@
         {
             "key": "story.sprites.sheet.names",
             "namespace": "story",
-            "source_text": "Called",
-            "description": "Heading of the list of display names the scripts give a character, with line counts.",
+            "source_text": "Named in scripts",
+            "description": "Heading of the list of display names the scripts give a character, primary name first, with line counts.",
             "placeholders": []
         },
         {
@@ -23215,6 +23266,13 @@
             "namespace": "story",
             "source_text": "Operator page",
             "description": "Link from a character's sheet to the operator's own page.",
+            "placeholders": []
+        },
+        {
+            "key": "story.sprites.sheet.scaled",
+            "namespace": "story",
+            "source_text": "This character has too many expressions for a full-size image, so the sheet was saved smaller.",
+            "description": "Note after a download whose sheet was scaled down to stay inside the browser's image size limit.",
             "placeholders": []
         },
         {
@@ -23295,6 +23353,25 @@
             "source_text": "Name",
             "description": "Sort option: alphabetical by the character's display name.",
             "placeholders": []
+        },
+        {
+            "key": "story.sprites.stray.more",
+            "namespace": "story",
+            "source_text": "+{count} more",
+            "description": "At the end of the first 30 stray names: shows the rest.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "story.sprites.stray.toggle",
+            "namespace": "story",
+            "source_text": "{lines, plural, one {# stray line} other {# stray lines}} under {names, plural, one {# other name} other {# other names}}",
+            "description": "Disclosure under a character's names: lines spoken under names too rare to be aliases, mostly someone else talking while this character stays highlighted. Opens the list of those names.",
+            "placeholders": [
+                "lines",
+                "names"
+            ]
         },
         {
             "key": "story.sprites.subtitle",

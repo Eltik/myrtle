@@ -25,9 +25,16 @@ export type StorySpriteEntry = {
     variant?: string;
     /**
      * The names the scripts speak this sprite under, most lines first. Empty
-     * when no named line was ever attributed to it.
+     * when no named line was ever attributed to it. Only ALIASES are listed:
+     * a name needs 3 weighted lines and 2% of the folder's named lines, the
+     * primary excepted; what the cut drops is `noise`.
      */
     names: Array<StorySpriteName>;
+    /**
+     * Weighted named lines whose names fell under the alias threshold:
+     * mostly someone else speaking while this sprite stays lit.
+     */
+    noise: number;
     /**
      * Weighted named lines attributed to this sprite over the library.
      */

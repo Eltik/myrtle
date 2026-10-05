@@ -1,7 +1,9 @@
 /**
- * "Download sheet": every expression of one folder composed onto ONE canvas,
- * body plate plus face patch exactly as `Body` stacks them, in the same head
- * crop the sheet's grid shows, each captioned with its `#N$M` key.
+ * "Download sheet": every expression of one folder on ONE canvas at the
+ * plate's own resolution (the 1024 px bodies, 1280 for the large ones), each
+ * the body plate with its face patch composited by the same math as `Body`
+ * (`facePos / bodySize` of the drawn plate), captioned with its `#N$M` key,
+ * under the character's name and folder, in the page's own colours.
  *
  * The images are fetched again with `crossOrigin="anonymous"`, because the
  * assets are served from the backend's origin and a canvas that draws a
@@ -11,38 +13,42 @@
 import { asset } from "#/components/operators/detail/impl/assets";
 import { downloadBlob, loadImage } from "#/lib/utils";
 import type { StorySpriteVariant } from "#/types/generated/StorySpriteVariant";
-import { CELL_CROP, cropForVariant, sheetLayout } from "./gallery";
+import { type ISheetLayout, sheetLayout } from "./gallery";
 
-const CELL = 220;
-const LABEL = 26;
-const HEAD = 64;
-const GAP = 12;
-const MAX_COLS = 6;
+export interface ISheetColours {
+    background: string;
+    cell: string;
+    ink: string;
+    muted: string;
+}
 
-/** Draw one expression into a `cell` px square whose top-left is (x, y). */
-function drawCell(ctx: CanvasRenderingContext2D, variant: StorySpriteVariant, body: HTMLImageElement, face: HTMLImageElement | null, x: number, y: number, cell: number): void {
-    const crop = cropForVariant(variant, CELL_CROP);
-    const plate = (crop.size / 100) * cell;
-    const px = x + (crop.left / 100) * cell;
-    const py = y + (crop.top / 100) * cell;
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(x, y, cell, cell);
-    ctx.clip();
-    ctx.drawImage(body, px, py, plate, plate);
+export interface ISheetResult {
+    width: number;
+    height: number;
+    bytes: number;
+    ms: number;
+    note: ISheetLayout["note"];
+}
+
+/** Draw one expression as its whole plate into a `cell` px square at (x, y). */
+function drawPlate(ctx: CanvasRenderingContext2D, variant: StorySpriteVariant, body: HTMLImageElement, face: HTMLImageElement | null, x: number, y: number, cell: number): void {
+    ctx.drawImage(body, x, y, cell, cell);
     const pos = variant.facePos;
     const bw = variant.bodySize?.w ?? body.naturalWidth;
     const bh = variant.bodySize?.h ?? body.naturalHeight;
     if (face && pos && bw > 0 && bh > 0) {
-        ctx.drawImage(face, px + (pos.x / bw) * plate, py + (pos.y / bh) * plate, (pos.w / bw) * plate, (pos.h / bh) * plate);
+        ctx.drawImage(face, x + (pos.x / bw) * cell, y + (pos.y / bh) * cell, (pos.w / bw) * cell, (pos.h / bh) * cell);
     }
-    ctx.restore();
 }
 
-/** Compose and save the sheet. Resolves when the download has been handed to the browser; rejects if any body fails to load. */
-export async function downloadSheet(opts: { base: string; title: string; variants: readonly StorySpriteVariant[]; background: string; ink: string; muted: string }): Promise<void> {
-    const { base, title, variants, background, ink, muted } = opts;
-    const layout = sheetLayout(variants.length, { cell: CELL, label: LABEL, head: HEAD, gap: GAP, maxCols: MAX_COLS });
+/**
+ * Compose and save the sheet at `scale` (1 full, 0.5 half). Resolves with the
+ * canvas size, the PNG's bytes and the wall time once the download has been
+ * handed to the browser; rejects if any body fails to load.
+ */
+export async function downloadSheet(opts: { base: string; title: string; variants: readonly StorySpriteVariant[]; scale: number; colours: ISheetColours }): Promise<ISheetResult> {
+    const started = performance.now();
+    const { base, title, variants, scale, colours } = opts;
     const images = await Promise.all(
         variants.map(async (v) => {
             const body = await loadImage(asset(v.bodyUrl), { crossOrigin: true });
@@ -50,33 +56,40 @@ export async function downloadSheet(opts: { base: string; title: string; variant
             return { body, face };
         }),
     );
+    const plate = Math.max(1, ...images.map((i) => Math.max(i.body.naturalWidth, i.body.naturalHeight)));
+    const layout = sheetLayout(variants.length, plate, scale);
     const canvas = document.createElement("canvas");
     canvas.width = layout.width;
     canvas.height = layout.height;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("no 2d context");
-    ctx.fillStyle = background;
+    ctx.imageSmoothingQuality = "high";
+    ctx.fillStyle = colours.background;
     ctx.fillRect(0, 0, layout.width, layout.height);
-    ctx.fillStyle = ink;
-    ctx.font = "600 26px system-ui, sans-serif";
-    ctx.textBaseline = "middle";
-    ctx.fillText(title, GAP, HEAD / 2 - 6);
-    ctx.fillStyle = muted;
-    ctx.font = "13px ui-monospace, monospace";
-    ctx.fillText(base, GAP, HEAD / 2 + 18);
+    const s = layout.scale;
+    ctx.textBaseline = "alphabetic";
+    ctx.fillStyle = colours.ink;
+    ctx.font = `600 ${Math.round(76 * s)}px system-ui, sans-serif`;
+    ctx.fillText(title, layout.gap, layout.head * 0.55);
+    ctx.fillStyle = colours.muted;
+    ctx.font = `${Math.round(34 * s)}px ui-monospace, monospace`;
+    ctx.fillText(base, layout.gap, layout.head * 0.88);
     variants.forEach((v, i) => {
         const img = images[i];
         if (!img) return;
         const col = i % layout.cols;
         const row = Math.floor(i / layout.cols);
-        const x = GAP + col * (CELL + GAP);
-        const y = HEAD + GAP + row * (CELL + LABEL + GAP);
-        drawCell(ctx, v, img.body, img.face, x, y, CELL);
-        ctx.fillStyle = muted;
-        ctx.font = "13px ui-monospace, monospace";
-        ctx.fillText(v.key, x + 2, y + CELL + LABEL / 2);
+        const x = layout.gap + col * (layout.cell + layout.gap);
+        const y = layout.head + layout.gap + row * (layout.cell + layout.label + layout.gap);
+        ctx.fillStyle = colours.cell;
+        ctx.fillRect(x, y, layout.cell, layout.cell);
+        drawPlate(ctx, v, img.body, img.face, x, y, layout.cell);
+        ctx.fillStyle = colours.muted;
+        ctx.font = `${Math.round(44 * s)}px ui-monospace, monospace`;
+        ctx.fillText(v.key, x + Math.round(4 * s), y + layout.cell + layout.label * 0.72);
     });
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
     if (!blob) throw new Error("canvas.toBlob returned null");
-    downloadBlob(blob, `${base}-expressions.png`);
+    downloadBlob(blob, `${base}-expressions${scale < 1 ? "-half" : ""}.png`);
+    return { width: layout.width, height: layout.height, bytes: blob.size, ms: Math.round(performance.now() - started), note: layout.note };
 }

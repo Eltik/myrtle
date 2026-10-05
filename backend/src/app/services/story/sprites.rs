@@ -27,8 +27,9 @@ use std::time::Instant;
 
 use super::cache::{ServerCache, cached_index};
 use super::dto::{
-    StorySpriteDetail, StorySpriteEntry, StorySpriteIndex, StorySpriteKind, StorySpriteName,
-    StorySpriteStory, StorySpriteVariant,
+    StorySpriteDetail, StorySpriteEntry, StorySpriteExample, StorySpriteIndex, StorySpriteKind,
+    StorySpriteName, StorySpriteNameDetail, StorySpriteNameStory, StorySpriteStory,
+    StorySpriteVariant,
 };
 use super::index::StoryIndexCache;
 use crate::app::{cpu, error::ApiError, state::AppState};
@@ -53,7 +54,7 @@ pub struct StorySpriteCache {
 }
 
 /// What the script walk saw, in its own units.
-#[derive(Debug, Clone, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub struct SpriteCensus {
     pub scripts: u32,
     /// Lines with a non-empty `[name=...]`.
@@ -67,6 +68,39 @@ pub struct SpriteCensus {
     /// Folders left out of the gallery: no expression resolves, or every
     /// one it offers is a blank plate.
     pub hidden: Vec<String>,
+    /// Names cut by the alias threshold ([`keep_aliases`]), over every folder.
+    pub dropped_names: u32,
+    /// Their weighted lines, summed.
+    pub dropped_lines: f64,
+}
+
+/// A name is an ALIAS of a folder only with at least this many weighted lines…
+pub const ALIAS_MIN_LINES: f64 = 3.0;
+/// …and at least this share of the folder's named lines.
+pub const ALIAS_MIN_SHARE: f64 = 0.02;
+
+/// Cut the lit-slot rule's misattributions out of a folder's names (sorted,
+/// most lines first): someone else speaking while this sprite stays lit
+/// leaves a trickle of foreign names (Kal'tsit's 3,102 lines carried "Wei
+/// Yenwu" 3, "Taciturn Passerby" 2, "Mon3tr" 0.5). A name stays when it has
+/// [`ALIAS_MIN_LINES`] AND [`ALIAS_MIN_SHARE`] of `total`; the PRIMARY always
+/// stays, so a folder with two lines keeps its name. Returns the kept names
+/// and the cut ones (the STRAY names), both still most lines first.
+#[must_use]
+pub fn keep_aliases(
+    names: Vec<StorySpriteName>,
+    total: f64,
+) -> (Vec<StorySpriteName>, Vec<StorySpriteName>) {
+    let mut kept = Vec::with_capacity(names.len());
+    let mut stray = Vec::new();
+    for (i, name) in names.into_iter().enumerate() {
+        if i == 0 || (name.count >= ALIAS_MIN_LINES && name.count >= ALIAS_MIN_SHARE * total) {
+            kept.push(name);
+        } else {
+            stray.push(name);
+        }
+    }
+    (kept, stray)
 }
 
 /// A plate with no art: a PNG whose every pixel is fully transparent.
@@ -87,12 +121,75 @@ fn is_blank_plate(path: &Path) -> bool {
 #[derive(Debug, Default)]
 struct Tally {
     names: HashMap<String, f64>,
+    /// Per name: where it is spoken and the example candidates.
+    name_detail: HashMap<String, NameTally>,
     lines: f64,
     /// Story order -> (story id, lines, uses).
     stories: BTreeMap<u32, (String, f64, u32)>,
     /// Raw sprite name as written -> times put up.
     uses: HashMap<String, u32>,
     first_seen: Option<i64>,
+}
+
+/// One (folder, name) pair's whereabouts while the walk runs.
+#[derive(Debug, Default)]
+struct NameTally {
+    /// Story order -> (story id, weighted lines).
+    stories: BTreeMap<u32, (String, f64)>,
+    /// Example candidates: up to [`EXAMPLES`] lines from each of the first
+    /// [`EXAMPLES`] stories, as (story order, story id, script line, text).
+    candidates: Vec<(u32, String, u32, String)>,
+}
+
+/// Example lines per name on the sheet, and stories listed per name.
+const EXAMPLES: usize = 3;
+const NAME_STORIES: usize = 5;
+
+impl NameTally {
+    fn add(&mut self, order: u32, story_id: &str, line: u32, text: &str, w: f64) {
+        let stories_seen = self.stories.len();
+        let entry = self
+            .stories
+            .entry(order)
+            .or_insert_with(|| (story_id.to_owned(), 0.0));
+        entry.1 += w;
+        let in_story = self.candidates.iter().filter(|c| c.0 == order).count();
+        let new_story = in_story == 0;
+        if in_story < EXAMPLES && (!new_story || stories_seen < EXAMPLES) && !text.trim().is_empty()
+        {
+            self.candidates
+                .push((order, story_id.to_owned(), line, text.to_owned()));
+        }
+    }
+
+    /// The examples, SPREAD across stories: the first line of each of the
+    /// first stories, then second lines, until [`EXAMPLES`] are taken.
+    fn examples(&self) -> Vec<(String, u32, String)> {
+        let mut orders: Vec<u32> = self.candidates.iter().map(|c| c.0).collect();
+        orders.dedup();
+        let mut out = Vec::new();
+        for round in 0..EXAMPLES {
+            for o in &orders {
+                if out.len() == EXAMPLES {
+                    return out;
+                }
+                if let Some(c) = self.candidates.iter().filter(|c| c.0 == *o).nth(round) {
+                    out.push((c.1.clone(), c.2, c.3.clone()));
+                }
+            }
+        }
+        out
+    }
+}
+
+/// What the sheet says about one story beside a name or an example.
+#[derive(Debug, Clone, Default)]
+struct StoryMeta {
+    name: String,
+    code: Option<String>,
+    tag: Option<String>,
+    group_id: String,
+    group_name: String,
 }
 
 /// The folder's tally, with this story registered on it.
@@ -259,7 +356,7 @@ pub fn build_sprite_index(
     let mut census = SpriteCensus::default();
     let mut tallies: HashMap<String, Tally> = HashMap::new();
     // Story id -> (name, group id, group name), for the sheet's story list.
-    let mut story_meta: HashMap<String, (String, Option<String>, String, String)> = HashMap::new();
+    let mut story_meta: HashMap<String, StoryMeta> = HashMap::new();
     let mut seen_txt: HashSet<&str> = HashSet::new();
     let mut order: u32 = 0;
     // A raw name -> its folder, memoised: the corpus writes the same few
@@ -285,12 +382,13 @@ pub fn build_sprite_index(
             order += 1;
             story_meta.insert(
                 story.id.clone(),
-                (
-                    story.name.clone(),
-                    story.avg_tag.clone(),
-                    group.id.clone(),
-                    group.name.clone(),
-                ),
+                StoryMeta {
+                    name: story.name.clone(),
+                    code: story.code.clone(),
+                    tag: story.avg_tag.clone(),
+                    group_id: group.id.clone(),
+                    group_name: group.name.clone(),
+                },
             );
             let commands = parser::parse(&text);
             // Every distinct name is resolved once up front, so the walk's
@@ -335,6 +433,10 @@ pub fn build_sprite_index(
                 for (folder, w) in &line.sprites {
                     let t = touch(&mut tallies, folder, dated, order, &story.id);
                     *t.names.entry(line.speaker.clone()).or_default() += w;
+                    t.name_detail
+                        .entry(line.speaker.clone())
+                        .or_default()
+                        .add(order, &story.id, line.line, &line.text, *w);
                     t.lines += w;
                     if let Some(s) = t.stories.get_mut(&order) {
                         s.1 += w;
@@ -383,6 +485,10 @@ pub fn build_sprite_index(
                 .total_cmp(&a.count)
                 .then_with(|| a.name.cmp(&b.name))
         });
+        let (names, stray) = keep_aliases(names, tally.lines);
+        let noise: f64 = stray.iter().map(|n| n.count).sum();
+        census.dropped_names += u32::try_from(stray.len()).unwrap_or(u32::MAX);
+        census.dropped_lines += noise;
         let op = operators.operator_for(folder);
         let first = tally
             .stories
@@ -400,6 +506,7 @@ pub fn build_sprite_index(
             operator_name: op.as_ref().map(|(_, name, _)| name.clone()),
             variant: op.and_then(|(_, _, v)| v),
             names,
+            noise: round2(noise),
             lines: round2(tally.lines),
             story_count: u32::try_from(tally.stories.len()).unwrap_or(u32::MAX),
             first_seen: tally.first_seen,
@@ -412,14 +519,13 @@ pub fn build_sprite_index(
             .stories
             .into_values()
             .map(|(id, lines, uses)| {
-                let (name, tag, group_id, group_name) =
-                    story_meta.get(&id).cloned().unwrap_or_default();
+                let m = story_meta.get(&id).cloned().unwrap_or_default();
                 StorySpriteStory {
                     id,
-                    name,
-                    tag,
-                    group_id,
-                    group_name,
+                    name: m.name,
+                    tag: m.tag,
+                    group_id: m.group_id,
+                    group_name: m.group_name,
                     lines: round2(lines),
                     uses,
                 }
@@ -428,6 +534,8 @@ pub fn build_sprite_index(
         details.insert(
             folder.to_ascii_lowercase(),
             StorySpriteDetail {
+                names: name_details(&entry.names, &tally.name_detail, &story_meta),
+                stray_names: name_details(&stray, &tally.name_detail, &story_meta),
                 sprite: entry.clone(),
                 variants,
                 stories,
@@ -436,6 +544,67 @@ pub fn build_sprite_index(
         sprites.push(entry);
     }
     (StorySpriteIndex { sprites }, details, census)
+}
+
+/// The sheet's per-name detail, for the names the alias threshold KEPT, in
+/// the same order: the stories that speak this sprite under the name (most
+/// lines first, [`NAME_STORIES`] of them) and up to [`EXAMPLES`] lines.
+fn name_details(
+    kept: &[StorySpriteName],
+    detail: &HashMap<String, NameTally>,
+    meta: &HashMap<String, StoryMeta>,
+) -> Vec<StorySpriteNameDetail> {
+    kept.iter()
+        .map(|n| {
+            let Some(d) = detail.get(&n.name) else {
+                return StorySpriteNameDetail {
+                    name: n.name.clone(),
+                    count: n.count,
+                    stories: Vec::new(),
+                    more_stories: 0,
+                    examples: Vec::new(),
+                };
+            };
+            let mut stories: Vec<(u32, &(String, f64))> =
+                d.stories.iter().map(|(o, s)| (*o, s)).collect();
+            stories.sort_by(|a, b| b.1.1.total_cmp(&a.1.1).then(a.0.cmp(&b.0)));
+            let more = stories.len().saturating_sub(NAME_STORIES);
+            StorySpriteNameDetail {
+                name: n.name.clone(),
+                count: n.count,
+                stories: stories
+                    .into_iter()
+                    .take(NAME_STORIES)
+                    .map(|(_, (id, lines))| {
+                        let m = meta.get(id).cloned().unwrap_or_default();
+                        StorySpriteNameStory {
+                            id: id.clone(),
+                            name: m.name,
+                            code: m.code,
+                            tag: m.tag,
+                            lines: round2(*lines),
+                        }
+                    })
+                    .collect(),
+                more_stories: u32::try_from(more).unwrap_or(u32::MAX),
+                examples: d
+                    .examples()
+                    .into_iter()
+                    .map(|(story_id, line, text)| {
+                        let m = meta.get(&story_id).cloned().unwrap_or_default();
+                        StorySpriteExample {
+                            story_id,
+                            story_name: m.name,
+                            code: m.code,
+                            tag: m.tag,
+                            line,
+                            text,
+                        }
+                    })
+                    .collect(),
+            }
+        })
+        .collect()
 }
 
 static SPRITES: ServerCache<StorySpriteCache> = ServerCache::new();
@@ -530,6 +699,36 @@ mod tests {
         assert_eq!(key_of("avg_npc_043_1#2"), "#2$1");
         assert_eq!(key_of("avg_225_haak_1#03$2"), "#3$2");
         assert_eq!(key_of("avg_1_a_1@smile"), "@smile");
+    }
+
+    #[test]
+    fn an_alias_needs_three_lines_and_two_percent() {
+        let n = |name: &str, count: f64| StorySpriteName {
+            name: name.to_owned(),
+            count,
+        };
+        let names = |v: &[StorySpriteName]| v.iter().map(|x| x.name.clone()).collect::<Vec<_>>();
+        // Kal'tsit: every foreign name is under 2% of 3,102.
+        let (kept, stray) = keep_aliases(
+            vec![n("Kal'tsit", 3102.0), n("Wei Yenwu", 3.0), n("Mon3tr", 0.5)],
+            3108.0,
+        );
+        assert_eq!(names(&kept), ["Kal'tsit"]);
+        assert_eq!(names(&stray), ["Wei Yenwu", "Mon3tr"]);
+        // Jie: 14 of 269 is 5.2% and stays; 3 of 269 is 1.1% and goes.
+        let (kept, _) = keep_aliases(
+            vec![
+                n("Jie", 252.0),
+                n("Minister of Works", 14.0),
+                n("Chun", 3.0),
+            ],
+            269.0,
+        );
+        assert_eq!(names(&kept), ["Jie", "Minister of Works"]);
+        // A tiny folder keeps its primary below 3 lines; 2.0 >= 2% but < 3 is cut.
+        let (kept, stray) = keep_aliases(vec![n("Guard", 2.0), n("Soldier", 2.0)], 4.0);
+        assert_eq!(names(&kept), ["Guard"]);
+        assert_eq!(names(&stray), ["Soldier"]);
     }
 
     #[test]

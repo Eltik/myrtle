@@ -154,8 +154,23 @@ fn the_gallery_names_every_folder_by_the_lit_slot_rule() {
         let out = PathBuf::from(out);
         std::fs::create_dir_all(&out).unwrap();
         std::fs::write(out.join("sprites.json"), &list).unwrap();
-        for base in ["avg_npc_043_1", "avg_npc_2125_1", "char_002_amiya_1"] {
-            let d = &details[base];
+        let mut bases: Vec<String> = ["avg_npc_043_1", "avg_npc_2125_1", "char_002_amiya_1"]
+            .iter()
+            .map(|b| (*b).to_owned())
+            .collect();
+        // `SPRITES_DUMP_BASES=a,b` adds sheets to the dump.
+        if let Ok(extra) = std::env::var("SPRITES_DUMP_BASES") {
+            bases.extend(
+                extra
+                    .split(',')
+                    .map(|b| b.trim().to_lowercase())
+                    .filter(|b| !b.is_empty()),
+            );
+        }
+        for base in &bases {
+            let Some(d) = details.get(base.as_str()) else {
+                continue;
+            };
             std::fs::write(
                 out.join(format!("{base}.json")),
                 serde_json::to_vec(d).unwrap(),
@@ -191,6 +206,85 @@ fn the_gallery_names_every_folder_by_the_lit_slot_rule() {
     assert_eq!(amiya.operator_name.as_deref(), Some("Amiya"));
     assert_eq!(amiya.variant.as_deref(), Some("1"));
     assert_eq!(top(amiya), Some("Amiya"), "{}", row(amiya));
+
+    // The alias threshold (3 lines AND 2% of the folder's named lines).
+    let names = |e: &StorySpriteEntry| e.names.iter().map(|n| n.name.clone()).collect::<Vec<_>>();
+    assert_eq!(names(nine), ["Nine"], "{}", row(nine));
+    let jie_row = by["avg_npc_2125_1"];
+    assert!(
+        names(jie_row).contains(&"Minister of Works".to_owned()),
+        "{}",
+        row(jie_row)
+    );
+    assert!(
+        !names(jie_row).contains(&"Chun".to_owned()),
+        "{}",
+        row(jie_row)
+    );
+    // The sheet's per-name detail: the kept names, in order, with examples.
+    let jie_sheet = &details["avg_npc_2125_1"];
+    let jie_names: Vec<&str> = jie_sheet.names.iter().map(|n| n.name.as_str()).collect();
+    assert_eq!(jie_names, names(jie_row));
+    for n in &jie_sheet.names {
+        println!(
+            "Jie as {:?}: {} lines over {} stories (+{} more)",
+            n.name,
+            n.count,
+            n.stories.len(),
+            n.more_stories
+        );
+        for e in &n.examples {
+            println!(
+                "  {} line {} [{}]: {}",
+                e.story_id, e.line, e.story_name, e.text
+            );
+        }
+    }
+    // The stray names ride the sheet, most lines first, with the same detail.
+    let amiya_sheet = &details["char_002_amiya_1"];
+    assert!(amiya_sheet.names.len() == amiya.names.len());
+    assert!(!amiya_sheet.stray_names.is_empty());
+    let stray_total: f64 = amiya_sheet.stray_names.iter().map(|n| n.count).sum();
+    assert!(
+        (stray_total - amiya.noise).abs() < 0.05,
+        "{stray_total} vs {}",
+        amiya.noise
+    );
+    for e in sprites.iter().filter(|e| top(e) == Some("Morgan")) {
+        let sheet = &details[&e.base.to_lowercase()];
+        println!(
+            "Morgan {}: {} stray names {:?}",
+            e.base,
+            sheet.stray_names.len(),
+            sheet
+                .stray_names
+                .iter()
+                .map(|n| (n.name.as_str(), n.count))
+                .collect::<Vec<_>>()
+        );
+    }
+    let mut most: Vec<(&str, usize)> = details
+        .values()
+        .map(|d| (d.sprite.base.as_str(), d.stray_names.len()))
+        .collect();
+    most.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(b.0)));
+    println!("most stray names: {:?}", &most[..5]);
+    println!(
+        "Amiya char_002_amiya_1: {} stray names, {} lines",
+        amiya_sheet.stray_names.len(),
+        stray_total
+    );
+    let minister = &jie_sheet.names[1];
+    assert!(!minister.examples.is_empty() && minister.examples.len() <= 3);
+    assert!(minister.stories.len() <= 5);
+    let kalts = by["char_003_kalts_1"];
+    assert_eq!(
+        names(kalts),
+        ["Kal'tsit"],
+        "{} noise {}",
+        row(kalts),
+        kalts.noise
+    );
 
     let gladiia = by["avg_474_gladiia_1"];
     assert_eq!(gladiia.char_id.as_deref(), Some("char_474_glady"));

@@ -59,12 +59,16 @@ export const Route = createFileRoute("/stories_/$storyId")({
     // resume prompt. It is read as MISSING rather than falsy: `Number(null)` is
     // 0 and finite, which would pin every visit to halt 0.
     // `?view=book` shows the story as one printable document (`BookView`) instead of the stage.
-    validateSearch: (search: Record<string, unknown>): { halt?: number; view?: "book" } => {
-        const out: { halt?: number; view?: "book" } = {};
+    // `?line=N` opens at the first halt at or past script line N (a link from
+    // the character gallery, which knows lines and not halts); `?halt=` wins.
+    validateSearch: (search: Record<string, unknown>): { halt?: number; line?: number; view?: "book" } => {
+        const out: { halt?: number; line?: number; view?: "book" } = {};
         if (search.view === "book") out.view = "book";
         const asNumber = (v: unknown): number => (typeof v === "number" ? v : typeof v === "string" && v.trim() !== "" ? Number(v) : Number.NaN);
         const halt = asNumber(search.halt);
         if (Number.isFinite(halt) && halt >= 0) out.halt = Math.floor(halt);
+        const line = asNumber(search.line);
+        if (Number.isFinite(line) && line >= 1) out.line = Math.floor(line);
         return out;
     },
     loader: async ({ context, params }) => {
@@ -108,7 +112,7 @@ function RootErrorComponent({ error }: { error: unknown }) {
 
 function RouteComponent() {
     const { storyId } = Route.useParams();
-    const { halt, view } = Route.useSearch();
+    const { halt, line, view } = Route.useSearch();
     const server = useGamedataServer();
     // Opening a story is a sync trigger, and the reader shows nothing for it:
     // the pull, the merge and the debounced push all run beside the reading.
@@ -125,5 +129,5 @@ function RouteComponent() {
     }
     const exportGroup = exportGroupOf(index, storyId);
     if (view === "book" && exportGroup) return <BookView script={script} group={exportGroup} server={server} />;
-    return <StoryReader key={storyId} script={script} entry={placement.entry} groupName={placement.groupName} exportGroup={exportGroup} category={placement.category} previous={placement.previous} next={placement.next} initialHalt={halt} />;
+    return <StoryReader key={storyId} script={script} entry={placement.entry} groupName={placement.groupName} exportGroup={exportGroup} category={placement.category} previous={placement.previous} next={placement.next} initialHalt={halt} initialLine={line} />;
 }

@@ -81,6 +81,11 @@ export interface StepResult {
     effects: Effect[];
     /** Ordinal of this halt, 0-based. */
     haltIndex: number;
+    /**
+     * The script line (`StoryCommand.line`, 1-based in the file) of the command
+     * that halted: the line a `?line=N` link names. Absent on the end.
+     */
+    line?: number;
 }
 
 export interface EngineOptions {
@@ -322,7 +327,8 @@ function build(script: StoryScript, options: EngineOptions, total: number): Engi
             // `{@nickname}`, `{@nbs}` and literal `\n` are resolved here so the
             // backlog, the auto-play timer and the text box all read one string.
             const resolved: Halt = halt.kind === "line" ? { ...halt, text: substitute(halt.text, nickname) } : halt;
-            return { halt: resolved, timeline, effects, haltIndex };
+            const line = halt.kind === "end" ? undefined : commands[pc - 1]?.line;
+            return line === undefined ? { halt: resolved, timeline, effects, haltIndex } : { halt: resolved, timeline, effects, haltIndex, line };
         };
 
         if (atEnd) return finish({ kind: "end" });

@@ -20,6 +20,24 @@ export interface HaltSummary {
     speaker?: string;
     /** The first words of the line, already plain and already substituted. */
     preview: string;
+    /** The script line of the command that halted, see `StepResult.line`. */
+    line?: number;
+}
+
+/**
+ * `?line=N` as a halt: the FIRST halt whose script line is at or past `N`.
+ *
+ * The summaries are one probe walk that takes every decision's first option,
+ * the same default a replay takes, so a line inside an unchosen branch lands
+ * on the first halt after it, a line that IS a decision lands on that
+ * decision, and a line past the last halt clamps to the last halt. The
+ * backend cannot name a halt itself (counting halts needs the engine), which
+ * is why the link carries a line and this resolves it.
+ */
+export function haltForLine(summaries: readonly HaltSummary[], line: number): number {
+    if (summaries.length === 0) return 0;
+    for (const s of summaries) if (s.line !== undefined && s.line >= line) return s.haltIndex;
+    return (summaries[summaries.length - 1] as HaltSummary).haltIndex;
 }
 
 /** The first `max` characters of a line, cut on a word boundary where one is near the end. */

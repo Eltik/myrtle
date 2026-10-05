@@ -6,7 +6,7 @@ import { cardView } from "./SpriteCard";
 import { stepCell } from "./SpriteSheet";
 
 function entry(base: string, over: Partial<StorySpriteEntry> = {}): StorySpriteEntry {
-    return { base, kind: "npc", names: [], lines: 0, storyCount: 0, variantCount: 1, ...over };
+    return { base, kind: "npc", names: [], noise: 0, lines: 0, storyCount: 0, variantCount: 1, ...over };
 }
 
 function variant(key: string, over: Partial<StorySpriteVariant> = {}): StorySpriteVariant {
@@ -145,9 +145,24 @@ describe("the sheet", () => {
         expect(stepCell(rects, 3, "End")).toBe(6);
     });
 
-    it("lays the download out in rows of at most six", () => {
-        expect(sheetLayout(13, { cell: 220, label: 26, head: 64, gap: 12, maxCols: 6 })).toEqual({ cols: 6, rows: 3, width: 1404, height: 850, cell: 220, label: 26, head: 64, gap: 12 });
-        expect(sheetLayout(2, { cell: 220, label: 26, head: 64, gap: 12, maxCols: 6 }).cols).toBe(2);
+    it("lays the download out ceil(sqrt(n)) across at the plate's size, at most six", () => {
+        const nine = sheetLayout(2, 1024, 1);
+        expect([nine.cols, nine.rows, nine.width, nine.height, nine.note]).toEqual([2, 1, 2144, 1334, null]);
+        const thirty = sheetLayout(30, 1024, 1);
+        expect([thirty.cols, thirty.rows, thirty.width, thirty.height]).toEqual([6, 5, 6368, 5862]);
+        expect(sheetLayout(30, 1024, 0.5).cell).toBe(512);
+    });
+
+    it("widens past the side limit before it shrinks, and says so", () => {
+        // 81 at 1024: 6 x 14 rows is 16,082 tall, inside; 100 is 17 rows (19,478) and takes 8 columns.
+        expect(sheetLayout(81, 1024, 1).note).toBeNull();
+        const many = sheetLayout(100, 1024, 1);
+        expect(many.note).toBe("moreColumns");
+        expect(many.height).toBeLessThanOrEqual(16_384);
+        expect(many.width).toBeLessThanOrEqual(16_384);
+        const huge = sheetLayout(400, 1280, 1);
+        expect(huge.note).toBe("halfSize");
+        expect(huge.width * huge.height).toBeLessThanOrEqual(268_435_456);
     });
 });
 

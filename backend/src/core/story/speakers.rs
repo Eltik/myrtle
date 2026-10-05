@@ -81,6 +81,8 @@ pub struct SpokenLine {
     pub sprites: Vec<(String, f64)>,
     /// 1-based line number in the script file.
     pub line: u32,
+    /// The line's text as written (rich-text tags and `{@nickname}` intact).
+    pub text: String,
     /// Which plates were up when the line was spoken: bit 0 a cut-in, bit 1
     /// an interlude window with a character in it. 0 is the stage alone.
     pub plate: u8,
@@ -392,6 +394,7 @@ pub fn attribute_speakers_with(
                     speaker: speaker.to_owned(),
                     sprites,
                     line: c.line,
+                    text: c.text.clone().unwrap_or_default(),
                     plate: stage.plate_shown(),
                 });
             }

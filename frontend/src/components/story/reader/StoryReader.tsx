@@ -59,12 +59,14 @@ export interface IStoryReaderProps {
     previous: StoryEntry | null;
     next: StoryEntry | null;
     initialHalt?: number;
+    /** `?line=N`: open at the first halt at or past script line N. */
+    initialLine?: number;
 }
 
 /** A stable empty slot map, so a frameless render does not hand the tint hook a new object every time. */
 const EMPTY_SLOTS = {};
 
-export function StoryReader({ script, entry, groupName, exportGroup = null, category, previous, next, initialHalt }: IStoryReaderProps): React.ReactElement {
+export function StoryReader({ script, entry, groupName, exportGroup = null, category, previous, next, initialHalt, initialLine }: IStoryReaderProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("story");
     const tc: TypedT<typeof sharedMessages> = useT("story");
     const [settings, setSettings] = useStorySettings();
@@ -96,7 +98,7 @@ export function StoryReader({ script, entry, groupName, exportGroup = null, cate
     // an explicit `false`, so a missing stored value is never off.
     const videosOn = settings.playVideos !== false;
     const cutsceneLabel = t("reader.cutscene.label");
-    const player = useStoryPlayer({ script, storyId: script.id, nickname, audio, initialHalt, animateRatio, videos: videosOn, cutsceneLabel, onShake });
+    const player = useStoryPlayer({ script, storyId: script.id, nickname, audio, initialHalt, initialLine, animateRatio, videos: videosOn, cutsceneLabel, onShake });
     const { phase, halt, frame, playing, haltIndex, totalHalts, backlog, revealKey, advance, choose, back, start, resume, restart, savedHalt, haltSummaries, jumpTo, skipToEnd } = player;
     // One place every skip event goes through, so the button, `S` and the
     // sheet's two answers cannot disagree about what a press means.

@@ -740,8 +740,13 @@ pub struct StorySpriteEntry {
     #[ts(optional)]
     pub variant: Option<String>,
     /// The names the scripts speak this sprite under, most lines first. Empty
-    /// when no named line was ever attributed to it.
+    /// when no named line was ever attributed to it. Only ALIASES are listed:
+    /// a name needs 3 weighted lines and 2% of the folder's named lines, the
+    /// primary excepted; what the cut drops is `noise`.
     pub names: Vec<StorySpriteName>,
+    /// Weighted named lines whose names fell under the alias threshold:
+    /// mostly someone else speaking while this sprite stays lit.
+    pub noise: f64,
     /// Weighted named lines attributed to this sprite over the library.
     pub lines: f64,
     /// Distinct library stories that put this sprite up.
@@ -806,6 +811,69 @@ pub struct StorySpriteStory {
 #[ts(export)]
 pub struct StorySpriteDetail {
     pub sprite: StorySpriteEntry,
+    /// The kept names of `sprite.names`, in the same order, each with where it
+    /// is spoken and example lines.
+    pub names: Vec<StorySpriteNameDetail>,
+    /// The names the alias threshold CUT (`sprite.noise` is their weight),
+    /// most lines first, with the same detail: mostly someone else speaking
+    /// while this sprite stays lit. Never searched and never a chip of their
+    /// own; the sheet lists them behind a disclosure.
+    pub stray_names: Vec<StorySpriteNameDetail>,
     pub variants: Vec<StorySpriteVariant>,
     pub stories: Vec<StorySpriteStory>,
+}
+
+/// One story that speaks a sprite under one name.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct StorySpriteNameStory {
+    pub id: String,
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub code: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub tag: Option<String>,
+    /// Weighted lines under this name in this story.
+    pub lines: f64,
+}
+
+/// One line spoken under a name while the sprite is lit. `line` is the
+/// script's own line (`StoryCommand.line`), which the reader resolves to a
+/// halt with `?line=`; `text` is as written, rich-text tags and
+/// `{@nickname}` intact.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct StorySpriteExample {
+    pub story_id: String,
+    pub story_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub code: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub tag: Option<String>,
+    pub line: u32,
+    pub text: String,
+}
+
+/// One kept name of a sprite folder, for the sheet's name popover: its
+/// weighted lines, the stories that use it (most lines first, at most 5, and
+/// how many more), and up to 3 example lines, spread over different stories
+/// where the name is spoken in more than one.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct StorySpriteNameDetail {
+    pub name: String,
+    pub count: f64,
+    pub stories: Vec<StorySpriteNameStory>,
+    pub more_stories: u32,
+    pub examples: Vec<StorySpriteExample>,
 }

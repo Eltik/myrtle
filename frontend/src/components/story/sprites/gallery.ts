@@ -222,9 +222,12 @@ export const CARD_CROP = { zoom: 1.7, aspect: 4 / 3, anchorY: 0.34 } as const;
 /** The sheet cell's window: square, tighter on the face, which is what an expression sheet compares. */
 export const CELL_CROP = { zoom: 3.6, aspect: 1, anchorY: 0.45 } as const;
 
-/** A weighted line count for display: whole numbers stay whole, a split keeps one decimal. */
+/**
+ * A weighted line count for display, as a whole number: the half lines of a
+ * two-lit split are SUMMED on the backend first and rounded only here.
+ */
 export function lineCount(n: number): number {
-    return Math.round(n * 10) / 10;
+    return Math.round(n);
 }
 
 /** Normalise a folder name for a URL comparison (`AVG_NPC_043_1` is `avg_npc_043_1`). */
@@ -232,26 +235,60 @@ export function sameBase(a: string, b: string): boolean {
     return compactForSearch(a) === compactForSearch(b);
 }
 
+/** The largest canvas side every current engine draws (Chrome, Firefox, Safari agree on 16,384 px for a 2D canvas). */
+export const CANVAS_MAX_SIDE = 16_384;
+/** The largest canvas area Chrome allocates, ~268 MP. */
+export const CANVAS_MAX_AREA = 268_435_456;
+
 export interface ISheetLayout {
     cols: number;
     rows: number;
     width: number;
     height: number;
+    /** The cell's side in px: the plate at `scale`. */
     cell: number;
     label: number;
     head: number;
     gap: number;
+    /** 1 at full size, 0.5 at half; lower only when the fallback below had to shrink it. */
+    scale: number;
+    /** Why the layout differs from the one asked for, or null. */
+    note: "moreColumns" | "halfSize" | null;
 }
 
 /**
- * The downloaded sheet's geometry: `count` square cells of `cell` px with a
- * caption strip of `label` px under each, `cols` across at most, under a
- * `head` px title band.
+ * The downloaded sheet's geometry at the PLATE's own size. `plate` is the
+ * largest body texture side in px, `scale` 1 (full) or 0.5 (half); every
+ * other measure scales with it so the caption reads at the same proportion.
+ * Columns are ceil(sqrt(count)), at most 6, so the sheet is near square.
+ *
+ * Past the canvas limits ({@link CANVAS_MAX_SIDE}, {@link CANVAS_MAX_AREA}) it
+ * first takes MORE columns (a taller sheet is the usual overflow), then
+ * halves the scale until it fits, and says which it did.
  */
-export function sheetLayout(count: number, opts: { cell: number; label: number; head: number; gap: number; maxCols: number }): ISheetLayout {
-    const cols = Math.max(1, Math.min(opts.maxCols, count));
-    const rows = Math.max(1, Math.ceil(count / cols));
-    const width = opts.gap + cols * (opts.cell + opts.gap);
-    const height = opts.head + opts.gap + rows * (opts.cell + opts.label + opts.gap);
-    return { cols, rows, width, height, cell: opts.cell, label: opts.label, head: opts.head, gap: opts.gap };
+export function sheetLayout(count: number, plate: number, scale: number): ISheetLayout {
+    const n = Math.max(1, count);
+    const fits = (l: ISheetLayout) => l.width <= CANVAS_MAX_SIDE && l.height <= CANVAS_MAX_SIDE && l.width * l.height <= CANVAS_MAX_AREA;
+    const at = (cols: number, sc: number): ISheetLayout => {
+        const cell = Math.round(plate * sc);
+        const label = Math.round(76 * sc);
+        const head = Math.round(170 * sc);
+        const gap = Math.round(32 * sc);
+        const rows = Math.ceil(n / cols);
+        return { cols, rows, width: gap + cols * (cell + gap), height: head + gap + rows * (cell + label + gap), cell, label, head, gap, scale: sc, note: null };
+    };
+    const asked = at(Math.min(6, Math.ceil(Math.sqrt(n))), scale);
+    if (fits(asked)) return asked;
+    for (let cols = asked.cols + 1; cols <= n; cols++) {
+        const wider = at(cols, scale);
+        if (wider.width > CANVAS_MAX_SIDE) break;
+        if (fits(wider)) return { ...wider, note: "moreColumns" };
+    }
+    let sc = scale;
+    while (sc > 0.05) {
+        sc /= 2;
+        const smaller = at(asked.cols, sc);
+        if (fits(smaller)) return { ...smaller, note: "halfSize" };
+    }
+    return { ...at(asked.cols, sc), note: "halfSize" };
 }

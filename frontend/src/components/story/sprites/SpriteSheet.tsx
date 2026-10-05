@@ -15,6 +15,7 @@ import type { StorySpriteVariant } from "#/types/generated/StorySpriteVariant";
 import type { messages } from "./CharactersTab.messages";
 import { useSpriteDetail } from "./data";
 import { CELL_CROP, groupVariants, initialVariant, lineCount, primaryName } from "./gallery";
+import { NameChip, StrayNames } from "./NameChip";
 import { SpriteFigure } from "./SpriteCard";
 import { downloadSheet } from "./sheetPng";
 import { spriteThumbUrl } from "./thumb";
@@ -72,6 +73,8 @@ export function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): Reac
     const cells = useRef<(HTMLButtonElement | null)[]>([]);
     const [busy, setBusy] = useState(false);
     const [failed, setFailed] = useState(false);
+    // Said only when the canvas limits forced a smaller scale; extra columns are silent.
+    const [scaled, setScaled] = useState(false);
 
     const onKeyDown = useCallback(
         (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -88,10 +91,14 @@ export function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): Reac
     const download = useCallback(async () => {
         setBusy(true);
         setFailed(false);
+        setScaled(false);
         try {
+            // The page's own colours, read off the live theme, so a dark
+            // page saves a dark sheet.
             const style = getComputedStyle(document.documentElement);
             const read = (v: string, fallback: string) => style.getPropertyValue(v).trim() || fallback;
-            await downloadSheet({ base: entry.base, title: name, variants: flat, background: read("--background", "#111"), ink: read("--foreground", "#eee"), muted: read("--muted-foreground", "#999") });
+            const result = await downloadSheet({ base: entry.base, title: name, variants: flat, scale: 1, colours: { background: read("--background", "#111"), cell: read("--secondary", "#222"), ink: read("--foreground", "#eee"), muted: read("--muted-foreground", "#999") } });
+            setScaled(result.note === "halfSize");
         } catch {
             setFailed(true);
         } finally {
@@ -130,25 +137,26 @@ export function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): Reac
                     ) : (
                         <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
                             {entry.names.map((n, i) => (
-                                <li key={n.name} className={cn("flex items-baseline gap-1.5 rounded-md border px-2 py-1 font-sans text-[12.5px]", i === 0 ? "border-primary/40 bg-primary/10 text-foreground" : "border-border text-foreground/90")}>
-                                    <span>{n.name}</span>
-                                    <span className="font-mono text-[10.5px] text-muted-foreground tabular-nums">{f.number(lineCount(n.count))}</span>
+                                <li key={n.name}>
+                                    <NameChip name={n.name} count={n.count} primary={i === 0} detail={(detail.names ?? []).find((d) => d.name === n.name)} total={entry.lines} owner={name} />
                                 </li>
                             ))}
                         </ul>
                     )}
+                    <StrayNames strays={detail.strayNames ?? []} noise={entry.noise ?? 0} total={entry.lines} owner={name} />
                 </section>
             </div>
 
             <div className="flex min-w-0 flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
                     <h3 className="m-0 font-sans font-semibold text-[13px] text-foreground">{t("sprites.sheet.expressions", { count: flat.length })}</h3>
-                    <Button variant="outline" size="sm" className="max-sm:min-h-11" onClick={download} disabled={busy || flat.length === 0}>
+                    <Button variant="outline" size="sm" className="max-sm:min-h-11" onClick={() => void download()} disabled={busy || flat.length === 0}>
                         <DownloadIcon className="size-3.5" aria-hidden="true" />
                         {busy ? t("sprites.sheet.downloading") : t("sprites.sheet.download")}
                     </Button>
                 </div>
                 {failed ? <p className="m-0 font-sans text-[12px] text-destructive">{t("sprites.sheet.downloadFailed")}</p> : null}
+                {scaled ? <p className="m-0 font-sans text-[11.5px] text-muted-foreground">{t("sprites.sheet.scaled")}</p> : null}
                 {/* One roving tab stop: Tab enters the grid on the selected cell and the arrows move inside it. */}
                 <div role="listbox" aria-label={t("sprites.sheet.gridAria")} onKeyDown={onKeyDown} className="flex flex-col gap-3">
                     {groups.map((g) => (

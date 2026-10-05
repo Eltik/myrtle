@@ -1283,12 +1283,36 @@ impl StoryAssetIndex {
                 let n = face.parse::<usize>().ok()?.checked_sub(1)?;
                 folder.files.get(g.sprites.get(n)?.name.as_str())
             });
-        let file = hub_pick.or_else(|| {
-            by_face
-                .iter()
-                .chain(defaults.iter())
-                .find_map(|c| folder.files.get(c))
-        })?;
+        // 2b. THE HUB'S LISTED SPRITE IS THE LAST RESORT. `char_2006_weiywfmzuki_1`
+        // holds one file, `char_2006_fmzuki_1.png`, which its hub names and no
+        // file-name rule spells; the scripts call the folder bare 259 times in
+        // 14 files and the reader drew nothing (2026-10-05). After the rules,
+        // the `#N`-indexed hub sprite, else the hub's first, whichever exists.
+        // `STORY_NO_HUB_FALLBACK=1` restores the rules alone.
+        let hub_fallback = || {
+            if std::env::var_os("STORY_NO_HUB_FALLBACK").is_some() {
+                return None;
+            }
+            let g = folder.hub.first()?;
+            let n = face
+                .parse::<usize>()
+                .ok()
+                .and_then(|n| n.checked_sub(1))
+                .unwrap_or(0);
+            g.sprites
+                .get(n)
+                .into_iter()
+                .chain(g.sprites.first())
+                .find_map(|s| folder.files.get(s.name.as_str()))
+        };
+        let file = hub_pick
+            .or_else(|| {
+                by_face
+                    .iter()
+                    .chain(defaults.iter())
+                    .find_map(|c| folder.files.get(c))
+            })
+            .or_else(hub_fallback)?;
         // The old hub layout's bare `<face>.png` patch rides on either body;
         // a folder with faces baked into the body has no bare patch to find.
         let body_stem = normalized_stem(file);
@@ -1776,6 +1800,26 @@ mod tests {
         assert_eq!(s.face_url, None);
         // Case-insensitive.
         assert!(idx.resolve_character("AVG_225_Haak_1#1$1").is_some());
+    }
+
+    #[test]
+    fn a_folder_named_unlike_its_only_file_resolves_through_the_hub() {
+        // Fumuzuki's real folder: one file the hub names, which no file-name rule spells.
+        let hub = r#"{"groups":[{"facePos":{"x":-1.0,"y":-1.0},"faceSize":{"w":0.0,"h":0.0},"sprites":[{"name":"char_2006_fmzuki_1","alias":"","isWholeBody":false,"size":{"w":1024.0,"h":1024.0}}]}],"legacy":true,"root":{"x":0.0,"y":160.0,"w":1024.0,"h":1024.0}}"#;
+        let idx = index_with(vec![with_hub(
+            folder("char_2006_weiywfmzuki_1", &["char_2006_fmzuki_1.png"]),
+            hub,
+        )]);
+        let s = idx.resolve_character("char_2006_weiywfmzuki_1").unwrap();
+        assert_eq!(
+            s.body_url,
+            "/textures/avg/characters/char_2006_weiywfmzuki_1/char_2006_fmzuki_1.png"
+        );
+        let s = idx.resolve_character("char_2006_weiywfmzuki_1#3").unwrap();
+        assert_eq!(
+            s.body_url,
+            "/textures/avg/characters/char_2006_weiywfmzuki_1/char_2006_fmzuki_1.png"
+        );
     }
 
     #[test]

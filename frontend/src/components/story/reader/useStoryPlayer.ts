@@ -7,7 +7,7 @@ import type { Frame } from "#/lib/story/scene";
 import { plainStoryText, renderLine } from "#/lib/story/text";
 import type { StoryScript } from "#/types/generated/StoryScript";
 import { type BacklogEntry, reachOf, rebuiltTo, withChoice, withDecision, withHalt } from "./backlog";
-import { firstWords, type HaltSummary } from "./scrub";
+import { firstWords, type HaltSummary, haltForLine } from "./scrub";
 
 export type { BacklogEntry } from "./backlog";
 
@@ -72,6 +72,11 @@ interface Options {
     /** `?halt=N` from the URL: replay straight to that halt. */
     initialHalt?: number;
     /**
+     * `?line=N` from the URL: replay to the first halt whose script line is at
+     * or past N ({@link haltForLine}). `initialHalt` wins when both are given.
+     */
+    initialLine?: number;
+    /**
      * `AVGController.animateRatio`: every scene duration is multiplied by it.
      * A settings change retunes the live engine instead of rebuilding it, so
      * the reader keeps its place.
@@ -89,7 +94,7 @@ interface Options {
     onShake?: (shake: CameraShake) => void;
 }
 
-export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, animateRatio, videos, cutsceneLabel, onShake }: Options): StoryPlayer {
+export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, initialLine, animateRatio, videos, cutsceneLabel, onShake }: Options): StoryPlayer {
     // The ratio is a LIVE property, not a build argument: rebuilding the engine
     // on a settings change would reset the reader to command 0.
     const ratioRef = useRef(animateRatio);
@@ -110,7 +115,7 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
     // card: a hydration mismatch on every title screen. Both render the title card
     // and the resume offer arrives after mount.
     const [saved, setSaved] = useState<StoryPosition | null>(null);
-    const [phase, setPhase] = useState<Phase>(initialHalt !== undefined ? "reading" : "title");
+    const [phase, setPhase] = useState<Phase>(initialHalt !== undefined || initialLine !== undefined ? "reading" : "title");
     const timer = useRef<number | null>(null);
     const backlogRef = useRef<BacklogEntry[]>([]);
     // The choices of the path the LOG is on, out to its reach. `engine.choices`
@@ -341,24 +346,7 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
      * `replayTo` uses when a walk reaches a decision the reader has not
      * answered, so the two agree on every halt ordinal.
      */
-    const haltSummaries = useMemo<HaltSummary[]>(() => {
-        const out: HaltSummary[] = [];
-        const probe = createEngine(script, { nickname, videos });
-        let r = probe.step();
-        // `totalHalts` is the ceiling the engine already counts; the guard is a
-        // belt on a walk that a malformed predicate could otherwise not end.
-        for (let guard = 0; r.halt.kind !== "end" && guard <= probe.totalHalts + 1; guard++) {
-            if (r.halt.kind === "line") out.push({ haltIndex: r.haltIndex, kind: "line", speaker: r.halt.speaker, preview: firstWords(plainStoryText(renderLine(r.halt.text, nickname)), 60) });
-            if (r.halt.kind === "video") out.push({ haltIndex: r.haltIndex, kind: "video", preview: cutsceneLabel });
-            if (r.halt.kind === "decision") {
-                out.push({ haltIndex: r.haltIndex, kind: "decision", preview: firstWords(plainStoryText(renderLine(r.halt.options[0] ?? "", nickname))) });
-                r = probe.step(r.halt.values[0]);
-            } else {
-                r = probe.step();
-            }
-        }
-        return out;
-    }, [script, nickname, videos, cutsceneLabel]);
+    const haltSummaries = useMemo<HaltSummary[]>(() => summarizeHalts(script, nickname, videos, cutsceneLabel), [script, nickname, videos, cutsceneLabel]);
 
     const jumpTo = useCallback(
         (target: number) => {
@@ -387,19 +375,24 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
     // reader that is already going back to a card.
     const startedRef = useRef(false);
     const initialHaltRef = useRef(initialHalt);
+    const initialLineRef = useRef(initialLine);
     useEffect(() => {
-        if (initialHaltRef.current !== undefined) return;
+        if (initialHaltRef.current !== undefined || initialLineRef.current !== undefined) return;
         const p = loadProgress().pos[storyId];
         if (!p || p.halt <= 0) return;
         setSaved(p);
         if (!startedRef.current) setPhase((current) => (current === "title" ? "resume" : current));
     }, [storyId]);
 
-    // `?halt=N`: replay straight there, once per story (the reader remounts per story id).
+    // `?halt=N` (or `?line=N`, resolved through the probe's summaries): replay
+    // straight there, once per story (the reader remounts per story id).
     const replayRef = useRef(replayTo);
     replayRef.current = replayTo;
+    const summariesRef = useRef(haltSummaries);
+    summariesRef.current = haltSummaries;
     useEffect(() => {
-        const target = initialHaltRef.current;
+        const line = initialLineRef.current;
+        const target = initialHaltRef.current ?? (line !== undefined ? haltForLine(summariesRef.current, line) : undefined);
         if (target === undefined) return;
         const p = loadProgress().pos[storyId];
         replayRef.current(Math.max(0, target), p?.choices ?? {}, p?.reach);
@@ -441,4 +434,29 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
         jumpTo,
         skipToEnd,
     };
+}
+
+/**
+ * One probe walk of the script, for the scrubber, the backlog jumps and
+ * `?line=`. A decision takes its FIRST option, which is the same default
+ * `replayTo` uses when a walk reaches a decision the reader has not answered,
+ * so the two agree on every halt ordinal. Exported for the `?line=` test.
+ */
+export function summarizeHalts(script: StoryScript, nickname: string, videos: boolean | undefined, cutsceneLabel: string): HaltSummary[] {
+    const out: HaltSummary[] = [];
+    const probe = createEngine(script, { nickname, videos });
+    let r = probe.step();
+    // `totalHalts` is the ceiling the engine already counts; the guard is a
+    // belt on a walk that a malformed predicate could otherwise not end.
+    for (let guard = 0; r.halt.kind !== "end" && guard <= probe.totalHalts + 1; guard++) {
+        if (r.halt.kind === "line") out.push({ haltIndex: r.haltIndex, kind: "line", speaker: r.halt.speaker, preview: firstWords(plainStoryText(renderLine(r.halt.text, nickname)), 60), line: r.line });
+        if (r.halt.kind === "video") out.push({ haltIndex: r.haltIndex, kind: "video", preview: cutsceneLabel, line: r.line });
+        if (r.halt.kind === "decision") {
+            out.push({ haltIndex: r.haltIndex, kind: "decision", preview: firstWords(plainStoryText(renderLine(r.halt.options[0] ?? "", nickname))), line: r.line });
+            r = probe.step(r.halt.values[0]);
+        } else {
+            r = probe.step();
+        }
+    }
+    return out;
 }
