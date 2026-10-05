@@ -32,7 +32,7 @@ export function kindTileAttributes(entity: ITierEntity): { "data-kind"?: TierEnt
 }
 
 /** The image classes of each art fit (see {@link entityArtFit}). */
-const FIT_CLASS: Record<ArtFit, string> = {
+export const FIT_CLASS: Record<ArtFit, string> = {
     cover: "object-cover",
     object: "object-contain p-[6%]",
     glyph: "object-contain p-[16%]",

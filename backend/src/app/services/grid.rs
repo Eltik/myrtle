@@ -40,8 +40,6 @@ pub const LABEL_MAX: usize = 60;
 pub const PER_PAGE_DEFAULT: i32 = 24;
 pub const PER_PAGE_MAX: i32 = 60;
 const MAX_GRIDS_PER_USER: i64 = 50;
-/// Icons a card thumbnail shows.
-const PREVIEW_LEN: usize = 4;
 /// Slug base length: the random suffix keeps it unique, so the rest is only
 /// for the reader of the URL.
 const SLUG_BASE_MAX: usize = 60;
@@ -93,12 +91,14 @@ pub struct GridCell {
     pub entity_server: Option<Server>,
 }
 
-/// One card-thumbnail icon: the path, and the server to fetch it from when it
-/// is not the reader's, with [`GridCell::entity_server`]'s meaning.
+/// One filled cell of a card thumbnail: its art's path, the kind (which
+/// decides how the art sits in the cell), and the server to fetch it from
+/// when it is not the reader's, with [`GridCell::entity_server`]'s meaning.
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GridPreviewIcon {
+    pub kind: EntityKind,
     /// Same form as [`EntitySummary::icon`].
     pub icon: String,
     #[ts(type = "string | null")]
@@ -170,9 +170,10 @@ pub struct GridSummary {
     /// The kinds a cell may hold, in canonical order.
     pub entity_kinds: Vec<EntityKind>,
     pub updated_at: DateTime<Utc>,
-    /// Up to four icons from the first filled cells with one, in cell order,
-    /// for a card thumbnail.
-    pub preview: Vec<GridPreviewIcon>,
+    /// The board in miniature for a card thumbnail: one entry per cell,
+    /// row-major like [`Grid::cells`], `rows * cols` long. `None` for an
+    /// empty cell, and for a pick no loaded server knows or that has no art.
+    pub preview: Vec<Option<GridPreviewIcon>>,
 }
 
 #[derive(TS, utoipa::ToSchema)]
@@ -372,7 +373,7 @@ fn checked(input: GridInput) -> Result<GridDocument, ApiError> {
     let entity_kinds = allowed_kinds(&input.entity_kinds)?;
     let rows = size("rows", input.rows)?;
     let cols = size("cols", input.cols)?;
-    let expected = usize::from(rows.unsigned_abs()) * usize::from(cols.unsigned_abs());
+    let expected = cell_count(rows, cols);
     if input.cells.len() != expected {
         return Err(ApiError::BadRequest(format!(
             "cells: a {rows} x {cols} grid has {expected} cells, got {}",
@@ -429,6 +430,12 @@ fn check_locked_kinds(row: &GridRow, kinds: &[EntityKind]) -> Result<(), ApiErro
         ));
     }
     Ok(())
+}
+
+/// The cells a `rows` x `cols` board holds. Stored sizes are 1 to 10, so the
+/// sign never matters; `unsigned_abs` only keeps the cast lossless.
+fn cell_count(rows: i16, cols: i16) -> usize {
+    usize::from(rows.unsigned_abs()) * usize::from(cols.unsigned_abs())
 }
 
 fn size(field: &str, value: i32) -> Result<i16, ApiError> {
@@ -601,13 +608,13 @@ fn to_cell(cell: StoredCell, resolver: &Resolver) -> GridCell {
 
 /// Game data to resolve picks against: the reader's server first, then every
 /// other loaded server in [`fallback_order`].
-struct Resolver {
+pub(crate) struct Resolver {
     /// `None` marks the reader's own server.
     sources: Vec<(Option<Server>, Arc<GameData>, Arc<AssetIndex>)>,
 }
 
 impl Resolver {
-    fn new(state: &AppState, server: Server) -> Self {
+    pub(crate) fn new(state: &AppState, server: Server) -> Self {
         let own = state.server_data(server);
         let mut tried = vec![Arc::clone(&own)];
         let mut sources = vec![(None, own.game_data.load_full(), own.asset_index.load_full())];
@@ -635,7 +642,11 @@ impl Resolver {
 
     /// The pick's summary and, when it is not the reader's, the server that
     /// knew it.
-    fn resolve(&self, kind: EntityKind, id: &str) -> Option<(EntitySummary, Option<Server>)> {
+    pub(crate) fn resolve(
+        &self,
+        kind: EntityKind,
+        id: &str,
+    ) -> Option<(EntitySummary, Option<Server>)> {
         first_resolved(self.sources.iter(), |(server, gd, assets)| {
             tier_entity::resolve(gd, assets, kind, id)
                 .map(|e| (romanize_cn_operator(e, *server), *server))
@@ -690,6 +701,33 @@ fn template_visible(listed: Option<bool>, owner: Option<Uuid>, viewer: Viewer) -
     listed.unwrap_or(false) || viewer.is_some_and(|(id, _)| Some(id) == owner)
 }
 
+/// `len` thumbnail entries, one per cell in cell order: the pick's art as
+/// `resolve` finds it, `None` where there is no pick, it does not resolve, or
+/// it resolves without art. Saves keep the cell count at `rows * cols`; a
+/// stored list that is not is cut or padded with empty cells, so the card
+/// always draws the grid's shape.
+fn preview_of(
+    cells: &[StoredCell],
+    len: usize,
+    resolve: impl Fn(EntityKind, &str) -> Option<(EntitySummary, Option<Server>)>,
+) -> Vec<Option<GridPreviewIcon>> {
+    let mut preview: Vec<_> = cells
+        .iter()
+        .take(len)
+        .map(|cell| {
+            let (kind, id) = cell.entity()?;
+            let (entity, server) = resolve(kind, id)?;
+            Some(GridPreviewIcon {
+                kind: entity.kind,
+                icon: entity.icon?,
+                server,
+            })
+        })
+        .collect();
+    preview.resize(len, None);
+    preview
+}
+
 /// Card summaries of `rows`, previews resolved against `server` first.
 fn summaries(state: &AppState, rows: Vec<GridRow>, server: Server) -> Vec<GridSummary> {
     let resolver = Resolver::new(state, server);
@@ -701,20 +739,9 @@ fn summaries(state: &AppState, rows: Vec<GridRow>, server: Server) -> Vec<GridSu
 fn to_summary(row: GridRow, resolver: &Resolver) -> GridSummary {
     let owner = owner_of(&row);
     let entity_kinds = row.kinds();
-    let preview = row
-        .cells
-        .0
-        .iter()
-        .filter_map(StoredCell::entity)
-        .filter_map(|(kind, id)| {
-            let (entity, server) = resolver.resolve(kind, id)?;
-            Some(GridPreviewIcon {
-                icon: entity.icon?,
-                server,
-            })
-        })
-        .take(PREVIEW_LEN)
-        .collect();
+    let preview = preview_of(&row.cells.0, cell_count(row.rows, row.cols), |kind, id| {
+        resolver.resolve(kind, id)
+    });
     GridSummary {
         slug: row.slug,
         title: row.title,
@@ -1043,6 +1070,85 @@ mod tests {
         ] {
             assert_eq!(name(e, from), "予愿安洁莉娜");
         }
+    }
+
+    fn stored(kind: Option<&str>, id: Option<&str>) -> StoredCell {
+        StoredCell {
+            label: String::new(),
+            entity_kind: kind.map(str::to_owned),
+            entity_id: id.map(str::to_owned),
+        }
+    }
+
+    /// Knows `amiya` (EN art), `aglna2` (CN art only) and `noart` (no art).
+    fn preview_resolve(kind: EntityKind, id: &str) -> Option<(EntitySummary, Option<Server>)> {
+        let (icon, server) = match id {
+            "amiya" => (Some("/avatar/amiya"), None),
+            "aglna2" => (Some("/avatar/aglna2"), Some(Server::CN)),
+            "noart" => (None, None),
+            _ => return None,
+        };
+        let entity = EntitySummary {
+            kind,
+            id: id.into(),
+            name: id.into(),
+            icon: icon.map(str::to_owned),
+            href: None,
+            facets: std::collections::BTreeMap::new(),
+        };
+        Some((entity, server))
+    }
+
+    #[test]
+    fn the_preview_is_every_cell_in_order() {
+        let cells = [
+            stored(Some("operator"), Some("amiya")),
+            stored(None, None),
+            stored(Some("operator"), Some("aglna2")),
+            stored(Some("operator"), Some("gone")),
+            stored(Some("operator"), Some("noart")),
+            stored(Some("not_a_kind"), Some("amiya")),
+        ];
+        let preview = preview_of(&cells, 6, preview_resolve);
+        let icon = |icon: &str, server| {
+            Some(GridPreviewIcon {
+                kind: EntityKind::Operator,
+                icon: icon.into(),
+                server,
+            })
+        };
+        assert_eq!(
+            preview,
+            vec![
+                icon("/avatar/amiya", None),
+                None,
+                icon("/avatar/aglna2", Some(Server::CN)),
+                None,
+                None,
+                None,
+            ]
+        );
+    }
+
+    #[test]
+    fn the_preview_has_the_grids_shape_whatever_was_stored() {
+        let filled = stored(Some("operator"), Some("amiya"));
+        // A 6 x 6 grid draws 36 cells, not the first four picks.
+        let full = vec![filled.clone(); 36];
+        assert_eq!(preview_of(&full, 36, preview_resolve).len(), 36);
+        assert!(
+            preview_of(&full, 36, preview_resolve)
+                .iter()
+                .all(Option::is_some)
+        );
+        // An empty grid is all empty cells.
+        let empty = vec![stored(None, None); 9];
+        assert_eq!(preview_of(&empty, 9, preview_resolve), vec![None; 9]);
+        // A stored list off its size is padded or cut to rows * cols.
+        let short = preview_of(std::slice::from_ref(&filled), 4, preview_resolve);
+        assert_eq!(short.len(), 4);
+        assert!(short[0].is_some() && short[1..].iter().all(Option::is_none));
+        assert_eq!(preview_of(&full, 2, preview_resolve).len(), 2);
     }
 
     #[test]

@@ -193,6 +193,15 @@ export const messages = {
         description: "Subtitle on the tier-list browser social card.",
     },
 
+    "og.grids.title": {
+        text: "Grids",
+        description: "Headline on the grid browser social card. A grid is a board of labelled cells filled with operators and other picks.",
+    },
+    "og.grids.subtitle": {
+        text: "Fill a grid with your picks, share it, or start from a template.",
+        description: "Subtitle on the grid browser social card.",
+    },
+
     "og.terms.title": {
         text: "Terms of Service",
         description: "Headline on the terms of service social card.",

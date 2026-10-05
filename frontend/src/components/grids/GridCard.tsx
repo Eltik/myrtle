@@ -1,17 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import { GitForkIcon } from "lucide-react";
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
+import { FIT_CLASS } from "#/components/tier-lists/entities";
 import { env } from "#/env";
 import type { IGridSummary } from "#/lib/api/grids";
 import { entityIconURL } from "#/lib/api/tier-entities";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { cn } from "#/lib/utils";
 import { KindChips } from "./AllowedKinds";
 import type { messages } from "./GridCard.messages";
 import { gridSizeLabel } from "./shared";
-
-/** The thumbnail never draws more than this many cells a side: a 10 x 10 reads as a dense board at 6 x 6 just as well. */
-const THUMB_MAX = 6;
+import { thumbArtFit, thumbCells, thumbSpacing, thumbWidth } from "./thumb";
 
 interface IGridCardProps {
     grid: IGridSummary;
@@ -51,34 +51,38 @@ export function GridCard({ grid, badge, actions }: IGridCardProps) {
     );
 }
 
-/** A miniature of the board: the first picks' art where the grid has some, grey cells elsewhere. */
+/** The board in miniature: every cell in the grid's shape, each pick's art where it has some, the board's empty grey elsewhere. No labels: at this size they would not read. */
 function GridThumb({ grid }: { grid: IGridSummary }) {
     const server = useGamedataServer();
-    const rows = Math.min(grid.rows, THUMB_MAX);
-    const cols = Math.min(grid.cols, THUMB_MAX);
-    const previews = grid.preview.slice(0, 4).map((p) => entityIconURL(p.icon, env.VITE_BACKEND_URL ?? "", p.server ?? server));
+    const base = env.VITE_BACKEND_URL ?? "";
+    const cells = thumbCells(grid.preview, grid.rows, grid.cols);
+    const { gap, radius } = thumbSpacing(grid.rows, grid.cols);
 
     return (
-        <div className="flex h-36 items-center justify-center bg-[oklch(0.13_0.004_285)] p-3">
-            {previews.length > 0 ? (
-                <div className="grid h-full grid-cols-2 grid-rows-2 gap-1" style={{ aspectRatio: "1 / 1" }}>
-                    {[0, 1, 2, 3].map((i) => {
-                        const src = previews[i];
-                        return (
-                            <span key={i} className="block overflow-hidden rounded-[3px] bg-[oklch(0.32_0.006_285)]">
-                                {src && <img src={src} alt="" aria-hidden="true" loading="lazy" decoding="async" className="block h-full w-full object-cover" />}
-                            </span>
-                        );
-                    })}
-                </div>
-            ) : (
-                <div className="grid h-full gap-0.75" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, aspectRatio: `${cols} / ${rows}` } as CSSProperties}>
-                    {Array.from({ length: rows * cols }, (_, i) => (
-                        // biome-ignore lint/suspicious/noArrayIndexKey: placeholder cells have no identity but their position
-                        <span key={i} className="block rounded-[2px] bg-[oklch(0.32_0.006_285)]" />
-                    ))}
-                </div>
-            )}
+        <div className="flex h-36 items-center justify-center bg-[oklch(0.13_0.004_285)] p-3 [container-type:size]">
+            <div className="grid" style={{ gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))`, gap, width: thumbWidth(grid.rows, grid.cols, gap) }} aria-hidden="true">
+                {cells.map((cell, i) =>
+                    cell ? (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: a cell IS its position
+                        <span key={i} className="relative block aspect-square overflow-hidden bg-[oklch(0.24_0.005_285)]" style={{ borderRadius: radius }}>
+                            <img
+                                src={entityIconURL(cell.icon, base, cell.server ?? server)}
+                                alt=""
+                                loading="lazy"
+                                decoding="async"
+                                draggable={false}
+                                onError={(e) => {
+                                    e.currentTarget.style.visibility = "hidden";
+                                }}
+                                className={cn("absolute inset-0 block h-full w-full", FIT_CLASS[thumbArtFit(cell)])}
+                            />
+                        </span>
+                    ) : (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: a cell IS its position
+                        <span key={i} className="block aspect-square bg-[oklch(0.32_0.006_285)]" style={{ borderRadius: radius }} />
+                    ),
+                )}
+            </div>
         </div>
     );
 }

@@ -16263,14 +16263,18 @@
       },
       "GridPreviewIcon": {
         "type": "object",
-        "description": "One card-thumbnail icon: the path, and the server to fetch it from when it\nis not the reader's, with [`GridCell::entity_server`]'s meaning.",
+        "description": "One filled cell of a card thumbnail: its art's path, the kind (which\ndecides how the art sits in the cell), and the server to fetch it from\nwhen it is not the reader's, with [`GridCell::entity_server`]'s meaning.",
         "required": [
+          "kind",
           "icon"
         ],
         "properties": {
           "icon": {
             "type": "string",
             "description": "Same form as [`EntitySummary::icon`]."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/EntityKind"
           },
           "server": {
             "type": [
@@ -16319,9 +16323,16 @@
           "preview": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/GridPreviewIcon"
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/components/schemas/GridPreviewIcon"
+                }
+              ]
             },
-            "description": "Up to four icons from the first filled cells with one, in cell order,\nfor a card thumbnail."
+            "description": "The board in miniature for a card thumbnail: one entry per cell,\nrow-major like [`Grid::cells`], `rows * cols` long. `None` for an\nempty cell, and for a pick no loaded server knows or that has no art."
           },
           "rows": {
             "type": "integer",

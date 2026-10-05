@@ -134,6 +134,11 @@ export const DEFAULT_OG_PRESETS = {
         subtitleKey: "og.tierLists.subtitle",
         activeTag: "Home",
     },
+    grids: {
+        titleKey: "og.grids.title",
+        subtitleKey: "og.grids.subtitle",
+        activeTag: "Home",
+    },
     terms: {
         titleKey: "og.terms.title",
         subtitleKey: "og.terms.subtitle",

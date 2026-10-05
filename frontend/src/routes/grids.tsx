@@ -3,6 +3,7 @@ import { GridsBrowse } from "#/components/grids/GridsBrowse";
 import { DEFAULT_GRIDS_SEARCH, type IGridsSearch } from "#/components/grids/shared";
 import { browseGridsQueryOptions } from "#/lib/api/grids";
 import { metaT } from "#/lib/meta";
+import { defaultOgURL } from "#/lib/og";
 import { seo } from "#/lib/seo";
 
 export const Route = createFileRoute("/grids")({
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/grids")({
     loader: ({ context, deps }) => context.queryClient.ensureQueryData(browseGridsQueryOptions({ ...deps, server: context.i18n.gamedataServer })),
     head: ({ match }) => {
         const t = metaT(match.context.i18n);
-        const { meta, links } = seo({ title: t("grids.title"), description: t("grids.description"), path: "/grids", locale: match.context.i18n?.locale });
+        const { meta, links } = seo({ title: t("grids.title"), description: t("grids.description"), path: "/grids", image: defaultOgURL("grids", match.context.i18n), locale: match.context.i18n?.locale });
         return { meta: [{ charSet: "utf-8" }, { name: "viewport", content: "width=device-width, initial-scale=1" }, ...meta], links };
     },
 });

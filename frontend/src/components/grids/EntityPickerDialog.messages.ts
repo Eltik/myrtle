@@ -36,8 +36,12 @@ export const messages = {
         description: "Button that reloads the picker's failed list.",
     },
     "picker.empty": {
-        text: "Nothing matches your search.",
-        description: "Shown in the picker when the search leaves nothing.",
+        text: "Nothing matches your search and filters.",
+        description: "Shown in the picker when the search and the filter toggles leave nothing.",
+    },
+    "picker.clearFilters": {
+        text: "Clear filters",
+        description: "Button in the picker that turns off every filter toggle (rarity, class and so on) of the current type tab.",
     },
     "picker.showMore": {
         text: "Show more ({shown} of {total})",

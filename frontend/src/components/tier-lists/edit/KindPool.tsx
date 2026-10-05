@@ -10,7 +10,6 @@ import { Kicker } from "#/components/ui/kicker";
 import { ScrollArea } from "#/components/ui/scroll-area";
 import { Spinner } from "#/components/ui/spinner";
 import { Switch } from "#/components/ui/switch";
-import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "#/components/ui/tooltip";
 import { entityOwner, type ITierEntity, type TierEntityKind } from "#/lib/api/tier-entities";
 import { type TypedRichT, useRichT, useT } from "#/lib/i18n";
@@ -21,8 +20,10 @@ import { hasEntityDrag, readEntityDrag } from "./dnd";
 import { useAnyDragLifted, usePoolIsOver } from "./drag-controller";
 import { EditableOpTile } from "./EditableOpTile";
 import styles from "./Editor.module.css";
+import { FacetFilter } from "./FacetFilter";
 import type { messages } from "./KindPool.messages";
-import { type IPoolFacet, type IPoolKind, usePoolKind } from "./poolKinds";
+import { anyFacetSelected, type FacetSelection, matchesFacets, matchesSearch } from "./poolFilters";
+import { type IPoolKind, usePoolKind } from "./poolKinds";
 
 /** A grid longer than this renders in pages of {@link PAGE} as it scrolls. The operator pool (~410) never pages; the enemy pool (~1,540) does. */
 const PAGE_FROM = 600;
@@ -270,19 +271,15 @@ export function KindPool({ kind, entities, status, onRetry, placedKeys, onUnplac
  */
 function usePoolFilters(all: ITierEntity[], config: IPoolKind, placedKeys: Set<string>) {
     const [query, setQuery] = useState("");
-    const [selected, setSelected] = useState<Record<string, string[]>>({});
+    const [selected, setSelected] = useState<FacetSelection>({});
     const [hideUsed, setHideUsed] = useState(true);
 
     const filtered = useMemo(() => {
         const q = compactForSearch(query);
         const matched = all.filter((entity) => {
-            for (const facet of config.facets) {
-                const want = selected[facet.id];
-                if (want && want.length > 0 && !want.includes(facet.valueOf(entity) ?? "")) return false;
-            }
+            if (!matchesFacets(entity, config.facets, selected)) return false;
             if (hideUsed && placedKeys.has(entity.key)) return false;
-            if (q.length === 0) return true;
-            return config.searchTexts(entity).some((text) => Boolean(text) && compactForSearch(text ?? "").includes(q));
+            return matchesSearch(config.searchTexts(entity), q);
         });
         return config.compare ? matched.sort(config.compare) : matched;
     }, [all, config, query, selected, hideUsed, placedKeys]);
@@ -293,7 +290,7 @@ function usePoolFilters(all: ITierEntity[], config: IPoolKind, placedKeys: Set<s
         setSelected({});
         setHideUsed(true);
     }, []);
-    const anySelected = Object.values(selected).some((v) => v.length > 0);
+    const anySelected = anyFacetSelected(selected);
     const hasFilters = query.length > 0 || anySelected || !hideUsed;
 
     return { query, setQuery, selected, setFacet, hideUsed, setHideUsed, filtered, hasFilters, clearFilters };
@@ -368,72 +365,6 @@ function PoolEmptyState({ status, onRetry, className }: { status: CatalogueStatu
                 <EmptyDescription>{t("edit.pool.emptyBody")}</EmptyDescription>
             </EmptyHeader>
         </Empty>
-    );
-}
-
-const EDGE_FADE_PX = 24;
-
-/**
- * Fades whichever edge of a horizontal scroller has chips hidden past it. The
- * scrollbar is hidden, so without this a cut-off row looks complete.
- */
-function useEdgeFade<T extends HTMLElement>() {
-    const ref = useRef<T>(null);
-    const [edges, setEdges] = useState({ start: false, end: false });
-    useEffect(() => {
-        const el = ref.current;
-        if (!el) return;
-        const update = () => {
-            const start = el.scrollLeft > 1;
-            const end = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
-            setEdges((prev) => (prev.start === start && prev.end === end ? prev : { start, end }));
-        };
-        update();
-        el.addEventListener("scroll", update, { passive: true });
-        // The row's own box stays the same width when its chips change, so watch the content too.
-        const observer = new ResizeObserver(update);
-        observer.observe(el);
-        if (el.firstElementChild) observer.observe(el.firstElementChild);
-        return () => {
-            el.removeEventListener("scroll", update);
-            observer.disconnect();
-        };
-    }, []);
-    if (!edges.start && !edges.end) return { ref, style: undefined };
-    const mask = `linear-gradient(to right, ${edges.start ? "transparent" : "black"}, black ${EDGE_FADE_PX}px, black calc(100% - ${EDGE_FADE_PX}px), ${edges.end ? "transparent" : "black"})`;
-    return { ref, style: { maskImage: mask, WebkitMaskImage: mask } };
-}
-
-/** One facet's row of toggles in the pool dialog. */
-function FacetFilter({ facet, value, onChange }: { facet: IPoolFacet; value: string[]; onChange: (next: string[]) => void }) {
-    const fade = useEdgeFade<HTMLDivElement>();
-    return (
-        // min-w-0: a long facet (24 skin brands) has to shrink to the dialog so its row scrolls instead of overflowing.
-        <Field className="min-w-0 max-w-full gap-1.5 sm:flex-row sm:items-center sm:gap-2">
-            <FieldLabel className="whitespace-nowrap font-bold font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.16em]">{facet.label}</FieldLabel>
-            <div ref={fade.ref} style={fade.style} className="-mx-1 flex min-w-0 overflow-x-auto px-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <ToggleGroup value={value} onValueChange={(v) => onChange(v as string[])} aria-label={facet.groupLabel} multiple variant="outline" size="sm" className="flex-nowrap">
-                    {facet.options.map((option) =>
-                        facet.variant === "icon" ? (
-                            <Tooltip key={option.value}>
-                                <TooltipTrigger
-                                    render={
-                                        <ToggleGroupItem value={option.value} aria-label={option.ariaLabel ?? option.label} className="shrink-0 px-1.5 [&:not([data-pressed])>img]:opacity-40">
-                                            {option.icon}
-                                        </ToggleGroupItem>
-                                    }
-                                />
-                                <TooltipContent>{option.label}</TooltipContent>
-                            </Tooltip>
-                        ) : (
-                            <ToggleGroupItem key={option.value} value={option.value} aria-label={option.ariaLabel} className={cn("shrink-0 [&:not([data-pressed])]:opacity-55", facet.variant === "mono" && "font-mono tabular-nums")}>
-                                {option.label}
-                            </ToggleGroupItem>
-                        ),
-                    )}
-                </ToggleGroup>
-            </div>
-        </Field>
     );
 }
 

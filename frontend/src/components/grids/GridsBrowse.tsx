@@ -75,7 +75,10 @@ export function GridsBrowse({ search }: { search: IGridsSearch }) {
                                 type="button"
                                 aria-pressed={search.sort === s}
                                 onClick={() => setSort(s)}
-                                className={cn("h-8 cursor-pointer rounded-md px-3 font-medium font-sans text-sm transition-colors", search.sort === s ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground")}
+                                className={cn(
+                                    "relative inline-flex h-8 cursor-pointer items-center justify-center rounded-md px-3 font-medium font-sans text-sm transition-colors pointer-coarse:after:absolute pointer-coarse:after:size-full pointer-coarse:after:min-h-11",
+                                    search.sort === s ? "bg-background text-foreground shadow-sm/5" : "text-muted-foreground hover:text-foreground",
+                                )}
                             >
                                 {s === "recent" ? t("browse.sort.recent") : t("browse.sort.popular")}
                             </button>

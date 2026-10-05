@@ -1,10 +1,12 @@
 import { XIcon } from "lucide-react";
 import { type CSSProperties, type KeyboardEvent, useRef, useState } from "react";
+import { useEdgeFade } from "#/components/tier-lists/edit/FacetFilter";
 import { EntityAvatar } from "#/components/tier-lists/entities";
 import { useEntityLabels } from "#/components/tier-lists/kinds";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { truncateCodePoints } from "#/lib/markdown/sanitize-input";
+import { compactGridSize } from "./compact";
 import type { messages } from "./GridBoard.messages";
 import styles from "./GridBoard.module.css";
 import { cellPosition, GRID_LABEL_MAX } from "./shared";
@@ -33,6 +35,13 @@ interface IGridBoardProps {
     /** Row-major, `rows * cols` long. */
     cells: IGridEditCell[];
     editor?: IGridBoardEditor;
+    /**
+     * `compact` draws the board inside another surface (a profile showcase card):
+     * no title (the host shows it), tighter padding, and cells sized to a height
+     * budget rather than the page width. Read-only. Omitted, the board is the
+     * grid page's, unchanged.
+     */
+    size?: "full" | "compact";
 }
 
 /** How large the strip's text is: fewer columns, bigger cells, bigger words. */
@@ -42,16 +51,20 @@ function density(cols: number): "large" | "medium" | "small" {
     return "small";
 }
 
-export function GridBoard({ title, rows, cols, cells, editor }: IGridBoardProps) {
+export function GridBoard({ title, rows, cols, cells, editor, size = "full" }: IGridBoardProps) {
     const t: TypedT<typeof messages> = useT("grids");
     const [dragFrom, setDragFrom] = useState<number | null>(null);
     const [dropOver, setDropOver] = useState<number | null>(null);
+    // Past six columns a phone scrolls the board inside itself; the faded edge says there is more.
+    const fade = useEdgeFade<HTMLDivElement>();
     const shownTitle = title || t("board.untitled");
+    const compact = size === "compact" ? compactGridSize(rows, cols) : null;
+    const boardStyle = compact ? ({ "--cell-max": `${compact.cellPx}px`, "--cell-gap": `${compact.gapPx}px`, "--label-size": `${compact.labelPx}px`, maxWidth: `${compact.boardMaxPx}px` } as CSSProperties) : undefined;
 
     return (
-        <section className={styles.board} data-density={density(cols)} aria-label={t("board.label", { title: shownTitle, rows, cols })}>
-            <h2 className={styles.title}>{shownTitle}</h2>
-            <div className={styles.scroller}>
+        <section className={styles.board} data-density={density(cols)} data-size={compact ? "compact" : undefined} style={boardStyle} aria-label={t("board.label", { title: shownTitle, rows, cols })}>
+            {!compact && <h2 className={styles.title}>{shownTitle}</h2>}
+            <div ref={fade.ref} style={fade.style} className={styles.scroller}>
                 <div className={styles.grid} style={{ "--cols": cols } as CSSProperties}>
                     {cells.map((cell, index) => (
                         <GridCellView
@@ -104,7 +117,9 @@ function GridCellView({ cell, index, cols, editor, dragging, dropTarget, onDragF
                     {entityName && <span className="sr-only">{entityName}</span>}
                 </div>
                 <div className={styles.strip}>
-                    <span className={styles.stripText}>{cell.label}</span>
+                    <span className={styles.stripText} title={cell.label || undefined}>
+                        {cell.label}
+                    </span>
                 </div>
             </div>
         );
@@ -114,6 +129,7 @@ function GridCellView({ cell, index, cols, editor, dragging, dropTarget, onDragF
         onDragFrom(null);
         onDropOver(null);
     };
+    const clearLabel = t("cell.clear", { name: entityName ?? cell.id ?? "", ...position });
 
     return (
         // biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop swap for a pointer; the cell's two buttons are the keyboard and touch path
@@ -191,8 +207,8 @@ function GridCellView({ cell, index, cols, editor, dragging, dropTarget, onDragF
                         // The button goes with the pick; keep focus on the cell.
                         artRef.current?.focus();
                     }}
-                    aria-label={t("cell.clear", { name: entityName ?? cell.id ?? "", ...position })}
-                    title={t("cell.clear", { name: entityName ?? cell.id ?? "", ...position })}
+                    aria-label={clearLabel}
+                    title={clearLabel}
                 >
                     <XIcon aria-hidden="true" />
                 </button>
@@ -216,7 +232,13 @@ function LabelStrip({ label, position, onChange }: ILabelStripProps) {
     if (draft === null) {
         return (
             <button type="button" className={styles.strip} onClick={() => setDraft(label)} aria-label={t("cell.editLabel", { label: label || t("cell.noLabel"), ...position })}>
-                {label ? <span className={styles.stripText}>{label}</span> : <span className={`${styles.stripText} ${styles.stripPlaceholder}`}>{t("cell.labelPlaceholder")}</span>}
+                {label ? (
+                    <span className={styles.stripText} title={label}>
+                        {label}
+                    </span>
+                ) : (
+                    <span className={`${styles.stripText} ${styles.stripPlaceholder}`}>{t("cell.labelPlaceholder")}</span>
+                )}
             </button>
         );
     }

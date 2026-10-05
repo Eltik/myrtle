@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Link, useBlocker, useNavigate } from "@tanstack/react-router";
 import { CheckIcon, ExternalLinkIcon, LockIcon, RotateCcwIcon } from "lucide-react";
-import { useCallback, useId, useMemo, useReducer, useRef, useState } from "react";
+import { type RefObject, useCallback, useEffect, useId, useMemo, useReducer, useRef, useState } from "react";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "#/components/ui/breadcrumb";
 import { Button } from "#/components/ui/button";
 import { Field, FieldLabel } from "#/components/ui/field";
@@ -209,6 +209,7 @@ function EditorHeader({ slug, state, dirty, titleValid, saving, saveError, onTit
     const descId = useId();
     const listedId = useId();
     const listedHintId = useId();
+    const actionsRef = useRef<HTMLDivElement>(null);
 
     return (
         <header className="border-border/60 border-b bg-linear-to-b from-card/40 to-transparent">
@@ -257,7 +258,8 @@ function EditorHeader({ slug, state, dirty, titleValid, saving, saveError, onTit
                             <SizeStepper label={t("edit.rows")} value={state.rows} onChange={(rows) => onResize(rows, state.cols)} />
                             <SizeStepper label={t("edit.cols")} value={state.cols} onChange={(cols) => onResize(state.rows, cols)} />
                             <div className="flex items-center gap-2.5 pb-1">
-                                <Switch id={listedId} checked={state.isListed} onCheckedChange={onListedChange} aria-describedby={listedHintId} />
+                                {/* The switch is 22 px tall; a coarse pointer gets a 44 px square around it, like the site's buttons. */}
+                                <Switch id={listedId} checked={state.isListed} onCheckedChange={onListedChange} aria-describedby={listedHintId} className="relative pointer-coarse:after:absolute pointer-coarse:after:-inset-x-[3px] pointer-coarse:after:-inset-y-[11px]" />
                                 <div className="flex flex-col">
                                     <label htmlFor={listedId} className="cursor-pointer font-medium font-sans text-foreground text-sm">
                                         {t("edit.listed")}
@@ -301,14 +303,9 @@ function EditorHeader({ slug, state, dirty, titleValid, saving, saveError, onTit
                                 </div>
                             )}
                         </div>
-                        <div className="flex items-center gap-1.5">
-                            <Button type="button" onClick={onSave} disabled={!dirty || saving || !titleValid} loading={saving} className="flex-1">
-                                <CheckIcon />
-                                {t("edit.save")}
-                            </Button>
-                            <Button type="button" variant="outline" onClick={onDiscard} disabled={!dirty || saving} size="icon" aria-label={t("edit.discard")} title={t("edit.discard")}>
-                                <RotateCcwIcon />
-                            </Button>
+                        <div ref={actionsRef} className="flex items-center gap-1.5">
+                            <SaveButton onSave={onSave} disabled={!dirty || saving || !titleValid} saving={saving} className="flex-1" />
+                            <DiscardButton onDiscard={onDiscard} disabled={!dirty || saving} />
                             <Button type="button" variant="ghost" render={<Link to="/grids/$slug" params={{ slug }} target="_blank" rel="noreferrer" />} size="icon" aria-label={t("edit.openPublic")} title={t("edit.openPublic")}>
                                 <ExternalLinkIcon />
                             </Button>
@@ -317,7 +314,67 @@ function EditorHeader({ slug, state, dirty, titleValid, saving, saveError, onTit
                     </div>
                 </div>
             </div>
+            <MobileSaveBar actionsRef={actionsRef} dirty={dirty} titleValid={titleValid} saving={saving} onSave={onSave} onDiscard={onDiscard} />
         </header>
+    );
+}
+
+interface IMobileSaveBarProps {
+    /** The header's own Save row: the bar shows only while it is off screen. */
+    actionsRef: RefObject<HTMLDivElement | null>;
+    dirty: boolean;
+    titleValid: boolean;
+    saving: boolean;
+    onSave: () => void;
+    onDiscard: () => void;
+}
+
+/**
+ * Below `lg` the board sits under the header, so editing its lower rows puts
+ * the Save row a long scroll away. While there are changes and that row is
+ * out of view, Save and Discard follow along at the bottom of the screen. At
+ * `lg` and up the bar never renders.
+ */
+function MobileSaveBar({ actionsRef, dirty, titleValid, saving, onSave, onDiscard }: IMobileSaveBarProps) {
+    const t: EditorT = useT("grids");
+    const [rowVisible, setRowVisible] = useState(true);
+    useEffect(() => {
+        const el = actionsRef.current;
+        if (!el || typeof IntersectionObserver === "undefined") return;
+        const observer = new IntersectionObserver(([entry]) => setRowVisible(entry?.isIntersecting ?? true));
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [actionsRef]);
+    if (!dirty || rowVisible) return null;
+    return (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-border border-t bg-background/92 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] backdrop-blur-md lg:hidden">
+            <div className="mx-auto flex max-w-[1180px] items-center gap-2">
+                <span className="min-w-0 flex-1 truncate font-bold font-mono text-[10.5px] text-muted-foreground uppercase tracking-[0.14em]">{t("edit.unsaved")}</span>
+                <DiscardButton onDiscard={onDiscard} disabled={saving} />
+                <SaveButton onSave={onSave} disabled={saving || !titleValid} saving={saving} className="min-w-28" />
+            </div>
+        </div>
+    );
+}
+
+/** Save, as the header's row and the mobile bar both draw it. */
+function SaveButton({ onSave, disabled, saving, className }: { onSave: () => void; disabled: boolean; saving: boolean; className: string }) {
+    const t: EditorT = useT("grids");
+    return (
+        <Button type="button" onClick={onSave} disabled={disabled} loading={saving} className={className}>
+            <CheckIcon />
+            {t("edit.save")}
+        </Button>
+    );
+}
+
+/** Discard, as the header's row and the mobile bar both draw it. */
+function DiscardButton({ onDiscard, disabled }: { onDiscard: () => void; disabled: boolean }) {
+    const t: EditorT = useT("grids");
+    return (
+        <Button type="button" variant="outline" onClick={onDiscard} disabled={disabled} size="icon" aria-label={t("edit.discard")} title={t("edit.discard")}>
+            <RotateCcwIcon />
+        </Button>
     );
 }
 

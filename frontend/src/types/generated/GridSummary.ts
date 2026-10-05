@@ -17,8 +17,9 @@ export type GridSummary = {
     entity_kinds: Array<EntityKind>;
     updated_at: string;
     /**
-     * Up to four icons from the first filled cells with one, in cell order,
-     * for a card thumbnail.
+     * The board in miniature for a card thumbnail: one entry per cell,
+     * row-major like [`Grid::cells`], `rows * cols` long. `None` for an
+     * empty cell, and for a pick no loaded server knows or that has no art.
      */
-    preview: Array<GridPreviewIcon>;
+    preview: Array<GridPreviewIcon | null>;
 };

@@ -9768,6 +9768,13 @@
             "placeholders": []
         },
         {
+            "key": "grids.picker.clearFilters",
+            "namespace": "grids",
+            "source_text": "Clear filters",
+            "description": "Button in the picker that turns off every filter toggle (rarity, class and so on) of the current type tab.",
+            "placeholders": []
+        },
+        {
             "key": "grids.picker.description",
             "namespace": "grids",
             "source_text": "Choose an operator, skin, event or anything else for this cell.",
@@ -9777,8 +9784,8 @@
         {
             "key": "grids.picker.empty",
             "namespace": "grids",
-            "source_text": "Nothing matches your search.",
-            "description": "Shown in the picker when the search leaves nothing.",
+            "source_text": "Nothing matches your search and filters.",
+            "description": "Shown in the picker when the search and the filter toggles leave nothing.",
             "placeholders": []
         },
         {
@@ -12201,6 +12208,20 @@
             "namespace": "meta",
             "source_text": "Gacha · My History",
             "description": "Headline on the personal gacha history social card. The separator is a middle dot.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.og.grids.subtitle",
+            "namespace": "meta",
+            "source_text": "Fill a grid with your picks, share it, or start from a template.",
+            "description": "Subtitle on the grid browser social card.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.og.grids.title",
+            "namespace": "meta",
+            "source_text": "Grids",
+            "description": "Headline on the grid browser social card. A grid is a board of labelled cells filled with operators and other picks.",
             "placeholders": []
         },
         {
