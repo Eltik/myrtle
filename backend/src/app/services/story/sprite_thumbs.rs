@@ -4,7 +4,8 @@
 //! disk under `derived/sprite-thumbs/<base>/<variant>.<ext>`.
 //!
 //! Why it exists: the gallery's first page drew 60 cards from 79 full-size
-//! body and face PNGs, 25,715,702 bytes (median 285,851). The tier list's
+//! body and face PNGs, 25,997,666 bytes, against 2,902,478 for the 60 thumbs
+//! (`first_page_thumbs_priced`). The tier list's
 //! `/story-sprite-thumb/{id}` cannot stand in: it crops one default body per
 //! CHARACTER, not per folder and expression.
 //!
@@ -28,6 +29,7 @@ use tokio::sync::Semaphore;
 
 use super::dto::StorySpriteVariant;
 use crate::app::error::ApiError;
+use crate::core::story::assets::served_path;
 
 /// Output height in px; the width follows the plate's aspect.
 pub const THUMB_H: u32 = 320;
@@ -35,7 +37,8 @@ pub const THUMB_H: u32 = 320;
 /// The cache directory under a server's assets root.
 const CACHE_DIR: &str = "derived/sprite-thumbs";
 
-/// Bodies composed at once; each is a 1024 to 1384 px decode plus a resize.
+/// Bodies composed at once; each is a decode of a body 256 to 2,048 px on a
+/// side (1,024 for 8,134 of the 12,107 EN expressions) plus a resize.
 const MAX_CONCURRENT_RENDERS: usize = 2;
 
 /// A cached file older than this is touched on a hit, see the module doc.
@@ -90,11 +93,6 @@ pub fn cache_rel_path(base: &str, key: &str, format: ThumbFormat) -> String {
         variant_file_stem(key),
         format.ext()
     )
-}
-
-/// A wire URL (`/textures/avg/characters/x/avg_x%231.png`) as a path on disk.
-fn source_path(root: &Path, url: &str) -> PathBuf {
-    root.join(url.trim_start_matches('/').replace("%23", "#"))
 }
 
 /// Compose `variant` from its body and face PNGs and scale it to `height`.
@@ -198,12 +196,12 @@ pub async fn ensure(
     variant: &StorySpriteVariant,
 ) -> Result<String, ApiError> {
     let root = PathBuf::from(assets_dir);
-    let body = source_path(&root, &variant.sprite.body_url);
+    let body = served_path(&root, &variant.sprite.body_url);
     let face = variant
         .sprite
         .face_url
         .as_deref()
-        .map(|u| source_path(&root, u));
+        .map(|u| served_path(&root, u));
     let rel = cache_rel_path(base, &variant.key, FORMAT);
     let target = root.join(&rel);
 

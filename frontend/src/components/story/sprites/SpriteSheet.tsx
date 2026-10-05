@@ -11,60 +11,45 @@ import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { StorySpriteDetail } from "#/types/generated/StorySpriteDetail";
+import type { StorySpriteNameDetail } from "#/types/generated/StorySpriteNameDetail";
 import type { StorySpriteVariant } from "#/types/generated/StorySpriteVariant";
 import type { messages } from "./CharactersTab.messages";
 import { useSpriteDetail } from "./data";
-import { CELL_CROP, groupVariants, initialVariant, lineCount, primaryName } from "./gallery";
+import { CELL_CROP, GRID_KEYS, groupVariants, initialVariant, lineCount, primaryName, stepCell } from "./gallery";
 import { NameChip, StrayNames } from "./NameChip";
 import { SpriteFigure } from "./SpriteCard";
-import { downloadSheet } from "./sheetPng";
+import { downloadSheet, readThemeColours } from "./sheetPng";
 import { spriteThumbUrl } from "./thumb";
 
 type SpritesT = TypedT<typeof messages>;
 
-/**
- * The cell an arrow key moves to, read off the LAID-OUT grid rather than a
- * column count: the sheet's groups break rows, so "down" is the nearest cell
- * in the next visual row, by centre distance across.
- */
-export function stepCell(rects: readonly { left: number; top: number; width: number; height: number }[], from: number, key: string): number {
-    const n = rects.length;
-    if (n === 0) return from;
-    if (key === "ArrowRight") return Math.min(n - 1, from + 1);
-    if (key === "ArrowLeft") return Math.max(0, from - 1);
-    if (key === "Home") return 0;
-    if (key === "End") return n - 1;
-    const here = rects[from];
-    if (!here || (key !== "ArrowDown" && key !== "ArrowUp")) return from;
-    const cx = here.left + here.width / 2;
-    const down = key === "ArrowDown";
-    let best = from;
-    let bestRow = Number.POSITIVE_INFINITY;
-    let bestDx = Number.POSITIVE_INFINITY;
-    rects.forEach((r, i) => {
-        const dy = down ? r.top - here.top : here.top - r.top;
-        if (dy <= here.height / 2) return;
-        const dx = Math.abs(r.left + r.width / 2 - cx);
-        if (dy < bestRow - 1 || (Math.abs(dy - bestRow) <= 1 && dx < bestDx)) {
-            bestRow = dy;
-            bestDx = dx;
-            best = i;
-        }
-    });
-    return best;
-}
+/** Placeholder cells while a sheet loads. */
+const SKELETON_CELLS = 8;
 
 /** The sheet itself: identity, the large preview, the expression grid, the names and the stories. */
-export function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): React.ReactElement {
+function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): React.ReactElement {
     const t: SpritesT = useT("story");
     const f = useFormatters();
     const server = useGamedataServer();
     const entry = detail.sprite;
     const name = primaryName(entry);
     const variants = detail.variants;
-    const groups = useMemo(() => groupVariants(variants), [variants]);
-    // The flat order the grid draws in, so an arrow key and a click agree.
+    // Each group with where it starts in the flat order the grid draws in, so
+    // an arrow key and a click agree on a cell's index.
+    const groups = useMemo(() => {
+        let start = 0;
+        return groupVariants(variants).map((g) => {
+            const section = { ...g, start };
+            start += g.variants.length;
+            return section;
+        });
+    }, [variants]);
     const flat = useMemo(() => groups.flatMap((g) => g.variants), [groups]);
+    const nameDetails = useMemo(() => {
+        const byName = new Map<string, StorySpriteNameDetail>();
+        for (const d of detail.names ?? []) if (!byName.has(d.name)) byName.set(d.name, d);
+        return byName;
+    }, [detail.names]);
     const [selected, setSelected] = useState(() => {
         const at = initialVariant(variants, entry.thumb?.key);
         return flat.indexOf(variants[at] as StorySpriteVariant);
@@ -78,7 +63,7 @@ export function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): Reac
 
     const onKeyDown = useCallback(
         (e: React.KeyboardEvent<HTMLDivElement>) => {
-            if (!["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
+            if (!GRID_KEYS.has(e.key)) return;
             const rects = cells.current.map((el) => el?.getBoundingClientRect() ?? { left: 0, top: 0, width: 0, height: 0 });
             const next = stepCell(rects, Math.max(0, selected), e.key);
             e.preventDefault();
@@ -93,11 +78,7 @@ export function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): Reac
         setFailed(false);
         setScaled(false);
         try {
-            // The page's own colours, read off the live theme, so a dark
-            // page saves a dark sheet.
-            const style = getComputedStyle(document.documentElement);
-            const read = (v: string, fallback: string) => style.getPropertyValue(v).trim() || fallback;
-            const result = await downloadSheet({ base: entry.base, title: name, variants: flat, scale: 1, colours: { background: read("--background", "#111"), cell: read("--secondary", "#222"), ink: read("--foreground", "#eee"), muted: read("--muted-foreground", "#999") } });
+            const result = await downloadSheet({ base: entry.base, title: name, variants: flat, colours: readThemeColours() });
             setScaled(result.note === "halfSize");
         } catch {
             setFailed(true);
@@ -106,7 +87,6 @@ export function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): Reac
         }
     }, [entry.base, name, flat]);
 
-    let at = -1;
     return (
         <div className="grid gap-5 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
             <div className="flex min-w-0 flex-col gap-3">
@@ -138,7 +118,7 @@ export function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): Reac
                         <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
                             {entry.names.map((n, i) => (
                                 <li key={n.name}>
-                                    <NameChip name={n.name} count={n.count} primary={i === 0} detail={(detail.names ?? []).find((d) => d.name === n.name)} total={entry.lines} owner={name} />
+                                    <NameChip name={n.name} count={n.count} primary={i === 0} detail={nameDetails.get(n.name)} total={entry.lines} owner={name} />
                                 </li>
                             ))}
                         </ul>
@@ -163,9 +143,8 @@ export function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): Reac
                         <div key={g.body} className="flex flex-col gap-1.5">
                             {groups.length > 1 ? <span className="font-mono text-[10.5px] text-muted-foreground">{t("sprites.sheet.body", { body: g.body })}</span> : null}
                             <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-5 lg:grid-cols-6">
-                                {g.variants.map((v) => {
-                                    at += 1;
-                                    const i = at;
+                                {g.variants.map((v, j) => {
+                                    const i = g.start + j;
                                     const on = i === selected;
                                     return (
                                         <button
@@ -212,8 +191,8 @@ export function SpriteSheetBody({ detail }: { detail: StorySpriteDetail }): Reac
     );
 }
 
-/** Loading, the 404 and the sheet, for the dialog and the page alike. */
-export function SpriteSheetState({ base }: { base: string }): React.ReactElement {
+/** Loading, the 404 and the sheet, for the dialog and the bottom sheet alike. */
+function SpriteSheetState({ base }: { base: string }): React.ReactElement {
     const t: SpritesT = useT("story");
     const q = useSpriteDetail(base);
     if (q.isLoading) {
@@ -221,7 +200,8 @@ export function SpriteSheetState({ base }: { base: string }): React.ReactElement
             <output className="grid gap-5 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]" aria-label={t("sprites.sheet.loading")}>
                 <Skeleton className="aspect-square w-full rounded-xl" />
                 <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-6">
-                    {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+                    {Array.from({ length: SKELETON_CELLS }, (_, i) => (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: a placeholder has no identity beyond its position
                         <Skeleton key={i} className="aspect-square w-full rounded-[9px]" />
                     ))}
                 </div>
@@ -233,8 +213,8 @@ export function SpriteSheetState({ base }: { base: string }): React.ReactElement
     return <SpriteSheetBody key={q.data.sprite.base} detail={q.data} />;
 }
 
-/** The title row the dialog and the page share: the primary name, then the folder id. */
-export function SheetTitleText({ name, base }: { name: string; base: string }): React.ReactElement {
+/** The title row: the primary name, then the folder id. */
+function SheetTitleText({ name, base }: { name: string; base: string }): React.ReactElement {
     return (
         <span className="flex min-w-0 flex-col">
             <span className="truncate font-sans font-semibold text-[16px] text-foreground">{name}</span>

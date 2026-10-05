@@ -9,16 +9,18 @@
 
 mod common;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Instant;
 
 use backend::app::services::story::{
-    StorySpriteEntry, StorySpriteKind, build_index, build_sprite_index,
+    StoryIndexCache, StorySpriteEntry, StorySpriteKind, build_index, build_sprite_index,
 };
 use backend::core::gamedata::assets::AssetIndex;
+use backend::core::gamedata::types::GameData;
 use backend::core::story::StoryAssetIndex;
+use backend::core::story::assets::served_path;
 
 fn assets_dir() -> PathBuf {
     let dir = std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output/en".into());
@@ -28,6 +30,36 @@ fn assets_dir() -> PathBuf {
 fn tree_present(dir: &Path) -> bool {
     dir.join("gamedata/excel/story_review_table.json").exists()
         && dir.join("textures/avg/characters").is_dir()
+}
+
+/// The EN tree loaded the way the server loads it.
+struct Tree {
+    dir: PathBuf,
+    gd: &'static GameData,
+    library: StoryIndexCache,
+    assets: Arc<StoryAssetIndex>,
+}
+
+/// The tree, or `None` (after saying so) when it is not on disk.
+fn load_tree() -> Option<Tree> {
+    let dir = assets_dir();
+    if !tree_present(&dir) {
+        eprintln!(
+            "story_sprites_real_data_test: no EN story tree with sprites at {}, skipping",
+            dir.display()
+        );
+        return None;
+    }
+    let gd = common::load_game_data();
+    let asset_index = Arc::new(AssetIndex::build(&dir));
+    let library = build_index(gd, &asset_index, &dir);
+    let assets = StoryAssetIndex::for_dir(&dir, &asset_index);
+    Some(Tree {
+        dir,
+        gd,
+        library,
+        assets,
+    })
 }
 
 fn top(e: &StorySpriteEntry) -> Option<&str> {
@@ -57,18 +89,15 @@ fn row(e: &StorySpriteEntry) -> String {
 
 #[test]
 fn the_gallery_names_every_folder_by_the_lit_slot_rule() {
-    let dir = assets_dir();
-    if !tree_present(&dir) {
-        eprintln!(
-            "story_sprites_real_data_test: no EN story tree with sprites at {}, skipping",
-            dir.display()
-        );
+    let Some(Tree {
+        dir,
+        gd,
+        library,
+        assets,
+    }) = load_tree()
+    else {
         return;
-    }
-    let gd = common::load_game_data();
-    let asset_index = Arc::new(AssetIndex::build(&dir));
-    let library = build_index(gd, &asset_index, &dir);
-    let assets = StoryAssetIndex::for_dir(&dir, &asset_index);
+    };
 
     let started = Instant::now();
     let (index, details, census) = build_sprite_index(gd, &library, &assets, &dir);
@@ -208,23 +237,24 @@ fn the_gallery_names_every_folder_by_the_lit_slot_rule() {
     assert_eq!(top(amiya), Some("Amiya"), "{}", row(amiya));
 
     // The alias threshold (3 lines AND 2% of the folder's named lines).
-    let names = |e: &StorySpriteEntry| e.names.iter().map(|n| n.name.clone()).collect::<Vec<_>>();
-    assert_eq!(names(nine), ["Nine"], "{}", row(nine));
+    let name_list =
+        |e: &StorySpriteEntry| e.names.iter().map(|n| n.name.clone()).collect::<Vec<_>>();
+    assert_eq!(name_list(nine), ["Nine"], "{}", row(nine));
     let jie_row = by["avg_npc_2125_1"];
     assert!(
-        names(jie_row).contains(&"Minister of Works".to_owned()),
+        name_list(jie_row).contains(&"Minister of Works".to_owned()),
         "{}",
         row(jie_row)
     );
     assert!(
-        !names(jie_row).contains(&"Chun".to_owned()),
+        !name_list(jie_row).contains(&"Chun".to_owned()),
         "{}",
         row(jie_row)
     );
     // The sheet's per-name detail: the kept names, in order, with examples.
     let jie_sheet = &details["avg_npc_2125_1"];
     let jie_names: Vec<&str> = jie_sheet.names.iter().map(|n| n.name.as_str()).collect();
-    assert_eq!(jie_names, names(jie_row));
+    assert_eq!(jie_names, name_list(jie_row));
     for n in &jie_sheet.names {
         println!(
             "Jie as {:?}: {} lines over {} stories (+{} more)",
@@ -242,7 +272,7 @@ fn the_gallery_names_every_folder_by_the_lit_slot_rule() {
     }
     // The stray names ride the sheet, most lines first, with the same detail.
     let amiya_sheet = &details["char_002_amiya_1"];
-    assert!(amiya_sheet.names.len() == amiya.names.len());
+    assert_eq!(amiya_sheet.names.len(), amiya.names.len());
     assert!(!amiya_sheet.stray_names.is_empty());
     let stray_total: f64 = amiya_sheet.stray_names.iter().map(|n| n.count).sum();
     assert!(
@@ -279,7 +309,7 @@ fn the_gallery_names_every_folder_by_the_lit_slot_rule() {
     assert!(minister.stories.len() <= 5);
     let kalts = by["char_003_kalts_1"];
     assert_eq!(
-        names(kalts),
+        name_list(kalts),
         ["Kal'tsit"],
         "{} noise {}",
         row(kalts),
@@ -292,7 +322,7 @@ fn the_gallery_names_every_folder_by_the_lit_slot_rule() {
     // Every expression of every sheet resolves, and a sheet lists each pair
     // of files once.
     for d in details.values() {
-        let mut seen = std::collections::HashSet::new();
+        let mut seen = HashSet::new();
         for v in &d.variants {
             assert!(
                 seen.insert((&v.sprite.body_url, &v.sprite.face_url)),
@@ -315,18 +345,18 @@ fn plates_over_the_stage_priced_both_ways() {
     use backend::core::story::speakers::{PlateRule, SpeakerRules, attribute_speakers_with};
     use backend::core::story::{load_script, parser};
 
-    let dir = assets_dir();
-    if !tree_present(&dir) {
-        eprintln!("story_sprites_real_data_test: no EN tree, skipping");
+    let Some(Tree {
+        dir,
+        library,
+        assets,
+        ..
+    }) = load_tree()
+    else {
         return;
-    }
-    let gd = common::load_game_data();
-    let asset_index = Arc::new(AssetIndex::build(&dir));
-    let library = build_index(gd, &asset_index, &dir);
-    let assets = StoryAssetIndex::for_dir(&dir, &asset_index);
+    };
 
     let mut scripts = Vec::new();
-    let mut seen = std::collections::HashSet::new();
+    let mut seen = HashSet::new();
     for g in &library.index.groups {
         for s in &g.stories {
             if let Some(r) = library.lookup.get(&s.id)
@@ -421,15 +451,15 @@ fn plates_over_the_stage_priced_both_ways() {
 fn first_page_thumbs_priced() {
     use backend::app::services::story::sprite_thumbs::{THUMB_H, ThumbFormat, compose, encode};
 
-    let dir = assets_dir();
-    if !tree_present(&dir) {
-        eprintln!("story_sprites_real_data_test: no EN tree, skipping");
+    let Some(Tree {
+        dir,
+        gd,
+        library,
+        assets,
+    }) = load_tree()
+    else {
         return;
-    }
-    let gd = common::load_game_data();
-    let asset_index = Arc::new(AssetIndex::build(&dir));
-    let library = build_index(gd, &asset_index, &dir);
-    let assets = StoryAssetIndex::for_dir(&dir, &asset_index);
+    };
     let (index, _, census) = build_sprite_index(gd, &library, &assets, &dir);
     println!(
         "hidden folders: {} {:?}",
@@ -449,8 +479,8 @@ fn first_page_thumbs_priced() {
             .then_with(|| name(a).cmp(&name(b)))
     });
     page.truncate(60);
-    let path = |url: &str| dir.join(url.trim_start_matches('/').replace("%23", "#"));
-    let mut before_files = std::collections::HashSet::new();
+    let path = |url: &str| served_path(&dir, url);
+    let mut before_files = HashSet::new();
     let (mut webp_bytes, mut webp20, mut png20) = (0_usize, 0_usize, 0_usize);
     let mut compose_ms = 0_u128;
     let mut webp_ms = 0_u128;

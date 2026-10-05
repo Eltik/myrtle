@@ -438,6 +438,13 @@ fn encode_path_piece(s: &str) -> String {
     s.replace('#', "%23")
 }
 
+/// A served URL (`/textures/avg/characters/x/avg_x%231.png`) back to its file
+/// under `assets_dir`, undoing [`encode_path_piece`].
+#[must_use]
+pub fn served_path(assets_dir: &Path, url: &str) -> PathBuf {
+    assets_dir.join(url.trim_start_matches('/').replace("%23", "#"))
+}
+
 /// Lowercase stem with the unpacker's doubled extensions cut (`1$1.png.png`,
 /// `1$1..png` both key as `1$1`).
 fn normalized_stem(file_name: &str) -> String {
@@ -458,6 +465,12 @@ fn normalized_stem(file_name: &str) -> String {
 /// alpha planes the served PNGs already carry, never a body or a face.
 fn is_alpha_companion(file_name: &str) -> bool {
     file_name.contains("[alpha]") || normalized_stem(file_name) == "alpha"
+}
+
+/// The hub list position a 1-based `#N` face index names, as `_TryParseIndex`
+/// decrements it; `None` for `0` or a face that is not a number.
+fn hub_slot(face: &str) -> Option<usize> {
+    face.parse::<usize>().ok()?.checked_sub(1)
 }
 
 /// Leading zeros trimmed, as the client reads an index (`"01"` -> `"1"`); `"0"` stays `"0"`.
@@ -1259,10 +1272,10 @@ impl StoryAssetIndex {
         // group's sprite list, and a legacy hub lists whole sprites in an
         // order of its own: `avg_npc_043_1` (Nine) lists [`_2`, `_1`], so `#2`
         // is `avg_npc_043_1`, her lit art, used 342 times, and `#1` the dark
-        // silhouette used twice at her reveals; the suffix rule served the
-        // silhouette everywhere (2026-10-05). 41 of the 233 multi-sprite legacy
-        // hubs order differently from their suffixes (Shwaz, Grani, Homura,
-        // Skadi, Meteor, W among them). Only a SENTINEL group lists whole
+        // silhouette used twice at her reveals, which a suffix rule would
+        // serve everywhere. 41 of the 233 multi-sprite legacy hubs order
+        // differently from their suffixes (Shwaz, Grani, Homura, Skadi,
+        // Meteor, W among them). Only a SENTINEL group lists whole
         // sprites; a group with a real `facePos` lists face patches (`1`..`6`
         // beside one body), which must never be picked as the body. A hub
         // with several groups, one sprite, or an index past its list falls
@@ -1280,27 +1293,24 @@ impl StoryAssetIndex {
                         .all(|s| !s.name.bytes().all(|b| b.is_ascii_digit()))
             })
             .and_then(|g| {
-                let n = face.parse::<usize>().ok()?.checked_sub(1)?;
-                folder.files.get(g.sprites.get(n)?.name.as_str())
+                folder
+                    .files
+                    .get(g.sprites.get(hub_slot(face)?)?.name.as_str())
             });
         // 2b. THE HUB'S LISTED SPRITE IS THE LAST RESORT. `char_2006_weiywfmzuki_1`
         // holds one file, `char_2006_fmzuki_1.png`, which its hub names and no
-        // file-name rule spells; the scripts call the folder bare 259 times in
-        // 14 files and the reader drew nothing (2026-10-05). After the rules,
-        // the `#N`-indexed hub sprite, else the hub's first, whichever exists.
+        // file-name rule spells, and the scripts call the folder bare 259
+        // times in 14 files. After the rules: the `#N`-indexed hub sprite,
+        // else the hub's first, whichever exists. Over every folder the
+        // scripts use it rescues exactly that one.
         // `STORY_NO_HUB_FALLBACK=1` restores the rules alone.
         let hub_fallback = || {
             if std::env::var_os("STORY_NO_HUB_FALLBACK").is_some() {
                 return None;
             }
             let g = folder.hub.first()?;
-            let n = face
-                .parse::<usize>()
-                .ok()
-                .and_then(|n| n.checked_sub(1))
-                .unwrap_or(0);
             g.sprites
-                .get(n)
+                .get(hub_slot(face).unwrap_or(0))
                 .into_iter()
                 .chain(g.sprites.first())
                 .find_map(|s| folder.files.get(s.name.as_str()))

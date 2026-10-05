@@ -328,7 +328,7 @@ function build(script: StoryScript, options: EngineOptions, total: number): Engi
             // backlog, the auto-play timer and the text box all read one string.
             const resolved: Halt = halt.kind === "line" ? { ...halt, text: substitute(halt.text, nickname) } : halt;
             const line = halt.kind === "end" ? undefined : commands[pc - 1]?.line;
-            return line === undefined ? { halt: resolved, timeline, effects, haltIndex } : { halt: resolved, timeline, effects, haltIndex, line };
+            return { halt: resolved, timeline, effects, haltIndex, ...(line === undefined ? {} : { line }) };
         };
 
         if (atEnd) return finish({ kind: "end" });

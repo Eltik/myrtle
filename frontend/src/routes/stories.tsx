@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LIBRARY_TABS, type LibraryTab, StoryLibrary } from "#/components/story/library/StoryLibrary";
+import { isLibraryTab, type LibraryTab, StoryLibrary } from "#/components/story/library/StoryLibrary";
 import { storyIndexQueryOptions, storySpriteQueryOptions } from "#/lib/api/story";
 import { metaT } from "#/lib/meta";
 import { defaultOgURL } from "#/lib/og";
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/stories")({
     // rather than falsy, and an unknown tab value is dropped.
     validateSearch: (search: Record<string, unknown>): { tab?: LibraryTab; sprite?: string } => {
         const out: { tab?: LibraryTab; sprite?: string } = {};
-        if (typeof search.tab === "string" && (LIBRARY_TABS as readonly string[]).includes(search.tab) && search.tab !== "browse") out.tab = search.tab as LibraryTab;
+        if (isLibraryTab(search.tab) && search.tab !== "browse") out.tab = search.tab;
         if (typeof search.sprite === "string" && search.sprite.trim() !== "") out.sprite = search.sprite.trim();
         return out;
     },

@@ -17,6 +17,8 @@ import { SpriteSheetDialog } from "./SpriteSheet";
 type SpritesT = TypedT<typeof messages>;
 
 const GRID = "grid grid-cols-2 gap-2.5 min-[480px]:grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6";
+/** Placeholder cards while the list loads: two rows at the widest grid. */
+const SKELETON_CARDS = 12;
 
 /**
  * The library's CHARACTERS tab: every story sprite folder, searchable by the
@@ -129,6 +131,7 @@ function Segmented<T extends string>({ label, options, value, onChange, render }
     );
 }
 
+/** The grid's place: the unavailable, failed, loading and empty states, else the grid itself. */
 function GalleryBody({ loading, failed, unavailable, empty, children }: { loading: boolean; failed: boolean; unavailable: boolean; empty: boolean; children: React.ReactNode }): React.ReactElement {
     const t: SpritesT = useT("story");
     if (unavailable) {
@@ -143,7 +146,7 @@ function GalleryBody({ loading, failed, unavailable, empty, children }: { loadin
     if (loading) {
         return (
             <output className={GRID} aria-label={t("sprites.loading")}>
-                {Array.from({ length: 12 }, (_, i) => (
+                {Array.from({ length: SKELETON_CARDS }, (_, i) => (
                     // biome-ignore lint/suspicious/noArrayIndexKey: a placeholder has no identity beyond its position
                     <Skeleton key={i} className="aspect-3/4 w-full rounded-xl" />
                 ))}

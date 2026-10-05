@@ -340,12 +340,7 @@ export function useStoryPlayer({ script, storyId, nickname, audio, initialHalt, 
         [apply, engine, halt, haltIndex],
     );
 
-    /**
-     * One probe walk of the script, for the scrubber and the backlog jumps.
-     * A decision takes its FIRST option, which is the same default
-     * `replayTo` uses when a walk reaches a decision the reader has not
-     * answered, so the two agree on every halt ordinal.
-     */
+    // The scrubber's, the backlog jumps' and `?line=`'s halts, see `summarizeHalts`.
     const haltSummaries = useMemo<HaltSummary[]>(() => summarizeHalts(script, nickname, videos, cutsceneLabel), [script, nickname, videos, cutsceneLabel]);
 
     const jumpTo = useCallback(
@@ -448,11 +443,12 @@ export function summarizeHalts(script: StoryScript, nickname: string, videos: bo
     let r = probe.step();
     // `totalHalts` is the ceiling the engine already counts; the guard is a
     // belt on a walk that a malformed predicate could otherwise not end.
+    const plain = (text: string) => plainStoryText(renderLine(text, nickname));
     for (let guard = 0; r.halt.kind !== "end" && guard <= probe.totalHalts + 1; guard++) {
-        if (r.halt.kind === "line") out.push({ haltIndex: r.haltIndex, kind: "line", speaker: r.halt.speaker, preview: firstWords(plainStoryText(renderLine(r.halt.text, nickname)), 60), line: r.line });
+        if (r.halt.kind === "line") out.push({ haltIndex: r.haltIndex, kind: "line", speaker: r.halt.speaker, preview: firstWords(plain(r.halt.text), 60), line: r.line });
         if (r.halt.kind === "video") out.push({ haltIndex: r.haltIndex, kind: "video", preview: cutsceneLabel, line: r.line });
         if (r.halt.kind === "decision") {
-            out.push({ haltIndex: r.haltIndex, kind: "decision", preview: firstWords(plainStoryText(renderLine(r.halt.options[0] ?? "", nickname))), line: r.line });
+            out.push({ haltIndex: r.haltIndex, kind: "decision", preview: firstWords(plain(r.halt.options[0] ?? "")), line: r.line });
             r = probe.step(r.halt.values[0]);
         } else {
             r = probe.step();

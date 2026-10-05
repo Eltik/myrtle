@@ -1,10 +1,12 @@
 //! `GET /story/index`, `GET /story/{story_id}`,
 //! `GET /story/group/{group_id}/illustrations`,
 //! `GET /story/group/{group_id}/archive`, `GET /story/community`,
-//! `GET /story/sprites` and `GET /story/sprites/{base}`: the Archives
-//! library, one parsed script, one group's art, one group's archive, what the
-//! community has read, and the character gallery with one folder's
-//! expression sheet. See `docs/story-reader.md` for the wire contract.
+//! `GET /story/sprites`, `GET /story/sprites/{base}` and
+//! `GET /story/sprites/{base}/thumb/{variant}`: the Archives library, one
+//! parsed script, one group's art, one group's archive, what the community
+//! has read, and the character gallery with one folder's expression sheet and
+//! one expression's thumbnail. See `docs/story-reader.md` for the wire
+//! contract.
 
 use axum::{
     Json,
@@ -13,6 +15,7 @@ use axum::{
     response::Response,
 };
 
+use crate::app::routes::assets::serve_file;
 use crate::app::services::story::{
     StoryArchive, StoryIllustrations, StoryIndex, StorySpriteDetail, StorySpriteIndex,
     get_group_archive, get_group_illustrations, get_story, get_story_index, get_story_sprite,
@@ -438,7 +441,7 @@ pub async fn sprite_variant_thumb(
     Path((base, variant)): Path<(String, String)>,
 ) -> Result<Response, ApiError> {
     let (dir, rel) = get_variant_thumb(&state, state.default_server, &base, &variant).await?;
-    crate::app::routes::assets::serve_file(&dir, &rel, &headers).await
+    serve_file(&dir, &rel, &headers).await
 }
 
 /// `GET /{server}/story/sprites/{base}/thumb/{variant}` - the same from
@@ -470,5 +473,5 @@ pub async fn sprite_variant_thumb_srv(
     Path((server, base, variant)): Path<(Server, String, String)>,
 ) -> Result<Response, ApiError> {
     let (dir, rel) = get_variant_thumb(&state, server, &base, &variant).await?;
-    crate::app::routes::assets::serve_file(&dir, &rel, &headers).await
+    serve_file(&dir, &rel, &headers).await
 }

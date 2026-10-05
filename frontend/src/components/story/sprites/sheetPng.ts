@@ -1,6 +1,7 @@
 /**
  * "Download sheet": every expression of one folder on ONE canvas at the
- * plate's own resolution (the 1024 px bodies, 1280 for the large ones), each
+ * plate's own resolution (a body is 256 to 2,048 px on a side over the 12,107
+ * EN expressions, 1,024 for 8,134 of them), each
  * the body plate with its face patch composited by the same math as `Body`
  * (`facePos / bodySize` of the drawn plate), captioned with its `#N$M` key,
  * under the character's name and folder, in the page's own colours.
@@ -13,13 +14,20 @@
 import { asset } from "#/components/operators/detail/impl/assets";
 import { downloadBlob, loadImage } from "#/lib/utils";
 import type { StorySpriteVariant } from "#/types/generated/StorySpriteVariant";
-import { type ISheetLayout, sheetLayout } from "./gallery";
+import { type ISheetLayout, SHEET_METRICS, sheetLayout } from "./gallery";
 
 export interface ISheetColours {
     background: string;
     cell: string;
     ink: string;
     muted: string;
+}
+
+/** The page's own colours, read off the live theme, so a dark page saves a dark sheet. */
+export function readThemeColours(): ISheetColours {
+    const style = getComputedStyle(document.documentElement);
+    const read = (v: string, fallback: string) => style.getPropertyValue(v).trim() || fallback;
+    return { background: read("--background", "#111"), cell: read("--secondary", "#222"), ink: read("--foreground", "#eee"), muted: read("--muted-foreground", "#999") };
 }
 
 export interface ISheetResult {
@@ -42,13 +50,14 @@ function drawPlate(ctx: CanvasRenderingContext2D, variant: StorySpriteVariant, b
 }
 
 /**
- * Compose and save the sheet at `scale` (1 full, 0.5 half). Resolves with the
- * canvas size, the PNG's bytes and the wall time once the download has been
- * handed to the browser; rejects if any body fails to load.
+ * Compose and save the sheet at full size, or smaller only when the canvas
+ * limits force it (`note`). Resolves with the canvas size, the PNG's bytes and
+ * the wall time once the download has been handed to the browser; rejects if
+ * any body fails to load.
  */
-export async function downloadSheet(opts: { base: string; title: string; variants: readonly StorySpriteVariant[]; scale: number; colours: ISheetColours }): Promise<ISheetResult> {
+export async function downloadSheet(opts: { base: string; title: string; variants: readonly StorySpriteVariant[]; colours: ISheetColours }): Promise<ISheetResult> {
     const started = performance.now();
-    const { base, title, variants, scale, colours } = opts;
+    const { base, title, variants, colours } = opts;
     const images = await Promise.all(
         variants.map(async (v) => {
             const body = await loadImage(asset(v.bodyUrl), { crossOrigin: true });
@@ -57,7 +66,7 @@ export async function downloadSheet(opts: { base: string; title: string; variant
         }),
     );
     const plate = Math.max(1, ...images.map((i) => Math.max(i.body.naturalWidth, i.body.naturalHeight)));
-    const layout = sheetLayout(variants.length, plate, scale);
+    const layout = sheetLayout(variants.length, plate, 1);
     const canvas = document.createElement("canvas");
     canvas.width = layout.width;
     canvas.height = layout.height;
@@ -66,13 +75,13 @@ export async function downloadSheet(opts: { base: string; title: string; variant
     ctx.imageSmoothingQuality = "high";
     ctx.fillStyle = colours.background;
     ctx.fillRect(0, 0, layout.width, layout.height);
-    const s = layout.scale;
+    const px = (measure: number) => Math.round(measure * layout.scale);
     ctx.textBaseline = "alphabetic";
     ctx.fillStyle = colours.ink;
-    ctx.font = `600 ${Math.round(76 * s)}px system-ui, sans-serif`;
+    ctx.font = `600 ${px(SHEET_METRICS.titleFont)}px system-ui, sans-serif`;
     ctx.fillText(title, layout.gap, layout.head * 0.55);
     ctx.fillStyle = colours.muted;
-    ctx.font = `${Math.round(34 * s)}px ui-monospace, monospace`;
+    ctx.font = `${px(SHEET_METRICS.folderFont)}px ui-monospace, monospace`;
     ctx.fillText(base, layout.gap, layout.head * 0.88);
     variants.forEach((v, i) => {
         const img = images[i];
@@ -85,11 +94,11 @@ export async function downloadSheet(opts: { base: string; title: string; variant
         ctx.fillRect(x, y, layout.cell, layout.cell);
         drawPlate(ctx, v, img.body, img.face, x, y, layout.cell);
         ctx.fillStyle = colours.muted;
-        ctx.font = `${Math.round(44 * s)}px ui-monospace, monospace`;
-        ctx.fillText(v.key, x + Math.round(4 * s), y + layout.cell + layout.label * 0.72);
+        ctx.font = `${px(SHEET_METRICS.keyFont)}px ui-monospace, monospace`;
+        ctx.fillText(v.key, x + px(SHEET_METRICS.keyInset), y + layout.cell + layout.label * 0.72);
     });
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
     if (!blob) throw new Error("canvas.toBlob returned null");
-    downloadBlob(blob, `${base}-expressions${scale < 1 ? "-half" : ""}.png`);
+    downloadBlob(blob, `${base}-expressions.png`);
     return { width: layout.width, height: layout.height, bytes: blob.size, ms: Math.round(performance.now() - started), note: layout.note };
 }

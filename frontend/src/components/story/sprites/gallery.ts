@@ -1,7 +1,8 @@
 /**
  * The CHARACTER GALLERY's pure half: who a card says it is, what a search
  * matches it by, how the grid orders it, how a sheet groups its expressions,
- * and where the crop sits on a body plate. Nothing here touches the DOM, so
+ * where the crop sits on a body plate, how the download is laid out and how
+ * an arrow key moves through the sheet. Nothing here touches the DOM, so
  * every rule is tested against hand-built entries (`gallery.test.ts`).
  *
  * The names come from the backend's census (`GET /story/sprites`), which
@@ -9,7 +10,7 @@
  * `docs/story-reader.md`, "Character gallery".
  */
 
-import { compactForSearch, type IPreparedQuery, type IPreparedTarget, type IScoreTarget, prepareQuery, prepareTarget, scorePrepared } from "#/lib/search/fuzzy";
+import { type IPreparedQuery, type IPreparedTarget, type IScoreTarget, prepareQuery, prepareTarget, scorePrepared } from "#/lib/search/fuzzy";
 import type { StorySpriteEntry } from "#/types/generated/StorySpriteEntry";
 import type { StorySpriteVariant } from "#/types/generated/StorySpriteVariant";
 
@@ -123,12 +124,6 @@ export function bodyIndexOf(key: string): number {
     return Number.isFinite(n) && n >= 1 ? n : 1;
 }
 
-/** The `#N` face a variant key addresses, or null for an alias key. */
-export function faceIndexOf(key: string): number | null {
-    const m = /#(\d+)/.exec(key);
-    return m ? Number(m[1]) : null;
-}
-
 export interface IVariantGroup {
     body: number;
     variants: StorySpriteVariant[];
@@ -159,14 +154,25 @@ export function initialVariant(variants: readonly StorySpriteVariant[], thumbKey
     return best >= 0 ? best : 0;
 }
 
+/** A point on the body plate, as fractions of its width and height. */
+export interface IPlatePoint {
+    x: number;
+    y: number;
+}
+
 /**
- * Where the face sits on the body plate, as fractions of the plate. Read off
- * `facePos` over `bodySize` (the texture's own pixels, never the 1024 canvas
- * plate). A whole-body or legacy sprite carries no face box, and there the
- * crop falls back to the head height the thumbnail service measured as the
- * median over the EN face-carrying hubs: 0.5 across, about 0.3 down.
+ * The face centre a sprite with no face box is read at: the head height the
+ * thumbnail service measured as the median over the EN face-carrying hubs,
+ * 0.5 across and about 0.3 down.
  */
-export function faceCentre(sprite: Pick<StorySpriteVariant, "facePos" | "bodySize">): { x: number; y: number; measured: boolean } {
+const GUESSED_FACE: IPlatePoint = { x: 0.5, y: 0.3 };
+
+/**
+ * Where the face sits on the body plate. Read off `facePos` over `bodySize`
+ * (the texture's own pixels, never the 1024 canvas plate). A whole-body or
+ * legacy sprite carries no face box and falls back to {@link GUESSED_FACE}.
+ */
+export function faceCentre(sprite: Pick<StorySpriteVariant, "facePos" | "bodySize">): IPlatePoint & { measured: boolean } {
     const p = sprite.facePos;
     const s = sprite.bodySize;
     if (p && s && s.w > 0 && s.h > 0 && p.w > 0 && p.h > 0) {
@@ -174,7 +180,18 @@ export function faceCentre(sprite: Pick<StorySpriteVariant, "facePos" | "bodySiz
         const y = (p.y + p.h / 2) / s.h;
         if (x >= 0 && x <= 1 && y >= 0 && y <= 1) return { x, y, measured: true };
     }
-    return { x: 0.5, y: 0.3, measured: false };
+    return { ...GUESSED_FACE, measured: false };
+}
+
+/**
+ * A head-and-shoulders window onto a square body plate. `zoom` is the plate's
+ * side over the frame's width; `aspect` the frame's height over its width;
+ * the face centre lands `anchorY` of the way down the frame.
+ */
+export interface ICropWindow {
+    zoom: number;
+    aspect: number;
+    anchorY: number;
 }
 
 export interface ICrop {
@@ -186,15 +203,9 @@ export interface ICrop {
     top: number;
 }
 
-/**
- * A head-and-shoulders window onto a square body plate.
- *
- * `zoom` is the plate's side over the frame's width; `aspect` the frame's
- * height over its width; the face centre lands `anchorY` of the way down the
- * frame and centred across it, clamped so the plate always covers the frame.
- */
-export function cropFor(face: { x: number; y: number }, opts: { zoom: number; aspect: number; anchorY: number }): ICrop {
-    const { zoom, aspect, anchorY } = opts;
+/** Place the plate so `face` sits at the window's anchor, centred across, clamped so the plate always covers the frame. */
+export function cropFor(face: IPlatePoint, crop: ICropWindow): ICrop {
+    const { zoom, aspect, anchorY } = crop;
     const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
     // In units of the frame's width.
     const left = clamp(0.5 - face.x * zoom, 1 - zoom, 0);
@@ -202,25 +213,27 @@ export function cropFor(face: { x: number; y: number }, opts: { zoom: number; as
     return { size: zoom * 100, left: left * 100, top: (topW / aspect) * 100 };
 }
 
+/** The most a crop zooms around a face it had to guess. */
+export const GUESSED_ZOOM = 1.6;
+/** The lowest a guessed face sits in its window. */
+const GUESSED_ANCHOR_Y = 0.36;
+
 /**
  * The window for one expression. A face the hub does not place is a GUESS, so
  * the zoom is held to {@link GUESSED_ZOOM}: a legacy whole sprite (Nine's
  * `avg_npc_043_1`) draws her head at 0.15 of the plate, and the 3.6x sheet
  * window around a guessed 0.3 framed her shoulder.
  */
-export function cropForVariant(sprite: Pick<StorySpriteVariant, "facePos" | "bodySize">, crop: { zoom: number; aspect: number; anchorY: number }): ICrop {
+export function cropForVariant(sprite: Pick<StorySpriteVariant, "facePos" | "bodySize">, crop: ICropWindow): ICrop {
     const face = faceCentre(sprite);
     if (face.measured) return cropFor(face, crop);
-    return cropFor({ x: 0.5, y: 0.3 }, { ...crop, zoom: Math.min(crop.zoom, GUESSED_ZOOM), anchorY: Math.min(crop.anchorY, 0.36) });
+    return cropFor(GUESSED_FACE, { ...crop, zoom: Math.min(crop.zoom, GUESSED_ZOOM), anchorY: Math.min(crop.anchorY, GUESSED_ANCHOR_Y) });
 }
 
-/** The most a crop zooms around a face it had to guess. */
-export const GUESSED_ZOOM = 1.6;
-
 /** The card's window: a 3:4 frame, the plate at 1.7x the frame's width, the face at 34% of its height. */
-export const CARD_CROP = { zoom: 1.7, aspect: 4 / 3, anchorY: 0.34 } as const;
+export const CARD_CROP = { zoom: 1.7, aspect: 4 / 3, anchorY: 0.34 } as const satisfies ICropWindow;
 /** The sheet cell's window: square, tighter on the face, which is what an expression sheet compares. */
-export const CELL_CROP = { zoom: 3.6, aspect: 1, anchorY: 0.45 } as const;
+export const CELL_CROP = { zoom: 3.6, aspect: 1, anchorY: 0.45 } as const satisfies ICropWindow;
 
 /**
  * A weighted line count for display, as a whole number: the half lines of a
@@ -230,15 +243,32 @@ export function lineCount(n: number): number {
     return Math.round(n);
 }
 
-/** Normalise a folder name for a URL comparison (`AVG_NPC_043_1` is `avg_npc_043_1`). */
-export function sameBase(a: string, b: string): boolean {
-    return compactForSearch(a) === compactForSearch(b);
-}
-
 /** The largest canvas side every current engine draws (Chrome, Firefox, Safari agree on 16,384 px for a 2D canvas). */
 export const CANVAS_MAX_SIDE = 16_384;
 /** The largest canvas area Chrome allocates, ~268 MP. */
 export const CANVAS_MAX_AREA = 268_435_456;
+
+/**
+ * The downloaded sheet's measures in px at full scale. Every one scales with
+ * the layout's `scale`, so a caption reads at the same proportion on a
+ * half-size sheet.
+ */
+export const SHEET_METRICS = {
+    /** The caption band under each cell. */
+    label: 76,
+    /** The title block above the grid. */
+    head: 170,
+    gap: 32,
+    titleFont: 76,
+    folderFont: 34,
+    keyFont: 44,
+    /** The caption's inset from the cell's left edge. */
+    keyInset: 4,
+} as const;
+/** The sheet is near square, ceil(sqrt(count)) columns, up to this many. */
+const SHEET_MAX_COLS = 6;
+/** The scale the halving fallback stops at. */
+const SHEET_MIN_SCALE = 0.05;
 
 export interface ISheetLayout {
     cols: number;
@@ -258,9 +288,10 @@ export interface ISheetLayout {
 
 /**
  * The downloaded sheet's geometry at the PLATE's own size. `plate` is the
- * largest body texture side in px, `scale` 1 (full) or 0.5 (half); every
- * other measure scales with it so the caption reads at the same proportion.
- * Columns are ceil(sqrt(count)), at most 6, so the sheet is near square.
+ * largest body texture side in px (256 to 2,048 on EN, 1,024 for 8,134 of the
+ * 12,107 expressions), `scale` 1 (full) or 0.5 (half); every
+ * other measure scales with it ({@link SHEET_METRICS}). Columns are
+ * ceil(sqrt(count)), at most {@link SHEET_MAX_COLS}.
  *
  * Past the canvas limits ({@link CANVAS_MAX_SIDE}, {@link CANVAS_MAX_AREA}) it
  * first takes MORE columns (a taller sheet is the usual overflow), then
@@ -269,26 +300,68 @@ export interface ISheetLayout {
 export function sheetLayout(count: number, plate: number, scale: number): ISheetLayout {
     const n = Math.max(1, count);
     const fits = (l: ISheetLayout) => l.width <= CANVAS_MAX_SIDE && l.height <= CANVAS_MAX_SIDE && l.width * l.height <= CANVAS_MAX_AREA;
-    const at = (cols: number, sc: number): ISheetLayout => {
+    const layoutAt = (cols: number, sc: number): ISheetLayout => {
         const cell = Math.round(plate * sc);
-        const label = Math.round(76 * sc);
-        const head = Math.round(170 * sc);
-        const gap = Math.round(32 * sc);
+        const label = Math.round(SHEET_METRICS.label * sc);
+        const head = Math.round(SHEET_METRICS.head * sc);
+        const gap = Math.round(SHEET_METRICS.gap * sc);
         const rows = Math.ceil(n / cols);
         return { cols, rows, width: gap + cols * (cell + gap), height: head + gap + rows * (cell + label + gap), cell, label, head, gap, scale: sc, note: null };
     };
-    const asked = at(Math.min(6, Math.ceil(Math.sqrt(n))), scale);
+    const asked = layoutAt(Math.min(SHEET_MAX_COLS, Math.ceil(Math.sqrt(n))), scale);
     if (fits(asked)) return asked;
     for (let cols = asked.cols + 1; cols <= n; cols++) {
-        const wider = at(cols, scale);
+        const wider = layoutAt(cols, scale);
         if (wider.width > CANVAS_MAX_SIDE) break;
         if (fits(wider)) return { ...wider, note: "moreColumns" };
     }
     let sc = scale;
-    while (sc > 0.05) {
+    while (sc > SHEET_MIN_SCALE) {
         sc /= 2;
-        const smaller = at(asked.cols, sc);
+        const smaller = layoutAt(asked.cols, sc);
         if (fits(smaller)) return { ...smaller, note: "halfSize" };
     }
-    return { ...at(asked.cols, sc), note: "halfSize" };
+    return { ...layoutAt(asked.cols, sc), note: "halfSize" };
+}
+
+export interface ICellRect {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+}
+
+/** The keys the expression grid moves on. */
+export const GRID_KEYS: ReadonlySet<string> = new Set(["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp", "Home", "End"]);
+
+/**
+ * The cell an arrow key moves to, read off the LAID-OUT grid rather than a
+ * column count: the sheet's groups break rows, so "down" is the nearest cell
+ * in the next visual row, by centre distance across.
+ */
+export function stepCell(rects: readonly ICellRect[], from: number, key: string): number {
+    const n = rects.length;
+    if (n === 0) return from;
+    if (key === "ArrowRight") return Math.min(n - 1, from + 1);
+    if (key === "ArrowLeft") return Math.max(0, from - 1);
+    if (key === "Home") return 0;
+    if (key === "End") return n - 1;
+    const here = rects[from];
+    if (!here || (key !== "ArrowDown" && key !== "ArrowUp")) return from;
+    const cx = here.left + here.width / 2;
+    const down = key === "ArrowDown";
+    let best = from;
+    let bestRow = Number.POSITIVE_INFINITY;
+    let bestDx = Number.POSITIVE_INFINITY;
+    rects.forEach((r, i) => {
+        const dy = down ? r.top - here.top : here.top - r.top;
+        if (dy <= here.height / 2) return;
+        const dx = Math.abs(r.left + r.width / 2 - cx);
+        if (dy < bestRow - 1 || (Math.abs(dy - bestRow) <= 1 && dx < bestDx)) {
+            bestRow = dy;
+            bestDx = dx;
+            best = i;
+        }
+    });
+    return best;
 }

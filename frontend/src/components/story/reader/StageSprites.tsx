@@ -77,6 +77,9 @@ export function bodyPlate(sprite: { plate?: unknown }): BodyPlate {
     return { x, y, w, h };
 }
 
+/** The image attributes `Body` adds under `lazy`. */
+const LAZY_IMAGE = { loading: "lazy", decoding: "async" } as const;
+
 /**
  * The body texture with its face patch composited at `facePos`. Exported for
  * the interlude window, which draws a character exactly as a slot does, and
@@ -104,15 +107,14 @@ export function Body({ state, sec, mode, lazy = false }: { state: Pick<SlotState
     };
     return (
         <div className="absolute inset-0" style={mode === "hold" ? undefined : fade(mode, sec)}>
-            <img ref={measure} onLoad={(e) => measure(e.currentTarget)} src={asset(state.sprite.bodyUrl)} alt={state.name} draggable={false} data-story-sprite={state.name} loading={lazy ? "lazy" : undefined} decoding={lazy ? "async" : undefined} className="absolute inset-0 size-full select-none" />
+            <img ref={measure} onLoad={(e) => measure(e.currentTarget)} src={asset(state.sprite.bodyUrl)} alt={state.name} draggable={false} data-story-sprite={state.name} {...(lazy ? LAZY_IMAGE : undefined)} className="absolute inset-0 size-full select-none" />
             {face && size && state.sprite.faceUrl ? (
                 <img
                     src={asset(state.sprite.faceUrl)}
                     alt=""
                     draggable={false}
                     data-story-face={state.name}
-                    loading={lazy ? "lazy" : undefined}
-                    decoding={lazy ? "async" : undefined}
+                    {...(lazy ? LAZY_IMAGE : undefined)}
                     className="absolute select-none"
                     style={{ left: `${(face.x / size.w) * 100}%`, top: `${(face.y / size.h) * 100}%`, width: `${(face.w / size.w) * 100}%`, height: `${(face.h / size.h) * 100}%` }}
                 />

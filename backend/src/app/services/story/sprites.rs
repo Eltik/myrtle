@@ -36,8 +36,8 @@ use crate::app::{cpu, error::ApiError, state::AppState};
 use crate::core::gamedata::assets::AssetIndex;
 use crate::core::gamedata::types::GameData;
 use crate::core::hypergryph::constants::Server;
-use crate::core::story::assets::{parse_sprite_name, trim_index};
-use crate::core::story::speakers::{attribute_speakers, is_meaningful_name};
+use crate::core::story::assets::{parse_sprite_name, served_path, trim_index};
+use crate::core::story::speakers::{PLACING_COMMANDS, attribute_speakers, is_meaningful_name};
 use crate::core::story::{StoryAssetIndex, load_script, parser};
 
 /// The built gallery, cached per server.
@@ -117,18 +117,34 @@ fn is_blank_plate(path: &Path) -> bool {
     image::open(path).is_ok_and(|img| img.to_rgba8().pixels().all(|p| p[3] == 0))
 }
 
+/// Example lines per name on the sheet.
+const EXAMPLES: usize = 3;
+/// Stories listed per name on the sheet.
+const NAME_STORIES: usize = 5;
+
 /// One folder's script-side tallies while the walk runs.
 #[derive(Debug, Default)]
 struct Tally {
+    /// Display name -> weighted lines.
     names: HashMap<String, f64>,
     /// Per name: where it is spoken and the example candidates.
     name_detail: HashMap<String, NameTally>,
     lines: f64,
-    /// Story order -> (story id, lines, uses).
-    stories: BTreeMap<u32, (String, f64, u32)>,
+    /// Story order -> what the folder does in that story.
+    stories: BTreeMap<u32, StoryTally>,
     /// Raw sprite name as written -> times put up.
     uses: HashMap<String, u32>,
     first_seen: Option<i64>,
+}
+
+/// One folder in one story.
+#[derive(Debug)]
+struct StoryTally {
+    id: String,
+    /// Weighted named lines attributed to the folder.
+    lines: f64,
+    /// Times the story puts the folder up.
+    uses: u32,
 }
 
 /// One (folder, name) pair's whereabouts while the walk runs.
@@ -136,45 +152,63 @@ struct Tally {
 struct NameTally {
     /// Story order -> (story id, weighted lines).
     stories: BTreeMap<u32, (String, f64)>,
-    /// Example candidates: up to [`EXAMPLES`] lines from each of the first
-    /// [`EXAMPLES`] stories, as (story order, story id, script line, text).
-    candidates: Vec<(u32, String, u32, String)>,
+    /// Up to [`EXAMPLES`] lines from each of the first [`EXAMPLES`] stories,
+    /// in walk order.
+    candidates: Vec<ExampleLine>,
 }
 
-/// Example lines per name on the sheet, and stories listed per name.
-const EXAMPLES: usize = 3;
-const NAME_STORIES: usize = 5;
+/// A line that may be shown as an example of a name.
+#[derive(Debug)]
+struct ExampleLine {
+    story_order: u32,
+    story_id: String,
+    line: u32,
+    text: String,
+}
 
 impl NameTally {
     fn add(&mut self, order: u32, story_id: &str, line: u32, text: &str, w: f64) {
         let stories_seen = self.stories.len();
-        let entry = self
-            .stories
+        self.stories
             .entry(order)
-            .or_insert_with(|| (story_id.to_owned(), 0.0));
-        entry.1 += w;
-        let in_story = self.candidates.iter().filter(|c| c.0 == order).count();
+            .or_insert_with(|| (story_id.to_owned(), 0.0))
+            .1 += w;
+        // Bounded by EXAMPLES squared, so the scan per line is constant.
+        let in_story = self
+            .candidates
+            .iter()
+            .filter(|c| c.story_order == order)
+            .count();
         let new_story = in_story == 0;
         if in_story < EXAMPLES && (!new_story || stories_seen < EXAMPLES) && !text.trim().is_empty()
         {
-            self.candidates
-                .push((order, story_id.to_owned(), line, text.to_owned()));
+            self.candidates.push(ExampleLine {
+                story_order: order,
+                story_id: story_id.to_owned(),
+                line,
+                text: text.to_owned(),
+            });
         }
     }
 
     /// The examples, SPREAD across stories: the first line of each of the
     /// first stories, then second lines, until [`EXAMPLES`] are taken.
-    fn examples(&self) -> Vec<(String, u32, String)> {
-        let mut orders: Vec<u32> = self.candidates.iter().map(|c| c.0).collect();
+    fn examples(&self) -> Vec<&ExampleLine> {
+        let mut orders: Vec<u32> = self.candidates.iter().map(|c| c.story_order).collect();
         orders.dedup();
         let mut out = Vec::new();
         for round in 0..EXAMPLES {
-            for o in &orders {
+            for &order in &orders {
                 if out.len() == EXAMPLES {
                     return out;
                 }
-                if let Some(c) = self.candidates.iter().filter(|c| c.0 == *o).nth(round) {
-                    out.push((c.1.clone(), c.2, c.3.clone()));
+                if let Some(c) = self
+                    .candidates
+                    .iter()
+                    .filter(|c| c.story_order == order)
+                    .nth(round)
+                {
+                    out.push(c);
                 }
             }
         }
@@ -192,6 +226,14 @@ struct StoryMeta {
     group_name: String,
 }
 
+/// Story id -> its [`StoryMeta`], for every script the walk read.
+type StoryMetas = HashMap<String, StoryMeta>;
+
+/// A story's meta, empty for an id the walk never read.
+fn meta_of(metas: &StoryMetas, id: &str) -> StoryMeta {
+    metas.get(id).cloned().unwrap_or_default()
+}
+
 /// The folder's tally, with this story registered on it.
 fn touch<'a>(
     tallies: &'a mut HashMap<String, Tally>,
@@ -204,9 +246,11 @@ fn touch<'a>(
     if let Some(d) = dated {
         t.first_seen = Some(t.first_seen.map_or(d, |f| f.min(d)));
     }
-    t.stories
-        .entry(order)
-        .or_insert_with(|| (story_id.to_owned(), 0.0, 0));
+    t.stories.entry(order).or_insert_with(|| StoryTally {
+        id: story_id.to_owned(),
+        lines: 0.0,
+        uses: 0,
+    });
     t
 }
 
@@ -214,6 +258,11 @@ fn touch<'a>(
 /// corpus makes (halves and thirds) without a float tail.
 fn round2(x: f64) -> f64 {
     (x * 100.0).round() / 100.0
+}
+
+/// A collection length as a wire count.
+fn count_u32(n: usize) -> u32 {
+    u32::try_from(n).unwrap_or(u32::MAX)
 }
 
 /// The character table's operators by the NUMBER in their id: `002` ->
@@ -308,17 +357,18 @@ fn variants_of(
     uses: &HashMap<String, u32>,
 ) -> Vec<StorySpriteVariant> {
     let mut out: Vec<StorySpriteVariant> = Vec::new();
+    // (body url, face url) -> its index in `out`.
     let mut at: HashMap<(String, Option<String>), usize> = HashMap::new();
     let mut add = |out: &mut Vec<StorySpriteVariant>, key: String, uses: u32| {
         let Some(sprite) = assets.resolve_character(&format!("{folder}{key}")) else {
             return;
         };
-        let id = (sprite.body_url.clone(), sprite.face_url.clone());
-        if let Some(&i) = at.get(&id) {
+        let files = (sprite.body_url.clone(), sprite.face_url.clone());
+        if let Some(&i) = at.get(&files) {
             out[i].uses += uses;
             return;
         }
-        at.insert(id, out.len());
+        at.insert(files, out.len());
         out.push(StorySpriteVariant {
             key,
             whole_body: sprite.face_url.is_none(),
@@ -339,24 +389,23 @@ fn variants_of(
     out
 }
 
-/// Build the gallery from the cached library index. Pure over its inputs
-/// plus one read of every distinct library script and the PNG headers the
-/// resolver reads for bodies whose hub carries no size.
-#[must_use]
-pub fn build_sprite_index(
-    gd: &GameData,
+/// What the script walk leaves for the folder pass.
+#[derive(Debug, Default)]
+struct ScriptTallies {
+    /// Folder as the resolver spells it -> its tally.
+    folders: HashMap<String, Tally>,
+    stories: StoryMetas,
+}
+
+/// Walk every distinct library script once, in library order, and tally
+/// every named line and every placement onto its folder.
+fn walk_scripts(
     library: &StoryIndexCache,
     assets: &StoryAssetIndex,
     assets_dir: &Path,
-) -> (
-    StorySpriteIndex,
-    HashMap<String, StorySpriteDetail>,
-    SpriteCensus,
-) {
-    let mut census = SpriteCensus::default();
-    let mut tallies: HashMap<String, Tally> = HashMap::new();
-    // Story id -> (name, group id, group name), for the sheet's story list.
-    let mut story_meta: HashMap<String, StoryMeta> = HashMap::new();
+    census: &mut SpriteCensus,
+) -> ScriptTallies {
+    let mut out = ScriptTallies::default();
     let mut seen_txt: HashSet<&str> = HashSet::new();
     let mut order: u32 = 0;
     // A raw name -> its folder, memoised: the corpus writes the same few
@@ -380,7 +429,7 @@ pub fn build_sprite_index(
             };
             census.scripts += 1;
             order += 1;
-            story_meta.insert(
+            out.stories.insert(
                 story.id.clone(),
                 StoryMeta {
                     name: story.name.clone(),
@@ -391,30 +440,16 @@ pub fn build_sprite_index(
                 },
             );
             let commands = parser::parse(&text);
-            // Every distinct name is resolved once up front, so the walk's
-            // resolver is a pure lookup that borrows nothing mutably.
-            for c in &commands {
-                if matches!(
-                    c.kind.as_str(),
-                    "character" | "charslot" | "charactercutin" | "interlude"
-                ) {
-                    for (k, v) in &c.args {
-                        if k.starts_with("name") && !folder_memo.contains_key(v.trim()) {
-                            let f = assets.sprite_folder_name(v.trim()).map(str::to_owned);
-                            folder_memo.insert(v.trim().to_owned(), f);
-                        }
-                    }
-                }
-            }
+            resolve_sprite_names(&commands, assets, &mut folder_memo);
             let walk = attribute_speakers(&commands, |raw| {
                 folder_memo.get(raw.trim()).cloned().flatten()
             });
 
             for (folder, raw) in &walk.placements {
-                let t = touch(&mut tallies, folder, dated, order, &story.id);
+                let t = touch(&mut out.folders, folder, dated, order, &story.id);
                 *t.uses.entry(raw.clone()).or_default() += 1;
                 if let Some(s) = t.stories.get_mut(&order) {
-                    s.2 += 1;
+                    s.uses += 1;
                 }
             }
             for line in &walk.lines {
@@ -431,7 +466,7 @@ pub fn build_sprite_index(
                     census.split_lines += 1;
                 }
                 for (folder, w) in &line.sprites {
-                    let t = touch(&mut tallies, folder, dated, order, &story.id);
+                    let t = touch(&mut out.folders, folder, dated, order, &story.id);
                     *t.names.entry(line.speaker.clone()).or_default() += w;
                     t.name_detail
                         .entry(line.speaker.clone())
@@ -439,12 +474,84 @@ pub fn build_sprite_index(
                         .add(order, &story.id, line.line, &line.text, *w);
                     t.lines += w;
                     if let Some(s) = t.stories.get_mut(&order) {
-                        s.1 += w;
+                        s.lines += w;
                     }
                 }
             }
         }
     }
+    out
+}
+
+/// Resolve every sprite name `commands` can put up into `memo`, once per
+/// distinct name, so the walk's resolver is a pure lookup that borrows
+/// nothing mutably.
+fn resolve_sprite_names(
+    commands: &[parser::StoryCommand],
+    assets: &StoryAssetIndex,
+    memo: &mut HashMap<String, Option<String>>,
+) {
+    let names = commands
+        .iter()
+        .filter(|c| PLACING_COMMANDS.contains(&c.kind.as_str()))
+        .flat_map(|c| &c.args)
+        .filter(|(k, _)| k.starts_with("name"))
+        .map(|(_, v)| v.trim());
+    for name in names {
+        if !memo.contains_key(name) {
+            let folder = assets.sprite_folder_name(name).map(str::to_owned);
+            memo.insert(name.to_owned(), folder);
+        }
+    }
+}
+
+/// The expression a folder's card shows: the most used (the lexically smaller
+/// key on a tie), else the first the folder offers.
+fn card_variant(variants: &[StorySpriteVariant]) -> Option<StorySpriteVariant> {
+    variants
+        .iter()
+        .filter(|v| v.uses > 0)
+        .max_by(|a, b| a.uses.cmp(&b.uses).then_with(|| b.key.cmp(&a.key)))
+        .or_else(|| variants.first())
+        .cloned()
+}
+
+/// A folder's names, most lines first, the name breaking a tie.
+fn ranked_names(names: HashMap<String, f64>) -> Vec<StorySpriteName> {
+    let mut ranked: Vec<StorySpriteName> = names
+        .into_iter()
+        .map(|(name, count)| StorySpriteName {
+            name,
+            count: round2(count),
+        })
+        .collect();
+    ranked.sort_by(|a, b| {
+        b.count
+            .total_cmp(&a.count)
+            .then_with(|| a.name.cmp(&b.name))
+    });
+    ranked
+}
+
+/// Build the gallery from the cached library index. Pure over its inputs
+/// plus one read of every distinct library script and the PNG headers the
+/// resolver reads for bodies whose hub carries no size.
+#[must_use]
+pub fn build_sprite_index(
+    gd: &GameData,
+    library: &StoryIndexCache,
+    assets: &StoryAssetIndex,
+    assets_dir: &Path,
+) -> (
+    StorySpriteIndex,
+    HashMap<String, StorySpriteDetail>,
+    SpriteCensus,
+) {
+    let mut census = SpriteCensus::default();
+    let ScriptTallies {
+        folders: mut tallies,
+        stories: story_meta,
+    } = walk_scripts(library, assets, assets_dir, &mut census);
 
     let operators = OperatorIds::new(gd);
     let mut sprites = Vec::new();
@@ -452,49 +559,21 @@ pub fn build_sprite_index(
     for folder in assets.sprite_folder_names() {
         let tally = tallies.remove(folder).unwrap_or_default();
         let mut variants = variants_of(assets, folder, &tally.uses);
-        variants.retain(|v| {
-            !is_blank_plate(
-                &assets_dir.join(
-                    v.sprite
-                        .body_url
-                        .trim_start_matches('/')
-                        .replace("%23", "#"),
-                ),
-            )
-        });
+        variants.retain(|v| !is_blank_plate(&served_path(assets_dir, &v.sprite.body_url)));
         if variants.is_empty() {
             census.hidden.push(folder.to_owned());
             continue;
         }
-        let thumb = variants
-            .iter()
-            .filter(|v| v.uses > 0)
-            .max_by(|a, b| a.uses.cmp(&b.uses).then_with(|| b.key.cmp(&a.key)))
-            .or_else(|| variants.first())
-            .cloned();
-        let mut names: Vec<StorySpriteName> = tally
-            .names
-            .into_iter()
-            .map(|(name, count)| StorySpriteName {
-                name,
-                count: round2(count),
-            })
-            .collect();
-        names.sort_by(|a, b| {
-            b.count
-                .total_cmp(&a.count)
-                .then_with(|| a.name.cmp(&b.name))
-        });
-        let (names, stray) = keep_aliases(names, tally.lines);
+        let (names, stray) = keep_aliases(ranked_names(tally.names), tally.lines);
         let noise: f64 = stray.iter().map(|n| n.count).sum();
-        census.dropped_names += u32::try_from(stray.len()).unwrap_or(u32::MAX);
+        census.dropped_names += count_u32(stray.len());
         census.dropped_lines += noise;
         let op = operators.operator_for(folder);
         let first = tally
             .stories
             .iter()
             .next()
-            .map(|(o, (id, _, _))| (*o, id.clone()));
+            .map(|(order, s)| (*order, s.id.clone()));
         let entry = StorySpriteEntry {
             base: folder.to_owned(),
             kind: if op.is_some() {
@@ -508,26 +587,26 @@ pub fn build_sprite_index(
             names,
             noise: round2(noise),
             lines: round2(tally.lines),
-            story_count: u32::try_from(tally.stories.len()).unwrap_or(u32::MAX),
+            story_count: count_u32(tally.stories.len()),
             first_seen: tally.first_seen,
             first_order: first.as_ref().map(|(o, _)| *o),
             first_story: first.map(|(_, id)| id),
-            variant_count: u32::try_from(variants.len()).unwrap_or(u32::MAX),
-            thumb,
+            variant_count: count_u32(variants.len()),
+            thumb: card_variant(&variants),
         };
         let stories = tally
             .stories
             .into_values()
-            .map(|(id, lines, uses)| {
-                let m = story_meta.get(&id).cloned().unwrap_or_default();
+            .map(|s| {
+                let m = meta_of(&story_meta, &s.id);
                 StorySpriteStory {
-                    id,
+                    id: s.id,
                     name: m.name,
                     tag: m.tag,
                     group_id: m.group_id,
                     group_name: m.group_name,
-                    lines: round2(lines),
-                    uses,
+                    lines: round2(s.lines),
+                    uses: s.uses,
                 }
             })
             .collect();
@@ -546,15 +625,16 @@ pub fn build_sprite_index(
     (StorySpriteIndex { sprites }, details, census)
 }
 
-/// The sheet's per-name detail, for the names the alias threshold KEPT, in
-/// the same order: the stories that speak this sprite under the name (most
-/// lines first, [`NAME_STORIES`] of them) and up to [`EXAMPLES`] lines.
+/// The sheet's per-name detail for `names`, in the same order: the stories
+/// that speak this sprite under the name (most lines first, [`NAME_STORIES`]
+/// of them, and how many more) and up to [`EXAMPLES`] lines.
 fn name_details(
-    kept: &[StorySpriteName],
+    names: &[StorySpriteName],
     detail: &HashMap<String, NameTally>,
-    meta: &HashMap<String, StoryMeta>,
+    meta: &StoryMetas,
 ) -> Vec<StorySpriteNameDetail> {
-    kept.iter()
+    names
+        .iter()
         .map(|n| {
             let Some(d) = detail.get(&n.name) else {
                 return StorySpriteNameDetail {
@@ -576,7 +656,7 @@ fn name_details(
                     .into_iter()
                     .take(NAME_STORIES)
                     .map(|(_, (id, lines))| {
-                        let m = meta.get(id).cloned().unwrap_or_default();
+                        let m = meta_of(meta, id);
                         StorySpriteNameStory {
                             id: id.clone(),
                             name: m.name,
@@ -586,19 +666,19 @@ fn name_details(
                         }
                     })
                     .collect(),
-                more_stories: u32::try_from(more).unwrap_or(u32::MAX),
+                more_stories: count_u32(more),
                 examples: d
                     .examples()
                     .into_iter()
-                    .map(|(story_id, line, text)| {
-                        let m = meta.get(&story_id).cloned().unwrap_or_default();
+                    .map(|e| {
+                        let m = meta_of(meta, &e.story_id);
                         StorySpriteExample {
-                            story_id,
+                            story_id: e.story_id.clone(),
                             story_name: m.name,
                             code: m.code,
                             tag: m.tag,
-                            line,
-                            text,
+                            line: e.line,
+                            text: e.text.clone(),
                         }
                     })
                     .collect(),
@@ -689,6 +769,32 @@ pub async fn get_story_sprite(
         .ok_or_else(|| ApiError::NotFoundMessage(format!("no story sprite folder `{base}`")))
 }
 
+/// Where one listed expression's thumb is served from: the server's assets
+/// root and the cached file under it, rendered first when missing or stale.
+/// `key` is the expression's `#N$M` (or `@alias`) exactly as the sheet lists
+/// it; an expression the gallery does not list is a 404.
+pub async fn get_variant_thumb(
+    state: &AppState,
+    server: Server,
+    base: &str,
+    key: &str,
+) -> Result<(String, String), ApiError> {
+    let gallery = cached_sprites(state, server).await?;
+    let detail = gallery
+        .details
+        .get(&base.to_ascii_lowercase())
+        .ok_or(ApiError::NotFound)?;
+    let variant = detail
+        .variants
+        .iter()
+        .find(|v| v.key == key)
+        .ok_or(ApiError::NotFound)?;
+    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let assets_dir = server_data.assets_dir.clone();
+    let rel = super::sprite_thumbs::ensure(&assets_dir, &detail.sprite.base, variant).await?;
+    Ok((assets_dir, rel))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -736,30 +842,4 @@ mod tests {
         assert!((round2(1.0 / 3.0 + 1.0 / 3.0) - 0.67).abs() < 1e-9);
         assert!((round2(342.5) - 342.5).abs() < 1e-9);
     }
-}
-
-/// Where one listed expression's thumb is served from: the server's assets
-/// root and the cached file under it, rendered first when missing or stale.
-/// `key` is the expression's `#N$M` (or `@alias`) exactly as the sheet lists
-/// it; an expression the gallery does not list is a 404.
-pub async fn get_variant_thumb(
-    state: &AppState,
-    server: Server,
-    base: &str,
-    key: &str,
-) -> Result<(String, String), ApiError> {
-    let gallery = cached_sprites(state, server).await?;
-    let detail = gallery
-        .details
-        .get(&base.to_ascii_lowercase())
-        .ok_or(ApiError::NotFound)?;
-    let variant = detail
-        .variants
-        .iter()
-        .find(|v| v.key == key)
-        .ok_or(ApiError::NotFound)?;
-    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
-    let assets_dir = server_data.assets_dir.clone();
-    let rel = super::sprite_thumbs::ensure(&assets_dir, &detail.sprite.base, variant).await?;
-    Ok((assets_dir, rel))
 }

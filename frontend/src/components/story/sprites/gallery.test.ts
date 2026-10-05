@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { StorySpriteEntry } from "#/types/generated/StorySpriteEntry";
 import type { StorySpriteVariant } from "#/types/generated/StorySpriteVariant";
-import { aliasesOf, bodyIndexOf, CARD_CROP, cropFor, faceCentre, filterSprites, groupVariants, initialVariant, matchTier, prepareSpriteSearch, primaryName, sheetLayout, spriteSearchTarget } from "./gallery";
+import { aliasesOf, bodyIndexOf, CARD_CROP, cropFor, faceCentre, filterSprites, groupVariants, initialVariant, matchTier, prepareSpriteSearch, primaryName, sheetLayout, spriteSearchTarget, stepCell } from "./gallery";
 import { cardView } from "./SpriteCard";
-import { stepCell } from "./SpriteSheet";
 
 function entry(base: string, over: Partial<StorySpriteEntry> = {}): StorySpriteEntry {
     return { base, kind: "npc", names: [], noise: 0, lines: 0, storyCount: 0, variantCount: 1, ...over };

@@ -8,20 +8,23 @@ import { cn } from "#/lib/utils";
 import type { StorySpriteEntry } from "#/types/generated/StorySpriteEntry";
 import type { StorySpriteVariant } from "#/types/generated/StorySpriteVariant";
 import type { messages } from "./CharactersTab.messages";
-import { aliasesOf, CARD_CROP, cropForVariant, primaryName } from "./gallery";
+import { aliasesOf, CARD_CROP, cropForVariant, type ICrop, type ICropWindow, primaryName } from "./gallery";
 import { spriteThumbUrl } from "./thumb";
 
 type SpritesT = TypedT<typeof messages>;
 
+const WHOLE_PLATE: ICrop = { size: 100, left: 0, top: 0 };
+
 /**
  * One expression drawn through the reader's own `Body` (body plate plus face
  * patch at `facePos`), or through the backend's composed `thumb` of the same
- * plate when one is given, inside a window cropped to the head. The square plate
- * is sized and offset in percent of the frame, so the same markup serves a
- * 150 px card and a 600 px preview, and nothing is measured at runtime.
+ * plate when one is given, inside a window cropped to the head (`crop`, or the
+ * whole plate when null). The square plate is sized and offset in percent of
+ * the frame, so the same markup serves a 150 px card and a 600 px preview, and
+ * nothing is measured at runtime.
  */
-export function SpriteFigure({ variant, name, crop, lazy, thumb, className }: { variant: StorySpriteVariant; name: string; crop: { zoom: number; aspect: number; anchorY: number } | null; lazy?: boolean; thumb?: string; className?: string }): React.ReactElement {
-    const box = crop ? cropForVariant(variant, crop) : { size: 100, left: 0, top: 0 };
+export function SpriteFigure({ variant, name, crop, lazy, thumb, className }: { variant: StorySpriteVariant; name: string; crop: ICropWindow | null; lazy?: boolean; thumb?: string; className?: string }): React.ReactElement {
+    const box = crop ? cropForVariant(variant, crop) : WHOLE_PLATE;
     return (
         <span className={cn("relative block overflow-hidden", className)}>
             <span className="absolute block aspect-square" style={{ width: `${box.size}%`, left: `${box.left}%`, top: `${box.top}%` }}>

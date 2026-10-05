@@ -29,6 +29,10 @@ import type { messages } from "./StoryLibrary.messages";
 export const LIBRARY_TABS = ["browse", "reading", "illustrations", "progress", "community", "characters"] as const;
 export type LibraryTab = (typeof LIBRARY_TABS)[number];
 
+export function isLibraryTab(value: unknown): value is LibraryTab {
+    return typeof value === "string" && (LIBRARY_TABS as readonly string[]).includes(value);
+}
+
 // The Characters tab is its own chunk: Browse's bundle and first load do not
 // carry the gallery, and nothing of it is fetched until the tab is opened.
 const CharactersTab = lazy(() => import("../sprites/CharactersTab"));
@@ -93,7 +97,7 @@ export function StoryLibrary(): React.ReactElement {
     const navigate = useNavigate({ from: "/stories" });
     const setTab = useCallback(
         (next: string) => {
-            const value = (LIBRARY_TABS as readonly string[]).includes(next) ? (next as LibraryTab) : "browse";
+            const value: LibraryTab = isLibraryTab(next) ? next : "browse";
             void navigate({ search: (prev) => ({ ...prev, tab: value === "browse" ? undefined : value, sprite: value === "characters" ? prev.sprite : undefined }), replace: true, resetScroll: false });
         },
         [navigate],

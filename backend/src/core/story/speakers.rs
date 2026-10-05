@@ -56,6 +56,11 @@ use super::parser::StoryCommand;
 /// The three stage slots, in the engine's own frame-state order.
 const SLOTS: [&str; 3] = ["l", "m", "r"];
 
+/// The commands that put a sprite up. Every argument of theirs whose key
+/// starts with `name` (`name`, `name2`) is a raw sprite name, which is what a
+/// caller resolving names ahead of the walk needs to visit.
+pub const PLACING_COMMANDS: [&str; 4] = ["character", "charslot", "charactercutin", "interlude"];
+
 /// One sprite on stage.
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct SlotState {
@@ -69,8 +74,8 @@ struct SlotState {
 /// One window of an interlude channel.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 struct Window {
-    /// The character drawn in it, as (raw name, folder).
-    character: Option<(String, String)>,
+    /// The folder of the character drawn in it.
+    character: Option<String>,
 }
 
 /// A named line and the folders it is attributed to, with their weights.
@@ -117,11 +122,27 @@ pub struct SpeakerWalk {
     pub placements: Vec<(String, String)>,
 }
 
+impl SpeakerWalk {
+    /// Resolve `name` and record it as put up; `None`, and nothing recorded,
+    /// when it has no folder, which is when the engine draws nothing.
+    fn put_up(
+        &mut self,
+        name: &str,
+        folder_of: &impl Fn(&str) -> Option<String>,
+    ) -> Option<String> {
+        let folder = folder_of(name)?;
+        self.placements.push((folder.clone(), name.to_owned()));
+        Some(folder)
+    }
+}
+
 /// The stage as the walk sees it.
 #[derive(Debug, Clone, Default)]
 struct Tracker {
     slots: BTreeMap<&'static str, SlotState>,
-    cutin: Option<(String, String)>,
+    /// The cut-in plate's folder.
+    cutin: Option<String>,
+    /// Interlude channel -> its window.
     windows: BTreeMap<String, Window>,
 }
 
@@ -134,8 +155,9 @@ fn slot_of(value: &str) -> Option<&'static str> {
     }
 }
 
-/// `Math.trunc(num(v, 0))`: an unparseable or absent focus is 0.
-fn focus_int(v: Option<&String>) -> i64 {
+/// An integer argument as the engine reads it, `Math.trunc(num(v, 0))`: an
+/// unparseable or absent value is 0.
+fn engine_int(v: Option<&String>) -> i64 {
     v.and_then(|s| s.trim().parse::<f64>().ok())
         .filter(|f| f.is_finite())
         .map_or(0, |f| f.trunc() as i64)
@@ -156,8 +178,7 @@ impl Tracker {
         folder_of: &impl Fn(&str) -> Option<String>,
     ) {
         let name = name.trim();
-        if let Some(folder) = folder_of(name) {
-            walk.placements.push((folder.clone(), name.to_owned()));
+        if let Some(folder) = walk.put_up(name, folder_of) {
             self.slots.insert(
                 slot,
                 SlotState {
@@ -181,7 +202,7 @@ impl Tracker {
         if name1.is_none() && name2.is_none() {
             return;
         }
-        let focus = focus_int(c.args.get("focus"));
+        let focus = engine_int(c.args.get("focus"));
         let lit1 = focus != 2 && focus != 3;
         let lit2 = focus == 0 || focus == 2;
         match (name1, name2) {
@@ -213,21 +234,18 @@ impl Tracker {
         }
         if let (Some(slot), Some(name)) = (slot, name) {
             let name = name.trim();
-            if let Some(folder) = folder_of(name) {
-                walk.placements.push((folder.clone(), name.to_owned()));
-                let prev_lit = self.slots.get(slot).map(|p| p.lit);
-                match self.slots.get_mut(slot) {
-                    Some(prev) if prev.name == name => {}
-                    _ => {
-                        self.slots.insert(
-                            slot,
-                            SlotState {
-                                name: name.to_owned(),
-                                folder,
-                                lit: prev_lit.unwrap_or(true),
-                            },
-                        );
-                    }
+            if let Some(folder) = walk.put_up(name, folder_of) {
+                let prev = self.slots.get(slot);
+                if prev.is_none_or(|p| p.name != name) {
+                    let lit = prev.is_none_or(|p| p.lit);
+                    self.slots.insert(
+                        slot,
+                        SlotState {
+                            name: name.to_owned(),
+                            folder,
+                            lit,
+                        },
+                    );
                 }
             }
         }
@@ -257,9 +275,8 @@ impl Tracker {
             return;
         }
         // An unresolved plate leaves the previous one up, as the engine does.
-        if let Some(folder) = folder_of(name) {
-            walk.placements.push((folder.clone(), name.to_owned()));
-            self.cutin = Some((name.to_owned(), folder));
+        if let Some(folder) = walk.put_up(name, folder_of) {
+            self.cutin = Some(folder);
         }
     }
 
@@ -285,14 +302,13 @@ impl Tracker {
             // No window to draw into: the engine logs it and draws nothing.
             return;
         };
-        let kind = focus_int(c.args.get("type"));
+        let kind = engine_int(c.args.get("type"));
         let name = c.args.get("name").map(|s| s.trim()).unwrap_or_default();
         if kind == 3
             && !name.is_empty()
-            && let Some(folder) = folder_of(name)
+            && let Some(folder) = walk.put_up(name, folder_of)
         {
-            walk.placements.push((folder.clone(), name.to_owned()));
-            window.character = Some((name.to_owned(), folder));
+            window.character = Some(folder);
         }
     }
 
@@ -303,15 +319,12 @@ impl Tracker {
 
     /// The folders a named line belongs to, by the rule in the module doc.
     fn speakers(&self, rules: SpeakerRules) -> Vec<String> {
-        let mut plates: Vec<String> = Vec::new();
-        if let Some((_, folder)) = &self.cutin {
-            plates.push(folder.clone());
-        }
-        for w in self.windows.values() {
-            if let Some((_, folder)) = &w.character {
-                plates.push(folder.clone());
-            }
-        }
+        let mut plates: Vec<String> = self
+            .cutin
+            .iter()
+            .chain(self.windows.values().filter_map(|w| w.character.as_ref()))
+            .cloned()
+            .collect();
         if !plates.is_empty() && rules.plates == PlateRule::Exclusive {
             return plates;
         }
