@@ -132,3 +132,20 @@ export const DEFAULT_REQUIREMENTS_VIEW: IRequirementsViewSettings = {
     category: "all",
     status: "all",
 };
+
+/**
+ * Highest material tier the requirement list keeps, 0 for every tier. T5 is
+ * left out because nothing sits above it, so it would read the same as All,
+ * and T1 because nobody farms toward a T2 by its T1 parts.
+ */
+export type MaxTierFilter = 0 | 2 | 3 | 4;
+
+export const MAX_TIER_OPTIONS: Exclude<MaxTierFilter, 0>[] = [4, 3, 2];
+
+export const MAX_TIER_STORAGE_KEY = "planner:requirements-max-tier";
+
+/** A stored value outside the offered options falls back to every tier. */
+export function parseMaxTier(raw: string): MaxTierFilter | undefined {
+    const n = Number(raw);
+    return n === 0 || (MAX_TIER_OPTIONS as number[]).includes(n) ? (n as MaxTierFilter) : undefined;
+}

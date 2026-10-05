@@ -5356,7 +5356,7 @@
         "tags": [
           "planner"
         ],
-        "summary": "Rename a plan group.",
+        "summary": "Rename and/or pin a plan group.",
         "operationId": "update_group",
         "parameters": [
           {
@@ -5373,7 +5373,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/GroupRequest"
+                "$ref": "#/components/schemas/UpdateGroupRequest"
               }
             }
           },
@@ -5454,6 +5454,159 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {
+            "service_key": []
+          }
+        ]
+      }
+    },
+    "/api/plan/preset": {
+      "post": {
+        "tags": [
+          "planner"
+        ],
+        "summary": "Save a plan preset, replacing the caller's preset of the same name.",
+        "operationId": "plan_preset_upsert",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The stored preset.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanPreset"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {
+            "service_key": []
+          }
+        ]
+      }
+    },
+    "/api/plan/preset/{preset_name}": {
+      "delete": {
+        "tags": [
+          "planner"
+        ],
+        "summary": "Delete one of the caller's plan presets.",
+        "operationId": "plan_preset_delete",
+        "parameters": [
+          {
+            "name": "preset_name",
+            "in": "path",
+            "description": "Preset name.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The preset is gone. Deleting twice is not an error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatusOk"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {
+            "service_key": []
+          }
+        ]
+      }
+    },
+    "/api/plan/presets": {
+      "get": {
+        "tags": [
+          "planner"
+        ],
+        "summary": "The caller's saved plan presets, by name.",
+        "operationId": "plan_presets_list",
+        "responses": {
+          "200": {
+            "description": "Every preset the caller saved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PlanPreset"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -5604,10 +5757,20 @@
           {
             "name": "active",
             "in": "query",
-            "description": "Restrict to one group name, or `all` for every plan.",
+            "description": "Comma-separated operator ids whose plans count toward `aggregatedRequirements`. Absent or empty counts every plan; an id with no plan (e.g. `none`) matches nothing, so `none` counts no plan. `plans` always lists every plan.",
             "required": false,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "max_tier",
+            "in": "query",
+            "description": "1 to 5. Flatten `aggregatedRequirements` so no craftable item above this tier is listed: owned copies are used first, and the rest is replaced by its recipe ingredients and workshop LMD, merged into the matching rows. Absent leaves the requirements unflattened.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
             }
           }
         ],
@@ -5624,6 +5787,63 @@
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {
+            "service_key": []
+          }
+        ]
+      }
+    },
+    "/api/plans/delete": {
+      "post": {
+        "tags": [
+          "planner"
+        ],
+        "summary": "Remove the caller's plans for many operators at once.",
+        "operationId": "plans_delete",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeletePlansRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "How many plans were removed. Ids without a plan are skipped, not an error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletePlansResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -13409,6 +13629,34 @@
           }
         }
       },
+      "DeletePlansRequest": {
+        "type": "object",
+        "required": [
+          "operator_ids"
+        ],
+        "properties": {
+          "operator_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "DeletePlansResponse": {
+        "type": "object",
+        "description": "Result of a bulk plan delete.",
+        "required": [
+          "deleted"
+        ],
+        "properties": {
+          "deleted": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Plans removed. Ids the caller had no plan for are not counted."
+          }
+        }
+      },
       "DepletedOperatorDto": {
         "type": "object",
         "required": [
@@ -16826,7 +17074,8 @@
             "type": "object",
             "required": [
               "groups",
-              "operator"
+              "operator",
+              "met"
             ],
             "properties": {
               "groups": {
@@ -16834,6 +17083,10 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "met": {
+                "type": "boolean",
+                "description": "The plan has nothing left to do: the operator is owned and every\ntarget (promotion and level, skill level, each mastery, each module\nstage) is reached or passed. Read from the same roster state the\nmaterial diff uses, so a met plan contributes no materials."
               },
               "operator": {}
             }
@@ -17128,6 +17381,7 @@
           "id",
           "user_id",
           "name",
+          "pinned",
           "created_at",
           "updated_at"
         ],
@@ -17143,6 +17397,10 @@
           "name": {
             "type": "string"
           },
+          "pinned": {
+            "type": "boolean",
+            "description": "Pinned groups list first. See `list_groups` for the order."
+          },
           "updated_at": {
             "type": "string",
             "format": "date-time"
@@ -17150,6 +17408,36 @@
           "user_id": {
             "type": "string",
             "format": "uuid"
+          }
+        }
+      },
+      "PlanPreset": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "target",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/components/schemas/PresetTarget"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -17202,7 +17490,8 @@
           "craftableCount",
           "missingCount",
           "canCraft",
-          "craftReason"
+          "craftReason",
+          "unmetStages"
         ],
         "properties": {
           "canCraft": {
@@ -17270,6 +17559,30 @@
           "sortSubrank": {
             "type": "integer",
             "format": "int32"
+          },
+          "unmetStages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanUnmetStage"
+            },
+            "description": "Stage clears the item's workshop recipe waits on that the player has\nnot made, in recipe order. The same gates `craft_reason` names as\n`Stage <code>`, structured so a client can link each stage. Empty when\nthe item has no recipe or its stage gates are all met."
+          }
+        }
+      },
+      "PlanUnmetStage": {
+        "type": "object",
+        "description": "One stage clear a recipe is still waiting on.",
+        "required": [
+          "stageId",
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Display code (`S9-3`), or the stage id when the stage table lacks it."
+          },
+          "stageId": {
+            "type": "string"
           }
         }
       },
@@ -17292,6 +17605,14 @@
             "items": {
               "$ref": "#/components/schemas/PlanGroup"
             }
+          },
+          "lastSyncedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "When the caller's account was last synced to our database. Every\ncurrent-state reading behind the plan (roster, inventory, base, stage\nclears) is a snapshot as of this moment. Null for an account with no\nprofile row."
           },
           "plans": {
             "type": "array",
@@ -17395,6 +17716,65 @@
           "net": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "PresetRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "target"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "1 to 100 characters after trimming. Saving under an existing name\nreplaces that preset's target."
+          },
+          "target": {
+            "$ref": "#/components/schemas/PresetTarget"
+          }
+        }
+      },
+      "PresetTarget": {
+        "type": "object",
+        "description": "A preset's target, independent of rarity: a bulk-add applies it to each\nselected operator and clamps it to what that operator can reach.",
+        "required": [
+          "elite",
+          "skill_level",
+          "masteries",
+          "module_stage"
+        ],
+        "properties": {
+          "elite": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Promotion, 0 to 2."
+          },
+          "level": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Level at that promotion. Null means the operator's cap at `elite`."
+          },
+          "masteries": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "Mastery per skill index, each 0 to 3."
+          },
+          "module_stage": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Stage for every module, 0 to 3."
+          },
+          "skill_level": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Skill level, 1 to 7."
           }
         }
       },
@@ -21458,6 +21838,26 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "UpdateGroupRequest": {
+        "type": "object",
+        "description": "A group update. Give at least one field; an absent one keeps its value.",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "New name."
+          },
+          "pinned": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether the group lists first."
           }
         }
       },

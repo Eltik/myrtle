@@ -1,10 +1,12 @@
 import { useQueries } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { ChevronDown, ChevronRight, Info, LayoutList, List, Users } from "lucide-react";
 import * as React from "react";
 
 import { itemIcon } from "#/components/operators/detail/impl/assets";
 import { Input } from "#/components/ui/input";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
+import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
 import { Skeleton } from "#/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "#/components/ui/toggle-group";
@@ -24,6 +26,8 @@ import {
     type IRequirementsViewSettings,
     inCategory,
     inStatus,
+    MAX_TIER_OPTIONS,
+    type MaxTierFilter,
     REQUIREMENT_CATEGORIES,
     REQUIREMENTS_VIEW_STORAGE_KEY,
     type RequirementCategory,
@@ -85,6 +89,10 @@ function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpan
                 <td className="px-2 py-2.5 text-right text-xs tabular-nums">
                     {item.canCraft ? (
                         <span className="text-sky-400">{f.number(item.craftableCount)}</span>
+                    ) : isMissingRequirements && (item.unmetStages?.length ?? 0) > 0 ? (
+                        <div className="flex justify-end">
+                            <UnmetStagesPopover item={item} t={t} />
+                        </div>
                     ) : isMissingRequirements ? (
                         <div className="flex justify-end">
                             <Tooltip>
@@ -123,6 +131,41 @@ function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpan
                     return <PlannerRequirementRow key={childPath} item={cost.item} depth={depth + 1} path={childPath} expandedPaths={expandedPaths} onToggleExpand={onToggleExpand} />;
                 })}
         </>
+    );
+}
+
+/**
+ * The craft-gate note with each uncleared stage as a link. A popover, not a
+ * tooltip, so the links can be reached by pointer and keyboard. It renders in a
+ * portal, but React still bubbles its clicks to the row, which would toggle the
+ * recipe open, so they stop here.
+ */
+function UnmetStagesPopover({ item, t }: { item: IPlanRequirementItem; t: ReqT }) {
+    const stop = (e: React.SyntheticEvent) => e.stopPropagation();
+    return (
+        <Popover>
+            <PopoverTrigger
+                openOnHover
+                delay={120}
+                onClick={stop}
+                render={(props) => (
+                    <button {...props} type="button" aria-label={t("planner.req.craftGate.aria", { name: item.name })} className="inline-flex cursor-help items-center text-muted-foreground/60 hover:text-foreground focus-visible:text-foreground">
+                        <Info className="size-3.5" aria-hidden="true" />
+                    </button>
+                )}
+            />
+            <PopoverPopup tooltipStyle side="top" className="max-w-xs" onClick={stop}>
+                <p className="text-left">{item.craftReason}</p>
+                <p className="mt-1 flex flex-wrap items-center gap-1.5 text-left">
+                    <span className="text-muted-foreground">{t("planner.req.craftGate.stages")}</span>
+                    {item.unmetStages?.map((stage) => (
+                        <Link key={stage.stageId} to="/stages/$stageId" params={{ stageId: stage.stageId }} className="font-medium text-primary underline-offset-2 hover:underline">
+                            {stage.code}
+                        </Link>
+                    ))}
+                </p>
+            </PopoverPopup>
+        </Popover>
     );
 }
 
@@ -256,6 +299,7 @@ function ByOperatorSection({ plan, predicate, isLoading, requirements, collapsed
 
 interface ByOperatorViewProps {
     plans: IOperatorPlanResponse[];
+    maxTier: MaxTierFilter;
     predicate: (item: IPlanRequirementItem) => boolean;
     collapsedSections: Record<string, boolean>;
     onToggleSection: (id: string) => void;
@@ -263,10 +307,10 @@ interface ByOperatorViewProps {
     onToggleExpand: (path: string) => void;
 }
 
-function ByOperatorView({ plans, predicate, collapsedSections, onToggleSection, expandedPaths, onToggleExpand }: ByOperatorViewProps) {
+function ByOperatorView({ plans, maxTier, predicate, collapsedSections, onToggleSection, expandedPaths, onToggleExpand }: ByOperatorViewProps) {
     const t: ReqT = useT("tools");
     const results = useQueries({
-        queries: plans.map((p) => plansQueryOptions([p.operator_id])),
+        queries: plans.map((p) => plansQueryOptions([p.operator_id], maxTier || undefined)),
     });
 
     if (plans.length === 0) {
@@ -299,10 +343,16 @@ interface RequirementsPanelProps {
     aggregatedRequirements: IPlanRequirementItem[];
     isLoading: boolean;
     activePlans: IOperatorPlanResponse[];
+    /** Owned by the planner, which fetches with it; 0 keeps every tier. */
+    maxTier: MaxTierFilter;
+    onMaxTierChange: (tier: MaxTierFilter) => void;
+    /** When the roster these requirements are read against was last synced. */
+    lastSyncedAt: string | null;
 }
 
-export function RequirementsPanel({ aggregatedRequirements, isLoading, activePlans }: RequirementsPanelProps): React.ReactElement {
+export function RequirementsPanel({ aggregatedRequirements, isLoading, activePlans, maxTier, onMaxTierChange, lastSyncedAt }: RequirementsPanelProps): React.ReactElement {
     const t: ReqT = useT("tools");
+    const f = useFormatters();
     const [settings, setSettings] = useLocalStorageState<IRequirementsViewSettings>(REQUIREMENTS_VIEW_STORAGE_KEY, DEFAULT_REQUIREMENTS_VIEW);
     const [reqSearchQuery, setReqSearchQuery] = React.useState("");
     const [expandedPaths, setExpandedPaths] = React.useState<Record<string, boolean>>({});
@@ -345,7 +395,14 @@ export function RequirementsPanel({ aggregatedRequirements, isLoading, activePla
     return (
         <div className="rounded-xl border border-border bg-card p-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="font-semibold text-foreground text-sm">{t("planner.req.title")}</h2>
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                    <h2 className="font-semibold text-foreground text-sm">{t("planner.req.title")}</h2>
+                    {lastSyncedAt && (
+                        <time dateTime={lastSyncedAt} title={f.date(lastSyncedAt, { dateStyle: "medium", timeStyle: "short" })} className="text-muted-foreground text-xs">
+                            {t("planner.req.lastSynced", { time: f.relativeLong(lastSyncedAt) })}
+                        </time>
+                    )}
+                </div>
                 {hasRequirements && (
                     <div className="flex flex-wrap items-center gap-2">
                         <Input type="search" placeholder={t("planner.req.search")} value={reqSearchQuery} onChange={(e) => setReqSearchQuery(e.target.value)} className="h-7 max-w-48 text-xs sm:h-7 sm:text-xs" />
@@ -410,8 +467,23 @@ export function RequirementsPanel({ aggregatedRequirements, isLoading, activePla
                             ))}
                         </SelectContent>
                     </Select>
+                    <Select value={String(maxTier)} onValueChange={(v) => v != null && onMaxTierChange(Number(v) as MaxTierFilter)}>
+                        <SelectTrigger size="sm" className={cn("h-7 text-xs", maxTier !== 0 && "border-primary/50")}>
+                            <SelectValue placeholder={t("planner.req.filter.tier")}>{() => t("planner.req.filter.tierValue", { value: maxTier === 0 ? t("planner.req.filter.all") : t("planner.req.filter.tierOption", { tier: maxTier }) })}</SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="0">{t("planner.req.filter.all")}</SelectItem>
+                            {MAX_TIER_OPTIONS.map((tier) => (
+                                <SelectItem key={tier} value={String(tier)}>
+                                    {t("planner.req.filter.tierOption", { tier })}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
             )}
+
+            {hasRequirements && maxTier !== 0 && <p className="mt-2 text-muted-foreground text-xs">{t("planner.req.tierNote", { tier: maxTier })}</p>}
 
             {isLoading ? (
                 <div className="mt-4 flex flex-col divide-y divide-border/40">
@@ -431,7 +503,7 @@ export function RequirementsPanel({ aggregatedRequirements, isLoading, activePla
             ) : aggregatedRequirements.length === 0 ? (
                 <p className="mt-6 text-center text-muted-foreground text-sm">{t("planner.req.noneForPlans")}</p>
             ) : settings.view === "by-operator" ? (
-                <ByOperatorView plans={activePlans} predicate={predicate} collapsedSections={collapsedSections} onToggleSection={handleToggleSection} expandedPaths={expandedPaths} onToggleExpand={handleToggleExpand} />
+                <ByOperatorView plans={activePlans} maxTier={maxTier} predicate={predicate} collapsedSections={collapsedSections} onToggleSection={handleToggleSection} expandedPaths={expandedPaths} onToggleExpand={handleToggleExpand} />
             ) : aggregateFiltered.length === 0 ? (
                 <p className="py-6 text-center text-muted-foreground text-sm">{t("planner.req.noneMatching")}</p>
             ) : (

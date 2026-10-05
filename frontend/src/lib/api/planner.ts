@@ -5,6 +5,7 @@ import { deepCamelize } from "#/lib/api/operators";
 import { backendFetch } from "#/lib/fetch";
 // Generated from `backend/src/database/models/planner.rs`.
 // To change a field, edit the Rust struct and run `bun run gen:types`.
+import type { DeletePlansResponse } from "#/types/generated/DeletePlansResponse";
 import type { OperatorPlanResponse } from "#/types/generated/OperatorPlanResponse";
 import type { PlanGroup } from "#/types/generated/PlanGroup";
 import type { PlannerResponse } from "#/types/generated/PlannerResponse";
@@ -75,13 +76,22 @@ export const upsertPlanFn = createServerFn({ method: "POST" })
         return plan;
     });
 
+export interface IPlansQueryInput {
+    activeIds?: string[];
+    /** Highest material tier to keep; anything above is broken into its recipe ingredients. Unset keeps every tier. */
+    maxTier?: number;
+}
+
 export const getPlansFn = createServerFn({ method: "GET" })
-    .inputValidator((activeIds?: string[]) => activeIds)
-    .handler(async ({ data: activeIds }) => {
+    .inputValidator((input?: IPlansQueryInput) => input)
+    .handler(async ({ data: input }) => {
         const token = getCookie("site_token");
         if (!token) throw new Error("Not signed in.");
-        const url = activeIds && activeIds.length > 0 ? `/plans?active=${encodeURIComponent(activeIds.join(","))}` : "/plans";
-        const res = await backendFetch(url, { bearerToken: token });
+        const params = new URLSearchParams();
+        if (input?.activeIds && input.activeIds.length > 0) params.set("active", input.activeIds.join(","));
+        if (input?.maxTier) params.set("max_tier", String(input.maxTier));
+        const query = params.toString();
+        const res = await backendFetch(query ? `/plans?${query}` : "/plans", { bearerToken: token });
         if (!res.ok) throw new Error(`Failed to load plans: ${res.status}`);
         const data = (await res.json()) as IPlannerResponse;
         if (data.plans) {
@@ -94,10 +104,10 @@ export const getPlansFn = createServerFn({ method: "GET" })
         return data;
     });
 
-export function plansQueryOptions(activeIds?: string[]) {
+export function plansQueryOptions(activeIds?: string[], maxTier?: number) {
     return queryOptions({
-        queryKey: ["user", "plans", activeIds?.join(",") || ""],
-        queryFn: () => getPlansFn({ data: activeIds }),
+        queryKey: ["user", "plans", activeIds?.join(",") || "", maxTier ?? 0],
+        queryFn: () => getPlansFn({ data: { activeIds, maxTier } }),
         staleTime: 60 * 1000,
         gcTime: 5 * 60 * 1000,
     });
@@ -163,6 +173,50 @@ export const deleteGroupFn = createServerFn({ method: "POST" })
         return { success: true };
     });
 
+// ---- Completed plans and pinned groups ----
+
+/** Deletes several plans in one request. Ids with no plan are skipped, so `deleted` can be lower than the input. */
+export const deletePlansFn = createServerFn({ method: "POST" })
+    .inputValidator((operatorIds: string[]) => operatorIds)
+    .handler(async ({ data: operatorIds }) => {
+        const token = getCookie("site_token");
+        if (!token) throw new Error("Not signed in.");
+        const res = await backendFetch("/plans/delete", {
+            method: "POST",
+            bearerToken: token,
+            body: JSON.stringify({ operator_ids: operatorIds }),
+        });
+        if (!res.ok) {
+            const text = await res.text().catch(() => "");
+            throw new Error(text || `Failed to delete plans: ${res.status}`);
+        }
+        return (await res.json()) as DeletePlansResponse;
+    });
+
+export interface ISetGroupPinnedInput {
+    name: string;
+    pinned: boolean;
+}
+
+export const setGroupPinnedFn = createServerFn({ method: "POST" })
+    .inputValidator((data: ISetGroupPinnedInput) => data)
+    .handler(async ({ data }) => {
+        const token = getCookie("site_token");
+        if (!token) throw new Error("Not signed in.");
+        const res = await backendFetch(`/plan/group/${encodeURIComponent(data.name)}`, {
+            method: "PUT",
+            bearerToken: token,
+            body: JSON.stringify({ pinned: data.pinned }),
+        });
+        if (!res.ok) {
+            const text = await res.text().catch(() => "");
+            throw new Error(text || `Failed to pin group: ${res.status}`);
+        }
+        return (await res.json()) as IPlanGroup;
+    });
+
+// ---- end completed plans and pinned groups ----
+
 export const getPublicPlansFn = createServerFn({ method: "GET" })
     .inputValidator((uid: string) => uid)
     .handler(async ({ data: uid }) => {
@@ -185,3 +239,72 @@ export function publicPlansQueryOptions(uid: string) {
         gcTime: 5 * 60 * 1000,
     });
 }
+
+// ---------------------------------------------------------------------------
+// Plan presets: named, rarity-free targets the bulk-add dialog applies to many
+// operators at once. Each operator is clamped client-side before its upsert.
+// ---------------------------------------------------------------------------
+
+/** Generated from `backend/src/database/models/planner.rs`. */
+export type IPlanPreset = import("#/types/generated/PlanPreset").PlanPreset;
+
+export type IPresetTarget = import("#/types/generated/PresetTarget").PresetTarget;
+
+/** Not under `PLANS_QUERY_PREFIX`: saving a plan leaves the presets alone. */
+export const PLAN_PRESETS_QUERY_KEY = ["user", "plan-presets"] as const;
+
+export const getPlanPresetsFn = createServerFn({ method: "GET" }).handler(async () => {
+    const token = getCookie("site_token");
+    if (!token) throw new Error("Not signed in.");
+    const res = await backendFetch("/plan/presets", { bearerToken: token });
+    if (!res.ok) throw new Error(`Failed to load presets: ${res.status}`);
+    return (await res.json()) as IPlanPreset[];
+});
+
+export function planPresetsQueryOptions() {
+    return queryOptions({
+        queryKey: PLAN_PRESETS_QUERY_KEY,
+        queryFn: () => getPlanPresetsFn(),
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
+
+export interface IUpsertPlanPresetInput {
+    name: string;
+    target: IPresetTarget;
+}
+
+/** Saves a preset; a preset with the same name is replaced. */
+export const upsertPlanPresetFn = createServerFn({ method: "POST" })
+    .inputValidator((data: IUpsertPlanPresetInput) => data)
+    .handler(async ({ data }) => {
+        const token = getCookie("site_token");
+        if (!token) throw new Error("Not signed in.");
+        const res = await backendFetch("/plan/preset", {
+            method: "POST",
+            bearerToken: token,
+            body: JSON.stringify({ name: data.name, target: data.target }),
+        });
+        if (!res.ok) {
+            const text = await res.text().catch(() => "");
+            throw new Error(text || `Failed to save preset: ${res.status}`);
+        }
+        return (await res.json()) as IPlanPreset;
+    });
+
+export const deletePlanPresetFn = createServerFn({ method: "POST" })
+    .inputValidator((name: string) => name)
+    .handler(async ({ data: name }) => {
+        const token = getCookie("site_token");
+        if (!token) throw new Error("Not signed in.");
+        const res = await backendFetch(`/plan/preset/${encodeURIComponent(name)}`, {
+            method: "DELETE",
+            bearerToken: token,
+        });
+        if (!res.ok) {
+            const text = await res.text().catch(() => "");
+            throw new Error(text || `Failed to delete preset: ${res.status}`);
+        }
+        return { success: true };
+    });

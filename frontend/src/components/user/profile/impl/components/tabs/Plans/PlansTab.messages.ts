@@ -19,6 +19,10 @@ export const messages = {
         text: "Operator plans",
         description: "Accessible name of the plans section of a profile.",
     },
+    "profile.plans.ungrouped": {
+        text: "Ungrouped",
+        description: "Heading of the last section of the plans tab, holding plans the player put in no group. Rendered uppercase by CSS.",
+    },
     "profile.plans.level": {
         text: "Level",
         description: "Row label over an operator's current and target level.",
@@ -42,6 +46,10 @@ export const messages = {
     "profile.plans.skillFallback": {
         text: "Skill {n}",
         description: "Stand-in name for a skill the game data does not name; {n} counts from 1.",
+    },
+    "profile.plans.complete": {
+        text: "Complete",
+        description: "Badge on a plan card whose targets the player's roster has already reached.",
     },
 } satisfies MessageMap;
 

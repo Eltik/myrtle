@@ -1,25 +1,34 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronDown, Lock, Pencil, Plus, Trash } from "lucide-react";
+import { ChevronDown, CircleCheck, Lock, Pencil, Pin, Plus, Trash } from "lucide-react";
 import * as React from "react";
 
 import { eliteIcon, moduleIconURL, skillIconURL } from "#/components/operators/detail/impl/assets";
+import { Badge } from "#/components/ui/badge";
 import { Button } from "#/components/ui/button";
 import { Checkbox } from "#/components/ui/checkbox";
+import { FilterChip } from "#/components/ui/filter-chip";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { PageHeader } from "#/components/ui/page-header";
 import { Skeleton } from "#/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { useAuth } from "#/hooks/use-auth";
-import { deleteGroupFn, deletePlanFn, type IOperatorPlanResponse, plansQueryOptions, upsertGroupFn } from "#/lib/api/planner";
+import { useLocalStorageState } from "#/hooks/use-local-storage-state";
+import { deleteGroupFn, deletePlanFn, deletePlansFn, type IOperatorPlanResponse, plansQueryOptions, setGroupPinnedFn, upsertGroupFn } from "#/lib/api/planner";
 import { type IRosterEntry, userRosterQueryOptions } from "#/lib/api/user";
 import { authActions } from "#/lib/auth/store";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, formatSubProfession, rarityToNumber } from "#/lib/utils";
+import { BulkPlanButton } from "./BulkPlanDialog";
+import { CompletedPlansDialog } from "./CompletedPlansDialog";
+import { completedNoticeStorageKey, metOperatorIds, readDismissedIds, shouldShowCompletedNotice, writeDismissedIds } from "./completedPlans";
 import { DeletePlansDialog, type IDeletePlansTarget } from "./DeletePlansDialog";
 import type { messages } from "./OperatorPlanner.messages";
 import { OperatorPlannerDialog } from "./OperatorPlannerDialog";
+import { activePlansForFilter, type GroupFilter, groupFilterCounts, isPlanActive, renameGroupFilterKey, toggleGroupFilterKey, UNGROUPED_FILTER_KEY } from "./planFilters";
+import { PLANS_QUERY_PREFIX } from "./planTargets";
 import { RequirementsPanel } from "./RequirementsPanel";
+import { MAX_TIER_STORAGE_KEY, type MaxTierFilter, parseMaxTier } from "./requirements";
 
 type PlannerT = TypedT<typeof messages>;
 
@@ -72,13 +81,14 @@ function targetSkillValue(plan: IOperatorPlanResponse, skillIndex: number): numb
 
 interface PlanCardHeaderProps {
     op: IOperatorPlanResponse["operator"];
+    met: boolean;
     isActive: boolean;
     onToggleActive: () => void;
     isExpanded: boolean;
     onToggleExpanded: () => void;
 }
 
-function PlanCardHeader({ op, isActive, onToggleActive, isExpanded, onToggleExpanded }: PlanCardHeaderProps) {
+function PlanCardHeader({ op, met, isActive, onToggleActive, isExpanded, onToggleExpanded }: PlanCardHeaderProps) {
     const t: PlannerT = useT("tools");
     return (
         <div className="flex items-start gap-3">
@@ -87,7 +97,15 @@ function PlanCardHeader({ op, isActive, onToggleActive, isExpanded, onToggleExpa
                 <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" server={op.server} />
             </span>
             <div className="min-w-0 flex-1">
-                <h3 className="truncate font-bold text-foreground text-sm leading-tight">{op.name}</h3>
+                <div className="flex min-w-0 items-center gap-2">
+                    <h3 className="truncate font-bold text-foreground text-sm leading-tight">{op.name}</h3>
+                    {met && (
+                        <Badge variant="success" size="sm">
+                            <CircleCheck aria-hidden="true" />
+                            {t("planner.completed.badge")}
+                        </Badge>
+                    )}
+                </div>
                 <p className="mt-0.5 truncate text-muted-foreground text-xs leading-normal">{t("planner.card.rarityClass", { rarity: rarityToNumber(op.rarity), archetype: formatSubProfession(op.subProfessionId) })}</p>
             </div>
             <button
@@ -236,11 +254,23 @@ export function OperatorPlanner(): React.ReactElement {
     const [open, setOpen] = React.useState(false);
     const [expandedGroups, setExpandedGroups] = React.useState<Record<string, boolean>>({});
     const [activePlans, setActivePlans] = React.useState<Record<string, boolean>>({});
+    const [groupFilter, setGroupFilter] = React.useState<GroupFilter>(() => new Set());
     const [expandedPlans, setExpandedPlans] = React.useState<Record<string, boolean>>({});
     const [editOperatorId, setEditOperatorId] = React.useState<string | null>(null);
     const [deleteTarget, setDeleteTarget] = React.useState<IDeletePlansTarget | null>(null);
     const [isDeleting, setIsDeleting] = React.useState(false);
     const [deleteError, setDeleteError] = React.useState<string | null>(null);
+    const [reviewPlans, setReviewPlans] = React.useState<IOperatorPlanResponse[] | null>(null);
+    const [isDeletingCompleted, setIsDeletingCompleted] = React.useState(false);
+    const [completedError, setCompletedError] = React.useState<string | null>(null);
+    // Null until storage is read on the client, so the notice never flashes in before its dismissal loads.
+    const [dismissedMetIds, setDismissedMetIds] = React.useState<string[] | null>(null);
+    const [maxTier, setMaxTier] = useLocalStorageState<MaxTierFilter>(MAX_TIER_STORAGE_KEY, 0, { parse: parseMaxTier, serialize: String });
+    const dismissedStorageKey = user?.uid ? completedNoticeStorageKey(user.uid) : null;
+
+    React.useEffect(() => {
+        setDismissedMetIds(dismissedStorageKey ? readDismissedIds(dismissedStorageKey) : null);
+    }, [dismissedStorageKey]);
 
     const { data: initialPlannerData, isLoading: initialPlansLoading } = useQuery({
         ...plansQueryOptions(),
@@ -250,7 +280,7 @@ export function OperatorPlanner(): React.ReactElement {
     const activeIds = React.useMemo(() => {
         if (!initialPlannerData?.plans) return undefined;
         const totalPlansCount = initialPlannerData.plans.length;
-        const activeList = initialPlannerData.plans.filter((p) => activePlans[p.operator_id] ?? true).map((p) => p.operator_id);
+        const activeList = initialPlannerData.plans.filter((p) => isPlanActive(p, activePlans, groupFilter)).map((p) => p.operator_id);
 
         if (activeList.length === totalPlansCount) {
             return undefined;
@@ -259,7 +289,7 @@ export function OperatorPlanner(): React.ReactElement {
             return ["none"];
         }
         return activeList;
-    }, [initialPlannerData?.plans, activePlans]);
+    }, [initialPlannerData?.plans, activePlans, groupFilter]);
 
     const { data: roster = [], isLoading: rosterLoading } = useQuery({
         ...userRosterQueryOptions(user?.uid ?? ""),
@@ -269,7 +299,7 @@ export function OperatorPlanner(): React.ReactElement {
     const isPlansListLoading = initialPlansLoading || rosterLoading;
 
     const { data: plannerData, isLoading: requirementsLoading } = useQuery({
-        ...plansQueryOptions(activeIds),
+        ...plansQueryOptions(activeIds, maxTier || undefined),
         enabled: isAuthenticated && !isPlansListLoading,
     });
 
@@ -277,7 +307,17 @@ export function OperatorPlanner(): React.ReactElement {
 
     const plans = plannerData?.plans ?? initialPlannerData?.plans ?? [];
     const aggregatedRequirements = plannerData?.aggregatedRequirements ?? [];
-    const activePlansList = plans.filter((p) => activePlans[p.operator_id] ?? true);
+    const groups = plannerData?.groups ?? initialPlannerData?.groups ?? [];
+    const isActive = (p: IOperatorPlanResponse) => isPlanActive(p, activePlans, groupFilter);
+    const activePlansList = plans.filter(isActive);
+    const filterCounts = groupFilterCounts(plans);
+    const ungroupedCount = filterCounts.get(UNGROUPED_FILTER_KEY) ?? 0;
+
+    // From the unfiltered list, so narrowing the selection never hides a completed plan.
+    const metIds = React.useMemo(() => metOperatorIds(initialPlannerData?.plans ?? []), [initialPlannerData?.plans]);
+    const showCompletedNotice = dismissedMetIds !== null && shouldShowCompletedNotice(metIds, dismissedMetIds);
+    const pinnedGroupCount = groups.filter((g) => g.pinned).length;
+    const showPinDivider = pinnedGroupCount > 0 && pinnedGroupCount < groups.length;
 
     const allSelected = plans.length > 0 && activePlansList.length === plans.length;
     const selectedPlansCount = activePlansList.length;
@@ -287,7 +327,14 @@ export function OperatorPlanner(): React.ReactElement {
         for (const p of plans) {
             next[p.operator_id] = !allSelected;
         }
+        setGroupFilter(new Set());
         setActivePlans(next);
+    };
+
+    /** Engaging the filter rewrites every plan's entry, so per-plan picks made before it do not survive it. */
+    const applyGroupFilter = (next: GroupFilter) => {
+        setGroupFilter(next);
+        setActivePlans(activePlansForFilter(plans, next));
     };
 
     const requestDeletePlan = (plan: IOperatorPlanResponse) => {
@@ -326,22 +373,61 @@ export function OperatorPlanner(): React.ReactElement {
         }
     };
 
+    /** Hides the notice for every plan met right now; a plan completing later brings it back. */
+    const dismissCompleted = () => {
+        if (dismissedStorageKey) writeDismissedIds(dismissedStorageKey, metIds);
+        setDismissedMetIds(metIds);
+    };
+
+    const openCompletedReview = () => {
+        setCompletedError(null);
+        setReviewPlans(plans.filter((p) => p.met));
+    };
+
+    const handleKeepCompleted = () => {
+        dismissCompleted();
+        setReviewPlans(null);
+    };
+
+    const handleDeleteCompleted = async (ids: string[]) => {
+        setIsDeletingCompleted(true);
+        setCompletedError(null);
+        try {
+            await deletePlansFn({ data: ids });
+            setActivePlans((prev) => {
+                const next = { ...prev };
+                for (const id of ids) {
+                    delete next[id];
+                }
+                return next;
+            });
+            dismissCompleted();
+            queryClient.invalidateQueries({ queryKey: PLANS_QUERY_PREFIX });
+            setReviewPlans(null);
+        } catch (err) {
+            console.error(err);
+            setCompletedError(t("planner.deleteFailed"));
+        } finally {
+            setIsDeletingCompleted(false);
+        }
+    };
+
+    const handleTogglePin = async (name: string, pinned: boolean) => {
+        try {
+            await setGroupPinnedFn({ data: { name, pinned } });
+            queryClient.invalidateQueries({ queryKey: PLANS_QUERY_PREFIX });
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     const handleEditPlan = (opId: string) => {
         setEditOperatorId(opId);
         setOpen(true);
     };
 
-    const toggleGroupPlansActive = (groupName: string) => {
-        const plansInGroup = plans.filter((p) => p.groups?.includes(groupName));
-        const allActive = plansInGroup.length > 0 && plansInGroup.every((p) => activePlans[p.operator_id] ?? true);
-        setActivePlans((prev) => {
-            const next = { ...prev };
-            for (const p of plansInGroup) {
-                next[p.operator_id] = !allActive;
-            }
-            return next;
-        });
-    };
+    /** The chip row and the Groups tab's checkboxes are one control: both toggle a key of the group filter. */
+    const toggleGroupFilter = (key: string) => applyGroupFilter(toggleGroupFilterKey(groupFilter, key));
 
     const handleRenameGroup = async (oldName: string) => {
         const newName = window.prompt(t("planner.group.renamePrompt"), oldName);
@@ -350,6 +436,7 @@ export function OperatorPlanner(): React.ReactElement {
         if (!trimmed || trimmed === oldName) return;
         try {
             await upsertGroupFn({ data: { oldName, name: trimmed } });
+            setGroupFilter((prev) => renameGroupFilterKey(prev, oldName, trimmed));
             queryClient.invalidateQueries({ queryKey: ["user", "plans"] });
         } catch (err) {
             console.error(err);
@@ -360,16 +447,18 @@ export function OperatorPlanner(): React.ReactElement {
         if (!window.confirm(t("planner.group.deleteConfirm", { name }))) return;
         try {
             await deleteGroupFn({ data: { name } });
+            const nextFilter = renameGroupFilterKey(groupFilter, name, null);
+            if (nextFilter !== groupFilter) applyGroupFilter(nextFilter);
             queryClient.invalidateQueries({ queryKey: ["user", "plans"] });
         } catch (err) {
             console.error(err);
         }
     };
 
-    const togglePlan = (opId: string) => {
+    const togglePlan = (plan: IOperatorPlanResponse) => {
         setActivePlans((prev) => ({
             ...prev,
-            [opId]: !(prev[opId] ?? true),
+            [plan.operator_id]: !isPlanActive(plan, prev, groupFilter),
         }));
     };
 
@@ -389,10 +478,13 @@ export function OperatorPlanner(): React.ReactElement {
                 description={t("planner.intro")}
                 actions={
                     isAuthenticated && plans.length > 0 ? (
-                        <Button onClick={() => setOpen(true)} size="sm">
-                            <Plus className="mr-1.5 size-4" />
-                            {t("planner.createPlan")}
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <BulkPlanButton />
+                            <Button onClick={() => setOpen(true)} size="sm">
+                                <Plus className="mr-1.5 size-4" />
+                                {t("planner.createPlan")}
+                            </Button>
+                        </div>
                     ) : null
                 }
             />
@@ -405,183 +497,229 @@ export function OperatorPlanner(): React.ReactElement {
                         <Plus className="size-5" />
                         {t("planner.createFirstPlan")}
                     </Button>
+                    <BulkPlanButton size="xl" variant="outline" />
                 </div>
             ) : (
-                <div className="mt-8 flex flex-col gap-6 min-[720px]:flex-row">
-                    <div className="w-full shrink-0 min-[720px]:w-90">
-                        <div className="rounded-xl border border-border bg-card p-4">
-                            <Tabs defaultValue="plans">
-                                <TabsList className="w-full">
-                                    <TabsTrigger value="plans" className="flex-1">
-                                        {t("planner.tab.plans")}
-                                    </TabsTrigger>
-                                    <TabsTrigger value="groups" className="flex-1">
-                                        {t("planner.tab.groups")}
-                                    </TabsTrigger>
-                                </TabsList>
+                <>
+                    {showCompletedNotice && (
+                        <div className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-success/30 bg-success/8 px-4 py-2.5 dark:bg-success/12">
+                            <span className="flex items-center gap-2 font-medium text-foreground text-sm">
+                                <CircleCheck className="size-4 shrink-0 text-success-foreground" aria-hidden="true" />
+                                {t("planner.completed.notice", { count: metIds.length })}
+                            </span>
+                            <Button size="sm" variant="outline" onClick={openCompletedReview}>
+                                {t("planner.completed.review")}
+                            </Button>
+                        </div>
+                    )}
+                    <div className={cn("flex flex-col gap-6 min-[720px]:flex-row", showCompletedNotice ? "mt-4" : "mt-8")}>
+                        <div className="w-full shrink-0 min-[720px]:w-90">
+                            <div className="rounded-xl border border-border bg-card p-4">
+                                <Tabs defaultValue="plans">
+                                    <TabsList className="w-full">
+                                        <TabsTrigger value="plans" className="flex-1">
+                                            {t("planner.tab.plans")}
+                                        </TabsTrigger>
+                                        <TabsTrigger value="groups" className="flex-1">
+                                            {t("planner.tab.groups")}
+                                        </TabsTrigger>
+                                    </TabsList>
 
-                                <TabsContent value="plans" className="mt-4">
-                                    {isPlansListLoading ? (
-                                        <div className="flex flex-col gap-4">
-                                            {["sk-1", "sk-2", "sk-3"].map((key) => (
-                                                <div key={key} className="flex items-center gap-3 rounded-xl border border-border/40 p-4">
-                                                    <Skeleton className="size-4 rounded" />
-                                                    <Skeleton className="size-10 rounded-xl" />
-                                                    <div className="flex flex-1 flex-col gap-1.5">
-                                                        <Skeleton className="h-3.5 w-24 rounded" />
-                                                        <Skeleton className="h-3 w-16 rounded" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col gap-4">
-                                            <div className="flex items-center justify-between border-border/40 border-b pb-3">
-                                                {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox component internally renders the input control */}
-                                                <label className="flex cursor-pointer items-center gap-2 font-medium text-muted-foreground text-xs hover:text-foreground">
-                                                    <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
-                                                    <span>{allSelected ? t("planner.unselectAll") : t("planner.selectAll")}</span>
-                                                </label>
-                                                {selectedPlansCount > 0 && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="xs"
-                                                        className="fade-in zoom-in-95 h-7 animate-in cursor-pointer border border-red-500/20 bg-red-500/5 text-red-600 duration-150 hover:border-red-500/40 hover:bg-red-500/15 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
-                                                        onClick={requestDeleteSelected}
-                                                    >
-                                                        <Trash className="mr-1 size-3.5" />
-                                                        {t("planner.deleteSelected", { count: selectedPlansCount })}
-                                                    </Button>
-                                                )}
-                                            </div>
-                                            {plans.map((p) => {
-                                                const op = p.operator;
-                                                if (!op) return null;
-                                                const rosterEntry = roster?.find((re) => re.operator_id === p.operator_id);
-                                                const isActive = activePlans[p.operator_id] ?? true;
-
-                                                return (
-                                                    /* biome-ignore lint/a11y/noLabelWithoutControl: PlanCardHeader renders the plan's Checkbox inside this label */
-                                                    <label key={p.id} className={cn("relative flex cursor-pointer flex-col gap-4 rounded-xl border p-4 transition-all hover:shadow-md", isActive ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20" : "border-border/40 bg-muted/20 opacity-60")}>
-                                                        <PlanCardHeader op={op} isActive={isActive} onToggleActive={() => togglePlan(p.operator_id)} isExpanded={!!expandedPlans[p.id]} onToggleExpanded={() => togglePlanExpanded(p.id)} />
-
-                                                        {expandedPlans[p.id] && <PlanDetails plan={p} op={op} rosterEntry={rosterEntry} className="border-border/40 border-t pt-3" />}
-
-                                                        <PlanActions onEdit={() => handleEditPlan(p.operator_id)} onDelete={() => requestDeletePlan(p)} className="mt-auto border-border/40 border-t pt-3" />
-                                                    </label>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </TabsContent>
-
-                                <TabsContent value="groups" className="mt-4">
-                                    {isPlansListLoading ? (
-                                        <div className="flex flex-col gap-4">
-                                            {["sk-grp-1", "sk-grp-2", "sk-grp-3"].map((key) => (
-                                                <div key={key} className="flex items-center gap-3 rounded-xl border border-border/40 p-4">
-                                                    <Skeleton className="size-4 rounded" />
-                                                    <div className="flex flex-1 flex-col gap-1.5">
-                                                        <Skeleton className="h-3.5 w-24 rounded" />
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : !plannerData?.groups || plannerData.groups.length === 0 ? (
-                                        <p className="py-4 text-center text-muted-foreground text-xs">{t("planner.group.none")}</p>
-                                    ) : (
-                                        <div className="flex flex-col gap-6">
-                                            {plannerData.groups.map((g) => {
-                                                const plansInGroup = plans.filter((p) => p.groups?.includes(g.name));
-                                                const isGroupActive = plansInGroup.length > 0 && plansInGroup.every((p) => activePlans[p.operator_id] ?? true);
-                                                const isExpanded = expandedGroups[g.name] ?? true;
-
-                                                return (
-                                                    /* biome-ignore lint/a11y/useSemanticElements: custom interactive group wrapper */
-                                                    <div
-                                                        key={g.name}
-                                                        role="button"
-                                                        tabIndex={0}
-                                                        onClick={(e) => {
-                                                            if (isInteractiveGroupChild(e.target as HTMLElement)) return;
-                                                            toggleGroupPlansActive(g.name);
-                                                        }}
-                                                        onKeyDown={(e) => {
-                                                            if (e.key !== "Enter" && e.key !== " ") return;
-                                                            if (isInteractiveGroupChild(e.target as HTMLElement)) return;
-                                                            e.preventDefault();
-                                                            toggleGroupPlansActive(g.name);
-                                                        }}
-                                                        className={cn(
-                                                            "relative flex cursor-pointer flex-col rounded-xl border p-4 transition-all hover:shadow-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50",
-                                                            isExpanded ? "gap-4" : "gap-0",
-                                                            isGroupActive ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20" : "border-border/40 bg-card opacity-60 hover:opacity-100",
-                                                        )}
-                                                    >
-                                                        <div className={cn("flex items-center justify-between", isExpanded && "border-border/40 border-b pb-3")}>
-                                                            <div className="flex items-center gap-3">
-                                                                <Checkbox checked={isGroupActive} onCheckedChange={() => toggleGroupPlansActive(g.name)} />
-                                                                <span className="font-semibold text-foreground text-sm">{g.name}</span>
-                                                            </div>
-                                                            <div className="flex items-center gap-1">
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setExpandedGroups((prev) => ({
-                                                                            ...prev,
-                                                                            [g.name]: !isExpanded,
-                                                                        }));
-                                                                    }}
-                                                                    className="flex size-7 items-center justify-center rounded-md border border-border bg-muted/40 text-foreground transition-all hover:border-border/80 hover:bg-muted"
-                                                                >
-                                                                    <ChevronDown className={cn("size-3.5 transition-transform", isExpanded && "rotate-180")} />
-                                                                </button>
-                                                                <button type="button" onClick={() => handleRenameGroup(g.name)} className="flex size-7 items-center justify-center rounded-md border border-border bg-muted/40 text-foreground transition-all hover:border-border/80 hover:bg-muted">
-                                                                    <Pencil className="size-3.5" />
-                                                                </button>
-                                                                <button type="button" onClick={() => handleDeleteGroup(g.name)} className="flex size-7 items-center justify-center rounded-md border border-red-500/20 bg-red-500/5 text-red-600 transition-all hover:border-red-500/40 hover:bg-red-500/15 dark:text-red-400">
-                                                                    <Trash className="size-3.5" />
-                                                                </button>
-                                                            </div>
+                                    <TabsContent value="plans" className="mt-4">
+                                        {isPlansListLoading ? (
+                                            <div className="flex flex-col gap-4">
+                                                {["sk-1", "sk-2", "sk-3"].map((key) => (
+                                                    <div key={key} className="flex items-center gap-3 rounded-xl border border-border/40 p-4">
+                                                        <Skeleton className="size-4 rounded" />
+                                                        <Skeleton className="size-10 rounded-xl" />
+                                                        <div className="flex flex-1 flex-col gap-1.5">
+                                                            <Skeleton className="h-3.5 w-24 rounded" />
+                                                            <Skeleton className="h-3 w-16 rounded" />
                                                         </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col gap-4">
+                                                {groups.length > 0 && (
+                                                    // biome-ignore lint/a11y/useSemanticElements: a labelled row of toggle chips, not a form fieldset
+                                                    <div role="group" aria-label={t("planner.filter.aria")} className="flex flex-wrap items-center gap-2">
+                                                        <FilterChip label={t("planner.filter.all")} active={groupFilter.size === 0} count={plans.length} onSelect={() => applyGroupFilter(new Set())} />
+                                                        {groups.map((g, i) => (
+                                                            <React.Fragment key={g.name}>
+                                                                {showPinDivider && i === pinnedGroupCount && <span aria-hidden="true" className="h-5 w-px bg-border" />}
+                                                                <FilterChip label={g.name} active={groupFilter.has(g.name)} count={filterCounts.get(g.name) ?? 0} onSelect={() => toggleGroupFilter(g.name)} />
+                                                            </React.Fragment>
+                                                        ))}
+                                                        {(ungroupedCount > 0 || groupFilter.has(UNGROUPED_FILTER_KEY)) && <FilterChip label={t("planner.filter.ungrouped")} active={groupFilter.has(UNGROUPED_FILTER_KEY)} count={ungroupedCount} onSelect={() => toggleGroupFilter(UNGROUPED_FILTER_KEY)} />}
+                                                    </div>
+                                                )}
+                                                <div className="flex items-center justify-between border-border/40 border-b pb-3">
+                                                    {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox component internally renders the input control */}
+                                                    <label className="flex cursor-pointer items-center gap-2 font-medium text-muted-foreground text-xs hover:text-foreground">
+                                                        <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} />
+                                                        <span>{allSelected ? t("planner.unselectAll") : t("planner.selectAll")}</span>
+                                                    </label>
+                                                    {selectedPlansCount > 0 && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="xs"
+                                                            className="fade-in zoom-in-95 h-7 animate-in cursor-pointer border border-red-500/20 bg-red-500/5 text-red-600 duration-150 hover:border-red-500/40 hover:bg-red-500/15 hover:text-red-600 dark:text-red-400 dark:hover:text-red-400"
+                                                            onClick={requestDeleteSelected}
+                                                        >
+                                                            <Trash className="mr-1 size-3.5" />
+                                                            {t("planner.deleteSelected", { count: selectedPlansCount })}
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                                {plans.map((p) => {
+                                                    const op = p.operator;
+                                                    if (!op) return null;
+                                                    const rosterEntry = roster?.find((re) => re.operator_id === p.operator_id);
+                                                    const planActive = isActive(p);
 
-                                                        {isExpanded && (
-                                                            <div className="group-plans-list mt-3 divide-y divide-border/30">
-                                                                {plansInGroup.length === 0 ? (
-                                                                    <p className="py-4 text-center text-muted-foreground text-xs">{t("planner.group.empty")}</p>
-                                                                ) : (
-                                                                    plansInGroup.map((p) => {
-                                                                        const op = p.operator;
-                                                                        if (!op) return null;
-                                                                        const rosterEntry = roster?.find((re) => re.operator_id === p.operator_id);
-                                                                        const isActive = activePlans[p.operator_id] ?? true;
+                                                    return (
+                                                        /* biome-ignore lint/a11y/noLabelWithoutControl: PlanCardHeader renders the plan's Checkbox inside this label */
+                                                        <label key={p.id} className={cn("relative flex cursor-pointer flex-col gap-4 rounded-xl border p-4 transition-all hover:shadow-md", planActive ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20" : "border-border/40 bg-muted/20 opacity-60")}>
+                                                            <PlanCardHeader op={op} met={p.met} isActive={planActive} onToggleActive={() => togglePlan(p)} isExpanded={!!expandedPlans[p.id]} onToggleExpanded={() => togglePlanExpanded(p.id)} />
 
-                                                                        return (
-                                                                            <div key={p.id} className="flex flex-col gap-3 py-4 first:pt-1 last:pb-1">
-                                                                                <PlanCardHeader op={op} isActive={isActive} onToggleActive={() => togglePlan(p.operator_id)} isExpanded={!!expandedPlans[p.id]} onToggleExpanded={() => togglePlanExpanded(p.id)} />
+                                                            {expandedPlans[p.id] && <PlanDetails plan={p} op={op} rosterEntry={rosterEntry} className="border-border/40 border-t pt-3" />}
 
-                                                                                {expandedPlans[p.id] && <PlanDetails plan={p} op={op} rosterEntry={rosterEntry} className="pl-7" />}
+                                                            <PlanActions onEdit={() => handleEditPlan(p.operator_id)} onDelete={() => requestDeletePlan(p)} className="mt-auto border-border/40 border-t pt-3" />
+                                                        </label>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </TabsContent>
 
-                                                                                <PlanActions onEdit={() => handleEditPlan(p.operator_id)} onDelete={() => requestDeletePlan(p)} className="pl-7" dense />
-                                                                            </div>
-                                                                        );
-                                                                    })
+                                    <TabsContent value="groups" className="mt-4">
+                                        {isPlansListLoading ? (
+                                            <div className="flex flex-col gap-4">
+                                                {["sk-grp-1", "sk-grp-2", "sk-grp-3"].map((key) => (
+                                                    <div key={key} className="flex items-center gap-3 rounded-xl border border-border/40 p-4">
+                                                        <Skeleton className="size-4 rounded" />
+                                                        <div className="flex flex-1 flex-col gap-1.5">
+                                                            <Skeleton className="h-3.5 w-24 rounded" />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : !plannerData?.groups || plannerData.groups.length === 0 ? (
+                                            <p className="py-4 text-center text-muted-foreground text-xs">{t("planner.group.none")}</p>
+                                        ) : (
+                                            <div className="flex flex-col gap-6">
+                                                {plannerData.groups.map((g, i) => {
+                                                    const plansInGroup = plans.filter((p) => p.groups?.includes(g.name));
+                                                    const isGroupSelected = groupFilter.has(g.name);
+                                                    const isExpanded = expandedGroups[g.name] ?? true;
+
+                                                    return (
+                                                        <React.Fragment key={g.name}>
+                                                            {showPinDivider && i === pinnedGroupCount && <hr className="-my-3 border-border/60 border-dashed" />}
+                                                            {/* biome-ignore lint/a11y/useSemanticElements: custom interactive group wrapper */}
+                                                            <div
+                                                                role="button"
+                                                                tabIndex={0}
+                                                                onClick={(e) => {
+                                                                    if (isInteractiveGroupChild(e.target as HTMLElement)) return;
+                                                                    toggleGroupFilter(g.name);
+                                                                }}
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key !== "Enter" && e.key !== " ") return;
+                                                                    if (isInteractiveGroupChild(e.target as HTMLElement)) return;
+                                                                    e.preventDefault();
+                                                                    toggleGroupFilter(g.name);
+                                                                }}
+                                                                className={cn(
+                                                                    "relative flex cursor-pointer flex-col rounded-xl border p-4 transition-all hover:shadow-md focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50",
+                                                                    isExpanded ? "gap-4" : "gap-0",
+                                                                    isGroupSelected ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/20" : groupFilter.size > 0 ? "border-border/40 bg-card opacity-60 hover:opacity-100" : "border-border/40 bg-card",
+                                                                )}
+                                                            >
+                                                                <div className={cn("flex items-center justify-between", isExpanded && "border-border/40 border-b pb-3")}>
+                                                                    <div className="flex items-center gap-3">
+                                                                        <Checkbox checked={isGroupSelected} onCheckedChange={() => toggleGroupFilter(g.name)} />
+                                                                        <span className="font-semibold text-foreground text-sm">{g.name}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1">
+                                                                        <button
+                                                                            type="button"
+                                                                            aria-label={g.pinned ? t("planner.group.unpin", { name: g.name }) : t("planner.group.pin", { name: g.name })}
+                                                                            aria-pressed={g.pinned}
+                                                                            title={g.pinned ? t("planner.group.unpin", { name: g.name }) : t("planner.group.pin", { name: g.name })}
+                                                                            onClick={() => handleTogglePin(g.name, !g.pinned)}
+                                                                            className={cn(
+                                                                                "flex size-7 items-center justify-center rounded-md border transition-all",
+                                                                                g.pinned ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/15" : "border-border bg-muted/40 text-muted-foreground hover:border-border/80 hover:bg-muted hover:text-foreground",
+                                                                            )}
+                                                                        >
+                                                                            <Pin className={cn("size-3.5", g.pinned && "fill-current")} />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                setExpandedGroups((prev) => ({
+                                                                                    ...prev,
+                                                                                    [g.name]: !isExpanded,
+                                                                                }));
+                                                                            }}
+                                                                            className="flex size-7 items-center justify-center rounded-md border border-border bg-muted/40 text-foreground transition-all hover:border-border/80 hover:bg-muted"
+                                                                        >
+                                                                            <ChevronDown className={cn("size-3.5 transition-transform", isExpanded && "rotate-180")} />
+                                                                        </button>
+                                                                        <button type="button" onClick={() => handleRenameGroup(g.name)} className="flex size-7 items-center justify-center rounded-md border border-border bg-muted/40 text-foreground transition-all hover:border-border/80 hover:bg-muted">
+                                                                            <Pencil className="size-3.5" />
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleDeleteGroup(g.name)}
+                                                                            className="flex size-7 items-center justify-center rounded-md border border-red-500/20 bg-red-500/5 text-red-600 transition-all hover:border-red-500/40 hover:bg-red-500/15 dark:text-red-400"
+                                                                        >
+                                                                            <Trash className="size-3.5" />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+
+                                                                {isExpanded && (
+                                                                    <div className="group-plans-list mt-3 divide-y divide-border/30">
+                                                                        {plansInGroup.length === 0 ? (
+                                                                            <p className="py-4 text-center text-muted-foreground text-xs">{t("planner.group.empty")}</p>
+                                                                        ) : (
+                                                                            plansInGroup.map((p) => {
+                                                                                const op = p.operator;
+                                                                                if (!op) return null;
+                                                                                const rosterEntry = roster?.find((re) => re.operator_id === p.operator_id);
+                                                                                const planActive = isActive(p);
+
+                                                                                return (
+                                                                                    <div key={p.id} className="flex flex-col gap-3 py-4 first:pt-1 last:pb-1">
+                                                                                        <PlanCardHeader op={op} met={p.met} isActive={planActive} onToggleActive={() => togglePlan(p)} isExpanded={!!expandedPlans[p.id]} onToggleExpanded={() => togglePlanExpanded(p.id)} />
+
+                                                                                        {expandedPlans[p.id] && <PlanDetails plan={p} op={op} rosterEntry={rosterEntry} className="pl-7" />}
+
+                                                                                        <PlanActions onEdit={() => handleEditPlan(p.operator_id)} onDelete={() => requestDeletePlan(p)} className="pl-7" dense />
+                                                                                    </div>
+                                                                                );
+                                                                            })
+                                                                        )}
+                                                                    </div>
                                                                 )}
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </TabsContent>
-                            </Tabs>
+                                                        </React.Fragment>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </TabsContent>
+                                </Tabs>
+                            </div>
+                        </div>
+                        <div className="flex-1">
+                            <RequirementsPanel aggregatedRequirements={aggregatedRequirements} isLoading={isRequirementsLoading} activePlans={activePlansList} maxTier={maxTier} onMaxTierChange={setMaxTier} lastSyncedAt={plannerData?.lastSyncedAt ?? initialPlannerData?.lastSyncedAt ?? null} />
                         </div>
                     </div>
-                    <div className="flex-1">
-                        <RequirementsPanel aggregatedRequirements={aggregatedRequirements} isLoading={isRequirementsLoading} activePlans={activePlansList} />
-                    </div>
-                </div>
+                </>
             )}
 
             <DeletePlansDialog
@@ -592,6 +730,17 @@ export function OperatorPlanner(): React.ReactElement {
                 onConfirm={handleConfirmDelete}
                 isSubmitting={isDeleting}
                 errorMessage={deleteError}
+            />
+
+            <CompletedPlansDialog
+                plans={reviewPlans}
+                onOpenChange={(isOpen) => {
+                    if (!isOpen && !isDeletingCompleted) setReviewPlans(null);
+                }}
+                onDelete={handleDeleteCompleted}
+                onKeep={handleKeepCompleted}
+                isSubmitting={isDeletingCompleted}
+                errorMessage={completedError}
             />
 
             {isAuthenticated && (

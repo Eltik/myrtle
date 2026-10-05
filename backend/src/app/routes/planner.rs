@@ -12,7 +12,10 @@ use crate::{
         state::AppState,
     },
     database::{
-        models::planner::{OperatorPlanResponse, PlanGroup, PlannerResponse},
+        models::planner::{
+            DeletePlansResponse, OperatorPlanResponse, PlanGroup, PlanPreset, PlannerResponse,
+            PresetTarget,
+        },
         queries::users::{find_by_id, find_by_uid},
     },
 };
@@ -20,6 +23,7 @@ use crate::{
 #[derive(Deserialize)]
 pub struct ListPlansQuery {
     pub active: Option<String>,
+    pub max_tier: Option<i16>,
 }
 
 #[derive(Deserialize, utoipa::ToSchema)]
@@ -40,7 +44,8 @@ pub struct UpsertPlanRequest {
     operation_id = "plans_list",
     tag = "planner",
     params(
-        ("active" = Option<String>, Query, description = "Restrict to one group name, or `all` for every plan.")
+        ("active" = Option<String>, Query, description = "Comma-separated operator ids whose plans count toward `aggregatedRequirements`. Absent or empty counts every plan; an id with no plan (e.g. `none`) matches nothing, so `none` counts no plan. `plans` always lists every plan."),
+        ("max_tier" = Option<i16>, Query, description = "1 to 5. Flatten `aggregatedRequirements` so no craftable item above this tier is listed: owned copies are used first, and the rest is replaced by its recipe ingredients and workshop LMD, merged into the matching rows. Absent leaves the requirements unflattened.")
     ),
     security(("bearer_auth" = []), ("service_key" = [])),
     responses(
@@ -57,6 +62,13 @@ pub async fn list(
     auth: AuthUser,
 ) -> Result<Json<PlannerResponse>, ApiError> {
     let user_id = auth.user_uuid()?;
+    if let Some(tier) = query.max_tier
+        && !(1..=5).contains(&tier)
+    {
+        return Err(ApiError::BadRequest(
+            "max_tier must be between 1 and 5".into(),
+        ));
+    }
     let active_ids: Vec<String> = query
         .active
         .as_ref()
@@ -67,7 +79,8 @@ pub async fn list(
                 .collect()
         })
         .unwrap_or_default();
-    let response = services::planner::list_plans(&state, user_id, active_ids).await?;
+    let response =
+        services::planner::list_plans(&state, user_id, active_ids, query.max_tier).await?;
     Ok(Json(response))
 }
 
@@ -143,8 +156,50 @@ pub async fn delete(
 }
 
 #[derive(Deserialize, utoipa::ToSchema)]
+pub struct DeletePlansRequest {
+    pub operator_ids: Vec<String>,
+}
+
+/// Remove the caller's plans for many operators at once.
+#[utoipa::path(
+    post,
+    path = "/plans/delete",
+    operation_id = "plans_delete",
+    tag = "planner",
+    request_body = DeletePlansRequest,
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "How many plans were removed. Ids without a plan are skipped, not an error.", body = DeletePlansResponse),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 422, response = crate::app::openapi::responses::ValidationFailed),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn delete_many(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Json(body): Json<DeletePlansRequest>,
+) -> Result<Json<DeletePlansResponse>, ApiError> {
+    let user_id = auth.user_uuid()?;
+    let response = services::planner::delete_plans(&state, user_id, &body.operator_ids).await?;
+    Ok(Json(response))
+}
+
+#[derive(Deserialize, utoipa::ToSchema)]
 pub struct GroupRequest {
     pub name: String,
+}
+
+/// A group update. Give at least one field; an absent one keeps its value.
+#[derive(Deserialize, utoipa::ToSchema)]
+pub struct UpdateGroupRequest {
+    /// New name.
+    pub name: Option<String>,
+    /// Whether the group lists first.
+    pub pinned: Option<bool>,
 }
 
 /// Create a named group to file plans under.
@@ -170,11 +225,11 @@ pub async fn create_group(
     Json(body): Json<GroupRequest>,
 ) -> Result<Json<PlanGroup>, ApiError> {
     let user_id = auth.user_uuid()?;
-    let group = services::planner::upsert_group(&state, user_id, None, &body.name).await?;
+    let group = services::planner::create_group(&state, user_id, &body.name).await?;
     Ok(Json(group))
 }
 
-/// Rename a plan group.
+/// Rename and/or pin a plan group.
 #[utoipa::path(
     put,
     path = "/plan/group/{group_name}",
@@ -182,7 +237,7 @@ pub async fn create_group(
     params(
         ("group_name" = String, Path, description = "Current group name.")
     ),
-    request_body = GroupRequest,
+    request_body = UpdateGroupRequest,
     security(("bearer_auth" = []), ("service_key" = [])),
     responses(
         (status = 200, description = "The group as stored.", body = PlanGroup),
@@ -199,11 +254,17 @@ pub async fn update_group(
     State(state): State<AppState>,
     auth: AuthUser,
     Path(group_name): Path<String>,
-    Json(body): Json<GroupRequest>,
+    Json(body): Json<UpdateGroupRequest>,
 ) -> Result<Json<PlanGroup>, ApiError> {
     let user_id = auth.user_uuid()?;
-    let group =
-        services::planner::upsert_group(&state, user_id, Some(&group_name), &body.name).await?;
+    let group = services::planner::update_group(
+        &state,
+        user_id,
+        &group_name,
+        body.name.as_deref(),
+        body.pinned,
+    )
+    .await?;
     Ok(Json(group))
 }
 
@@ -277,4 +338,93 @@ pub async fn list_public(
 
     let response = services::planner::list_public_plans(&state, profile.id).await?;
     Ok(Json(response))
+}
+
+/// The caller's saved plan presets, by name.
+#[utoipa::path(
+    get,
+    path = "/plan/presets",
+    operation_id = "plan_presets_list",
+    tag = "planner",
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "Every preset the caller saved.", body = Vec<PlanPreset>),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn list_presets(
+    State(state): State<AppState>,
+    auth: AuthUser,
+) -> Result<Json<Vec<PlanPreset>>, ApiError> {
+    let user_id = auth.user_uuid()?;
+    let presets = services::planner::list_presets(&state, user_id).await?;
+    Ok(Json(presets))
+}
+
+#[derive(Deserialize, utoipa::ToSchema)]
+pub struct PresetRequest {
+    /// 1 to 100 characters after trimming. Saving under an existing name
+    /// replaces that preset's target.
+    pub name: String,
+    pub target: PresetTarget,
+}
+
+/// Save a plan preset, replacing the caller's preset of the same name.
+#[utoipa::path(
+    post,
+    path = "/plan/preset",
+    operation_id = "plan_preset_upsert",
+    tag = "planner",
+    request_body = PresetRequest,
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "The stored preset.", body = PlanPreset),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 422, response = crate::app::openapi::responses::ValidationFailed),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn upsert_preset(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Json(body): Json<PresetRequest>,
+) -> Result<Json<PlanPreset>, ApiError> {
+    let user_id = auth.user_uuid()?;
+    let preset =
+        services::planner::upsert_preset(&state, user_id, &body.name, &body.target).await?;
+    Ok(Json(preset))
+}
+
+/// Delete one of the caller's plan presets.
+#[utoipa::path(
+    delete,
+    path = "/plan/preset/{preset_name}",
+    operation_id = "plan_preset_delete",
+    tag = "planner",
+    params(
+        ("preset_name" = String, Path, description = "Preset name.")
+    ),
+    security(("bearer_auth" = []), ("service_key" = [])),
+    responses(
+        (status = 200, description = "The preset is gone. Deleting twice is not an error.", body = StatusOk),
+        (status = 401, response = crate::app::openapi::responses::Unauthorized),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn delete_preset(
+    State(state): State<AppState>,
+    auth: AuthUser,
+    Path(preset_name): Path<String>,
+) -> Result<Json<StatusOk>, ApiError> {
+    let user_id = auth.user_uuid()?;
+    services::planner::delete_preset(&state, user_id, &preset_name).await?;
+    Ok(ok_status())
 }

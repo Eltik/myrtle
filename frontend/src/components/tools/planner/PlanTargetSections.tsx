@@ -18,7 +18,7 @@ import type { IPlanTargets } from "./usePlanTargets";
 type DialogT = TypedT<typeof messages>;
 
 /** The selected/unselected look shared by the promotion buttons and every target step. */
-function stepStateClass(isActive: boolean): string {
+export function stepStateClass(isActive: boolean): string {
     return isActive ? "border-primary bg-primary/10 opacity-100 ring-2 ring-primary/20" : "border-border bg-muted/40 opacity-40 hover:bg-muted/80 hover:opacity-75";
 }
 

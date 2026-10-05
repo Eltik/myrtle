@@ -83,6 +83,7 @@ pub const USER_TABLES: &[UserTable] = &[
     },
     owned("operator_plans"),
     owned("plan_groups"),
+    owned("plan_presets"),
     UserTable {
         name: "plan_group_members",
         owner_column: None,

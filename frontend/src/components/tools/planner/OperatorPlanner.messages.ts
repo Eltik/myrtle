@@ -55,6 +55,18 @@ export const messages = {
         text: "Delete selected ({count})",
         description: "Button that deletes every selected plan; the count is how many that is.",
     },
+    "planner.filter.aria": {
+        text: "Filter plans by group",
+        description: "Accessible name of the row of group chips above the plan list.",
+    },
+    "planner.filter.all": {
+        text: "All",
+        description: "Chip that clears the group filter so every plan counts toward the requirements.",
+    },
+    "planner.filter.ungrouped": {
+        text: "Ungrouped",
+        description: "Chip that selects the plans not sorted into any group.",
+    },
     "planner.card.level": {
         text: "Level",
         description: "Row label in an expanded plan card, above the current and target promotion and level.",
@@ -118,6 +130,26 @@ export const messages = {
     "planner.group.empty": {
         text: "No plans in this group.",
         description: "Shown inside an expanded group that has no plans in it.",
+    },
+    "planner.group.pin": {
+        text: "Pin {name}",
+        description: "Accessible name and tooltip of the button that pins a group to the top of the list; {name} is the player's own group name.",
+    },
+    "planner.group.unpin": {
+        text: "Unpin {name}",
+        description: "Accessible name and tooltip of the button that unpins a pinned group; {name} is the player's own group name.",
+    },
+    "planner.completed.notice": {
+        text: "{count, plural, one {# plan is complete} other {# plans are complete}}",
+        description: "Notice at the top of the planner when the last roster sync shows plans whose targets are all reached.",
+    },
+    "planner.completed.review": {
+        text: "Review",
+        description: "Button in the completed-plans notice that opens the list of completed plans.",
+    },
+    "planner.completed.badge": {
+        text: "Complete",
+        description: "Badge on a plan card whose targets the player's roster has already reached.",
     },
 } satisfies MessageMap;
 

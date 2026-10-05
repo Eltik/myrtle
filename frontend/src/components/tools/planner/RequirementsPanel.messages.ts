@@ -103,6 +103,34 @@ export const messages = {
         text: "No active plans selected.",
         description: "Shown in the by-operator view when every plan has been unselected.",
     },
+    "planner.req.lastSynced": {
+        text: "Last synced {time}",
+        description: "Beside the Requirements heading: when the roster and inventory these numbers come from were last synced. {time} is a relative time such as '3 hours ago' or 'yesterday'.",
+    },
+    "planner.req.filter.tier": {
+        text: "Max tier",
+        description: "Placeholder in the material-tier filter before a tier is chosen. 'Tier' is the game's material rarity, T1 to T5.",
+    },
+    "planner.req.filter.tierValue": {
+        text: "Max tier: {value}",
+        description: "Closed state of the material-tier filter, e.g. 'Max tier: T3' or 'Max tier: All'. Keep the colon.",
+    },
+    "planner.req.filter.tierOption": {
+        text: "T{tier}",
+        description: "A material tier, e.g. 'T3'. The community's own shorthand, which normally stays as-is.",
+    },
+    "planner.req.tierNote": {
+        text: "Materials above T{tier} are broken into their ingredients. LMD includes the crafting cost.",
+        description: "Note under the filters while a max tier is set. LMD is the game's currency; crafting at the workshop costs it.",
+    },
+    "planner.req.craftGate.aria": {
+        text: "Why {name} cannot be crafted yet",
+        description: "Accessible name of the info button beside an item whose recipe is locked; {name} is the item name from the game data.",
+    },
+    "planner.req.craftGate.stages": {
+        text: "Stages to clear:",
+        description: "Label before the links to the stages that unlock an item's recipe. Keep the colon.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

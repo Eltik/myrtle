@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import * as React from "react";
 
-import { Combobox, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList, ComboboxPopup } from "#/components/ui/combobox";
+import { Combobox, ComboboxEmpty, ComboboxInput, ComboboxItem, ComboboxList, ComboboxPopup, ComboboxPrimitive } from "#/components/ui/combobox";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { useOperatorName } from "#/hooks/use-operator-name";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
@@ -10,11 +10,13 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { professionLabel } from "#/lib/registry/operator-display";
 import { searchAndRank } from "#/lib/search/fuzzy";
+import { cn } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
+import type { messages as bulkMessages } from "./BulkPlanDialog.messages";
 import type { messages } from "./OperatorPlannerDialog.messages";
 
 /** One row of the operator picker. */
-interface IOperatorOption extends Pick<IOperatorIndexEntry, "id" | "name" | "appellation" | "rarity" | "profession" | "subProfessionId" | "tagList" | "nationId"> {
+export interface IOperatorOption extends Pick<IOperatorIndexEntry, "id" | "name" | "appellation" | "rarity" | "profession" | "subProfessionId" | "tagList" | "nationId"> {
     /** `name` under the Latin-names preference; what the list shows and sorts by. */
     displayName: string;
     /** Not yet on the selected server; listed first, with the CN avatar. */
@@ -78,7 +80,7 @@ export function useOperatorOptions(server: string, searchQuery: string, selected
         return sortedOptions.find((item) => item.id === selectedOperatorId) || null;
     }, [selectedOperatorId, sortedOptions]);
 
-    return { options, selectedOption, isLoading: isOperatorsLoading || isUpcomingLoading };
+    return { options, allOptions: sortedOptions, selectedOption, isLoading: isOperatorsLoading || isUpcomingLoading };
 }
 
 interface IOperatorSelectorProps {
@@ -118,5 +120,76 @@ export function OperatorSelector({ options, selectedOption, isLoading, onSelect,
                 </ComboboxPopup>
             </Combobox>
         </div>
+    );
+}
+
+interface IOperatorMultiSelectorProps {
+    options: IOperatorOption[];
+    /** The picked operators, in the order they were picked. */
+    selectedOptions: IOperatorOption[];
+    isLoading: boolean;
+    onSelectedChange: (options: IOperatorOption[]) => void;
+    searchQuery: string;
+    onSearchQueryChange: (query: string) => void;
+}
+
+/**
+ * The bulk dialog's operator search: the same rows and ranking as
+ * `OperatorSelector`, but every pick toggles in and the popup stays open.
+ * The input is always the search box; the picks are listed by the dialog.
+ */
+export function OperatorMultiSelector({ options, selectedOptions, isLoading, onSelectedChange, searchQuery, onSearchQueryChange }: IOperatorMultiSelectorProps): React.ReactElement {
+    const t: TypedT<typeof messages & typeof bulkMessages> = useT("tools");
+    const selectedIds = React.useMemo(() => new Set(selectedOptions.map((op) => op.id)), [selectedOptions]);
+    const unpickedMatches = options.filter((op) => !selectedIds.has(op.id));
+
+    const addAllMatches = () => onSelectedChange([...selectedOptions, ...unpickedMatches]);
+
+    return (
+        <Combobox<IOperatorOption, true>
+            multiple
+            items={options}
+            value={selectedOptions}
+            onValueChange={onSelectedChange}
+            filter={null}
+            inputValue={searchQuery}
+            onInputValueChange={onSearchQueryChange}
+            isItemEqualToValue={(a, b) => a.id === b.id}
+            itemToStringLabel={(op) => op?.displayName ?? ""}
+            itemToStringValue={(op) => op?.id ?? ""}
+        >
+            <ComboboxInput id="bulk-operator-selector" placeholder={isLoading ? t("planner.dialog.loadingOperators") : t("planner.dialog.searchOperators")} />
+            <ComboboxPopup className="max-w-100">
+                {searchQuery.trim() && unpickedMatches.length > 0 && (
+                    <div className="border-border border-b p-1">
+                        <button type="button" onClick={addAllMatches} className="flex w-full items-center rounded-md px-2 py-1.5 text-left font-medium text-primary text-xs hover:bg-primary/10">
+                            {t("planner.bulk.addAllResults", { count: unpickedMatches.length })}
+                        </button>
+                    </div>
+                )}
+                <ComboboxEmpty>{t("planner.dialog.noOperators")}</ComboboxEmpty>
+                <ComboboxList>
+                    {(op: IOperatorOption) => {
+                        const isSelected = selectedIds.has(op.id);
+                        return (
+                            <ComboboxPrimitive.Item key={op.id} value={op} className="flex min-h-8 cursor-default items-center gap-3 rounded-sm px-2 py-1 text-sm outline-none data-disabled:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-64">
+                                <span className={cn("flex size-4.5 shrink-0 items-center justify-center rounded-sm border transition-colors sm:size-4", isSelected ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background")}>
+                                    {isSelected && (
+                                        <svg aria-hidden="true" className="size-3 sm:size-2.5" fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M5.252 12.7 10.2 18.63 18.748 5.37" />
+                                        </svg>
+                                    )}
+                                </span>
+                                <span aria-hidden="true" className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/50">
+                                    <OperatorAvatar charId={op.id} name={op.displayName} className="block h-full w-full object-cover" server={op.isUpcoming ? "cn" : undefined} />
+                                </span>
+                                <span className="flex-1 font-medium text-foreground text-sm">{op.displayName}</span>
+                                <span className="font-normal text-muted-foreground text-xs">{t("planner.dialog.rarityClass", { rarity: op.rarity, class: professionLabel(op.profession) })}</span>
+                            </ComboboxPrimitive.Item>
+                        );
+                    }}
+                </ComboboxList>
+            </ComboboxPopup>
+        </Combobox>
     );
 }

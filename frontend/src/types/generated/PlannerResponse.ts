@@ -3,4 +3,15 @@ import type { OperatorPlanResponse } from "./OperatorPlanResponse";
 import type { PlanGroup } from "./PlanGroup";
 import type { PlanRequirementItem } from "./PlanRequirementItem";
 
-export type PlannerResponse = { plans: Array<OperatorPlanResponse>; aggregatedRequirements: Array<PlanRequirementItem>; groups: Array<PlanGroup> };
+export type PlannerResponse = {
+    plans: Array<OperatorPlanResponse>;
+    aggregatedRequirements: Array<PlanRequirementItem>;
+    groups: Array<PlanGroup>;
+    /**
+     * When the caller's account was last synced to our database. Every
+     * current-state reading behind the plan (roster, inventory, base, stage
+     * clears) is a snapshot as of this moment. Null for an account with no
+     * profile row.
+     */
+    lastSyncedAt: string | null;
+};

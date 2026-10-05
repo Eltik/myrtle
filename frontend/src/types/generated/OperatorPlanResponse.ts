@@ -4,6 +4,13 @@ import type { JsonValue } from "./serde_json/JsonValue";
 export type OperatorPlanResponse = {
     groups: Array<string>;
     operator: JsonValue;
+    /**
+     * The plan has nothing left to do: the operator is owned and every
+     * target (promotion and level, skill level, each mastery, each module
+     * stage) is reached or passed. Read from the same roster state the
+     * material diff uses, so a met plan contributes no materials.
+     */
+    met: boolean;
     id: string;
     user_id: string;
     operator_id: string;

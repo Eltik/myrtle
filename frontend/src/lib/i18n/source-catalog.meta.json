@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-05T02:41:26.597Z",
+    "generatedAt": "2026-10-05T06:23:44.747Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -30073,6 +30073,302 @@
             "placeholders": []
         },
         {
+            "key": "tools.planner.bulk.addAllResults",
+            "namespace": "tools",
+            "source_text": "{count, plural, one {Add the # result} other {Add all # results}}",
+            "description": "Row at the top of the operator picker that adds every operator matching the search.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.planner.bulk.clear",
+            "namespace": "tools",
+            "source_text": "Clear",
+            "description": "Button that removes every picked operator.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.desc",
+            "namespace": "tools",
+            "source_text": "Give several operators the same target. Each one stops at what its rarity allows.",
+            "description": "Subtitle of the bulk dialog. 'Rarity' is the operator's star rating.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.failed",
+            "namespace": "tools",
+            "source_text": "{count, plural, one {# plan was not saved.} other {# plans were not saved.}} The reason is on each row.",
+            "description": "Error banner after saving when some operators failed. The operators that saved are already removed from the list.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.planner.bulk.level",
+            "namespace": "tools",
+            "source_text": "Level",
+            "description": "Label over the target level field.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.levelCapNote",
+            "namespace": "tools",
+            "source_text": "Up to {max} here. Lower rarities stop at their own cap.",
+            "description": "Hint under the level field. {max} is the highest level the chosen promotion allows for any operator.",
+            "placeholders": [
+                "max"
+            ]
+        },
+        {
+            "key": "tools.planner.bulk.levelMax",
+            "namespace": "tools",
+            "source_text": "Max",
+            "description": "Switch beside the level field: when on, each operator targets the highest level at its promotion.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.masteries",
+            "namespace": "tools",
+            "source_text": "Masteries",
+            "description": "Label over the per-skill mastery rows. 'Mastery' is the game's skill upgrade past level 7.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.moduleStage",
+            "namespace": "tools",
+            "source_text": "Module stage",
+            "description": "Label over the module stage buttons. 'Module' is the game's operator equipment.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.open",
+            "namespace": "tools",
+            "source_text": "Bulk add",
+            "description": "Button beside the add-plan button that opens the dialog for planning many operators at once.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.operators",
+            "namespace": "tools",
+            "source_text": "Operators",
+            "description": "Label over the multi-select operator picker.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.overwrite",
+            "namespace": "tools",
+            "source_text": "Replace existing plans",
+            "description": "Switch label: when on, operators that already have a plan get the new target.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.overwrite.desc",
+            "namespace": "tools",
+            "source_text": "When off, operators that already have a plan are skipped.",
+            "description": "Hint under the replace-existing-plans switch.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.preset",
+            "namespace": "tools",
+            "source_text": "Preset",
+            "description": "Label over the saved-preset picker.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.presetDelete",
+            "namespace": "tools",
+            "source_text": "Delete preset",
+            "description": "Accessible name of the button that deletes the chosen preset.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.presetName",
+            "namespace": "tools",
+            "source_text": "Preset name",
+            "description": "Placeholder of the field naming a new preset.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.presetNone",
+            "namespace": "tools",
+            "source_text": "No saved presets yet.",
+            "description": "Shown in the preset picker when the player has saved none.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.presetPlaceholder",
+            "namespace": "tools",
+            "source_text": "Load a preset",
+            "description": "Placeholder of the preset picker before one is chosen.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.presetReplace",
+            "namespace": "tools",
+            "source_text": "Replace preset",
+            "description": "The save-preset button when the typed name matches a saved preset, which it overwrites.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.presetSave",
+            "namespace": "tools",
+            "source_text": "Save preset",
+            "description": "Button that saves the current target as a preset under the typed name.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.preview",
+            "namespace": "tools",
+            "source_text": "Preview",
+            "description": "Heading over the list of picked operators and the target each will get.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.previewEmpty",
+            "namespace": "tools",
+            "source_text": "Pick operators to see the target each one gets.",
+            "description": "Shown in the preview while no operator is picked.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.remove",
+            "namespace": "tools",
+            "source_text": "Remove {operator}",
+            "description": "Accessible name of the x on one picked operator. {operator} is an operator name from the game data.",
+            "placeholders": [
+                "operator"
+            ]
+        },
+        {
+            "key": "tools.planner.bulk.save",
+            "namespace": "tools",
+            "source_text": "{count, plural, =0 {Add plans} one {Add # plan} other {Add # plans}}",
+            "description": "Button that saves a plan for every operator not skipped.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.planner.bulk.selectedCount",
+            "namespace": "tools",
+            "source_text": "{count, plural, one {# selected} other {# selected}}",
+            "description": "Beside the operator picker's label: how many operators are picked.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.planner.bulk.skillLevel",
+            "namespace": "tools",
+            "source_text": "Skill level",
+            "description": "Label over the shared skill level buttons (1 to 7).",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.skillSlot",
+            "namespace": "tools",
+            "source_text": "S{index}",
+            "description": "Short name of a skill slot, e.g. 'S1' for the first skill. Game shorthand.",
+            "placeholders": [
+                "index"
+            ]
+        },
+        {
+            "key": "tools.planner.bulk.status.loading",
+            "namespace": "tools",
+            "source_text": "Loading...",
+            "description": "Preview row status while that operator's data loads. Three full stops, not an ellipsis character.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.status.planned",
+            "namespace": "tools",
+            "source_text": "Skipped: already planned",
+            "description": "Preview row status: the operator has a plan and replacing is off.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.status.reached",
+            "namespace": "tools",
+            "source_text": "Skipped: already there",
+            "description": "Preview row status: the operator's current progress meets or passes the whole target.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.status.replaces",
+            "namespace": "tools",
+            "source_text": "Replaces plan",
+            "description": "Preview row tag: this operator's existing plan will be overwritten.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.status.unplannable",
+            "namespace": "tools",
+            "source_text": "Skipped: can't be planned",
+            "description": "Preview row status for an operator whose upgrades the planner does not support.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.summary.masteries",
+            "namespace": "tools",
+            "source_text": "M{masteries}",
+            "description": "Compact masteries per skill in a preview row, e.g. 'M3/3/0'. {masteries} is the slash-separated list.",
+            "placeholders": [
+                "masteries"
+            ]
+        },
+        {
+            "key": "tools.planner.bulk.summary.module",
+            "namespace": "tools",
+            "source_text": "Mod {stage}",
+            "description": "Compact module stage in a preview row, e.g. 'Mod 3'.",
+            "placeholders": [
+                "stage"
+            ]
+        },
+        {
+            "key": "tools.planner.bulk.summary.promotion",
+            "namespace": "tools",
+            "source_text": "E{elite} Lv{level}",
+            "description": "Compact promotion and level in a preview row, e.g. 'E2 Lv90'. Game shorthand.",
+            "placeholders": [
+                "elite",
+                "level"
+            ]
+        },
+        {
+            "key": "tools.planner.bulk.summary.skill",
+            "namespace": "tools",
+            "source_text": "SL{level}",
+            "description": "Compact skill level in a preview row, e.g. 'SL7'. Game shorthand.",
+            "placeholders": [
+                "level"
+            ]
+        },
+        {
+            "key": "tools.planner.bulk.target",
+            "namespace": "tools",
+            "source_text": "Target",
+            "description": "Heading over the target fields (promotion, level, skills, modules) applied to every picked operator.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.targetNote",
+            "namespace": "tools",
+            "source_text": "Missing skills and modules are skipped. Anything already past the target stays where it is.",
+            "description": "Hint under the target fields: an operator with fewer skills or no module ignores those rows, and a plan never goes below the operator's current progress.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.bulk.title",
+            "namespace": "tools",
+            "source_text": "Bulk add plans",
+            "description": "Title of the dialog that plans many operators with one target.",
+            "placeholders": []
+        },
+        {
             "key": "tools.planner.card.delete",
             "namespace": "tools",
             "source_text": "Delete",
@@ -30187,6 +30483,61 @@
             "source_text": "Skill Summaries",
             "description": "Requirement category: the Skill Summary items used to level skills. The game's own item family name.",
             "placeholders": []
+        },
+        {
+            "key": "tools.planner.completed.badge",
+            "namespace": "tools",
+            "source_text": "Complete",
+            "description": "Badge on a plan card whose targets the player's roster has already reached.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.completed.delete",
+            "namespace": "tools",
+            "source_text": "{count, plural, =0 {Delete} one {Delete # plan} other {Delete # plans}}",
+            "description": "Button that deletes the checked completed plans; the count is how many are checked.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.planner.completed.desc",
+            "namespace": "tools",
+            "source_text": "Your last sync shows these operators at their targets. Delete the plans you no longer need.",
+            "description": "Body of the completed-plans dialog, above the checklist of plans.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.completed.keep",
+            "namespace": "tools",
+            "source_text": "Keep them",
+            "description": "Button that closes the completed-plans dialog without deleting anything and hides the notice until another plan completes.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.completed.notice",
+            "namespace": "tools",
+            "source_text": "{count, plural, one {# plan is complete} other {# plans are complete}}",
+            "description": "Notice at the top of the planner when the last roster sync shows plans whose targets are all reached.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "tools.planner.completed.review",
+            "namespace": "tools",
+            "source_text": "Review",
+            "description": "Button in the completed-plans notice that opens the list of completed plans.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.completed.title",
+            "namespace": "tools",
+            "source_text": "{count, plural, one {Completed plan} other {Completed plans}}",
+            "description": "Title of the dialog listing plans whose targets are all reached.",
+            "placeholders": [
+                "count"
+            ]
         },
         {
             "key": "tools.planner.createFirstPlan",
@@ -30615,6 +30966,27 @@
             ]
         },
         {
+            "key": "tools.planner.filter.all",
+            "namespace": "tools",
+            "source_text": "All",
+            "description": "Chip that clears the group filter so every plan counts toward the requirements.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.filter.aria",
+            "namespace": "tools",
+            "source_text": "Filter plans by group",
+            "description": "Accessible name of the row of group chips above the plan list.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.filter.ungrouped",
+            "namespace": "tools",
+            "source_text": "Ungrouped",
+            "description": "Chip that selects the plans not sorted into any group.",
+            "placeholders": []
+        },
+        {
             "key": "tools.planner.group.deleteConfirm",
             "namespace": "tools",
             "source_text": "Are you sure you want to delete group \"{name}\"?",
@@ -30638,11 +31010,29 @@
             "placeholders": []
         },
         {
+            "key": "tools.planner.group.pin",
+            "namespace": "tools",
+            "source_text": "Pin {name}",
+            "description": "Accessible name and tooltip of the button that pins a group to the top of the list; {name} is the player's own group name.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
             "key": "tools.planner.group.renamePrompt",
             "namespace": "tools",
             "source_text": "Enter new group name:",
             "description": "Prompt in the browser dialog that renames a group. Keep the colon.",
             "placeholders": []
+        },
+        {
+            "key": "tools.planner.group.unpin",
+            "namespace": "tools",
+            "source_text": "Unpin {name}",
+            "description": "Accessible name and tooltip of the button that unpins a pinned group; {name} is the player's own group name.",
+            "placeholders": [
+                "name"
+            ]
         },
         {
             "key": "tools.planner.intro",
@@ -30696,6 +31086,22 @@
             ]
         },
         {
+            "key": "tools.planner.req.craftGate.aria",
+            "namespace": "tools",
+            "source_text": "Why {name} cannot be crafted yet",
+            "description": "Accessible name of the info button beside an item whose recipe is locked; {name} is the item name from the game data.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "tools.planner.req.craftGate.stages",
+            "namespace": "tools",
+            "source_text": "Stages to clear:",
+            "description": "Label before the links to the stages that unlock an item's recipe. Keep the colon.",
+            "placeholders": []
+        },
+        {
             "key": "tools.planner.req.craftTitle",
             "namespace": "tools",
             "source_text": "You have {have} of {required} - the remaining {shortfall} must be crafted",
@@ -30730,6 +31136,31 @@
             ]
         },
         {
+            "key": "tools.planner.req.filter.tier",
+            "namespace": "tools",
+            "source_text": "Max tier",
+            "description": "Placeholder in the material-tier filter before a tier is chosen. 'Tier' is the game's material rarity, T1 to T5.",
+            "placeholders": []
+        },
+        {
+            "key": "tools.planner.req.filter.tierOption",
+            "namespace": "tools",
+            "source_text": "T{tier}",
+            "description": "A material tier, e.g. 'T3'. The community's own shorthand, which normally stays as-is.",
+            "placeholders": [
+                "tier"
+            ]
+        },
+        {
+            "key": "tools.planner.req.filter.tierValue",
+            "namespace": "tools",
+            "source_text": "Max tier: {value}",
+            "description": "Closed state of the material-tier filter, e.g. 'Max tier: T3' or 'Max tier: All'. Keep the colon.",
+            "placeholders": [
+                "value"
+            ]
+        },
+        {
             "key": "tools.planner.req.filter.type",
             "namespace": "tools",
             "source_text": "Type",
@@ -30743,6 +31174,15 @@
             "description": "Closed state of the item-type filter, e.g. 'Type: Materials'. Keep the colon.",
             "placeholders": [
                 "value"
+            ]
+        },
+        {
+            "key": "tools.planner.req.lastSynced",
+            "namespace": "tools",
+            "source_text": "Last synced {time}",
+            "description": "Beside the Requirements heading: when the roster and inventory these numbers come from were last synced. {time} is a relative time such as '3 hours ago' or 'yesterday'.",
+            "placeholders": [
+                "time"
             ]
         },
         {
@@ -30779,6 +31219,15 @@
             "source_text": "Search requirements...",
             "description": "Placeholder in the requirement search box. Three full stops, not an ellipsis character.",
             "placeholders": []
+        },
+        {
+            "key": "tools.planner.req.tierNote",
+            "namespace": "tools",
+            "source_text": "Materials above T{tier} are broken into their ingredients. LMD includes the crafting cost.",
+            "description": "Note under the filters while a max tier is set. LMD is the game's currency; crafting at the workshop costs it.",
+            "placeholders": [
+                "tier"
+            ]
         },
         {
             "key": "tools.planner.req.title",
@@ -39237,6 +39686,13 @@
             "placeholders": []
         },
         {
+            "key": "user.profile.plans.complete",
+            "namespace": "user",
+            "source_text": "Complete",
+            "description": "Badge on a plan card whose targets the player's roster has already reached.",
+            "placeholders": []
+        },
+        {
             "key": "user.profile.plans.eliteAlt",
             "namespace": "user",
             "source_text": "Elite {elite}",
@@ -39303,6 +39759,13 @@
             "namespace": "user",
             "source_text": "Skills",
             "description": "Row label over an operator's current and target skill ranks.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.plans.ungrouped",
+            "namespace": "user",
+            "source_text": "Ungrouped",
+            "description": "Heading of the last section of the plans tab, holding plans the player put in no group. Rendered uppercase by CSS.",
             "placeholders": []
         },
         {

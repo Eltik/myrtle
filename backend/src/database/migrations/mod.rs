@@ -93,6 +93,10 @@ const MIGRATIONS: &[(&str, &str)] = &[
         include_str!("v028_game_story_read_verdict.sql"),
     ),
     ("v029_tier_entities", include_str!("v029_tier_entities.sql")),
+    (
+        "v030_planner_pins_presets",
+        include_str!("v030_planner_pins_presets.sql"),
+    ),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

@@ -20,8 +20,9 @@ use crate::{
     database::{
         models::{
             planner::{
-                OperatorPlan, OperatorPlanResponse, PlanGroup, PlanRecipe, PlanRecipeCost,
-                PlanRequirementItem, PlannerResponse, TargetModulePlan, TargetSkillPlan,
+                DeletePlansResponse, OperatorPlan, OperatorPlanResponse, PlanGroup, PlanPreset,
+                PlanRecipe, PlanRecipeCost, PlanRequirementItem, PlanUnmetStage, PlannerResponse,
+                PresetTarget, TargetModulePlan, TargetSkillPlan,
             },
             roster::RosterEntry,
         },
@@ -42,6 +43,110 @@ struct RosterMastery {
 struct RosterModule {
     id: String,
     level: i16,
+    /// The save keeps a module the player has not unlocked at `level` 1 with
+    /// this flag set (every locked row in the database carries level 1 or
+    /// more), so `level` alone reads a locked module as stage 1.
+    #[serde(default)]
+    locked: bool,
+}
+
+/// The roster state a plan is measured from. The material diff
+/// (`get_plan_direct_materials`) and the completion check (`plan_met`) both
+/// read it, and every cost the diff adds sits behind the negation of one of
+/// the `reaches_*` checks `plan_met` requires. A met plan therefore costs
+/// nothing by construction; the two cannot disagree.
+struct CurrentState {
+    owned: bool,
+    elite: i16,
+    level: i16,
+    skill_level: i16,
+    masteries: Vec<RosterMastery>,
+    modules: Vec<RosterModule>,
+}
+
+impl CurrentState {
+    /// An operator the player does not own reads as Elite 0 level 1, skill
+    /// level 1, nothing mastered or unlocked.
+    fn from_roster(entry: Option<&RosterEntry>) -> Self {
+        Self {
+            owned: entry.is_some(),
+            elite: entry.map_or(0, |r| r.elite),
+            level: entry.map_or(1, |r| r.level),
+            skill_level: entry.map_or(1, |r| r.skill_level),
+            masteries: entry
+                .map(|r| serde_json::from_value(r.masteries.clone()).unwrap_or_default())
+                .unwrap_or_default(),
+            modules: entry
+                .map(|r| serde_json::from_value(r.modules.clone()).unwrap_or_default())
+                .unwrap_or_default(),
+        }
+    }
+
+    fn mastery(&self, skill_index: i16) -> i16 {
+        self.masteries
+            .iter()
+            .find(|m| m.index == skill_index)
+            .map_or(0, |m| m.mastery)
+    }
+
+    /// A locked module is stage 0, whatever level the save carries for it.
+    fn module_stage(&self, module_id: &str) -> i16 {
+        self.modules
+            .iter()
+            .find(|m| m.id == module_id)
+            .map_or(0, |m| if m.locked { 0 } else { m.level })
+    }
+
+    const fn reaches_level(&self, target_elite: i16, target_level: i16) -> bool {
+        self.elite > target_elite || (self.elite == target_elite && self.level >= target_level)
+    }
+
+    const fn reaches_skill_level(&self, target: i16) -> bool {
+        self.skill_level >= target
+    }
+
+    fn reaches_mastery(&self, target: &TargetSkillPlan) -> bool {
+        self.mastery(target.skill_index) >= target.mastery_level
+    }
+
+    fn reaches_module(&self, target: &TargetModulePlan) -> bool {
+        self.module_stage(&target.module_id) >= target.module_stage
+    }
+}
+
+/// A plan's mastery and module targets, parsed from their jsonb columns.
+struct PlanTargets {
+    skills: Vec<TargetSkillPlan>,
+    modules: Vec<TargetModulePlan>,
+}
+
+impl PlanTargets {
+    fn parse(plan: &OperatorPlan) -> Result<Self, ApiError> {
+        Ok(Self {
+            skills: serde_json::from_value(plan.target_skills.clone())
+                .map_err(|_| ApiError::BadRequest("Invalid target_skills format".into()))?,
+            modules: serde_json::from_value(plan.target_modules.clone())
+                .map_err(|_| ApiError::BadRequest("Invalid target_modules format".into()))?,
+        })
+    }
+}
+
+/// Whether the plan has nothing left to do: the operator is owned and every
+/// target is reached or passed. A target mastery or module stage of 0 is
+/// always reached.
+fn plan_met(plan: &OperatorPlan, targets: &PlanTargets, current: &CurrentState) -> bool {
+    current.owned
+        && current.reaches_level(plan.target_elite, plan.target_level)
+        && current.reaches_skill_level(plan.target_skill_level)
+        && targets.skills.iter().all(|t| current.reaches_mastery(t))
+        && targets.modules.iter().all(|t| current.reaches_module(t))
+}
+
+/// `plan_met` for a stored plan, reading its own roster entry. A plan whose
+/// target columns do not parse is not met.
+fn stored_plan_met(plan: &OperatorPlan, roster_entry: Option<&RosterEntry>) -> bool {
+    PlanTargets::parse(plan)
+        .is_ok_and(|targets| plan_met(plan, &targets, &CurrentState::from_roster(roster_entry)))
 }
 
 const fn phase_to_int(phase: &OperatorPhase) -> i16 {
@@ -119,21 +224,37 @@ fn item_display_meta(item_id: &str, materials: &Materials) -> (String, String, i
         return ("EXP".to_owned(), "EXP_PLAYER".to_owned(), 0);
     }
     if let Some(item) = materials.items.get(item_id) {
-        let rarity = match item.rarity {
-            ItemRarity::Tier1 => 1,
-            ItemRarity::Tier2 => 2,
-            ItemRarity::Tier3 => 3,
-            ItemRarity::Tier4 => 4,
-            ItemRarity::Tier5 => 5,
-            ItemRarity::Tier6 => 6,
-        };
         return (
             item.name.clone(),
             format!("{:?}", item.item_type).to_uppercase(),
-            rarity,
+            rarity_tier(&item.rarity),
         );
     }
     (item_id.to_owned(), "MATERIAL".to_owned(), 0)
+}
+
+const fn rarity_tier(rarity: &ItemRarity) -> i16 {
+    match rarity {
+        ItemRarity::Tier1 => 1,
+        ItemRarity::Tier2 => 2,
+        ItemRarity::Tier3 => 3,
+        ItemRarity::Tier4 => 4,
+        ItemRarity::Tier5 => 5,
+        ItemRarity::Tier6 => 6,
+    }
+}
+
+/// An item's tier (`TIER_1`..`TIER_6` as 1..6) from the item table. LMD and
+/// EXP are tier 0, as in `item_display_meta` (the table files them at
+/// `TIER_4` and `TIER_5`), and so is anything the table lacks.
+fn item_tier(item_id: &str, materials: &Materials) -> i16 {
+    if item_id == "4001" || item_id == "5001" {
+        return 0;
+    }
+    materials
+        .items
+        .get(item_id)
+        .map_or(0, |item| rarity_tier(&item.rarity))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -168,6 +289,7 @@ fn resolve_requirement_item(
         can_craft,
         craft_reason,
         recipe,
+        unmet_stages: Vec::new(),
     }
 }
 
@@ -244,6 +366,8 @@ fn claim_from_pool(pool: &mut HashMap<String, i32>, item_id: &str, count: i32) -
 /// A craft recipe normalized across workshop and factory formulas.
 struct RecipeView<'a> {
     output_count: i32,
+    /// LMD per craft (workshop formulas only; the factory charges none).
+    gold_cost: i64,
     costs: &'a [FormulaCost],
     require_rooms: &'a [FormulaRoomReq],
     /// Stage clears gating the recipe (workshop formulas only).
@@ -267,6 +391,7 @@ fn find_recipe<'a>(building: &'a BuildingDataFile, item_id: &str) -> RecipeLooku
         }
         return RecipeLookup::Found(RecipeView {
             output_count: formula.count,
+            gold_cost: formula.gold_cost,
             costs: &formula.costs,
             require_rooms: &formula.require_rooms,
             require_stage_ids: formula
@@ -283,6 +408,7 @@ fn find_recipe<'a>(building: &'a BuildingDataFile, item_id: &str) -> RecipeLooku
     {
         return RecipeLookup::Found(RecipeView {
             output_count: formula.count,
+            gold_cost: 0,
             costs: &formula.costs,
             require_rooms: &formula.require_rooms,
             require_stage_ids: Vec::new(),
@@ -291,8 +417,14 @@ fn find_recipe<'a>(building: &'a BuildingDataFile, item_id: &str) -> RecipeLooku
     RecipeLookup::None
 }
 
-fn unmet_recipe_requirements(ctx: &PlannerCtx, view: &RecipeView) -> Vec<String> {
+/// The recipe's unmet gates as display strings (`WORKSHOP lv.3`, `Stage S9-3`),
+/// and its unmet stage gates again as structured entries.
+fn unmet_recipe_requirements(
+    ctx: &PlannerCtx,
+    view: &RecipeView,
+) -> (Vec<String>, Vec<PlanUnmetStage>) {
     let mut unmet_reqs = Vec::new();
+    let mut unmet_stages = Vec::new();
     for room_req in view.require_rooms {
         let matching_count = ctx
             .user_building
@@ -316,9 +448,13 @@ fn unmet_recipe_requirements(ctx: &PlannerCtx, view: &RecipeView) -> Vec<String>
                 .get(*stage_id)
                 .map_or(*stage_id, |s| s.code.as_str());
             unmet_reqs.push(format!("Stage {stage_code}"));
+            unmet_stages.push(PlanUnmetStage {
+                stage_id: (*stage_id).to_owned(),
+                code: stage_code.to_owned(),
+            });
         }
     }
-    unmet_reqs
+    (unmet_reqs, unmet_stages)
 }
 
 /// Builds the requirement node for one item, allocating units out of `pool`, the
@@ -350,6 +486,7 @@ fn build_requirement_tree(
         _ => "No workshop or factory formula".to_owned(),
     };
     let mut recipe = None;
+    let mut unmet_stages = Vec::new();
 
     if let RecipeLookup::Found(view) = lookup {
         if view.costs.iter().any(|c| visited.contains(&c.id.as_str())) {
@@ -366,7 +503,8 @@ fn build_requirement_tree(
             );
         }
 
-        let unmet_reqs = unmet_recipe_requirements(ctx, &view);
+        let (unmet_reqs, stages) = unmet_recipe_requirements(ctx, &view);
+        unmet_stages = stages;
         let gates_met = unmet_reqs.is_empty();
 
         let crafts_needed = if shortfall > 0 {
@@ -434,7 +572,7 @@ fn build_requirement_tree(
 
     let missing_count = (shortfall - craftable_count).max(0);
 
-    resolve_requirement_item(
+    let mut item = resolve_requirement_item(
         ctx,
         item_id,
         required_count,
@@ -444,56 +582,50 @@ fn build_requirement_tree(
         can_craft,
         craft_reason,
         recipe,
-    )
+    );
+    item.unmet_stages = unmet_stages;
+    item
 }
 
+/// Materials from the current state to the plan's targets. Every cost is
+/// added behind the negation of a `CurrentState::reaches_*` check, the same
+/// checks `plan_met` requires, so a met plan yields an empty map.
 fn get_plan_direct_materials(
     gamedata: &GameData,
     plan: &OperatorPlan,
     operator: &Operator,
     roster_entry: Option<&RosterEntry>,
 ) -> Result<HashMap<String, i32>, ApiError> {
-    let current_elite = roster_entry.map_or(0, |r| r.elite);
-    let current_level = roster_entry.map_or(1, |r| r.level);
-    let current_skill_level = roster_entry.map_or(1, |r| r.skill_level);
-
-    let current_masteries: Vec<RosterMastery> = roster_entry
-        .map(|r| serde_json::from_value(r.masteries.clone()).unwrap_or_default())
-        .unwrap_or_default();
-    let current_modules: Vec<RosterModule> = roster_entry
-        .map(|r| serde_json::from_value(r.modules.clone()).unwrap_or_default())
-        .unwrap_or_default();
-
-    let skill_plans: Vec<TargetSkillPlan> = serde_json::from_value(plan.target_skills.clone())
-        .map_err(|_| ApiError::BadRequest("Invalid target_skills format".into()))?;
-
-    let module_plans: Vec<TargetModulePlan> =
-        serde_json::from_value(plan.target_modules.clone())
-            .map_err(|_| ApiError::BadRequest("Invalid target_modules format".into()))?;
+    let current = CurrentState::from_roster(roster_entry);
+    let targets = PlanTargets::parse(plan)?;
+    let current_elite = current.elite;
+    let current_skill_level = current.skill_level;
 
     let mut materials = HashMap::new();
 
-    calculate_leveling_costs(
-        operator,
-        gamedata,
-        current_elite,
-        current_level,
-        plan.target_elite,
-        plan.target_level,
-        &mut materials,
-    );
+    if !current.reaches_level(plan.target_elite, plan.target_level) {
+        calculate_leveling_costs(
+            operator,
+            gamedata,
+            current_elite,
+            current.level,
+            plan.target_elite,
+            plan.target_level,
+            &mut materials,
+        );
 
-    if plan.target_elite > current_elite {
-        for elite in (current_elite + 1)..=plan.target_elite {
-            if let Some(ref evolve_costs) = operator.phases[elite as usize].evolve_cost {
-                for cost in evolve_costs {
-                    *materials.entry(cost.id.clone()).or_insert(0) += cost.count;
+        if plan.target_elite > current_elite {
+            for elite in (current_elite + 1)..=plan.target_elite {
+                if let Some(ref evolve_costs) = operator.phases[elite as usize].evolve_cost {
+                    for cost in evolve_costs {
+                        *materials.entry(cost.id.clone()).or_insert(0) += cost.count;
+                    }
                 }
             }
         }
     }
 
-    if plan.target_skill_level > current_skill_level {
+    if !current.reaches_skill_level(plan.target_skill_level) {
         for i in (current_skill_level - 1)..(plan.target_skill_level - 1) {
             if let Some(lvl_up) = operator.all_skill_level_up.get(i as usize) {
                 for cost in &lvl_up.lvl_up_cost {
@@ -503,14 +635,11 @@ fn get_plan_direct_materials(
         }
     }
 
-    for target_skill in &skill_plans {
+    for target_skill in &targets.skills {
         let idx = target_skill.skill_index;
-        let current_mast = current_masteries
-            .iter()
-            .find(|m| m.index == idx)
-            .map_or(0, |m| m.mastery);
+        let current_mast = current.mastery(idx);
 
-        if target_skill.mastery_level > current_mast
+        if !current.reaches_mastery(target_skill)
             && let Some(skill_entry) = operator.skills.get(idx as usize)
         {
             for i in (current_mast as usize)..(target_skill.mastery_level as usize) {
@@ -523,12 +652,9 @@ fn get_plan_direct_materials(
         }
     }
 
-    for target_module in &module_plans {
-        let current_level = current_modules
-            .iter()
-            .find(|m| m.id == target_module.module_id)
-            .map_or(0, |m| m.level);
-        if target_module.module_stage > current_level
+    for target_module in &targets.modules {
+        let current_level = current.module_stage(&target_module.module_id);
+        if !current.reaches_module(target_module)
             && let Some(op_mod) = operator
                 .modules
                 .iter()
@@ -586,10 +712,94 @@ fn build_all_requirements(
         .collect()
 }
 
+/// Upper bound on recipe expansions in `flatten_above_tier`. Game recipes run
+/// strictly down in tier, so a real plan stops after a few dozen; the bound
+/// only keeps a cyclic recipe table from spinning.
+const MAX_FLATTEN_STEPS: usize = 10_000;
+
+/// Rewrites aggregated plan materials so nothing above `max_tier` is left
+/// that a recipe can replace.
+///
+/// Each above-tier item, highest tier first, first claims owned copies from
+/// its own ledger (a copy of the inventory that only above-tier items draw
+/// on); the remaining shortfall becomes `ceil(shortfall / output)` crafts,
+/// whose ingredients and workshop LMD are added to the matching entries. The
+/// item itself leaves the map, owned copies included, since nothing above the
+/// tier is shown. An ingredient that is itself above the tier is expanded in
+/// turn, and an item that gains need after its expansion is expanded again
+/// against what is left in the ledger, so no owned copy is counted twice.
+///
+/// Recipes are expanded whatever their room and stage gates: the filter
+/// answers "what do I farm", and a gate is a step on the way, not a reason to
+/// farm the higher tier. Items with no recipe (or chips, whose conversion is
+/// never proposed) stay as they are, above the tier or not.
+fn flatten_above_tier(
+    ctx: &PlannerCtx,
+    mut need: HashMap<String, i32>,
+    max_tier: i16,
+) -> HashMap<String, i32> {
+    let materials = &ctx.gamedata.materials;
+    let building = &ctx.gamedata.building;
+    let mut pool = ctx.inventory_map.clone();
+
+    for _ in 0..MAX_FLATTEN_STEPS {
+        let next = need
+            .iter()
+            .filter(|&(id, &count)| {
+                count > 0
+                    && item_tier(id, materials) > max_tier
+                    && matches!(find_recipe(building, id), RecipeLookup::Found(_))
+            })
+            .map(|(id, _)| (item_tier(id, materials), id.clone()))
+            // Highest tier first, ties by id, so the result never depends on
+            // the map's iteration order.
+            .max_by(|a, b| a.0.cmp(&b.0).then_with(|| b.1.cmp(&a.1)));
+        let Some((_, item_id)) = next else {
+            break;
+        };
+
+        let count = need.remove(&item_id).unwrap_or(0);
+        let shortfall = count - claim_from_pool(&mut pool, &item_id, count);
+        if shortfall <= 0 {
+            continue;
+        }
+        let RecipeLookup::Found(view) = find_recipe(building, &item_id) else {
+            continue;
+        };
+        let crafts = (shortfall + view.output_count - 1) / view.output_count;
+        for cost in view.costs {
+            *need.entry(cost.id.clone()).or_insert(0) += crafts * cost.count;
+        }
+        if view.gold_cost > 0 {
+            let lmd = i32::try_from(i64::from(crafts) * view.gold_cost).unwrap_or(i32::MAX);
+            let entry = need.entry("4001".to_owned()).or_insert(0);
+            *entry = entry.saturating_add(lmd);
+        }
+    }
+
+    need
+}
+
+/// The requirement rows for aggregated plan materials, optionally flattened
+/// to `max_tier` first. With no tier the rows are exactly what
+/// `build_all_requirements` makes of the materials.
+fn aggregate_requirements(
+    ctx: &PlannerCtx,
+    combined_materials: HashMap<String, i32>,
+    max_tier: Option<i16>,
+) -> Vec<PlanRequirementItem> {
+    let combined_materials = match max_tier {
+        Some(tier) => flatten_above_tier(ctx, combined_materials, tier),
+        None => combined_materials,
+    };
+    build_all_requirements(ctx, combined_materials)
+}
+
 fn calculate_requirements(
     ctx: &PlannerCtx,
     plans_with_ops: &[(OperatorPlan, Operator, Option<&RosterEntry>)],
     active_ids: &[String],
+    max_tier: Option<i16>,
 ) -> Result<Vec<PlanRequirementItem>, ApiError> {
     let mut combined_materials = HashMap::new();
     for (plan, operator, roster_entry) in plans_with_ops {
@@ -604,13 +814,14 @@ fn calculate_requirements(
         }
     }
 
-    Ok(build_all_requirements(ctx, combined_materials))
+    Ok(aggregate_requirements(ctx, combined_materials, max_tier))
 }
 
 pub async fn list_plans(
     state: &AppState,
     user_id: Uuid,
     active_ids: Vec<String>,
+    max_tier: Option<i16>,
 ) -> Result<PlannerResponse, ApiError> {
     let plans = queries::list_plans(&state.db, user_id).await?;
     let roster = roster_queries::get_roster(&state.db, user_id).await?;
@@ -666,6 +877,7 @@ pub async fn list_plans(
             resolve_operator(state, state.default_server, &plan.operator_id)
         {
             let roster_entry = roster_map.get(&plan.operator_id);
+            let met = stored_plan_met(&plan, roster_entry);
             plans_with_ops.push((plan.clone(), operator.clone(), roster_entry));
             let plan_groups = group_map.remove(&plan.id).unwrap_or_default();
             let mut op_val =
@@ -680,6 +892,7 @@ pub async fn list_plans(
                 plan,
                 groups: plan_groups,
                 operator: op_val,
+                met,
             });
         }
     }
@@ -692,12 +905,14 @@ pub async fn list_plans(
         user_building: &user_building,
         clears: &clears,
     };
-    let aggregated_requirements = calculate_requirements(&ctx, &plans_with_ops, &active_ids)?;
+    let aggregated_requirements =
+        calculate_requirements(&ctx, &plans_with_ops, &active_ids, max_tier)?;
 
     Ok(PlannerResponse {
         plans: responses,
         aggregated_requirements,
         groups,
+        last_synced_at: profile.as_ref().map(|p| p.updated_at),
     })
 }
 
@@ -709,6 +924,29 @@ pub async fn delete_plan(
     queries::delete_plan(&state.db, user_id, operator_id)
         .await
         .map_err(Into::into)
+}
+
+/// Most operator ids one bulk delete takes. Above the whole operator roster,
+/// so a "delete every plan" request always fits.
+const MAX_BULK_DELETE: usize = 1000;
+
+pub async fn delete_plans(
+    state: &AppState,
+    user_id: Uuid,
+    operator_ids: &[String],
+) -> Result<DeletePlansResponse, ApiError> {
+    if operator_ids.len() > MAX_BULK_DELETE {
+        return Err(ApiError::BadRequest(format!(
+            "At most {MAX_BULK_DELETE} plans can be deleted at once"
+        )));
+    }
+    if operator_ids.is_empty() {
+        return Ok(DeletePlansResponse { deleted: 0 });
+    }
+    let deleted = queries::delete_plans(&state.db, user_id, operator_ids).await?;
+    Ok(DeletePlansResponse {
+        deleted: i64::try_from(deleted).unwrap_or(i64::MAX),
+    })
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -904,6 +1142,10 @@ pub async fn upsert_plan(
             .execute(&mut *tx)
             .await?;
 
+        // A fixed lock order keeps concurrent upserts sharing groups from deadlocking.
+        let mut group_names: Vec<&String> = group_names.iter().collect();
+        group_names.sort();
+        group_names.dedup();
         for group_name in group_names {
             let group_id: Uuid = sqlx::query_scalar(
                 r"
@@ -934,6 +1176,9 @@ pub async fn upsert_plan(
 
     tx.commit().await?;
 
+    let roster_entry = roster_queries::get_operator(&state.db, user_id, operator_id).await?;
+    let met = stored_plan_met(&plan, roster_entry.as_ref());
+
     let plan_groups = if let Some(g) = groups {
         g
     } else {
@@ -963,16 +1208,35 @@ pub async fn upsert_plan(
         plan,
         groups: plan_groups,
         operator: op_val,
+        met,
     })
 }
 
-pub async fn upsert_group(
+pub async fn create_group(
     state: &AppState,
     user_id: Uuid,
-    old_name: Option<&str>,
     name: &str,
 ) -> Result<PlanGroup, ApiError> {
-    queries::upsert_group(&state.db, user_id, old_name, name)
+    queries::create_group(&state.db, user_id, name)
+        .await
+        .map_err(Into::into)
+}
+
+/// Renames and/or pins a group. At least one of `name` and `pinned` must be
+/// given.
+pub async fn update_group(
+    state: &AppState,
+    user_id: Uuid,
+    old_name: &str,
+    name: Option<&str>,
+    pinned: Option<bool>,
+) -> Result<PlanGroup, ApiError> {
+    if name.is_none() && pinned.is_none() {
+        return Err(ApiError::BadRequest(
+            "Nothing to update: give `name`, `pinned`, or both".into(),
+        ));
+    }
+    queries::update_group(&state.db, user_id, old_name, name, pinned)
         .await
         .map_err(Into::into)
 }
@@ -993,6 +1257,11 @@ pub async fn list_public_plans(
     for (plan_id, group_name) in mapping {
         group_map.entry(plan_id).or_default().push(group_name);
     }
+    let roster_map: HashMap<String, RosterEntry> = roster_queries::get_roster(&state.db, user_id)
+        .await?
+        .into_iter()
+        .map(|r| (r.operator_id.clone(), r))
+        .collect();
     let mut responses = Vec::new();
     for plan in plans {
         if plan.display_on_profile
@@ -1008,14 +1277,109 @@ pub async fn list_public_plans(
                     serde_json::Value::String(server.as_str().to_string()),
                 );
             }
+            let met = stored_plan_met(&plan, roster_map.get(&plan.operator_id));
             responses.push(OperatorPlanResponse {
                 plan,
                 groups: plan_groups,
                 operator: op_val,
+                met,
             });
         }
     }
     Ok(responses)
+}
+
+/// Checks a preset's ranges. The bounds are the ones every operator shares:
+/// level caps of 50 / 80 / 90 at Elite 0 / 1 / 2, skill levels past 4 from
+/// Elite 1, masteries at Elite 2 and skill level 7, modules at Elite 2. A
+/// bulk-add clamps each operator further to its own rarity.
+fn validate_preset_target(target: &PresetTarget) -> Result<(), ApiError> {
+    const LEVEL_CAPS: [i16; 3] = [50, 80, 90];
+    if !(0..=2).contains(&target.elite) {
+        return Err(ApiError::BadRequest("elite must be between 0 and 2".into()));
+    }
+    let cap = LEVEL_CAPS[target.elite as usize];
+    if let Some(level) = target.level
+        && !(1..=cap).contains(&level)
+    {
+        return Err(ApiError::BadRequest(format!(
+            "level must be between 1 and {cap} at Elite {}, or null for the cap",
+            target.elite
+        )));
+    }
+    if !(1..=7).contains(&target.skill_level) {
+        return Err(ApiError::BadRequest(
+            "skill_level must be between 1 and 7".into(),
+        ));
+    }
+    if target.skill_level > 4 && target.elite < 1 {
+        return Err(ApiError::BadRequest(
+            "skill_level above 4 requires Elite 1".into(),
+        ));
+    }
+    if target.masteries.iter().any(|m| !(0..=3).contains(m)) {
+        return Err(ApiError::BadRequest(
+            "each mastery must be between 0 and 3".into(),
+        ));
+    }
+    if target.masteries.iter().any(|&m| m > 0) && (target.elite < 2 || target.skill_level < 7) {
+        return Err(ApiError::BadRequest(
+            "masteries require Elite 2 and skill_level 7".into(),
+        ));
+    }
+    if !(0..=3).contains(&target.module_stage) {
+        return Err(ApiError::BadRequest(
+            "module_stage must be between 0 and 3".into(),
+        ));
+    }
+    if target.module_stage > 0 && target.elite < 2 {
+        return Err(ApiError::BadRequest("modules require Elite 2".into()));
+    }
+    Ok(())
+}
+
+fn preset_from_row(row: queries::PlanPresetRow) -> Result<PlanPreset, ApiError> {
+    let target = serde_json::from_value(row.target).map_err(|e| ApiError::Internal(e.into()))?;
+    Ok(PlanPreset {
+        id: row.id,
+        name: row.name,
+        target,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+    })
+}
+
+pub async fn list_presets(state: &AppState, user_id: Uuid) -> Result<Vec<PlanPreset>, ApiError> {
+    queries::list_presets(&state.db, user_id)
+        .await?
+        .into_iter()
+        .map(preset_from_row)
+        .collect()
+}
+
+/// Creates the preset, or replaces the target of the caller's preset by that
+/// name.
+pub async fn upsert_preset(
+    state: &AppState,
+    user_id: Uuid,
+    name: &str,
+    target: &PresetTarget,
+) -> Result<PlanPreset, ApiError> {
+    let name = name.trim();
+    if name.is_empty() || name.chars().count() > 100 {
+        return Err(ApiError::BadRequest(
+            "Preset name must be 1 to 100 characters".into(),
+        ));
+    }
+    validate_preset_target(target)?;
+    let target_json = serde_json::to_value(target).map_err(|e| ApiError::Internal(e.into()))?;
+    let row = queries::upsert_preset(&state.db, user_id, name, target_json).await?;
+    preset_from_row(row)
+}
+
+pub async fn delete_preset(state: &AppState, user_id: Uuid, name: &str) -> Result<(), ApiError> {
+    queries::delete_preset(&state.db, user_id, name).await?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -1110,20 +1474,46 @@ mod tests {
                 .insert(formula.formula_id.clone(), formula);
         }
 
-        fn requirements(&self, required: &[(&str, i32)]) -> Vec<PlanRequirementItem> {
-            let ctx = PlannerCtx {
+        fn add_item(&mut self, item_id: &str, rarity: ItemRarity) {
+            self.gamedata.materials.items.insert(
+                item_id.to_owned(),
+                crate::core::gamedata::types::material::Item {
+                    item_id: item_id.to_owned(),
+                    name: item_id.to_owned(),
+                    rarity,
+                    ..Default::default()
+                },
+            );
+        }
+
+        fn ctx(&self) -> PlannerCtx<'_> {
+            PlannerCtx {
                 gamedata: &self.gamedata,
                 asset_index: &self.asset_index,
                 inventory_map: &self.inventory,
                 user_building: &self.building,
                 clears: &self.clears,
-            };
-            let combined = required
-                .iter()
-                .map(|(id, count)| ((*id).to_owned(), *count))
-                .collect();
-            build_all_requirements(&ctx, combined)
+            }
         }
+
+        fn requirements(&self, required: &[(&str, i32)]) -> Vec<PlanRequirementItem> {
+            build_all_requirements(&self.ctx(), materials(required))
+        }
+
+        fn requirements_at(
+            &self,
+            required: &[(&str, i32)],
+            max_tier: Option<i16>,
+        ) -> Vec<PlanRequirementItem> {
+            aggregate_requirements(&self.ctx(), materials(required), max_tier)
+        }
+    }
+
+    fn materials(required: &[(&str, i32)]) -> HashMap<String, i32> {
+        required
+            .iter()
+            .map(|(id, count)| ((*id).to_owned(), *count))
+            .collect()
     }
 
     fn find<'a>(reqs: &'a [PlanRequirementItem], id: &str) -> &'a PlanRequirementItem {
@@ -1249,5 +1639,363 @@ mod tests {
         let b = find(&reqs, "b");
         assert_eq!(b.craftable_count, 1);
         assert_eq!(b.missing_count, 0);
+    }
+
+    /// A stage gate the player has not cleared is named in `craft_reason` and
+    /// listed, with its id, in `unmet_stages`.
+    #[test]
+    fn unmet_stage_gate_is_structured() {
+        let mut fx = Fixture::new(&[]);
+        let mut gated = workshop_formula("a", 1, "F_EVOLVE", &[("ing", 1)]);
+        gated.require_stages.push(
+            crate::core::gamedata::types::building::WorkshopFormulaUnlockStage {
+                stage_id: "main_09-03".to_owned(),
+                rank: 2,
+            },
+        );
+        fx.add_workshop(gated);
+        fx.gamedata.stages.insert(
+            "main_09-03".to_owned(),
+            crate::core::gamedata::types::stage::Stage {
+                stage_id: "main_09-03".to_owned(),
+                code: "9-3".to_owned(),
+                ..Default::default()
+            },
+        );
+
+        let reqs = fx.requirements(&[("a", 1)]);
+        let a = find(&reqs, "a");
+        assert!(!a.can_craft);
+        assert_eq!(a.craft_reason, "Requirements not met: Stage 9-3");
+        assert_eq!(a.unmet_stages.len(), 1);
+        assert_eq!(a.unmet_stages[0].stage_id, "main_09-03");
+        assert_eq!(a.unmet_stages[0].code, "9-3");
+
+        fx.clears.insert(
+            "main_09-03".to_owned(),
+            StageClear {
+                state: 3,
+                state_max: 3,
+                inferred: false,
+                complete_times: 1,
+                practice_times: 0,
+            },
+        );
+        let reqs = fx.requirements(&[("a", 1)]);
+        assert!(find(&reqs, "a").unmet_stages.is_empty());
+    }
+
+    /// The T5 / T4 / T3 chain of the Rephasic regression, with LMD on each
+    /// workshop craft: 10 T5 needed, 7 owned, 5 T4 owned.
+    fn tiered_fixture() -> Fixture {
+        let mut fx = Fixture::new(&[("t5", 7), ("t4", 5), ("t3", 30), ("t2a", 39), ("t2b", 4)]);
+        fx.add_item("t5", ItemRarity::Tier5);
+        fx.add_item("t4", ItemRarity::Tier4);
+        fx.add_item("t3", ItemRarity::Tier3);
+        fx.add_item("t2a", ItemRarity::Tier2);
+        fx.add_item("t2b", ItemRarity::Tier2);
+        let mut t5 = workshop_formula("t5", 1, "F_EVOLVE", &[("t4", 2), ("t2a", 1), ("t2b", 1)]);
+        t5.gold_cost = 300;
+        fx.add_workshop(t5);
+        let mut t4 = workshop_formula("t4", 1, "F_EVOLVE", &[("t3", 3)]);
+        t4.gold_cost = 200;
+        fx.add_workshop(t4);
+        fx
+    }
+
+    fn required_counts(reqs: &[PlanRequirementItem]) -> Vec<(&str, i32)> {
+        let mut counts: Vec<(&str, i32)> = reqs
+            .iter()
+            .map(|r| (r.id.as_str(), r.required_count))
+            .collect();
+        counts.sort_unstable();
+        counts
+    }
+
+    /// No tier leaves the requirement rows byte for byte what the unflattened
+    /// builder makes of the same materials.
+    #[test]
+    fn no_max_tier_is_byte_identical() {
+        let fx = tiered_fixture();
+        let required = [("t5", 10), ("t4", 2), ("4001", 5000)];
+        let plain = serde_json::to_string(&fx.requirements(&required)).unwrap();
+        let unfiltered = serde_json::to_string(&fx.requirements_at(&required, None)).unwrap();
+        assert_eq!(plain, unfiltered);
+    }
+
+    /// T5 x10 with 7 owned flattened to T3: the 3 short T5 take 6 T4, 3 + 3
+    /// T2 and 900 LMD; the 6 T4 claim the 5 owned and the 1 short takes 3 T3
+    /// and 200 LMD. No T4 or T5 row is left.
+    #[test]
+    fn max_tier_three_flattens_through_t4() {
+        let fx = tiered_fixture();
+        let reqs = fx.requirements_at(&[("t5", 10)], Some(3));
+        assert_eq!(
+            required_counts(&reqs),
+            vec![("4001", 1100), ("t2a", 3), ("t2b", 3), ("t3", 3)]
+        );
+        assert_eq!(find(&reqs, "t3").missing_count, 0);
+        assert_eq!(find(&reqs, "t2b").missing_count, 0);
+    }
+
+    /// Flattened to T4, the T4 row keeps the full 6 and its owned 5 count
+    /// once: 1 is crafted from T3 inside the row, exactly as unflattened.
+    #[test]
+    fn max_tier_four_keeps_t4_and_its_inventory() {
+        let fx = tiered_fixture();
+        let reqs = fx.requirements_at(&[("t5", 10)], Some(4));
+        assert_eq!(
+            required_counts(&reqs),
+            vec![("4001", 900), ("t2a", 3), ("t2b", 3), ("t4", 6)]
+        );
+        let t4 = find(&reqs, "t4");
+        assert_eq!(t4.inventory_count, 5);
+        assert_eq!(t4.craftable_count, 1);
+        assert_eq!(t4.missing_count, 0);
+    }
+
+    /// A direct T4 need and the T4 a T5 expands into merge into one row
+    /// before the owned T4 are claimed: 2 + 6 = 8 needed, 5 owned, 3 short,
+    /// 9 T3 and 900 + 600 LMD.
+    #[test]
+    fn flattened_need_merges_with_direct_need() {
+        let fx = tiered_fixture();
+        let reqs = fx.requirements_at(&[("t5", 10), ("t4", 2)], Some(3));
+        assert_eq!(
+            required_counts(&reqs),
+            vec![("4001", 1500), ("t2a", 3), ("t2b", 3), ("t3", 9)]
+        );
+    }
+
+    /// An above-tier item fully covered by inventory leaves nothing behind,
+    /// and an above-tier item with no recipe stays.
+    #[test]
+    fn flatten_drops_owned_and_keeps_uncraftable() {
+        let mut fx = tiered_fixture();
+        fx.add_item("relic", ItemRarity::Tier5);
+        let reqs = fx.requirements_at(&[("t5", 7), ("relic", 2)], Some(3));
+        assert_eq!(required_counts(&reqs), vec![("relic", 2)]);
+    }
+
+    fn roster_entry(
+        elite: i16,
+        level: i16,
+        skill_level: i16,
+        masteries: serde_json::Value,
+        modules: serde_json::Value,
+    ) -> RosterEntry {
+        RosterEntry {
+            user_id: Uuid::nil(),
+            operator_id: "char_test".to_owned(),
+            elite,
+            level,
+            exp: 0,
+            potential: 0,
+            skill_level,
+            favor_point: 0,
+            skin_id: None,
+            default_skill: None,
+            voice_lan: None,
+            current_equip: None,
+            current_tmpl: None,
+            obtained_at: None,
+            masteries,
+            modules,
+        }
+    }
+
+    fn plan(
+        elite: i16,
+        level: i16,
+        skill_level: i16,
+        skills: serde_json::Value,
+        modules: serde_json::Value,
+    ) -> OperatorPlan {
+        let now = sqlx::types::chrono::Utc::now();
+        OperatorPlan {
+            id: Uuid::nil(),
+            user_id: Uuid::nil(),
+            operator_id: "char_test".to_owned(),
+            target_elite: elite,
+            target_level: level,
+            target_skill_level: skill_level,
+            target_skills: skills,
+            target_modules: modules,
+            display_on_profile: false,
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
+    #[test]
+    fn plan_met_cases() {
+        use serde_json::json;
+        let e2_s2m3 = || {
+            plan(
+                2,
+                60,
+                7,
+                json!([{"skill_index": 1, "mastery_level": 3}]),
+                json!([{"module_id": "mod_x", "module_stage": 2}]),
+            )
+        };
+        let roster =
+            |elite, level, masteries, modules| roster_entry(elite, level, 7, masteries, modules);
+        let mod_x =
+            |level: i16, locked: bool| json!([{"id": "mod_x", "level": level, "locked": locked}]);
+        let s2m3 = json!([{"index": 1, "mastery": 3}]);
+
+        let cases: Vec<(&str, OperatorPlan, Option<RosterEntry>, bool)> = vec![
+            ("unowned", e2_s2m3(), None, false),
+            (
+                "unowned, E0 L1 plan",
+                plan(0, 1, 1, json!([]), json!([])),
+                None,
+                false,
+            ),
+            (
+                "exact",
+                e2_s2m3(),
+                Some(roster(2, 60, s2m3.clone(), mod_x(2, false))),
+                true,
+            ),
+            (
+                "exceeded: higher level, stage, mastery elsewhere",
+                e2_s2m3(),
+                Some(roster(
+                    2,
+                    90,
+                    json!([{"index": 0, "mastery": 3}, {"index": 1, "mastery": 3}]),
+                    mod_x(3, false),
+                )),
+                true,
+            ),
+            (
+                "higher elite at a lower level",
+                plan(1, 70, 7, json!([]), json!([])),
+                Some(roster(2, 1, json!([]), json!([]))),
+                true,
+            ),
+            (
+                "level short",
+                e2_s2m3(),
+                Some(roster(2, 59, s2m3.clone(), mod_x(2, false))),
+                false,
+            ),
+            (
+                "skill level short",
+                e2_s2m3(),
+                Some(roster_entry(2, 60, 6, s2m3.clone(), mod_x(2, false))),
+                false,
+            ),
+            (
+                "mastery on the wrong skill index",
+                e2_s2m3(),
+                Some(roster(
+                    2,
+                    60,
+                    json!([{"index": 0, "mastery": 3}]),
+                    mod_x(2, false),
+                )),
+                false,
+            ),
+            (
+                "mastery short",
+                e2_s2m3(),
+                Some(roster(
+                    2,
+                    60,
+                    json!([{"index": 1, "mastery": 2}]),
+                    mod_x(2, false),
+                )),
+                false,
+            ),
+            (
+                "module locked at a high level",
+                e2_s2m3(),
+                Some(roster(2, 60, s2m3.clone(), mod_x(3, true))),
+                false,
+            ),
+            (
+                "module missing",
+                e2_s2m3(),
+                Some(roster(2, 60, s2m3.clone(), json!([]))),
+                false,
+            ),
+            (
+                "zero targets are always reached",
+                plan(
+                    2,
+                    60,
+                    7,
+                    json!([{"skill_index": 2, "mastery_level": 0}]),
+                    json!([{"module_id": "mod_x", "module_stage": 0}]),
+                ),
+                Some(roster(2, 60, json!([]), mod_x(1, true))),
+                true,
+            ),
+        ];
+
+        for (name, plan, entry, expected) in cases {
+            assert_eq!(stored_plan_met(&plan, entry.as_ref()), expected, "{name}");
+        }
+    }
+
+    fn operator_with_module(module_id: &str, stage_costs: &[(&str, &str, i32)]) -> Operator {
+        use crate::core::gamedata::types::{
+            module::{Module, ModuleItemCost},
+            operator::OperatorModule,
+        };
+        let mut item_cost: HashMap<String, Vec<ModuleItemCost>> = HashMap::new();
+        for (stage, id, count) in stage_costs {
+            item_cost
+                .entry((*stage).to_owned())
+                .or_default()
+                .push(ModuleItemCost {
+                    id: (*id).to_owned(),
+                    count: *count,
+                    ..Default::default()
+                });
+        }
+        Operator {
+            modules: vec![OperatorModule {
+                module: Module {
+                    uni_equip_id: module_id.to_owned(),
+                    item_cost: Some(item_cost),
+                    ..Default::default()
+                },
+                ..Default::default()
+            }],
+            ..Default::default()
+        }
+    }
+
+    /// A locked module costs its stage 1 even though the save stores it at
+    /// level 1; unlocked at level 1, stage 1 costs nothing.
+    #[test]
+    fn locked_module_is_stage_zero() {
+        use serde_json::json;
+        let gamedata = GameData::default();
+        let operator = operator_with_module("mod_x", &[("1", "unlock", 5), ("2", "upgrade", 3)]);
+        let target = plan(
+            2,
+            1,
+            1,
+            json!([]),
+            json!([{"module_id": "mod_x", "module_stage": 1}]),
+        );
+        let module = |locked: bool| json!([{"id": "mod_x", "level": 1, "locked": locked}]);
+
+        let locked = roster_entry(2, 1, 1, json!([]), module(true));
+        let costs =
+            get_plan_direct_materials(&gamedata, &target, &operator, Some(&locked)).unwrap();
+        assert_eq!(costs, materials(&[("unlock", 5)]));
+        assert!(!stored_plan_met(&target, Some(&locked)));
+
+        let unlocked = roster_entry(2, 1, 1, json!([]), module(false));
+        let costs =
+            get_plan_direct_materials(&gamedata, &target, &operator, Some(&unlocked)).unwrap();
+        assert!(costs.is_empty());
+        assert!(stored_plan_met(&target, Some(&unlocked)));
     }
 }
