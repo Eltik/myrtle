@@ -88,20 +88,20 @@ export const messages = {
         description: "Caption under the animated-artwork switch. 'Spine' is the animation runtime's name and stays as-is.",
     },
     "appearance.latinNames.title": {
-        text: "Operator names",
-        description: "Card title over the option that shows CN-only operators under their Latin-script name.",
+        text: "CN-only names",
+        description: "Card title over the option that shows CN-only operators, outfits and events under their Latin-script name. 'CN' is the Chinese game server's short name and stays as-is.",
     },
     "appearance.latinNames.desc": {
-        text: "Operators that have not reached the global server yet only have a Chinese name. The game also gives each one a Latin-script name, which is usually the name they release under.",
-        description: "Card description under the Operator names title. 'Global server' is the English-language game server.",
+        text: "Operators, outfits and events that have not reached the global server yet only have a Chinese name. Most of them also have a Latin-script name, from the game itself or from an earlier global release, and it is usually the name they release under.",
+        description: "Card description under the CN-only names title. 'Global server' is the English-language game server; 'an earlier global release' means a previous edition of the same outfit series or event that already ran there.",
     },
     "appearance.latinNames.rowTitle": {
-        text: "Show Latin names for CN-only operators",
-        description: "Label of the switch that shows CN-only operators under their Latin-script name, and the switch's accessible name. 'CN' is the Chinese game server's short name and stays as-is.",
+        text: "Show Latin names for CN-only content",
+        description: "Label of the switch that shows CN-only operators, outfits and events under their Latin-script name, and the switch's accessible name. 'CN' is the Chinese game server's short name and stays as-is.",
     },
     "appearance.latinNames.rowDesc": {
-        text: "予愿安洁莉娜 becomes Angelina the Mellow Wish. Search matches either name whichever one is shown. The release planner follows it for CN-only events and outfits too. On by default.",
-        description: "Caption under the Latin-names switch. The Chinese example and its Latin name are game data and stay as-is; the setting also controls names in the release planner.",
+        text: "予愿安洁莉娜 becomes Angelina the Mellow Wish, and 斗争血脉/XI becomes Bloodline of Combat/XI. Search matches either name whichever one is shown. A name with no Latin form yet stays in Chinese. On by default.",
+        description: "Caption under the Latin-names switch. Both Chinese examples and their Latin names are game data and stay as-is.",
     },
 } satisfies MessageMap;
 

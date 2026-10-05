@@ -9,7 +9,7 @@ use crate::{
             AlignMethod, BannersResponse, PoolAlignment, ReleaseBanner, Resolution,
             STANDING_POOL_SECS, align, estimate, ledger, override_name, resolve,
         },
-        translate::{self, AutoName, AutoNameSource, TranslationMemory},
+        translate::{self, AutoName, TranslationMemory},
     },
     database::queries::release as q,
 };
@@ -120,10 +120,7 @@ pub async fn get_banners(state: &AppState) -> Result<BannersResponse, ApiError> 
                 name_char(id);
             }
             let name_en_auto = en_pool
-                .map(|e| AutoName {
-                    text: e.gacha_pool_name.clone(),
-                    source: AutoNameSource::Memory,
-                })
+                .map(|e| AutoName::memory(e.gacha_pool_name.clone()))
                 .or_else(|| translate::resolve(&names.memory, &pool.gacha_pool_name))
                 .or_else(|| override_name(ledger::KIND_POOL, &pool.gacha_pool_id, &names.ov));
             ReleaseBanner {

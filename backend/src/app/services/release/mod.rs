@@ -14,7 +14,9 @@ use crate::{
     app::{cache::keys::CacheKey, error::ApiError, state::AppState},
     core::{
         gamedata::types::{activity::ActivityBasicInfo, skin::Skin},
-        release::{EventAnchor, Resolution, estimate, ledger, override_name, resolve},
+        release::{
+            EventAnchor, Resolution, estimate, ledger, override_index, override_name, resolve,
+        },
         translate::{self, AutoName, TranslationMemory},
     },
     database::queries::release as q,
@@ -81,7 +83,7 @@ impl<'a> Names<'a> {
     fn new(p: &'a Planner, memory: TranslationMemory) -> Self {
         Self {
             memory,
-            ov: crate::core::release::override_index(&p.rows),
+            ov: override_index(&p.rows),
             en_idx: estimate::en_activity_index(&p.ctx.en),
         }
     }
@@ -126,6 +128,7 @@ impl Planner {
         }
         translate::resolve(&names.memory, &a.name)
             .or_else(|| self.ctx.event_name_by_id(&a.id))
+            .or_else(|| self.ctx.event_zone_name(&a.id))
             .or_else(|| override_name(ledger::KIND_ACTIVITY, &a.id, &names.ov))
     }
 

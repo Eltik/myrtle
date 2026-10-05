@@ -21,7 +21,6 @@ import { isPast, resolvedEnStart, sortKey } from "./helpers";
 import type { messages as planMessages } from "./plan.messages";
 import { REVIEW_NAME_CN, REVIEW_NAME_EN, reviewOutfits, reviewYearGroup } from "./reviews";
 import type { messages as reviewMessages } from "./reviews.messages";
-import { cnDay } from "./schedule";
 import { groupNewSkins } from "./skins";
 
 /** A key in `plan.messages.ts`; resolved by whichever component renders it. */
@@ -38,6 +37,11 @@ export interface IPlanSkin {
     skinNameAuto: AutoName | null;
     charName: AutoName | null;
     groupName: string;
+    groupNameAuto: AutoName | null;
+    /** The outfit series (`mh` for both Monster Hunter editions), so a card sits a set's new and rerun editions together. */
+    brand: string;
+    /** Sold with the row's own event, rather than on the same day as it. */
+    anchored: boolean;
     portraitPath: string | null;
     rerun: boolean;
     price: SkinPrice;
@@ -98,7 +102,29 @@ function isRerun(e: ReleaseEvent): boolean {
     return e.cnId.endsWith("sre");
 }
 
-function planSkin(tile: SkinTile, groupName: string, rerun: boolean, names: { skinNameEn?: string; skinNameAuto?: AutoName | null }): IPlanSkin {
+interface IPlanGroup {
+    name: string;
+    nameAuto?: AutoName | null;
+    brand: string;
+}
+
+/** A group id's series: `2026#mh` and `2023#mh` are both `mh`. */
+function brandOf(groupId: string, art: Record<string, { brandId: string } | undefined> | undefined): string {
+    return art?.[groupId]?.brandId ?? groupId.split("#")[1] ?? groupId;
+}
+
+/** The local calendar day an EN start falls on, the day a card shows. */
+function localDay(seconds: number): string {
+    const d = new Date(seconds * 1000);
+    return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+/** A card with no stages, shop or art: a store sale or a review, filled with outfits later. */
+function bareRow(fields: Pick<IPlanRow, "key" | "kind" | "nameCn" | "nameEn" | "enStart" | "resolution" | "rerun">): IPlanRow {
+    return { cnId: null, nameAuto: null, imagePath: null, ended: false, opStages: [], farmStages: [], missionTokens: 0, shop: null, skins: [], ...fields };
+}
+
+function planSkin(tile: SkinTile, group: IPlanGroup, rerun: boolean, names: { skinNameEn?: string; skinNameAuto?: AutoName | null }): IPlanSkin {
     return {
         skinId: tile.skinId,
         charId: tile.charId,
@@ -106,7 +132,10 @@ function planSkin(tile: SkinTile, groupName: string, rerun: boolean, names: { sk
         skinNameEn: names.skinNameEn ?? null,
         skinNameAuto: names.skinNameAuto ?? null,
         charName: tile.charName,
-        groupName,
+        groupName: group.name,
+        groupNameAuto: group.nameAuto ?? null,
+        brand: group.brand,
+        anchored: false,
         portraitPath: tile.portraitPath,
         rerun,
         price: tile.price,
@@ -157,28 +186,34 @@ export function usePlanData(today: Date, showPast: boolean): IPlanData {
             });
         }
         const attach = (anchor: EventAnchor | null | undefined, fallback: () => IPlanRow, skin: IPlanSkin) => {
-            const row = (anchor && byEvent.get(anchor.cnId)) || fallback();
-            if (!row.skins.some((s) => s.skinId === skin.skinId)) row.skins.push(skin);
+            const own = anchor ? byEvent.get(anchor.cnId) : undefined;
+            const row = own ?? fallback();
+            if (!row.skins.some((s) => s.skinId === skin.skinId)) row.skins.push({ ...skin, anchored: !!own });
         };
-        const saleRow = (cnStart: number, resolution: Resolution): IPlanRow => {
-            const key = `sale:${cnDay(cnStart)}`;
+        // One store-sale card per EN day: outfits that list together are one purchase decision.
+        const saleRow = (resolution: Resolution): IPlanRow => {
+            const enStart = resolvedEnStart(resolution) ?? 0;
+            const key = `sale:${localDay(enStart)}`;
             const existing = listings.find((l) => l.key === key);
             if (existing) return existing;
-            const row: IPlanRow = { key, kind: "listing", cnId: null, nameCn: "商店上架", nameEn: t("release.plan.storeSale"), nameAuto: null, imagePath: null, enStart: resolvedEnStart(resolution) ?? 0, resolution, ended: false, opStages: [], farmStages: [], missionTokens: 0, shop: null, rerun: false, skins: [] };
+            const row = bareRow({ key, kind: "listing", nameCn: "商店上架", nameEn: t("release.plan.storeSale"), enStart, resolution, rerun: false });
             listings.push(row);
             return row;
         };
+        const art = skins.data?.groupArt;
         for (const g of groupNewSkins(skins.data?.newSkins ?? [], model)) {
             if (resolvedEnStart(g.resolution) === null) continue;
+            const group = { name: g.skinGroupName || g.skinGroupId, nameAuto: g.skinGroupNameAuto, brand: brandOf(g.skinGroupId, art) };
             for (const s of g.skins) {
-                attach(g.anchor, () => saleRow(g.cnGetTime, g.resolution), planSkin(s, g.skinGroupName || g.skinGroupId, false, { skinNameAuto: s.skinNameAuto }));
+                attach(g.anchor, () => saleRow(g.resolution), planSkin(s, group, false, { skinNameAuto: s.skinNameAuto }));
             }
         }
         for (const r of skins.data?.rerunForecasts ?? []) {
             if (resolvedEnStart(r.next) === null) continue;
             const listing = r.basis.kind === "cn_listing" ? r.basis : null;
+            const group = { name: r.skinGroupName || r.skinGroupId, brand: brandOf(r.skinGroupId, art) };
             for (const s of r.skins) {
-                attach(listing?.anchor, () => saleRow(listing?.cn_start ?? resolvedEnStart(r.next) ?? 0, r.next), planSkin(s, r.skinGroupName || r.skinGroupId, true, { skinNameEn: s.skinName }));
+                attach(listing?.anchor, () => saleRow(r.next), planSkin(s, group, true, { skinNameEn: s.skinName }));
             }
         }
         const pool = skins.data?.reviewPool ?? [];
@@ -189,28 +224,17 @@ export function usePlanData(today: Date, showPast: boolean): IPlanData {
             const enStart = unlisted ? r.cnStart : resolvedEnStart(r.resolution);
             if (enStart === null) return [];
             const outfits = unlisted ? [] : reviewOutfits(r, pool);
-            return [
-                {
-                    key: `review:${r.cnStart}`,
-                    kind: "review" as const,
-                    cnId: null,
-                    nameCn: REVIEW_NAME_CN,
-                    nameEn: REVIEW_NAME_EN,
-                    nameAuto: null,
-                    imagePath: null,
-                    enStart,
-                    resolution: r.resolution,
-                    ended: false,
-                    opStages: [],
-                    farmStages: [],
-                    missionTokens: 0,
-                    shop: null,
-                    rerun: true,
-                    skins: outfits.map((o) => planSkin(o, reviewYearGroup(o, t), true, { skinNameEn: o.skinName })).reverse(),
-                },
-            ];
+            const row = bareRow({ key: `review:${r.cnStart}`, kind: "review", nameCn: REVIEW_NAME_CN, nameEn: REVIEW_NAME_EN, enStart, resolution: r.resolution, rerun: true });
+            row.skins = outfits
+                .map((o) => {
+                    const name = reviewYearGroup(o, t);
+                    return planSkin(o, { name, brand: name }, true, { skinNameEn: o.skinName });
+                })
+                .reverse();
+            return [row];
         });
-        const all = [...byEvent.values(), ...listings, ...reviews].filter((row) => showPast || !isPast(sortKey(row.resolution, row.enStart, model), today));
+        const sales = mergeSameDay(listings, [...byEvent.values()], reviews);
+        const all = [...byEvent.values(), ...sales, ...reviews].filter((row) => showPast || !isPast(sortKey(row.resolution, row.enStart, model), today));
         all.sort((a, b) => a.enStart - b.enStart || a.key.localeCompare(b.key));
         return all;
     }, [events.data, skins.data, showPast, today, t]);
@@ -221,6 +245,51 @@ export function usePlanData(today: Date, showPast: boolean): IPlanData {
         isPending: events.isPending || skins.isPending,
         error: events.error ?? skins.error ?? null,
     };
+}
+
+export interface IPlanSkinGroup {
+    name: string;
+    nameAuto: AutoName | null;
+    rerun: boolean;
+    skins: IPlanSkin[];
+}
+
+/**
+ * A card's outfits as set headings: the row's own event's sets first, then the
+ * rest of the day; each series keeps its editions together, new before rerun
+ * (Monster Hunter/II sits on Monster Hunter), in the order they arrived.
+ */
+export function planGroups(skins: IPlanSkin[]): IPlanSkinGroup[] {
+    const groups = new Map<string, IPlanSkinGroup & { brand: string; anchored: boolean; at: number }>();
+    const brandAt = new Map<string, { at: number; anchored: boolean }>();
+    skins.forEach((s, at) => {
+        const key = `${s.groupName}|${s.rerun ? "r" : "n"}`;
+        const g = groups.get(key) ?? { name: s.groupName, nameAuto: s.groupNameAuto, rerun: s.rerun, skins: [], brand: s.brand, anchored: false, at };
+        g.skins.push(s);
+        g.anchored ||= s.anchored;
+        groups.set(key, g);
+        const b = brandAt.get(s.brand) ?? { at, anchored: false };
+        b.anchored ||= s.anchored;
+        brandAt.set(s.brand, b);
+    });
+    const rank = (g: { brand: string }) => brandAt.get(g.brand) ?? { at: 0, anchored: false };
+    return [...groups.values()].sort((a, b) => Number(rank(b).anchored) - Number(rank(a).anchored) || rank(a).at - rank(b).at || Number(a.rerun) - Number(b.rerun) || a.at - b.at).map(({ name, nameAuto, rerun, skins: list }) => ({ name, nameAuto, rerun, skins: list }));
+}
+
+/**
+ * Folds each store sale into an event or review card that opens the same EN
+ * day, so the day reads as one card: a sale lands on the first such event by
+ * key, else the review. The sales left over are returned.
+ */
+export function mergeSameDay(sales: IPlanRow[], events: IPlanRow[], reviews: IPlanRow[]): IPlanRow[] {
+    const byDay = new Map<string, IPlanRow>();
+    for (const row of [...reviews, ...[...events].sort((a, b) => b.key.localeCompare(a.key))]) byDay.set(localDay(row.enStart), row);
+    return sales.filter((sale) => {
+        const host = byDay.get(localDay(sale.enStart));
+        if (!host) return true;
+        for (const s of sale.skins) if (!host.skins.some((h) => h.skinId === s.skinId)) host.skins.push({ ...s, anchored: false });
+        return false;
+    });
 }
 
 /** Only a known EN end closes an event; an estimate has none, and one dated before today is moved to today. */
@@ -350,7 +419,7 @@ export interface IShopGroup {
     tokens: number;
 }
 
-/** Limited goods by kind, priciest kind first within the fixed order; unlimited goods form their own trailing group. */
+/** Limited goods grouped by kind in a fixed kind order, priciest first within each; unlimited goods apart, priciest first. */
 export function shopGroups(shop: EventShop): { limited: IShopGroup[]; unlimited: ShopGood[] } {
     const limited = SHOP_KIND_ORDER.map((kind) => {
         const goods = shop.goods.filter((g) => g.kind === kind && g.availCount > 0).sort((a, b) => b.price - a.price || a.goodId.localeCompare(b.goodId));

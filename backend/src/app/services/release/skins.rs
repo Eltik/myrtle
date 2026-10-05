@@ -143,7 +143,7 @@ fn new_skins(p: &Planner, names: &Names<'_>, art: &mut GroupArt<'_>) -> Vec<NewS
                 skin_id: s.skin_id.clone(),
                 char_id: s.char_id.clone(),
                 skin_name_auto: translate::resolve(&names.memory, &skin_name),
-                skin_group_name_auto: translate::resolve(
+                skin_group_name_auto: translate::resolve_group(
                     &names.memory,
                     &s.display_skin.skin_group_name,
                 ),
@@ -191,7 +191,7 @@ fn batches(
         .filter(|b| b.img_id.as_deref().is_some_and(|i| !en_seen.contains(i)))
         .map(|b| BatchForecast {
             name: b.name.clone(),
-            name_en_auto: translate::resolve(&names.memory, &b.name),
+            name_en_auto: translate::resolve_group(&names.memory, &b.name),
             cn_start: b.start_time,
             cn_end: b.end_time,
             resolution: skipped::unless_passed(
@@ -242,6 +242,13 @@ fn by_cadence(
     }
 }
 
+fn by_group(groups: &[GroupHistory]) -> HashMap<&str, &GroupHistory> {
+    groups
+        .iter()
+        .map(|g| (g.skin_group_id.as_str(), g))
+        .collect()
+}
+
 /// `cn_kept` is the CN histories without the listings EN has passed (see
 /// `release::skipped`), `None` when there are none. A pending CN window that
 /// only those listings made is never dated from CN: EN's own rhythm dates
@@ -256,16 +263,9 @@ fn reruns(
     art: &mut GroupArt<'_>,
 ) -> Vec<RerunForecast> {
     let runs = estimate::StageRuns::build(&p.ctx.cn);
-    let en_by_group: HashMap<&str, &GroupHistory> = en_groups
-        .iter()
-        .map(|g| (g.skin_group_id.as_str(), g))
-        .collect();
-    let cn_by_group: HashMap<&str, &GroupHistory> = cn_groups
-        .iter()
-        .map(|g| (g.skin_group_id.as_str(), g))
-        .collect();
-    let kept_by_group: Option<HashMap<&str, &GroupHistory>> =
-        cn_kept.map(|k| k.iter().map(|g| (g.skin_group_id.as_str(), g)).collect());
+    let en_by_group = by_group(en_groups);
+    let cn_by_group = by_group(cn_groups);
+    let kept_by_group = cn_kept.map(by_group);
     let cadence = skins::cadence_model(en_groups);
     let mut consumed: HashSet<(String, i64)> = HashSet::new();
     let mut out: Vec<RerunForecast> = Vec::new();

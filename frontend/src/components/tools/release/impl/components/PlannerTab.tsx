@@ -14,7 +14,7 @@ import { cn, getAvatarById } from "#/lib/utils";
 import { useAutoTranslate } from "../autoTranslate";
 import { formatDate } from "../helpers";
 import type { messages as helperMessages } from "../helpers.messages";
-import { balances, EMPTY_STATE, type IPlanRow, type IPlanSkin, type IPlanState, type IRowBalance, rowDeviates, rowExpense, rowIncome, rowPotential, type StageClears, type StageStatus, stageKey, stageOn, stageStatus, usePlanData } from "../plan";
+import { balances, EMPTY_STATE, type IPlanRow, type IPlanSkin, type IPlanState, type IRowBalance, planGroups, rowDeviates, rowExpense, rowIncome, rowPotential, type StageClears, type StageStatus, stageKey, stageOn, stageStatus, usePlanData } from "../plan";
 import type { messages as planMessages } from "../plan.messages";
 import { useStoredState } from "../planStore";
 import { isOverdue } from "../resolution";
@@ -33,6 +33,12 @@ interface IPlannerTabProps {
 
 /** Shared empty set so a signed-out or toggled-off planner never re-renders on a fresh `new Set()`. */
 const NO_HIDDEN: ReadonlySet<string> = new Set<string>();
+
+/** Below Tailwind's `md`, where the list and detail panes stack and only one shows. */
+const STACKED_QUERY = "(max-width: 47.999rem)";
+
+/** The sticky site header's height (`top-20`), which detail scrolled into view must clear. */
+const HEADER_PX = 80;
 
 export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
     const t: PlannerT = useT("tools");
@@ -78,22 +84,23 @@ export function PlannerTab({ today }: IPlannerTabProps): React.ReactElement {
         });
     const detailRef = React.useRef<HTMLDivElement>(null);
     const plannerRef = React.useRef<HTMLDivElement>(null);
+    const stacked = () => window.matchMedia(STACKED_QUERY).matches;
+    const scrollToPlanner = () => {
+        const rect = plannerRef.current?.getBoundingClientRect();
+        if (rect) window.scrollTo({ top: window.scrollY + rect.top });
+    };
     const showDetail = () => {
         setPane("detail");
-        if (window.matchMedia("(max-width: 47.999rem)").matches) {
-            const rect = plannerRef.current?.getBoundingClientRect();
-            if (rect) window.scrollTo({ top: window.scrollY + rect.top });
-        } else {
-            const rect = detailRef.current?.getBoundingClientRect();
-            if (rect && rect.top < 80) window.scrollTo({ top: window.scrollY + rect.top - 80 });
+        if (stacked()) {
+            scrollToPlanner();
+            return;
         }
+        const rect = detailRef.current?.getBoundingClientRect();
+        if (rect && rect.top < HEADER_PX) window.scrollTo({ top: window.scrollY + rect.top - HEADER_PX });
     };
     const showEvents = () => {
         setPane("events");
-        if (window.matchMedia("(max-width: 47.999rem)").matches) {
-            const rect = plannerRef.current?.getBoundingClientRect();
-            if (rect) window.scrollTo({ top: window.scrollY + rect.top });
-        }
+        if (stacked()) scrollToPlanner();
     };
     const open = (key: string) => {
         setSelected(key);
@@ -247,22 +254,12 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
     const allOn = row.opStages.length > 0 && row.opStages.every((st) => stageOn(row, st, state, clears));
     const deviates = rowDeviates(row, state, clears);
     const tally = React.useMemo(() => {
-        const t: Record<StageStatus, number> = { claimed: 0, open: 0, unrated: 0, unknown: 0 };
-        for (const st of row.opStages) t[stageStatus(st, clears)] += 1;
-        return t;
+        const counts: Record<StageStatus, number> = { claimed: 0, open: 0, unrated: 0, unknown: 0 };
+        for (const st of row.opStages) counts[stageStatus(st, clears)] += 1;
+        return counts;
     }, [row.opStages, clears]);
     const onRecord = tally.claimed + tally.open + tally.unrated;
-    const groups = React.useMemo(() => {
-        const map = new Map<string, { name: string; rerun: boolean; skins: IPlanSkin[] }>();
-        for (const s of row.skins) {
-            if (hidden.has(s.skinId)) continue;
-            const key = `${s.groupName}|${s.rerun ? "r" : "n"}`;
-            const g = map.get(key) ?? { name: s.groupName, rerun: s.rerun, skins: [] };
-            g.skins.push(s);
-            map.set(key, g);
-        }
-        return [...map.values()];
-    }, [row.skins, hidden]);
+    const groups = React.useMemo(() => planGroups(row.skins.filter((s) => !hidden.has(s.skinId))), [row.skins, hidden]);
     const ownedHidden = row.skins.reduce((n, s) => n + (hidden.has(s.skinId) ? 1 : 0), 0);
     return (
         <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
@@ -346,7 +343,7 @@ function EventDetail({ row, state, clears, hidden, total, today, lookup, onPick,
                 groups.map((g) => (
                     <div key={`${g.name}|${g.rerun}`} className="flex flex-col gap-2 border-border/40 border-t pt-3">
                         <div className="flex items-baseline gap-2">
-                            <span className="font-sans font-semibold text-[13px] text-foreground">{g.name}</span>
+                            <CnName cn={g.name} auto={g.nameAuto} compact primaryClassName="font-sans font-semibold text-[13px] text-foreground" />
                             <Tag className={g.rerun ? "text-violet-400" : "text-fuchsia-400"}>{g.rerun ? t("release.planner.group.rerun") : t("release.planner.group.new")}</Tag>
                         </div>
                         <div className="flex flex-wrap gap-3">

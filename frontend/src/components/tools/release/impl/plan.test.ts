@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Resolution } from "#/types/generated/Resolution";
-import { EMPTY_STATE, enEnded, type IPlanRow, type IPlanState, rowDeviates, rowIncome, stageKey, stageOn } from "./plan";
+import { EMPTY_STATE, enEnded, type IPlanRow, type IPlanSkin, type IPlanState, mergeSameDay, planGroups, rowDeviates, rowIncome, stageKey, stageOn } from "./plan";
 
 /** 奇象巡展's shape: two different stages share the code EE-01. */
 const row = {
@@ -54,5 +54,43 @@ describe("an event EN has closed", () => {
         expect(enEnded(confirmed, SEP_30_END)).toBe(true);
         expect(enEnded({ status: "override", enId: null, enStart: 0, enEnd: null, source: "", note: "" }, SEP_30_END)).toBe(false);
         expect(enEnded({ status: "estimated", enStart: 0, lo: 0, hi: 0 }, SEP_30_END)).toBe(false);
+    });
+});
+
+const skin = (skinId: string, groupName: string, brand: string, rerun: boolean, anchored = false) => ({ skinId, groupName, groupNameAuto: null, brand, rerun, anchored }) as unknown as IPlanSkin;
+const card = (key: string, enStart: number, skins: IPlanSkin[]) => ({ key, enStart, skins: [...skins] }) as unknown as IPlanRow;
+// 2026-10-05 12:00 local, and the same day's evening.
+const NOON = new Date(2026, 9, 5, 12).getTime() / 1000;
+const EVENING = NOON + 8 * 3600;
+
+describe("one card per release day", () => {
+    it("folds a same-day sale into the event and keeps the next day's apart", () => {
+        const event = card("event:act4mainss", NOON, [skin("a", "斗争血脉/XI", "boc", false, true)]);
+        const sameDay = card("sale:same", EVENING, [skin("b", "Iteration Provident", "iteration", true), skin("a", "斗争血脉/XI", "boc", false)]);
+        const nextDay = card("sale:next", NOON + 86_400, [skin("c", "EPOQUE/VII", "epoque", true)]);
+        const left = mergeSameDay([sameDay, nextDay], [event], []);
+        expect(left.map((r) => r.key)).toEqual(["sale:next"]);
+        expect(event.skins.map((s) => [s.skinId, s.anchored])).toEqual([
+            ["a", true],
+            ["b", false],
+        ]);
+    });
+
+    it("folds a sale into a same-day review when no event opens that day", () => {
+        const review = card("review:1", NOON, []);
+        expect(mergeSameDay([card("sale:x", EVENING, [skin("b", "g", "g", true)])], [], [review])).toEqual([]);
+        expect(review.skins).toHaveLength(1);
+    });
+});
+
+describe("set headings in a card", () => {
+    it("puts the event's own sets first and a series' editions together, new before rerun", () => {
+        const groups = planGroups([skin("x", "EPOQUE/XXII", "epoque", true), skin("m1", "Monster Hunter", "mh", true), skin("k", "成就之星/X", "game", false, true), skin("m2", "怪物猎人/II", "mh", false), skin("m3", "怪物猎人/II", "mh", false)]);
+        expect(groups.map((g) => [g.name, g.skins.length])).toEqual([
+            ["成就之星/X", 1],
+            ["EPOQUE/XXII", 1],
+            ["怪物猎人/II", 2],
+            ["Monster Hunter", 1],
+        ]);
     });
 });

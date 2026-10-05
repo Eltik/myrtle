@@ -17,15 +17,15 @@ export const messages = {
         description: "Tag on a name this site matched to an English one it already knew. Very small tag; keep it to one word, lowercase.",
     },
     "release.auto.memory.title": {
-        text: "Same name under an id both servers share, or the EN name of this event's original run",
+        text: "Same name under an id both servers share, the EN name of this event's original run, or the EN series name with this edition's numeral",
         description: "Tooltip explaining the 'matched' tag. 'EN' is the English game server and stays as-is.",
     },
     "release.auto.appellation": {
         text: "codename",
-        description: "Tag on a name taken from the operator's Latin-script appellation. Very small tag; keep it to one word, lowercase.",
+        description: "Tag on a name taken from the Latin-script name the game ships: an operator's appellation or a main story episode's title. Very small tag; keep it to one word, lowercase.",
     },
     "release.auto.appellation.title": {
-        text: "The operator's shipped Latin name",
+        text: "The Latin name the game ships with it",
         description: "Tooltip explaining the 'codename' tag: the Latin-script name the game itself ships alongside the Chinese one.",
     },
     "release.auto.override": {

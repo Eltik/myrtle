@@ -50,6 +50,8 @@ impl Ctx {
         })
     }
 
+    /// A route path for the first asset found: EN under its EN id, then CN,
+    /// then EN under the CN id.
     fn image(
         &self,
         route: &str,
@@ -69,6 +71,15 @@ impl Ctx {
             return Some(format!("/{}/{route}/{cn_id}", self.en_server));
         }
         None
+    }
+
+    /// Both asset trees as `(server, index)`, the one the item ships on first.
+    fn servers(&self, on_en: bool) -> [(&str, &AssetIndex); 2] {
+        if on_en {
+            [(self.en_server, &self.en_assets), ("cn", &self.cn_assets)]
+        } else {
+            [("cn", &self.cn_assets), (self.en_server, &self.en_assets)]
+        }
     }
 
     pub fn event_image(&self, act_id: &str) -> Option<String> {
@@ -106,12 +117,7 @@ impl Ctx {
     /// A furniture piece's catalogue icon, served straight from the texture
     /// tree (there is no dedicated route).
     pub fn furniture_icon(&self, icon_id: &str, on_en: bool) -> Option<String> {
-        let servers: [(&str, &AssetIndex); 2] = if on_en {
-            [(self.en_server, &self.en_assets), ("cn", &self.cn_assets)]
-        } else {
-            [("cn", &self.cn_assets), (self.en_server, &self.en_assets)]
-        };
-        servers.iter().find_map(|(server, idx)| {
+        self.servers(on_en).iter().find_map(|(server, idx)| {
             idx.path(AssetKind::FurnitureIcon, icon_id)
                 .map(|rel| format!("/{server}/assets{rel}"))
         })
@@ -138,12 +144,7 @@ impl Ctx {
                 .or_else(|| files.iter().find(|f| **f == full))
                 .cloned()
         };
-        let servers: [(&str, &AssetIndex); 2] = if on_en {
-            [(self.en_server, &self.en_assets), ("cn", &self.cn_assets)]
-        } else {
-            [("cn", &self.cn_assets), (self.en_server, &self.en_assets)]
-        };
-        servers
+        self.servers(on_en)
             .iter()
             .find_map(|(server, idx)| pick(idx).map(|rel| format!("/{server}/assets{rel}")))
     }
@@ -164,9 +165,17 @@ impl Ctx {
                 .filter(|r| !r.name.trim().is_empty())
                 .map(|r| r.name.clone())
         };
-        by_side.or_else(by_retro).map(|text| AutoName {
-            text,
-            source: AutoNameSource::Memory,
+        by_side.or_else(by_retro).map(AutoName::memory)
+    }
+
+    /// A mainline episode's shipped Latin title (相变临界 -> Critical Phase
+    /// Transition), off its first zone; side stories carry none in the tables.
+    pub fn event_zone_name(&self, cn_id: &str) -> Option<AutoName> {
+        let zone = self.cn.zones.get(&format!("{cn_id}_zone1"))?;
+        let text = zone.zone_name_first.as_deref()?.trim();
+        (!text.is_empty() && text.is_ascii()).then(|| AutoName {
+            text: text.to_string(),
+            source: AutoNameSource::Appellation,
         })
     }
 

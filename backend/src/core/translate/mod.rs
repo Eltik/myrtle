@@ -23,11 +23,54 @@ pub struct AutoName {
     pub source: AutoNameSource,
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct TranslationMemory {
-    map: HashMap<String, String>,
+impl AutoName {
+    pub fn memory(text: impl Into<String>) -> Self {
+        Self {
+            text: text.into(),
+            source: AutoNameSource::Memory,
+        }
+    }
 }
 
+#[derive(Debug, Default, Clone)]
+pub struct TranslationMemory {
+    /// Trimmed CN name -> EN name.
+    map: HashMap<String, String>,
+    /// Outfit series by CN prefix (斗争血脉 -> Bloodline of Combat), read off the
+    /// paired group names, so a CN-only edition reads as its series plus its numeral.
+    series: HashMap<String, String>,
+}
+
+/// Splits `斗争血脉/XI` into the series and its numeral; a name with no `/` is a series alone.
+fn split_series(name: &str) -> (&str, Option<&str>) {
+    match name.rsplit_once('/') {
+        Some((series, numeral)) => (series, Some(numeral)),
+        None => (name, None),
+    }
+}
+
+/// Each CN series takes the EN prefix most of its paired editions use, ties to
+/// the lexically first, so 时代 settles on EPOQUE over the odd Epoque.
+fn series_of(map: &HashMap<String, String>) -> HashMap<String, String> {
+    let mut votes: HashMap<&str, HashMap<&str, usize>> = HashMap::new();
+    for (c, e) in map {
+        let ((cs, cn), (es, en)) = (split_series(c), split_series(e));
+        if cn == en && usable(cs, es) {
+            *votes.entry(cs).or_default().entry(es).or_default() += 1;
+        }
+    }
+    votes
+        .into_iter()
+        .filter_map(|(c, tally)| {
+            let best = tally
+                .into_iter()
+                .max_by(|a, b| a.1.cmp(&b.1).then(b.0.cmp(a.0)))?;
+            Some((c.to_string(), best.0.to_string()))
+        })
+        .collect()
+}
+
+/// A pair worth remembering: both sides non-blank and the EN side actually differs.
 fn usable(cn: &str, en: &str) -> bool {
     let (cn, en) = (cn.trim(), en.trim());
     !cn.is_empty() && !en.is_empty() && cn != en
@@ -87,7 +130,18 @@ impl TranslationMemory {
                 put(&p.gacha_pool_name, en_name);
             }
         }
-        Self { map }
+        let series = series_of(&map);
+        Self { map, series }
+    }
+
+    #[cfg(test)]
+    fn from_pairs(pairs: &[(&str, &str)]) -> Self {
+        let map: HashMap<String, String> = pairs
+            .iter()
+            .map(|(c, e)| ((*c).to_string(), (*e).to_string()))
+            .collect();
+        let series = series_of(&map);
+        Self { map, series }
     }
 
     pub fn get(&self, cn: &str) -> Option<&str> {
@@ -104,19 +158,24 @@ impl TranslationMemory {
 }
 
 pub fn resolve(memory: &TranslationMemory, cn: &str) -> Option<AutoName> {
-    let en = memory.get(cn.trim())?;
-    Some(AutoName {
-        text: en.to_string(),
-        source: AutoNameSource::Memory,
+    memory.get(cn).map(AutoName::memory)
+}
+
+/// An outfit group's name: the paired name when EN has this edition, else the
+/// EN series with the CN numeral (怪物猎人/II -> Monster Hunter/II).
+pub fn resolve_group(memory: &TranslationMemory, cn: &str) -> Option<AutoName> {
+    resolve(memory, cn).or_else(|| {
+        let (series, numeral) = split_series(cn.trim());
+        let en = memory.series.get(series)?;
+        Some(AutoName::memory(
+            numeral.map_or_else(|| en.clone(), |n| format!("{en}/{n}")),
+        ))
     })
 }
 
 pub fn operator_name(cn: &GameData, en: &GameData, char_id: &str) -> Option<AutoName> {
     if let Some(op) = en.operators.get(char_id) {
-        return Some(AutoName {
-            text: op.name.clone(),
-            source: AutoNameSource::Memory,
-        });
+        return Some(AutoName::memory(op.name.clone()));
     }
     let op = cn.operators.get(char_id)?;
     let app = op.appellation.trim();
@@ -171,5 +230,33 @@ mod tests {
         let m = TranslationMemory::build(&GameData::new(), &GameData::new(), &HashMap::new());
         assert_eq!(resolve(&m, "未知名称"), None);
         assert_eq!(resolve(&m, "   "), None);
+    }
+
+    #[test]
+    fn group_names_borrow_the_series_of_a_paired_edition() {
+        let m = TranslationMemory::from_pairs(&[
+            ("斗争血脉/VIII", "Bloodline of Combat/VIII"),
+            ("怪物猎人", "Monster Hunter"),
+            ("0011/韵系列/VIII", "0011/Yun/VIII"),
+            ("时代/XXXIII", "Epoque/XXXIII"),
+            ("时代/XLVIII", "EPOQUE/XLVIII"),
+            ("时代/XLIX", "EPOQUE/XLIX"),
+            ("忒斯特收藏/XVI", "Test Collection/XV"),
+        ]);
+        let text = |cn: &str| resolve_group(&m, cn).map(|a| a.text);
+        assert_eq!(
+            text("斗争血脉/XI").as_deref(),
+            Some("Bloodline of Combat/XI")
+        );
+        assert_eq!(text("怪物猎人/II").as_deref(), Some("Monster Hunter/II"));
+        assert_eq!(text("0011/韵系列/X").as_deref(), Some("0011/Yun/X"));
+        assert_eq!(text("时代/LIV").as_deref(), Some("EPOQUE/LIV"));
+        assert_eq!(
+            text("斗争血脉/VIII").as_deref(),
+            Some("Bloodline of Combat/VIII")
+        );
+        // A pair whose numerals disagree says nothing about the series.
+        assert_eq!(text("忒斯特收藏/XX"), None);
+        assert_eq!(text("小马宝莉"), None);
     }
 }
