@@ -100,6 +100,7 @@ pub mod chibis;
 pub mod dps;
 pub mod enemies;
 pub mod gacha;
+pub mod grids;
 pub mod health;
 pub mod i18n;
 pub mod improvements;
@@ -298,5 +299,6 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(assets::story_sprite_thumb_srv))
         .routes(routes!(assets::generic_srv))
         .merge(tier_lists::router())
+        .merge(grids::router())
         .merge(i18n::router())
 }

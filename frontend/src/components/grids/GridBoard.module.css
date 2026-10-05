@@ -1,0 +1,195 @@
+/* The grids.fun board: dark in both themes, a bold centred title, then equal
+   square cells, each art over a dark label strip. The board scrolls
+   sideways inside itself once its cells reach their minimum width, never the
+   page. */
+
+.board {
+    --board-bg: oklch(0.13 0.004 285);
+    --cell-bg: oklch(0.19 0.005 285);
+    --strip-bg: oklch(0.16 0.005 285);
+    --empty-bg: oklch(0.32 0.006 285);
+    --empty-fg: oklch(0.78 0.006 285);
+    --cell-gap: 6px;
+    --cell-min: 48px;
+    --cell-max: 180px;
+    --label-size: 13px;
+
+    border-radius: 16px;
+    background: var(--board-bg);
+    color: white;
+    padding: clamp(14px, 3vw, 28px) clamp(10px, 2.5vw, 28px) clamp(14px, 3vw, 28px);
+    box-shadow:
+        0 1px 2px oklch(0 0 0 / 0.08),
+        0 0 0 1px oklch(1 0 0 / 0.04) inset;
+}
+
+.board[data-density="large"] {
+    --label-size: 16px;
+}
+.board[data-density="medium"] {
+    --label-size: 12.5px;
+}
+.board[data-density="small"] {
+    --label-size: 10.5px;
+    --cell-gap: 4px;
+}
+
+@media (max-width: 640px) {
+    .board[data-density="large"] {
+        --label-size: 13px;
+    }
+    .board[data-density="medium"] {
+        --label-size: 10.5px;
+    }
+    .board[data-density="small"] {
+        --label-size: 9px;
+        --cell-gap: 3px;
+    }
+}
+
+.title {
+    margin: 0 0 clamp(12px, 2.5vw, 22px);
+    text-align: center;
+    font-family: var(--font-sans);
+    font-weight: 800;
+    font-size: clamp(1.25rem, 3.2vw, 2.25rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+}
+
+.scroller {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    gap: var(--cell-gap);
+    width: min(100%, calc(var(--cols) * var(--cell-max) + (var(--cols) - 1) * var(--cell-gap)));
+    min-width: calc(var(--cols) * var(--cell-min) + (var(--cols) - 1) * var(--cell-gap));
+    margin: 0 auto;
+}
+
+.cell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--cell-bg);
+    transition:
+        box-shadow 140ms ease,
+        opacity 140ms ease;
+}
+.cell[data-dragging="true"] {
+    opacity: 0.45;
+}
+.cell[data-drop-target="true"] {
+    box-shadow: 0 0 0 2px var(--primary);
+}
+
+.art {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    overflow: hidden;
+    background: oklch(0.24 0.005 285);
+    color: white;
+    padding: 0;
+    border: 0;
+    font: inherit;
+    /* The initials of a pick with no art. */
+    font-size: calc(var(--label-size) * 1.6);
+}
+.art[data-empty="true"] {
+    background: var(--empty-bg);
+    color: var(--empty-fg);
+}
+.art > img {
+    position: absolute;
+    inset: 0;
+}
+
+button.art {
+    cursor: pointer;
+}
+button.art:hover {
+    filter: brightness(1.12);
+}
+button.art:focus-visible,
+.strip:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: -2px;
+}
+
+.addItem {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: var(--label-size);
+    line-height: 1.15;
+    text-align: center;
+    padding: 0 6%;
+}
+
+.strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    /* Two lines, always, so every strip on a row lines up. */
+    min-height: calc(var(--label-size) * 1.2 * 2 + 10px);
+    padding: 5px 4px;
+    background: var(--strip-bg);
+    color: white;
+    border: 0;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: var(--label-size);
+    line-height: 1.2;
+    text-align: center;
+}
+.stripText {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+.stripPlaceholder {
+    color: oklch(0.6 0.006 285);
+    font-weight: 500;
+    font-style: italic;
+}
+button.strip {
+    cursor: text;
+}
+button.strip:hover {
+    background: oklch(0.21 0.006 285);
+}
+
+.stripInput {
+    width: 100%;
+    min-width: 0;
+    background: oklch(0.24 0.006 285);
+    color: white;
+    border: 0;
+    border-radius: 3px;
+    outline: 2px solid var(--ring);
+    padding: 2px 4px;
+    font: inherit;
+    text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cell {
+        transition: none;
+    }
+}

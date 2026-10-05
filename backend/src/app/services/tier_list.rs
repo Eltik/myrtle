@@ -509,7 +509,7 @@ pub async fn invalidate_detail(state: &AppState, slug: &str) {
     state.cache.invalidate(&CacheKey::TierList { slug }).await;
 }
 
-fn generate_slug(name: &str) -> String {
+pub(crate) fn generate_slug(name: &str) -> String {
     let base: String = name
         .to_lowercase()
         .chars()

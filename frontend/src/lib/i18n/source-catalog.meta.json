@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-05T08:38:35.286Z",
+    "generatedAt": "2026-10-05T10:15:19.139Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -8833,6 +8833,1085 @@
             "placeholders": []
         },
         {
+            "key": "grids.board.label",
+            "namespace": "grids",
+            "source_text": "{title}, a grid of {rows} by {cols}",
+            "description": "Accessible name of a grid board. {title} is the grid's own title; {rows} and {cols} are its row and column counts.",
+            "placeholders": [
+                "cols",
+                "rows",
+                "title"
+            ]
+        },
+        {
+            "key": "grids.board.untitled",
+            "namespace": "grids",
+            "source_text": "Untitled grid",
+            "description": "Shown as a grid's title on the board while its title is empty.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.browse.blurb",
+            "namespace": "grids",
+            "source_text": "Fill a board of prompts with your picks, share it, or use someone else's as a template.",
+            "description": "Line under the grid browser's heading.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.browse.empty",
+            "namespace": "grids",
+            "source_text": "No grids yet.",
+            "description": "Shown when no public grid exists.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.browse.emptyHint",
+            "namespace": "grids",
+            "source_text": "Start one with New grid.",
+            "description": "Hint under an empty grid list. 'New grid' is the create button's label.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.browse.emptySearch",
+            "namespace": "grids",
+            "source_text": "No grids match your search.",
+            "description": "Shown when the search leaves no grid.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.browse.error",
+            "namespace": "grids",
+            "source_text": "Grids could not be loaded.",
+            "description": "Shown when the grid list failed to load.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.browse.kicker",
+            "namespace": "grids",
+            "source_text": "Community",
+            "description": "Small uppercase label above the grid browser's heading.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.browse.mine",
+            "namespace": "grids",
+            "source_text": "My grids",
+            "description": "Button to the signed-in user's own grids.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.browse.next",
+            "namespace": "grids",
+            "source_text": "Next",
+            "description": "Goes to the next page of grids.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.browse.pageOf",
+            "namespace": "grids",
+            "source_text": "Page {page} of {total}",
+            "description": "Position in the grid list's pages. Both numbers are already formatted.",
+            "placeholders": [
+                "page",
+                "total"
+            ]
+        },
+        {
+            "key": "grids.browse.pagination",
+            "namespace": "grids",
+            "source_text": "Pages",
+            "description": "Accessible name of the pagination under the grid list.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.browse.prev",
+            "namespace": "grids",
+            "source_text": "Previous",
+            "description": "Goes to the previous page of grids.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.browse.retry",
+            "namespace": "grids",
+            "source_text": "Try again",
+            "description": "Reloads the grid list after an error.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.browse.searchLabel",
+            "namespace": "grids",
+            "source_text": "Search grids",
+            "description": "Accessible name of the grid browser's search box.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.browse.searchPlaceholder",
+            "namespace": "grids",
+            "source_text": "Search by title",
+            "description": "Placeholder of the grid browser's search box.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.browse.sort.popular",
+            "namespace": "grids",
+            "source_text": "Popular",
+            "description": "Sort option: grids used most as templates first.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.browse.sort.recent",
+            "namespace": "grids",
+            "source_text": "Recent",
+            "description": "Sort option: most recently updated grids first.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.browse.sortLabel",
+            "namespace": "grids",
+            "source_text": "Sort grids",
+            "description": "Accessible name of the Recent / Popular toggle.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.browse.title",
+            "namespace": "grids",
+            "source_text": "Grids",
+            "description": "Heading of the grid browser. A grid is a board of labelled cells ('Favorite Vanguard') each filled with an operator, skin or other pick.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.card.by",
+            "namespace": "grids",
+            "source_text": "by {name}",
+            "description": "Byline on a grid card. {name} is the owner's display name.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "grids.card.forks",
+            "namespace": "grids",
+            "source_text": "{count, plural, one {Used as a template {formatted} time} other {Used as a template {formatted} times}}",
+            "description": "Tooltip of the fork count on a grid card. {formatted} is {count} formatted for the locale.",
+            "placeholders": [
+                "count",
+                "formatted"
+            ]
+        },
+        {
+            "key": "grids.cell.addItem",
+            "namespace": "grids",
+            "source_text": "Add Item",
+            "description": "Centred in an empty cell's grey square in the grid editor; clicking it opens the picker. Keep it short: cells can be under 50 pixels wide.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.cell.change",
+            "namespace": "grids",
+            "source_text": "{name} in row {row}, column {col}. Change it",
+            "description": "Accessible name of a filled cell's art area in the grid editor. {name} is the picked entity's name and kind from the game data.",
+            "placeholders": [
+                "col",
+                "name",
+                "row"
+            ]
+        },
+        {
+            "key": "grids.cell.editLabel",
+            "namespace": "grids",
+            "source_text": "Label of row {row}, column {col}: {label}. Edit it",
+            "description": "Accessible name of a cell's label strip in the grid editor, which turns into a text field when clicked. {label} is the current label.",
+            "placeholders": [
+                "col",
+                "label",
+                "row"
+            ]
+        },
+        {
+            "key": "grids.cell.labelInput",
+            "namespace": "grids",
+            "source_text": "Label of row {row}, column {col}",
+            "description": "Accessible name of the label text field that replaces a cell's strip while it is being edited.",
+            "placeholders": [
+                "col",
+                "row"
+            ]
+        },
+        {
+            "key": "grids.cell.labelPlaceholder",
+            "namespace": "grids",
+            "source_text": "Add label",
+            "description": "Placeholder in an empty label strip in the grid editor, and in the label text field. Keep it short: cells can be under 50 pixels wide.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.cell.noLabel",
+            "namespace": "grids",
+            "source_text": "none",
+            "description": "Stands in for {label} in the label strip's accessible name when the cell has no label yet.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.cell.pick",
+            "namespace": "grids",
+            "source_text": "Pick something for row {row}, column {col}",
+            "description": "Accessible name of an empty cell's art area in the grid editor.",
+            "placeholders": [
+                "col",
+                "row"
+            ]
+        },
+        {
+            "key": "grids.create.aboutMeTitle",
+            "namespace": "grids",
+            "source_text": "About Me",
+            "description": "Title filled into the empty title field when the About Me starter is chosen.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.create.cancel",
+            "namespace": "grids",
+            "source_text": "Cancel",
+            "description": "Closes the create-grid dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.create.cols",
+            "namespace": "grids",
+            "source_text": "Columns",
+            "description": "Label of the columns stepper in the create-grid dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.create.description",
+            "namespace": "grids",
+            "source_text": "Start blank or from a ready-made set of labels. You can change everything later.",
+            "description": "Line under the create-grid dialog's title.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.create.name",
+            "namespace": "grids",
+            "source_text": "Title",
+            "description": "Label of the title field in the create-grid dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.create.namePlaceholder",
+            "namespace": "grids",
+            "source_text": "e.g. My Arknights favorites",
+            "description": "Placeholder of the title field in the create-grid dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.create.open",
+            "namespace": "grids",
+            "source_text": "New grid",
+            "description": "Button that opens the create-grid dialog (or the sign-in dialog when signed out).",
+            "placeholders": []
+        },
+        {
+            "key": "grids.create.rows",
+            "namespace": "grids",
+            "source_text": "Rows",
+            "description": "Label of the rows stepper in the create-grid dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.create.starter",
+            "namespace": "grids",
+            "source_text": "Start from",
+            "description": "Label over the two starter choices in the create-grid dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.create.starter.aboutMe",
+            "namespace": "grids",
+            "source_text": "About Me (Arknights)",
+            "description": "Starter choice: a grid pre-filled with 36 'favorite' prompts about Arknights. 'Arknights' is the game's name and stays as-is.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.create.starter.aboutMeHint",
+            "namespace": "grids",
+            "source_text": "A {size} by {size} of favorites to fill in.",
+            "description": "Hint under the About Me starter. {size} is 6: the starter is always 6 by 6.",
+            "placeholders": [
+                "size"
+            ]
+        },
+        {
+            "key": "grids.create.starter.blank",
+            "namespace": "grids",
+            "source_text": "Blank",
+            "description": "Starter choice: an empty grid of the chosen size.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.create.starter.blankHint",
+            "namespace": "grids",
+            "source_text": "Empty cells, your own labels.",
+            "description": "Hint under the Blank starter choice.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.create.submit",
+            "namespace": "grids",
+            "source_text": "Create and edit",
+            "description": "Creates the grid and opens it in the editor.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.create.title",
+            "namespace": "grids",
+            "source_text": "New grid",
+            "description": "Title of the create-grid dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.allSaved",
+            "namespace": "grids",
+            "source_text": "All saved",
+            "description": "Status line in the editor's save panel when nothing has changed. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.breadcrumbEdit",
+            "namespace": "grids",
+            "source_text": "Edit",
+            "description": "Last breadcrumb in the grid editor: the current page.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.breadcrumbMine",
+            "namespace": "grids",
+            "source_text": "My grids",
+            "description": "Breadcrumb link from the grid editor back to the signed-in user's grids.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.breadcrumbUntitled",
+            "namespace": "grids",
+            "source_text": "Untitled",
+            "description": "Breadcrumb stand-in for a grid whose title is empty.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.cols",
+            "namespace": "grids",
+            "source_text": "Columns",
+            "description": "Label of the stepper that sets how many columns the grid has (1 to 10). Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.descriptionLabel",
+            "namespace": "grids",
+            "source_text": "Description",
+            "description": "Accessible label of the grid editor's description field.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.descriptionPlaceholder",
+            "namespace": "grids",
+            "source_text": "What is this grid about? (optional)",
+            "description": "Placeholder of the grid editor's description field.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.discard",
+            "namespace": "grids",
+            "source_text": "Discard changes",
+            "description": "Accessible name and tooltip of the icon button that drops every unsaved change.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.forbidden.action",
+            "namespace": "grids",
+            "source_text": "View the grid",
+            "description": "Button from the forbidden notice to the grid's public page.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.forbidden.body",
+            "namespace": "grids",
+            "source_text": "Only its owner can change it. You can still use it as a template.",
+            "description": "Body of the editor's forbidden notice.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.forbidden.title",
+            "namespace": "grids",
+            "source_text": "You can't edit this grid",
+            "description": "Heading of the editor when the viewer does not own the grid.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.hint",
+            "namespace": "grids",
+            "source_text": "Click a picture to choose what goes in it, click a label to rename it, drag a cell onto another to swap them.",
+            "description": "Help line under the board in the grid editor.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.kicker",
+            "namespace": "grids",
+            "source_text": "Editing grid",
+            "description": "Small uppercase label above the grid editor's title field.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.leave.body",
+            "namespace": "grids",
+            "source_text": "Your unsaved changes to this grid will be lost.",
+            "description": "Body of the leave dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.leave.cancel",
+            "namespace": "grids",
+            "source_text": "Stay",
+            "description": "Closes the leave dialog and stays in the editor.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.leave.confirm",
+            "namespace": "grids",
+            "source_text": "Leave",
+            "description": "Leaves the editor, dropping unsaved changes.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.leave.title",
+            "namespace": "grids",
+            "source_text": "Leave without saving?",
+            "description": "Title of the dialog shown when leaving the grid editor with unsaved changes.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.listed",
+            "namespace": "grids",
+            "source_text": "Listed",
+            "description": "Label of the switch that shows the grid in the public browse list.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.listedOff",
+            "namespace": "grids",
+            "source_text": "Only people with the link can see it",
+            "description": "Hint under the Listed switch when it is off: the grid stays reachable by its link.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.listedOn",
+            "namespace": "grids",
+            "source_text": "Shown in Browse grids",
+            "description": "Hint under the Listed switch when it is on.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.missing.action",
+            "namespace": "grids",
+            "source_text": "Back to my grids",
+            "description": "Button from the not-found notice to the user's grids.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.missing.body",
+            "namespace": "grids",
+            "source_text": "It may have been deleted, or the link is wrong.",
+            "description": "Body of the editor's not-found notice.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.missing.title",
+            "namespace": "grids",
+            "source_text": "Grid not found",
+            "description": "Heading of the editor when the grid does not exist.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.openPublic",
+            "namespace": "grids",
+            "source_text": "Open public page",
+            "description": "Accessible name and tooltip of the icon button that opens the grid's public page in a new tab.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.rows",
+            "namespace": "grids",
+            "source_text": "Rows",
+            "description": "Label of the stepper that sets how many rows the grid has (1 to 10). Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.save",
+            "namespace": "grids",
+            "source_text": "Save",
+            "description": "Button that saves the grid.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.shrink.body",
+            "namespace": "grids",
+            "source_text": "{count, plural, one {# cell with a label or pick falls outside} other {# cells with a label or pick fall outside}} a {rows} by {cols} grid and will be removed.",
+            "description": "Body of the shrink dialog. {count} is how many filled cells are lost; {rows} and {cols} are the new size.",
+            "placeholders": [
+                "cols",
+                "count",
+                "rows"
+            ]
+        },
+        {
+            "key": "grids.edit.shrink.cancel",
+            "namespace": "grids",
+            "source_text": "Keep size",
+            "description": "Cancels the shrink; the grid keeps its current size.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.shrink.confirm",
+            "namespace": "grids",
+            "source_text": "Remove and resize",
+            "description": "Confirms the shrink, deleting the cells that fall outside.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.shrink.title",
+            "namespace": "grids",
+            "source_text": "Remove filled cells?",
+            "description": "Title of the dialog shown when making the grid smaller would delete cells that have a label or a pick.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.titleLabel",
+            "namespace": "grids",
+            "source_text": "Grid title",
+            "description": "Accessible label of the grid editor's title field.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.titlePlaceholder",
+            "namespace": "grids",
+            "source_text": "Name your grid",
+            "description": "Placeholder of the grid editor's title field.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.titleRequired",
+            "namespace": "grids",
+            "source_text": "A grid needs a title before it can be saved.",
+            "description": "Shown in the save panel while the title is empty.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.toast.saveFailedTitle",
+            "namespace": "grids",
+            "source_text": "Could not save",
+            "description": "Toast title when saving the grid failed; the body is the error.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.toast.savedBody",
+            "namespace": "grids",
+            "source_text": "Your changes are live.",
+            "description": "Toast body after a successful save.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.toast.savedTitle",
+            "namespace": "grids",
+            "source_text": "Grid saved",
+            "description": "Toast title after a successful save.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.unsaved",
+            "namespace": "grids",
+            "source_text": "Unsaved changes",
+            "description": "Status line in the editor's save panel while there are changes to save. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.unsavedBody",
+            "namespace": "grids",
+            "source_text": "Save to publish your changes.",
+            "description": "Line under 'Unsaved changes' in the save panel.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.edit.upToDate",
+            "namespace": "grids",
+            "source_text": "Your grid is up to date.",
+            "description": "Line under 'All saved' in the save panel.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.kinds.atLeastOne",
+            "namespace": "grids",
+            "source_text": "A grid allows at least one type.",
+            "description": "Shown when the user tries to untick the last allowed type.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.kinds.change",
+            "namespace": "grids",
+            "source_text": "Change",
+            "description": "Button in the grid editor that opens the dialog for changing the allowed types.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.kinds.clear.body",
+            "namespace": "grids",
+            "source_text": "{count, plural, one {# pick is of a type you removed and will be cleared.} other {# picks are of types you removed and will be cleared.}} Labels stay.",
+            "description": "Body of the confirmation shown when removing allowed types. {count} is how many cells lose their pick; their labels are kept.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "grids.kinds.clear.cancel",
+            "namespace": "grids",
+            "source_text": "Keep types",
+            "description": "Cancels removing the types; nothing changes.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.kinds.clear.confirm",
+            "namespace": "grids",
+            "source_text": "Clear picks",
+            "description": "Confirms removing the types and clearing the picks of those types.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.kinds.clear.title",
+            "namespace": "grids",
+            "source_text": "Clear picks?",
+            "description": "Title of the confirmation shown when removing an allowed type that some cells hold.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.kinds.dialog.apply",
+            "namespace": "grids",
+            "source_text": "Apply",
+            "description": "Applies the ticked types in the allowed-types dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.kinds.dialog.cancel",
+            "namespace": "grids",
+            "source_text": "Cancel",
+            "description": "Closes the allowed-types dialog without changing anything.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.kinds.dialog.description",
+            "namespace": "grids",
+            "source_text": "People filling in this grid can only pick these types. Changes save with your other edits.",
+            "description": "Subtitle of the allowed-types dialog. 'Save' refers to the editor's Save button; nothing is stored until then.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.kinds.dialog.title",
+            "namespace": "grids",
+            "source_text": "Allowed types",
+            "description": "Title of the editor dialog where a grid's owner picks which entity types its cells may hold.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.kinds.hint",
+            "namespace": "grids",
+            "source_text": "People filling in this grid can only pick these.",
+            "description": "Hint under the allowed-types checkboxes in the create-grid dialog and the editor's types dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.kinds.label",
+            "namespace": "grids",
+            "source_text": "Allowed types",
+            "description": "Label over the set of entity types (operators, skins, enemies...) a grid's cells may hold. Shown in the create dialog, the editor and the grid page.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.kinds.locked",
+            "namespace": "grids",
+            "source_text": "Set by the template this grid was made from.",
+            "description": "Note in the grid editor when the allowed types cannot be changed because the grid is a copy of a template.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.kinds.more",
+            "namespace": "grids",
+            "source_text": "+{count}",
+            "description": "Last chip of a shortened list of allowed types on a grid card: how many more types are allowed. {count} is a number.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "grids.kinds.moreTitle",
+            "namespace": "grids",
+            "source_text": "Also allows: {kinds}",
+            "description": "Tooltip on the '+N' chip of a grid card. {kinds} is a comma-separated list of type names.",
+            "placeholders": [
+                "kinds"
+            ]
+        },
+        {
+            "key": "grids.kinds.placed",
+            "namespace": "grids",
+            "source_text": "{count, plural, one {# pick} other {# picks}}",
+            "description": "Small count beside a type in the editor's types dialog: how many cells hold a pick of that type now.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "grids.my.browse",
+            "namespace": "grids",
+            "source_text": "Browse grids",
+            "description": "Button to the public grid browser.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.my.count",
+            "namespace": "grids",
+            "source_text": "{count, plural, one {# grid} other {# grids}} of {max}",
+            "description": "How many grids the user has, out of the per-user limit {max} (50).",
+            "placeholders": [
+                "count",
+                "max"
+            ]
+        },
+        {
+            "key": "grids.my.delete",
+            "namespace": "grids",
+            "source_text": "Delete {title}",
+            "description": "Accessible name and tooltip of a card's delete icon button. {title} is the grid's title.",
+            "placeholders": [
+                "title"
+            ]
+        },
+        {
+            "key": "grids.my.deleteDialog.body",
+            "namespace": "grids",
+            "source_text": "\"{title}\" will be deleted for good. Grids made from it keep their own copy.",
+            "description": "Body of the delete confirmation. {title} is the grid's title; keep the quotes.",
+            "placeholders": [
+                "title"
+            ]
+        },
+        {
+            "key": "grids.my.deleteDialog.cancel",
+            "namespace": "grids",
+            "source_text": "Cancel",
+            "description": "Closes the delete confirmation.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.my.deleteDialog.confirm",
+            "namespace": "grids",
+            "source_text": "Delete",
+            "description": "Confirms deleting the grid.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.my.deleteDialog.title",
+            "namespace": "grids",
+            "source_text": "Delete this grid?",
+            "description": "Title of the delete confirmation.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.my.edit",
+            "namespace": "grids",
+            "source_text": "Edit",
+            "description": "Opens the grid in the editor.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.my.emptyBody",
+            "namespace": "grids",
+            "source_text": "Make one from scratch, or open any grid and use it as a template.",
+            "description": "Body of the empty state of the user's grids.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.my.emptyTitle",
+            "namespace": "grids",
+            "source_text": "You have no grids yet.",
+            "description": "Heading of the empty state of the user's grids.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.my.error",
+            "namespace": "grids",
+            "source_text": "Your grids could not be loaded.",
+            "description": "Shown when the user's grids failed to load.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.my.kicker",
+            "namespace": "grids",
+            "source_text": "Your grids",
+            "description": "Small uppercase label above the heading of the signed-in user's grids.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.my.retry",
+            "namespace": "grids",
+            "source_text": "Try again",
+            "description": "Reloads the user's grids after an error.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.my.title",
+            "namespace": "grids",
+            "source_text": "My Grids",
+            "description": "Heading of the signed-in user's grids.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.my.toast.deleted",
+            "namespace": "grids",
+            "source_text": "Deleted \"{title}\"",
+            "description": "Toast after a grid was deleted. {title} is its title; keep the quotes.",
+            "placeholders": [
+                "title"
+            ]
+        },
+        {
+            "key": "grids.my.unlisted",
+            "namespace": "grids",
+            "source_text": "Unlisted",
+            "description": "Badge on a card of a grid hidden from the browse list. Rendered uppercase; keep it short.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.picker.cancel",
+            "namespace": "grids",
+            "source_text": "Cancel",
+            "description": "Button that closes the picker without changing the cell.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.picker.clear",
+            "namespace": "grids",
+            "source_text": "Clear",
+            "description": "Button in the picker that removes the cell's current pick, keeping its label.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.picker.description",
+            "namespace": "grids",
+            "source_text": "Choose an operator, skin, event or anything else for this cell.",
+            "description": "Line under the picker dialog's title.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.picker.empty",
+            "namespace": "grids",
+            "source_text": "Nothing matches your search.",
+            "description": "Shown in the picker when the search leaves nothing.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.picker.error",
+            "namespace": "grids",
+            "source_text": "This list could not be loaded.",
+            "description": "Shown in the picker when the current tab's list failed to load.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.picker.kinds",
+            "namespace": "grids",
+            "source_text": "What to pick from",
+            "description": "Accessible name of the row of kind tabs (Operators, Skins, Events...) in the picker dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.picker.loading",
+            "namespace": "grids",
+            "source_text": "Loading…",
+            "description": "Shown in the picker while the current tab's list loads.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.picker.retry",
+            "namespace": "grids",
+            "source_text": "Retry",
+            "description": "Button that reloads the picker's failed list.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.picker.searchPlaceholder",
+            "namespace": "grids",
+            "source_text": "Search {kind}",
+            "description": "Placeholder of the picker's search box. {kind} is the current tab's plural name, e.g. 'Operators'.",
+            "placeholders": [
+                "kind"
+            ]
+        },
+        {
+            "key": "grids.picker.showMore",
+            "namespace": "grids",
+            "source_text": "Show more ({shown} of {total})",
+            "description": "Button under a long picker list that renders the next batch. {shown} is how many are shown, {total} how many match.",
+            "placeholders": [
+                "shown",
+                "total"
+            ]
+        },
+        {
+            "key": "grids.picker.title",
+            "namespace": "grids",
+            "source_text": "Pick for row {row}, column {col}",
+            "description": "Title of the grid editor's picker dialog when the cell has no label. {row} and {col} are 1-based positions.",
+            "placeholders": [
+                "col",
+                "row"
+            ]
+        },
+        {
+            "key": "grids.picker.titleLabelled",
+            "namespace": "grids",
+            "source_text": "Pick: {label}",
+            "description": "Title of the grid editor's picker dialog. {label} is the cell's own label, e.g. 'Favorite Vanguard'.",
+            "placeholders": [
+                "label"
+            ]
+        },
+        {
+            "key": "grids.view.back",
+            "namespace": "grids",
+            "source_text": "All grids",
+            "description": "Link from a grid's page back to the grid browser.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.view.by",
+            "namespace": "grids",
+            "source_text": "by {name}",
+            "description": "Byline on a grid's page. {name} is the owner's display name.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "grids.view.copy",
+            "namespace": "grids",
+            "source_text": "Copy link",
+            "description": "Copies the grid's page address to the clipboard.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.view.copy.errTitle",
+            "namespace": "grids",
+            "source_text": "Could not copy the link",
+            "description": "Toast when the clipboard refused the link.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.view.copy.okTitle",
+            "namespace": "grids",
+            "source_text": "Link copied",
+            "description": "Toast after the grid's link was copied.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.view.download",
+            "namespace": "grids",
+            "source_text": "Download PNG",
+            "description": "Downloads the grid as a PNG image.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.view.download.errBody",
+            "namespace": "grids",
+            "source_text": "The image could not be generated. Try again in a moment.",
+            "description": "Toast body when the PNG could not be made.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.view.download.errTitle",
+            "namespace": "grids",
+            "source_text": "Download failed",
+            "description": "Toast title when the PNG could not be made.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.view.downloading",
+            "namespace": "grids",
+            "source_text": "Preparing…",
+            "description": "Replaces 'Download PNG' while the image is being made.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.view.edit",
+            "namespace": "grids",
+            "source_text": "Edit",
+            "description": "Opens the grid in the editor. Shown to its owner.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.view.fork",
+            "namespace": "grids",
+            "source_text": "Use this template",
+            "description": "Button that copies the grid's title, size and labels, without its picks, into a new grid the viewer owns, then opens it in the editor.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.view.fork.errTitle",
+            "namespace": "grids",
+            "source_text": "Could not copy this grid",
+            "description": "Toast title when 'Use this template' failed; the body is the error.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.view.forks",
+            "namespace": "grids",
+            "source_text": "{count, plural, one {{formatted} use} other {{formatted} uses}}",
+            "description": "How many grids were made from this one with 'Use this template'. {formatted} is {count} formatted for the locale.",
+            "placeholders": [
+                "count",
+                "formatted"
+            ]
+        },
+        {
+            "key": "grids.view.missing.action",
+            "namespace": "grids",
+            "source_text": "Browse grids",
+            "description": "Button from the not-found notice to the grid browser.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.view.missing.body",
+            "namespace": "grids",
+            "source_text": "It may have been deleted, or the link is wrong.",
+            "description": "Body of a grid page whose grid does not exist.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.view.missing.title",
+            "namespace": "grids",
+            "source_text": "Grid not found",
+            "description": "Heading of a grid page whose grid does not exist.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.view.templateOf",
+            "namespace": "grids",
+            "source_text": "Template:",
+            "description": "Precedes a link to the grid this one was made from with 'Use this template'.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.view.unlisted",
+            "namespace": "grids",
+            "source_text": "Unlisted",
+            "description": "Shown in a grid's byline when it is hidden from the browse list but reachable by link.",
+            "placeholders": []
+        },
+        {
             "key": "home.card.arrowIcon",
             "namespace": "home",
             "source_text": "Right arrow",
@@ -10817,6 +11896,20 @@
             "placeholders": []
         },
         {
+            "key": "meta.editGrid.description",
+            "namespace": "meta",
+            "source_text": "Edit your grid.",
+            "description": "Meta description of the grid editor.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.editGrid.title",
+            "namespace": "meta",
+            "source_text": "Edit Grid",
+            "description": "Document title of the grid editor.",
+            "placeholders": []
+        },
+        {
             "key": "meta.editTierList.description",
             "namespace": "meta",
             "source_text": "Edit your tier list.",
@@ -10889,6 +11982,38 @@
             "placeholders": []
         },
         {
+            "key": "meta.grid.descriptionFallback",
+            "namespace": "meta",
+            "source_text": "A {rows} by {cols} Arknights grid by {owner} on myrtle.moe.",
+            "description": "Meta description of a grid whose owner wrote none. {rows} and {cols} are its size; {owner} is the owner's display name.",
+            "placeholders": [
+                "cols",
+                "owner",
+                "rows"
+            ]
+        },
+        {
+            "key": "meta.grid.fallbackTitle",
+            "namespace": "meta",
+            "source_text": "Grid",
+            "description": "Document title of a grid page whose data failed to load.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.grids.description",
+            "namespace": "meta",
+            "source_text": "Fill a grid of Arknights prompts with your picks, share it, or use one as a template.",
+            "description": "Meta description of the grid browser.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.grids.title",
+            "namespace": "meta",
+            "source_text": "Grids",
+            "description": "Document title of the grid browser. A grid is a board of labelled cells filled with operators and other picks.",
+            "placeholders": []
+        },
+        {
             "key": "meta.home.description",
             "namespace": "meta",
             "source_text": "Track your roster, scout community pulls, and explore every operator.",
@@ -10900,6 +12025,20 @@
             "namespace": "meta",
             "source_text": "Myrtle",
             "description": "Document title of the landing page. The site name on its own, deliberately.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.myGrids.description",
+            "namespace": "meta",
+            "source_text": "Create, edit, and share your grids.",
+            "description": "Meta description of the signed-in user's own grids.",
+            "placeholders": []
+        },
+        {
+            "key": "meta.myGrids.title",
+            "namespace": "meta",
+            "source_text": "My Grids",
+            "description": "Document title of the signed-in user's own grids.",
             "placeholders": []
         },
         {
@@ -12259,6 +13398,20 @@
             "placeholders": []
         },
         {
+            "key": "nav.page.grids.desc",
+            "namespace": "nav",
+            "source_text": "Community favorites grids and templates",
+            "description": "One-line blurb under the Grids palette entry.",
+            "placeholders": []
+        },
+        {
+            "key": "nav.page.grids.label",
+            "namespace": "nav",
+            "source_text": "Grids",
+            "description": "Palette entry for the grids section. A grid is a board of labelled cells filled with operators and other picks.",
+            "placeholders": []
+        },
+        {
             "key": "nav.page.operators.desc",
             "namespace": "nav",
             "source_text": "Browse every operator · stats, skills, modules",
@@ -12549,6 +13702,20 @@
             "namespace": "nav",
             "source_text": "DPS Charts",
             "description": "Name of the damage-per-second chart tool. 'DPS' is the usual abbreviation and stays as-is.",
+            "placeholders": []
+        },
+        {
+            "key": "nav.tool.grids.desc",
+            "namespace": "nav",
+            "source_text": "Fill a favorites grid and share it",
+            "description": "One-line blurb under the Grids tool.",
+            "placeholders": []
+        },
+        {
+            "key": "nav.tool.grids.label",
+            "namespace": "nav",
+            "source_text": "Grids",
+            "description": "Name of the tool for making a board of labelled cells ('Favorite Vanguard') filled with operators and other picks.",
             "placeholders": []
         },
         {

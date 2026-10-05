@@ -65,6 +65,14 @@ export const messages = {
         text: "View and track operator birthdays",
         description: "One-line blurb under the birthdays tool.",
     },
+    "tool.grids.label": {
+        text: "Grids",
+        description: "Name of the tool for making a board of labelled cells ('Favorite Vanguard') filled with operators and other picks.",
+    },
+    "tool.grids.desc": {
+        text: "Fill a favorites grid and share it",
+        description: "One-line blurb under the Grids tool.",
+    },
     "tool.release.label": {
         text: "Release Planner",
         description: "Name of the tool that projects when Chinese-server content reaches the global servers.",

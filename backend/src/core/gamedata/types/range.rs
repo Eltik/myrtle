@@ -5,7 +5,8 @@ use ts_rs::TS;
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]
-#[ts(export)]
+// `Grid` on the wire is the grids feature's board; this one exports as `RangeGrid`.
+#[ts(export, rename = "RangeGrid")]
 pub struct Grid {
     pub row: i32,
     pub col: i32,

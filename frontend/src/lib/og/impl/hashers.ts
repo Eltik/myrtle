@@ -1,6 +1,8 @@
+import type { IGridImageData } from "./grid";
 import { ogHash } from "./hash";
 import { type IStoryOgData, storyOgHashParts } from "./story";
 import type { IDefaultOgData } from "./templates/Default";
+import { GRID_IMAGE_LAYOUT } from "./templates/GridImage";
 import type { IOperatorOgData } from "./templates/Operator";
 import type { IStageOgData } from "./templates/Stage";
 import type { ITierListOgData } from "./templates/TierList";
@@ -104,6 +106,14 @@ const tierListBoardImageHasher = defineOgHasher<ITierListBoardImageData>({
     hashParts: (data) => [TIER_LIST_BOARD_IMAGE_LAYOUT.width, data.title, data.slug, data.tiers.map((t) => `${t.name}:${t.color}:${t.operators.map((o) => `${o.id}.${o.rarity}`).join(",")}`).join("|")],
 });
 
+const GRID_IMAGE_HASH_VERSION = "v2";
+
+const gridImageHasher = defineOgHasher<IGridImageData>({
+    kind: "grid-image",
+    hashVersion: GRID_IMAGE_HASH_VERSION,
+    hashParts: (data) => [GRID_IMAGE_LAYOUT.width, data.title, data.slug, data.server, data.rows, data.cols, data.cells.map((c) => `${c.label}=${c.key ?? ""}`).join("|")],
+});
+
 const STAGE_HASH_VERSION = "v1";
 
 const stageHasher = defineOgHasher<IStageOgData>({
@@ -137,6 +147,7 @@ interface IOgDataByKind {
     user: IUserOgData;
     "tier-list": ITierListOgData;
     "tier-list-image": ITierListBoardImageData;
+    "grid-image": IGridImageData;
     stage: IStageOgData;
     story: IStoryOgData;
     default: IDefaultOgData;
@@ -152,6 +163,7 @@ export const ogHashers: { [K in OgKind]: IOgHasher<OgData<K>> } = {
     user: userHasher,
     "tier-list": tierListHasher,
     "tier-list-image": tierListBoardImageHasher,
+    "grid-image": gridImageHasher,
     stage: stageHasher,
     story: storyHasher,
     default: defaultHasher,

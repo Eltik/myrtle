@@ -3,6 +3,7 @@ pub mod base_planner;
 pub mod dps;
 pub mod gacha;
 pub mod game_session;
+pub mod grid;
 pub mod i18n;
 pub mod improvements;
 pub mod item_leaderboard;

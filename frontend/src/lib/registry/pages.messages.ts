@@ -36,6 +36,14 @@ export const messages = {
         text: "Official and community tier lists for every operator",
         description: "Blurb under the Tier Lists palette entry.",
     },
+    "page.grids.label": {
+        text: "Grids",
+        description: "Palette entry for the grids section. A grid is a board of labelled cells filled with operators and other picks.",
+    },
+    "page.grids.desc": {
+        text: "Community favorites grids and templates",
+        description: "One-line blurb under the Grids palette entry.",
+    },
     "page.playersSearch.label": {
         text: "Search Players",
         description: "Palette entry for the player search. The site says 'player' throughout; Arknights itself calls them Doctors, so a region may prefer the game's term.",

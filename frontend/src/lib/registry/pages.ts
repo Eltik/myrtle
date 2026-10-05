@@ -48,6 +48,14 @@ export const PAGES: IPage[] = [
         keywords: ["tier", "tierlist", "ranking", "meta", "rank", "community", "official"],
     },
     {
+        id: "grids",
+        href: "/grids",
+        labelKey: "page.grids.label",
+        descKey: "page.grids.desc",
+        icon: "grid",
+        keywords: ["grid", "grids", "favorites", "about me", "template", "board"],
+    },
+    {
         id: "players-search",
         href: "/user/search",
         labelKey: "page.playersSearch.label",

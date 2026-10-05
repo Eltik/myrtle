@@ -130,6 +130,38 @@ export const messages = {
         text: "Edit your tier list.",
         description: "Meta description of the tier-list editor.",
     },
+    "grids.title": {
+        text: "Grids",
+        description: "Document title of the grid browser. A grid is a board of labelled cells filled with operators and other picks.",
+    },
+    "grids.description": {
+        text: "Fill a grid of Arknights prompts with your picks, share it, or use one as a template.",
+        description: "Meta description of the grid browser.",
+    },
+    "grid.fallbackTitle": {
+        text: "Grid",
+        description: "Document title of a grid page whose data failed to load.",
+    },
+    "grid.descriptionFallback": {
+        text: "A {rows} by {cols} Arknights grid by {owner} on myrtle.moe.",
+        description: "Meta description of a grid whose owner wrote none. {rows} and {cols} are its size; {owner} is the owner's display name.",
+    },
+    "myGrids.title": {
+        text: "My Grids",
+        description: "Document title of the signed-in user's own grids.",
+    },
+    "myGrids.description": {
+        text: "Create, edit, and share your grids.",
+        description: "Meta description of the signed-in user's own grids.",
+    },
+    "editGrid.title": {
+        text: "Edit Grid",
+        description: "Document title of the grid editor.",
+    },
+    "editGrid.description": {
+        text: "Edit your grid.",
+        description: "Meta description of the grid editor.",
+    },
 
     "user.fallbackTitle": {
         text: "Player",

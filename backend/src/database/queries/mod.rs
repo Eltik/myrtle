@@ -2,6 +2,7 @@ pub mod building;
 pub mod enemies;
 pub mod gacha;
 pub mod game_credentials;
+pub mod grids;
 pub mod i18n;
 pub mod item_leaderboard;
 pub mod items;

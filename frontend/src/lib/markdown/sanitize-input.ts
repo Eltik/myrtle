@@ -114,9 +114,15 @@ export function sanitizeMarkdownForStorage(input: string | null | undefined, opt
  */
 export function sanitizePlainName(input: string | null | undefined, maxLength: number): string {
     if (input == null) return "";
-    let s = String(input).replace(/\r\n?/g, " ").replace(CONTROL_CHARS_RE, "").replace(HTML_COMMENT_RE, "").replace(HTML_TAG_RE, "").replace(/\s+/g, " ").trim();
-    if (s.length > maxLength) s = s.slice(0, maxLength).trimEnd();
-    return s;
+    const s = String(input).replace(/\r\n?/g, " ").replace(CONTROL_CHARS_RE, "").replace(HTML_COMMENT_RE, "").replace(HTML_TAG_RE, "").replace(/\s+/g, " ").trim();
+    return truncateCodePoints(s, maxLength).trimEnd();
+}
+
+/** The first `max` code points of `s`. A UTF-16 `slice` can cut a surrogate pair in half; the backend counts chars, which are code points. */
+export function truncateCodePoints(s: string, max: number): string {
+    if (s.length <= max) return s;
+    const points = Array.from(s);
+    return points.length <= max ? s : points.slice(0, max).join("");
 }
 
 function isAllowedLinkTarget(href: string): boolean {

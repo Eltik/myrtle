@@ -1,6 +1,6 @@
 import type { messages as toolMessages } from "#/lib/registry/tools.messages";
 
-export type ToolIconName = "chart" | "calc" | "star" | "dice" | "cake" | "pack" | "search" | "trophy" | "users" | "user" | "history" | "tiers" | "heart" | "list-todo" | "shield" | "crosshair" | "map" | "calendar-clock" | "book";
+export type ToolIconName = "chart" | "calc" | "star" | "dice" | "cake" | "pack" | "search" | "trophy" | "users" | "user" | "history" | "tiers" | "heart" | "list-todo" | "shield" | "crosshair" | "map" | "calendar-clock" | "book" | "grid";
 
 export type ToolCategory = "calculator" | "fun";
 
@@ -88,6 +88,15 @@ export const TOOLS: ITool[] = [
         icon: "cake",
         category: "fun",
         keywords: ["birthday", "operator", "track"],
+    },
+    {
+        id: "grids",
+        href: "/grids",
+        labelKey: "tool.grids.label",
+        descKey: "tool.grids.desc",
+        icon: "grid",
+        category: "fun",
+        keywords: ["grid", "grids", "favorites", "about me", "template", "bingo", "chart", "board"],
     },
     {
         id: "release",

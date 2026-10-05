@@ -3411,6 +3411,462 @@
         ]
       }
     },
+    "/api/grids": {
+      "get": {
+        "tags": [
+          "grids"
+        ],
+        "summary": "Listed grids, one page at a time.",
+        "operationId": "grids_list",
+        "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "`recent` (latest edit first, the default) or `popular` (most forked first, then latest edit).",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "description": "Case-insensitive substring of the title.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "1-based page number. Defaults to 1.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "description": "Grids per page, 1 to 60. Defaults to 24.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "description": "Game server whose data resolves each preview icon: `en`, `jp`, `kr`, `cn`, `tw` or `bili`. Defaults to the deployment's default server.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of listed grids and the total that matched.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GridListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "grids"
+        ],
+        "summary": "Create a grid. The caller becomes its owner; one account keeps at most 50.",
+        "operationId": "grid_create",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "query",
+            "description": "Game server whose data resolves each cell's `entity` in the response. Defaults to the deployment's default server.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GridInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "The created grid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Grid"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {
+            "service_key": []
+          }
+        ]
+      }
+    },
+    "/api/grids/mine": {
+      "get": {
+        "tags": [
+          "grids"
+        ],
+        "summary": "Every grid the caller owns, listed or not, latest edit first.",
+        "operationId": "grids_mine",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "query",
+            "description": "Game server whose data resolves each preview icon. Defaults to the deployment's default server.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The caller's grids.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GridSummary"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {
+            "service_key": []
+          }
+        ]
+      }
+    },
+    "/api/grids/{slug}": {
+      "get": {
+        "tags": [
+          "grids"
+        ],
+        "summary": "One grid with every cell's entity resolved. An unlisted grid is still\nserved to anyone with its slug.",
+        "operationId": "grid_get",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Grid slug, as it appears in its URL.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "description": "Game server whose data resolves each cell's `entity`. Defaults to the deployment's default server.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The grid. `can_edit` is true for its owner and site admins.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Grid"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "grids"
+        ],
+        "summary": "Replace a grid's title, description, size, cells and listing. Owner or\nsite admin only.",
+        "operationId": "grid_update",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Grid slug, as it appears in its URL.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "description": "Game server whose data resolves each cell's `entity` in the response. Defaults to the deployment's default server.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GridInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The grid as stored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Grid"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationFailed"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {
+            "service_key": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "grids"
+        ],
+        "summary": "Delete a grid. Owner or site admin only. Its forks are kept and lose their\n`template_of`.",
+        "operationId": "grid_delete",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Grid slug, as it appears in its URL.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The grid is gone."
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {
+            "service_key": []
+          }
+        ]
+      }
+    },
+    "/api/grids/{slug}/fork": {
+      "post": {
+        "tags": [
+          "grids"
+        ],
+        "summary": "Use a grid as a template: a new grid owned by the caller with its title,\ndescription, size and labels, every cell empty, and listed. Counts toward\nthe caller's 50.",
+        "operationId": "grid_fork",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "description": "Slug of the grid to copy.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "description": "Game server whose data resolves the response. Defaults to the deployment's default server.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The new grid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Grid"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {
+            "service_key": []
+          }
+        ]
+      }
+    },
     "/api/health": {
       "get": {
         "tags": [
@@ -15523,6 +15979,336 @@
           }
         }
       },
+      "Grid": {
+        "type": "object",
+        "required": [
+          "id",
+          "slug",
+          "title",
+          "rows",
+          "cols",
+          "cells",
+          "is_listed",
+          "entity_kinds",
+          "kinds_locked",
+          "owner",
+          "fork_count",
+          "can_edit",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "can_edit": {
+            "type": "boolean",
+            "description": "The caller may save or delete it: its owner, or a site admin."
+          },
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GridCell"
+            },
+            "description": "Row-major: cell `(r, c)` is `cells[r * cols + c]`."
+          },
+          "cols": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "entity_kinds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityKind"
+            },
+            "description": "The kinds a cell may hold, in canonical order."
+          },
+          "fork_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_listed": {
+            "type": "boolean"
+          },
+          "kinds_locked": {
+            "type": "boolean",
+            "description": "`entity_kinds` is set by the template this grid was forked from and a\nsave cannot change it. True for every fork, including one whose\n`template_of` is hidden from this viewer; false once the source is\ndeleted, which clears the link."
+          },
+          "owner": {
+            "$ref": "#/components/schemas/GridOwner"
+          },
+          "rows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "template_of": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/GridTemplateRef",
+                "description": "`None` for an original, or when the source has been deleted."
+              }
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "GridCell": {
+        "type": "object",
+        "required": [
+          "label"
+        ],
+        "properties": {
+          "entity": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EntitySummary",
+                "description": "`None` when the cell is empty, or when the served game data has no such\nentity; the raw `entity_kind` and `entity_id` are still sent."
+              }
+            ]
+          },
+          "entity_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "entity_kind": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EntityKind"
+              }
+            ]
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      },
+      "GridCellInput": {
+        "type": "object",
+        "description": "One cell as the editor sends it. `entity_kind` and `entity_id` are set\ntogether or not at all.",
+        "required": [
+          "label"
+        ],
+        "properties": {
+          "entity_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "entity_kind": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EntityKind"
+              }
+            ]
+          },
+          "label": {
+            "type": "string"
+          }
+        }
+      },
+      "GridInput": {
+        "type": "object",
+        "description": "A whole grid as the editor saves it. `cells` is row-major and exactly\n`rows * cols` long, and every pick is of a kind in `entity_kinds`.",
+        "required": [
+          "title",
+          "rows",
+          "cols",
+          "cells",
+          "is_listed",
+          "entity_kinds"
+        ],
+        "properties": {
+          "cells": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GridCellInput"
+            }
+          },
+          "cols": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "entity_kinds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityKind"
+            },
+            "description": "The kinds a cell may hold: at least one. Stored deduplicated and in\ncanonical order. A fork's set is its template's and cannot change."
+          },
+          "is_listed": {
+            "type": "boolean"
+          },
+          "rows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
+      "GridListResponse": {
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "per_page"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GridSummary"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "per_page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "GridOwner": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The owner's in-game nickname, or their uid when it is empty."
+          }
+        }
+      },
+      "GridSummary": {
+        "type": "object",
+        "required": [
+          "slug",
+          "title",
+          "rows",
+          "cols",
+          "owner",
+          "fork_count",
+          "is_listed",
+          "entity_kinds",
+          "updated_at",
+          "preview"
+        ],
+        "properties": {
+          "cols": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "entity_kinds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EntityKind"
+            },
+            "description": "The kinds a cell may hold, in canonical order."
+          },
+          "fork_count": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "is_listed": {
+            "type": "boolean"
+          },
+          "owner": {
+            "$ref": "#/components/schemas/GridOwner"
+          },
+          "preview": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Up to four icon paths from the first filled cells, in cell order, for a\ncard thumbnail. Same form as [`EntitySummary::icon`]."
+          },
+          "rows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "GridTemplateRef": {
+        "type": "object",
+        "description": "The grid a fork was made from.",
+        "required": [
+          "slug",
+          "title"
+        ],
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        }
+      },
       "GroupRequest": {
         "type": "object",
         "required": [
@@ -23895,6 +24681,10 @@
     {
       "name": "tier-lists",
       "description": "Community tier lists: their tiers, the operators placed in them, published versions, per-list edit grants and engagement counters."
+    },
+    {
+      "name": "grids",
+      "description": "Community grids: titled boards of labelled cells, each optionally holding one tier-list entity, and forks that reuse a grid as a template."
     },
     {
       "name": "i18n",

@@ -18,6 +18,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as OperatorsRouteImport } from './routes/operators'
 import { Route as HelpMeRouteImport } from './routes/help-me'
+import { Route as GridsRouteImport } from './routes/grids'
 import { Route as EnemiesRouteImport } from './routes/enemies'
 import { Route as DyntestRouteImport } from './routes/dyntest'
 import { Route as DonateRouteImport } from './routes/donate'
@@ -40,6 +41,7 @@ import { Route as StoriesSpritesRouteImport } from './routes/stories_.sprites'
 import { Route as StoriesStoryIdRouteImport } from './routes/stories_.$storyId'
 import { Route as StagesStageIdRouteImport } from './routes/stages_.$stageId'
 import { Route as OperatorsIdRouteImport } from './routes/operators_.$id'
+import { Route as GridsSlugRouteImport } from './routes/grids_.$slug'
 import { Route as GachaHistoryRouteImport } from './routes/gacha.history'
 import { Route as GachaCommunityRouteImport } from './routes/gacha.community'
 import { Route as EnemiesIdRouteImport } from './routes/enemies_.$id'
@@ -48,6 +50,7 @@ import { Route as AuthedAdminIndexRouteImport } from './routes/_authed/admin/ind
 import { Route as StoriesSpritesBaseRouteImport } from './routes/stories_.sprites_.$base'
 import { Route as ApiOgDefaultRouteImport } from './routes/api/og/default'
 import { Route as AuthedTierListsMyRouteImport } from './routes/_authed/tier-lists_.my'
+import { Route as AuthedGridsMyRouteImport } from './routes/_authed/grids_.my'
 import { Route as AuthedAdminUsersRouteImport } from './routes/_authed/admin/users'
 import { Route as AuthedAdminTranslationsRouteImport } from './routes/_authed/admin/translations'
 import { Route as AuthedAdminSettingsRouteImport } from './routes/_authed/admin/settings'
@@ -58,6 +61,8 @@ import { Route as AuthedAdminHealthRouteImport } from './routes/_authed/admin/he
 import { Route as AuthedAdminAuditRouteImport } from './routes/_authed/admin/audit'
 import { Route as ApiTierListsSlugImageRouteImport } from './routes/api/tier-lists/$slug/image'
 import { Route as ApiOgKindIdRouteImport } from './routes/api/og/$kind/$id'
+import { Route as ApiGridsSlugImageRouteImport } from './routes/api/grids/$slug/image'
+import { Route as AuthedGridsSlugEditRouteImport } from './routes/_authed/grids_.$slug.edit'
 import { Route as AuthedTierListsMyIdEditRouteImport } from './routes/_authed/tier-lists_.my_.$id.edit'
 
 const TierListsRoute = TierListsRouteImport.update({
@@ -103,6 +108,11 @@ const OperatorsRoute = OperatorsRouteImport.update({
 const HelpMeRoute = HelpMeRouteImport.update({
   id: '/help-me',
   path: '/help-me',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GridsRoute = GridsRouteImport.update({
+  id: '/grids',
+  path: '/grids',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EnemiesRoute = EnemiesRouteImport.update({
@@ -214,6 +224,11 @@ const OperatorsIdRoute = OperatorsIdRouteImport.update({
   path: '/operators/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GridsSlugRoute = GridsSlugRouteImport.update({
+  id: '/grids_/$slug',
+  path: '/grids/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GachaHistoryRoute = GachaHistoryRouteImport.update({
   id: '/gacha/history',
   path: '/gacha/history',
@@ -252,6 +267,11 @@ const ApiOgDefaultRoute = ApiOgDefaultRouteImport.update({
 const AuthedTierListsMyRoute = AuthedTierListsMyRouteImport.update({
   id: '/tier-lists_/my',
   path: '/tier-lists/my',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedGridsMyRoute = AuthedGridsMyRouteImport.update({
+  id: '/grids_/my',
+  path: '/grids/my',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedAdminUsersRoute = AuthedAdminUsersRouteImport.update({
@@ -306,6 +326,16 @@ const ApiOgKindIdRoute = ApiOgKindIdRouteImport.update({
   path: '/api/og/$kind/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiGridsSlugImageRoute = ApiGridsSlugImageRouteImport.update({
+  id: '/api/grids/$slug/image',
+  path: '/api/grids/$slug/image',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedGridsSlugEditRoute = AuthedGridsSlugEditRouteImport.update({
+  id: '/grids_/$slug/edit',
+  path: '/grids/$slug/edit',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedTierListsMyIdEditRoute = AuthedTierListsMyIdEditRouteImport.update({
   id: '/tier-lists_/my_/$id/edit',
   path: '/tier-lists/my/$id/edit',
@@ -319,6 +349,7 @@ export interface FileRoutesByFullPath {
   '/donate': typeof DonateRoute
   '/dyntest': typeof DyntestRoute
   '/enemies': typeof EnemiesRoute
+  '/grids': typeof GridsRoute
   '/help-me': typeof HelpMeRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
@@ -332,6 +363,7 @@ export interface FileRoutesByFullPath {
   '/enemies/$id': typeof EnemiesIdRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
+  '/grids/$slug': typeof GridsSlugRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/stages/$stageId': typeof StagesStageIdRoute
   '/stories/$storyId': typeof StoriesStoryIdRoute
@@ -355,10 +387,13 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AuthedAdminSettingsRoute
   '/admin/translations': typeof AuthedAdminTranslationsRoute
   '/admin/users': typeof AuthedAdminUsersRoute
+  '/grids/my': typeof AuthedGridsMyRoute
   '/tier-lists/my': typeof AuthedTierListsMyRoute
   '/api/og/default': typeof ApiOgDefaultRoute
   '/stories/sprites/$base': typeof StoriesSpritesBaseRoute
   '/admin/': typeof AuthedAdminIndexRoute
+  '/grids/$slug/edit': typeof AuthedGridsSlugEditRoute
+  '/api/grids/$slug/image': typeof ApiGridsSlugImageRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
   '/api/tier-lists/$slug/image': typeof ApiTierListsSlugImageRoute
   '/tier-lists/my/$id/edit': typeof AuthedTierListsMyIdEditRoute
@@ -370,6 +405,7 @@ export interface FileRoutesByTo {
   '/donate': typeof DonateRoute
   '/dyntest': typeof DyntestRoute
   '/enemies': typeof EnemiesRoute
+  '/grids': typeof GridsRoute
   '/help-me': typeof HelpMeRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
@@ -382,6 +418,7 @@ export interface FileRoutesByTo {
   '/enemies/$id': typeof EnemiesIdRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
+  '/grids/$slug': typeof GridsSlugRoute
   '/operators/$id': typeof OperatorsIdRoute
   '/stages/$stageId': typeof StagesStageIdRoute
   '/stories/$storyId': typeof StoriesStoryIdRoute
@@ -405,10 +442,13 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AuthedAdminSettingsRoute
   '/admin/translations': typeof AuthedAdminTranslationsRoute
   '/admin/users': typeof AuthedAdminUsersRoute
+  '/grids/my': typeof AuthedGridsMyRoute
   '/tier-lists/my': typeof AuthedTierListsMyRoute
   '/api/og/default': typeof ApiOgDefaultRoute
   '/stories/sprites/$base': typeof StoriesSpritesBaseRoute
   '/admin': typeof AuthedAdminIndexRoute
+  '/grids/$slug/edit': typeof AuthedGridsSlugEditRoute
+  '/api/grids/$slug/image': typeof ApiGridsSlugImageRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
   '/api/tier-lists/$slug/image': typeof ApiTierListsSlugImageRoute
   '/tier-lists/my/$id/edit': typeof AuthedTierListsMyIdEditRoute
@@ -422,6 +462,7 @@ export interface FileRoutesById {
   '/donate': typeof DonateRoute
   '/dyntest': typeof DyntestRoute
   '/enemies': typeof EnemiesRoute
+  '/grids': typeof GridsRoute
   '/help-me': typeof HelpMeRoute
   '/operators': typeof OperatorsRoute
   '/privacy': typeof PrivacyRoute
@@ -435,6 +476,7 @@ export interface FileRoutesById {
   '/enemies_/$id': typeof EnemiesIdRoute
   '/gacha/community': typeof GachaCommunityRoute
   '/gacha/history': typeof GachaHistoryRoute
+  '/grids_/$slug': typeof GridsSlugRoute
   '/operators_/$id': typeof OperatorsIdRoute
   '/stages_/$stageId': typeof StagesStageIdRoute
   '/stories_/$storyId': typeof StoriesStoryIdRoute
@@ -458,10 +500,13 @@ export interface FileRoutesById {
   '/_authed/admin/settings': typeof AuthedAdminSettingsRoute
   '/_authed/admin/translations': typeof AuthedAdminTranslationsRoute
   '/_authed/admin/users': typeof AuthedAdminUsersRoute
+  '/_authed/grids_/my': typeof AuthedGridsMyRoute
   '/_authed/tier-lists_/my': typeof AuthedTierListsMyRoute
   '/api/og/default': typeof ApiOgDefaultRoute
   '/stories_/sprites_/$base': typeof StoriesSpritesBaseRoute
   '/_authed/admin/': typeof AuthedAdminIndexRoute
+  '/_authed/grids_/$slug/edit': typeof AuthedGridsSlugEditRoute
+  '/api/grids/$slug/image': typeof ApiGridsSlugImageRoute
   '/api/og/$kind/$id': typeof ApiOgKindIdRoute
   '/api/tier-lists/$slug/image': typeof ApiTierListsSlugImageRoute
   '/_authed/tier-lists_/my_/$id/edit': typeof AuthedTierListsMyIdEditRoute
@@ -475,6 +520,7 @@ export interface FileRouteTypes {
     | '/donate'
     | '/dyntest'
     | '/enemies'
+    | '/grids'
     | '/help-me'
     | '/operators'
     | '/privacy'
@@ -488,6 +534,7 @@ export interface FileRouteTypes {
     | '/enemies/$id'
     | '/gacha/community'
     | '/gacha/history'
+    | '/grids/$slug'
     | '/operators/$id'
     | '/stages/$stageId'
     | '/stories/$storyId'
@@ -511,10 +558,13 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/translations'
     | '/admin/users'
+    | '/grids/my'
     | '/tier-lists/my'
     | '/api/og/default'
     | '/stories/sprites/$base'
     | '/admin/'
+    | '/grids/$slug/edit'
+    | '/api/grids/$slug/image'
     | '/api/og/$kind/$id'
     | '/api/tier-lists/$slug/image'
     | '/tier-lists/my/$id/edit'
@@ -526,6 +576,7 @@ export interface FileRouteTypes {
     | '/donate'
     | '/dyntest'
     | '/enemies'
+    | '/grids'
     | '/help-me'
     | '/operators'
     | '/privacy'
@@ -538,6 +589,7 @@ export interface FileRouteTypes {
     | '/enemies/$id'
     | '/gacha/community'
     | '/gacha/history'
+    | '/grids/$slug'
     | '/operators/$id'
     | '/stages/$stageId'
     | '/stories/$storyId'
@@ -561,10 +613,13 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/translations'
     | '/admin/users'
+    | '/grids/my'
     | '/tier-lists/my'
     | '/api/og/default'
     | '/stories/sprites/$base'
     | '/admin'
+    | '/grids/$slug/edit'
+    | '/api/grids/$slug/image'
     | '/api/og/$kind/$id'
     | '/api/tier-lists/$slug/image'
     | '/tier-lists/my/$id/edit'
@@ -577,6 +632,7 @@ export interface FileRouteTypes {
     | '/donate'
     | '/dyntest'
     | '/enemies'
+    | '/grids'
     | '/help-me'
     | '/operators'
     | '/privacy'
@@ -590,6 +646,7 @@ export interface FileRouteTypes {
     | '/enemies_/$id'
     | '/gacha/community'
     | '/gacha/history'
+    | '/grids_/$slug'
     | '/operators_/$id'
     | '/stages_/$stageId'
     | '/stories_/$storyId'
@@ -613,10 +670,13 @@ export interface FileRouteTypes {
     | '/_authed/admin/settings'
     | '/_authed/admin/translations'
     | '/_authed/admin/users'
+    | '/_authed/grids_/my'
     | '/_authed/tier-lists_/my'
     | '/api/og/default'
     | '/stories_/sprites_/$base'
     | '/_authed/admin/'
+    | '/_authed/grids_/$slug/edit'
+    | '/api/grids/$slug/image'
     | '/api/og/$kind/$id'
     | '/api/tier-lists/$slug/image'
     | '/_authed/tier-lists_/my_/$id/edit'
@@ -630,6 +690,7 @@ export interface RootRouteChildren {
   DonateRoute: typeof DonateRoute
   DyntestRoute: typeof DyntestRoute
   EnemiesRoute: typeof EnemiesRoute
+  GridsRoute: typeof GridsRoute
   HelpMeRoute: typeof HelpMeRoute
   OperatorsRoute: typeof OperatorsRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -642,6 +703,7 @@ export interface RootRouteChildren {
   EnemiesIdRoute: typeof EnemiesIdRoute
   GachaCommunityRoute: typeof GachaCommunityRoute
   GachaHistoryRoute: typeof GachaHistoryRoute
+  GridsSlugRoute: typeof GridsSlugRoute
   OperatorsIdRoute: typeof OperatorsIdRoute
   StagesStageIdRoute: typeof StagesStageIdRoute
   StoriesStoryIdRoute: typeof StoriesStoryIdRoute
@@ -659,6 +721,7 @@ export interface RootRouteChildren {
   UserSearchRoute: typeof UserSearchRoute
   ApiOgDefaultRoute: typeof ApiOgDefaultRoute
   StoriesSpritesBaseRoute: typeof StoriesSpritesBaseRoute
+  ApiGridsSlugImageRoute: typeof ApiGridsSlugImageRoute
   ApiOgKindIdRoute: typeof ApiOgKindIdRoute
   ApiTierListsSlugImageRoute: typeof ApiTierListsSlugImageRoute
 }
@@ -726,6 +789,13 @@ declare module '@tanstack/react-router' {
       path: '/help-me'
       fullPath: '/help-me'
       preLoaderRoute: typeof HelpMeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/grids': {
+      id: '/grids'
+      path: '/grids'
+      fullPath: '/grids'
+      preLoaderRoute: typeof GridsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/enemies': {
@@ -882,6 +952,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperatorsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/grids_/$slug': {
+      id: '/grids_/$slug'
+      path: '/grids/$slug'
+      fullPath: '/grids/$slug'
+      preLoaderRoute: typeof GridsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/gacha/history': {
       id: '/gacha/history'
       path: '/gacha/history'
@@ -936,6 +1013,13 @@ declare module '@tanstack/react-router' {
       path: '/tier-lists/my'
       fullPath: '/tier-lists/my'
       preLoaderRoute: typeof AuthedTierListsMyRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/grids_/my': {
+      id: '/_authed/grids_/my'
+      path: '/grids/my'
+      fullPath: '/grids/my'
+      preLoaderRoute: typeof AuthedGridsMyRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/admin/users': {
@@ -1008,6 +1092,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiOgKindIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/grids/$slug/image': {
+      id: '/api/grids/$slug/image'
+      path: '/api/grids/$slug/image'
+      fullPath: '/api/grids/$slug/image'
+      preLoaderRoute: typeof ApiGridsSlugImageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authed/grids_/$slug/edit': {
+      id: '/_authed/grids_/$slug/edit'
+      path: '/grids/$slug/edit'
+      fullPath: '/grids/$slug/edit'
+      preLoaderRoute: typeof AuthedGridsSlugEditRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/tier-lists_/my_/$id/edit': {
       id: '/_authed/tier-lists_/my_/$id/edit'
       path: '/tier-lists/my/$id/edit'
@@ -1048,13 +1146,17 @@ const AuthedAdminRouteWithChildren = AuthedAdminRoute._addFileChildren(
 
 interface AuthedRouteChildren {
   AuthedAdminRoute: typeof AuthedAdminRouteWithChildren
+  AuthedGridsMyRoute: typeof AuthedGridsMyRoute
   AuthedTierListsMyRoute: typeof AuthedTierListsMyRoute
+  AuthedGridsSlugEditRoute: typeof AuthedGridsSlugEditRoute
   AuthedTierListsMyIdEditRoute: typeof AuthedTierListsMyIdEditRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAdminRoute: AuthedAdminRouteWithChildren,
+  AuthedGridsMyRoute: AuthedGridsMyRoute,
   AuthedTierListsMyRoute: AuthedTierListsMyRoute,
+  AuthedGridsSlugEditRoute: AuthedGridsSlugEditRoute,
   AuthedTierListsMyIdEditRoute: AuthedTierListsMyIdEditRoute,
 }
 
@@ -1069,6 +1171,7 @@ const rootRouteChildren: RootRouteChildren = {
   DonateRoute: DonateRoute,
   DyntestRoute: DyntestRoute,
   EnemiesRoute: EnemiesRoute,
+  GridsRoute: GridsRoute,
   HelpMeRoute: HelpMeRoute,
   OperatorsRoute: OperatorsRoute,
   PrivacyRoute: PrivacyRoute,
@@ -1081,6 +1184,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnemiesIdRoute: EnemiesIdRoute,
   GachaCommunityRoute: GachaCommunityRoute,
   GachaHistoryRoute: GachaHistoryRoute,
+  GridsSlugRoute: GridsSlugRoute,
   OperatorsIdRoute: OperatorsIdRoute,
   StagesStageIdRoute: StagesStageIdRoute,
   StoriesStoryIdRoute: StoriesStoryIdRoute,
@@ -1098,6 +1202,7 @@ const rootRouteChildren: RootRouteChildren = {
   UserSearchRoute: UserSearchRoute,
   ApiOgDefaultRoute: ApiOgDefaultRoute,
   StoriesSpritesBaseRoute: StoriesSpritesBaseRoute,
+  ApiGridsSlugImageRoute: ApiGridsSlugImageRoute,
   ApiOgKindIdRoute: ApiOgKindIdRoute,
   ApiTierListsSlugImageRoute: ApiTierListsSlugImageRoute,
 }

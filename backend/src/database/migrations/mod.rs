@@ -94,6 +94,11 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v030_planner_pins_presets",
         include_str!("v030_planner_pins_presets.sql"),
     ),
+    ("v031_grids", include_str!("v031_grids.sql")),
+    (
+        "v032_grid_entity_kinds",
+        include_str!("v032_grid_entity_kinds.sql"),
+    ),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

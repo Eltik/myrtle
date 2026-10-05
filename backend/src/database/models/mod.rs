@@ -1,5 +1,6 @@
 pub mod audit;
 pub mod gacha;
+pub mod grid;
 pub mod i18n;
 pub mod item_leaderboard;
 pub mod operator_notes;

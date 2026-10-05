@@ -8,16 +8,19 @@ import type { IRosterEntry } from "#/lib/api/user";
 import { backendFetch } from "#/lib/fetch";
 import { metaSourceForLocale } from "#/lib/meta";
 import { formatGroupId, formatNationId, formatNumber, formatTeamId, rarityToNumber, toAvatarStem } from "#/lib/utils";
+import type { Grid } from "#/types/generated/Grid";
 import type { PlacementDetail } from "#/types/generated/PlacementDetail";
 import type { StoryIndex } from "#/types/generated/StoryIndex";
 import type { IOperatorListItem } from "#/types/operators";
 import type { IStage, IZone } from "#/types/stages";
 import type { IUserProfile } from "#/types/user";
+import { buildGridImageData, type IGridImageData, parseGridOgId } from "./grid";
 import { type IOgHasher, type OgData, type OgKind, ogHashers } from "./hashers";
 import { defaultOgPreset, defaultOgTagLabels, resolveDefaultOgPreset } from "./presets";
 import type { IRenderDimensions } from "./render";
 import { buildStoryOgData, type IStoryOgData, parseStoryOgId } from "./story";
 import { DefaultTemplate, type IDefaultOgData } from "./templates/Default";
+import { GridImageTemplate, gridImageDimensions } from "./templates/GridImage";
 import { type IOperatorOgData, OperatorTemplate } from "./templates/Operator";
 import { buildStageOgData, type IStageOgData, StageTemplate } from "./templates/Stage";
 import { StoryTemplate } from "./templates/Story";
@@ -497,6 +500,17 @@ const tierListBoardImageHandler = /* @__PURE__ */ defineOgHandler<ITierListBoard
     dimensions: (data) => tierListBoardImageDimensions(data),
 });
 
+const gridImageHandler = /* @__PURE__ */ defineOgHandler<IGridImageData>(ogHashers["grid-image"], {
+    fetch: async (id) => {
+        const { server, slug } = parseGridOgId(id);
+        const res = await backendFetch(`/grids/${encodeURIComponent(slug)}?server=${encodeURIComponent(server)}`);
+        if (!res.ok) return null;
+        return buildGridImageData((await res.json()) as Grid, backendBaseURL(), server);
+    },
+    template: (data) => GridImageTemplate(data),
+    dimensions: (data) => gridImageDimensions(data),
+});
+
 const STATIC_STAGE_TTL_MS = 30 * 60 * 1000;
 let stagesCache: { promise: Promise<IStage[]>; expiresAt: number } | null = null;
 let zonesCache: { promise: Promise<IZone[]>; expiresAt: number } | null = null;
@@ -618,6 +632,7 @@ export const ogRegistry: { [K in OgKind]: IOgHandler<OgData<K>> } = {
     user: userHandler,
     "tier-list": tierListHandler,
     "tier-list-image": tierListBoardImageHandler,
+    "grid-image": gridImageHandler,
     stage: stageHandler,
     story: storyHandler,
     default: defaultHandler,

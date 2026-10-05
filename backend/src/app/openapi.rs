@@ -183,6 +183,7 @@ it is missing from the server too.",
         (name = "meta", description = "Health and site-wide totals."),
         (name = "admin", description = "Administrative endpoints. A non-admin token is answered with 403, not 404."),
         (name = "tier-lists", description = "Community tier lists: their tiers, the operators placed in them, published versions, per-list edit grants and engagement counters."),
+        (name = "grids", description = "Community grids: titled boards of labelled cells, each optionally holding one tier-list entity, and forks that reuse a grid as a template."),
         (name = "i18n", description = "The public translation catalog a browser renders from. The content hash is in the path, so a catalog response is immutable and cacheable indefinitely."),
         (name = "i18n-admin", description = "The translation workspace: locales, message editing with an audit trail, game-data text overrides and per-locale grants.")
     )

@@ -155,6 +155,15 @@ export function ToolIcon({ name, className }: { name: ToolIconName; className?: 
                     <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                 </svg>
             );
+        case "grid":
+            return (
+                <svg aria-hidden="true" viewBox="0 0 24 24" className={className} {...p}>
+                    <rect x="3" y="3" width="7" height="7" rx="1" />
+                    <rect x="14" y="3" width="7" height="7" rx="1" />
+                    <rect x="3" y="14" width="7" height="7" rx="1" />
+                    <rect x="14" y="14" width="7" height="7" rx="1" />
+                </svg>
+            );
         default:
             return null;
     }

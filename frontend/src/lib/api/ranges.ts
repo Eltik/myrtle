@@ -1,13 +1,13 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
+import type { Range } from "#/types/generated/Range";
 // Generated from `backend/src/core/gamedata/types/range.rs`. To change a field,
 // edit the Rust struct and run `bun run gen:types` - do not redeclare it here.
-import type { Grid } from "#/types/generated/Grid";
-import type { Range } from "#/types/generated/Range";
+import type { RangeGrid } from "#/types/generated/RangeGrid";
 import { DEFAULT_GAMEDATA_SERVER, gamedataKey, gamedataPath, resolveGamedataServer } from "./gamedata";
 
-export type IRangeGrid = Grid;
+export type IRangeGrid = RangeGrid;
 export type IRange = Range;
 export type IRangesMap = Record<string, IRange>;
 
