@@ -31,6 +31,12 @@ fn story_sprites_present() -> bool {
     en_dir().join("textures/avg/characters").is_dir()
 }
 
+/// Backend CI downloads `gamedata` alone, so the episodes' key visuals
+/// (`mixstory_*` sprite packs) only resolve on a full local extract.
+fn story_art_present() -> bool {
+    en_dir().join("textures/spritepack").is_dir()
+}
+
 fn facet<'a>(facets: &'a BTreeMap<String, FacetValue>, name: &str) -> Option<&'a str> {
     match facets.get(name)? {
         FacetValue::One(s) => Some(s),
@@ -448,7 +454,9 @@ fn main_story_is_one_entry_per_episode_in_order() {
             .collect::<Vec<_>>(),
         "episode order"
     );
-    assert_eq!(no_icon, 0);
+    if story_art_present() {
+        assert_eq!(no_icon, 0);
+    }
     // Four acts, the `chapter_table` ones, every episode in one.
     assert_eq!(by_act.len(), 4, "{by_act:?}");
     assert!(!by_act.contains_key("?"));

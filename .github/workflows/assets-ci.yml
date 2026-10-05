@@ -257,7 +257,7 @@ jobs:
 
       - name: Upload binaries
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/v3'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: binaries-${{ matrix.os }}
           path: |
@@ -441,7 +441,7 @@ jobs:
       # recent run that carried it. Re-run via workflow_dispatch to refresh sooner.
       - name: Upload game data for backend CI
         if: github.event_name != 'pull_request'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: game-data
           path: assets/output/en/gamedata/
