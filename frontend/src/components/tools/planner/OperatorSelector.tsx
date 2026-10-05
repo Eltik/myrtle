@@ -10,9 +10,9 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { professionLabel } from "#/lib/registry/operator-display";
 import { searchAndRank } from "#/lib/search/fuzzy";
-import { cn } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import type { messages as bulkMessages } from "./BulkPlanDialog.messages";
+import { CheckMark } from "./CheckMark";
 import type { messages } from "./OperatorPlannerDialog.messages";
 
 /** One row of the operator picker. */
@@ -80,7 +80,7 @@ export function useOperatorOptions(server: string, searchQuery: string, selected
         return sortedOptions.find((item) => item.id === selectedOperatorId) || null;
     }, [selectedOperatorId, sortedOptions]);
 
-    return { options, allOptions: sortedOptions, selectedOption, isLoading: isOperatorsLoading || isUpcomingLoading };
+    return { options, selectedOption, isLoading: isOperatorsLoading || isUpcomingLoading };
 }
 
 interface IOperatorSelectorProps {
@@ -173,13 +173,7 @@ export function OperatorMultiSelector({ options, selectedOptions, isLoading, onS
                         const isSelected = selectedIds.has(op.id);
                         return (
                             <ComboboxPrimitive.Item key={op.id} value={op} className="flex min-h-8 cursor-default items-center gap-3 rounded-sm px-2 py-1 text-sm outline-none data-disabled:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-64">
-                                <span className={cn("flex size-4.5 shrink-0 items-center justify-center rounded-sm border transition-colors sm:size-4", isSelected ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background")}>
-                                    {isSelected && (
-                                        <svg aria-hidden="true" className="size-3 sm:size-2.5" fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M5.252 12.7 10.2 18.63 18.748 5.37" />
-                                        </svg>
-                                    )}
-                                </span>
+                                <CheckMark checked={isSelected} />
                                 <span aria-hidden="true" className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/50">
                                     <OperatorAvatar charId={op.id} name={op.displayName} className="block h-full w-full object-cover" server={op.isUpcoming ? "cn" : undefined} />
                                 </span>

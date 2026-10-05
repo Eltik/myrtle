@@ -22,7 +22,9 @@ use ts_rs::TS;
 
 use crate::app::cpu;
 use crate::app::error::ApiError;
-use crate::app::services::planner::{calculate_leveling_costs, module_phase_to_int};
+use crate::app::services::planner::{
+    EXP_ITEM, LMD_ITEM, calculate_leveling_costs, module_phase_to_int,
+};
 use crate::app::state::AppState;
 use crate::core::gamedata::types::GameData;
 use crate::core::gamedata::types::module::ModuleType;
@@ -191,11 +193,6 @@ pub struct LmdIncomeDto {
 const FARMING_STAGE_CODE: &str = "CE-6";
 /// Minutes in a day, for sanity regeneration.
 const MINUTES_PER_DAY: f64 = 1440.0;
-
-/// LMD item id in the planner's material map.
-const LMD_ITEM: &str = "4001";
-/// EXP pseudo-item id in the planner's material map.
-const EXP_ITEM: &str = "5001";
 
 pub async fn max_level_costs(
     state: &AppState,

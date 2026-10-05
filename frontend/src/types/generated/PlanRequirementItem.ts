@@ -18,6 +18,12 @@ export type PlanRequirementItem = {
     canCraft: boolean;
     craftReason: string;
     /**
+     * True when the item has a workshop recipe the player cannot use yet
+     * because its room or stage gates are unmet. False when it is craftable
+     * or has no usable recipe at all.
+     */
+    craftBlocked: boolean;
+    /**
      * The crafting recipe, when this item has one.
      *
      * This closes a genuine cycle in the data: a recipe's costs are themselves

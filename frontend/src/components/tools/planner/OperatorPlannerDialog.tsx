@@ -4,11 +4,10 @@ import * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, DialogPanel, DialogPopup, DialogTitle } from "#/components/ui/dialog";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
-import { Switch } from "#/components/ui/switch";
 import { useAuth } from "#/hooks/use-auth";
 import { useOperatorName } from "#/hooks/use-operator-name";
 import { operatorQueryOptions } from "#/lib/api/operators";
-import { plansQueryOptions, upsertPlanFn } from "#/lib/api/planner";
+import { PLANS_QUERY_PREFIX, plansQueryOptions, upsertPlanFn } from "#/lib/api/planner";
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
@@ -17,7 +16,8 @@ import type { messages } from "./OperatorPlannerDialog.messages";
 import { OperatorSelector, useOperatorOptions } from "./OperatorSelector";
 import { PlanGroupsField } from "./PlanGroupsField";
 import { ModuleTargetsSection, PromotionLevelPanel, SkillTargetsSection } from "./PlanTargetSections";
-import { PLANS_QUERY_PREFIX, plannableModules, planTargetPayload, UNPLANNABLE_OPERATOR_ID } from "./planTargets";
+import { plannableModules, planTargetPayload, UNPLANNABLE_OPERATOR_ID } from "./planTargets";
+import { SwitchRow } from "./SwitchRow";
 import { usePlanTargets } from "./usePlanTargets";
 
 interface IOperatorPlannerDialogProps {
@@ -152,15 +152,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
 
                                         <PlanGroupsField groupNames={groupNames} selectedGroups={targets.selectedGroups} onSelectedGroupsChange={targets.setSelectedGroups} />
 
-                                        <div className="flex items-center justify-between rounded-xl border border-border bg-card/40 p-4">
-                                            <div className="space-y-0.5">
-                                                <label htmlFor="display-on-profile" className="cursor-pointer font-semibold text-foreground text-sm">
-                                                    {t("planner.dialog.displayOnProfile")}
-                                                </label>
-                                                <p className="text-muted-foreground text-xs">{t("planner.dialog.displayOnProfile.desc")}</p>
-                                            </div>
-                                            <Switch id="display-on-profile" checked={targets.displayOnProfile} onCheckedChange={targets.setDisplayOnProfile} />
-                                        </div>
+                                        <SwitchRow id="display-on-profile" label={t("planner.dialog.displayOnProfile")} description={t("planner.dialog.displayOnProfile.desc")} checked={targets.displayOnProfile} onCheckedChange={targets.setDisplayOnProfile} />
                                     </>
                                 )}
                             </div>

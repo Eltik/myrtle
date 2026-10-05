@@ -55,7 +55,7 @@ const TAB_CHUNKS: Partial<Record<TabId, () => Promise<unknown>>> = {
 };
 
 /** Tabs that render phases, skills or template ids and so need the full operator table. */
-const FULL_TABLE_TABS: ReadonlySet<TabId> = new Set<TabId>(["roster", "plans", "optimizer"]);
+const FULL_TABLE_TABS: ReadonlySet<TabId> = new Set<TabId>(["roster", "optimizer"]);
 
 function GridSkeleton() {
     return (
@@ -111,12 +111,10 @@ export function UserProfile() {
 
     const { data: inventory } = useQuery({ ...userInventoryQueryOptions(id), enabled: activeTab === "inventory" });
     const { data: score, isLoading: isScoreLoading } = useQuery({ ...userScoreQueryOptions(id), enabled: activeTab === "score" });
-    const { data: publicPlans, isFetched: plansFetched } = useQuery({ ...publicPlansQueryOptions(id), enabled: activeTab === "plans" });
-    // Plans renders from its own small request, which would also queue behind the
-    // table on bun, so on that tab the table waits for it too (fetched or failed).
+    const { data: publicPlans } = useQuery({ ...publicPlansQueryOptions(id), enabled: activeTab === "plans" });
     const { data: operatorsStatic } = useQuery({
         ...operatorsListQueryOptions(gamedataServer),
-        enabled: FULL_TABLE_TABS.has(activeTab) && loadedChunks.has(activeTab) && (activeTab !== "plans" || plansFetched),
+        enabled: FULL_TABLE_TABS.has(activeTab) && loadedChunks.has(activeTab),
     });
     // Improvements only fire while the Score tab is mounted - it's a heavier
     // payload than the headline score, so don't pay for it on every profile view.
@@ -235,7 +233,7 @@ export function UserProfile() {
                     <Suspense fallback={activeTab === "score" ? <ScoreTabSkeleton /> : <GridSkeleton />}>
                         {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} />}
                         {activeTab === "inventory" && <ItemsTab inventory={inventory ?? []} />}
-                        {activeTab === "plans" && <PlansTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
+                        {activeTab === "plans" && <PlansTab uid={id} roster={roster ?? []} />}
                         {activeTab === "enemies" && <EnemiesTab encountered={encounteredEnemies} isLoading={isEnemiesLoading} />}
                         {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} uid={id} server={data.server} />}
                         {activeTab === "optimizer" && <OptimizerTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}

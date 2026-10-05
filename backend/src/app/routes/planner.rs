@@ -8,13 +8,16 @@ use crate::{
         error::ApiError,
         extractors::auth::AuthUser,
         routes::{StatusOk, ok_status},
-        services,
+        services::{
+            self,
+            planner::{MAX_FLATTEN_TIER, MIN_FLATTEN_TIER},
+        },
         state::AppState,
     },
     database::{
         models::planner::{
-            DeletePlansResponse, OperatorPlanResponse, PlanGroup, PlanPreset, PlannerResponse,
-            PresetTarget,
+            DeletePlansResponse, OperatorPlanResponse, PlanGroup, PlanInput, PlanPreset,
+            PlannerResponse, PresetTarget,
         },
         queries::users::{find_by_id, find_by_uid},
     },
@@ -63,11 +66,11 @@ pub async fn list(
 ) -> Result<Json<PlannerResponse>, ApiError> {
     let user_id = auth.user_uuid()?;
     if let Some(tier) = query.max_tier
-        && !(1..=5).contains(&tier)
+        && !(MIN_FLATTEN_TIER..=MAX_FLATTEN_TIER).contains(&tier)
     {
-        return Err(ApiError::BadRequest(
-            "max_tier must be between 1 and 5".into(),
-        ));
+        return Err(ApiError::BadRequest(format!(
+            "max_tier must be between {MIN_FLATTEN_TIER} and {MAX_FLATTEN_TIER}"
+        )));
     }
     let active_ids: Vec<String> = query
         .active
@@ -111,19 +114,16 @@ pub async fn upsert(
     Json(body): Json<UpsertPlanRequest>,
 ) -> Result<Json<OperatorPlanResponse>, ApiError> {
     let user_id = auth.user_uuid()?;
-    let plan = services::planner::upsert_plan(
-        &state,
-        user_id,
-        &operator_id,
-        body.target_elite,
-        body.target_level,
-        body.target_skill_level,
-        body.target_skills,
-        body.target_modules,
-        body.display_on_profile,
-        body.groups,
-    )
-    .await?;
+    let input = PlanInput {
+        target_elite: body.target_elite,
+        target_level: body.target_level,
+        target_skill_level: body.target_skill_level,
+        target_skills: body.target_skills,
+        target_modules: body.target_modules,
+        display_on_profile: body.display_on_profile,
+    };
+    let plan =
+        services::planner::upsert_plan(&state, user_id, &operator_id, input, body.groups).await?;
     Ok(Json(plan))
 }
 

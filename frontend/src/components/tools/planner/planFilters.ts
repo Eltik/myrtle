@@ -72,3 +72,15 @@ export function groupFilterCounts(plans: readonly IFilterablePlan[]): Map<string
     }
     return counts;
 }
+
+/**
+ * The `active` ids the requirements query is fetched with. Undefined when every
+ * plan is active, so the page shares the unfiltered query; a `none` sentinel
+ * when no plan is, because an empty list would send no filter and count them all.
+ */
+export function activePlanIds(plans: readonly IFilterablePlan[], activePlans: ActivePlans, filter: GroupFilter): string[] | undefined {
+    const active = plans.filter((p) => isPlanActive(p, activePlans, filter)).map((p) => p.operator_id);
+    if (active.length === plans.length) return undefined;
+    if (active.length === 0) return ["none"];
+    return active;
+}

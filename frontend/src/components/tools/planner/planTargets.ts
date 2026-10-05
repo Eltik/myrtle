@@ -31,13 +31,6 @@ export const ELITE_PHASES = [0, 1, 2] as const;
  */
 export const UNPLANNABLE_OPERATOR_ID = "char_4195_radian";
 
-/**
- * The prefix every planner mutation invalidates. It is a prefix on purpose:
- * `plansQueryOptions` appends the active-plan filter, and every filtered copy
- * of the plan list has to refetch.
- */
-export const PLANS_QUERY_PREFIX = ["user", "plans"] as const;
-
 const PROMOTION_PHASES: readonly string[] = ["PHASE_0", "PHASE_1", "PHASE_2"];
 
 export type SkillTargets = Record<number, number>;
@@ -48,6 +41,28 @@ export type IOperatorSkill = IOperatorListItem["skills"][number];
 /** The mastery rank a skill target names, or 0 below mastery. */
 export function masteryOf(skillTarget: number): number {
     return skillTarget - MAX_SKILL_LEVEL;
+}
+
+/**
+ * The skill target a stored state names for one skill: the shared level below
+ * 7, else 7 plus that skill's mastery (a missing mastery row is M0). Plans and
+ * roster entries both store a shared level plus a mastery per skill.
+ */
+export function skillTargetOf(sharedLevel: number, mastery: number | undefined): number {
+    if (sharedLevel < MAX_SKILL_LEVEL) return sharedLevel;
+    const rank = mastery ?? 0;
+    return rank > 0 ? MAX_SKILL_LEVEL + rank : MAX_SKILL_LEVEL;
+}
+
+/** The stage of a module the roster holds. A locked module is stored at stage 1 or above but counts as 0: it costs nothing to plan its first stage. */
+export function ownedModuleStage(entry: IRosterEntry, moduleId: string): number {
+    const owned = entry.modules?.find((m) => m.id === moduleId);
+    return owned && !owned.locked ? owned.level : 0;
+}
+
+/** Whether promotion and level `a` sit strictly below `b`. */
+export function isPromotionBelow(a: { elite: number; level: number }, b: { elite: number; level: number }): boolean {
+    return a.elite < b.elite || (a.elite === b.elite && a.level < b.level);
 }
 
 export function getMaxLevel(rarity: number, elite: number): number {
@@ -120,19 +135,10 @@ export function plannableModules(operator: IOperatorListItem): IOperatorModule[]
     return operator.modules.filter((m) => m.typeName1 !== "ORIGINAL");
 }
 
-/**
- * The skill target a stored state names for skill `idx`: the shared level
- * below 7, else 7 plus that skill's mastery (a missing mastery row is M0).
- */
 function seedSkillTargets(operator: IOperatorListItem, skillLevel: number, masteryAt: (idx: number) => number | undefined): SkillTargets {
     const targets: SkillTargets = {};
     operator.skills.forEach((_, idx) => {
-        if (skillLevel < MAX_SKILL_LEVEL) {
-            targets[idx] = skillLevel;
-            return;
-        }
-        const mastery = masteryAt(idx) ?? 0;
-        targets[idx] = mastery > 0 ? MAX_SKILL_LEVEL + mastery : MAX_SKILL_LEVEL;
+        targets[idx] = skillTargetOf(skillLevel, masteryAt(idx));
     });
     return targets;
 }
@@ -182,10 +188,7 @@ export function initialTargets(operator: IOperatorListItem, plan: IOperatorPlanR
             elite,
             level: Math.min(rosterEntry.level, getMaxLevel(rarity, elite)),
             skills: seedSkillTargets(operator, rosterEntry.skill_level, (idx) => rosterEntry.masteries?.find((m) => m.index === idx)?.mastery),
-            modules: seedModuleTargets(operator, (mod) => {
-                const owned = rosterEntry.modules?.find((m) => m.id === mod.uniEquipId);
-                return owned && !owned.locked ? owned.level : 0;
-            }),
+            modules: seedModuleTargets(operator, (mod) => ownedModuleStage(rosterEntry, mod.uniEquipId)),
             displayOnProfile: false,
             groups: [],
         };

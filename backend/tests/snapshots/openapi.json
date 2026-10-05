@@ -17799,11 +17799,16 @@
           "missingCount",
           "canCraft",
           "craftReason",
+          "craftBlocked",
           "unmetStages"
         ],
         "properties": {
           "canCraft": {
             "type": "boolean"
+          },
+          "craftBlocked": {
+            "type": "boolean",
+            "description": "True when the item has a workshop recipe the player cannot use yet\nbecause its room or stage gates are unmet. False when it is craftable\nor has no usable recipe at all."
           },
           "craftReason": {
             "type": "string"

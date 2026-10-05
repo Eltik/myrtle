@@ -9,17 +9,13 @@ import type { DeletePlansResponse } from "#/types/generated/DeletePlansResponse"
 import type { OperatorPlanResponse } from "#/types/generated/OperatorPlanResponse";
 import type { PlanGroup } from "#/types/generated/PlanGroup";
 import type { PlannerResponse } from "#/types/generated/PlannerResponse";
-import type { PlanRecipe } from "#/types/generated/PlanRecipe";
-import type { PlanRecipeCost } from "#/types/generated/PlanRecipeCost";
+import type { PlanPreset } from "#/types/generated/PlanPreset";
 import type { PlanRequirementItem } from "#/types/generated/PlanRequirementItem";
+import type { PresetTarget } from "#/types/generated/PresetTarget";
 import type { TargetModulePlan } from "#/types/generated/TargetModulePlan";
 import type { TargetSkillPlan } from "#/types/generated/TargetSkillPlan";
 import type { IOperatorListItem } from "#/types/operators";
 import type { Refine } from "#/types/refine";
-
-export type IPlanRecipeCost = PlanRecipeCost;
-
-export type IPlanRecipe = PlanRecipe;
 
 export type IPlanRequirementItem = PlanRequirementItem;
 
@@ -35,13 +31,53 @@ export type IPlanGroup = PlanGroup;
 
 export type IPlannerResponse = Refine<PlannerResponse, { plans: IOperatorPlanResponse[] }>;
 
+/** A named, rarity-free target the bulk-add dialog applies to many operators at once. */
+export type IPlanPreset = PlanPreset;
+
+export type IPresetTarget = PresetTarget;
+
+/**
+ * The prefix every planner mutation invalidates. It is a prefix on purpose:
+ * `plansQueryOptions` appends the active-plan filter, and every filtered copy
+ * of the plan list has to refetch.
+ */
+export const PLANS_QUERY_PREFIX = ["user", "plans"] as const;
+
+/** Not under `PLANS_QUERY_PREFIX`: saving a plan leaves the presets alone. */
+export const PLAN_PRESETS_QUERY_KEY = ["user", "plan-presets"] as const;
+
+const STALE_TIME = 60 * 1000;
+const GC_TIME = 5 * 60 * 1000;
+
+/** The signed-in player's session token; every planner call except the public list needs one. */
+function siteToken(): string {
+    const token = getCookie("site_token");
+    if (!token) throw new Error("Not signed in.");
+    return token;
+}
+
+/** Throws the backend's error body, or `<failure>: <status>` when the body is empty. */
+async function throwUnlessOk(res: Response, failure: string): Promise<void> {
+    if (res.ok) return;
+    const text = await res.text().catch(() => "");
+    throw new Error(text || `${failure}: ${res.status}`);
+}
+
+/** The backend sends the operator in snake_case; everything that reads a plan expects camelCase. */
+function camelizeOperator(plan: IOperatorPlanResponse): IOperatorPlanResponse {
+    if (plan.operator) plan.operator = deepCamelize(plan.operator);
+    return plan;
+}
+
+// ---- Plans ----
+
 export interface IUpsertPlanInput {
     operatorId: string;
     targetElite: number;
     targetLevel: number;
     targetSkillLevel: number;
-    targetSkills: { skill_index: number; mastery_level: number }[];
-    targetModules: { module_id: string; module_stage: number }[];
+    targetSkills: TargetSkillPlan[];
+    targetModules: TargetModulePlan[];
     displayOnProfile: boolean;
     groups?: string[];
 }
@@ -49,8 +85,7 @@ export interface IUpsertPlanInput {
 export const upsertPlanFn = createServerFn({ method: "POST" })
     .inputValidator((data: IUpsertPlanInput) => data)
     .handler(async ({ data }) => {
-        const token = getCookie("site_token");
-        if (!token) throw new Error("Not signed in.");
+        const token = siteToken();
         const payload = {
             target_elite: data.targetElite,
             target_level: data.targetLevel,
@@ -65,15 +100,8 @@ export const upsertPlanFn = createServerFn({ method: "POST" })
             bearerToken: token,
             body: JSON.stringify(payload),
         });
-        if (!res.ok) {
-            const text = await res.text().catch(() => "");
-            throw new Error(text || `Failed to save plan: ${res.status}`);
-        }
-        const plan = (await res.json()) as IOperatorPlanResponse;
-        if (plan.operator) {
-            plan.operator = deepCamelize(plan.operator);
-        }
-        return plan;
+        await throwUnlessOk(res, "Failed to save plan");
+        return camelizeOperator((await res.json()) as IOperatorPlanResponse);
     });
 
 export interface IPlansQueryInput {
@@ -85,8 +113,7 @@ export interface IPlansQueryInput {
 export const getPlansFn = createServerFn({ method: "GET" })
     .inputValidator((input?: IPlansQueryInput) => input)
     .handler(async ({ data: input }) => {
-        const token = getCookie("site_token");
-        if (!token) throw new Error("Not signed in.");
+        const token = siteToken();
         const params = new URLSearchParams();
         if (input?.activeIds && input.activeIds.length > 0) params.set("active", input.activeIds.join(","));
         if (input?.maxTier) params.set("max_tier", String(input.maxTier));
@@ -94,42 +121,68 @@ export const getPlansFn = createServerFn({ method: "GET" })
         const res = await backendFetch(query ? `/plans?${query}` : "/plans", { bearerToken: token });
         if (!res.ok) throw new Error(`Failed to load plans: ${res.status}`);
         const data = (await res.json()) as IPlannerResponse;
-        if (data.plans) {
-            for (const p of data.plans) {
-                if (p.operator) {
-                    p.operator = deepCamelize(p.operator);
-                }
-            }
-        }
+        data.plans?.forEach(camelizeOperator);
         return data;
     });
 
 export function plansQueryOptions(activeIds?: string[], maxTier?: number) {
     return queryOptions({
-        queryKey: ["user", "plans", activeIds?.join(",") || "", maxTier ?? 0],
+        queryKey: [...PLANS_QUERY_PREFIX, activeIds?.join(",") || "", maxTier ?? 0],
         queryFn: () => getPlansFn({ data: { activeIds, maxTier } }),
-        staleTime: 60 * 1000,
-        gcTime: 5 * 60 * 1000,
+        staleTime: STALE_TIME,
+        gcTime: GC_TIME,
     });
 }
 
 export const deletePlanFn = createServerFn({ method: "POST" })
     .inputValidator((operatorId: string) => operatorId)
     .handler(async ({ data: operatorId }) => {
-        const token = getCookie("site_token");
-        if (!token) throw new Error("Not signed in.");
+        const token = siteToken();
         const res = await backendFetch(`/plan/${encodeURIComponent(operatorId)}`, {
             method: "DELETE",
             bearerToken: token,
         });
-        if (!res.ok) {
-            const text = await res.text().catch(() => "");
-            throw new Error(text || `Failed to delete plan: ${res.status}`);
-        }
+        await throwUnlessOk(res, "Failed to delete plan");
         return { success: true };
     });
 
+/** Deletes several plans in one request. Ids with no plan are skipped, so `deleted` can be lower than the input. */
+export const deletePlansFn = createServerFn({ method: "POST" })
+    .inputValidator((operatorIds: string[]) => operatorIds)
+    .handler(async ({ data: operatorIds }) => {
+        const token = siteToken();
+        const res = await backendFetch("/plans/delete", {
+            method: "POST",
+            bearerToken: token,
+            body: JSON.stringify({ operator_ids: operatorIds }),
+        });
+        await throwUnlessOk(res, "Failed to delete plans");
+        return (await res.json()) as DeletePlansResponse;
+    });
+
+export const getPublicPlansFn = createServerFn({ method: "GET" })
+    .inputValidator((uid: string) => uid)
+    .handler(async ({ data: uid }) => {
+        const res = await backendFetch(`/plans/public?uid=${encodeURIComponent(uid)}`);
+        if (!res.ok) throw new Error(`Failed to load public plans: ${res.status}`);
+        const data = (await res.json()) as IOperatorPlanResponse[];
+        data.forEach(camelizeOperator);
+        return data;
+    });
+
+export function publicPlansQueryOptions(uid: string) {
+    return queryOptions({
+        queryKey: ["user", "public-plans", uid],
+        queryFn: () => getPublicPlansFn({ data: uid }),
+        staleTime: STALE_TIME,
+        gcTime: GC_TIME,
+    });
+}
+
+// ---- Groups ----
+
 export interface IUpsertGroupInput {
+    /** Set to rename that group; unset creates `name`. */
     oldName?: string;
     name: string;
 }
@@ -137,8 +190,7 @@ export interface IUpsertGroupInput {
 export const upsertGroupFn = createServerFn({ method: "POST" })
     .inputValidator((data: IUpsertGroupInput) => data)
     .handler(async ({ data }) => {
-        const token = getCookie("site_token");
-        if (!token) throw new Error("Not signed in.");
+        const token = siteToken();
         const url = data.oldName ? `/plan/group/${encodeURIComponent(data.oldName)}` : "/plan/group";
         const method = data.oldName ? "PUT" : "POST";
         const res = await backendFetch(url, {
@@ -146,51 +198,8 @@ export const upsertGroupFn = createServerFn({ method: "POST" })
             bearerToken: token,
             body: JSON.stringify({ name: data.name }),
         });
-        if (!res.ok) {
-            const text = await res.text().catch(() => "");
-            throw new Error(text || `Failed to save group: ${res.status}`);
-        }
+        await throwUnlessOk(res, "Failed to save group");
         return (await res.json()) as IPlanGroup;
-    });
-
-export interface IDeleteGroupInput {
-    name: string;
-}
-
-export const deleteGroupFn = createServerFn({ method: "POST" })
-    .inputValidator((data: IDeleteGroupInput) => data)
-    .handler(async ({ data }) => {
-        const token = getCookie("site_token");
-        if (!token) throw new Error("Not signed in.");
-        const res = await backendFetch(`/plan/group/${encodeURIComponent(data.name)}`, {
-            method: "DELETE",
-            bearerToken: token,
-        });
-        if (!res.ok) {
-            const text = await res.text().catch(() => "");
-            throw new Error(text || `Failed to delete group: ${res.status}`);
-        }
-        return { success: true };
-    });
-
-// ---- Completed plans and pinned groups ----
-
-/** Deletes several plans in one request. Ids with no plan are skipped, so `deleted` can be lower than the input. */
-export const deletePlansFn = createServerFn({ method: "POST" })
-    .inputValidator((operatorIds: string[]) => operatorIds)
-    .handler(async ({ data: operatorIds }) => {
-        const token = getCookie("site_token");
-        if (!token) throw new Error("Not signed in.");
-        const res = await backendFetch("/plans/delete", {
-            method: "POST",
-            bearerToken: token,
-            body: JSON.stringify({ operator_ids: operatorIds }),
-        });
-        if (!res.ok) {
-            const text = await res.text().catch(() => "");
-            throw new Error(text || `Failed to delete plans: ${res.status}`);
-        }
-        return (await res.json()) as DeletePlansResponse;
     });
 
 export interface ISetGroupPinnedInput {
@@ -201,61 +210,37 @@ export interface ISetGroupPinnedInput {
 export const setGroupPinnedFn = createServerFn({ method: "POST" })
     .inputValidator((data: ISetGroupPinnedInput) => data)
     .handler(async ({ data }) => {
-        const token = getCookie("site_token");
-        if (!token) throw new Error("Not signed in.");
+        const token = siteToken();
         const res = await backendFetch(`/plan/group/${encodeURIComponent(data.name)}`, {
             method: "PUT",
             bearerToken: token,
             body: JSON.stringify({ pinned: data.pinned }),
         });
-        if (!res.ok) {
-            const text = await res.text().catch(() => "");
-            throw new Error(text || `Failed to pin group: ${res.status}`);
-        }
+        await throwUnlessOk(res, "Failed to pin group");
         return (await res.json()) as IPlanGroup;
     });
 
-// ---- end completed plans and pinned groups ----
-
-export const getPublicPlansFn = createServerFn({ method: "GET" })
-    .inputValidator((uid: string) => uid)
-    .handler(async ({ data: uid }) => {
-        const res = await backendFetch(`/plans/public?uid=${encodeURIComponent(uid)}`);
-        if (!res.ok) throw new Error(`Failed to load public plans: ${res.status}`);
-        const data = (await res.json()) as IOperatorPlanResponse[];
-        for (const p of data) {
-            if (p.operator) {
-                p.operator = deepCamelize(p.operator);
-            }
-        }
-        return data;
-    });
-
-export function publicPlansQueryOptions(uid: string) {
-    return queryOptions({
-        queryKey: ["user", "public-plans", uid],
-        queryFn: () => getPublicPlansFn({ data: uid }),
-        staleTime: 60 * 1000,
-        gcTime: 5 * 60 * 1000,
-    });
+export interface IDeleteGroupInput {
+    name: string;
 }
 
-// ---------------------------------------------------------------------------
-// Plan presets: named, rarity-free targets the bulk-add dialog applies to many
-// operators at once. Each operator is clamped client-side before its upsert.
-// ---------------------------------------------------------------------------
+export const deleteGroupFn = createServerFn({ method: "POST" })
+    .inputValidator((data: IDeleteGroupInput) => data)
+    .handler(async ({ data }) => {
+        const token = siteToken();
+        const res = await backendFetch(`/plan/group/${encodeURIComponent(data.name)}`, {
+            method: "DELETE",
+            bearerToken: token,
+        });
+        await throwUnlessOk(res, "Failed to delete group");
+        return { success: true };
+    });
 
-/** Generated from `backend/src/database/models/planner.rs`. */
-export type IPlanPreset = import("#/types/generated/PlanPreset").PlanPreset;
-
-export type IPresetTarget = import("#/types/generated/PresetTarget").PresetTarget;
-
-/** Not under `PLANS_QUERY_PREFIX`: saving a plan leaves the presets alone. */
-export const PLAN_PRESETS_QUERY_KEY = ["user", "plan-presets"] as const;
+// ---- Presets ----
+// Each operator is clamped client-side (`bulkTargets.ts`) before its upsert.
 
 export const getPlanPresetsFn = createServerFn({ method: "GET" }).handler(async () => {
-    const token = getCookie("site_token");
-    if (!token) throw new Error("Not signed in.");
+    const token = siteToken();
     const res = await backendFetch("/plan/presets", { bearerToken: token });
     if (!res.ok) throw new Error(`Failed to load presets: ${res.status}`);
     return (await res.json()) as IPlanPreset[];
@@ -265,8 +250,8 @@ export function planPresetsQueryOptions() {
     return queryOptions({
         queryKey: PLAN_PRESETS_QUERY_KEY,
         queryFn: () => getPlanPresetsFn(),
-        staleTime: 60 * 1000,
-        gcTime: 5 * 60 * 1000,
+        staleTime: STALE_TIME,
+        gcTime: GC_TIME,
     });
 }
 
@@ -279,32 +264,24 @@ export interface IUpsertPlanPresetInput {
 export const upsertPlanPresetFn = createServerFn({ method: "POST" })
     .inputValidator((data: IUpsertPlanPresetInput) => data)
     .handler(async ({ data }) => {
-        const token = getCookie("site_token");
-        if (!token) throw new Error("Not signed in.");
+        const token = siteToken();
         const res = await backendFetch("/plan/preset", {
             method: "POST",
             bearerToken: token,
             body: JSON.stringify({ name: data.name, target: data.target }),
         });
-        if (!res.ok) {
-            const text = await res.text().catch(() => "");
-            throw new Error(text || `Failed to save preset: ${res.status}`);
-        }
+        await throwUnlessOk(res, "Failed to save preset");
         return (await res.json()) as IPlanPreset;
     });
 
 export const deletePlanPresetFn = createServerFn({ method: "POST" })
     .inputValidator((name: string) => name)
     .handler(async ({ data: name }) => {
-        const token = getCookie("site_token");
-        if (!token) throw new Error("Not signed in.");
+        const token = siteToken();
         const res = await backendFetch(`/plan/preset/${encodeURIComponent(name)}`, {
             method: "DELETE",
             bearerToken: token,
         });
-        if (!res.ok) {
-            const text = await res.text().catch(() => "");
-            throw new Error(text || `Failed to delete preset: ${res.status}`);
-        }
+        await throwUnlessOk(res, "Failed to delete preset");
         return { success: true };
     });

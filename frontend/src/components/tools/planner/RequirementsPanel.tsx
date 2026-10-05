@@ -18,6 +18,7 @@ import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
 import { cn } from "#/lib/utils";
+import type { messages as plannerMessages } from "./OperatorPlanner.messages";
 import type { messages } from "./RequirementsPanel.messages";
 import {
     type CategoryFilter,
@@ -43,9 +44,9 @@ import {
 import type { messages as requirementMessages } from "./requirements.messages";
 
 /** Own keys plus the labels `requirements.ts` carries. */
-type ReqT = TypedT<typeof messages & typeof requirementMessages>;
+type ReqT = TypedT<typeof messages & typeof requirementMessages & Pick<typeof plannerMessages, "planner.unknownOperator">>;
 
-interface PlannerRequirementRowProps {
+interface IPlannerRequirementRowProps {
     item: IPlanRequirementItem;
     depth: number;
     path: string;
@@ -53,12 +54,12 @@ interface PlannerRequirementRowProps {
     onToggleExpand: (path: string) => void;
 }
 
-function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpand }: PlannerRequirementRowProps) {
+function PlannerRequirementRow({ item, depth, path, expandedPaths, onToggleExpand }: IPlannerRequirementRowProps) {
     const t: ReqT = useT("tools");
     const f = useFormatters();
     const hasRecipe = !!(item.recipe && item.recipe.costs.length > 0);
     const isExpanded = expandedPaths[path];
-    const isMissingRequirements = !item.canCraft && item.craftReason.startsWith("Requirements not met");
+    const isMissingRequirements = item.craftBlocked;
     const { status, shortfall } = requirementStatus(item);
     const needsCrafting = status === "craft";
 
@@ -194,7 +195,7 @@ function TableHead({ t }: { t: ReqT }) {
     );
 }
 
-interface RequirementsTableProps {
+interface IRequirementsTableProps {
     items: IPlanRequirementItem[];
     grouped: boolean;
     pathPrefix?: string;
@@ -205,7 +206,7 @@ interface RequirementsTableProps {
     onToggleGroup?: (key: string) => void;
 }
 
-function RequirementsTable({ items, grouped, pathPrefix = "", expandedPaths, onToggleExpand, collapsedGroups, onToggleGroup }: RequirementsTableProps) {
+function RequirementsTable({ items, grouped, pathPrefix = "", expandedPaths, onToggleExpand, collapsedGroups, onToggleGroup }: IRequirementsTableProps) {
     const t: ReqT = useT("tools");
     const rowFor = (item: IPlanRequirementItem) => <PlannerRequirementRow key={`${pathPrefix}${item.id}`} item={item} depth={0} path={`${pathPrefix}${item.id}`} expandedPaths={expandedPaths} onToggleExpand={onToggleExpand} />;
 
@@ -244,7 +245,7 @@ function RequirementsTable({ items, grouped, pathPrefix = "", expandedPaths, onT
     );
 }
 
-interface ByOperatorSectionProps {
+interface IByOperatorSectionProps {
     plan: IOperatorPlanResponse;
     predicate: (item: IPlanRequirementItem) => boolean;
     isLoading: boolean;
@@ -255,7 +256,7 @@ interface ByOperatorSectionProps {
     onToggleExpand: (path: string) => void;
 }
 
-function ByOperatorSection({ plan, predicate, isLoading, requirements, collapsed, onToggle, expandedPaths, onToggleExpand }: ByOperatorSectionProps) {
+function ByOperatorSection({ plan, predicate, isLoading, requirements, collapsed, onToggle, expandedPaths, onToggleExpand }: IByOperatorSectionProps) {
     const operatorName = useOperatorName();
     const t: ReqT = useT("tools");
     const op = plan.operator;
@@ -266,10 +267,12 @@ function ByOperatorSection({ plan, predicate, isLoading, requirements, collapsed
             <button type="button" onClick={onToggle} className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-muted/20">
                 {collapsed ? <ChevronRight className="size-4 shrink-0 text-muted-foreground" /> : <ChevronDown className="size-4 shrink-0 text-muted-foreground" />}
                 <span aria-hidden="true" className="relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted/70">
-                    <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" server={op.server} />
+                    {op && <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" server={op.server} />}
                 </span>
                 <div className="min-w-0 flex-1">
-                    <span className="block truncate font-semibold text-foreground text-xs leading-tight">{operatorName(op)}</span>
+                    <span className="block truncate font-semibold text-foreground text-xs leading-tight" title={op ? undefined : plan.operator_id}>
+                        {op ? operatorName(op) : t("planner.unknownOperator")}
+                    </span>
                     <span className="block truncate text-[11px] text-muted-foreground leading-normal">{formatPlanTarget(plan, t)}</span>
                 </div>
                 {!isLoading && <span className="shrink-0 text-[11px] text-muted-foreground">{formatSubtotal(subtotal(filtered), t)}</span>}
@@ -299,7 +302,7 @@ function ByOperatorSection({ plan, predicate, isLoading, requirements, collapsed
     );
 }
 
-interface ByOperatorViewProps {
+interface IByOperatorViewProps {
     plans: IOperatorPlanResponse[];
     maxTier: MaxTierFilter;
     predicate: (item: IPlanRequirementItem) => boolean;
@@ -309,7 +312,7 @@ interface ByOperatorViewProps {
     onToggleExpand: (path: string) => void;
 }
 
-function ByOperatorView({ plans, maxTier, predicate, collapsedSections, onToggleSection, expandedPaths, onToggleExpand }: ByOperatorViewProps) {
+function ByOperatorView({ plans, maxTier, predicate, collapsedSections, onToggleSection, expandedPaths, onToggleExpand }: IByOperatorViewProps) {
     const t: ReqT = useT("tools");
     const results = useQueries({
         queries: plans.map((p) => plansQueryOptions([p.operator_id], maxTier || undefined)),
@@ -341,7 +344,7 @@ function ByOperatorView({ plans, maxTier, predicate, collapsedSections, onToggle
     );
 }
 
-interface RequirementsPanelProps {
+interface IRequirementsPanelProps {
     aggregatedRequirements: IPlanRequirementItem[];
     isLoading: boolean;
     activePlans: IOperatorPlanResponse[];
@@ -352,7 +355,7 @@ interface RequirementsPanelProps {
     lastSyncedAt: string | null;
 }
 
-export function RequirementsPanel({ aggregatedRequirements, isLoading, activePlans, maxTier, onMaxTierChange, lastSyncedAt }: RequirementsPanelProps): React.ReactElement {
+export function RequirementsPanel({ aggregatedRequirements, isLoading, activePlans, maxTier, onMaxTierChange, lastSyncedAt }: IRequirementsPanelProps): React.ReactElement {
     const t: ReqT = useT("tools");
     const f = useFormatters();
     const [settings, setSettings] = useLocalStorageState<IRequirementsViewSettings>(REQUIREMENTS_VIEW_STORAGE_KEY, DEFAULT_REQUIREMENTS_VIEW);

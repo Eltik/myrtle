@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { activePlansForFilter, groupFilterCounts, isPlanActive, matchesGroupFilter, renameGroupFilterKey, toggleGroupFilterKey, UNGROUPED_FILTER_KEY } from "./planFilters";
+import { activePlanIds, activePlansForFilter, groupFilterCounts, isPlanActive, matchesGroupFilter, renameGroupFilterKey, toggleGroupFilterKey, UNGROUPED_FILTER_KEY } from "./planFilters";
 
 const plans = [{ operator_id: "a", groups: ["Farm"] }, { operator_id: "b", groups: ["Farm", "IS"] }, { operator_id: "c", groups: ["IS"] }, { operator_id: "d", groups: [] }, { operator_id: "e" }];
 
@@ -53,5 +53,14 @@ describe("filter key edits", () => {
 describe("groupFilterCounts", () => {
     it("counts a plan under each of its groups and the groupless under Ungrouped", () => {
         expect(Object.fromEntries(groupFilterCounts(plans))).toEqual({ Farm: 2, IS: 2, [UNGROUPED_FILTER_KEY]: 2 });
+    });
+});
+
+describe("activePlanIds", () => {
+    it("sends no filter when every plan is active, a sentinel when none is, else the active ids", () => {
+        expect(activePlanIds(plans, {}, new Set())).toBeUndefined();
+        expect(activePlanIds([], {}, new Set(["Farm"]))).toBeUndefined();
+        expect(activePlanIds(plans, { a: false, b: false, c: false, d: false, e: false }, new Set())).toEqual(["none"]);
+        expect(activePlanIds(plans, {}, new Set(["IS"]))).toEqual(["b", "c"]);
     });
 });

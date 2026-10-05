@@ -5,13 +5,12 @@ import * as React from "react";
 import { Button } from "#/components/ui/button";
 import { Combobox, ComboboxEmpty, ComboboxInput, ComboboxList, ComboboxPopup, ComboboxPrimitive } from "#/components/ui/combobox";
 import { Input } from "#/components/ui/input";
-import { deleteGroupFn, upsertGroupFn } from "#/lib/api/planner";
+import { deleteGroupFn, PLANS_QUERY_PREFIX, upsertGroupFn } from "#/lib/api/planner";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
-import { cn } from "#/lib/utils";
+import { CheckMark } from "./CheckMark";
 import type { messages } from "./OperatorPlannerDialog.messages";
-import { PLANS_QUERY_PREFIX } from "./planTargets";
 
 interface IPlanGroupsFieldProps {
     /** Every group the player has, in the API's order. */
@@ -168,13 +167,7 @@ export function PlanGroupsField({ groupNames, selectedGroups, onSelectedGroupsCh
                                     className="flex min-h-8 cursor-default items-center justify-between gap-2 rounded-sm px-2 py-1 text-sm outline-none data-disabled:pointer-events-none data-highlighted:bg-accent data-highlighted:text-accent-foreground data-disabled:opacity-64 sm:min-h-7"
                                 >
                                     <div className="flex items-center gap-2">
-                                        <span className={cn("flex size-4.5 shrink-0 items-center justify-center rounded-sm border border-input transition-colors sm:size-4", isSelected ? "border-primary bg-primary text-primary-foreground" : "border-input bg-background")}>
-                                            {isSelected && (
-                                                <svg aria-hidden="true" className="size-3 sm:size-2.5" fill="none" height="24" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
-                                                    <path d="M5.252 12.7 10.2 18.63 18.748 5.37" />
-                                                </svg>
-                                            )}
-                                        </span>
+                                        <CheckMark checked={isSelected} />
                                         <span>{name}</span>
                                     </div>
                                     <div className="flex items-center gap-1">

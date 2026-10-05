@@ -1,4 +1,4 @@
-use crate::database::models::planner::{OperatorPlan, PlanGroup};
+use crate::database::models::planner::{OperatorPlan, PlanGroup, PlanInput};
 use sqlx::PgPool;
 use sqlx::types::chrono::{DateTime, Utc};
 use uuid::Uuid;
@@ -23,33 +23,20 @@ pub async fn list_plans(pool: &PgPool, user_id: Uuid) -> Result<Vec<OperatorPlan
     .await
 }
 
-pub async fn get_plan(
-    pool: &PgPool,
-    user_id: Uuid,
-    operator_id: &str,
-) -> Result<Option<OperatorPlan>, sqlx::Error> {
-    sqlx::query_as::<_, OperatorPlan>(
-        "SELECT * FROM operator_plans WHERE user_id = $1 AND operator_id = $2",
-    )
-    .bind(user_id)
-    .bind(operator_id)
-    .fetch_optional(pool)
-    .await
-}
-
-#[allow(clippy::too_many_arguments)]
+/// Creates or replaces the caller's plan for `operator_id`. With `groups`,
+/// the plan's group memberships become exactly those names, creating any
+/// group that does not exist yet; without, they are left as they are. One
+/// transaction, so a failed group write leaves the plan unchanged too.
 pub async fn upsert_plan(
     pool: &PgPool,
     user_id: Uuid,
     operator_id: &str,
-    target_elite: i16,
-    target_level: i16,
-    target_skill_level: i16,
-    target_skills: serde_json::Value,
-    target_modules: serde_json::Value,
-    display_on_profile: bool,
+    input: &PlanInput,
+    groups: Option<&[String]>,
 ) -> Result<OperatorPlan, sqlx::Error> {
-    sqlx::query_as::<_, OperatorPlan>(
+    let mut tx = pool.begin().await?;
+
+    let plan = sqlx::query_as::<_, OperatorPlan>(
         r"
         INSERT INTO operator_plans (
             user_id,
@@ -75,14 +62,55 @@ pub async fn upsert_plan(
     )
     .bind(user_id)
     .bind(operator_id)
-    .bind(target_elite)
-    .bind(target_level)
-    .bind(target_skill_level)
-    .bind(target_skills)
-    .bind(target_modules)
-    .bind(display_on_profile)
-    .fetch_one(pool)
-    .await
+    .bind(input.target_elite)
+    .bind(input.target_level)
+    .bind(input.target_skill_level)
+    .bind(&input.target_skills)
+    .bind(&input.target_modules)
+    .bind(input.display_on_profile)
+    .fetch_one(&mut *tx)
+    .await?;
+
+    if let Some(group_names) = groups {
+        sqlx::query("DELETE FROM plan_group_members WHERE operator_plan_id = $1")
+            .bind(plan.id)
+            .execute(&mut *tx)
+            .await?;
+
+        // A fixed lock order keeps concurrent upserts sharing groups from deadlocking.
+        let mut group_names: Vec<&String> = group_names.iter().collect();
+        group_names.sort();
+        group_names.dedup();
+        for group_name in group_names {
+            let group_id: Uuid = sqlx::query_scalar(
+                r"
+                INSERT INTO plan_groups (user_id, name)
+                VALUES ($1, $2)
+                ON CONFLICT (user_id, name) DO UPDATE SET name = EXCLUDED.name
+                RETURNING id
+                ",
+            )
+            .bind(user_id)
+            .bind(group_name)
+            .fetch_one(&mut *tx)
+            .await?;
+
+            sqlx::query(
+                r"
+                INSERT INTO plan_group_members (plan_group_id, operator_plan_id)
+                VALUES ($1, $2)
+                ON CONFLICT DO NOTHING
+                ",
+            )
+            .bind(group_id)
+            .bind(plan.id)
+            .execute(&mut *tx)
+            .await?;
+        }
+    }
+
+    tx.commit().await?;
+    Ok(plan)
 }
 
 pub async fn delete_plan(
@@ -178,19 +206,41 @@ pub async fn delete_group(pool: &PgPool, user_id: Uuid, name: &str) -> Result<()
     Ok(())
 }
 
+/// Every (plan id, group name) membership across the caller's plans, each
+/// plan's groups by name, as `get_plan_group_names` orders them.
 pub async fn get_all_plan_groups(
     pool: &PgPool,
     user_id: Uuid,
 ) -> Result<Vec<(Uuid, String)>, sqlx::Error> {
     sqlx::query_as::<_, (Uuid, String)>(
         r"
-        SELECT pgm.operator_plan_id, pg.name 
+        SELECT pgm.operator_plan_id, pg.name
         FROM plan_groups pg
         JOIN plan_group_members pgm ON pgm.plan_group_id = pg.id
         WHERE pg.user_id = $1
+        ORDER BY pgm.operator_plan_id, pg.name ASC
         ",
     )
     .bind(user_id)
+    .fetch_all(pool)
+    .await
+}
+
+/// The names of the groups one plan is filed under, by name.
+pub async fn get_plan_group_names(
+    pool: &PgPool,
+    operator_plan_id: Uuid,
+) -> Result<Vec<String>, sqlx::Error> {
+    sqlx::query_scalar(
+        r"
+        SELECT pg.name
+        FROM plan_groups pg
+        JOIN plan_group_members pgm ON pgm.plan_group_id = pg.id
+        WHERE pgm.operator_plan_id = $1
+        ORDER BY pg.name ASC
+        ",
+    )
+    .bind(operator_plan_id)
     .fetch_all(pool)
     .await
 }

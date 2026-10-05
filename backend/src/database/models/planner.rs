@@ -38,6 +38,17 @@ pub struct OperatorPlan {
     pub updated_at: DateTime<Utc>,
 }
 
+/// The columns of `operator_plans` a caller sets when saving a plan.
+#[derive(Debug, Clone)]
+pub struct PlanInput {
+    pub target_elite: i16,
+    pub target_level: i16,
+    pub target_skill_level: i16,
+    pub target_skills: serde_json::Value,
+    pub target_modules: serde_json::Value,
+    pub display_on_profile: bool,
+}
+
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -75,6 +86,10 @@ pub struct PlanRequirementItem {
     pub missing_count: i32,
     pub can_craft: bool,
     pub craft_reason: String,
+    /// True when the item has a workshop recipe the player cannot use yet
+    /// because its room or stage gates are unmet. False when it is craftable
+    /// or has no usable recipe at all.
+    pub craft_blocked: bool,
     /// The crafting recipe, when this item has one.
     ///
     /// This closes a genuine cycle in the data: a recipe's costs are themselves

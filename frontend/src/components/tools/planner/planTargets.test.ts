@@ -78,4 +78,13 @@ describe("planTargetPayload", () => {
         });
         expect(planTargetPayload({}, {}).targetSkillLevel).toBe(1);
     });
+
+    it("never sends a mastery below skill level 7, which the backend rejects", () => {
+        for (let a = 1; a <= 10; a++) {
+            for (let b = 1; b <= 10; b++) {
+                const payload = planTargetPayload({ 0: a, 1: b }, {});
+                if (payload.targetSkills.some((s) => s.mastery_level > 0)) expect(payload.targetSkillLevel).toBe(7);
+            }
+        }
+    });
 });

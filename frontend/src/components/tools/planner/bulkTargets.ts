@@ -1,8 +1,8 @@
+import type { IPresetTarget, IUpsertPlanInput } from "#/lib/api/planner";
 import type { IRosterEntry } from "#/lib/api/user";
 import { rarityToNumber } from "#/lib/utils";
-import type { PresetTarget } from "#/types/generated/PresetTarget";
 import type { IOperatorListItem } from "#/types/operators";
-import { clampModuleTargets, clampSkillTargets, getMaxLevel, MAX_SKILL_LEVEL, type ModuleTargets, maxEliteFor, plannableModules, planTargetPayload, type SkillTargets } from "./planTargets";
+import { clampModuleTargets, clampSkillTargets, getMaxLevel, isPromotionBelow, MAX_SKILL_LEVEL, type ModuleTargets, maxEliteFor, ownedModuleStage, plannableModules, planTargetPayload, type SkillTargets } from "./planTargets";
 
 /**
  * The bulk-add rules: one rarity-free target (a preset) applied to many
@@ -13,13 +13,18 @@ import { clampModuleTargets, clampSkillTargets, getMaxLevel, MAX_SKILL_LEVEL, ty
  */
 
 /** Level caps a preset may name at Elite 0, 1 and 2, the highest any rarity reaches. */
-export const PRESET_LEVEL_CAPS = [50, 80, 90] as const;
+const PRESET_LEVEL_CAPS = [50, 80, 90] as const;
+
+/** The highest level a preset may name at `elite`. */
+export function presetLevelCap(elite: number): number {
+    return PRESET_LEVEL_CAPS[elite] ?? 90;
+}
 
 /** Skill levels past this one need Elite 1, whatever the operator. */
 const PRESET_E0_SKILL_CAP = 4;
 
 /** Where the bulk form starts: Elite 2 at its cap, skill level 7, nothing mastered or modded. */
-export const DEFAULT_PRESET_TARGET: PresetTarget = {
+export const DEFAULT_PRESET_TARGET: IPresetTarget = {
     elite: 2,
     level: null,
     skill_level: MAX_SKILL_LEVEL,
@@ -29,27 +34,21 @@ export const DEFAULT_PRESET_TARGET: PresetTarget = {
 };
 
 /** The promotion, level, skill and module fields of a plan upsert. */
-export interface IBulkPlanTarget {
-    targetElite: number;
-    targetLevel: number;
-    targetSkillLevel: number;
-    targetSkills: { skill_index: number; mastery_level: number }[];
-    targetModules: { module_id: string; module_stage: number }[];
-}
+export type IBulkPlanTarget = Pick<IUpsertPlanInput, "targetElite" | "targetLevel" | "targetSkillLevel" | "targetSkills" | "targetModules">;
 
 /**
  * Lowers whatever the preset's own fields no longer allow, matching the
  * server's preset rules: the level cap per promotion, skill levels past 4
  * from Elite 1, masteries at Elite 2 and skill level 7, modules at Elite 2.
  */
-export function normalizePresetTarget(target: PresetTarget): PresetTarget {
+export function normalizePresetTarget(target: IPresetTarget): IPresetTarget {
     const elite = Math.min(Math.max(0, target.elite), 2);
-    const cap = PRESET_LEVEL_CAPS[elite] ?? 90;
+    const cap = presetLevelCap(elite);
     const level = target.level === null ? null : Math.min(Math.max(1, target.level), cap);
     let skillLevel = Math.min(Math.max(1, target.skill_level), MAX_SKILL_LEVEL);
     if (elite < 1) skillLevel = Math.min(skillLevel, PRESET_E0_SKILL_CAP);
     const canMaster = elite === 2 && skillLevel === MAX_SKILL_LEVEL;
-    const masteries = target.masteries.map((m) => (canMaster ? Math.min(Math.max(0, m), 3) : 0)) as PresetTarget["masteries"];
+    const masteries = target.masteries.map((m) => (canMaster ? Math.min(Math.max(0, m), 3) : 0)) as IPresetTarget["masteries"];
     const moduleStage = elite === 2 ? Math.min(Math.max(0, target.module_stage), 3) : 0;
     return { elite, level, skill_level: skillLevel, masteries, module_stage: moduleStage, display_on_profile: target.display_on_profile ?? false };
 }
@@ -62,8 +61,8 @@ type PresetChange = { field: "elite"; value: number } | { field: "level"; value:
  * to Elite 2, a skill level past 4 lifts promotion to Elite 1); lowering one
  * drops whatever depended on it.
  */
-export function withPresetChange(prev: PresetTarget, change: PresetChange): PresetTarget {
-    const next: PresetTarget = { ...prev, masteries: [...prev.masteries] };
+export function withPresetChange(prev: IPresetTarget, change: PresetChange): IPresetTarget {
+    const next: IPresetTarget = { ...prev, masteries: [...prev.masteries] };
     switch (change.field) {
         case "elite":
             next.elite = change.value;
@@ -99,7 +98,7 @@ export function withPresetChange(prev: PresetTarget, change: PresetChange): Pres
  * uses, so a mastery or module the operator cannot reach at that promotion
  * is dropped rather than rejected by the server.
  */
-export function clampPresetForOperator(preset: PresetTarget, operator: IOperatorListItem): IBulkPlanTarget {
+export function clampPresetForOperator(preset: IPresetTarget, operator: IOperatorListItem): IBulkPlanTarget {
     const rarity = rarityToNumber(operator.rarity);
     const maxElite = maxEliteFor(rarity);
     const elite = Math.min(preset.elite, maxElite);
@@ -118,17 +117,6 @@ export function clampPresetForOperator(preset: PresetTarget, operator: IOperator
     const modules = clampModuleTargets(wantedModules, operator, elite, level);
 
     return { targetElite: elite, targetLevel: level, ...planTargetPayload(skills, modules) };
-}
-
-/** Whether promotion and level `a` sit strictly below `b`. */
-function isBelow(a: { elite: number; level: number }, b: { elite: number; level: number }): boolean {
-    return a.elite < b.elite || (a.elite === b.elite && a.level < b.level);
-}
-
-/** An owned module's stage; a locked one counts as stage 0. */
-function ownedStage(entry: IRosterEntry, moduleId: string): number {
-    const owned = entry.modules?.find((m) => m.id === moduleId);
-    return owned && !owned.locked ? owned.level : 0;
 }
 
 export interface IMergedPlanTarget {
@@ -152,18 +140,16 @@ export function raiseToRoster(target: IBulkPlanTarget, entry: IRosterEntry | und
 
     const current = { elite: entry.elite, level: entry.level };
     const wanted = { elite: target.targetElite, level: target.targetLevel };
-    const promotionReached = !isBelow(current, wanted);
+    const promotionReached = !isPromotionBelow(current, wanted);
     const promotion = promotionReached ? current : wanted;
 
     const skillReached = entry.skill_level >= target.targetSkillLevel;
-    const targetSkills = target.targetSkills.map((s) => {
-        const owned = entry.masteries?.find((m) => m.index === s.skill_index)?.mastery ?? 0;
-        return { skill_index: s.skill_index, mastery_level: Math.max(owned, s.mastery_level) };
-    });
-    const masteriesReached = target.targetSkills.every((s) => (entry.masteries?.find((m) => m.index === s.skill_index)?.mastery ?? 0) >= s.mastery_level);
+    const ownedMastery = (skillIndex: number) => entry.masteries?.find((m) => m.index === skillIndex)?.mastery ?? 0;
+    const targetSkills = target.targetSkills.map((s) => ({ skill_index: s.skill_index, mastery_level: Math.max(ownedMastery(s.skill_index), s.mastery_level) }));
+    const masteriesReached = target.targetSkills.every((s) => ownedMastery(s.skill_index) >= s.mastery_level);
 
-    const targetModules = target.targetModules.map((m) => ({ module_id: m.module_id, module_stage: Math.max(ownedStage(entry, m.module_id), m.module_stage) }));
-    const modulesReached = target.targetModules.every((m) => ownedStage(entry, m.module_id) >= m.module_stage);
+    const targetModules = target.targetModules.map((m) => ({ module_id: m.module_id, module_stage: Math.max(ownedModuleStage(entry, m.module_id), m.module_stage) }));
+    const modulesReached = target.targetModules.every((m) => ownedModuleStage(entry, m.module_id) >= m.module_stage);
 
     return {
         target: {

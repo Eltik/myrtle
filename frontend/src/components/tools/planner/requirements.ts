@@ -31,8 +31,8 @@ export interface IRequirementStatusInfo {
 /**
  * Single source of truth for a requirement's status. The row rendering and the
  * filter/count logic both derive status here so the visible badges and the filter
- * chips can never disagree. Precedence matches the original inline row logic:
- * missing (has an unbuildable shortfall) > craft (shortfall, but craftable) > complete.
+ * chips can never disagree. Precedence: missing (has an unbuildable shortfall)
+ * > craft (shortfall, but craftable) > complete.
  */
 export function requirementStatus(item: IPlanRequirementItem): IRequirementStatusInfo {
     const shortfall = Math.max(item.requiredCount - item.inventoryCount, 0);
