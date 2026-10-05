@@ -1611,6 +1611,7 @@ struct PowerPlant {
 /// them with the best unplaced power specialists in two EVEN squads (each joins
 /// the lower running total) so drone recovery stays level across the
 /// alternation. Non-specialists are left out; here they'd only drain morale.
+#[allow(clippy::too_many_arguments)]
 fn build_power_plan(
     operators: &[OperatorBaseProfile],
     building: &UserBuilding,

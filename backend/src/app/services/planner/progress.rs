@@ -168,7 +168,7 @@ fn sum_level_range(values: &[i32], from_level: i16, to_level: i16) -> i32 {
 /// level `current_level` to Elite `target_elite` level `target_level` into
 /// `materials`. Each promotion crossed levels to that phase's cap first and
 /// restarts at level 1. Promotion materials are not included.
-pub(crate) fn calculate_leveling_costs(
+pub fn calculate_leveling_costs(
     operator: &Operator,
     gamedata: &GameData,
     current_elite: i16,

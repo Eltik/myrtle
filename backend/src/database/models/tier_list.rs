@@ -43,6 +43,9 @@ pub enum EntityKind {
     /// A story character sprite set, keyed by its folder under
     /// `textures/avg/characters` with the trailing variant number cut.
     StorySprite,
+    /// A main story episode, a `story_review_table` group with `EntryType:
+    /// MAINLINE` (`main_0` to `main_16` on EN).
+    MainStory,
 }
 
 impl EntityKind {
@@ -59,6 +62,7 @@ impl EntityKind {
         Self::Skill,
         Self::IntegratedStrategies,
         Self::StorySprite,
+        Self::MainStory,
     ];
 
     pub const fn as_str(self) -> &'static str {
@@ -75,6 +79,7 @@ impl EntityKind {
             Self::Skill => "skill",
             Self::IntegratedStrategies => "integrated_strategies",
             Self::StorySprite => "story_sprite",
+            Self::MainStory => "main_story",
         }
     }
 }

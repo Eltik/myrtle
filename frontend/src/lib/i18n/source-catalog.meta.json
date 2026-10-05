@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-05T08:13:56.352Z",
+    "generatedAt": "2026-10-05T08:38:35.286Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -25304,6 +25304,13 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.kinds.desc.main_story",
+            "namespace": "tierLists",
+            "source_text": "Every episode of the main story",
+            "description": "One-line explanation under 'Main story' in the kinds dialog.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.kinds.desc.module",
             "namespace": "tierLists",
             "source_text": "Every operator module",
@@ -25497,6 +25504,20 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.pool.act",
+            "namespace": "tierLists",
+            "source_text": "Act",
+            "description": "Label of the filter by act (the game's groups of main story episodes, such as Hour of An Awakening) in the pool dialog. Rendered uppercase.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.act.group",
+            "namespace": "tierLists",
+            "source_text": "Filter by act",
+            "description": "Accessible name of the row of main story act filter buttons.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.pool.brand",
             "namespace": "tierLists",
             "source_text": "Brand",
@@ -25675,6 +25696,13 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.edit.pool.grid.main_story",
+            "namespace": "tierLists",
+            "source_text": "Available main story episodes",
+            "description": "Accessible name of the grid of main story episode tiles in the pool.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.edit.pool.grid.module",
             "namespace": "tierLists",
             "source_text": "Available modules",
@@ -25784,6 +25812,13 @@
             "namespace": "tierLists",
             "source_text": "Integrated Strategies pool",
             "description": "Small uppercase label above the pool of Integrated Strategies themes and items that can be dragged onto a tier; also the title of the larger pool dialog. Keep the game's own name for the mode.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.kicker.main_story",
+            "namespace": "tierLists",
+            "source_text": "Main story pool",
+            "description": "Small uppercase label above the pool of main story episodes that can be dragged onto a tier; also the title of the larger pool dialog.",
             "placeholders": []
         },
         {
@@ -25987,6 +26022,13 @@
             "namespace": "tierLists",
             "source_text": "Search operators",
             "description": "Accessible name of the pool's search box.",
+            "placeholders": []
+        },
+        {
+            "key": "tierLists.edit.pool.search.main_story",
+            "namespace": "tierLists",
+            "source_text": "Search main story episodes",
+            "description": "Accessible name of the pool's search box while it lists main story episodes.",
             "placeholders": []
         },
         {
@@ -26953,6 +26995,13 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.entity.kind.main_story",
+            "namespace": "tierLists",
+            "source_text": "Main story episode",
+            "description": "Singular kind label shown small above a main story episode's name in its hover card.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.entity.kind.module",
             "namespace": "tierLists",
             "source_text": "Module",
@@ -27037,6 +27086,13 @@
             "placeholders": []
         },
         {
+            "key": "tierLists.entity.kinds.main_story",
+            "namespace": "tierLists",
+            "source_text": "Main story",
+            "description": "Name of a kind of thing a tier list can rank: the episodes of the game's main story. Used on pool tabs and in the kinds settings.",
+            "placeholders": []
+        },
+        {
             "key": "tierLists.entity.kinds.module",
             "namespace": "tierLists",
             "source_text": "Modules",
@@ -27084,6 +27140,15 @@
             "source_text": "Subclasses",
             "description": "Name of a kind of thing a tier list can rank: operator subclasses (archetypes such as Charger or Lord). Plural. Used on pool tabs and in the kinds settings.",
             "placeholders": []
+        },
+        {
+            "key": "tierLists.entity.mainStory.episode",
+            "namespace": "tierLists",
+            "source_text": "Episode {number}",
+            "description": "A main story episode by its number, as the game prints it (Episode 14). Used in hover cards and matched by the pool search. {number} is a number.",
+            "placeholders": [
+                "number"
+            ]
         },
         {
             "key": "tierLists.entity.preview.open",

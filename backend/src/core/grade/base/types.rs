@@ -16,7 +16,7 @@ pub struct UserRoom {
     pub level: i32,        // 1-indexed (1, 2, 3)
     /// `char_id`s stationed now.
     pub current_operators: Vec<String>,
-    /// Factory formula ("F_GOLD"/"F_EXP"/"F_DIAMOND"); None for non-factories.
+    /// Factory formula (`F_GOLD`, `F_EXP`, `F_DIAMOND`); `None` for non-factories.
     pub current_formula: Option<String>,
     /// In-game preset queue: each shift a list of `char_id`s. Empty if unset.
     pub preset_shifts: Vec<Vec<String>>,

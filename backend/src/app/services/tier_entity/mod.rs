@@ -20,6 +20,7 @@ mod enemy;
 mod event;
 mod faction;
 mod integrated_strategies;
+mod main_story;
 mod module;
 mod operator;
 mod skill;
@@ -78,7 +79,9 @@ pub struct EntitySummary {
     /// `sp_type`; Integrated Strategies entries `theme` (`rogue_N`,
     /// which is IS N+1) and `item_type` (`theme`, `relic`, `band`, ...);
     /// story sprites `source` (`operator` or `npc`), for an operator `char_id`,
-    /// and, when the hub places the face, `face` (`x,y` fractions of the plate).
+    /// and, when the hub places the face, `face` (`x,y` fractions of the plate);
+    /// main story episodes `episode` (`0` to `16` on EN), `act` (the
+    /// `chapter_table` index) and `act_name`.
     pub facets: BTreeMap<String, FacetValue>,
 }
 
@@ -106,6 +109,7 @@ const fn source(kind: EntityKind) -> &'static KindSource {
         EntityKind::Skill => &skill::SOURCE,
         EntityKind::IntegratedStrategies => &integrated_strategies::SOURCE,
         EntityKind::StorySprite => &story_sprite::SOURCE,
+        EntityKind::MainStory => &main_story::SOURCE,
     }
 }
 

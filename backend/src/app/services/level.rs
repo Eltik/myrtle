@@ -1,5 +1,5 @@
 //! Stage level loading for the Stage Viewer. Reads `level_*.json`, camelCases every
-//! key (EN/Yostar exports are PascalCase), reshapes `MapData.Map` from the flat
+//! key (EN/Yostar exports are `PascalCase`), reshapes `MapData.Map` from the flat
 //! `{Column_size, Matrix_data}` form into a 2D grid, and caches per stage.
 
 use serde_json::Value;

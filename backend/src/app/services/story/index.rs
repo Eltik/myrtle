@@ -113,10 +113,9 @@ fn zone_id_for(
         .find_map(|rs| gd.stages.get(&rs.stage_id).map(|st| st.zone_id.clone()))
 }
 
-fn zone_for(gd: &GameData, zone_id: &str) -> Option<StoryZone> {
-    let zone_id = zone_id.to_owned();
-    let zone = gd.zones.get(&zone_id)?;
-    let chapter_id = gd.zone_chapters.get(&zone_id).cloned().or_else(|| {
+/// The `chapter_table` id a mainline zone sits in.
+fn chapter_id_for(gd: &GameData, zone_id: &str) -> Option<String> {
+    gd.zone_chapters.get(zone_id).cloned().or_else(|| {
         // Fallback: the numeric `main_N` range of `chapter_table`.
         let n: i32 = zone_id.strip_prefix("main_")?.parse().ok()?;
         gd.chapters.values().find_map(|c| {
@@ -124,9 +123,13 @@ fn zone_for(gd: &GameData, zone_id: &str) -> Option<StoryZone> {
             let hi: i32 = c.end_zone_id.strip_prefix("main_")?.parse().ok()?;
             (lo <= n && n <= hi).then(|| c.chapter_id.clone())
         })
-    });
+    })
+}
+
+fn zone_for(gd: &GameData, zone_id: &str) -> Option<StoryZone> {
+    let zone = gd.zones.get(zone_id)?;
     Some(StoryZone {
-        chapter_name: chapter_id
+        chapter_name: chapter_id_for(gd, zone_id)
             .and_then(|c| gd.chapters.get(&c))
             .map(|c| c.chapter_name.clone()),
         name_first: zone.zone_name_first.clone(),
@@ -584,6 +587,71 @@ fn main_ordinal(id: &str) -> i32 {
     id.strip_prefix("main_")
         .and_then(|n| n.parse().ok())
         .unwrap_or(i32::MAX)
+}
+
+/// One mainline chapter, read the way [`build_index`] reads it but without
+/// the script probe, so a surface that only names chapters (the tier list's
+/// `main_story` kind) does not pay for the library.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MainlineChapter {
+    pub group_id: String,
+    pub name: String,
+    /// The EPISODE number the library prints.
+    pub number: Option<u32>,
+    /// The `chapter_table` act the episode sits in: its index and name.
+    pub act: Option<(i32, String)>,
+    /// The library's `bannerUrl`: the Story Collection key visual.
+    pub banner_url: Option<String>,
+}
+
+/// Every mainline chapter, in episode order.
+#[must_use]
+pub fn mainline_chapters(gd: &GameData, assets: &AssetIndex) -> Vec<MainlineChapter> {
+    let story_sets = story_sets_by_group(gd);
+    let mut out: Vec<MainlineChapter> = gd
+        .story_reviews
+        .values()
+        .filter(|g| {
+            let first_txt = g
+                .info_unlock_datas
+                .iter()
+                .map(|s| s.story_txt.as_str())
+                .find(|t| !t.is_empty())
+                .unwrap_or("");
+            category_for(&g.entry_type, &g.act_type, first_txt) == StoryCategory::Main
+        })
+        .map(|g| {
+            let zone_id = zone_id_for(gd, g);
+            let act = zone_id
+                .as_deref()
+                .and_then(|z| chapter_id_for(gd, z))
+                .and_then(|c| gd.chapters.get(&c))
+                .map(|c| (c.chapter_index, c.chapter_name.clone()));
+            MainlineChapter {
+                group_id: g.id.clone(),
+                name: g.name.clone(),
+                number: chapter_number_for(gd, &g.id, zone_id.as_deref()),
+                act,
+                banner_url: storyline_art_for(
+                    assets,
+                    story_sets.get(&g.id).and_then(|s| s.kv_image_id.as_deref()),
+                ),
+            }
+        })
+        .collect();
+    out.sort_by(|a, b| {
+        (
+            a.number.unwrap_or(u32::MAX),
+            main_ordinal(&a.group_id),
+            &a.group_id,
+        )
+            .cmp(&(
+                b.number.unwrap_or(u32::MAX),
+                main_ordinal(&b.group_id),
+                &b.group_id,
+            ))
+    });
+    out
 }
 
 #[cfg(test)]

@@ -1,4 +1,4 @@
-//! Integrated Strategies game data. The FlatBuffer export uses `PascalCase`
+//! Integrated Strategies game data. The `FlatBuffer` export uses `PascalCase`
 //! keys and `[{key, value}]` arrays for dicts, so it is read as
 //! `serde_json::Value` and picked apart by hand.
 

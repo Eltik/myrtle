@@ -5,4 +5,4 @@
  * placement is keyed by (kind, id), and the variants are the allow-list: an
  * unknown kind fails to parse at the route and never reaches the database.
  */
-export type EntityKind = "operator" | "class" | "subclass" | "enemy" | "event" | "faction" | "stronghold_bond" | "skin" | "module" | "skill" | "integrated_strategies" | "story_sprite";
+export type EntityKind = "operator" | "class" | "subclass" | "enemy" | "event" | "faction" | "stronghold_bond" | "skin" | "module" | "skill" | "integrated_strategies" | "story_sprite" | "main_story";

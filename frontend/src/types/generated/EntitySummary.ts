@@ -35,7 +35,9 @@ export type EntitySummary = {
      * `sp_type`; Integrated Strategies entries `theme` (`rogue_N`,
      * which is IS N+1) and `item_type` (`theme`, `relic`, `band`, ...);
      * story sprites `source` (`operator` or `npc`), for an operator `char_id`,
-     * and, when the hub places the face, `face` (`x,y` fractions of the plate).
+     * and, when the hub places the face, `face` (`x,y` fractions of the plate);
+     * main story episodes `episode` (`0` to `16` on EN), `act` (the
+     * `chapter_table` index) and `act_name`.
      */
     facets: { [key in string]?: FacetValue };
 };

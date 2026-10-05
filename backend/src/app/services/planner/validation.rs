@@ -32,7 +32,7 @@ const fn phase_to_int(phase: &OperatorPhase) -> i16 {
     }
 }
 
-pub(crate) fn module_phase_to_int(phase: &str) -> i16 {
+pub fn module_phase_to_int(phase: &str) -> i16 {
     match phase {
         "PHASE_1" | "1" => 1,
         "PHASE_2" | "2" => 2,

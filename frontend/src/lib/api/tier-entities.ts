@@ -130,6 +130,14 @@ interface IKindFields {
         startTime: number;
         rerun: boolean;
     };
+    /** A main story episode. Its art is the Story Collection key visual, a square poster. */
+    main_story: {
+        /** The EPISODE number, `0` up. */
+        episode: number | null;
+        /** The act's `chapter_table` index, and its name (`Hour of An Awakening`). */
+        act: number | null;
+        actName: string | null;
+    };
     /** An Integrated Strategies theme or item. */
     integrated_strategies: {
         /** The game's theme id, `rogue_N`. The game's own numbering is N + 1 (`rogue_1` is IS2). */
@@ -199,6 +207,13 @@ interface IKindModel<K extends TierEntityKind> {
     owner?: (entity: ITierEntityOf<K>) => string | null;
     /** The kind's own fields, from its summary's facets. */
     fields: (facet: FacetReader) => IKindFields[K];
+}
+
+/** A numeric facet, `null` when absent. */
+function optionalNumber(value: string | null): number | null {
+    if (value === null || value === "") return null;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
 }
 
 /** A module whose own art the extract lacks falls back to its type badge (72 x 52), which is an object, not a picture. */
@@ -282,6 +297,11 @@ const KIND_MODELS: { [K in TierEntityKind]: IKindModel<K> } = {
             startTime: Number(facet("start_time")) || 0,
             rerun: facet("rerun") === "true",
         }),
+    },
+    main_story: {
+        // The library's 432 px square key visual, title typeset in.
+        artFit: "cover",
+        fields: (facet) => ({ episode: optionalNumber(facet("episode")), act: optionalNumber(facet("act")), actName: facet("act_name") }),
     },
     integrated_strategies: {
         // Items: relics, tools, foldartals and Tongbao are 184 px objects with transparent margins; squads, capsules and Wrath badges vary in aspect.

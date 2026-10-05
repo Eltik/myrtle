@@ -152,6 +152,11 @@ function eventTypeLabel(t: KindT, displayType: string): string {
     }
 }
 
+/** `Episode 14`; `null` for an episode the data gives no number. */
+function episodeLabel(t: KindT, episode: number | null): string | null {
+    return episode === null ? null : t("entity.mainStory.episode", { number: episode });
+}
+
 /** `IS3` for `rogue_2`; an id that is not a numbered theme reads as itself. */
 function isThemeLabel(t: KindT, theme: string): string {
     const n = integratedStrategiesNumber(theme);
@@ -405,6 +410,30 @@ export const KIND_DEFINITIONS: { [K in TierEntityKind]: IKindDefinition<K> } = {
             ],
             searchTexts: (e) => [e.name],
         }),
+    },
+    main_story: {
+        plural: (t) => t("entity.kinds.main_story"),
+        singular: (t) => t("entity.kind.main_story"),
+        description: (t) => t("edit.kinds.desc.main_story"),
+        detail: (e, t) => present(episodeLabel(t, e.episode), e.actName),
+        pool: (t, catalogue) => {
+            const acts = new Map<number, string>();
+            for (const e of catalogue) if (e.act !== null && !acts.has(e.act)) acts.set(e.act, e.actName ?? String(e.act));
+            return {
+                ...poolLabels(t, t("edit.pool.kicker.main_story"), t("edit.pool.search.main_story"), t("edit.pool.grid.main_story")),
+                facets: [
+                    {
+                        id: "act",
+                        label: t("edit.pool.act"),
+                        groupLabel: t("edit.pool.act.group"),
+                        variant: "text",
+                        options: [...acts].sort(([a], [b]) => a - b).map(([value, label]) => ({ value: String(value), label })),
+                        valueOf: (e) => (e.act === null ? null : String(e.act)),
+                    },
+                ],
+                searchTexts: (e) => [e.name, episodeLabel(t, e.episode), e.actName],
+            };
+        },
     },
     integrated_strategies: {
         plural: (t) => t("entity.kinds.integrated_strategies"),

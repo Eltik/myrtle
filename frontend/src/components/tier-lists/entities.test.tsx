@@ -72,6 +72,8 @@ describe("toTierEntity", () => {
         expect(entity({ kind: "module", id: "uniequip_002_amiya", name: "Module", icon: null, facets: { module_type: "D", type_code: "CCR" } })).toMatchObject({ kind: "module", moduleType: "D", typeCode: "CCR" });
         expect(entity({ kind: "integrated_strategies", id: "rogue_2", name: "Mizuki & Caerula Arbor", icon: null, facets: { theme: "rogue_2", item_type: "theme" } })).toMatchObject({ theme: "rogue_2", itemType: "theme" });
         expect(entity({ kind: "story_sprite", id: "avg_npc_935", name: "Ines", icon: null, facets: { source: "npc" } })).toMatchObject({ source: "npc" });
+        expect(entity({ kind: "main_story", id: "main_14", name: "Absolved Will Be the Seekers", icon: null, facets: { episode: "14", act: "2", act_name: "Shadow of A Dying Sun" } })).toMatchObject({ episode: 14, act: 2, actName: "Shadow of A Dying Sun" });
+        expect(entity({ kind: "main_story", id: "main_99", name: "Unnumbered", icon: null, facets: {} })).toMatchObject({ episode: null, act: null, actName: null });
     });
 
     it("numbers Integrated Strategies themes the way the game does, one past the table", () => {

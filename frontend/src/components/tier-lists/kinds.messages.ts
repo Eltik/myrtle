@@ -400,6 +400,43 @@ export const messages = {
         description: "Edition filter option: the event's first run, as opposed to a rerun.",
     },
 
+    "entity.kinds.main_story": {
+        text: "Main story",
+        description: "Name of a kind of thing a tier list can rank: the episodes of the game's main story. Used on pool tabs and in the kinds settings.",
+    },
+    "entity.kind.main_story": {
+        text: "Main story episode",
+        description: "Singular kind label shown small above a main story episode's name in its hover card.",
+    },
+    "edit.kinds.desc.main_story": {
+        text: "Every episode of the main story",
+        description: "One-line explanation under 'Main story' in the kinds dialog.",
+    },
+    "edit.pool.kicker.main_story": {
+        text: "Main story pool",
+        description: "Small uppercase label above the pool of main story episodes that can be dragged onto a tier; also the title of the larger pool dialog.",
+    },
+    "edit.pool.search.main_story": {
+        text: "Search main story episodes",
+        description: "Accessible name of the pool's search box while it lists main story episodes.",
+    },
+    "edit.pool.grid.main_story": {
+        text: "Available main story episodes",
+        description: "Accessible name of the grid of main story episode tiles in the pool.",
+    },
+    "entity.mainStory.episode": {
+        text: "Episode {number}",
+        description: "A main story episode by its number, as the game prints it (Episode 14). Used in hover cards and matched by the pool search. {number} is a number.",
+    },
+    "edit.pool.act": {
+        text: "Act",
+        description: "Label of the filter by act (the game's groups of main story episodes, such as Hour of An Awakening) in the pool dialog. Rendered uppercase.",
+    },
+    "edit.pool.act.group": {
+        text: "Filter by act",
+        description: "Accessible name of the row of main story act filter buttons.",
+    },
+
     "entity.kinds.integrated_strategies": {
         text: "Integrated Strategies",
         description: "Name of a kind of thing a tier list can rank: the game's roguelike mode, its themes and their items (collectibles, squads, Foldartals and the like). Keep the game's own name for the mode. Used on pool tabs and in the kinds settings.",

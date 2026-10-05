@@ -22,7 +22,7 @@ function KindLabels() {
 
 describe("KIND_DEFINITIONS", () => {
     it("lists every kind in the settings and tab order", () => {
-        expect(ALL_ENTITY_KINDS).toEqual(["operator", "skill", "module", "skin", "class", "subclass", "faction", "enemy", "event", "integrated_strategies", "stronghold_bond", "story_sprite"]);
+        expect(ALL_ENTITY_KINDS).toEqual(["operator", "skill", "module", "skin", "class", "subclass", "faction", "enemy", "event", "main_story", "integrated_strategies", "stronghold_bond", "story_sprite"]);
     });
 
     it("gives every kind its own translated names, description and pool kicker, never a raw key", () => {

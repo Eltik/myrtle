@@ -27,6 +27,7 @@
 //! - [`sprites`]: the character gallery, every sprite folder with its names
 //!   and expressions.
 //! - [`sprite_thumbs`]: one expression composed and scaled, cached on disk.
+//!
 //! Census and wire contract: `docs/story-reader.md`, sections 1 and 2. Numbers stay
 //! in the code only where they back a decision the code makes.
 
@@ -47,7 +48,7 @@ pub use dto::*;
 pub use illustrations::{
     GroupRefs, NameRefs, SpriteRefs, get_group_illustrations, group_illustrations,
 };
-pub use index::{StoryIndexCache, StoryRef, build_index};
+pub use index::{MainlineChapter, StoryIndexCache, StoryRef, build_index, mainline_chapters};
 pub use script::{get_story, load_and_parse};
 pub use sprites::{
     OperatorIds, SpriteCensus, StorySpriteCache, build_sprite_index, cached_sprites,

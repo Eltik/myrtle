@@ -43,7 +43,7 @@ fn every_kind_catalogue_reaches_the_measured_counts() {
     let gd = common::load_game_data();
     let assets = en_assets();
 
-    let floors: [(EntityKind, usize); 11] = [
+    let floors: [(EntityKind, usize); 12] = [
         (EntityKind::Class, 8),
         (EntityKind::Subclass, 71),
         (EntityKind::Enemy, 1541),
@@ -55,6 +55,7 @@ fn every_kind_catalogue_reaches_the_measured_counts() {
         (EntityKind::Skill, 901),
         (EntityKind::IntegratedStrategies, 1681),
         (EntityKind::StorySprite, 1443),
+        (EntityKind::MainStory, 17),
     ];
     let mut failures = Vec::new();
     for kind in EntityKind::ALL.iter().copied() {
@@ -400,6 +401,48 @@ fn skills_are_one_per_operator_slot() {
         .is_err()
     );
     assert!(validate([(gd, &assets)], EntityKind::Skill, "skchr_amiya_2").is_err());
+}
+
+#[test]
+fn main_story_is_one_entry_per_episode_in_order() {
+    let gd = common::load_game_data();
+    let assets = en_assets();
+    let episodes = catalogue(gd, &assets, EntityKind::MainStory);
+    let numbers: Vec<Option<&str>> = episodes
+        .iter()
+        .map(|e| facet(&e.facets, "episode"))
+        .collect();
+    let no_icon = episodes.iter().filter(|e| e.icon.is_none()).count();
+    let mut by_act: BTreeMap<&str, usize> = BTreeMap::new();
+    for e in &episodes {
+        *by_act
+            .entry(facet(&e.facets, "act_name").unwrap_or("?"))
+            .or_default() += 1;
+    }
+    println!(
+        "main story {}: {no_icon} without icon, by act {by_act:?}",
+        episodes.len()
+    );
+    // EN 2026-10-05: Episodes 00 to 16, `main_15` and `main_16` numbered off
+    // their `act*mainss` zones.
+    assert_eq!(episodes.len(), 17);
+    let expected: Vec<String> = (0..17).map(|n| n.to_string()).collect();
+    assert_eq!(
+        numbers,
+        expected
+            .iter()
+            .map(|n| Some(n.as_str()))
+            .collect::<Vec<_>>(),
+        "episode order"
+    );
+    assert_eq!(no_icon, 0);
+    // Four acts, the `chapter_table` ones, every episode in one.
+    assert_eq!(by_act.len(), 4, "{by_act:?}");
+    assert!(!by_act.contains_key("?"));
+    let ep15 = resolve(gd, &assets, EntityKind::MainStory, "main_15").expect("main_15");
+    assert_eq!(facet(&ep15.facets, "act"), Some("3"));
+    // A side story is not a main story episode.
+    assert!(validate([(gd, &assets)], EntityKind::MainStory, "act17side").is_err());
 }
 
 /// Every kind's catalogue, one pretty-printed JSON file per kind.
