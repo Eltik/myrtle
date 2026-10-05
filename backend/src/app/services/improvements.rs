@@ -732,8 +732,8 @@ pub struct ShiftRoomDto {
     pub team_label: Option<String>,
 }
 
-/// A player's team within this fraction of the recommendation's output is "≈ yours" -
-/// good enough to keep, with the small gap surfaced as a note instead of a swap nag.
+/// A team within this fraction of the recommendation's output is "≈ yours": kept,
+/// with the gap shown as a note instead of a swap nag.
 const EQUIVALENT_LENIENCY: f64 = 0.05;
 
 #[derive(TS, utoipa::ToSchema)]
@@ -745,19 +745,16 @@ pub struct RoomLayoutEntry {
     pub levels: Vec<i32>,
 }
 
-/// Serve one user's improvements, memoised on the sync generation.
+/// One user's improvements, memoised on the sync generation.
 ///
-/// The user row is fetched here rather than inside the builder so the key can be
-/// derived before any of the expensive work: `users.updated_at` moves on every
-/// sync, so a rebuilt roster lands on a new key and the previous body ages
-/// out. The body is cached PRE-SERIALIZED with its `ETag`, because it runs to
-/// hundreds of kilobytes on a large account and a hit should neither re-serialize
-/// it nor re-hash it, and an `If-None-Match` revalidation can then answer 304
-/// without sending it at all.
+/// The user row is fetched first so the key exists before any expensive work:
+/// `users.updated_at` moves on every sync, so a rebuilt roster lands on a new key
+/// and the old body ages out. Cached PRE-SERIALIZED with its `ETag`: the body runs
+/// to hundreds of KB, so a hit skips re-serializing and re-hashing, and
+/// `If-None-Match` can answer 304.
 ///
-/// Access control is NOT here. The handler gates on the target's `public_profile`
-/// ahead of this call, which is what keeps a cache hit from leaking a private
-/// profile.
+/// No access control here: the handler gates on `public_profile` before this
+/// call, which keeps a cache hit from leaking a private profile.
 pub async fn get_improvements(state: &AppState, uid: &str) -> Result<CachedJson, ApiError> {
     let user = find_by_uid(&state.db, uid)
         .await?
@@ -791,21 +788,15 @@ async fn build_improvements(
     let support_ids: HashSet<&str> = supports.iter().map(|s| s.operator_id.as_str()).collect();
     let owned_operators: HashSet<&str> = roster.iter().map(|e| e.operator_id.as_str()).collect();
 
-    // Concurrently, not one after another. None of these five consumes another's
-    // output: three need only the pool and the user id, medals needs
-    // `owned_operators` and base needs `roster`, both already in hand. Run
-    // sequentially they cost five database round-trips end to end, which was the
-    // bulk of this endpoint's latency and the reason a CPU permit was held for
-    // whole seconds while the CPU did nothing. The pattern is the one used for
-    // roster and supports a few lines above.
+    // Concurrent: none of these five consumes another's output (three need only the
+    // pool and user id; medals needs `owned_operators`, base needs `roster`). Run
+    // sequentially, the five round-trips were the bulk of this endpoint's latency.
     //
-    // The TRADE: an in-flight request now holds up to five pool connections at
-    // once instead of one, so the pool (40 by default) is what bounds concurrency
-    // here rather than the CPU semaphore. That is the right place for the limit,
-    // because the work really is database-bound, but it does mean roughly eight
-    // simultaneous callers can saturate the pool, after which `acquire` sheds at
-    // its 5 second timeout. Raise DATABASE_MAX_CONNECTIONS if that shows up,
-    // remembering Postgres's own max_connections has to exceed it.
+    // TRADE: an in-flight request now holds up to five pool connections, so the pool
+    // (40 by default) bounds concurrency here, not the CPU semaphore. Right place,
+    // since the work is DB-bound, but ~8 simultaneous callers saturate it and
+    // `acquire` sheds at its 5 s timeout. Raise DATABASE_MAX_CONNECTIONS if that
+    // shows up, keeping Postgres's own max_connections above it.
     let (stages, roguelike, sandbox, medals, base) = tokio::try_join!(
         build_stage_improvements(&state.db, user_id, &game_data),
         build_roguelike_improvements(&state.db, user_id, &game_data),
@@ -820,11 +811,10 @@ async fn build_improvements(
         build_base_improvements(&state.db, user_id, &roster, Arc::clone(&game_data)),
     )?;
 
-    // The permit covers only this line, the one synchronous step: a pass over the
-    // roster doing table lookups and arithmetic. Holding it across the five DB
-    // round-trips capped the endpoint at two callers for a reason that was mostly
-    // not CPU. Held this tightly, the queue in `cpu` rarely engages here; it stays
-    // a real floor under the base optimizer and DPS.
+    // The permit covers only this synchronous step (roster lookups and arithmetic).
+    // Holding it across the five DB round-trips capped the endpoint at two callers.
+    // Held this tightly, the `cpu` queue rarely engages here; it still floors the
+    // base optimizer and DPS.
     let operators = {
         let _admission = cpu::admit("user_improvements").await?;
         build_operator_improvements(&roster, &game_data, &support_ids)
@@ -1166,11 +1156,9 @@ async fn build_medal_improvements(
         if earned.contains(&medal.medal_id) {
             continue;
         }
-        // Collab-gated medal the user CAN'T currently earn (they don't own the
-        // operator). It isn't an "improvement opportunity" - surface it in its
-        // own list with operator context instead of the permanent/event gaps.
-        // If the user *owns* the collab operator, fall through and treat it as a
-        // normal achievable gap.
+        // Collab-gated medal the user can't earn (doesn't own the operator): its own
+        // list with operator context, not a gap. Owning the operator falls through
+        // to a normal gap.
         if let Some(lock) = game_data.medals.operator_lock(&medal.medal_id)
             && !owned_operators.contains(lock.operator_id.as_str())
         {
@@ -1188,10 +1176,9 @@ async fn build_medal_improvements(
                 permanent_missing.push(make_gap(medal, None));
             }
             Obtainability::Event { proxy_close_ts } => {
-                // A closed event window is no longer an improvement opportunity,
-                // but it isn't invisible either - route it to the "no longer
-                // obtainable" bucket so the user can see it was missed. (Still
-                // scored via the event pool with recency decay - see grade_medals.rs.)
+                // A closed window isn't an opportunity but isn't hidden either: it goes
+                // to "no longer obtainable". Still scored via the event pool with
+                // recency decay (grade_medals.rs).
                 if proxy_close_ts > 0 && proxy_close_ts < now {
                     unobtainable_missing.push(make_gap(medal, Some(proxy_close_ts)));
                     continue;
@@ -1206,9 +1193,8 @@ async fn build_medal_improvements(
                 ));
             }
             #[allow(clippy::needless_continue)]
-            // Seasonal/event content not reachable *yet* (e.g. an SSS tower season
-            // that hasn't started). It will open later, so it isn't an actionable
-            // gap - left out of the lists entirely.
+            // Not reachable *yet* (e.g. an SSS tower season that hasn't started), so
+            // not an actionable gap: left out.
             Obtainability::NotYet => continue,
             // Never obtainable again: finished one-time modes / retired towers.
             // Surfaced in the "no longer obtainable" bucket for reference;
@@ -1279,7 +1265,7 @@ const MASTERY_MILESTONE: i16 = 3;
 const SKILL_LEVEL_MILESTONE: i16 = 7;
 /// Stage 3 on the operator's top advanced module (the "MOD3" milestone).
 const MODULE_MILESTONE: i16 = 3;
-/// Potential is 0-indexed, so index 5 is pot 6 - full potential (the "POT6" milestone).
+/// Potential is 0-indexed: index 5 is pot 6 (the "POT6" milestone).
 const POTENTIAL_MILESTONE_INDEX: i16 = 5;
 
 pub fn build_operator_improvements(
@@ -1382,10 +1368,9 @@ pub fn build_operator_improvements(
             rarity_weight,
             total_weight,
         );
-        // ELITE simulates "promote + max level at new phase", which also
-        // covers the level dimension that MAX_LEVEL targets. When both tags
-        // appear, take whichever delta is larger - additivity would double-
-        // count the level dimension.
+        // ELITE simulates "promote + max level at new phase", which also covers
+        // the level dimension MAX_LEVEL targets. When both tags appear, take the
+        // larger delta; adding them would double-count the level dimension.
         let (mut subscore_overlap, mut total_overlap) = (0.0_f64, 0.0_f64);
         let (mut subscore_independent, mut total_independent) = (0.0_f64, 0.0_f64);
         for d in &deltas {
@@ -1459,9 +1444,8 @@ async fn build_base_improvements(
         return Ok(BaseImprovements::default());
     };
 
-    // The owner's saved account facts (recruit slots etc.) re-price the same
-    // skills here as in the interactive planner - the two surfaces must never
-    // disagree on a number.
+    // The owner's saved account facts re-price skills exactly as the planner does,
+    // so the two never disagree.
     let open_recruit_slots: Option<u32> =
         match crate::database::queries::users::get_base_facts(pool, user_id).await {
             Ok(Some(value)) => value
@@ -1476,11 +1460,9 @@ async fn build_base_improvements(
             _ => None,
         };
 
-    // Everything past the reads is a CPU-bound search - seconds in release,
-    // tens of seconds in a debug build. Inline on an async worker it stalled
-    // every future parked on that worker for its whole duration (a 0.2 s
-    // planner request waited 33 s behind it), so it runs on the blocking pool;
-    // the handler's CPU admission still bounds how many run at once.
+    // The rest is a CPU-bound search (seconds in release, tens in debug). Inline, it
+    // stalled every future on its worker (a 0.2 s planner request waited 33 s), so
+    // it runs on the blocking pool; the handler's CPU admission bounds concurrency.
     let roster = roster.to_vec();
     cpu::offload("user_improvements", move || {
         compute_base_improvements(&roster, &game_data, &building_json, open_recruit_slots)
@@ -1488,8 +1470,8 @@ async fn build_base_improvements(
     .await
 }
 
-/// The base-improvements search proper: from a synced building and a roster
-/// to the report. Pure compute, no I/O - see `build_base_improvements`.
+/// The base-improvements search proper, building + roster to report. Pure compute,
+/// no I/O; see `build_base_improvements`.
 fn compute_base_improvements(
     roster: &[RosterEntry],
     game_data: &GameData,
@@ -1517,26 +1499,22 @@ fn compute_base_improvements(
         );
     }
 
-    // Evaluate the base-wide resource economies (Rosmontis / Ebenholz / Mr.
-    // Nothing "Perception Information" and anything shaped like it) ONCE: each
-    // consumer's pool bonus becomes a direct productivity buff in the OPTIMAL
-    // registry, so the optimizer values and places them. It's a peak/snapshot
-    // strategy (it needs operators resting to feed the pool), so the overrides
-    // apply ONLY to `optimal` - not `current`, `sustained`, or the rotation.
-    // The machinery reads the actual rooms, so every layout (243, 252, 2/5/2)
-    // gets the treatment - the old 243-only gate died with perception.rs.
-    // NATIVE-FIRST: the pool machinery (plan_optimal_economies + the bundle
-    // oracle below) prices every economy from clauses. The Fiammetta-type
-    // morale-swap manager is rotation logistics, not an economy: reserve one
-    // whenever the roster owns both a morale-conditional generator (Ling) and
-    // a manager - the manager sustains the generator's grant, and she carries
-    // no production value a reservation could waste.
+    // Resource economies (Rosmontis / Ebenholz / Mr. Nothing "Perception Information"
+    // and lookalikes) are evaluated ONCE: each consumer's pool bonus becomes a direct
+    // productivity buff in the OPTIMAL registry. It's a peak strategy (it needs
+    // resters feeding the pool), so the overrides apply ONLY to `optimal`, not
+    // `current`, `sustained` or the rotation. It reads the actual rooms, so every
+    // layout (243, 252, 2/5/2) gets it; the old 243-only gate died with perception.rs.
+    // NATIVE-FIRST: the pool machinery (plan_optimal_economies + the bundle oracle)
+    // prices every economy from clauses. The Fiammetta-type morale-swap manager is
+    // rotation logistics, not an economy: reserve one whenever the roster owns a
+    // morale-conditional generator (Ling) and a manager. She sustains the
+    // generator's grant and has no production value a reservation could waste.
     let has_conditional_generator = profiles
         .iter()
         .any(|op| has_morale_conditional_grant(op, &game_data.building));
-    // The optimal search's registry and pins: solved native economies plus
-    // the reserved morale-swap manager - `pools::search_economy`, shared with
-    // the planner.
+    // The optimal search's registry and pins: solved native economies plus the
+    // reserved morale-swap manager (`pools::search_economy`, shared with the planner).
     let economy = search_economy(&profiles, &user_building, &game_data.building, &registry);
     let optimal_registry = economy.registry;
     let optimal_pins: Vec<(String, String)> = economy.pins;
@@ -1552,8 +1530,8 @@ fn compute_base_improvements(
         None,
         &live_morale,
     );
-    // The optimal search with the joint-seating bundle trials -
-    // `pools::optimal_with_bundles`, shared with the planner.
+    // The optimal search with the joint-seating bundle trials
+    // (`pools::optimal_with_bundles`, shared with the planner).
     let accepted = optimal_with_bundles(
         &profiles,
         &user_building,
@@ -1580,14 +1558,11 @@ fn compute_base_improvements(
     let rotation_dto = rotation_to_dto(&sustained, game_data);
     let layout = build_layout_summary(&user_building);
 
-    // The shift rotation plans over trading/factory/power structures generically
-    // (group tiling, gold-split and power squads all derive from the actual
-    // rooms), so any base with the full production spread gets one - 243 and
-    // 252 are the layouts the tests pin.
-    // The rotation plans with the same economy-aware registry and generator
-    // pins as the optimal view (PoolPayoff overrides from perception, native
-    // pool plans, and accepted bundles): consumers price their solved payoff
-    // in team selection, and pinned generators hold their seats every shift.
+    // The shift rotation plans trading/factory/power generically (tiling, gold split
+    // and power squads derive from the actual rooms), so any full production spread
+    // gets one; 243 and 252 are the tested layouts. It uses the optimal view's
+    // economy-aware registry and generator pins, so consumers price their solved
+    // payoff and pinned generators hold their seats every shift.
     let shift_rotation = if has_shift_rotation_layout(&user_building) {
         let rotation = recommend_shift_rotation(
             &profiles,
@@ -1643,12 +1618,11 @@ fn compute_base_improvements(
     }
 }
 
-/// Build the resource-economy plan DTO from the COMMITTED plan itself: every
-/// buff the optimal registry re-priced (pool payoffs, pool-scaled globals)
-/// plus the generator seats the plan reserved. `None` when the plan committed
-/// no economy. Sustained scales the peak by the mean uptime of the plan's
-/// OTHER pinned generators - the pool only stays full while they work; the
-/// consumer's own co-present share counts in full.
+/// Resource-economy plan DTO from the COMMITTED plan: every buff the optimal
+/// registry re-priced (pool payoffs, pool-scaled globals) plus the generator seats
+/// it reserved. `None` when no economy was committed. Sustained scales the peak by
+/// the mean uptime of the plan's OTHER pinned generators (the pool stays full only
+/// while they work); the consumer's own co-present share counts in full.
 #[allow(clippy::too_many_arguments)]
 fn native_economy_dto(
     base_registry: &HashMap<String, BuffResolutionStrategy>,
@@ -1773,26 +1747,21 @@ fn has_shift_rotation_layout(building: &UserBuilding) -> bool {
     count("TRADING") >= 1 && count("MANUFACTURE") >= 2 && count("POWER") >= 1
 }
 
-/// For each rotation cell, find the player's CURRENT preset team - across every room of the
-/// SAME building type, in any slot or shift - that best matches the recommended team, and pair
-/// them so the total number of operator swaps is minimised. This makes the comparison
-/// order-independent: as long as the player runs the right team combos somewhere in that
-/// building type, it counts as a match regardless of which physical post or shift order they
-/// sit in (e.g. teams 1/2/3 across both Trading Posts in any arrangement), while a team combo
-/// itself still matters (it is compared as a whole set). Returns `(shift_index, slot_id) ->
-/// matched current team`; a recommended cell with no preset left to pair against maps to an
-/// empty team (a full swap-in).
+/// Pairs each rotation cell with the player's current preset team (any room of the
+/// same building type) that best matches it, minimising total swaps. Right team
+/// combos anywhere in that building type count as a match (teams 1/2/3 across both
+/// Trading Posts in any arrangement); a combo itself is compared as a whole set.
+/// Returns `(shift_index, slot_id) -> matched team`; a cell with nothing left to
+/// pair gets an empty team (a full swap-in).
 fn match_current_teams(rotation: &ShiftRotation) -> HashMap<(usize, String), Vec<String>> {
     struct Cell {
         key: (usize, String),
         set: HashSet<String>,
         ops: Vec<String>,
     }
-    // Group by (shift, what the room PRODUCES) - shift index + room type + factory formula. Matching
-    // stays order-independent across the SLOTS of one shift (teams 1/2/3 in either Trading Post, in
-    // any order), but NOT across shifts: the player's shift-1 preset is compared to the shift-1
-    // recommendation, never shuffled into another shift. Grouping by formula also stops a Gold
-    // factory's recommendation being matched against an EXP preset (and vice versa).
+    // Group by (shift, room type, factory formula): order-independent across the
+    // slots of one shift, never across shifts, and a Gold factory never matches an
+    // EXP preset.
     type Group = (usize, String, Option<String>);
     let mut rec_by_type: HashMap<Group, Vec<Cell>> = HashMap::new();
     let mut cur_by_type: HashMap<Group, Vec<Cell>> = HashMap::new();
@@ -1823,10 +1792,9 @@ fn match_current_teams(rotation: &ShiftRotation) -> HashMap<(usize, String), Vec
     for (group, rec_cells) in &rec_by_type {
         let empty: Vec<Cell> = Vec::new();
         let cur_cells = cur_by_type.get(group).unwrap_or(&empty);
-        // Rank every (recommended, current) pairing by how few swaps it costs (the symmetric
-        // difference of the two teams), then greedily lock in the cheapest pairings - each
-        // recommended cell and each preset used at most once. Cost-0 (exact) pairings win
-        // first, so a player who already runs the right combos matches no matter the order.
+        // Greedily lock in the cheapest (recommended, current) pairings by symmetric
+        // difference, each used once. Exact matches go first, so the right combos
+        // match in any order.
         let mut pairs: Vec<(usize, usize, usize)> = Vec::new();
         for (i, r) in rec_cells.iter().enumerate() {
             for (j, c) in cur_cells.iter().enumerate() {
@@ -1855,11 +1823,10 @@ fn match_current_teams(rotation: &ShiftRotation) -> HashMap<(usize, String), Vec
     out
 }
 
-/// Simulate a layout's CURRENT crews with no rotation at all - the "if you
-/// never swap" picture adachurch calls the single-form sim. Every staffed room
-/// works around the clock at the efficiency the evaluate pass scored it;
-/// dormitory occupants rest as permanent residents. The timeline is omitted -
-/// the verdict, depletion events and idle hours are the point.
+/// The CURRENT crews with no rotation ("if you never swap", adachurch's
+/// single-form sim): staffed rooms work around the clock at their evaluated
+/// efficiency, dorm occupants rest permanently. No timeline; the verdict,
+/// depletions and idle hours are the point.
 #[allow(clippy::too_many_arguments)]
 pub fn static_sustainability(
     building: &UserBuilding,
@@ -1960,10 +1927,9 @@ pub fn static_sustainability(
     })
 }
 
-/// Convert a recommended rotation into its DTO, computing the per-room diff between
-/// the player's saved preset and the recommendation. A production room whose CURRENT team
-/// isn't the recommended set but scores at least as high (an exact tie on the room's objective)
-/// is flagged `equivalent` and suggests no swap - the player's team is already as good.
+/// Rotation to DTO, with the per-room diff between the saved preset and the
+/// recommendation. A production room whose current team isn't the recommended set
+/// but scores within the leniency band is flagged `equivalent` and suggests no swap.
 pub fn shift_rotation_to_dto(
     rotation: &ShiftRotation,
     game_data: &GameData,
@@ -1984,12 +1950,11 @@ pub fn shift_rotation_to_dto(
         rotation.parked.iter().map(String::as_str).collect();
     // Order-independent pairing of each recommended cell to the player's closest current team.
     let matched = match_current_teams(rotation);
-    // The shifts each operator is RECOMMENDED to work (their "home" shifts). A main-team operator
-    // works shifts 1 & 3 and rests the middle one; the order-independent overlay can match the
-    // player's preset (which keeps running them) into that rest shift and mark it "≈ yours", showing
-    // them working a shift the rotation deliberately rests them on - the reported "24/7" operator.
-    // So a cell may only KEEP a team containing such an operator on a shift that actually recommends
-    // them.
+    // Shifts each operator is RECOMMENDED to work. A main-team operator works shifts
+    // 1 and 3 and rests the middle; the order-independent overlay could match a
+    // preset that keeps running them into that rest shift as "≈ yours" (the reported
+    // "24/7" operator). So a cell may only KEEP a team with such an operator on a
+    // shift that recommends them.
     let mut rec_shifts: HashMap<&str, HashSet<usize>> = HashMap::new();
     for shift in &rotation.shifts {
         for room in shift.rooms.iter().filter(|r| r.active) {
@@ -2068,14 +2033,12 @@ pub fn shift_rotation_to_dto(
             .unwrap_or_default();
         let (shift_globals, shift_conditions) =
             crate::core::grade::base::skill_ledger::grants_of(&ledger_ctx, &shift_cc);
-        // An operator can physically be in only ONE room per shift. The recommended teams are
-        // already a conflict-free partition, but the order-independent `equivalent` overlay can
-        // surface the player's team (matched from a DIFFERENT slot) for one cell while another
-        // cell recommends the same operator - so the same face would show twice in one shift.
-        // Each operator is authoritative in the cell that RECOMMENDS it; a cell may only KEEP its
-        // current team (mark `equivalent`) when none of that team's operators are recommended
-        // elsewhere this shift, nor already kept by an earlier cell. Otherwise it falls back to the
-        // real recommendation + swap.
+        // One room per operator per shift. The recommended teams are a partition, but
+        // the `equivalent` overlay can surface the player's team (matched from another
+        // slot) in one cell while another cell recommends the same operator. The
+        // recommending cell owns the operator; a cell may KEEP its team only if none
+        // of it is recommended elsewhere this shift or already kept by an earlier
+        // cell. Otherwise: the recommendation plus a swap.
         let rec_owner: HashMap<&str, &str> = shift
             .rooms
             .iter()
@@ -2105,9 +2068,8 @@ pub fn shift_rotation_to_dto(
             let mut swap_out: Vec<String> = current
                 .iter()
                 .filter(|id| !rec.contains(id.as_str()))
-                // An operator recommended to WORK in another room this shift isn't being removed -
-                // they're relocating to their recommended slot (shown as an add there). Excluding
-                // them here avoids showing one operator as both working and leaving the same shift.
+                // Recommended to WORK in another room this shift: relocating, not
+                // removed (shown as an add there).
                 .filter(|id| !matches!(rec_owner.get(id.as_str()), Some(owner) if *owner != room.slot_id))
                 .cloned()
                 .collect();
@@ -2134,12 +2096,11 @@ pub fn shift_rotation_to_dto(
                 && swap_out.is_empty()
                 && moved_out.is_empty();
 
-            // A team the player ALREADY runs that comes within the leniency band of the
-            // recommendation's output needs no swap - a factory/trading team (Bryophyta vs a
-            // Dorothy-boosted Rhine operator), or a Power Plant specialist with the same
-            // drone-recovery % (Pudding vs Indigo, both +15%). The signed gap is surfaced so the
-            // UI can note a small improvement exists without nagging a swap. Only checked for
-            // rooms whose output `team_value` can score (production + power).
+            // A team the player already runs within the leniency band needs no swap:
+            // a factory/trading team (Bryophyta vs a Dorothy-boosted Rhine operator)
+            // or a Power Plant specialist with the same drone-recovery % (Pudding vs
+            // Indigo, both +15%). The signed gap is surfaced so the UI can note it.
+            // Only rooms `team_value` can score (production + power).
             let mut equivalent = false;
             let mut gap_pct: Option<f64> = None;
             if !current.is_empty()
@@ -2169,10 +2130,10 @@ pub fn shift_rotation_to_dto(
                 if rec_v > 0.0 {
                     gap_pct = Some((cur_v - rec_v) / rec_v * 100.0);
                 }
-                // Keeping this team is only valid if it doesn't double-book an operator the shift
-                // needs in another room (recommended there, or already kept here), and doesn't keep
-                // an operator working a shift the rotation rests them on (recommended on another
-                // shift but not this one) - otherwise a main-team operator would appear to work 24/7.
+                // Keeping is valid only if it doesn't double-book an operator
+                // (recommended in another room, or already kept) or keep one working a
+                // shift the rotation rests them on; otherwise a main-team operator
+                // would appear to work 24/7.
                 let conflicts = current.iter().any(|id| {
                     matches!(rec_owner.get(id.as_str()), Some(owner) if *owner != room.slot_id)
                         || kept.contains(id)
@@ -2560,8 +2521,7 @@ mod shift_match_tests {
 
     #[test]
     fn matching_is_order_independent_across_same_type_rooms() {
-        // The same two teams, but the player keeps them in the OPPOSITE posts. Order of the
-        // physical building must not matter - both posts should read as a perfect match.
+        // Same two teams in the OPPOSITE posts: both should read as a perfect match.
         let rotation = ShiftRotation {
             shifts: vec![Shift {
                 index: 1,

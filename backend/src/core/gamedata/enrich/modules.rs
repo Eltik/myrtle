@@ -23,11 +23,9 @@ pub fn get_operator_modules(
     let mut out: Vec<OperatorModule> = modules
         .equip_dict
         .values()
-        // For Amiya, every module's `char_id` is the base (`char_002_amiya`)
-        // but branch modules have `tmpl_id` set to their form id. Branch
-        // modules belong only to their tmpl; base modules (no tmpl_id) belong
-        // only to the base form. For regular ops, tmpl_id is always None and
-        // this reduces to a simple `char_id` match.
+        // Amiya's modules all carry the base char_id; branch modules set `tmpl_id` to
+        // their form and belong only to it, base modules (no tmpl_id) only to the base
+        // form. For everyone else this is a plain char_id match.
         .filter(|m| match &m.tmpl_id {
             Some(tmpl) => tmpl == char_id,
             None => m.char_id == char_id,
@@ -43,20 +41,15 @@ pub fn get_operator_modules(
         })
         .collect();
 
-    // `equip_dict` is a HashMap, so the iteration above is in a per-process
-    // random order: without this sort the same operator's modules come back in
-    // a different order after every restart, and anything downstream that reads
-    // position - a default selection, a dropdown, a "Mod N" label - silently
-    // means a different module each time.
+    // `equip_dict` is a HashMap, so without this sort an operator's modules come back
+    // in a different order every restart, and anything that reads position (default
+    // selection, dropdown, "Mod N" label) silently picks another module.
     //
-    // Sort by the uniequip number, NOT `char_equip_order`. The latter looks like
-    // the display order and is not: on 17 operators it reads [0, 2, 1], putting
-    // uniequip_003 ahead of _002, where the game lists them 001, 002, 003
-    // (Skadi, Ash, Mostima, Irene, Archetto, Logos and eleven more). The
-    // uniequip number reproduces the game's own `char_equip` array for every
-    // operator that has modules, and it is also the order the DPS formulas index
-    // by, so display and engine agree. `uni_equip_id` breaks any tie, making the
-    // ordering total and reproducible.
+    // Sort by the uniequip number, NOT `char_equip_order`: that reads [0, 2, 1] on 17
+    // operators (Skadi, Ash, Mostima, Irene, Archetto, Logos and eleven more), putting
+    // uniequip_003 ahead of _002 where the game lists 001, 002, 003. The uniequip
+    // number reproduces the game's `char_equip` array for every moduled operator and
+    // is the order the DPS formulas index by. `uni_equip_id` breaks ties.
     out.sort_by(|a, b| {
         uniequip_number(&a.module.uni_equip_id)
             .cmp(&uniequip_number(&b.module.uni_equip_id))

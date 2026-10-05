@@ -6,12 +6,11 @@ use crate::core::gamedata::types::enemy::EnemyHandbook;
 const ANIM_DIRS: &[(&str, &str)] = &[
     ("BattleFront", "front"),
     ("BattleBack", "back"),
-    // The third battle facing, exported since 2026-09-09. Three tokens carry one
+    // Third battle facing, exported since 2026-09-09. Three tokens carry one
     // (`token_10027_ironmn_pile3`, `token_10052_radian_tower2`, `token_10053_radian_tower3`,
-    // four skeletons), and each already has a `BattleFront` counterpart, so this is an extra
-    // facing on entries the site already lists rather than three new ones. `animation_types`
-    // is a `HashMap<String, SpineFiles>` and the generated TS is an open index signature, so
-    // a fifth key is additive: nothing that reads front/back/dorm/dynamic is affected.
+    // four skeletons), each already with a `BattleFront`, so it's an extra facing, not new
+    // entries. `animation_types` is a HashMap and the generated TS an open index signature,
+    // so a fifth key is additive.
     ("BattleDown", "down"),
     ("Building", "dorm"),
     ("DynIllust", "dynamic"),
@@ -90,13 +89,11 @@ pub fn init_chibi_data(assets_dir: &Path) -> ChibiData {
 
 /// Build chibi data for enemies from `spine/Enemy/`.
 ///
-/// Every spine set is its own enemy: `_N`-suffixed stems like
-/// `enemy_1000_gopro_2` are distinct handbook entries ("Hound Pro"), not
-/// alternate forms of the base enemy. The unpacker groups related ids into
-/// one directory purely for storage, so walk the sets (not the directories)
-/// and key each character by its full file stem, joining display names from
-/// the enemy handbook. Enemies only have a battle-facing pose, so each
-/// character gets a single "default" skin with a "front" animation type.
+/// Every spine set is its own enemy: `_N` stems like `enemy_1000_gopro_2` are
+/// distinct handbook entries ("Hound Pro"), not alternate forms. The unpacker
+/// groups related ids into one directory only for storage, so walk the sets and
+/// key each by its full stem, names joined from the handbook. Enemies only have
+/// a battle-facing pose: one "default" skin with a "front" animation type.
 pub fn init_enemy_chibi_data(assets_dir: &Path, enemies: &EnemyHandbook) -> ChibiData {
     let enemy_dir = assets_dir.join("spine").join("Enemy");
     let mut characters: HashMap<String, ChibiCharacter> = HashMap::new();
@@ -275,8 +272,8 @@ fn strip_known_prefix(stem: &str) -> &str {
 /// the stem matched the directory's `char_id` (either as the default or as a
 /// `{char_id}_{suffix}` variant). Non-conventional stems mean the file
 /// inside this character's folder has an unrelated name (e.g.
-/// `BattleFront/char_008_owl/char_502_nblade.atlas` - owl reuses Blade's
-/// chibi); the caller may decide to promote them to "default".
+/// `BattleFront/char_008_owl/char_502_nblade.atlas`: Owl reuses Blade's
+/// chibi); the caller may promote them to "default".
 fn derive_skin_name_for_dir(stem: &str, char_id: &str) -> (String, bool) {
     let cleaned = strip_known_prefix(stem);
 
@@ -297,9 +294,8 @@ fn derive_skin_name_for_dir(stem: &str, char_id: &str) -> (String, bool) {
 /// Resolve all spine sets in a non-DynIllust directory into (skin, files)
 /// pairs. When a directory contains exactly one stem that does not follow
 /// the `{char_id}` / `{char_id}_{suffix}` convention and no conventional
-/// default exists, that stem is promoted to "default" - which covers cases
-/// like Owl reusing Blade's chibi or Liskarm-the-typo files living under
-/// `char_107_liskam/`.
+/// default exists, that stem is promoted to "default". Covers Owl reusing
+/// Blade's chibi and the Liskarm-typo files under `char_107_liskam/`.
 fn resolve_dir_skins(sets: Vec<(String, SpineFiles)>, char_id: &str) -> Vec<(String, SpineFiles)> {
     let mut tagged: Vec<(String, bool, SpineFiles)> = sets
         .into_iter()
@@ -328,17 +324,14 @@ fn resolve_dir_skins(sets: Vec<(String, SpineFiles)>, char_id: &str) -> Vec<(Str
 
 /// Resolve `DynIllust` directory contents.
 ///
-/// One `DynIllust` folder corresponds to exactly one skin variant, so the
-/// folder name is the canonical skin identifier (e.g. dir
-/// `char_4087_ines_ambiencesynesthesia#5/` is the `ambiencesynesthesia#5`
-/// skin's dynamic - even when the file inside drops the `#5` and case).
+/// One `DynIllust` folder is exactly one skin variant, so the folder name is the
+/// skin id (`char_4087_ines_ambiencesynesthesia#5/` is that skin's dynamic, even
+/// when the file inside drops the `#5` and case).
 ///
-/// The one exception is "duplicate-of-default" folders such as
-/// `char_1012_skadi2_2/` whose file is just `dyn_illust_char_1012_skadi2.atlas`
-/// (no `_2` suffix in the file name). The trailing `_2` is a disambiguator,
-/// not a skin variant, and the spine actually belongs to the default skin -
-/// we detect this by checking whether the file's stripped stem matches the
-/// dir's `char_id` with no skin suffix at all.
+/// Exception: duplicate-of-default folders like `char_1012_skadi2_2/` whose file
+/// is just `dyn_illust_char_1012_skadi2.atlas`. The trailing `_2` is a
+/// disambiguator and the spine belongs to the default skin; detected by the
+/// file's stripped stem matching the dir's `char_id` with no skin suffix.
 ///
 /// Across files within one folder we prefer `dyn_illust_` over
 /// `dyn_portrait_` and skip `_Start` intro-animation companions.
@@ -350,10 +343,9 @@ fn resolve_dyn_illust_skins(
     let (_, dir_skin) = parse_skin_identity(dir_name);
     let char_lower = char_id.to_lowercase();
 
-    // Pure numeric dir suffixes (`_2`, `_3`, …) are duplicate-of-default
-    // counters, not real skin variants - Arknights' real skin IDs always
-    // use named tags like `sale#X` / `boc#X` / `iteration#N`. Folders such
-    // as `char_2014_nian_2/` whose file is `dyn_illust_char_2014_nian2.atlas`
+    // Pure numeric dir suffixes (`_2`, `_3`) are duplicate-of-default counters;
+    // real skin ids use named tags (`sale#X`, `boc#X`, `iteration#N`). Folders like
+    // `char_2014_nian_2/` whose file is `dyn_illust_char_2014_nian2.atlas`
     // (concatenated, not the bare char_id) only fall through to this check.
     let dir_skin_is_numeric = !dir_skin.is_empty() && dir_skin.chars().all(|c| c.is_ascii_digit());
 

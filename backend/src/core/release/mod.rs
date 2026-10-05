@@ -64,13 +64,12 @@ pub fn resolve(
     estimate::estimate(model, cn_start)
 }
 
-/// One resolution per CN Fashion Review edition, in `cn` order. An edition
-/// the EN data lists is Confirmed; otherwise an override under
-/// `KIND_REVIEW`, keyed by the CN start in unix seconds, stands in for the
-/// announced date. The listing still wins once the data carries it, so the
-/// row turns Confirmed on the next extract with nobody deleting the override.
-/// An edition whose CN start is in `passed` (EN shipped past its tag without
-/// carrying it, see [`skipped`]) is Unlisted where it would be estimated.
+/// One resolution per CN Fashion Review edition, in `cn` order. Listed in EN data
+/// = Confirmed; else a `KIND_REVIEW` override keyed by CN start (unix seconds)
+/// stands in for the announced date. The listing wins once the data has it, so
+/// the row turns Confirmed next extract without deleting the override. An
+/// edition whose CN start is in `passed` (EN shipped past its tag without it,
+/// see [`skipped`]) is Unlisted where it would be estimated.
 pub fn resolve_reviews(
     cn: &[(i64, i64)],
     en: &[(i64, i64)],

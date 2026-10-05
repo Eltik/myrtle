@@ -1,9 +1,8 @@
 #[derive(Debug, Clone, Copy)]
 pub struct StageClear {
     pub state: i16,
-    /// Upper bound on `state` for a record inferred from surviving mission,
-    /// medal and unlock evidence (see `stage_evidence`); equals `state` for
-    /// a battle record.
+    /// Upper bound on `state` for a record inferred from surviving mission, medal and
+    /// unlock evidence (`stage_evidence`); equals `state` for a battle record.
     pub state_max: i16,
     pub inferred: bool,
     pub complete_times: i32,
@@ -12,9 +11,9 @@ pub struct StageClear {
 
 impl StageClear {
     pub const fn is_cleared(&self) -> bool {
-        // state >= 2 means "cleared" in Arknights' dungeon record. Some auto-passed
-        // stages (easy_*, mainline cutscene variants) carry state=3 with no
-        // completeTimes/practiceTimes; gating on those zeroes them out.
+        // state >= 2 = cleared. Some auto-passed stages (easy_*, mainline cutscene
+        // variants) have state=3 and no completeTimes/practiceTimes; gating on those
+        // zeroes them.
         self.state >= 2
     }
 

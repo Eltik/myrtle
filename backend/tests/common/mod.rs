@@ -16,12 +16,9 @@ pub fn load_game_data() -> &'static GameData {
     shared_game_data_ref()
 }
 
-/// The same single load, as the `Arc` an `AppState`'s `ArcSwap` wants.
-///
-/// Held as an `Arc` rather than a plain value so a test that needs a real
-/// `AppState` shares this load instead of taking a second one: two copies of
-/// the EN tables in one binary is where the integration suite used to run out
-/// of memory.
+/// The same single load, as the `Arc` an `AppState`'s `ArcSwap` wants, so a test
+/// needing a real `AppState` shares it: two copies of the EN tables in one binary
+/// is where the integration suite used to run out of memory.
 pub fn shared_game_data() -> std::sync::Arc<GameData> {
     std::sync::Arc::clone(shared_game_data_arc())
 }

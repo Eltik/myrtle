@@ -20,8 +20,8 @@ fn load_universe() -> SandboxUniverse {
 fn sandbox_node_count_reflects_one_playthrough() {
     let universe = load_universe();
 
-    // The persistent overworld (sandbox_1_main) has ~127 nodes - "over 100",
-    // matching what a player actually explores. The old bug produced 1032.
+    // The persistent overworld (sandbox_1_main) has ~127 nodes ("over 100"), what
+    // a player actually explores. The old bug produced 1032.
     assert!(
         universe.max_nodes > 100 && universe.max_nodes < 400,
         "max_nodes should reflect a single playthrough (~127), got {}",
@@ -34,11 +34,10 @@ fn sandbox_node_count_reflects_one_playthrough() {
     );
 }
 
-/// Regression test for the quest-count inflation: the old code counted all 113
-/// individual `QuestData` *steps* as the "Quests" total, which both showed a
-/// bogus 113 and deflated the quest sub-score. The total should be the in-game
-/// Records/Archive quest log (`ArchiveQuestData`: the 7 story acts), the same
-/// set the player's `collect.complete.quest` records completion against.
+/// Quest-count inflation: the old code counted all 113 `QuestData` steps, a bogus
+/// 113 that deflated the quest sub-score. The total is the Records/Archive quest
+/// log (`ArchiveQuestData`, the 7 story acts), the set `collect.complete.quest`
+/// records completion against.
 #[test]
 fn sandbox_quest_count_reflects_archive_quests() {
     let universe = load_universe();

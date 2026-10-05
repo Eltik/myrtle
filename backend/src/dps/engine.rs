@@ -159,7 +159,6 @@ pub fn calculate_dps(
         return None;
     }
 
-    // Per-operator __init__ state the generator cannot hoist (custom/init.rs).
     apply_init(&mut unit);
 
     let shredded = apply_shreds(enemy, &unit.shreds);

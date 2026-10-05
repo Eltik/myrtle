@@ -6,10 +6,7 @@ use serde::Deserialize;
 
 use super::serde_helpers::{deserialize_fb_map, deserialize_fb_map_or_default};
 
-/// Root structure for `building_data.json`.
-///
-/// Only the fields needed for base grading are deserialized; the rest are
-/// silently ignored.
+/// `building_data.json`, only the fields base grading reads.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct BuildingDataFile {
@@ -112,9 +109,8 @@ pub struct Furniture {
 #[serde(rename_all = "PascalCase")]
 pub struct LayoutDef {
     pub id: String,
-    // Tolerant rather than strict: a floorplan we cannot read should cost the
-    // board, not take the whole of `building_data` - and with it base grading -
-    // down with it.
+    // Tolerant: an unreadable floorplan should cost the board, not all of
+    // `building_data` and base grading with it.
     #[serde(deserialize_with = "deserialize_fb_map_or_default", default)]
     pub slots: HashMap<String, LayoutSlotDef>,
     #[serde(deserialize_with = "deserialize_fb_map_or_default", default)]
@@ -126,9 +122,9 @@ pub struct LayoutDef {
 #[serde(rename_all = "PascalCase")]
 pub struct LayoutSlotDef {
     pub id: String,
-    /// Which class of room may occupy this slot - `OUTPUT`, `CUSTOM`,
-    /// `FUNCTION`, `SPECIAL`, or the structure's own `ELEVATOR`/`CORRIDOR`.
-    /// Matches [`RoomDef::category`], not a room type.
+    /// Room class allowed here: `OUTPUT`, `CUSTOM`, `FUNCTION`, `SPECIAL`, or
+    /// the structure's own `ELEVATOR`/`CORRIDOR`. Matches [`RoomDef::category`],
+    /// not a room type.
     pub category: String,
     pub storey_id: String,
     /// Position in half-tiles. `Row` is already absolute: the storey's
@@ -215,7 +211,6 @@ pub struct BuffUnlockCondition {
 }
 
 impl BuffUnlockCondition {
-    /// Convert the phase string to a numeric elite level.
     /// `"PHASE_0"` -> 0, `"PHASE_1"` -> 1, `"PHASE_2"` -> 2.
     pub fn elite(&self) -> i32 {
         match self.phase.as_str() {

@@ -49,8 +49,8 @@ pub struct OperatorListEntry {
 
 type OperatorModuleRef<'a> = &'a OperatorModule;
 
-/// The operator's ADVANCED modules, sorted by uniequip number - the same order
-/// `OperatorData` uses, so a formula module's position indexes into it.
+/// The operator's ADVANCED modules in uniequip order, the order `OperatorData`
+/// uses, so a formula module's position indexes into it.
 fn advanced_modules_sorted(operator: &Operator) -> Vec<OperatorModuleRef<'_>> {
     let mut mods: Vec<_> = operator
         .modules
@@ -68,10 +68,9 @@ fn advanced_modules_sorted(operator: &Operator) -> Vec<OperatorModuleRef<'_>> {
     mods
 }
 
-/// The physical module a formula module at `pos` resolves to, or `None` when the
-/// current game data has no such module. Mirrors the resolution in
-/// `OperatorUnit::new` exactly, so what the API advertises, what it names, and
-/// what the engine simulates cannot drift apart.
+/// Physical module for formula module `pos`, or `None` if game data lacks it.
+/// Mirrors `OperatorUnit::new` exactly so advertised, named and simulated modules
+/// can't drift apart.
 fn resolve_module<'a>(
     sorted: &[OperatorModuleRef<'a>],
     pos: usize,
@@ -213,18 +212,13 @@ pub struct RequestShred {
     pub res_flat: Option<i32>,
 }
 
-/// Bounds on a `CalculateRequest`.
+/// Bounds on a `CalculateRequest`. The endpoint is unauthenticated and feeds the
+/// simulator directly. Fields that multiply the tick count (`buffs.aspd` above
+/// all) need a cost ceiling, and a non-finite float comes out as a NaN result,
+/// serialized as `null` under a 200.
 ///
-/// The endpoint is unauthenticated and every field feeds the simulator
-/// directly, so two classes of input have to be refused here. Fields that
-/// multiply the simulated tick count - `buffs.aspd` above all - decide how much
-/// work one request costs, and need a ceiling. Non-finite floats propagate
-/// through the arithmetic into a NaN result, which serialises as JSON `null`
-/// under a 200: a wrong answer presented as a correct one.
-///
-/// The ranges are deliberately wider than the game allows. This is a ceiling on
-/// cost, not a model of what is reachable in play, and a speculative query
-/// should not be refused.
+/// Ranges are deliberately wider than the game allows: a cost ceiling, not a model
+/// of what's reachable in play.
 impl CalculateRequest {
     pub fn validate(&self) -> Result<(), ApiError> {
         int_range("promotion", self.promotion, 0, 2)?;

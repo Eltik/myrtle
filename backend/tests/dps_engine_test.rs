@@ -404,7 +404,7 @@ fn test_engine_vs_python_expected() {
 
     // The point of the suite: the transpiled formulas must not drift from the
     // Python reference. A failure means `generated.rs` and `expected_dps.json`
-    // disagree - read the sample failures above, then regenerate with
+    // disagree: read the sample failures above, then regenerate with
     // `cargo run --bin generate-dps -- --formulas --transpile --expected`
     // before concluding the fixture is merely stale.
     assert_eq!(
@@ -418,7 +418,7 @@ fn test_engine_vs_python_expected() {
 /// (default/no-module) result.
 ///
 /// "Missing" is derived from the operator's actual advanced modules (sorted by
-/// uniequip number) - a formula module at position `pos` is unavailable when the
+/// uniequip number): a formula module at position `pos` is unavailable when the
 /// operator has fewer than `pos + 1` advanced modules. No hardcoded uniequip IDs.
 #[test]
 fn test_unavailable_module_returns_none() {

@@ -1,10 +1,6 @@
-//! Enemy -> stages inverted index.
-//!
-//! Maps each enemy id to the list of stages it appears in, precomputed at
-//! gamedata init by parsing the per-stage level files under
-//! `gamedata/levels/`. Serves the `/static/enemy-stages` resource so the
-//! frontend can answer "where does this enemy show up?" without fetching
-//! hundreds of level files itself.
+//! Enemy -> stages index, built at gamedata init from the level files under
+//! `gamedata/levels/`. Serves `/static/enemy-stages` so the frontend need not
+//! fetch hundreds of level files to say where an enemy shows up.
 
 use serde::Serialize;
 use std::collections::{BTreeMap, HashMap};

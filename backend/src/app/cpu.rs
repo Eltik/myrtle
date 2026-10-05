@@ -1,30 +1,21 @@
 //! Admission control for CPU-bound endpoints.
 //!
-//! Long synchronous work on a tokio worker blocks that worker, including the
-//! accept loop, so the endpoints that run a search or a simulation are bounded
-//! here rather than left to take as many workers as they are given.
+//! Long synchronous work on a tokio worker blocks it, accept loop included, so
+//! search and simulation endpoints are bounded here.
 //!
-//! Two entry points:
+//! - [`run`] moves the work to the blocking pool as an owned closure, keeping the
+//!   async workers free.
+//! - [`admit`] only takes a permit, for services that interleave compute with
+//!   awaited I/O; it bounds how many async workers they occupy. Splitting such a
+//!   service into load-then-compute is what lets it move to [`run`].
 //!
-//! - [`run`] moves the work to the blocking pool. Use it when the computation
-//!   can be handed over as an owned closure, which keeps the async workers
-//!   free entirely.
-//! - [`admit`] only takes a permit, for services that interleave computation
-//!   with `await`ed I/O and so cannot be handed over wholesale. It bounds how
-//!   many async workers such a service can occupy at once. Splitting a service
-//!   into load-then-compute is what lets it move to [`run`].
-//!
-//! Over the limit, a request WAITS a bounded time for a permit and is refused
-//! only if none frees up, or if too many are already waiting. Refusing instantly
-//! was the previous behaviour and it is wrong for a user-facing page: on a 3 core
-//! box the permit formula below yields ONE, so a second reader of
-//! `/api/user/improvements` got a 503 while the first was still computing. A
-//! reader will happily wait a few hundred milliseconds; they will not accept an
-//! error. The queue is bounded in both directions, by time and by depth, so this
-//! is still shedding rather than an unbounded backlog of callers who have gone
-//! away. Waiting on a semaphore yields, so a waiter does not hold an async
-//! worker; it holds its connection and its request state, which is what the
-//! depth cap protects.
+//! Over the limit, a request WAITS a bounded time for a permit, refused only if
+//! none frees up or the queue is full. Refusing instantly was the old behaviour
+//! and wrong for a user-facing page: on a 3-core box the formula below gives ONE
+//! permit, so a second reader of `/api/user/improvements` got a 503 while the
+//! first computed. The queue is bounded by time and depth, so this still sheds. A
+//! waiter yields on the semaphore and holds no worker, only its connection and
+//! request state, which the depth cap protects.
 
 use std::num::NonZero;
 use std::sync::LazyLock;
@@ -55,14 +46,12 @@ static CPU: LazyLock<Semaphore> = LazyLock::new(|| Semaphore::new(*PERMITS));
 
 /// How long a request may wait for a permit before it is refused.
 ///
-/// Sized against how long the work actually takes: `/admin/stats` reports
-/// `sum_micros` and `started` per kind, and their quotient is the mean hold time.
-/// The wait wants to be a small multiple of that, so a burst drains instead of
-/// shedding, while a genuinely saturated box still sheds rather than queueing
-/// past the 30s handler timeout in `middleware`.
+/// A small multiple of the mean hold time (`/admin/stats`: `sum_micros / started`
+/// per kind), so a burst drains while a saturated box still sheds before the 30s
+/// handler timeout in `middleware`.
 ///
-/// `CPU_TASK_WAIT_MS=0` restores the previous behaviour EXACTLY: no wait, refuse
-/// the moment no permit is free.
+/// `CPU_TASK_WAIT_MS=0` restores the old behaviour EXACTLY: refuse the moment no
+/// permit is free.
 static WAIT: LazyLock<Duration> = LazyLock::new(|| {
     let ms = std::env::var("CPU_TASK_WAIT_MS")
         .ok()
@@ -71,14 +60,12 @@ static WAIT: LazyLock<Duration> = LazyLock::new(|| {
     Duration::from_millis(ms)
 });
 
-/// How many requests may be waiting for a permit at once.
+/// How many requests may wait for a permit at once.
 ///
-/// Without a ceiling, a slow spell converts into a queue that grows for as long
-/// as traffic arrives, every entry holding a connection and its request state,
-/// and the whole queue then times out together. Eight per permit is a TRADE, not
-/// a derived number: deep enough to absorb the bursts this endpoint actually
-/// sees, shallow enough that the memory is bounded and the tail waiter still has
-/// a realistic chance of being served inside WAIT.
+/// Uncapped, a slow spell becomes a queue that grows with traffic, each entry
+/// holding a connection and request state, then times out all together. Eight per
+/// permit is a TRADE, not derived: deep enough for the bursts this sees, shallow
+/// enough that memory is bounded and the tail waiter can still be served in WAIT.
 static QUEUE_DEPTH: LazyLock<usize> = LazyLock::new(|| {
     std::env::var("CPU_TASK_QUEUE")
         .ok()
@@ -88,12 +75,10 @@ static QUEUE_DEPTH: LazyLock<usize> = LazyLock::new(|| {
 
 static WAITING: AtomicUsize = AtomicUsize::new(0);
 
-/// Keeps `WAITING` honest when a waiter goes away.
-///
-/// Axum drops the handler future when the client disconnects or the handler
-/// timeout fires, so a plain decrement after the await would be skipped on
-/// exactly the paths that matter, and the counter would climb until the depth
-/// cap refused everything forever.
+/// Keeps `WAITING` honest when a waiter goes away. Axum drops the handler future
+/// on client disconnect or handler timeout, so a decrement after the await would
+/// be skipped exactly then, and the counter would climb until the depth cap
+/// refused everything forever.
 struct Waiter;
 
 impl Drop for Waiter {
@@ -127,14 +112,8 @@ fn refuse(kind: &'static str, why: &'static str) -> ApiError {
     ApiError::ServiceUnavailable
 }
 
-/// Take a permit, waiting a bounded time for one, or refuse.
-///
-/// Three outcomes, in order of how common they should be: a permit is free and
-/// the caller proceeds immediately; none is free so the caller queues and is
-/// served when one returns; or the box is saturated, by depth or by time, and
-/// the caller is refused. Tokio's semaphore is FIFO, so waiters are served in
-/// arrival order and a steady stream of new requests cannot starve one that has
-/// been waiting.
+/// Take a permit, waiting a bounded time, or refuse when saturated by depth or
+/// time. Tokio's semaphore is FIFO, so new arrivals can't starve a waiter.
 async fn acquire(kind: &'static str) -> Result<SemaphorePermit<'static>, ApiError> {
     if let Ok(permit) = CPU.try_acquire() {
         METRICS.cpu_started(kind);
@@ -163,9 +142,8 @@ async fn acquire(kind: &'static str) -> Result<SemaphorePermit<'static>, ApiErro
     }
 }
 
-/// Run synchronous CPU-bound work on the blocking pool, under admission
-/// control. The closure must own what it needs: clone the `AppState` (it is an
-/// `Arc` behind the scenes) and move the request body in.
+/// Runs synchronous CPU-bound work on the blocking pool under admission control.
+/// The closure owns its inputs: clone the `AppState` (an `Arc`) and move the body in.
 pub async fn run<F, T>(kind: &'static str, work: F) -> Result<T, ApiError>
 where
     F: FnOnce() -> T + Send + 'static,
@@ -185,17 +163,14 @@ where
     })
 }
 
-/// Runs a CPU-bound section on the blocking pool for a service that ALREADY
-/// holds an [`Admission`] and cannot hand its whole body to [`run`] because it
-/// loads first and computes after.
+/// Runs a CPU-bound section on the blocking pool for a service that already holds
+/// an [`Admission`] and loads before it computes, so can't hand it all to [`run`].
 ///
-/// This is the second half of the load-then-compute split the module doc asks
-/// for. The point is not throughput but isolation: a search that runs inline
-/// on an async worker blocks that worker for its whole duration, and every
-/// future parked there - another request's database lookups included - waits
-/// it out. Measured before this existed: a 0.2 s planner request took 33 s
-/// while an improvements search ran on the worker it had landed on. No permit
-/// is taken here; the caller's admission already bounds concurrency.
+/// For isolation, not throughput: an inline search blocks its async worker, and
+/// every future parked there (other requests' DB lookups included) waits it out.
+/// Measured before this existed: a 0.2 s planner request took 33 s behind an
+/// improvements search on its worker. No permit taken; the caller's admission
+/// already bounds concurrency.
 pub async fn offload<F, T>(kind: &'static str, work: F) -> Result<T, ApiError>
 where
     F: FnOnce() -> T + Send + 'static,
@@ -286,10 +261,9 @@ mod tests {
         assert_eq!(waiting(), 0, "the queue must drain");
     }
 
-    /// Axum drops the handler future on client disconnect and on the handler
-    /// timeout, which is exactly when a decrement placed after the await would be
-    /// skipped. A leaked count is permanent: it climbs until the depth cap
-    /// refuses every request forever, so this guards the `Waiter` Drop impl.
+    /// The handler future is dropped on disconnect and on timeout, exactly when a
+    /// post-await decrement would be skipped. A leaked count is permanent (the depth
+    /// cap ends up refusing everything), so this guards the `Waiter` Drop impl.
     #[tokio::test]
     async fn the_waiting_count_survives_a_cancelled_waiter() {
         let _pool = POOL.lock().await;

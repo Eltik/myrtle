@@ -25,9 +25,8 @@ const CACHE_PREFIX: &str = "i18n:";
 /// catalog. An empty namespace cannot be spelled in a URL, so `-` stands in.
 pub const ALL_NAMESPACES: &str = "-";
 
-/// The source-text fingerprint. Computed here rather than in the extractor so
-/// that exactly one implementation decides whether two English strings are the
-/// same string, and a change to it can never half-apply.
+/// Source-text fingerprint. Lives here, not in the extractor, so one implementation
+/// decides whether two English strings match and a change can't half-apply.
 fn source_hash(text: &str) -> String {
     hex::encode(Sha256::digest(text.as_bytes()))[..16].to_owned()
 }
@@ -76,10 +75,9 @@ pub async fn get_manifest(state: &AppState) -> Result<CachedJson, ApiError> {
         let mut out = Vec::with_capacity(locales.len());
         for locale in locales {
             let mut map = BTreeMap::new();
-            // `-` is the every-namespace catalog. The client fetches this one
-            // until the catalog is measured large enough to be worth splitting
-            // per route; the per-namespace hashes below make that split a
-            // client-side change only.
+            // `-` is the every-namespace catalog. The client uses it until the
+            // catalog is big enough to split per route; the per-namespace hashes
+            // make that a client-only change.
             map.insert(
                 ALL_NAMESPACES.to_owned(),
                 queries::catalog_hash(&state.db, &locale.code, "").await?,
@@ -100,11 +98,9 @@ pub async fn get_manifest(state: &AppState) -> Result<CachedJson, ApiError> {
             });
         }
 
-        // The default is the locale flagged as the source, not a hardcoded
-        // string: it is the language the bundled catalog is written in and the
-        // floor of every fallback chain, and it should be visible and
-        // changeable rather than compiled in. `en` remains the fallback answer
-        // if no locale is flagged, so a database mid-migration still serves.
+        // Default = the locale flagged as source (the bundled catalog's language,
+        // floor of every fallback chain), not a compiled-in string. `en` if none is
+        // flagged, so a database mid-migration still serves.
         let default_locale = queries::list_locales(&state.db, false)
             .await?
             .into_iter()
@@ -160,13 +156,9 @@ pub async fn get_catalog(
     })
 }
 
-/// The two-part check: the global role is the ticket into the feature, and a
-/// row in `translation_permissions` says which locales. `SuperAdmin` skips the
-/// grant lookup entirely.
-///
-/// Because the authoritative half is a database read, a freshly granted locale
-/// works on the very next request - unlike `users.role`, which is carried in
-/// the JWT and only refreshes with the token.
+/// Super-admins pass; anyone else needs a `translation_permissions` row for the
+/// locale that grants `required`. Read per request, so a new grant works on the
+/// next call, unlike `users.role`, which rides the JWT.
 pub async fn assert_can_write(
     state: &AppState,
     auth: &AuthUser,
@@ -179,12 +171,9 @@ pub async fn assert_can_write(
         return Ok(user_id);
     }
 
-    // The grant row is the authority, not the global role. Requiring
-    // `is_translator()` first made a grant inert on its own: the role rides the
-    // JWT and is frozen at login, so a freshly granted translator was refused
-    // until they logged out and back in - and one left at `User` was refused
-    // forever, which is the state a locale grant alone used to produce.
-    // Grants are read per request, so one takes effect on the very next call.
+    // No `is_translator()` precondition: the role rides the JWT, frozen at login,
+    // so a freshly granted translator was refused until re-login, and one left at
+    // `User` (what a locale grant alone used to produce) was refused forever.
     let grants = queries::list_permissions_for_user(&state.db, user_id).await?;
     let allowed = grants.iter().any(|g| {
         g.locale == locale
@@ -200,12 +189,9 @@ pub async fn assert_can_write(
     }
 }
 
-/// Whether this caller may load the admin panel's translation surface.
-///
-/// A staff role admits, and so does any single translation grant - otherwise a
-/// locale grant would be unusable, since its holder could not reach the screen
-/// that spends it. Resolved per request from the database, like the grants
-/// themselves.
+/// Whether the caller may open the admin translation surface: a staff role, or any
+/// single grant (otherwise its holder couldn't reach the screen that spends it).
+/// Read per request from the database, like the grants.
 pub async fn can_access_admin_panel(state: &AppState, auth: &AuthUser) -> Result<bool, ApiError> {
     if auth.role.can_access_admin_panel() {
         return Ok(true);
@@ -226,10 +212,8 @@ pub async fn writable_locales(state: &AppState, auth: &AuthUser) -> Result<Vec<S
             .map(|l| l.code)
             .collect());
     }
-    // No role precondition, for the same reason `assert_can_write` has none:
-    // the grants ARE the answer to "what may this caller edit", and gating the
-    // lookup on the JWT role handed a freshly granted translator an empty
-    // locale picker on a screen they were otherwise allowed to open.
+    // No role precondition, same as `assert_can_write`: gating on the JWT role gave
+    // a freshly granted translator an empty locale picker.
     let Ok(user_id) = auth.user_uuid() else {
         return Ok(Vec::new());
     };
@@ -248,22 +232,18 @@ pub async fn writable_locales(state: &AppState, auth: &AuthUser) -> Result<Vec<S
     Ok(codes)
 }
 
-/// Collect the placeholder names a message references.
+/// Placeholder names a message references.
 ///
-/// This has to be structural rather than a brace scan. In ICU the braces
-/// inside a `plural`/`select` argument delimit BRANCH BODIES, and a branch
-/// body is a message, not an argument: in
-/// `{count, plural, one {tier} other {tiers}}` the only placeholder is
-/// `count`, while `tier` and `tiers` are literal text.
+/// Structural, not a brace scan: in ICU the braces inside a `plural`/`select`
+/// argument delimit branch bodies, which are messages. In
+/// `{count, plural, one {tier} other {tiers}}` the only placeholder is `count`.
 ///
-/// A naive "first token after every `{`" scan took those too, so a message whose
-/// branch body opens with a word was rejected against its own declared
-/// placeholders: 42 catalogue entries could not be translated, even pasting the
-/// English source verbatim failed with "unknown placeholder(s)". `{# operator}`
-/// passes that scan, `{tier}` does not, and every old test case started with `#`.
+/// The naive "first token after every `{`" scan took `tier` too, so 42 catalogue
+/// entries couldn't be translated; even the verbatim English source failed with
+/// "unknown placeholder(s)". `{# operator}` passed that scan, `{tier}` didn't, and
+/// every old test case started with `#`.
 ///
-/// Mirrors the parse `format.ts` performs on the client, so the validator and
-/// the renderer agree about what a message references.
+/// Mirrors the parse in `format.ts` so validator and renderer agree.
 fn referenced_placeholders(message: &str) -> Result<HashSet<String>, String> {
     /// What the next `{` opens.
     enum Ctx {
@@ -306,11 +286,9 @@ fn referenced_placeholders(message: &str) -> Result<HashSet<String>, String> {
                 //   '{ '} '# '|   -> opens a quoted run, closed by the next '
                 //   ' anywhere else -> a plain apostrophe, not a quote
                 //
-                // The last clause is load-bearing. Skipping to the next quote
-                // on ANY apostrophe made a translation like
-                // "don't show {count}" scan past its own argument, so the
-                // validator rejected it for a missing `{count}` that was
-                // right there.
+                // The last clause is load-bearing: skipping to the next quote on
+                // ANY apostrophe made "don't show {count}" scan past its own
+                // argument and fail validation.
                 if chars.get(i + 1) == Some(&'\'') {
                     i += 1;
                 } else if matches!(chars.get(i + 1), Some('{' | '}' | '#' | '|')) {
@@ -370,13 +348,10 @@ fn referenced_placeholders(message: &str) -> Result<HashSet<String>, String> {
     Ok(found)
 }
 
-/// Reject a translation that invents a placeholder the source never declared,
-/// or drops one the source did.
-///
-/// This is both a correctness guard and the main abuse guard for direct edit:
-/// an invented argument is the one way a translator could make a message do
-/// something the developer did not sanction, and an unbalanced brace would
-/// throw inside the client formatter and blank the subtree.
+/// Rejects a translation that invents or drops a placeholder relative to the
+/// source. Also the main abuse guard for direct edit: an invented argument is the
+/// one way to make a message do something unsanctioned, and an unbalanced brace
+/// would throw in the client formatter and blank the subtree.
 fn validate_message(value: &str, declared: &serde_json::Value) -> Result<(), ApiError> {
     let referenced = referenced_placeholders(value).map_err(|e| {
         ApiError::ValidationFailed(vec![FieldError {
@@ -511,13 +486,9 @@ pub struct LocaleProgress {
     pub stale: i64,
 }
 
-/// Every active namespace, for the translation editor's filter.
-///
-/// Read straight from the key table rather than derived from a page of
-/// messages: a page is at most 500 keys out of several thousand, so deriving
-/// the list from one meant a namespace only appeared in the filter once the
-/// translator had already paged onto it - which is the opposite of what a
-/// filter is for.
+/// Every active namespace, for the editor's filter. Read from the key table, not
+/// a page of messages: a page is at most 500 of several thousand keys, so a
+/// namespace only showed up once the translator had already paged onto it.
 pub async fn list_namespaces(state: &AppState) -> Result<Vec<String>, ApiError> {
     queries::list_namespaces(&state.db)
         .await
@@ -636,8 +607,8 @@ pub async fn update_message(
     // no-op save on a stale row is still meaningful and must go through.
     let changed = existing.value.as_deref() != Some(value);
 
-    // The snapshot is the source that was on screen for this save, which is
-    // the key's current source_text - the same text the hash is taken over.
+    // The snapshot is the source on screen for this save: the key's current
+    // source_text, the same text the hash is taken over.
     queries::upsert_message(
         &state.db,
         key,
@@ -919,8 +890,8 @@ mod tests {
         }
     }
 
-    /// A nested argument inside a branch body is still an argument - the fix
-    /// must not skip those.
+    /// A nested argument inside a branch body is still an argument; the fix must
+    /// not skip those.
     #[test]
     fn a_nested_argument_inside_a_branch_is_still_collected() {
         let found = referenced_placeholders(

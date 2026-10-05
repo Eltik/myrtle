@@ -1,29 +1,19 @@
 //! Story reading progress, synced to the account.
 //!
-//! The reader's progress is a localStorage document first and a row here
-//! second: reading never waits on this table, and a browser that cannot reach
-//! it keeps working unchanged. What the account buys is that the document
-//! FOLLOWS the reader to another device.
+//! The reader's localStorage document comes first; reading never waits on this
+//! table. The account only makes the document follow the reader across devices.
 //!
-//! The document is stored verbatim. Its shape is owned by
-//! `frontend/src/lib/story/progress.ts`, which coerces every field on read, and
-//! the merge that decides what a round trip produces is
-//! `frontend/src/lib/story/sync.ts`, which runs in the browser. Nothing here
-//! merges: a PUT replaces the row whole.
+//! Stored verbatim: its shape is owned by `frontend/src/lib/story/progress.ts`
+//! and the merge by `frontend/src/lib/story/sync.ts` (in the browser). A PUT
+//! replaces the row whole. The only check here is ADMISSION ("is this a
+//! story-progress document at all"), so the column can't become a general blob
+//! store on an authenticated endpoint.
 //!
-//! What this module does read is an ADMISSION check, not a parse. It answers
-//! one question, "is this a story-progress document at all", so the column
-//! cannot become a general blob store on an authenticated endpoint. Anything it
-//! admits, it stores byte for byte.
-//!
-//! The account's OWN game data is a second source, and the two halves that read
-//! it sit next door:
-//!
-//! - [`verdict`]: what the game says was read, out of a raw `syncData` payload.
-//!   Pure: it takes JSON and the story index's maps and returns a set.
-//!   `docs/story-reader.md` carries the census the rule was derived from.
-//! - [`store`]: the database half, plus the re-derivation that runs the verdict
-//!   rule again over what is already stored, with no call to the game server.
+//! The account's own game data is a second source:
+//! - [`verdict`]: what the game says was read, from a raw `syncData` payload.
+//!   Pure. Census in `docs/story-reader.md`.
+//! - [`store`]: the database half, plus re-running the verdict over what is
+//!   already stored, without calling the game server.
 
 mod store;
 mod verdict;
@@ -93,13 +83,10 @@ pub struct StoryProgressResponse {
     pub game_synced_at: Option<i64>,
 }
 
-/// A number that is finite and not negative.
-///
-/// `serde_json` already refuses NaN and infinity at parse time, so the finite
-/// check is belt over braces; the sign is the one that bites, because a halt of
-/// -1 is the reader's own "no position" sentinel and must not travel. One rule,
-/// applied to every number the document carries: the `pos` entries' three
-/// fields and the `unread` values.
+/// Finite and not negative. `serde_json` already refuses NaN and infinity; the
+/// sign is what bites, since -1 is the reader's own "no position" sentinel and
+/// must not travel. Applied to every number the document carries (the `pos`
+/// fields and the `unread` values).
 fn non_negative(v: &Value) -> bool {
     v.as_f64().is_some_and(|n| n.is_finite() && n >= 0.0)
 }

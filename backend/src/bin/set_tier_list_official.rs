@@ -1,12 +1,9 @@
-//! Mark a tier list official (`list_type` = `"official"`) or community (`"community"`), looked up
-//! by slug.
+//! Mark a tier list official or community, looked up by slug.
 //!
-//! Usage: cargo run --release --bin set-tier-list-official -- <slug> --official cargo run
-//! --release --bin set-tier-list-official -- <slug> --community cargo run --release --bin
-//! set-tier-list-official -- <slug> --official --yes   # skip confirm
+//! Usage: cargo run --release --bin set-tier-list-official -- <slug> (--official|--community)
+//! [--yes]
 //!
-//! `--community` is the "remove official" action. Reads `DATABASE_URL` from the environment (or
-//! `.env`).
+//! `--community` is the "remove official" action. Reads `DATABASE_URL` from the env or `.env`.
 
 use anyhow::{Context, Result, bail};
 use backend::database::queries;

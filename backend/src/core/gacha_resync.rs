@@ -1,10 +1,9 @@
 //! Reconcile stored `gacha_records.rarity` against the latest game data.
 //!
-//! Rarity is read from `character_table` (`rarity_from_gamedata`). When the
-//! `char_id` is missing at fetch time (brand-new operator, asset pipeline behind),
-//! it falls back to the API's `star`, which has been wrong/stale. After a
-//! hot-reload those rows are rewritten here: one unnest-driven UPDATE, bounded by
-//! the distinct `(char_id, rarity)` pairs (a few hundred).
+//! Rarity comes from `character_table`. When the `char_id` is missing at fetch
+//! time (new operator, asset pipeline behind) it falls back to the API's `star`,
+//! which has been wrong. After a hot-reload those rows are rewritten here in one
+//! unnest UPDATE over the distinct `(char_id, rarity)` pairs (a few hundred).
 
 use std::collections::HashSet;
 
@@ -30,9 +29,7 @@ pub async fn reconcile_rarities(db: &PgPool, gd: &GameData) -> Result<ResyncStat
 
     let distinct_pairs = pairs.len();
 
-    // One canonical rarity per char_id. Multiple stored rarities for the same
-    // char only need a single fix entry - the UPDATE rewrites every row whose
-    // rarity disagrees.
+    // One fix entry per char_id; the UPDATE rewrites every disagreeing row.
     let mut seen: HashSet<String> = HashSet::new();
     let mut char_ids: Vec<String> = Vec::new();
     let mut rarities: Vec<i16> = Vec::new();

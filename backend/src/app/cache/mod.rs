@@ -13,9 +13,8 @@ use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use keys::CacheKey;
 
-/// A pre-serialized JSON body paired with its strong `ETag`. The `ETag` is computed
-/// exactly once - when the body enters the cache - so cache hits and
-/// `If-None-Match` revalidations never re-hash the (potentially multi-MB) body.
+/// Pre-serialized JSON body with its strong `ETag`, hashed once on cache entry so
+/// hits and `If-None-Match` never re-hash a multi-MB body.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct CachedJson {
     pub body: String,
@@ -39,13 +38,11 @@ pub struct Inflight(Mutex<HashMap<String, watch::Receiver<Outcome>>>);
 
 /// Like [`cached_json`], for a build that must not die with its request.
 ///
-/// The build runs as its own task: it writes the cache and then broadcasts
-/// its outcome, so a caller whose handler future is dropped - the client
-/// went away, or the handler timeout fired - loses nothing but its own
-/// response; the next request finds the cache filled. Callers arriving while
-/// the build runs join it (single flight). Without this, moving the base
-/// search to the blocking pool made the 30 s handler timeout discard a 40 s
-/// debug-build search every time, and every retry recomputed it.
+/// The build runs as its own task: it fills the cache, then broadcasts. A caller
+/// whose handler is dropped (client gone, handler timeout) loses only its own
+/// response; the next request hits the cache. Concurrent callers join the build.
+/// Before this, the 30 s handler timeout discarded a 40 s debug-build base search
+/// every time and each retry recomputed it.
 pub async fn cached_json_detached<F, Fut>(
     state: &AppState,
     key: &CacheKey<'_>,
@@ -109,9 +106,8 @@ async fn join(mut rx: watch::Receiver<Outcome>) -> Result<CachedJson, ApiError> 
     }
 }
 
-/// Fetch a pre-serialized JSON body (+ its precomputed `ETag`) from the cache, or
-/// build it with `build` on a miss and store both together. `build` runs only on a
-/// cache miss and is the sole place the body is serialized or the `ETag` is hashed.
+/// Cached body + `ETag`, or run `build` on a miss and store both. `build` is the
+/// only place the body is serialized and hashed.
 pub async fn cached_json<F, Fut>(
     state: &AppState,
     key: &CacheKey<'_>,

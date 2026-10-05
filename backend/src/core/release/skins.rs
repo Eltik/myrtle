@@ -14,13 +14,10 @@ use super::{estimate::percentile, types::Resolution};
 const SECS_PER_DAY: f64 = 86_400.0;
 const SAME_WINDOW_SECS: i64 = 20 * 86_400;
 
-/// Returns whether a skin belongs in skin-shop sale groups.
-///
-/// Measured against the current real-data extracts: this removes 1,984 CN and
-/// 1,716 EN skins from sale-group membership.  Test Collection has 28 skins
-/// in each extract: 13 remain and 15 are removed.  `obtain_approach` is
-/// localized (`采购中心` in CN and `Store` in EN), so the structural SKINSHOP
-/// listing/carousel ID set is preferred whenever it is available.
+/// Whether a skin belongs in skin-shop sale groups. On current extracts this
+/// drops 1,984 CN and 1,716 EN skins; Test Collection keeps 13 of 28 in each.
+/// `obtain_approach` is localized (`采购中心` / `Store`), so the structural
+/// SKINSHOP listing/carousel id set wins when available.
 fn is_skin_shop_sold(skin: &Skin, shop_skin_ids: &HashSet<&str>) -> bool {
     shop_skin_ids.contains(skin.skin_id.as_str())
         || matches!(
@@ -302,10 +299,10 @@ pub fn group_histories_without(
         }
     }
     let keep_unsold = keep_unsold_skins();
-    // Earliest release among a group's outfits the Fashion Review stocks. A
-    // review window belongs to a group only once that outfit has aged into the
-    // review's pool; otherwise it lands on every older group, Test
-    // Collection/XV included, though neither of its outfits is eligible.
+    // Earliest release among a group's review-stocked outfits. A review window
+    // belongs to a group only once that outfit has aged into the pool; otherwise it
+    // lands on every older group, Test Collection/XV included, though neither of
+    // its outfits is eligible.
     let mut review_from: HashMap<&str, i64> = HashMap::new();
     for s in gd.skins.char_skins.values() {
         let gid = s.display_skin.skin_group_id.as_str();
@@ -511,12 +508,11 @@ pub fn anniversary_models(groups: &[GroupHistory], now: i64) -> Vec<AnniversaryS
 pub const RERUN_MATCH_SECS: i64 = 31 * 86_400;
 pub const REVIEW_LAG_MIN_SECS: i64 = 90 * 86_400;
 pub const REVIEW_LAG_MAX_SECS: i64 = 270 * 86_400;
-/// How old an outfit is when a Fashion Review first stocks it. The review is
-/// cumulative: every edition adds the outfits that turned about two years old
-/// since the last one and keeps everything older. Measured against the
-/// twenty CN editions on record (2021-11 to 2026-07): the newest outfit each
-/// edition added was 723 to 821 days old, the oldest it left out 693 to 785,
-/// so a fixed two years is right to within one release batch per edition.
+/// Outfit age when a Fashion Review first stocks it. Reviews are cumulative:
+/// each adds outfits that turned about two years old since the last. Across the
+/// twenty CN editions on record (2021-11 to 2026-07) the newest added was 723 to
+/// 821 days old and the oldest left out 693 to 785, so two years is right to
+/// within one release batch.
 pub const REVIEW_POOL_AGE_SECS: i64 = 730 * 86_400;
 /// Store outfits that were never in a review (Fang's Cross-Cantabile and
 /// Hibiscus's Nian) carry this tag despite their store obtain approach.
@@ -555,11 +551,9 @@ pub const fn review_pool_cutoff(cn_start: i64) -> i64 {
     cn_start - REVIEW_POOL_AGE_SECS
 }
 
-/// Whether an outfit ever enters the Fashion Review: a store outfit at its
-/// base tier (18, or 15 for the early list) from a real brand. Crossover
-/// membership is the brand list's own group roster
-/// (`BrandList.crossover.GroupList`); the group id suffix names the partner,
-/// not the brand.
+/// A store outfit at base tier (18, or 15 for the early list) from a real brand.
+/// Crossover membership comes from `BrandList.crossover.GroupList`; the group id
+/// suffix names the partner, not the brand.
 pub fn review_eligible(skin: &Skin, brands: &HashMap<String, Brand>) -> bool {
     let ds = &skin.display_skin;
     super::prices::plain_store(skin)
@@ -620,9 +614,9 @@ pub fn next_by_cadence(en_last: i64, model: &CadenceModel) -> Resolution {
     }
 }
 
-/// Merged EN listing starts of one group: starts closer than
-/// `SAME_WINDOW_SECS` to the previous kept start fold into it, exactly as
-/// `cadence_model` merges them.  Review windows are never listings.
+/// A group's merged EN listing starts: a start within `SAME_WINDOW_SECS` of the
+/// previous kept one folds into it, as in `cadence_model`. Review windows are
+/// never listings.
 fn merged_listing_starts(group: &GroupHistory) -> Vec<i64> {
     let mut starts: Vec<i64> = Vec::new();
     for w in group.listings() {
@@ -638,14 +632,12 @@ fn merged_listing_starts(group: &GroupHistory) -> Vec<i64> {
 
 /// Dates a group's next EN rerun from its own listing rhythm.
 ///
-/// The anchor is the group's last EN *listing* start, never a review window:
-/// `group_histories` attaches every outfit-review window to every group that
-/// debuted before it, so anchoring on `last_seen` put 80 outfits on one date
-/// (latest review 2026-07-16 + pooled 343 d = 2027-06-24).  When the group has
-/// at least one own listing gap, the estimate is the anchor plus that last
-/// gap; the lo/hi band keeps the pooled spread around it, since the pooled
-/// model is the only measure of cadence noise.  Without an own gap the pooled
-/// model dates it from the listing anchor.
+/// Anchored on the last EN *listing* start, never a review window:
+/// `group_histories` attaches every review window to every older group, so
+/// anchoring on `last_seen` put 80 outfits on one date (review 2026-07-16 +
+/// pooled 343 d = 2027-06-24). With an own listing gap, the estimate is anchor +
+/// that last gap, with the pooled spread as lo/hi (the only measure of cadence
+/// noise). Without one, the pooled model dates it from the anchor.
 ///
 /// Leave-last-out backtest, 28 EN groups with >=3 merged listings, predicting
 /// the held-out latest listing (median abs error, within 30 d):
@@ -655,14 +647,14 @@ fn merged_listing_starts(group: &GroupHistory) -> Vec<i64> {
 /// - last listing + own median gap: 18 d, 16/28 (series change cadence,
 ///   e.g. 0011 Craft went 6-monthly to yearly)
 ///
-/// The own gap is clamped to the pooled p25..p75 band (182..363 d today).
-/// Neutral on the same backtest (13 d, 21/28; mean 66 -> 65 d) but it stops
-/// one long hole from dating a group years out: Bloodline of Combat/I's last
-/// gap is 1273 d (its outfits sat in review pools in between), which put it
-/// on 2029-10-08; Ambience Synesthesia/VI's 135 d moved it before its rhythm.
+/// The own gap is clamped to the pooled p25..p75 (182..363 d today). Neutral on
+/// the backtest (13 d, 21/28; mean 66 -> 65 d), but one long hole can't date a
+/// group years out: Bloodline of Combat/I's last gap is 1273 d (outfits in
+/// review pools between), which put it on 2029-10-08; Ambience Synesthesia/VI's
+/// 135 d moved it ahead of its rhythm.
 ///
-/// Returns `None` when the group has no EN listing to anchor on; otherwise
-/// the anchor, the resolution and the own gap in days (`None` = pooled).
+/// `None` with no EN listing to anchor on; else the anchor, the resolution and
+/// the own gap in days (`None` = pooled).
 pub fn next_by_own_cadence(
     group: &GroupHistory,
     model: &CadenceModel,

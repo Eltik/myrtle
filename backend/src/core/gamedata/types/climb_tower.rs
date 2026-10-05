@@ -10,8 +10,8 @@
 use serde::Deserialize;
 use std::collections::HashMap;
 
-/// Root of `climb_tower_table.json` - only the season schedule is parsed.
-/// `SeasonInfos` is a FlatBuffer-style `[{key, value}]` map.
+/// `climb_tower_table.json`, season schedule only. `SeasonInfos` is a
+/// FlatBuffer-style `[{key, value}]` map.
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct ClimbTowerTableFile {

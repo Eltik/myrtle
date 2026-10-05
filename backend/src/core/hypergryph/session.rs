@@ -25,10 +25,9 @@ struct GetSecretBody<'a> {
     device_id3: &'a str,
 }
 
-/// `uid` and `secret` are ONLY present on success. A rejected login answers
-/// `{"result":4}` and nothing else, so requiring them made serde fail first and
-/// the `result` check below unreachable: every game-server rejection surfaced as
-/// serde's `missing field` error for `uid`, which named neither the real failure nor its code.
+/// `uid` and `secret` exist ONLY on success. A rejection is just `{"result":4}`;
+/// requiring them made serde fail first, so every rejection surfaced as
+/// `missing field uid` with neither the real failure nor its code.
 #[derive(Deserialize)]
 #[allow(dead_code)]
 struct GetSecretResponse {
@@ -39,11 +38,9 @@ struct GetSecretResponse {
     secret: String,
 }
 
-/// The `networkVersion` sent to `account/login`, overridable per run.
-///
-/// Yostar has moved this before and a wrong value is rejected with a bare
-/// `result` code that says nothing about why. The default is unchanged; set
-/// `AK_NETWORK_VERSION` to probe another value without a rebuild.
+/// Sent to `account/login`. Yostar has moved it before, and a wrong value gets a
+/// bare `result` code. Set `AK_NETWORK_VERSION` to probe another value without a
+/// rebuild.
 fn network_version_for(server: Server) -> Result<String, FetchError> {
     if let Ok(v) = std::env::var("AK_NETWORK_VERSION")
         && !v.is_empty()
@@ -60,14 +57,11 @@ fn network_version_for(server: Server) -> Result<String, FetchError> {
 
 /// Mints the game-server `secret` for a u8 session.
 ///
-/// Retries ONCE after refreshing the version config when the game server
-/// answers a non-zero result. A stale `clientVersion`/`resVersion` is the one
-/// cause of that this process can fix by itself: the versions are read at
-/// startup and then cached for the process lifetime, so a client update shipped
-/// while the backend is up rejects every login until it restarts. The retry is
-/// bounded to one attempt and does nothing when the versions are already
-/// current, so a login that fails for any other reason costs one extra request
-/// and reports the same error it would have.
+/// On a non-zero result, retries ONCE after refreshing the version config. A
+/// stale `clientVersion`/`resVersion` is the one cause this process can fix:
+/// versions are cached at startup, so a client update shipped while the backend
+/// runs rejects every login until restart. When versions are already current,
+/// another failure costs one extra request and reports the same error.
 async fn get_secret(
     client: &Client,
     uid: &str,
@@ -167,8 +161,7 @@ async fn get_secret_once(
     let data: GetSecretResponse = parse_json(response, "get_secret").await?;
 
     if data.result != 0 {
-        // Everything the next person needs to tell a stale client apart from a
-        // rejected account, on the one line they will actually see.
+        // Enough to tell a stale client from a rejected account, on one log line.
         return Err(FetchError::ParseError(format!(
             "getSecret failed: result={} uid={} server={} networkVersion={} clientVersion={} resVersion={}",
             data.result,
@@ -189,8 +182,8 @@ async fn get_secret_once(
     Ok(data.secret)
 }
 
-/// Same shape as `GetSecretResponse`: `uid` and `token` are success-only, so
-/// they default rather than failing the parse ahead of the `result` check.
+/// Like `GetSecretResponse`: `uid` and `token` are success-only, so they default
+/// instead of failing the parse before the `result` check.
 #[derive(Deserialize)]
 #[allow(dead_code)]
 struct U8TokenResponse {
@@ -282,9 +275,8 @@ async fn get_u8_token(
     Ok(data)
 }
 
-/// Logs into the Bilibili channel (`BiliGame` publisher SDK) and runs it
-/// through the same u8/gs pipeline Yostar's `uid`/`token` go through, with
-/// `channel_id = "2"`.
+/// Bilibili channel (`BiliGame` SDK) through the same u8/gs pipeline as Yostar,
+/// with `channel_id = "2"`.
 pub async fn login_bilibili(
     client: &Client,
     username: &str,
@@ -306,16 +298,14 @@ pub async fn login_bilibili(
     })
 }
 
-/// Requests an SMS code for the Bilibili channel login below. UNVERIFIED:
-/// see `core::hypergryph::bilibili` module docs, the endpoint itself is a
-/// structural guess.
+/// UNVERIFIED: the endpoint is a structural guess (see
+/// `core::hypergryph::bilibili`).
 pub async fn send_bilibili_sms(client: &Client, phone: &str) -> Result<(), FetchError> {
     bilibili::send_sms_code(client, phone).await
 }
 
-/// Same as [`login_bilibili`] but via phone + SMS code instead of
-/// username/password. UNVERIFIED: see `core::hypergryph::bilibili` module
-/// docs.
+/// [`login_bilibili`] via phone + SMS code. UNVERIFIED: see
+/// `core::hypergryph::bilibili`.
 pub async fn login_bilibili_sms(
     client: &Client,
     phone: &str,
@@ -337,11 +327,9 @@ pub async fn login_bilibili_sms(
     })
 }
 
-/// Experimental: official CN (Hypergryph) login via the passport system
-/// documented in `core::hypergryph::passport`. Runs the passport login, then
-/// an oauth2 grant, then the shared u8/gs pipeline with `channel_id = "1"`.
-/// See that module's docs: the appCode the grant step depends on is an
-/// unverified placeholder, so this is expected to fail until the real
+/// Experimental official CN login: passport login, oauth2 grant, then the shared
+/// u8/gs pipeline with `channel_id = "1"`. The grant's appCode is an unverified
+/// placeholder (`core::hypergryph::passport`), so expect failure until the real
 /// game-client appCode is known.
 pub async fn login_cn(
     client: &Client,
@@ -409,15 +397,11 @@ pub async fn login(
     })
 }
 
-/// Re-mint a fresh game `secret` from the durable Yostar token carried on the
-/// session, updating `uid`/`token`/`secret` in place and resetting `seqnum`.
-///
-/// Only one `secret` is active per account at a time, so re-running the u8 and
-/// `account/login` steps re-establishes a valid session and resets the sequence
-/// counter to its post-login baseline.
-///
-/// Returns [`FetchError::NotLoggedIn`] when the durable token is absent; callers
-/// should surface a re-login.
+/// Re-mint `secret` from the session's durable Yostar token, updating
+/// `uid`/`token`/`secret` in place and resetting `seqnum`. One `secret` is live
+/// per account, so rerunning u8 + `account/login` re-establishes the session.
+/// [`FetchError::NotLoggedIn`] when the durable token is absent; callers should
+/// ask for a re-login.
 pub async fn refresh_secret(
     client: &Client,
     session: &mut AuthSession,

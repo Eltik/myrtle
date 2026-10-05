@@ -1,15 +1,12 @@
 //! The interactive base planner: score an arbitrary layout, or optimize one
 //! under constraints.
 //!
-//! `/user/improvements` answers one question - "what is the best plan for this
-//! player's real base?" - and answers it whole. The planner answers a different
-//! one: "what happens if I do THIS?", asked repeatedly against a layout the
-//! player is editing in the browser. Both run through the same clause engine
-//! (`ledger::score_room` via `assignment`), so a number the planner shows and a
-//! number the improvements plan shows can never disagree.
+//! `/user/improvements` answers "best plan for this player's real base?" once; the
+//! planner answers "what if I do THIS?" repeatedly against a layout edited in the
+//! browser. Both score through `ledger::score_room` via `assignment`, so their
+//! numbers can't disagree.
 //!
-//! These handlers are stateless. The edited layout lives in the client and
-//! arrives with every request; nothing about a draft is persisted server-side.
+//! Stateless: the draft lives in the client and arrives with every request.
 
 use std::collections::{HashMap, HashSet};
 
@@ -353,9 +350,9 @@ fn apply_account_facts(ctx: &mut BaseContext, game_data: &GameData, facts: &Acco
     }
 }
 
-/// The facts the PROFILE OWNER declared, saved server-side - the default every
-/// scorer reads, so the planner and `/user/improvements` price the same skills
-/// the same way. A request's own facts override per-field (a what-if).
+/// Facts the PROFILE OWNER saved server-side: the default every scorer reads, so
+/// the planner and `/user/improvements` price skills alike. A request's own facts
+/// override per field (a what-if).
 async fn effective_facts(state: &AppState, uid: &str, request: AccountFactsReq) -> AccountFactsReq {
     let saved = match find_by_uid(&state.db, uid).await {
         Ok(Some(user)) => crate::database::queries::users::get_base_facts(&state.db, user.id)
@@ -593,9 +590,8 @@ impl DraftRoom {
     }
 }
 
-/// Reject a draft before it reaches the engine: rooms the game has no definition for,
-/// impossible levels, and crews larger than the room's seats are refused by name
-/// rather than producing a nonsense score from a client-supplied layout.
+/// Rejects unknown room types, impossible levels and over-seated crews by name,
+/// rather than scoring a nonsense client-supplied layout.
 fn validate(layout: &[DraftRoom], game_data: &GameData) -> Result<(), ApiError> {
     if layout.is_empty() {
         return Err(ApiError::BadRequest("layout is empty".into()));
@@ -642,11 +638,9 @@ fn validate(layout: &[DraftRoom], game_data: &GameData) -> Result<(), ApiError> 
         }
     }
 
-    // A room type cannot appear more often than the game allows one. This is
-    // a cost bound as much as a correctness one: the rotation planner sizes its
-    // candidate pool from the per-type room count, so a layout weighted onto a
-    // single type inflates the search well past what any roster can fill.
-    // `MAX_ROOMS` bounds the total; this bounds the mix.
+    // Per-type cap from the game. A cost bound too: the rotation planner sizes its
+    // candidate pool from per-type counts, so a layout piled onto one type inflates
+    // the search past any roster. `MAX_ROOMS` bounds the total; this bounds the mix.
     let mut per_type: HashMap<&str, i32> = HashMap::new();
     for room in layout {
         let count = per_type.entry(room.room_type.as_str()).or_default();
@@ -662,8 +656,8 @@ fn validate(layout: &[DraftRoom], game_data: &GameData) -> Result<(), ApiError> 
         }
     }
 
-    // One operator, one seat - the engine assumes it, so catch a violation here
-    // instead of letting a duplicated operator inflate the score.
+    // One operator, one seat: the engine assumes it, and a duplicate would inflate
+    // the score.
     let mut placed: HashSet<&str> = HashSet::new();
     for room in layout {
         for op in &room.operators {
@@ -805,9 +799,8 @@ pub async fn evaluate(
     let mut ctx = context_for(state, uid, viewer_id, &game_data, req.ignore_promotion).await?;
     let facts = effective_facts(state, uid, req.facts).await;
     apply_account_facts(&mut ctx, &game_data, &facts);
-    // Real current morale, PROJECTED to now: the sync stores each bar with a
-    // timestamp and a seat, so drain/recovery since the last sync is applied
-    // before anything reads it. "Lasts X h" genuinely means from now.
+    // Current morale PROJECTED to now: each synced bar has a timestamp and seat, so
+    // drain/recovery since the sync is applied first. "Lasts X h" means from now.
     let mut drones_json: Option<serde_json::Value> = None;
     let (live_morale, morale_synced_hours_ago, synced_bars) =
         match find_by_uid(&state.db, uid).await {
@@ -849,8 +842,7 @@ pub async fn evaluate(
             .collect(),
     };
 
-    // `compute_current_assignment` scores rooms exactly as stationed - which is
-    // precisely what "score this draft" means.
+    // Scores rooms exactly as stationed, which is what "score this draft" means.
     let assignment = compute_live_assignment(
         &ctx.profiles,
         &building,
@@ -1207,24 +1199,18 @@ pub async fn optimize(
     })
 }
 
-/// Rooms the optimizer has no model for at all: it never staffs a Training Room
-/// or a Workshop, and no part of the search values a seat in one.
+/// Rooms the optimizer has no model for: it never staffs Training or Workshop and
+/// nothing in the search values a seat there.
 ///
-/// This is NOT simply "everything the optimizer doesn't staff" -
-/// dormitories are excluded on purpose. The optimizer never *puts* anyone in a
-/// dorm, but a resting operator is legitimately available labor, and the
-/// improvements plan treats them that way. Pinning dorm crews here would make
-/// the planner propose worse layouts than the Score tab, which is exactly the
-/// disagreement this design exists to prevent.
+/// Dorms are left out on purpose: the optimizer never seats anyone there, but a
+/// resting operator is available labor, as the improvements plan treats them.
+/// Pinning dorm crews would make the planner propose worse than the Score tab.
 const UNMODELED_ROOM_TYPES: [&str; 2] = ["TRAINING", "WORKSHOP"];
 
 /// A two-squad, three-shift rotation for the drafted layout.
 ///
-/// The draft carries no in-game preset queue, so the DTO's preset-comparison
-/// fields (`current`, `swap_in`, `swap_out`, `matches`) are empty by
-/// construction - there is nothing to compare a draft against. The planner
-/// renders the recommendation, its squad labels and the sustainability verdict,
-/// and leaves the preset overlay to the Score tab where a real preset exists.
+/// A draft has no in-game preset queue, so `current`, `swap_in`, `swap_out` and
+/// `matches` are empty by construction; the preset overlay stays on the Score tab.
 pub async fn rotation(
     state: &AppState,
     uid: &str,
@@ -1248,9 +1234,8 @@ pub async fn rotation(
 
     let mut pins = build_pins(&req.layout, &[], &req.locked);
     let candidates = ctx.profiles_excluding(&req.excluded);
-    // Same solved economies, generator pins and morale-swap manager
-    // reservation the improvements plan rotates with - the planner and the
-    // Score tab must never disagree about them.
+    // Same economies, generator pins and morale-swap reservation as the
+    // improvements rotation, so the planner and the Score tab agree.
     let economy = search_economy(&candidates, &building, &game_data.building, &ctx.registry);
     for pin in economy.pins {
         if !pins.iter().any(|(id, _)| *id == pin.0) {
@@ -1298,19 +1283,13 @@ pub async fn rotation(
     })
 }
 
-/// The `(char_id, room_type)` pins a planner run must respect.
+/// The `(char_id, room_type)` pins a planner run must respect: rooms outside
+/// `scope`, room types the optimizer can't model ([`UNMODELED_ROOM_TYPES`]), and
+/// operators the player pinned.
 ///
-/// Three reasons an operator gets held in place, all expressed the same way:
-///
-/// - the room is outside `scope`, so the player asked us not to touch it;
-/// - the room type is one the optimizer has no model for (see
-///   [`UNMODELED_ROOM_TYPES`]);
-/// - the player pinned that operator explicitly.
-///
-/// Pinning rather than excluding is deliberate: a pinned operator still sits in
-/// a room, so their cross-room buffs stay in the scoring. Excluding them would
-/// quietly delete those buffs and make a scoped run disagree with a whole-base
-/// one. Shared by optimize and rotation so the two never drift.
+/// Pinning, not excluding: a pinned operator still sits in a room, so their
+/// cross-room buffs stay in the score. Excluding would drop them and make a scoped
+/// run disagree with a whole-base one. Shared by optimize and rotation.
 fn build_pins(layout: &[DraftRoom], scope: &[String], locked: &[String]) -> Vec<(String, String)> {
     let in_scope: HashSet<&str> = scope.iter().map(String::as_str).collect();
     let locked: HashSet<&str> = locked.iter().map(String::as_str).collect();
@@ -1330,11 +1309,10 @@ fn build_pins(layout: &[DraftRoom], scope: &[String], locked: &[String]) -> Vec<
 
 /// What changed, room by room.
 ///
-/// The "before" crew comes from the DRAFT, not from `baseline`: a
-/// `BaseAssignment` only carries production rooms and a staffed Control Center,
-/// so keying off it silently discards every proposal for a Power Plant, Office
-/// or Reception Room. Baseline supplies the efficiency and yield figures where
-/// it has them, and zero where the engine reports none.
+/// The "before" crew comes from the DRAFT, not `baseline`: a `BaseAssignment`
+/// carries only production rooms and a staffed Control Center, so keying off it
+/// dropped every Power Plant, Office and Reception proposal. Baseline supplies
+/// efficiency and yield where it has them, zero elsewhere.
 fn diff_rooms(
     draft: &[DraftRoom],
     baseline: &BaseAssignment,
@@ -1354,8 +1332,7 @@ fn diff_rooms(
             continue;
         };
         let before = scored_by_slot.get(after.slot_id.as_str()).copied();
-        // Crew identity, not seat order - reordering the same operators is not a
-        // change worth asking the player to review.
+        // Crew identity, not seat order: a reorder isn't a change to review.
         let a: HashSet<&str> = drafted.operators.iter().map(String::as_str).collect();
         let b: HashSet<&str> = after.operators.iter().map(String::as_str).collect();
         if a == b {
@@ -1438,8 +1415,8 @@ pub fn catalog(state: &AppState) -> CatalogResponse {
         .collect();
     formulas.sort_by(|a, b| a.formula_type.cmp(&b.formula_type));
 
-    // The game keys them, so take whichever is
-    // there rather than naming it - a second layout should not blank the board.
+    // The game keys layouts; take whichever is there rather than naming it, so a
+    // second layout can't blank the board.
     let layout = game_data.building.layouts.values().next();
 
     let mut slots: Vec<CatalogSlotDto> = layout

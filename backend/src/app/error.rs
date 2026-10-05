@@ -10,10 +10,8 @@ use crate::core::hypergryph::fetch::FetchError;
 pub enum ApiError {
     #[error("{0}")]
     BadRequest(String),
-    /// We hold no game session for the user, from the cache or the durable
-    /// store, so only a fresh sign-in with an email code can recover. A 400
-    /// with its own code: clients branch on `GAME_LOGIN_REQUIRED` to tell the
-    /// user what to do instead of showing the prose.
+    /// No game session in cache or durable store; only a fresh email-code sign-in
+    /// recovers. 400 with code `GAME_LOGIN_REQUIRED` so clients can branch on it.
     #[error("no game session - login again")]
     GameLoginRequired,
     #[error("unauthorized")]
@@ -133,9 +131,7 @@ impl From<sqlx::Error> for ApiError {
     fn from(e: sqlx::Error) -> Self {
         match &e {
             sqlx::Error::RowNotFound => Self::NotFound,
-            // The pool is full and `acquire_timeout` elapsed. That is
-            // backpressure, not an internal fault, so it is a 503: the code a
-            // client, a proxy and a dashboard all know how to act on.
+            // Pool full and `acquire_timeout` elapsed: backpressure, not a fault, so 503.
             sqlx::Error::PoolTimedOut => {
                 tracing::warn!("database pool exhausted; shedding request");
                 Self::ServiceUnavailable

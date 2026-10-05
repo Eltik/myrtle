@@ -1,14 +1,7 @@
-//! Pins the generated OpenAPI document so an API surface change shows up as a reviewable diff.
-//!
-//! Sibling of `api_shape_test` (JSON shape of the `/static` payloads) and
-//! `bindings_shape_test` (generated TypeScript): no compiler checks the consumer
-//! contract, so a snapshot does.
-//!
-//! The diff covers new endpoints with their parameters and responses, renamed or
-//! removed fields on any schema (a disappearing line breaks every consumer of that
-//! field), and path or method changes (read from the same `#[utoipa::path]` that
-//! registers the route). Nothing is outside it: `every_route_is_documented` asserts
-//! no route uses a plain `.route(..)`.
+//! Pins the generated OpenAPI document so an API change shows up as a reviewable diff.
+//! Sibling of `api_shape_test` (`/static` JSON) and `bindings_shape_test` (generated
+//! TS): no compiler checks the consumer contract. `every_route_is_documented` keeps
+//! every route inside the document.
 //!
 //! Refresh after an intentional change, and review the diff in the PR:
 //!   UPDATE_OPENAPI=1 cargo test --test openapi_snapshot_test
@@ -19,8 +12,7 @@ use std::path::PathBuf;
 use backend::app::server::api_parts;
 use utoipa::openapi::path::{Operation, PathItem};
 
-/// `PathItem` stores one `Option<Operation>` per HTTP method rather than a map,
-/// so flatten it into the pairs these tests want to iterate.
+/// `PathItem` holds one `Option<Operation>` per method, not a map.
 fn operations(item: &PathItem) -> Vec<(&'static str, &Operation)> {
     [
         ("get", &item.get),
@@ -41,8 +33,7 @@ fn snapshot_path() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/snapshots/openapi.json")
 }
 
-/// Render the document the server serves, pretty-printed so the diff is
-/// line-oriented rather than one enormous line.
+/// Pretty-printed so the snapshot diffs line by line.
 fn render() -> String {
     let (_router, api) = api_parts();
     let mut json = api
@@ -81,9 +72,8 @@ fn openapi_document_matches_snapshot() {
     );
 }
 
-/// Every documented operation must carry a description for each response it
-/// declares, because an undescribed status code in the rendered docs is worse
-/// than an absent one: it looks answered.
+/// An undescribed status code in the rendered docs is worse than an absent one:
+/// it looks answered.
 #[test]
 fn every_documented_response_has_a_description() {
     let (_router, api) = api_parts();
@@ -112,25 +102,18 @@ fn every_documented_response_has_a_description() {
     assert!(missing.is_empty(), "undescribed responses: {missing:?}");
 }
 
-/// An operation that requires a credential must document what happens when the
-/// credential is missing or bad.
-///
-/// Note the direction. The converse is NOT an invariant: `POST /api/login`
-/// answers 401 for a wrong code while requiring no credential of its own, so
-/// "documents a 401" does not imply "needs a token".
+/// A credentialed operation must document its 401. Not the converse:
+/// `POST /api/login` answers 401 for a wrong code but needs no token.
 #[test]
 fn documented_operations_declare_their_auth_posture() {
     let (_router, api) = api_parts();
 
     for (path, item) in &api.paths.paths {
         for (method, op) in operations(item) {
-            // `security(.., ())` - an empty requirement among the options - is how
-            // an endpoint says the credential is optional, so it is not a promise
-            // that unauthenticated calls fail. Only a wholly-required credential
-            // obliges a documented 401.
-            //
-            // Read through the serialized form: `SecurityRequirement`'s inner map
-            // is private, and an empty requirement is exactly `{}` on the wire.
+            // `security(.., ())` (an empty requirement among the options) marks the
+            // credential optional, so only a wholly-required one needs a 401.
+            // Read via serde: `SecurityRequirement`'s map is private, and an empty
+            // requirement is `{}` on the wire.
             let requires_credential = op.security.as_ref().is_some_and(|reqs| {
                 !reqs.is_empty()
                     && reqs.iter().all(|req| {
@@ -150,18 +133,11 @@ fn documented_operations_declare_their_auth_posture() {
     }
 }
 
-/// Every route is documented.
-///
-/// The budget was 155 and is now zero: no route is reached through a plain
-/// `.route(..)`, so the OpenAPI document omits no endpoint. A handler registered
-/// with `.route(..)` instead of `.routes(routes!(..))` has no `#[utoipa::path]` to
-/// take its path and method from, and fails here.
-///
-/// Do not raise the budget to land an endpoint quickly. Annotating a handler is
-/// four lines, and `src/app/openapi.rs` lists the steps.
+/// A plain `.route(..)` has no `#[utoipa::path]`, so the document would omit it.
+/// The budget was 155 and is now zero; don't raise it to land an endpoint.
+/// `src/app/openapi.rs` lists the four steps to annotate a handler.
 #[test]
 fn every_route_is_documented() {
-    /// Zero, and it should stay zero.
     const UNDOCUMENTED_ROUTE_BUDGET: usize = 0;
 
     let routes_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("src/app/routes");
@@ -206,18 +182,11 @@ fn every_route_is_documented() {
     );
 }
 
-/// `operationId` must be unique across the whole document.
-///
-/// utoipa derives it from the bare handler function name, and this API has six
-/// modules that each export a `list`, three that export a `delete`, and so on.
-/// Thirty-two of the operations collided before this test existed. That is not
-/// cosmetic: client generators name their methods after `operationId`, so
-/// duplicates collide or silently drop operations, and the OpenAPI spec itself
-/// requires uniqueness.
-///
-/// The fix for a collision is an explicit `operation_id = "..."` on the handler,
-/// qualified enough to stand alone. Only the colliding ones carry it, because
-/// this test rather than a naming convention is what keeps the guarantee.
+/// utoipa derives `operationId` from the bare handler name, and six modules export
+/// a `list`, three a `delete`: 32 operations collided before this test. Client
+/// generators name methods after it, so duplicates collide or drop operations, and
+/// the spec requires uniqueness. Fix with an explicit `operation_id = "..."` on the
+/// colliding handler only; this test, not a naming convention, keeps the guarantee.
 #[test]
 fn operation_ids_are_unique() {
     let (_router, api) = api_parts();
@@ -244,14 +213,10 @@ fn operation_ids_are_unique() {
     );
 }
 
-/// Every `$ref` in the document must resolve to something the document defines.
-///
-/// A dangling `$ref` makes the whole document invalid to every validator and
-/// code generator, and it is easy to introduce without noticing: cutting a
-/// recursive schema with `#[schema(no_recursion)]` stops utoipa collecting the
-/// referenced type into `components` while the field still emits a `$ref` to
-/// it. That is exactly how `PlanRecipe` went missing. The cure is to name the
-/// type in `components(schemas(..))` in `src/app/openapi.rs`.
+/// A dangling `$ref` invalidates the whole document for validators and generators.
+/// `#[schema(no_recursion)]` stops utoipa collecting the type into `components`
+/// while the field still emits the `$ref`; that is how `PlanRecipe` went missing.
+/// Fix: name the type in `components(schemas(..))` in `src/app/openapi.rs`.
 #[test]
 fn every_ref_resolves() {
     let (_router, api) = api_parts();
@@ -320,16 +285,10 @@ fn every_ref_resolves() {
     );
 }
 
-/// Every operation needs a summary, because the rendered docs fall back to the
-/// raw path without one.
-///
-/// Scalar uses `summary` as the sidebar label. Three operations were missing
-/// theirs and showed as `/api/login/cn/send-code` in a list of 180 prose
-/// labels, which reads as a hole rather than as an endpoint. Nothing in the
-/// spec is invalid without it, so only looking at the page catches this, which
-/// is why it is pinned here instead.
-///
-/// The summary is the first line of the handler's doc comment. Write one.
+/// Scalar labels the sidebar with `summary` and falls back to the raw path. Three
+/// operations lacked one and showed as `/api/login/cn/send-code` among 180 prose
+/// labels. The spec is valid without it, so only this test catches it. The summary
+/// is the first line of the handler's doc comment.
 #[test]
 fn every_operation_has_a_summary() {
     let (_router, api) = api_parts();

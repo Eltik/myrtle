@@ -1,24 +1,21 @@
-//! One EXPRESSION as a small image: a gallery folder's `#N$M` composed (body
-//! plate plus face patch at `facePos`, exactly as `Body` stacks them on the
-//! page) and scaled to [`THUMB_H`] px high, made on first request and kept on
-//! disk under `derived/sprite-thumbs/<base>/<variant>.<ext>`.
+//! One expression as a small image: a gallery folder's `#N$M` composed (body plate
+//! plus face patch at `facePos`, as `Body` stacks them) and scaled to [`THUMB_H`]
+//! px, rendered on first request and kept under
+//! `derived/sprite-thumbs/<base>/<variant>.<ext>`.
 //!
-//! Why it exists: the gallery's first page drew 60 cards from 79 full-size
-//! body and face PNGs, 25,997,666 bytes, against 2,902,478 for the 60 thumbs
-//! (`first_page_thumbs_priced`). The tier list's
-//! `/story-sprite-thumb/{id}` cannot stand in: it crops one default body per
-//! CHARACTER, not per folder and expression.
+//! Why: the gallery's first page drew 60 cards from 79 full-size PNGs, 25,997,666
+//! bytes, vs 2,902,478 for 60 thumbs (`first_page_thumbs_priced`). The tier list's
+//! `/story-sprite-thumb/{id}` crops one default body per CHARACTER, not per folder
+//! and expression, so it can't stand in.
 //!
-//! Only expressions the gallery LISTS are rendered, looked up in the cached
-//! census by key, so the route cannot be driven to compose arbitrary files.
-//! The cache file is fresh while it is newer than both sources; a re-extract
-//! rewrites every source and so retires every thumb, which then re-renders
-//! lazily. `derived/` is never in a subtree the extract writes, so the orphan
-//! sweep (`assets/orphans.mjs`) never reaches it; a cache hit still refreshes
-//! the file's mtime once it is a day old, the rule `pool_write_png` follows,
-//! so a future sweep that did reach it would keep what is served. Not on
-//! every hit: the asset route's `ETag` is size plus mtime, and touching per
-//! request would turn every 304 into a 200.
+//! Only expressions the gallery LISTS render (looked up in the cached census), so
+//! the route can't be driven to compose arbitrary files. A thumb is fresh while
+//! newer than both sources; a re-extract retires every thumb. `derived/` is outside
+//! what the extract writes, so the orphan sweep (`assets/orphans.mjs`) never
+//! reaches it; a hit still refreshes the mtime once it is a day old (the
+//! `pool_write_png` rule) in case a future sweep does. Not on every hit: the asset
+//! route's `ETag` is size plus mtime, so a per-request touch turns every 304 into
+//! a 200.
 
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
@@ -141,7 +138,6 @@ pub fn compose(
     Ok(out)
 }
 
-/// Encode a composed thumb.
 pub fn encode(img: &RgbaImage, format: ThumbFormat) -> anyhow::Result<Vec<u8>> {
     let (w, h) = img.dimensions();
     let mut bytes = Vec::new();

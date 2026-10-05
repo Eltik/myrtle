@@ -89,9 +89,8 @@ pub async fn calculate(
     if let Some(hit) = state.cache.get::<DpsResult>(&key).await {
         return Ok(Json(hit));
     }
-    // `cpu::run` needs an owned closure, so the compute side takes its own handle.
-    // AppState is an Arc behind the scenes, so this is a refcount bump, and it
-    // leaves `state` available for the cache write once the work comes back.
+    // `cpu::run` needs an owned closure. AppState is an Arc, so this is a refcount
+    // bump, and `state` stays free for the cache write.
     let compute_state = state.clone();
     let result = cpu::run("dps_calculate", move || {
         services::dps::calculate(&compute_state, body)

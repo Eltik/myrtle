@@ -14,7 +14,7 @@
 //! | ATTAIN            | `LimitParam` | `attainRare6CharList`
 //! | FESCLASSIC        | `DynMeta`    | `rarityPickCharDict.TIER_5` + `TIER_6`
 //! | SPECIAL           | `DynMeta`    | same as FESCLASSIC
-//! | LINKAGE / SINGLE / NORMAL / DOUBLE | (no blob - rate-ups come from elsewhere)
+//! | LINKAGE / SINGLE / NORMAL / DOUBLE | (no blob; rate-ups come from elsewhere)
 //!
 //! Decoding is best-effort: a malformed blob never errors out, it leaves the
 //! banner's featured lists empty and the UI falls back.
@@ -65,8 +65,8 @@ fn overlay_pool_detail(pool: &mut GachaPoolClient, detail: &GachaPoolDetail) {
     let info = &detail.detail_info;
     let mut used_api = false;
 
-    // The rate-ups proper. Union rather than replace - the blob-derived entry
-    // is a subset here, and empty on the rule types the blobs own outright.
+    // The rate-ups proper. Union, not replace: the blob-derived entry is a subset
+    // here, and empty on the rule types the blobs own outright.
     if let Some(up) = info.up_char_info.as_ref() {
         for entry in &up.per_char_list {
             let target = match entry.rarity_rank {
@@ -129,10 +129,9 @@ fn extract_featured(pool: &GachaPoolClient) -> (Vec<String>, Vec<String>) {
     let mut f6: Vec<String> = Vec::new();
     let mut f5: Vec<String> = Vec::new();
 
-    // LIMITED's `limitedCharId` lives in LimitParam; everything else lives in
-    // DynMeta. We probe both regardless of rule_type - Yostar has shuffled
-    // fields across rule types in the past, and the cost of a missing-key
-    // lookup is negligible.
+    // LIMITED's `limitedCharId` lives in LimitParam, everything else in DynMeta.
+    // Probe both regardless of rule_type: Yostar has shuffled fields across rule
+    // types before, and a missing-key lookup is cheap.
     for doc in [&limit, &dyn_meta].iter().copied().flatten() {
         if let Some(s) = doc.get_str("limitedCharId").ok().filter(|s| !s.is_empty()) {
             push_unique(&mut f6, s);
@@ -195,7 +194,7 @@ mod tests {
     use crate::core::gamedata::types::gacha_detail::GachaPoolDetail;
 
     /// A LIMITED banner's `LimitParam.Base64`, decoding to
-    /// `{hasFreeChar, freeCount, limitedCharId, version}` - a single 6*.
+    /// `{hasFreeChar, freeCount, limitedCharId, version}`: a single 6*.
     const LIMITED_BLOB: &str = "WwAAAAhoYXNGcmVlQ2hhcgABEmZyZWVDb3VudAAsAQAAAAAAAAJsaW1pdGVkQ2hhcklkABEAAABjaGFyXzEwNDVfc3Zhc2gyABJ2ZXJzaW9uAAEAAAAAAAAAAA==";
 
     fn pool(id: &str, rule: &str, limit_param: Option<&str>) -> GachaPoolClient {

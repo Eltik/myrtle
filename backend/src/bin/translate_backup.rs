@@ -145,7 +145,7 @@ fn main() -> Result<()> {
     {
         let w = tables.get_mut("tier_lists").unwrap();
         for r in &tier_lists {
-            // skip soft-deleted rows - v3 has no is_deleted column
+            // v3 has no is_deleted column, so skip soft-deleted rows
             if r.get("is_deleted")
                 .and_then(serde_json::Value::as_bool)
                 .unwrap_or(false)
@@ -205,8 +205,8 @@ fn main() -> Result<()> {
             if !known_tier_ids.contains(tier_id) {
                 continue;
             }
-            // dedupe - old schema's PK was an `id` UUID, v3 collapses to
-            // (tier_id, operator_id). Take the first sighting to be deterministic.
+            // old PK was an `id` UUID; v3 collapses to (tier_id, operator_id). First
+            // sighting wins, for determinism.
             if !seen.insert((tier_id.to_string(), op_id.to_string())) {
                 continue;
             }
@@ -263,13 +263,13 @@ fn main() -> Result<()> {
     {
         let w = tables.get_mut("operator_notes_audit_log").unwrap();
         let audit: Vec<Value> = read_array(&args.in_dir.join("operator_notes_audit_log.json"))?;
-        // v3 PK is BIGSERIAL - emit synthetic incrementing ids. Sequence is
-        // reset post-import by import-database.
+        // v3 PK is BIGSERIAL: emit synthetic incrementing ids; import-database resets
+        // the sequence.
         let mut next_id: i64 = 1;
         for r in &audit {
             let op = r.get("operator_id").and_then(|v| v.as_str()).unwrap_or("");
             let Some(note_id) = note_id_by_op.get(op) else {
-                continue; // orphan audit row - its parent note is gone
+                continue; // orphan audit row, its parent note is gone
             };
             w.write(&json!({
                 "id": next_id,
@@ -345,7 +345,7 @@ fn main() -> Result<()> {
             "updated_at": obj.get("updated_at"),
         }))?;
 
-        // user_settings - old `settings` blob was free-form; default to true
+        // user_settings: the old `settings` blob was free-form; default to true
         let settings = obj.get("settings");
         tables.get_mut("user_settings").unwrap().write(&json!({
             "user_id": id,
@@ -417,8 +417,8 @@ fn main() -> Result<()> {
             }
         }
 
-        // user_items - old myrtle stored inventory as {item_id: {amount, ...meta}}
-        // (with the full ItemTable entry inlined). v3 only needs id+quantity.
+        // user_items: old myrtle stored inventory as {item_id: {amount, ...meta}}
+        // (the full ItemTable entry inlined). v3 only needs id+quantity.
         if let Some(inv) = data
             .and_then(|d| d.get("inventory"))
             .and_then(|v| v.as_object())
@@ -538,7 +538,7 @@ fn main() -> Result<()> {
             "data": building,
         }))?;
 
-        // user_checkin (history array - try both shapes)
+        // user_checkin (history array, two possible shapes)
         let history = data
             .and_then(|d| d.get("checkIn"))
             .and_then(|c| c.get("history").or_else(|| c.get("checkInHistory")))
@@ -595,9 +595,8 @@ fn main() -> Result<()> {
     );
 
     // ── user_gacha_settings -> fold into user_settings overrides ────────────
-    // (already wrote one settings row per user above with defaults - overwrite
-    //  by reading user_gacha_settings and rewriting only changed flags. Simpler
-    //  to do this as a post-pass: read what we already wrote, patch, rewrite.)
+    // Post-pass: reread the settings rows written above with defaults, patch the
+    // changed flags, rewrite.
     let gacha_settings: Vec<Value> = read_array(&args.in_dir.join("user_gacha_settings.json"))?;
     if !gacha_settings.is_empty() {
         // map user_id -> (store_gacha, share_stats) from gacha settings
@@ -627,7 +626,7 @@ fn main() -> Result<()> {
         for r in &records {
             let user_id = r.get("user_id").and_then(|v| v.as_str()).unwrap_or("");
             if !user_ids.contains(user_id) {
-                continue; // orphan - FK would fail
+                continue; // orphan, FK would fail
             }
             let char_id = r
                 .get("char_id")
@@ -771,9 +770,8 @@ fn read_array(path: &Path) -> Result<Vec<Value>> {
     }
 }
 
-/// Stream a JSON array of objects, yielding each object as `Value`. Memory
-/// stays bounded to ~one object regardless of file size - necessary for
-/// users.json which can be multiple GB.
+/// Stream a JSON array of objects, yielding each object as `Value`.
+/// Memory stays bounded to ~one object, needed for users.json (multiple GB).
 fn stream_array<F>(path: &Path, mut on_item: F) -> Result<()>
 where
     F: FnMut(Value) -> Result<()>,

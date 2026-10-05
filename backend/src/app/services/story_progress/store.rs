@@ -1,15 +1,10 @@
-//! The database half of the account's game read marks, and the re-derivation.
+//! `user_game_story_read`: writing the verdict set, reading it back, and rebuilding
+//! the refresh's payload from it so [`super::verdict::parse_game_story_read`] can
+//! rerun without the game server. What "read" means lives in [`super::verdict`].
 //!
-//! What this module OWNS is `user_game_story_read`: writing the verdict set to
-//! it, reading it back, and rebuilding the refresh's payload shape out of it so
-//! [`super::verdict::parse_game_story_read`] can be run again with no call to
-//! the game server. Nothing here decides what "read" means; that is
-//! [`super::verdict`].
-//!
-//! Scale: 1,365 rows for the measured account against a 1,887-story EN
-//! library, written as ONE `UNNEST` insert inside one transaction on one
-//! connection. The stage timings on [`StoreOutcome`] are the deliverable, not
-//! decoration: see the doc comment there.
+//! 1,365 rows for the measured account vs a 1,887-story EN library, written as
+//! ONE `UNNEST` insert in one transaction. See [`StoreOutcome`] for why the stage
+//! timings exist.
 
 use serde_json::Value;
 use uuid::Uuid;
@@ -18,20 +13,17 @@ use super::verdict::{GameStoryReadSet, parse_game_story_read};
 use super::{StoryProgressResponse, get};
 use crate::app::{error::ApiError, state::AppState};
 
-/// Re-derive the game verdict from what the database ALREADY holds, with no
-/// call to the game server.
+/// Re-derive the game verdict from what the database already holds, without the
+/// game server.
 ///
-/// A refresh is the only thing that reads the game's payload, but every input
-/// the verdict needs survives it: `user_game_story_read` keeps which stories
-/// the flags named (`played`) and which the Archive listed (`archived`, with
-/// `rc` and `uts`), and `user_stage_progress.stages` keeps every stage record
-/// with `state`, `startTimes` and `completeTimes`. Those are rebuilt into the
-/// payload shape the refresh parses and run through the SAME rule, so a rule
-/// change reaches an account the moment it presses "Sync now" rather than on
-/// its next refresh. An account with neither table row is answered as a plain
-/// read. The `cowFirstTs` the refresh copies onto a stage record is what lets
-/// the special story stages count here; a store written before that copy
-/// loses those (six on the test account) until the next refresh.
+/// Every verdict input survives a refresh: `user_game_story_read` keeps which
+/// stories the flags named (`played`) and the Archive listed (`archived`, with
+/// `rc` and `uts`), and `user_stage_progress.stages` keeps every stage record.
+/// They are rebuilt into the refresh's payload shape and run through the SAME
+/// rule, so a rule change reaches an account on "Sync now", not its next refresh.
+/// No row in either table answers as a plain read. Special story stages count
+/// through the `cowFirstTs` the refresh copies onto the stage record; a store from
+/// before that copy loses them (six on the test account) until the next refresh.
 pub async fn reverdict(
     state: &AppState,
     user_id: Uuid,
@@ -72,7 +64,7 @@ pub async fn reverdict(
     get(state, user_id).await
 }
 
-/// One stored row, as {@link `stored_payload`} rebuilds it.
+/// One stored row, as [`stored_payload`] rebuilds it.
 #[derive(Debug, sqlx::FromRow)]
 pub struct StoredRead {
     pub story_id: String,
@@ -155,11 +147,9 @@ pub async fn store_game_read(
     })
 }
 
-/// What the store did, stage by stage.
-///
-/// The stage times are the deliverable, not decoration: the 2026-09-24 refresh
-/// answered 504 with ZERO rows stored, and the only way to tell a slow INSERT
-/// from a store that never ran is to have it say which stage it reached.
+/// What the store did, stage by stage. The 2026-09-24 refresh answered 504 with
+/// ZERO rows stored; the stage reached is what tells a slow INSERT from a store
+/// that never ran.
 #[derive(Debug, Default, Clone, Copy)]
 pub struct StoreOutcome {
     /// Rows written by the INSERT.
@@ -172,12 +162,9 @@ pub struct StoreOutcome {
     pub commit_ms: u128,
 }
 
-/// A store that did not happen, in the words both the log line and the refresh
-/// response need.
-///
-/// `ApiError::Internal` Displays as "internal error", which is exactly the
-/// message that cost the 2026-09-24 pass an afternoon, so the stage travels as
-/// a field rather than inside an opaque wrapper.
+/// A store that did not happen, for both the log line and the refresh response.
+/// The stage is a field because `ApiError::Internal` Displays as "internal error",
+/// the message that cost the 2026-09-24 pass an afternoon.
 #[derive(Debug, Clone)]
 pub struct StoreFailure {
     /// Which statement did not answer: `begin`, `delete`, `insert`, `commit`.

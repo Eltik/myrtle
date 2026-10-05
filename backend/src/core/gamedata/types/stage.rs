@@ -1,5 +1,3 @@
-//! `stage_table` types.
-
 use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::HashMap;
 use ts_rs::TS;
@@ -331,8 +329,7 @@ pub struct StageTableFile {
     /// `RelevantStorySetId` names.
     #[serde(default, deserialize_with = "deserialize_fb_map_story_sets")]
     pub storyline_story_sets: HashMap<String, StorylineStorySet>,
-    // Other fields like TileInfo, MapThemes, etc.
-    // are not needed for the randomizer
+    // Other fields (TileInfo, MapThemes, ...) aren't read.
 }
 
 /// `StorylineStorySets` keyed by `StorySetId` rather than by the outer `key`,

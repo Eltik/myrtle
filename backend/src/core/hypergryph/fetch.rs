@@ -10,8 +10,8 @@ use crate::core::hypergryph::{
 };
 use crate::utils::redact::redacted_body;
 
-/// Deadline for one exchange, body included; suits the small answers most
-/// endpoints give. `account/syncData` needs more (see [`FetchRequest::timeout`]).
+/// Whole-exchange deadline, body included. `account/syncData` needs more (see
+/// [`FetchRequest::timeout`]).
 pub const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
 
 #[derive(Debug, Deserialize)]
@@ -67,8 +67,8 @@ pub struct FetchRequest<'a> {
     pub session: Option<&'a AuthSession>,
     pub server: Server,
     pub sign: bool,
-    /// Whole-exchange deadline, [`REQUEST_TIMEOUT`] unless the answer is
-    /// large (the whole player from `account/syncData`).
+    /// [`REQUEST_TIMEOUT`] unless the answer is large (the whole player from
+    /// `account/syncData`).
     pub timeout: Duration,
 }
 pub async fn fetch(
@@ -139,15 +139,14 @@ pub async fn fetch_domain(
     fetch(client, &raw_url, req).await
 }
 
-/// Read the response body. Non-2xx statuses are parsed as the Arknights error
-/// envelope (`FetchError::Upstream`) or, failing that, surfaced as `ParseError`.
+/// Non-2xx is parsed as the Arknights error envelope (`FetchError::Upstream`),
+/// else surfaced as `ParseError`.
 pub async fn read_body(response: Response, context: &str) -> Result<String, FetchError> {
     read_body_tolerating(response, context, &[]).await
 }
 
-/// [`read_body`] for a caller that expects some envelope codes as ordinary
-/// answers (a shop that does not exist, a stage with no replay): those still
-/// come back as `FetchError::Upstream` but are not logged as warnings.
+/// [`read_body`] for callers expecting some envelope codes as normal answers (no
+/// such shop, no replay): still `FetchError::Upstream`, but not logged as warnings.
 pub async fn read_body_tolerating(
     response: Response,
     context: &str,
@@ -185,7 +184,6 @@ pub async fn parse_json<T: serde::de::DeserializeOwned>(
     parse_json_tolerating(response, context, &[]).await
 }
 
-/// [`parse_json`] over [`read_body_tolerating`].
 pub async fn parse_json_tolerating<T: serde::de::DeserializeOwned>(
     response: Response,
     context: &str,
@@ -193,8 +191,8 @@ pub async fn parse_json_tolerating<T: serde::de::DeserializeOwned>(
 ) -> Result<T, FetchError> {
     let text = read_body_tolerating(response, context, tolerated).await?;
     serde_json::from_str::<T>(&text).map_err(|e| {
-        // Body and serde detail stay in logs; the surfaced error is intentionally generic
-        // so we don't leak the upstream schema to API clients.
+        // Body and serde detail stay in logs; the error stays generic so the upstream
+        // schema doesn't leak to API clients.
         tracing::warn!(context, body = %redacted_body(&text), error = %e, "failed to parse response body");
         FetchError::ParseError(format!("{context}: invalid upstream response"))
     })

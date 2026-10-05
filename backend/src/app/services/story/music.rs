@@ -1,10 +1,6 @@
-//! The theme a story group plays over its Archives entry.
-//!
-//! What this module OWNS is the join from a group id to a `Musics` row, a BGM
-//! bank and the two clips on disk. It is one function because the rule is one
-//! chain of fallbacks, each step derived from the rows the step before it
-//! missed; the audit trail for those steps is the doc comment below and
-//! `docs/story-reader.md`, section "1. What is true about the data".
+//! The theme a story group plays over its Archives entry: group id -> `Musics` row
+//! -> BGM bank -> clips on disk, as one fallback chain (audited on `group_music`
+//! and in `docs/story-reader.md` section 1).
 
 use super::dto::{StoryCategory, StoryMusic};
 use super::opt;

@@ -12,8 +12,7 @@ const WEIGHT_COLLECTIBLES: f64 = 20.0;
 const WEIGHT_BP: f64 = 15.0;
 const WEIGHT_CHALLENGES: f64 = 10.0;
 
-// Newer themes weigh slightly more
-// Might consider making all of them a weight of 1.0
+// Newer themes weigh slightly more. Might flatten all to 1.0.
 fn theme_weight(theme_id: &str) -> f64 {
     match theme_id {
         "rogue_1" => 0.12,
@@ -147,9 +146,8 @@ fn grade_theme(
         dimensions.push((WEIGHT_DIFFICULTY, score));
     }
 
-    // 3. Collectibles (20%) - relics + capsules + bands
-    //    Counted against the archive id lists (see `count_collected`), so each
-    //    category is bounded by its max by construction; no cap needed.
+    // 3. Collectibles (20%): relics + capsules + bands, counted against the archive
+    //    id lists (`count_collected`), so each is bounded by its max already.
     let max_collectibles = theme.max_relics + theme.max_capsules + theme.max_bands;
     if max_collectibles > 0 {
         let collected = theme.count_collected(progress_json);
@@ -176,7 +174,7 @@ fn grade_theme(
         dimensions.push((WEIGHT_BP, score));
     }
 
-    // 5. Challenges (10%) - skip if theme has none (e.g. rogue_5)
+    // 5. Challenges (10%); some themes have none (rogue_5)
     if theme.max_challenges > 0 {
         let count = progress
             .challenge

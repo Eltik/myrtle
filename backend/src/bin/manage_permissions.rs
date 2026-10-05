@@ -37,8 +37,8 @@ async fn main() -> Result<()> {
         .context("failed to connect to database")?;
     println!("Connected to database.\n");
 
-    // Optional operator identity - stamped onto grants so audit_log shows who
-    // ran the tool. Missing/unknown UID just becomes NULL.
+    // Stamped onto grants so audit_log shows who ran the tool; a missing or unknown
+    // UID becomes NULL.
     let operator = if let Some(uid) = std::env::var("ADMIN_UID").ok().filter(|s| !s.is_empty()) {
         if let Some(u) = find_user_by_id_or_uid(&pool, &uid).await? {
             println!("Operating as: {} ({})\n", u.uid, display_name(&u));
@@ -374,10 +374,8 @@ async fn toggle_visibility(pool: &PgPool) -> Result<()> {
     Ok(())
 }
 
-/// Resolves either a UUID or an Arknights UID to a single `UserRow`. When the
-/// same Arknights UID exists on multiple servers we return the first match by
-/// `created_at` - collisions are rare and the operator can re-search by UUID
-/// if they need a specific one.
+/// Takes a UUID or an Arknights UID. A UID on several servers returns the earliest
+/// `created_at`; collisions are rare, so re-search by UUID for a specific one.
 async fn find_user_by_id_or_uid(pool: &PgPool, input: &str) -> Result<Option<UserRow>> {
     if let Ok(uuid) = Uuid::parse_str(input) {
         Ok(sqlx::query_as::<_, UserRow>(USER_SELECT_BY_ID)

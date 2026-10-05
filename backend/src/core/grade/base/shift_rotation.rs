@@ -1,12 +1,10 @@
-//! Recommended 3-shift base rotation, for comparing the player's in-game presets
-//! against an optimized rotation.
+//! Recommended 3-shift base rotation, to compare against the player's presets.
 //!
-//! The rotation follows the login rhythm players actually run:
+//! It follows the login rhythm players run:
 //!
-//! - **Production groups** (the Gold factories, the EXP factories, the Trading
-//!   Posts) are staffed by `ceil(3N/2)` teams (3 teams for a pair of rooms) tiled
-//!   as 24-hour blocks: every team works two consecutive shifts (wrapping past the
-//!   cycle boundary) then rests one, and exactly ONE team per group swaps out at
+//! - **Production groups** (gold factories, EXP factories, posts) get
+//!   `ceil(3N/2)` teams (3 for a pair of rooms) tiled as 24h blocks: two
+//!   consecutive shifts on (wrapping), one off, and ONE team per group swaps at
 //!   each 12h login:
 //!
 //!   ```text
@@ -14,22 +12,18 @@
 //!     room 2:  Team B   Team C   Team C
 //!   ```
 //!
-//! - **Power plants, Office, Reception and the Control Center** alternate two
-//!   squads: Squad 1 works shifts 1 & 3, Squad 2 covers shift 2 - the swap you
-//!   make at every login. When a Control-Center operator carries a cross-room
-//!   synergy (Viviana's buff needs her Knights working in the factories), the CC
-//!   flips to a 24h BLOCK (Squad 1 on shifts 1+2, Squad 2 on shift 3) and the
-//!   dependent production team is phased onto the same shifts-1+2 block, so the
-//!   provider and its dependents are always active together.
+//! - **Power, Office, Reception, Control Center** alternate two squads: Squad 1
+//!   on shifts 1 & 3, Squad 2 on shift 2. When a CC operator has a cross-room
+//!   synergy (Viviana needs her Knights in the factories), the CC flips to a 24h
+//!   BLOCK (Squad 1 on 1+2, Squad 2 on 3) and the dependent team is phased onto
+//!   the same block so provider and dependents work together.
 //!
-//! Production teams are chosen JOINTLY (balanced, sum-of-teams objective - see
-//! `team_select`) instead of best-team-first, so the strong operators spread
-//! across the rotation instead of stacking into one 107% team that leaves the
-//! last team hollow.
+//! Production teams are picked jointly (`team_select`), not best-first, so the
+//! strong operators don't stack into one 107% team and leave the last hollow.
 //!
-//! An operator the player sustains 24/7 with a morale-swap manager (Fiammetta) is
-//! pinned to one room across every shift and badged; owning a manager also
-//! proactively recommends sustaining the highest-gain trading operator.
+//! An operator held 24/7 by a morale-swap manager (Fiammetta) is pinned to one
+//! room every shift and badged; owning a manager also proposes sustaining the
+//! highest-gain trading operator.
 
 use std::collections::{HashMap, HashSet};
 
@@ -49,27 +43,24 @@ use super::{
     util::{is_production_room, max_stationed_at_level},
 };
 
-/// The number of shifts in a recommended rotation (12h each; two logins per day).
+/// 12h each, two logins a day.
 pub const SHIFT_COUNT: usize = 3;
 
-/// A full recommended rotation: `SHIFT_COUNT` shifts, each listing every room's
-/// recommended crew alongside the player's preset for that room and shift.
+/// `SHIFT_COUNT` shifts, each with every room's recommended crew beside the
+/// player's preset.
 pub struct ShiftRotation {
     pub shifts: Vec<Shift>,
-    /// Operators the player runs 24/7 with a morale-swap manager (Fiammetta) - pinned to one
-    /// room every shift instead of rotating. The frontend badges these as "24/7 - Fiammetta".
+    /// Held 24/7 by a morale-swap manager (Fiammetta): pinned to one room every shift.
+    /// Badged "24/7 - Fiammetta" in the frontend.
     pub sustained: Vec<String>,
-    /// Operators parked on SPARE Control-Center seats after every value-seated
-    /// pick (bonus greedy, morale reservation, economy pins): chosen for lowest
-    /// opportunity cost, not for their skills. The frontend badges them so a
-    /// gated skill text on a benchwarmer doesn't read as the optimizer's
-    /// reasoning.
+    /// Operators on SPARE CC seats after every value pick (bonus greedy, morale
+    /// reservation, economy pins): chosen for low opportunity cost, not skills.
+    /// Badged so a gated skill on a benchwarmer doesn't read as the reasoning.
     pub bench: Vec<String>,
-    /// Operators seated as zero-morale TOKENS (the "dead Lancet"): a named
-    /// plant-count gate reads them as assigned whatever their morale, and a
-    /// robot-exclusion gate stops reading them once dead, so both counts
-    /// apply. Kept in their room every shift, never rested, their own skills
-    /// forfeited; the morale simulation leaves them at zero by design.
+    /// Zero-morale TOKENS (the "dead Lancet"): a named plant-count gate counts them
+    /// at any morale and a robot-exclusion gate stops seeing them once dead, so both
+    /// apply. Same room every shift, never rested, own skills forfeited; the morale
+    /// sim leaves them at zero by design.
     pub parked: Vec<String>,
 }
 
@@ -85,31 +76,28 @@ pub struct ShiftRoom {
     pub room_type: String,
     /// Production formula for factories (`F_GOLD`/`F_EXP`/...), else `None`.
     pub formula_type: Option<String>,
-    /// Recommended operators (`char_id`s) for this room in this shift.
     pub recommended: Vec<String>,
-    /// The player's preset operators for this room in this shift, if they have one.
+    /// The player's preset for this room and shift, if any.
     pub current: Vec<String>,
-    /// False when the room is deliberately UNSTAFFED this shift (no spare team -
-    /// the room rests dark rather than burning benchwarmers' morale).
+    /// False when deliberately UNSTAFFED (no spare team; resting dark beats burning
+    /// benchwarmers' morale).
     pub active: bool,
-    /// The displayed crew's room efficiency % (speed incl. Squad-1 global bonuses) for
-    /// production and power cells, so players can see how output is distributed.
+    /// Crew efficiency % (speed incl. Squad-1 globals) for production and power
+    /// cells, to show how output is distributed.
     pub efficiency: Option<f64>,
-    /// Stable identity of the team/squad staffing this cell - the same id spans the
-    /// two consecutive shift columns a production team's 24h block covers, so the
-    /// frontend can visually tie them together.
+    /// Same id across the two shift columns a production team's 24h block covers,
+    /// so the frontend can tie them together.
     pub team_id: Option<String>,
     /// Display label: "Team A/B/C" for production blocks, "Squad 1/2" elsewhere.
     pub team_label: Option<String>,
 }
 
-/// How a two-squad room cycles across the three shifts.
 #[derive(Clone, Copy, PartialEq)]
 enum SquadPattern {
-    /// Squad 1 works shifts 1 & 3, Squad 2 covers shift 2 - the per-login swap.
+    /// Squad 1 works shifts 1 & 3, Squad 2 shift 2: the per-login swap.
     Alternating,
-    /// Squad 1 works shifts 1+2 (a 24h block, aligned with its dependent
-    /// production teams), Squad 2 covers shift 3.
+    /// Squad 1 works shifts 1+2 (24h block aligned with its dependent production
+    /// teams), Squad 2 shift 3.
     Block,
 }
 
@@ -123,11 +111,10 @@ impl SquadPattern {
     }
 }
 
-/// Seat a 24/7-pinned operator into every shift cell of `slot` in a plan that
-/// reserved their seat: each cell's team becomes `team + pinned`, re-scored by
-/// the ledger (a Shamare pin zeroes the bodies beside her; a Tequila pin adds
-/// his rider to whatever Tailoring the cell fields), so the tiled objective
-/// prices the pin as the rotation will actually run it.
+/// Seat a 24/7 pin into every cell of `slot` in a plan that reserved the seat:
+/// each cell becomes `team + pinned`, re-scored by the ledger (a Shamare pin
+/// zeroes the bodies beside her; a Tequila pin adds his rider to the cell's
+/// Tailoring), so the tiled objective prices the pin as it will really run.
 #[allow(clippy::too_many_arguments)]
 fn seat_pinned_operator(
     groups: &mut [PlannedGroup],
@@ -180,12 +167,10 @@ fn seat_pinned_operator(
     }
 }
 
-/// Operators the player runs 24/7 - present in EVERY saved preset of a production room, so they're
-/// kept in across both presets and never rotated out - that a morale-swap manager (Fiammetta) can
-/// hold at full morale around the clock. Capped at the number of managers owned, preferring the
-/// operators with the LOWEST natural uptime (highest morale drain): those are the ones that actually
-/// need a manager to sustain 24/7, whereas a low-drain operator sustains itself and shouldn't spend
-/// a manager. Empty when the roster owns no manager or runs nobody across every preset.
+/// Operators in EVERY saved preset of a production room (never rotated out) that
+/// a morale-swap manager (Fiammetta) can hold at full morale. Capped at managers
+/// owned, lowest natural uptime first: a low-drain operator sustains itself and
+/// shouldn't spend a manager. Empty with no manager or nobody in every preset.
 fn preset_sustained_operators(
     building: &UserBuilding,
     operators: &[OperatorBaseProfile],
@@ -194,22 +179,21 @@ fn preset_sustained_operators(
     building_data: &BuildingDataFile,
 ) -> HashSet<String> {
     let managers = num_morale_swap_managers(operators, building_data);
-    // No manager, or no dormitory that can host one (her seat + the swap
-    // seat): nobody can be held 24/7 - she has to STAY in a dorm to work.
+    // No manager, or no dorm that can host one (her seat + the swap seat): she has
+    // to STAY in a dorm to work.
     if managers == 0 || !super::dorms::building_hosts_manager(building, building_data) {
         return HashSet::new();
     }
-    // The manager's swap needs HER at full morale first (Fiammetta recharges
-    // at +2/hr exclusive -> one swap per 12h login), so she can only hold an
-    // operator whose drain doesn't outrun that cadence.
+    // Her swap needs HER at full morale (Fiammetta recharges +2/h exclusive, one
+    // swap per 12h login), so she can only hold drains that don't outrun that.
     let swap_rate = super::assignment::morale_swap_enabler(operators, building_data)
         .and_then(|id| operators.iter().find(|o| o.char_id == id))
         .map_or(0.0, |m| {
             super::dorms::manager_swap_rate(m, registry, building_data)
         });
-    // 24/7 candidates: operators present in every (non-empty) saved preset of a production room. Two
-    // distinct presets are required - a single saved preset is just "the current team", not a swap
-    // the player deliberately holds around the clock.
+    // Present in every non-empty preset of a production room, with two distinct
+    // presets required: a single preset is just the current team, not a deliberate
+    // round-the-clock hold.
     let mut candidates: HashSet<String> = HashSet::new();
     for room in building
         .rooms
@@ -238,7 +222,7 @@ fn preset_sustained_operators(
             }
         }
     }
-    // A manager holds the operators that benefit most - lowest natural uptime (highest drain) first.
+    // Lowest natural uptime (highest drain) first.
     let recovery = morale_recovery(building);
     let op_index: HashMap<&str, &OperatorBaseProfile> =
         operators.iter().map(|o| (o.char_id.as_str(), o)).collect();
@@ -258,7 +242,7 @@ fn preset_sustained_operators(
     ranked.into_iter().collect()
 }
 
-/// All permutations of `0..n` (tiny inputs: at most a handful of teams/rooms).
+/// Tiny inputs: a handful of teams/rooms at most.
 fn permutations(n: usize) -> Vec<Vec<usize>> {
     let mut out = Vec::new();
     let mut current: Vec<usize> = Vec::with_capacity(n);
@@ -282,7 +266,7 @@ fn permutations(n: usize) -> Vec<Vec<usize>> {
     out
 }
 
-/// All index-combinations of `pool` of exactly `size` (tiny inputs: a room holds ≤ 5).
+/// Exactly-`size` combinations of `pool` (tiny inputs: a room holds ≤ 5).
 fn small_subsets(pool: &[String], size: usize) -> Vec<Vec<String>> {
     if size == 0 {
         return vec![Vec::new()];
@@ -311,11 +295,10 @@ fn small_subsets(pool: &[String], size: usize) -> Vec<Vec<String>> {
     }
 }
 
-/// A cell's crew with the room's pinned 24/7 operators worked in ahead of the rotating
-/// team: the remaining seats go to the SUBSET of the team that scores best alongside
-/// the pinned operators - not a naive truncation, which could seat a second order-value
-/// operator whose bonus doesn't stack with the pinned one (Bibeak next to a pinned
-/// Proviso) while a speed operator rests. With nothing pinned this is just the team.
+/// A cell's crew with the room's 24/7 pins seated first; remaining seats go to
+/// the team SUBSET that scores best beside them. Naive truncation could seat a
+/// second order-value operator that doesn't stack with the pin (Bibeak next to a
+/// pinned Proviso) while a speed operator rests. Nothing pinned = the team.
 #[allow(clippy::too_many_arguments)]
 fn merge_kept(
     kept: &[String],
@@ -369,12 +352,12 @@ fn merge_kept(
     best.map_or(crew, |(_, trial)| trial)
 }
 
-/// Build the recommended rotation for the player's base, pairing each shift's
-/// recommended crews with their saved presets.
+/// Build the recommended rotation, pairing each shift's crews with the saved
+/// presets.
 ///
-/// Wrapped in the same base-wide-conditional two-pass as the peak optimizer: pass 1
-/// runs with Hoederer-style "when X works any Work Area" bonuses off to learn who is
-/// actually deployed, pass 2 re-plans with the unlocked bonuses baked in.
+/// Same base-wide-conditional two-pass as the peak optimizer: pass 1 runs with
+/// Hoederer-style "when X works any Work Area" bonuses off to learn who is
+/// deployed, pass 2 re-plans with the unlocked bonuses.
 pub fn recommend_shift_rotation(
     operators: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -418,8 +401,8 @@ pub fn recommend_shift_rotation(
         .flat_map(|s| s.rooms.iter().filter(|r| r.active))
         .flat_map(|r| r.recommended.iter().cloned())
         .collect();
-    // Room-presence gates resolve against the room types the FIRST shift stations
-    // people in (the rotation keeps room type per slot constant across shifts).
+    // Room-presence gates resolve against the first shift's stationed room types
+    // (room type per slot is constant across shifts).
     let deployed_rooms: HashMap<String, String> = pass1
         .shifts
         .iter()
@@ -487,13 +470,10 @@ fn rotation_core(
         .filter(|r| is_production_room(&r.room_type))
         .collect();
 
-    // Economy pins - the generator seats the pool plans and accepted bundles
-    // reserve (Ling/Dusk in the CC, Senshi in a dormitory, robots in plants).
-    // They are reserved from EVERY rotation pool so production/aux/power can't
-    // burn them as fillers; Control-Center pins additionally join BOTH squads,
-    // because the economy needs them present whenever its consumers work. The
-    // morale simulation runs on the result and reports honestly if that 24/7
-    // presence doesn't hold.
+    // Economy pins (pool plans and accepted bundles: Ling/Dusk in the CC, Senshi in
+    // a dorm, robots in plants) are reserved from EVERY rotation pool so they can't
+    // be burned as fillers. CC pins also join BOTH squads since consumers need them
+    // whenever they work; the morale sim reports if that 24/7 presence fails.
     let roster_ids: HashSet<&str> = operators.iter().map(|o| o.char_id.as_str()).collect();
     let mut pinned_ids: HashSet<String> = pins
         .iter()
@@ -506,12 +486,10 @@ fn rotation_core(
         .map(|(id, _)| id.clone())
         .collect();
 
-    // The morale-swap manager is reserved by the ROTATION ITSELF, not left to
-    // the caller's pins: its 24/7 sustains (preset-derived or the proactive
-    // trading top-up) assume her swap, and the swap only works while she STAYS
-    // parked in a dormitory. Whenever she exists and the building can host her
-    // (her seat + a free swap seat), she is held out of every working pool and
-    // the dormitory pass below seats her in every shift.
+    // The rotation reserves the morale-swap manager itself, not the caller's pins:
+    // its 24/7 sustains assume her swap, which only works while she stays in a
+    // dorm. If the building can host her (her seat + a free swap seat), she's out
+    // of every working pool and the dorm pass seats her every shift.
     let manager_resident: Option<String> =
         if super::dorms::building_hosts_manager(building, building_data) {
             super::assignment::morale_swap_enabler(operators, building_data)
@@ -521,14 +499,12 @@ fn rotation_core(
     if let Some(m) = &manager_resident {
         pinned_ids.insert(m.clone());
     }
-    // Parked tokens hold their seat in every shift: out of every working pool.
+    // Parked tokens hold their seat every shift.
     pinned_ids.extend(parked.iter().cloned());
 
-    // Control Center Squad 1 (with its global bonuses / faction conditions) and the
-    // balanced production teams, re-selecting the CC when one of its operators turns
-    // out dead weight against the teams actually chosen.
-    // One enumeration memo for this run: registry, facility counts and
-    // drains are fixed here, so identical inputs mean identical teams.
+    // CC Squad 1 (with its globals / faction conditions) and the balanced teams,
+    // re-selecting the CC when a member is dead weight against the chosen teams.
+    // One memo per run: registry, facility counts and drains are fixed here.
     let memo = super::team_select::EnumerationMemo::default();
     let (cc_plan, mut groups) = rotation_cc_plan(
         operators,
@@ -557,28 +533,24 @@ fn rotation_core(
         },
     );
 
-    // ── Fiammetta 24/7 sustain ────────────────────────────────────────────────────
-    // Preset evidence first (the player's explicit choice), then a proactive top-up:
-    // owning a manager recommends sustaining the trading operator whose 24/7 seat
-    // adds the most REALIZED yield. Each candidate is priced by a with/without
-    // oracle on the rotation objective: the teams are re-planned around the
-    // candidate's permanent seat and every shift is scored with them seated
-    // against the same teams unseated - only the candidate's presence differs,
-    // never the planner's own noise. That couples the pick to the base's gold supply
-    // (base expert, 2026-09-08): a gold-starved post gains nothing from more
-    // speed, so Tequila's per-bar LMD rider outranks Shamare's speed there,
-    // while a gold-rich post keeps its speed anchor around the clock.
+    // Fiammetta 24/7 sustain. Preset evidence first (the player's choice), then a
+    // proactive top-up: the trading operator whose 24/7 seat adds the most REALIZED
+    // yield. Each candidate gets a with/without oracle on the rotation objective:
+    // teams re-planned around the seat, every shift scored seated vs unseated
+    // against the same teams, so only the candidate differs, not planner noise.
+    // That couples the pick to gold supply (base expert, 2026-09-08): a starved post
+    // gains nothing from speed, so Tequila's per-bar rider outranks Shamare's speed
+    // there, while a gold-rich post keeps its speed anchor.
     let mut sustained =
         preset_sustained_operators(building, operators, morale_drains, registry, building_data);
     let managers = num_morale_swap_managers(operators, building_data);
     let op_index = build_op_index(operators);
-    // The post the oracle priced each candidate's 24/7 seat at.
+    // Post the oracle priced each candidate's seat at.
     let mut oracle_slot: HashMap<String, String> = HashMap::new();
     if sustained.len() < managers && super::dorms::building_hosts_manager(building, building_data) {
         let recovery = morale_recovery(building);
-        // Swap feasibility: the manager can only hold an operator whose drain
-        // doesn't outrun her own recharge (Fiammetta: one full-bar swap per
-        // 12h at +2/hr exclusive self-recovery).
+        // She can only hold a drain that doesn't outrun her recharge (Fiammetta: one
+        // full-bar swap per 12h at +2/h exclusive self-recovery).
         let swap_rate = super::assignment::morale_swap_enabler(operators, building_data)
             .and_then(|id| operators.iter().find(|o| o.char_id == id))
             .map_or(0.0, |m| {
@@ -608,13 +580,11 @@ fn rotation_core(
                     if !feasible {
                         continue;
                     }
-                    // The seat is tried at EVERY trading post, and the best
-                    // one is kept: a value shape pays by post level (Proviso
-                    // at a level-2 post, the Shamare squad at level 3), and
-                    // "the first room of her group" pinned Proviso to the
-                    // level-3 post, where the plan then built Shamare's squad
-                    // around her (31010962). A saved preset that holds the
-                    // operator in a post still wins outright.
+                    // Try the seat at EVERY post, keep the best: value pays by post
+                    // level (Proviso at L2, the Shamare squad at L3), and "first room
+                    // of her group" pinned Proviso to the L3 post, where the plan built
+                    // Shamare's squad around her (31010962). A saved preset holding
+                    // the operator in a post still wins.
                     let slots: Vec<String> = match preset_room_of(building, id)
                         .filter(|slot| trading_slots.contains(slot))
                     {
@@ -625,8 +595,8 @@ fn rotation_core(
                     let uptime = op_index
                         .get(id.as_str())
                         .map_or(1.0, |op| op_uptime(op, morale_drains, recovery));
-                    // Without the manager the operator works ~2 of 3 shifts at their
-                    // morale-limited uptime; with it, all three at full.
+                    // Without the manager: ~2 of 3 shifts at morale-limited uptime; with: all 3 at
+                    // full.
                     let extra_uptime = 1.0 - uptime * (2.0 / 3.0);
                     let mut best: Option<(String, f64)> = None;
                     for slot in slots {
@@ -693,22 +663,18 @@ fn rotation_core(
             }
         }
     }
-    // Pin each sustained operator that a team actually fields to ONE room (the room
-    // their presets hold them in, else the first room of their group) for all three
-    // shifts, then RE-PLAN the teams with the pinned operators excluded from the pool:
-    // the pin permanently occupies a slot, so teams planned around it must not spend
-    // members that don't stack with it (a second order-value operator next to a pinned
-    // Proviso is wasted - the packer needs to know she's already there).
+    // Pin each fielded sustained operator to ONE room (their preset room, else the
+    // group's first) for all shifts, then RE-PLAN with pins out of the pool: the pin
+    // holds a slot, so teams must not spend members that don't stack with it (a
+    // second order-value operator beside a pinned Proviso is wasted).
     let mut kept_by_room: HashMap<String, Vec<String>> = HashMap::new();
     for g in &groups {
         let group_rooms: Vec<String> = g.rooms.iter().map(|(s, _)| s.clone()).collect();
         for team in &g.teams {
             for op in team.ops.iter().filter(|op| sustained.contains(*op)) {
-                // The preset's post, else the post the oracle priced the
-                // seat at, else the first room of the operator's group. A
-                // trading preset may name a post in ANOTHER level's group
-                // (the posts are grouped per level), and the player's
-                // choice still wins.
+                // Preset post, else the oracle's post, else the group's first room. A trading
+                // preset may name a post in another level's group (posts group per level); the
+                // player's choice still wins.
                 let same_kind = |slot: &String| {
                     group_rooms.contains(slot)
                         || (g.room_type == "TRADING"
@@ -730,11 +696,10 @@ fn rotation_core(
     let mut sustained_label: Vec<String> = kept_by_room.values().flatten().cloned().collect();
     sustained_label.sort();
     sustained_label.dedup();
-    // Every production team works a 24h block ([A,A,B] / [B,C,C] tiling), so a
-    // member whose drain outruns a full bar (Aroma's "+0.25 Morale per hour"
-    // rider) runs dry mid-block. Such operators leave the team pool unless the
-    // morale-swap manager sustains them (the 24/7 pick above) or a plan pins
-    // them; the morale simulation then reports honestly on what remains.
+    // Every production team works a 24h block ([A,A,B] / [B,C,C]), so a member
+    // whose drain outruns a full bar (Aroma's "+0.25 Morale per hour" rider) runs
+    // dry mid-block. They leave the pool unless the manager sustains them or a plan
+    // pins them; the morale sim reports on what remains.
     let heavy: Vec<String> = operators
         .iter()
         .filter(|op| !super::sustain_sim::sustains_24h_block(op, morale_drains))
@@ -746,9 +711,8 @@ fn rotation_core(
         exclude.extend(sustained_label.iter().cloned());
         exclude.extend(pinned_ids.iter().cloned());
         exclude.extend(heavy);
-        // Teams re-planned around the pin and without the heavy drainers: the
-        // pinned operator is out of the pool and their permanent slot shrinks
-        // the teams that only ever work their room.
+        // Re-planned around the pin, without heavy drainers: the pin's permanent slot
+        // shrinks teams that only work its room.
         groups = plan_production_groups(
             &production_rooms,
             operators,
@@ -775,10 +739,9 @@ fn rotation_core(
     used.extend(sustained_label.iter().cloned());
     used.extend(pinned_ids.iter().cloned());
 
-    // Office / Reception: Squad 1 from the best leftovers, Squad 2 from what
-    // remains. Squad 1 works a 24h block (its shifts wrap consecutive), so its
-    // pick excludes heavy-drainers - they stay in the pool for the single-shift
-    // Squad 2, the seat their morale bar can actually finish.
+    // Office / Reception: Squad 1 from the best leftovers, Squad 2 from the rest.
+    // Squad 1 works a 24h block, so it skips heavy drainers; they stay available for
+    // single-shift Squad 2.
     let aux_squads = |assigned: &mut HashSet<String>,
                       only_24h_sustainable: bool|
      -> HashMap<String, (String, Vec<String>)> {
@@ -802,14 +765,13 @@ fn rotation_core(
     let mut aux1 = aux_squads(&mut assigned, true);
     let mut aux2 = aux_squads(&mut assigned, false);
 
-    // An economy pin into an Office or Reception Room (Mulberry's per-slot
-    // Worldly Plight, Whisperain's Memory Fragments) works that room in
-    // EVERY shift, as a Control-Center pin joins both squads: the consumers
-    // planned around those points (Mr. Nothing, Rosmontis) need them
-    // whenever they work. Reserved from the pools above, such a pin never
-    // reached a squad: the optimal view seated Whisperain in the Office
-    // while every shift showed Haruka/Penance (55699327), and a Worldly
-    // Plight team's Office went to Provence over Mulberry.
+    // An economy pin in an Office or Reception (Mulberry's per-slot Worldly Plight,
+    // Whisperain's Memory Fragments) works that room EVERY shift, like a CC pin in
+    // both squads: its consumers (Mr. Nothing, Rosmontis) need it whenever they
+    // work. Reserved from the pools above, such a pin never reached a squad: the
+    // optimal view had Whisperain in the Office while every shift showed
+    // Haruka/Penance (55699327), and a Worldly Plight Office went to Provence over
+    // Mulberry.
     for (id, room_type) in pins.iter().filter(|(id, _)| pinned_ids.contains(id)) {
         if !matches!(room_type.as_str(), "HIRE" | "MEETING") {
             continue;
@@ -833,10 +795,9 @@ fn rotation_core(
         }
     }
 
-    // Control Center Squad 2: the best global-bonus fill from the leftovers, so the
-    // CC keeps granting bonuses while Squad 1 rests. It sees every production team
-    // the rotation fields, so a conditional operator whose gate no team satisfies
-    // is evicted here just as Squad 1's dead-weight loop would.
+    // CC Squad 2: best global-bonus fill from leftovers, so the CC keeps granting
+    // while Squad 1 rests. It sees every fielded team, so a conditional operator
+    // whose gate no team meets is evicted as in Squad 1's dead-weight loop.
     let team_rooms: Vec<super::types::RoomAssignment> = groups
         .iter()
         .flat_map(|g| {
@@ -869,17 +830,15 @@ fn rotation_core(
         assigned.extend(plant.backup.iter().cloned());
     }
 
-    // Top both CC squads up to a full crew with the lowest-opportunity-cost leftovers,
-    // exactly like the peak plan does - a half-empty Control Center (Squad 2 = two
-    // bonus operators and three vacant seats) reads as a mistake, and spare seats are
-    // free real estate for benchwarmers. Runs LAST so no useful operator is stolen
-    // from production, aux, or power. An entirely empty Squad 2 stays empty (dark).
+    // Top both CC squads up with the lowest-opportunity-cost leftovers, like the
+    // peak plan: a half-empty CC reads as a mistake and spare seats are free for
+    // benchwarmers. Runs LAST so nothing useful is taken from production, aux or
+    // power. An entirely empty Squad 2 stays dark.
     let mut cc1 = cc_plan.squad1.clone();
     let mut cc2 = cc_squad2;
-    // Seat the Control-Center economy pins in Squad 1 - two of the three shifts
-    // under either pattern, the same realistic uptime the perception economy
-    // priced their payoff at. Both squads would mean a 36h unbroken stretch no
-    // morale bar survives; the generators rest exactly when Squad 2 covers.
+    // Economy pins sit in Squad 1: two of three shifts under either pattern, the
+    // uptime the perception economy priced. Both squads = 36h unbroken, which no
+    // bar survives; generators rest when Squad 2 covers.
     #[allow(clippy::cast_sign_loss)]
     let cc_cap = cc_plan.control_slots.max(0) as usize;
     for id in cc_pinned.iter().rev() {
@@ -890,12 +849,10 @@ fn rotation_core(
     if cc_cap > 0 {
         cc1.truncate(cc_cap);
     }
-    // A pin that Squad 2 also picked on its own merits would work all three
-    // shifts - drop it from the 12h seat so the rest shift survives.
+    // A pin Squad 2 also picked on merit would work all three shifts; drop it from
+    // the 12h seat so the rest shift survives.
     cc2.retain(|id| !cc_pinned.contains(id));
-    // Spare-seat picks, tracked so the UI can badge them: their skills are not
-    // why they were seated, and a gated text on a benchwarmer shouldn't read
-    // as the optimizer's reasoning.
+    // Spare-seat picks, tracked for the UI badge.
     let mut bench: HashSet<String> = HashSet::new();
     if !cc1.is_empty() {
         bench.extend(fill_remaining_slots(
@@ -920,10 +877,9 @@ fn rotation_core(
         ));
     }
 
-    // ── Synergy phase alignment ──────────────────────────────────────────────────
-    // A CC Squad-1 faction condition (Viviana + her Knights) links the CC to the
-    // production teams that satisfy it: the CC flips to a 24h block on shifts 1+2 and
-    // each linked group phases its linked team onto the same block (ordinal 0).
+    // Synergy phase alignment: a CC Squad-1 faction condition (Viviana + her
+    // Knights) flips the CC to a 24h block on shifts 1+2, and each linked group
+    // moves its linked team onto that block (ordinal 0).
     let mut cc_pattern = SquadPattern::Alternating;
     let mut linked_groups: HashSet<usize> = HashSet::new();
     for (gi, g) in groups.iter_mut().enumerate() {
@@ -933,12 +889,10 @@ fn rotation_core(
             if team.ops.is_empty() {
                 continue;
             }
-            // What the Control Center's conditions ADD to this team as
-            // scored - not what they would grant on paper. A nullifier
-            // kills a per-operator grant on its roommates (Umiri's Siracusa
-            // +5% on Texas and Lappland under Shamare), and a team linked
-            // on paper was swapped onto the two-shift block over the squad
-            // that actually earns there (00980819, 2026-09-21).
+            // What the CC's conditions ADD to this team as scored, not on paper. A
+            // nullifier kills a per-operator grant on roommates (Umiri's Siracusa +5% on
+            // Texas and Lappland under Shamare); a paper-linked team got swapped onto the
+            // two-shift block over the squad that really earns there (00980819, 2026-09-21).
             let scored = |conditions: &[super::assignment::CcCondition]| {
                 compute_team_efficiency(
                     &team.ops,
@@ -966,18 +920,16 @@ fn rotation_core(
         {
             cc_pattern = SquadPattern::Block;
             linked_groups.insert(gi);
-            // Ordinal 0 holds the shifts-1+2 block; move the linked team there.
+            // Ordinal 0 holds the shifts-1+2 block.
             if ti != 0 {
                 g.teams.swap(0, ti);
             }
         }
     }
 
-    // A Block pattern turns Squad 1 into a 24-hour seat, so the same gate that
-    // governs every other 24h block applies: a member whose drain can't finish
-    // a 24h bar trades places with a sustaining Squad-2 member (the 12h seat).
-    // Economy pins stay - their around-the-clock presence IS the plan, and the
-    // morale simulation reports honestly if it doesn't hold.
+    // Block makes Squad 1 a 24h seat, so the 24h gate applies: a member who can't
+    // finish a 24h bar trades places with a sustaining Squad-2 member. Economy pins
+    // stay: their presence is the plan, and the morale sim reports if it fails.
     if cc_pattern == SquadPattern::Block {
         let is_pin = |id: &str| cc_pinned.iter().any(|p| p == id);
         let sustains = |id: &str| {
@@ -995,11 +947,9 @@ fn rotation_core(
             }
         });
         for id in heavy {
-            // Among the sustaining Squad-2 members, promote the one whose move
-            // WASTES the least value: score = what they'd add on top of Squad 1
-            // minus what Squad 2 loses without them. A "+7% trading" next to
-            // Squad 1's same-family +7% scores negative, so a plain filler
-            // (0 - 0) is preferred over stranding a value pick.
+            // Promote the sustaining Squad-2 member whose move wastes least: what they add
+            // to Squad 1 minus what Squad 2 loses. A "+7% trading" beside Squad 1's
+            // same-family +7% scores negative, so a plain filler (0 - 0) wins.
             let best = cc2
                 .iter()
                 .enumerate()
@@ -1029,7 +979,7 @@ fn rotation_core(
             } else if !cc2.contains(&id) && (cc2.len() as i32) < cc_plan.control_slots {
                 cc2.push(id);
             }
-            // else: benched - no Control-Center seat can hold this drain 24h.
+            // else: benched; no CC seat holds this drain 24h.
         }
     }
 
@@ -1042,9 +992,8 @@ fn rotation_core(
             (r.slot_id.as_str(), non_empty)
         })
         .collect();
-    // The player's saved presets are equal alternating halves (two presets = the A/B
-    // swap they make at every login; three = one per shift), so cycle through them -
-    // preset 1 is NOT a "main" that outranks the others.
+    // Saved presets are equal alternating halves (two = the A/B login swap, three =
+    // one per shift), so cycle them; preset 1 is not a "main".
     let preset_for = |slot: &str, k: usize| -> Vec<String> {
         presets
             .get(slot)
@@ -1053,14 +1002,13 @@ fn rotation_core(
             .unwrap_or_default()
     };
 
-    // ── Preset-phase alignment ───────────────────────────────────────────────────
-    // Which team is "Team A" / which squad is "Squad 1" is arbitrary - over the real
-    // login alternation every unit works the same share - so pick the arrangement that
-    // matches the player's saved presets. The plan then CONFIRMS operators they
-    // already run in a phase instead of telling them to swap between phases.
+    // Preset-phase alignment: which unit is "Team A" / "Squad 1" is arbitrary
+    // (every unit works the same share), so pick the arrangement matching the saved
+    // presets. The plan then confirms operators already in a phase instead of
+    // asking for swaps.
     let sym_diff = |a: &[String], b: &[String]| -> usize {
         if b.is_empty() {
-            return 0; // no preset saved - nothing to match against
+            return 0; // no preset saved
         }
         let sa: HashSet<&str> = a.iter().map(String::as_str).collect();
         let sb: HashSet<&str> = b.iter().map(String::as_str).collect();
@@ -1078,12 +1026,10 @@ fn rotation_core(
                 ordinal_cells[t] += 1;
             }
         }
-        // Try every room ordering x team permutation (teams only move between
-        // ordinals working the same number of cells, and a synergy-linked team
-        // stays on the shifts-1+2 block). Arrangements are ranked OUTPUT FIRST -
-        // rooms with a pinned 24/7 operator make phases output-sensitive (parking
-        // a Shamare team on a pinned Proviso's post wastes her value) - and only
-        // then by preset churn among output ties.
+        // Every room order x team permutation (teams only move between ordinals with
+        // the same cell count; a synergy-linked team stays on shifts 1+2). Ranked by
+        // OUTPUT first (a 24/7 pin makes phases matter: a Shamare team on a pinned
+        // Proviso's post wastes her), then preset churn among ties.
         let mut best: Option<(i64, usize, Vec<usize>, Vec<usize>)> = None;
         for room_order in permutations(n) {
             for team_perm in permutations(g.teams.len()) {
@@ -1136,7 +1082,7 @@ fn rotation_core(
                         cost += sym_diff(&crew, &preset_for(slot, k));
                     }
                 }
-                // Quantize the output so float noise doesn't defeat the churn tie-break.
+                // Quantized so float noise doesn't defeat the churn tie-break.
                 let output_key = (output * 100.0).round() as i64;
                 let better = match &best {
                     None => true,
@@ -1152,9 +1098,8 @@ fn rotation_core(
             g.teams = team_perm.iter().map(|&t| g.teams[t].clone()).collect();
         }
     }
-    // Two-squad rooms: flipping Squad 1/2 is free for the Alternating pattern (the
-    // real cadence is an even A/B swap), so flip whenever the player's presets run
-    // the squads in the opposite phase.
+    // Two-squad rooms: flipping is free under Alternating (an even A/B swap), so
+    // flip when the presets run the squads in the opposite phase.
     let flip_costs = |slot: &str, s1: &[String], s2: &[String]| -> (usize, usize) {
         let (mut keep, mut flip) = (0usize, 0usize);
         for k in 0..SHIFT_COUNT {
@@ -1176,11 +1121,9 @@ fn rotation_core(
         let (keep, flip) = flip_costs(slot, s1, s2);
         flip < keep
     };
-    // The power squads were split EVENLY across the plants, so flipping must be a
-    // group decision (all plants or none) - flipping plants individually would
-    // reshuffle the balanced squads back into a lopsided pair. And the STRONGER
-    // squad stays first (Squad 1 covers two of the three displayed shifts), so a
-    // preset-phase flip is only taken when it doesn't demote the stronger squad.
+    // Power squads were split EVENLY across plants, so flip all plants or none
+    // (flipping one reshuffles them lopsided). The STRONGER squad stays first
+    // (Squad 1 covers two of three shifts), so a flip can't demote it.
     let mut power_plan = power_plan;
     if power_plan.iter().all(|p| !p.backup.is_empty()) {
         let squad_total = |pick: fn(&PowerPlant) -> &Vec<String>| -> f64 {
@@ -1196,8 +1139,8 @@ fn rotation_core(
             let (pk, pf) = flip_costs(&p.slot_id, &p.main, &p.backup);
             (k + pk, f + pf)
         });
-        // A flip promotes the old Squad 2 onto Squad 1's 24h block, so it may
-        // only happen when every promoted operator's morale bar survives one.
+        // A flip promotes old Squad 2 onto Squad 1's 24h block; every promoted bar
+        // must survive one.
         let bar_ok_ids = |ids: &[String]| -> bool {
             ids.iter().all(|id| {
                 op_index
@@ -1237,16 +1180,13 @@ fn rotation_core(
         std::mem::swap(&mut cc1, &mut cc2);
     }
 
-    // ── Squad-2 shift-aligned dead-weight check ──────────────────────────────────
-    // Squad 2 works exactly one shift, and the tiling is now settled, so its
-    // conditional operators can be judged against the teams working THAT shift
-    // rather than the whole rotation (the earlier all-teams check in `squad2` is
-    // only a lower bound: Jessica the Liberator's Blacksteel gate fired on the
-    // shifts-1+2 factory team while she herself sat the shift-3 seat, collecting
-    // nothing). Squad 1 needs no such pass: phase alignment moves each linked
-    // team onto Squad 1's own block by construction. Evicted seats are topped
-    // back up from the bench; evictees stay in `assigned`, so the top-up cannot
-    // re-seat them.
+    // Squad-2 dead-weight check, per shift. Squad 2 works one shift and the tiling
+    // is settled, so judge its conditional operators against THAT shift's teams.
+    // The earlier all-teams check in `squad2` is only a lower bound: Jessica the
+    // Liberator's Blacksteel gate fired on the shifts-1+2 factory team while she
+    // sat shift 3, collecting nothing. Squad 1 needs no pass: phase alignment puts
+    // linked teams on its block. Evicted seats refill from the bench; evictees stay
+    // in `assigned` so they can't be re-seated.
     if let Some(k2) = (0..SHIFT_COUNT).find(|&k| cc_pattern.squad_at(k) == 1)
         && !cc2.is_empty()
     {
@@ -1271,8 +1211,8 @@ fn rotation_core(
                 })
             })
             .collect();
-        // 24/7-sustained rooms outside the groups (their whole crew is kept)
-        // also work this shift and can satisfy a gate.
+        // 24/7-sustained rooms outside the groups also work this shift and can meet a
+        // gate.
         for (slot, ops) in &kept_by_room {
             if !groups
                 .iter()
@@ -1314,8 +1254,7 @@ fn rotation_core(
     let team_letter = |ordinal: usize| -> String {
         char::from(b'A' + u8::try_from(ordinal % 26).unwrap_or(0)).to_string()
     };
-    // The displayed crew's room efficiency (speed incl. Squad-1 globals), for the
-    // production/power cells where output distribution matters.
+    // Crew efficiency (speed incl. Squad-1 globals) for production/power cells.
     let crew_efficiency = |crew: &[String], room_type: &str, formula: Option<&str>| -> f64 {
         let (speed, _) = compute_team_efficiency(
             crew,
@@ -1342,8 +1281,8 @@ fn rotation_core(
     for k in 0..SHIFT_COUNT {
         let mut rooms = Vec::new();
 
-        // Production groups: each room runs the team its tiling cell names, with any
-        // pinned 24/7 operator merged in ahead. An empty team rests the room dark.
+        // Each room runs its tiling cell's team, pinned 24/7 operators merged first.
+        // An empty team rests the room dark.
         for g in &groups {
             for (ri, (slot, level)) in g.rooms.iter().enumerate() {
                 let ordinal = g.cells[ri][k];
@@ -1383,8 +1322,8 @@ fn rotation_core(
             }
         }
 
-        // Power plants: Squad 1 / Squad 2 alternating (a plant generates electricity
-        // regardless of who staffs it, so an empty squad just rests the plant dark).
+        // Power: Squad 1 / Squad 2 alternating. A plant generates regardless of crew,
+        // so an empty squad just rests it dark.
         for plant in &power_plan {
             let squad = SquadPattern::Alternating.squad_at(k);
             let crew = if squad == 0 || plant.backup.is_empty() {
@@ -1411,8 +1350,7 @@ fn rotation_core(
             });
         }
 
-        // Office / Reception: Squad 1 / Squad 2 alternating; with no second squad the
-        // room rests dark on Squad 2's shift.
+        // Office / Reception alternate; no second squad = dark on Squad 2's shift.
         for (slot, (room_type, squad1)) in &aux1 {
             let squad = SquadPattern::Alternating.squad_at(k);
             let squad2 = aux2.get(slot).map(|(_, ops)| ops);
@@ -1434,8 +1372,8 @@ fn rotation_core(
             });
         }
 
-        // Control Center: Alternating by default; a Block (shifts 1+2) when a Squad-1
-        // synergy needs its dependent production teams' 24h window.
+        // CC: Alternating by default, Block (shifts 1+2) when a Squad-1 synergy needs
+        // its dependent teams' 24h window.
         if let Some(cc_slot) = &cc_plan.slot_id {
             let squad = cc_pattern.squad_at(k);
             let (crew, active) = match (squad, cc2.is_empty()) {
@@ -1456,14 +1394,12 @@ fn rotation_core(
             });
         }
 
-        // A facility-count enabler counts only in the shifts it works: Greyy
-        // the Lightningbearer's "+1 Power Plant" is gone from a shift that
-        // rests him, and Weedy's and Eunectes' per-plant productivity with
-        // it. The teams were chosen against the optimal seats' counts (the
-        // enabler is there whenever the plan can afford him); the DISPLAYED
-        // figure is re-priced against this shift's seats so a shift without
-        // him does not claim his plant (44947595: Weedy/Eunectes read 136 in
-        // both shifts, one of them with three plain plants).
+        // A facility-count enabler counts only in shifts it works: Greyy the
+        // Lightningbearer's "+1 Power Plant" is gone from his rest shift, and with it
+        // Weedy's and Eunectes' per-plant productivity. Teams were picked against the
+        // optimal seats' counts; the DISPLAYED figure is re-priced on this shift's seats
+        // (44947595: Weedy/Eunectes read 136 in both shifts, one with three plain
+        // plants).
         let shift_seats: HashMap<String, String> = rooms
             .iter()
             .flat_map(|r| {
@@ -1511,14 +1447,11 @@ fn rotation_core(
         });
     }
 
-    // ── Dormitories ─────────────────────────────────────────────────────────
-    // Rest is a seat, not an absence: each shift's off-duty workers go INTO
-    // specific dormitories - the heaviest drainers into the highest-recovery
-    // dorm (a 2/5/2's one good dorm is exactly why levels matter) - and
-    // dorm-skill holders the plan left unseated take permanent dorm seats to
-    // speed everyone else's recovery. A pinned morale-swap manager (Fiammetta)
-    // keeps her dormitory seat in every shift. The sustainability simulator
-    // reads these same cells, so the verdict and the display agree.
+    // Dormitories. Rest is a seat: each shift's off-duty workers go INTO specific
+    // dorms, heaviest drainers to the best (a 2/5/2's one good dorm is why levels
+    // matter), and unseated dorm-skill holders take permanent dorm seats. A pinned
+    // manager (Fiammetta) keeps her dorm seat every shift. The sustainability sim
+    // reads these same cells, so verdict and display agree.
     let dorms = super::dorms::dorm_list(building, building_data);
     if !dorms.is_empty() {
         let mut seated: HashSet<String> = HashSet::new();
@@ -1532,8 +1465,7 @@ fn rotation_core(
             }
         }
         let sustained_set: HashSet<&str> = sustained_label.iter().map(String::as_str).collect();
-        // Off-duty workers per shift, heaviest drain first - they need the
-        // best dorm most.
+        // Heaviest drain first: they need the best dorm most.
         let resters_by_shift: Vec<Vec<String>> = (0..SHIFT_COUNT)
             .map(|k| {
                 let mut r: Vec<String> = seated
@@ -1557,10 +1489,9 @@ fn rotation_core(
                 r
             })
             .collect();
-        // The morale-swap manager works FROM a dormitory: her pinned seat is
-        // permanent. She takes the worst dorm, keeping the good ones for the
-        // operators whose recovery actually depends on the rate. The
-        // rotation's own reservation joins any caller-pinned dorm residents.
+        // The manager works FROM a dorm, permanently. She takes the worst dorm, leaving
+        // the good ones to operators whose recovery depends on the rate. Joins any
+        // caller-pinned dorm residents.
         let mut dorm_pinned: Vec<String> = pins
             .iter()
             .filter(|(id, rt)| rt == "DORMITORY" && !seated.contains(id))
@@ -1574,11 +1505,10 @@ fn rotation_core(
         }
         let peak_rest = resters_by_shift.iter().map(Vec::len).max().unwrap_or(0);
         let capacity: usize = dorms.iter().map(|d| d.capacity).sum();
-        // A pinned morale-swap manager consumes TWO seats' worth of headroom:
-        // her own, and a free slot beside her - the swap only fires when the
-        // drained operator is assigned INTO her dormitory ("swaps Morale with
-        // the previous Operator assigned to that Dormitory"), so a dorm packed
-        // solid around her breaks the mechanic.
+        // A pinned manager needs TWO seats of headroom: hers and a free one beside her.
+        // The swap only fires when the drained operator is assigned INTO her dorm
+        // ("swaps Morale with the previous Operator assigned to that Dormitory"), so a
+        // dorm packed solid around her breaks it.
         let headroom = capacity
             .saturating_sub(peak_rest)
             .saturating_sub(dorm_pinned.len() * 2);
@@ -1590,7 +1520,7 @@ fn rotation_core(
             .collect();
         let mut staffing =
             super::dorms::plan_dorm_staffing(&dorms, &leftovers, headroom, registry, building_data);
-        // Manager into the worst dorm with a spare permanent seat.
+        // Worst dorm with a spare permanent seat.
         for id in &dorm_pinned {
             if let Some((_, crew)) = staffing.iter_mut().rev().find(|(slot, crew)| {
                 let cap = dorms
@@ -1631,8 +1561,8 @@ fn rotation_core(
     }
 }
 
-/// The production room whose saved presets ALL contain `op` - where the player
-/// physically parks a 24/7 operator.
+/// The production room whose saved presets ALL contain `op`: where the player
+/// parks a 24/7 operator.
 fn preset_room_of(building: &UserBuilding, op: &str) -> Option<String> {
     building
         .rooms
@@ -1646,10 +1576,9 @@ fn preset_room_of(building: &UserBuilding, op: &str) -> Option<String> {
         .map(|r| r.slot_id.clone())
 }
 
-/// A power plant's electricity output is fixed by its level - operators only matter
-/// if they carry a Power Plant base skill (drone recovery, shared morale drain, etc.).
-/// An operator with no power skill (e.g. a pure Dormitory/Training operator) is dead
-/// weight there, so only genuine power specialists are recommended for the plants.
+/// Plant output is fixed by level; only Power Plant skills (drone recovery,
+/// shared drain) matter there. Anyone else is dead weight, so plants get
+/// specialists only.
 fn has_power_skill(op: &OperatorBaseProfile, building_data: &BuildingDataFile) -> bool {
     op.available_buffs.iter().any(|b| {
         building_data
@@ -1659,9 +1588,8 @@ fn has_power_skill(op: &OperatorBaseProfile, building_data: &BuildingDataFile) -
     })
 }
 
-/// Rough strength of an operator's POWER base skill, for ranking who staffs the plants:
-/// the largest value any of its power buffs resolves to (drone recovery, power output,
-/// etc.). Promoted skills resolve higher, so an E2 power specialist outranks an E0 one.
+/// Largest value any of the operator's power buffs resolves to, for ranking.
+/// Promoted skills resolve higher, so an E2 specialist outranks an E0.
 fn power_value(
     op: &OperatorBaseProfile,
     building_data: &BuildingDataFile,
@@ -1671,23 +1599,18 @@ fn power_value(
     super::ledger::op_power_rank_value(op, building_data, registry, facility_counts)
 }
 
-/// A power plant's Squad 1 plus the Squad 2 that covers its alternating rest shift.
 struct PowerPlant {
     slot_id: String,
-    /// Best specialist(s), stationed on Squad 1's shifts.
+    /// Squad 1's shifts.
     main: Vec<String>,
-    /// Next-best specialist(s), covering Squad 2's shift (empty if the roster has no
-    /// spare power operator, in which case the plant rests dark that shift).
+    /// Squad 2's shift; empty if no spare power operator (plant rests dark).
     backup: Vec<String>,
 }
 
-/// Power plants generate electricity regardless of who staffs them, so the optimizer
-/// doesn't pick their crews. Staff the plants with the BEST leftover power specialists
-/// (operators carrying a power base skill that aren't already placed anywhere else in
-/// the rotation), split into two EVEN squads: each specialist joins whichever squad has
-/// the lower running total, so drone recovery stays level across the alternation
-/// instead of one squad hoarding the strongest operators. Operators with no power skill
-/// are left out entirely - parking them here would do nothing but drain morale.
+/// Plants generate regardless of crew, so the optimizer doesn't pick them. Staff
+/// them with the best unplaced power specialists in two EVEN squads (each joins
+/// the lower running total) so drone recovery stays level across the
+/// alternation. Non-specialists are left out; here they'd only drain morale.
 fn build_power_plan(
     operators: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -1724,10 +1647,9 @@ fn build_power_plan(
         .iter()
         .map(|r| max_stationed_at_level(building_data, "POWER", r.level).max(1) as usize)
         .collect();
-    // Parked tokens hold a seat in BOTH squads: plant by plant, first seat
-    // free. Filling a plant's only seat sends the specialists - the exclusion
-    // gate's holder among them - to the OTHER plants, which is where that gate
-    // wants them.
+    // Parked tokens hold a seat in BOTH squads, plant by plant, first free seat.
+    // Filling a plant's only seat sends the specialists (the exclusion gate's holder
+    // among them) to the other plants, where that gate wants them.
     let mut reserved: Vec<Vec<String>> = vec![Vec::new(); power_rooms.len()];
     let mut tokens: Vec<&String> = parked.iter().collect();
     tokens.sort();
@@ -1739,9 +1661,8 @@ fn build_power_plan(
     let per_squad: usize =
         slots.iter().sum::<usize>() - reserved.iter().map(Vec::len).sum::<usize>();
 
-    // Even split: strongest first, each into the squad with the lower running total
-    // (a squad stops accepting once its plant slots are full). With 25/20/20/20/20/15
-    // specialists this yields 60/60 rather than best-first's 65/55.
+    // Strongest first, each into the lower-total squad until its plant slots fill.
+    // With 25/20/20/20/20/15 this gives 60/60 vs best-first's 65/55.
     let bar_ok = |id: &str| -> bool {
         operators
             .iter()
@@ -1752,8 +1673,7 @@ fn build_power_plan(
     for (id, value) in ranked.into_iter().take(per_squad * 2) {
         let pick = (0..2)
             .filter(|&i| squads[i].0.len() < per_squad)
-            // Squad 1's shifts wrap into a 24h block; a heavy-drainer only fits
-            // the single-shift Squad 2.
+            // Squad 1 wraps into a 24h block; heavy drainers only fit Squad 2.
             .filter(|&i| i == 1 || bar_ok(&id))
             .min_by(|&a, &b| {
                 squads[a]
@@ -1766,9 +1686,8 @@ fn build_power_plan(
             squads[i].1 += value;
         }
     }
-    // The split can't always be exactly even; the STRONGER half leads as Squad 1
-    // (it covers shifts 1 & 3 in the displayed cycle), the weaker covers shift 2 -
-    // unless promoting the stronger half would put a heavy-drainer on the 24h block.
+    // Not always exactly even: the STRONGER half leads as Squad 1 (shifts 1 & 3),
+    // unless that would put a heavy drainer on the 24h block.
     if squads[1].1 > squads[0].1 && squads[1].0.iter().all(|id| bar_ok(id)) {
         squads.swap(0, 1);
     }
@@ -1791,8 +1710,7 @@ fn build_power_plan(
                     .collect(),
                 backup: {
                     let picks: Vec<String> = (0..free).filter_map(|_| squad2.next()).collect();
-                    // A plant held only by its token has no second squad to
-                    // rest it dark; it keeps the token.
+                    // A plant held only by its token has no second squad; it keeps the token.
                     if picks.is_empty() && held.is_empty() {
                         Vec::new()
                     } else {

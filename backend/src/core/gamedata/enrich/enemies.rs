@@ -83,10 +83,8 @@ fn merge_level_entry(
         base.map_or(0, |l| l.life_point_reduce)
     };
 
-    // Skills are authored once at level 0 for nearly every enemy; higher
-    // difficulty tiers ship an empty array. Treat an empty raw skills list as
-    // "inherit", since that matches in-game behavior (the boss keeps fighting
-    // with the same kit, just with scaled stats).
+    // Skills are authored at level 0 for nearly every enemy; higher tiers ship an
+    // empty array, which means inherit (in game the boss keeps its kit, stats scale).
     let skills = if data.skills.is_empty() {
         base.map(|l| l.skills.clone()).unwrap_or_default()
     } else {

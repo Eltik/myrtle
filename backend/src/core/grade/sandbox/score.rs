@@ -198,9 +198,8 @@ fn score_base_building(sandbox: &Value, universe: &SandboxUniverse) -> (f64, usi
     )
 }
 
-/// Returns `(score, recipes, music, rift_levels, rift_levels_max)`. The rift
-/// piece is the fixed rift dungeons cleared over the total; the raw
-/// `(rift_levels, rift_levels_max)` are surfaced for the breakdown.
+/// Returns `(score, recipes, music, rift_levels, rift_levels_max)`. Rift piece =
+/// fixed rift dungeons cleared over the total; the raw pair feeds the breakdown.
 fn score_content_depth(
     sandbox: &Value,
     universe: &SandboxUniverse,

@@ -92,10 +92,9 @@ fn every_module_belongs_to_the_operator_that_lists_it() {
     }
 }
 
-/// The assertion that actually matters: the order we serve is the order the game
-/// shows. `char_equip` is the game's own per-character module list, so this pins
-/// the ordering to the source of truth rather than to whichever key we picked.
-/// A stable but wrong order would pass the tests above and fail this one.
+/// The served order is the order the game shows: `char_equip` is the game's own
+/// per-character module list. A stable but wrong order passes the tests above and
+/// fails this one.
 #[test]
 fn operator_modules_match_the_games_own_char_equip_order() {
     let gd = load_game_data();

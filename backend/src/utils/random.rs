@@ -26,10 +26,6 @@ pub fn fill_random(buf: &mut [u8]) {
 mod platform {
     use std::sync::atomic::{AtomicI32, Ordering};
 
-    // Sentinel values stored in GETRANDOM_STATE:
-    //   UNCHECKED (-1) -> haven't probed yet
-    //   UNAVAILABLE (0) -> getrandom syscall not present, fall back to /dev/urandom
-    //   AVAILABLE  (1) -> use getrandom
     const UNCHECKED: i32 = -1;
     const UNAVAILABLE: i32 = 0;
     const AVAILABLE: i32 = 1;
@@ -73,7 +69,7 @@ mod platform {
                     // which is always valid to read.
                     let errno = unsafe { *errno_ptr() };
                     match errno {
-                        4 => {} // EINTR - retry
+                        4 => {} // EINTR: retry
                         _ => panic!("getrandom failed: errno {errno}"),
                     }
                 }
@@ -101,7 +97,7 @@ mod platform {
                     // which is always valid to read.
                     let errno = unsafe { *errno_ptr() };
                     match errno {
-                        4 => {} // EINTR - retry
+                        4 => {} // EINTR: retry
                         _ => panic!("/dev/urandom read failed: errno {errno}"),
                     }
                 }

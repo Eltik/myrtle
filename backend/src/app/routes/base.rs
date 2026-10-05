@@ -36,10 +36,8 @@ async fn viewer_id(state: &AppState, auth: &MaybeAuthUser) -> Option<uuid::Uuid>
         .map(|u| u.id)
 }
 
-// Which roster to plan against comes from the shared `resolve_uid` gate in
-// `routes::mod`, which must run here in the handler rather than inside the
-// service: `rotation_plan` can answer from cache without entering the service
-// at all, so a gate further in would not see that request.
+// The `resolve_uid` gate runs in the handler, not the service: `rotation_plan`
+// can answer from cache without entering the service.
 
 /// The player's real stationed base, as the planner's starting draft.
 /// Runs the shared privacy gate: another player's data is readable only when

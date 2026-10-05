@@ -1,24 +1,19 @@
-//! The CHARACTER GALLERY: every sprite folder under
-//! `textures/avg/characters/`, with the names the scripts speak it under and
-//! every expression it offers.
+//! The character gallery: every sprite folder under `textures/avg/characters/`,
+//! the names the scripts speak it under, and every expression it offers.
 //!
-//! What this module OWNS is the census, and the census is two walks:
+//! The census is two walks:
+//! - SCRIPTS, once per distinct library script in library order:
+//!   [`crate::core::story::speakers`] attributes each named line to the sprite(s)
+//!   LIT when spoken (the reader's speaker-colour rule) and counts every put-up.
+//!   Source of `names`, `lines`, `stories`, `firstSeen` and each expression's `uses`.
+//! - FOLDERS, once each: every `#N$M` the hub offers, resolved by
+//!   [`StoryAssetIndex::resolve_character`] so gallery and reader never draw a key
+//!   differently, deduplicated by the files it lands on.
 //!
-//! - Over the SCRIPTS, once per distinct library script in library order:
-//!   [`crate::core::story::speakers`] attributes every named line to the
-//!   sprite(s) LIT when it is spoken, the rule the reader's own speaker colour
-//!   uses, and counts every time a sprite is put up. That is where `names`,
-//!   `lines`, `stories`, `firstSeen` and each expression's `uses` come from.
-//! - Over the FOLDERS, once each: every `#N$M` the hub offers, resolved by
-//!   [`StoryAssetIndex::resolve_character`] so the gallery and the reader can
-//!   never draw one key differently, deduplicated by the files it lands on.
-//!
-//! Nothing here is per request: the build runs under `cpu::run` and the whole
-//! result (the light list AND every folder's detail) is cached per server in a
-//! [`ServerCache`], retired by a new `GameData` load or a new asset tree. The
-//! list and the detail are two routes because the detail carries every
-//! expression and every story, which for all folders at once is several times
-//! the list (measured in `docs/story-reader.md`, "Character gallery").
+//! Built under `cpu::run` and cached whole per server in a [`ServerCache`], retired
+//! by a new `GameData` or asset tree. List and detail are separate routes because
+//! all details at once are several times the list (`docs/story-reader.md`,
+//! "Character gallery").
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::{Path, PathBuf};

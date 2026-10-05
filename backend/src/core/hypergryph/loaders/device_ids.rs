@@ -10,9 +10,8 @@ fn state_path() -> PathBuf {
     )
 }
 
-/// Explicit override: all three ids supplied via env. Lets an operator pin a
-/// known device (e.g. ephemeral containers with no persistent volume). All
-/// three must be present and non-empty or the override is ignored.
+/// All three ids from env, to pin a known device (ephemeral containers with no
+/// volume). Ignored unless all three are non-empty.
 fn from_env() -> Option<DeviceIds> {
     let ids = DeviceIds {
         device_id: std::env::var("DEVICE_ID").ok()?,
@@ -37,7 +36,7 @@ fn read_file(path: &PathBuf) -> Option<DeviceIds> {
     }
 }
 
-/// Atomic write via temp file + rename. Called at most once (on first run).
+/// Temp file + rename. Runs at most once, on first run.
 fn write_file(path: &PathBuf, ids: &DeviceIds) -> std::io::Result<()> {
     let body = serde_json::to_vec_pretty(ids)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
@@ -52,14 +51,13 @@ fn write_file(path: &PathBuf, ids: &DeviceIds) -> std::io::Result<()> {
     Ok(())
 }
 
-/// Resolve a stable device identity, in priority order:
-///   1. `DEVICE_ID` / `DEVICE_ID2` / `DEVICE_ID3` env vars (explicit pin),
-///   2. the persisted JSON file (`DEVICE_IDS_FILE`, default `device_ids.json`),
-///   3. a freshly generated set, which is then persisted for next time.
+/// Priority: `DEVICE_ID` / `DEVICE_ID2` / `DEVICE_ID3` env, then the persisted
+/// file (`DEVICE_IDS_FILE`, default `device_ids.json`), then a fresh set that is
+/// persisted.
 ///
-/// Device ids must stay stable across restarts: Arknights binds a minted
-/// `secret` to the device that requested it, so a regenerated device id breaks
-/// re-minting from a stored session and can trip device-change verification.
+/// Must stay stable across restarts: a minted `secret` is bound to the device
+/// that asked for it, so a new id breaks re-minting from a stored session and
+/// can trip device-change verification.
 pub fn resolve_device_ids() -> DeviceIds {
     if let Some(ids) = from_env() {
         tracing::info!("using device ids from environment");

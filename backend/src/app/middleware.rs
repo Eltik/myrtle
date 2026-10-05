@@ -1,10 +1,8 @@
 //! Cross-cutting request middleware: observation, timeout, rate limiting.
 //!
-//! Written as `axum::middleware::from_fn` layers rather than assembled from
-//! third-party tower layers, because all three need the same three values - the
-//! matched route, the request id and the resolved client address - and deriving
-//! those once in one place is simpler than keeping three layers' notions of
-//! them in agreement.
+//! Plain `from_fn` layers rather than third-party tower layers: all three need the
+//! matched route, request id and client address, and deriving them in one place
+//! beats keeping three layers in agreement.
 
 use std::net::{IpAddr, SocketAddr};
 use std::sync::LazyLock;
@@ -39,14 +37,11 @@ fn now_secs() -> u64 {
 /// is produced as soon as the stream exists, so a slow download is unaffected.
 const HANDLER_TIMEOUT: Duration = Duration::from_secs(30);
 
-/// The matched route (`/api/operators/{id}`) when the router has resolved one.
+/// The matched route (`/api/operators/{id}`), when the router resolved one.
 ///
-/// Its two callers need different fallbacks, hence the two wrappers below:
-///
-/// - [`metric_label`] must stay bounded, because it becomes a metric label, so
-///   everything unmatched collapses into one series.
-/// - [`classify_path`] must stay accurate even with no match, because the rate
-///   limiter derives an allowance from it, so it falls back to the real path.
+/// [`metric_label`] collapses unmatched requests into one series to keep labels
+/// bounded; [`classify_path`] falls back to the real path because the rate
+/// limiter derives an allowance from it.
 fn matched_route(req: &Request) -> Option<&str> {
     req.extensions()
         .get::<MatchedPath>()
@@ -107,11 +102,9 @@ pub async fn observe(req: Request, next: Next) -> Response {
         response.headers_mut().insert(REQUEST_ID, value);
     }
 
-    // One line per request: route, status, latency and the id to correlate on.
-    // It is DEBUG, not INFO: production runs at `backend=info` and this line was
-    // the whole of the log volume there, while route, status and latency are
-    // already on the metrics above and the id is on the response header. Server
-    // errors log at WARN so they surface without widening the filter.
+    // DEBUG, not INFO: production runs `backend=info` and this line was its whole
+    // log volume, while route/status/latency are already metrics and the id is on
+    // the response header. Server errors log at WARN.
     let latency_ms = elapsed.as_secs_f64() * 1000.0;
     if status.is_server_error() {
         tracing::warn!(
@@ -142,14 +135,11 @@ fn timeout_response() -> Response {
         .into_response()
 }
 
-/// How many proxies sit in front of this process.
+/// Proxies in front of this process. 0 (default): the peer is the client and
+/// `X-Forwarded-For` is ignored. Behind one reverse proxy, set 1.
 ///
-/// 0 (the default) means the peer address is the client and `X-Forwarded-For`
-/// is ignored entirely. Behind one reverse proxy, set 1.
-///
-/// Hops are counted from the RIGHT of the header, because only the entries a
-/// trusted proxy appended are trustworthy - the leftmost entries are whatever
-/// the client chose to send.
+/// Hops count from the RIGHT: only entries a trusted proxy appended are
+/// trustworthy, the leftmost are whatever the client sent.
 static TRUSTED_PROXY_HOPS: LazyLock<usize> = LazyLock::new(|| {
     std::env::var("TRUSTED_PROXY_HOPS")
         .ok()
@@ -249,15 +239,12 @@ impl Cidr {
 /// Addresses that skip rate limiting entirely, from `RATE_LIMIT_EXEMPT_IPS`
 /// (comma-separated addresses or CIDR blocks).
 ///
-/// Loopback is always exempt and does not need listing. This is what keeps a
-/// first-party server-side renderer on the same host from being throttled as
-/// though it were one very busy visitor: its requests all arrive from one
-/// address, so a per-address allowance is the wrong tool for them. Set this
-/// when that renderer runs somewhere else - another host, a container network -
-/// and so reaches this process from a routable address.
+/// Loopback is always exempt, so a same-host SSR renderer isn't throttled as one
+/// very busy visitor. Set this when the renderer reaches us from a routable
+/// address (another host, a container network).
 ///
-/// Only add addresses that cannot be reached by an untrusted client: an
-/// exempted address has no allowance at all.
+/// Only list addresses untrusted clients can't reach: an exempt address has no
+/// allowance at all.
 static EXEMPT_ADDRESSES: LazyLock<Vec<Cidr>> = LazyLock::new(|| {
     let raw = std::env::var("RATE_LIMIT_EXEMPT_IPS").unwrap_or_default();
     let mut parsed = Vec::new();
@@ -346,11 +333,8 @@ struct Window {
 static BUCKETS: LazyLock<DashMap<(Bucket, IpAddr), Window>> = LazyLock::new(DashMap::new);
 static SWEEP_TICKER: AtomicU64 = AtomicU64::new(0);
 
-/// Drop entries whose window has passed, every 10k admissions.
-///
-/// Sweeping inline rather than from a spawned task keeps this to one moving
-/// part, and amortises to roughly nothing per request. Without it the map
-/// would retain an entry per address seen.
+/// Drops expired entries every 10k admissions. Inline rather than a spawned task:
+/// one moving part, ~free per request. Without it the map keeps every address seen.
 fn maybe_sweep(current_window: u64) {
     if SWEEP_TICKER
         .fetch_add(1, Ordering::Relaxed)
@@ -360,10 +344,8 @@ fn maybe_sweep(current_window: u64) {
     }
 }
 
-/// True when the caller presented the internal service key, which the
-/// frontend's server-side rendering uses. Those calls are trusted and
-/// first-party; holding them to a per-IP allowance would throttle the site
-/// itself, since they all arrive from one address.
+/// The caller presented the internal service key (frontend SSR). Those calls all
+/// arrive from one address, so a per-IP allowance would throttle the site itself.
 fn is_service_call(req: &Request, state: &AppState) -> bool {
     let configured = state.config.service_key.as_bytes();
     if configured.is_empty() {
@@ -383,9 +365,8 @@ pub async fn rate_limit(State(state): State<AppState>, req: Request, next: Next)
     }
 
     let Some(ip) = client_ip(&req) else {
-        // No usable client address - a misconfiguration, or a transport that
-        // carries none. Refusing every such request would take the site down
-        // over a deployment detail, so it passes.
+        // No usable client address (misconfig, or a transport without one).
+        // Refusing would take the site down over a deployment detail, so it passes.
         return next.run(req).await;
     };
 
@@ -405,12 +386,10 @@ pub async fn rate_limit(State(state): State<AppState>, req: Request, next: Next)
         hits: AtomicU64::new(0),
     });
 
-    // Rolling the window and counting the hit are two atomics, not one, so two
-    // requests arriving exactly as the minute turns can both count as the first
-    // of the new window. That is a few extra admissions per address per minute
-    // under a race, and it is the deliberate trade: a fixed window on two
-    // `Relaxed` atomics costs nothing per request, where a mutex or a true
-    // sliding window buys precision a rate limiter does not need.
+    // Rolling the window and counting are two atomics, so two requests right at the
+    // minute turn can both count as first of the new window: a few extra admissions
+    // under a race. Deliberate: two `Relaxed` atomics cost nothing, and a mutex or a
+    // true sliding window buys precision a rate limiter doesn't need.
     let hits = if entry.window.swap(window, Ordering::Relaxed) == window {
         entry.hits.fetch_add(1, Ordering::Relaxed) + 1
     } else {

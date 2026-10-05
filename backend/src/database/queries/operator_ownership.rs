@@ -55,13 +55,12 @@ pub async fn get_operator_ownership(
     Ok((population, rows))
 }
 
-/// The default-skill and default-module distributions for one operator, each
-/// ordered most-picked first.
+/// Default-skill and default-module distributions for one operator, most-picked
+/// first.
 ///
-/// The ordering is `users DESC, choice ASC`, and the tie-break is load-bearing
-/// rather than cosmetic: 4 operators tie exactly at the top of their
-/// distribution, and an unordered read would name a different winner per
-/// process the way `HashMap` iteration did for module order.
+/// The `choice ASC` tie-break matters: 4 operators tie exactly at the top, and an
+/// unordered read named a different winner per process (as `HashMap` order did for
+/// modules).
 pub async fn get_operator_choices(
     pool: &PgPool,
     server_id: i16,
@@ -244,12 +243,10 @@ pub async fn refresh_build_stats(pool: &PgPool) -> Result<(), sqlx::Error> {
         .execute(&mut *tx)
         .await?;
 
-    // Where a skill is LEFT, not whether it was touched. Restricted to E2
-    // owners because mastery needs E2 and rows exist for every owned operator
-    // regardless: 664,176 at E0 and 183,465 at E1, every one of them
-    // specialize_level = 0. Counting those would bury each real figure under
-    // operators that cannot be mastered at all, which is the same mistake as
-    // reading a locked option as a declined one.
+    // Where a skill is LEFT, not whether it was touched. E2 owners only: rows exist
+    // for every owned operator (664,176 at E0, 183,465 at E1, all specialize_level =
+    // 0), and counting them would bury the real figures, the same mistake as reading
+    // a locked option as a declined one.
     sqlx::query(
         r"
         INSERT INTO operator_mastery_stats (server_id, operator_id, skill_index, mastery, users)
@@ -270,12 +267,9 @@ pub async fn refresh_build_stats(pool: &PgPool) -> Result<(), sqlx::Error> {
         .execute(&mut *tx)
         .await?;
 
-    // `locked` is the discriminator, NOT the row's presence: a locked row always
-    // carries module_level = 1, which is a placeholder rather than a level, and
-    // such rows exist at E0 and E1 where a module cannot be equipped at all.
-    // Remapping locked to 0 keeps "has not unlocked it" as its own bucket, which
-    // is the largest stopping point there is and would otherwise masquerade as
-    // Lv1.
+    // `locked` is the discriminator, not row presence: a locked row always carries
+    // module_level = 1 as a placeholder and exists at E0/E1 too. Mapping locked to 0
+    // keeps "not unlocked", the largest stopping point, from posing as Lv1.
     sqlx::query(
         r"
         INSERT INTO operator_module_level_stats (server_id, operator_id, uni_equip_id, module_level, users)

@@ -1,11 +1,6 @@
-//! Periodic regrade job.
-//!
-//! Recomputes every user's grade on a fixed cadence (default 24h) because
-//! stage scoring depends on aggregate user completion, so individual grades
-//! drift as the playerbase progresses.
-//!
-//! The last-run timestamp is persisted to a small JSON file so restarts
-//! don't trigger a fresh regrade pass.
+//! Regrades every user on a fixed cadence (default 24h): stage scoring depends
+//! on aggregate completion, so grades drift as the playerbase progresses. The
+//! last run is persisted to a small JSON file so restarts don't trigger a pass.
 
 use crate::app::state::AppState;
 use crate::core::gamedata::types::GameData;
@@ -51,7 +46,7 @@ fn read_state(path: &PathBuf) -> State {
     }
 }
 
-/// Atomic write via temp file + rename. Cheap; called at most once per cycle.
+/// Temp file + rename; at most once per cycle.
 fn write_state(path: &PathBuf, state: &State) -> std::io::Result<()> {
     let body = serde_json::to_vec_pretty(state)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e))?;
@@ -157,15 +152,11 @@ async fn regrade_one(
     Ok(overall)
 }
 
-/// One full regrade pass, shared by the loop and by `core::refresh`.
+/// One full regrade pass, shared by the loop and `core::refresh`.
 ///
-/// Marked HEAVY in the task registry: this walks the entire `users` table and
-/// recomputes every grade, so unlike the other one-shots its cost grows with
-/// the user count rather than being a single aggregate query. It is excluded
-/// from a bare `--all` for that reason.
-///
-/// Unlike the loop, this does not touch the on-disk state file: forcing a pass
-/// by hand should not convince the scheduled job that it has already run.
+/// HEAVY in the registry: walks all of `users`, so its cost grows with the user
+/// count and a bare `--all` skips it. Doesn't touch the state file: a manual pass
+/// shouldn't convince the scheduled job it already ran.
 pub async fn refresh_once(state: &AppState) -> anyhow::Result<String> {
     let cfg = Cfg::from_env();
     let (ok, failed) = run_pass(state, &cfg).await;
@@ -206,7 +197,7 @@ async fn run_pass(state: &AppState, cfg: &Cfg) -> (u64, u64) {
         cursor = page.last().map(|(id, _)| *id);
 
         for (user_id, uid) in page {
-            // Permit before spawn: bounds memory and open DB connections
+            // Permit before spawn: bounds memory and open DB connections.
             let Ok(permit) = sem.clone().acquire_owned().await else {
                 break;
             };

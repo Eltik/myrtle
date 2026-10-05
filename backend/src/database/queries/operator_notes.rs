@@ -101,9 +101,7 @@ pub async fn get_audit_log_global(
     limit: i64,
     before: Option<chrono::DateTime<chrono::Utc>>,
 ) -> Result<Vec<OperatorNoteAuditEntryWithContext>, sqlx::Error> {
-    // Single query: join operator_notes (for operator_id) and users (for
-    // display info). LEFT JOIN on users so audit rows survive even if the
-    // referenced user is hard-deleted some day.
+    // LEFT JOIN users so audit rows survive a hard-deleted user.
     const SELECT: &str = r"
         SELECT
             a.id,

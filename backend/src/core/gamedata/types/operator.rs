@@ -403,10 +403,9 @@ pub struct CharacterTable {
     pub characters: HashMap<String, RawOperator>,
 }
 
-/// Wrapper for `char_patch_table.json` - Hypergryph stores Amiya's branch forms
-/// (Guard `char_1001_amiya2`, Medic `char_1037_amiya3`) here instead of the
-/// main `character_table`, alongside an `Infos` map that groups the base id
-/// with all its template ids.
+/// `char_patch_table.json`: Amiya's branch forms (Guard `char_1001_amiya2`,
+/// Medic `char_1037_amiya3`) live here, not in `character_table`, with an
+/// `Infos` map grouping the base id and its template ids.
 #[derive(Debug, Clone, Deserialize, Default)]
 #[serde(rename_all = "PascalCase")]
 pub struct CharPatchTable {
@@ -613,20 +612,20 @@ pub struct Operator {
     pub tmpl_default: Option<String>,
 }
 
-/// Collab `team_id`s - operators tied to a third-party IP, only (rarely)
-/// obtainable during a collab rerun, never through standard headhunting. Owning
-/// one is the only way to (re)earn its medals, so collab status is the single
-/// signal we treat as "not reliably obtainable".
+/// Collab `team_id`s: operators from a third-party IP, obtainable only (rarely)
+/// in a collab rerun, never from standard headhunting. Owning one is the only
+/// way to (re)earn its medals, so collab status is the one "not reliably
+/// obtainable" signal.
 ///
-/// Curated because Arknights gamedata has **no** reliable collab flag:
-/// `character_table` has no such field, `handbook_team_table.IsLimited` is
-/// `false` for every team (collabs included), `gacha_table` `LINKAGE` pools
-/// don't map cleanly to char ids, and "operator has no Terra `nation_id`"
-/// false-positives in-game factions like `followers`. Add new collab teams here.
+/// Curated because the gamedata has no reliable collab flag: `character_table`
+/// has no such field, `handbook_team_table.IsLimited` is `false` for every
+/// team (collabs too), `gacha_table` `LINKAGE` pools don't map cleanly to char
+/// ids, and "no Terra `nation_id`" false-positives factions like `followers`.
+/// Add new collab teams here.
 ///
-/// NOTE: deliberately does NOT key off `item_obtain_approach`. Event-reward /
-/// welfare operators (Vigil, Mint, Lava the Purgatory, ...) carry approaches
-/// like "Event Reward" but remain obtainable, so that signal over-excludes.
+/// Not keyed off `item_obtain_approach` on purpose: event / welfare operators
+/// (Vigil, Mint, Lava the Purgatory, ...) say "Event Reward" yet stay
+/// obtainable, so it over-excludes.
 const COLLAB_TEAMS: &[&str] = &["rainbow", "mujica", "laios"];
 
 /// Collab `DisplayNumber` prefixes for collabs that lack a dedicated team. The
@@ -646,9 +645,8 @@ const COLLAB_DISPLAY_PREFIXES: &[&str] = &["MH"];
 const COLLAB_CHAR_IDS: &[&str] = &["char_4067_lolxh"];
 
 impl Operator {
-    /// True if this is a collab (third-party IP) operator. The one consolidated
-    /// place that answers "is this a collab op" - consumers (medal locks,
-    /// scoring, future roster features) should call this rather than re-derive.
+    /// Collab (third-party IP) operator. Medal locks and scoring call this;
+    /// don't re-derive it.
     pub fn is_collab(&self) -> bool {
         if self
             .team_id

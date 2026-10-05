@@ -18,8 +18,8 @@ pub struct AuthUser {
 }
 
 impl AuthUser {
-    /// The authenticated user's id parsed as a `Uuid`, returning `Unauthorized` when
-    /// the token carries a non-UUID subject (e.g. the internal "service" principal).
+    /// The subject as a `Uuid`; `Unauthorized` for a non-UUID subject such as the
+    /// internal "service" principal.
     pub fn user_uuid(&self) -> Result<uuid::Uuid, ApiError> {
         self.user_id.parse().map_err(|_| ApiError::Unauthorized)
     }
@@ -34,12 +34,10 @@ impl FromRequestParts<AppState> for AuthUser {
         parts: &mut Parts,
         state: &AppState,
     ) -> Result<Self, Self::Rejection> {
-        // Try service key first (for internal SSR calls).
-        // Constant-time compare to avoid leaking the key via timing.
-        // Both sides are checked for emptiness before the compare: `ct_eq` on
-        // two empty slices is equal, so an empty configured key and an empty
-        // header would authenticate each other. `AppConfig::require_secret`
-        // refuses an empty key at boot; this is the second lock on that door.
+        // Service key first (internal SSR calls), compared in constant time.
+        // Both sides must be non-empty: `ct_eq` on two empty slices is equal, so an
+        // empty key would match an empty header. `AppConfig::require_secret` also
+        // refuses an empty key at boot.
         if let Some(key) = parts.headers.get("x-service-key")
             && !key.is_empty()
             && !state.config.service_key.is_empty()
@@ -94,10 +92,9 @@ fn extract_bearer(headers: &HeaderMap) -> Result<&str, ApiError> {
         .ok_or(ApiError::Unauthorized)
 }
 
-/// An unknown or absent role in a token degrades to `User` rather than
-/// failing the request: a token minted before a role existed must still
-/// authenticate, just without the privilege. `GlobalRole::from_str` owns the
-/// spelling of every role so this cannot drift from `Display`.
+/// Unknown or absent role degrades to `User`: a token minted before the role
+/// existed still authenticates, minus the privilege. `GlobalRole::from_str` owns
+/// the spellings so this can't drift from `Display`.
 fn parse_role(role: &str) -> GlobalRole {
     GlobalRole::from_str(role).unwrap_or_default()
 }

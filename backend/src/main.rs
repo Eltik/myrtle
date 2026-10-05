@@ -47,15 +47,12 @@ const HARD_EXIT_GRACE: Duration = Duration::from_secs(15);
 
 /// A shutdown signal the main runtime cannot ANSWER still ends the process.
 ///
-/// `server::run` drains under a 5 s grace and `shutdown_timeout` bounds the
-/// blocking pool, but both of those are futures on the main runtime: when
-/// every worker is parked in synchronous compute, nothing polls them and the
-/// signal is simply never seen. That is what happened on 2026-09-23, when one
-/// account's grade held a worker for 39,861 ms in a debug build and SIGTERM
-/// went unanswered until the process was killed by hand. This watchdog owns
-/// its own thread and its own single-threaded runtime, so it is polled
-/// whatever the main runtime is doing, and it leaves once the grace is up.
-/// A clean shutdown is faster than the grace, so this never fires on one.
+/// `server::run`'s 5 s grace and `shutdown_timeout` are both futures on the main
+/// runtime: with every worker parked in sync compute nothing polls them. On
+/// 2026-09-23 one account's grade held a worker for 39,861 ms (debug build) and
+/// SIGTERM went unanswered until the process was killed by hand. This watchdog
+/// has its own thread and single-threaded runtime and leaves once the grace is
+/// up; a clean shutdown is faster, so it never fires on one.
 fn spawn_shutdown_watchdog() {
     let started = std::thread::Builder::new()
         .name("shutdown-watchdog".into())
@@ -217,10 +214,9 @@ async fn async_main() {
         }
     }
 
-    // Background watchers + cron jobs. These query Postgres and (in the case of
-    // `regrade_job`) fan out parallel workers across every user, which is heavy
-    // and pointless for local stage-viewer / API work. Set
-    // `DISABLE_BACKGROUND_JOBS=1` to skip them during local development.
+    // Background watchers + cron jobs. Heavy (`regrade_job` fans out over every
+    // user) and pointless for local stage-viewer / API work;
+    // `DISABLE_BACKGROUND_JOBS=1` skips them.
     let jobs_phase = boot.phase("jobs");
     startup::step("spawn");
     let jobs_disabled = std::env::var("DISABLE_BACKGROUND_JOBS")

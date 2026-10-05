@@ -1,25 +1,15 @@
-//! One slot per server, and the SINGLE FLIGHT that guards what is behind it.
+//! One slot per server, with a single flight: a derived value (the library index
+//! here, the community aggregate in [`crate::app::services::story_community`]) is
+//! built at most once per game-data load per server. The archive rides the index's
+//! slot as a field of [`StoryIndexCache`].
 //!
-//! What this module OWNS is the rule that a derived value is built at most once
-//! per game-data load per server. Two things are cached that way, the library
-//! index here and the community aggregate in
-//! [`crate::app::services::story_community`], and they held two copies of the
-//! same idiom until [`ServerCache`] took it. The archive is NOT a third: it is
-//! a field of [`StoryIndexCache`] and rides the index's own slot.
-//!
-//! The check and the build sit inside ONE lock, because the index build is
-//! 6,332 ms and every caller that arrives inside it would otherwise miss and
-//! start its own. Measured on the 2026-09-24 boot, before the lock existed:
-//! `spawn_warm` logged "story index warmed" for EN and the first
-//! `GET /api/story/index` logged "story index built `build_ms=6332`" a second
-//! later, and `/metrics` counted
-//! `myrtle_cpu_task_total{kind="story_index",outcome="started"} 3` with
-//! `duration_seconds_sum 14.580557` for ONE game-data load. The warm and the
-//! request did not key on different `GameData` arcs: they overlapped, and
-//! nothing made the second wait for the first. Measured offline with 8
-//! concurrent readers on one load: 7 builds and ONE 503 before (each reader
-//! takes its own `cpu::run` permit and the eighth is shed at the 2.5 s
-//! admission wait), 1 build and no refusal after.
+//! Check and build sit inside ONE lock: the index build is 6,332 ms and every
+//! caller arriving inside it would start its own. 2026-09-24 boot, before the lock:
+//! the warm and the first `GET /api/story/index` overlapped and
+//! `myrtle_cpu_task_total{kind="story_index",outcome="started"}` reached 3
+//! (`duration_seconds_sum 14.580557`) for ONE load. Offline, 8 concurrent readers
+//! on one load: 7 builds and one 503 before (the eighth `cpu::run` permit is shed
+//! at the 2.5 s admission wait), 1 build and no refusal after.
 
 use std::collections::HashMap;
 use std::future::Future;

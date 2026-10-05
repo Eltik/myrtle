@@ -650,9 +650,8 @@ pub async fn get_operator_json(
     .await
 }
 
-/// Find an operator across loaded servers, preferring `preferred` (the default).
-/// Returns the operator and the server it was found on, so a single request
-/// resolves both global and upcoming (CN-only) operators - no client-side retry.
+/// Find an operator across loaded servers, `preferred` first, and the server it was
+/// found on, so one request resolves both global and CN-only operators.
 pub fn resolve_operator(
     state: &AppState,
     preferred: Server,

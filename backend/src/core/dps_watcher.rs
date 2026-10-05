@@ -6,8 +6,8 @@
 //! belonging in CI and a normal deploy, not something a server does to itself
 //! while serving.
 //!
-//! So the contract is narrow - notice the upstream commit, say so once, and
-//! back off when the API is unavailable.
+//! The contract is narrow: notice the upstream commit, say so once, back off when
+//! the API is unavailable.
 
 use std::time::Duration;
 

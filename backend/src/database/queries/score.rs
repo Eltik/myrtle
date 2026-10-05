@@ -45,11 +45,9 @@ fn sort_column(sort_by: &str) -> &'static str {
     }
 }
 
-/// When `movement_interval` is provided, each row is enriched with `rank_delta`
-/// computed against the most recent snapshot taken before that interval.
-/// When `movement_only` is also true, rows whose rank hasn't changed (or which
-/// have no baseline yet) are excluded - count and pagination both reflect the
-/// filtered population, so the caller can paginate normally.
+/// With `movement_interval`, each row gets `rank_delta` against the latest
+/// snapshot before that interval. With `movement_only` too, unchanged rows and rows
+/// with no baseline are dropped; count and pagination use the filtered set.
 #[allow(clippy::too_many_arguments)]
 pub async fn get_leaderboard(
     pool: &PgPool,
@@ -160,9 +158,8 @@ pub async fn get_leaderboard(
     qry.bind(limit).bind(offset).fetch_all(pool).await
 }
 
-/// Count leaderboard entries. When `movement_interval` is provided and
-/// `movement_only` is true, the count is restricted to users with non-zero
-/// movement since the baseline - so it matches the paginated rows.
+/// Count leaderboard entries. With `movement_interval` and `movement_only`, counts
+/// only users who moved since the baseline, to match the paginated rows.
 pub async fn count_leaderboard(
     pool: &PgPool,
     server: Option<&str>,
@@ -243,9 +240,8 @@ pub async fn count_leaderboard(
     qry.fetch_one(pool).await
 }
 
-/// A user's score and rank across every leaderboard snapshot they appear in,
-/// oldest first - the Score tab's history chart. Snapshots are taken by the
-/// leaderboard job, so the series grows one point per snapshot.
+/// A user's score and rank in every leaderboard snapshot they appear in, oldest
+/// first, for the Score tab chart. One point per snapshot the leaderboard job takes.
 pub async fn get_score_history(
     pool: &PgPool,
     uid: &str,

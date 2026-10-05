@@ -1,10 +1,6 @@
-//! Loading and parsing ONE story, the `GET /story/{id}` half.
-//!
-//! Nothing here is cached, the story summary included: the parse is milliseconds (measured 2026-09-21: the
-//! longest EN script parses in under 10 ms) and the asset index it resolves
-//! through is the shared, already-warmed one. The work runs under
-//! [`cpu::run`] because the FIRST call on a cold process still builds that
-//! index, one walk over roughly 90k files.
+//! Loading and parsing one story (`GET /story/{id}`). Uncached: the longest EN
+//! script parses in under 10 ms (2026-09-21). Runs under [`cpu::run`] because the
+//! first call on a cold process builds the asset index (~90k files).
 
 use std::sync::Arc;
 
@@ -30,8 +26,6 @@ pub async fn get_story(
     let assets_dir = std::path::PathBuf::from(&server_data.assets_dir);
     let live_assets = server_data.asset_index.load_full();
     let id = story_id.to_owned();
-    // first call also builds the asset index (one walk over ~90k files), so this
-    // runs off the async worker; the parse itself is <10 ms (measured 2026-09-21)
     cpu::run("story_parse", move || {
         load_and_parse(&assets_dir, &live_assets, &id, &story_ref)
     })

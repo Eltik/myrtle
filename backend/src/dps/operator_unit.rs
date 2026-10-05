@@ -58,7 +58,7 @@ pub struct OperatorUnit {
     pub drone_atk: f64,
     pub drone_atk_interval: f32,
 
-    // Clone/summon operator stats (for operators like Muelsyse that copy another operator)
+    // Stats of the copied operator (Muelsyse clones)
     pub clone_atk: f64,
     pub clone_atk_interval: f64,
     pub clone_is_ranged: bool,
@@ -89,7 +89,7 @@ pub struct OperatorUnit {
     pub buff_atk_flat: f64,
     pub buff_fragile: f64,
 
-    pub shreds: Vec<f64>, // Defense shred values [def_shred_mult, def_shred_flat, res_shred_mult, res_shred_flat]
+    pub shreds: Vec<f64>, // [def_mult, def_flat, res_mult, res_flat]
 
     /// Ammo count; also doubles as the `hits` input for some healing formulas.
     pub ammo: f64,
@@ -191,7 +191,6 @@ impl OperatorUnit {
                 };
             }
 
-            // Amiya is a special child
             let is_amiya = operator_data
                 .data
                 .id
@@ -506,7 +505,7 @@ impl OperatorUnit {
         }
 
         let mut drone_atk: f64 = 0.0;
-        // Default to 1.0 to avoid division by zero (matches Python's default)
+        // Python's default; also avoids dividing by zero
         let mut drone_atk_interval: f32 = 1.0;
 
         if !operator_data.drone_atk.is_empty() {

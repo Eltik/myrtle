@@ -285,8 +285,8 @@ pub async fn account_portal_login(
     }
 }
 
-// The Arknights server is inconsistent: bools come through as `true`/`false` or `0`/`1`,
-// and integers sometimes ride on the wire as decimal strings.
+// The server is inconsistent: bools arrive as `true`/`false` or `0`/`1`, and
+// integers sometimes as decimal strings.
 fn de_bool_loose<'de, D: serde::Deserializer<'de>>(d: D) -> Result<bool, D::Error> {
     use serde::de::Error;
     match serde_json::Value::deserialize(d)? {
@@ -491,7 +491,7 @@ pub async fn get_battle_replay(
     client: &Client,
     session: &mut AuthSession,
     server: Server,
-    battle_type: &str, // "quest" (normal stages) or "campaignV2" (Annihilation) - see saved_replay_targets
+    battle_type: &str, // "quest" (normal stages) or "campaignV2" (Annihilation), see saved_replay_targets
     stage_id: &str,
 ) -> Result<BattleReplay, FetchError> {
     let endpoint = format!("{battle_type}/getBattleReplay");
@@ -510,19 +510,17 @@ pub async fn get_battle_replay(
 
 /// Pacing for [`harvest_replays`].
 ///
-/// One session must call `getBattleReplay` sequentially: the auth `seqnum` is a
-/// monotonic counter, so concurrent calls on one `AuthSession` race and
-/// invalidate it. Sessions are separate rate-limit buckets server-side, so spawn
-/// one task per player for throughput.
+/// One session must call `getBattleReplay` sequentially: `seqnum` is monotonic,
+/// so concurrent calls on one `AuthSession` race and invalidate it. Sessions are
+/// separate rate-limit buckets, so run one task per player.
 ///
-/// `interval` defaults to 100ms. The server tolerates back-to-back requests on a
-/// session; the pause mostly keeps a runaway loop from starving the tokio
-/// runtime. `Duration::ZERO` for max throughput.
+/// `interval` defaults to 100ms. The server tolerates back-to-back requests; the
+/// pause mostly keeps a runaway loop from starving tokio. `Duration::ZERO` for max
+/// throughput.
 ///
-/// Build the target list from `account/syncData`, not by enumerating every stage
-/// in gamedata. The live client only calls `getBattleReplay` on stages with a
-/// saved replay; a stream of 5516 misses is traffic anti-abuse systems can
-/// fingerprint.
+/// Build targets from `account/syncData`, not every gamedata stage. The live
+/// client only asks for stages with a saved replay; a stream of 5516 misses is
+/// traffic anti-abuse can fingerprint.
 #[derive(Debug, Clone)]
 pub struct ReplayHarvestOptions {
     pub min_interval: Duration,
@@ -552,7 +550,7 @@ fn jitter_delay(min: Duration, max: Duration) -> Duration {
 #[derive(Debug)]
 pub enum ReplayOutcome {
     Replay(BattleReplay),
-    /// Upstream code 5516: account has no saved auto-deploy script for the stage.
+    /// Upstream 5516: no saved auto-deploy script for the stage.
     NoSaved,
 }
 
@@ -602,11 +600,9 @@ where
     Ok(())
 }
 
-/// The player's full state blob as raw JSON, from one authenticated call.
-///
-/// Body `{"platform": 1}` matches what `ArkPRTS` and the roster refresh send.
-/// Often megabytes for endgame accounts; sessions are independent, so fan out
-/// one task per player.
+/// The player's full state as raw JSON. Body `{"platform": 1}` matches `ArkPRTS`
+/// and the roster refresh. Often megabytes for endgame accounts; sessions are
+/// independent, so fan out one task per player.
 pub async fn sync_data_raw(
     client: &Client,
     session: &mut AuthSession,
@@ -627,11 +623,10 @@ pub async fn sync_data(
     serde_json::from_str(&text).map_err(|e| FetchError::ParseError(format!("parse syncData ({e})")))
 }
 
-/// Walk a `sync_data` response and return every `(battle_type, stage_id)` where
-/// the player has a saved auto-deploy replay. Only these stages will return a
-/// real replay from [`get_battle_replay`]; everything else returns code 5516.
+/// Every `(battle_type, stage_id)` with a saved auto-deploy replay. Only these
+/// return a real replay from [`get_battle_replay`]; the rest return 5516.
 ///
-/// Source of truth per `OpenBachelorS` / `DoctoratePy` server reimpls:
+/// Per the `OpenBachelorS` / `DoctoratePy` server reimpls:
 /// - `user.dungeon.stages[*].hasBattleReplay == 1`          -> `battle_type = "quest"`
 /// - `user.campaignsV2.instances[*].hasBattleReplay == 1`   -> `battle_type = "campaignV2"`
 ///
@@ -662,9 +657,9 @@ fn collect_replay_flags(
     }));
 }
 
-/// Discover via syncData, then harvest only the stages with a saved replay: no
-/// 5516 misses, and the traffic shape matches the live client. Fan out one task
-/// per session behind a Semaphore(64).
+/// Discover via syncData, then harvest only saved replays: no 5516 misses, and
+/// the traffic matches the live client. One task per session behind a
+/// Semaphore(64).
 pub async fn collect_player_replays<F>(
     client: &Client,
     session: &mut AuthSession,

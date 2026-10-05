@@ -77,10 +77,7 @@ const fn cache_key(resource: &str, server: Server) -> CacheKey<'_> {
     }
 }
 
-// ============================================================================
-// Stage detail: one stage + its zone, level, referenced enemies and referenced
-// drop materials - instead of the full stages/zones/enemies/materials tables.
-// ============================================================================
+// Stage detail: one stage with its zone, level, enemies and drops, instead of the full tables.
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -231,17 +228,14 @@ pub async fn get_stage_detail(
     .await
 }
 
-// ============================================================================
-// Enemy detail: one enemy handbook record (+ race lookup table so the client
-// can resolve its race name) and its "Appears In" stage list.
-// ============================================================================
+// Enemy detail: the handbook record, the race table, and its "Appears In" stages.
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct EnemyDetailResponse<'a> {
     enemy: &'a Enemy,
-    /// The full (small) race table - the detail page derives the enemy's race
-    /// name from its `enemyTags` against this, matching the old client join.
+    /// The full (small) race table; the page resolves the race name from
+    /// `enemyTags` against it, as the old client join did.
     race_data: &'a HashMap<String, RaceData>,
 }
 
@@ -310,11 +304,7 @@ pub async fn get_chibi(
     .await
 }
 
-// ============================================================================
-// Skins index: slim `skinId -> {charId, displaySkin{...}}` map for the profile
-// Stats tab (skin count + skin-collection browser) - only the fields that tab
-// reads, over all skins.
-// ============================================================================
+// Skins index: `skinId -> {charId, displaySkin}`, only the fields the profile Stats tab reads.
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]

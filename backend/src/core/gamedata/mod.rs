@@ -59,10 +59,10 @@ pub mod types;
 /// Load the optional `gacha/getPoolDetail` sidecar written by
 /// [`super::gacha_detail_job`].
 ///
-/// Absence is the normal case, not an error: a deployment with no game service
-/// account never writes one, and banners then carry only their blob-derived
-/// rate-ups. A *corrupt* or version-mismatched file is a warning and is
-/// discarded - gamedata load must never fail because a cache went bad.
+/// Absence is normal: a deployment with no game service account never writes one,
+/// and banners then carry only their blob-derived rate-ups. A corrupt or
+/// version-mismatched file is a warning and is discarded; gamedata load must never
+/// fail because a cache went bad.
 fn load_pool_details(assets_dir: &Path, warnings: &mut Vec<String>) -> Option<PoolDetailFile> {
     let path = pool_detail_path(assets_dir);
     if !path.exists() {
@@ -154,10 +154,9 @@ const ASSET_STEPS: [&str; 3] = ["textures", "portraits", "audio"];
 
 /// The steps [`init_game_data`] reports, in order, for the boot progress plan.
 ///
-/// Table steps carry a size hint from disk. The tables are wildly unequal - EN's
-/// `activity_table` is 2.3 GB against under 20 MB for almost everything else -
-/// so weighting them by step count would be badly off until they have been
-/// measured.
+/// Table steps carry a size hint from disk. The tables are wildly unequal (EN's
+/// `activity_table` is 2.3 GB, almost everything else under 20 MB), so weighting by
+/// step count would be badly off until they've been measured.
 pub fn boot_steps(data_dir: &Path) -> Vec<startup::StepSpec> {
     let mut steps = ASSET_STEPS.map(startup::StepSpec::new).to_vec();
     steps.extend(BOOT_TABLES.iter().map(|name| table_step(data_dir, name)));
@@ -207,10 +206,9 @@ pub fn init_game_data(
     let char_table: CharacterTable = load_table(data_dir, "character_table")?;
     let mut raw_operators = char_table.characters;
 
-    // Merge Amiya's branch forms (Guard `char_1001_amiya2`, Medic
-    // `char_1037_amiya3`) from char_patch_table - Hypergryph stores them
-    // separately. Without this, those ids 404 everywhere and grade
-    // calculations silently skip them.
+    // Merge Amiya's branch forms (Guard `char_1001_amiya2`, Medic `char_1037_amiya3`)
+    // from char_patch_table, where HG stores them separately. Without this those ids
+    // 404 everywhere and grading silently skips them.
     let char_patch: CharPatchTable =
         load_table_or_warn(data_dir, "char_patch_table", &mut warnings);
     for (id, op) in char_patch.patch_chars {

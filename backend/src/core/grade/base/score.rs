@@ -8,18 +8,15 @@ use super::{
 };
 use std::collections::HashMap;
 
-/// Weight of stationing UTILIZATION: how close the synced stationing comes to
-/// the optimizer's best staffing of the same rooms. The dominant term - the
-/// grade is first and foremost "do you have the best base you could have".
+/// Stationing utilization: synced stationing vs the optimizer's best staffing
+/// of the same rooms. The dominant term.
 const UTILIZATION_WEIGHT: f64 = 0.75;
-/// Weight of infrastructure COMPLETENESS: what the built rooms can achieve
-/// versus the same rooms at max level. Deliberately the smaller share -
-/// account progress matters, but less than using what you have well.
+/// Infrastructure completeness: built rooms vs the same rooms at max level.
+/// Smaller on purpose: progress matters less than using what you have.
 const INFRASTRUCTURE_WEIGHT: f64 = 0.25;
 
-/// The base grade with its two components, each already log-curved to [0, 1].
-/// `score` is the weighted blend the profile stores; the components are kept
-/// so the frontend can show WHICH term drags the grade.
+/// Base grade plus its two log-curved [0, 1] components. `score` is the blend
+/// the profile stores; the components let the frontend show which one drags.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct BaseGrade {
     pub score: f64,
@@ -39,20 +36,14 @@ impl BaseGrade {
     }
 }
 
-/// The base grade answers: does the player have the best base THEY could
-/// have? Two log-curved ratios, both valued as sustained LMD-equivalent
-/// daily yield (morale rotation and factory buffer stalls included,
-/// gold->trade coupled), blended 75/25:
+/// Does the player have the best base THEY could have? Two log-curved ratios of
+/// sustained LMD-equivalent daily yield (morale rotation, factory buffer stalls,
+/// gold->trade coupling), blended 75/25:
 ///
-///   - UTILIZATION (75%): the base as stationed in the sync, versus the
-///     optimizer's best staffing of the same roster on the same rooms.
-///     Roster size and room levels cancel out of this ratio - it measures
-///     how well the player USES what they have.
-///   - INFRASTRUCTURE (25%): what those rooms can achieve as built, versus
-///     the same rooms upgraded to max level (same layout, same roster;
-///     furniture ambience is left as synced - it is decor, not a room
-///     level). This is the "keep upgrading" pressure, kept deliberately
-///     below the stationing term.
+///   - UTILIZATION (75%): the synced stationing vs the optimizer's best staffing
+///     of the same roster on the same rooms. Roster size and room levels cancel.
+///   - INFRASTRUCTURE (25%): the rooms as built vs at max level (same layout and
+///     roster; furniture ambience left as synced, it's decor, not a level).
 pub fn grade_base(
     roster: &[RosterEntry],
     building_json: Option<&serde_json::Value>,
@@ -74,9 +65,8 @@ pub fn grade_base(
     }
     let profiles = build_operator_profiles(roster, game_data);
 
-    // Achievable on the rooms as BUILT: the optimizer's cap-aware best
-    // staffing of the player's own roster (denominator of utilization,
-    // numerator of infrastructure).
+    // Achievable on the rooms as built (utilization denominator, infrastructure
+    // numerator).
     let achievable = best_yield(
         &profiles,
         &user_building,
@@ -88,12 +78,10 @@ pub fn grade_base(
         return BaseGrade::default();
     }
 
-    // The base as the player actually stationed it, with each bar as the
-    // game last wrote it. A player who runs saved preset shifts is graded on
-    // the average of those shifts, not on whichever one happened to be on
-    // duty at sync: a rotation's shifts are each weaker than the sustained
-    // optimum on purpose (one is the rest shift), so a single shift of a
-    // three-shift plan read 88% on 00980819 whose plan as a whole read 94%.
+    // Preset-shift players are graded on the average of their shifts, not the one
+    // on duty at sync: each shift is weaker than the sustained optimum on purpose
+    // (one is the rest shift). One shift of a three-shift plan read 88% on 00980819
+    // where the whole plan read 94%.
     let live_morale =
         building_json.map_or_else(HashMap::new, super::sustain_sim::synced_live_morale);
     let value_of = |shift: Option<usize>| {
@@ -115,11 +103,10 @@ pub fn grade_base(
             &morale_drains,
         )
     };
-    // A preset shift counts only where every production room that keeps
-    // presets has a crew in it: the game stores an unset third preset as
-    // empty seats (`-1` ids), which would otherwise read as a shift with
-    // dark rooms (00980819: two posts and a factory dark in "shift 3", the
-    // average fell to 78% of a base that runs at 98%).
+    // A preset shift counts only if every production room with presets has a crew
+    // in it. An unset third preset is stored as `-1` seats and would read as dark
+    // rooms (00980819: two posts and a factory dark in "shift 3", average fell to
+    // 78% of a base running at 98%).
     let usable_shifts: Vec<usize> = {
         let with_presets: Vec<&super::types::UserRoom> = user_building
             .rooms
@@ -154,7 +141,6 @@ pub fn grade_base(
     };
     let utilization = log_curve_ratio((actual / achievable).clamp(0.0, 1.0));
 
-    // The same rooms at max level: what finishing the upgrades would unlock.
     let maxed_building = max_level_building(&user_building, building_data);
     let ceiling = best_yield(
         &profiles,
@@ -166,17 +152,14 @@ pub fn grade_base(
     let infrastructure = if ceiling > 0.0 {
         log_curve_ratio((achievable / ceiling).clamp(0.0, 1.0))
     } else {
-        // No production possible even fully upgraded: nothing to hold
-        // against the player's upgrade state.
+        // Nothing producible even fully upgraded: nothing to hold against them.
         1.0
     };
 
     BaseGrade::blend(utilization, infrastructure)
 }
 
-/// The optimizer's best sustained LMD-equivalent daily yield for this roster
-/// on this building (cap-aware staffing, then the same sustained valuation
-/// the utilization numerator uses).
+/// Best sustained LMD-equivalent daily yield for this roster on this building.
 fn best_yield(
     profiles: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -184,13 +167,11 @@ fn best_yield(
     registry: &HashMap<String, BuffResolutionStrategy>,
     morale_drains: &HashMap<String, f64>,
 ) -> f64 {
-    // The bar is the plan the Optimizer tab shows - the bundle-searched
-    // optimal - valued sustained. A player who copies that plan reads
-    // 100%; held against a plan the tab never shows (the cap-aware
-    // sustained selection, 3% above it on 00980819), a perfect copy read
-    // 96% and the player asked why (2026-09-22). The bundle search is the
-    // expensive part of a grade (a few seconds in release); it runs on
-    // the blocking pool like every other base search.
+    // The bar is the Optimizer tab's plan (bundle-searched optimal), valued
+    // sustained, so copying it reads 100%. Against the cap-aware sustained selection
+    // (3% higher on 00980819, never shown) a perfect copy read 96% and the player
+    // asked why (2026-09-22). The bundle search is the expensive part of a grade (a
+    // few seconds in release); it runs on the blocking pool.
     let economy = super::pools::search_economy(profiles, building, building_data, registry);
     let accepted = super::pools::optimal_with_bundles(
         profiles,
@@ -211,9 +192,8 @@ fn best_yield(
     )
 }
 
-/// The same layout with every room upgraded to its max level (`phases` count
-/// from the room catalogue). Composition is untouched - which slot hosts
-/// which facility is the player's floor plan, not an upgrade.
+/// Every room at max level (`phases` count from the catalogue). Composition is
+/// untouched: which slot hosts what is the floor plan, not an upgrade.
 fn max_level_building(building: &UserBuilding, building_data: &BuildingDataFile) -> UserBuilding {
     let mut maxed = building.clone();
     for room in &mut maxed.rooms {

@@ -57,7 +57,7 @@ impl SandboxUniverse {
             // `CraftItemData` as a `BASE_BUILDING` (19) or `COMBAT_BUILDING`
             // (24) entry, alongside 53 `TACTICAL` ones. Summing the two counted
             // every building blueprint twice and put the total at 139 when the
-            // real universe is 96 - the exact key set of `build.book` in the
+            // real universe is 96, the exact key set of `build.book` in the
             // progress of players who have collected them all.
             max_blueprints: count("CraftItemData"),
             max_rifts: count("FixedRiftData"),
@@ -70,21 +70,18 @@ impl SandboxUniverse {
         first.get("value")
     }
 
-    /// Count the explorable map nodes for a *single playthrough*.
+    /// Explorable map nodes for a single playthrough.
     ///
-    /// `MapData` does NOT hold one node list per region. It holds:
-    ///   - the persistent overworld map(s) (`sandbox_1_main`, ≈127 nodes), mirrored in
-    ///     user progress under `main.map.node`; and
-    ///   - dozens of randomized layout *variants* of instanced hunt/rift encounters
-    ///     (`sandbox_1_hunt_normal_1` .. `_10`, etc.), only one of which is ever loaded.
+    /// `MapData` holds the persistent overworld map(s) (`sandbox_1_main`, ≈127
+    /// nodes, mirrored in progress as `main.map.node`) plus dozens of randomized
+    /// hunt/rift layout variants (`sandbox_1_hunt_normal_1` .. `_10`, ...), only
+    /// one of which is ever loaded. Summing them all gave ≈1032 over 59 variants,
+    /// the bogus ">1,000" "Map nodes" total that left the exploration sub-score
+    /// unfillable and deflated the whole RA grade.
     ///
-    /// Summing Nodes across every entry gives ≈1032 across 59 variants, the bogus
-    /// ">1,000" total: it showed as the "Map nodes" UI total and left the exploration
-    /// sub-score unfillable (denominator 10x too large), deflating the whole RA grade.
-    ///
-    /// Counts the overworld map(s), keys containing `_main`, since exploration is keyed
-    /// off `main.map.node`. With none present (data shape change), falls back to one
-    /// representative variant per layout group so it never regresses to the over-count.
+    /// Counts the `_main` maps, since exploration keys off `main.map.node`. With
+    /// none (a shape change), falls back to one variant per layout group so it
+    /// never regresses to the over-count.
     fn count_map_nodes(sandbox_data: &Value) -> usize {
         let Some(map_data) = sandbox_data.get("MapData").and_then(|v| v.as_array()) else {
             return 0;

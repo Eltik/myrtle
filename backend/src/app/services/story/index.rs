@@ -1,23 +1,14 @@
-//! The BUILD: loaded game data plus one pass over the scripts on disk, turned
-//! into the whole library index.
+//! The library index build: loaded game data plus one pass over the scripts on disk.
 //!
-//! What this module OWNS is the derivation, and its cost. The walk is linear in
-//! the library and the constants are the reason the result is cached rather
-//! than recomputed:
+//! Cost, and why [`super::cache`] holds it per server with one builder:
+//! - 451 EN groups and 315 operator records over 2,254 story slots naming 1,887
+//!   distinct script paths. The probe memoises on path, so 367 record stories a
+//!   `record` group already lists are read once.
+//! - One read plus parse per distinct path: 5,793 ms of the 7,279 ms debug build.
+//!   Word counts and illustration names come out of that same read.
+//! - Everything after the probe is one pass over the 2,254 entries.
 //!
-//! - 451 EN groups and 315 operator records over 2,254 story slots, which name
-//!   1,887 DISTINCT script paths. The probe memoises on the path, so 367 record
-//!   stories that a `record` group already listed are read once, not twice.
-//! - One read plus one parse per distinct path: 5,793 ms of the 7,279 ms debug
-//!   build. The word count and the illustration names come out of that same
-//!   read, so no later request re-opens a script to count anything.
-//! - Everything after the probe is a walk over what is already in memory: the
-//!   totals pass, the storyline shelves and the sort are each one pass over the
-//!   2,254 entries.
-//!
-//! Which is why [`super::cache`] holds the result per server and lets exactly
-//! one caller build it. The census behind the numbers above lives in
-//! `docs/story-reader.md`, section "1. What is true about the data".
+//! Census: `docs/story-reader.md`, "1. What is true about the data".
 
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;

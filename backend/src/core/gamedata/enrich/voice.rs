@@ -7,13 +7,12 @@ struct LangInfo {
     suffix: &'static str,
 }
 
-/// Audio directory + filename suffix for a language, or `None` when the language
-/// is one we don't have a path convention for.
+/// Audio directory and filename suffix for a language.
 ///
-/// `LangType::Unknown` is the `#[serde(other)]` fallback: HG shipped a voice
-/// language this build doesn't name. There is no correct directory to guess, so
-/// the caller omits the URL rather than emitting one that 404s. Every other
-/// language on that character still resolves.
+/// `None` for `LangType::Unknown`, the `#[serde(other)]` fallback for a voice
+/// language this build doesn't name: there's no directory to guess, so the caller
+/// omits the URL instead of emitting a 404. The character's other languages still
+/// resolve.
 const fn lang_info(lang: &LangType) -> Option<LangInfo> {
     Some(match lang {
         LangType::Jp => LangInfo {
@@ -133,10 +132,9 @@ fn enrich_voice(id: &str, raw: &RawVoice, voice_lang: Option<&VoiceLang>) -> Voi
 }
 
 fn build_voice_url(voice_asset: &str, lang: &LangType) -> Option<String> {
-    // Files on disk are Vorbis-in-Ogg (`.ogg`). Percent-encode `#` (present in
-    // skin folder names like `char_245_cello_sale#12`) so the browser doesn't
-    // treat it as a URL fragment and truncate the path - matching `audio_url`
-    // in `gamedata::assets`.
+    // Files are Vorbis-in-Ogg. Percent-encode `#` (skin folders like
+    // `char_245_cello_sale#12`) or the browser reads it as a fragment; same as
+    // `audio_url` in `gamedata::assets`.
     let info = lang_info(lang)?;
     let Some((original_dir, file)) = voice_asset.split_once('/') else {
         return Some(format!("/audio/sound_beta_2/voice/{voice_asset}.ogg").replace('#', "%23"));

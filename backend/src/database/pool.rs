@@ -41,11 +41,9 @@ pub async fn create_pool(database_url: &str) -> Result<PgPool, sqlx::Error> {
         .acquire_timeout(ACQUIRE_TIMEOUT)
         .idle_timeout(Duration::from_mins(10))
         .max_lifetime(Duration::from_mins(30))
-        // sqlx defaults this to true, which spends a round-trip on every
-        // checkout to prove the connection is alive - a cost paid per query,
-        // and one that dominates a batch job. `max_lifetime` already retires
-        // connections, and one that dies between checkouts surfaces as a query
-        // error the caller can retry.
+        // sqlx defaults this to true: a round-trip per checkout, which dominates batch
+        // jobs. `max_lifetime` already retires connections, and one that dies between
+        // checkouts surfaces as a retryable query error.
         .test_before_acquire(false)
         .connect(database_url)
         .await

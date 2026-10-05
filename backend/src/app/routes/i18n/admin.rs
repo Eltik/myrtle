@@ -12,11 +12,9 @@ use crate::database::models::i18n::{
     GamedataOverride, Locale, TranslationEntry, UiMessageAuditEntry,
 };
 
-/// Reading the translation workspace. Open to any staff role rather than to
-/// translators alone, so a tier-list admin can see progress without being
-/// granted a locale - and to any grant holder whatever their global role, so a
-/// locale grant is usable by itself. Writes are gated per locale in the
-/// service.
+/// Reading the translation workspace: any staff role (so a tier-list admin can watch
+/// progress without a locale grant), or any grant holder whatever their global
+/// role. Writes are gated per locale in the service.
 async fn assert_can_read(state: &AppState, auth: &AuthUser) -> Result<(), ApiError> {
     if service::can_access_admin_panel(state, auth).await? {
         Ok(())

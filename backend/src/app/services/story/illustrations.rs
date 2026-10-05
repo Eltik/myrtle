@@ -1,14 +1,6 @@
-//! What a group's scripts DRAW: the distinct backgrounds, CGs and sprite
-//! folders they reference, and the stories that reference each.
-//!
-//! The cache holds NAMES, never URLs. Every name is resolved per request
-//! through the same [`StoryAssetIndex`] `GET /story/{id}` resolves through, so
-//! a re-extract that moves a file cannot leave a stale URL behind.
-//!
-//! Scale: the builder runs once per story at index build, 2,254 calls over
-//! 1,887 distinct scripts on EN, and the per-request half is a walk over one
-//! group's rows. Both are linear in the names a group writes; nothing here is
-//! quadratic in the library.
+//! What a group's scripts draw: the distinct backgrounds, CGs and sprite folders,
+//! and the stories that reference each. Built once per story at index build (2,254
+//! calls over 1,887 scripts on EN); linear in the names a group writes.
 
 use std::collections::HashMap;
 

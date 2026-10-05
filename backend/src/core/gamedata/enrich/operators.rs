@@ -112,8 +112,7 @@ fn enrich_operator(id: &str, raw: &RawOperator, ctx: &EnrichCtx) -> Operator {
         enrich_operator_skills(&raw.skills, ctx.skills, ctx.materials, ctx.assets);
     let operator_modules =
         get_operator_modules(id, ctx.modules, ctx.battle_equip, ctx.materials, ctx.assets);
-    // Handbook/profile lore is shared across Amiya's three forms - fall back
-    // to the template default id so branches inherit the base entry.
+    // Amiya's forms share handbook/profile lore: fall back to the template default id.
     let handbook_id = ctx
         .tmpl_groups
         .get(id)
@@ -124,10 +123,9 @@ fn enrich_operator(id: &str, raw: &RawOperator, ctx: &EnrichCtx) -> Operator {
     let portrait = ctx.assets.portrait_path(id).map(str::to_owned);
     let skin = ctx.assets.charart_path(id);
 
-    // Base skills are stored only on the default form's BuildingChar entry
-    // (Amiya alt forms have no `building.chars` entry of their own). Walk every
-    // id in the template group so each branch inherits the shared skill list;
-    // dedupe by buff_id in case a future tmpl group genuinely splits skills.
+    // Base skills live only on the default form's BuildingChar entry (Amiya's alt
+    // forms have none), so walk the whole template group. Dedupe by buff_id in case a
+    // group ever splits skills.
     let base_skill_lookup_ids: Vec<&str> = match ctx.tmpl_groups.get(id) {
         Some(info) => info.tmpl_ids.iter().map(String::as_str).collect(),
         None => vec![id],

@@ -45,18 +45,16 @@ pub async fn latest_medal_ownership_refresh_at(
 }
 
 /// Recompute the per-server aggregate from scratch and atomically replace the
-/// table. Heavy enough to run only from the background job, never on a request.
+/// table. Background job only, never on a request.
 ///
-/// Only users who opted into stat sharing are counted, for both the earned
-/// tallies and the population denominator (same policy as
-/// `refresh_operator_ownership`). The denominator is the eligible users on each
-/// server who have synced medal data.
+/// Only users who opted into stat sharing count, for both the tallies and the
+/// denominator (same policy as `refresh_operator_ownership`). The denominator is
+/// eligible users on each server who have synced medal data.
 ///
-/// A `user_medals` row exists for in-progress medals too, so counting rows is
-/// not enough: the WHERE clause mirrors `is_medal_earned` in
-/// `app/services/roster.rs` (the Rust source of truth) - earned means
+/// `user_medals` has rows for in-progress medals too, so the WHERE mirrors
+/// `is_medal_earned` in `app/services/roster.rs` (the source of truth): earned is
 /// `reach_ts > 0`, or `reach_ts = -1` with `first_ts > 0` and every
-/// `[achieved, required]` pair in `val` met (an empty array counts as met).
+/// `[achieved, required]` pair in `val` met (empty counts as met).
 pub async fn refresh_medal_ownership(pool: &PgPool) -> Result<(), sqlx::Error> {
     let mut tx = pool.begin().await?;
 

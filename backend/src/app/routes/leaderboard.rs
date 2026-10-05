@@ -21,8 +21,8 @@ use crate::{
 
 #[derive(Deserialize)]
 pub struct LeaderboardParams {
-    pub sort: Option<String>,   // defaults to "total_score"
-    pub server: Option<String>, // optional server filter
+    pub sort: Option<String>, // defaults to "total_score"
+    pub server: Option<String>,
     /// When set, each row is enriched with `rank_delta` vs. the most recent
     /// snapshot taken before this interval. Valid: "1 day" | "7 days" | "30 days".
     pub movement_interval: Option<String>,

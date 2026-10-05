@@ -217,9 +217,8 @@ impl AppConfig {
 /// string, and an empty secret compares equal to an empty header, which would
 /// make the credential free to present.
 ///
-/// A short-but-present secret is a weakness rather than a hole, so it warns
-/// rather than panicking - a deploy should not start failing on a value that
-/// worked yesterday.
+/// A short-but-present secret is a weakness, not a hole, so it warns instead of
+/// panicking: a deploy shouldn't start failing on a value that worked yesterday.
 fn require_secret(name: &str, recommended_len: usize) -> String {
     let value = std::env::var(name).unwrap_or_else(|_| panic!("{name} must be set"));
 

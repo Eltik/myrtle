@@ -47,17 +47,13 @@ pub const POOL_DETAIL_FILE_VERSION: u32 = 1;
 /// next extract.
 pub const POOL_DETAIL_REL_PATH: &str = "derived/gacha_pool_details.json";
 
-/// Resolve where a server's pool-detail sidecar lives.
+/// Defaults to `{assets_dir}/derived/gacha_pool_details.json`.
+/// `GACHA_DETAIL_DIR` relocates it, required when the assets tree is mounted
+/// read-only (the container mounts it `:ro`) since the refresh job writes it.
 ///
-/// Defaults to `{assets_dir}/derived/gacha_pool_details.json`. Set
-/// `GACHA_DETAIL_DIR` to relocate it, which is required whenever the assets
-/// tree is mounted read-only (the container deployment mounts it `:ro`), since
-/// the refresh job has to write this file.
-///
-/// In the override case the file is named after the final component of
-/// `assets_dir`, which is the server code by construction: assets dirs are
-/// built as `{ASSETS_DIR}/{server}`. Loader and job both call this with the same
-/// `assets_dir`, so they cannot disagree.
+/// With the override the file is named after the last component of
+/// `assets_dir`, which is the server code (`{ASSETS_DIR}/{server}`). Loader
+/// and job pass the same `assets_dir`, so they cannot disagree.
 pub fn pool_detail_path(assets_dir: &Path) -> PathBuf {
     match std::env::var("GACHA_DETAIL_DIR") {
         Ok(dir) if !dir.trim().is_empty() => {

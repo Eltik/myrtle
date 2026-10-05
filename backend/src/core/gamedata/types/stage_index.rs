@@ -1,13 +1,9 @@
-//! Stage viewer index.
-//!
-//! A flat, display-ready catalogue of every browsable stage across all game
-//! modes, precomputed at gamedata init. Unlike `stage_table` (which only covers
-//! story / event / SSS / Annihilation content), this also folds in the
-//! procedural modes whose stages live in separate tables and level files -
-//! Integrated Strategies, Reclamation Algorithm, Contingency Contract and
-//! Paradox Simulation - so the frontend's Stage List can populate every
-//! category from a single resource. All taxonomy/labelling comes from
-//! [`StageClassifier`], the single source of truth.
+//! Stage viewer index: a flat, display-ready catalogue of every browsable
+//! stage, built at gamedata init. Unlike `stage_table` (story / event / SSS /
+//! Annihilation only) it also folds in modes whose stages live in other tables
+//! and level files (Integrated Strategies, Reclamation Algorithm, Contingency
+//! Contract, Paradox Simulation), so the Stage List fills every category from
+//! one resource. Taxonomy and labels come from [`StageClassifier`].
 //!
 //! [`StageClassifier`]: super::super::enrich::stage_class::StageClassifier
 

@@ -1,24 +1,21 @@
-//! Precomputed stage bucketing for grading.
-//!
-//! Built once at gamedata load from stages + zones + activities.
-//! Stages are split into two pools:
+//! Stage bucketing for grading, built once at gamedata load from stages, zones
+//! and activities. Two pools:
 //!     - permanent: Mainline, `MainlineActivity`, `MainlineRetro`, Sidestory, Branchline, Campaign,
 //!       and any zone whose id starts with "`permanent_sidestory`".
-//!       `MainlineActivity` is treated as permanent because in the data it covers chapters that
-//!       are permanent campaign content (e.g. ch.15/16); the matching `MainlineRetro` zones are
-//!       currently empty, so the gameplay stages still live under the activity ID.
+//!       `MainlineActivity` counts as permanent: in the data it covers permanent campaign
+//!       chapters (e.g. ch.15/16), and the matching `MainlineRetro` zones are empty, so the
+//!       gameplay stages still live under the activity ID.
 //!       A stage whose `StageType` is `Activity` is NOT permanent even when its zone is:
 //!       the three 2020 vignettes (`act4d0` SW-EV, `act6d5` AF, `act7d5` SA; 19 stages) hang
-//!       their nodes off `main_1..main_6` in the data, but they were one-time events that
-//!       never entered `retro_table`, so they route to the event pool below.
-//!     - event: Activity zones (subject to recency decay).
+//!       their nodes off `main_1..main_6`, but they were one-time events that never
+//!       entered `retro_table`, so they go to the event pool.
+//!     - event: Activity zones, recency-decayed.
 //!       One-time competitive activity types (Contingency Contract, Boss Rush, Vector
-//!       Breakthrough, etc. - see `ActivityBasicInfo::is_one_time_competitive`) are dropped
-//!       entirely because they can't be cleared after they end and aren't rebroadcast.
-//!       Rotating Annihilation maps (`camp_r_*`) are also routed here using their
-//!       rotation window as the event window, so a map that rotated out long ago
-//!       decays instead of dragging the grade as a permanent gap. The three
-//!       permanent Annihilation maps (`camp_01/02/03`) stay in the permanent pool.
+//!       Breakthrough, ..., see `ActivityBasicInfo::is_one_time_competitive`) are dropped,
+//!       since they can't be cleared after they end and aren't rebroadcast.
+//!       Rotating Annihilation maps (`camp_r_*`) land here with their rotation window as
+//!       the event window, so a map that rotated out long ago decays instead of sitting
+//!       as a permanent gap. The permanent maps (`camp_01/02/03`) stay permanent.
 //!
 //! An entry in either pool can also be OPTIONAL (`optional: true`). An optional
 //! stage sits behind an either/or choice the player makes once and cannot undo,
@@ -67,10 +64,9 @@ pub struct EventEntry {
     /// launched after a user's last sync so stale data isn't penalized.
     pub start_time: Option<i64>,
     pub end_time: Option<i64>,
-    /// `true` once this event has entered the permanent retrospective record
-    /// (`retro_table` - i.e. it has rerun and become permanently replayable).
-    /// Permanent events count toward grading at all times; limited events that
-    /// have yet to rerun only count while their run window is currently open.
+    /// `true` once the event is in `retro_table`: it has rerun and is
+    /// permanently replayable. Permanent events always count toward grading;
+    /// limited events that have yet to rerun only while their window is open.
     pub is_permanent: bool,
     /// Reachable only by taking one arm of an either/or choice; counts only
     /// once cleared and is never a gap. See the module doc.
@@ -147,7 +143,7 @@ impl StageUniverse {
                     live_only: is_live_only,
                 });
             } else {
-                // Activity zones - event pool
+                // Activity zones: event pool.
                 // Vignette stages in a mainline zone only carry the activity id on the
                 // stage id, so fall back to it when the zone resolves nothing.
                 let activity = resolve_activity(&stage.zone_id, &sorted_activities)
@@ -272,5 +268,5 @@ fn resolve_activity<'a>(
         .copied()
 }
 
-// One-time competitive content is filtered via `ActivityBasicInfo::is_one_time_competitive`
-// (shared with medal scoring) - see `activity.rs`.
+// One-time competitive content is filtered by
+// `ActivityBasicInfo::is_one_time_competitive`, shared with medal scoring.

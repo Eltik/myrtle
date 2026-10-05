@@ -39,8 +39,8 @@ pub const TABLES: &[&str] = &[
     "audit_log",
 ];
 
-/// (table, serial column) - sequences that must be reset after import so
-/// future inserts don't collide with restored ids.
+/// (table, serial column): sequences reset after import so new inserts don't
+/// collide with restored ids.
 pub const SERIAL_COLUMNS: &[(&str, &str)] = &[
     ("gacha_records", "id"),
     ("tier_list_flairs", "id"),

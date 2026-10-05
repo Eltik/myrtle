@@ -187,7 +187,7 @@ fn every_skill_at_m3_completes_the_mastery_dimension() {
 
     // Most 4★/5★ operators only ever have two skills, so "all skills at M3" is
     // M6 for them, not M9. Scoring the milestone off the raw M3 count used to
-    // cap them at 0.75 with nothing left to buy - see the ladder in
+    // cap them at 0.75 with nothing left to buy; see the ladder in
     // `mastery_milestone_from_levels`.
     for (operator_id, masteries) in [
         (

@@ -1,33 +1,24 @@
-//! A committed snapshot of the JSON shape of every `/static/{resource}` payload.
+//! Snapshot of the JSON shape of every `/static/{resource}` payload.
 //!
-//! Motivation: the frontend hand-writes ~300 interfaces describing these
-//! payloads and casts responses with `as IWhatever`, so a field renamed on one
-//! side and not the other is invisible to both compilers. `voice_url` ->
-//! `voiceURL` was renamed in the TS type alone and silently killed every voice
-//! line on both servers; nothing failed, nothing logged.
+//! The frontend hand-writes ~300 interfaces and casts with `as IWhatever`, so a
+//! one-sided rename is invisible to both compilers. `voice_url` -> `voiceURL` was
+//! renamed in the TS type alone and silently killed every voice line on both
+//! servers; nothing failed, nothing logged.
 //!
-//! This test pins the BACKEND half: any rename, removal, or type change in a
-//! serialized field shows up as a snapshot diff at the moment it is made,
-//! covering all 257 `Serialize` types automatically rather than a hand-picked
-//! few. It does not, and cannot, catch a rename made only in the TypeScript.
-//! For that the TS types have to be generated from these structs rather than
-//! written by hand. The snapshot is the input that makes that generation
-//! possible later.
+//! This pins the BACKEND half (all 257 `Serialize` types): a rename, removal or
+//! type change shows up as a snapshot diff. A TS-only rename needs generated TS
+//! types to catch; this snapshot is their future input.
 //!
-//! IMPORTANT: this pins the WIRE format, which is not what the frontend's types
-//! describe. `frontend/src/lib/api/operators.ts` runs `deepCamelize` over the
-//! operator payloads, converting `PascalCase` and trailing-underscore keys
-//! (`AttributesKeyFrames`, `MaxHp`, `Type_`) to camelCase before any consumer
-//! sees them. So a `PascalCase` path in this snapshot is correct and expected for
-//! the structs that mirror `character_table`; do not "fix" it by renaming the
-//! Rust fields. Endpoints WITHOUT that normalization (voices, materials) are
-//! the ones where this snapshot and the TS types must agree key-for-key.
+//! IMPORTANT: this is the WIRE format. `frontend/src/lib/api/operators.ts` runs
+//! `deepCamelize` over the operator payloads (`AttributesKeyFrames`, `MaxHp`,
+//! `Type_` -> camelCase), so `PascalCase` paths here are expected for the
+//! `character_table` mirrors; do not "fix" them by renaming Rust fields. Endpoints
+//! WITHOUT that pass (voices, materials) must match the TS types key-for-key.
 //!
-//! The shape is a function of the Rust types AND of which assets are on disk:
-//! `Option` fields serialize as `null` when their image is absent, the chibi
-//! index is empty without spine files, and the banner rate tables come from a
-//! file the live `gacha/getPoolDetail` job writes. So there is one snapshot per
-//! asset profile, chosen by `API_SHAPE_PROFILE`:
+//! The shape also depends on which assets are on disk: `Option` fields go `null`
+//! when their image is absent, the chibi index is empty without spine files, and
+//! the banner rate tables come from a file the live `gacha/getPoolDetail` job
+//! writes. One snapshot per asset profile, chosen by `API_SHAPE_PROFILE`:
 //!
 //! ```text
 //!   (unset)         tests/snapshots/api_shape.txt
@@ -37,8 +28,8 @@
 //!                   only), which is what backend-ci.yml runs against
 //! ```
 //!
-//! The diff between the two files is exactly the set of asset-derived wire
-//! fields. Refresh after an intentional change:
+//! The diff between the two files is exactly the asset-derived wire fields.
+//! Refresh after an intentional change:
 //!
 //! ```text
 //!   UPDATE_API_SHAPE=1 cargo test --test api_shape_test
@@ -48,9 +39,8 @@
 //! ```
 //!
 //! (`gh run download <assets-ci run id> -n game-data -D <artifact>/gamedata`
-//! fetches the artifact) and review both diffs as part of the PR. A line
-//! disappearing from either is a breaking change for every consumer of that
-//! field.
+//! fetches the artifact) and review both diffs in the PR. A line disappearing
+//! from either is a breaking change for that field's consumers.
 
 mod common;
 
@@ -59,19 +49,11 @@ use std::fmt::Write as _;
 
 use serde_json::Value;
 
-// No sampling: every container is walked in full.
-//
-// An earlier version capped children at 200 per container, on the theory that
-// the shape comes from the Rust types rather than the data. That made the test
-// FLAKY. Several of these payloads are built by iterating a `HashMap`, so their
-// element order changes run to run; whether the first 200 entries happened to
-// include a `null` for an `Option` field then decided whether that line made it
-// into the snapshot. It surfaced as phantom diffs like `stage-index[*].name:
-// null` appearing and disappearing with nothing having changed.
-//
-// Walking everything is O(payload) CPU and adds only the path set (a few
-// thousand entries) to memory, since resources are built and dropped one at a
-// time. Determinism is worth more than the seconds.
+// No sampling: every container is walked in full. A cap of 200 children made
+// the test FLAKY: several payloads iterate a `HashMap`, so whether the first 200
+// held a `null` for an `Option` field changed run to run (phantom
+// `stage-index[*].name: null` diffs). Walking everything costs seconds of CPU and
+// a few thousand paths of memory; determinism is worth it.
 
 const fn type_name(v: &Value) -> &'static str {
     match v {

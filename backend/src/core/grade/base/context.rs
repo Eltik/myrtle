@@ -1,9 +1,5 @@
-//! The shared setup every base computation needs: the roster turned into
-//! base-skill profiles, the buff registry, and the morale drain table.
-//!
-//! Both the read-only improvements plan and the interactive planner endpoints
-//! start from exactly this state, so it lives in one place - a second copy
-//! would be a second chance for the two to disagree about what a roster means.
+//! Roster profiles, buff registry and morale drains, built once. The improvements
+//! plan and the planner endpoints share this so they can't disagree about a roster.
 
 use std::collections::HashMap;
 
@@ -59,9 +55,7 @@ impl BaseContext {
         }
     }
 
-    /// The subset of `profiles` the planner may seat, given an exclusion list.
-    /// Excluding is cheaper than re-deriving profiles, and keeps the candidate
-    /// pool the single thing a caller has to reason about.
+    /// `profiles` minus `excluded`. Cheaper than re-deriving profiles.
     pub fn profiles_excluding(&self, excluded: &[String]) -> Vec<OperatorBaseProfile> {
         if excluded.is_empty() {
             return self.profiles.clone();

@@ -27,8 +27,7 @@ pub struct DeviceIds {
 }
 
 impl DeviceIds {
-    /// True only when all three ids are populated. Used to reject a partially
-    /// written or corrupt persisted file before adopting it.
+    /// Rejects a partially written or corrupt persisted file before adopting it.
     pub const fn is_complete(&self) -> bool {
         !self.device_id.is_empty() && !self.device_id2.is_empty() && !self.device_id3.is_empty()
     }

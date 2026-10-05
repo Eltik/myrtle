@@ -1,11 +1,7 @@
-//! The ledger scorer: resolves a room's assigned operators' CLAUSES into
-//! per-(entity, metric) contributions, then settles the non-linear shapes in a
-//! strict order - pools, then peer scaling by deltas, then suppression LAST -
-//! exactly as the algorithm reference prescribes.
-//!
-//! Recording every entity's contribution per metric (not just a running total)
-//! is what makes suppression and peer scaling possible at all: both look
-//! backward at what was already computed, not forward at raw game data.
+//! The ledger scorer. Resolves a room's clauses into per-(entity, metric)
+//! entries, then settles in the algorithm reference's order: pools, peer scaling
+//! by deltas, suppression LAST. Per-entity entries (not a running total) are what
+//! let suppression and peer scaling look back at what was already computed.
 
 use std::collections::{HashMap, HashSet};
 
@@ -19,23 +15,19 @@ use super::clause::{
 use super::types::OperatorBaseProfile;
 use super::util::buff_family;
 
-/// The game floor on a trading post's order limit - a team that slashes the
-/// limit below it (Degenbrecher) still banks at least one order.
+/// Game floor: a team that slashes the limit (Degenbrecher) still banks one order.
 const MIN_TRADING_ORDER_LIMIT: i32 = 1;
-/// Fallback base order limit when neither the `TRADING_MIN_LEVEL` synthetic
-/// nor gamedata trading phases are available (hand-built test contexts).
+/// No `TRADING_MIN_LEVEL` synthetic and no trading phases (hand-built test contexts).
 const FALLBACK_TRADING_ORDER_LIMIT: i32 = 6;
 
-/// Fixed-point bounds. Every real case converges in one or two rounds; the
-/// limits are headroom against pathological inputs, not tuned settings.
+/// Real cases converge in one or two rounds; these are guards, not tuning.
 const MAX_PEER_ROUNDS: usize = 12;
 const PEER_EPS: f64 = 1e-6;
 /// Pool-settlement bounds, shared with the assignment-scope pass in `pools.rs`.
 pub const MAX_POOL_ROUNDS: usize = 8;
 pub const POOL_EPS: f64 = 1e-6;
 
-/// Where a ledger entry came from - drives suppression exemptions and the
-/// legacy mirror basis.
+/// Drives suppression exemptions and the legacy mirror basis.
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Source {
     /// Flat / gate-resolved contribution.
@@ -47,10 +39,9 @@ enum Source {
     PeerScaled,
     /// Drained out of a resource pool.
     PoolDrain,
-    /// Granted onto this operator by an EXTERNAL source (a per-operator
-    /// Control-Center conditional, e.g. Umiri). Not the operator's own skill:
-    /// a teammate nullifier (Shamare) kills it even on the nullifier's own
-    /// row, because "contributions from other operators" means other SOURCES.
+    /// Granted by an EXTERNAL source (per-operator CC conditional, e.g. Umiri).
+    /// A nullifier (Shamare) kills it even on her own row: "contributions from
+    /// other operators" means other SOURCES.
     Granted,
 }
 
@@ -84,15 +75,13 @@ struct SuppressItem {
     metrics: Vec<Metric>,
 }
 
-/// A deferred order-VALUE shape: priced in P5 together with every other
-/// shape in the room, against the post's order rarity.
+/// Order-VALUE shape deferred to P5, priced with the room's other shapes.
 struct OrderItem {
     entity: usize,
     metric: Metric,
     effect: OrderEffect,
 }
 
-/// The room being scored plus the shared base context.
 pub struct RoomEval<'a> {
     pub member_ids: &'a [String],
     pub room_type: &'a str,
@@ -103,39 +92,33 @@ pub struct RoomEval<'a> {
     pub facility_counts: &'a HashMap<String, usize>,
     pub total_dorm_levels: i32,
     pub cc_conditions: &'a [CcCondition],
-    /// The room's own level, when the caller knows it: a trading post's order
-    /// rarity and base order limit follow ITS level. `None` falls back to the
-    /// base-wide `TRADING_MIN_LEVEL` synthetic (candidate ranking, callers
-    /// scoring a room type without a room).
+    /// A trading post's rarity and base limit follow ITS level. `None` = the
+    /// base-wide `TRADING_MIN_LEVEL` synthetic (candidate ranking, no concrete room).
     pub room_level: Option<i32>,
-    /// Operators actively working any non-dormitory room, for
-    /// `RequiresChar { scope: BaseWorkArea }`. `None` = unknown (candidate
-    /// enumeration) - such clauses then contribute 0.
+    /// Operators working any non-dorm room, for `RequiresChar { scope: BaseWorkArea }`.
+    /// `None` = unknown (candidate enumeration); those clauses then give 0.
     pub deployed_work_area: Option<&'a HashSet<String>>,
 }
 
-/// Capacity points a seat is assumed to bring when ranking a capacity-point
-/// scaler (Bubble) before the team is known.
+/// Per-seat capacity points assumed when ranking a capacity-point scaler
+/// (Bubble) before the team is known.
 const ASSUMED_CAPACITY_POINTS: f64 = 20.0;
 
 pub struct RoomTotals {
     pub speed_pct: f64,
     /// Order VALUE: LMD per hour over a bare post's, minus one (percent).
     pub order_value_pct: f64,
-    /// Order gold THROUGHPUT: Pure Gold per hour over a bare post's, minus
-    /// one (percent) - the part of the value that draws bars from stock.
+    /// Order gold THROUGHPUT, percent over a bare post: the part that draws bars
+    /// from stock.
     pub order_gold_pct: f64,
-    /// Net capacity-limit delta of the room: crew capacity skills, per-
-    /// operator and post-level Control-Center grants, peer-scaled cuts.
+    /// Crew capacity skills, per-operator and post-level CC grants, peer-scaled cuts.
     pub capacity_delta: f64,
-    /// A trading post's final order limit (the level's base plus
-    /// `capacity_delta`, floored at 1); `None` for every other room type.
+    /// Trading post only: level base + `capacity_delta`, floored at 1.
     pub order_limit: Option<i32>,
 }
 
-/// The order limit a trading post's level grants before any skill (6/8/10 for
-/// L1-L3, gamedata `TradingData.Phases`), resolved through the
-/// `TRADING_MIN_LEVEL` synthetic so search and display always agree.
+/// Pre-skill order limit (6/8/10 for L1-L3, `TradingData.Phases`), resolved
+/// through `TRADING_MIN_LEVEL` so search and display agree.
 pub(crate) fn trading_base_limit(
     building_data: &BuildingDataFile,
     facility_counts: &HashMap<String, usize>,
@@ -148,9 +131,8 @@ pub(crate) fn trading_base_limit(
         .map_or(FALLBACK_TRADING_ORDER_LIMIT, |p| p.order_limit)
 }
 
-/// The level a trading post is priced at: its own when known, else the
-/// base-wide minimum (a mixed-level base used to price every post at the
-/// lower cap - a level-2 post beside a level-3 one made both read wrong).
+/// Own level when known, else the base-wide minimum. (Pricing every post at the
+/// minimum made an L2 + L3 base read both wrong.)
 fn trading_level(
     facility_counts: &HashMap<String, usize>,
     room_level: Option<i32>,
@@ -164,8 +146,8 @@ fn trading_level(
         })
 }
 
-/// Score one room's team: the clause walk (P0-P1), pool settlement (P2), peer
-/// relaxation (P3), suppression (P4), and metric finalization (P5).
+/// Clause walk (P0-P1), pools (P2), peer relaxation (P3), suppression (P4),
+/// finalization (P5).
 pub fn score_room(ev: &RoomEval) -> RoomTotals {
     let members: Vec<&OperatorBaseProfile> = ev
         .member_ids
@@ -173,12 +155,10 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
         .filter_map(|id| ev.op_index.get(id.as_str()).copied())
         .collect();
 
-    // Materialize each member's applicable clauses once, each tagged with
-    // whether its buff is a facility-count strategy (that provenance decides
-    // what survives an automation wipe, at BUFF granularity like the old
-    // engine). Clauses are derived on the fly from the (possibly
-    // base-wide-resolved) strategy registry; once the registry dies (CP5) this
-    // reads a prebuilt clause store instead.
+    // Each clause tagged with whether its buff is a facility-count strategy:
+    // that decides what survives an automation wipe, at BUFF granularity like
+    // the old engine. Derived from the registry until it dies (CP5), then from a
+    // prebuilt clause store.
     let mut member_clauses: Vec<Vec<(Clause, bool)>> = members
         .iter()
         .map(|op| {
@@ -205,10 +185,9 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
         })
         .collect();
 
-    // Priority exclusions: a live "does not stack with X and takes priority
-    // over it" clause drops every ROOMMATE's clause of X's family before
-    // anything is priced (Bubble's Bigger is Better! over Vermeil's
-    // Recycling: the game credits her 1%-per-point tiers alone, 33 not 99).
+    // "Does not stack with X and takes priority over it": drop every ROOMMATE's
+    // clause of X's family before pricing (Bubble's Bigger is Better! over
+    // Vermeil's Recycling: the game credits her tiers alone, 33 not 99).
     let exclusions: Vec<(usize, Vec<String>)> = member_clauses
         .iter()
         .enumerate()
@@ -228,11 +207,9 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
         }
     }
 
-    // The automation wipe fires only when a member's automation clause is LIVE
-    // in this room (its buff applies here) - clause-gated like every other
-    // shape. (The legacy engine triggered on merely CARRYING an automation
-    // buff, so Weedy evaluated in a Trading Post wiped the team; that quirk
-    // was reproduced through the shadow migration and fixed after.)
+    // Wipe only when the automation clause is LIVE in this room. The legacy
+    // engine fired on merely CARRYING the buff (Weedy in a Trading Post wiped the
+    // team); kept through the shadow migration, fixed after.
     let automation_wipe = member_clauses.iter().flatten().any(|(c, _)| {
         matches!(
             &c.kind,
@@ -252,8 +229,8 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
             _ => None,
         })
         .collect();
-    // Skill-name tokens per member (the leading word of each live skill's
-    // name), the basis for skill counts - the P0 converters apply here too.
+    // Leading word of each skill name, the basis for skill counts. P0
+    // converters apply here too.
     let skill_tags: Vec<Vec<String>> = members
         .iter()
         .map(|op| {
@@ -286,9 +263,8 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
         })
         .collect();
 
-    // Per-member own capacity-limit total (Self + resolved room-scoped gates):
-    // the basis for capacity-tier subjects (Bubble's per-point tiers). The
-    // room's final limit is read off the ledger entries after peer scaling.
+    // Own capacity (Self + room-scoped gates), the basis for capacity-tier
+    // subjects (Bubble). The room's final limit comes off the ledger after P3.
     let own_capacity: Vec<f64> = members
         .iter()
         .enumerate()
@@ -307,10 +283,9 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                     {
                         c.value
                     }
-                    // Counted capacity (Astgenne's "+5 Storage Capacity for
-                    // each Rhine Tech-type skill in that Factory"): the count
-                    // is over skills/tags, never over capacity tiers, so no
-                    // capacity basis is needed here.
+                    // Astgenne's "+5 Storage Capacity for each Rhine Tech-type
+                    // skill in that Factory": counts skills/tags, never capacity
+                    // tiers, so no capacity basis needed.
                     ClauseKind::ScalingCount {
                         subject,
                         include_self,
@@ -334,12 +309,9 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
         .collect();
 
     // ── P2 (room-local slice): layout-derived pool settlement ────────────────
-    // A generator whose points come purely from the LAYOUT (Minimalist's
-    // Engineering Robots: per functional-facility level, capped) settles right
-    // here: its points exist wherever the generator's clause is live. Pools
-    // fed by the ASSIGNMENT (dorm occupants, resting operators) are not
-    // settleable per room and wait for the assignment-scope pass - their
-    // consumers read zero points, never a guess.
+    // LAYOUT-fed generators (Minimalist's Engineering Robots: per functional
+    // facility level, capped) settle here. ASSIGNMENT-fed pools (dorm occupants,
+    // resters) wait for the assignment-scope pass; their consumers read zero.
     let room_pools: HashMap<&str, f64> = {
         let functional_levels = ev
             .facility_counts
@@ -373,16 +345,15 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
     for (i, _op) in members.iter().enumerate() {
         for (clause, from_facility) in &member_clauses[i] {
             let factor = config_factor(clause, ev.formula_type);
-            // A facility-count buff's flat base rides its scaled part through
-            // an automation wipe: the old engine kept or dropped whole BUFFS.
+            // A facility-count buff's flat base survives an automation wipe with
+            // its scaled part: the old engine kept or dropped whole BUFFS.
             let direct_source = if *from_facility {
                 Source::RoomCountScaled
             } else {
                 Source::Direct
             };
             match &clause.kind {
-                // Order shapes are priced jointly in P5; a configuration
-                // discount of zero drops the shape like any other clause.
+                // Priced jointly in P5. A zero config factor drops it.
                 ClauseKind::OrderMix(effect) => {
                     if factor > 0.0 {
                         order_items.push(OrderItem {
@@ -413,9 +384,8 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                     );
                     let scaled = clause.value * count;
                     let amount = clause.cap.map_or(scaled, |cap| scaled.min(cap));
-                    // Facility-provenance counts (Snegurochka's "that
-                    // Factory's productivity" per occupant) survive the
-                    // automation wipe like plant-count grants.
+                    // Facility-provenance counts (Snegurochka's "that Factory's
+                    // productivity" per occupant) survive the automation wipe.
                     entries.push(Entry {
                         entity: i,
                         metric: clause.metric.clone(),
@@ -444,10 +414,9 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                         source: Source::RoomCountScaled,
                     });
                 }
-                // Stepped pool consumer: +value per `step` settled points,
-                // floored. Points come from the room-local settlement above,
-                // or from the assignment-scope settlement's `POOL_<resource>`
-                // synthetic; an unfed pool reads zero - never a guess.
+                // +value per `step` settled points, floored. Points from the
+                // room-local settlement or the `POOL_<resource>` synthetic; an
+                // unfed pool reads zero.
                 ClauseKind::ScalingPoolPoints { resource, step } => {
                     let points = room_pools
                         .get(resource.as_str())
@@ -477,9 +446,8 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                         CondScope::BaseWorkArea => ev
                             .deployed_work_area
                             .is_some_and(|d| chars.iter().any(|req| d.contains(req))),
-                        // Resolved by registry rewrite (resolve_base_wide /
-                        // resolve_room_presence) before scoring; context-free
-                        // passes credit 0.
+                        // Rewritten by resolve_base_wide / resolve_room_presence
+                        // before scoring; context-free passes credit 0.
                         CondScope::BaseAnywhere | CondScope::RoomTypeElsewhere => false,
                     };
                     if present {
@@ -498,8 +466,8 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                             .enumerate()
                             .any(|(j, _)| j != i && tags[j].iter().any(|t| t == tag)),
                         CondScope::BaseWorkArea | CondScope::BaseAnywhere => false,
-                        // Resolved by registry rewrite (resolve_room_presence)
-                        // before scoring; context-free passes credit 0.
+                        // Rewritten by resolve_room_presence; context-free passes
+                        // credit 0.
                         CondScope::RoomTypeElsewhere => false,
                     };
                     if present {
@@ -563,20 +531,18 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                 ClauseKind::ScalingRoomOrderLimit => {
                     limit_items.push((i, clause.metric.clone(), clause.value * factor));
                 }
-                // Priority exclusions were applied to the member clause lists
-                // above; the marker itself prices nothing.
+                // Already applied to the member clause lists above.
                 ClauseKind::ExcludesBuffs { .. } => {}
-                // The exempt marker on automation clauses is honored via the
-                // wipe's source check, not per-suppressor state.
+                // The automation exempt marker is honored by the wipe's source
+                // check, not here.
                 ClauseKind::SuppressesOthers { metrics, .. } => {
                     suppressors.push(SuppressItem {
                         entity: i,
                         metrics: metrics.clone(),
                     });
                 }
-                // A pre-SOLVED pool drain (perception seam) lands directly on
-                // the drain channel; unsettled Generate/Convert clauses wait
-                // for the native pool pass and contribute nothing here.
+                // Pre-SOLVED drain (perception seam). Generate/Convert wait for
+                // the pool pass.
                 ClauseKind::ResourceConvert(super::clause::ResourceOp::Consume { .. }) => {
                     entries.push(Entry {
                         entity: i,
@@ -586,9 +552,7 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                     });
                 }
                 ClauseKind::ResourceConvert(_) => {}
-                // CC globals fan out at assignment scope, not into the owner's
-                // own room total. GrantsTag was consumed in P0. Unresolved and
-                // FacilityCount contribute nothing here.
+                // CC globals fan out at assignment scope; GrantsTag was used in P0.
                 ClauseKind::RoomTypeGlobal { .. }
                 | ClauseKind::GrantsTag { .. }
                 | ClauseKind::Unresolved => {}
@@ -597,16 +561,12 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
     }
 
     // ── Per-operator Control-Center grants ──────────────────────────────────
-    // Umiri-style conditionals ("all Siracusa Operators assigned to Trading
-    // Posts gain +5%") buff the OPERATORS, so they enter the ledger as
-    // per-entity contributions and die under a team suppressor (Shamare
-    // cancels everything not sourced from herself) exactly like any other
-    // teammate contribution. Threshold conditionals ("...with 3 Kjerag
-    // Operators") buff the POST and stay CC-sourced (added in P5, immune to
-    // suppression, like the unconditional globals). They land BEFORE peer
-    // scaling: Gnosis's "-15% efficiency and +6 order limit" on each Kjerag
-    // trader is what Degenbrecher's and Swire's per-limit readers count and
-    // what Jaye's cut reads.
+    // Umiri-style ("all Siracusa Operators assigned to Trading Posts gain +5%")
+    // buff OPERATORS: per-entity entries a suppressor (Shamare) kills like any
+    // teammate's. Threshold ones ("...with 3 Kjerag Operators") buff the POST and
+    // are added in P5, immune to suppression. Lands BEFORE peer scaling: Gnosis's
+    // "-15% efficiency and +6 order limit" per Kjerag trader is what Degenbrecher,
+    // Swire and Jaye's cut read.
     {
         let speed_metric = Metric::speed_for_room(ev.room_type);
         for cond in ev.cc_conditions {
@@ -637,8 +597,6 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
     }
 
     // ── P3: peer scaling by deltas, stage by stage ───────────────────────────
-    // (P2, pool settlement, is assignment-scoped; nothing to do per room until
-    // the perception seam feeds pools - see `settle_pools`.)
     // A reader sees everything settled before its stage; readers sharing a
     // stage relax to a fixed point (two mirrors reading each other).
     let last_stage = peers.iter().map(|p| p.stage).max().unwrap_or(0);
@@ -647,12 +605,10 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
             let mut max_delta = 0.0f64;
             let mut emissions: Vec<Entry> = Vec::new();
             for item in peers.iter_mut().filter(|p| p.stage == stage) {
-                // The reference-pure basis: the FULL metric total the roommates
-                // are contributing right now - facility-scaled, count-scaled,
-                // granted and pool-drained entries included. An own-skills
-                // reader (Waai Fu's "provided by all other Operators ...
-                // excluding facility count") drops the facility-count parts
-                // and the external grants nobody in the room provides.
+                // Reference-pure basis: the roommates' FULL current total, all
+                // sources. An own-skills reader (Waai Fu's "provided by all other
+                // Operators ... excluding facility count") drops facility-count
+                // parts and external grants.
                 let basis_total: f64 = entries
                     .iter()
                     .filter(|e| e.metric == item.basis_metric)
@@ -663,9 +619,8 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
                     })
                     .map(|e| e.amount)
                     .sum();
-                // A quantized reader ("per 5 CAP", "-1 per 10%") counts only
-                // positive headroom and floors by the step; a percentage
-                // mirror is continuous.
+                // Quantized ("per 5 CAP", "-1 per 10%"): positive basis only,
+                // floored by step. A percentage mirror is continuous.
                 let scaled = if item.quantized {
                     (basis_total.max(0.0) / item.step).floor() * item.value
                 } else {
@@ -692,11 +647,10 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
     }
 
     // ── Order limit: the room's capacity after every delta ──────────────────
-    // Crew capacity skills, per-operator CC grants and peer-scaled cuts are
-    // CapacityLimit entries by now; post-level CC grants (Wiš'adel's "that
-    // Trading Post's order limit +2" while Hoederer is seated) add on top.
-    // Capacity is not a metric a nullifier targets, so this is final. The
-    // game's "(minimum 1)" is a floor on the ROOM total, never per skill.
+    // Skills, per-operator grants and peer cuts are entries by now; post-level CC
+    // grants (Wiš'adel's "that Trading Post's order limit +2" with Hoederer) add
+    // on top. No nullifier targets capacity, so this is final. "(minimum 1)"
+    // floors the ROOM total, never a single skill.
     let cc_room_capacity: f64 = ev
         .cc_conditions
         .iter()
@@ -715,9 +669,8 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
         (trading_base_limit(ev.building_data, ev.facility_counts, ev.room_level) + delta)
             .max(MIN_TRADING_ORDER_LIMIT)
     });
-    // Jaye's per-order riders pay on the FINAL limit, base included. From
-    // here on they are ordinary speed contributions: a nullifier kills them
-    // like any other roommate's speed.
+    // Jaye's per-order riders pay on the FINAL limit, base included, then are
+    // plain speed a nullifier can kill.
     if let Some(limit) = order_limit {
         for (entity, metric, value) in &limit_items {
             entries.push(Entry {
@@ -732,11 +685,9 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
     // ── P4: suppression, strictly last ───────────────────────────────────────
     let speed_metric = Metric::speed_for_room(ev.room_type);
 
-    // Automation wipe first: the CURRENT room's speed dies for EVERYONE -
-    // automation owners' non-facility buffs included - except contributions
-    // granted by facility count ("excluding productivity granted based on
-    // facility count"), which is why automation operators stack with each
-    // other and with facility-count scalers.
+    // Automation wipe: the room's speed dies for EVERYONE, owners included,
+    // "excluding productivity granted based on facility count". That's why
+    // automation ops stack with each other and with facility-count scalers.
     if automation_wipe {
         for e in &mut entries {
             if e.metric == speed_metric && e.source != Source::RoomCountScaled {
@@ -746,15 +697,13 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
     }
     for s in &suppressors {
         for e in &mut entries {
-            // The suppressor's OWN skill survives - but an external grant
-            // landing on the suppressor's row (Umiri's per-operator CC bonus)
-            // is another operator's contribution and dies with the rest.
+            // The suppressor's OWN skill survives; an external grant on her row
+            // (Umiri's CC bonus) is someone else's and dies.
             if e.entity == s.entity && e.source != Source::Granted {
                 continue;
             }
-            // Under an automation wipe, speed is fully governed by the wipe
-            // (facility-granted parts survive a nullifier too); the nullifier
-            // still applies to non-speed metrics (Pure-Gold order value).
+            // Under a wipe the wipe owns speed (facility parts survive a
+            // nullifier too); non-speed metrics (Pure-Gold value) still die.
             if automation_wipe && e.metric == speed_metric {
                 continue;
             }
@@ -765,9 +714,8 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
         }
     }
 
-    // Suppression reaches the deferred order shapes too: a nullifier kills
-    // other entities' shapes on the metrics it targets (Shamare's Precious-
-    // Metal shift kills Proviso's Pure-Gold value, spares flat value).
+    // Deferred order shapes too: Shamare's Precious-Metal shift kills Proviso's
+    // Pure-Gold value, spares flat value.
     order_items.retain(|item| {
         !suppressors
             .iter()
@@ -781,10 +729,7 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
         .map(|e| e.amount)
         .sum();
 
-    // Order VALUE resolves through the order-mix model: the room's shapes are
-    // priced together against the post's order rarity, so Proviso is worth
-    // more in a level-2 post than a level-3 one, and Tequila composes with
-    // her on the 4-gold orders she leaves alone.
+    // Shapes priced together against the post's rarity (see `order_mix`).
     let (order_value, order_gold) = if order_items.is_empty() {
         (0.0, 0.0)
     } else {
@@ -798,9 +743,7 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
         )
     };
 
-    // Threshold-gated Control-Center bonuses buff the POST itself, so they
-    // are added here, past suppression - CC-sourced like the unconditional
-    // globals. (Per-operator conditionals already entered the ledger above.)
+    // Threshold CC bonuses buff the POST: added past suppression.
     speed += ev
         .cc_conditions
         .iter()
@@ -817,10 +760,7 @@ pub fn score_room(ev: &RoomEval) -> RoomTotals {
     }
 }
 
-/// One operator's applicable clauses in a room: derived from the registry,
-/// gated on the owner's room type and the configuration discount, each paired
-/// with its config factor. The shared iteration under every per-operator
-/// clause query below.
+/// An operator's clauses live in `room_type`, each with its config factor (>0).
 fn applicable_clauses<'a>(
     op: &'a OperatorBaseProfile,
     room_type: &'a str,
@@ -843,10 +783,9 @@ fn applicable_clauses<'a>(
         })
 }
 
-/// An optimistic upper bound on an operator's solo value in a room, used only
-/// for ranking candidates: every gate assumed satisfied, every teammate scaler
-/// assumed fully matched, facility scaling at real counts. Never a final score
-/// (the ledger is), so it must only stay >= the true value.
+/// Optimistic solo upper bound for candidate ranking: gates met, teammate
+/// scalers fully matched, facility scaling at real counts. Must stay >= the true
+/// value; never a final score.
 #[allow(clippy::too_many_arguments, clippy::cast_precision_loss)]
 pub fn op_optimistic_bound(
     op: &OperatorBaseProfile,
@@ -863,22 +802,20 @@ pub fn op_optimistic_bound(
     let speed_metric = Metric::speed_for_room(room_type);
     let counts_toward_bound =
         |m: &Metric| *m == speed_metric || matches!(m, Metric::OrderValue { .. });
-    // Order shapes are priced against the post's level (the base-wide
-    // TRADING_MIN_LEVEL synthetic; the top tier when no post is known).
+    // TRADING_MIN_LEVEL; top tier when no post is known.
     let order_rarity = super::order_mix::rarity_for_level(
         building_data,
         facility_counts
             .get(super::assignment::TRADING_MIN_LEVEL)
             .map_or(i32::MAX, |lv| i32::try_from(*lv).unwrap_or(i32::MAX)),
     );
-    // The op's own layout-derived pools (generator + consumer travel together,
-    // e.g. Minimalist), so their consumer value is exact, not optimistic.
+    // Own layout-derived pools (generator + consumer on one op, e.g. Minimalist):
+    // exact, not optimistic.
     let functional_levels = facility_counts
         .get(super::assignment::FUNCTIONAL_LEVEL_SUM)
         .copied()
         .unwrap_or(0) as f64;
-    // Dorm-occupancy generators (Rosmontis' Extrasensory) are optimistic at
-    // FULL dormitories: the count of dorms times a top-level dorm's seats.
+    // Dorm-occupancy generators (Rosmontis' Extrasensory): assume FULL top-level dorms.
     let full_dorms = {
         let dorms = facility_counts.get("DORMITORY").copied().unwrap_or(0) as f64;
         let top_level = building_data
@@ -914,8 +851,7 @@ pub fn op_optimistic_bound(
                 _ => None,
             })
             .collect();
-    // The op's own converters move its generated points onward (Perception
-    // Information -> Chain of Thought) so its consumer reads the right pool.
+    // Own converters (Perception Information -> Chain of Thought).
     for (c, _) in applicable_clauses(op, room_type, formula_type, registry, building_data) {
         if let ClauseKind::ResourceConvert(super::clause::ResourceOp::Convert { from, to, ratio }) =
             &c.kind
@@ -933,16 +869,15 @@ pub fn op_optimistic_bound(
         let v = c.value * factor;
         total += match &c.kind {
             ClauseKind::SelfValue => v,
-            // An order shape's optimistic worth: solo, or its marginal beside
-            // the mix-shifting partner that makes it pay (Tequila + Tailoring).
+            // Solo, or the marginal beside a mix-shifting partner (Tequila + Tailoring).
             ClauseKind::OrderMix(effect) => {
                 super::order_mix::optimistic_value_pct_among(effect, order_rarity, companions)
                     * factor
             }
-            // A solved pool payoff counts at face value - the consumer must
-            // rank high enough to be SEATED for the pool to pay out at all.
+            // Face value: the consumer must rank high enough to be SEATED for the
+            // pool to pay at all.
             ClauseKind::ResourceConvert(super::clause::ResourceOp::Consume { .. }) => v,
-            // A stepped pool consumer fed by the op's own generator: exact.
+            // Fed by the op's own generator: exact.
             ClauseKind::ScalingPoolPoints { resource, step } => {
                 (own_pools.get(resource).copied().unwrap_or(0.0) / step).floor() * v
             }
@@ -954,8 +889,6 @@ pub fn op_optimistic_bound(
                 include_self,
             } => {
                 let assumed = match subject {
-                    // Capacity points: assume every seat brings a full
-                    // capacity skill's worth of points.
                     Subject::CapacityPoints { .. } => {
                         (teammates_assumed + f64::from(u8::from(*include_self)))
                             * ASSUMED_CAPACITY_POINTS
@@ -982,12 +915,10 @@ pub fn op_optimistic_bound(
             }
             ClauseKind::ScalingPeerMetric { metric, step, .. } => {
                 if *metric == Metric::CapacityLimit {
-                    // Capacity conversion: TRADING posts almost never field
-                    // capacity-adders, so keep their bound at zero; FACTORIES
-                    // routinely stack them (Vermeil's whole comp), so credit an
-                    // optimistic capacity-rich room there - otherwise she'd rank
-                    // at zero and be cut before the scorer tries her with the
-                    // teammates that make her strong.
+                    // Trading posts almost never field capacity-adders: bound 0.
+                    // Factories stack them (Vermeil's comp), so assume a rich
+                    // room or she ranks at zero and is cut before the scorer
+                    // tries her with the teammates that make her strong.
                     if room_type == "MANUFACTURE" {
                         const ASSUMED_CAP: f64 = 20.0;
                         let scaled = (ASSUMED_CAP / step).floor() * v;
@@ -1000,9 +931,8 @@ pub fn op_optimistic_bound(
                     c.cap.unwrap_or(0.0)
                 }
             }
-            // Jaye's per-order riders: the level's base limit is what a post
-            // holds before peers add and his own cut subtracts - optimistic
-            // at the base.
+            // Jaye: priced at the level's base limit, before peers add and his
+            // own cut subtracts.
             ClauseKind::ScalingRoomOrderLimit => {
                 v * f64::from(trading_base_limit(building_data, facility_counts, None))
             }
@@ -1012,9 +942,8 @@ pub fn op_optimistic_bound(
     total
 }
 
-/// Only the facility-count-granted part of an operator's value - what survives
-/// in an automation room (base value of a facility buff rides along, matching
-/// the wipe's buff-granular survival rule).
+/// The facility-count part of an operator's value: what survives an automation
+/// room (a facility buff's base value rides along, as in the wipe).
 pub fn op_facility_only_value(
     op: &OperatorBaseProfile,
     room_type: &str,
@@ -1059,9 +988,8 @@ pub fn op_facility_only_value(
         .sum()
 }
 
-/// An operator's own capacity-limit total in a room: flat contributions plus
-/// named-teammate conditional capacity resolved against `present` (which
-/// INCLUDES the operator, mirroring the game's room-scoped check).
+/// Own capacity: flat plus named-teammate conditionals against `present`, which
+/// INCLUDES the operator (the game's room-scoped check does too).
 pub fn op_capacity_limit(
     op: &OperatorBaseProfile,
     room_type: &str,
@@ -1078,9 +1006,8 @@ pub fn op_capacity_limit(
                 chars,
                 scope: CondScope::Room,
             } if chars.iter().any(|req| present.contains(req)) => c.value,
-            // A counted capacity has no roster here: the holder's own match
-            // is the floor (Astgenne's own Rhine Tech skill), the ledger
-            // prices the rest.
+            // No roster here: the holder's own match is the floor (Astgenne's
+            // own Rhine Tech skill); the ledger prices the rest.
             ClauseKind::ScalingCount {
                 include_self: true, ..
             } => c.value,
@@ -1089,10 +1016,8 @@ pub fn op_capacity_limit(
         .sum()
 }
 
-/// An operator's order VALUE that survives a Shamare-type nullifier: flat and
-/// Precious-Metal value counts, Pure-Gold value dies with the Pure-Gold orders
-/// the nullifier shifts the post away from. What separates a genuine Shamare
-/// partner from a warm body.
+/// Order VALUE that survives a Shamare-type nullifier: flat and Precious-Metal
+/// count, Pure-Gold dies. Separates a real Shamare partner from a warm body.
 pub fn op_surviving_order_value(
     op: &OperatorBaseProfile,
     room_type: &str,
@@ -1101,9 +1026,7 @@ pub fn op_surviving_order_value(
     building_data: &BuildingDataFile,
     companions: &[OrderEffect],
 ) -> f64 {
-    // Ranking helper without a room level: price each surviving shape at the
-    // top order rarity (the level a value operator is normally seated at),
-    // at its best marginal beside the roster's other shapes.
+    // No room level: top rarity, where value operators normally sit.
     let top = super::order_mix::rarity_for_level(building_data, i32::MAX);
     applicable_clauses(op, room_type, formula_type, registry, building_data)
         .filter(|(c, _)| c.metric == (Metric::OrderValue { pure_gold: false }))
@@ -1116,8 +1039,8 @@ pub fn op_surviving_order_value(
         .sum()
 }
 
-/// Every order shape the given operators can field in `room_type` (deduped):
-/// the companions a ranking bound prices a shape's marginal against.
+/// Deduped order shapes `operators` field: the companions a ranking bound
+/// prices a marginal against.
 pub fn roster_order_effects(
     operators: &[&OperatorBaseProfile],
     room_type: &str,
@@ -1125,8 +1048,7 @@ pub fn roster_order_effects(
     registry: &HashMap<String, BuffResolutionStrategy>,
     building_data: &BuildingDataFile,
 ) -> Vec<OrderEffect> {
-    // A registry lookup per buff, never a clause build: this runs inside
-    // every team search.
+    // Registry lookup, not a clause build: runs inside every team search.
     let _ = formula_type;
     let mut out: Vec<OrderEffect> = Vec::new();
     if room_type != "TRADING" {
@@ -1148,18 +1070,16 @@ pub fn roster_order_effects(
     out
 }
 
-/// Ranking value of an operator's strongest POWER-room buff: solo clause value
-/// at real facility counts, with a facility-count ENABLER (Greyy the
-/// Lightningbearer's "+1 Power Plant") ranked far above ordinary drone output -
-/// it must be STATIONED in a power plant for the count bonus to fire.
+/// Ranking value of the strongest POWER buff. A facility-count ENABLER (Greyy the
+/// Lightningbearer's "+1 Power Plant") ranks far above drone output: it only
+/// fires while STATIONED in a power plant.
 pub fn op_power_rank_value(
     op: &OperatorBaseProfile,
     building_data: &BuildingDataFile,
     registry: &HashMap<String, BuffResolutionStrategy>,
     facility_counts: &HashMap<String, usize>,
 ) -> f64 {
-    /// Rank weight per unit of facility count granted (an enabler outranks any
-    /// realistic drone-recovery percentage).
+    /// Outranks any realistic drone-recovery %.
     const ENABLER_RANK_WEIGHT: f64 = 30.0;
     op.available_buffs
         .iter()
@@ -1193,20 +1113,15 @@ pub fn op_power_rank_value(
         .fold(0.0, f64::max)
 }
 
-/// Discount for a formula-specific clause in an UNCONFIGURED room. The value
-/// is real - were the room configured to the matching product, it would apply
-/// in full - but the live snapshot doesn't prove it, so it is discounted:
-/// never zeroed (that punishes unconfigured rooms as if the skill were inert)
-/// and never full (that scores speculative output as realized). Tunable.
+/// Formula-specific clause in an UNCONFIGURED room: real but unproven. Zero
+/// would treat the skill as inert, full would score speculation as realized.
+/// Tunable.
 pub const UNCONFIGURED_OUTPUT_FACTOR: f64 = 0.5;
 
-/// The three-tier configuration discount:
-/// - generic clause, or configured room whose formula the clause targets -> 1.0
-/// - configured room whose formula the clause does NOT target -> 0.0 - a
-///   mechanical fact, never discounted
-/// - unconfigured room -> [`UNCONFIGURED_OUTPUT_FACTOR`] - real but unproven,
-///   never zeroed. A clause covering both Gold and EXP serves any factory
-///   equally, so it counts as generic.
+/// - generic clause, or configured room with the targeted formula -> 1.0
+/// - configured room with another formula -> 0.0 (mechanical fact)
+/// - unconfigured room -> [`UNCONFIGURED_OUTPUT_FACTOR`]; a clause covering
+///   Gold and EXP serves any factory, so it counts as generic.
 fn config_factor(clause: &Clause, formula_type: Option<&str>) -> f64 {
     if clause.output_targets.is_empty() {
         return 1.0;
@@ -1239,8 +1154,7 @@ fn count_matches(
             .filter(|&j| j != owner || include_self)
             .filter(|&j| tags[j].iter().any(|t| t == token))
             .count(),
-        // Skills by name: one count per member carrying such a skill (an
-        // operator's kit never holds two skills of one type).
+        // One per member: a kit never holds two skills of one type.
         Subject::SkillTag(token) => (0..members.len())
             .filter(|&j| j != owner || include_self)
             .filter(|&j| skill_tags[j].iter().any(|t| t == token))
@@ -1272,8 +1186,7 @@ fn count_matches(
                 0
             }
         }
-        // Summed capacity points on one side of the threshold (positive
-        // headroom only - a slashed limit earns nothing).
+        // Positive only: a slashed limit earns nothing.
         Subject::CapacityPoints { threshold, above } => {
             return (0..members.len())
                 .filter(|&j| j != owner || include_self)
@@ -1288,9 +1201,7 @@ fn count_matches(
 
 #[cfg(test)]
 mod tests {
-    // Engine-level behaviors are exercised through the shadow-equivalence
-    // integration test and the clause goldens; the pure-function tests here
-    // cover the pieces with no legacy counterpart.
+    // Engine behavior lives in the shadow-equivalence test and clause goldens.
     use super::*;
 
     #[test]
@@ -1308,8 +1219,7 @@ mod tests {
         assert!((config_factor(&mk(&[]), Some("F_GOLD")) - 1.0).abs() < 1e-9);
         assert!((config_factor(&mk(&["F_GOLD"]), Some("F_GOLD")) - 1.0).abs() < 1e-9);
         assert!(config_factor(&mk(&["F_EXP"]), Some("F_GOLD")).abs() < 1e-9);
-        // Unconfigured room: formula-specific value is discounted, never
-        // zeroed; a clause serving every family is generic - always full.
+        // Unconfigured: discounted, never zeroed; every-family clause = generic.
         assert!((config_factor(&mk(&["F_EXP"]), None) - UNCONFIGURED_OUTPUT_FACTOR).abs() < 1e-9);
         assert!((config_factor(&mk(&["F_GOLD", "F_EXP", "F_DIAMOND"]), None) - 1.0).abs() < 1e-9);
         assert!(

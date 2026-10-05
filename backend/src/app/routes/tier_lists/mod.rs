@@ -7,8 +7,7 @@ use serde::Deserialize;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_axum::routes;
 
-/// Load an active tier list by slug or return `404`. Shared by the tier-list
-/// route handlers, which all resolve the `{slug}` path param the same way.
+/// Active tier list by slug, or `404`.
 pub(crate) async fn load_tier_list(state: &AppState, slug: &str) -> Result<TierList, ApiError> {
     find_by_slug(&state.db, slug)
         .await?

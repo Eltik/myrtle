@@ -27,12 +27,8 @@
 //! - [`sprites`]: the character gallery, every sprite folder with its names
 //!   and expressions.
 //! - [`sprite_thumbs`]: one expression composed and scaled, cached on disk.
-//!
-//! The measured census behind every number quoted in here, and the wire
-//! contract itself, are in `docs/story-reader.md`, sections "1. What is true
-//! about the data" and "2. Wire contract". Numbers stay in the code only where
-//! they document a DECISION the code makes; the narrative history stays in the
-//! doc.
+//! Census and wire contract: `docs/story-reader.md`, sections 1 and 2. Numbers stay
+//! in the code only where they back a decision the code makes.
 
 mod archive;
 mod art;

@@ -96,9 +96,9 @@ pub async fn get_catalog(
         .await
 }
 
-/// A short content fingerprint of one locale+namespace catalog. Changing any
-/// value - or any value in the fallback the catalog inherits from - moves this
-/// hash, which is what the immutable per-hash catalog URLs are keyed on.
+/// Short content fingerprint of one locale+namespace catalog. Moves when any
+/// value changes, including one inherited from the fallback; the immutable
+/// per-hash catalog URLs are keyed on it.
 pub async fn catalog_hash(
     pool: &PgPool,
     locale: &str,
@@ -181,13 +181,11 @@ pub async fn deactivate_missing_keys(
     Ok(res.rows_affected())
 }
 
-/// The source locale has no `ui_messages` rows - its text lives in
-/// `ui_message_keys.source_text` - so it needs `source_text` projected as the
-/// value and can never be stale. Without that the editor showed every source
-/// row as "Not translated" while the progress chips above it correctly said
-/// zero untranslated, which is the same number contradicting itself on one
-/// screen. A row that HAS been overridden for the source locale still wins,
-/// because that override is exactly what editing English in the panel writes.
+/// The source locale has no `ui_messages` rows (its text is
+/// `ui_message_keys.source_text`), so project that as the value and never mark it
+/// stale. Without this the editor showed every source row "Not translated" while
+/// the progress chips said zero untranslated. A source-locale override still wins:
+/// it is what editing English in the panel writes.
 const ENTRY_SELECT: &str = r"
     SELECT k.key,
            k.namespace,
@@ -447,8 +445,8 @@ pub async fn locale_completion(pool: &PgPool) -> Result<Vec<(String, i64, i64)>,
     .await
 }
 
-/// `(locale, total_active_keys, translated, stale)` - drives the admin
-/// sidebar badge and the per-locale progress bars.
+/// `(locale, total_active_keys, translated, stale)`, for the admin sidebar badge
+/// and per-locale progress bars.
 pub async fn locale_progress(pool: &PgPool) -> Result<Vec<(String, i64, i64, i64)>, sqlx::Error> {
     sqlx::query_as::<_, (String, i64, i64, i64)>(
         r"

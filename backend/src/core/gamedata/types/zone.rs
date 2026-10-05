@@ -87,6 +87,5 @@ pub struct ZoneTableFile {
     /// Main zone -> chapter link, read by the story reader.
     #[serde(deserialize_with = "deserialize_fb_map_or_default", default)]
     pub mainline_addition_info: HashMap<String, super::chapter::MainlineAdditionInfo>,
-    // Other fields like WeeklyAdditionInfo, ZoneRecordRewardData, etc.
-    // are not needed for the randomizer
+    // Other fields (WeeklyAdditionInfo, ZoneRecordRewardData, ...) aren't read.
 }

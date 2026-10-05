@@ -178,9 +178,8 @@ pub async fn remove(
     let user_id: Uuid = auth.user_uuid()?;
     let list = find_and_authorize(&state, &slug, user_id, auth.role, Permission::Edit).await?;
 
-    // Find which tier this entity is in, then remove. Idempotent: if the
-    // placement is already gone (e.g. cascade-deleted by a prior tier delete in
-    // the same save batch), report success rather than NotFound.
+    // Idempotent: a placement already gone (e.g. cascade-deleted by a tier delete
+    // earlier in the same save batch) is success, not NotFound.
     let entity = EntityRef { kind, id: &id };
     let tiers = get_tiers(&state.db, list.id).await?;
     for tier in &tiers {

@@ -48,25 +48,20 @@ pub struct LoginResponse {
     pub server: String,
 }
 
-/// Persist the durable half of a fresh login, so re-syncing survives the cache.
+/// Persists the durable half of a login so re-sync survives the cache.
 ///
-/// Every login route ends here. The cached session expires in an hour and dies
-/// on any backend restart; the site token lasts seven days. Without this the
-/// gap between the two is a forced re-login, which is what users hit when they
-/// pressed "Re-sync" the next day.
+/// The cached session lasts an hour and dies on restart; the site token lasts
+/// seven days. Without this, users pressing "Re-sync" the next day hit a forced
+/// re-login.
 ///
-/// `save` is the player's own answer to "remember this login", sent per login
-/// (see `LoginRequest::save_credentials`). When it is false this stores
-/// nothing AND removes anything an earlier login left behind, so opting out is
-/// a withdrawal and not merely a skip. The cached session still works for the
-/// hour it lives, which is what makes the opt-out usable rather than a forced
-/// immediate re-login.
+/// `save` is the per-login "remember this login" choice
+/// (`LoginRequest::save_credentials`). False stores nothing and deletes what an
+/// earlier login left, so opting out withdraws. The cached session still works
+/// for its hour.
 ///
-/// Best-effort on purpose: a database that will not take the credential costs
-/// the user a re-login later, and failing the login in front of them now would
-/// be the worse trade. It is logged either way. The DELETE half is not
-/// best-effort in the same way: a failure there leaves a credential the user
-/// asked us to drop, so it is logged at warn with its own message.
+/// Best-effort: a failed store costs a re-login later, which beats failing the
+/// login now. A failed DELETE leaves a credential the user asked us to drop, so
+/// it logs at warn with its own message.
 async fn persist_credentials(
     state: &AppState,
     user_id: Uuid,

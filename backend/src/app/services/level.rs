@@ -1,11 +1,6 @@
-//! On-demand stage **level** loading for the Stage Viewer.
-//!
-//! Resolves a stage id to its `level_id`, reads the matching `level_*.json` off
-//! disk, and serves the raw Arknights level normalized for the frontend map
-//! renderer: every object key is camelCased (EN/Yostar exports are `PascalCase`)
-//! and `MapData.Map` is reshaped from the flattened `{Column_size, Matrix_data}`
-//! form into a 2D grid. Results are cached so the file is parsed/transformed at
-//! most once per stage.
+//! Stage level loading for the Stage Viewer. Reads `level_*.json`, camelCases every
+//! key (EN/Yostar exports are PascalCase), reshapes `MapData.Map` from the flat
+//! `{Column_size, Matrix_data}` form into a 2D grid, and caches per stage.
 
 use serde_json::Value;
 

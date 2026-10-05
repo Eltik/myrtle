@@ -7,10 +7,8 @@ use crate::core::gamedata::{
 };
 
 pub fn get_artists(char_id: &str, skins: &SkinData) -> Vec<String> {
-    // For Amiya, every skin's `char_id` is the base (`char_002_amiya`) but
-    // `tmpl_id` identifies the form. Filter by tmpl_id when present so each
-    // branch shows only its own artists; non-Amiya skins have tmpl_id=None
-    // and fall through to a plain char_id match.
+    // Amiya's skins all carry the base `char_id`; `tmpl_id` names the form. Match on
+    // tmpl_id when set, else char_id.
     let mut seen = std::collections::HashSet::new();
     skins
         .char_skins

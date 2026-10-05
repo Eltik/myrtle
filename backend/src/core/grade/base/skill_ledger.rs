@@ -1,18 +1,12 @@
-//! Per-skill contribution ledger: the "how this room's number is calculated"
-//! breakdown behind the deep-dive UI.
+//! Per-skill contribution ledger behind the deep-dive UI.
 //!
-//! Every line is a MARGINAL measured by ablation: remove exactly one buff from
-//! one operator, re-score the room with everything else unchanged, and report
-//! the delta. That definition survives every mechanism the engine models:
-//! pair riders (Lemuen loses her +25 if Exusiai leaves), non-stacking families
-//! (a second +7% global shows 0), faction gates, recipe-type scaling, because
-//! it asks the scorer itself rather than re-deriving the rules.
+//! Each line is a marginal by ablation: drop one buff from one operator, re-score
+//! the room, report the delta. Asking the scorer instead of re-deriving the rules
+//! covers pair riders (Lemuen loses her +25 without Exusiai), non-stacking
+//! families (a second +7% global shows 0), faction gates, recipe scaling.
 //!
-//! Lines that measure 0 are classified rather than hidden: a priced strategy
-//! whose gate isn't met here reads "inactive", a morale/drain skill reads
-//! "morale" (it moves the sustain sim, not efficiency), a capacity skill reads
-//! "capacity", and a buff the engine deliberately doesn't price (never-guess)
-//! reads "unmodeled": three honest states where a ✓/✗ ledger has two.
+//! Zero lines are classified, not hidden: "inactive" (gate unmet), "morale"
+//! (moves the sustain sim), "capacity", or "unmodeled" (deliberately unpriced).
 
 use std::collections::HashMap;
 
@@ -59,7 +53,6 @@ pub enum LineDisposition {
     Unmodeled,
 }
 
-/// One skill line of a room's breakdown.
 #[derive(Clone, Debug)]
 pub struct LedgerLine {
     pub operator_id: String,
@@ -68,21 +61,18 @@ pub struct LedgerLine {
     pub speed_pct: f64,
     /// Marginal order VALUE %.
     pub value_pct: f64,
-    /// Set for Control-Center lines shown on a production room: the line's
-    /// owner sits in the CC, not this room.
+    /// Control Center line shown on a production room; its owner sits in the CC.
     pub from_control_center: bool,
     pub disposition: LineDisposition,
-    /// How to read a marginal that is spread over other lines: a count skill
-    /// ("+5% per Metalwork-type skill") whose value already sits inside the
-    /// skills it counts, its own included.
+    /// For a marginal spread over other lines: a count skill ("+5% per
+    /// Metalwork-type skill") whose value already sits in the skills it counts.
     pub note: Option<String>,
 }
 
 const EPS: f64 = 1e-6;
 
-/// A profile identical to `op` with one buff removed. Match tags are
-/// recomputed: some derive from the buff set, and a stale tag would keep a
-/// faction gate satisfied that the ablation should break.
+/// `op` minus one buff. Match tags are recomputed: some derive from the buff
+/// set, and a stale tag would keep satisfied a faction gate the ablation should break.
 fn ablated(
     op: &OperatorBaseProfile,
     buff_id: &str,
@@ -91,8 +81,7 @@ fn ablated(
     ablated_where(op, |b| b != buff_id, building_data)
 }
 
-/// A copy of `op` keeping only the buffs `keep` accepts, with its match tags
-/// recomputed for the reduced skill set.
+/// `op` keeping only the buffs `keep` accepts, match tags recomputed.
 fn ablated_where(
     op: &OperatorBaseProfile,
     keep: impl Fn(&str) -> bool,
@@ -104,15 +93,14 @@ fn ablated_where(
     p
 }
 
-/// A skill in this room that takes priority over roommates' skills of some
-/// buff families ("does not stack with Recycling and takes priority over it").
+/// A skill that takes priority over roommates' buff families ("does not stack
+/// with Recycling and takes priority over it").
 struct PriorityExclusion {
     owner: String,
     buff_id: String,
     families: Vec<String>,
 }
 
-/// Every live priority exclusion in a crew, for `room_type`.
 fn priority_exclusions(ctx: &LedgerCtx, ops: &[String], room_type: &str) -> Vec<PriorityExclusion> {
     ops.iter()
         .filter_map(|id| ctx.op_index.get(id.as_str()).map(|op| (id, op)))
@@ -140,7 +128,6 @@ fn priority_exclusions(ctx: &LedgerCtx, ops: &[String], room_type: &str) -> Vec<
         .collect()
 }
 
-/// A buff's display name, falling back to its id.
 fn buff_name<'a>(ctx: &'a LedgerCtx, buff_id: &'a str) -> &'a str {
     ctx.building_data
         .buffs
@@ -152,10 +139,9 @@ fn zero_disposition(strategy: Option<&BuffResolutionStrategy>, crew: &[String]) 
     match strategy {
         Some(BuffResolutionStrategy::MoraleModifier { .. }) => LineDisposition::MoraleOnly,
         Some(BuffResolutionStrategy::CapacityOnly { .. }) => LineDisposition::CapacityOnly,
-        // A capacity component with 0 efficiency marginal is still ACTIVE
-        // capacity when its teammate gate is met (Lappland's "+4 order limit
-        // with Texas" reads "capacity", not "inactive", while Texas shares
-        // the post).
+        // A capacity component with 0 efficiency marginal is still active capacity
+        // when its teammate gate is met (Lappland's "+4 order limit with Texas" reads
+        // "capacity", not "inactive", while Texas shares the post).
         Some(BuffResolutionStrategy::EfficiencyWithOrderLimit { order_limit, .. })
             if *order_limit != 0 =>
         {
@@ -176,17 +162,16 @@ fn zero_disposition(strategy: Option<&BuffResolutionStrategy>, crew: &[String]) 
             }
         }
         Some(BuffResolutionStrategy::ControlNonProduction { .. }) => LineDisposition::NonProduction,
-        // Drain-aura immunity (Waai Fu's Team Spirit) is real and priced, but
-        // entirely a morale effect - zero efficiency marginal by design.
+        // Drain-aura immunity (Waai Fu's Team Spirit) is priced but purely morale:
+        // zero efficiency marginal by design.
         Some(BuffResolutionStrategy::MoraleDrainAuraImmunity) => LineDisposition::MoraleOnly,
         Some(BuffResolutionStrategy::Complex { .. }) | None => LineDisposition::Unmodeled,
         Some(_) => LineDisposition::Inactive,
     }
 }
 
-/// The scoring context a room ledger re-runs its ablations against. All fields
-/// are exactly what `compute_team_efficiency` was called with for the real
-/// number, so a marginal of 0 genuinely means "removing this changes nothing".
+/// Exactly the inputs `compute_team_efficiency` got for the real number, so a
+/// marginal of 0 really means removing it changes nothing.
 pub struct LedgerCtx<'a> {
     pub op_index: &'a HashMap<&'a str, &'a OperatorBaseProfile>,
     pub registry: &'a HashMap<String, BuffResolutionStrategy>,
@@ -236,8 +221,8 @@ impl LedgerCtx<'_> {
         )
     }
 
-    /// Global bonuses + conditions a fixed CC crew grants, with at most one
-    /// member's profile replaced by an ablated copy.
+    /// Globals + conditions a fixed CC crew grants, optionally with one member's
+    /// profile swapped for an ablated copy.
     fn cc_grants(
         &self,
         cc_ops: &[String],
@@ -257,9 +242,8 @@ impl LedgerCtx<'_> {
     }
 }
 
-/// The global bonuses + conditions a fixed Control-Center crew grants -
-/// exposed so rotation cells can build per-shift ledgers against the crew
-/// that actually works their shift.
+/// Globals + conditions a fixed CC crew grants. Exposed so rotation cells can
+/// build per-shift ledgers against the crew working that shift.
 pub(crate) fn grants_of(
     ctx: &LedgerCtx,
     cc_ops: &[String],
@@ -267,10 +251,9 @@ pub(crate) fn grants_of(
     ctx.cc_grants(cc_ops, None)
 }
 
-/// The breakdown for one production room (TRADING / MANUFACTURE / POWER):
-/// each crew member's same-room buffs, plus every Control-Center line that
-/// targets this room type. `global_bonuses`/`cc_conditions` must be the grants
-/// of `cc_ops` exactly as the room was really scored with.
+/// Breakdown for one production room (TRADING / MANUFACTURE / POWER): each crew
+/// member's same-room buffs plus every CC line targeting this room type.
+/// `global_bonuses`/`cc_conditions` must be `cc_ops`' grants as really scored.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn production_room_ledger(
     ctx: &LedgerCtx,
@@ -286,7 +269,6 @@ pub(crate) fn production_room_ledger(
     let full_global = global_bonuses.get(room_type).copied().unwrap_or(0.0);
 
     let exclusions = priority_exclusions(ctx, ops, room_type);
-    // The room's own crew, one line per same-room buff.
     for id in ops {
         let Some(op) = ctx.op_index.get(id.as_str()) else {
             continue;
@@ -298,10 +280,9 @@ pub(crate) fn production_room_ledger(
             if buff.room_type != room_type {
                 continue;
             }
-            // A skill that takes priority over a roommate's family is priced
-            // as ITS OWN contribution: its probe keeps the excluded family
-            // out, otherwise removing Bubble's tiers resurrects Recycling and
-            // her line would read -33.
+            // A skill with priority over a roommate's family is priced as its own: the
+            // probe keeps the excluded family out, or removing Bubble's tiers resurrects
+            // Recycling and her line reads -33.
             let probe = ablated(op, buff_id, ctx.building_data);
             let kept_out: Vec<(String, OperatorBaseProfile)> = exclusions
                 .iter()
@@ -322,8 +303,7 @@ pub(crate) fn production_room_ledger(
                 ctx.score_with(ops, room_type, formula, cc_conditions, &replacements);
             let d_speed = full_speed - speed;
             let d_value = full_value - value;
-            // A roommate's skill that takes priority over this one's family
-            // reads covered, with the winner named - not a fault.
+            // A roommate's skill with priority over this family: covered, winner named.
             let excluded_by = exclusions
                 .iter()
                 .find(|e| e.owner != *id && e.families.iter().any(|f| f == buff_family(buff_id)));
@@ -367,11 +347,10 @@ pub(crate) fn production_room_ledger(
         }
     }
 
-    // Control-Center lines that target this room type. Unconditional globals
-    // use family attribution (the winner claims the family's value, duplicate
-    // copies read "covered" - ablation is tie-blind and would let the value
-    // go unclaimed); conditional globals keep the ablation path, since their
-    // credit genuinely depends on THIS room's crew meeting the gate.
+    // Unconditional globals use family attribution (winner claims the value,
+    // duplicates read "covered"; ablation is tie-blind and would leave it
+    // unclaimed). Conditional globals keep ablation: their credit depends on THIS
+    // room's crew meeting the gate.
     let (lines, winners) = cc_bonus_lines(ctx, cc_ops);
     for (i, l) in lines.iter().enumerate() {
         if l.bonus.conditional.is_none() {
@@ -401,8 +380,7 @@ pub(crate) fn production_room_ledger(
             });
             continue;
         }
-        // Conditional global: does the gate fire in THIS crew? Ablate and
-        // re-score under the reduced grants.
+        // Conditional global: does the gate fire in this crew?
         if l.bonus
             .conditional
             .as_ref()
@@ -438,16 +416,14 @@ pub(crate) fn production_room_ledger(
     out
 }
 
-/// A pool generator's own ablation is structurally zero: pools settle at
-/// assignment scope, so removing the generator clause here leaves the settled
-/// points untouched and the line read "inactive" while a roommate's consumer
-/// line carried the value (Rosmontis' Extrasensory under her own
-/// Manifestation of Consciousness). When a consumer of the same pool in the
-/// room reads a positive marginal, the generator contributes; the note says
-/// where its value sits.
+/// A pool generator's own ablation is structurally zero (pools settle at
+/// assignment scope), so it read "inactive" while a roommate's consumer carried
+/// the value (Rosmontis' Extrasensory under her Manifestation of Consciousness).
+/// If a consumer of the same pool here has a positive marginal, the generator
+/// contributes; the note says where the value sits.
 fn relabel_feeding_generators(ctx: &LedgerCtx, lines: &mut [LedgerLine]) {
     use super::clause::{ClauseKind, ResourceOp, clauses_from_strategy};
-    // Pools consumed in this room with a positive marginal, and the line that reads them.
+    // Pools consumed here with a positive marginal -> the line reading them.
     let mut consumed: HashMap<String, String> = HashMap::new();
     for l in lines.iter() {
         if l.speed_pct <= EPS {
@@ -501,22 +477,19 @@ fn relabel_feeding_generators(ctx: &LedgerCtx, lines: &mut [LedgerLine]) {
     }
 }
 
-/// One Control-Center bonus line, pre-attribution.
 struct CcBonusLine {
     operator_id: String,
     buff_id: String,
     bonus: super::assignment::CcBonus,
-    /// A crew-gated global whose gate this crew does not meet (Hoshiguma
-    /// without another L.G.D. operator in the center): inactive, not covered.
+    /// Crew-gated global whose gate this crew misses (Hoshiguma without another
+    /// L.G.D. operator in the center): inactive, not covered.
     gate_unmet: bool,
 }
 
-/// Gather every CC member's bonus-bearing CONTROL buff, plus the winner of
-/// each non-stacking family: the strongest member, first-in-crew-order on
-/// ties - the game's own "(only the most effective one will take effect)"
-/// rule. Ablation marginals are tie-blind (with two +7% copies, removing
-/// either changes nothing, so NOBODY claims the +7 that is really there);
-/// explicit attribution keeps the lines summing to the room's number.
+/// Every CC member's bonus-bearing CONTROL buff, plus each non-stacking family's
+/// winner: strongest member, crew order on ties (the game's "only the most
+/// effective one will take effect"). Ablation is tie-blind (with two +7% copies
+/// nobody claims the +7); explicit attribution keeps lines summing to the room.
 fn cc_bonus_lines(
     ctx: &LedgerCtx,
     cc_ops: &[String],
@@ -538,8 +511,7 @@ fn cc_bonus_lines(
             if let Some(mut bonus) =
                 super::assignment::cc_bonus_for(buff_id, buff, ctx.registry.get(buff_id))
             {
-                // A crew gate is settled here, where the crew is known: met,
-                // the line carries the gate's full value like any global.
+                // Crew gates settle here, where the crew is known. Met = full value.
                 let gate_unmet = match bonus.crew_gate.take() {
                     None => false,
                     Some(gate) if gate.met(id, &crew) => {
@@ -573,8 +545,7 @@ fn cc_bonus_lines(
     (lines, winners)
 }
 
-/// The plain-words reach of a gated Control-Center grant: who it pays,
-/// where, and how many the plan fields.
+/// Plain-words reach of a gated CC grant: who it pays, where, how many.
 fn conditional_reach_note(cond: &super::assignment::CcCondition, reach: usize) -> String {
     let room = match cond.target_room.as_str() {
         "MANUFACTURE" => "Factories",
@@ -616,7 +587,7 @@ pub(crate) fn control_room_ledger(
     team_rooms: &[super::types::RoomAssignment],
 ) -> Vec<LedgerLine> {
     let mut out = Vec::new();
-    // Non-bonus CONTROL buffs (morale, clue, unmodeled...) classify by strategy.
+    // Non-bonus CONTROL buffs (morale, clue, unmodeled) classify by strategy.
     for id in cc_ops {
         let Some(op) = ctx.op_index.get(id.as_str()) else {
             continue;
@@ -631,10 +602,9 @@ pub(crate) fn control_room_ledger(
             {
                 continue;
             }
-            // A morale skill says what it does in plain words: a seat held
-            // for "+0.05 morale/h to the Control Center crew" (Gladiia,
-            // Projekt Red) read as a seat held for nothing when its text
-            // led with an Abyssal Hunter rider (00980819, 2026-09-21).
+            // Morale skills say what they do: a seat held for "+0.05 morale/h to the
+            // Control Center crew" (Gladiia, Projekt Red) read as held for nothing when the
+            // text led with an Abyssal Hunter rider (00980819, 2026-09-21).
             let note = match ctx.registry.get(buff_id) {
                 Some(BuffResolutionStrategy::MoraleModifier {
                     recovery_per_hour,
@@ -668,19 +638,17 @@ pub(crate) fn control_room_ledger(
             });
         }
     }
-    // Bonus lines: stacking entries contribute outright, each non-stacking
-    // family is claimed by its winner, the rest read "covered". Conditional
-    // globals are credited on their target rooms, not here.
+    // Stacking entries contribute outright, each non-stacking family goes to its
+    // winner, the rest read "covered". Conditional globals credit their target rooms.
     let (lines, winners) = cc_bonus_lines(ctx, cc_ops);
     for (i, l) in lines.iter().enumerate() {
         let claims = l.bonus.stacks
             || winners.get(&(l.bonus.room.clone(), l.bonus.family.clone())) == Some(&i);
         let (value, disposition, note) = if let Some(cond) = &l.bonus.conditional {
-            // Umiri-style: the credit lands inside the rooms whose crews meet
-            // the gate. On the CC row, say WHERE it went - "inactive" is only
-            // honest when no team satisfies it - and how far it reaches, so a
-            // seat held for one Knight in a factory (Viviana beside Fartooth)
-            // is not read as a seat held for nothing (31010962, 2026-09-21).
+            // Umiri-style: credit lands in the rooms whose crews meet the gate. The CC row
+            // says where it went ("inactive" only if no team meets it) and how far it
+            // reaches, so one Knight in a factory (Viviana beside Fartooth) doesn't read as
+            // a seat held for nothing (31010962, 2026-09-21).
             let reach = super::assignment::cc_condition_reach(cond, team_rooms, ctx.op_index);
             (
                 0.0,

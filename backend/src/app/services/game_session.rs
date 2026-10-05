@@ -9,11 +9,10 @@ use crate::{
     database::queries::{game_credentials, users},
 };
 
-/// Load a user's cached game session. Fails if absent or unparseable.
+/// Cached game session; fails if absent or unparseable.
 ///
-/// Cache-only by design: this serves paths that run after [`ensure_fresh`] has
-/// already established a live session in the same request. Anything starting
-/// cold should call [`ensure_fresh`], which falls back to the durable store.
+/// Cache-only: for paths that run after [`ensure_fresh`] in the same request.
+/// Cold starts call [`ensure_fresh`], which falls back to the durable store.
 pub async fn load(state: &AppState, user_id: &str) -> Result<AuthSession, ApiError> {
     let json: Option<String> = state
         .cache
@@ -25,13 +24,11 @@ pub async fn load(state: &AppState, user_id: &str) -> Result<AuthSession, ApiErr
     serde_json::from_str(&json).map_err(|_| ApiError::BadRequest("invalid game session".into()))
 }
 
-/// Persist a game session, renewing its TTL.
+/// Caches a game session, renewing its TTL.
 ///
-/// Cache-only, and deliberately so. The durable `yostar_uid` / `yostar_token`
-/// pair inside the session is fixed at login and never mutates afterwards:
-/// `refresh_secret` rewrites the uid, token, secret and seqnum but not those
-/// two, so there is nothing here for the database to learn. Writing the
-/// durable pair is [`crate::app::services::auth`]'s job, once per login.
+/// Cache-only on purpose: the durable `yostar_uid` / `yostar_token` pair is fixed
+/// at login (`refresh_secret` never rewrites it), so the DB has nothing to learn.
+/// [`crate::app::services::auth`] writes the durable pair once per login.
 pub async fn save(state: &AppState, user_id: &str, session: &AuthSession) {
     if let Ok(json) = serde_json::to_string(session) {
         let () = state
@@ -62,16 +59,12 @@ async fn restore(state: &AppState, uid: &str, server: Server) -> Result<AuthSess
     })
 }
 
-/// Establish a live session: take the cached one or rebuild it from the durable
-/// store, re-mint a fresh secret from its durable token, persist it, and return
-/// it. Downstream calls then run against a valid secret with a reset sequence
-/// counter.
+/// Live session: cached or rebuilt from the durable store, with a freshly minted
+/// secret and a reset sequence counter, persisted.
 ///
-/// The cache is an optimisation here, not the source of truth. A miss, an
-/// eviction, a backend restart, or a cached value that no longer parses all
-/// land on the same path: rebuild from `user_game_credentials`, so a user
-/// only sees [`ApiError::GameLoginRequired`] when we genuinely hold nothing
-/// for them.
+/// The cache is an optimisation, not the source of truth. A miss, eviction,
+/// restart or unparseable entry all rebuild from `user_game_credentials`, so
+/// [`ApiError::GameLoginRequired`] means we genuinely hold nothing.
 pub async fn ensure_fresh(
     state: &AppState,
     user_id: &str,
@@ -87,12 +80,9 @@ pub async fn ensure_fresh(
     Ok(session)
 }
 
-/// Forget a user's game session: the cached copy and the durable credentials
-/// behind it.
-///
-/// The user-facing "disconnect". Afterwards the account is unreachable without
-/// a fresh email code, which is the point (self-serve revocation; account
-/// deletion was the only route before). Synced data is untouched.
+/// Forgets the cached session and the durable credentials behind it (the
+/// user-facing "disconnect"). A fresh email code is needed afterwards; synced data
+/// is untouched. Before this, account deletion was the only self-serve revocation.
 pub async fn disconnect(state: &AppState, uid: &str, user_id: Uuid) -> Result<bool, ApiError> {
     state.cache.invalidate(&CacheKey::GameSession { uid }).await;
     state

@@ -1,14 +1,10 @@
-//! A scoped planner run ("optimize this room only").
+//! Scoped planner run ("optimize this room only").
 //!
-//! The search plans the scoped rooms beside the frozen production rooms, but
-//! it still re-seats the rooms it has no freeze for (dormitories, the Control
-//! Center, power plants), and where a scoped room is not the base's
-//! bottleneck - a gold factory already covering the posts' demand - every
-//! crew meeting that demand ties in the objective, so it may hand back a crew
-//! slower than the draft (110% -> 104%, user report 2026-09-26). This pass
-//! settles the proposal the way the player reads it: every room outside the
-//! scope is exactly the draft, and a scoped room changes only when its own
-//! yield rises.
+//! The search still re-seats unfrozen rooms (dorms, Control Center, power), and
+//! where a scoped room isn't the bottleneck every crew covering demand ties, so it
+//! can return a slower crew than the draft (110% -> 104%, user report 2026-09-26).
+//! This pass keeps every room outside the scope as drafted and changes a scoped
+//! room only when its own yield rises.
 
 use std::collections::{HashMap, HashSet};
 
@@ -19,12 +15,10 @@ use super::buff_registry::BuffResolutionStrategy;
 use super::types::{BaseAssignment, OperatorBaseProfile, RoomAssignment, UserBuilding};
 use super::yield_model::room_yield;
 
-/// The scoped proposal as the player will see it once applied: the drafted
-/// building with the search's crews in the scoped rooms, scored through the
-/// live path, with any scoped room the search made worse kept as drafted.
-/// Reverting a room hands its drafted operators back, so a crew the search
-/// built from them elsewhere in the scope loses those seats rather than
-/// double-booking anyone.
+/// The scoped proposal as applied: the draft with the search's crews in the
+/// scoped rooms, scored through the live path, reverting any scoped room the
+/// search made worse. A reverted room takes its drafted operators back, so a
+/// scoped crew built from them loses those seats instead of double-booking.
 #[allow(clippy::too_many_arguments)]
 pub fn settle_scoped_proposal(
     operators: &[OperatorBaseProfile],
@@ -107,9 +101,8 @@ pub fn settle_scoped_proposal(
     }
 }
 
-/// A room reads worse than another when it earns less per day, or the same
-/// at a lower efficiency (rooms the yield model prices at zero - power,
-/// the Control Center - compare on efficiency alone).
+/// Worse = less per day, or same per day at lower efficiency (power and the
+/// Control Center price at zero, so they compare on efficiency alone).
 fn is_worse(room: &RoomAssignment, than: &RoomAssignment) -> bool {
     const EPS: f64 = 1e-9;
     let worth = |r: &RoomAssignment| {

@@ -16,23 +16,16 @@ use crate::database::queries::roguelike::get_roguelike_progress;
 use crate::database::queries::roster::get_roster;
 use crate::database::queries::roster::get_supports;
 
-/// Section weights for the overall grade. Relative importance, not
-/// percentages - a section's share of the grade is `weight / SECTION_WEIGHT_TOTAL`.
+/// Relative section weights; a section's share is `weight / SECTION_WEIGHT_TOTAL`.
 ///
-/// Rationale (share of the grade in parens):
-/// - Operators (34%): the core long-term investment and the largest section,
-///   but capped near a third of the grade so roster depth alone can't carry
-///   an account.
-/// - Stages (24%): combat progression is what the roster is *for* - story and
-///   event clears are the account's demonstrated output, so stages outweigh
-///   every supporting system, base included.
-/// - Base (14%): substantial but bounded infrastructure; every mature account
-///   converges on the same maxed base, so it differentiates accounts less
-///   than stages and must weigh under them.
-/// - Roguelike (12%): the deepest side mode, rewarded above the breadth
-///   sections.
-/// - Medals / Sandbox (8% each): breadth and completionism, kept light so
-///   chasing them stays optional.
+/// - Operators (34%): the core investment, capped near a third so roster depth
+///   alone can't carry an account.
+/// - Stages (24%): combat progression is what the roster is for, so stages
+///   outweigh every supporting system, base included.
+/// - Base (14%): every mature account converges on the same maxed base, so it
+///   differentiates less than stages.
+/// - Roguelike (12%): the deepest side mode, above the breadth sections.
+/// - Medals / Sandbox (8% each): completionism, kept light so it stays optional.
 pub const SECTION_WEIGHT_OPERATOR: f64 = 0.85;
 pub const SECTION_WEIGHT_BASE: f64 = 0.35;
 pub const SECTION_WEIGHT_ROGUELIKE: f64 = 0.3;
@@ -40,8 +33,7 @@ pub const SECTION_WEIGHT_MEDAL: f64 = 0.2;
 pub const SECTION_WEIGHT_STAGE: f64 = 0.6;
 pub const SECTION_WEIGHT_SANDBOX: f64 = 0.2;
 
-/// Sum of every section weight above. The frontend mirrors these shares in
-/// `Score/helpers.ts` (`SUBSCORES`) - keep the two in sync.
+/// Mirrored in the frontend's `Score/helpers.ts` (`SUBSCORES`); keep in sync.
 pub const SECTION_WEIGHT_TOTAL: f64 = SECTION_WEIGHT_OPERATOR
     + SECTION_WEIGHT_BASE
     + SECTION_WEIGHT_ROGUELIKE

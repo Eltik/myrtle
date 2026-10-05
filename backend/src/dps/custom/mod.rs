@@ -1,9 +1,8 @@
 //! Generated DPS + HPS operator implementations.
 //!
-//! The `generated*` modules are the transpiled per-operator function bodies.
-//! The `dispatch*` modules are the auto-generated `match` tables that route a
-//! `char_id` to the right body. All four files are produced by
-//! `cargo run --bin generate-dps` - this `mod.rs` is hand-written and stable.
+//! `generated*` holds the transpiled per-operator bodies, `dispatch*` the `match`
+//! tables routing a `char_id` to them. All four come from
+//! `cargo run --bin generate-dps`; this `mod.rs` is hand-written.
 
 mod dispatch;
 mod dispatch_hps;

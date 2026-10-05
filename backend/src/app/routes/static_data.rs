@@ -7,10 +7,8 @@ use crate::app::services::static_data::get_resource;
 use crate::app::{error::ApiError, state::AppState};
 use crate::core::hypergryph::constants::Server;
 
-/// Wrap a cached JSON body (with its precomputed `ETag`) in the shared game-data
-/// caching headers (`ETag` + `Cache-Control: public, max-age=300`) and honor
-/// `If-None-Match`. Reused by the slim per-record game-data endpoints
-/// (stage/enemy/chibi/skins/operator). The 304 branch never touches the body.
+/// Cached game-data body with `ETag` + `Cache-Control: public, max-age=300`.
+/// A matching `If-None-Match` gets a 304 without touching the body.
 pub(crate) fn json_response(cached: CachedJson, headers: &HeaderMap) -> Response {
     let CachedJson { body, etag } = cached;
     if let Some(inm) = headers

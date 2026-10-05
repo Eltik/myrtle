@@ -1,19 +1,12 @@
-//! Trading-post order economics: which LMD orders a post of a given level
-//! can draw, what each is worth and how long it takes, and how order-VALUE
-//! skills change the post's LMD per hour.
+//! Trading-post order economics. Order-value skills are stored as SHAPES
+//! (`OrderEffect`), never a guessed %, and priced here against the post's
+//! `OrderRarity` (gamedata `TradingData`). So Proviso's "+2 gold on orders below
+//! 4" is +100% at level 1, +83% at level 2, +55% at level 3, where 4-gold orders
+//! earn her nothing.
 //!
-//! The registry stores an order-value skill as its SHAPE (`OrderEffect`), not
-//! a guessed percentage, and the scorer resolves the room's whole set of
-//! shapes here against the post's `OrderRarity` (gamedata `TradingData`).
-//! That is what makes Proviso worth +100% in a level-1 post, +83% in a
-//! level-2 post and +55% in a level-3 post: her "+2 gold on orders below 4"
-//! fires on every order a low post can draw, but 4-gold orders - only a
-//! level-3 post draws them - earn her nothing.
-//!
-//! Order sizes, durations and per-rarity draw weights are game mechanics
-//! (Trading Post reference tables, cross-checked against the wiki), not
-//! per-operator values; LMD per gold bar is the same `GOLD_BAR_LMD` the yield
-//! model uses (gamedata `GoldItems` 3003 = 500).
+//! Order sizes, durations and draw weights: Trading Post reference tables,
+//! cross-checked against the wiki. LMD per bar = `GOLD_BAR_LMD` (`GoldItems`
+//! 3003 = 500).
 
 use crate::core::gamedata::types::building::BuildingDataFile;
 
@@ -27,7 +20,7 @@ struct OrderSize {
     minutes: f64,
 }
 
-/// The three LMD order sizes in rarity order (low / medium / high yield).
+/// Low / medium / high yield.
 const ORDER_SIZES: [OrderSize; 3] = [
     OrderSize {
         gold: 2,
@@ -47,28 +40,23 @@ const ORDER_SIZES: [OrderSize; 3] = [
 /// post draws only 2-gold orders, level-2 adds 3-gold, level-3 adds 4-gold.
 const MIX_BY_RARITY: [[f64; 3]; 3] = [[1.0, 0.0, 0.0], [0.6, 0.4, 0.0], [0.3, 0.5, 0.2]];
 
-/// The Tailoring family's mix at rarity 3, by the crew's summed tailoring
-/// STEPS: "increased slightly" (α tiers: Shamare, E0 Bibeak) is one step,
-/// "increased" (β: E2 Bibeak) two, and the steps of every tailor in the
-/// room add up (the texts carry no strongest-only clause). Index = steps - 1,
-/// capped at the table's end. Below rarity 3 no high-yield order exists to
-/// shift toward, and the game publishes no shifted mix there - never guess.
+/// Tailoring mix at rarity 3, by the room's summed STEPS: "increased slightly"
+/// (α: Shamare, E0 Bibeak) = 1, "increased" (β: E2 Bibeak) = 2; tailors stack
+/// (no strongest-only clause). Index = steps - 1, capped. Below rarity 3 there's
+/// no high-yield order to shift toward and no published mix: never guess.
 ///
-/// Measured, not guessed: the community sheet's Shamare-squad table gives
-/// eight equivalent-productivity figures at a level-3 post (Shamare + other
-/// 91.6; E0/E2 Tequila + other 108.07/124.39; with E0 Bibeak 110.08/128.12;
-/// E2 Bibeak + other 92.8, with E0/E2 Tequila 115.52/138.21). One mix per
-/// step count reproduces all eight within 0.05 (least squares on a 0.01
-/// grid, 2026-09-20); the earlier guesses (0.15/0.30/0.55, 0.05/0.10/0.85)
-/// read the Tequila rows 0.6-1.7 low and could not stack two α tiers at all.
+/// Fitted to the community sheet's Shamare-squad table, eight level-3 figures
+/// (Shamare + other 91.6; E0/E2 Tequila + other 108.07/124.39; with E0 Bibeak
+/// 110.08/128.12; E2 Bibeak + other 92.8, with E0/E2 Tequila 115.52/138.21): all
+/// eight within 0.05 (least squares, 0.01 grid, 2026-09-20). Earlier guesses
+/// (0.15/0.30/0.55, 0.05/0.10/0.85) read Tequila 0.6-1.7 low and couldn't stack
+/// two α tiers.
 const TAILORING_MIX_BY_STEPS: [[f64; 3]; 3] =
     [[0.18, 0.25, 0.57], [0.14, 0.21, 0.65], [0.05, 0.06, 0.89]];
 
-/// Highest supported rarity (the size table has three entries).
 const MAX_RARITY: usize = 3;
 
-/// The order rarity a trading post of `level` draws from, from gamedata.
-/// Clamped to the supported table; a level past the data uses the top tier.
+/// Order rarity for a post of `level`. A level past the data uses the top tier.
 pub fn rarity_for_level(building_data: &BuildingDataFile, level: i32) -> usize {
     let phases = &building_data.trading_data.phases;
     #[allow(clippy::cast_sign_loss)]
@@ -78,9 +66,6 @@ pub fn rarity_for_level(building_data: &BuildingDataFile, level: i32) -> usize {
     })
 }
 
-/// The draw mix for `rarity` once the room's mix-shifting effects apply:
-/// the Tailoring tiers present add their steps (see
-/// `TAILORING_MIX_BY_STEPS`).
 fn mix_for(effects: &[OrderEffect], rarity: usize) -> [f64; 3] {
     let base = MIX_BY_RARITY[rarity.clamp(1, MAX_RARITY) - 1];
     if rarity < MAX_RARITY {
@@ -101,10 +86,8 @@ fn mix_for(effects: &[OrderEffect], rarity: usize) -> [f64; 3] {
     }
 }
 
-/// LMD an order of `size` pays once the room's per-order effects apply.
-/// Same-kind effects take the strongest (two Provisos cannot coexist; the
-/// rule keeps the arithmetic honest anyway); different kinds compose, since
-/// they target disjoint orders (below-4 vs above-3).
+/// Same-kind effects take the strongest; different kinds compose, since they hit
+/// disjoint orders (below-4 vs above-3).
 fn order_lmd(effects: &[OrderEffect], size: OrderSize) -> f64 {
     let mut gold = f64::from(size.gold);
     let mut flat = 0.0;
@@ -129,10 +112,8 @@ fn order_lmd(effects: &[OrderEffect], size: OrderSize) -> f64 {
     gold * GOLD_BAR_LMD + flat
 }
 
-/// Pure Gold an order of `size` consumes once the room's per-order effects
-/// apply. Proviso's defaulted bonus is gold DRAWN FROM STOCK (base expert,
-/// 2026-09-08: "it just is more gold consumed per order"); Tequila's flat
-/// LMD rider consumes none.
+/// Proviso's bonus is gold DRAWN FROM STOCK (base expert, 2026-09-08: "it just
+/// is more gold consumed per order"); Tequila's flat LMD rider consumes none.
 fn order_gold(effects: &[OrderEffect], size: OrderSize) -> f64 {
     let defaulted_bonus = effects
         .iter()
@@ -163,9 +144,7 @@ fn per_minute(mix: [f64; 3], per_order: impl Fn(OrderSize) -> f64) -> f64 {
     if minutes <= 0.0 { 0.0 } else { total / minutes }
 }
 
-/// The order-VALUE percentage a room's set of order effects is worth at
-/// `rarity`: LMD per hour with the effects over LMD per hour of a bare post
-/// of the same level, minus one. Zero for an empty set.
+/// Order-VALUE %: LMD/hr with `effects` over a bare post's at `rarity`, minus one.
 pub fn value_pct(effects: &[OrderEffect], rarity: usize) -> f64 {
     if effects.is_empty() {
         return 0.0;
@@ -178,12 +157,9 @@ pub fn value_pct(effects: &[OrderEffect], rarity: usize) -> f64 {
     (boosted / base - 1.0) * 100.0
 }
 
-/// The gold-THROUGHPUT percentage the same set of effects is worth at
-/// `rarity`: Pure Gold consumed per hour with the effects over a bare post's,
-/// minus one. Proviso's bonus gold is throughput (more bars per order, drawn
-/// from stock); Tequila's LMD rider is not (same bars, more LMD per bar).
-/// The yield model couples the two: bars moved are bounded by the gold the
-/// factories make, LMD per bar is not.
+/// Gold-THROUGHPUT %: bars consumed/hr with `effects` over a bare post's, minus
+/// one. Proviso's bonus is throughput; Tequila's rider is not (same bars, more LMD
+/// each). Matters because the yield model caps bars moved at factory gold output.
 pub fn gold_pct(effects: &[OrderEffect], rarity: usize) -> f64 {
     if effects.is_empty() {
         return 0.0;
@@ -196,12 +172,10 @@ pub fn gold_pct(effects: &[OrderEffect], rarity: usize) -> f64 {
     (boosted / base - 1.0) * 100.0
 }
 
-/// An OPTIMISTIC bound on one shape's worth at `rarity`, for candidate
-/// ranking only: its solo value, or its marginal inside a room whose mix is
-/// already shifted by a strong Tailoring companion - whichever is larger.
-/// Tequila's "+500 above 3 gold" is worth 7 points alone at level 3 but 24
-/// next to a strong Tailoring, and the ranker must not cut her before the
-/// scorer can try that pairing. Never a final score (the ledger is).
+/// OPTIMISTIC bound for candidate ranking only, never a final score: max of solo
+/// value and the marginal beside a strong Tailoring. Tequila's "+500 above 3 gold"
+/// is 7 points alone at level 3 but 24 beside strong Tailoring; the ranker must
+/// not cut her before the scorer tries the pairing.
 pub fn optimistic_value_pct(effect: &OrderEffect, rarity: usize) -> f64 {
     let solo = value_pct(std::slice::from_ref(effect), rarity);
     let strong = OrderEffect::HigherYieldChance { strong: true };
@@ -210,11 +184,9 @@ pub fn optimistic_value_pct(effect: &OrderEffect, rarity: usize) -> f64 {
     solo.max(with - without)
 }
 
-/// [`optimistic_value_pct`] against the shapes the ROSTER actually fields:
-/// the larger of the solo worth and the best marginal beside any one
-/// companion shape. Bibeak's Tailoring is a sliver alone but the piece that
-/// makes Tequila's rider pay (+17 beside him), and the ranker must not cut
-/// her before the scorer can try the trio.
+/// [`optimistic_value_pct`] plus the best marginal beside any shape the roster
+/// fields. Bibeak's Tailoring is a sliver alone but makes Tequila's rider pay
+/// (+17 beside him); the ranker must not cut her before the scorer tries the trio.
 pub fn optimistic_value_pct_among(
     effect: &OrderEffect,
     rarity: usize,
@@ -229,9 +201,8 @@ pub fn optimistic_value_pct_among(
     best
 }
 
-/// Pure Gold bars a bare post of `rarity` sells per day at 100%: the mix's
-/// gold per order over its minutes per order (a level-3 post: 2.9 gold per
-/// 203.4 min = 20.53 bars, a level-1 post exactly 20).
+/// Bars a bare post sells per day at 100% (level 3: 2.9 gold per 203.4 min =
+/// 20.53; level 1: exactly 20).
 pub fn bars_per_day(rarity: usize) -> f64 {
     let mix = MIX_BY_RARITY[rarity.clamp(1, MAX_RARITY) - 1];
     let (gold, minutes) = ORDER_SIZES
@@ -247,9 +218,8 @@ pub fn bars_per_day(rarity: usize) -> f64 {
     }
 }
 
-/// Average Pure Gold per order a bare post of `rarity` draws - the fill
-/// model's orders-per-day basis (a level-1 post fills its buffer with more,
-/// smaller orders than a level-3 post).
+/// The fill model's orders-per-day basis (a level-1 post fills its buffer with
+/// more, smaller orders than a level-3 one).
 pub fn avg_gold_per_order(rarity: usize) -> f64 {
     let mix = MIX_BY_RARITY[rarity.clamp(1, MAX_RARITY) - 1];
     ORDER_SIZES
@@ -320,16 +290,14 @@ mod tests {
 
     #[test]
     fn proviso_moves_gold_and_tequila_moves_lmd() {
-        // Proviso: every extra LMD is an extra bar from stock - gold and LMD
-        // throughput rise together.
+        // Proviso: every extra LMD is an extra bar from stock.
         assert!((gold_pct(&[PROVISO], 2) - value_pct(&[PROVISO], 2)).abs() < 1e-9);
         assert!((gold_pct(&[PROVISO], 3) - value_pct(&[PROVISO], 3)).abs() < 1e-9);
-        // Tequila: the same bars pay more - no extra gold consumed at all.
+        // Tequila: same bars pay more, no extra gold.
         assert!(gold_pct(&[TEQUILA], 3).abs() < 1e-9);
         assert!(value_pct(&[TEQUILA], 3) > 0.0);
-        // Beside strong Tailoring the mix shifts (bigger, slower orders): gold
-        // throughput barely moves while Tequila's LMD rider fires on most
-        // orders (65% at two steps, measured).
+        // Strong Tailoring: gold throughput barely moves, Tequila's rider fires on
+        // most orders (65% at two steps, measured).
         let strong = OrderEffect::HigherYieldChance { strong: true };
         let g = gold_pct(&[TEQUILA, strong.clone()], 3);
         let v = value_pct(&[TEQUILA, strong], 3);

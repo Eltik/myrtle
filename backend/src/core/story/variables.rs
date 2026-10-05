@@ -14,7 +14,6 @@ pub struct StoryVariables {
 }
 
 impl StoryVariables {
-    /// The file's path under a server's assets root.
     #[must_use]
     pub fn path(server_assets_dir: &Path) -> std::path::PathBuf {
         server_assets_dir.join("gamedata/story/story_variables.json.json")

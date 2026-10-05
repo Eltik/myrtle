@@ -1,19 +1,18 @@
 //! Annihilation (campaign) rotation schedule from `campaign_table.json`.
 //!
-//! Rotating Annihilation maps (`camp_r_*`) are only playable during their
-//! scheduled window - only one is active at a time, alongside the three
-//! permanent maps (`camp_01/02/03`, which never appear in this table and are
-//! always playable). `CampaignRotateStageOpenTimes` gives each rotating map a
-//! definite open/close window, which we use to tell "you can max this now"
-//! apart from "this rotated out and is currently locked."
+//! Rotating maps (`camp_r_*`) are playable only in their window, one at a
+//! time, beside the three permanent maps (`camp_01/02/03`, absent from this
+//! table, always playable). `CampaignRotateStageOpenTimes` gives each rotating
+//! map its open/close window, which separates "you can max this now" from
+//! "rotated out, currently locked".
 
 use serde::Deserialize;
 use std::collections::HashMap;
 
 use super::serde_helpers::deserialize_fb_map_or_default;
 
-/// Root of `campaign_table.json` - the rotation schedule plus per-map kill
-/// ladders (for the full-clear kill count).
+/// `campaign_table.json`: the rotation schedule and per-map kill ladders (for
+/// the full-clear kill count).
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct CampaignTableFile {
@@ -57,9 +56,9 @@ pub struct RotationWindow {
 /// Where a rotating Annihilation map sits relative to a reference time.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RotationStatus {
-    /// Window contains `now` - currently playable.
+    /// Window contains `now`: playable.
     Active,
-    /// Window already closed - rotated out, not currently playable.
+    /// Window closed: rotated out.
     Past,
     /// Window hasn't opened yet.
     Future,
@@ -100,9 +99,8 @@ impl CampaignRotations {
         Self { windows, kill_max }
     }
 
-    /// Kill count for a full clear of an Annihilation map - the highest
-    /// `BreakLadders` milestone (400 for every map to date). `None` for
-    /// stages not in the campaign table.
+    /// Full-clear kill count: the highest `BreakLadders` milestone (400 for
+    /// every map to date). `None` for stages not in the campaign table.
     pub fn kill_max(&self, stage_id: &str) -> Option<i32> {
         self.kill_max.get(stage_id).copied()
     }

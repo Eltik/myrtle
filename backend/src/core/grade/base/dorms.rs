@@ -1,14 +1,9 @@
-//! Dormitory modeling: which dorm an operator rests in, at what rate, and who
-//! staffs the dorms to make everyone else's rest faster.
-//!
-//! Dorms produce nothing, so every earlier pass treated them as one averaged
-//! recovery pool. That erases the two decisions the game actually rewards:
-//! resting the neediest operators in the HIGHEST-level dorm (a 2/5/2 base's
-//! dorms are deliberately under-leveled to afford the fifth factory, so its
-//! one good dorm matters), and seating dorm-skill operators - whole-dorm
-//! auras ("+0.15/hr to all Operators in that Dormitory") and single-target
-//! healers ("+0.55/hr to another Operator whose Morale is not full") - as
-//! permanent dorm staff.
+//! Dorms modeled per room, not as one averaged recovery pool. The pool erased the
+//! two decisions the game rewards: neediest resters into the HIGHEST-level dorm (a
+//! 2/5/2 base under-levels dorms to afford the fifth factory, so its one good dorm
+//! matters), and dorm-skill holders as permanent staff: whole-dorm auras ("+0.15/hr
+//! to all Operators in that Dormitory") and single-target healers ("+0.55/hr to
+//! another Operator whose Morale is not full").
 
 use std::collections::{HashMap, HashSet};
 
@@ -18,7 +13,6 @@ use super::buff_registry::BuffResolutionStrategy;
 use super::types::{OperatorBaseProfile, UserBuilding};
 use super::util::max_stationed_at_level;
 
-/// One dormitory of the base, with its game-true recovery rate.
 #[derive(Debug, Clone)]
 pub struct Dorm {
     pub slot_id: String,
@@ -30,9 +24,8 @@ pub struct Dorm {
     pub recovery_per_hour: f64,
 }
 
-/// The base's dormitories, BEST FIRST (highest recovery rate, then level, then
-/// slot id for determinism). Fill order everywhere: the neediest rester gets
-/// the best dorm.
+/// Dorms BEST FIRST (recovery rate, then level, then slot id). The neediest
+/// rester gets the best dorm.
 pub fn dorm_list(building: &UserBuilding, building_data: &BuildingDataFile) -> Vec<Dorm> {
     let phases = &building_data.dorm_data.phases;
     let mut dorms: Vec<Dorm> = building
@@ -45,9 +38,7 @@ pub fn dorm_list(building: &UserBuilding, building_data: &BuildingDataFile) -> V
                 .get(idx)
                 .map_or(0.0, |p| f64::from(p.manpower_recover) / 100.0);
             // Ambience: `comfort / ComfortManpowerRecoverFactor` manpower/sec
-            // (= comfort/2500 morale/hr at the game's factor of 25). The synced
-            // furniture sets `comfort`; a drafted room without it just gets the
-            // bare rate.
+            // (comfort/2500 morale/hr at factor 25). Drafted rooms have no comfort.
             let factor = building_data.comfort_manpower_recover_factor;
             if factor > 0.0 && r.comfort > 0 {
                 rate += f64::from(r.comfort) / (factor * 100.0);
@@ -73,10 +64,8 @@ pub fn dorm_list(building: &UserBuilding, building_data: &BuildingDataFile) -> V
     dorms
 }
 
-/// An operator's WHOLE-DORM recovery aura ("+X/hr to all Operators in that
-/// Dormitory"), 0 when they have none. The game's non-stacking rule ("only the
-/// strongest effect of this type") means one aura holder per dorm is the whole
-/// benefit - value ranked for exactly that seat.
+/// WHOLE-DORM aura ("+X/hr to all Operators in that Dormitory"), 0 if none.
+/// Non-stacking ("only the strongest effect of this type"): one holder per dorm.
 pub fn dorm_aura_value(
     op: &OperatorBaseProfile,
     registry: &HashMap<String, BuffResolutionStrategy>,
@@ -85,9 +74,8 @@ pub fn dorm_aura_value(
     dorm_skill_value(op, registry, building_data, false)
 }
 
-/// An operator's SINGLE-TARGET dorm heal ("+X/hr to another Operator in that
-/// Dormitory whose Morale is not full"), 0 when they have none. Also
-/// non-stacking within its own type.
+/// SINGLE-TARGET dorm heal ("+X/hr to another Operator in that Dormitory whose
+/// Morale is not full"), 0 if none. Also non-stacking within its type.
 pub fn dorm_single_value(
     op: &OperatorBaseProfile,
     registry: &HashMap<String, BuffResolutionStrategy>,
@@ -122,14 +110,13 @@ fn dorm_skill_value(
         .fold(0.0, f64::max)
 }
 
-/// A morale-swap manager's own recovery rate, parsed from her dormitory kit.
+/// A morale-swap manager's own recovery rate.
 ///
-/// Fiammetta's "Self-Discipline": "self Morale recovered +2 per hour, and
-/// cannot gain Morale recovery from any other source" - the exclusivity makes
-/// this her WHOLE rate, regardless of dorm level, auras or ambience (which is
-/// also why parking her in the worst dorm costs nothing). Her "Communal
-/// Suffering" swap fires only at FULL morale, so one swap takes
-/// `MORALE_MAX / rate` hours to recharge - 12h at +2/hr, exactly one login.
+/// Fiammetta's "Self-Discipline": "self Morale recovered +2 per hour, and cannot
+/// gain Morale recovery from any other source", so this is her WHOLE rate whatever
+/// the dorm level, auras or ambience (the worst dorm costs her nothing). "Communal
+/// Suffering" swaps only at FULL morale: `MORALE_MAX / rate` hours to recharge,
+/// 12h at +2/hr, one login.
 pub fn manager_swap_rate(
     manager: &OperatorBaseProfile,
     registry: &HashMap<String, BuffResolutionStrategy>,
@@ -153,41 +140,33 @@ pub fn manager_swap_rate(
         .fold(0.0, f64::max)
 }
 
-/// True when the manager can hold `drain` at full morale around the clock: the
-/// swap hands over a full 24-point bar once per `MORALE_MAX / swap_rate` hours
-/// (her recharge), so the sustained operator must not spend the bar faster
-/// than she refills hers - `drain <= swap_rate`. Fiammetta (+2/hr) sustains
-/// anything up to 2.0/hr; an Enforcer-class 3.0/hr drainer outruns her.
+/// Can the manager hold `drain` at full morale 24/7? She hands over a full
+/// 24-point bar per `MORALE_MAX / swap_rate` hours, so `drain <= swap_rate`.
+/// Fiammetta (+2/hr) sustains up to 2.0/hr; a 3.0/hr Enforcer-class drainer outruns her.
 pub fn manager_can_sustain(swap_rate: f64, drain_per_hour: f64) -> bool {
     swap_rate > 0.0 && drain_per_hour <= swap_rate + 1e-9
 }
 
-/// True when the building can actually HOST a morale-swap manager: her swap
-/// only works while she STAYS parked in a dormitory ("When this Operator is
-/// assigned to a Dormitory, ... swaps Morale with the previous Operator
-/// assigned to that Dormitory"), and the swap needs a free seat beside her
-/// for the drained operator's visit. No dormitory with two seats, no 24/7
-/// sustain - owning Fiammetta is not enough.
+/// Can the building HOST a morale-swap manager? She must STAY in a dorm ("When
+/// this Operator is assigned to a Dormitory, ... swaps Morale with the previous
+/// Operator assigned to that Dormitory") with a free seat beside her for the
+/// drained operator. No two-seat dorm, no 24/7 sustain.
 pub fn building_hosts_manager(building: &UserBuilding, building_data: &BuildingDataFile) -> bool {
     dorm_list(building, building_data)
         .iter()
         .any(|d| d.capacity >= 2)
 }
 
-/// The `(manager, "DORMITORY")` pin a plan should reserve whenever the roster
-/// owns a morale-swap manager (Fiammetta) and the building can host her - she
-/// works FROM a dormitory seat, whether she's holding a morale-conditional
-/// generator (Ling) at the right side of its bar or sustaining a production
-/// operator 24/7. Her own kit has no other use, so reserving her costs
-/// nothing. `None` when she's missing or no dorm can host her; the "you'd
-/// want one but don't own one" flag is the caller's concern.
+/// `(manager, "DORMITORY")` pin when the roster owns a morale-swap manager
+/// (Fiammetta) and a dorm can host her. She works from a dorm seat, either holding
+/// a morale-conditional generator (Ling) on the right side of its bar or
+/// sustaining a producer 24/7; her kit has no other use, so the pin is free.
+/// The "you'd want one but don't own one" flag is the caller's job.
 pub fn morale_manager_pin(
     profiles: &[OperatorBaseProfile],
     building: &UserBuilding,
     registry_building_data: &BuildingDataFile,
 ) -> Option<(String, String)> {
-    // She has to STAY in a dormitory for the swap to fire - a base with no
-    // dorm (or no seat beside her) cannot use a manager at all.
     if !building_hosts_manager(building, registry_building_data) {
         return None;
     }
@@ -195,18 +174,14 @@ pub fn morale_manager_pin(
         .map(|id| (id, "DORMITORY".to_string()))
 }
 
-/// Permanent dorm staff for a rotation: dorm-skill holders seated 24/7 in
-/// specific dorms, chosen from operators the plan left unseated.
+/// Permanent 24/7 dorm staff, picked from operators the plan left unseated.
 ///
-/// Policy (the same one players run):
-/// - one whole-dorm AURA holder per dorm, strongest first into the best dorm -
-///   the non-stacking rule makes a second aura in the same dorm worthless;
-/// - then single-target healers wherever seats remain, strongest first into
-///   the best dorm with room;
-/// - never more staff than `headroom` - every staffed seat is one fewer
-///   rester the dorms can hold, so callers pass how many seats the resting
-///   rhythm can spare (total capacity minus peak resting demand). Boosting
-///   recovery is worthless if it evicts the people who need to recover.
+/// Same policy players run:
+/// - one AURA holder per dorm, strongest into the best dorm (a second aura in
+///   the same dorm is worthless, non-stacking);
+/// - then single-target healers, strongest into the best dorm with room;
+/// - at most `headroom` staff (capacity minus peak resting demand): each staff
+///   seat evicts a rester, and faster recovery is worthless if it does that.
 pub fn plan_dorm_staffing(
     dorms: &[Dorm],
     leftovers: &[&OperatorBaseProfile],
@@ -224,7 +199,6 @@ pub fn plan_dorm_staffing(
     let mut budget = headroom;
     let mut used: HashSet<&str> = HashSet::new();
 
-    // Whole-dorm auras: one per dorm, best aura into the best dorm.
     let mut aura_ranked: Vec<(&&OperatorBaseProfile, f64)> = leftovers
         .iter()
         .map(|op| (op, dorm_aura_value(op, registry, building_data)))
@@ -247,7 +221,6 @@ pub fn plan_dorm_staffing(
         budget -= 1;
     }
 
-    // Single-target healers: fill remaining budgeted seats, best dorm first.
     let mut single_ranked: Vec<(&&OperatorBaseProfile, f64)> = leftovers
         .iter()
         .filter(|op| !used.contains(op.char_id.as_str()))
@@ -257,7 +230,7 @@ pub fn plan_dorm_staffing(
     single_ranked.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
     let mut single_iter = single_ranked.into_iter();
     'outer: for (i, dorm) in dorms.iter().enumerate() {
-        // One healer per dorm: their skill is also "only the strongest".
+        // One healer per dorm: also "only the strongest".
         if staffed[i].1.len() >= dorm.capacity {
             continue;
         }

@@ -1,6 +1,6 @@
 use crate::app::error::ApiError;
 
-// Ceiling is the `tiers.name varchar(40)` column (v001 baseline); raising past 40 needs a migration.
+// `tiers.name varchar(40)` (v001 baseline); raising past 40 needs a migration.
 pub const TIER_NAME_MAX: usize = 40;
 pub const TIER_DESCRIPTION_MAX: usize = 1000;
 pub const LIST_NAME_MAX: usize = 80;
@@ -36,7 +36,6 @@ pub fn validate_opt_length(field: &str, value: Option<&str>, max: usize) -> Resu
     }
 }
 
-/// Whether a movement/standing interval is one of the supported time windows.
 pub fn is_valid_interval(interval: &str) -> bool {
     matches!(interval, "1 day" | "7 days" | "30 days")
 }

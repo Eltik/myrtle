@@ -35,9 +35,8 @@ fn make_test_key(operator_name: &str, skill: i32, module: i32) -> String {
 const TOLERANCE_PERCENT: f64 = 0.15;
 const TOLERANCE_ABSOLUTE: f64 = 2.0;
 
-/// Compare Rust HPS (f64) against Python's truncated int. Python emits
-/// `int(value)` which truncates toward zero, so allow a 1-unit floor offset
-/// plus the general tolerance.
+/// Python emits `int(value)`, truncating toward zero: allow a 1-unit floor offset
+/// on top of the tolerance.
 fn compare_hps(rust: f64, python: i64) -> bool {
     let py_f = python as f64;
     let diff = (rust - py_f).abs();

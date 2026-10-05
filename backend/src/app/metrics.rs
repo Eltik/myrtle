@@ -28,11 +28,8 @@ pub static METRICS: LazyLock<Metrics> = LazyLock::new(Metrics::default);
 const BUCKET_BOUNDS: [f64; 9] = [0.005, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 5.0, 30.0];
 const BUCKET_COUNT: usize = BUCKET_BOUNDS.len() + 1; // + "+Inf"
 
-/// Ceiling on distinct label values held per map.
-///
-/// Route labels are bounded by the router, but callers may supply other
-/// label values. Past this ceiling a new label is dropped, so no caller
-/// can grow these maps without limit.
+/// Ceiling on distinct label values per map. Routes are bounded by the router,
+/// other labels are caller-supplied; past this a new label is dropped.
 const MAX_SERIES: usize = 512;
 
 #[derive(Default)]
@@ -48,7 +45,7 @@ pub struct Metrics {
 
 #[derive(Default)]
 struct RouteStats {
-    /// Indexed by status class - 1xx..5xx at 0..4.
+    /// Indexed by status class: 1xx..5xx at 0..4.
     by_class: [AtomicU64; 5],
     buckets: [AtomicU64; BUCKET_COUNT],
     sum_micros: AtomicU64,

@@ -404,7 +404,7 @@ pub struct ItemTableFile {
     #[serde(deserialize_with = "deserialize_fb_map", default)]
     pub exp_items: HashMap<String, ExpItem>,
     #[serde(default)]
-    pub potential_items: Vec<serde_json::Value>, // Complex nested structure with integer keys
+    pub potential_items: Vec<serde_json::Value>, // Nested, integer keys
     #[serde(deserialize_with = "deserialize_fb_map", default)]
     pub ap_supply_out_of_date_dict: HashMap<String, ApSupply>,
     #[serde(deserialize_with = "deserialize_fb_map", default)]

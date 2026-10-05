@@ -1,12 +1,6 @@
-//! `GET /story/index`, `GET /story/{story_id}`,
-//! `GET /story/group/{group_id}/illustrations`,
-//! `GET /story/group/{group_id}/archive`, `GET /story/community`,
-//! `GET /story/sprites`, `GET /story/sprites/{base}` and
-//! `GET /story/sprites/{base}/thumb/{variant}`: the Archives library, one
-//! parsed script, one group's art, one group's archive, what the community
-//! has read, and the character gallery with one folder's expression sheet and
-//! one expression's thumbnail. See `docs/story-reader.md` for the wire
-//! contract.
+//! Story reader routes: the Archives library, parsed scripts, group art and
+//! archive, community read counts, and the sprite gallery. Wire contract in
+//! `docs/story-reader.md`.
 
 use axum::{
     Json,

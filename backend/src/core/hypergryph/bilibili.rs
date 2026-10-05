@@ -1,23 +1,18 @@
-//! Login via the `BiliGame` publisher SDK, used by the CN Bilibili client
-//! (the CN official client goes through `passport.rs`).
+//! Login via the `BiliGame` publisher SDK (CN Bilibili client; the CN official
+//! client uses `passport.rs`).
 //!
 //! Not `passport.bilibili.com` OAuth: a direct login against a `BiliGame`
-//! merchant endpoint scoped to Arknights's merchant/game/server ids. The
-//! password path (`issue/cipher/v3` + `login/v3`, RSA-encrypted password)
-//! follows the protocol documented by thesadru/arkprts (GPL-3.0), confirmed
-//! against a real biligame response. Independent reimplementation, not a copy
-//! of arkprts's source.
+//! merchant endpoint scoped to Arknights's merchant/game/server ids. The password
+//! path (`issue/cipher/v3` + `login/v3`, RSA-encrypted password) follows the
+//! protocol documented by thesadru/arkprts (GPL-3.0), confirmed against a real
+//! response. Independent reimplementation, not a copy of arkprts.
 //!
 //! [`send_sms_code`] and [`login_sms`] are a GUESS: arkprts has no SMS path and
-//! neither is confirmed against a real response. Probed 2026-09-15,
-//! `issue/sms_code/v3` answers 404, so the site's SMS login doesn't work until
-//! the real endpoint turns up. The Bilibili client does offer SMS login, but no
-//! endpoint for it has surfaced. The guess mirrors the password endpoints: same
-//! ids, same signing, `issue/sms_code/v3` beside `issue/cipher/v3`,
-//! `login/sms/v3` beside `login/v3`, and a plaintext `sms_code` in place of the
-//! RSA `pwd` (a short-lived code has no obvious need for RSA). A 404 or an odd
-//! shape means a wrong path or field name, not bad code: read the actual error
-//! and fix that assumption.
+//! neither is confirmed. Probed 2026-09-15, `issue/sms_code/v3` answers 404, so
+//! SMS login doesn't work until the real endpoint turns up. The guess mirrors the
+//! password endpoints (same ids and signing, `issue/sms_code/v3`, `login/sms/v3`,
+//! plaintext `sms_code` in place of the RSA `pwd`). A 404 or odd shape means a
+//! wrong path or field name: read the actual error and fix that assumption.
 
 use std::time::Duration;
 
@@ -54,7 +49,6 @@ fn signed_form(mut pairs: Vec<(&str, String)>) -> Vec<(&str, String)> {
     pairs
 }
 
-/// application/x-www-form-urlencoded encoding of `pairs`, in order.
 fn encode_form(pairs: &[(&str, String)]) -> String {
     pairs
         .iter()
@@ -105,10 +99,9 @@ async fn load_cipher(client: &Client) -> Result<CipherResponse, FetchError> {
     })
 }
 
-/// Random device id in the odd nine-segment shape arkprts's client generates
-/// (longer than a UUID's five segments). Purely client-side; nothing in the
-/// research gathered suggests the server validates its shape, only that it be
-/// present and reasonably unique per login attempt.
+/// Device id in arkprts's nine-segment shape (longer than a UUID). Client-side
+/// only; nothing suggests the server checks the shape, just presence and
+/// per-attempt uniqueness.
 fn random_bd_id() -> String {
     const SEGMENT_LENGTHS: [usize; 9] = [8, 4, 4, 4, 12, 8, 4, 4, 4];
     let mut rng = rand::rng();
@@ -124,11 +117,9 @@ fn random_bd_id() -> String {
 }
 
 fn sign_password(password: &str, cipher_key: &str, hash: &str) -> Result<String, FetchError> {
-    // biligame returns the cipher key as a standard OpenSSL `rsa -pubout` PEM
-    // (SubjectPublicKeyInfo, "-----BEGIN PUBLIC KEY-----"), not a raw PKCS1
-    // "-----BEGIN RSA PUBLIC KEY-----" block, so this needs pkcs8 decoding, not
-    // pkcs1 (confirmed against a real cipher_key response: pkcs1 parsing
-    // rejected it with "expecting \"RSA PUBLIC KEY\"").
+    // The cipher key is an OpenSSL `rsa -pubout` PEM (SubjectPublicKeyInfo,
+    // "BEGIN PUBLIC KEY"), not PKCS1 "BEGIN RSA PUBLIC KEY", so pkcs8 decoding.
+    // Confirmed on a real response: pkcs1 rejected it with "expecting \"RSA PUBLIC KEY\"".
     let public_key = RsaPublicKey::from_public_key_pem(cipher_key)
         .map_err(|e| FetchError::ParseError(format!("bilibili: invalid cipher key: {e}")))?;
 
@@ -146,8 +137,8 @@ fn sign_password(password: &str, cipher_key: &str, hash: &str) -> Result<String,
 
 use rsa::RsaPublicKey;
 
-/// The SDK's refusal shape: `{"code": 500002, "message": "PWD_INVALID", ...}`
-/// on a wrong password or unknown account (it does not distinguish the two).
+/// `{"code": 500002, "message": "PWD_INVALID", ...}` for a wrong password or an
+/// unknown account (indistinguishable).
 #[derive(Deserialize)]
 struct BilibiliError {
     #[serde(default)]
@@ -179,11 +170,9 @@ fn string_or_integer<'de, D: serde::Deserializer<'de>>(d: D) -> Result<String, D
     })
 }
 
-/// Logs into the `BiliGame` publisher SDK, yielding a channel `uid` +
-/// `access_key` pair. Feed these into
+/// Yields a channel `uid` + `access_key` for
 /// [`crate::core::hypergryph::session::login_bilibili`]'s u8 exchange with
-/// `channel_id = "2"`, the same shared pipeline Yostar's `uid`/`token` go
-/// through.
+/// `channel_id = "2"`, the same pipeline Yostar's `uid`/`token` use.
 pub async fn login(
     client: &Client,
     username: &str,
@@ -253,9 +242,8 @@ pub async fn login(
     Ok(data)
 }
 
-/// Requests an SMS code for `phone` on the `BiliGame` channel, ahead of
-/// [`login_sms`]. UNVERIFIED: see module docs, the endpoint path itself is a
-/// guess.
+/// SMS code for `phone`, ahead of [`login_sms`]. UNVERIFIED: the path is a guess
+/// (see module docs).
 pub async fn send_sms_code(client: &Client, phone: &str) -> Result<(), FetchError> {
     let body = signed_form(vec![
         ("merchant_id", MERCHANT_ID.to_owned()),
@@ -289,9 +277,8 @@ pub async fn send_sms_code(client: &Client, phone: &str) -> Result<(), FetchErro
     Ok(())
 }
 
-/// Logs into the `BiliGame` publisher SDK with a phone number and the SMS code
-/// requested via [`send_sms_code`], yielding the same `{uid, access_key}`
-/// shape [`login`] does. UNVERIFIED: see module docs.
+/// Phone + SMS code login, same `{uid, access_key}` shape as [`login`].
+/// UNVERIFIED: see module docs.
 pub async fn login_sms(
     client: &Client,
     phone: &str,

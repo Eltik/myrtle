@@ -11,9 +11,8 @@ use super::pools::ROBOTS_IN_POWER;
 use super::util::buff_family;
 use crate::core::gamedata::types::consts::GameDataConst;
 
-/// Build a lowercased operator-name -> `char_id` lookup, used to resolve
-/// named-teammate conditional buffs (the buff text references operators by
-/// display name, e.g. "...the same Trading Post as Lappland").
+/// Lowercased display name -> `char_id`, for buff text naming teammates
+/// ("...the same Trading Post as Lappland").
 pub fn build_name_to_char(operators: &HashMap<String, Operator>) -> HashMap<String, String> {
     operators
         .iter()
@@ -21,8 +20,7 @@ pub fn build_name_to_char(operators: &HashMap<String, Operator>) -> HashMap<Stri
         .collect()
 }
 
-/// Lowercased faction identifiers (group/nation/team id) for one operator, used
-/// as match tags for count-scaling synergies.
+/// Lowercased group/nation/team ids, the match tags for count scalers.
 pub fn faction_tags_of(op: &Operator) -> Vec<String> {
     let mut tags = Vec::new();
     let mut push = |s: &str| {
@@ -37,17 +35,14 @@ pub fn faction_tags_of(op: &Operator) -> Vec<String> {
     if let Some(t) = &op.team_id {
         push(t);
     }
-    // Robot-class operators (Lancet-2, Castle-3, Friston-3, ...) carry the
-    // "Robot" recruitment tag; the base's robot economies (Alanna's Operation
-    // Platforms, Overclock) count them, so expose it as a match tag. No base
-    // skill uses a "robot" faction token, so this cannot collide.
+    // "Robot" recruitment tag (Lancet-2, Castle-3, ...), counted by Alanna's
+    // Operation Platforms and Overclock. No faction token is "robot", so no
+    // collision.
     if op.tag_list.iter().any(|s| s == "Robot") {
         push("robot");
     }
-    // Race, from the handbook profile ("[Race] Durin"): the base's
-    // "<$cc.tag.durin>Durin Operator" counts (Pozëmka's production lines)
-    // key on it. Serialized enum name, lowercased - the same token the
-    // buff markup carries.
+    // Race from the handbook ("[Race] Durin"), for "<$cc.tag.durin>Durin
+    // Operator" counts (Pozëmka). Lowercased enum name = the markup token.
     if let Some(race) = op
         .profile
         .as_ref()
@@ -56,13 +51,11 @@ pub fn faction_tags_of(op: &Operator) -> Vec<String> {
     {
         push(&race);
     }
-    // The multi-power system: RIIC faction tags count a SECONDARY NATION
-    // (Texas: nation lungmen, SubPower siracusa - the game's "all Siracusa
-    // Operators" buffs reach her, community-verified). A secondary GROUP does
-    // NOT count: Vina Victoria carries SubPower {glasgow} but the game's
-    // "Glasgow Gang Operator" checks (Delphine) don't count her (verified
-    // in-game 2026-09-07) - group membership is the top-level GroupId only.
-    // MainPower mirrors the top-level ids; the dedup guard makes it a no-op.
+    // A secondary NATION counts (Texas: lungmen, SubPower siracusa; "all
+    // Siracusa Operators" reach her, community-verified). A secondary GROUP
+    // does not: Vina Victoria's SubPower {glasgow} isn't counted by Delphine's
+    // "Glasgow Gang Operator" (in-game 2026-09-07). MainPower repeats the
+    // top-level ids; dedup makes it a no-op.
     let powers = op.main_power.iter().chain(op.sub_power.iter().flatten());
     for nation in powers.filter_map(|p| p.nation_id.as_ref()) {
         let lower = nation.to_lowercase();
@@ -84,17 +77,16 @@ pub fn build_faction_map(operators: &HashMap<String, Operator>) -> HashMap<Strin
 static RE_FIRST_PCT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)%</>").unwrap());
 
-/// The first percentage with its sign, up or down: a Control-Center grant
-/// can be a malus (Gnosis's "order acquisition efficiency <vdown>-15%</>").
+/// First signed % (a CC grant can be a malus: Gnosis's "order acquisition
+/// efficiency <vdown>-15%</>").
 static RE_FIRST_SIGNED_PCT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<@cc\.(?:vup|vdown)>([+-]?[\d.]+)%</>").unwrap());
 
 static RE_FIRST_FLOAT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)</>").unwrap());
 
-/// A `<@cc.vup>+N</>` immediately followed by "Morale" - the actual morale-recovery figure,
-/// as opposed to a resource-generation number ("…Worldly Plight<@cc.vup>+5</>") that happens
-/// to come first in the text.
+/// `<@cc.vup>+N</>` right before "Morale", not an earlier resource number
+/// ("…Worldly Plight<@cc.vup>+5</>").
 static RE_MORALE_RECOVERY: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<@cc\.vup>\+?([\d.]+)</>\s*Morale").unwrap());
 
@@ -137,8 +129,6 @@ static RE_POOL_CONSUME_REV: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
-/// Own-room-level pool generator: "provide N <Resource> for every level of the
-/// current Dormitory" (Senshi).
 /// Own-room occupant generator: "for every 1 Operators in that Dormitory,
 /// <Resource> +N" (Virtuosa).
 static RE_POOL_GEN_OWN_OCC: LazyLock<Regex> = LazyLock::new(|| {
@@ -148,6 +138,8 @@ static RE_POOL_GEN_OWN_OCC: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
+/// Own-room-level pool generator: "provide N <Resource> for every level of the
+/// current Dormitory" (Senshi).
 static RE_POOL_GEN_OWN_ROOM: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
         r"provide <@cc\.vup>([\d.]+)</>\s*<\$cc\.([A-Za-z0-9_]+)>.{0,60}for every level of the current",
@@ -185,9 +177,8 @@ static RE_POOL_GEN_DORM_CONVERT: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
-/// Alanna's robot counter: "productivity +PCT% for every <tag.op> Operation
-/// Platform assigned to a Power Plant" - a pseudo-pool the settlement fills
-/// with the count of Robot-tagged operators seated in POWER rooms.
+/// Alanna: "productivity +PCT% for every <tag.op> Operation Platform assigned to
+/// a Power Plant". Pseudo-pool of Robot-tagged operators in POWER rooms.
 static RE_POOL_CONSUME_ROBOTS_POWER: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
         r"productivity <@cc\.vup>\+([\d.]+)%</> for <@cc\.vup>every</>\s*<\$cc\.tag\.op>.{0,60}?assigned to a Power Plant",
@@ -215,10 +206,9 @@ static RE_POOL_TAIL: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
-/// "each"/"every" QUANTIFYING a faction/tag token ("for each <Glasgow Gang>
-/// Operator..."), styled or bare - the singular per-operator conditional form
-/// (Delphine), as opposed to the plural "all <Kjerag> Operators..." phrasing.
-/// Token-adjacency keeps a temporal "each hour" from ever matching.
+/// "each"/"every" right before a faction token ("for each <Glasgow Gang>
+/// Operator...", Delphine), vs the plural "all <Kjerag> Operators...".
+/// Adjacency keeps "each hour" out.
 static RE_EACH_FACTION: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"(?:<@cc\.vup>)?(?:each|every)(?:</>)?\s*<\$cc\.(?:g|tag)\.").unwrap()
 });
@@ -247,8 +237,6 @@ fn room_type_from_global_label(label: &str) -> &'static str {
     }
 }
 
-/// One named-operator-gated Control-Center grant: the payload fires while
-/// `char_id` is seated in a `target_room`-type room, and lands ON that room.
 /// The rider a facility-count modifier needs met, read off the deployment.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FacilityGate {
@@ -286,6 +274,8 @@ static RE_TAG_MARKUP: LazyLock<Regex> =
 static RE_CAPS_AT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"caps at <@cc\.kw>(\d+)</>").unwrap());
 
+/// Named-operator-gated CC grant: fires while `char_id` sits in a
+/// `target_room`-type room, and lands ON that room.
 #[derive(Debug, Clone, PartialEq)]
 pub struct NamedCharGrant {
     pub char_id: String,
@@ -312,8 +302,7 @@ static RE_CC_NAMED_GATE: LazyLock<Regex> = LazyLock::new(|| {
 static RE_NAMED_GATE_ORD: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"order limit <@cc\.vup>\+(\d+)</>").unwrap());
 
-/// Morale-drain-aura immunity (Waai Fu's Team Spirit): the holder ignores
-/// roommates' effects on ITS OWN morale consumption.
+/// Waai Fu's Team Spirit: ignores roommates' effects on her own drain.
 static RE_DRAIN_AURA_IMMUNITY: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
         r"ignore</> the effects of any Operators stationed in (?:that|the) [A-Za-z ]+ that would affect the Morale consumption of <@cc\.kw>this Operator",
@@ -321,9 +310,8 @@ static RE_DRAIN_AURA_IMMUNITY: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
-/// Non-production Control-Center skill effects, each in its own facility's
-/// units: clue collection speed (Reception Room), Specialization training
-/// speed (Training Room), HR contacting speed (HR Office).
+/// Non-production CC effects, each in its facility's units: clue speed
+/// (Reception), Specialization speed (Training), contact speed (HR Office).
 static RE_CC_CLUE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"clue collection speed <@cc\.vup>\+([\d.]+)%</>").unwrap());
 static RE_CC_TRAIN: LazyLock<Regex> = LazyLock::new(|| {
@@ -339,29 +327,24 @@ static RE_CC_EACH_FACTION: LazyLock<Regex> =
 
 /// A same-room companion gate: "assigned to the Control Center with <op>".
 static RE_CC_WITH: LazyLock<Regex> = LazyLock::new(|| {
-    // Both word orders: "assigned to the Control Center with <Aak>" and
-    // Mr. Lee's "assigned together with <Aak> to the Control Center".
+    // Also Mr. Lee's "assigned together with <Aak> to the Control Center".
     Regex::new(r"assigned (?:to the Control Center with|together with) <@cc\.kw>([^<]+)</>")
         .unwrap()
 });
 
-/// A count-scaler whose subject is a SKILL ("for each Rhine Tech-type skill",
-/// "per Standardization Skill"), as opposed to an operator ("per Glasgow Gang
-/// Operator").
+/// Counts SKILLS ("for each Rhine Tech-type skill", "per Standardization
+/// Skill"), not operators ("per Glasgow Gang Operator").
 static RE_COUNT_SKILLS: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?:for each|for every|per) [A-Za-z' -]+?[Ss]kills?\b").unwrap());
 
-/// A Control-Center faction global split by PRODUCT (Flametail: "+10%
-/// productivity towards Battle Records and -10% productivity towards
-/// Precious Metals"): each signed percentage with the product it targets.
+/// CC global split by PRODUCT (Flametail: "+10% productivity towards Battle
+/// Records and -10% productivity towards Precious Metals").
 static RE_TOWARDS_PRODUCT: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"<@cc\.v(?:up|down)>([+-]?[\d.]+)%</> productivity towards <@cc\.kw>([^<]+)</>")
         .unwrap()
 });
 
-/// The factory formula family a product name belongs to (game mechanic: the
-/// three factory product lines). Unknown names resolve to nothing - a
-/// product-split bonus the model cannot place is worth 0, never a guess.
+/// Unknown product -> None, so the split bonus is worth 0, never a guess.
 fn formula_for_product(name: &str) -> Option<&'static str> {
     let n = name.to_lowercase();
     if n.contains("battle record") {
@@ -381,20 +364,16 @@ static RE_DORM_SINGLE_TARGET: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"to an(?:other)? Operator (?:assigned to|in) (?:that|the) Dorm(?:itory)?").unwrap()
 });
 
-/// The whole-dorm aura figure: "restores +X Morale per hour to all (other)
-/// Operators assigned to that Dormitory". Captured explicitly so compound
-/// texts classify as the AURA they are - the `contains("self")` heuristic
-/// filed both shapes under self-only, hiding them from dorm staffing:
-/// - Durin's "self Morale recovered per hour -0.1, but restores +0.2 ... to
-///   all Operators". Community-confirmed 2026-08-24: the aura applies to
-///   herself fully too (net +0.1), so the self-malus can never turn her
-///   negative and needs no field of its own - dorm staff don't drain, so a
-///   net-positive rider never changes an outcome.
-/// - The "self +0.55, and restores +0.1 ... to all OTHER Operators" family.
-///   A dorm self-recovery rider is priced nowhere (resters recover at dorm
-///   rate + auras; only the Fiammetta swap path reads self-only rates, gated
-///   on its "swap" text), so the others-aura is the whole model-relevant
-///   value of these skills.
+/// Whole-dorm aura: "restores +X Morale per hour to all (other) Operators
+/// assigned to that Dormitory". Explicit so compound texts classify as AURA; the
+/// `contains("self")` heuristic filed both shapes as self-only, hiding them from
+/// dorm staffing:
+/// - Durin's "self Morale recovered per hour -0.1, but restores +0.2 ... to all
+///   Operators". Community-confirmed 2026-08-24: the aura covers her too (net
+///   +0.1), so the self-malus needs no field.
+/// - "self +0.55, and restores +0.1 ... to all OTHER Operators". The self rider
+///   is priced nowhere (only the Fiammetta swap path reads self-only rates), so
+///   the aura is the whole value.
 static RE_DORM_AURA_ALL: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"restores <@cc\.vup>\+([\d.]+)</> Morale per hour to all (?:other )?Operators")
         .unwrap()
@@ -421,9 +400,8 @@ static RE_POOL_CONSUME_ORDER: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
-/// A speed/capacity trade ("productivity -5%, capacity limit +16" - the
-/// Craftsmanship family): signed productivity plus a flat capacity grant. The
-/// morale-cost rider is captured separately by the drains side-map.
+/// Craftsmanship family: "productivity -5%, capacity limit +16". The morale
+/// rider goes through the drains side-map.
 static RE_SPEED_CAPACITY_TRADE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
         r"[Pp]roductivity <@cc\.(vup|vdown)>([+-]?[\d.]+)%</>(?:,| and)\s*capacity limit <@cc\.(vup|vdown)>([+-]?[\d.]+)</>",
@@ -439,17 +417,16 @@ static RE_POOL_CONVERT: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
-/// The per-hour ramp rate, in either word order: "+1% per hour" (Ceobe) or
-/// "productivity per hour +2%" (Aroma - whose rate the leading form missed,
-/// halving her ramp).
+/// Ramp rate, either word order: "+1% per hour" (Ceobe) or "productivity per
+/// hour +2%" (Aroma; the first form alone missed it and halved her ramp).
 static RE_PER_HOUR_PCT: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"(?:<@cc\.vup>\+?([\d.]+)%?</>\s*per hour|per hour <@cc\.vup>\+?([\d.]+)%?</>)")
         .unwrap()
 });
 
-/// A nullifier whose grant lands on the ROOM per occupant (Snegurochka:
-/// "every Operator in that Factory increases that Factory's Productivity by
-/// +10% and Capacity limit by +5"; her lower tier has the capacity half only).
+/// Nullifier granting to the ROOM per occupant (Snegurochka: "every Operator in
+/// that Factory increases that Factory's Productivity by +10% and Capacity limit
+/// by +5"; her lower tier has only the capacity half).
 static RE_NULLIFY_ROOM_PER_OP: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
         r"every Operator in that Factory increases that Factory's (?:Productivity by <@cc\.vup>\+([\d.]+)%</> and )?Capacity limit by <@cc\.vup>\+([\d.]+)</>",
@@ -457,10 +434,9 @@ static RE_NULLIFY_ROOM_PER_OP: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
-/// A per-recruit-slot pool grant (Whisperain: "for every Recruit slot
-/// (Default slots do not count), Memory Fragments +10"). The slot count is
-/// account state the sync cannot read: the settlement takes it from the
-/// player-declared fact carried under [`ACCOUNT_FACTS_KEY`].
+/// Whisperain: "for every Recruit slot (Default slots do not count), Memory
+/// Fragments +10". The sync can't read slots; the player declares them under
+/// [`ACCOUNT_FACTS_KEY`].
 pub(crate) static RE_SLOT_GRANT: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
         r"for every Recruit slot \(Default slots do not count\),\s*<*<\$cc\.(bd_[A-Za-z0-9_]+)>[^+]{0,40}?<@cc\.vup>\+([\d.]+)</>",
@@ -468,15 +444,12 @@ pub(crate) static RE_SLOT_GRANT: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
-/// Registry key of the synthetic [`BuffResolutionStrategy::AccountFacts`]
-/// entry: never a buff id, read by the pool settlement for slot counts.
+/// Registry key of the synthetic [`BuffResolutionStrategy::AccountFacts`]; never a buff id.
 pub const ACCOUNT_FACTS_KEY: &str = "ACCOUNT_FACTS";
 
-// Factories phrase the queue cap as "capacity limit", trading posts as "order limit" - the
-// same mechanic, so accept either so a factory capacity skill (Vermeil's "+8") is counted.
-// Both the terse "capacity limit +8" and the spelled-out "capacity limit is
-// increased by +12 when producing Battle Records" (Scene's Editing; its
-// `Targets` scope it to that formula through the configuration factor).
+// Factory "capacity limit" = trading "order limit" (Vermeil's "+8"). Also the
+// long form "capacity limit is increased by +12 when producing Battle Records"
+// (Scene's Editing; `Targets` scopes it via the config factor).
 static RE_ORDER_LIMIT_POS: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"(?:order|capacity) limit(?: is increased by)?\s*<@cc\.vup>\+?(\d+)</>").unwrap()
 });
@@ -494,34 +467,29 @@ static RE_NTH_PCT: LazyLock<Regex> =
 static RE_VUP_NUMBER: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<@cc\.vup>(\d+)</>").unwrap());
 
-// First keyword after "for each/every" - the thing a count-scaling buff counts.
+// What a count-scaler counts: first keyword after "for each/every".
 static RE_COUNT_KEYWORD: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"for (?:each|every).*?<@cc\.kw>([^<]+)</>").unwrap());
 
 // Any <@cc.kw>…</> keyword (multi-word capable), used to parse converter skills.
 static RE_KW_ANY: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<@cc\.kw>([^<]+)</>").unwrap());
 
-// A <@cc.kw>…</> keyword block whose contents may carry nested markup wrappers,
-// e.g. Lemuen's "<@cc.kw><$cc.angel>Exusiai</></>". Non-greedy so it stops at
-// the first closing tag; inner tags are stripped with RE_INNER_TAG afterward.
+// Keyword block that may nest markup (Lemuen's "<@cc.kw><$cc.angel>Exusiai</></>").
+// Non-greedy; RE_INNER_TAG strips the inner tags after.
 static RE_KW_BLOCK: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<@cc\.kw>(.*?)</>").unwrap());
 static RE_INNER_TAG: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"<[^>]*>").unwrap());
 
-// A faction marker like "<$cc.g.glasgow>" (group), "<$cc.n.…>" (nation), or
-// "<$cc.t.…>" (team) - captures the faction token used by match-tag scaling.
+// "<$cc.g.glasgow>" (group), "<$cc.n.…>" (nation), "<$cc.t.…>" (team).
 static RE_FACTION_TOKEN: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"<\$cc\.[gnt]\.(\w+)>").unwrap());
 
-// Shamare-type self-scaling: "...each Operator increases … by +X%". Requires the
-// per-Operator unit AND a percentage, so it won't match factory automation ops
-// that scale "per Power Plant" (Weedy) or grant "+N Capacity" (Snegurochka).
+// Shamare: "...each Operator increases … by +X%". Needs per-Operator AND a %, so
+// Weedy's "per Power Plant" and Snegurochka's "+N Capacity" don't match.
 static RE_NULLIFY_SELF_PCT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"each Operator increases.*?<@cc\.vup>\+?([\d.]+)%").unwrap());
 
-// Buff text phrases the drain as "Morale consumed per hour" or "...each hour" (the latter
-// covers the Penguin Logistics trio - Texas/Lappland/Exusiai), and some add "...BY +2"
-// (Enforcer's reception skill) - so accept "(?:per|each) hour" and an optional "by", else
-// those drains are silently lost.
+// "per hour" or "each hour" (Penguin Logistics: Texas/Lappland/Exusiai), optional
+// "by" (Enforcer's "...BY +2"). Missing either silently drops those drains.
 static RE_MORALE_INCREASE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"Morale consumed (?:per|each) hour\s*(?:by\s*)?<@cc\.vdown>\+?([\d.]+)</>").unwrap()
 });
@@ -530,17 +498,15 @@ static RE_MORALE_DECREASE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"Morale consumed (?:per|each) hour\s*(?:by\s*)?<@cc\.vup>-?([\d.]+)</>").unwrap()
 });
 
-/// The SHAPE of an order-value trading skill. The registry keeps the shape,
-/// not a percentage: the worth of "+2 gold on orders below 4" depends on
-/// which orders the post draws, which is the post's level - resolved at
-/// scoring time by `order_mix::value_pct` against gamedata's `OrderRarity`.
+/// Order-value SHAPE, not a %: "+2 gold on orders below 4" depends on the post's
+/// level, priced by `order_mix::value_pct` against `OrderRarity`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum OrderEffect {
     /// Proviso's Damages for Breach: orders trading fewer than `below` Pure
     /// Gold ("Defaulted", from Contract Law's text) trade `bonus` more.
     DefaultedGoldBonus { below: u32, bonus: u32 },
-    /// Tequila's Investment: orders trading more than `above` Pure Gold pay
-    /// `lmd` more LMD (defaulted trades excluded - they are below anyway).
+    /// Tequila's Investment: orders over `above` Pure Gold pay `lmd` more
+    /// (defaulted trades are below anyway).
     HighOrderLmdBonus { above: u32, lmd: u32 },
     /// The Tailoring family: the chance of higher-yield orders is
     /// "increased slightly" (`strong: false`) or "increased" (`strong: true`).
@@ -554,10 +520,9 @@ pub enum BuffResolutionStrategy {
     /// The buff's Efficiency field, taken as the flat bonus %.
     DirectEfficiency { value: f64 },
 
-    /// Bonus scales with count of a facility type.
-    /// e.g. Automation: +X% per Power Plant, nullifies other ops' productivity.
-    /// e.g. Quartz: base +30% trading, plus +2% per recipe type at Factories
-    ///      (approximated by the Factory count via `base_pct` + per-facility scaling).
+    /// e.g. Automation: +X% per Power Plant, nullifies others.
+    /// e.g. Quartz: +30% trading, +2% per recipe type at Factories
+    ///      (approximated by the Factory count).
     FacilityCountScaling {
         target_room: String,    // "POWER", "TRADING", "DORMITORY", "MANUFACTURE", etc.
         per_unit_pct: f64,      // e.g. 5.0, 10.0, 15.0
@@ -568,24 +533,21 @@ pub enum BuffResolutionStrategy {
         cap_pct: Option<f64>,
     },
 
-    /// Bonus scales with teammates' skills matching a pattern.
     /// e.g. "+5% per Standardization skill in same Factory"
     TeammateSkillScaling {
         target_buff_pattern: String, // prefix to match, e.g. "manu_prod_spd"
         per_match_pct: f64,
     },
 
-    /// Pays `ratio` % for every full `step` % the roommates' OWN skills
-    /// contribute, up to `cap_pct`. e.g. Heavenly Reward: "+5% per 5% from
-    /// others, max +25%"; Waai Fu's Cooperative Will: +5% per 5%, max +40%,
-    /// "excluding the additional productivity affected by facility count".
+    /// `ratio` % per full `step` % of roommates' OWN skills, up to `cap_pct`.
+    /// Heavenly Reward: "+5% per 5% from others, max +25%"; Waai Fu: +5% per 5%,
+    /// max +40%, "excluding the additional productivity affected by facility count".
     TeammateOutputMirroring {
         ratio: f64,   // % paid per step, e.g. 5.0
         step: f64,    // % of roommate contribution per payout, e.g. 5.0
         cap_pct: f64, // max bonus, e.g. 25.0
     },
 
-    /// Provides both efficiency AND order limit change.
     /// e.g. `SilverAsh`: "+20% efficiency, +4 order limit"
     /// e.g. Degenbrecher: "+25% efficiency, -6 order limit"
     EfficiencyWithOrderLimit {
@@ -593,15 +555,12 @@ pub enum BuffResolutionStrategy {
         order_limit: i32, // positive = adds CAP, negative = removes CAP
     },
 
-    /// A base efficiency that's always applied, plus a bonus efficiency / order
-    /// limit that ONLY applies when a specific named operator shares the room.
+    /// Base efficiency plus a bonus/limit only with a named roommate.
     /// e.g. Texas "Feud": base 0, +65% only with Lappland.
     /// e.g. Lemuen: base +20%, +25% more only with Exusiai.
     /// e.g. Lappland "Hidden Purpose β": +4 order limit only with Texas.
     ///
-    /// `required_char_id` is the resolved `char_id` of the gating teammate, or
-    /// None when the named operator couldn't be resolved (the conditional part
-    /// then contributes nothing rather than being over-credited).
+    /// `required_char_id` None = unresolved name; the conditional part gives 0.
     ConditionalOnTeammate {
         required_char_id: Option<String>,
         base_efficiency: f64,
@@ -609,40 +568,33 @@ pub enum BuffResolutionStrategy {
         order_limit: i32,
     },
 
-    /// A base efficiency that's always applied, plus a bonus that applies when one of several named
-    /// operators is actively WORKING somewhere in the base ("any Work Area, excluding Assistants") -
-    /// not just present in the room, and not while resting in a dormitory.
-    /// e.g. Hoederer "Starting From Scratch β": +30%, and +5% more when Ines or W works any Work Area.
-    /// The optimizer resolves this to a flat efficiency per assignment once it knows who is actually
-    /// deployed in a work area (two-pass), so the scorer treats it as base-only on its own.
+    /// Base plus a bonus while a named operator WORKS anywhere ("any Work Area,
+    /// excluding Assistants"), not resting in a dorm. e.g. Hoederer "Starting From
+    /// Scratch β": +30%, +5% more when Ines or W works. The optimizer flattens it
+    /// per assignment (two-pass); alone the scorer credits the base only.
     ConditionalOnBaseWide {
         required_char_ids: Vec<String>,
         base_efficiency: f64,
         bonus_efficiency: f64,
-        /// "When Vigil is in the Base (excluding Assistants and Activity
-        /// Room users)" (Bellone, Underflow): the partner counts wherever
-        /// they are stationed, a dormitory included. False = the "Work
-        /// Area" phrasing, where a resting partner does not count.
+        /// "When Vigil is in the Base (excluding Assistants and Activity Room
+        /// users)" (Bellone, Underflow): a dorm counts. False = "Work Area"
+        /// phrasing, where a resting partner doesn't.
         anywhere: bool,
     },
 
-    /// Deployment-context gate: the bonus applies only while a named operator (or enough
-    /// operators of a faction) is stationed in a specific ROOM TYPE anywhere in the base.
-    /// e.g. "if Kal'tsit is assigned to the Control Center, drone recovery +5%" (Roberta),
-    /// "and Gummy is in a Trading Post, Battle Record formula productivity +35%",
-    /// "if another Laterano Operator is assigned to a Power Plant, +5%".
-    /// Like `ConditionalOnBaseWide`, the optimizer collapses this to a flat efficiency via
-    /// `resolve_room_presence` once the deployment is known; unresolved contexts credit
-    /// the base only (never guess).
+    /// Bonus while a named operator (or enough of a faction) sits in a ROOM TYPE.
+    /// e.g. "if Kal'tsit is assigned to the Control Center, drone recovery +5%"
+    /// (Roberta), "and Gummy is in a Trading Post, Battle Record formula
+    /// productivity +35%", "if another Laterano Operator is assigned to a Power
+    /// Plant, +5%". Flattened by `resolve_room_presence`; unresolved = base only.
     ConditionalOnRoomPresence {
-        /// Named-operator form: any of these deployed in `room_type` unlocks the bonus.
-        /// Empty when the named operator couldn't be resolved (bonus then stays off).
+        /// Any of these in `room_type` unlocks it. Empty = unresolved, stays off.
         required_char_ids: Vec<String>,
         /// Faction form: lowercased faction token; at least `required_count` operators
         /// carrying it must be deployed in `room_type`.
         required_faction: Option<String>,
-        /// 2 for the "another <faction> Operator" phrasing - the buff only applies while
-        /// its (same-faction) owner works that room type, so "owner + another" = 2 total.
+        /// 2 for "another <faction> Operator": the same-faction owner works that
+        /// room type too, so owner + another = 2.
         required_count: usize,
         /// Internal room type ("TRADING", "CONTROL", "TRAINING", "POWER", ...).
         room_type: String,
@@ -650,23 +602,20 @@ pub enum BuffResolutionStrategy {
         bonus_efficiency: f64,
     },
 
-    /// Jaye's Street Economics: "+X% for every difference of 1 order between
-    /// the current number of orders and the maximum" - pays per EMPTY order
-    /// slot of the post's final limit.
+    /// Jaye's Street Economics: "+X% for every difference of 1 order between the
+    /// current number of orders and the maximum", i.e. per EMPTY slot.
     OrderDifferenceScaling { per_order_pct: f64 },
 
-    /// Jaye's Basic Needs (`trade_ord_limit_count`): "reduces the order limit
-    /// by 1 for every 10% order acquisition efficiency provided by all other
-    /// Operators (to a minimum of 1); furthermore +4% for every 1 order". The
-    /// cut reads the roommates' settled efficiency; the rider pays per FILLED
-    /// order.
+    /// Jaye's Basic Needs (`trade_ord_limit_count`): "reduces the order limit by
+    /// 1 for every 10% order acquisition efficiency provided by all other
+    /// Operators (to a minimum of 1); furthermore +4% for every 1 order". Rider
+    /// pays per FILLED order.
     LimitCutPerPeerEfficiency {
         pct_per_cut: f64,
         cut: i32,
         per_order_pct: f64,
     },
 
-    /// Scales with total order limit contributions from teammates.
     /// e.g. Degenbrecher E2: "+25% per 5 CAP from teammates, max +100%"
     /// e.g. Swire the Elegant Wit: "+4% per 1 order limit increase from others"
     /// e.g. Vermeil E1: "+2% per capacity limit in the factory" (her OWN +8 counts too)
@@ -677,57 +626,47 @@ pub enum BuffResolutionStrategy {
         /// Evaluation stage (`clause::PEER_STAGE_*`): Degenbrecher and Vermeil
         /// read the FIXED limits, Swire reads the limit after Jaye's cut.
         stage: u8,
-        /// True when the operator's OWN capacity counts toward the total it scales on
-        /// (Vermeil scales on the whole factory's capacity, including her own +8). False for
-        /// "from others/teammates" skills (Jaye, Degenbrecher - whose own -6 must not self-reduce).
+        /// OWN capacity counts (Vermeil, her own +8). False for "from
+        /// others/teammates" (Jaye; Degenbrecher's own -6 must not self-reduce).
         includes_self: bool,
     },
 
-    /// Per-operator capacity-tier scaling (Bubble E1): each operator in the factory - including
-    /// this one - gains `low_pct` productivity if its own capacity-limit bonus is at or below
-    /// `threshold`, else `high_pct`. The room bonus is the SUM across the team, so it rewards
-    /// stacking high-capacity operators.
+    /// Bubble E1: each occupant, her included, gives `low_pct` if its own capacity
+    /// bonus is at or below `threshold`, else `high_pct`, summed over the team.
     CapacityTierScaling {
         threshold: i32,
         low_pct: f64,
         high_pct: f64,
-        /// Buff-id prefixes this skill takes priority over in its room ("does
-        /// not stack with Recycling and takes priority over it"): the named
-        /// skill's family, resolved by skill NAME from the buff table. A
-        /// roommate's clauses from these families do not apply.
+        /// "Does not stack with Recycling and takes priority over it": prefixes of
+        /// the named skill's family, resolved by skill NAME. Roommates' clauses
+        /// from these don't apply.
         excludes: Vec<String>,
     },
 
-    /// Raises a room type's EFFECTIVE facility count by `amount` ("Power Plant +1, only affects
-    /// facility quantity" - Greyy the Lightningbearer E2; Eunectes E2 "+2"). It grants no
-    /// productivity itself, but every `FacilityCountScaling` buff that scales per that facility
-    /// (factory automation - Weedy/Eunectes/Pudding) reads the boosted count, so it powers those
-    /// combos. Resolved by adjusting the facility counts the optimizer scores against.
+    /// EFFECTIVE facility count +`amount` ("Power Plant +1, only affects facility
+    /// quantity": Greyy the Lightningbearer E2; Eunectes E2 "+2"). No productivity
+    /// itself; automation (Weedy/Eunectes/Pudding) reads the boosted count.
     FacilityCountModifier {
         target_room: String,
         amount: i32,
-        /// The room the holder must be seated in for the count to apply
-        /// (Eunectes: the Control Center; Greyy: a Power Plant).
+        /// Eunectes: Control Center; Greyy: a Power Plant.
         owner_room: String,
         gate: FacilityGate,
     },
 
-    /// A count of same-tag operators anywhere IN THE BASE (Nasti's "for each
-    /// Rhine Lab Operator in the Base (caps at 5), Precious Metal
-    /// productivity +3%"): the holder counts too. Resolved against the
-    /// deployment like the room-presence gates - `DirectEfficiency` once the
-    /// seats are known, 0 before.
+    /// Same-tag operators anywhere IN THE BASE, holder included (Nasti's "for
+    /// each Rhine Lab Operator in the Base (caps at 5), Precious Metal
+    /// productivity +3%"). 0 until the deployment resolves it.
     BaseWideMatchCountScaling {
         token: String,
         per_match_pct: f64,
         cap_count: Option<usize>,
     },
 
-    /// A grant from the holder's OWN room seat onto the room a NAMED operator
-    /// occupies (Justice Knight in a Power Plant: "+5% to the Factory Wild
-    /// Mane is assigned to"). `active` is set by the deployment pass when the
-    /// holder sits in `self_room`; the Control-Center condition collector
-    /// then lands it on the target's room like a per-operator faction global.
+    /// Grant onto the room a NAMED operator occupies (Justice Knight in a Power
+    /// Plant: "+5% to the Factory Wild Mane is assigned to"). `active` is set
+    /// when the holder sits in `self_room`; then it lands like a per-operator CC
+    /// global.
     NamedTargetRoomBoost {
         self_room: String,
         target_char_id: String,
@@ -736,90 +675,68 @@ pub enum BuffResolutionStrategy {
         active: bool,
     },
 
-    /// Efficiency scales with the number of teammates that match a keyword the
-    /// buff names for itself. The keyword is parsed straight from the buff text
-    /// ("for each <kw>…"), so this one strategy covers every faction- and
-    /// skill-type synergy without hardcoding any faction or operator name:
+    /// Per teammate matching the keyword in "for each <kw>…", so no faction or
+    /// operator name is hardcoded:
     ///   - Dorothy: "+5% per Rhine Tech-type skill"      -> token "rhine"
     ///   - Mizuki:  "+5% per Standardization Skill"       -> token "standardization"
     ///   - Bryophyta:"+5% per Metalwork-type skill"       -> token "metalwork"
     ///   - Morgan:  "+20% per Glasgow Gang Operator"      -> token "glasgow"
     ///
-    /// A teammate matches when the token equals one of its faction ids
-    /// (group/nation/team) or the leading word of one of its skill names.
+    /// Matches a faction id (group/nation/team) or a skill name's leading word.
     ///
-    /// `bonus_char_id` / `bonus_pct` carry an OPTIONAL named-teammate rider that
-    /// some count-scalers tack on (Morgan "Gang Compass": +20% per Glasgow Gang
-    /// op, AND +35% more when Siege shares the room). `bonus_pct` is credited only
-    /// when that named operator is present; `None` means no rider.
+    /// `bonus_char_id` / `bonus_pct`: optional named-roommate rider (Morgan "Gang
+    /// Compass": +20% per Glasgow Gang op, +35% more with Siege).
     MatchCountScaling {
         token: String,
         per_match_pct: f64,
         cap_pct: Option<f64>,
         bonus_char_id: Option<String>,
         bonus_pct: f64,
-        /// True for "each <X>-type skill in this Factory" phrasings: the count
-        /// is of SKILLS by name (the holder's own included - Dorothy's own
-        /// Rhine Tech β counts toward her "+5% per Rhine Tech-type skill"),
-        /// never of operators by faction (Rosmontis is Rhine Lab but carries
-        /// no Rhine Tech skill). False for "per <faction> Operator" counts.
+        /// "each <X>-type skill in this Factory": counts SKILLS, the holder's own
+        /// included (Dorothy's Rhine Tech β), never faction (Rosmontis is Rhine
+        /// Lab with no Rhine Tech skill). False for "per <faction> Operator".
         count_skills: bool,
-        /// True when the counted amount is STORAGE CAPACITY (Astgenne the
-        /// Lightchaser's "+5 Storage Capacity for each Rhine Tech-type
-        /// skill"), not productivity.
+        /// Pays STORAGE CAPACITY (Astgenne the Lightchaser's "+5 Storage
+        /// Capacity for each Rhine Tech-type skill").
         capacity: bool,
     },
 
-    /// A base efficiency that's always applied, plus a bonus that applies when ANY
-    /// operator of a given faction shares the room - the faction analogue of
-    /// `ConditionalOnTeammate`. e.g. Morgan "Resolution on Foreign Trade β": base
-    /// +30%, +10% more if any Glasgow Gang operator is in the same Trading Post.
-    /// `faction_token` is matched against teammates' `match_tags` (e.g. "glasgow").
+    /// Faction analogue of `ConditionalOnTeammate`. e.g. Morgan "Resolution on
+    /// Foreign Trade β": +30%, +10% more with any Glasgow Gang roommate.
     ConditionalOnFaction {
         faction_token: String,
         base_efficiency: f64,
         efficiency: f64,
     },
 
-    /// Reclassifies certain skill types as another (Highmore: "all Rhine Lab and
-    /// Pinus Sylvestris skills are considered Standardization skills"). While
-    /// this operator is in the room, any teammate matching a `from_tokens` tag
-    /// also gains the `to_token` tag - so e.g. Rhine operators start counting
-    /// for a Standardization scaler. Carries no efficiency of its own.
+    /// Highmore: "all Rhine Lab and Pinus Sylvestris skills are considered
+    /// Standardization skills". Roommates with a `from_tokens` tag gain
+    /// `to_token`. No efficiency of its own.
     SkillTypeConversion {
         from_tokens: Vec<String>,
         to_token: String,
     },
 
-    /// Nullifies every teammate's output, but this operator's own efficiency
-    /// scales with the number of teammates present.
     /// e.g. Shamare: "all other Operators' efficiency becomes 0, but each
     /// Operator increases this Operator's efficiency by +45%".
     NullifyTeammatesSelfScaling { per_teammate_pct: f64 },
 
-    /// Boosts LMD *per order* (order value) rather than order speed. Because the
-    /// trade rate is a fixed 500 LMD per Pure Gold bar, an LMD-per-order boost is
-    /// an LMD-per-hour boost of the same proportion (gold-supply permitting). This
-    /// is NOT "order acquisition efficiency", so a flat-LMD value (Tequila) survives
-    /// a Shamare-style speed-nullifier. `estimated_pct` is the LMD-equivalent value.
+    /// LMD *per order*, not speed. At a fixed 500 LMD/bar that's the same % of
+    /// LMD/hr (gold supply permitting). Not "order acquisition efficiency", so
+    /// Tequila survives a Shamare nullifier. `estimated_pct` = LMD-equivalent.
     ///
-    /// `pure_gold` marks a value that depends on Pure-Gold orders specifically
-    /// (Proviso boosts low/"defaulted" Pure-Gold orders). A Shamare-type operator
-    /// shifts the post toward higher-yield Precious-Metal orders, so a Pure-Gold
-    /// value no longer applies in a Shamare team - which is why Proviso, unlike
-    /// Tequila, does NOT benefit from Shamare.
+    /// `pure_gold`: depends on Pure-Gold orders (Proviso's "defaulted" ones).
+    /// Shamare shifts to Precious-Metal orders, so Proviso, unlike Tequila,
+    /// gains nothing beside her.
     OrderValue {
         effect: OrderEffect,
         pure_gold: bool,
     },
 
-    /// A Control-Center global whose strength scales with a POOL: "for every 8
-    /// Passion, all Trading Posts' order efficiency +1%" (Sakiko), "all
-    /// Factories +1%, with an additional +1% for every 20 Passion" (Mortis).
-    /// Context-free scoring credits `base_pct` only; the settlement resolves
-    /// the pool part by registry rewrite (`resolve_global_pool`) once the
-    /// points are known - current view from live seats, bundles from pinned
-    /// generators.
+    /// CC global scaling with a POOL: "for every 8 Passion, all Trading Posts'
+    /// order efficiency +1%" (Sakiko), "all Factories +1%, with an additional +1%
+    /// for every 20 Passion" (Mortis). Context-free = `base_pct` only;
+    /// `resolve_global_pool` adds the pool part (live seats or pinned generators).
     GlobalPoolScaling {
         target_room: String,
         base_pct: f64,
@@ -829,20 +746,17 @@ pub enum BuffResolutionStrategy {
         resource: String,
     },
 
-    /// Control Center buff that applies globally to all rooms of a type.
     /// e.g. "all Factories +2%"
     GlobalEffect {
         target_room: String, // "MANUFACTURE", "TRADING"
         bonus_pct: f64,
     },
 
-    /// Control Center global gated on the CENTER's own crew: "assigned
-    /// together with other L.G.D. Operators to the Control Center, all
-    /// Factories' productivity +3%" (Hoshiguma the Breacher). Fires when at
-    /// least `min_others` OTHER seated operators carry `tag` - the group id
-    /// is the game's own membership (Swire counts, Swire the Elegant Wit, who
-    /// carries no group, does not). Resolved by the CC bonus accumulator once
-    /// the crew is known; alone it is worth nothing.
+    /// CC global gated on the CC's own crew: "assigned together with other L.G.D.
+    /// Operators to the Control Center, all Factories' productivity +3%"
+    /// (Hoshiguma the Breacher). Needs `min_others` OTHER seats with `tag`, by
+    /// group id (Swire counts; Swire the Elegant Wit, no group, doesn't).
+    /// Resolved by the CC bonus accumulator; alone worth nothing.
     GlobalEffectWithCrewTag {
         target_room: String,
         bonus_pct: f64,
@@ -850,38 +764,30 @@ pub enum BuffResolutionStrategy {
         min_others: usize,
     },
 
-    /// Control Center buff that boosts a production room ONLY when its team
-    /// matches a faction condition - so it is NOT credited flat to every room.
+    /// CC buff on a production room ONLY when its team matches a faction:
     ///   - per-operator (Umiri): "all <Siracusa> Operators in Trading Posts gain
     ///     +5%" -> each matching op adds `bonus_pct` (`faction_token` "siracusa",
     ///     `per_operator` = true, `required_count` = 1).
     ///   - count-gated (SilverAsh): "all Trading Posts with 3 <Kjerag> Operators
     ///     gain +10%" -> the whole post gains `bonus_pct` once it holds
     ///     `required_count` of that faction (`per_operator` = false, required 3).
-    ///
-    /// `faction_token` is matched against teammates' `match_tags`.
     ConditionalGlobalEffect {
         target_room: String,
         faction_token: String,
         required_count: usize,
         per_operator: bool,
         bonus_pct: f64,
-        /// Order-limit delta granted to each matching operator (Gnosis's "+6
-        /// order limit" on Kjerag traders); 0 for pure speed conditionals.
+        /// Per matching operator (Gnosis's "+6 order limit" on Kjerag traders).
         order_limit: i32,
-        /// Product-split bonuses (`formula -> pct`, Flametail's +10% on Battle
-        /// Records / -10% on Precious Metals). Empty = `bonus_pct` on every
-        /// product; non-empty = only the listed formulas, 0 elsewhere.
+        /// `formula -> pct` (Flametail: +10% Battle Records / -10% Precious
+        /// Metals). Empty = `bonus_pct` everywhere; else listed formulas only.
         formula_bonuses: Vec<(String, f64)>,
     },
 
-    /// A Control-Center global that branches on two LAYOUT-COUNTED resources
-    /// (Wang's Expedience: "if Influence >= Territory, all Trading Posts +7%;
-    /// if Territory > Influence, all Factories +2%", where the glossary
-    /// defines Influence = Trading Posts + Power Plants and Territory =
-    /// Factories). Resolved into a plain `GlobalEffect` by
-    /// `resolve_layout_branches` once the building is known; unresolved it
-    /// contributes 0.
+    /// CC global branching on LAYOUT counts (Wang's Expedience: "if Influence >=
+    /// Territory, all Trading Posts +7%; if Territory > Influence, all Factories
+    /// +2%"; glossary: Influence = Trading Posts + Power Plants, Territory =
+    /// Factories). `resolve_layout_branches` makes it a `GlobalEffect`; else 0.
     LayoutCountBranch {
         a_term: String,
         b_term: String,
@@ -893,11 +799,9 @@ pub enum BuffResolutionStrategy {
         gt_pct: f64,
     },
 
-    /// A Control-Center global gated on the DEPLOYMENT of another room type
-    /// (Pudding's Overclock: "if there are 2 or more Operation Platforms
-    /// assigned to Power Plants, all Factories' productivity +2%"). Resolved
-    /// by `resolve_room_presence` into a `GlobalEffect` when the deployment
-    /// meets the gate; unresolved it contributes 0.
+    /// CC global gated on another room's DEPLOYMENT (Pudding's Overclock: "if
+    /// there are 2 or more Operation Platforms assigned to Power Plants, all
+    /// Factories' productivity +2%"). `resolve_room_presence`; else 0.
     RoomPresenceGatedGlobal {
         required_faction: String,
         required_count: usize,
@@ -907,22 +811,16 @@ pub enum BuffResolutionStrategy {
         bonus_pct: f64,
     },
 
-    /// Control Center conditionals gated on a NAMED operator seated in a
-    /// target room, payloads landing where that operator sits (Wiš'adel's
-    /// Conspirator: "if Ines is assigned to the Reception Room, clue
+    /// Wiš'adel's Conspirator: "if Ines is assigned to the Reception Room, clue
     /// collection speed +5%; if Hoederer is assigned to a Trading Post, that
-    /// Trading Post's order limit +2"). One grant per gated segment; a grant
-    /// whose name fails to resolve is dropped at parse (never guess).
+    /// Trading Post's order limit +2". One grant per segment; unresolved names
+    /// are dropped.
     NamedCharRoomGrants { grants: Vec<NamedCharGrant> },
 
-    /// "Ignore the effects of any Operators stationed in that <room> that
-    /// would affect the Morale consumption of this Operator" (Waai Fu's Team
-    /// Spirit): the holder is immune to roommate-projected drain auras in the
-    /// buff's room type. No output of its own - it cancels others' drain
-    /// effects on the holder.
+    /// "Ignore the effects of any Operators stationed in that <room> that would
+    /// affect the Morale consumption of this Operator" (Waai Fu's Team Spirit).
     MoraleDrainAuraImmunity,
 
-    /// Bonus based on operator faction/tag in the affected rooms.
     /// e.g. "all Knight operators in Factories +7%"
     TagBased {
         tag: String, // "knight", "sarkaz", "abyssal", etc.
@@ -930,40 +828,31 @@ pub enum BuffResolutionStrategy {
         target_room: String,
     },
 
-    /// Morale recovery or morale drain modifier (dormitory/control).
     MoraleModifier {
         recovery_per_hour: f64, // positive = recovery, negative = drain
         is_self_only: bool,     // true when only the holder benefits
-        /// True only for Control-Center auras reaching OTHER buildings' workers
-        /// (Chongyue's "Operators working in other buildings recover +0.05").
-        /// False for the CC-room-only `control_mp_cost` family ("all Operators
-        /// in the Control Center") and every dormitory skill.
+        /// CC auras reaching OTHER buildings (Chongyue's "Operators working in
+        /// other buildings recover +0.05"). False for `control_mp_cost` ("all
+        /// Operators in the Control Center") and dorm skills.
         base_wide: bool,
-        /// Dormitory skills only: true for the "restores +X to ANOTHER Operator
-        /// in that Dormitory whose Morale is not full" single-target healers
-        /// (+0.55-class), false for whole-dorm auras ("to all Operators in
-        /// that Dormitory", +0.15-class). Both carry the game's non-stacking
-        /// "only the strongest effect of this type" rule within their type.
+        /// Dorm only: "restores +X to ANOTHER Operator in that Dormitory whose
+        /// Morale is not full" (+0.55-class) vs whole-dorm auras (+0.15-class).
+        /// Each type is non-stacking within itself.
         single_target: bool,
     },
 
-    /// Only affects the room's capacity/order limit, not speed. `order_limit` is the cap it
-    /// adds (e.g. Vermeil's "capacity limit +8") - it contributes no productivity itself, but
-    /// feeds operators whose output scales with the room's total order/capacity limit.
+    /// Capacity only (Vermeil's "capacity limit +8"); feeds limit scalers.
     CapacityOnly { order_limit: i32 },
 
     /// Non-production facilities (workshop, HR, training, reception); `value`
     /// is the parsed efficiency, scored secondarily.
     NonProduction { value: f64 },
 
-    /// A Control-Center skill that boosts a NON-PRODUCTION facility metric
-    /// (clue collection, HR contacting, training speed), priced in its OWN
-    /// units with zero LMD weight - the objective stays production-pure (both
-    /// reference implementations silo or zero these; an LMD conversion would
-    /// be an invented weight). Feeds the CC spare-seat tie-break and display.
-    /// `same_room_gate`: None = unconditional; Some(chars) = only while one of
-    /// the named operators shares the Control Center (empty = the named
-    /// operator couldn't be resolved, so the gate never fires - never guess).
+    /// CC boost to a NON-PRODUCTION metric (clues, HR contact, training), in its
+    /// OWN units with zero LMD weight: both reference implementations silo or
+    /// zero these, and a conversion would be invented. CC spare-seat tie-break
+    /// and display only. `same_room_gate`: Some(chars) = only with one of them in
+    /// the CC; empty = unresolved, never fires.
     ControlNonProduction {
         /// The boosted facility's room type ("MEETING", "TRAINING", "HIRE").
         target_room: String,
@@ -974,14 +863,11 @@ pub enum BuffResolutionStrategy {
     /// No branch parses the buff; `estimated_pct` is a conservative estimate.
     Complex { estimated_pct: f64 },
 
-    /// Efficiency changes over the course of a shift based on time/morale.
-    /// Stores the time-averaged value over a full 24hr shift.
+    /// Time-averaged over a full 24h shift.
     MoraleDecayEfficiency { time_averaged_value: f64 },
 
-    /// Generates points of a named pool resource from the base's LAYOUT: "+N
-    /// <Resource> per level per building, max CAP" (Minimalist's Engineering
-    /// Robots). The basis is the summed level of the functional facilities, so
-    /// the points are known without an assignment.
+    /// From the LAYOUT: "+N <Resource> per level per building, max CAP"
+    /// (Minimalist's Engineering Robots). Needs no assignment.
     PoolGenerateBuildingLevels {
         /// Stable resource key from the `$cc.bd_*` term id, not the display name.
         resource: String,
@@ -989,13 +875,10 @@ pub enum BuffResolutionStrategy {
         cap: f64,
     },
 
-    /// Consumes settled pool points: "+PCT% productivity for every PER
-    /// <Resource>". Floored by PER, like every stepped game counter.
-    /// A pool-scaling TAIL on an otherwise ordinary production skill:
-    /// "...capacity limit +8, Productivity +5%, plus an additional +1% for
-    /// every <Felvine>". The base strategy prices the flat parts; the tail
-    /// adds a `ScalingPoolPoints` clause on the same buff so the pool
-    /// machinery feeds it - no half-parse where the tail silently drops.
+    /// Pool TAIL on an ordinary production skill: "...capacity limit +8,
+    /// Productivity +5%, plus an additional +1% for every <Felvine>". `base`
+    /// prices the flat parts; the tail adds a `ScalingPoolPoints` clause so it
+    /// never silently drops.
     PoolTail {
         base: Box<Self>,
         resource: String,
@@ -1004,36 +887,31 @@ pub enum BuffResolutionStrategy {
         per: f64,
     },
 
+    /// "+PCT% productivity for every PER <Resource>", floored by PER.
     PoolPointsScaling {
         resource: String,
         per: f64,
         pct: f64,
     },
 
-    /// Generates pool points from the level of the room the OWNER is seated in
-    /// (Senshi: "provide 1 Monster Meal for every level of the current
-    /// Dormitory"). Settled at assignment scope, where the seat is known.
+    /// Senshi: "provide 1 Monster Meal for every level of the current
+    /// Dormitory". Settled at assignment scope.
     PoolGenerateOwnRoomLevel { resource: String, per_level: f64 },
 
-    /// Generates pool points per operator seated in the OWNER's own room
-    /// (Virtuosa: "for every 1 Operators in that Dormitory, Soundless
-    /// Resonance +1"). Settled at assignment scope.
+    /// Virtuosa: "for every 1 Operators in that Dormitory, Soundless Resonance
+    /// +1". Settled at assignment scope.
     PoolGenerateOwnRoomOccupants { resource: String, per: f64 },
 
-    /// A nullifier whose grant belongs to the ROOM, per occupant
-    /// (Snegurochka's Workflow Optimization). Its speed half survives an
-    /// automation wipe like facility-count grants: the game phrases both as
-    /// "that Factory's productivity" (user-verified 2026-09-10 beside
-    /// Eunectes and Passenger).
+    /// Snegurochka's Workflow Optimization: per-occupant grant to the ROOM. The
+    /// speed half survives an automation wipe, as both read "that Factory's
+    /// productivity" (user-verified 2026-09-10 beside Eunectes and Passenger).
     RoomPerOperatorGrant { speed_pct: f64, capacity: f64 },
 
-    /// Player-declared account facts, carried under [`ACCOUNT_FACTS_KEY`]
-    /// (never a buff): recruit slots bought beyond the initial one.
+    /// Player-declared, under [`ACCOUNT_FACTS_KEY`]: recruit slots beyond the first.
     AccountFacts { open_recruit_slots: u32 },
 
-    /// A one-buff dorm economy (Mr. Nothing): every dorm occupant grants
-    /// `per_occupant` points, and the SAME buff consumes them at `pct` per
-    /// `per` points.
+    /// Mr. Nothing: each dorm occupant grants `per_occupant`; the SAME buff
+    /// pays `pct` per `per` points.
     PoolDormEconomy {
         resource: String,
         per_occupant: f64,
@@ -1041,9 +919,8 @@ pub enum BuffResolutionStrategy {
         pct: f64,
     },
 
-    /// A one-buff generator + converter (Rosmontis' Extrasensory): dorm
-    /// occupants feed `gen_resource`, which converts 1:`from_per` into
-    /// `to_resource`.
+    /// Rosmontis' Extrasensory: dorm occupants feed `gen_resource`, converted
+    /// 1:`from_per` into `to_resource`.
     PoolGenerateDormAndConvert {
         gen_resource: String,
         per_occupant: f64,
@@ -1051,39 +928,27 @@ pub enum BuffResolutionStrategy {
         from_per: f64,
     },
 
-    /// A room-wide morale-drain aura: every occupant of the owner's room
-    /// (the owner included) drains `delta` more per hour (negative = slower).
+    /// Every occupant, owner included, drains `delta`/hr more (negative = slower).
     MoraleRoomAura { delta: f64 },
 
-    /// A Control-Center aura raising dormitory sleepers' recovery
-    /// (non-stacking: the strongest applies).
+    /// CC aura on dorm sleepers' recovery; non-stacking.
     DormRecoveryAura { rate: f64 },
 
-    /// A per-teammate room aura: every OTHER occupant of the room gains
-    /// `per_teammate_pct` of the room's speed metric ("other Operators working
-    /// in the Trading Post have +15% order acquisition efficiency"), which the
-    /// room total sees as value x (occupants - 1).
+    /// "other Operators working in the Trading Post have +15% order acquisition
+    /// efficiency": value x (occupants - 1) on the room.
     PerTeammateEfficiency { per_teammate_pct: f64 },
 
-    /// A standalone pool converter (Ancient Witchcraft: "every 5 Worldly
-    /// Plight is converted to 1 Witchcraft Crystal").
-    ///
-    /// NOTE: the Control-Center WP/PI generators (Chongyue's Sui counter,
-    /// Dusk/Ling's morale-conditional grants) are NOT parsed yet - those buffs
-    /// carry a morale aura the CONTROL arm already claims, and a second effect
-    /// needs a side-channel like `morale_drains`. Their consumers parse now
-    /// and read an unfed pool (zero) until that lands.
+    /// Ancient Witchcraft: "every 5 Worldly Plight is converted to 1 Witchcraft
+    /// Crystal". The CC WP/PI generators (Chongyue, Dusk/Ling) come through the
+    /// side-channel in `pools.rs`, since the CONTROL arm claims their morale aura.
     PoolConvert {
         from: String,
         to: String,
         from_per: f64,
     },
 
-    /// A SOLVED resource-pool payoff (the perception-economy integration
-    /// seam): the pool solver has already settled how much this consumer's
-    /// buff drains, and `pct` is that drain as productivity. Distinct from
-    /// `DirectEfficiency` so the scorer knows this is pool output - it rides
-    /// the ledger's pool-drain channel, not a parsed flat skill.
+    /// SOLVED pool payoff as productivity (perception-economy seam). Not
+    /// `DirectEfficiency`: it rides the ledger's pool-drain channel.
     PoolPayoff { pct: f64 },
 }
 
@@ -1096,17 +961,15 @@ pub fn build_registry(
 ) {
     let mut registry: HashMap<String, BuffResolutionStrategy> = HashMap::new();
     let mut morale_drains = HashMap::new();
-    // The game's "Defaulted trade" threshold, read from the one buff that
-    // defines it (Contract Law: "less than 4"). Payoff skills that reference
-    // defaulted trades price against it; with no definer they stay enablers.
+    // "Defaulted trade" threshold from Contract Law ("less than 4"). Without it,
+    // payoff skills stay enablers.
     let defaulted_below = defaulted_trade_threshold(buffs);
 
     for (buff_id, buff) in buffs {
         let prefix = buff_family(buff_id);
 
-        // Morale-drain extraction runs FIRST, before any parse branch can
-        // `continue` past it - a buff's cost rider must be captured no matter
-        // which strategy family claims its productivity half.
+        // Drains FIRST, before any branch can `continue` past: the cost rider
+        // counts whichever family claims the productivity half.
         let mut drain = 0.0;
         if let Some(val) = parse_morale_drain_increase(&buff.description) {
             drain += val;
@@ -1121,12 +984,9 @@ pub fn build_registry(
             morale_drains.insert(buff_id.clone(), drain);
         }
 
-        // Facility-count enablers (Greyy the Lightningbearer E2 "Power Plant +1", Eunectes E2
-        // "+2") raise a room type's EFFECTIVE facility count - they grant no productivity but
-        // power every per-facility automation scaler. Detected room-agnostically by the stock
-        // "(only affects facility quantity/count)" clause and the room they name - matching that
-        // exact clause (not the "...based on facility count" of Weedy/Eunectes automation buffs)
-        // keeps the two apart.
+        // Facility-count enablers (Greyy the Lightningbearer E2 "Power Plant +1",
+        // Eunectes E2 "+2"), keyed on the exact "(only affects facility
+        // quantity/count)" clause, not automation's "...based on facility count".
         let desc_l = buff.description.to_lowercase();
         if desc_l.contains("only affects facility quantity")
             || desc_l.contains("only affects the facility count")
@@ -1139,8 +999,7 @@ pub fn build_registry(
                 "MANUFACTURE"
             };
             let amount = parse_first_float(&buff.description).unwrap_or(1.0) as i32;
-            // The gate the text states; a named gate whose operator cannot be
-            // resolved makes the modifier unmeetable (never guess).
+            // An unresolvable named gate makes the modifier unmeetable.
             let gate = if let Some(c) = RE_FACILITY_GATE_CHAR.captures(&buff.description) {
                 match (
                     name_to_char.get(&c[1].to_lowercase()),
@@ -1169,13 +1028,9 @@ pub fn build_registry(
             continue;
         }
 
-        // Layout-derived pool economies (Minimalist's Engineering Robots): a
-        // generator whose points come purely from the base's LAYOUT ("+N per
-        // level per building, max CAP") and its stepped consumers ("for every
-        // PER <Resource> present, productivity +PCT%"). The resource key is the
-        // stable `$cc.bd_*` term id, never the display text. Economies whose
-        // points depend on the ASSIGNMENT (dorm occupants, resting operators)
-        // stay Unresolved until the assignment-scope pool pass lands.
+        // Layout pool economies (Minimalist's Engineering Robots): "+N per level
+        // per building, max CAP" and "for every PER <Resource> present,
+        // productivity +PCT%". Keyed on the `$cc.bd_*` term id, not display text.
         if let Some(c) = RE_POOL_GEN_LEVELS.captures(&buff.description) {
             registry.insert(
                 buff_id.clone(),
@@ -1187,9 +1042,8 @@ pub fn build_registry(
             );
             continue;
         }
-        // Pool consumers are room-scored clauses; a CONTROL-room "+X% per N
-        // <pool>" is a GLOBAL that fans out to other rooms (Ave Mujica's
-        // "Plentiful Work Experience") and stays with the CC-global machinery.
+        // A CONTROL "+X% per N <pool>" is a GLOBAL (Ave Mujica's "Plentiful Work
+        // Experience"), handled by the CC-global branches.
         if buff.room_type != "CONTROL" {
             if let Some(c) = RE_POOL_CONSUME.captures(&buff.description) {
                 registry.insert(
@@ -1337,10 +1191,9 @@ pub fn build_registry(
                 } else {
                     magnitude
                 };
-                // The capacity side is signed too: Wulfenite's Go-Getter is
-                // "+20% and capacity limit -8", and that -8 nets against her
-                // Storage Guru +16 in a Vermeil basis (the game's 93% for
-                // Vermeil/Pallas/Wulfenite only adds up with the -8 in).
+                // Signed: Wulfenite's Go-Getter "+20% and capacity limit -8" nets
+                // against her Storage Guru +16 for Vermeil (the game's 93% for
+                // Vermeil/Pallas/Wulfenite needs the -8).
                 let cap_magnitude: i32 = c[4].trim_start_matches('+').parse().unwrap_or(0);
                 let cap_signed = if &c[3] == "vdown" {
                     -cap_magnitude.abs()
@@ -1360,12 +1213,10 @@ pub fn build_registry(
 
         let strategy = match buff.room_type.as_str() {
             "MEETING" => {
-                // Clue-search speed. Most reception buffs carry it in `efficiency`, but several put
-                // (or raise) the % in the description: a time-ramping skill states a higher ceiling
-                // ("…by 2% per hour, up to a maximum of 30%" - Ines, which `efficiency` reports as
-                // its lower 20% starting value), and solo / Clue-Exchange skills leave `efficiency`
-                // 0 entirely (Caper's exchange skill, solo specialists). Credit the sustained
-                // ceiling first, then the `efficiency` field, then any plain description %.
+                // Ramping skills state a higher ceiling in text ("…by 2% per hour, up
+                // to a maximum of 30%": Ines, whose `efficiency` is the 20% start), and
+                // solo/Clue-Exchange skills leave `efficiency` 0 (Caper). Order:
+                // ceiling, `efficiency`, then any plain %.
                 let value = parse_reception_ceiling(&buff.description)
                     .or_else(|| (buff.efficiency != 0).then(|| f64::from(buff.efficiency)))
                     .or_else(|| parse_first_pct(&buff.description))
@@ -1377,8 +1228,8 @@ pub fn build_registry(
             },
             "DORMITORY" => {
                 let desc_lower = buff.description.to_lowercase();
-                // The explicit whole-dorm phrasing WINS over the self heuristic:
-                // Durin's compound text mentions "self" but is an aura.
+                // Whole-dorm phrasing beats the self heuristic: Durin says "self"
+                // but is an aura.
                 let aura = RE_DORM_AURA_ALL
                     .captures(&buff.description)
                     .and_then(|c| c[1].parse::<f64>().ok());
@@ -1388,9 +1239,7 @@ pub fn build_registry(
                     && (desc_lower.contains("self")
                         || desc_lower.contains("oneself")
                         || prefix.contains("_oneself"));
-                // "restores +X to another Operator in that Dormitory" - one
-                // beneficiary, not the whole room (audited: 25 single-target
-                // vs 39 whole-dorm captures, disjoint).
+                // Audited: 25 single-target vs 39 whole-dorm captures, disjoint.
                 let single_target = RE_DORM_SINGLE_TARGET.is_match(&buff.description);
                 BuffResolutionStrategy::MoraleModifier {
                     recovery_per_hour: recovery,
@@ -1401,9 +1250,8 @@ pub fn build_registry(
             }
             "CONTROL" => {
                 let desc_lower = buff.description.to_lowercase();
-                // Layout-counted branches and deployment-gated globals FIRST:
-                // their texts also contain the plain "all Factories' +X%"
-                // phrase the global branches below would claim at face value.
+                // FIRST: these texts also hold the plain "all Factories' +X%"
+                // the global branches below would take at face value.
                 if let Some(branch) = parse_layout_count_branch(&buff.description) {
                     branch
                 } else if let Some(gated) = parse_room_presence_gated_global(&buff.description) {
@@ -1411,10 +1259,9 @@ pub fn build_registry(
                 } else if let Some(crew_gated) = parse_crew_tag_global(&buff.description) {
                     crew_gated
                 }
-                // Pool-scaled globals next, so the plain-global branches below
-                // don't claim them at their flat base value. Audited 2026-08-13:
-                // shape A captures exactly control_mp_bd&trade[000], shape B
-                // exactly control_prod_bd_spd[000]/[010].
+                // Before the plain globals for the same reason. Audited 2026-08-13:
+                // shape A = exactly control_mp_bd&trade[000], shape B =
+                // control_prod_bd_spd[000]/[010].
                 else if let Some(c) = RE_GLOBAL_POOL_A.captures(&buff.description) {
                     BuffResolutionStrategy::GlobalPoolScaling {
                         target_room: room_type_from_global_label(&c[3]).to_string(),
@@ -1433,24 +1280,19 @@ pub fn build_registry(
                     }
                 } else if prefix.contains("_fraction")
                     || prefix.contains("_tag")
-                    // Per-operator faction globals outside the _fraction/_tag id
-                    // family (audited: exactly control_bd_spd's "for each
-                    // <Blacksteel Worldwide> Operator assigned to Factories,
-                    // productivity +5%"; its drain rider rides the side-map).
-                    // (also Flametail's "each <Pinus Sylvestris> Operator
-                    // assigned to Factories have +10% ... towards Battle
-                    // Records", which has no leading "for").
+                    // Per-operator faction globals outside the _fraction/_tag ids
+                    // (audited: control_bd_spd's "for each <Blacksteel Worldwide>
+                    // Operator assigned to Factories, productivity +5%", and
+                    // Flametail's "each <Pinus Sylvestris> Operator assigned to
+                    // Factories have +10% ... towards Battle Records", no "for").
                     || (RE_EACH_FACTION.is_match(&buff.description)
                         && (desc_lower.contains("factor") || desc_lower.contains("trading")))
                 {
                     let tag = parse_tag_keyword(&buff.description).unwrap_or_default();
                     let bonus = parse_first_pct(&buff.description).unwrap_or(0.0);
                     // Production tag buffs (Viviana: "+7% Knights in Factories")
-                    // only reach matching operators, so model them per-operator
-                    // like the faction conditionals - this lets the optimizer
-                    // co-schedule the buffed operators with the CC operator. Tag
-                    // buffs on non-production rooms (e.g. "Elite in Dormitories")
-                    // stay as a flat tag bonus.
+                    // are per-operator so the optimizer co-schedules the Knights.
+                    // Non-production ones ("Elite in Dormitories") stay flat.
                     if desc_lower.contains("factor") || desc_lower.contains("trading") {
                         let target_room = if desc_lower.contains("trading") {
                             "TRADING"
@@ -1486,28 +1328,21 @@ pub fn build_registry(
                     || prefix.contains("_cost")
                     || prefix.contains("allCost")
                 {
-                    // Control-Center morale recovery. Only the "other buildings"
-                    // phrasing reaches workers base-wide; the `control_mp_cost`
-                    // family ("all Operators in the Control Center") is CC-room-only.
+                    // Only "other buildings" reaches base-wide; `control_mp_cost`
+                    // ("all Operators in the Control Center") is CC-only.
                     //
-                    // An aura is credited ONLY when the sentence's subject really
-                    // is an aura scope. This family also holds named-partner gates
-                    // (Mr. Lee's "together with Aak" +0.25, the Amiya pair skills)
-                    // and self-subject texts (Gladiia's Abyssal-conditional self
-                    // ±0.5, the self-drain riders) - a flat parse credited all of
-                    // them as unconditional room auras, inflating the sustain sim.
-                    // Partner-gated and self-subject variants price 0 (never-guess:
-                    // the gate/condition isn't resolvable at parse time); self
-                    // DRAINS still ride the `parse_morale_loss_increase` side-map.
+                    // Partner-gated (Mr. Lee's "together with Aak" +0.25, the Amiya
+                    // pairs) and self-subject texts (Gladiia's Abyssal-conditional
+                    // ±0.5) price 0: a flat parse made them all auras and inflated
+                    // the sustain sim. Self DRAINS still go through
+                    // `parse_morale_loss_increase`.
                     let partner_gated = RE_CC_WITH.is_match(&buff.description);
                     // "each <faction> Operator increases the Morale of all
-                    // Operators in the Control Center by +0.05" (Lungmen
-                    // Guard, Ursus students, Kjerag, Alternates, Team
-                    // Rainbow, Lee's agency): the aura scales with the
-                    // faction's seated count, which no consumer resolves yet.
-                    // Priced flat it credited +0.05 to a crew with none of
-                    // them (Lava the Purgatory seated beside no Alternate,
-                    // 31010962), so it prices 0 until it is count-scaled.
+                    // Operators in the Control Center by +0.05" (Lungmen Guard,
+                    // Ursus students, Kjerag, Alternates, Team Rainbow, Lee's
+                    // agency) scales with a seated count nothing resolves yet. Flat,
+                    // it credited a crew with none (Lava the Purgatory, no
+                    // Alternate, 31010962). 0 until count-scaled.
                     let faction_counted = RE_CC_EACH_FACTION.is_match(&buff.description);
                     let aura_scope = desc_lower.contains("operators in the control center")
                         || desc_lower.contains("other building");
@@ -1531,28 +1366,18 @@ pub fn build_registry(
                     } else {
                         "TRADING"
                     };
-                    // Signed: Gnosis's Kjerag traders take "-15%" alongside
-                    // "+6 order limit" (the only CONTROL conditional whose
-                    // first percentage is a vdown, audited 2026-09-17).
+                    // Signed: Gnosis's "-15%" with "+6 order limit" (the only
+                    // CONTROL conditional leading with a vdown, audited 2026-09-17).
                     let bonus = parse_first_signed_pct(&buff.description).unwrap_or(0.0);
                     let order_limit = parse_order_limit(&buff.description).unwrap_or(0);
-                    // Faction-gated global bonuses ("all <Siracusa> Operators…",
-                    // "all Trading Posts with 3 <Kjerag> Operators…") must NOT be
-                    // credited flat to every room - they depend on each room's team.
-                    // The faction token comes from the displayed keyword (Kjerag ->
-                    // "kjerag", matching operators' nation tag), not the internal
-                    // group marker. A "with <N>" clause means the WHOLE post is
-                    // gated on holding N of that faction; otherwise it's a per-
-                    // operator bonus that each matching operator earns.
-                    // Both faction phrasings are conditional: the plural "all
-                    // <Kjerag> Operators assigned to Trading Posts gain..."
-                    // and Delphine's singular "for each <Glasgow Gang>
-                    // Operator assigned to the same Trading Post, +10%"
-                    // (audited: hers is the ONLY each-singular in this branch).
-                    // Missing the singular routed her to TagBased - a flat
-                    // half-credit with no condition, so she earned a CC seat
-                    // even when no Glasgow member worked a post, and the
-                    // dead-weight reselection never checked her.
+                    // Faction-gated ("all <Siracusa> Operators…", "all Trading Posts
+                    // with 3 <Kjerag> Operators…"): never flat. Token from the shown
+                    // keyword (Kjerag -> "kjerag", the nation tag), not the group
+                    // marker. "with <N>" gates the WHOLE post; otherwise per operator.
+                    // Delphine's singular "for each <Glasgow Gang> Operator assigned
+                    // to the same Trading Post, +10%" (the only one, audited) used to
+                    // fall to TagBased: a flat half-credit that won her a CC seat with
+                    // no Glasgow trader, unseen by the dead-weight reselection.
                     if let Some(faction_token) = parse_tag_keyword(&buff.description)
                         && !faction_token
                             .chars()
@@ -1582,12 +1407,9 @@ pub fn build_registry(
                 } else if let Some(grants) =
                     parse_named_char_room_grants(&buff.description, name_to_char)
                 {
-                    // Named-operator room gates (Wiš'adel's Conspirator): each
-                    // "if <NAME> is assigned to <room>, <payload>" segment
-                    // becomes a grant landing on the room seating that
-                    // operator. Must precede the non-production branch, whose
-                    // Reception-Room guard exists exactly to leave these
-                    // (`control_meeting&ord` x2) for this parse.
+                    // Wiš'adel's Conspirator. Must precede the non-production
+                    // branch, whose Reception-Room guard leaves these
+                    // (`control_meeting&ord` x2) for here.
                     BuffResolutionStrategy::NamedCharRoomGrants { grants }
                 } else if let Some((target_room, c)) = [
                     ("MEETING", &RE_CC_CLUE),
@@ -1598,18 +1420,12 @@ pub fn build_registry(
                 .find_map(|(room, rx)| rx.captures(&buff.description).map(|c| (*room, c)))
                     && !buff.description.contains("assigned to the Reception Room")
                 {
-                    // Non-production CC skill (clue / training / HR), priced in its
-                    // own units - see ControlNonProduction. Placed last so every
-                    // production branch keeps priority. Audited 2026-08-13: within
-                    // CONTROL this captures upMeetingSpeed x2, meeting_spd&bd,
-                    // mp&meet_spd (Sakiko same-room gate), meeting&mp_cost x2
-                    // (their drain rides the hoisted extraction), train_spd x3,
-                    // hire_spd&bd. The Reception-Room guard excludes meeting&ord
-                    // x2 - their clue part is gated on Ines elsewhere and their
-                    // order-limit part targets Hoederer's post, cross-room
-                    // machinery we don't price: whole-buff unresolved beats a
-                    // half-parse. control_hire_spd's aggregate-state conditional
-                    // self-excludes by phrasing.
+                    // Last, so production branches win. Audited 2026-08-13: captures
+                    // upMeetingSpeed x2, meeting_spd&bd, mp&meet_spd (Sakiko gate),
+                    // meeting&mp_cost x2, train_spd x3, hire_spd&bd. The Reception
+                    // guard leaves meeting&ord x2 to the named-gate parse above.
+                    // control_hire_spd's aggregate-state conditional self-excludes
+                    // by phrasing.
                     let same_room_gate = RE_CC_WITH.captures(&buff.description).map(|w| {
                         name_to_char
                             .get(&w[1].to_lowercase())
@@ -1630,26 +1446,18 @@ pub fn build_registry(
                 }
             }
             "MANUFACTURE" | "TRADING" | "POWER" => {
-                // Base-wide named-operator conditional: "+30%, and +5% more when Ines or W is
-                // assigned to any Work Area" (Hoederer). The bonus depends on a named operator
-                // actively WORKING somewhere in the base, distinguished by the "Work Area" phrasing
-                // (vs the same-room "...same Trading Post as <op>"). Carries the base, the bonus %
-                // stated after the named list, and the required operators; the optimizer credits the
-                // bonus only once it knows who is deployed in a work area.
+                // Hoederer: "+30%, and +5% more when Ines or W is assigned to any Work
+                // Area". "Work Area" separates it from same-room "...same Trading Post
+                // as <op>".
                 let in_work_area = buff.description.contains("Work Area");
                 let in_base_anywhere = buff.description.contains("is in the Base");
                 let base_wide = (in_work_area || in_base_anywhere)
                     .then(|| find_all_operator_char_ids(&buff.description, name_to_char))
                     .filter(|(ids, _)| !ids.is_empty());
-                // Deployment-context gate: the bonus needs a specific operator (or faction)
-                // stationed in a specific room TYPE somewhere in the base, not this room.
-                // Must precede the base-wide/teammate branches (its "is assigned to a
-                // <Room>" phrasing carries no "Work Area"/"same" marker to catch it).
+                // Room-presence gates must precede the base-wide/teammate branches:
+                // "is assigned to a <Room>" has no "Work Area"/"same" marker.
                 if RE_DRAIN_AURA_IMMUNITY.is_match(&buff.description) {
-                    // Waai Fu's Team Spirit: the holder ignores roommates'
-                    // drain auras in this room type. Checked first - its
-                    // phrasing carries no efficiency payload for the other
-                    // branches to misread.
+                    // Waai Fu's Team Spirit. First: no payload for others to misread.
                     BuffResolutionStrategy::MoraleDrainAuraImmunity
                 } else if let Some((target_room, target_char_id, bonus_pct)) = RE_TARGET_ROOM_BOOST
                     .captures(&buff.description)
@@ -1687,12 +1495,11 @@ pub fn build_registry(
                         anywhere: !in_work_area,
                     }
                 }
-                // Named-teammate conditional. Handles both phrasings:
+                // Named-teammate conditional, both phrasings:
                 //   "...same Trading Post as <@cc.kw>Lappland</> … +65%"   (Texas)
                 //   "+20%; if <@cc.kw>Exusiai</> … same Trading Post … +25%" (Lemuen)
-                // The base efficiency (always applied) is the Efficiency field; the
-                // bonus is the % stated alongside the named operator. Faction-count
-                // buffs ("for every Glasgow Gang operator…") are excluded.
+                // Base = Efficiency field. Faction counts ("for every Glasgow Gang
+                // operator…") excluded.
                 else if buff.description.contains("same")
                     && !buff.description.contains("for every")
                     && let Some((req_name, name_end)) =
@@ -1700,9 +1507,7 @@ pub fn build_registry(
                 {
                     let required_char_id = name_to_char.get(&req_name).cloned();
                     let base_efficiency = f64::from(buff.efficiency);
-                    // The conditional bonus is the efficiency % stated after the
-                    // named operator; for pure-conditional buffs (base 0) fall back
-                    // to the first % in the text.
+                    // % after the name; base-0 buffs fall back to the first %.
                     let efficiency = parse_first_pct_from(&buff.description, name_end)
                         .or_else(|| {
                             (base_efficiency == 0.0)
@@ -1718,12 +1523,8 @@ pub fn build_registry(
                         order_limit,
                     }
                 }
-                // Faction-gated conditional (Morgan "Resolution on Foreign Trade β":
-                // base +30%, +10% more if ANY Glasgow Gang op shares the post). The
-                // faction analogue of the named-teammate conditional above: it names
-                // a faction ("if a <Glasgow Gang> Operator…same…") rather than one
-                // operator. Count-scalers ("for every <faction>…") are excluded -
-                // those are handled by MatchCountScaling below.
+                // Faction conditional (Morgan: "if a <Glasgow Gang> Operator…same…").
+                // Count-scalers ("for every <faction>…") go to MatchCountScaling.
                 else if buff.description.contains("same")
                     && !buff.description.contains("for every")
                     && !buff.description.contains("for each")
@@ -1743,19 +1544,14 @@ pub fn build_registry(
                         efficiency,
                     }
                 }
-                // Shamare-type: nullifies every teammate's output, but self-scales
-                // per teammate ("...all other Operators' efficiency becomes 0, but
-                // each Operator increases this Operator's efficiency by +45%").
-                // The regex requires the per-Operator % so factory automation ops
-                // (Weedy "per Power Plant", Snegurochka "+N Capacity") fall through
-                // to their facility-scaling handling below.
+                // Shamare-type. Weedy and Snegurochka fall through to facility
+                // scaling (see RE_NULLIFY_SELF_PCT).
                 else if let Some(cap) = RE_NULLIFY_SELF_PCT.captures(&buff.description) {
                     BuffResolutionStrategy::NullifyTeammatesSelfScaling {
                         per_teammate_pct: cap[1].parse().unwrap_or(0.0),
                     }
                 }
-                // Skill-type converter (Highmore): "all <X> and <Y> skills are
-                // considered <Z> skills". Parsed generically from the keywords.
+                // Highmore: "all <X> and <Y> skills are considered <Z> skills".
                 else if let Some((from_tokens, to_token)) =
                     parse_skill_conversion(&buff.description)
                 {
@@ -1764,26 +1560,22 @@ pub fn build_registry(
                         to_token,
                     }
                 }
-                // Match-count scaling: "+X% for each <keyword>" where the keyword
-                // is a faction or skill type (NOT a number - those are resource
-                // mechanics, handled elsewhere). One data-driven strategy for every
-                // faction/skill synergy; the token comes straight from the text.
+                // "+X% for each <keyword>", keyword a faction or skill type (a number
+                // is a resource mechanic, handled elsewhere).
                 else if let Some(token) = parse_count_keyword(&buff.description)
                     && plain_text(&buff.description)
                         .to_lowercase()
                         .contains("in the base")
-                    // Facility counts ("for every facility in the Base with an
-                    // Elite Operator assigned", Mantra) need seats by slot,
-                    // which the deployment map does not carry: they keep their
-                    // flat base below, never a guessed count.
+                    // Mantra's "for every facility in the Base with an Elite
+                    // Operator assigned" needs seats by slot, which the deployment
+                    // map lacks: flat base only, never a guessed count.
                     && !plain_text(&buff.description)
                         .to_lowercase()
                         .contains("every facility")
                 {
-                    // Base-wide OPERATOR count ("for each Rhine Lab Operator in
-                    // the Base (caps at 5)"): resolved against the deployment,
-                    // the holder included. The rate is the percentage stated
-                    // after the count phrase, never the buff's leading flat %.
+                    // "for each Rhine Lab Operator in the Base (caps at 5)": holder
+                    // included; rate = the % after the count phrase, not the
+                    // leading flat %.
                     let count_at = buff
                         .description
                         .find("for each")
@@ -1800,9 +1592,8 @@ pub fn build_registry(
                 } else if let Some(token) = parse_count_keyword(&buff.description) {
                     let per_match_pct = parse_first_pct(&buff.description).unwrap_or(5.0);
                     let cap_pct = parse_scaling_cap(&buff.description);
-                    // Optional named-teammate rider (Morgan "Gang Compass": +35%
-                    // more "when in the same Trading Post as Siege"). Credited only
-                    // when that operator is present; absent -> (None, 0).
+                    // Morgan "Gang Compass": +35% more "when in the same Trading Post
+                    // as Siege". No rider -> (None, 0).
                     let (bonus_char_id, bonus_pct) = buff
                         .description
                         .contains("same")
@@ -1829,18 +1620,10 @@ pub fn build_registry(
                         capacity,
                     }
                 }
-                // Order-VALUE trading skills: raise LMD *per order* rather than
-                // order speed. Stored as their SHAPE and resolved per post level
-                // by `order_mix` (Proviso: +100% in a level-1 post, +83% in a
-                // level-2, +55% in a level-3 - her "+2 gold on orders below 4"
-                // fires on every order a low post can draw). Same-kind effects
-                // take the strongest; different kinds compose on the disjoint
-                // orders they target (Proviso below 4, Tequila above 3).
-                // Pozëmka's production lines: "+5% per Pure Gold Production
-                // Line" scales on the gold factories, and "for every Durin
-                // Operator in the base (caps at 4), another Line" is a base-
-                // wide count worth that same per-line rate (read from the
-                // sibling skill's text, never assumed).
+                // Pozëmka: "+5% per Pure Gold Production Line" scales on the gold
+                // factories; "for every Durin Operator in the base (caps at 4),
+                // another Line" is a base-wide count at that per-line rate, read
+                // from the sibling skill's text.
                 else if buff.room_type == "TRADING"
                     && plain_text(&buff.description).contains("Pure Gold Production Line")
                 {
@@ -1853,9 +1636,8 @@ pub fn build_registry(
                         })
                         .filter_map(|b| parse_first_pct(&b.description))
                         .fold(0.0, f64::max);
-                    // The counted kin is a TAG ("<$cc.tag.durin>Durin") whose
-                    // "for every 1" leads with a number the keyword parser
-                    // rejects, so read the tag markup first.
+                    // A TAG ("<$cc.tag.durin>Durin") after "for every 1", which the
+                    // keyword parser rejects as numeric.
                     let counted = RE_TAG_MARKUP
                         .captures(&buff.description)
                         .map(|c| c[1].to_string())
@@ -1886,13 +1668,11 @@ pub fn build_registry(
                     && let Some((effect, pure_gold)) =
                         order_value_shape(&buff.description, defaulted_below)
                 {
+                    // Order VALUE as a SHAPE, priced per post level by `order_mix`.
                     BuffResolutionStrategy::OrderValue { effect, pure_gold }
                 }
-                // Jaye's Basic Needs (E1 slot, `trade_ord_limit_count`): "-1
-                // order limit for every 10% efficiency provided by all other
-                // Operators (minimum 1); furthermore +4% for every 1 order".
-                // Its id carries "_limit", so it is caught before the
-                // capacity-only branch; the minimum applies to the ROOM total.
+                // Jaye's Basic Needs (E1, `trade_ord_limit_count`). Id has "_limit":
+                // must precede capacity-only. The minimum is on the ROOM total.
                 else if prefix.contains("_limit_count") {
                     let pct_per_cut = parse_nth_pct(&buff.description, 0).unwrap_or(10.0);
                     let cut = parse_order_limit(&buff.description).unwrap_or(-1);
@@ -1903,11 +1683,8 @@ pub fn build_registry(
                         per_order_pct,
                     }
                 }
-                // Jaye's Street Economics (E0 slot): "+X% for every difference
-                // of 1 order between the current number of orders and the
-                // maximum" - paid per empty slot of the post's FINAL limit.
-                // (Its id carries "_limit" but it is an EFFICIENCY skill, so it
-                // must be caught before the capacity-only check below.)
+                // Jaye's Street Economics (E0). Also "_limit" but an EFFICIENCY
+                // skill: must precede capacity-only.
                 else if prefix.contains("_limit_diff")
                     || (buff.room_type == "TRADING"
                         && buff.description.contains("order acquisition efficiency")
@@ -1930,10 +1707,8 @@ pub fn build_registry(
                 else if prefix.contains("_reduce")
                     && buff.description.contains("Morale difference")
                 {
-                    // Pattern: "+X% base, -Y% per Z morale difference"
-                    // Peak is in Efficiency field. Penalty: parse from description.
-                    // Over a full shift, avg morale difference = 12
-                    // (morale goes from 24 to 0, difference goes from 0 to 24, avg = 12)
+                    // "+X% base, -Y% per Z morale difference"; peak = Efficiency.
+                    // Over a shift morale goes 24 -> 0, so the average difference is 12.
                     let peak = f64::from(buff.efficiency);
                     // Parse: "every <@cc.kw>4</> points" -> 4, and "-5%" -> 5
                     let interval = parse_kw_number(&buff.description).unwrap_or(4.0);
@@ -1960,8 +1735,7 @@ pub fn build_registry(
                 else if prefix.contains("_addition") && buff.description.contains("per hour") {
                     // Pattern: "+X% base, +Y% per hour, up to +Z%"
                     let base = f64::from(buff.efficiency); // starting value (may be 0)
-                    // A targeted regex, not parse_first_pct: the first % in the text is the
-                    // [030] tier's base (20%), not the per-hour ramp rate we need here.
+                    // Not parse_first_pct: the first % is the [030] tier's 20% base.
                     let per_hr = parse_per_hour_pct(&buff.description).unwrap_or(1.0);
                     let cap = parse_last_pct(&buff.description).unwrap_or(25.0);
                     let ramp_hours = if per_hr > 0.0 {
@@ -1979,8 +1753,8 @@ pub fn build_registry(
                         time_averaged_value: avg,
                     }
                 }
-                // Efficiency + order limit (e.g. "efficiency +25% and order limit -6")
-                // Must come BEFORE the generic buff.efficiency > 0 check
+                // "efficiency +25% and order limit -6". BEFORE the generic
+                // efficiency > 0 check.
                 else if prefix.starts_with("trade_ord_spd&limit") {
                     let efficiency = f64::from(buff.efficiency);
                     let order_limit = parse_order_limit(&buff.description).unwrap_or(0);
@@ -1989,7 +1763,7 @@ pub fn build_registry(
                         order_limit,
                     }
                 }
-                // Order limit scaling: Degenbrecher's "for every 5 order limit increase... +25%, max +100%"
+                // Degenbrecher: "for every 5 order limit increase... +25%, max +100%"
                 else if prefix == "trade_ord_spd_variable3" {
                     let threshold = parse_first_vup_number(&buff.description).unwrap_or(5.0);
                     let bonus = parse_nth_pct(&buff.description, 0).unwrap_or(25.0);
@@ -2002,10 +1776,9 @@ pub fn build_registry(
                         stage: PEER_STAGE_FIXED_LIMIT,
                     }
                 }
-                // Swire the Elegant Wit's "Investment Solicitations": "+4% per
-                // order limit increase provided by all other Operators" - read
-                // AFTER Jaye's cut (in-game: Jaye/Swire/SilverAsh under Gnosis
-                // reads 129, i.e. 4% x (10 - 2), not 4% x 10).
+                // Swire the Elegant Wit: "+4% per order limit increase provided by
+                // all other Operators", read AFTER Jaye's cut (in-game: Jaye/Swire/
+                // SilverAsh under Gnosis reads 129 = 4% x (10 - 2), not 4% x 10).
                 else if prefix == "trade_ord_spd_variable" {
                     let per = parse_first_pct(&buff.description).unwrap_or(4.0);
                     BuffResolutionStrategy::OrderLimitScaling {
@@ -2016,10 +1789,8 @@ pub fn build_registry(
                         stage: PEER_STAGE_NET_LIMIT,
                     }
                 }
-                // Vermeil-type: factory productivity scales with the team's capacity-limit
-                // boosts ("+X% productivity per capacity limit increase"). The manufacture
-                // analogue of Jaye's order-limit scaling - strong in capacity-stacking teams.
-                // Counts the WHOLE factory's capacity, including this operator's own (+8).
+                // Vermeil: "+X% productivity per capacity limit increase", over the
+                // WHOLE factory's capacity, her own +8 included.
                 else if prefix == "manu_prod_spd_variable" {
                     let per = parse_first_pct(&buff.description).unwrap_or(2.0);
                     BuffResolutionStrategy::OrderLimitScaling {
@@ -2030,9 +1801,7 @@ pub fn build_registry(
                         stage: PEER_STAGE_FIXED_LIMIT,
                     }
                 }
-                // Bubble E1: per-operator capacity tiers - each operator in the factory gains
-                // `low`% if its capacity bonus is <= threshold, else `high`%. Strong when paired
-                // with high-capacity operators (Vulcan/Ceobe/Wulfenite etc.).
+                // Bubble E1 capacity tiers (strong with Vulcan/Ceobe/Wulfenite).
                 else if prefix == "manu_prod_spd_variable3" {
                     let threshold =
                         parse_first_vup_number(&buff.description).unwrap_or(16.0) as i32;
@@ -2045,12 +1814,9 @@ pub fn build_registry(
                         excludes: non_stacking_priority_families(&buff.description, buffs),
                     }
                 }
-                // Recipe-type scaling (Quartz "Precise Scheduling"): a base trading
-                // efficiency PLUS "+N% per recipe type being processed at Factories".
-                // Scales on the count of DISTINCT recipe types (the synthetic
-                // `MANUFACTURE_RECIPE_TYPES` count - gold + EXP is 2, not the 4-factory
-                // count), with the base % from the Efficiency field and the per-unit % the
-                // trailing %.
+                // Quartz "Precise Scheduling": base + "+N% per recipe type being
+                // processed at Factories", over DISTINCT recipe types
+                // (`MANUFACTURE_RECIPE_TYPES`: gold + EXP = 2, not 4 factories).
                 else if prefix.contains("&formula") && buff.description.contains("recipe type") {
                     let per_unit = parse_last_pct(&buff.description).unwrap_or(2.0);
                     BuffResolutionStrategy::FacilityCountScaling {
@@ -2062,11 +1828,9 @@ pub fn build_registry(
                         cap_pct: None,
                     }
                 }
-                // Reception-level scaling (Vigil's New City Trade: "+25%,
-                // +5% per Reception Room level, up to a maximum of 40%"):
-                // base + per-level on the base's Reception Room level, the
-                // ceiling stated on the TOTAL, so the scaled part's cap is
-                // the ceiling less the base.
+                // Vigil's New City Trade: "+25%, +5% per Reception Room level, up to
+                // a maximum of 40%". The ceiling is on the TOTAL, so the scaled cap
+                // is ceiling minus base.
                 else if prefix.contains("&meet")
                     && buff.description.contains("per Reception Room level")
                 {
@@ -2084,7 +1848,7 @@ pub fn build_registry(
                         value: f64::from(buff.efficiency),
                     }
                 }
-                // Automation, scales with power plant count
+                // Automation, per Power Plant.
                 else if prefix.contains("&power") {
                     let per_unit = parse_first_pct(&buff.description).unwrap_or(5.0);
                     BuffResolutionStrategy::FacilityCountScaling {
@@ -2096,8 +1860,7 @@ pub fn build_registry(
                         cap_pct: None,
                     }
                 }
-                // Snegurochka: nullifies teammates, and every occupant grants
-                // the ROOM +N% productivity (top tier) and +M capacity.
+                // Snegurochka: per-occupant ROOM grant (+N% top tier, +M capacity).
                 else if let Some(c) = RE_NULLIFY_ROOM_PER_OP.captures(&buff.description) {
                     BuffResolutionStrategy::RoomPerOperatorGrant {
                         speed_pct: c
@@ -2107,8 +1870,7 @@ pub fn build_registry(
                         capacity: c[2].parse().unwrap_or(0.0),
                     }
                 }
-                // Other &manu nullifiers with no priced payload: a zero-value
-                // automation op so it's never picked for output.
+                // Other &manu nullifiers: zero value, never picked for output.
                 else if prefix.contains("&manu") {
                     BuffResolutionStrategy::FacilityCountScaling {
                         target_room: "MANUFACTURE".to_string(),
@@ -2138,12 +1900,9 @@ pub fn build_registry(
                         per_match_pct: per_match,
                     }
                 }
-                // Output mirroring (Waai Fu's Cooperative Will, Snowsant's
-                // Heavenly Reward): "+5% for every 5% provided by all other
-                // Operators assigned to that <room>, up to a maximum of N%".
-                // The first % is the payout, the second the step it is paid
-                // per; the same number in every such skill so far, read
-                // separately anyway.
+                // Waai Fu, Snowsant: "+5% for every 5% provided by all other
+                // Operators assigned to that <room>, up to a maximum of N%". Payout
+                // and step are read separately though equal so far.
                 else if prefix.contains("_variable2") {
                     let cap = parse_last_pct(&buff.description).unwrap_or(25.0);
                     let per = parse_first_pct(&buff.description).unwrap_or(5.0);
@@ -2156,19 +1915,11 @@ pub fn build_registry(
                         cap_pct: cap,
                     }
                 }
-                // Building-resource dependent. Two kinds, both worth 0 in the baseline:
-                //   - Unstockable consumables (Marcille's "+1% per Monster Meal",
-                //     Engineering Robots, Witchcraft Crystal): can't assume the player
-                //     has any banked, and crediting the per-unit % (as if one unit were
-                //     stocked) over-ranks the operator against reliable specialists.
-                //   - The Perception Information / Chain of Thought / Soundless Resonance
-                //     economy (Rosmontis, Ebenholz, ...): a base-wide resource loop fed
-                //     by operators resting in dorms (and CC/HR/Training generators). Real
-                //     and potentially large, but it spans the whole base, so it needs a
-                //     cross-building resource simulation rather than a per-room estimate -
-                //     0 until that exists, which is safer than a wrong per-unit guess.
-                // Any always-on flat productivity lives in a separate base-skill slot,
-                // captured by the `efficiency > 0` branch above.
+                // Unmatched building-resource skills are 0 here: per-unit credit for
+                // an unbanked consumable (Monster Meal, Engineering Robots,
+                // Witchcraft Crystal) over-ranks them, and the Perception economy
+                // is base-wide (the pool settlement prices it). Flat parts live in
+                // a separate slot, caught by `efficiency > 0` above.
                 else if prefix.contains("_bd") {
                     BuffResolutionStrategy::Complex { estimated_pct: 0.0 }
                 }
@@ -2189,11 +1940,9 @@ pub fn build_registry(
                         cap_pct: None,
                     }
                 }
-                // Drone-recovery power skill scaling with max Drone capacity (Greyy the
-                // Lightningbearer's "+1% Drone recovery rate for every 10 max Drone capacity
-                // (Max +25%)"). Scales on the base's ACTUAL max drone capacity - the synthetic
-                // `DRONE_CAPACITY` facility count (a 3x L3-plant base holds 235 drones, so the
-                // skill reads +23.5%, under its +25% ceiling) - with the stated cap carried.
+                // Greyy the Lightningbearer: "+1% Drone recovery rate for every 10 max
+                // Drone capacity (Max +25%)", on the real `DRONE_CAPACITY` (3x L3
+                // plants hold 235 drones: +23.5%).
                 else if buff.room_type == "POWER"
                     && buff.description.contains("Drone recovery")
                     && buff.description.contains("max Drone capacity")
@@ -2208,7 +1957,7 @@ pub fn build_registry(
                         cap_pct: parse_last_pct(&buff.description),
                     }
                 }
-                // Non-capacity-scaled drone skill with its % only in the description.
+                // Drone skill with its % only in the description.
                 else if buff.room_type == "POWER" && buff.description.contains("Drone recovery") {
                     let value = parse_last_pct(&buff.description)
                         .or_else(|| parse_first_pct(&buff.description))
@@ -2222,9 +1971,7 @@ pub fn build_registry(
             _ => BuffResolutionStrategy::CapacityOnly { order_limit: 0 },
         };
 
-        // A pool-scaling tail ("plus an additional +X% for every <res>")
-        // composes over whatever the base parse produced, so the flat parts
-        // keep their pricing and the tail becomes a ScalingPoolPoints clause.
+        // "plus an additional +X% for every <res>" wraps the base parse.
         let strategy = match RE_POOL_TAIL.captures(&buff.description) {
             Some(c) if buff.room_type == "MANUFACTURE" || buff.room_type == "TRADING" => {
                 BuffResolutionStrategy::PoolTail {
@@ -2245,11 +1992,9 @@ pub fn build_registry(
     (registry, morale_drains)
 }
 
-/// The match token of a "for each/every <keyword>" count-scaling buff, or `None`
-/// if the buff doesn't scale per teammate. The token is the leading word of the
-/// keyword, lowercased (e.g. "Rhine Tech-type skill" -> "rhine", "Glasgow Gang
-/// Operator" -> "glasgow"). Numeric keywords ("for each 4 gold bars") are
-/// resource mechanics, not teammate counts, and return `None`.
+/// "for each/every <keyword>" -> lowercased leading word ("Rhine Tech-type
+/// skill" -> "rhine", "Glasgow Gang Operator" -> "glasgow"). Numeric keywords
+/// ("for each 4 gold bars") are resource mechanics: `None`.
 fn parse_count_keyword(desc: &str) -> Option<String> {
     let cap = RE_COUNT_KEYWORD.captures(desc)?;
     let token = first_token(&cap[1]);
@@ -2257,9 +2002,7 @@ fn parse_count_keyword(desc: &str) -> Option<String> {
         .then_some(token)
 }
 
-/// Parse a skill-type converter: "all <X> and <Y> skills are considered <Z>
-/// skills" -> (from = [x, y], to = z). The last keyword is the target type; the
-/// earlier ones are the source types. Returns `None` if not a converter.
+/// "all <X> and <Y> skills are considered <Z> skills" -> ([x, y], z).
 fn parse_skill_conversion(desc: &str) -> Option<(Vec<String>, String)> {
     if !(desc.contains("considered") && desc.contains("skill")) {
         return None;
@@ -2293,9 +2036,8 @@ fn plain_text(desc: &str) -> String {
     RE_TAG.replace_all(desc, "").into_owned()
 }
 
-/// "Defaulted trade" threshold: the Pure-Gold count below which a trade is
-/// defaulted, from the buff that defines the rule ("if the amount of Pure
-/// Gold traded is less than 4, it will be considered a Defaulted trade").
+/// From the defining text: "if the amount of Pure Gold traded is less than 4, it
+/// will be considered a Defaulted trade".
 fn defaulted_trade_threshold(buffs: &HashMap<String, Buff>) -> Option<u32> {
     static RE_DEFAULTED_RULE: LazyLock<Regex> = LazyLock::new(|| {
         Regex::new(r"Pure Gold traded is less than (\d+), it will be considered a Defaulted trade")
@@ -2311,11 +2053,8 @@ fn defaulted_trade_threshold(buffs: &HashMap<String, Buff>) -> Option<u32> {
         })
 }
 
-/// `(shape, pure_gold)` of an order-value trading skill. `pure_gold` is true
-/// for values that only apply to Pure-Gold orders (Proviso), which a
-/// Shamare-type Precious-Metal shift kills. `defaulted_below` is the game's
-/// defaulted-trade threshold; without a definer the Proviso payoff cannot be
-/// priced and stays an enabler (never guess).
+/// `(shape, pure_gold)`. `pure_gold`: Pure-Gold-only value (Proviso), killed by
+/// Shamare's shift. Without `defaulted_below` Proviso stays an enabler.
 fn order_value_shape(desc: &str, defaulted_below: Option<u32>) -> Option<(OrderEffect, bool)> {
     static RE_HIGH_LMD: LazyLock<Regex> = LazyLock::new(|| {
         Regex::new(r"traded is higher than (\d+)[^.]*?increase the LMD gained by \+(\d+)").unwrap()
@@ -2357,18 +2096,15 @@ fn first_token(s: &str) -> String {
         .to_lowercase()
 }
 
-/// "assigned together with other <$cc.g.lgd>L.G.D.</> Operators to the
-/// Control Center" - a Control-Center global gated on the center's own crew.
+/// "assigned together with other <$cc.g.lgd>L.G.D.</> Operators to the Control Center".
 static RE_CC_WITH_OTHER_TAG: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"assigned together with other <\$cc\.(?:g|tag)\.([A-Za-z0-9_]+)>").unwrap()
 });
 
-/// Hoshiguma the Breacher's Camaraderie: "together with other L.G.D.
-/// Operators to the Control Center, all Factories' productivity +3%". The
-/// gate is on the Control Center's crew, the payload a plain room-type
-/// global; one other operator of the tag is enough ("Operators" names no
-/// count). Parsed BEFORE the per-operator faction branch, which read the
-/// same text as "+3% to each L.G.D. operator in Factories" and never fired.
+/// Hoshiguma the Breacher's Camaraderie: "together with other L.G.D. Operators to
+/// the Control Center, all Factories' productivity +3%". One other is enough
+/// ("Operators" names no count). Parsed BEFORE the per-operator faction branch,
+/// which misread it as "+3% to each L.G.D. operator in Factories".
 fn parse_crew_tag_global(desc: &str) -> Option<BuffResolutionStrategy> {
     let tag = RE_CC_WITH_OTHER_TAG.captures(desc)?[1].to_lowercase();
     let lower = plain_text(desc).to_lowercase();
@@ -2390,11 +2126,10 @@ fn parse_crew_tag_global(desc: &str) -> Option<BuffResolutionStrategy> {
     })
 }
 
-/// Operators the game's term glossary lists under a base TAG: `cc.tag.knight`
-/// reads "Includes the following operators / Nearl the Radiant Knight, Nearl,
-/// Blemishine, ..., Gravel, Viviana". A curated tag has no character field
-/// behind it - the glossary is its only definition - so this is where "all
-/// Knight Operators" (Viviana) learns who a Knight is. `char_id` -> tags.
+/// `char_id` -> glossary TAGs. `cc.tag.knight` reads "Includes the following
+/// operators / Nearl the Radiant Knight, Nearl, Blemishine, ..., Gravel,
+/// Viviana"; curated tags have no character field, so this is the only source
+/// for "all Knight Operators" (Viviana).
 pub fn glossary_tags(
     consts: &GameDataConst,
     name_to_char: &HashMap<String, String>,
@@ -2441,11 +2176,9 @@ pub fn faction_tags_for(
     tags
 }
 
-/// The buff families a skill takes priority over: "(This effect does not
-/// stack with Recycling and takes priority over it)" names a SKILL, resolved
-/// to every buff carrying that name (all tiers share the id prefix). Empty
-/// when the text carries no such clause or the name resolves to nothing -
-/// then nothing is excluded (never guess).
+/// "(This effect does not stack with Recycling and takes priority over it)"
+/// names a SKILL; resolve it to every buff of that name (tiers share the id
+/// prefix). Unresolved -> empty, nothing excluded.
 fn non_stacking_priority_families(desc: &str, buffs: &HashMap<String, Buff>) -> Vec<String> {
     let plain = plain_text(desc);
     let Some(start) = plain.find("does not stack with ") else {
@@ -2474,26 +2207,23 @@ fn parse_first_pct(desc: &str) -> Option<f64> {
     RE_FIRST_PCT.captures(desc).and_then(|c| c[1].parse().ok())
 }
 
-/// The sustained ceiling of a time-ramping reception skill ("…then by 2% per hour, up to a maximum
-/// of 30%") - the value it holds during continuous operation. `None` when the skill has no ramp.
+/// Sustained ceiling of a ramping reception skill ("…then by 2% per hour, up to a
+/// maximum of 30%").
 fn parse_reception_ceiling(desc: &str) -> Option<f64> {
-    // "maximum of" is ASCII, so the lowercased index is a valid byte offset into the original.
+    // ASCII needle, so the lowercased index is valid in the original.
     let idx = desc.to_lowercase().find("maximum of")?;
     parse_first_pct_from(desc, idx)
 }
 
-/// First `<@cc.vup>+N%` efficiency at or after byte offset `start` - used to
-/// pick out the conditional bonus that follows a named operator keyword.
+/// First `<@cc.vup>+N%` at or after byte offset `start`.
 fn parse_first_pct_from(desc: &str, start: usize) -> Option<f64> {
     desc.get(start..).and_then(parse_first_pct)
 }
 
-/// First `<@cc.kw>…</>` keyword that resolves to a known operator name
-/// (stripping nested `<$cc.x>` wrappers). Returns the lowercased name and the
-/// byte offset just past that keyword block, so the caller can scan for the
-/// conditional bonus % that appears after it. Handles both word orders:
-/// "...same Trading Post as <@cc.kw>Lappland</>" and
-/// "if <@cc.kw>Exusiai</> is assigned to the same Trading Post".
+/// First keyword naming a known operator (nested `<$cc.x>` stripped): lowercased
+/// name and the byte offset past the block. Both orders: "...same Trading Post
+/// as <@cc.kw>Lappland</>" and "if <@cc.kw>Exusiai</> is assigned to the same
+/// Trading Post".
 fn find_operator_keyword(
     desc: &str,
     name_to_char: &HashMap<String, String>,
@@ -2508,9 +2238,8 @@ fn find_operator_keyword(
     None
 }
 
-/// Every `<@cc.kw>…</>` keyword that resolves to a known operator, as `char_id`s, plus the byte
-/// offset just past the LAST one (so the caller can read a bonus % stated after the named list).
-/// Handles multi-operator conditions ("when <Ines> or <W> are assigned…").
+/// Every keyword naming a known operator ("when <Ines> or <W> are assigned…"),
+/// plus the byte offset past the LAST one.
 fn find_all_operator_char_ids(
     desc: &str,
     name_to_char: &HashMap<String, String>,
@@ -2529,9 +2258,7 @@ fn find_all_operator_char_ids(
     (ids, last_end)
 }
 
-/// Room labels as they appear in buff text -> internal room type. A documented
-/// text-identifier binding (like the facility-count enabler mapping): gamedata
-/// carries no label->room-type table.
+/// Buff-text room label -> room type. Gamedata has no such table.
 fn room_type_from_label(label: &str) -> Option<&'static str> {
     Some(match label {
         "Factory" => "MANUFACTURE",
@@ -2547,11 +2274,9 @@ fn room_type_from_label(label: &str) -> Option<&'static str> {
     })
 }
 
-/// Parse a Control-Center buff's named-operator room gates ("if <NAME> is
-/// assigned to <room>, <payload>") into grants landing on the named
-/// operator's room. Returns None when no segment carries BOTH a resolvable
-/// gate and a priced payload - the buff then falls through to later branches.
-/// A segment whose NAME fails to resolve is dropped (never guess).
+/// "if <NAME> is assigned to <room>, <payload>" segments -> grants. None when no
+/// segment has both a resolvable gate and a priced payload (falls through).
+/// Unresolved names are dropped.
 fn parse_named_char_room_grants(
     desc: &str,
     name_to_char: &HashMap<String, String>,
@@ -2606,10 +2331,9 @@ pub fn layout_term_rooms(
         .collect()
 }
 
-/// Wang's Expedience shape: "if <A> is greater than or equal to <B>, all
-/// <room> +X%; if <B> is greater than <A>, all <room> +Y%", with A and B
-/// glossary pool resources (`$cc.bd_*`). The names map to resource ids by
-/// their order of appearance in the markup.
+/// Wang's Expedience: "if <A> is greater than or equal to <B>, all <room> +X%; if
+/// <B> is greater than <A>, all <room> +Y%". A and B map to `$cc.bd_*` ids by
+/// order of appearance.
 fn parse_layout_count_branch(desc: &str) -> Option<BuffResolutionStrategy> {
     static RE_BRANCH: LazyLock<Regex> = LazyLock::new(|| {
         Regex::new(
@@ -2641,9 +2365,8 @@ fn parse_layout_count_branch(desc: &str) -> Option<BuffResolutionStrategy> {
     })
 }
 
-/// Pudding's Overclock shape: "if there are N or more Operation Platforms
-/// assigned to <room>s, all <room> +X%". Operation Platforms are the
-/// Robot-tagged operators (`robot` match tag).
+/// Pudding's Overclock: "if there are N or more Operation Platforms assigned to
+/// <room>s, all <room> +X%". Operation Platforms = `robot` tag.
 fn parse_room_presence_gated_global(desc: &str) -> Option<BuffResolutionStrategy> {
     static RE_GATE: LazyLock<Regex> = LazyLock::new(|| {
         Regex::new(
@@ -2662,13 +2385,11 @@ fn parse_room_presence_gated_global(desc: &str) -> Option<BuffResolutionStrategy
     })
 }
 
-/// Deployment-context gates: "if <op> is assigned to the <Room>", "and <op> is
-/// in a <Room>", "if another <faction> Operator is assigned to a <Room>".
-/// Audited across all gamedata buffs (2026-08-13): within the production room
-/// arms the named form captures exactly `manu_formula_spd_P[000]` (Gummy in a
-/// Trading Post) and `power_rec_spd_P[000]/[001]` (Kal'tsit in the Control
-/// Center, Logos as the Trainer); the faction form captures exactly
-/// `power_rec_spd_ext&faction[000]` (another Laterano op in a Power Plant).
+/// "if <op> is assigned to the <Room>", "and <op> is in a <Room>", "if another
+/// <faction> Operator is assigned to a <Room>". Audited 2026-08-13 in the
+/// production arms: named = exactly `manu_formula_spd_P[000]` (Gummy, Trading
+/// Post) and `power_rec_spd_P[000]/[001]` (Kal'tsit in CC, Logos as Trainer);
+/// faction = exactly `power_rec_spd_ext&faction[000]` (Laterano, Power Plant).
 fn parse_room_presence_gate(
     desc: &str,
     base_efficiency: f64,
@@ -2689,8 +2410,7 @@ fn parse_room_presence_gate(
     if let Some(c) = RE_GATE_CHAR.captures(desc) {
         let room_type = room_type_from_label(&c[2])?;
         let end = c.get(0)?.end();
-        // An unresolvable name leaves the char list empty: the gate then never
-        // fires and only the base is credited (never guess).
+        // Unresolved name -> empty list: base only.
         return Some(BuffResolutionStrategy::ConditionalOnRoomPresence {
             required_char_ids: name_to_char
                 .get(&c[1].to_lowercase())
@@ -2710,9 +2430,7 @@ fn parse_room_presence_gate(
         return Some(BuffResolutionStrategy::ConditionalOnRoomPresence {
             required_char_ids: Vec::new(),
             required_faction: Some(c[1].to_lowercase()),
-            // "another <faction> Operator": the buff only matters while its
-            // same-faction owner works that room type too, so owner + another
-            // = 2 matching operators deployed there.
+            // "another": owner + another.
             required_count: 2,
             room_type: room_type.to_string(),
             base_efficiency,
@@ -2722,9 +2440,7 @@ fn parse_room_presence_gate(
     None
 }
 
-/// First faction marker (`<$cc.g.glasgow>` etc.) in the text. Returns the token
-/// and the byte offset just past it, so the caller can read the bonus % that
-/// follows the faction mention.
+/// First faction marker (`<$cc.g.glasgow>` etc.) and the byte offset past it.
 fn find_faction_token(desc: &str) -> Option<(String, usize)> {
     let m = RE_FACTION_TOKEN.captures(desc)?;
     let token = m[1].to_lowercase();
@@ -2753,11 +2469,9 @@ fn parse_first_float(desc: &str) -> Option<f64> {
         .and_then(|c| c[1].parse().ok())
 }
 
-/// Base-wide morale recovery from a Control-Center buff. Prefers the figure tied to "Morale"
-/// (e.g. "recover <@cc.vup>+0.05</> Morale per hour"); a buff whose only `<@cc.vup>` number is
-/// a perception-RESOURCE generation (it mentions a `<$cc.bd_…>` resource like Worldly Plight)
-/// recovers no morale at all - that economy is valued separately, not as base-wide morale.
-/// Otherwise falls back to the first `<@cc.vup>` figure (buffs phrased without "Morale" nearby).
+/// Prefers the figure tied to "Morale" ("recover <@cc.vup>+0.05</> Morale per
+/// hour"). If the only number is a `<$cc.bd_…>` resource grant (Worldly Plight),
+/// no morale. Else the first `<@cc.vup>` figure.
 fn parse_morale_recovery(desc: &str) -> Option<f64> {
     if let Some(c) = RE_MORALE_RECOVERY.captures(desc) {
         return c[1].parse().ok();
@@ -2768,12 +2482,9 @@ fn parse_morale_recovery(desc: &str) -> Option<f64> {
     parse_first_float(desc)
 }
 
-/// Extract the faction/tag token from a `<@cc.kw>…</>` keyword, normalised to match an
-/// operator's faction tag (`nation_id`/`group_id`/`team_id`). A dotted acronym like "L.G.D."
-/// collapses to its letters ("lgd"), which is how the L.G.D. group is tagged - a plain word
-/// match would otherwise drop it and the conditional buff would be credited unconditionally.
-/// Anything else takes its leading word ("Blacksteel Worldwide" -> "blacksteel", "Kjerag" ->
-/// "kjerag"), matching the existing behaviour.
+/// Keyword -> faction tag. "L.G.D." collapses to "lgd" (how the group is tagged;
+/// a word match dropped it and credited the conditional unconditionally).
+/// Otherwise the leading word ("Blacksteel Worldwide" -> "blacksteel").
 fn parse_tag_keyword(desc: &str) -> Option<String> {
     let kw = RE_TAG_KEYWORD.captures(desc)?.get(1)?.as_str();
     if kw.contains('.') && kw.chars().all(|c| c.is_ascii_alphabetic() || c == '.') {
@@ -2862,12 +2573,11 @@ pub fn parse_morale_drain_decrease(desc: &str) -> Option<f64> {
         .and_then(|c| c[1].parse().ok())
 }
 
-/// A morale effect one operator's buff applies to a DIFFERENT co-seated
-/// operator - the Ave Mujica drama riders ("Morale consumed per hour by
-/// Sakiko Togawa +0.1" while sharing the Control Center), Mortis' amnesty
-/// ("ignores the self Morale loss effect from her own base skill"), and
-/// Nian's faction-wide version ("remove any Morale reduction effects from
-/// Sui Operators ... that affect themselves").
+/// Morale effect on a DIFFERENT co-seated operator: Ave Mujica riders ("Morale
+/// consumed per hour by Sakiko Togawa +0.1" in the same CC), Mortis' amnesty
+/// ("ignores the self Morale loss effect from her own base skill"), Nian's
+/// faction version ("remove any Morale reduction effects from Sui Operators ...
+/// that affect themselves").
 #[derive(Clone, Debug, PartialEq)]
 pub enum TargetedMoraleEffect {
     /// The named target drains `delta` more per hour while the owner shares
@@ -2879,9 +2589,7 @@ pub enum TargetedMoraleEffect {
     /// Every co-seated operator carrying the faction tag has their own
     /// self-drain-increase riders negated (the owner included).
     NegatesFactionOwnLoss { faction: String },
-    /// The owner ignores every morale effect TEAMMATES project into the room
-    /// (Waaifu's Team Spirit: room drain auras don't touch her, in either
-    /// direction).
+    /// Ignores every morale effect TEAMMATES project, either direction (Waai Fu).
     SelfAuraImmunity,
     /// The owner's drain shifts by `delta` while their room produces one of
     /// `targets` (Cement's Vlog: -0.25 while making Battle Records).
@@ -2913,9 +2621,7 @@ static RE_FORMULA_DRAIN: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
-/// True when the buff carries any targeted morale effect - used by the
-/// unresolved-inventory relabel: a buff whose whole effect the targeted
-/// side-channel prices needs no Unresolved marker.
+/// Lets the unresolved inventory drop the marker on a buff this side-channel prices.
 pub fn has_targeted_morale_effect(desc: &str) -> bool {
     RE_TARGETED_RIDER.is_match(desc)
         || RE_NEGATES_OWN.is_match(desc)
@@ -2924,8 +2630,7 @@ pub fn has_targeted_morale_effect(desc: &str) -> bool {
         || RE_FORMULA_DRAIN.is_match(desc)
 }
 
-/// Extract every targeted morale effect from the buff table. Audited
-/// 2026-08-13: riders = `control_mp&meet_spd`[000] (+0.05 on Sakiko) and
+/// Audited 2026-08-13: riders = `control_mp&meet_spd`[000] (+0.05 on Sakiko) and
 /// `control_dorm_rec2`[000] (+0.1 on Sakiko); own-loss negation =
 /// `control_mp_cost_reset`[000] (Mortis, companion-gated on Sakiko); faction
 /// negation = `control_facCostReset`[000] (Sui).
@@ -2962,8 +2667,7 @@ pub fn targeted_morale_effects(
         } else if RE_AURA_IMMUNITY.is_match(&buff.description) {
             out.insert(buff_id.clone(), TargetedMoraleEffect::SelfAuraImmunity);
         } else if let Some(c) = RE_FORMULA_DRAIN.captures(&buff.description) {
-            // The produced good is the buff's Targets entry (F_EXP for
-            // Battle Records) - no product-name mapping needed.
+            // Targets entry (F_EXP for Battle Records), no name mapping.
             out.insert(
                 buff_id.clone(),
                 TargetedMoraleEffect::SelfFormulaDrain {
@@ -2976,24 +2680,17 @@ pub fn targeted_morale_effects(
     out
 }
 
-/// Per-recruit-slot HR speed: "+10% HR contacting speed for every Recruit
-/// slot other than the initial slot" (Lin's Meritocracy). The slot count is
-/// ACCOUNT state the sync cannot read, so the base parse prices the rider 0
-/// (never-guess) and this resolver re-prices it when the player declares the
-/// fact.
+/// Lin's Meritocracy: "+10% HR contacting speed for every Recruit slot other than
+/// the initial slot". The sync can't read slots: 0 until the player declares them.
 static RE_HR_PER_SLOT: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"(?:<@cc\.vup>)?\+([\d.]+)%(?:</>)? HR contacting speed for every Recruit slot")
         .unwrap()
 });
 
-/// Registry rewrite for player-declared account facts (the established
-/// resolve-* pattern: never mutate, return a re-priced copy). Currently one
-/// fact exists: `open_recruit_slots` - recruit slots purchased beyond the
-/// initial one (0-3) - which prices the per-slot HR-speed riders that
-/// otherwise resolve to 0. Audited 2026-08-23: `RE_HR_PER_SLOT` captures
-/// exactly `hire_spd_cost&extra[000]` (Lin, flat 0 + 10/slot); the other
-/// slot-gated buffs' riders are clue likelihoods, drains, or resource points
-/// - none of them the buff's PRICED value - and stay untouched.
+/// Re-priced registry copy for player-declared facts; today `open_recruit_slots`
+/// (0-3 beyond the first). Audited 2026-08-23: `RE_HR_PER_SLOT` captures exactly
+/// `hire_spd_cost&extra[000]` (Lin, 0 + 10/slot); other slot-gated riders (clue
+/// odds, drains, resource points) aren't priced value and stay untouched.
 pub fn resolve_account_facts(
     registry: &HashMap<String, BuffResolutionStrategy>,
     buffs: &HashMap<String, Buff>,
@@ -3023,15 +2720,12 @@ pub fn resolve_account_facts(
     out
 }
 
-/// The alternative self-drain phrasing: "self Morale loss per hour
-/// <@cc.vdown>+N</>". Companion-gated forms ("when assigned together with
-/// <op>, ... Morale loss +N") are SKIPPED - capturing them flat would charge
-/// drain the operator only pays alongside a partner, fabricating depletion
-/// warnings. Audited 2026-08-13: captures exactly `control_bd_spd`[000],
+/// "self Morale loss per hour <@cc.vdown>+N</>". Companion-gated forms ("when
+/// assigned together with <op>, ... Morale loss +N") are SKIPPED: flat, they
+/// fabricate depletion warnings. Audited 2026-08-13: exactly `control_bd_spd`[000],
 /// `control_mp_cost&bd_up`[000] (Chongyue +0.5), `control_mp_cost&bd2`[010]
-/// (+0.5), and `control_mp_cost&bd3`[000] (Sakiko +0.05, whose TRAILING
-/// "when Passion is 40 or higher" condition holds at any committed plan's
-/// steady-state pool - the flat capture is the steady-state model).
+/// (+0.5), `control_mp_cost&bd3`[000] (Sakiko +0.05; its trailing "when Passion
+/// is 40 or higher" holds at any committed plan's steady state).
 pub fn parse_morale_loss_increase(desc: &str) -> Option<f64> {
     static RE_MORALE_LOSS: LazyLock<Regex> = LazyLock::new(|| {
         Regex::new(r"[Ss]elf Morale loss per hour <@cc\.vdown>\+([\d.]+)</>").unwrap()

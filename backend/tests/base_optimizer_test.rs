@@ -37,7 +37,7 @@ fn room(slot: &str, room_type: &str, level: i32) -> UserRoom {
 }
 
 /// A realistic base layout (Control Center + 2 trading posts + 4 factories + 4
-/// dormitories) - used instead of any specific captured user.
+/// dormitories), used instead of any captured user.
 fn generic_base() -> UserBuilding {
     let mut rooms = vec![room("cc", "CONTROL", 5)];
     rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
@@ -46,7 +46,7 @@ fn generic_base() -> UserBuilding {
     UserBuilding { rooms }
 }
 
-/// Every operator with base skills, at E2-max - a deep, user-independent roster
+/// Every operator with base skills, at E2-max: a deep, user-independent roster
 /// (mirrors the "best possible" baseline the grader builds).
 fn full_roster(gd: &GameData) -> Vec<OperatorBaseProfile> {
     gd.building
@@ -197,7 +197,7 @@ fn trading_efficiency(gd: &GameData, roster: &[OperatorBaseProfile]) -> f64 {
         .map_or(0.0, |r| r.total_efficiency)
 }
 
-/// The trading post's potential LMD/day - reflects BOTH order speed and order
+/// The trading post's potential LMD/day: reflects BOTH order speed and order
 /// value (so Proviso, who adds value not speed, shows up here).
 fn trading_lmd(gd: &GameData, roster: &[OperatorBaseProfile]) -> f64 {
     let name_to_char = build_name_to_char(&gd.operators);
@@ -340,7 +340,7 @@ fn texas_without_lappland_is_not_overcredited() {
 
     // Roster has Texas but NOT Lappland, plus two flat +30% operators. Since
     // Texas's +65% is conditional on Lappland (absent here), her Feud buff must
-    // contribute 0 - so the two +30% operators should both beat her.
+    // contribute 0, so the two +30% operators should both beat her.
     let roster = vec![
         profile(gd, TEXAS),
         profile(gd, "char_502_nblade"),
@@ -370,7 +370,7 @@ fn texas_without_lappland_is_not_overcredited() {
 #[test]
 fn shamare_nullifies_teammate_output() {
     // Shamare zeroes every teammate's efficiency, so a Shamare room's output
-    // depends only on how many bodies fill it - NOT on who those bodies are.
+    // depends only on how many bodies fill it, NOT on who those bodies are.
     let gd = load_game_data();
     const SHAMARE: &str = "char_254_vodfox";
 
@@ -455,7 +455,7 @@ fn rhine_lab_faction_synergy_boosts_dorothy() {
 #[test]
 fn highmore_converts_rhine_skills_for_standardization_scaler() {
     // Mizuki scales +5% per Standardization skill. A Rhine operator (Silence)
-    // is NOT a Standardization skill on its own - but Highmore converts Rhine
+    // is NOT a Standardization skill on its own, but Highmore converts Rhine
     // skills into Standardization, so Mizuki should then count Silence.
     let gd = load_game_data();
     const MIZUKI: &str = "char_437_mizuki"; // +5% per Standardization skill
@@ -534,7 +534,7 @@ fn rotation_plan_orders_members_by_when_to_swap_and_names_a_backup() {
 #[test]
 fn staggered_rotation_shares_a_small_bench_across_rooms() {
     // A staggered rotation swaps one operator at a time, so a single versatile
-    // filler can back up several rooms - the shared bench is far smaller than a
+    // filler can back up several rooms: the shared bench is far smaller than a
     // doubled roster (one backup per room), never bigger than the room count.
     let gd = load_game_data();
     let building = generic_base();
@@ -556,7 +556,7 @@ fn staggered_rotation_shares_a_small_bench_across_rooms() {
     );
 
     // The bench is shared (no duplicates) and covers all rooms with fewer fillers
-    // than there are rooms - the same filler is reused, not one reserved per room.
+    // than there are rooms; the same filler is reused, not one reserved per room.
     let unique: std::collections::HashSet<&String> = rotation.shared_bench.iter().collect();
     assert_eq!(
         unique.len(),
@@ -622,7 +622,7 @@ fn weedy_is_not_padded_into_a_normal_factory() {
 #[test]
 fn metalwork_specialists_take_gold_freeing_generics_for_exp() {
     // A Gold factory should be staffed by Metalwork (Gold-only) specialists, not by
-    // a generic +30% who serves any product equally - the generic is freed for the
+    // a generic +30% who serves any product equally; the generic is freed for the
     // EXP factory that has no dedicated operator. This is the Marcille vs Haze case.
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
@@ -674,7 +674,7 @@ fn metalwork_specialists_take_gold_freeing_generics_for_exp() {
 
 #[test]
 fn proviso_is_credited_as_a_strong_gold_trader() {
-    // Proviso's Pure-Gold payoff raises LMD per ORDER (value), not order speed -
+    // Proviso's Pure-Gold payoff raises LMD per ORDER (value), not order speed,
     // so it shows up in the LMD yield, not the efficiency %. By LMD she should
     // rival or beat a strong flat (speed) trader.
     let gd = load_game_data();
@@ -696,7 +696,7 @@ fn proviso_is_credited_as_a_strong_gold_trader() {
 fn proviso_value_does_not_survive_shamare() {
     // Shamare shifts the post toward Precious-Metal orders, so Proviso's Pure-Gold
     // value no longer applies in her team. A Shamare + Proviso post reads only
-    // Shamare's own ~10% value, NOT Proviso's +55% - she is wasted with Shamare and
+    // Shamare's own ~10% value, NOT Proviso's +55%; she is wasted with Shamare and
     // belongs in a fast post instead.
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
@@ -742,7 +742,7 @@ fn jaye_order_limit_efficiency_is_counted() {
 
 /// Jaye's cut is what bounds him: beside Exusiai (+35) and Lemuen (+20, +25
 /// more with Exusiai) he cuts the limit by 8 and the post holds 2 orders, so
-/// the displayed figure is 80 + 4 x 2 = 88 - and a 2-order buffer sells four
+/// the displayed figure is 80 + 4 x 2 = 88, and a 2-order buffer sells four
 /// orders a day, so the optimizer benches him and runs the pair.
 #[test]
 fn jaye_is_benched_when_his_cut_starves_the_order_buffer() {
@@ -789,7 +789,7 @@ fn jaye_is_benched_when_his_cut_starves_the_order_buffer() {
 #[test]
 fn lemuen_conditional_bonus_with_exusiai_is_counted() {
     // Lemuen's "Amicus": base +20% order efficiency, PLUS +25% more when Exusiai
-    // shares the post - phrased "if <Exusiai> is assigned to the same Trading
+    // shares the post, phrased "if <Exusiai> is assigned to the same Trading
     // Post" (name BEFORE "same"), unlike Texas's "...same Post as <Lappland>".
     // The +25% was once dropped, leaving the team at ~+85% (reported as ~92%).
     // With it counted: Lemuen 45 + Exusiai 35 + Quartz 30 = 110.
@@ -805,7 +805,7 @@ fn lemuen_conditional_bonus_with_exusiai_is_counted() {
         "Lemuen+Exusiai+Quartz should read ~+110% (Lemuen's +25% Exusiai bonus counted), got +{eff:.1}%"
     );
 
-    // The +25% is genuinely conditional: drop Exusiai and Lemuen keeps only her
+    // The +25% is conditional: drop Exusiai and Lemuen keeps only her
     // base +20%, so the same two-trader pairing must read materially lower.
     let no_exu = trading_efficiency(
         gd,
@@ -824,7 +824,7 @@ fn lemuen_conditional_bonus_with_exusiai_is_counted() {
 fn quartz_recipe_scaling_counts_distinct_recipe_types_not_factories() {
     // Quartz "Precise Scheduling" (trade_ord_spd&formula[000]): base +30% trading, plus +2% per
     // recipe TYPE being processed at Factories. That scales on the number of distinct formulas the
-    // base runs (gold + EXP = 2), NOT the factory count - four gold/EXP factories still process two
+    // base runs (gold + EXP = 2), NOT the factory count: four gold/EXP factories still process two
     // recipe types. Her buff resolves to a FacilityCountScaling targeting the synthetic
     // MANUFACTURE_RECIPE_TYPES count with a +30% base, so a 2-recipe base reads +34% (30 + 2×2).
 
@@ -904,7 +904,7 @@ fn morgan_glasgow_count_carries_a_siege_rider() {
 fn faction_conditional_credits_base_plus_glasgow_bonus() {
     // Vina Victoria "Resolution on Foreign Trade β": base +30% trading, plus +10%
     // more "if a Glasgow Gang Operator is assigned to the same Trading Post". The
-    // faction analogue of a named-teammate conditional - base always on, bonus
+    // faction analogue of a named-teammate conditional: base always on, bonus
     // gated on a faction tag rather than one operator.
 
     let gd = load_game_data();
@@ -1027,7 +1027,7 @@ fn faction_gated_cc_buffs_are_conditional_not_flat_global() {
 fn control_center_same_type_buffs_do_not_stack() {
     // Amiya and Swire both grant the clause-bearing "+X% to all Trading Posts" CC
     // buff ("only the most effective one will take effect... same skill effect"),
-    // so two of them must NOT stack - only the strongest applies.
+    // so two of them must NOT stack; only the strongest applies.
     use backend::core::grade::base::assignment::compute_current_assignment;
 
     let gd = load_game_data();
@@ -1077,7 +1077,7 @@ fn control_center_same_type_buffs_do_not_stack() {
 #[test]
 fn control_center_clauseless_buffs_stack() {
     // Mon3tr's "+2% all Factories" carries the non-stacking clause, but Sakiko's
-    // Precious-Metal productivity does NOT - so Sakiko stacks on top of Mon3tr.
+    // Precious-Metal productivity does NOT, so Sakiko stacks on top of Mon3tr.
     use backend::core::grade::base::assignment::compute_current_assignment;
 
     let gd = load_game_data();
@@ -1131,7 +1131,7 @@ fn shamare_money_printer_forms_despite_a_deep_distractor_pool() {
     const SHAMARE: &str = "char_254_vodfox";
     const TEQUILA: &str = "char_486_takila";
     const BIBEAK: &str = "char_252_bibeak";
-    // 15 flat trading operators - distractors that crowd the candidate set.
+    // 15 flat trading operators, distractors that crowd the candidate set.
     let distractors = [
         "char_502_nblade",
         "char_123_fang",
@@ -1231,7 +1231,7 @@ fn fixed_synergy_squads_are_marked_locked_and_flexible_teams_are_not() {
 #[test]
 fn viviana_knight_buff_reaches_pinus_knights_like_wild_mane() {
     // Viviana's CC buff "+7% to all Knight Operators in Factories" must reach Wild
-    // Mane, who is Pinus Sylvestris (the Knightclub) - so the optimizer co-schedules
+    // Mane, who is Pinus Sylvestris (the Knightclub), so the optimizer co-schedules
     // them. A non-Knight factory operator gets nothing from her.
     use backend::core::grade::base::assignment::compute_current_assignment;
 
@@ -1290,8 +1290,8 @@ fn faction_gated_cc_bonus_does_not_inflate_a_nonmatching_post() {
     // Regression: a Proviso/Lemuen/Exusiai post under a Control Center staffed by
     // Amiya + SilverAsh + Umiri must read ~87% (Lemuen 45 + Exusiai 35 = 80 speed,
     // plus ONLY Amiya's unconditional +7% global). SilverAsh's "3 Kjerag" +10% and
-    // Umiri's "Siracusa" +5% must NOT apply - this team is Kazimierz/Laterano/
-    // Lungmen - so it must NOT read the old, inflated 102%.
+    // Umiri's "Siracusa" +5% must NOT apply (this team is Kazimierz/Laterano/
+    // Lungmen), so it must NOT read the old, inflated 102%.
     use backend::core::grade::base::assignment::compute_current_assignment;
 
     let gd = load_game_data();
@@ -1360,7 +1360,7 @@ fn faction_gated_cc_bonus_does_not_inflate_a_nonmatching_post() {
 #[test]
 fn weedy_is_treated_as_power_scaling_automation() {
     // Weedy nullifies teammates and scales with POWER PLANTS, not teammates. In a
-    // base with more power plants she must produce more - proving she's modeled as
+    // base with more power plants she must produce more, proving she's modeled as
     // facility-scaling automation, not as a Shamare-style per-teammate nullifier.
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
@@ -1438,7 +1438,7 @@ fn gold_exp_split_is_yield_based() {
 #[test]
 fn current_preset_shifts_are_distinct() {
     // When the player has a planned rotation (preset shifts), the "current"
-    // Shift A and Shift B must reflect those distinct presets - not the same
+    // Shift A and Shift B must reflect those distinct presets, not the same
     // static crew for both.
     use backend::core::grade::base::assignment::{compute_current_assignment, has_preset_shifts};
     let gd = load_game_data();
@@ -1495,7 +1495,7 @@ fn current_preset_shifts_are_distinct() {
 fn staggered_rotation_sustains_near_peak() {
     // A staggered rotation keeps your best operators working almost all the time
     // (swap only the lowest-morale one), so sustained 24/7 output is CLOSE to peak
-    // - not a big drop from averaging weaker whole teams. LOCKED synergy teams can't
+    // rather than a big drop from averaging weaker whole teams. LOCKED synergy teams can't
     // be staggered one operator at a time, so they sustain a little further below
     // peak (their rest gaps go uncovered), which is why the floor is ~20%.
     let gd = load_game_data();
@@ -1638,7 +1638,7 @@ fn current_assignment_reflects_live_base() {
     );
 
     // The optimizer can't do worse than the player's current arrangement. Compare
-    // by realized YIELD (LMD-equivalent/day) - the optimizer's actual objective -
+    // by realized YIELD (LMD-equivalent/day), the optimizer's actual objective,
     // not the raw efficiency-sum, which ignores the gold/EXP split, order value,
     // and per-room soft caps and so can rank a lower-yield base higher.
     let realized_value = |asn: &backend::core::grade::base::types::BaseAssignment| -> f64 {
@@ -1784,7 +1784,7 @@ fn grade_base_scores_stationing_quality() {
     };
 
     // Unstaffed base, rooms already max level: zero utilization, full
-    // infrastructure - exactly the 25% infrastructure share, and the stored
+    // infrastructure: exactly the 25% infrastructure share, and the stored
     // components say so explicitly.
     let empty = grade_base(&roster, Some(&building(&[], &[], &[], 3)), gd);
     assert!(
@@ -1853,7 +1853,7 @@ fn grade_base_scores_stationing_quality() {
 fn conditional_cc_buff_is_not_credited_when_its_gate_cannot_be_met() {
     // SilverAsh the Reignfrost's Control Center buff only helps Trading Posts that
     // hold 3 Kjerag operators. With too few Kjerag traders in the roster the gate
-    // can never trigger, so he must NOT take a CC seat - a legitimate global op
+    // can never trigger, so he must NOT take a CC seat; a legitimate global op
     // (Amiya: "all Trading Posts +X%") gets it instead.
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
@@ -1890,7 +1890,7 @@ fn conditional_cc_buff_is_not_credited_when_its_gate_cannot_be_met() {
 #[test]
 fn degenbrecher_is_not_used_in_a_trading_post_without_cap_synergy() {
     // Degenbrecher gives +25% speed but slashes the order limit by 6 ("minimum 1"),
-    // and her payoff clause needs teammates who ADD order limit - which trading
+    // and her payoff clause needs teammates who ADD order limit, which trading
     // posts don't field. So she cripples a normal post and must be left out in
     // favour of ordinary traders (the seat stays empty before she's forced in).
     let gd = load_game_data();
@@ -1962,7 +1962,7 @@ fn cross_formula_reallocation_frees_a_generic_for_exp() {
 fn texas_is_not_a_standalone_rotation_backup_without_lappland() {
     // Texas's trading value is entirely conditional on Lappland sharing the post
     // (her base is 0). As a staggered rotation backup she is swapped in to cover one
-    // resting main, so with no Lappland present she does nothing - she must NOT be
+    // resting main, so with no Lappland present she does nothing; she must NOT be
     // chosen as a standalone backup over a real trader.
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
@@ -2353,7 +2353,7 @@ fn hoshigumas_camaraderie_fires_beside_another_lgd_operator() {
     // "When this Operator is assigned together with other L.G.D. Operators to
     // the Control Center, all Factories' productivity +3%" (Hoshiguma the
     // Breacher). The gate is on the center's crew: Swire (group L.G.D.)
-    // meets it, Amiya does not, and Swire the Elegant Wit - no group - does
+    // meets it, Amiya does not, and Swire the Elegant Wit (no group) does
     // not either. It used to be read as "+3% to each L.G.D. operator in
     // Factories" and never fired (user report 2026-10-03).
     use backend::core::grade::base::assignment::compute_current_assignment;
@@ -2623,7 +2623,7 @@ fn a_robot_token_is_parked_dead_when_its_gate_and_an_exclusion_gate_both_pay() {
 fn dead_conditional_cc_operator_is_dropped_after_assignment() {
     // The roster HAS three Kjerag traders, so SilverAsh's gate passes the roster
     // feasibility check and he is initially seated in the CC. But stronger non-Kjerag
-    // traders win the single post's seats, so no post ever holds 3 Kjerag - his +10%
+    // traders win the single post's seats, so no post ever holds 3 Kjerag and his +10%
     // never fires. The post-assignment check must drop him and reseat a real op.
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
@@ -2664,7 +2664,7 @@ fn morale_operator_takes_a_spare_cc_seat_and_lifts_sustain() {
     // A global morale-recovery operator (Wiš'adel: workers in other buildings recover
     // faster) should claim a spare Control Center seat instead of being burned as a
     // zero-value production filler, and its base-wide recovery boost must raise the
-    // sustained output - the "add a morale operator" the rotation wants.
+    // sustained output: the "add a morale operator" the rotation wants.
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
@@ -2719,7 +2719,7 @@ fn morale_operator_takes_a_spare_cc_seat_and_lifts_sustain() {
 fn insufficient_dorm_capacity_throttles_sustained_output() {
     // A base can only rest as many operators at once as its dorms hold. With the same
     // production rooms and the same dorm LEVEL (so recovery rate is identical), fewer
-    // dorms - less capacity - means the rotation can't rest everyone and sustained
+    // dorms (less capacity) means the rotation can't rest everyone and sustained
     // output is throttled. This is the "you can only rest 20, so you need 3 sets" cap.
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
@@ -2746,7 +2746,7 @@ fn insufficient_dorm_capacity_throttles_sustained_output() {
 fn rotation_is_expressed_as_overlapping_sets() {
     // The rotation surfaces as a few overlapping staffings: each set rests one main
     // per room (covered by the backup), consecutive sets share all-but-one operator,
-    // and across the sets every main rests in turn - so the whole base is never
+    // and across the sets every main rests in turn, so the whole base is never
     // swapped at once.
     let gd = load_game_data();
     let name_to_char = build_name_to_char(&gd.operators);
@@ -2821,7 +2821,7 @@ fn rotation_is_expressed_as_overlapping_sets() {
 #[test]
 fn set_count_tracks_real_rest_demand_not_seat_count() {
     // The number of rotation sets should reflect how many operators actually run low
-    // on morale within a cycle - NOT just the seat count. A factory of low-drain
+    // on morale within a cycle, NOT just the seat count. A factory of low-drain
     // operators (Vermeil/Vulcan-type, ~48h before a swap) needs no rest slots and
     // yields zero sets, while the same factory of neutral-drain operators (~24h)
     // rotates each of them and yields the full three sets.
@@ -2872,7 +2872,7 @@ fn weedy_is_not_suggested_as_a_rotation_backup() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
     // Four factories + one power plant: Weedy's lone automation output (one plant)
-    // loses to the strong normal teams, so she sits idle - the exact case where she
+    // loses to the strong normal teams, so she sits idle: the exact case where she
     // used to be offered as a backup for EVERY factory at once.
     let mut rooms: Vec<UserRoom> = (0..4)
         .map(|i| room(&format!("mf{i}"), "MANUFACTURE", 3))
@@ -3108,7 +3108,7 @@ fn shift_rotation_forms_three_overlapping_shifts() {
     };
 
     // The Control Center runs TWO squads: Squad 1 on two shifts, Squad 2 (disjoint) covering the
-    // third - either alternating (1&3 / 2) or as a 24h block (1+2 / 3) when a synergy aligns it.
+    // third: either alternating (1&3 / 2) or as a 24h block (1+2 / 3) when a synergy aligns it.
     let cc_slot = "cc";
     let cc_crews: Vec<Vec<String>> = (0..3).map(|k| crew(k, cc_slot)).collect();
     assert!(
@@ -3130,7 +3130,7 @@ fn shift_rotation_forms_three_overlapping_shifts() {
         "the two CC squads are disjoint so Squad 1 actually rests"
     );
 
-    // The HR Office and Reception Room cycle two squads too - the per-login swap.
+    // The HR Office and Reception Room cycle two squads too: the per-login swap.
     for slot in ["hr", "rc"] {
         let crews: Vec<Vec<String>> = (0..3).map(|k| crew(k, slot)).collect();
         assert!(!crews[0].is_empty(), "{slot} should be staffed");
@@ -3186,7 +3186,7 @@ fn shift_rotation_forms_three_overlapping_shifts() {
         "a pair of posts runs exactly three teams"
     );
     // Teams working the same shift never share an operator, and a team shares nobody with its
-    // replacement - EXCEPT a Fiammetta-sustained operator, who is deliberately pinned to one
+    // replacement, EXCEPT a Fiammetta-sustained operator, who is deliberately pinned to one
     // room across every shift (the full roster owns a manager, so one trader gets sustained).
     let sustained: std::collections::HashSet<&String> = rot.sustained.iter().collect();
     let rotating = |c: Vec<String>| -> Vec<String> {
@@ -3223,7 +3223,7 @@ fn team_value_is_order_independent_and_rewards_staffing() {
     // `team_value` is what the rotation comparison uses to tell whether a player's current team
     // already ties the recommendation (Bryophyta vs a Dorothy-boosted Rhine operator). It must
     // not depend on operator order, and a staffed team must score at least as high as an empty
-    // room - otherwise an equivalent team could be misjudged.
+    // room, otherwise an equivalent team could be misjudged.
     let gd = load_game_data();
     let building = trading_post(3);
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
@@ -3276,7 +3276,7 @@ fn team_value_is_order_independent_and_rewards_staffing() {
 #[test]
 fn facility_count_enabler_counts_only_from_her_seat() {
     // Greyy the Lightningbearer E2 raises the EFFECTIVE Power Plant count by 1 ("only affects
-    // facility quantity") - but only while she is seated in a Power Plant. The core search
+    // facility quantity"), but only while she is seated in a Power Plant. The core search
     // never seats her there on its own (the plan carries no plant crews), so without a pin
     // Weedy reads the real plants; the improvements oracle offers her seat as a bundle, and
     // with that pin Weedy's per-plant output rises.
@@ -3318,7 +3318,7 @@ fn facility_count_enabler_counts_only_from_her_seat() {
 
 #[test]
 fn vermeil_converts_her_own_capacity() {
-    // Vermeil's E1 scales factory productivity with the WHOLE factory's capacity limit -
+    // Vermeil's E1 scales factory productivity with the WHOLE factory's capacity limit,
     // including her own +8 from her E0. A solo Vermeil should therefore convert that +8 into a
     // real productivity bonus (~+16% at +2%/cap), not score a flat 0 (the self-exclusion bug).
     let gd = load_game_data();
@@ -3346,7 +3346,7 @@ fn vermeil_converts_her_own_capacity() {
 #[test]
 fn optimal_with_empty_pins_is_identical_to_the_plain_optimum() {
     // The pinned path must be a no-op when nothing is pinned, so non-243 / no-economy bases (and
-    // every existing caller) get exactly the plain optimum - the economy only ever ADDS pins.
+    // every existing caller) get exactly the plain optimum; the economy only ever ADDS pins.
     let gd = load_game_data();
     let mut rooms = vec![room("cc", "CONTROL", 5), room("hr", "HIRE", 3)];
     rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
@@ -3405,7 +3405,7 @@ const DOLRIS: &str = "char_4184_dolris"; // Idol's Aura: generates +1 per dormit
 const TMORIS: &str = "char_4186_tmoris"; // Reliable Companion: generates +10
 
 /// A real 243 layout (Control Center + 2 trading + 4 factories + 3 power + dorms) so the
-/// resource economy is in play - the whole Passion combo lives in the Control Center.
+/// resource economy is in play: the whole Passion combo lives in the Control Center.
 fn bd_base_243() -> UserBuilding {
     let mut rooms = vec![room("cc", "CONTROL", 5)];
     rooms.extend((0..2).map(|i| room(&format!("tp{i}"), "TRADING", 3)));
@@ -3698,7 +3698,7 @@ fn ines_reception_skill_uses_the_sustained_time_ceiling() {
     let (registry, _drains) =
         build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
     // Ines's "Shadow Gathering": clue search +20%, then +2%/hr up to a maximum of 30%. Under
-    // sustained operation she holds the 30% ceiling - the `Efficiency` field only reports the 20%
+    // sustained operation she holds the 30% ceiling; the `Efficiency` field only reports the 20%
     // starting value, which would undercredit her.
     let value = match registry.get("meet_spd_hast[000]") {
         Some(BuffResolutionStrategy::NonProduction { value }) => *value,
@@ -3715,7 +3715,7 @@ fn enforcer_loses_to_chen_in_reception_because_he_burns_out() {
     // Enforcer's reception skill is higher (+35% vs Ch'en's/FEater's +25%), but his "+2 Morale
     // consumed per hour" burns him out in ~5h of a 12h shift, so his prorated clue output drops
     // below both sustainable operators. The 2-seat Reception Room fills with Ch'en + FEater and
-    // leaves Enforcer out - without the morale penalty he'd be the top pick.
+    // leaves Enforcer out; without the morale penalty he'd be the top pick.
     const ENFORCER: &str = "char_4036_forcer";
     const CHEN: &str = "char_010_chen";
     const FEATER: &str = "char_109_fmout"; // +25% reception, no morale cost
@@ -3749,7 +3749,7 @@ fn enforcer_loses_to_chen_in_reception_because_he_burns_out() {
 #[test]
 fn factory_formula_assignment_respects_the_players_current_layout() {
     // The optimizer picks the gold/EXP COUNT, but must lay it onto the slots the player ALREADY
-    // runs that way - otherwise it flips every factory's formula and the whole comparison reads as
+    // runs that way, otherwise it flips every factory's formula and the whole comparison reads as
     // "change everything" (the reported "very wrong" plan).
     let gd = load_game_data();
     let (registry, drains) = build_registry(&gd.building.buffs, &build_name_to_char(&gd.operators));
@@ -3862,7 +3862,7 @@ fn preset_24_7_operator_with_fiammetta_is_kept_every_shift_and_flagged() {
             tp.active,
             tp.recommended
         );
-        // The manager makes that possible only by STAYING in a dormitory -
+        // The manager makes that possible only by STAYING in a dormitory:
         // the rotation reserves her seat itself, with no caller pins.
         const FIAMMETTA: &str = "char_300_phenxi";
         assert!(
@@ -3941,7 +3941,7 @@ fn without_a_manager_the_24_7_preset_operator_still_rests_the_middle_shift() {
 fn rest_shift_does_not_keep_a_main_team_operator_working() {
     // An operator recommended on the MAIN shifts (1 & 3) whom the player ALSO keeps in their
     // rest-shift preset (i.e. they currently run them 24/7) must NOT be shown working the middle
-    // shift via the "≈ yours" overlay - that made a main operator look 24/7. The rest shift should
+    // shift via the "≈ yours" overlay; that made a main operator look 24/7. The rest shift should
     // flag them OUT instead.
     use backend::app::services::improvements::shift_rotation_to_dto;
     use backend::core::grade::base::shift_rotation::{Shift, ShiftRoom, ShiftRotation};
@@ -4012,7 +4012,7 @@ fn rest_shift_does_not_keep_a_main_team_operator_working() {
 #[test]
 fn reception_does_not_credit_a_co_op_conditional_without_the_partner() {
     // Vulpisfoglia's +30% only applies "together with Suzuran"; without Suzuran in the room she's a
-    // +20% operator and should lose her slot to unconditional higher-skill operators - not be
+    // +20% operator and should lose her slot to unconditional higher-skill operators, not be
     // over-credited the conditional and beat them.
     const VULPIS: &str = "char_4026_vulpis"; // +20%, plus +30% ONLY together with Suzuran
     let gd = load_game_data();
@@ -4045,7 +4045,7 @@ fn reception_does_not_credit_a_co_op_conditional_without_the_partner() {
 #[test]
 fn power_plant_is_equivalent_when_drone_recovery_matches() {
     // Two Power Plant specialists with the SAME drone-recovery % (Pudding and Indigo, both +15%)
-    // are interchangeable - the diff should read "≈ yours", not a pointless swap.
+    // are interchangeable: the diff should read "≈ yours", not a pointless swap.
     use backend::app::services::improvements::shift_rotation_to_dto;
     use backend::core::grade::base::shift_rotation::{Shift, ShiftRoom, ShiftRotation};
     const PUDDING: &str = "char_4004_pudd";
@@ -4088,7 +4088,7 @@ fn power_plant_is_equivalent_when_drone_recovery_matches() {
 #[test]
 fn base_wide_bonus_applies_only_when_the_partner_works_a_work_area() {
     // Hoederer's "+5% when Ines or W is assigned to any Work Area" must be credited only when Ines is
-    // actually deployed in a work area - not merely owned, and not while she has nowhere to work.
+    // actually deployed in a work area, not merely owned, and not while she has nowhere to work.
     // With a Reception Room she works (a Work Area) and the bonus applies; without one (and no
     // production skill of her own) she can't be stationed, so it doesn't.
     const HOEDERER: &str = "char_4088_hodrer";
@@ -4171,7 +4171,7 @@ fn quartz_value_reflects_distinct_recipe_types_not_factory_count() {
 #[test]
 fn synergy_pairs_stay_co_teamed_and_all_three_teams_are_staffed() {
     // The balanced packer selects whole candidate teams, so a superadditive pair
-    // (Texas + Lappland) is never split across teams - while a roster with enough
+    // (Texas + Lappland) is never split across teams, while a roster with enough
     // traders staffs all three of the pair-of-posts teams instead of frontloading
     // two and leaving the third hollow.
     use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
@@ -4227,9 +4227,9 @@ fn synergy_pairs_stay_co_teamed_and_all_three_teams_are_staffed() {
 
 #[test]
 fn owning_fiammetta_proactively_sustains_the_best_trading_operator() {
-    // NO preset evidence at all - owning a morale-swap manager alone makes the rotation
+    // NO preset evidence at all: owning a morale-swap manager alone makes the rotation
     // recommend holding the highest-gain trading operator (high team output x high morale
-    // drain - a Shamare/Proviso-type) at full morale 24/7, pinned to one post every shift.
+    // drain, a Shamare/Proviso-type) at full morale 24/7, pinned to one post every shift.
     // Shamare's skill burns extra morale per hour, so she gains the most from the manager.
     use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
     const SHAMARE: &str = "char_254_vodfox";
@@ -4740,7 +4740,7 @@ fn bubble_pays_per_capacity_point_by_tier() {
 }
 
 /// Vigil's New City Trade reads the base's Reception Room level: +25 base,
-/// +5 per level, capped at 40 - so a level-3 room gives 40, none gives 25.
+/// +5 per level, capped at 40, so a level-3 room gives 40, none gives 25.
 #[test]
 fn vigil_reads_the_reception_room_level() {
     use backend::core::grade::base::assignment::compute_current_assignment;
@@ -4797,7 +4797,7 @@ fn aroma_ramp_rate_parses_in_the_trailing_form() {
 
 /// Snegurochka's Workflow Optimization grants the ROOM +10% per occupant
 /// (and +5 capacity), which survives an automation wipe like the plant
-/// grants - beside Eunectes on three plants the room reads 30 + 20.
+/// grants: beside Eunectes on three plants the room reads 30 + 20.
 #[test]
 fn snegurochka_room_grant_survives_the_automation_wipe() {
     use backend::core::grade::base::assignment::compute_current_assignment;
@@ -5415,7 +5415,7 @@ fn bench_seat_prefers_a_valued_operator_over_a_blank() {
 /// limit per 10% the others provide and +4% per order of the FINAL limit
 /// (Street Economics per empty slot, Basic Needs per filled order); Gnosis in
 /// the Control Center gives Kjerag traders -15% and +6. The readers resolve in
-/// stages - Degenbrecher on the fixed limits, Jaye's cut on the efficiency so
+/// stages: Degenbrecher on the fixed limits, Jaye's cut on the efficiency so
 /// far, Swire on the limit after the cut. A mutual fixed point would read 104
 /// and 113 for the two Jaye+Gnosis posts, not 121 and 129. The "(minimum 1)"
 /// floors the ROOM limit, never a single skill.
@@ -5746,7 +5746,7 @@ fn leniency_marks_a_close_team_equivalent_and_surfaces_the_gap() {
 fn drone_capacity_skill_scales_with_the_bases_actual_capacity() {
     // Greyy the Lightningbearer's "+1% Drone recovery rate for every 10 max Drone capacity
     // (Max +25%)" reads the base's REAL drone capacity: 100 base + 45 per L3 Power Plant.
-    // On a full 243 (3x L3 plants = 235 drones) that's +23.5% - under the +25% cap, not AT it.
+    // On a full 243 (3x L3 plants = 235 drones) that's +23.5%, under the +25% cap, not AT it.
     use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
     const GREYY_ALTER: &str = "char_1027_greyy2";
     let gd = load_game_data();
@@ -5862,7 +5862,7 @@ fn clause_registry_goldens_on_real_gamedata() {
         "Hoederer's rider requires Ines/W in any Work Area: {hoederer:?}"
     );
 
-    // Proviso "Damages for Breach": Pure-Gold order VALUE, not speed - kept as
+    // Proviso "Damages for Breach": Pure-Gold order VALUE, not speed, kept as
     // its SHAPE (+2 gold on orders below the game's defaulted threshold of 4)
     // and priced per post level at scoring time.
     let proviso = &clauses["trade_ord_against[010]"];
@@ -5908,7 +5908,7 @@ fn clause_registry_goldens_on_real_gamedata() {
 
 /// Full planner run on a REAL captured base (dumped from psql by the session
 /// tooling, never committed). With the CP2 shadow live, every room evaluation
-/// double-scores through the clause ledger and panics on divergence - so a
+/// double-scores through the clause ledger and panics on divergence, so a
 /// clean pass here proves ledger equivalence on live data, and the printed
 /// summary is the diff baseline for the principled changes (CP3/CP4).
 ///
@@ -6191,7 +6191,7 @@ fn real_base_repro() {
 }
 
 /// NEVER-GUESS diagnostics (CP3): every buff the parser can't reduce to real
-/// clauses contributes exactly ZERO and must be VISIBLE - this test prints the
+/// clauses contributes exactly ZERO and must be VISIBLE; this test prints the
 /// full unresolved inventory (the work list for new parsers) and pins the
 /// properties the principle demands: unresolved sets carry no value, and the
 /// families the goldens prove parseable never regress into the list.
@@ -6211,7 +6211,7 @@ fn unresolved_buffs_are_zero_and_inventoried() {
             buff.room_type, id, buff.buff_name
         );
         // Never guess: an unresolved buff's clause set carries no scoring
-        // value. A morale drain may ride along - it comes from structured
+        // value. A morale drain may ride along; it comes from structured
         // side-map data, not from guessing at the productivity text.
         assert!(
             clauses[*id].iter().all(|c| match c.kind {
@@ -6268,8 +6268,8 @@ fn unresolved_buffs_are_zero_and_inventoried() {
 
 /// Deployment-context gates ("if Kal'tsit is assigned to the Control Center, drone
 /// recovery +5%") parse into `ConditionalOnRoomPresence` and are credited by registry
-/// rewrite exactly when the deployment stations the required operator - or enough
-/// operators of the required faction - in the gate's room type. Context-free scoring
+/// rewrite exactly when the deployment stations the required operator (or enough
+/// operators of the required faction) in the gate's room type. Context-free scoring
 /// credits the gated part 0 (never guess).
 #[test]
 // Exact float equality is intentional: these are deterministic values threaded
@@ -6364,7 +6364,7 @@ fn room_presence_gates_resolve_against_the_deployment() {
 }
 
 /// Delphine's "for each Glasgow Gang Operator assigned to the same Trading
-/// Post, +10%" is a CONDITIONAL per-operator global, not a flat tag bonus -
+/// Post, +10%" is a CONDITIONAL per-operator global, not a flat tag bonus:
 /// the singular "each ... Operator" phrasing must route to the same machinery
 /// as `SilverAsh`'s plural form. She earns a Control-Center seat only when the
 /// plan actually fields Glasgow traders; otherwise the dead-weight reselection
@@ -6451,7 +6451,7 @@ fn delphine_needs_glasgow_traders_to_earn_her_cc_seat() {
 
     // Only non-Glasgow traders available: her conditional can never fire.
     // A spare CC seat is fine (leftovers get parked), but she must add ZERO
-    // credited value anywhere - previously the flat TagBased misparse sold
+    // credited value anywhere; previously the flat TagBased misparse sold
     // her +10% at half credit with nobody to receive it.
     let neutrals = ["char_103_angel", "char_214_kafka", "char_4032_provs"];
     let without_her = plan(&neutrals, false);
@@ -6494,7 +6494,7 @@ fn delphine_needs_glasgow_traders_to_earn_her_cc_seat() {
 /// subject really is an aura scope ("all Operators in the Control Center" /
 /// "other buildings"). Named-partner gates (Mr. Lee needs Aak; the Amiya pair
 /// skills) and self-subject conditionals (Gladiia's Abyssal-dependent ±0.5)
-/// price 0 - a flat parse credited them all as unconditional room auras.
+/// price 0; a flat parse credited them all as unconditional room auras.
 #[test]
 fn cc_morale_auras_credit_only_true_aura_scopes() {
     use backend::core::grade::base::buff_registry::BuffResolutionStrategy;
@@ -6526,7 +6526,7 @@ fn cc_morale_auras_credit_only_true_aura_scopes() {
 
 /// The rotation's Control-Center Squad 2 must run the same dead-weight rule as
 /// Squad 1. Squad 1's eviction loop drops a conditional operator whose gate the
-/// planned teams never satisfy - but its exclusion list used to stay private, so
+/// planned teams never satisfy, but its exclusion list used to stay private, so
 /// the Squad-2 leftover greedy re-picked the SAME operator at face value and
 /// seated her on the third shift with nobody to receive the bonus (the uid
 /// 09525371 report: Delphine in the shift-3 CC, zero Glasgow anywhere).
@@ -6553,7 +6553,7 @@ fn rotation_squad2_evicts_conditional_cc_ops_no_team_satisfies() {
     // roster-level feasibility gate passes and Delphine keeps her face-value
     // selection weight), but the base has NO Trading Post: the condition fires
     // in no plannable team, so Delphine may hold a seat in NO shift's Control
-    // Center - squad 2's leftover fill included.
+    // Center, squad 2's leftover fill included.
     let building = UserBuilding {
         rooms: vec![room("cc", "CONTROL", 5), room("d0", "DORMITORY", 2)],
     };
@@ -6582,8 +6582,8 @@ fn rotation_squad2_evicts_conditional_cc_ops_no_team_satisfies() {
 /// Fiammetta's swap mechanic, as her own skills describe it: "Self-Discipline"
 /// recharges her at +2/hr EXCLUSIVELY (no dorm level, aura or ambience helps),
 /// and "Communal Suffering" swaps her full bar with the operator assigned into
-/// her dormitory. One swap therefore takes 24/2 = 12h to recharge - exactly one
-/// login - so she can only hold an operator whose drain won't outrun that
+/// her dormitory. One swap therefore takes 24/2 = 12h to recharge, exactly one
+/// login, so she can only hold an operator whose drain won't outrun that
 /// cadence: drain <= 2.0/hr sustains, faster does not.
 #[test]
 fn fiammetta_swap_rate_bounds_who_she_can_sustain() {
@@ -6650,7 +6650,7 @@ fn fiammetta_swap_rate_bounds_who_she_can_sustain() {
         }
     }
 
-    // A base with no dormitory cannot host her at all - no pin, no sustain.
+    // A base with no dormitory cannot host her at all: no pin, no sustain.
     use backend::core::grade::base::dorms::morale_manager_pin;
     let no_dorms = UserBuilding {
         rooms: vec![room("cc", "CONTROL", 5), room("tp", "TRADING", 3)],
@@ -6663,7 +6663,7 @@ fn fiammetta_swap_rate_bounds_who_she_can_sustain() {
 
 /// Dormitory LEVELS decide recovery: the sim rests each operator at the rate
 /// of the SPECIFIC dorm they land in (best dorm first), so a 2/5/2-style base
-/// with under-leveled dorms genuinely recovers slower than a full-dorm 243 -
+/// with under-leveled dorms recovers slower than a full-dorm 243,
 /// enough to flip a heavy drainer's verdict. A dorm-skill aura holder seated
 /// as permanent staff speeds that dorm up for whoever rests beside them.
 #[test]
@@ -6880,7 +6880,7 @@ fn rotation_emits_dorm_cells_with_resters_and_staff() {
 
 /// A base-wide Control-Center recovery aura (Chongyue-type: "+0.05/hr to
 /// Operators working in other buildings") stretches PRODUCTION members' swap
-/// clocks in the plan - the same working-drain offset the simulator charges,
+/// clocks in the plan: the same working-drain offset the simulator charges,
 /// not a dorm-rest bonus.
 #[test]
 fn cc_base_wide_recovery_stretches_swap_clocks() {
@@ -7020,7 +7020,7 @@ fn aura_immunity_and_formula_drain_shape_the_sim() {
     );
 }
 
-/// Targeted morale effects between co-seated operators - the Ave Mujica
+/// Targeted morale effects between co-seated operators, the Ave Mujica
 /// drama: Dolris' rider drains Sakiko +0.1/hr while they share the Control
 /// Center, and Mortis' amnesty cancels Sakiko's OWN +0.05 rider. The sim
 /// charges each exactly when the pair is co-seated.
@@ -7106,7 +7106,7 @@ fn targeted_morale_effects_follow_co_seating() {
 
 /// The Control Center's own recovery auras (`control_mp_cost`: "+0.05/hr to
 /// all Operators in the Control Center") offset its workers' drain in the
-/// sustainability sim - and ONLY its workers: the aura is room-local, so a
+/// sustainability sim, and ONLY its workers: the aura is room-local, so a
 /// trading-post worker in the same rotation gains nothing from it.
 #[test]
 fn cc_recovery_auras_offset_cc_workers_drain_only() {
@@ -7215,7 +7215,7 @@ fn cc_recovery_auras_offset_cc_workers_drain_only() {
 /// Pool-scaled Control-Center globals (Sakiko's "all Trading Posts +1% per 8
 /// Passion", the Mortis "all Factories +1% (+1% per 20)") parse into
 /// `GlobalPoolScaling` and resolve by registry rewrite against settled pool
-/// points - floored steps, base always on - exactly like the other
+/// points (floored steps, base always on), exactly like the other
 /// deployment-dependent rewrites. Context-free scoring credits the base only.
 #[test]
 // Exact float equality is intentional: these are deterministic values threaded
@@ -7283,7 +7283,7 @@ fn global_pool_consumers_resolve_against_settled_points() {
 
 /// The planner's `lasts_hours` reads the same room-wide drain-aura model the
 /// sustainability simulator charges: a trading-post aura carrier stretches
-/// every TEAMMATE's swap clock, not just its own - previously the display
+/// every TEAMMATE's swap clock, not just its own; previously the display
 /// said "swap Texas at 24h" while the simulator knew she'd last far longer.
 #[test]
 fn lasts_hours_reads_the_room_drain_aura() {
@@ -7333,8 +7333,8 @@ fn lasts_hours_reads_the_room_drain_aura() {
 /// The 3-shift rotation runs on the same economy plan as the optimal view: a
 /// consumer's `PoolPayoff` override prices into rotation team selection, and a
 /// pinned Control-Center generator (Ling for the Sui economy) holds a Squad-1
-/// seat - two of the three shifts, the same realistic uptime perception priced
-/// the payoff at (all three would be a 36h stretch no morale bar survives) -
+/// seat for two of the three shifts, the same realistic uptime perception priced
+/// the payoff at (all three would be a 36h stretch no morale bar survives),
 /// and is never burned as a production filler.
 #[test]
 fn rotation_seats_economy_pins_and_credits_payoffs() {
@@ -7396,8 +7396,8 @@ fn rotation_seats_economy_pins_and_credits_payoffs() {
 }
 
 /// Non-production Control-Center skills (clue / training / HR) parse into
-/// `ControlNonProduction` - priced in their OWN units with zero LMD weight (the
-/// objective stays production-pure, matching both reference implementations) -
+/// `ControlNonProduction`, priced in their OWN units with zero LMD weight (the
+/// objective stays production-pure, matching both reference implementations),
 /// and break ties for SPARE CC seats with the reference priority: clue > HR >
 /// training. "Only the strongest effect of this type" makes ONE family per
 /// boosted metric, across different buff-id prefixes.
@@ -7516,7 +7516,7 @@ fn cc_non_production_skills_parse_and_break_spare_seat_ties() {
 /// pay when Robot-tagged operators hold Power Plant seats, so the generator
 /// pins the roster's robots (capped at the building's real power capacity) and
 /// prices her factory skill at the solved payoff. The improvements-level oracle
-/// then weighs that feed against the drone specialists the pins displace -
+/// then weighs that feed against the drone specialists the pins displace,
 /// a trade that only became priceable once POWER entered `assignment_value`.
 #[test]
 // Exact float equality is intentional: `10.0` is the literal per-platform bonus
@@ -7594,7 +7594,7 @@ fn power_drone_recovery_is_priced_in_the_objective() {
         "+20% drone recovery must be worth exactly 1000 LMD/day, got {}",
         with - without
     );
-    // Two plants stack linearly - no coupling, unlike the gold->trade loop.
+    // Two plants stack linearly: no coupling, unlike the gold->trade loop.
     let both = assignment_value(&[power(20.0), power(23.5)]);
     assert!(((both - without) - 2175.0).abs() < 1e-9);
 }
@@ -7702,7 +7702,7 @@ fn automation_wipe_is_room_gated() {
         &drains,
     );
     // Weedy adds nothing in a Trading Post, but she must not DESTROY the
-    // Texas+Lappland synergy either - the pair's value survives her presence.
+    // Texas+Lappland synergy either; the pair's value survives her presence.
     assert!(
         with_weedy >= without - 1e-9,
         "Weedy in a trading post must not wipe teammates: with={with_weedy:.4} without={without:.4}"
@@ -7714,8 +7714,8 @@ fn automation_wipe_is_room_gated() {
 }
 
 /// 2/5/2 layout (2 trading posts, 5 factories, 2 power plants): the rotation
-/// machinery is layout-generic - groups, gold split, tiling and power squads
-/// all derive from the actual rooms - so the second standard endgame layout
+/// machinery is layout-generic (groups, gold split, tiling and power squads
+/// all derive from the actual rooms), so the second standard endgame layout
 /// gets a full 3-shift plan. Pins: the 3-gold/2-EXP split (2 posts' gold
 /// demand + 1), the trading login rhythm, alternating power/CC squads, and no
 /// operator double-booked within a shift.
@@ -7756,7 +7756,7 @@ fn shift_rotation_supports_252_layout() {
 
     // Factory split: two L3 posts sell roughly two factories' worth of bars, so
     // the marginal 5th factory goes to EXP (unsold gold is worthless under the
-    // coupled gold->trade yield) - the objective picks 2 gold / 3 EXP.
+    // coupled gold->trade yield), so the objective picks 2 gold / 3 EXP.
     for shift in 0..3 {
         let mut gold = 0;
         let mut exp = 0;
@@ -7833,7 +7833,7 @@ fn shift_rotation_supports_252_layout() {
 /// The recommended rotation must survive its own morale simulation: game-true
 /// rates (1/hr drain, level-scaled dorm recovery) over a week of the login
 /// rhythm. A 24h work block drains the full bar and a 12h L5-dorm rest refills
-/// it - so the recommended plan holds up, and the verdict says so honestly.
+/// it, so the recommended plan holds up and the verdict says so.
 #[test]
 fn recommended_rotation_survives_its_own_morale_sim() {
     use backend::core::grade::base::shift_rotation::recommend_shift_rotation;
@@ -7867,7 +7867,7 @@ fn recommended_rotation_survives_its_own_morale_sim() {
         // With L5 dorms a 24h block is sustainable at exactly baseline drain
         // (24 drained, 12h x 2.0 recovered), and the planner routes operators
         // whose skills drain faster than baseline into single-shift Squad-2
-        // seats - so the recommended plan must fully hold up.
+        // seats, so the recommended plan must fully hold up.
         assert_eq!(
             report.verdict,
             Verdict::HoldsUp,
@@ -7896,7 +7896,7 @@ fn recommended_rotation_survives_its_own_morale_sim() {
 
 /// The simulator flags an UNSUSTAINABLE rhythm: with L1 dorms (+1.6/hr), a 12h
 /// rest recovers only ~19 of the 24 points a 24h block drains, so production
-/// operators leak ~5 morale per cycle and run dry within the week - the
+/// operators leak ~5 morale per cycle and run dry within the week; the
 /// verdict must say "depletes" and name them, not wave the plan through.
 #[test]
 fn morale_sim_flags_underbuilt_dorms() {
@@ -7955,7 +7955,7 @@ fn morale_sim_flags_underbuilt_dorms() {
 }
 
 /// The first NATIVE pool economy: Minimalist's Engineering Robots. Her E0
-/// generator makes +1 robot per functional-facility level (max 64 - exactly a
+/// generator makes +1 robot per functional-facility level (max 64, exactly a
 /// maxed 243's level sum) and her E2 consumer converts every 8 robots into +5%
 /// productivity, floored. Generator and consumer travel together, so the pool
 /// settles room-locally from the layout alone: on a maxed base she is a
@@ -8040,7 +8040,7 @@ fn minimalist_engineering_robots_settle_from_the_layout() {
 /// he provides 1 Meal per level of THAT dorm; Marcille (factory, +1%/Meal) and
 /// Chilchuck (trading, +1%/Meal) consume the settled points. The live view
 /// settles against real seats: with Senshi resting in an L5 dorm both consumers
-/// gain exactly +5% over the identical base without him - and with him absent
+/// gain exactly +5% over the identical base without him, and with him absent
 /// the pool reads zero, never a guess.
 #[test]
 fn senshi_monster_meals_settle_against_live_seats() {
@@ -8101,10 +8101,10 @@ fn senshi_monster_meals_settle_against_live_seats() {
 ///   Worldly Plight point and his own skill converts them to order efficiency.
 /// - Rosmontis' Extrasensory CHAIN: dorm occupants feed Perception
 ///   Information, which converts 1:1 into Chain of Thought, which her E2
-///   consumer drains at +1% per point - two pools, one fixed-point pass.
+///   consumer drains at +1% per point: two pools, one fixed-point pass.
 /// - A CROSS-OPERATOR chain: Mr. Nothing generates Worldly Plight from the
 ///   dorms while a factory teammate's converter turns every 5 into a
-///   Witchcraft Crystal worth +2% - generation, conversion and consumption in
+///   Witchcraft Crystal worth +2%: generation, conversion and consumption in
 ///   three different rooms.
 #[test]
 fn dorm_fed_pools_and_conversion_chains_settle() {
@@ -8189,11 +8189,11 @@ fn dorm_fed_pools_and_conversion_chains_settle() {
 }
 
 /// The Control-Center generator SIDE-CHANNEL: Dusk/Ling/Chongyue's CC buffs
-/// carry a morale aura (which the parser owns) AND a pool grant - extracted
+/// carry a morale aura (which the parser owns) AND a pool grant, extracted
 /// separately by the settlement. Seating the three siblings in the CC with Shu
 /// deployed makes 4 deployed Sui: Chongyue grants min(4,5)x5 = 20 Worldly
 /// Plight, Dusk and Ling's "above/below 12 morale" branches settle at the 0.5
-/// steady-state fraction (+7.5 each) - 35 points, and Shu's factory skill
+/// steady-state fraction (+7.5 each): 35 points, and Shu's factory skill
 /// drains them at +1% per 3: exactly +11%.
 #[test]
 fn sui_worldly_plight_flows_from_the_control_center() {
@@ -8294,9 +8294,9 @@ fn alanna_counts_robots_in_power_plants() {
 }
 
 /// SEAT INCENTIVES: the optimal search itself now values the pool economies.
-/// The planner solves Senshi's Monster Meals ahead of the search - pinning him
+/// The planner solves Senshi's Monster Meals ahead of the search, pinning him
 /// into the best dormitory and pricing Marcille's consumer at the settled
-/// +5% - so the optimizer SEATS Marcille in the factory over a plain +2%
+/// +5%, so the optimizer SEATS Marcille in the factory over a plain +2%
 /// operator it would otherwise prefer, and reserves Senshi's dorm seat. The
 /// honesty rule holds throughout: consumers fed by unpinned third parties get
 /// no credit.
@@ -8392,7 +8392,7 @@ fn optimal_search_seats_the_monster_meal_economy() {
 /// Chongyue grants 15, the conditional branches add 7.5 each = 30 Worldly
 /// Plight), Shu's factory skill solves to floor(30/3) = +10%, and the
 /// witch's self-owned converter chain reaches floor(30/5) = 6 Crystals ->
-/// +12% at E2. The caller then judges the bundle by total yield - the
+/// +12% at E2. The caller then judges the bundle by total yield; the
 /// optimizer itself prices the three CC seats it costs.
 #[test]
 fn sui_bundle_prices_the_cc_economy_as_a_package() {
@@ -8443,7 +8443,7 @@ fn sui_bundle_prices_the_cc_economy_as_a_package() {
 /// PARITY HARNESS vs the reference optimizer: rebuild the exact 2/5/2 fixture
 /// the reference solved for this roster (2 gold-strategy posts, 3 gold + 2 EXP
 /// factories, 2 plants, low dorms) and print OUR optimal seating for the same
-/// rooms - the diff against the captured reference answer attributes every
+/// rooms; the diff against the captured reference answer attributes every
 /// divergence to a coverage gap or a judgment difference.
 #[test]
 #[ignore = "needs a captured user dump (BASE_REPRO_DIR)"]
@@ -8563,7 +8563,7 @@ fn reference_parity_252() {
 /// whole room's drain ("-0.1/hr to all Operators in the Trading Post") and a
 /// Control-Center aura lifting every dormitory sleeper's recovery both change
 /// the week's morale arithmetic. With L2 dorms (+1.7/hr), a 24h block drains
-/// 24 but a 12h rest recovers only 20.4 - operators leak and deplete; the
+/// 24 but a 12h rest recovers only 20.4: operators leak and deplete; the
 /// room aura cuts the block's drain to 21.6, which the rest covers.
 #[test]
 fn morale_auras_change_the_sustainability_arithmetic() {
@@ -8574,7 +8574,7 @@ fn morale_auras_change_the_sustainability_arithmetic() {
     let name_to_char = build_name_to_char(&gd.operators);
     let (registry, drains) = build_registry(&gd.building.buffs, &name_to_char);
 
-    // Find a real owner of the trading drain aura from gamedata - no hardcoded id.
+    // Find a real owner of the trading drain aura from gamedata, no hardcoded id.
     let aura_owner = gd
         .building
         .chars
@@ -8599,7 +8599,7 @@ fn morale_auras_change_the_sustainability_arithmetic() {
         rooms: vec![room("tp", "TRADING", 3), room("d0", "DORMITORY", 2)],
     };
     // A hand-built 3-shift rotation: the trio works shifts 1+2 (a 24h block)
-    // and rests shift 3 - the exact rhythm the planner emits.
+    // and rests shift 3, the exact rhythm the planner emits.
     let mk_rotation = |crew: Vec<String>| ShiftRotation {
         parked: Vec::new(),
         shifts: (1..=3)
@@ -8666,7 +8666,7 @@ fn morale_auras_change_the_sustainability_arithmetic() {
 /// drops every operator whose morale drain outpaces the bar. On a wide base
 /// (5 factories + 2 trading posts) the sustainable pool ran dry, the beam left
 /// the third team of the trading group empty, and the tiling stood a Trading
-/// Post dark for two of three shifts - while Lappland, Texas and friends sat
+/// Post dark for two of three shifts while Lappland, Texas and friends sat
 /// unused. An unstaffed production room yields nothing at all; a heavy drainer
 /// yields at full rate until their bar empties, and morale is recoverable.
 #[test]
@@ -8716,7 +8716,7 @@ fn shift_rotation_never_rests_a_production_room_with_candidates_to_spare() {
         "production rooms left unstaffed against a full roster: {dark:?}"
     );
 
-    // And the crews must still be genuinely disjoint within a shift - backfilling
+    // And the crews must still be disjoint within a shift; backfilling
     // must not double-book someone already working elsewhere that shift.
     for shift in &rot.shifts {
         let mut seen: std::collections::HashSet<&str> = std::collections::HashSet::new();
@@ -8985,7 +8985,7 @@ fn planner_probe() {
 
 /// The deep-dive skill ledger: marginals by ablation, with coupled skills
 /// (Feud + Jaye's limit cut), pair riders, CC globals and capacity lines all
-/// classified honestly.
+/// classified.
 #[test]
 fn skill_ledger_reports_marginals_and_dispositions() {
     use backend::core::grade::base::assignment::compute_current_assignment;
@@ -9295,7 +9295,7 @@ fn trainer_hints_respect_the_declared_class() {
 
 /// Non-stacking family attribution: with two "+7% all Trading Posts" globals
 /// in the Control Center, exactly ONE line claims the +7 and the duplicate
-/// reads "covered" - and the CC row's lines sum to the crew's global total.
+/// reads "covered", and the CC row's lines sum to the crew's global total.
 /// (Pure ablation marginals are tie-blind: removing either copy changes
 /// nothing, so nobody would claim the value.)
 #[test]
@@ -9404,7 +9404,7 @@ fn wisadel_conspirator_named_char_grants() {
     }
 
     // Behavior: the post seating Hoederer gains +2 order limit while Wiš'adel
-    // holds the CC - and only that post.
+    // holds the CC, and only that post.
     let build = |cc_crew: Vec<String>| {
         let mut building = UserBuilding {
             rooms: vec![
@@ -9494,7 +9494,7 @@ fn waai_fu_ignores_factory_drain_auras() {
 /// Order VALUE follows the post's level. Proviso's "+2 gold on orders below
 /// 4" fires on every order a level-1 post draws (2-gold only: +100%), on
 /// every order a level-2 post draws (2- and 3-gold: +83%), but leaves the
-/// 4-gold orders only a level-3 post draws untouched (+55%) - which is why
+/// 4-gold orders only a level-3 post draws untouched (+55%), which is why
 /// she shines in a 2/5/2 base's level-2 posts. Tequila's "+500 LMD above 3
 /// gold" needs the 4-gold orders, so it is worth 0 below level 3 and
 /// composes with Proviso at level 3 on the orders she leaves alone.
@@ -9551,7 +9551,7 @@ fn order_value_follows_the_posts_level() {
 /// 2/5/3 base ties 5 >= 5 and takes the trading branch (+7% posts); a 2/5/2
 /// base has Territory ahead and takes the factory branch (+2%). Either way
 /// he is "strongest effect of the same type" with Amiya's post global and
-/// Kal'tsit's factory global - so beside both he is dead weight.
+/// Kal'tsit's factory global, so beside both he is dead weight.
 #[test]
 fn wang_branches_on_layout_counts_and_is_covered_by_amiya_and_kaltsit() {
     use backend::core::grade::base::assignment::compute_current_assignment;
@@ -9654,7 +9654,7 @@ fn wang_branches_on_layout_counts_and_is_covered_by_amiya_and_kaltsit() {
 }
 
 /// Pudding's Overclock is gated on the DEPLOYMENT: "2 or more Operation
-/// Platforms assigned to Power Plants" - with two Robot-tagged operators in
+/// Platforms assigned to Power Plants": with two Robot-tagged operators in
 /// the plants the factories get +2% (Kal'tsit's family, non-stacking); with
 /// one robot the skill is inactive, not a flat +2.
 #[test]
@@ -9719,7 +9719,7 @@ fn pudding_overclock_needs_two_robots_in_power_plants() {
 /// Secondary affiliations: a `SubPower` NATION counts (Texas is Siracusa for
 /// Umiri, community-verified) but a `SubPower` GROUP does not (Vina Victoria
 /// carries {glasgow} there, and the game's "Glasgow Gang Operator" checks
-/// don't count her - verified in-game 2026-09-07).
+/// don't count her, verified in-game 2026-09-07).
 #[test]
 fn subpower_counts_nations_but_not_groups() {
     let gd = load_game_data();
@@ -9918,7 +9918,7 @@ fn shared_dorm_pool_prices_own_origins_and_bundles_the_cofeeder() {
 }
 
 /// Dusk's Control-Center rider ("when self morale is above 12, Perception
-/// Information +10") feeds the SAME pool Rosmontis' dorm count fills - the
+/// Information +10") feeds the SAME pool Rosmontis' dorm count fills; the
 /// base expert (2026-09-08): Dusk, Iris, Czerny and Whisperain all stack into
 /// it from their own resources, no split, no cap; the community's high-end
 /// sheet reads Perception Info 34 = 20 dorm + Dusk 10 + Iris 2 + Czerny 2.
@@ -10047,7 +10047,7 @@ fn live_settlement_reads_dusks_grant_off_her_real_morale() {
 /// are whole-dorm AURAS, not self-only skills. Community-confirmed 2026-08-24:
 /// the aura applies to the holder fully too (net +0.1 on her own bar), and it
 /// competes under the game's strongest-effect rule like every other dorm aura
-/// (Lumen-class auras do NOT stack either - the model's max-fold is correct).
+/// (Lumen-class auras do NOT stack either; the model's max-fold is correct).
 #[test]
 fn durin_compound_text_is_a_whole_dorm_aura() {
     use backend::core::grade::base::dorms::dorm_aura_value;
@@ -10092,7 +10092,7 @@ fn durin_compound_text_is_a_whole_dorm_aura() {
 /// Umiri's Famiglia Approval buffs OPERATORS, not the post: it stacks with
 /// Amiya's post-wide +7% (different effect types), its credit lands on the
 /// post holding the Siracusan, and the CC row labels it "per-room" when it
-/// fires - "inactive" only when no team satisfies it.
+/// fires, "inactive" only when no team satisfies it.
 #[test]
 fn umiri_stacks_with_amiya_and_labels_per_room() {
     use backend::core::grade::base::assignment::compute_current_assignment;
@@ -10135,7 +10135,7 @@ fn umiri_stacks_with_amiya_and_labels_per_room() {
         "one Siracusan = +5, got {}",
         umiri_tp.speed_pct
     );
-    // Amiya's +7 is credited too - they STACK (different effect types).
+    // Amiya's +7 is credited too: they STACK (different effect types).
     let amiya_tp = tp
         .ledger
         .iter()
@@ -10143,13 +10143,13 @@ fn umiri_stacks_with_amiya_and_labels_per_room() {
         .expect("amiya line on the post");
     assert!((amiya_tp.speed_pct - 7.0).abs() < 1e-6);
 
-    // No Siracusan anywhere: honestly inactive.
+    // No Siracusan anywhere: inactive.
     let asn = build(vec!["char_103_angel".into()]);
     let cc = asn.rooms.iter().find(|r| r.room_type == "CONTROL").unwrap();
     let umiri_cc = cc.ledger.iter().find(|l| l.buff_id == UMIRI_BUFF).unwrap();
     assert_eq!(umiri_cc.disposition, LineDisposition::Inactive);
 
-    // Texas counts too - her SubPower is siracusa even though her nation is
+    // Texas counts too: her SubPower is siracusa even though her nation is
     // lungmen (the game's multi-affiliation system). Two Siracusans = +10.
     let asn = build(vec!["char_140_whitew".into(), "char_102_texas".into()]);
     let tp = asn.rooms.iter().find(|r| r.room_type == "TRADING").unwrap();
@@ -10164,8 +10164,8 @@ fn umiri_stacks_with_amiya_and_labels_per_room() {
         umiri_tp.speed_pct
     );
 
-    // Shamare cancels contributions sourced from her TEAMMATES - including
-    // Umiri's per-operator grant to Lappland - while CC-sourced post-wide
+    // Shamare cancels contributions sourced from her TEAMMATES (including
+    // Umiri's per-operator grant to Lappland), while CC-sourced post-wide
     // globals (Amiya's +7) survive.
     let asn = build(vec!["char_254_vodfox".into(), "char_140_whitew".into()]);
     let tp = asn.rooms.iter().find(|r| r.room_type == "TRADING").unwrap();
@@ -10243,7 +10243,7 @@ fn a_gold_starved_post_prefers_the_squad_paid_per_bar() {
         starved.iter().any(|o| o == SHAMARE) && starved.iter().any(|o| o == TEQUILA),
         "one gold factory: the per-bar squad, got {starved:?}"
     );
-    // Rich: no gold factory at all - the post sells from stock, so every
+    // Rich: no gold factory at all: the post sells from stock, so every
     // bonus bar Proviso draws is supplied, and her squad earns more.
     let rich = {
         let building = UserBuilding {
@@ -10926,7 +10926,7 @@ fn ledger_totals(
 /// its worked example (E2 Proviso + Exusiai at a level-2 post, Amiya in the
 /// Control Center: (100 + 35 + 7 + 2) x 1.811073 - 103 - 7 = 150.79). The
 /// order-mix model reproduces every figure to six decimals from the game's
-/// order sizes and each level's draw mix - no table of multipliers.
+/// order sizes and each level's draw mix, no table of multipliers.
 #[test]
 #[allow(clippy::suboptimal_flops)] // the sheet's formula, written as the sheet writes it
 fn proviso_multipliers_match_the_community_sheet_at_every_level_and_elite() {
@@ -11610,7 +11610,7 @@ fn a_knight_trio_is_assembled_with_viviana_in_the_control_center() {
 
 /// A player who runs no gold factory at all sells from stock: their posts
 /// earn AND every factory makes EXP. A plan that switched their lone
-/// factory to gold fed a post that was already fed and threw the EXP away -
+/// factory to gold fed a post that was already fed and threw the EXP away;
 /// the 2026-09-22 census found 27 such bases graded at half their own
 /// yield. Zero gold is tried only where every factory carries a recorded
 /// non-gold recipe; a base with no recipes (a draft, a fixture) or any gold

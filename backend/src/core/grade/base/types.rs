@@ -14,25 +14,20 @@ pub struct UserRoom {
     pub slot_id: String,
     pub room_type: String, // "MANUFACTURE", "TRADING", "POWER", "DORMITORY", etc.
     pub level: i32,        // 1-indexed (1, 2, 3)
-    /// `char_id`s currently stationed in this room (the player's live setup).
+    /// `char_id`s stationed now.
     pub current_operators: Vec<String>,
-    /// Current production formula for factories ("`F_GOLD"/"F_EXP"/"F_DIAMOND`"),
-    /// parsed from the live building data. None for non-factory rooms.
+    /// Factory formula ("F_GOLD"/"F_EXP"/"F_DIAMOND"); None for non-factories.
     pub current_formula: Option<String>,
-    /// The player's planned rotation shifts for this room (each a list of
-    /// `char_id`s), from the in-game preset queue. Empty if none set.
+    /// In-game preset queue: each shift a list of `char_id`s. Empty if unset.
     pub preset_shifts: Vec<Vec<String>>,
     /// Dormitory ambience (0-5000) from the synced furniture, 0 elsewhere.
     pub comfort: i32,
-    /// A production room the search must leave exactly as drafted (crew and
-    /// recipe): a scoped planner run's out-of-scope room. It is scored as
-    /// drafted and sits in the yield context the free rooms are planned
-    /// beside; its operators are taken.
+    /// Out-of-scope room in a scoped planner run: the search leaves crew and recipe
+    /// as drafted, scores it as drafted, and treats its operators as taken.
     pub frozen: bool,
 }
 
-/// One operator's morale state from the synced building data: the bar as the
-/// game last recorded it, when that was, and where they were sitting.
+/// One operator's synced morale: the bar as last written, when, and where.
 #[derive(Debug, Clone)]
 pub struct MoraleSnapshot {
     /// Morale points (0-24) at `at_unix`.
@@ -92,7 +87,6 @@ fn formula_from_id(id: &str) -> Option<String> {
 
 impl UserBuilding {
     pub fn from_json(data: &serde_json::Value) -> Self {
-        // instId -> char_id (which operator each stationed instance is).
         let inst_to_char: HashMap<i64, String> = data
             .get("chars")
             .and_then(|v| v.as_object())
@@ -108,7 +102,7 @@ impl UserBuilding {
             })
             .unwrap_or_default();
 
-        // slot_id -> current factory formula, from `rooms.MANUFACTURE[slot].formulaId`.
+        // slot_id -> factory formula (`rooms.MANUFACTURE[slot].formulaId`).
         let formula_by_slot: HashMap<String, String> = data
             .get("rooms")
             .and_then(|v| v.get("MANUFACTURE"))
@@ -124,7 +118,7 @@ impl UserBuilding {
             })
             .unwrap_or_default();
 
-        // slot_id -> dormitory ambience, from `rooms.DORMITORY[slot].comfort`.
+        // slot_id -> dorm ambience (`rooms.DORMITORY[slot].comfort`).
         let comfort_by_slot: HashMap<String, i32> = data
             .get("rooms")
             .and_then(|v| v.get("DORMITORY"))
@@ -141,8 +135,7 @@ impl UserBuilding {
             })
             .unwrap_or_default();
 
-        // slot_id -> planned rotation shifts, from `rooms.<type>[slot].presetQueue`
-        // (a list of shifts, each a list of stationed instIds -> char_ids).
+        // slot_id -> preset shifts (`rooms.<type>[slot].presetQueue`, instIds -> char_ids).
         let mut presets_by_slot: HashMap<String, Vec<Vec<String>>> = HashMap::new();
         if let Some(rooms_obj) = data.get("rooms").and_then(|v| v.as_object()) {
             for room_type_slots in rooms_obj.values() {
@@ -216,7 +209,7 @@ impl UserBuilding {
         Self { rooms }
     }
 
-    /// Total dormitory levels (sum of all dorm levels, for &dorm&lv scaling)
+    /// Sum of dorm levels, for &dorm&lv scaling.
     pub fn total_dorm_levels(&self) -> i32 {
         self.rooms
             .iter()
@@ -233,28 +226,23 @@ impl UserBuilding {
 #[derive(Clone)]
 pub struct OperatorBaseProfile {
     pub char_id: String,
-    /// Which `buff_ids` this operator has unlocked (based on their elite/level
-    /// meeting the Cond requirements from `BuildingChar.buff_char`)
+    /// `buff_ids` unlocked by the operator's elite/level (`BuildingChar.buff_char` Cond).
     pub available_buffs: Vec<String>,
-    /// Lowercased faction identifiers (group/nation/team id), used by
-    /// match-count synergies like Dorothy's "+5% per Rhine Tech skill" or
-    /// Morgan's "+20% per Glasgow Gang operator".
+    /// Lowercased group/nation/team ids, for match-count synergies like Dorothy's
+    /// "+5% per Rhine Tech skill" or Morgan's "+20% per Glasgow Gang operator".
     pub faction_tags: Vec<String>,
-    /// Precomputed match tags for count-scaling synergies: faction tags plus the
-    /// leading word of each of this operator's skill names (e.g. "rhine",
-    /// "standardization"). Computed once here rather than in the hot inner loop.
+    /// Faction tags plus the leading word of each skill name ("rhine",
+    /// "standardization"). Precomputed to keep it out of the hot loop.
     pub match_tags: Vec<String>,
-    /// Star rarity (1-6). Drives the Reception Room ambience bonus (6★ > 5★ > 4★).
+    /// 1-6. Reception Room ambience bonus scales with it (6★ > 5★ > 4★).
     pub rarity: i16,
-    /// Elite/promotion phase (0/1/2). Drives the Reception Room elite bonus (E2 > E1 > E0).
+    /// 0/1/2. Reception Room elite bonus (E2 > E1 > E0).
     pub elite: i16,
 }
 
 impl OperatorBaseProfile {
-    /// `ignore_promotion` takes each slot's highest tier regardless of the
-    /// operator's elite/level - "what this operator would bring at E2 max".
-    /// The player still has to promote them for it to be true, so anything
-    /// planned this way is a target, not a reading of their current base.
+    /// `ignore_promotion` takes each slot's top tier regardless of elite/level ("at
+    /// E2 max"). Anything planned this way is a target, not their current base.
     pub fn build(
         roster: &RosterEntry,
         building_char: &BuildingChar,
@@ -288,8 +276,8 @@ impl OperatorBaseProfile {
     }
 }
 
-/// Faction tags + the leading word of each of the operator's skill names - the
-/// set a `MatchCountScaling` buff keys on. Computed once per operator.
+/// Faction tags plus each skill name's leading word: what a `MatchCountScaling`
+/// buff keys on.
 pub fn compute_match_tags(
     faction_tags: &[String],
     available_buffs: &[String],
@@ -306,8 +294,8 @@ pub fn compute_match_tags(
             }
         }
     }
-    // Curated base tags ("all Knight Operators") come in with the faction
-    // tags, from the game's term glossary (`buff_registry::glossary_tags`).
+    // Curated base tags ("all Knight Operators") arrive with the faction tags, from
+    // the term glossary (`buff_registry::glossary_tags`).
     tags
 }
 
@@ -317,26 +305,23 @@ pub struct RoomAssignment {
     pub room_type: String,
     pub level: i32,
     pub formula_type: Option<String>,
-    pub operators: Vec<String>, // char_ids assigned to this room
+    pub operators: Vec<String>,
     /// Order-acquisition SPEED %, i.e. the productivity bonus the game shows.
     pub total_efficiency: f64,
-    /// Order-VALUE % (LMD per order, e.g. Proviso) - multiplies LMD yield, kept
-    /// separate from speed so it doesn't inflate the displayed efficiency.
+    /// Order-VALUE % (LMD per order, e.g. Proviso). Multiplies LMD yield; separate
+    /// from speed so it doesn't inflate the displayed efficiency.
     pub order_value: f64,
-    /// The gold-THROUGHPUT part of that value (Pure Gold per hour over a bare
-    /// post's): Proviso's bonus bars come from stock, Tequila's LMD rider
-    /// moves none. The yield model bounds the former by the factories' gold.
+    /// Gold-throughput part of that value (Pure Gold/h over a bare post): Proviso's
+    /// bonus bars come from stock, Tequila's LMD rider moves none. The yield model
+    /// bounds the former by the factories' gold.
     pub order_gold: f64,
-    /// A trading post's final order limit after every skill (`None` for other
-    /// rooms) - the buffer the yield model prices.
+    /// Post's final order limit after every skill (`None` elsewhere); the buffer the
+    /// yield model prices.
     pub order_limit: Option<i32>,
-    /// True when this is a FIXED synergy squad - its operators depend on each
-    /// other (e.g. Shamare + Tequila + Bibeak, or Texas + Lappland) and can't be
-    /// swapped without breaking the combo. False = a flexible team of independent
-    /// operators that are interchangeable with similar ones.
+    /// Fixed synergy squad whose operators depend on each other (Shamare + Tequila +
+    /// Bibeak, Texas + Lappland). False = interchangeable independent operators.
     pub locked: bool,
-    /// Per-skill contribution breakdown (deep dive). Filled by the evaluate
-    /// path only; search paths leave it empty - it is display data, not score.
+    /// Per-skill breakdown for the deep dive. Evaluate path only; display, not score.
     pub ledger: Vec<super::skill_ledger::LedgerLine>,
     /// Output-buffer size and fill time (deep dive). Evaluate path only.
     pub fill: Option<super::yield_model::RoomFill>,
@@ -345,24 +330,19 @@ pub struct RoomAssignment {
 #[derive(Clone)]
 pub struct BaseAssignment {
     pub rooms: Vec<RoomAssignment>,
-    pub total_production_efficiency: f64, // sum across all production rooms
-    /// Operators parked on SPARE seats (Control-Center top-up after every
-    /// value-seated pick): they were chosen for lowest opportunity cost, not
-    /// for their skills, and the UI badges them so a gated skill text on a
+    pub total_production_efficiency: f64,
+    /// Operators on SPARE seats (Control Center top-up after the value picks): chosen
+    /// for low opportunity cost, not skills. The UI badges them so a gated skill on a
     /// benchwarmer doesn't read as the optimizer's reasoning.
     pub bench: Vec<String>,
 }
 
-/// A STAGGERED rotation: your best operators staff the base (the `main`), and you
-/// swap only the lowest-morale operator in a room for its backup, so the base runs
-/// at near-peak almost always and few operators sit in the dorms at once.
-/// `rooms` gives the per-room rotation plan (swap order + timing + backup).
-/// `shared_bench` is the small pool of fillers that covers ALL rooms: because only
-/// one operator is swapped at a time, a versatile filler backs up several rooms.
-/// `sustained_efficiency` is the 24/7 output: close to `main`'s peak, reduced only
-/// by the time a backup covers a resting operator (low-drain teams rest less).
-/// `sets` expresses the rotation as a handful of overlapping staffings to cycle
-/// through (rather than swapping the whole base at once).
+/// STAGGERED rotation: the best operators staff the base (`main`) and only the
+/// lowest-morale operator in a room swaps for its backup, so the base runs near peak
+/// with few operators in the dorms at once. `shared_bench` covers ALL rooms: one
+/// swap at a time means one versatile filler backs several rooms.
+/// `sustained_efficiency` is 24/7 output: `main`'s peak minus backup cover time.
+/// `sets` are overlapping staffings to cycle through instead of swapping wholesale.
 pub struct RotationAssignment {
     pub main: BaseAssignment,
     pub rooms: Vec<RoomRotation>,
@@ -371,22 +351,17 @@ pub struct RotationAssignment {
     pub sustained_efficiency: f64,
 }
 
-/// One snapshot of the staggered rotation: a complete base staffing in which each
-/// room has (at most) one main resting, covered by a backup. Cycling through the
-/// sets every swap interval rests every operator in turn, and CONSECUTIVE sets share
-/// all-but-one operator per room - so you never break the whole base at once. E.g.
-/// a 2-seat post over {Proviso, Gravel, Spot} cycles Proviso+Gravel -> Proviso+Spot
-/// -> Gravel+Spot.
+/// One full staffing where each room has at most one main resting, covered by a
+/// backup. Consecutive sets share all but one operator per room. E.g. a 2-seat post
+/// over {Proviso, Gravel, Spot}: Proviso+Gravel -> Proviso+Spot -> Gravel+Spot.
 pub struct RotationSet {
     pub rooms: Vec<RotationSetRoom>,
 }
 
-/// One room's staffing within a rotation set.
 pub struct RotationSetRoom {
     pub slot_id: String,
     pub room_type: String,
-    /// The operators working this room in this set (the resting main swapped out for
-    /// the backup).
+    /// Resting main swapped out for the backup.
     pub working: Vec<String>,
     /// The main resting this set (whom `working` covers via the backup), if any.
     pub resting: Option<String>,
@@ -396,17 +371,14 @@ pub struct RotationSetRoom {
 pub struct RoomRotation {
     pub slot_id: String,
     pub room_type: String,
-    /// The room's main operators, ordered by who needs swapping FIRST (the
-    /// fastest-draining operator hits low morale soonest).
+    /// Ordered by who swaps FIRST (fastest drain hits low morale soonest).
     pub members: Vec<RotationMember>,
-    /// The backup operator to rotate in (`char_id`), if one is available.
     pub backup: Option<String>,
 }
 
 /// A main operator in a room's rotation, with how long it works before a swap.
 pub struct RotationMember {
     pub operator: String,
-    /// Approximate hours this operator works before its morale runs low and you
-    /// rotate it out (fast-draining skills last fewer hours).
+    /// Approximate hours before morale runs low and it swaps out.
     pub lasts_hours: f64,
 }

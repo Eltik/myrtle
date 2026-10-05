@@ -149,10 +149,10 @@ async fn main() -> Result<()> {
 
     let args = parse_args()?;
 
-    // Game data (expensive - load once, share). ASSETS_DIR is a base dir; the
-    // server's data loads from `{base}/{server}` (+ `/gamedata/excel`). The
-    // `--server` flag only filters which users to regrade; the game-data server
-    // is selected by BIN_SERVER/SERVERS (see `default_bin_server_from_env`).
+    // Load game data once and share it. ASSETS_DIR is a base dir; data loads from
+    // `{base}/{server}` (+ `/gamedata/excel`). `--server` only filters which users to
+    // regrade; the game-data server comes from BIN_SERVER/SERVERS (see
+    // `default_bin_server_from_env`).
     let base = std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output".into());
     let server = default_bin_server_from_env();
     let data_dir = derive_game_data_dir(&base, server);
@@ -169,7 +169,7 @@ async fn main() -> Result<()> {
     );
     let game_data = Arc::new(game_data);
 
-    // Dedicated pool sized to comfortably hold concurrency * (fanout of grade queries).
+    // Own pool, sized for concurrency * grade-query fanout.
     let database_url = std::env::var("DATABASE_URL").context("DATABASE_URL must be set")?;
     let max_conns = std::cmp::max(20, (args.concurrency as u32) * 3);
     let pool = PgPoolOptions::new()
@@ -182,7 +182,7 @@ async fn main() -> Result<()> {
         .context("failed to connect to database")?;
     tracing::info!(max_conns, "connected to database");
 
-    // Total count (for ETA) - best-effort; skipped on error.
+    // Total for the ETA; best-effort, 0 on error.
     let total = count_targets(&pool, &args).await.unwrap_or(0);
     tracing::info!(total, "users to regrade");
 

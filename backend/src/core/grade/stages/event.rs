@@ -5,19 +5,16 @@ use crate::core::gamedata::types::stage_universe::EventEntry;
 const DECAY_HORIZON_SECONDS: f64 = 5.0 * 365.25 * 86400.0;
 const DECAY_FLOOR: f64 = 0.30;
 
-/// Small grace window so an event that started moments before the user's sync
-/// (or has clock skew) doesn't get filtered out.
+/// Grace for an event that opened just before the sync, or clock skew.
 pub const SYNC_GRACE_SECONDS: i64 = 12 * 60 * 60;
 
-/// Whether an event stage should count toward a user's grade right now.
+/// Whether an event stage counts toward the grade now.
 ///
-/// Permanent events (`EventEntry::is_permanent` - those that have rerun and
-/// entered the retrospective record) always count, subject to the per-server
-/// `allowed` cap. A limited event that has yet to rerun only counts while its
-/// run window is currently open; once it ends it becomes unobtainable until it
-/// reruns or goes permanent, so penalizing a player for missing it would be
-/// unfair. The `last_synced_ts` guard keeps a freshly-opened event from showing
-/// as "missing" before the user has synced clears for it.
+/// Permanent events (`EventEntry::is_permanent`: rerun and in the retrospective
+/// record) always count, subject to the per-server `allowed` cap. A limited event
+/// that hasn't rerun counts only while open; after it ends it's unobtainable
+/// until a rerun, so missing it isn't penalized. `last_synced_ts` keeps a
+/// freshly opened event from reading "missing" before the user has synced clears.
 pub fn event_is_gradeable(
     entry: &EventEntry,
     now: i64,

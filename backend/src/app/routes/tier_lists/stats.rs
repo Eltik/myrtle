@@ -162,9 +162,8 @@ pub async fn record_view(
         extract_session_id(&headers).map(|sid| hash_session_id(&state.config.jwt_secret, &sid))
     };
 
-    // Deliberately no invalidate_detail: views are high-frequency and a briefly
-    // stale view count in the cached detail is an acceptable trade for not
-    // churning the cache on every page load.
+    // No invalidate_detail: views are high-frequency, and a briefly stale count
+    // beats churning the cache on every page load.
     let unique = queries::record_view(&state.db, list.id, user_id, session_hash.as_deref()).await?;
     Ok(Json(ViewRecorded { unique }))
 }

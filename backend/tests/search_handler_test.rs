@@ -223,9 +223,8 @@ async fn the_route_serves_every_shape() {
         println!("sort={sort}: top metric {:?}", entries[0].metric);
     }
 
-    // The direction a caller gets when they ask for none: oldest accounts
-    // first for `joined`, highest first for a count. Checked here and not
-    // only on the enum, because this is the order a visitor actually sees.
+    // Default direction: oldest first for `joined`, highest first for a count.
+    // Checked here, not only on the enum: this is the order a visitor sees.
     let (oldest, _) = get(&state, "sort=joined&limit=1").await.expect("joined");
     let (newest, _) = get(&state, "sort=joined&dir=desc&limit=1")
         .await
@@ -355,12 +354,10 @@ async fn the_route_serves_every_shape() {
     assert_eq!(support_total, support_expected, "support= total");
     println!("has=: {has_total} players, support=: {support_total} players");
 
-    // Owns-all, the one filter whose answer depends on the caller's server:
-    // every admitted player owns every obtainable operator of the scope that
-    // their own server released. Counted independently over every public
-    // roster, because checking only the rows that came back would pass an
-    // empty page, and an over-wide scope (unobtainable operators left in,
-    // say) empties the page rather than dirtying it.
+    // Owns-all depends on the caller's server: every admitted player owns every
+    // obtainable scope operator their server released. Counted over every public
+    // roster: checking only returned rows would pass an empty page, and an
+    // over-wide scope (unobtainables left in) empties the page, not dirties it.
     let rosters = all_rosters(&pool).await;
     let expected_all: Vec<&PublicRoster> = rosters
         .iter()

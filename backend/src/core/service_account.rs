@@ -1,9 +1,7 @@
-//! Service accounts: game accounts owned by the backend rather than by a user.
+//! Service accounts: game accounts the backend owns, one per server.
 //!
-//! Every `Domain::GS` route authenticates on the `uid` / `secret` / `seqnum`
-//! headers; there is no anonymous mode. Impersonal reads, banner metadata and
-//! the like, therefore still need a logged-in account, so the backend keeps
-//! its own, one per server.
+//! Every `Domain::GS` route needs the `uid` / `secret` / `seqnum` headers; there is
+//! no anonymous mode, so even impersonal reads (banner metadata) need a login.
 //!
 //! # Invariants
 //!
@@ -64,7 +62,6 @@ pub fn session_dir() -> PathBuf {
     PathBuf::from(std::env::var("GAME_SESSION_DIR").unwrap_or_else(|_| DEFAULT_SESSION_DIR.into()))
 }
 
-/// Path of a single server's session file.
 pub fn session_path(server: Server) -> PathBuf {
     session_dir().join(format!("{}.json", server.as_str()))
 }
@@ -333,7 +330,6 @@ impl ServiceAccounts {
         self.accounts.len()
     }
 
-    /// Every server that has a usable account.
     pub fn servers(&self) -> Vec<Server> {
         self.accounts.keys().copied().collect()
     }

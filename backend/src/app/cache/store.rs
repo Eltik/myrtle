@@ -96,9 +96,8 @@ impl CacheStore {
             .await;
     }
 
-    /// Store under an already-rendered key with an explicit TTL - for a
-    /// detached build that outlives the borrowed `CacheKey` it was started
-    /// with (see `cached_json_detached`).
+    /// Stores under a pre-rendered key, for a detached build that outlives its
+    /// borrowed `CacheKey` (see `cached_json_detached`).
     pub async fn set_rendered(&self, key_str: &str, ttl: std::time::Duration, value: String) {
         match self {
             Self::Redis(conn) => {

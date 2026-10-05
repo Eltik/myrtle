@@ -48,14 +48,13 @@ pub fn compute_optimal_assignment(
     )
 }
 
-/// As `compute_optimal_assignment`, but with a set of `(char_id, room_type)` PINS - operators
-/// the plan must station in a specific room and reserve from everything else. This is how the
-/// base-wide resource economy (perception) wires into the real optimizer rather than living in
-/// a side panel: its support generators (Mulberry -> Office, the dorm generators, Ling/Dusk ->
-/// Control Center) and its morale-swap manager (Fiammetta -> dormitory) are reserved so
-/// production and the rest of the Control Center are optimized AROUND them (never double-booking
-/// an operator), and the rooms they occupy are surfaced in the plan. Empty pins reproduces the
-/// plain optimum exactly, so non-243 / no-economy bases are unaffected.
+/// As `compute_optimal_assignment`, plus `(char_id, room_type)` PINS: operators the plan must
+/// station in a given room and reserve from everything else. This is how the perception economy
+/// reaches the real optimizer: its support generators (Mulberry -> Office, the dorm generators,
+/// Ling/Dusk -> Control Center) and morale-swap manager (Fiammetta -> dormitory) are reserved, so
+/// production and the rest of the CC are optimized around them without double-booking, and their
+/// rooms show in the plan. Empty pins reproduce the plain optimum exactly (non-243 / no-economy
+/// bases are unaffected).
 pub fn compute_optimal_assignment_with_pins(
     operators: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -76,8 +75,8 @@ pub fn compute_optimal_assignment_with_pins(
 }
 
 /// True when the roster owns an operator whose base-wide conditional (Hoederer's "+5% when Ines or
-/// W works any Work Area") could fire - i.e. at least one required partner is itself in the candidate
-/// pool and so could be deployed. Only then is the two-pass resolution worth running.
+/// W works any Work Area") could fire: a required partner is itself in the candidate pool. Only
+/// then is the two-pass resolution worth running.
 pub(crate) fn base_wide_relevant(
     operators: &[OperatorBaseProfile],
     registry: &HashMap<String, BuffResolutionStrategy>,
@@ -95,9 +94,8 @@ pub(crate) fn base_wide_relevant(
 }
 
 /// A copy of `registry` with every base-wide conditional collapsed to a flat `DirectEfficiency`:
-/// its base, plus the bonus when one of its required partners is in `present` (the operators
-/// deployed in work areas). This lets the room scorer stay deployment-agnostic - it just reads the
-/// already-resolved efficiency.
+/// its base, plus the bonus when a required partner is in `present` (operators deployed in work
+/// areas), so the room scorer stays deployment-agnostic.
 pub(crate) fn resolve_base_wide(
     registry: &HashMap<String, BuffResolutionStrategy>,
     working: &HashSet<String>,
@@ -215,10 +213,9 @@ pub(crate) fn room_presence_relevant(
 }
 
 /// A copy of `registry` with every room-presence gate collapsed to a flat `DirectEfficiency`:
-/// its base, plus the bonus when the deployment (`deployed_rooms`: char id -> room type)
-/// actually stations the required operator - or enough operators of the required faction -
-/// in the gate's room type. The scorer then stays deployment-agnostic, exactly like
-/// [`resolve_base_wide`].
+/// its base, plus the bonus when the deployment (`deployed_rooms`: char id -> room type) seats
+/// the required operator, or enough of the required faction, in the gate's room type. Same
+/// rewrite as [`resolve_base_wide`].
 pub fn resolve_room_presence(
     registry: &HashMap<String, BuffResolutionStrategy>,
     deployed_rooms: &HashMap<String, String>,
@@ -306,10 +303,10 @@ pub fn resolve_room_presence(
                     per_match_pct,
                     cap_count,
                 } => {
-                    // Pass 1 (no deployment yet) counts the roster's kin - a
-                    // capped counter then reads the same in both passes and
-                    // the second pass is skipped; pass 2 and the live view
-                    // count the actual seats.
+                    // Pass 1 (no deployment yet) counts the roster's kin, so a
+                    // capped counter reads the same in both passes and the second
+                    // pass is skipped; pass 2 and the live view count the actual
+                    // seats.
                     let n = if deployed_rooms.is_empty() {
                         operators
                             .iter()
@@ -418,7 +415,7 @@ pub fn resolve_layout_branches(
 /// A copy of `registry` with every pool-scaled Control-Center global
 /// (`GlobalPoolScaling`) collapsed to a flat `GlobalEffect` against the given
 /// settled pool `points`: base plus `pct` per floored `per`-step of the
-/// resource. The same rewrite pattern as [`resolve_base_wide`] - scoring stays
+/// resource. Same rewrite as [`resolve_base_wide`], so scoring stays
 /// settlement-agnostic.
 pub fn resolve_global_pool(
     registry: &HashMap<String, BuffResolutionStrategy>,
@@ -450,10 +447,9 @@ pub fn resolve_global_pool(
 
 /// The shared optimizer body, wrapped so a base-wide conditional (Hoederer's "+5% when Ines or W
 /// works any Work Area") is credited only when its partner is ACTUALLY deployed in a work area.
-/// Because a partner's deployment doesn't depend on the conditional operator, two passes suffice:
-/// pass 1 deploys everyone with the bonus off, then pass 2 re-optimizes with the bonus baked in for
-/// partners that pass 1 stationed. Gated on the roster actually owning such a buff with its partner
-/// available, so ordinary bases run a single pass with no overhead.
+/// A partner's deployment doesn't depend on the conditional operator, so two passes suffice:
+/// pass 1 deploys with the bonus off, pass 2 re-optimizes with it baked in for the partners
+/// pass 1 stationed. Ordinary bases (no such buff with its partner available) run one pass.
 #[allow(clippy::too_many_arguments)]
 fn optimal_inner(
     operators: &[OperatorBaseProfile],
@@ -477,8 +473,8 @@ fn optimal_inner(
             &pinned_seats,
         );
     }
-    // Layout-counted branches (Wang) depend only on the building - resolve
-    // them once, ahead of both passes.
+    // Layout-counted branches (Wang) depend only on the building: resolve
+    // them once, before both passes.
     let layout_registry = resolve_layout_branches(registry, building, building_data);
     let registry = &layout_registry;
     // Pass 1: bonuses off, to learn who actually ends up deployed where.
@@ -498,9 +494,9 @@ fn optimal_inner(
         cap_aware,
         &pinned_seats,
     );
-    // Operators the assignment stationed - all of which are work areas (the optimizer never benches
-    // anyone in a dormitory). A resting/benched partner is therefore absent here, so its bonus stays
-    // off, which is exactly the "Work Area, not resting" semantics.
+    // Operators the assignment stationed, all in work areas (the optimizer never benches anyone in
+    // a dormitory). A resting/benched partner is absent, so its bonus stays off: the "Work Area,
+    // not resting" semantics.
     let deployed: HashSet<String> = pass1
         .rooms
         .iter()
@@ -576,7 +572,7 @@ fn optimal_inner_core(
     let op_index = build_op_index(operators);
 
     // Reserve every pinned operator up front so neither production nor Control-Center padding
-    // can claim one - the economy needs them where perception placed them.
+    // can claim one; the economy needs them where perception placed them.
     let pinned_ids: HashSet<String> = pins
         .iter()
         .filter(|(id, _)| op_index.contains_key(id.as_str()))
@@ -585,8 +581,8 @@ fn optimal_inner_core(
     let assigned: HashSet<String> = pinned_ids.clone();
 
     let control_room = building.rooms.iter().find(|r| r.room_type == "CONTROL");
-    // Only staff the Control Center if one is actually built - otherwise we'd
-    // strip CC operators out of the production pool for a room that doesn't exist.
+    // Staff the Control Center only if one is built, or CC operators get stripped out of the
+    // production pool for a room that doesn't exist.
     let control_slots = if control_room.is_some() {
         max_stationed_for_room(building, building_data, "CONTROL")
     } else {
@@ -606,10 +602,9 @@ fn optimal_inner_core(
         .filter(|r| is_production_room(&r.room_type))
         .collect();
 
-    // Assign the Control Center, then production. If a CC operator turns out to be
-    // dead weight - its only effect is a conditional the optimized teams never
-    // satisfy (SilverAsh's Kjerag gate when no post fields 3 Kjerag) - drop it and
-    // reselect, so its seat goes to an operator that actually contributes.
+    // Control Center, then production. A CC operator whose only effect is a conditional the
+    // optimized teams never satisfy (SilverAsh's Kjerag gate when no post fields 3 Kjerag) is
+    // dead weight: drop it and reselect so its seat goes to an operator that contributes.
     let mut exclude_cc: HashSet<String> = HashSet::new();
     let (cc_room, room_assignments, assigned) = loop {
         let mut assigned = assigned.clone();
@@ -666,9 +661,8 @@ fn optimal_inner_core(
         exclude_cc.extend(newly_dead);
     };
     let mut assigned = assigned;
-    // Keep the dropped dead-weight operators benched - otherwise they would be
-    // re-added to the Control Center as zero-value fillers, resurfacing the very
-    // recommendation we just removed.
+    // Keep the dropped dead-weight operators benched, or they come back as zero-value CC
+    // fillers and resurface the recommendation just removed.
     assigned.extend(exclude_cc);
 
     let total_production_efficiency = room_assignments.iter().map(|r| r.total_efficiency).sum();
@@ -683,8 +677,8 @@ fn optimal_inner_core(
             cc_room.operators.insert(0, id.clone());
         }
     }
-    // Fill any remaining CC slots with leftover operators - production has
-    // already claimed everyone it benefits from, so these are true spares.
+    // Fill remaining CC slots with leftovers; production already took everyone it benefits
+    // from, so these are true spares.
     let bench = fill_remaining_slots(
         &mut cc_room.operators,
         control_slots,
@@ -698,10 +692,10 @@ fn optimal_inner_core(
         rooms.insert(0, cc);
     }
 
-    // Surface the support generators and morale-swap manager in the rooms they occupy (Office,
-    // dormitories) so the plan shows the full staffing the economy needs, not just the
-    // production rooms its pool boosts. These rooms carry no production efficiency (their value
-    // is already credited to the consumers they power), so they don't change the yield math.
+    // Show the support generators and morale-swap manager in the rooms they occupy (Office,
+    // dormitories) so the plan has the full staffing the economy needs. These rooms carry no
+    // production efficiency (their value is credited to the consumers they power), so the
+    // yield math is unchanged.
     append_support_rooms(
         &mut rooms,
         pins,
@@ -818,9 +812,9 @@ fn aux_room_value(
         .fold(0.0, f64::max)
 }
 
-// ─── Reception Room (clue-search) ambience model ────────────────────────────────────────────
-// Total clue-search speed = RR-level bonus + (base ambience bonus, unmodeled - not synced) +
-// per-operator (rarity bonus + elite bonus + own clue-search skill). See the player's RR table.
+// Reception Room (clue-search) ambience model. Total clue-search speed = RR-level bonus + (base
+// ambience bonus, unmodeled, not synced) + per operator (rarity + elite + own clue-search
+// skill). See the player's RR table.
 
 /// The Reception Room's innate clue-search bonus for being staffed at all
 /// (the feedback sheet's in-game check: Kazemaru alone = 50 + 5 + 4 + 16).
@@ -883,10 +877,9 @@ fn reception_skill(
                 return None;
             }
             // A co-operation skill ("...together with <operator>... +30%") only fires when that
-            // specific partner shares the room. We value operators independently here, so we can't
-            // confirm the partner is present - crediting it anyway over-valued the conditional
-            // (Vulpisfoglia's +30%-with-Suzuran beating an unconditional +25% Tracker). Skip it, so
-            // the operator is scored on its always-on clue skill.
+            // partner shares the room. Operators are valued independently here, so the partner
+            // can't be confirmed; crediting it over-valued the conditional (Vulpisfoglia's
+            // +30%-with-Suzuran beating an unconditional +25% Tracker). Score the always-on skill.
             if d.contains("together with") {
                 return None;
             }
@@ -895,21 +888,20 @@ fn reception_skill(
         .sum()
 }
 
-/// Hours in one ~12h shift, for prorating a Reception Room operator that can't last the whole shift.
+/// One shift, for prorating a Reception Room operator that can't last it.
 const SHIFT_HOURS: f64 = 12.0;
 
-/// The fraction of a 12h shift a Reception Room operator can actually work before its morale runs
-/// out. Most operators last well beyond a shift (factor 1.0), but a high-drain skill - Enforcer's
-/// "+2 Morale consumed per hour" burns him out in ~5h - only contributes for part of the shift, so
-/// its clue output is prorated and it loses to a sustainable operator (Ch'en) of similar skill.
+/// Fraction of a 12h shift a Reception Room operator can work before its morale runs out. Most
+/// last well past a shift (1.0), but a high-drain skill (Enforcer's "+2 Morale consumed per
+/// hour" burns him out in ~5h) is prorated, so it loses to a sustainable operator (Ch'en) of
+/// similar skill.
 fn reception_sustain(op: &OperatorBaseProfile, morale_drains: &HashMap<String, f64>) -> f64 {
     // Candidate scoring has no crew context yet, so no room aura applies here.
     (op_lasts_hours(op, morale_drains, 0.0) / SHIFT_HOURS).min(1.0)
 }
 
-/// An operator's full Reception Room value: its clue-search skill (solo skills active only when
-/// `alone`) plus the rarity and elite ambience bonuses, prorated by how much of a shift it can
-/// actually sustain (a fast-draining operator burns out partway through and contributes less).
+/// An operator's full Reception Room value: clue-search skill (solo skills only when `alone`)
+/// plus rarity and elite ambience, prorated by how much of a shift it can sustain.
 fn reception_op_value(
     op: &OperatorBaseProfile,
     registry: &HashMap<String, BuffResolutionStrategy>,
@@ -973,12 +965,11 @@ fn best_reception_crew(
     }
 }
 
-/// Fill the auxiliary facilities (HR Office, Reception Room) with the best AVAILABLE operators -
-/// the optimizer otherwise only staffs production and the Control Center, leaving these empty.
-/// HR Office operators are ranked by raw room skill; the Reception Room uses the clue-search
-/// ambience model (rarity + elite + skill, best pair vs best solo). Chosen operators are reserved
-/// so the rest of the plan doesn't double-book them; a room already staffed (e.g. an Office held by
-/// a perception support generator) is left alone.
+/// Fill the auxiliary facilities (HR Office, Reception Room) with the best AVAILABLE operators;
+/// the optimizer otherwise staffs only production and the Control Center. HR Office operators
+/// rank by raw room skill; the Reception Room uses the clue-search ambience model (rarity +
+/// elite + skill, best pair vs best solo). Picks are reserved against double-booking; a room
+/// already staffed (e.g. an Office held by a perception support generator) is left alone.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn assign_auxiliary_rooms(
     rooms: &mut Vec<RoomAssignment>,
@@ -1205,40 +1196,34 @@ fn append_support_rooms(
     }
 }
 
-// ── Morale / longevity model for staggered rotation ────────────────────────
-// Each working operator burns morale and must occasionally rest. A STAGGERED
-// rotation swaps only the lowest-morale operator at a time, so a room is almost
-// always at full strength and just one backup covers a resting main. The 24/7
-// output is therefore close to peak - lowered only while a backup (weaker)
-// covers, and that coverage time shrinks for low-drain operators.
+// Morale / longevity model for staggered rotation. Each working operator burns morale and must
+// rest now and then. A STAGGERED rotation swaps only the lowest-morale operator at a time, so a
+// room is nearly always at full strength and one backup covers a resting main. 24/7 output is
+// close to peak, lowered only while a (weaker) backup covers, which is shorter for low-drain
+// operators.
 //
 // Constants are calibrated estimates (drain modifiers come in ~±0.25/hr units):
 /// Neutral per-hour morale burn for a working operator (before skill modifiers).
 const BASE_MORALE_DRAIN: f64 = 0.5;
-/// Per-hour morale recovery while resting in a FULLY-DEVELOPED dormitory (faster
-/// than drain, so operators spend more time working than resting). The realized
-/// rate scales down with dorm level - see `morale_recovery`.
+/// Per-hour morale recovery resting in a FULLY-DEVELOPED dormitory (faster than drain, so
+/// operators work more than they rest). Scales down with dorm level; see `morale_recovery`.
 const MORALE_RECOVERY: f64 = 1.0;
 /// Dorm level at which recovery reaches the modeled maximum.
 const MAX_DORM_LEVEL: f64 = 5.0;
 /// Floor on the recovery factor so a barely-built base still rotates (slowly).
 const MIN_RECOVERY_FACTOR: f64 = 0.3;
-/// How much of a resting main's output its relief recovers (a good rotation
-/// piece is close, but not equal, to the operator it replaces). The same for
-/// every room: a flexible room swaps a backup in one operator at a time, and a
-/// LOCKED synergy squad (Texas needs Lappland) is relieved by the next shift's
-/// WHOLE crew - the rotation the planner itself recommends - which covers the
-/// gap just as well. Pricing a locked crew's rest at zero coverage made the
-/// grade prefer a plain 75-speed post over the 132-speed synergy post the
-/// search had chosen, so plain stationing out-graded the plan (56505800,
+/// How much of a resting main's output its relief recovers (a good rotation piece is close to,
+/// not equal to, the operator it replaces). Same for every room: a flexible room swaps in one
+/// backup at a time, and a LOCKED synergy squad (Texas needs Lappland) is relieved by the next
+/// shift's WHOLE crew, the rotation the planner recommends, which covers just as well. Pricing a
+/// locked crew's rest at zero coverage made the grade prefer a plain 75-speed post over the
+/// 132-speed synergy post the search chose, so plain stationing out-graded the plan (56505800,
 /// +4.5%). `locked` still means "no one-at-a-time backup" in the rotation view.
 const BACKUP_COVERAGE: f64 = 0.8;
 
-/// Effective per-hour morale recovery for this base. Operators rest in dormitories,
-/// whose recovery rate rises with dorm level, so a base with low-level dorms (a
-/// typical 252 layout) recovers its workers more slowly: they spend more time
-/// resting and the base sustains further below peak. A fully-developed dorm wing
-/// (L5) recovers at the modeled maximum, matching the original calibration.
+/// Effective per-hour morale recovery for this base. Dorm recovery rises with level, so a base
+/// with low-level dorms (a typical 252) rests longer and sustains further below peak. An L5
+/// dorm wing recovers at the modeled maximum, the original calibration.
 pub fn morale_recovery(building: &UserBuilding) -> f64 {
     let levels: Vec<i32> = building
         .rooms
@@ -1282,10 +1267,9 @@ fn dorm_capacity_factor(rest_demand: f64, capacity: i32) -> f64 {
     }
 }
 
-/// Morale per hour this operator restores to workers in OTHER buildings when seated
-/// in the Control Center (Chongyue, Wiš'adel). Unlike the Control-Center-only morale
-/// trickle, this lifts every working operator's recovery, so it is a base-wide
-/// sustain boost - which is what makes a morale operator worth a CC seat over a
+/// Morale per hour this operator restores to workers in OTHER buildings when seated in the
+/// Control Center (Chongyue, Wiš'adel). Unlike the CC-only trickle it lifts every working
+/// operator's recovery, which is what makes a morale operator worth a CC seat over a
 /// production buff whose gate never fires.
 fn cc_global_morale_recovery(
     op: &OperatorBaseProfile,
@@ -1309,11 +1293,10 @@ fn cc_global_morale_recovery(
         .sum()
 }
 
-/// Morale recovery an operator's Control-Center skill gives the CC crew
-/// itself ("increases Morale of all Operators in the Control Center by
-/// +0.05 per hour" - Viviana, `GreyThroat`, `Mon3tr`): a real, priced effect
-/// that sustains the crew, worth a spare seat over a blank filler though
-/// less than a base-wide aura (`cc_global_morale_recovery`).
+/// Morale recovery an operator's Control-Center skill gives the CC crew itself ("increases
+/// Morale of all Operators in the Control Center by +0.05 per hour": Viviana, `GreyThroat`,
+/// `Mon3tr`). Worth a spare seat over a blank filler, though less than a base-wide aura
+/// (`cc_global_morale_recovery`).
 fn cc_room_morale_recovery(
     op: &OperatorBaseProfile,
     registry: &HashMap<String, BuffResolutionStrategy>,
@@ -1409,9 +1392,9 @@ pub(crate) fn op_uptime(
 /// out (~a daily rotation); faster-draining operators last proportionally fewer.
 const ROTATION_BASE_HOURS: f64 = 24.0;
 
-/// Approximate hours an operator works before needing a rotation, rounded to the
-/// hour - inversely proportional to its morale drain plus the room-wide drain
-/// aura its teammates project (`room_aura`; 0 when no crew context exists).
+/// Approximate hours an operator works before needing a rotation, rounded to the hour:
+/// inversely proportional to its morale drain plus its teammates' room-wide drain aura
+/// (`room_aura`; 0 without crew context).
 fn op_lasts_hours(
     op: &OperatorBaseProfile,
     morale_drains: &HashMap<String, f64>,
@@ -1421,10 +1404,9 @@ fn op_lasts_hours(
     (ROTATION_BASE_HOURS * BASE_MORALE_DRAIN / drain).round()
 }
 
-/// The summed room-wide morale-drain aura a crew carries (its members'
-/// `MoraleDrainAura` clauses) - the same aggregation the sustainability
-/// simulator applies per room, so the planner's `lasts_hours` figures and the
-/// simulator's verdicts read from one model.
+/// The summed room-wide morale-drain aura a crew carries (its members' `MoraleDrainAura`
+/// clauses), the same aggregation the sustainability simulator applies per room, so the
+/// planner's `lasts_hours` and the simulator's verdicts share one model.
 pub(crate) fn crew_drain_aura(
     crew: &[String],
     op_index: &HashMap<&str, &OperatorBaseProfile>,
@@ -1492,8 +1474,8 @@ pub fn morale_swap_enabler(
         .map(|op| op.char_id.clone())
 }
 
-/// Number of morale-swap managers (Fiammetta and equivalents) the roster owns - each can hold ONE
-/// working operator at full morale 24/7. Mirrors `morale_swap_enabler`'s detection.
+/// Morale-swap managers (Fiammetta and equivalents) the roster owns; each holds ONE working
+/// operator at full morale 24/7. Mirrors `morale_swap_enabler`'s detection.
 pub(crate) fn num_morale_swap_managers(
     operators: &[OperatorBaseProfile],
     building_data: &BuildingDataFile,
@@ -1511,12 +1493,12 @@ pub(crate) fn num_morale_swap_managers(
         .count()
 }
 
-/// The production operators a roster's morale-swap managers keep at full morale 24/7. Each manager
-/// (Fiammetta) holds ONE operator, so we credit the operators whose room gains the MOST sustained
-/// output from never resting (room value x the rest it would otherwise take) - typically a
-/// high-drain order-value operator like a Proviso the player "24/7s with Fiammetta". The room
-/// magnitude folds in order VALUE so a value operator qualifies, not only speed contributors.
-/// Empty when the roster owns no manager.
+/// The production operators the roster's morale-swap managers keep at full morale 24/7. Each
+/// manager (Fiammetta) holds ONE operator, so credit goes to the operators whose room gains the
+/// most sustained output from never resting (room value x the rest it would otherwise take),
+/// typically a high-drain order-value operator like a Proviso the player "24/7s with
+/// Fiammetta". Room magnitude folds in order VALUE so value operators qualify, not only speed.
+/// Empty without a manager.
 pub fn morale_sustained_beneficiaries(
     main: &BaseAssignment,
     operators: &[OperatorBaseProfile],
@@ -1535,7 +1517,7 @@ pub fn morale_sustained_beneficiaries(
     // The swap hands over a full bar once per manager recharge (Fiammetta:
     // +2/hr exclusive self-recovery -> one swap per 12h login). An operator
     // draining faster than she recharges outruns the swap and CANNOT be held
-    // 24/7 - they must keep rotating.
+    // 24/7; it keeps rotating.
     let swap_rate = morale_swap_enabler(operators, building_data)
         .and_then(|id| operators.iter().find(|o| o.char_id == id))
         .map_or(0.0, |m| manager_swap_rate(m, registry, building_data));
@@ -1645,16 +1627,13 @@ pub fn sustained_efficiency_of(
         .sum()
 }
 
-/// Sustained LMD-equivalent daily value of an assignment: each staffed
-/// production room's efficiency is throttled by its rotation sustain factor
-/// and its factory buffer-cap factor - the same arithmetic as
-/// [`sustained_efficiency_of`] - and the throttled rooms are then valued
-/// through the coupled yield model ([`assignment_value`]). This is the honest
-/// "what does this staffing actually earn per day" figure that a snapshot
-/// efficiency overstates. An UNSTAFFED room is worth exactly 0 (priced so in
-/// `BaseFlows::add_room`, where an idle gold factory still bounds its posts) - in the game
-/// a factory with no operators produces nothing, even though the scorer
-/// still reports its Control-Center globals as room efficiency.
+/// Sustained LMD-equivalent daily value of an assignment: each staffed production room's
+/// efficiency throttled by its rotation sustain and factory buffer-cap factors (the arithmetic
+/// of [`sustained_efficiency_of`]), then valued through the coupled yield model
+/// ([`assignment_value`]). This is what the staffing earns per day, which a snapshot efficiency
+/// overstates. An UNSTAFFED room is worth exactly 0 (priced so in `BaseFlows::add_room`, where
+/// an idle gold factory still bounds its posts): a factory with no operators produces nothing,
+/// even though the scorer still reports its Control-Center globals as room efficiency.
 pub fn sustained_assignment_value(
     main: &BaseAssignment,
     operators: &[OperatorBaseProfile],
@@ -1760,17 +1739,17 @@ pub fn compute_sustained_assignment(
     let total_dorm_levels = building.total_dorm_levels();
     let op_index = build_op_index(operators);
     // A base-wide recovery aura from the Control Center (Chongyue, Wiš'adel:
-    // "+0.05/hr to Operators working in other buildings") is a WORKING-drain
-    // offset - the simulator charges it that way. For the uptime ratio it is
-    // folded into `recovery` (recovery/(drain+recovery) moves the same
-    // direction either side); for the swap clocks below it offsets drain
-    // directly, matching the simulator's arithmetic.
+    // "+0.05/hr to Operators working in other buildings") offsets WORKING drain,
+    // as the simulator charges it. For the uptime ratio it is folded into
+    // `recovery` (recovery/(drain+recovery) moves the same direction either
+    // side); for the swap clocks below it offsets drain directly, matching the
+    // simulator's arithmetic.
     let cc_recovery = cc_morale_boost(&main, &op_index, registry, building_data);
     let recovery = morale_recovery(building) + cc_recovery;
 
-    // A morale-swap manager (Fiammetta) holds one working operator at full morale 24/7 - so that
-    // operator (e.g. a Proviso the player keeps running) never rests: it isn't discounted by the
-    // rotation, adds no rest demand, and is never the one swapped out.
+    // A morale-swap manager (Fiammetta) holds one working operator (e.g. a Proviso the player
+    // keeps running) at full morale 24/7: never discounted by the rotation, no rest demand,
+    // never the one swapped out.
     let morale_sustained = morale_sustained_beneficiaries(
         &main,
         operators,
@@ -1794,10 +1773,9 @@ pub fn compute_sustained_assignment(
         &morale_sustained,
     );
 
-    // Dorm-capacity throttle: a base can only rest as many operators at once as its
-    // dormitories hold. If more than that need to rest, the rotation falls behind and
-    // workers run tired - scale output by how much of the rest demand the dorms cover.
-    // A morale-sustained operator never rests, so it adds nothing to the demand.
+    // Dorm-capacity throttle: a base rests only as many operators at once as its dorms hold.
+    // Beyond that the rotation falls behind and workers run tired, so scale output by how much
+    // of the rest demand the dorms cover. A morale-sustained operator adds no demand.
     let rest_demand: f64 = main
         .rooms
         .iter()
@@ -1821,10 +1799,10 @@ pub fn compute_sustained_assignment(
     // filler can back up every room of its kind, never needed in two at once.
 
     // Best filler for a room, ranked by the REAL value it adds ALONGSIDE the room's
-    // mains - not an optimistic standalone bound. An operator whose buff is gated on
-    // an absent teammate (Texas needs Lappland) adds ~0 and is rejected, since as a
-    // staggered rotation piece it is swapped in to cover one resting main and its
-    // enabler may not be present. Backups are not consumed per room (shared bench).
+    // mains, not an optimistic standalone bound. An operator whose buff is gated on
+    // an absent teammate (Texas needs Lappland) adds ~0 and is rejected: it covers one
+    // resting main at a time and its enabler may not be there. Backups are a shared
+    // bench, not consumed per room.
     let best_filler = |room_type: &str,
                        formula: Option<&str>,
                        room_mains: &[String]|
@@ -1877,8 +1855,8 @@ pub fn compute_sustained_assignment(
         let formula = room.formula_type.as_deref();
 
         // The room's shared drain aura shifts every member's swap clock, and
-        // the Control Center's base-wide recovery offsets it - the same
-        // arithmetic the sustainability simulator charges.
+        // the Control Center's base-wide recovery offsets it, as the
+        // sustainability simulator charges.
         let room_aura = crew_drain_aura(&room.operators, &op_index, building_data, registry);
         // Members ordered by who needs swapping first (shortest hours first).
         let mut members: Vec<RotationMember> = room
@@ -1914,11 +1892,9 @@ pub fn compute_sustained_assignment(
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
 
-        // A LOCKED synergy team (its operators depend on each other) can't be
-        // staggered one operator at a time without breaking the combo - swapping a
-        // single member collapses the whole team's output. So a locked room gets NO
-        // individual backup: it works as a fixed unit. Only flexible, individually
-        // interchangeable rooms get a rotation backup.
+        // A LOCKED synergy team (members depend on each other) can't be staggered one
+        // operator at a time: swapping one member collapses the combo. It gets NO
+        // individual backup and works as a fixed unit.
         let backup = if room.locked {
             None
         } else {
@@ -1940,13 +1916,12 @@ pub fn compute_sustained_assignment(
 
     // Express the rotation as a few OVERLAPPING sets: in set k each room rests its
     // k-th most-urgent main (covered by the backup), so consecutive sets share all
-    // but one operator per room - you never break the whole base at once. Up to three
+    // but one operator per room and the whole base never breaks at once. Up to three
     // sets matches the usual 12h-swap / ~36h-recovery cadence.
     //
-    // A room only rotates the operators that actually run their morale low within one
-    // rotation cycle (~36h). A low-drain operator (Vermeil-type) works it almost
-    // continuously and never needs a rest slot, so a room of them adds no sets - the
-    // set count tracks REAL rest demand, not just seat count.
+    // A room rotates only the operators that run their morale low within one cycle
+    // (~36h). A low-drain operator (Vermeil-type) works almost continuously and needs
+    // no rest slot, so the set count tracks REAL rest demand, not seat count.
     const MAX_ROTATION_SETS: usize = 3;
     const ROTATION_CYCLE_HOURS: f64 = 36.0;
     let needs_rest = |m: &RotationMember| m.lasts_hours <= ROTATION_CYCLE_HOURS;
@@ -2113,13 +2088,11 @@ pub fn compute_live_assignment(
     let total_dorm_levels = building.total_dorm_levels();
     let op_index = build_op_index(operators);
 
-    // Credit Hoederer-style base-wide bonuses against the operators the player actually has WORKING
-    // this shift - everyone they've stationed outside a dormitory (where operators only rest). This
-    // scores the current base on the same "partner in a Work Area, not resting" rule as the
-    // recommendation. The current deployment is fixed, so no second pass is needed. Pool-scaled
-    // Control-Center globals (Sakiko) resolve against the same settled pools the scorer reads.
-    // Layout-counted branches (Wang) resolve on every path - the layout is
-    // always known.
+    // Credit Hoederer-style base-wide bonuses against the operators WORKING this shift
+    // (stationed outside a dormitory), the same "partner in a Work Area, not resting" rule as
+    // the recommendation. The deployment is fixed, so one pass. Pool-scaled CC globals
+    // (Sakiko) resolve against the settled pools the scorer reads; layout-counted branches
+    // (Wang) resolve on every path since the layout is always known.
     let layout_registry = resolve_layout_branches(registry, building, building_data);
     let registry = &layout_registry;
     let needs_presence =
@@ -2139,8 +2112,8 @@ pub fn compute_live_assignment(
                 .flat_map(|r| room_ops_for_shift(r, shift))
                 .collect();
             // Room-presence gates ("if Kal'tsit is assigned to the Control Center")
-            // resolve against where each operator actually sits this shift - every
-            // room type, dormitories included ("assigned to", not "working").
+            // resolve against where each operator sits this shift, in every room
+            // type including dormitories ("assigned to", not "working").
             let stationed: HashMap<String, String> = building
                 .rooms
                 .iter()
@@ -2376,8 +2349,8 @@ pub fn compute_live_assignment(
     BaseAssignment {
         rooms,
         total_production_efficiency: total,
-        // The live view mirrors what the player stationed - nobody was parked
-        // by the optimizer, so no seat is a bench seat.
+        // The live view mirrors what the player stationed; the optimizer parked
+        // nobody, so no seat is a bench seat.
         bench: Vec::new(),
     }
 }
@@ -2390,13 +2363,12 @@ fn count_facilities(building: &UserBuilding) -> HashMap<String, usize> {
     facility_counts
 }
 
-/// The building's facility counts WITH any enabler bonuses the roster can field (Greyy the
-/// Lightningbearer E2 "+1 Power Plant", Eunectes E2 "+2"): each distinct enabler buff family
-/// contributes its amount once (the in-game gate is self-exclusive, so duplicate copies don't
-/// stack), assuming it is stationed where it fires - optimal whenever the base runs the
-/// per-facility automation it powers. Automation scalers (Weedy/Eunectes/Pudding) then score
-/// against the boosted count, so those combos are correctly valued; bases without such operators
-/// are unaffected (nothing reads the extra count).
+/// The building's facility counts WITH the enabler bonuses the roster can field (Greyy the
+/// Lightningbearer E2 "+1 Power Plant", Eunectes E2 "+2"). Each distinct enabler buff family
+/// adds its amount once (the in-game gate is self-exclusive, so copies don't stack), assuming
+/// it is stationed where it fires, which is optimal whenever the base runs the automation it
+/// powers. Automation scalers (Weedy/Eunectes/Pudding) then score against the boosted count;
+/// bases without such operators are unaffected.
 pub(crate) fn effective_facility_counts(
     building: &UserBuilding,
     operators: &[OperatorBaseProfile],
@@ -2417,17 +2389,14 @@ pub(crate) fn effective_facility_counts(
     )
 }
 
-/// Operators a plan seats as a zero-morale TOKEN - the community's "dead
-/// Lancet". A named facility-count gate reads its operator as ASSIGNED whatever
-/// their morale (Eunectes' "if Lancet-2 is assigned to a Power Plant": +2
-/// plants), while a robot-exclusion gate in the same room type (Greyy the
-/// Lightningbearer's "no Operation Platforms in other Power Plants": +1) stops
-/// reading them once they are dead. Parked, both counts apply and only the
-/// token's own skills are forfeited. A token is parked when `seats` holds its
-/// gate's holder in the holder's room, the token (a robot) in the gated room,
-/// and an exclusion-gate holder in that room type; without the exclusion the
-/// token is better off working. Derived from the gates alone - no operator is
-/// named here.
+/// Operators a plan seats as a zero-morale TOKEN, the community's "dead Lancet". A named
+/// facility-count gate reads its operator as ASSIGNED whatever their morale (Eunectes' "if
+/// Lancet-2 is assigned to a Power Plant": +2 plants), while a robot-exclusion gate in the same
+/// room type (Greyy the Lightningbearer's "no Operation Platforms in other Power Plants": +1)
+/// stops reading them once dead. Parked, both counts apply and only the token's own skills are
+/// lost. A token is parked when `seats` holds its gate's holder in the holder's room, the token
+/// (a robot) in the gated room, and an exclusion-gate holder in that room type; without the
+/// exclusion it is better off working. Derived from the gates alone; no operator is named here.
 pub(crate) fn parked_tokens(
     seats: &HashMap<String, String>,
     operators: &[OperatorBaseProfile],
@@ -2483,12 +2452,10 @@ pub(crate) fn working_crew(crew: &[String], parked: &HashSet<String>) -> Vec<Str
         .collect()
 }
 
-/// [`effective_facility_counts`] with `inert`: operators whose morale is at
-/// zero. A zero-morale robot still counts as ASSIGNED for a named gate
-/// (Eunectes' "if Lancet-2 is assigned to a Power Plant") but no longer
-/// counts as an Operation Platform for Greyy's "no Operation Platforms in
-/// other Power Plants" - the community's "dead Lancet", worth both counts
-/// at once (user-verified 2026-09-10).
+/// [`effective_facility_counts`] with `inert`: operators at zero morale. A zero-morale robot
+/// still counts as ASSIGNED for a named gate (Eunectes' "if Lancet-2 is assigned to a Power
+/// Plant") but not as an Operation Platform for Greyy's "no Operation Platforms in other Power
+/// Plants": the community's "dead Lancet", worth both counts at once (user-verified 2026-09-10).
 pub(crate) fn effective_facility_counts_with_inert(
     building: &UserBuilding,
     operators: &[OperatorBaseProfile],
@@ -2502,7 +2469,7 @@ pub(crate) fn effective_facility_counts_with_inert(
     let mut seen_families: HashSet<&str> = HashSet::new();
     // A modifier counts only when `seats` (char id -> room type: the live
     // crews, or the plan's pins) satisfies both the holder's own seat and the
-    // text's gate - Eunectes' +2 needs her in the Control Center AND Lancet-2
+    // text's gate: Eunectes' +2 needs her in the Control Center AND Lancet-2
     // in a Power Plant (user-verified 2026-09-10: a 1/5/3 read 6 plants with
     // her in a factory).
     let robot_in = |room: &str| {
@@ -2541,10 +2508,10 @@ pub(crate) fn effective_facility_counts_with_inert(
             }
         }
     }
-    // Distinct recipe TYPES the factories process (Pure Gold, Battle Records, ...) - what Quartz's
-    // "+2% per recipe type" scales on, NOT the raw factory count: four gold/EXP factories still
-    // process only two recipe types. Use the player's set formulas; if none are set yet, assume the
-    // optimizer's usual gold + EXP split (2), capped at the factory count.
+    // Distinct recipe TYPES the factories process (Pure Gold, Battle Records, ...), which Quartz's
+    // "+2% per recipe type" scales on, NOT the factory count: four gold/EXP factories process
+    // two types. Use the player's set formulas; with none set, assume the optimizer's usual
+    // gold + EXP split (2), capped at the factory count.
     let factory_count = counts.get("MANUFACTURE").copied().unwrap_or(0);
     let distinct_formulas: HashSet<&str> = building
         .rooms
@@ -2558,18 +2525,17 @@ pub(crate) fn effective_facility_counts_with_inert(
         distinct_formulas.len()
     };
     counts.insert(MANUFACTURE_RECIPE_TYPES.to_string(), recipe_types);
-    // Factories set to Pure Gold - Pozëmka's "Pure Gold Production Lines".
+    // Factories set to Pure Gold (Pozëmka's "Pure Gold Production Lines").
     let gold_lines = building
         .rooms
         .iter()
         .filter(|r| r.room_type == "MANUFACTURE" && r.current_formula.as_deref() == Some("F_GOLD"))
         .count();
     counts.insert(GOLD_LINES.to_string(), gold_lines);
-    // The base's max Drone capacity, which capacity-scaled drone skills (Greyy the
-    // Lightningbearer: "+1% per 10 max Drone capacity") read: 100 base plus each
-    // Power Plant's per-level grant. These are client-side game constants not present
-    // in the extracted gamedata tables (a full 3x L3 base holds 235 drones - the
-    // user-visible figure the skill tooltips confirm).
+    // The base's max Drone capacity, read by capacity-scaled drone skills (Greyy the
+    // Lightningbearer: "+1% per 10 max Drone capacity"): 100 base plus each Power Plant's
+    // per-level grant. Client-side constants absent from the extracted tables (a full 3x L3
+    // base holds 235 drones, the figure the skill tooltips confirm).
     let drone_capacity: usize = BASE_DRONE_CAPACITY
         + building
             .rooms
@@ -2612,16 +2578,16 @@ pub(crate) fn effective_facility_counts_with_inert(
     counts
 }
 
-/// Max Drone (Labor) capacity of a base with no Power Plants - a client-side game
-/// constant (not in the extracted gamedata tables).
+/// Max Drone (Labor) capacity with no Power Plants. Client-side constant, not in the
+/// extracted gamedata tables.
 const BASE_DRONE_CAPACITY: usize = 100;
-/// Per-level max-Drone grant of a Power Plant (L1/L2/L3) - client-side game constants.
+/// Per-level max-Drone grant of a Power Plant (L1/L2/L3). Client-side constants.
 const POWER_PLANT_DRONE_CAPACITY: [usize; 3] = [20, 30, 45];
 /// Synthetic `facility_counts` key holding the base's max Drone capacity.
 const DRONE_CAPACITY: &str = "DRONE_CAPACITY";
 
-/// Synthetic `facility_counts` key holding the number of DISTINCT recipe types the factories run
-/// (not the factory count) - the quantity Quartz's recipe-type trading scaler reads.
+/// Synthetic `facility_counts` key: DISTINCT recipe types the factories run (not the factory
+/// count), which Quartz's recipe-type trading scaler reads.
 const MANUFACTURE_RECIPE_TYPES: &str = "MANUFACTURE_RECIPE_TYPES";
 
 /// Synthetic `facility_counts` key holding the LOWEST trading-post level in the base,
@@ -2636,19 +2602,17 @@ pub const MEETING_LEVEL: &str = "MEETING_LEVEL";
 /// "+5% per Pure Gold Production Line").
 pub const GOLD_LINES: &str = "GOLD_LINES";
 
-/// Synthetic `facility_counts` key holding the summed LEVEL of the base's
-/// functional facilities - the "per level per building" basis of layout-derived
-/// pool generators (Minimalist's Engineering Robots). A maxed 243 sums to
-/// exactly 64, matching her stated cap. Corridors, elevators and private
-/// quarters are infrastructure, not buildings, and don't count.
+/// Synthetic `facility_counts` key: the summed LEVEL of the base's functional facilities, the
+/// "per level per building" basis of layout-derived pool generators (Minimalist's Engineering
+/// Robots). A maxed 243 sums to exactly 64, her stated cap. Corridors, elevators and private
+/// quarters are infrastructure, not buildings.
 pub(crate) const FUNCTIONAL_LEVEL_SUM: &str = "FUNCTIONAL_LEVEL_SUM";
 
-/// True when a room type counts as a "building" for per-building/per-level
-/// scalers - derived from gamedata room CATEGORIES (production `OUTPUT`, dorm
-/// `CUSTOM`, `FUNCTION` facilities) plus the Control Center, whose `SPECIAL`
-/// category it shares with corridors and elevators (infrastructure, not
-/// buildings). Private quarters (`CUSTOM_P`) don't count either - validated by
-/// Minimalist's cap: a maxed 243's qualifying levels sum to exactly her 64.
+/// True when a room type counts as a "building" for per-building/per-level scalers: gamedata
+/// room CATEGORIES (production `OUTPUT`, dorm `CUSTOM`, `FUNCTION` facilities) plus the Control
+/// Center, whose `SPECIAL` category it shares with corridors and elevators (not buildings).
+/// Private quarters (`CUSTOM_P`) don't count either, validated by Minimalist's cap: a maxed
+/// 243's qualifying levels sum to exactly her 64.
 pub(crate) fn is_functional_building(building_data: &BuildingDataFile, room_type: &str) -> bool {
     room_type == "CONTROL"
         || building_data
@@ -2679,8 +2643,8 @@ pub(crate) struct ControlCenter {
     /// The user's CONTROL room (slot/level), if they have one built.
     slot_id: Option<String>,
     level: i32,
-    /// Total global bonus % across all targeted production room types - shown
-    /// as the CC room's "efficiency" so its impact is visible.
+    /// Total global bonus % across all targeted production room types, shown as the CC room's
+    /// "efficiency".
     total_global_pct: f64,
 }
 
@@ -2702,11 +2666,10 @@ impl ControlCenter {
     }
 }
 
-/// Append unused operators to `slots` until it reaches `max_slots`, marking each
-/// as `assigned`. Fillers occupy seats but add no value, so we pick the operators
-/// with the lowest *opportunity cost* - those with the fewest base skills for
-/// OTHER rooms - keeping operators with useful Dormitory/Training/etc. skills
-/// (e.g. Schwarz) available for the rooms where they actually help.
+/// Append unused operators to `slots` until it reaches `max_slots`, marking each `assigned`.
+/// Fillers add no value, so pick the lowest *opportunity cost*: the fewest base skills for
+/// OTHER rooms, keeping operators with useful Dormitory/Training/etc. skills (e.g. Schwarz)
+/// for the rooms they help.
 pub fn fill_remaining_slots(
     slots: &mut Vec<String>,
     max_slots: i32,
@@ -2732,10 +2695,10 @@ pub fn fill_remaining_slots(
             .min_by(|a, b| {
                 // A Control-Center bench seat goes to someone who brings the
                 // room SOMETHING (clue / HR / training speed, a morale aura)
-                // before a blank operator - a level-1 E0 with no skill
-                // anywhere costs nothing elsewhere but is worth nothing here
-                // either (user feedback 2026-09-15). Among the valued, the
-                // cheapest seat elsewhere, then the larger value.
+                // before a blank operator: a level-1 E0 with no skill anywhere
+                // costs nothing elsewhere but is worth nothing here either
+                // (user feedback 2026-09-15). Among the valued, the cheapest
+                // seat elsewhere, then the larger value.
                 let ka = other_room_skill_count(a, room_type, building_data);
                 let kb = other_room_skill_count(b, room_type, building_data);
                 if room_type != "CONTROL" {
@@ -2743,10 +2706,10 @@ pub fn fill_remaining_slots(
                 }
                 // A base-wide morale aura lifts every worker's sustain and
                 // ranks ahead of any facility-speed skill; HR and training
-                // speed next; clue speed last, whatever its size - a
-                // reception room fills its board either way, so Lee's +25%
-                // is not worth a seat over a smaller HR or morale skill
-                // (user feedback 2026-09-19).
+                // speed next; clue speed last, whatever its size: a reception
+                // room fills its board either way, so Lee's +25% is not worth
+                // a seat over a smaller HR or morale skill (user feedback
+                // 2026-09-19).
                 // A CC-crew morale aura (Viviana's +0.05 to the Control
                 // Center) is real value too, behind the base-wide kind.
                 let ma = cc_global_morale_recovery(a, registry, building_data);
@@ -2872,15 +2835,13 @@ pub fn cc_seated_coverage(
     best
 }
 
-/// Tie-break value of parking `op` in a SPARE Control-Center seat: its
-/// non-production CC skills (clue / HR / training). HR and training speed
-/// rank ahead of clue speed whatever its size, and a base-wide morale aura
-/// ahead of both (user feedback 2026-09-19, the order `fill_remaining_slots`
-/// applies; production-relay and morale-recovery seats are claimed by earlier
-/// selection layers). The ranks order candidates for a
-/// free seat - they are priorities, NOT LMD; the objective stays
-/// production-pure. Same-room-gated clauses need a partner we can't assume, so
-/// they count nothing here (never guess).
+/// Tie-break value of parking `op` in a SPARE Control-Center seat: its non-production CC skills
+/// (clue / HR / training). HR and training speed rank ahead of clue speed whatever its size,
+/// and a base-wide morale aura ahead of both (user feedback 2026-09-19, the order
+/// `fill_remaining_slots` applies; production-relay and morale-recovery seats are claimed by
+/// earlier layers). These are priorities for a free seat, NOT LMD; the objective stays
+/// production-pure. Same-room-gated clauses need a partner that can't be assumed, so they
+/// count nothing here.
 pub fn cc_spare_seat_value(
     op: &OperatorBaseProfile,
     building_data: &BuildingDataFile,
@@ -2940,14 +2901,13 @@ pub fn cc_spare_seat_split(
         )
 }
 
-/// Opportunity cost of parking `op` in a room as a FILLER. Counts the other room
-/// types its skills serve (value lost elsewhere), plus a heavy penalty when the
-/// team it joins ZEROES the operator's own same-room contribution: a nullifier
-/// team (Shamare) wastes a speed/limit trader (`SilverAsh`'s +20%/+4 contributes
-/// nothing under her), and an automation factory wastes a normal production
-/// operator. Contributions that survive - order value under a nullifier,
-/// facility-count productivity under automation - carry no penalty, so genuine
-/// partners (Bibeak) and true benchwarmers rank ahead of wasted specialists.
+/// Opportunity cost of parking `op` in a room as a FILLER: the other room types its skills
+/// serve (value lost elsewhere), plus a heavy penalty when the team it joins ZEROES its own
+/// same-room contribution. A nullifier team (Shamare) wastes a speed/limit trader
+/// (`SilverAsh`'s +20%/+4 is nothing under her), and an automation factory wastes a normal
+/// production operator. Contributions that survive (order value under a nullifier,
+/// facility-count productivity under automation) carry no penalty, so true partners (Bibeak)
+/// and benchwarmers rank ahead of wasted specialists.
 pub(crate) fn padding_cost(
     op: &OperatorBaseProfile,
     room_type: &str,
@@ -3011,7 +2971,7 @@ pub(crate) struct CcBonus {
     /// True when the buff has NO non-stacking clause and therefore always adds.
     pub(crate) stacks: bool,
     /// `Some` when this bonus only applies to production rooms whose team meets a
-    /// faction condition - credited per-room, not flat. `bonus` above is then a
+    /// faction condition, credited per room, not flat. `bonus` above is then a
     /// discounted *selection* weight, not the value actually granted.
     pub(crate) conditional: Option<CcCondition>,
     /// `Some` when the bonus fires only beside other Control-Center crew of a
@@ -3052,25 +3012,24 @@ pub struct CcCondition {
     pub(crate) per_operator: bool,
     pub(crate) bonus_pct: f64,
     /// Order/capacity limit granted to the room satisfying the gate (0 for
-    /// speed conditionals). Suppression-agnostic - capacity is not a metric a
-    /// nullifier targets.
+    /// speed conditionals). Suppression-agnostic: a nullifier doesn't target
+    /// capacity.
     pub(crate) order_limit: f64,
     /// Product-split bonuses (`formula -> pct`): Flametail's +10% on Battle
     /// Records / -10% on Precious Metals. Empty = `bonus_pct` on every product.
     pub(crate) formula_bonuses: Vec<(String, f64)>,
 }
 
-/// Does an operator satisfy a CC-condition gate token? Faction tokens match
-/// the operator's tags; a char-id token ("char_1035_wisdel"-style, from
-/// named-operator gates) matches that exact operator. The two namespaces
-/// cannot collide - faction tokens are bare lowercase words.
+/// Does an operator satisfy a CC-condition gate token? Faction tokens match the operator's
+/// tags; a char-id token ("char_1035_wisdel"-style, from named-operator gates) matches that
+/// operator. They can't collide: faction tokens are bare lowercase words.
 pub(crate) fn cc_token_matches(op: &OperatorBaseProfile, token: &str) -> bool {
     op.char_id == token || op.match_tags.iter().any(|t| t == token)
 }
 
 impl CcCondition {
     /// A stable text form of everything the room scorer reads from this
-    /// condition - the key material for an enumeration memo.
+    /// condition, keying an enumeration memo.
     pub(crate) fn fingerprint(&self) -> String {
         let formulas: Vec<String> = self
             .formula_bonuses
@@ -3091,7 +3050,7 @@ impl CcCondition {
 
     /// The percentage this condition grants in a room running `formula`: the
     /// flat bonus, or the product-split entry for that formula (an
-    /// unconfigured or unlisted product earns 0 - never a guess).
+    /// unconfigured or unlisted product earns 0, never a guess).
     pub(crate) fn bonus_for(&self, formula: Option<&str>) -> f64 {
         if self.formula_bonuses.is_empty() {
             return self.bonus_pct;
@@ -3126,10 +3085,10 @@ impl CcCondition {
         }
     }
 
-    /// The order-limit points this condition grants a `room_type` room staffed
-    /// by `team` - the capacity payload of a named-operator gate ("that
-    /// Trading Post's order limit +2" while Hoederer is seated there), or of a
-    /// per-operator grant (Gnosis's "+6 order limit" on each Kjerag trader).
+    /// The order-limit points this condition grants a `room_type` room staffed by `team`: the
+    /// capacity payload of a named-operator gate ("that Trading Post's order limit +2" while
+    /// Hoederer is seated there) or of a per-operator grant (Gnosis's "+6 order limit" on each
+    /// Kjerag trader).
     pub(crate) fn capacity_contribution(
         &self,
         room_type: &str,
@@ -3173,10 +3132,9 @@ pub(crate) struct CcBonusAccumulator {
 }
 
 impl CcBonusAccumulator {
-    /// The marginal flat gain from adding `bonuses` - a stacking buff always counts
-    /// fully; a non-stacking one counts only what it exceeds its family's strongest.
-    /// A crew-gated bonus counts its full value when the crew folded in so far
-    /// meets its gate, nothing otherwise.
+    /// The marginal flat gain from adding `bonuses`: a stacking buff counts fully, a
+    /// non-stacking one only what it exceeds its family's strongest, a crew-gated one
+    /// its full value when the crew folded in so far meets the gate, else nothing.
     pub(crate) fn marginal(&self, bonuses: &[CcBonus]) -> f64 {
         bonuses
             .iter()
@@ -3225,7 +3183,7 @@ impl CcBonusAccumulator {
 
     /// Fold one operator's bonuses in: clause-less buffs add to the room total,
     /// clause-bearing ones keep only the strongest per family. A crew-gated
-    /// bonus is skipped here (no crew to resolve it against - use `add_from`).
+    /// bonus is skipped here (no crew to resolve it against; use `add_from`).
     pub(crate) fn add(&mut self, bonuses: &[CcBonus]) {
         for b in bonuses {
             if b.crew_gate.is_some() {
@@ -3243,8 +3201,8 @@ impl CcBonusAccumulator {
                 self.conditions
                     .entry(key)
                     .and_modify(|c| {
-                        // Strongest of the family wins - by speed payload,
-                        // then by capacity payload (Conspirator α +1 vs β +2
+                        // Strongest of the family wins: speed payload first,
+                        // then capacity payload (Conspirator α +1 vs β +2
                         // both carry 0 speed).
                         if (cond.bonus_pct, cond.order_limit) > (c.bonus_pct, c.order_limit) {
                             *c = cond.clone();
@@ -3256,7 +3214,7 @@ impl CcBonusAccumulator {
     }
 
     /// `(flat per-room totals, faction-gated conditions)`. Conditional families are
-    /// kept out of the flat totals - they're applied per room against the team.
+    /// kept out of the flat totals; they apply per room against the team.
     pub(crate) fn finish(mut self) -> (HashMap<String, f64>, Vec<CcCondition>) {
         let gated = std::mem::take(&mut self.gated);
         for (owner, b) in &gated {
@@ -3310,7 +3268,7 @@ pub(crate) fn cc_bonus_for(
         }) => Some(CcBonus {
             room: target_room.clone(),
             family: buff_family(buff_id).to_string(),
-            // Faction bonuses only reach matching operators - credit half. They
+            // Faction bonuses only reach matching operators: credit half. They
             // carry no non-stacking clause, so they stack on top of generics.
             bonus: bonus_pct * 0.5,
             stacks: true,
@@ -3328,10 +3286,9 @@ pub(crate) fn cc_bonus_for(
         }) => Some(CcBonus {
             room: target_room.clone(),
             family: buff_family(buff_id).to_string(),
-            // Selection weight: discounted since the gate may not be met. The
-            // real value is granted per-room via `conditional`. A capacity
-            // grant (Gnosis) carries no weight of its own here - its worth is
-            // what the readers in the post make of it, priced when he sits.
+            // Selection weight, discounted since the gate may not be met; the real value is
+            // granted per room via `conditional`. A capacity grant (Gnosis) carries no weight
+            // here: its worth is what the post's readers make of it, priced when he sits.
             bonus: bonus_pct * 0.5,
             stacks: false,
             conditional: Some(CcCondition {
@@ -3365,14 +3322,12 @@ pub(crate) fn cc_bonus_for(
             }),
         }),
         Some(BuffResolutionStrategy::NamedCharRoomGrants { grants }) => {
-            // The order-limit payload rides the CC-condition machinery: the
-            // room seating the named operator gains capacity. Zero selection
-            // weight - surplus limit is not rewarded (the capacity factor
-            // caps at 1.0), so its expected efficiency value is honestly 0;
-            // it still raises the order BUFFER, which the yield model prices.
-            // The clue payload is handled by `cc_non_production_effects`.
-            // (At most one order-limit grant per buff exists in the data; a
-            // second would collapse into the same family here.)
+            // The order-limit payload rides the CC-condition machinery: the room seating the
+            // named operator gains capacity. Zero selection weight, since surplus limit isn't
+            // rewarded (the capacity factor caps at 1.0); it still raises the order BUFFER,
+            // which the yield model prices. The clue payload is handled by
+            // `cc_non_production_effects`. (The data has at most one order-limit grant per
+            // buff; a second would collapse into the same family here.)
             grants
                 .iter()
                 .find(|g| g.order_limit != 0.0)
@@ -3451,8 +3406,8 @@ fn cc_condition_feasible(
         .filter(|op| cc_token_matches(op, &cond.faction_token))
         .filter(|op| {
             // A named operator can always be SEATED in the target room; the
-            // faction shape additionally wants members with a skill for it -
-            // seatable-but-skill-less faction bodies never make the team.
+            // faction shape also wants members with a skill for it, since
+            // seatable but skill-less faction bodies never make the team.
             op.char_id == cond.faction_token
                 || op.available_buffs.iter().any(|b| {
                     building_data
@@ -3492,8 +3447,8 @@ pub(crate) fn cc_condition_fires(
 }
 
 /// How many operators a per-operator CC grant reaches in `rooms` (or, for a
-/// room-level gate, how many target rooms meet its count). Zero = the gate
-/// is unmet anywhere - what `cc_condition_fires` reports as false.
+/// room-level gate, how many target rooms meet its count). Zero means unmet
+/// anywhere, which `cc_condition_fires` reports as false.
 pub(crate) fn cc_condition_reach(
     cond: &CcCondition,
     rooms: &[RoomAssignment],
@@ -3518,10 +3473,10 @@ pub(crate) fn cc_condition_reach(
         .sum()
 }
 
-/// Is a CC operator dead weight - i.e. every effect it brings is a conditional that
-/// does NOT fire in the actual production teams? The production optimizer is already
-/// rewarded for satisfying these gates (it credits the bonus per room), so if it
-/// declined to, the gate is genuinely unmet and the operator should yield its seat.
+/// Is a CC operator dead weight, every effect a conditional that does NOT fire in the actual
+/// production teams? The production optimizer is already rewarded for meeting these gates (it
+/// credits the bonus per room), so if it declined, the gate is truly unmet and the operator
+/// yields its seat.
 pub(crate) fn cc_op_is_dead(
     op: &OperatorBaseProfile,
     rooms: &[RoomAssignment],
@@ -3531,7 +3486,7 @@ pub(crate) fn cc_op_is_dead(
 ) -> bool {
     let bonuses = cc_bonuses(op, registry, building_data);
     if bonuses.is_empty() {
-        return false; // no CC value to begin with - a plain filler, leave it be
+        return false; // no CC value: a plain filler, leave it
     }
     !bonuses.iter().any(|b| match &b.conditional {
         None => true, // an unconditional bonus always lands
@@ -3666,7 +3621,7 @@ impl RotationCcPlan {
     /// The best Squad-2 fill from operators not in `exclude` (nor Squad 1): the
     /// leftover global-bonus operators, then leftover global morale-recovery
     /// operators for the spare seats (the same priority Squad 1 gets). Empty when
-    /// nothing useful remains - the CC then rests dark that shift.
+    /// nothing useful remains; the CC then rests dark that shift.
     ///
     /// `team_rooms` are ALL the production teams the rotation fields, and they
     /// gate Squad 2 exactly like Squad 1's dead-weight loop: an operator whose
@@ -3898,12 +3853,12 @@ fn assign_production_rooms_inner(
 ) -> Vec<RoomAssignment> {
     let assigned_before = assigned.clone();
     // A frozen room (a scoped planner run's out-of-scope room) keeps its
-    // drafted crew and recipe: it is scored as drafted, its operators are
-    // taken, and it sits in the yield context the free rooms are planned
-    // beside - its gold feeds the posts, its post sells the gold. Held only
-    // as (operator, room type) pins, a scoped "optimize this room only"
-    // re-crewed every other room, flipped a factory's recipe and left the
-    // frozen crews unseated (31010962, 2026-09-20).
+    // drafted crew and recipe: scored as drafted, its operators taken, and it
+    // sits in the yield context the free rooms are planned beside (its gold
+    // feeds the posts, its post sells the gold). Held only as (operator, room
+    // type) pins, a scoped "optimize this room only" re-crewed every other
+    // room, flipped a factory's recipe and left the frozen crews unseated
+    // (31010962, 2026-09-20).
     let op_index = build_op_index(operators);
     let mut fixed: Vec<RoomAssignment> = Vec::new();
     for room in rooms.iter().filter(|r| r.frozen) {
@@ -4046,10 +4001,9 @@ fn assign_production_rooms_inner(
             morale_drains,
         );
 
-        // Score the split by realized daily YIELD (LMD-equivalent), not by a sum
-        // of efficiency %. This makes the gold/EXP split value-based: gold
-        // factories only pay off up to the trading posts' selling capacity, so
-        // excess gold factories are correctly switched to EXP.
+        // Score the split by realized daily YIELD (LMD-equivalent), not summed efficiency %,
+        // so the gold/EXP split is value-based: gold only pays up to the posts' selling
+        // capacity, and excess gold factories switch to EXP.
         let mut scored = trial_rooms;
         scored.extend(free.iter().cloned());
         let trial_objective = assignment_value(&scored);
@@ -4217,9 +4171,8 @@ fn assign_production_rooms_inner(
         morale_drains,
     );
 
-    // Now that every room has its best *beneficial* team (and only now - so a
-    // valuable operator is never wasted as a filler in a room where they do
-    // nothing), top each room up to a full crew with leftover operators.
+    // Only now that every room has its best *beneficial* team, top each room up with
+    // leftovers, so a valuable operator is never wasted as a filler where it does nothing.
     pad_production_rooms(
         &mut best_assignments,
         operators,
@@ -4394,13 +4347,12 @@ fn poach_facility_partners(
     }
 }
 
-/// Move a generic operator out of a formula-specific room into a different-formula
-/// room that has an open seat, when doing so raises total value. A generic (`+30%`
-/// to any product) in a Gold factory is worth the same in an EXP factory, so when
-/// the Gold side already has enough output (excess gold is unsold) the generic is
-/// better spent producing EXP; the seat it frees is later backfilled (by a Metalwork
-/// specialist if one is idle). Gated on the full `assignment_value` - which couples
-/// gold to trading - so it never regresses the assignment.
+/// Move a generic operator out of a formula-specific room into a different-formula room with
+/// an open seat when that raises total value. A generic (`+30%` to any product) is worth the
+/// same in Gold and EXP, so when the Gold side already has enough output (excess gold is
+/// unsold) it is better spent on EXP; its freed seat is backfilled later (by an idle Metalwork
+/// specialist if any). Gated on the full `assignment_value`, which couples gold to trading, so
+/// it never regresses the assignment.
 #[allow(clippy::too_many_arguments)]
 fn reallocate_across_formulas(
     rooms: &mut [RoomAssignment],
@@ -4457,7 +4409,7 @@ fn reallocate_across_formulas(
                 let Some(g_op) = op_index.get(g_id.as_str()).copied() else {
                     continue;
                 };
-                // Only generics move - a specialist earns its keep right here.
+                // Only generics move; a specialist earns its keep here.
                 if op_is_formula_specialist(g_op, &rooms[ai].room_type, fa_ref, building_data) {
                     continue;
                 }
@@ -4543,7 +4495,7 @@ fn pad_production_rooms(
             .any(|op| has_automation_buff(op, registry));
 
         if is_auto {
-            // Extra operators are nullified - occupy the seats with the lowest
+            // Extra operators are nullified: seat the lowest
             // opportunity-cost benchwarmers available.
             fill_remaining_slots(
                 &mut room.operators,
@@ -4571,7 +4523,7 @@ fn pad_production_rooms(
             });
             while (room.operators.len() as i32) < max_slots {
                 // The seat may stay empty: a filler is only worth adding if it does
-                // not LOWER the room's output - scored with the order buffer, so
+                // not LOWER the room's output. Scored with the order buffer, so
                 // Degenbrecher's -6 (a 4-order post beside limit-less traders) or
                 // Jaye's cut beside +80% of roommates is priced by what the post
                 // actually sells, not by the raw figure.
@@ -4939,8 +4891,8 @@ fn assign_single_room(
         cap_aware,
     );
 
-    // Mode 2: automation (factories only) - a single op's facility-count buff
-    // nullifies teammates, so this team is scored independently. No order value.
+    // Mode 2: automation (factories only). A single op's facility-count buff
+    // nullifies teammates, so this team is scored on its own. No order value.
     let (auto_ops, auto_speed) = if room.room_type == "MANUFACTURE" {
         best_automation_team(
             room,
@@ -5047,11 +4999,10 @@ pub fn align_rooms_to_current(building: &UserBuilding, proposal: &mut BaseAssign
     }
 }
 
-/// A FIXED synergy squad: its operators depend on each other, so they can't be
-/// swapped without breaking the combo. True when the team mixes a nullifier
-/// (Shamare) with order-value partners, or any member's buff is gated on a
-/// teammate / faction that the team actually satisfies. A team of independent
-/// operators (each contributing standalone) is NOT locked - it's interchangeable.
+/// A FIXED synergy squad whose operators depend on each other, so swapping one breaks the
+/// combo. True when the team mixes a nullifier (Shamare) with order-value partners, or any
+/// member's buff is gated on a teammate / faction the team satisfies. Independent operators
+/// are NOT locked.
 pub(crate) fn team_is_locked(
     ops: &[String],
     room_type: &str,
@@ -5096,9 +5047,8 @@ pub(crate) fn team_is_locked(
     false
 }
 
-/// Resolved strategies for a `char_id`'s top buffs that apply in this room - the
-/// `char_id` (E2-max) variant of `applicable_strategies`, for when we only have
-/// the id rather than a profile with a specific elite level.
+/// Resolved strategies for a `char_id`'s top buffs that apply in this room: the E2-max
+/// variant of `applicable_strategies`, for when only the id is at hand.
 fn profile_strategies<'a>(
     char_id: &str,
     room_type: &'a str,
@@ -5131,8 +5081,8 @@ fn buff_applies(buff: &Buff, room_type: &str, formula_type: Option<&str>) -> boo
     true
 }
 
-/// A buff whose targets span more than one product family (both Gold and EXP)
-/// serves any factory equally, so it is generic - not a formula specialist.
+/// A buff whose targets span more than one product family (Gold and EXP) serves any
+/// factory equally: generic, not a formula specialist.
 pub(crate) fn is_generic_targets(targets: &[String]) -> bool {
     targets.iter().any(|t| t == "F_GOLD") && targets.iter().any(|t| t == "F_EXP")
 }
@@ -5160,8 +5110,7 @@ fn op_is_formula_specialist(
     })
 }
 
-/// Resolve one `buff_id` to its strategy if the buff applies to this room/formula -
-/// the shared "look up the buff, gate on room/formula, resolve" step.
+/// Resolve one `buff_id` to its strategy if the buff applies to this room/formula.
 fn applicable_strategy<'a>(
     buff_id: &str,
     room_type: &str,
@@ -5187,10 +5136,9 @@ fn applicable_strategies<'a>(
     })
 }
 
-/// An operator's order value that SURVIVES a Shamare-type speed-nullifier: flat-LMD
-/// and Precious-Metal value count, but Pure-Gold value (Proviso) does not, because
-/// Shamare shifts the post away from Pure-Gold orders. This is what makes an operator
-/// a genuine Shamare partner versus a mere warm body.
+/// An operator's order value that SURVIVES a Shamare-type speed-nullifier: flat-LMD and
+/// Precious-Metal value count, Pure-Gold value (Proviso) does not, because Shamare shifts the
+/// post away from Pure-Gold orders. That is what makes a real Shamare partner, not a warm body.
 fn op_surviving_order_value(
     op: &OperatorBaseProfile,
     room_type: &str,
@@ -5227,7 +5175,7 @@ fn op_surviving_order_value_among(
     )
 }
 
-/// One scored team combination for a room type/formula - the unit the balanced
+/// One scored team combination for a room type/formula, the unit the balanced
 /// rotation selector packs into disjoint team sets.
 #[derive(Clone, Debug)]
 pub(crate) struct CandidateTeam {
@@ -5241,13 +5189,10 @@ pub(crate) struct CandidateTeam {
     pub(crate) score: f64,
 }
 
-/// Find the best NORMAL-mode team for a room by exhaustively evaluating
-/// combinations of the top candidate operators.
-///
-/// Greedy slot-by-slot filling can't discover synergies that require *both*
-/// members present (e.g. Texas's +65% only triggers with Lappland, and Lappland
-/// alone scores ~0) - neither operator bootstraps the pair. Searching whole-team
-/// combinations evaluates the pair together, so the true optimum is found.
+/// Best NORMAL-mode team for a room, by exhaustively scoring combinations of the top
+/// candidates. Greedy slot filling can't find synergies that need *both* members (Texas's +65%
+/// only fires with Lappland, and Lappland alone scores ~0); whole-team combinations score the
+/// pair together.
 #[allow(clippy::too_many_arguments)]
 fn best_team_for_room(
     room: &UserRoom,
@@ -5322,9 +5267,9 @@ pub(crate) fn candidate_pool<'a>(
         .collect()
 }
 
-/// Enumerate EVERY scored team combination for a room type/formula, best first - the
-/// engine behind `best_team_for_room` (which takes the head) and the rotation's
-/// balanced multi-team selection (which packs several disjoint teams from the list).
+/// Every scored team combination for a room type/formula, best first: the engine behind
+/// `best_team_for_room` (takes the head) and the rotation's balanced multi-team selection
+/// (packs several disjoint teams from the list).
 ///
 /// `pool_limit` widens the candidate cut when several disjoint teams must come out of
 /// one enumeration. `include_automation` admits Weedy-type automation operators to the
@@ -5442,12 +5387,11 @@ pub(crate) fn enumerate_candidate_teams(
 
     // A nullifier (Shamare) zeroes teammates' SPEED and gains efficiency per
     // teammate, so its only worthwhile partners are operators whose order VALUE
-    // survives the nullify (Tequila's flat LMD, Bibeak's Precious Metal) - every
-    // other operator would merely be a warm body. Nullifier teams are therefore
-    // enumerated from a RESTRICTED pool (nullifier + surviving-value operators),
-    // and a second nullifier-free pool covers the normal teams: a rotation needs
-    // several disjoint teams, so the Shamare combo must not crowd Texas+Lappland
-    // and the flat traders out of the candidate list.
+    // survives the nullify (Tequila's flat LMD, Bibeak's Precious Metal); anyone
+    // else is a warm body. Nullifier teams are enumerated from a RESTRICTED pool
+    // (nullifier + surviving-value operators), and a second nullifier-free pool
+    // covers the normal teams: a rotation needs several disjoint teams, so the
+    // Shamare combo must not crowd Texas+Lappland and the flat traders out.
     let has_nullifier = candidates
         .iter()
         .any(|op| op_is_nullifier(op, room_type, formula_type, registry, building_data));
@@ -5491,10 +5435,10 @@ pub(crate) fn enumerate_candidate_teams(
         let mut ranked: Vec<(&OperatorBaseProfile, f64, bool)> = pool_candidates
             .iter()
             .map(|op| {
-                // Fold surviving order value into the ranking so value partners (which
-                // score ~0 on speed) survive the top-K cut alongside the nullifier -
-                // priced beside the roster's other shapes (Bibeak's Tailoring is worth
-                // +17 next to Tequila, a sliver alone).
+                // Fold surviving order value into the ranking so value partners (~0 on
+                // speed) survive the top-K cut beside the nullifier, priced against the
+                // roster's other shapes (Bibeak's Tailoring is worth +17 next to Tequila,
+                // a sliver alone).
                 let value_boost = if nullifier_pool {
                     op_surviving_order_value_among(
                         op,
@@ -5522,9 +5466,9 @@ pub(crate) fn enumerate_candidate_teams(
                     + value_boost
                     // A per-operator Control-Center grant (Viviana's +7 to
                     // Knights, Flametail's +10 Battle Records to Kazimierz)
-                    // is part of what this operator brings, and a bound that
+                    // is part of what this operator brings; a bound that
                     // ignored it cut the Knights at their flat 25 behind
-                    // every other 25 - the trio at 42 each was never
+                    // every other 25, and the trio at 42 each was never
                     // enumerated (00980819, 2026-09-22).
                     + cc_conditions
                         .iter()
@@ -5572,10 +5516,10 @@ pub(crate) fn enumerate_candidate_teams(
                 totals.order_value_pct,
                 totals.order_gold_pct,
             );
-            // A nullifier's strength comes from the BODIES that fill its remaining
-            // seats (+45% per teammate), which padding adds after selection - score
-            // the empty seats as phantom bodies so a Shamare candidate isn't
-            // undervalued against ordinary teams. Padding recomputes the real figure.
+            // A nullifier's strength comes from the BODIES filling its other seats
+            // (+45% per teammate), which padding adds after selection. Score the
+            // empty seats as phantom bodies so a Shamare candidate isn't undervalued
+            // against ordinary teams; padding recomputes the real figure.
             if nullifier_pool {
                 let empty_seats = max_slots.saturating_sub(combo.len()) as f64;
                 if empty_seats > 0.0 {
@@ -5605,7 +5549,7 @@ pub(crate) fn enumerate_candidate_teams(
             // A trading post sells what its order buffer holds between
             // collections: a team that slashes the limit (Jaye's cut beside
             // +80% of roommates, Degenbrecher without a limit-adder) is
-            // ranked by the orders it actually moves - the same cap the
+            // ranked by the orders it actually moves, the same cap the
             // yield objective applies.
             score *= super::yield_model::trading_cap_factor(
                 room_type,
@@ -5665,7 +5609,7 @@ fn best_automation_team(
 ) -> (Vec<String>, f64) {
     // An automation team is led by a nullifier (Weedy, Eunectes, Passenger,
     // Snegurochka); the other seats go to whoever's facility-count skill
-    // survives the wipe - another nullifier OR a plain facility-scaled
+    // survives the wipe: another nullifier OR a plain facility-scaled
     // partner (Purestream's "+20% per Trading Post"). Admitting only
     // nullifiers paired Weedy with Eunectes at 77 where Weedy with
     // Purestream reads 117 beside two posts (00980819, 2026-09-21).
@@ -5918,12 +5862,11 @@ pub(crate) fn compute_team_totals(
     })
 }
 
-/// Score an arbitrary team stationed in a production room with the same speed/value objective
-/// the room search uses - so a caller can tell whether a player's CURRENT team is already at
-/// least as good as a recommended one (and the plan needn't nag them to swap). `operators` is
-/// the full roster, needed to resolve in-room synergies (e.g. Dorothy's bonus to a Rhine
-/// teammate). Faction-gated Control-Center conditions are ignored - a small approximation that
-/// keeps this a pure team-vs-team comparison.
+/// Score an arbitrary team in a production room with the room search's speed/value objective,
+/// so a caller can tell whether a player's CURRENT team already matches a recommended one (and
+/// skip nagging a swap). `operators` is the full roster, for in-room synergies (Dorothy's
+/// bonus to a Rhine teammate). Faction-gated Control-Center conditions are ignored, a small
+/// approximation that keeps this team-vs-team.
 #[allow(clippy::too_many_arguments)]
 pub fn team_value(
     team: &[String],
@@ -5971,17 +5914,14 @@ pub(crate) fn room_search_score(room_type: &str, speed_pct: f64, value_pct: f64)
     }
 }
 
-// ── Cap-aware sustained model (AFK product-buffer stall) ──────────────────────
-// A factory makes products into a fixed buffer; once full, it STOPS. A player who
-// leaves the base running and collects on a cadence loses everything a factory
-// makes past its buffer, so high-throughput / low-capacity factories stall and a
-// LARGE capacity (Vermeil's "+8" etc.) keeps a factory producing across long AFK.
-// Peak/active play never stalls (you collect as you go), so this only shapes the
+// Cap-aware sustained model (AFK product-buffer stall). A factory fills a fixed buffer and
+// then STOPS. A player who collects on a cadence loses everything made past the buffer, so
+// high-throughput / low-capacity factories stall and a LARGE capacity (Vermeil's "+8" etc.)
+// keeps producing across long AFK. Active play never stalls, so this only shapes the
 // SUSTAINED objective.
-/// Assumed days between product collections for the sustained metric - the buffer
-/// stalls a factory that overproduces within this window. Tunable; ~1.5 days is the
-/// "set it and check back" cadence where factory capacity starts to matter without
-/// over-penalising a normal base that collects more often.
+/// Assumed days between product collections for the sustained metric; the buffer stalls a
+/// factory that overproduces within it. Tunable: ~1.5 days is the "set it and check back"
+/// cadence where capacity starts to matter without over-penalising a base that collects more.
 const SUSTAINED_AFK_DAYS: f64 = 1.5;
 /// Seconds per day, for converting a formula's `CostPoint` (seconds per item)
 /// into a daily output rate.
@@ -6031,8 +5971,8 @@ fn factory_cap_factor(
     (buffer / peak_over_window).min(1.0)
 }
 
-/// A team's total capacity-limit bonus in a room (sum of its operators' order/capacity-limit
-/// contributions) - the buffer headroom it adds for the cap-aware sustained model.
+/// A team's total capacity-limit bonus in a room (summed order/capacity-limit contributions):
+/// the buffer headroom it adds for the cap-aware sustained model.
 fn team_capacity_bonus(
     team: &[String],
     room_type: &str,
@@ -6067,7 +6007,7 @@ fn team_capacity_bonus(
 /// (the game hands gold out outside the base), keeping the posts' LMD AND
 /// every factory's EXP. That supply is unbounded, so as a free CHOICE zero
 /// gold would win on every base; it is a candidate only where the player
-/// ALREADY runs no gold factory - they sell from stock today, and a plan that
+/// ALREADY runs no gold factory: they sell from stock today, and a plan that
 /// switched a lone factory to gold fed a post that was already fed and threw
 /// the EXP away (a plan worth 42% less than the player's own stationing, 27
 /// small accounts in the 2026-09-22 census). A player running gold is

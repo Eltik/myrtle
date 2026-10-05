@@ -1,20 +1,12 @@
-//! The `OpenAPI` document for the public API, and the shared pieces every
-//! annotated handler references.
+//! The `OpenAPI` document for the public API, and the shared pieces annotated
+//! handlers reference.
 //!
-//! # Why this exists in this shape
-//!
-//! The API surface is ~150 routes. Any scheme where documenting an endpoint is
-//! a step *separate* from registering it loses to entropy, so the router is
-//! built with [`utoipa_axum::router::OpenApiRouter`]: a handler wrapped in
-//! `routes!()` takes its path and method from its own `#[utoipa::path]`
-//! annotation, which makes the route registration and the spec entry the same
-//! declaration rather than two that have to be kept in agreement.
-//!
-//! Routes registered with plain `.route()` still serve but never reach the
-//! spec, which let the annotation pass run incrementally rather than as a
-//! 166-handler flag day. None are left: `tests/openapi_snapshot_test.rs` asserts that count is
-//! zero and pins the generated document, so both a new endpoint and any drift
-//! in an existing one land in a PR as a reviewable diff.
+//! The router is a [`utoipa_axum::router::OpenApiRouter`]: a handler in `routes!()`
+//! takes its path and method from its own `#[utoipa::path]`, so registering a route
+//! and documenting it are one declaration. A plain `.route()` still serves but never
+//! reaches the spec (that let the 166-handler annotation pass go incrementally).
+//! None are left: `tests/openapi_snapshot_test.rs` asserts the count is zero and
+//! pins the document, so any drift lands in a PR as a diff.
 //!
 //! # Adding an endpoint to the spec
 //!
@@ -30,12 +22,8 @@ use utoipa::{Modify, OpenApi, ToResponse};
 
 use crate::app::error::ErrorBody;
 
-/// Named, reusable error responses.
-///
-/// Handlers reference these by name rather than restating the error envelope,
-/// so the description of a 401 is written once for the whole API. Each is a
-/// newtype over [`ErrorBody`], which is the body every one of them actually
-/// carries.
+/// Named error responses, so a 401's description is written once for the whole
+/// API. Each is a newtype over [`ErrorBody`].
 pub mod responses {
     // Each response is a newtype whose field exists only so `ToResponse` can
     // point at `ErrorBody`'s schema; nothing constructs these types at runtime.
@@ -96,12 +84,10 @@ pub mod responses {
     pub struct ServiceUnavailable(ErrorBody);
 }
 
-/// Attaches the two ways a caller can authenticate.
-///
-/// Both are read by [`crate::app::extractors::auth::AuthUser`]: a player-facing
-/// JWT in `Authorization: Bearer`, and the internal service key used by the
-/// frontend's server-side rendering. The service key is documented because it
-/// appears in the extractor, not because third parties can obtain one.
+/// The two auth schemes [`crate::app::extractors::auth::AuthUser`] reads: a player
+/// JWT in `Authorization: Bearer`, and the service key the frontend's SSR uses. The
+/// key is documented because the extractor reads it, not because third parties can
+/// get one.
 struct SecurityAddon;
 
 impl Modify for SecurityAddon {
@@ -159,12 +145,10 @@ it is missing from the server too.",
     components(
         schemas(
             ErrorBody,
-            // `PlanRequirementItem::recipe` carries `#[schema(no_recursion)]` to cut
-            // the item/recipe cycle. That stops utoipa walking into `PlanRecipe` to
-            // collect it, while the field still emits a `$ref` to it, so without this
-            // line the document references a schema it never defines and every
-            // validator and code generator rejects it. `tests/openapi_snapshot_test.rs`
-            // fails on a dangling `$ref`, which is what caught it.
+            // `PlanRequirementItem::recipe` has `#[schema(no_recursion)]` to cut the
+            // item/recipe cycle, so utoipa never collects `PlanRecipe` while the field
+            // still `$ref`s it. Without this line the `$ref` dangles and validators
+            // reject the document; `tests/openapi_snapshot_test.rs` caught it.
             crate::database::models::planner::PlanRecipe,
             // A query-parameter enum is referenced by `$ref` from the handler's
             // `params(...)` but utoipa collects schemas only from bodies, so it

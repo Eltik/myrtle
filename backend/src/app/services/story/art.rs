@@ -1,14 +1,6 @@
-//! Every `AssetIndex` lookup the story index turns into a SERVED path.
-//!
-//! One shape answers all three: a kind plus an id, resolved to the
-//! `/textures/...` path the frontend fetches under `/api/assets`. The helpers
-//! below differ only in which kind they ask for and how they massage the id
-//! first, so the lookup itself is written once.
-//!
-//! This is the `AssetIndex` half, over the game's own classified sprite packs.
-//! The reader's OWN tree (`textures/avg`, plus the audio and video walks) is
-//! resolved by [`crate::core::story::StoryAssetIndex`], which is a different
-//! index over a different tree and shares no body with this one.
+//! `AssetIndex` lookups the story index turns into served `/textures/...` paths.
+//! The reader's own tree (`textures/avg`, audio, video) is a separate index,
+//! [`crate::core::story::StoryAssetIndex`].
 
 use crate::core::gamedata::assets::{AssetIndex, AssetKind};
 

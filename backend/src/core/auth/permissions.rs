@@ -67,7 +67,7 @@ impl FromStr for Permission {
 #[serde(rename_all = "lowercase")]
 pub enum GlobalRole {
     #[default]
-    User, // Default - no special permissions
+    User,
     TierListEditor, // Can edit tier lists they have permission for
     TierListAdmin,  // Can manage all tier lists
     Translator,     // Can edit UI translations for locales granted in translation_permissions

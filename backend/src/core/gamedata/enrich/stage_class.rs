@@ -1,12 +1,9 @@
-//! Stage classification: the single source of truth for turning a level file
-//! (or `stage_table` stage) into canonical display info - its zone/event,
-//! coarse category, fine group, code and name.
+//! Stage classification: turns a level file (or `stage_table` stage) into display
+//! info (zone/event, category, group, code, name).
 //!
-//! This is shared by the enemy -> stages index and is designed to back a
-//! future stage viewer, so all of the per-mode quirk handling (Integrated
-//! Strategies seasons, Reclamation Algorithm, Paradox Simulation, Contingency
-//! Contract, Annihilation, event EX zones, ...) lives here rather than being
-//! re-derived by callers or the frontend.
+//! Shared by the enemy -> stages index and the stage index, so the per-mode quirks
+//! (IS seasons, Reclamation Algorithm, Paradox Simulation, Contingency Contract,
+//! Annihilation, event EX zones) live here, not in callers or the frontend.
 
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
@@ -43,8 +40,8 @@ pub struct StageInfo {
 ///
 /// Some tables (e.g. `roguelike_topic_table`, `activity_table`) carry invalid
 /// UTF-8 in flavor text, which makes direct JSON parsing reject the whole file.
-/// The streaming reader lossily decodes it so the table still parses - the bad
-/// bytes only ever live in descriptions, never in the keys/names/level ids read here.
+/// The streaming reader decodes it lossily; the bad bytes only ever live in
+/// descriptions, never in the keys/names/level ids read here.
 pub fn read_json(data_dir: &Path, name: &str) -> Option<Value> {
     let file = std::fs::File::open(data_dir.join(format!("{name}.json"))).ok()?;
     serde_json::from_reader(SanitizingReader::new(std::io::BufReader::new(file))).ok()
@@ -264,7 +261,7 @@ fn collect_is_topics(
 
 /// Collect `(enemy_id, stage_id)` from any `BossData.EnemyId` declared inside a
 /// `FlatBuffer` map entry (`{key: <stage_id>, value: {... BossData: {EnemyId}}}`)
-/// anywhere in `activity_table` - some bosses are never in a level file.
+/// anywhere in `activity_table`; some bosses are never in a level file.
 fn collect_boss_stages(v: &Value, out: &mut Vec<(String, String)>) {
     match v {
         Value::Array(arr) => {
@@ -675,7 +672,7 @@ impl<'a> StageClassifier<'a> {
             });
         }
         if segs.contains(&"memory") {
-            // Paradox Simulation - one entry per operator record.
+            // Paradox Simulation: one entry per operator record.
             let (code, name) = self
                 .memory_meta
                 .get(rel)

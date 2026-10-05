@@ -8,18 +8,14 @@ use std::time::Duration;
 const DAY: Duration = Duration::from_hours(24);
 const RETRY: Duration = Duration::from_hours(1);
 
-/// How often the loop looks for a roster sync to fold in. A user who refreshes
-/// sees the community numbers move within this window.
-///
-/// 60 s is taken from the measured cost, not guessed: the full recompute is
-/// 62.531 ms over 619,706 rows, so the worst case of 1,440 passes a day is 90
-/// seconds of database time. At ten times the data that is 900 seconds a day
-/// and still comfortable; widen this when it stops being.
+/// How often the loop folds in roster syncs; a refreshing user sees community
+/// numbers move within this window. Measured: a full recompute is 62.531 ms over
+/// 619,706 rows, so 1,440 passes/day is 90 s of DB time. At 10x the data that's
+/// 900 s/day, still fine; widen when it isn't.
 const TICK: Duration = Duration::from_mins(1);
 
-/// How long to wait before the first refresh, derived from the persisted time
-/// so a restart soon after a refresh does not recompute. Consulted only at
-/// startup; the steady-state cadence is paced in memory.
+/// From the persisted time, so a restart right after a refresh doesn't
+/// recompute. Startup only; the steady cadence is paced in memory.
 async fn initial_delay(state: &AppState) -> Duration {
     match latest_ownership_refresh_at(&state.db).await {
         Ok(Some(last)) => {
@@ -37,13 +33,10 @@ async fn initial_delay(state: &AppState) -> Duration {
     }
 }
 
-/// One pass: recompute, then drop cached responses so the fresh aggregate is
-/// served at once rather than after the cache TTL lapses.
-///
-/// Shared by the loop below and by `core::refresh`, so a forced refresh and a
-/// scheduled one cannot drift apart. Reports the row counts because an empty
-/// aggregate is a legitimate outcome (nobody has opted into stat sharing) and
-/// is indistinguishable from a silent failure without them.
+/// Recompute, then drop cached responses so the new aggregate is served now,
+/// not after the TTL. Shared with `core::refresh` so forced and scheduled runs
+/// can't drift. Reports row counts: an empty aggregate (nobody opted in) is
+/// legitimate and otherwise looks like a silent failure.
 pub async fn refresh_once(state: &AppState) -> anyhow::Result<String> {
     refresh_build_stats(&state.db).await?;
 
@@ -70,8 +63,7 @@ pub async fn refresh_once(state: &AppState) -> anyhow::Result<String> {
     ))
 }
 
-/// Wrap [`refresh_once`] in the loop's pacing: a success schedules the next
-/// unconditional pass a day out, a failure retries in an hour.
+/// Success schedules the next pass a day out; failure retries in an hour.
 async fn refresh(state: &AppState, reason: &'static str) -> Duration {
     match refresh_once(state).await {
         Ok(summary) => {
@@ -90,10 +82,9 @@ async fn run_loop(state: AppState) {
         tick_secs = TICK.as_secs(),
         "operator ownership refresh job started (daily floor, coalesced on sync)"
     );
-    // Pace the loop in memory rather than re-reading the persisted time each
-    // iteration: the aggregate is legitimately empty until users opt into
-    // sharing, and an empty table would otherwise read back as "never refreshed"
-    // and spin.
+    // Paced in memory, not from the persisted time: the aggregate is legitimately
+    // empty until users opt in, and an empty table would read as "never
+    // refreshed" and spin.
     let mut wait = initial_delay(&state).await;
     loop {
         tracing::debug!(

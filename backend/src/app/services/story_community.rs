@@ -1,35 +1,25 @@
-//! What the community has READ: how many accounts have opened each story, and
-//! how far into each group they get.
+//! What the community has READ: accounts per story, and how far into each group.
 //!
-//! The aggregate is anonymous. Nothing on the wire names an account; every
-//! field is a count over accounts, so the only privacy decision is which
-//! accounts are counted at all. Two `user_settings` flags could govern it and
-//! they do not name the same 2,630 minus N: `public_profile` gates the named
-//! surfaces (a profile by uid, the leaderboards, user search) and `share_stats`
-//! gates the anonymous ones (`operator_ownership_stats`, medal ownership). This
-//! one takes the UNION of the two opt-outs, so an account that turned either
-//! off is not counted, which is stricter than any existing aggregate and is
-//! the conservative reading of an opt-out.
+//! Anonymous: every field is a count, so the only privacy call is who is counted.
+//! `public_profile` gates the named surfaces (profile by uid, leaderboards, user
+//! search) and `share_stats` the anonymous ones (`operator_ownership_stats`, medal
+//! ownership); they do not name the same accounts. This takes the UNION of the two
+//! opt-outs: turning either off excludes the account, stricter than any other
+//! aggregate.
 //!
-//! Per account the read set has three sources, in the order the reader's own
-//! library applies them. `user_game_story_read.read_in_game` is the whole
-//! verdict when the account has any row, because that table is written by the
-//! refresh from the game's own flags, its Archive block and its stage records
-//! together. An account with no such row still has `user_stage_progress.stages`,
-//! and the same gate rule `story_progress::stage_satisfies` applies there
-//! recovers what the game played: a story whose every `RequiredStages` gate is
-//! satisfied was played for that account. Then the reader's own document adds
-//! its `read` keys and withdraws its `unread` keys, which is the only source
-//! that can mark a story the game cannot know about and the only one that can
-//! take a mark away.
+//! Per account, three sources in the reader library's order:
+//! `user_game_story_read.read_in_game` is the whole verdict when any row exists
+//! (the refresh writes it from the game's flags, Archive block and stage records).
+//! Otherwise `user_stage_progress.stages` through `story_progress::stage_satisfies`:
+//! a story whose every `RequiredStages` gate is satisfied was played. Then the
+//! reader document adds its `read` keys and withdraws its `unread` keys, the only
+//! source that can mark what the game can't know, or take a mark away.
 //!
-//! The build is CPU-bound over 43 MB of jsonb, so it runs on the blocking pool
-//! in batches and is cached per server with a `computed_at`. Six hours is the
-//! staleness ceiling: a background task computes it at boot and again on that
-//! clock, and a request older than the ceiling recomputes under the slot lock.
-//! That lock is `story::ServerCache`, the SAME single flight the library index
-//! is built under, so a reader that arrives during a build waits for it rather
-//! than starting a second one.
+//! The build is CPU-bound over 43 MB of jsonb: blocking pool, in batches, cached
+//! per server with a `computed_at`. Six hours max staleness: a background task
+//! computes at boot and on that clock; an older request recomputes under the slot
+//! lock, the same `story::ServerCache` single flight as the library index, so a
+//! reader arriving mid-build waits instead of starting a second one.
 
 use std::collections::HashMap;
 use std::sync::Arc;

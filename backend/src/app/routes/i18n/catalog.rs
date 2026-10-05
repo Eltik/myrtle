@@ -6,16 +6,12 @@ use crate::app::cache::CachedJson;
 use crate::app::services::i18n::{get_catalog, get_manifest};
 use crate::app::{error::ApiError, state::AppState};
 
-/// `Cache-Control` for a catalog whose hash is still current. The hash is in
-/// the URL, so the body at this URL can never change - which is what lets it
-/// be cached forever and removes any need to purge Cloudflare, where this
-/// project has no purge automation at all.
+/// The hash is in the URL, so the body never changes: cache forever. Also means
+/// no Cloudflare purge, which this project has no automation for.
 const IMMUTABLE: &str = "public, max-age=31536000, immutable";
 
-/// A superseded hash still answers with current content, because a client
-/// holding an old manifest should get something sane rather than a 404 - but
-/// it must NOT be cached as immutable, or that stale URL would be pinned in an
-/// edge cache forever.
+/// A superseded hash still gets current content rather than a 404, but must not
+/// be cached immutable or the stale URL stays pinned at the edge.
 const SHORT: &str = "public, max-age=30";
 
 fn etag_response(cached: CachedJson, cache_control: &str, headers: &HeaderMap) -> Response {

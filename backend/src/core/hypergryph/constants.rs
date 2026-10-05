@@ -68,8 +68,7 @@ impl Server {
         }
     }
 
-    /// Parse a server code (as produced by [`Self::as_str`]) case-insensitively.
-    /// Accepts `bilibili` as an alias for `bili`. Returns `None` for unknown codes.
+    /// Case-insensitive inverse of [`Self::as_str`]; `bilibili` aliases `bili`.
     pub fn parse(s: &str) -> Option<Self> {
         match s.trim().to_lowercase().as_str() {
             "en" => Some(Self::EN),

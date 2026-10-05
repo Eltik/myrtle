@@ -1,30 +1,22 @@
 //! Experimental: official CN (Hypergryph) account login.
 //!
-//! No open-source project found in research has published a verified
-//! implementation of the actual Arknights CN game client's login. What IS
-//! documented, by ArkMowers/arknights-mower (MIT) and the archived
-//! `ProbiusOfficial/Skland_API` docs, is the Hypergryph passport login used by
-//! the Skland companion app, against the same account system
-//! (`as.hypergryph.com`) the game client almost certainly shares.
+//! No open-source project has a verified implementation of the CN game client's
+//! login. What IS documented (ArkMowers/arknights-mower, MIT; the archived
+//! `ProbiusOfficial/Skland_API` docs) is the passport login the Skland app uses,
+//! on the same account system (`as.hypergryph.com`) the client almost certainly
+//! shares.
 //!
-//! The hypothesis this module encodes: the game client runs the identical
-//! phone/password or phone/SMS-code login, then the identical
-//! `user/oauth2/v2/grant` exchange, but with its own `appCode` rather than
-//! Skland's. That appCode has not surfaced anywhere in research; [`app_code`]
-//! defaults to Skland's own published value as a placeholder, overridable via
-//! the `HYPERGRYPH_CN_APP_CODE` env var once the real one is captured, for
-//! example by MITM against a rooted device running the actual client (see
-//! djpadbit/Arknights-RE for that methodology). Until then, expect
-//! [`oauth2_grant`] to be rejected, or to return a grant scoped to the wrong
-//! app, and `session::login_cn`'s u8 exchange to fail. This is shipped anyway
-//! so testing it costs one constant, not the whole pipeline built from
-//! scratch.
+//! Hypothesis: the client runs the same phone/password or phone/SMS login and
+//! the same `user/oauth2/v2/grant` exchange, with its own `appCode`. That code
+//! hasn't surfaced; [`app_code`] defaults to Skland's as a placeholder,
+//! overridable via `HYPERGRYPH_CN_APP_CODE` once captured (e.g. MITM on a rooted
+//! device, see djpadbit/Arknights-RE). Until then expect [`oauth2_grant`] to be
+//! rejected or scoped to the wrong app, and `session::login_cn`'s u8 exchange to
+//! fail. Shipped so testing it costs one constant.
 //!
-//! Also note: the passport token-introspection endpoint (`user/info/v1/basic`,
-//! not called here) returns real-name-registration PII, ID card number and
-//! legal name, because CN mandates real-name binding for game accounts. Treat
-//! a passport token as sensitive for that reason, not just as a game session
-//! credential.
+//! The introspection endpoint (`user/info/v1/basic`, not called here) returns
+//! real-name PII (ID card number, legal name), since CN mandates real-name
+//! binding. Treat a passport token as sensitive for that reason.
 
 use std::time::Duration;
 
@@ -49,10 +41,8 @@ struct Envelope<T> {
     status: i32,
     #[serde(default)]
     msg: String,
-    // No #[serde(default)] here: serde already treats a missing Option<T>
-    // field as None without it, and adding it makes serde_derive infer a
-    // spurious `T: Default` bound (Option<T>::default() doesn't need one,
-    // but the derive's #[serde(default)] handling doesn't know that).
+    // No #[serde(default)]: a missing Option<T> is already None, and the attribute
+    // makes serde_derive infer a spurious `T: Default` bound.
     data: Option<T>,
 }
 
@@ -148,8 +138,7 @@ struct TokenData {
     token: String,
 }
 
-/// Exchanges a phone plus password or phone plus SMS code for a Hypergryph
-/// passport token.
+/// Phone + password or phone + SMS code -> passport token.
 pub async fn login(
     client: &Client,
     credential: PassportCredential<'_>,
@@ -175,9 +164,8 @@ pub struct OAuthGrant {
     pub uid: String,
 }
 
-/// Exchanges a passport token for an app-scoped `OAuth2` grant. See module docs:
-/// the appCode this sends is an unverified placeholder for the actual game
-/// client.
+/// Passport token -> app-scoped `OAuth2` grant. The appCode is an unverified
+/// placeholder (see module docs).
 pub async fn oauth2_grant(client: &Client, passport_token: &str) -> Result<OAuthGrant, FetchError> {
     let body = serde_json::json!({
         "token": passport_token,

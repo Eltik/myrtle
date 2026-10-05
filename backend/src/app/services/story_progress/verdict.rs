@@ -1,42 +1,32 @@
-//! What the GAME itself says this account has read, out of a raw `syncData`
-//! payload.
+//! What the GAME says this account has read, from a raw `syncData` payload.
+//! Pure (JSON in, [`GameStoryReadSet`] out, no database or clock), so
+//! [`super::store::reverdict`] can rerun the rule over stored rows.
 //!
-//! Pure over its inputs: JSON in, a [`GameStoryReadSet`] out, no database and
-//! no clock. That is what lets [`super::store::reverdict`] run the same rule
-//! again over stored rows, with no call to the game server.
-//!
-//! THREE SOURCES, and not one of them alone is the answer:
-//!
-//! - `user.status.flags`, the client's own played-script record, keyed by
-//!   `story_review_table` `InfoUnlockDatas[].StoryTxt`. It is the half that
-//!   covers the mainline, and it never carries a story-only stage
-//!   (`main_08_st_01`, `spst_08-02`), which the game plays as a STAGE: 42 of
-//!   those are invisible to it.
+//! Three sources, none sufficient alone:
+//! - `user.status.flags`, the client's played-script record, keyed by
+//!   `story_review_table` `InfoUnlockDatas[].StoryTxt`. Covers the mainline, but
+//!   never a story-only stage (`main_08_st_01`, `spst_08-02`), which the game
+//!   plays as a STAGE: 42 of those are invisible to it.
 //! - `user.storyreview.groups.<groupId>`, the Archive block. PRESENCE is the
 //!   signal: `rc` is a re-read counter, 0 on 1,036 of the measured account's
-//!   1,038 rows, so gating on `rc > 0` yielded two stories out of a library the
-//!   account has most of. No `main_*` group appears in it at all. And what it
-//!   lists is what an event UNLOCKED, not what was opened: 94 of its gated
-//!   stories had never been read.
-//! - `user.dungeon.stages` read against `RequiredStages`, which settles both
-//!   gaps. Satisfied gates mean the game played the story for the player; see
-//!   [`stage_satisfies`] for why a story-only stage at state 3 with zero starts
-//!   is an opening.
+//!   1,038 rows, so gating on `rc > 0` yielded two stories. No `main_*` group
+//!   appears in it. It lists what an event UNLOCKED, not what was opened: 94 of
+//!   its gated stories had never been read.
+//! - `user.dungeon.stages` against `RequiredStages`, which settles both gaps:
+//!   satisfied gates mean the game played the story (see [`stage_satisfies`] for
+//!   why a story-only stage at state 3 with zero starts is an opening).
 //!
-//! THE VERDICT: played or cleared is read, and Archive presence counts only on
-//! a story with NO gate (operator records, `USE_ITEM` mini vignettes), where it
-//! is the only signal there is. On the measured EN account that reads 1,313 of
-//! the 1,407 rows the three sources name.
+//! Verdict: played or cleared is read; Archive presence counts only on a story
+//! with NO gate (operator records, `USE_ITEM` mini vignettes), where it is the
+//! only signal. Measured EN account: 1,313 of the 1,407 rows the sources name.
 //!
-//! The payload census those numbers come from, and the two refutations that got
-//! the rule here, are in `docs/story-reader.md`, section "4. Measured", under
-//! "Progress sync from the GAME: two sources, measured against a real payload"
-//! and "The game's read verdict, corrected: stage gates, a v2 document, a
-//! DB-only re-derivation".
+//! Census and the two refutations behind the rule: `docs/story-reader.md`,
+//! "4. Measured", under "Progress sync from the GAME: two sources, measured
+//! against a real payload" and "The game's read verdict, corrected: stage gates,
+//! a v2 document, a DB-only re-derivation".
 //!
-//! Scale: the payload is 2.4 MB of JSON on the measured account and every walk
-//! here is linear in it, so callers run this on the blocking pool under
-//! `cpu::offload`, never on an async worker.
+//! The payload is 2.4 MB on the measured account and every walk is linear in it,
+//! so callers run this under `cpu::offload`, never on an async worker.
 
 use serde_json::Value;
 
@@ -429,14 +419,8 @@ mod tests {
     // test reaches into the store half.
     use super::super::store::{StoredRead, stored_payload};
 
-    // -----------------------------------------------------------------------
-    // The game's own read marks, from BOTH sources.
-    //
-    // Every payload below is HAND-WRITTEN. The shapes and the field semantics
-    // are read off a real EN `account/syncData` dump, but nothing captured from
-    // an account is reproduced here: the fragments are the smallest thing that
-    // exercises each rule.
-    // -----------------------------------------------------------------------
+    // Every payload below is HAND-WRITTEN: shapes and semantics read off a real EN
+    // `account/syncData` dump, but nothing captured from an account is reproduced.
 
     use std::collections::HashMap;
 
@@ -560,7 +544,7 @@ mod tests {
                 played: false,
                 archived: true,
             },
-            // Known to no index entry: its flag cannot be rebuilt, as a path the index does not know would not map.
+            // Known to no index entry: its flag can't be rebuilt, like an unknown path.
             StoredRead {
                 story_id: "gone_level_x_beg".into(),
                 reread_count: 0,

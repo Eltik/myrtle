@@ -1,15 +1,13 @@
 //! Balanced multi-team selection for the shift rotation.
 //!
-//! The rotation staffs each production GROUP (rooms making the same product: the
-//! Gold factories, the EXP factories, the Trading Posts) with `ceil(3N/2)` teams
-//! tiled as 24-hour blocks over the group's `N rooms × 3 shifts` cells - the
-//! classic login rhythm where exactly one team per group swaps out every 12h.
+//! Each production GROUP (same product: gold factories, EXP factories, posts)
+//! gets `ceil(3N/2)` teams tiled as 24h blocks over its `N rooms × 3 shifts`
+//! cells, so exactly one team per group swaps every 12h.
 //!
-//! Teams are chosen JOINTLY across all groups to maximize the summed output of
-//! every team, not best-team-first. Best-first "frontloads" the strong operators
-//! into the first team and leaves the last team hollow (107%/106%/75%); the sum
-//! objective yields the balanced spread (≈100/95/95/90) and routes cross-formula
-//! generics to whichever product values them most. Whole candidate TEAMS are the
+//! Teams are chosen jointly to maximize summed output, not best-first.
+//! Best-first frontloads the strong operators and leaves the last team hollow
+//! (107%/106%/75%); the sum gives ≈100/95/95/90 and routes cross-formula
+//! generics to the product that values them most. Whole candidate teams are the
 //! packing unit, so superadditive pairs (Texas + Lappland) stay intact.
 
 use std::cell::RefCell;
@@ -28,11 +26,11 @@ use super::sustain_sim::sustains_24h_block;
 use super::types::{OperatorBaseProfile, RoomAssignment, UserRoom};
 use super::util::max_stationed_at_level;
 
-/// Widen the candidate pool beyond the single-team cut when several disjoint teams
-/// must come out of one enumeration.
+/// Candidate pool beyond the single-team cut when several disjoint teams come
+/// out of one enumeration.
 const BASE_POOL: usize = 16;
 const POOL_PER_EXTRA_TEAM: usize = 8;
-/// Keep this many top candidates per group for the packing search.
+/// Top candidates kept per group for the packing search.
 const CANDIDATES_PER_GROUP: usize = 400;
 /// Beam width for the disjoint-selection search.
 const BEAM_WIDTH: usize = 300;
@@ -41,23 +39,21 @@ const EXTENSIONS_PER_SLOT: usize = 24;
 /// Local-search polish passes after the beam.
 const POLISH_PASSES: usize = 4;
 
-/// A set of operators, as a fixed-width bitset.
+/// Operator set as a fixed-width bitset.
 ///
-/// The beam search tests team disjointness millions of times, so the set has to
-/// be a couple of machine words rather than a `HashSet`. 256 bits covers the
-/// worst-case universe: three production groups, each enumerating from a pool of
+/// The beam tests disjointness millions of times, so this has to be a few words,
+/// not a `HashSet`. 256 bits covers the worst case: three groups each enumerating
 /// `BASE_POOL + POOL_PER_EXTRA_TEAM × (teams − 1)` operators (~72 at 5 rooms),
-/// so ~216 distinct operators at the extreme.
+/// ~216 total.
 ///
-/// A bare `u128` was too small: the union across all three groups could pass
-/// 128, and every candidate team holding an operator past it was silently
-/// dropped, shrinking the pool with no signal.
+/// A bare `u128` was too small: the union could pass 128 and every team holding
+/// an operator past it was silently dropped.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Default)]
 pub struct OpMask([u64; 4]);
 
 impl OpMask {
     pub(crate) const EMPTY: Self = Self([0; 4]);
-    /// Distinct operators representable. Indices at or past this are rejected.
+    /// Indices at or past this are rejected.
     pub(crate) const CAPACITY: usize = 256;
 
     const fn set(&mut self, bit: usize) {
@@ -85,7 +81,7 @@ impl OpMask {
     }
 }
 
-/// One production group to staff: rooms making the same product.
+/// Rooms making the same product.
 pub struct GroupSpec {
     pub(crate) room_type: String,
     pub(crate) formula_type: Option<String>,
@@ -93,8 +89,8 @@ pub struct GroupSpec {
     pub(crate) rooms: Vec<(String, i32)>,
 }
 
-/// A staffed production group: the selected teams (ordinal order matches the
-/// tiling - ordinal 0 holds the shifts-1+2 block) and the room×shift tiling.
+/// Teams in ordinal order (ordinal 0 holds the shifts-1+2 block) plus the
+/// room×shift tiling.
 pub struct PlannedGroup {
     pub(crate) room_type: String,
     pub(crate) formula_type: Option<String>,
@@ -104,14 +100,13 @@ pub struct PlannedGroup {
     pub(crate) cells: Vec<[usize; SHIFT_COUNT]>,
 }
 
-/// Tile a group of `n_rooms` into 24h team blocks: chain the `3N` room-shift cells
-/// room-major and hand each team two consecutive cells (the trailing cell of an odd
-/// chain goes to the last team alone - it works a single 12h block).
+/// Chain the `3N` room-shift cells room-major and give each team two
+/// consecutive cells (an odd chain's trailing cell goes to the last team alone,
+/// a single 12h block).
 ///
-/// For 2 rooms this is the login rhythm the player runs by hand:
-/// `room0 = [T0, T0, T1]`, `room1 = [T1, T2, T2]` - every team works 24h straight
-/// (T1's block wraps shift 3 -> shift 1), rests 12h, and exactly one team per group
-/// swaps out at each login.
+/// For 2 rooms it's the hand-run login rhythm: `room0 = [T0, T0, T1]`,
+/// `room1 = [T1, T2, T2]`. Every team works 24h (T1 wraps shift 3 -> 1), rests
+/// 12h, and one team per group swaps at each login.
 pub fn tile_group(n_rooms: usize) -> Vec<[usize; SHIFT_COUNT]> {
     let mut cells = vec![[0usize; SHIFT_COUNT]; n_rooms];
     for pos in 0..(n_rooms * SHIFT_COUNT) {
@@ -120,12 +115,11 @@ pub fn tile_group(n_rooms: usize) -> Vec<[usize; SHIFT_COUNT]> {
     cells
 }
 
-/// Number of teams `tile_group(n_rooms)` needs: one per pair of cells.
 pub const fn teams_for_rooms(n_rooms: usize) -> usize {
     (n_rooms * SHIFT_COUNT).div_ceil(2)
 }
 
-/// How many cells each team ordinal occupies in the tiling (2, except a trailing 1).
+/// Cells per team ordinal (2, except a trailing 1).
 fn ordinal_weights(n_rooms: usize) -> Vec<usize> {
     let teams = teams_for_rooms(n_rooms);
     let mut w = vec![0usize; teams];
@@ -137,11 +131,10 @@ fn ordinal_weights(n_rooms: usize) -> Vec<usize> {
     w
 }
 
-/// Everything `enumerate_candidate_teams` reads that varies within one
-/// core-planner run: the room shape, the enumeration flags, the
-/// Control-Center conditions in force and the FILTERED candidate ids.
-/// Registry, building data, facility counts and morale drains are fixed for
-/// the run, which is why an [`EnumerationMemo`] must not outlive it.
+/// What varies within one core-planner run: room shape, enumeration flags, CC
+/// conditions in force, FILTERED candidate ids. Registry, building data,
+/// facility counts and drains are fixed per run, so an [`EnumerationMemo`] must
+/// not outlive it.
 #[derive(Hash, PartialEq, Eq)]
 struct MemoKey {
     room_type: String,
@@ -157,14 +150,11 @@ struct MemoKey {
 
 /// Memo for `enumerate_candidate_teams` over one core-planner run.
 ///
-/// The Fiammetta 24/7-seat oracle re-plans the whole base once per trading
-/// candidate, and the rotation runs twice (two passes): on a full base the
-/// same four-factory enumeration came back from identical inputs twenty
-/// times in one planner request (0.4 s each in a debug build). The candidate
-/// a trial excludes is a trader with no factory skill, so the factory pools -
-/// and therefore the enumerations - are the same. The key holds the filtered
-/// ids, so a hit means the enumeration would have read exactly the same
-/// inputs; the result is the same by construction.
+/// The Fiammetta 24/7-seat oracle re-plans the base per trading candidate and
+/// the rotation runs two passes: on a full base the same four-factory
+/// enumeration ran twenty times per request (0.4 s each, debug build). The
+/// excluded candidate is a trader with no factory skill, so factory pools match.
+/// The key holds the filtered ids, so a hit has identical inputs by construction.
 #[derive(Default)]
 pub struct EnumerationMemo(RefCell<HashMap<MemoKey, Vec<CandidateTeam>>>);
 
@@ -226,9 +216,8 @@ impl EnumerationMemo {
     }
 }
 
-/// Select the balanced team sets for every production group and pick the best
-/// gold/EXP split, returning the planned groups (teams padded to capacity, ordinal
-/// order strongest-first with the weakest team on any trailing 1-cell block).
+/// Balanced team sets per group plus the best gold/EXP split. Teams padded to
+/// capacity, strongest first, weakest on any trailing 1-cell block.
 #[allow(clippy::too_many_arguments)]
 pub fn plan_production_groups(
     production_rooms: &[&UserRoom],
@@ -245,9 +234,9 @@ pub fn plan_production_groups(
     kept: &HashMap<String, Vec<String>>,
     memo: &EnumerationMemo,
 ) -> Vec<PlannedGroup> {
-    // Seats held out of each room: `reserved_seats` (a seat the sustain
-    // oracle keeps EMPTY to price a plan without its candidate) plus the
-    // pinned crews, which the trading posts fold into their teams.
+    // Seats held out per room: `reserved_seats` (kept EMPTY by the sustain oracle
+    // to price a plan without its candidate) plus pinned crews, which the posts
+    // fold into their teams.
     let mut reserved: HashMap<String, usize> = reserved_seats.clone();
     for (slot, ops) in kept {
         *reserved.entry(slot.clone()).or_insert(0) += ops.len();
@@ -256,8 +245,8 @@ pub fn plan_production_groups(
         .iter()
         .filter(|r| r.room_type == "MANUFACTURE")
         .collect();
-    // Lay the gold/EXP split onto the slots the player ALREADY runs that way (the
-    // split optimizes the COUNT; the physical layout stays theirs).
+    // Lay the split onto the slots the player already runs that way (the split
+    // picks the COUNT; the physical layout stays theirs).
     factory_rooms.sort_by_key(|r| match r.current_formula.as_deref() {
         Some("F_GOLD") => 0,
         Some("F_EXP") => 1,
@@ -269,9 +258,8 @@ pub fn plan_production_groups(
         .collect();
 
     let num_factories = factory_rooms.len();
-    // Gold factories cover the trading posts' gold demand; zero gold is a
-    // candidate only where the player runs no gold factory today (see
-    // `gold_split_candidates`).
+    // Gold factories cover post demand; zero gold is a candidate only where the
+    // player runs no gold factory today (`gold_split_candidates`).
     let fed = trading_rooms.len().min(num_factories);
     let splits = gold_split_candidates(&factory_rooms, fed, 0);
 
@@ -300,11 +288,10 @@ pub fn plan_production_groups(
                 rooms: exp,
             });
         }
-        // One trading group PER POST LEVEL: a post's order rarity, base
-        // limit and order value follow its level, so a level-3 and a
-        // level-2 post planned as one group (at the lower level) priced
-        // Shamare's tailoring at nothing and Proviso's bonus bars at the
-        // wrong post. Same-level posts still share a group and a tiling.
+        // One trading group PER POST LEVEL: rarity, base limit and order value follow
+        // the level, so an L3 and L2 post planned together (at the lower level) priced
+        // Shamare's tailoring at nothing and Proviso's bars at the wrong post.
+        // Same-level posts still share a group and tiling.
         let mut levels: Vec<i32> = trading_rooms.iter().map(|r| r.level).collect();
         levels.sort_unstable();
         levels.dedup();
@@ -358,10 +345,9 @@ pub fn plan_production_groups(
     best.map(|(_, planned)| planned).unwrap_or_default()
 }
 
-/// The rotation objective for a planned split: realized yield summed over the three
-/// shifts, staffing each room with the team its tiling cell names. This couples the
-/// gold factories to the trading posts per shift (LMD = min(made, sold) × 500), the
-/// same yield model the peak optimizer scores splits with.
+/// Realized yield summed over three shifts, each room staffed by its tiling
+/// cell's team. Couples gold to posts per shift (LMD = min(made, sold) × 500),
+/// the same model the peak optimizer scores splits with.
 pub fn tiled_objective(groups: &[PlannedGroup], global_bonuses: &HashMap<String, f64>) -> f64 {
     (0..SHIFT_COUNT)
         .map(|shift| {
@@ -394,8 +380,8 @@ pub fn tiled_objective(groups: &[PlannedGroup], global_bonuses: &HashMap<String,
         .sum()
 }
 
-/// The trading posts' own LMD summed over the tiling, uncoupled from the
-/// gold supply: the tie-breaker inside `POST_TIE_BAND`.
+/// Posts' own LMD over the tiling, uncoupled from gold supply: the tie-breaker
+/// inside `POST_TIE_BAND`.
 fn trading_uncoupled_lmd(groups: &[PlannedGroup], global_bonuses: &HashMap<String, f64>) -> f64 {
     let global = *global_bonuses.get("TRADING").unwrap_or(&0.0);
     groups
@@ -426,9 +412,9 @@ fn trading_uncoupled_lmd(groups: &[PlannedGroup], global_bonuses: &HashMap<Strin
         .sum()
 }
 
-/// Beam-search the disjoint team selection maximizing `Σ score × cells_worked`
-/// across every group's team slots, then polish with local moves. Returns each
-/// group planned with its teams in ordinal order (strongest on the widest block).
+/// Beam-search disjoint teams maximizing `Σ score × cells_worked`, then polish
+/// with local moves. Teams come back in ordinal order (strongest on the widest
+/// block).
 #[allow(clippy::too_many_arguments)]
 fn select_balanced_teams(
     specs: &[GroupSpec],
@@ -445,19 +431,17 @@ fn select_balanced_teams(
     memo: &EnumerationMemo,
 ) -> Vec<PlannedGroup> {
     let op_index = build_op_index(operators);
-    // Enumerate candidate teams per group, once per group. Team size is bounded
-    // by the group's SMALLEST room so any team fits any room its block spans.
+    // Team size is bounded by the group's SMALLEST room so any team fits any room
+    // its block spans.
     let per_group: Vec<Vec<CandidateTeam>> = specs
         .iter()
         .map(|spec| {
             let capacity = group_capacity(spec, building_data);
-            // A pinned 24/7 crew (the sustained Shamare, Proviso) is part
-            // of every team its post fields, so the post's candidates carry
-            // it and are scored WITH it: enumerated without her and merged
-            // afterwards, a level-3 post picked a Proviso team and the merge
-            // put Proviso beside Shamare, who nullifies her (00980819).
-            // Only a group whose rooms all hold the same pinned crew can be
-            // folded this way; others keep the seat-count reservation.
+            // A pinned 24/7 crew (sustained Shamare, Proviso) is part of every team its post
+            // fields, so candidates are scored WITH it. Enumerated without and merged later,
+            // an L3 post picked a Proviso team and the merge put her beside Shamare, who
+            // nullifies her (00980819). Only groups whose rooms all hold the same pin fold;
+            // others keep the seat-count reservation.
             let group_kept: Option<&Vec<String>> = {
                 let sets: Vec<&Vec<String>> = spec
                     .rooms
@@ -471,10 +455,9 @@ fn select_balanced_teams(
             let teams_needed = teams_for_rooms(spec.rooms.len());
             let min_level = spec.rooms.iter().map(|(_, l)| *l).min().unwrap_or(1);
             let pool = BASE_POOL + POOL_PER_EXTRA_TEAM * teams_needed.saturating_sub(1);
-            // The pinned crew is allowed back into ITS post's enumeration:
-            // the enumerator knows how to build a nullifier's squad (Shamare
-            // with the order-value partners that survive her), and a team
-            // built without her and folded afterwards never is one.
+            // The pin is allowed back into ITS post's enumeration: the enumerator can build
+            // a nullifier's squad (Shamare plus the order-value partners that survive her);
+            // a team built without her and folded later never is one.
             let assigned_for_group: HashSet<String> = group_kept.map_or_else(
                 || assigned.clone(),
                 |pinned| {
@@ -517,10 +500,10 @@ fn select_balanced_teams(
                     morale_drains,
                     false,
                     pool,
-                    // Factories can run automation teams (Weedy + facility-count scalers
-                    // like Purestream); enumerate them as ordinary candidates.
+                    // Factories can run automation teams (Weedy + facility-count scalers like
+                    // Purestream).
                     spec.room_type == "MANUFACTURE",
-                    // Rotation teams work 24h blocks - heavy-drainers can't finish one.
+                    // 24h blocks: heavy drainers can't finish one.
                     true,
                 )
             });
@@ -546,8 +529,7 @@ fn select_balanced_teams(
                     if !seen.insert(key) {
                         continue;
                     }
-                    // A team the enumerator built around the pin keeps its
-                    // own figures; only the folded ones are re-scored.
+                    // Teams built around the pin keep their figures; only folded ones re-score.
                     if pinned.iter().all(|p| t.ops.contains(p)) && t.ops.len() == ops.len() {
                         folded.push(t.clone());
                         continue;
@@ -589,10 +571,9 @@ fn select_balanced_teams(
         })
         .collect();
 
-    // Operator universe -> bit indices for the disjointness masks. The universe is
-    // the UNION across every group's candidate pool, which on a full base
-    // (gold + EXP + trading, each up to `BASE_POOL + 8×extra` operators) runs to
-    // ~200 - so [`OpMask`] is sized to hold it rather than dropping the overflow.
+    // Operator universe -> bit indices. It's the union of every group's pool,
+    // ~200 on a full base (gold + EXP + trading, each up to `BASE_POOL + 8×extra`),
+    // hence [`OpMask`]'s size.
     let mut bit_of: HashMap<String, usize> = HashMap::new();
     for teams in &per_group {
         for t in teams {
@@ -611,9 +592,8 @@ fn select_balanced_teams(
         }
         Some(m)
     };
-    // (candidates, masks) per group. A team can only fail to mask if the universe
-    // overflowed `OpMask::CAPACITY`, which the sizing above makes unreachable in
-    // practice; dropping it is still safer than mis-scoring a collision.
+    // A team fails to mask only if the universe overflowed `OpMask::CAPACITY`
+    // (unreachable in practice); dropping it beats mis-scoring a collision.
     let masked: Vec<Vec<(CandidateTeam, OpMask)>> = per_group
         .into_iter()
         .map(|teams| {
@@ -624,9 +604,9 @@ fn select_balanced_teams(
         })
         .collect();
 
-    // Team slots, groups interleaved (g0t0, g1t0, g2t0, g0t1, …) so no group
-    // exhausts the shared generics before another gets a turn. Slot weight = how
-    // many tiling cells that ordinal works (2, or the trailing 1).
+    // Slots interleave groups (g0t0, g1t0, g2t0, g0t1, …) so no group exhausts the
+    // shared generics first. Slot weight = cells that ordinal works (2 or a
+    // trailing 1).
     let weights: Vec<Vec<usize>> = specs
         .iter()
         .map(|s| ordinal_weights(s.rooms.len()))
@@ -641,7 +621,7 @@ fn select_balanced_teams(
         }
     }
 
-    // Beam search over slots. State: (used ops mask, weighted total, pick per slot).
+    // State: (used ops mask, weighted total, pick per slot).
     #[derive(Clone)]
     struct State {
         mask: OpMask,
@@ -666,7 +646,7 @@ fn select_balanced_teams(
                 .or_insert(st);
         };
         for st in &beam {
-            // An empty slot keeps small rosters feasible: the room rests dark on that block.
+            // An empty slot keeps small rosters feasible: the room rests dark that block.
             push(st.clone());
             let mut taken = 0usize;
             for (ci, (cand, mask)) in masked[g].iter().enumerate() {
@@ -700,10 +680,9 @@ fn select_balanced_teams(
         picks: Vec::new(),
     });
 
-    // Local-search polish: (a) replace any slot's team with a better disjoint
-    // candidate from its group; (b) swap two slots' teams across groups when each
-    // team also exists as a candidate in the other group (a generic gold team may
-    // be worth more as an EXP team - the cross-formula fix at team granularity).
+    // Polish: (a) swap a slot's team for a better disjoint candidate; (b) swap two
+    // slots' teams across groups when each exists in the other group (a generic
+    // gold team may be worth more as EXP).
     let ops_key = |ops: &[String]| -> Vec<String> {
         let mut k = ops.to_vec();
         k.sort();
@@ -721,7 +700,7 @@ fn select_balanced_teams(
         .collect();
     for _ in 0..POLISH_PASSES {
         let mut improved = false;
-        // (a) single-slot replacement (also fills empty slots freed by better packing).
+        // (a) single-slot replacement; also fills slots freed by better packing.
         for (si, &(g, ordinal)) in slots.iter().enumerate() {
             let weight = weights[g][ordinal] as f64;
             let cur_pick = best.picks[si];
@@ -741,7 +720,7 @@ fn select_balanced_teams(
                 }
             }
         }
-        // (b) cross-group swap of two picked teams.
+        // (b) cross-group swap.
         for i in 0..slots.len() {
             for j in (i + 1)..slots.len() {
                 let (gi, oi) = slots[i];
@@ -776,10 +755,9 @@ fn select_balanced_teams(
         }
     }
 
-    // Materialize: per group, selected teams sorted strongest-first onto the
-    // ordinals sorted widest-block-first, so any trailing 1-cell block gets the
-    // weakest team. Missing picks leave an empty team, which `backfill_empty_teams`
-    // then fills - an unstaffed production room is never the right answer.
+    // Per group, teams strongest-first onto ordinals widest-block-first, so a
+    // trailing 1-cell block gets the weakest. Missing picks leave an empty team for
+    // `backfill_empty_teams`; an unstaffed production room is never right.
     let materialize = |picks: &[Option<usize>]| -> Vec<PlannedGroup> {
         specs
             .iter()
@@ -800,7 +778,6 @@ fn select_balanced_teams(
                         .partial_cmp(&a.score)
                         .unwrap_or(std::cmp::Ordering::Equal)
                 });
-                // Ordinals by descending cell count, strongest team first.
                 let w = ordinal_weights(n);
                 let mut ordinals: Vec<usize> = (0..teams_needed).collect();
                 ordinals.sort_by_key(|&o| std::cmp::Reverse(w[o]));
@@ -830,27 +807,23 @@ fn select_balanced_teams(
             .collect()
     };
 
-    // Coupled polish for the TRADING slots: the beam ranks a post's teams by
-    // raw score (speed x order value), which cannot see that a gold-starved
-    // base sells no more than its factories make, nor which post level a
-    // value shape pays at. Each trading slot tries every disjoint candidate
-    // and keeps the one that raises the tiled objective (the peak search's
-    // coupled yield, per shift) - the rotation's twin of the peak search's
-    // yield-picked posts. Texas/Lappland at 122 beat the Shamare squad at 97
-    // on score while the squad realized more (00980819, 2026-09-21).
+    // Coupled polish for TRADING slots. The beam ranks posts by raw score (speed x
+    // value), blind to a gold-starved base selling no more than its factories make
+    // and to which post level a value shape pays at. Each trading slot tries every
+    // disjoint candidate and keeps one that raises the tiled objective. Texas/
+    // Lappland at 122 beat the Shamare squad at 97 on score while the squad
+    // realized more (00980819, 2026-09-21).
     let trading_slots: Vec<usize> = slots
         .iter()
         .enumerate()
         .filter(|(_, (g, _))| specs[*g].room_type == "TRADING")
         .map(|(si, _)| si)
         .collect();
-    // Within `POST_TIE_BAND` of the coupled value the posts' own (uncoupled)
-    // LMD breaks the tie, as the peak search's `best_post_combination`
-    // does: on a starved base the coupled value cannot tell Proviso at the
-    // level-2 post from a plain speed pair there, and her value shape pays
-    // most at the lower post. A move inside the band must raise the tie-
-    // breaker, a move outside it must clear the band: monotone both ways,
-    // so the polish cannot cycle.
+    // Within `POST_TIE_BAND` the posts' uncoupled LMD breaks ties, as in
+    // `best_post_combination`: on a starved base the coupled value can't tell
+    // Proviso at the L2 post from a plain speed pair, and her value pays most at
+    // the lower post. In-band moves must raise the tie-breaker, out-of-band moves
+    // must clear the band: monotone both ways, so the polish can't cycle.
     if !trading_slots.is_empty() {
         let measure = |picks: &[Option<usize>]| {
             let groups = materialize(picks);
@@ -859,10 +832,9 @@ fn select_balanced_teams(
                 trading_uncoupled_lmd(&groups, global_bonuses),
             )
         };
-        // Pair moves draw from each slot's best teams by raw score AND by
-        // the post's own LMD at its level: at a level-3 post every top
-        // score is a Proviso team, while the Shamare squad (lower score,
-        // more LMD per order) is what the coupled objective wants there.
+        // Pair moves draw from each slot's best by raw score AND by the post's own LMD
+        // at its level: at an L3 post every top score is a Proviso team, but the
+        // Shamare squad (lower score, more LMD per order) is what the objective wants.
         let pair_pool: Vec<Vec<usize>> = specs
             .iter()
             .enumerate()
@@ -934,11 +906,9 @@ fn select_balanced_teams(
                     improved = true;
                 }
             }
-            // Pair moves: two trading slots re-picked together over their
-            // top candidates, so an operator held by one slot can move to
-            // the other (Proviso parked in the level-3 post's single-shift
-            // slot could never reach the level-2 post's two-shift slot by
-            // single moves - she was "taken" from that slot's view).
+            // Pair moves re-pick two trading slots together, so an operator can move
+            // between them (Proviso parked in the L3 post's single-shift slot could never
+            // reach the L2 post's two-shift slot by single moves).
             for (pi, &si) in trading_slots.iter().enumerate() {
                 for &sj in &trading_slots[pi + 1..] {
                     let (gi, gj) = (slots[si].0, slots[sj].0);
@@ -1011,21 +981,12 @@ fn select_balanced_teams(
 
 /// Seat anyone still free in a team the beam left empty.
 ///
-/// Rotation teams work 24-hour blocks, so their candidate pool excludes every
-/// operator whose morale drain outpaces the bar (`require_24h_sustain`). On a
-/// wide base that pool runs dry - a roster can own plenty of Trading Post
-/// operators and still leave the third team of a two-post group empty, which
-/// tiles into a production room standing dark for two of three shifts.
-///
-/// That trade is backwards. An unstaffed production room generates nothing at
-/// all: a certain, total loss for every hour it is dark. A heavy drainer working
-/// that block produces at full rate until their bar empties, and morale is
-/// recoverable in a dormitory. So when the sustainable pool is exhausted, relax
-/// the 24h requirement rather than resting the room - "someone imperfect" beats
-/// "nobody" every time.
-///
-/// This only fires where the beam already failed to fill a block, so bases whose
-/// sustainable pool is deep enough are completely unaffected.
+/// Rotation pools exclude operators whose drain outpaces the bar
+/// (`require_24h_sustain`). On a wide base that pool runs dry and the third team
+/// of a two-post group comes back empty, leaving a room dark two shifts of three.
+/// A dark room is a total loss; a heavy drainer produces at full rate until the
+/// bar empties and recovers in a dorm. So relax the 24h rule instead of resting
+/// the room. Only fires where the beam failed, so deep pools are unaffected.
 #[allow(clippy::too_many_arguments)]
 fn backfill_empty_teams(
     groups: &mut [PlannedGroup],
@@ -1048,8 +1009,7 @@ fn backfill_empty_teams(
     }
     let op_index = build_op_index(operators);
 
-    // Teams must stay genuinely disjoint: an operator seated by the beam, or
-    // already committed elsewhere in the base, is not available here.
+    // Stay disjoint: beam-seated or already committed operators are taken.
     let mut used: HashSet<String> = assigned.clone();
     for g in groups.iter() {
         for t in &g.teams {
@@ -1068,11 +1028,10 @@ fn backfill_empty_teams(
             continue;
         }
         let min_level = g.rooms.iter().map(|(_, l)| *l).min().unwrap_or(1);
-        // A pinned trading crew is part of the backfilled team too, scored
-        // with it: filled without the pin, a post's spare block took a
-        // speed pair whose raw score outranked the pinned squad, and the
-        // pair then sat under the nullifier while the squad worked one
-        // shift (00980819).
+        // A pinned trading crew is part of the backfilled team, scored with it. Filled
+        // without the pin, a spare block took a speed pair that outranked the squad on
+        // raw score, then sat under the nullifier while the squad worked one shift
+        // (00980819).
         let pinned: Option<&Vec<String>> = (g.room_type == "TRADING")
             .then(|| {
                 let sets: Vec<&Vec<String>> = g
@@ -1125,14 +1084,12 @@ fn backfill_empty_teams(
                     false,
                     BASE_POOL,
                     g.room_type == "MANUFACTURE",
-                    // The whole point of the pass: consider the operators the strict
-                    // rotation pool threw away.
+                    // Consider the operators the strict rotation pool threw away.
                     false,
                 )
             });
             let Some(team) = relaxed.into_iter().find(|t| !t.ops.is_empty()) else {
-                // Genuinely nobody left with an applicable skill - resting the
-                // room really is all that's on offer.
+                // Nobody left with an applicable skill: resting the room is all that's left.
                 break;
             };
             let team = match pinned {
@@ -1181,8 +1138,7 @@ fn backfill_empty_teams(
     }
 }
 
-/// Team size for a group: bounded by its smallest room so a team fits any room its
-/// 24h block spans.
+/// Bounded by the smallest room so a team fits any room its 24h block spans.
 fn group_capacity(spec: &GroupSpec, building_data: &BuildingDataFile) -> usize {
     spec.rooms
         .iter()
@@ -1193,11 +1149,10 @@ fn group_capacity(spec: &GroupSpec, building_data: &BuildingDataFile) -> usize {
         .unwrap_or(0)
 }
 
-/// Top every team up to its group's capacity from the shared leftover pool, weakest
-/// team first (fillers with small relevant buffs land where they help most). Mirrors
-/// the peak `pad_production_rooms` rules: never pad an automation/nullifier operator
-/// into a normal team, never accept a filler that lowers the team's output, and pad
-/// automation teams with the lowest-opportunity-cost benchwarmers.
+/// Top teams up from the shared leftover pool, weakest first. Same rules as the
+/// peak `pad_production_rooms`: no automation/nullifier operator in a normal
+/// team, no filler that lowers output, and automation teams get the
+/// lowest-opportunity-cost benchwarmers.
 #[allow(clippy::too_many_arguments)]
 fn pad_teams(
     groups: &mut [PlannedGroup],
@@ -1233,12 +1188,10 @@ fn pad_teams(
     for (gi, ti) in order {
         let (room_type, formula, capacity) = {
             let g = &groups[gi];
-            // A team's usable size is bounded by the LARGEST room its tiling cells
-            // touch, net of any slot a pinned 24/7 operator permanently occupies there.
-            // A team spanning both a pinned and a free room keeps its full size (the
-            // scored merge benches the least-useful member in the pinned cell); a team
-            // that only ever works the pinned room shrinks - padding it further would
-            // bench the filler invisibly every shift.
+            // Usable size = the LARGEST room the team's cells touch, minus seats a pinned
+            // 24/7 operator holds there. Spanning a pinned and a free room keeps full size
+            // (the scored merge benches the weakest in the pinned cell); only working the
+            // pinned room shrinks it, else the filler gets benched invisibly every shift.
             let capacity = g
                 .rooms
                 .iter()
@@ -1253,8 +1206,8 @@ fn pad_teams(
                 .unwrap_or(0);
             (g.room_type.clone(), g.formula_type.clone(), capacity)
         };
-        // An empty team stays empty - the block rests dark rather than burning
-        // benchwarmers' morale on a zero-value cell.
+        // Empty stays empty: the block rests dark rather than burning benchwarmers'
+        // morale on a zero-value cell.
         if groups[gi].teams[ti].ops.is_empty() {
             continue;
         }
@@ -1278,9 +1231,8 @@ fn pad_teams(
                     continue;
                 }
                 if is_auto {
-                    // Extra members are nullified - take the lowest-opportunity-cost
-                    // benchwarmer (no scoring needed; a same-room specialist whose
-                    // contribution automation zeroes is penalized as wasted).
+                    // Extra members are nullified: take the lowest-opportunity-cost benchwarmer (a
+                    // same-room specialist zeroed by automation is penalized as wasted).
                     let cost = padding_cost(
                         op,
                         &room_type,
@@ -1299,8 +1251,7 @@ fn pad_teams(
                 }
                 if has_automation_buff(op, registry)
                     || op_is_nullifier(op, &room_type, formula.as_deref(), registry, building_data)
-                    // Padding seats the op into a 24h-block team - a heavy-drainer
-                    // would run dry mid-block.
+                    // 24h-block team: a heavy drainer would run dry mid-block.
                     || !sustains_24h_block(op, morale_drains)
                 {
                     continue;
@@ -1374,7 +1325,7 @@ mod tests {
                     count[t] += 1;
                 }
             }
-            // Every team works 1-2 cells; only the trailing team of an odd chain works 1.
+            // Only the trailing team of an odd chain works 1 cell.
             for (t, &c) in count.iter().enumerate() {
                 let expect = if (n_rooms * SHIFT_COUNT) % 2 == 1 && t == teams - 1 {
                     1
@@ -1383,8 +1334,8 @@ mod tests {
                 };
                 assert_eq!(c, expect, "team {t} cell count (n={n_rooms})");
             }
-            // A team's cells are consecutive in the room-major chain, so its work
-            // block is 24h of consecutive shifts (possibly wrapping via the chain).
+            // A team's cells are consecutive in the room-major chain, so its block is 24h
+            // of consecutive shifts (possibly wrapping).
             for t in 0..teams {
                 let positions: Vec<usize> = (0..n_rooms * SHIFT_COUNT)
                     .filter(|p| cells[p / SHIFT_COUNT][p % SHIFT_COUNT] == t)

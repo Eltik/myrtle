@@ -1,9 +1,8 @@
 //! Reconcile every `gacha_records.rarity` against the current game data.
 //!
-//! Same logic as the post-hot-reload background task in `core::asset_watcher`,
-//! but invokable directly. Useful for one-shots - e.g. after restoring from a
-//! backup, after a manual gamedata patch, or to verify the resync logic on a
-//! given snapshot.
+//! Same logic as the post-hot-reload task in `core::asset_watcher`, runnable by
+//! hand: after a backup restore, a manual gamedata patch, or to check the resync
+//! on a given snapshot.
 //!
 //! Usage:
 //!   cargo run --release --bin resync-gacha
@@ -82,9 +81,8 @@ async fn main() -> Result<()> {
         .context("failed to connect to database")?;
 
     if args.dry_run {
-        // Mirror reconcile_rarities' scan, but report the deltas instead of
-        // issuing the UPDATE. Keeps the bin self-contained so we don't need a
-        // second public entry point on the module.
+        // Mirrors reconcile_rarities' scan but reports the deltas instead of updating,
+        // so the module needs no second public entry point.
         let pairs: Vec<(String, i16)> =
             sqlx::query_as("SELECT DISTINCT char_id, rarity FROM gacha_records")
                 .fetch_all(&pool)

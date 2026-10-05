@@ -8,9 +8,8 @@ use std::time::Duration;
 const DAY: Duration = Duration::from_hours(24);
 const RETRY: Duration = Duration::from_hours(1);
 
-/// How long to wait before the first refresh, derived from the persisted time
-/// so a restart soon after a refresh does not recompute. Consulted only at
-/// startup; the steady-state cadence is paced in memory.
+/// From the persisted time, so a restart right after a refresh doesn't
+/// recompute. Startup only; the steady cadence is paced in memory.
 async fn initial_delay(state: &AppState) -> Duration {
     match latest_medal_ownership_refresh_at(&state.db).await {
         Ok(Some(last)) => {
@@ -28,9 +27,9 @@ async fn initial_delay(state: &AppState) -> Duration {
     }
 }
 
-/// One pass, shared by the loop and by `core::refresh`. Reports the row count
-/// because an empty aggregate is a legitimate outcome (nobody sharing) and is
-/// indistinguishable from a silent failure without it.
+/// Shared by the loop and `core::refresh`. Reports the row count: an empty
+/// aggregate (nobody sharing) is legitimate and otherwise looks like a silent
+/// failure.
 pub async fn refresh_once(state: &AppState) -> anyhow::Result<String> {
     refresh_medal_ownership(&state.db).await?;
     let rows: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM medal_ownership_stats")
@@ -41,10 +40,9 @@ pub async fn refresh_once(state: &AppState) -> anyhow::Result<String> {
 
 async fn run_loop(state: AppState) {
     tracing::info!("medal ownership refresh job started (daily cadence)");
-    // Pace the loop in memory rather than re-reading the persisted time each
-    // iteration: the aggregate is legitimately empty until users opt into
-    // sharing, and an empty table would otherwise read back as "never refreshed"
-    // and spin.
+    // Paced in memory, not from the persisted time: the aggregate is legitimately
+    // empty until users opt in, and an empty table would read as "never
+    // refreshed" and spin.
     let mut wait = initial_delay(&state).await;
     loop {
         tracing::debug!(

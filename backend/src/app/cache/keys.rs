@@ -90,11 +90,10 @@ pub enum CacheKey<'a> {
         uid: &'a str,
         request_hash: u64,
     },
-    /// One user's improvements body, keyed on the sync generation that produced
-    /// it. `version` is `users.updated_at`, which `trg_users_timestamp` bumps on
-    /// every sync upsert, so a fresh sync writes a NEW key rather than needing the
-    /// old one cleared: a stale body cannot be served even if an invalidation hook
-    /// is forgotten. Same self-addressing trick as `I18nCatalog`.
+    /// One user's improvements body, keyed on `users.updated_at`, which
+    /// `trg_users_timestamp` bumps on every sync upsert. A sync writes a new key,
+    /// so a stale body can't be served even if an invalidation hook is missed.
+    /// Same trick as `I18nCatalog`.
     ///
     /// KNOWN GAP, bounded by the TTL: `set_base_facts` writes `user_settings`
     /// without touching `users`, so saving base facts does not move the version
@@ -113,11 +112,9 @@ pub enum CacheKey<'a> {
     DpsList {
         kind: &'a str,
     },
-    /// A rendered UI message catalog. The content hash is part of the key, so
-    /// a body under a given key can never be stale - a translator's edit moves
-    /// the hash and therefore the key. The long TTL is safe for the same
-    /// reason; `invalidate_by_prefix("i18n:")` on write only keeps the store
-    /// from accumulating orphaned bodies.
+    /// A rendered UI message catalog. The content hash is in the key, so a body is
+    /// never stale and the long TTL is safe; `invalidate_by_prefix("i18n:")` on
+    /// write only clears orphaned bodies.
     I18nCatalog {
         locale: &'a str,
         namespace: &'a str,
@@ -258,18 +255,14 @@ impl CacheKey<'_> {
             CacheKey::CommunityEnemyAverage => Duration::from_mins(30),
             CacheKey::BaseRotation { .. } => Duration::from_mins(5),
             CacheKey::BaseOptimize { .. } => Duration::from_mins(5),
-            // Deliberately SHORT, and not because of the roster: the version in
-            // the key already handles that. Two builders read the wall clock,
-            // `build_stage_improvements` to decide which events are open and
-            // `build_medal_improvements` to bucket medals as still-earnable or
-            // missed forever, and both change SET MEMBERSHIP at a rotation
-            // boundary rather than just a label. This TTL is the only bound on
-            // how long a user is told an event is open after it closed.
+            // Deliberately SHORT, not for the roster (the key's version covers that).
+            // `build_stage_improvements` (open events) and `build_medal_improvements`
+            // (earnable vs missed medals) read the wall clock and change set
+            // membership at a rotation boundary. This TTL is the only bound on
+            // calling a closed event open.
             CacheKey::UserImprovements { .. } => Duration::from_mins(5),
-            // Same hour as the list it belongs to. A simulation is a pure
-            // function of the body and the game data, so the only thing that can
-            // invalidate it is a reload, and `asset_watcher` clears the whole
-            // `dps:` prefix on one.
+            // Same hour as the list. Pure in body + game data, so only a reload
+            // invalidates it, and `asset_watcher` clears the `dps:` prefix on one.
             CacheKey::DpsCalculate { .. } => Duration::from_hours(1),
             CacheKey::DpsList { .. } => Duration::from_hours(1),
             CacheKey::I18nCatalog { .. } => Duration::from_hours(24), // content-addressed; cannot go stale

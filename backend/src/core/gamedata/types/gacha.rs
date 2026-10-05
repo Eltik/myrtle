@@ -51,15 +51,12 @@ pub struct GachaPoolClient {
     #[serde(alias = "GuaranteeName")]
     pub guarantee_name: Option<String>,
 
-    // Decoded from `LimitParam.Base64` / `DynMeta.Base64` during enrichment.
-    // Both fields are Yostar-emitted base64-wrapped standard MongoDB BSON
-    // documents whose shape varies by `gacha_rule_type` (LIMITED carries
-    // `limitedCharId`; CLASSIC_DOUBLE has main/sub 6★ + rare5CharList;
-    // FESCLASSIC / SPECIAL nest a `rarityPickCharDict` with TIER_5/TIER_6
-    // arrays; ATTAIN variants carry `attainRare6CharList`).
-    // Empty vec when the banner doesn't surface rate-ups this way (e.g.
-    // NORMAL / SINGLE pools which only have art assets, or LINKAGE pools
-    // whose featured chars come from a separate LinkageRuleId).
+    // Decoded from `LimitParam.Base64` / `DynMeta.Base64` during enrichment:
+    // base64-wrapped BSON whose shape varies by `gacha_rule_type` (LIMITED has
+    // `limitedCharId`; CLASSIC_DOUBLE main/sub 6★ + rare5CharList; FESCLASSIC /
+    // SPECIAL nest `rarityPickCharDict` with TIER_5/TIER_6; ATTAIN variants have
+    // `attainRare6CharList`). Empty when the banner has none this way (NORMAL /
+    // SINGLE pools carry only art, LINKAGE pools use a separate LinkageRuleId).
     #[serde(default, skip_deserializing)]
     pub featured6: Vec<String>,
     #[serde(default, skip_deserializing)]

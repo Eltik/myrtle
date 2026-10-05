@@ -1,16 +1,12 @@
-//! Rotation-sustainability simulator: steps the recommended 3-shift rotation
-//! through a week of 12h blocks with GAME-TRUE morale rates and reports
-//! whether any operator runs dry mid-shift. The static planner already scores
-//! output; this pass VALIDATES the rhythm - a recommendation that quietly
-//! drains its operators is flagged, not shipped as if it held up.
+//! Rotation-sustainability check: steps the 3-shift rotation through a week of
+//! 12h blocks at game-true morale rates and reports anyone running dry
+//! mid-shift, so a plan that quietly drains its operators gets flagged.
 //!
-//! Rates come from gamedata, not the planner's relative uptime calibration:
-//! a full morale bar is 24 points (`MaxManpower` 8,640,000 ap = 360,000 ap per
-//! point, drained over 24h baseline -> 1.0 point/hour), and a dormitory
-//! recovers `DormData.Phases[level].ManpowerRecover / 100` points/hour
-//! (1.6/hr at L1 -> 2.0/hr at L5). Furniture comfort (up to ~+0.35/hr) is NOT
-//! modeled - it isn't synced - which errs conservative: a rotation that holds
-//! up here also holds up in game.
+//! Rates come from gamedata, not the planner's uptime calibration: a full bar is
+//! 24 points (`MaxManpower` 8,640,000 ap = 360,000 ap/point, 1.0 point/h
+//! baseline), and a dorm recovers `DormData.Phases[level].ManpowerRecover / 100`
+//! points/h (1.6 at L1 -> 2.0 at L5). Furniture comfort (up to ~+0.35/h) isn't
+//! synced and isn't modeled, which errs conservative.
 
 use std::collections::HashMap;
 
@@ -21,33 +17,25 @@ use super::clause::{ClauseKind, Metric, clauses_from_strategy};
 use super::shift_rotation::ShiftRotation;
 use super::types::{OperatorBaseProfile, UserBuilding};
 
-/// The game's full morale bar.
 pub(crate) const MORALE_MAX: f64 = 24.0;
 /// Baseline drain while working: one point per hour (8,640,000 ap over 24h).
 const GAME_BASE_MORALE_DRAIN: f64 = 1.0;
-/// Skills can slow drain but never fully stop it (matches the planner's floor).
+/// Skills slow drain but never stop it (the planner's floor).
 const MIN_MORALE_DRAIN: f64 = 0.05;
-/// One shift of the login rhythm.
 const SHIFT_HOURS: f64 = 12.0;
-/// A week of the rotation - enough cycles for slow leaks to surface.
+/// A week: enough cycles for slow leaks to surface.
 pub const SIM_HORIZON_HOURS: f64 = 168.0;
 
-/// Did the rotation survive the horizon?
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Verdict {
-    /// Nobody ran dry: the rhythm is sustainable as recommended.
     HoldsUp,
-    /// At least one operator's morale hit zero mid-shift.
     Depletes,
 }
 
-/// An operator whose morale reached zero while working.
 #[derive(Debug, Clone)]
 pub struct DepletedOperator {
     pub char_id: String,
-    /// Hours into the simulation when the bar emptied.
     pub at_hours: f64,
-    /// The room they were working when it happened.
     pub slot_id: String,
 }
 
@@ -57,48 +45,41 @@ pub struct SustainabilityReport {
     pub horizon_hours: f64,
     /// First depletion per operator, ordered by when it happened.
     pub depleted: Vec<DepletedOperator>,
-    /// Peak number of resting operators the dorms could NOT hold at once
-    /// (they recover nothing that block). Zero for a healthy base.
+    /// Peak resting operators the dorms could NOT seat at once (they recover nothing
+    /// that block). Zero for a healthy base.
     pub dorm_overflow: usize,
-    /// Every simulated operator's morale over the horizon - the data behind a
-    /// "morale over time" chart.
+    /// Every simulated operator's morale over the horizon, for the chart.
     pub timeline: Vec<OperatorMoraleTimeline>,
-    /// Per-facility production totals and lost hours over the horizon.
     pub facilities: Vec<FacilityOutput>,
 }
 
-/// One production room's simulated totals over the horizon. Each 12h block
-/// contributes `rate x mean crew alive-fraction`: an operator's buffs stop
-/// the moment their bar empties, so the room's output is scaled by how much
-/// of the block its crew actually had morale. `idle_hours` counts the lost
-/// time - dark shifts (the cell rests unstaffed) plus the post-depletion
+/// One production room's totals over the horizon. Each 12h block contributes
+/// `rate x mean crew alive-fraction`: buffs stop when a bar empties.
+/// `idle_hours` = dark shifts (cell rests unstaffed) plus the post-depletion
 /// remainder of working blocks.
 #[derive(Debug, Clone)]
 pub struct FacilityOutput {
     pub slot_id: String,
     pub room_type: String,
     pub formula_type: Option<String>,
-    /// Simulated totals over the horizon, in each room's own resource.
+    /// In each room's own resource.
     pub lmd: f64,
     pub gold: f64,
     pub exp: f64,
     pub idle_hours: f64,
 }
 
-/// One operator's simulated morale, sampled at every 12h block boundary
-/// (`samples[0]` is t=0 = a full bar; one more sample per block).
+/// Morale sampled at every 12h block boundary (`samples[0]` = t=0, full bar).
 #[derive(Debug, Clone)]
 pub struct OperatorMoraleTimeline {
     pub char_id: String,
-    /// The room they work most often - their "home" for display. A permanent
-    /// dorm resident's home is their dormitory; a sustained 24/7 operator's is
-    /// the room the rotation pins them to.
+    /// Room worked most, for display. A dorm resident's is their dorm; a 24/7
+    /// operator's is the room the rotation pins them to.
     pub home_slot_id: String,
     pub samples: Vec<f64>,
 }
 
-/// Effective working drain at GAME rates, in morale points per hour: the
-/// 1.0/hr baseline plus the operator's per-buff deltas.
+/// Working drain at game rates (points/h): 1.0 baseline plus per-buff deltas.
 pub fn game_morale_drain(op: &OperatorBaseProfile, morale_drains: &HashMap<String, f64>) -> f64 {
     let modifier: f64 = op
         .available_buffs
@@ -108,33 +89,26 @@ pub fn game_morale_drain(op: &OperatorBaseProfile, morale_drains: &HashMap<Strin
     (GAME_BASE_MORALE_DRAIN + modifier).max(MIN_MORALE_DRAIN)
 }
 
-/// True when a full 24h block (two consecutive shifts) fits inside the
-/// operator's morale bar: 24 points over 24 hours means drain must not exceed
-/// the 1.0/hr baseline. This is BAR-feasibility only and deliberately
-/// dorm-independent - a recovery shortfall is the simulator's report, not a
-/// seating rule. The planner uses it to keep heavy-drainers out of 24h-block
-/// seats (production teams, Squad 1) while leaving them eligible for the
-/// single-shift Squad 2 positions they can genuinely work.
+/// Whether a 24h block (two shifts) fits in the bar: drain <= the 1.0/h
+/// baseline. Bar-feasibility only and dorm-independent on purpose; a recovery
+/// shortfall is the simulator's report, not a seating rule. Keeps heavy drainers
+/// out of 24h seats (production, Squad 1) but eligible for single-shift Squad 2.
 pub fn sustains_24h_block(op: &OperatorBaseProfile, morale_drains: &HashMap<String, f64>) -> bool {
     game_morale_drain(op, morale_drains) <= GAME_BASE_MORALE_DRAIN + 1e-9
 }
 
-/// Per-operator schedule across the 3-shift cycle: which shifts they work and
-/// where. Derived from the rotation's recommended cells.
+/// Which shifts an operator works and where, from the rotation's cells.
 struct OpSchedule {
-    /// `slot_id` worked per shift index, `None` = resting that shift.
+    /// `None` = resting that shift.
     works: [Option<String>; 3],
-    /// Game-true drain per working hour.
     drain: f64,
 }
 
-/// Every operator's morale AS THE GAME LAST WROTE IT, straight from the
-/// synced building JSON - the state the synced base displayed. The live
-/// views describe that base, so pool counters read these bars unprojected:
-/// a stale sync projected weeks forward would report a state the game never
-/// showed (Dusk drained below 12 while her counter read the full grant).
-/// Empty when the sync carries no bars - callers then fall back to
-/// steady-state models.
+/// Morale as the game last wrote it, unprojected. Live views describe the synced
+/// base, so pool counters read these bars: projecting a stale sync weeks forward
+/// reports a state the game never showed (Dusk drained below 12 while her
+/// counter read the full grant). Empty when the sync has no bars; callers fall
+/// back to steady-state models.
 pub fn synced_live_morale(building_json: &serde_json::Value) -> HashMap<String, f64> {
     super::types::live_morale_snapshot(building_json)
         .into_iter()
@@ -142,12 +116,10 @@ pub fn synced_live_morale(building_json: &serde_json::Value) -> HashMap<String, 
         .collect()
 }
 
-/// Project synced morale snapshots forward to `now_unix`: an operator in a
-/// working room drains at their game rate, one in a dormitory recovers at that
-/// dorm's rate (level + ambience), and an unstationed one is frozen - the
-/// game only moves morale inside rooms. Room auras and single-target healers
-/// are deliberately ignored here: this is a now-cast, not the block sim, and
-/// staying slightly conservative beats over-promising.
+/// Project snapshots to `now_unix`: working rooms drain at the game rate, dorms
+/// recover at their rate (level + ambience), unstationed is frozen (the game
+/// only moves morale in rooms). Auras and single-target healers are ignored on
+/// purpose: a now-cast, not the block sim, and conservative beats over-promising.
 pub fn project_morale(
     snapshots: &HashMap<String, super::types::MoraleSnapshot>,
     now_unix: i64,
@@ -176,10 +148,9 @@ pub fn project_morale(
         .iter()
         .map(|(id, snap)| {
             let hours = ((now_unix - snap.at_unix).max(0) as f64) / 3600.0;
-            // Known dorm -> recover; known working room -> drain; anything
-            // else (unstationed, or a room type the sync knows but we don't
-            // model, e.g. private rooms) -> FROZEN. Never-guess: an unknown
-            // seat must not fabricate drain OR recovery.
+            // Known dorm -> recover; known working room -> drain; anything else
+            // (unstationed, unmodeled rooms like private rooms) -> frozen. An unknown seat
+            // must not fabricate drain or recovery.
             let projected = if let Some(rate) = dorms.get(&snap.room_slot) {
                 snap.morale + rate * hours
             } else if working.contains_key(id.as_str()) {
@@ -216,10 +187,9 @@ pub fn simulate_rotation(
     )
 }
 
-/// Like [`simulate_rotation`], but with the option to start operators at
-/// their REAL current bars instead of full ones. The steady-state rotation
-/// verdict deliberately starts full (it answers "does the rhythm hold?"); the
-/// unrotated "from now" sim seeds live bars (it answers "what happens next?").
+/// [`simulate_rotation`] optionally seeded with REAL current bars. The
+/// steady-state verdict starts full ("does the rhythm hold?"); the unrotated
+/// "from now" sim seeds live bars ("what happens next?").
 #[allow(clippy::too_many_arguments)]
 pub fn simulate_rotation_from(
     rotation: &ShiftRotation,
@@ -234,11 +204,10 @@ pub fn simulate_rotation_from(
     let profile_by_id: HashMap<&str, &OperatorBaseProfile> =
         profiles.iter().map(|p| (p.char_id.as_str(), p)).collect();
 
-    // Targeted morale effects between CO-SEATED operators: the Ave Mujica
-    // riders raise Sakiko's drain while their owners share her room, Mortis'
-    // amnesty cancels her own rider, and Nian's faction version cancels every
-    // co-seated Sui operator's self-drain riders. Deltas accrue per
-    // (operator, shift); the owner's buff must belong to the room it fires in.
+    // Targeted effects between co-seated operators: Ave Mujica riders raise
+    // Sakiko's drain while their owners share her room, Mortis' amnesty cancels her
+    // own rider, Nian's faction version cancels co-seated Sui self-drain riders.
+    // Per (operator, shift); the owner's buff must belong to the room it fires in.
     let own_drain_increase = |id: &str| -> f64 {
         profile_by_id.get(id).map_or(0.0, |p| {
             p.available_buffs
@@ -253,9 +222,8 @@ pub fn simulate_rotation_from(
                 .sum()
         })
     };
-    // An operator's aura clauses of one metric, summed (their room-wide drain
-    // aura / their dorm-recovery aura), derived from the same clause registry
-    // the scorer reads.
+    // Sum of an operator's aura clauses for one metric (room drain / dorm
+    // recovery), from the scorer's clause registry.
     let aura_total = |id: &str, metric: &Metric| -> f64 {
         profile_by_id.get(id).map_or(0.0, |p| {
             p.available_buffs
@@ -276,9 +244,8 @@ pub fn simulate_rotation_from(
         })
     };
 
-    // Per (slot, shift): the summed room drain aura its members carry, and per
-    // shift the best dorm-recovery aura among that shift's workers (the
-    // non-stacking clause: only the strongest applies).
+    // Per (slot, shift): summed room drain aura. Per shift: the best dorm-recovery
+    // aura among workers (non-stacking, strongest only).
     let mut room_aura: HashMap<(String, usize), f64> = HashMap::new();
     let mut dorm_aura_by_shift = [0.0f64; 3];
     for (k, shift) in rotation.shifts.iter().enumerate().take(3) {
@@ -300,10 +267,9 @@ pub fn simulate_rotation_from(
         }
     }
 
-    // Targeted per-operator effects, resolved per (operator, shift) once the
-    // room auras are known: the Ave Mujica riders and amnesties, Waaifu's
-    // room-aura immunity, and Cement's formula-conditional drain. Every
-    // effect's buff must belong to the room type it fires in.
+    // Per (operator, shift), once room auras are known: Ave Mujica riders and
+    // amnesties, Waaifu's room-aura immunity, Cement's formula-conditional drain.
+    // Each buff must belong to the room type it fires in.
     let mut targeted_delta: HashMap<(String, usize), f64> = HashMap::new();
     for (k, shift) in rotation.shifts.iter().enumerate().take(3) {
         for room in shift.rooms.iter().filter(|r| r.active) {
@@ -371,11 +337,10 @@ pub fn simulate_rotation_from(
         }
     }
 
-    // Control-Center recovery auras, per shift: the `control_mp_cost` family
-    // ("+0.05/hr to all Operators in the Control Center") offsets the CC's own
-    // workers' drain, while the "other buildings" auras (Chongyue's) offset
-    // every NON-CC worker instead. Only CONTROL-room buffs count - a dorm
-    // recovery skill on a CC-seated operator does nothing outside its room.
+    // CC recovery auras per shift: `control_mp_cost` ("+0.05/hr to all Operators in
+    // the Control Center") offsets CC workers, "other buildings" auras (Chongyue's)
+    // offset every non-CC worker. CONTROL-room buffs only; a dorm skill on a
+    // CC-seated operator does nothing outside its room.
     let cc_recovery_total = |id: &str, base_wide: bool| -> f64 {
         profile_by_id.get(id).map_or(0.0, |p| {
             p.available_buffs
@@ -419,8 +384,7 @@ pub fn simulate_rotation_from(
         }
     }
 
-    // Working drain per operator: game baseline plus their buffs' per-hour
-    // deltas (the same per-buff numbers the planner's uptime model reads).
+    // Baseline plus per-buff deltas (the numbers the planner's uptime model reads).
     let op_drain = |id: &str| -> f64 {
         profile_by_id.get(id).map_or(GAME_BASE_MORALE_DRAIN, |p| {
             game_morale_drain(p, morale_drains)
@@ -445,13 +409,11 @@ pub fn simulate_rotation_from(
         }
     }
 
-    // Dormitory RESIDENTS per (dorm slot, shift): the dorm-cell members who
-    // never work a shift - permanent staff (aura holders, single-target
-    // healers, a parked morale-swap manager). A dorm seat is rest, not work:
-    // residents never drain, they hold seats and project their dorm skills
-    // onto whoever rests beside them. Workers the rotation SHOWS resting in a
-    // dorm cell are not residents - the simulator re-derives their rest from
-    // the schedule and assigns them to dorms by live morale below.
+    // Dorm RESIDENTS per (dorm slot, shift): dorm-cell members who never work
+    // (aura holders, single-target healers, a parked morale-swap manager). They
+    // never drain; they hold seats and project dorm skills on whoever rests beside
+    // them. Workers shown resting in a dorm cell are not residents: their rest is
+    // re-derived from the schedule and seated by live morale below.
     let residents: HashMap<(String, usize), Vec<String>> = dorm_cells
         .into_iter()
         .map(|(key, ids)| {
@@ -463,22 +425,19 @@ pub fn simulate_rotation_from(
         })
         .collect();
 
-    // Fiammetta-held 24/7 operators are morale-swapped every login; they never
-    // drain and never occupy a dorm slot.
+    // Fiammetta-held 24/7 operators are swapped every login: no drain, no dorm seat.
     for id in &rotation.sustained {
         schedules.remove(id);
     }
-    // A parked token sits at zero morale by design: it neither drains nor
-    // runs dry, and its seat never needs a bed.
+    // A parked token sits at zero by design: no drain, no running dry, no bed.
     for id in &rotation.parked {
         schedules.remove(id);
     }
 
-    // The base's dorms, best first - the neediest rester always gets the
-    // highest-recovery dorm, exactly the assignment a player makes. Per (dorm,
-    // shift): seats already held by residents, the strongest whole-dorm aura
-    // among them, and the strongest single-target heal (both non-stacking
-    // within their type, so the max IS the whole effect).
+    // Dorms best first: the neediest rester gets the highest-recovery dorm, as a
+    // player would. Per (dorm, shift): resident-held seats, the strongest
+    // whole-dorm aura and single-target heal among them (each non-stacking, so the
+    // max is the whole effect).
     let dorm_list = super::dorms::dorm_list(building, building_data);
     let resident_aura = |slot: &str, k: usize, single: bool| -> f64 {
         residents.get(&(slot.to_string(), k)).map_or(0.0, |ids| {
@@ -507,7 +466,7 @@ pub fn simulate_rotation_from(
         .collect();
     let mut depleted: Vec<DepletedOperator> = Vec::new();
     let mut dorm_overflow = 0usize;
-    // Morale sampled per operator at every block boundary (t=0 is full).
+    // Sampled at every block boundary (t=0 is full).
     let mut samples: HashMap<String, Vec<f64>> = schedules
         .keys()
         .map(|id| {
@@ -518,7 +477,6 @@ pub fn simulate_rotation_from(
         })
         .collect();
 
-    // Room levels, for converting a cell's efficiency into a resource rate.
     let level_of: HashMap<&str, i32> = building
         .rooms
         .iter()
@@ -531,22 +489,19 @@ pub fn simulate_rotation_from(
         let shift = block % 3;
         let t0 = block as f64 * SHIFT_HOURS;
 
-        // How much of this block each worker had morale for (1.0 = the whole
-        // block) - the fraction of the block their buffs were live.
+        // Fraction of this block each worker had morale (buffs live).
         let mut alive_frac: HashMap<&str, f64> = HashMap::new();
 
-        // Workers drain. Running dry STRICTLY inside a block is a depletion;
-        // landing on exactly zero at the block boundary is the intended rhythm
-        // (the bar empties right as the login swap rests the team).
+        // Running dry STRICTLY inside a block is a depletion; hitting exactly zero at
+        // the boundary is the intended rhythm (empties as the login swap rests them).
         const EPS: f64 = 1e-9;
         for (id, sched) in &schedules {
             let Some(slot) = &sched.works[shift] else {
                 continue;
             };
-            // The room's drain aura (a teammate's "-0.1/hr to everyone here")
-            // shifts this block's effective drain, and the Control Center's
-            // recovery auras offset it - the CC's own aura for its workers,
-            // the "other buildings" auras for everyone else. Floor applies.
+            // The room's drain aura (a teammate's "-0.1/hr to everyone here") shifts the
+            // drain; CC recovery auras offset it (CC's own for its workers, "other
+            // buildings" for the rest). Floor applies.
             let aura = room_aura
                 .get(&(slot.clone(), shift))
                 .copied()
@@ -574,10 +529,9 @@ pub fn simulate_rotation_from(
             }
         }
 
-        // Per-facility production this block: rate x mean crew alive-fraction.
-        // A dark cell (the room rests unstaffed this shift) is fully idle; a
-        // working crew that runs dry mid-block idles for the remainder.
-        // (Synthetic fixtures can carry fewer than 3 shifts; a missing shift contributes nothing.)
+        // A dark cell (room rests unstaffed) is fully idle; a crew that runs dry
+        // mid-block idles for the remainder. Synthetic fixtures may have fewer than 3
+        // shifts; a missing shift contributes nothing.
         for room in rotation
             .shifts
             .get(shift)
@@ -605,8 +559,7 @@ pub fn simulate_rotation_from(
             let crew_frac = room
                 .recommended
                 .iter()
-                // 24/7-sustained and resident operators aren't in `schedules`;
-                // their bars are held full by definition.
+                // 24/7 and resident operators aren't in `schedules`; their bars stay full.
                 .map(|id| alive_frac.get(id.as_str()).copied().unwrap_or(1.0))
                 .sum::<f64>()
                 / room.recommended.len() as f64;
@@ -618,8 +571,8 @@ pub fn simulate_rotation_from(
                 room.efficiency.unwrap_or(0.0),
                 0.0,
                 room.recommended.len(),
-                // The rotation's cells carry no order limit; the sustained
-                // sim prices the rate, the assignment objective the buffer.
+                // Cells carry no order limit: the sustained sim prices the rate, the
+                // assignment objective the buffer.
                 None,
             );
             let day_frac = SHIFT_HOURS / 24.0 * crew_frac;
@@ -629,12 +582,10 @@ pub fn simulate_rotation_from(
             acc.idle_hours += SHIFT_HOURS * (1.0 - crew_frac);
         }
 
-        // Resters recover lowest-morale first, filling the BEST dorm's free
-        // seats before the next: each recovers at that dorm's own level rate,
-        // plus its residents' whole-dorm aura, plus the working Control-Center
-        // aura ("all Operators in Dormitories recover +0.05/hr"). The dorm's
-        // single-target healer tops up its neediest rester. Anyone beyond the
-        // last free seat recovers nothing that block.
+        // Lowest morale rests first, filling the best dorm's free seats before the
+        // next: dorm level rate + residents' whole-dorm aura + the working CC aura ("all
+        // Operators in Dormitories recover +0.05/hr"). The single-target healer tops up
+        // the neediest. Past the last free seat, no recovery that block.
         let mut resting: Vec<&String> = schedules
             .iter()
             .filter(|(id, s)| s.works[shift].is_none() && morale[id.as_str()] < MORALE_MAX)
@@ -659,8 +610,7 @@ pub fn simulate_rotation_from(
             let single = resident_aura(&dorm.slot_id, shift, true);
             for taken in 0..free {
                 let Some(id) = queue.next() else { break };
-                // The queue is needy-first, so the dorm's first intake is its
-                // neediest occupant - the single-target heal lands there.
+                // Queue is needy-first, so a dorm's first intake gets the single-target heal.
                 let boost = if taken == 0 { single } else { 0.0 };
                 let m = morale.get_mut(id.as_str()).expect("rester has morale");
                 *m = (*m + (rate + boost) * SHIFT_HOURS).min(MORALE_MAX);
@@ -674,10 +624,8 @@ pub fn simulate_rotation_from(
         }
     }
 
-    // The chart data: every scheduled operator's sampled bar, homed to the
-    // slot they work most; permanent dorm residents and 24/7-sustained
-    // operators ride along as flat full bars (residents never drain, the
-    // manager's swap keeps a sustained operator topped up by definition).
+    // Every scheduled operator's samples, homed to the slot they work most. Dorm
+    // residents and 24/7 operators ride along as flat full bars.
     let flat = vec![MORALE_MAX; blocks + 1];
     let mut timeline: Vec<OperatorMoraleTimeline> = samples
         .into_iter()

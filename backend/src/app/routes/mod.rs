@@ -29,16 +29,12 @@ pub fn ok_status() -> Json<StatusOk> {
     })
 }
 
-/// The privacy gate for a `uid` naming someone other than the caller.
+/// The privacy gate for a `uid` naming someone other than the caller: readable
+/// when it's the caller's own or marked public, 403 otherwise. Every `uid`-taking
+/// handler goes through [`resolve_user_id`] or [`resolve_uid`], never the raw param.
 ///
-/// This is the single place that decides whether one player may see another's
-/// data: a named profile is readable when it is the caller's own or it is
-/// marked public, and 403 otherwise. Any handler that accepts a `uid` must
-/// reach it through [`resolve_user_id`] or [`resolve_uid`] rather than reading
-/// the parameter directly.
-///
-/// The gate belongs in the handler, ahead of any cache read. Gating inside a
-/// service instead leaves a cache hit able to answer before the check runs.
+/// Gate in the handler, ahead of any cache read; inside a service, a cache hit
+/// can answer before the check runs.
 async fn resolve_public_profile(
     state: &AppState,
     auth: &MaybeAuthUser,
@@ -61,9 +57,8 @@ async fn resolve_public_profile(
     Ok(profile)
 }
 
-/// Resolve the target `user_id` from either a `uid` query param (public access)
-/// or the authenticated user's token (private access). A `uid` lookup is only
-/// allowed for the caller's own profile or a profile marked public.
+/// Target `user_id` from the `uid` param (own or public profiles only) or from the
+/// caller's token.
 pub(crate) async fn resolve_user_id(
     state: &AppState,
     auth: &MaybeAuthUser,
@@ -130,18 +125,13 @@ pub mod user;
 
 /// The `/api` route tree.
 ///
-/// Every handler here is reached through `.routes(routes!(..))` and carries a
-/// `#[utoipa::path]` annotation: the path and method come from that
-/// annotation, so the route and its documentation are one declaration rather
-/// than two that have to be kept in agreement.
+/// Every handler goes through `.routes(routes!(..))` with a `#[utoipa::path]`, so
+/// route and docs are one declaration. A `.route(..)` still serves but is missing
+/// from the `OpenAPI` document and fails `tests/openapi_snapshot_test.rs`; see
+/// [`crate::app::openapi`].
 ///
-/// `.route(..)` still works and would still serve, but a route added that way
-/// is invisible to the `OpenAPI` document, so `tests/openapi_snapshot_test.rs`
-/// fails on it. See [`crate::app::openapi`] for what to write instead.
-///
-/// The builder chain keeps one `OpenApiRouter` temporary per `.routes(..)` call
-/// live in a debug frame (~700 KB); it runs once at startup, on the main
-/// thread's 8 MB stack, so the frame is not a risk.
+/// The builder chain holds one `OpenApiRouter` temporary per `.routes(..)` in a
+/// debug frame (~700 KB); it runs once at startup on the main thread's 8 MB stack.
 #[allow(clippy::large_stack_frames)]
 pub fn router() -> OpenApiRouter<AppState> {
     OpenApiRouter::new()

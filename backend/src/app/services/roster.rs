@@ -52,9 +52,8 @@ pub struct GameUser {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Social {
-    /// Up to 3 entries (some may be `null` for empty slots) - references
-    /// troop slots by `charInstId`. Resolved to `operator_id` in
-    /// `extract_supports`.
+    /// Up to 3, `null` for an empty slot. Points at troop slots by `charInstId`;
+    /// `extract_supports` resolves them to `operator_id`.
     pub assist_char_list: Option<Vec<Option<AssistChar>>>,
 }
 
@@ -1004,24 +1003,19 @@ fn extract_medals(medal: &Option<MedalStore>) -> serde_json::Value {
     serde_json::to_value(entries).unwrap_or_default()
 }
 
-/// Returns true when a medal entry from Hypergryph's `user.medal.medals` map
-/// represents an actually earned medal, not in-progress tracking.
+/// Whether an entry of `user.medal.medals` is an earned medal rather than progress.
 ///
-/// Hypergryph's unearned-default row is `{val: 0, fts: 0, rts: 0}` - those are
-/// initialized but never touched by gameplay. Earn signals:
-///   1. `rts > 0` - medal was claimed/awarded; `rts` is the reach timestamp.
-///   2. `rts == -1` with `fts > 0` and `val` being an array:
-///      - Non-empty: every `[achieved, required]` pair must be met (story
-///        unlocks, multi-step medals).
-///      - Empty `[]`: "binary completion" templates with no trackable
-///        condition pairs (`PassStageKilled`, `PassStageWithSimpleCount*`,
-///        etc.). For these, Hypergryph stamps `fts` + `rts=-1` on award and
-///        leaves `val` at its zero-condition shape; that combo is the earn
-///        signal. Empirically, ~30% of activity-medal templates use this
-///        pattern (see Break the Ice medals 01/02/07/09/10).
+/// The unearned default is `{val: 0, fts: 0, rts: 0}`. Earned when:
+///   1. `rts > 0`: claimed; `rts` is the reach timestamp.
+///   2. `rts == -1`, `fts > 0`, and `val` an array that is either
+///      - non-empty with every `[achieved, required]` pair met (story unlocks,
+///        multi-step medals), or
+///      - empty: "binary completion" templates with no condition pairs
+///        (`PassStageKilled`, `PassStageWithSimpleCount*`, ...), stamped
+///        `fts` + `rts=-1` on award. ~30% of activity-medal templates (Break the
+///        Ice medals 01/02/07/09/10).
 ///
-/// Everything else (rts=0/fts=0 defaults, in-progress with partial val, no
-/// val at all) is treated as unearned.
+/// Anything else (zero defaults, partial `val`, no `val`) is unearned.
 pub(crate) fn is_medal_earned(val: &serde_json::Value, fts: i64, rts: i64) -> bool {
     if rts > 0 {
         return true;
@@ -1077,11 +1071,10 @@ fn extract_supports(troop: &Option<Troop>, social: &Option<Social>) -> serde_jso
     serde_json::to_value(entries).unwrap_or_default()
 }
 
-/// Annihilation progress lives at `user.campaignsV2.instances` (top level of
-/// the save, not under `user.dungeon`) and is kill-count based - there is no
-/// `state` flag like normal stages. Merge it into the stages object with a
-/// synthesized `state` (kill target reached -> 3, partial kills -> 2) so every
-/// downstream stage-clear consumer treats Annihilation like any other stage.
+/// Annihilation progress lives at `user.campaignsV2.instances` (top level, not
+/// under `user.dungeon`) and counts kills, with no `state` flag. Merged into the
+/// stages object with a synthesized `state` (kill target reached -> 3, partial
+/// kills -> 2) so stage-clear consumers treat it like any other stage.
 fn merge_campaign_clears(
     stages: &mut serde_json::Value,
     raw: &serde_json::Value,
@@ -1282,7 +1275,7 @@ mod tests {
         // still produce an object.
         let raw = serde_json::json!({
             "user": {"campaignsV2": {"instances": {
-                // Not in the campaign table (no kill_max) - partial credit only.
+                // Not in the campaign table (no kill_max): partial credit only.
                 "camp_r_99": {"maxKills": 400}
             }}}
         });

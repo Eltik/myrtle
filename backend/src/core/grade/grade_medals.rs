@@ -9,7 +9,7 @@ pub type UserMedalRow = (String, Option<serde_json::Value>, Option<i64>, Option<
 const PERMANENT_POOL_WEIGHT: f64 = 0.65;
 const EVENT_POOL_WEIGHT: f64 = 0.35;
 
-const DECAY_HORIZON_SECONDS: f64 = 5.0 * 365.25 * 86400.0; // 5 years, might need tweaking as game progresses
+const DECAY_HORIZON_SECONDS: f64 = 5.0 * 365.25 * 86400.0; // 5 years; may need tweaking
 const RECENY_FLOOR: f64 = 0.30;
 
 const RARITY_T1: f64 = 1.0;
@@ -45,11 +45,8 @@ pub fn grade_medals(
     (permanent_score * PERMANENT_POOL_WEIGHT) + (event_score * EVENT_POOL_WEIGHT)
 }
 
-/// True when a medal can't be earned by *this* user: it's gated on a collab
-/// operator the user doesn't own. Such medals are dropped from the pool entirely
-/// (like one-time competitive stages in the stage universe) so players aren't
-/// penalized for medals they have no way to earn. If the user owns the operator,
-/// the medal is achievable and scored normally.
+/// Gated on a collab operator the user doesn't own. Dropped from the pool (like
+/// one-time competitive stages) so nobody is penalized for an unearnable medal.
 fn is_unobtainable_for(medal_id: &str, medal_data: &MedalData, owned: &HashSet<&str>) -> bool {
     medal_data
         .operator_lock(medal_id)
@@ -145,8 +142,7 @@ fn medal_weight(medal: &MedalDefinition) -> f64 {
     }
 }
 
-/// Scoring weight of a medal rarity tier. Also used by the improvements
-/// service to sort medal gaps by value.
+/// Also used by the improvements service to sort medal gaps by value.
 pub fn rarity_weight(rarity: &str) -> f64 {
     match rarity {
         "T1" => RARITY_T1,

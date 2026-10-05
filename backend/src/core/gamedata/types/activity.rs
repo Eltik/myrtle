@@ -1,5 +1,3 @@
-//! Activity table types, used for event start/end times
-
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use ts_rs::TS;
@@ -70,12 +68,11 @@ pub struct ActivityBasicInfo {
 impl ActivityBasicInfo {
     /// One-time competitive / minigame events (Contingency Contract / multiplayer,
     /// Vector Breakthrough, Boss Rush, Enemy Duel, Auto-Chess, Half-Idle, Arcade,
-    /// etc.) that can't be replayed after they end and aren't rebroadcast.
+    /// ...) that can't be replayed after they end and aren't rebroadcast.
     ///
-    /// The single source of truth shared by the stage universe (which drops these
-    /// stages entirely) and medal scoring (which marks their medals unobtainable
-    /// rather than recency-decayed) - both to avoid permanently penalizing players
-    /// who never had a chance to grind a one-off competitive mode.
+    /// Shared by the stage universe (drops their stages) and medal scoring (marks
+    /// their medals unobtainable instead of recency-decaying them), so nobody is
+    /// penalized for a one-off mode they never got to play.
     pub fn is_one_time_competitive(&self) -> bool {
         matches!(
             self.activity_type.as_str(),
@@ -154,9 +151,9 @@ impl ActivityTableFile {
     /// Picking the other arm locks this one for good, so the stage can never be
     /// a gap: not owning it says nothing about the player.
     ///
-    /// This is the single place either/or hub mechanics get derived. If another
-    /// event ships a similar hub table, add its derivation here, keyed on that
-    /// table's own logic type, never on stage codes or id suffixes.
+    /// Either/or hub mechanics are derived only here. Another event with a
+    /// similar hub table gets its derivation here too, keyed on that table's
+    /// own logic type, never on stage codes or id suffixes.
     ///
     /// Measured on the 2026-09-22 EN and CN tables: exactly `{act21side_06_m}`,
     /// out of 49 rings that are 43 LINEAR, 3 AND and 3 OR on both servers. Ring
@@ -425,16 +422,13 @@ pub fn merge_farm_archive(
     };
     let path = root.join(FARM_ARCHIVE);
 
-    // "No archive yet" and "could not read the archive" are NOT the same thing, and
-    // collapsing them with .ok()/.unwrap_or_default() is what made one failed read
-    // destructive: an empty map means `before` is 0, every live activity counts as
-    // new, and the write below then replaces an archive of closed events with only
-    // the handful currently open. This file is the only copy of drop tables the
-    // client has already stripped, so that loss cannot be re-derived from anywhere.
+    // A failed read must not look like "no archive yet": an empty map makes
+    // `before` 0, every live activity counts as new, and the write below replaces
+    // the archive of closed events with the few open now. This file is the only
+    // copy of drop tables the client has already stripped.
     //
-    // On any read or parse failure, keep the file and serve degraded: the caller
-    // gets the live activities alone for this load, and the next successful load
-    // restores the merge.
+    // On a read or parse failure keep the file and serve the live activities
+    // alone; the next good load restores the merge.
     let mut merged: HashMap<String, Vec<FarmStage>> = match std::fs::read_to_string(&path) {
         Ok(raw) => match serde_json::from_str(&raw) {
             Ok(parsed) => parsed,
@@ -468,11 +462,9 @@ pub fn merge_farm_archive(
         && let Ok(json) = serde_json::to_string(&merged)
         && let Some(dir) = path.parent()
     {
-        // Temp-then-rename, and the result is checked. `std::fs::write` truncates
-        // at open, so a stalled write here leaves a zero-length archive that the
-        // NEXT load reads as "no events" and overwrites again, turning one bad
-        // write into permanent loss. Discarding the error also meant the operator
-        // had no way to know the archive had stopped being written.
+        // Temp-then-rename, checked. `std::fs::write` truncates at open, so a
+        // stalled write left a zero-length archive that the next load read as
+        // "no events" and overwrote again. The error used to be discarded too.
         if let Err(e) =
             std::fs::create_dir_all(dir).and_then(|()| write_atomic_archive(&path, json.as_bytes()))
         {

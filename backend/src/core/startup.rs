@@ -1,23 +1,20 @@
-//! Startup progress: which phase the server is in, and how much of the boot is
-//! left.
+//! Startup progress: the current phase and how much of the boot is left.
 //!
-//! A cold start runs tens of seconds - game data per server (EN's
-//! `activity_table` alone is 2.3 GB), ~2800 level files, migrations, a config
-//! fetch per server - and put almost nothing on stdout, so it read as a hang.
+//! A cold start takes tens of seconds (per-server game data, EN's `activity_table`
+//! alone is 2.3 GB; ~2800 level files; migrations; a config fetch per server) and
+//! printed almost nothing, so it read as a hang.
 //!
-//! Each step's duration goes to `startup_timings.json` and is read back on the
-//! next boot, so a step that took 9s of a 40s boot gets 9/40 of the bar. Steps
-//! that
-//! can't count themselves - `serde_json` on a 2.3 GB table reports nothing - are
-//! interpolated against that duration and scaled by the drift so far; the level
-//! walks report exactly, through [`step_progress`]. A first boot has no history
-//! and says `estimating`.
+//! Step durations go to `startup_timings.json` and are read back next boot, so a
+//! step that took 9s of a 40s boot gets 9/40 of the bar. Steps that can't count
+//! themselves (`serde_json` on a 2.3 GB table) are interpolated against that
+//! duration and scaled by the drift so far; level walks report exactly through
+//! [`step_progress`]. A first boot has no history and says `estimating`.
 //!
 //! Off a terminal (pm2, Docker) the bars become one log line per phase.
 //!
-//! [`step`] reads a global rather than taking a reporter, because the code that
-//! reports it - `init_game_data`, the table loader - also runs in the tests, the
-//! `src/bin` tools and the hot-reload watcher, none of which draw bars.
+//! [`step`] reads a global instead of taking a reporter because its callers
+//! (`init_game_data`, the table loader) also run in tests, `src/bin` tools and the
+//! hot-reload watcher, none of which draw bars.
 
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -131,8 +128,7 @@ impl PhaseSpec {
 }
 
 /// Cost hint for a JSON table, from its size on disk. `None` when the file is
-/// absent, which is normal - the loader warns and carries on - leaving the step
-/// at [`UNMEASURED_MS`].
+/// absent (normal: the loader warns and carries on), leaving [`UNMEASURED_MS`].
 pub fn table_hint_ms(path: &std::path::Path) -> Option<f64> {
     let bytes = std::fs::metadata(path).ok()?.len() as f64;
     Some(bytes / (NOMINAL_PARSE_MB_PER_S * 1024.0 * 1024.0) * 1000.0)
@@ -374,13 +370,10 @@ fn step_rss_epoch() -> Instant {
 
 /// One `step_rss` line on stderr, before the step's own bookkeeping.
 ///
-/// Why this ships rather than living in a scratch patch: the CN load once
-/// peaked at 5.3 GiB of RSS against a 542 MiB result, and because the peak is
-/// transient and inside a step nobody could say *which* step allocated it -
-/// reproducing it meant rebuilding an instrumented binary. Every load step
-/// already calls [`step`], so hanging the measurement here turns "where did the
-/// boot spend 5 GiB?" into a one-env-var question, in production, on the real
-/// data, at no cost when the variable is unset.
+/// Ships on purpose: the CN load once peaked at 5.3 GiB RSS for a 542 MiB result,
+/// transiently and inside some step nobody could name without an instrumented
+/// rebuild. Every load step calls [`step`], so this answers it with one env var
+/// on production data, and costs nothing when unset.
 fn trace_step_rss(key: &str) {
     if !step_rss_enabled() {
         return;
@@ -425,9 +418,8 @@ pub fn step(key: &str) {
                 est_ms: UNMEASURED_MS,
             });
         } else {
-            // Recomputed, not accumulated, so steps jumped over - an optional
-            // table that wasn't on disk - are credited and the bar doesn't stall
-            // behind work that will never run.
+            // Recomputed, not accumulated, so skipped steps (an optional table not on
+            // disk) are credited and the bar doesn't stall behind work that never runs.
             p.done_est_ms = p.steps[..at].iter().map(|s| s.est_ms).sum();
             p.current = at;
         }
@@ -466,10 +458,9 @@ fn close_current(p: &mut PhaseInner, phase_key: &str) {
 
 /// A `tracing` writer that clears the bars before a log line goes out.
 ///
-/// Without it the startup `info!`/`warn!` lines - the game data warnings, the
-/// applied migrations - print over a half-drawn bar and shred the terminal.
-/// Install with `tracing_subscriber::fmt().with_writer(startup::log_writer())`;
-/// once the boot is over it costs one atomic load per line.
+/// Without it startup `info!`/`warn!` lines print over a half-drawn bar and shred
+/// the terminal. Install with `tracing_subscriber::fmt().with_writer(startup::log_writer())`;
+/// after boot it costs one atomic load per line.
 #[derive(Clone, Copy, Default)]
 pub struct ProgressWriter;
 

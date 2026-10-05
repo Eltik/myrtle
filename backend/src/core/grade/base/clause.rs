@@ -1,17 +1,11 @@
-//! The clause data model: every base-skill bonus, no matter how it is worded,
-//! reduces at parse time to one or more CLAUSES drawn from a small fixed
-//! taxonomy of shapes. The scoring engine (`ledger.rs`) knows only these shapes -
-//! adding a new operator or bonus means classifying text into an existing shape
-//! (or, rarely, extending the fixed set), never writing new scoring code.
+//! Every base-skill bonus parses to one or more CLAUSES from a small fixed set of
+//! shapes, the only thing `ledger.rs` scores. A new operator means classifying
+//! text into an existing shape, never new scoring code.
 //!
-//! Principles carried from the algorithm reference:
-//! - NEVER GUESS: a bonus that cannot be cleanly parsed becomes [`ClauseKind::Unresolved`]
-//!   and contributes exactly zero - a confidently wrong number is worse than a
-//!   visibly incomplete one.
-//! - One buff may emit SEVERAL clauses (Hoederer: a flat base plus a base-wide
-//!   presence rider; Weedy: facility scaling plus a suppression of teammates).
-//! - Weighting/polarity to LMD-equivalents happens exactly once, downstream in
-//!   `yield_model` / `room_search_score` - never here.
+//! - NEVER GUESS: unparseable text becomes [`ClauseKind::Unresolved`] and scores 0.
+//! - One buff may emit SEVERAL clauses (Hoederer: flat base + base-wide presence
+//!   rider; Weedy: facility scaling + teammate suppression).
+//! - LMD weighting happens once, downstream in `yield_model` / `room_search_score`.
 
 use std::collections::HashMap;
 
@@ -27,37 +21,30 @@ pub enum Metric {
     ManufactureSpeed,
     /// Trading Post order-acquisition %.
     TradingSpeed,
-    /// % LMD-per-order, resolved at scoring time from the room's order
-    /// shapes and the post's level (`order_mix`). `pure_gold` marks a value
-    /// tied to Pure-Gold orders specifically (Proviso), which a
-    /// Precious-Metal-shifting suppressor (Shamare) kills.
+    /// % LMD-per-order, priced by `order_mix`. `pure_gold` = tied to Pure-Gold
+    /// orders (Proviso), which Shamare's Precious-Metal shift kills.
     OrderValue { pure_gold: bool },
     /// Order/capacity-limit points (sign carries polarity - Degenbrecher's -6).
     CapacityLimit,
     /// Power Plant drone-recovery %.
     DroneRecovery,
-    /// Morale recovered per hour. `base_wide` = reaches operators outside the
-    /// owner's room (Control-Center "all other facilities" auras).
+    /// Morale/hr. `base_wide` = reaches outside the owner's room (CC "all other
+    /// facilities" auras).
     MoraleRecovery { base_wide: bool },
     /// Morale drain modifier per hour (positive = drains faster).
     MoraleDrainDelta,
-    /// A room-wide drain modifier: EVERY occupant of the owner's room drains
-    /// `value` more (negative = slower) per hour while the owner is seated
-    /// ("Morale consumed per hour of all Operators in the Factory -0.1").
+    /// EVERY occupant of the owner's room drains `value`/hr more (negative =
+    /// slower) ("Morale consumed per hour of all Operators in the Factory -0.1").
     MoraleDrainAura,
-    /// Marker: the holder IGNORES roommates' `MoraleDrainAura` effects on its
-    /// own drain in the owner's room type (Waai Fu's Team Spirit). Value is
-    /// unused; presence is the whole effect.
+    /// Marker: holder IGNORES roommates' `MoraleDrainAura` (Waai Fu's Team Spirit).
     MoraleDrainAuraImmunity,
-    /// A Control-Center aura raising every DORMITORY sleeper's recovery rate
-    /// ("all Operators in Dormitories recover +0.05 Morale per hour") - the
-    /// game's non-stacking clause applies, so consumers take the maximum.
+    /// CC aura on every dorm sleeper ("all Operators in Dormitories recover +0.05
+    /// Morale per hour"). Non-stacking: consumers take the max.
     DormRecoveryAura,
     /// Non-production facility value (clue search, HR contact, ...).
     NonProduction(NonProdKind),
-    /// Raises a room type's EFFECTIVE facility count ("Power Plant +1, only
-    /// affects facility quantity"). Consumed by the context builder, not summed
-    /// into room output.
+    /// EFFECTIVE facility count ("Power Plant +1, only affects facility
+    /// quantity"). Read by the context builder, not summed into output.
     FacilityCount(String),
 }
 
@@ -75,9 +62,7 @@ pub enum NonProdKind {
 pub enum CombineRule {
     /// Ordinary additive stacking.
     Sum,
-    /// Resolved jointly through the order-mix model (order VALUE): the room's
-    /// whole set of order shapes is priced together against the post's level,
-    /// so disjoint-order effects compose and same-kind ones take the strongest.
+    /// Priced jointly by `order_mix`.
     OrderMix,
 }
 
@@ -110,25 +95,22 @@ pub enum Subject {
     /// A faction / skill-type token matched against an operator's `match_tags`
     /// ("glasgow", "standardization", "rhine").
     Tag(String),
-    /// A skill-type token matched against the leading word of an operator's
-    /// SKILL names only ("rhine" = a Rhine Tech skill), never its faction -
-    /// "for each Rhine Tech-type skill in this Factory" counts skills.
+    /// Leading word of SKILL names only, never faction ("for each Rhine
+    /// Tech-type skill in this Factory" counts skills).
     SkillTag(String),
     /// A buff-id prefix matched against teammates' skills ("+5% per
     /// Standardization skill" via id patterns).
     SkillIdPrefix(String),
-    /// Every other occupant of the room, regardless of identity (Shamare's
-    /// "each Operator", Bubble's per-occupant tiers).
+    /// Any other occupant (Shamare's "each Operator", Bubble's tiers).
     AnyOtherOccupant,
-    /// Specific resolved operators. Empty = the named operator could not be
-    /// resolved: the clause then contributes 0 (never guess).
+    /// Empty = unresolved name; contributes 0.
     Chars(Vec<String>),
     /// Occupants whose own total of `metric` exceeds `threshold` (Bubble's
     /// high-capacity tier).
     PeerMetricAbove { metric: Metric, threshold: f64 },
-    /// The summed capacity POINTS of occupants on one side of `threshold`
-    /// (Bubble's Bigger is Better!: 1% per point at or below 16, 3% per
-    /// point above - Bena's +17 alone is 51%, user-verified 2026-09-10).
+    /// Summed capacity POINTS on one side of `threshold` (Bubble's Bigger is
+    /// Better!: 1%/point at or below 16, 3%/point above; Bena's +17 alone = 51%,
+    /// user-verified 2026-09-10).
     CapacityPoints { threshold: f64, above: bool },
 }
 
@@ -137,30 +119,24 @@ pub enum Subject {
 pub enum CondScope {
     /// The clause owner's own room.
     Room,
-    /// Anywhere the operator is actively WORKING (any non-dormitory room of the
-    /// deployment - Hoederer's "assigned to any Work Area").
+    /// Any non-dorm room (Hoederer's "assigned to any Work Area").
     BaseWorkArea,
-    /// Anywhere in the base, a dormitory included ("when Vigil is in the Base,
-    /// excluding Assistants and Activity Room users"). Resolved by registry
-    /// rewrite (`resolve_base_wide`) once the deployment is known.
+    /// Anywhere incl. dorms ("when Vigil is in the Base, excluding Assistants and
+    /// Activity Room users"). Rewritten by `resolve_base_wide`.
     BaseAnywhere,
-    /// A specific room TYPE elsewhere in the base ("if Kal'tsit is assigned to
-    /// the Control Center"). The optimizer resolves these by registry rewrite
-    /// (`resolve_room_presence`) once the deployment is known; a context-free
-    /// scoring pass credits the gated part exactly 0 (never guess). The room
-    /// type lives on the strategy, not here, so the scope stays `Copy`.
+    /// A room TYPE elsewhere ("if Kal'tsit is assigned to the Control Center").
+    /// Rewritten by `resolve_room_presence`; context-free passes credit 0. The
+    /// room type lives on the strategy so this stays `Copy`.
     RoomTypeElsewhere,
 }
 
-/// A occupancy condition attached to a room-type-global clause (Control-Center
-/// buffs gated on the TARGET room's team: "all Trading Posts with 3 Kjerag
+/// CC global gated on the TARGET room's team ("all Trading Posts with 3 Kjerag
 /// Operators", "all Siracusa Operators in Trading Posts").
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Gate {
     pub tag: String,
     pub required_count: usize,
-    /// True: the value applies once per matching occupant. False: the whole
-    /// room gains the value once the count threshold is met.
+    /// Per matching occupant; false = whole room once the threshold is met.
     pub per_operator: bool,
 }
 
@@ -169,40 +145,34 @@ pub struct Gate {
 pub enum SuppressExempt {
     /// Nothing is exempt (Shamare zeroes every listed metric outright).
     None,
-    /// Contributions whose source clause scales on a facility count survive
-    /// (Weedy automation: "excluding productivity granted based on facility
-    /// count").
+    /// Facility-count-scaled sources survive (Weedy: "excluding productivity
+    /// granted based on facility count").
     RoomCountScaledSources,
 }
 
 /// What a pool generator's points multiply against.
 #[derive(Clone, Debug, PartialEq)]
 pub enum PoolBasis {
-    /// The summed level of the base's functional facilities (layout-derived,
-    /// settled room-locally wherever the generator's clause is live).
+    /// Summed functional-facility levels (layout-derived, settled room-locally).
     FunctionalLevels,
-    /// The level of the room the GENERATOR is seated in (Senshi's "per level
-    /// of the current Dormitory") - settled at assignment scope, where the
-    /// seat is known.
+    /// The GENERATOR's room level (Senshi's "per level of the current
+    /// Dormitory"). Settled at assignment scope.
     OwnRoomLevel,
-    /// The number of operators seated in the base's dormitories (Rosmontis'
-    /// Perception Information, Mr. Nothing's Worldly Plight).
+    /// Dorm occupants (Rosmontis' Perception Information, Mr. Nothing's Worldly Plight).
     DormOccupants,
-    /// The number of operators seated in the GENERATOR's own room (Virtuosa's
-    /// "for every 1 Operators in that Dormitory, Soundless Resonance +1").
+    /// Occupants of the GENERATOR's room (Virtuosa's "for every 1 Operators in
+    /// that Dormitory, Soundless Resonance +1").
     OwnRoomOccupants,
     /// Operators outside the dormitories carrying a faction tag, counted up
     /// to `unit_cap` (Chongyue: "+5 per Sui Operator ... (max 5)").
     DeployedTag { tag: String, unit_cap: f64 },
-    /// A flat grant scaled by the steady-state fraction of a work block its
-    /// morale condition holds (Dusk/Ling's "when own Morale is above/below
-    /// 12": at baseline drain a 24-point bar spends half its block on each
-    /// side, so both branches settle at 0.5). A documented model, not a guess.
+    /// Flat grant times the fraction of a block its morale condition holds
+    /// (Dusk/Ling's "when own Morale is above/below 12": a 24-point bar at
+    /// baseline drain spends half on each side, so 0.5). Documented model.
     Flat { weight: f64 },
 }
 
-/// A resource-pool operation (the perception economies: Perception Information,
-/// Chain of Thought, Worldly Plight, ...).
+/// Perception Information, Chain of Thought, Worldly Plight, ...
 #[derive(Clone, Debug, PartialEq)]
 pub enum ResourceOp {
     /// Adds `value` points to `resource` per unit of `basis`.
@@ -226,14 +196,11 @@ pub const PEER_STAGE_FIXED_LIMIT: u8 = 1;
 pub const PEER_STAGE_LIMIT_CUT: u8 = 2;
 pub const PEER_STAGE_NET_LIMIT: u8 = 3;
 
-/// Jaye's two per-order riders average over a shift: Street Economics pays
-/// per EMPTY order slot and Basic Needs per FILLED order, and a post fills
-/// from empty toward full between collections, so each is worth half the
-/// limit on average - and together (E1+) exactly the full limit, the figure
-/// the game shows. A documented model for the E0 half, exact for E1+.
+/// Jaye: Street Economics pays per EMPTY slot, Basic Needs per FILLED order, and
+/// a post fills from empty between collections, so each averages half the limit
+/// and both (E1+) exactly the full limit, as the game shows. Model for E0, exact E1+.
 const SHIFT_FILL_AVERAGE: f64 = 0.5;
 
-/// The fixed shape taxonomy. Everything the scorer knows how to do lives here.
 #[derive(Clone, Debug, PartialEq)]
 pub enum ClauseKind {
     /// Flat bonus to the owner's own room. Resolves against nothing.
@@ -252,81 +219,61 @@ pub enum ClauseKind {
     /// `value` applies once per level, summed across every built room of a type
     /// (dormitory-level scaling).
     ScalingLevelSum { room: String },
-    /// `value` applies once per unit of a room-count-like quantity: real room
-    /// counts ("per Power Plant") and the synthetic counts the context builder
-    /// provides (`MANUFACTURE_RECIPE_TYPES`, `DRONE_CAPACITY`).
+    /// Per unit of a room count ("per Power Plant") or a synthetic count
+    /// (`MANUFACTURE_RECIPE_TYPES`, `DRONE_CAPACITY`).
     ScalingRoomCount { room: String },
-    /// `value` applies once per `step` settled points of a named pool resource,
-    /// floored ("+5% per 8 Engineering Robots"). Points come from the room's
-    /// live generator clauses (layout-derived pools) or, later, the
-    /// assignment-scope pool settlement.
+    /// Per `step` settled pool points, floored ("+5% per 8 Engineering Robots").
     ScalingPoolPoints { resource: String, step: f64 },
-    /// Binary gate: full `value` when one of `chars` is present in scope.
-    /// Empty `chars` never fires (unresolvable name - never guess).
+    /// Full `value` when one of `chars` is in scope. Empty never fires.
     RequiresChar {
         chars: Vec<String>,
         scope: CondScope,
     },
     /// Binary gate on any occupant carrying a faction tag.
     RequiresTag { tag: String, scope: CondScope },
-    /// Full value only when nothing matching is present (reception solo skills:
-    /// "if no other Operators are working").
+    /// Only when nothing matches ("if no other Operators are working").
     RequiresAbsentTag { subject: Subject },
-    /// Binary threshold gate: full value once `count`+ matches are present in
-    /// the owner's room.
+    /// Full value once `count`+ matches are in the owner's room.
     RequiresCountTag { tag: String, count: usize },
     /// Pool operation, settled by the ledger's fixed-point pool pass.
     ResourceConvert(ResourceOp),
-    /// Zeroes every OTHER occupant's contribution of the listed metrics in the
-    /// owner's room, leaving the owner untouched. Runs strictly last.
+    /// Zeroes every OTHER occupant's listed metrics. Runs strictly last.
     SuppressesOthers {
         metrics: Vec<Metric>,
         exempt: SuppressExempt,
     },
-    /// The owner's skill takes priority over roommates' skills of these buff
-    /// families ("does not stack with Recycling and takes priority over it"):
-    /// their clauses are dropped from the room before anything is priced.
+    /// "Does not stack with Recycling and takes priority over it": roommates'
+    /// clauses of these families are dropped before pricing.
     ExcludesBuffs { prefixes: Vec<String> },
-    /// The owner's bonus scales off a total that roommates are already
-    /// contributing. A `quantized` reader floors the basis by `step` and
-    /// ignores a negative total ("per 5 CAP" -> floor(max(0, total) / 5)); a
-    /// continuous mirror divides by it. `stage` orders the readers: a clause
-    /// sees only contributions settled in EARLIER stages (fixed values and
-    /// Control-Center grants are stage 0), so a chain of readers resolves the
-    /// way the game does instead of to a mutual fixed point. Measured in-game
-    /// (six Kjerag/Gnosis posts, community sheet Annex 1): Degenbrecher's
-    /// per-5 reads the fixed limits (stage 1), Jaye's cut then reads every
-    /// efficiency so far (stage 2), Swire's per-point reads the limit after
-    /// Jaye (stage 3). Readers sharing a stage relax to a fixed point - the
-    /// genuinely circular case.
+    /// Scales off what roommates already contribute. `quantized`: "per 5 CAP" ->
+    /// floor(max(0, total) / 5); otherwise a continuous mirror. A reader sees
+    /// only EARLIER stages (fixed values and CC grants are stage 0), so chains
+    /// resolve as the game does, not to a mutual fixed point. Measured in-game
+    /// (six Kjerag/Gnosis posts, community sheet Annex 1): Degenbrecher's per-5
+    /// reads fixed limits (1), Jaye's cut reads efficiency so far (2), Swire's
+    /// per-point reads the limit after Jaye (3). Same-stage readers relax to a
+    /// fixed point (genuinely circular).
     ScalingPeerMetric {
         metric: Metric,
         include_self: bool,
         step: f64,
         stage: u8,
         quantized: bool,
-        /// Read only what the roommates' OWN skills contribute: facility-count
-        /// parts and external (Control-Center) grants are left out, for
-        /// texts that pay "per X provided by all other Operators assigned to
-        /// that room (excluding ... facility count)". The default reads the
-        /// full total, as the Kjerag limit readers do.
+        /// Roommates' OWN skills only, no facility-count parts or CC grants:
+        /// "per X provided by all other Operators assigned to that room
+        /// (excluding ... facility count)". Kjerag limit readers read the full total.
         own_skills_only: bool,
     },
-    /// `value` applies once per order of the room's FINAL order limit - the
-    /// level's base plus every capacity delta in the room (crew skills,
-    /// Control-Center grants, peer-scaled cuts), floored at 1. Trading only.
+    /// Per order of the FINAL limit (base + every capacity delta, floored at 1).
+    /// Trading only.
     ScalingRoomOrderLimit,
-    /// While the owner is present, occupants matching a `from` tag also carry
-    /// the `to` tag (Highmore's skill-type conversion). Affects other clauses'
-    /// subject resolution; contributes no value itself.
+    /// With the owner present, `from`-tagged occupants also carry `to`
+    /// (Highmore's skill-type conversion). No value of its own.
     GrantsTag { from: Vec<String>, to: String },
-    /// The parse failed. Contributes exactly zero and is surfaced in the
-    /// diagnostics list so coverage gaps get real parsers, not guesses.
+    /// Parse failed: zero, and listed in diagnostics so the gap gets a real parser.
     Unresolved,
-    /// An order-VALUE shape (Proviso, Tequila, Tailoring), resolved at
-    /// scoring time against the post's order rarity together with every
-    /// other order shape in the room - `order_mix::value_pct`. The clause's
-    /// own `value` is unused.
+    /// Order-VALUE shape (Proviso, Tequila, Tailoring), priced with the room's
+    /// other shapes by `order_mix::value_pct`. `value` is unused.
     OrderMix(OrderEffect),
 }
 
@@ -342,20 +289,15 @@ pub struct Clause {
     pub value: f64,
     /// Ceiling on the scaled part when the text states one ("Max +25%").
     pub cap: Option<f64>,
-    /// Product formulas this clause is restricted to (from `Buff.targets`,
-    /// e.g. `F_GOLD`) - drives the three-tier configuration discount. Empty =
-    /// generic, always full value.
+    /// `Buff.targets` (e.g. `F_GOLD`), for the configuration discount. Empty = generic.
     pub output_targets: Vec<String>,
-    /// Set when the game's non-stacking clause applies ("only the strongest
-    /// effect of this type"): entries sharing a family keep only the strongest.
+    /// "Only the strongest effect of this type": a family keeps its strongest.
     pub non_stacking_family: Option<String>,
 }
 
 pub type ClauseSet = Vec<Clause>;
 
 impl Clause {
-    /// A bare clause with the fields every emission shares; callers override
-    /// the rest by struct update.
     fn base(buff_id: &str, buff: &Buff, metric: Metric, kind: ClauseKind, value: f64) -> Self {
         Self {
             buff_id: buff_id.to_string(),
@@ -370,9 +312,8 @@ impl Clause {
     }
 }
 
-/// The non-stacking family for a Control-Center global, when the buff text
-/// carries the game's "only the strongest of this type applies" clause. Family
-/// key = the buff-id prefix (same family across tiers/carriers).
+/// For a CC global saying "only the strongest of this type applies". Key = the
+/// buff-id prefix, shared across tiers and carriers.
 fn cc_non_stacking_family(buff_id: &str, buff: &Buff) -> Option<String> {
     let d = buff.description.to_lowercase();
     let non_stacking = d.contains("only the most effective")
@@ -381,9 +322,8 @@ fn cc_non_stacking_family(buff_id: &str, buff: &Buff) -> Option<String> {
     non_stacking.then(|| buff_family(buff_id).to_string())
 }
 
-/// Map one legacy [`BuffResolutionStrategy`] to its clause set - the migration
-/// adapter that guarantees the clause model can express everything the old
-/// taxonomy could. Dies once `build_clauses` parses buff text directly.
+/// Legacy [`BuffResolutionStrategy`] -> clauses. Migration adapter; dies once
+/// `build_clauses` parses buff text directly.
 #[allow(clippy::too_many_lines)]
 pub fn clauses_from_strategy(
     buff_id: &str,
@@ -436,11 +376,9 @@ pub fn clauses_from_strategy(
                 out.push(c);
             }
             if *nullifies_others {
-                // The automation survival rule, made declarative: teammates'
-                // speed is zeroed EXCEPT contributions that scale on facility
-                // counts ("excluding productivity granted based on facility
-                // count") - so automation operators stack with each other and
-                // with facility-count scalers like Purestream.
+                // Teammates' speed zeroed EXCEPT facility-count parts ("excluding
+                // productivity granted based on facility count"), so automation
+                // ops stack with each other and with scalers like Purestream.
                 out.push(Clause::base(
                     buff_id,
                     buff,
@@ -472,12 +410,10 @@ pub fn clauses_from_strategy(
 
         // "+5% for every 5% provided by all other Operators assigned to that
         // Factory (excluding the additional productivity affected by facility
-        // count), up to a maximum of 40%" (Waai Fu; Snowsant at a post). Paid
-        // per FULL step of what the roommates' own skills add - not per
-        // point, and not on facility-count parts or Control-Center grants,
-        // which no roommate "provides". Priced per point it read 5x the
-        // room and always hit the cap (31010962: Tragodia's 35 became 40 in
-        // a room the game shows at 72 with Wang's 2).
+        // count), up to a maximum of 40%" (Waai Fu; Snowsant at a post). Per FULL
+        // step of roommates' own skills; facility parts and CC grants excluded.
+        // Per point it read 5x and always capped (31010962: Tragodia's 35 became
+        // 40 in a room the game shows at 72 with Wang's 2).
         S::TeammateOutputMirroring {
             ratio,
             step,
@@ -513,9 +449,9 @@ pub fn clauses_from_strategy(
             ));
         }
 
-        // Jaye's Basic Needs: the limit cut reads the roommates' settled
-        // efficiency (Gnosis's malus and Degenbrecher's scaled part included),
-        // floored per 10%; the rider pays per filled order, shift-averaged.
+        // Jaye's Basic Needs: the cut reads settled roommate efficiency (Gnosis's
+        // malus, Degenbrecher's scaled part), floored per 10%; the rider pays
+        // per filled order, shift-averaged.
         S::LimitCutPerPeerEfficiency {
             pct_per_cut,
             cut,
@@ -583,7 +519,7 @@ pub fn clauses_from_strategy(
                     *base_efficiency,
                 ));
             }
-            // An unresolved name emits an empty chars list, which never fires.
+            // Unresolved name -> empty list, never fires.
             let chars: Vec<String> = required_char_id.clone().into_iter().collect();
             if *efficiency != 0.0 {
                 out.push(Clause::base(
@@ -660,8 +596,7 @@ pub fn clauses_from_strategy(
                     *base_efficiency,
                 ));
             }
-            // The gated part scores 0 without deployment context; the optimizer
-            // credits it by rewriting the strategy (resolve_room_presence).
+            // Gated part is 0 until resolve_room_presence rewrites the strategy.
             if *bonus_efficiency != 0.0 {
                 if let Some(tag) = required_faction {
                     out.push(Clause::base(
@@ -720,8 +655,7 @@ pub fn clauses_from_strategy(
             high_pct,
             excludes,
         } => {
-            // Per capacity POINT, tiered by each occupant's own bonus: low
-            // per point at or below the threshold, high per point above it.
+            // Per capacity POINT: low rate at or below the threshold, high above.
             if !excludes.is_empty() {
                 out.push(Clause::base(
                     buff_id,
@@ -784,12 +718,10 @@ pub fn clauses_from_strategy(
             count_skills,
             capacity,
         } => {
-            // Skill counts include the holder's own skill (Dorothy's Rhine
-            // Tech β counts toward her per-Rhine-Tech-skill bonus). Operator
-            // counts "in the same room" include the holder too when they
-            // carry the tag (Morgan's Gang Compass reads +20% for herself and
-            // +20% for Siege, user-verified 2026-09-10) unless the text says
-            // "other".
+            // Skill counts include the holder's own (Dorothy's Rhine Tech β counts
+            // for her own bonus). "In the same room" operator counts include a
+            // tagged holder unless the text says "other" (Morgan's Gang Compass:
+            // +20% herself, +20% Siege, user-verified 2026-09-10).
             let (subject, include_self) = if *count_skills {
                 (Subject::SkillTag(token.clone()), true)
             } else {
@@ -885,9 +817,8 @@ pub fn clauses_from_strategy(
                 },
                 *per_teammate_pct,
             ));
-            // Shamare shifts the post toward Precious-Metal orders: teammates'
-            // SPEED dies, flat/Precious-Metal order value survives, Pure-Gold
-            // value (Proviso) dies with the Pure-Gold orders themselves.
+            // Shamare shifts to Precious-Metal orders: teammates' SPEED dies,
+            // flat/Precious-Metal value survives, Pure-Gold value (Proviso) dies.
             out.push(Clause::base(
                 buff_id,
                 buff,
@@ -921,9 +852,7 @@ pub fn clauses_from_strategy(
             base_pct,
             ..
         } => {
-            // Context-free scoring credits the always-on base only; the pool
-            // part resolves by registry rewrite (resolve_global_pool) once the
-            // settled points are known.
+            // Base only; resolve_global_pool rewrites the pool part once settled.
             if *base_pct != 0.0 {
                 let mut c = Clause::base(
                     buff_id,
@@ -940,8 +869,7 @@ pub fn clauses_from_strategy(
             }
         }
 
-        // A crew-gated global compiles like the plain global; its gate lives
-        // in the Control-Center bonus accumulator, where the crew is known.
+        // Gate lives in the CC bonus accumulator, where the crew is known.
         S::GlobalEffect {
             target_room,
             bonus_pct,
@@ -991,8 +919,7 @@ pub fn clauses_from_strategy(
             );
             c.non_stacking_family = cc_non_stacking_family(buff_id, buff);
             out.push(c);
-            // The capacity payload (Gnosis's "+6 order limit" on each Kjerag
-            // trader) rides the same gate.
+            // Same gate for Gnosis's "+6 order limit" per Kjerag trader.
             if *order_limit != 0 {
                 out.push(Clause::base(
                     buff_id,
@@ -1007,19 +934,17 @@ pub fn clauses_from_strategy(
             }
         }
 
-        // Resolved by registry rewrite before scoring (`resolve_layout_branches`,
-        // `resolve_room_presence`); context-free they contribute exactly 0.
+        // Rewritten by `resolve_layout_branches` / `resolve_room_presence`;
+        // context-free they give 0.
         S::LayoutCountBranch { .. }
         | S::RoomPresenceGatedGlobal { .. }
         | S::BaseWideMatchCountScaling { .. }
         | S::NamedTargetRoomBoost { .. } => {}
 
         S::NamedCharRoomGrants { grants } => {
-            // Each grant lands on the room seating the named operator, gated
-            // on that operator (the char id doubles as the gate token - the
-            // occupancy matcher accepts char ids alongside faction tags). The
-            // live values ride the CC-condition machinery; these clauses give
-            // the taxonomy an honest record of both payloads.
+            // Gated on the named operator's room (char id doubles as the gate
+            // token). Live values ride the CC conditions; these clauses just
+            // record both payloads.
             for g in grants {
                 if g.order_limit != 0.0 {
                     out.push(Clause::base(
@@ -1096,9 +1021,8 @@ pub fn clauses_from_strategy(
             base_wide,
             ..
         } => {
-            // `base_wide` is parsed, not inferred from the room: only the
-            // "other buildings" Control-Center auras reach outside workers;
-            // the `control_mp_cost` family and dorm skills stay room-local.
+            // Parsed, not inferred: only "other buildings" CC auras reach outside;
+            // `control_mp_cost` and dorm skills stay room-local.
             out.push(Clause::base(
                 buff_id,
                 buff,
@@ -1135,9 +1059,8 @@ pub fn clauses_from_strategy(
             value,
             same_room_gate,
         } => {
-            // The metric belongs to the BOOSTED facility, not the CC the owner
-            // sits in. Zero LMD weight - it feeds the CC spare-seat tie-break
-            // and display only.
+            // Metric of the BOOSTED facility, not the CC. Zero LMD weight: CC
+            // spare-seat tie-break and display only.
             let kind = match same_room_gate {
                 Some(chars) => ClauseKind::RequiresChar {
                     chars: chars.clone(),
@@ -1152,19 +1075,16 @@ pub fn clauses_from_strategy(
                 kind,
                 *value,
             );
-            // "Only the strongest effect of this type takes place" is one
-            // family per boosted METRIC across all CC skills - upMeetingSpeed
-            // +25% and meeting_spd&bd +5% share it despite different buff-id
-            // prefixes, so the prefix-keyed family would be wrong here.
+            // One family per boosted METRIC, not per prefix: upMeetingSpeed +25%
+            // and meeting_spd&bd +5% share it.
             if cc_non_stacking_family(buff_id, buff).is_some() {
                 c.non_stacking_family = Some(format!("cc_nonprod_{target_room}"));
             }
             out.push(c);
         }
 
-        // NEVER GUESS: the legacy estimate dies at the clause boundary. The
-        // adapter still carries the estimate through until CP3 flips it off -
-        // see `UNRESOLVED_CARRIES_LEGACY_ESTIMATE`.
+        // NEVER GUESS. The legacy estimate rides through until CP3 flips
+        // `UNRESOLVED_CARRIES_LEGACY_ESTIMATE` off.
         S::Complex { estimated_pct } => {
             if UNRESOLVED_CARRIES_LEGACY_ESTIMATE && *estimated_pct != 0.0 {
                 out.push(Clause::base(
@@ -1188,8 +1108,7 @@ pub fn clauses_from_strategy(
         S::MoraleDecayEfficiency {
             time_averaged_value,
         } => {
-            // Time-averaging over the shift is a parse-time transform; the
-            // clause itself is a plain flat value.
+            // Shift averaging happened at parse time.
             out.push(Clause::base(
                 buff_id,
                 buff,
@@ -1199,9 +1118,7 @@ pub fn clauses_from_strategy(
             ));
         }
 
-        // A solved pool payoff drains the perception pool into the room's
-        // speed metric - pool output on the ledger's drain channel, never a
-        // fake flat skill.
+        // Pool output on the drain channel, never a fake flat skill.
         S::PoolPayoff { pct } => {
             out.push(Clause::base(
                 buff_id,
@@ -1214,10 +1131,8 @@ pub fn clauses_from_strategy(
             ));
         }
 
-        // A layout-derived pool generator: its points exist wherever the owner
-        // is seated, computed from the building alone. Carried as a Generate
-        // clause the ledger's room-local settlement reads (value = points per
-        // functional level, cap = the stated maximum).
+        // Layout-derived: points from the building alone, settled room-locally
+        // (value = points per functional level, cap = stated max).
         S::PoolGenerateBuildingLevels {
             resource,
             per_level,
@@ -1237,8 +1152,8 @@ pub fn clauses_from_strategy(
             out.push(c);
         }
 
-        // Snegurochka: the automation-style wipe, plus per-occupant room
-        // grants (speed and capacity) that carry the facility provenance.
+        // Snegurochka: automation-style wipe plus per-occupant speed/capacity
+        // grants with facility provenance.
         S::RoomPerOperatorGrant {
             speed_pct,
             capacity,
@@ -1295,9 +1210,8 @@ pub fn clauses_from_strategy(
             ));
         }
 
-        // An own-room-level generator (Senshi's Monster Meals): points depend
-        // on WHERE the owner sits, so the assignment-scope settlement resolves
-        // it; the room-local slice skips it.
+        // Senshi's Monster Meals: depends on WHERE the owner sits, so settled at
+        // assignment scope, not room-locally.
         S::PoolGenerateOwnRoomLevel {
             resource,
             per_level,
@@ -1314,8 +1228,7 @@ pub fn clauses_from_strategy(
             ));
         }
 
-        // Mr. Nothing's one-buff dorm economy: a dorm-occupant generator AND a
-        // stepped consumer of the same pool.
+        // Mr. Nothing: generator AND stepped consumer of one pool, one buff.
         S::PoolDormEconomy {
             resource,
             per_occupant,
@@ -1344,8 +1257,8 @@ pub fn clauses_from_strategy(
             ));
         }
 
-        // Rosmontis' Extrasensory: a dorm-occupant generator whose points
-        // convert onward into a second pool her other skills consume.
+        // Rosmontis' Extrasensory: points convert into a second pool her other
+        // skills consume.
         S::PoolGenerateDormAndConvert {
             gen_resource,
             per_occupant,
@@ -1375,8 +1288,7 @@ pub fn clauses_from_strategy(
             ));
         }
 
-        // Room-wide drain aura: everyone in the owner's room drains delta more
-        // (negative = slower) - consumed by the sustainability simulator.
+        // Read by the sustainability simulator.
         S::MoraleRoomAura { delta } => {
             out.push(Clause::base(
                 buff_id,
@@ -1387,7 +1299,7 @@ pub fn clauses_from_strategy(
             ));
         }
 
-        // CC dorm-recovery aura (non-stacking) - also a simulator consumer.
+        // Non-stacking; read by the simulator.
         S::DormRecoveryAura { rate } => {
             out.push(Clause::base(
                 buff_id,
@@ -1398,8 +1310,7 @@ pub fn clauses_from_strategy(
             ));
         }
 
-        // A per-teammate room aura: the room total gains value x (occupants-1),
-        // exactly a count over the other occupants.
+        // value x (occupants - 1): a count over the other occupants.
         S::PerTeammateEfficiency { per_teammate_pct } => {
             out.push(Clause::base(
                 buff_id,
@@ -1413,8 +1324,7 @@ pub fn clauses_from_strategy(
             ));
         }
 
-        // A standalone converter (Ancient Witchcraft: WP/5 -> Witchcraft
-        // Crystal), relaxed by the settlement's fixed-point rounds.
+        // Ancient Witchcraft: WP/5 -> Witchcraft Crystal.
         S::PoolConvert { from, to, from_per } => {
             out.push(Clause::base(
                 buff_id,
@@ -1429,7 +1339,6 @@ pub fn clauses_from_strategy(
             ));
         }
 
-        // A stepped pool consumer: +pct per `per` settled points, floored.
         S::PoolTail {
             base,
             resource,
@@ -1465,21 +1374,16 @@ pub fn clauses_from_strategy(
     out
 }
 
-/// The resource id of the perception-information economy's pool (Rosmontis /
-/// Ebenholz / Mr. Nothing). The only pool today; native generator/converter
-/// clauses will join it when the perception parser is absorbed.
+/// Rosmontis / Ebenholz / Mr. Nothing's pool.
 pub const PERCEPTION_POOL: &str = "PERCEPTION_INFO";
 
-/// NEVER GUESS (flipped at CP3): an unparsed buff contributes exactly ZERO and
-/// is surfaced through [`unresolved_buffs`] diagnostics instead of being scored
-/// as a made-up flat estimate. A wrong guess silently corrupts every ranking it
-/// touches; a zero shows up as a coverage gap that gets a real parser. (True
-/// was the CP2 shadow-migration setting, proving ledger==legacy bit-exactly.)
+/// NEVER GUESS (flipped at CP3): an unparsed buff scores ZERO and shows up in
+/// [`unresolved_buffs`]. A wrong guess silently corrupts every ranking; a zero is a
+/// visible gap. True was the CP2 shadow setting that proved ledger == legacy.
 pub const UNRESOLVED_CARRIES_LEGACY_ESTIMATE: bool = false;
 
-/// Build the clause registry for every buff. Currently the guaranteed-equivalent
-/// path through the legacy strategy parser; converts branch-by-branch to direct
-/// text parsing as the migration proceeds.
+/// Goes through the legacy strategy parser for now; converts to direct text
+/// parsing branch by branch.
 pub fn build_clauses(
     buffs: &HashMap<String, Buff>,
     name_to_char: &HashMap<String, String>,
@@ -1491,12 +1395,10 @@ pub fn build_clauses(
             continue;
         };
         let mut set = clauses_from_strategy(buff_id, buff, strategy);
-        // A buff whose ONLY clause is Unresolved but whose effect IS captured
-        // by a side-channel is fully priced - the drain map (the
-        // `power_rec_spd&cost` family: "reduces the Morale consumed each hour
-        // by -0.52" and nothing else) or the pool-grant scan (Dolris' "Idol's
-        // Aura": purely a dorm-occupancy Passion grant). Drop the marker so
-        // the unresolved inventory lists real work, not label pessimism.
+        // Only-Unresolved but priced by a side channel: the drain map
+        // (`power_rec_spd&cost`: "reduces the Morale consumed each hour by
+        // -0.52", nothing else) or the pool-grant scan (Dolris' "Idol's Aura", a
+        // dorm-occupancy Passion grant). Drop the marker so the list is real work.
         if !set.is_empty()
             && set.iter().all(|c| matches!(c.kind, ClauseKind::Unresolved))
             && (morale_drains.get(buff_id).is_some_and(|d| *d != 0.0)
@@ -1505,8 +1407,7 @@ pub fn build_clauses(
         {
             set.clear();
         }
-        // The legacy side-map of morale drains becomes MoraleDrainDelta clauses
-        // on the same buff, so one registry carries everything.
+        // Fold the legacy drain side-map in so one registry carries everything.
         if let Some(drain) = morale_drains.get(buff_id)
             && *drain != 0.0
         {
@@ -1526,8 +1427,7 @@ pub fn build_clauses(
     out
 }
 
-/// Diagnostics: every buff whose clause set contains an [`ClauseKind::Unresolved`]
-/// entry - the honest coverage-gap list that replaces silent guessing.
+/// Buffs with an [`ClauseKind::Unresolved`] clause: the coverage-gap list.
 pub fn unresolved_buffs(clauses: &HashMap<String, ClauseSet>) -> Vec<&str> {
     let mut ids: Vec<&str> = clauses
         .iter()
@@ -1644,8 +1544,7 @@ mod tests {
         let ClauseKind::SuppressesOthers { metrics, exempt } = &set[1].kind else {
             panic!("expected suppression, got {:?}", set[1].kind);
         };
-        // Speed dies; Pure-Gold order value dies with the orders; flat/PM value
-        // survives because it is NOT in the suppressed list.
+        // Speed and Pure-Gold value die; flat/PM value isn't in the list.
         assert!(metrics.contains(&Metric::TradingSpeed));
         assert!(metrics.contains(&Metric::OrderValue { pure_gold: true }));
         assert!(!metrics.contains(&Metric::OrderValue { pure_gold: false }));

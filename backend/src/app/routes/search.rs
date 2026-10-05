@@ -36,9 +36,8 @@ fn non_empty(value: Option<&String>) -> Option<&str> {
 }
 
 impl SearchParams {
-    /// The wire params as the service's own request, or the 400 that names
-    /// what the caller got wrong. Public so a test can drive the exact path
-    /// an HTTP request takes, `Query<SearchParams>` included.
+    /// Wire params to a `SearchRequest`, or a 400 naming the bad param. Public so
+    /// tests drive the same path as a real request.
     pub fn into_request(self) -> Result<SearchRequest, ApiError> {
         let sort = match non_empty(self.sort.as_ref()) {
             None => SearchSort::Score,

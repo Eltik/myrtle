@@ -13,9 +13,9 @@ use crate::app::state::AppState;
 use crate::core::auth::permissions::Permission;
 use crate::database::models::i18n::TranslationPermission;
 
-/// Who may hand out locales. `Permission::Admin` on a locale makes a locale
-/// lead able to recruit within their own language without being a site
-/// super-admin - which is the whole point of keeping grants in a table.
+/// Who may hand out locales. `Permission::Admin` on a locale lets a locale lead
+/// recruit for their language without being a site super-admin; that's why
+/// grants live in a table.
 async fn assert_can_manage(
     state: &AppState,
     auth: &AuthUser,

@@ -8,8 +8,8 @@ pub struct GameDataConst {
     pub evolve_gold_cost: Vec<EvolveGoldCostEntry>,
     /// The game's term glossary (`cc.bd_*` pool resources etc.): the text
     /// behind a `<$cc.bd_wang_1>` reference, e.g. "For every Trading Post and
-    /// Power Plant, Influence +1" - the only place a layout-counted resource
-    /// is defined.
+    /// Power Plant, Influence +1", the only place a layout-counted resource is
+    /// defined.
     #[serde(default)]
     pub term_description_dict: Vec<TermDescriptionEntry>,
     /// Minutes per point of natural sanity regeneration (`PlayerApRegenSpeed`,

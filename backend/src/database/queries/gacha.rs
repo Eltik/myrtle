@@ -58,7 +58,7 @@ pub async fn get_stats(pool: &PgPool, user_id: Uuid) -> Result<Option<GachaStats
         .await
 }
 
-/// Get full history with filters for user-facing `/gacha/history` endpoint.
+/// Filtered history for `/gacha/history`.
 #[allow(clippy::too_many_arguments)]
 pub async fn get_history_filtered(
     pool: &PgPool,

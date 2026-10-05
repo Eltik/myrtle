@@ -1,20 +1,17 @@
-//! One player's gradeable stage pools.
+//! One player's gradeable stage pools. The universe is shared; three gates
+//! narrow it per player:
 //!
-//! The stage universe is the same for everyone; what a given player can be
-//! graded on is narrower, and three gates decide it:
+//!   - server: a stage no user on the player's server has seen isn't out there
+//!     yet (bundled tables can run ahead of EN);
+//!   - event window: a limited event that hasn't rerun counts only while open
+//!     (`event::event_is_gradeable`);
+//!   - either/or: an optional stage (one arm of a hub choice that locks the
+//!     other) counts only once cleared; a live-only stage (not kept by the
+//!     archive) passes the same gate and counts as three stars, since no replay
+//!     can raise it.
 //!
-//!   - the server gate: a stage no user on the player's server has ever seen
-//!     is not on that server yet (the bundled tables can run ahead of EN);
-//!   - the event window: a limited event that has not rerun counts only while
-//!     it is open (`event::event_is_gradeable`);
-//!   - the either/or gate: an optional stage (one arm of a hub choice that
-//!     locks the other arm for good) counts only once the player cleared it;
-//!     a live-only stage (one the archive did not keep) passes the same gate,
-//!     and its clear counts as three stars because no replay can raise it.
-//!
-//! [`PlayerPools`] applies all three once, and every consumer walks the result:
-//! the weighted grade, the Score tab counts and the improvements gap lists all
-//! see the same [`PoolStage`] rows, so a gate is written in exactly one place.
+//! The grade, Score tab counts and improvement gaps all read the same
+//! [`PoolStage`] rows, so each gate lives in one place.
 
 use std::collections::{HashMap, HashSet};
 
@@ -23,18 +20,18 @@ use crate::core::gamedata::types::stage_universe::StageUniverse;
 use super::event::{decay_factor, event_is_gradeable};
 use super::types::StageClear;
 
-/// One stage of a player's pool, after every gate, with the player's record.
+/// A stage after every gate, with the player's record.
 #[derive(Debug, Clone, Copy)]
 pub struct PoolStage<'a> {
     pub stage_id: &'a str,
-    /// The universe weight (zone weight times difficulty multiplier).
+    /// Zone weight times difficulty multiplier.
     pub weight: f64,
     /// Recency decay for an event that has closed; 1.0 for everything else.
     pub decay: f64,
     /// The player's dungeon record, `None` when they never touched the stage.
     pub clear: Option<&'a StageClear>,
-    /// The stage existed only while its event ran, so a clear is final: it
-    /// counts as three stars whatever the record says.
+    /// Existed only while its event ran, so a clear is final and counts as three
+    /// stars whatever the record says.
     pub live_only: bool,
 }
 
@@ -120,10 +117,9 @@ impl<'a> PlayerPools<'a> {
         self.allowed.is_none_or(|set| set.contains(stage_id))
     }
 
-    /// The either/or gate. An optional stage sits behind a choice the player
-    /// made once and cannot undo, and a live-only stage is gone with its
-    /// event, so either joins the pool (numerator and denominator alike) only
-    /// once cleared, and is never a gap.
+    /// An optional stage sits behind a one-time choice and a live-only stage is gone
+    /// with its event, so either joins the pool (both halves) only once cleared and
+    /// is never a gap.
     fn admit(
         &self,
         stage_id: &'a str,
@@ -143,8 +139,7 @@ impl<'a> PlayerPools<'a> {
     }
 }
 
-/// How much of a pool the player has: cleared credit over the pool's weight,
-/// clamped to 1.0; 0 for an empty pool.
+/// Cleared credit over pool weight, clamped to 1.0; 0 for an empty pool.
 pub fn weighted_score<'a>(stages: impl Iterator<Item = PoolStage<'a>>) -> f64 {
     let (credit, weight) = stages.fold((0.0, 0.0), |(credit, weight), s| {
         (credit + s.credit(), weight + s.weight * s.decay)

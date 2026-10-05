@@ -1,32 +1,28 @@
-//! CN outfit-shop listings EN has passed without carrying.
+//! CN outfit-shop listings EN passed without carrying.
 //!
-//! CN and EN number recommend-panel entries with one shared `TagId` space
-//! (EN `tag_867` is CN `tag_867`, and so on for every listing EN confirmed).
-//! EN ships entries roughly in tag order, so once EN carries a tag whose CN
-//! entry started at or after a CN listing, EN has moved past that listing's
-//! slot; if EN still has no entry with that listing's tag, EN did not list
-//! it. The 2026-04-23 Fashion Review (`tag_1022`) is the case that forced
-//! this: EN ran that edition as blind boxes from 2026-09-16 with nothing in
-//! the outfit shop, carries none of `tag_1010`..`tag_1022`, and ships
-//! `tag_1023`..`tag_1033`, so the estimate of CN start + median lag
-//! (2026-09-28) was a sale that never came.
+//! CN and EN share one recommend-panel `TagId` space (EN `tag_867` is CN
+//! `tag_867`). EN ships roughly in tag order, so once EN carries a tag whose CN
+//! entry started at or after a CN listing, EN is past that slot; if it still
+//! lacks that tag, EN didn't list it. Forced by the 2026-04-23 Fashion Review
+//! (`tag_1022`): EN ran it as blind boxes from 2026-09-16 with nothing in the
+//! shop, carries none of `tag_1010`..`tag_1022`, ships `tag_1023`..`tag_1033`,
+//! so CN start + median lag (2026-09-28) estimated a sale that never came.
 //!
-//! Only a later entry EN ran on its delayed calendar counts. Global
-//! releases open on both servers together: of the 992 EN entries CN also
-//! lists, 20 opened within 0.7 d of CN (the Ambience Synesthesia gift packs,
-//! starter packs, two Test Collections), 9 within 19.2 to 56.3 d, and the
-//! other 963 at 103.2 d or later. `tag_1027`, the 2026 concert pack, opened
-//! on EN 2026-04-26, 0.7 d after CN; counted, it calls every skipped tag
-//! below it passed months before EN reaches their slot. On the 2026-09-05 EN
-//! extract that is 13 CN outfit listings from `tag_1007` up, three of which
-//! (`tag_1007`..`tag_1009`) EN then listed on 2026-09-10 to 2026-09-23;
-//! without it, none. [`REVIEW_LAG_MIN_SECS`] (90 d) sits in the empty
-//! interval between 56.3 and 103.2 d.
+//! Only later entries EN ran on its delayed calendar count; global releases
+//! open on both servers together. Of the 992 EN entries CN also lists, 20 opened
+//! within 0.7 d of CN (Ambience Synesthesia gift packs, starter packs, two Test
+//! Collections), 9 within 19.2 to 56.3 d, the other 963 at 103.2 d or later.
+//! `tag_1027` (2026 concert pack) opened on EN 2026-04-26, 0.7 d after CN;
+//! counted, it marks every skipped tag below it passed months early. On the
+//! 2026-09-05 EN extract that's 13 CN listings from `tag_1007` up, three of
+//! which (`tag_1007`..`tag_1009`) EN then listed 2026-09-10 to 2026-09-23;
+//! without it, none. [`REVIEW_LAG_MIN_SECS`] (90 d) sits in the empty interval
+//! between 56.3 and 103.2 d.
 //!
-//! Only the tag says this. The blind-box window lives in an announcement
-//! image, and the item table ties no `RandomSkinbox_*` to an edition
-//! (`RandomSkinbox_1` and `_2` were on EN before 2026-09-16, and `_2` and
-//! `_3` sold in the same window), so an Unlisted row never says how EN ran it.
+//! Only the tag says this. The blind-box window lives in an announcement image
+//! and the item table ties no `RandomSkinbox_*` to an edition (`_1` and `_2`
+//! were on EN before 2026-09-16, `_2` and `_3` sold in the same window), so an
+//! Unlisted row never says how EN ran it.
 
 use std::collections::{HashMap, HashSet};
 
@@ -50,8 +46,8 @@ pub struct SkippedTags {
     cn_start: HashMap<u32, i64>,
     /// Every tag number EN's recommend panel carries.
     en_tags: HashSet<u32>,
-    /// The EN tags EN opened at least [`REVIEW_LAG_MIN_SECS`] after CN: the
-    /// entries on EN's delayed calendar.
+    /// EN tags opened at least [`REVIEW_LAG_MIN_SECS`] after CN: EN's delayed
+    /// calendar.
     en_lagged: Vec<u32>,
 }
 

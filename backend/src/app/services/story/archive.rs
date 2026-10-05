@@ -1,17 +1,9 @@
-//! The game's own "from the archive" screen for one story group.
-//!
-//! What this module OWNS is the join from `story_review_meta_table` (the slots
-//! a group's archive lists) and `activity_table.MissionArchives` (the
-//! recordings shelf, which is keyed by zone and sits in a different table
-//! entirely) to the resolved sections the reader draws. Its art is resolved at
-//! BUILD time, off the game data the index cache is keyed by, so a re-extract
-//! that moves a file rebuilds the URLs with the index.
-//!
-//! Scale: the whole archive half is 6 EN groups and about 300 leaf items, and
-//! the build is 31 ms of the 7,279 ms debug index build, the `textures/ui` walk
-//! included. That is why it is cached with the index rather than assembled per
-//! request. Section counts and the on-disk census are in
-//! `docs/story-reader.md`, section "1. What is true about the data".
+//! The game's "from the archive" screen for one story group: the join of
+//! `story_review_meta_table` (a group's archive slots) and
+//! `activity_table.MissionArchives` (the recordings shelf, keyed by zone) into the
+//! sections the reader draws. Art resolves at build time off the index's game data,
+//! so a re-extract that moves a file rebuilds the URLs with the index. Census in
+//! `docs/story-reader.md`, "1. What is true about the data".
 
 use std::collections::{HashMap, HashSet};
 

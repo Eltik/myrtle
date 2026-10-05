@@ -109,10 +109,9 @@ pub struct UserSearch<'a> {
     pub q: Option<&'a str>,
     pub rank: Rank<'a>,
     pub descending: bool,
-    /// Operator ids the user must all own; deduplicated by the caller so
-    /// `count(*) = len` is an exact test. `(user_id, operator_id)` is a
-    /// primary key, so the count cannot exceed the list and `>=` would read
-    /// the same: the equality is the clearer statement, not a tighter one.
+    /// Operator ids the user must all own, deduplicated by the caller so
+    /// `count(*) = len` is exact. `(user_id, operator_id)` is the primary key, so
+    /// `>=` would read the same; `=` is just clearer.
     pub has: &'a [String],
     /// An operator that must sit in one of the user's support slots.
     pub support: Option<&'a str>,

@@ -1,14 +1,8 @@
-//! Assignment-scope pool settlement (stage 2a of the pool pass): once an
-//! assignment is KNOWN - the player's live base, where every seat is real -
-//! generators whose points depend on WHERE their owner sits can settle, and
-//! conversion chains relax to a fixed point. The settled totals ride the
-//! `facility_counts` synthetic channel (`POOL_<resource>`) into the room
-//! scorer, so consumers price them with zero signature changes.
-//!
-//! Search paths (candidate enumeration, the rotation planner) have no fixed
-//! assignment, read no synthetics, and price these consumers at zero - the
-//! conservative side of never-guess. Seat incentives for generators are the
-//! next stage.
+//! Assignment-scope pool settlement (stage 2a). With real seats (the live base),
+//! seat-dependent generators settle and conversion chains relax to a fixed
+//! point. Totals reach the room scorer as `POOL_<resource>` synthetics in
+//! `facility_counts`. Search paths have no fixed assignment and price these
+//! consumers at zero; see the seat-incentive planner below.
 
 use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
@@ -25,15 +19,13 @@ use super::types::{OperatorBaseProfile, UserBuilding};
 /// `facility_counts` key prefix for settled pool points ("`POOL_bd_dungeon`").
 pub(crate) const POOL_PREFIX: &str = "POOL_";
 
-/// Pseudo-pool: the count of Robot-tagged operators seated in Power Plants
-/// (the game's "Operation Platform" term, `$cc.tag.op`) - Alanna's basis.
+/// Pseudo-pool: Robot-tagged operators in Power Plants ("Operation Platform",
+/// `$cc.tag.op`). Alanna's basis.
 pub const ROBOTS_IN_POWER: &str = "tag_op_in_power";
 
-/// The steady-state fraction of a work block a "when own Morale is above/below
-/// N" condition holds: a full bar drains linearly at the baseline rate across
-/// a 24h block, so it sits above N for (MAX-N)/MAX of the block and below N
-/// for N/MAX. A documented model derived from the same gamedata rates the
-/// simulator uses - not a guess, and not fixed to any particular threshold.
+/// Fraction of a block a "when own Morale is above/below N" condition holds. A
+/// full bar drains linearly, so above N for (MAX-N)/MAX, below for N/MAX.
+/// Documented model on the simulator's gamedata rates.
 fn morale_condition_weight(above: bool, threshold: f64) -> f64 {
     use super::sustain_sim::MORALE_MAX;
     let frac = if above {
@@ -45,11 +37,9 @@ fn morale_condition_weight(above: bool, threshold: f64) -> f64 {
 }
 
 // ── Generator side-channel ───────────────────────────────────────────────────
-// Some buffs (Dusk/Ling/Chongyue's Control-Center skills) carry BOTH an effect
-// the parser owns as the buff's strategy (a morale aura) AND a pool grant. The
-// grant half is extracted here straight from the description - a side-channel
-// like `morale_drains`, owned entirely by the settlement, and applied wherever
-// the buff's own room type says its owner must sit.
+// Some CC skills (Dusk/Ling/Chongyue) carry a parsed strategy (a morale aura)
+// AND a pool grant. The grant half is read from the description here, a
+// side-channel like `morale_drains`.
 
 /// Morale-conditional flat grants: "when self/own Morale is above/below N,
 /// <Resource> +M" (both of Ling's branches match via `captures_iter`).
@@ -57,22 +47,17 @@ static RE_MORALE_COND_GRANT: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"[Mm]orale is (above|below)\s*<@cc\.kw>([\d.]+)</>,\s*<\$cc\.([A-Za-z0-9_]+)>[^+]{0,40}?<@cc\.vup>\+([\d.]+)</>").unwrap()
 });
 
-/// An UNCONDITIONAL flat grant: "..., <Resource> +N" with no counter or
-/// condition governing it. The regex alone over-captures (the same textual
-/// shape ends conditional and per-operator clauses), so every match must pass
-/// [`flat_grant_unconditional`] - audited 2026-08-13: the pair accepts exactly
-/// the unconditional Control-Center flats (Passion +20/+10/+10, Felvine +8)
-/// and rejects every morale-conditional, per-operator, per-dorm-occupant and
-/// recruit-slot form (each owned by its own regex or strategy).
+/// UNCONDITIONAL "..., <Resource> +N". Over-captures alone, so every match must
+/// pass [`flat_grant_unconditional`]. Audited 2026-08-13: the pair accepts exactly
+/// the unconditional CC flats (Passion +20/+10/+10, Felvine +8) and rejects the
+/// morale-conditional, per-operator, per-dorm-occupant and recruit-slot forms.
 static RE_FLAT_GRANT: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"<\$cc\.(bd_[A-Za-z0-9_]+)><@cc\.rem>[^<]+</></>\s*<@cc\.vup>\+([\d.]+)</>")
         .unwrap()
 });
 
-/// True when the settlement's grant side-channel captures this text: a buff
-/// whose ONLY other clause is Unresolved is then fully priced without a
-/// strategy (Dolris' "Idol's Aura" is purely a dorm-occupancy Passion grant),
-/// so its Unresolved marker would be label pessimism.
+/// The side-channel captures this text, so an otherwise-Unresolved buff is
+/// still priced (Dolris' "Idol's Aura", a dorm-occupancy Passion grant).
 pub(crate) fn has_side_channel_grant(desc: &str) -> bool {
     super::buff_registry::RE_SLOT_GRANT.is_match(desc)
         || RE_OWN_LEVEL_GRANT.is_match(desc)
@@ -85,9 +70,8 @@ pub(crate) fn has_side_channel_grant(desc: &str) -> bool {
             .any(|c| flat_grant_unconditional(desc, c.get(0).map_or(0, |m| m.start())))
 }
 
-/// True when the buff's PARSED strategy already emits a Generate for
-/// `resource` - the side-channel must not re-capture a grant the clause layer
-/// owns (the Sui generators parse whole; re-reading their text double-counts).
+/// The parsed strategy already generates `resource`; re-reading the text would
+/// double-count (the Sui generators parse whole).
 fn strategy_generates(
     registry: &HashMap<String, BuffResolutionStrategy>,
     buff_id: &str,
@@ -105,19 +89,17 @@ fn strategy_generates(
     })
 }
 
-/// True when the grant at `start` is a plain flat (not governed by a counter
-/// or condition): no counting/conditional keyword in the preceding window.
+/// No counting/conditional keyword in the window before `start`.
 fn flat_grant_unconditional(desc: &str, start: usize) -> bool {
-    // 160 chars reaches past the longest counter phrase ("for each <Sui>
-    // Operator assigned to buildings other than Dormitories and Activity
-    // Rooms,") while the true flats' windows hold only the CC intro.
+    // 160 covers the longest counter phrase ("for each <Sui> Operator assigned
+    // to buildings other than Dormitories and Activity Rooms,"); true flats'
+    // windows hold only the CC intro.
     let mut from = start.saturating_sub(160);
     while from > 0 && !desc.is_char_boundary(from) {
         from -= 1;
     }
-    // Case-insensitive: Dusk's rider reads "when self morale is above 12,
-    // Perception Information +10" - a morale-conditional grant the flat
-    // channel must not count a second time.
+    // Lowercase: Dusk's "when self morale is above 12, Perception Information
+    // +10" is morale-conditional and must not count twice.
     let window = desc[from..start].to_lowercase();
     ![
         "for each",
@@ -131,10 +113,8 @@ fn flat_grant_unconditional(desc: &str, start: usize) -> bool {
     .any(|kw| window.contains(kw))
 }
 
-/// The riders that grant per LEVEL of the owner's own room, on buffs whose
-/// primary effect is something else (Iris' aura: "for every level of the
-/// current Dormitory, 1 level of Dreamland"; Czerny's aura: "each Dormitory
-/// level gives 1 Measure").
+/// Per-own-room-LEVEL riders (Iris: "for every level of the current Dormitory,
+/// 1 level of Dreamland"; Czerny: "each Dormitory level gives 1 Measure").
 static RE_OWN_LEVEL_GRANT: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
         r"(?:for every level of the current [A-Za-z ]+?,\s*<@cc\.vup>([\d.]+) levels?</>\s*<\$cc\.(bd_[A-Za-z0-9_]+)>|each [A-Za-z ]+? level gives <@cc\.vup>([\d.]+)</>\s*<\$cc\.(bd_[A-Za-z0-9_]+)>)",
@@ -142,9 +122,8 @@ static RE_OWN_LEVEL_GRANT: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
-/// Recruit slots beyond the default ones, from the Office level (the
-/// feedback sheet's in-game check: 0 at HR1, 10 fragments at HR2, 20 at HR3
-/// for Whisperain's +10 per slot).
+/// Extra recruit slots from the Office level (in-game check from the feedback
+/// sheet: Whisperain's +10/slot gives 0 at HR1, 10 at HR2, 20 at HR3).
 fn recruit_slots_of(building: &UserBuilding) -> f64 {
     building
         .rooms
@@ -154,18 +133,12 @@ fn recruit_slots_of(building: &UserBuilding) -> f64 {
         .fold(0.0, f64::max)
 }
 
-/// The deployment-independent pool grants a buff's TEXT carries beside the
-/// effect the parser owns: unconditional flat grants (Dusk's "Perception
-/// Information +10" rider, guarded so a parsed generator is never counted
-/// twice), morale-conditional grants at their steady-state weight, and
-/// dorm-occupancy counters settled against `dorm_occupants`. Faction and
-/// deployed-tag counters need the deployment and stay with their callers.
-/// One extractor for the live settlement, the dorm economies and the
-/// Control-Center grant bundles, so every path reads the same points.
-/// `current_morale` is the owner's REAL bar when the caller knows it (the live
-/// settlement, from the sync's last write): a morale-conditional grant
-/// then reads as the game shows it - all or nothing by the condition -
-/// instead of its steady-state time-share.
+/// Deployment-independent grants in a buff's TEXT: unconditional flats (Dusk's
+/// "Perception Information +10", never double-counting a parsed generator),
+/// morale-conditional grants at steady-state weight, dorm-occupancy counters.
+/// Faction/deployed-tag counters stay with callers. Shared by every path so they
+/// all read the same points. With a REAL `current_morale` (live sync), a
+/// conditional grant is all-or-nothing, as the game shows it.
 fn text_grants(
     buff_id: &str,
     buff: &Buff,
@@ -176,13 +149,11 @@ fn text_grants(
     recruit_slots: f64,
 ) -> Vec<(String, f64)> {
     let mut grants: Vec<(String, f64)> = Vec::new();
-    // Per-recruit-slot grants (Whisperain's Memory Fragments) read the
-    // Office level's slots.
+    // Whisperain's Memory Fragments.
     for c in super::buff_registry::RE_SLOT_GRANT.captures_iter(&buff.description) {
         let per: f64 = c[2].parse().unwrap_or(0.0);
         grants.push((c[1].to_string(), per * recruit_slots));
     }
-    // Per-own-room-level riders (Iris' Dreamland, Czerny's Measure).
     for c in RE_OWN_LEVEL_GRANT.captures_iter(&buff.description) {
         let (per, resource) = match (c.get(1), c.get(2), c.get(3), c.get(4)) {
             (Some(p), Some(r), _, _) | (_, _, Some(p), Some(r)) => (p.as_str(), r.as_str()),
@@ -219,8 +190,7 @@ fn text_grants(
     grants
 }
 
-/// A simple deployed-tag counter: "for each <tag.X> ... Operator, <Resource>
-/// +P" (the Felvine generator; no cap, unlike the Sui faction counter).
+/// "for each <tag.X> ... Operator, <Resource> +P" (Felvine; uncapped, unlike Sui).
 static RE_TAG_GRANT: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(
         r"for each <\$cc\.tag\.([a-z0-9_]+)>.{0,80}?Operator,\s*<\$cc\.(bd_[A-Za-z0-9_]+)>[^+]{0,40}?<@cc\.vup>\+([\d.]+)</>",
@@ -237,11 +207,9 @@ static RE_DORM_OCC_GRANT: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
-/// True when one of `op`'s buffs carries a MORALE-CONDITIONAL pool grant
-/// (Ling's "when own Morale is above/below N, <Resource> +M") - such a
-/// generator only sustains its grant with a morale-swap manager holding it at
-/// the right side of the bar, so a plan pinning one should also reserve the
-/// manager.
+/// MORALE-CONDITIONAL grant (Ling's "when own Morale is above/below N, <Resource>
+/// +M"). Sustained only with a morale-swap manager, so pinning one should
+/// reserve the manager too.
 pub fn has_morale_conditional_grant(
     op: &OperatorBaseProfile,
     building_data: &BuildingDataFile,
@@ -260,16 +228,11 @@ static RE_FACTION_GRANT: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"for each <\$cc\.g\.([a-z0-9_]+)>.{0,60}?assigned to buildings other than.{0,80}?<\$cc\.([A-Za-z0-9_]+)>[^+]{0,40}?<@cc\.vup>\+([\d.]+)</>\s*\(max ([\d.]+)\)").unwrap()
 });
 
-/// Settle every assignment-fed pool against the player's LIVE seats: walk each
-/// room's stationed operators, run the generators whose basis needs a seat
-/// (own-room-level), then relax conversion chains batched until stable.
-/// Layout-derived generators (`PoolBasis::FunctionalLevels`) are deliberately
-/// skipped - the ledger settles those room-locally wherever the generator's
-/// clause is live, and settling them here too would double-count.
-/// `live_morale` is each seated operator's bar as the game last wrote it
-/// (empty when the sync carries none): Dusk's "when self morale is above 12,
-/// Perception Information +10" counts the full 10 while she IS above 12, as
-/// the game showed it, and nothing once she has dropped below.
+/// Settle assignment-fed pools against LIVE seats, then relax conversion chains.
+/// `FunctionalLevels` generators are skipped: the ledger settles them room-locally
+/// and this would double-count. `live_morale` is each bar as the game last wrote
+/// it (may be empty): Dusk's "when self morale is above 12, Perception Information
+/// +10" counts 10 while she IS above 12, nothing below.
 pub(crate) fn settle_current_pools(
     building: &UserBuilding,
     operators: &[OperatorBaseProfile],
@@ -280,9 +243,7 @@ pub(crate) fn settle_current_pools(
     let by_id: HashMap<&str, &OperatorBaseProfile> =
         operators.iter().map(|o| (o.char_id.as_str(), o)).collect();
 
-    // Operators resting in the dormitories, the basis for dorm-count
-    // generators (Rosmontis' Perception Information, Mr. Nothing's Worldly
-    // Plight): only seats the sync actually shows, never an assumption.
+    // Dorm-count generators (Rosmontis, Mr. Nothing): synced seats only.
     #[allow(clippy::cast_precision_loss)]
     let dorm_occupants = building
         .rooms
@@ -291,8 +252,7 @@ pub(crate) fn settle_current_pools(
         .map(|r| r.current_operators.len())
         .sum::<usize>() as f64;
 
-    // Deployed operators (seated anywhere but a dormitory), for faction
-    // counters and the robot pseudo-pool.
+    // Non-dorm seats, for faction counters and the robot pseudo-pool.
     let deployed: Vec<&OperatorBaseProfile> = building
         .rooms
         .iter()
@@ -310,11 +270,8 @@ pub(crate) fn settle_current_pools(
 
     let recruit_slots = recruit_slots_of(building);
     let mut points: HashMap<String, f64> = HashMap::new();
-    // Conversion clauses live wherever their owner is actually seated.
     let mut converts: Vec<(String, String, f64)> = Vec::new();
 
-    // The robot pseudo-pool: Robot-tagged operators seated in Power Plants
-    // (the game's "Operation Platform" count Alanna's skill reads).
     #[allow(clippy::cast_precision_loss)]
     let robots_in_power = building
         .rooms
@@ -333,8 +290,7 @@ pub(crate) fn settle_current_pools(
             let Some(op) = by_id.get(id.as_str()) else {
                 continue;
             };
-            // A depleted operator holds the seat but works nothing: no
-            // generator, no converter, no text grant.
+            // Depleted: holds the seat, generates nothing.
             if live_morale
                 .get(id.as_str())
                 .is_some_and(|m| *m < super::assignment::INERT_MORALE)
@@ -362,9 +318,7 @@ pub(crate) fn settle_current_pools(
                                     clause.value * room.current_operators.len() as f64
                                 }
                                 PoolBasis::DormOccupants => clause.value * dorm_occupants,
-                                // Layout-derived pools settle room-locally in
-                                // the ledger; the other bases wait for their
-                                // side-channel parsers.
+                                // Layout pools settle in the ledger.
                                 _ => continue,
                             };
                             let total = points.entry(resource.clone()).or_insert(0.0);
@@ -380,9 +334,7 @@ pub(crate) fn settle_current_pools(
                 }
             }
 
-            // The generator side-channel: a seated operator's buffs for THIS
-            // room may carry a pool grant alongside whatever effect the parser
-            // owns. Extract the grant half from the text directly.
+            // Generator side-channel for THIS room's buffs.
             for buff_id in &op.available_buffs {
                 let Some(buff) = building_data.buffs.get(buff_id) else {
                     continue;
@@ -419,19 +371,12 @@ pub(crate) fn settle_current_pools(
         }
     }
 
-    // Batched fixed-point relaxation of conversion chains: each round reads
-    // the pool state as it stood at the round's start and applies all moves
-    // together, so the result never depends on clause order. `ratio` is
-    // from-points-per-to-point, floored like every stepped game counter.
-    // Converters COPY (base expert, 2026-09-08: every reader of a pool sees
-    // the whole of it - Jieyun's Witchcraft Crystals do not take Worldly
-    // Plight away from Shu or Mr. Nothing), each converter once, so a chain
-    // still settles over the rounds.
-    // Each converter's output is a LEVEL recomputed every round from the
-    // current pool (never an increment), so a chain settles whatever the
-    // order its links appear in: Dreamland -> Perception -> Chain of Thought
-    // takes two rounds and Rosmontis reads Iris' points too (the feedback's
-    // conversion-order report, 2026-09-13).
+    // Batched rounds from the round-start state, so clause order never matters.
+    // `ratio` = from-points per to-point, floored. Converters COPY (base expert,
+    // 2026-09-08: Jieyun's Witchcraft Crystals don't take Worldly Plight from Shu
+    // or Mr. Nothing). Output is a LEVEL recomputed each round, not an increment,
+    // so Dreamland -> Perception -> Chain of Thought settles in two rounds and
+    // Rosmontis reads Iris' points (conversion-order report, 2026-09-13).
     let mut contrib: Vec<f64> = vec![0.0; converts.len()];
     for _ in 0..MAX_POOL_ROUNDS {
         let snapshot = points.clone();
@@ -494,20 +439,14 @@ mod tests {
 }
 
 // ── Seat incentives: the optimizer half ──────────────────────────────────────
-// The search scores candidate teams with no assignment context, so pool
-// consumers read zero there. This planner runs BEFORE the optimal search and
-// solves the economies the roster can field, exactly like the perception
-// module's proven pattern: consumer buffs get PoolPayoff overrides (so the
-// search VALUES them) and generators that must sit somewhere specific get
-// pinned seats.
+// The search has no assignment, so consumers read zero there. This runs BEFORE
+// the search and solves the roster's economies like the perception module:
+// consumers get PoolPayoff overrides, seat-bound generators get pins.
 //
-// The honesty rule: a consumer is credited ONLY when every generator (and
-// converter) feeding its pool is either the consumer themself - seated by the
-// same recommendation that seats the consumer - or explicitly PINNED by this
-// plan. Value flowing from a third operator the search may never seat is
-// phantom value, and stays at zero until joint-seating economics land.
+// Honesty rule: credit a consumer ONLY when every generator and converter
+// feeding it is the consumer themself or PINNED here. Value from a third operator
+// the search may never seat is phantom; zero until joint-seating economics land.
 
-/// A solved economy plan for the optimal search.
 #[derive(Debug, Default, PartialEq)]
 pub struct EconomyPlan {
     /// `buff_id -> solved productivity %` - consumer buffs to override with
@@ -516,20 +455,15 @@ pub struct EconomyPlan {
     /// `(char_id, room_type)` generator seats the plan reserves (Senshi into
     /// the best dormitory).
     pub pins: Vec<(String, String)>,
-    /// `(buff_id, target_room, solved total %)` pool-scaled Control-Center
-    /// globals (Sakiko's trading global), to fold as
-    /// [`BuffResolutionStrategy::GlobalEffect`].
+    /// `(buff_id, target_room, solved %)` pool-scaled CC globals (Sakiko's
+    /// trading global), folded as [`BuffResolutionStrategy::GlobalEffect`].
     pub globals: Vec<(String, String, f64)>,
-    /// The operator the bundle's seats exist for (Pozëmka behind her Durins):
-    /// the oracle skips the trial while that operator is not seated in the
-    /// plan it would improve - a count nobody reads is not worth an
-    /// optimizer run.
+    /// Who the seats are for (Pozëmka behind her Durins). The oracle skips the
+    /// trial while she isn't seated: an unread count isn't worth a run.
     pub beneficiary: Option<String>,
 }
 
-/// Projected dorm occupancy at steady state: dorms hold whoever isn't
-/// working, capped by their slots. A deep roster keeps them full; a
-/// shallow one can't. Grounded in the layout and roster, not assumed.
+/// Steady-state dorm occupancy: whoever isn't working, capped by slots.
 fn projected_dorm_occupancy(
     profiles: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -550,9 +484,7 @@ fn projected_dorm_occupancy(
     occ
 }
 
-/// One dorm-fed or room-level pool economy of the roster: its generators
-/// (with the room their owner must occupy), converters and consumers, and
-/// the projected dorm occupancy they settle against.
+/// One dorm-fed or room-level pool economy, settled against projected occupancy.
 struct DormEconomy {
     gens: Vec<Gen>,
     /// (converter owner, from, to, ratio)
@@ -563,15 +495,13 @@ struct DormEconomy {
 
 struct Gen {
     owner: String,
-    /// The room type the generating skill needs its owner in.
     owner_room: String,
     resource: String,
     points: f64,
-    /// A pin this generator needs to produce (own-room-level seats).
+    /// Own-room-level seats need a pin.
     pin: Option<String>,
-    /// A parsed generator clause (the dorm economies proper) rather than a
-    /// text side-channel grant riding along: only native origins anchor a
-    /// shared-pool bundle, side-channel origins join one as co-feeders.
+    /// Parsed generator, not a side-channel grant. Only native origins anchor a
+    /// shared-pool bundle; side-channel ones join as co-feeders.
     native: bool,
 }
 
@@ -604,13 +534,10 @@ fn collect_dorm_economy(
             let Some(buff) = building_data.buffs.get(buff_id) else {
                 continue;
             };
-            // Text side-channel grants (Dusk's Control-Center "Perception
-            // Information +10" rider) feed the SAME pool the dorm generators
-            // fill - the base expert confirmed 2026-09-08 that Dusk, Iris,
-            // Czerny and Whisperain all stack into Rosmontis' count from
-            // their own resources. They are origins the shared-pool bundles
-            // may pin (into the room the grant's buff requires), never a
-            // pin the native plan forces.
+            // Side-channel grants (Dusk's "Perception Information +10") feed the
+            // SAME pool: base expert 2026-09-08, Dusk, Iris, Czerny and Whisperain
+            // all stack into Rosmontis' count. Shared-pool bundles may pin them;
+            // the native plan never forces it.
             for (resource, points) in text_grants(
                 buff_id,
                 buff,
@@ -640,8 +567,7 @@ fn collect_dorm_economy(
                                 let lvl = best_room_level(&clause.owner_room_type);
                                 (clause.value * lvl, Some(clause.owner_room_type.clone()))
                             }
-                            // The generator's own room at full occupancy (a
-                            // pinned Virtuosa fills her dormitory's beds).
+                            // Full own room (a pinned Virtuosa fills her dorm).
                             PoolBasis::OwnRoomOccupants => {
                                 let seats = building
                                     .rooms
@@ -663,8 +589,8 @@ fn collect_dorm_economy(
                                 )
                             }
                             PoolBasis::DormOccupants => (clause.value * projected_occupancy, None),
-                            // Layout pools settle inside the scorer already;
-                            // other bases have no search story yet.
+                            // Layout pools settle in the scorer; others have
+                            // no search story yet.
                             _ => continue,
                         };
                         econ.gens.push(Gen {
@@ -697,12 +623,9 @@ fn collect_dorm_economy(
     econ
 }
 
-/// Settle an economy's pools per ORIGIN operator: `resource -> origin ->
-/// points`. Converters COPY points onward (the game credits every converter
-/// the whole pool - the live settlement shows Rosmontis and Ebenholz each
-/// reading the full Perception Information), and a converted point keeps
-/// the origin that generated it, so a consumer can be priced on exactly the
-/// origins the plan can vouch for.
+/// `resource -> origin -> points`. Converters COPY (live settlement: Rosmontis
+/// and Ebenholz each read the full Perception Information); converted points
+/// keep their origin, so consumers are priced on origins the plan vouches for.
 fn settle_by_origin(econ: &DormEconomy) -> HashMap<String, HashMap<String, f64>> {
     let mut pools: HashMap<String, HashMap<String, f64>> = HashMap::new();
     for g in &econ.gens {
@@ -765,10 +688,8 @@ pub fn plan_optimal_economies(
     }
     let pools = settle_by_origin(&econ);
 
-    // Price each consumer under the honesty rule, per ORIGIN: only the points
-    // the consumer themself or a pinned generator produced count. A co-feeder
-    // the search might not seat (Ebenholz beside Rosmontis) adds nothing here
-    // - the shared-pool bundle below offers that seating to the oracle.
+    // Honesty rule per ORIGIN. A co-feeder the search might not seat (Ebenholz
+    // beside Rosmontis) adds nothing; the shared-pool bundle offers that seat.
     for (owner, buff_id, resource, step, pct) in &econ.consumers {
         let Some(origins) = pools.get(resource) else {
             continue;
@@ -789,11 +710,9 @@ pub fn plan_optimal_economies(
     plan
 }
 
-/// Joint-seating bundles for SHARED dorm-fed pools: a consumer whose pool is
-/// also fed by other operators (Rosmontis' Chain of Thought draws on
-/// Ebenholz's Musicianship) gets one bundle that pins those co-feeders into
-/// the rooms their generators need and prices every consumer of the pool at
-/// the full total. The oracle keeps it only if the seats pay for themselves.
+/// SHARED dorm-fed pools (Rosmontis' Chain of Thought draws on Ebenholz's
+/// Musicianship): pin the co-feeders and price every consumer at the full total.
+/// The oracle keeps it only if the seats pay.
 fn shared_pool_bundles(
     profiles: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -814,8 +733,8 @@ fn shared_pool_bundles(
         let Some(origins) = pools.get(resource) else {
             continue;
         };
-        // A pool fed only by side-channel grants (the Sui Control-Center
-        // economy) is the grant-carrier bundles' business, not a dorm pool.
+        // Side-channel-only pools (the Sui CC economy) belong to the
+        // grant-carrier bundles.
         if !origins.keys().any(|o| native_owners.contains(o.as_str())) {
             continue;
         }
@@ -828,9 +747,8 @@ fn shared_pool_bundles(
         if others.is_empty() {
             continue;
         }
-        // Every co-feeder SUBSET is its own bundle: a seat the oracle rejects
-        // (Ebenholz's Trading-Post pin) must not sink the co-feeders that pay
-        // for themselves (Dusk's Control-Center seat).
+        // One bundle per co-feeder SUBSET: a rejected seat (Ebenholz's Trading
+        // Post pin) must not sink one that pays (Dusk's CC seat).
         for subset in cofeeder_subsets(&others) {
             if !seen.insert(subset.clone()) {
                 continue;
@@ -844,8 +762,7 @@ fn shared_pool_bundles(
                         .map(|g| (id.clone(), g.owner_room.clone()))
                 })
                 .collect();
-            // Every consumer fed by this pool set is priced on its own origin
-            // plus the pinned ones - the points this bundle can vouch for.
+            // Own origin plus the pinned ones.
             let overrides: Vec<(String, f64)> = econ
                 .consumers
                 .iter()
@@ -874,20 +791,12 @@ fn shared_pool_bundles(
     bundles
 }
 
-/// Facility-count modifiers as seat bundles: Eunectes' "+2 Power Plants"
-/// needs her in the Control Center and Lancet-2 in a Power Plant, Greyy's
-/// "+1" needs her plant seat. Offered only when the roster fields an
-/// automation scaler that reads the count (Weedy, Eunectes, Pudding); the
-/// oracle keeps the seats if the boosted count pays for them.
-/// A Control-Center operator whose bonus is gated on a production room's
-/// crew (Viviana: "all Knight Operators assigned to Factories +7%") is a
-/// seat the greedy Control-Center selector rarely takes: her selection
-/// weight is a discounted guess, and the crews that would earn it are
-/// only assembled once she sits. For each such operator whose faction the
-/// roster fields at least twice with a skill for the target room, pin her
-/// into the Control Center and let the caller's oracle keep the plan if
-/// the base gains (00980819 ran Fartooth/Ashlock/Wild Mane with Viviana
-/// where the plan never assembled them, 2026-09-22).
+/// CC operators gated on a production crew (Viviana: "all Knight Operators
+/// assigned to Factories +7%"). The greedy CC selector rarely takes them: the
+/// weight is a discounted guess and the crew only forms once she sits. When the
+/// roster fields her faction twice with a target-room skill, pin her and let the
+/// oracle judge (00980819 ran Fartooth/Ashlock/Wild Mane with Viviana; the plan
+/// never assembled them, 2026-09-22).
 fn cc_conditional_bundles(
     profiles: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -940,10 +849,9 @@ fn cc_conditional_bundles(
             break;
         }
     }
-    // Two seats whose grants reach the same operators pay TOGETHER (Viviana's
-    // +7 to Knights and Flametail's +10 Battle Records to Kazimierz land on
-    // the same trio: 128 with both, 96 with one), so each overlapping pair
-    // is also tried as one bundle.
+    // Overlapping grants pay TOGETHER (Viviana's +7 to Knights and Flametail's
+    // +10 Battle Records to Kazimierz hit the same trio: 128 with both, 96 with
+    // one), so overlapping pairs are tried as one bundle too.
     for i in 0..seats.len() {
         for j in (i + 1)..seats.len() {
             if seats[i].1.intersection(&seats[j].1).count() >= 2 {
@@ -962,6 +870,10 @@ fn cc_conditional_bundles(
     bundles
 }
 
+/// Facility-count modifiers as seat bundles: Eunectes' "+2 Power Plants" needs
+/// her in the CC and Lancet-2 in a Power Plant; Greyy's "+1" needs her plant
+/// seat. Offered only when an automation scaler reads the count (Weedy,
+/// Eunectes, Pudding).
 fn facility_count_bundles(
     profiles: &[OperatorBaseProfile],
     registry: &HashMap<String, BuffResolutionStrategy>,
@@ -995,10 +907,9 @@ fn facility_count_bundles(
                         continue;
                     }
                     pins.push((char_id.clone(), room.clone()));
-                    // A robot token can be PARKED at zero morale so a robot-
-                    // exclusion count in the same room type fires beside it
-                    // (`assignment::parked_tokens`): seat that gate's holders
-                    // too, and let the oracle price the combination.
+                    // A robot token can be PARKED at zero morale so a
+                    // robot-exclusion count fires beside it
+                    // (`assignment::parked_tokens`): seat those holders too.
                     let token_is_robot = profiles
                         .iter()
                         .find(|p| &p.char_id == char_id)
@@ -1034,11 +945,9 @@ fn facility_count_bundles(
     bundles
 }
 
-/// Base-wide counts as seat bundles (Pozëmka's Durins, Nasti's Rhine Lab):
-/// the operators a player parks in the dormitories purely to be counted.
-/// For each base-wide counter the roster fields, pin the spare tag-matching
-/// operators (fewest other-room skills first, up to the cap) into
-/// dormitory seats; the oracle keeps the seats if the count pays for them.
+/// Base-wide counts (Pozëmka's Durins, Nasti's Rhine Lab): operators parked in
+/// dorms just to be counted. Pin spare matches (fewest other-room skills first,
+/// up to the cap); the oracle keeps them if the count pays.
 fn base_count_bundles(
     profiles: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -1094,10 +1003,8 @@ fn base_count_bundles(
     bundles
 }
 
-/// The co-feeder sets a shared pool offers the oracle: every non-empty
-/// subset while there are at most three co-feeders, else the full set and
-/// each singleton (bounded, and the two shapes that matter: everyone, or
-/// one seat that pays for itself).
+/// Every non-empty subset up to three co-feeders, else the full set plus each
+/// singleton (bounded; the shapes that matter are everyone or one paying seat).
 fn cofeeder_subsets(others: &[String]) -> Vec<Vec<String>> {
     const FULL_ENUMERATION_MAX: usize = 3;
     let mut subsets: Vec<Vec<String>> = Vec::new();
@@ -1116,27 +1023,22 @@ fn cofeeder_subsets(others: &[String]) -> Vec<Vec<String>> {
         subsets.push(others.to_vec());
         subsets.extend(others.iter().map(|id| vec![id.clone()]));
     }
-    // Largest first: the full seating is the bundle the oracle should try
-    // before its parts.
+    // Largest first: try the full seating before its parts.
     subsets.sort_by(|a, b| b.len().cmp(&a.len()).then_with(|| a.cmp(b)));
     subsets
 }
 
 // ── Joint-seating bundles (stage 3b) ─────────────────────────────────────────
-// Economies whose generators and consumers are DIFFERENT operators can't pass
-// the self-or-pinned rule alone - committing them is a seat-economics judgment
-// (three Control-Center seats for the Sui trio cost whatever globals those
-// seats would otherwise carry). Rather than modeling displacement by hand, a
-// bundle packages the pins and solved consumer overrides together, and the
-// CALLER judges it by running the optimal search with and without the bundle
-// and keeping whichever total yield wins. The optimizer is the oracle; the
-// bundle only has to be priced honestly.
+// When generators and consumers are DIFFERENT operators, seating them is a
+// seat-economics call (three CC seats for the Sui trio cost the globals those
+// seats would carry). No hand-modeled displacement: a bundle packs pins and
+// overrides, and the CALLER runs the search with and without it. The optimizer
+// is the oracle; the bundle just has to be priced honestly.
 
-/// Candidate joint-seating bundles for the roster, ready for with/without
-/// evaluation. Today: the Sui Control-Center economy (Chongyue's deployed-Sui
-/// counter plus Dusk/Ling's conditional grants, powering Shu's factory skill
-/// and the Worldly Plight -> Witchcraft Crystal chain), and the robot
-/// power-plant economy (Alanna's Operation Platforms).
+/// Bundles for with/without trials. Today: the Sui CC economy (Chongyue's
+/// deployed-Sui counter + Dusk/Ling's conditional grants, feeding Shu's factory
+/// skill and Worldly Plight -> Witchcraft Crystal) and the robot power-plant
+/// economy (Alanna's Operation Platforms).
 pub fn candidate_bundles(
     profiles: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -1158,14 +1060,9 @@ pub fn candidate_bundles(
         building_data,
     ));
 
-    // Robot displacement (Alanna's Operation Platforms): a consumer whose buff
-    // scales with Robot-tagged operators seated in Power Plants. Pin the
-    // roster's robots into the plants and price the consumer at its solved
-    // payoff; the caller's oracle keeps whichever assignment is worth more -
-    // the robots' feed, or the drone specialists those pins displace (their
-    // recovery is priced in LMD by the yield model). Robots with the highest
-    // own POWER value go first so the bundle surrenders as little recovery as
-    // possible.
+    // Alanna: pin robots into the plants and price her payoff; the oracle
+    // weighs that against the drone specialists displaced (priced in LMD).
+    // Highest own POWER value first, to give up the least recovery.
     let power_seats: usize = building
         .rooms
         .iter()
@@ -1227,16 +1124,14 @@ pub fn candidate_bundles(
         }
     }
 
-    // The Sui trio: every owned operator whose CONTROL buffs carry a
-    // side-channel pool grant (the same regexes the live settlement uses).
+    // Owned operators whose CONTROL buffs carry a side-channel grant (the Sui
+    // trio and others).
     struct GrantCarrier {
         owner: String,
-        /// The room type the grant buffs require their owner to occupy - the
-        /// pin target (Control Center for the Sui skills, by their own text).
+        /// Pin target, from the buff's own room (CC for the Sui skills).
         pin_room: String,
-        /// resource, steady-state-weighted amount; dorm-occupancy counters
-        /// (Dolris' "Passion +1 per dorm Operator") are settled against the
-        /// PROJECTED occupancy, the same figure the dorm economies plan with.
+        /// (resource, steady-state amount). Dorm counters (Dolris' "Passion +1 per
+        /// dorm Operator") use PROJECTED occupancy, as the dorm economies do.
         flat: Vec<(String, f64)>,
         faction: Option<(String, String, f64, f64)>, // tag, resource, per, unit_cap
     }
@@ -1266,8 +1161,7 @@ pub fn candidate_bundles(
                     c[4].parse().unwrap_or(f64::INFINITY),
                 ));
             }
-            // The simple deployed-tag counter (Felvine per Soubo Adventurer)
-            // rides the faction channel: same shape, uncapped.
+            // Felvine per Soubo Adventurer: faction shape, uncapped.
             if faction.is_none()
                 && let Some(c) = RE_TAG_GRANT.captures(&buff.description)
                 && !strategy_generates(registry, buff_id, buff, &c[2])
@@ -1301,12 +1195,9 @@ pub fn candidate_bundles(
         return bundles;
     }
 
-    // One bundle per resource ECONOMY, not one mega-bundle: carriers granting
-    // disjoint resources (the Sui, Mujica and Felvine economies) must compete
-    // at the oracle separately - a joint bundle over-pins the Control Center
-    // (more pins than seats) and auto-loses, starving every economy at once.
-    // Groups merge when carriers share a resource; a consumer's own converter
-    // only ever bridges resources its own group already grants.
+    // One bundle per resource ECONOMY (Sui, Mujica, Felvine): a mega-bundle
+    // over-pins the CC and auto-loses, starving all of them. Groups merge on a
+    // shared resource; a consumer's converter only bridges its own group's.
     let mut groups: Vec<(HashSet<String>, Vec<usize>)> = Vec::new();
     for (i, g) in cc_gens.iter().enumerate() {
         let mut res: HashSet<String> = g.flat.iter().map(|(r, _)| r.clone()).collect();
@@ -1328,18 +1219,15 @@ pub fn candidate_bundles(
 
     for (group_resources, carrier_idx) in groups {
         let group: Vec<&GrantCarrier> = carrier_idx.iter().map(|&i| &cc_gens[i]).collect();
-        // Settle the group's pools with its grant-carriers pinned into the CC.
-        // The faction counter sees only the pinned members themselves (they sit
-        // in the CC, a non-dormitory building) - conservative: any further
-        // deployed kin the search seats is upside the bundle doesn't claim.
+        // The faction counter sees only the pinned carriers; more deployed kin is
+        // upside the bundle doesn't claim.
         let mut pinned: Vec<String> = group.iter().map(|g| g.owner.clone()).collect();
         let mut pin_seats: Vec<(String, String)> = group
             .iter()
             .map(|g| (g.owner.clone(), g.pin_room.clone()))
             .collect();
-        // A PURE global consumer (Sakiko: no grants of her own, but her
-        // factory global drinks the group's pool) needs a Control-Center seat
-        // too - pin her with the carriers so her global may be credited.
+        // A PURE global consumer (Sakiko: no grants, but her factory global
+        // drinks the pool) needs a CC pin too.
         for op in profiles {
             if pinned.contains(&op.char_id) {
                 continue;
@@ -1376,11 +1264,9 @@ pub fn candidate_bundles(
             }
         }
 
-        // Price consumers and self-owned converter chains against the settled
-        // pools, honoring the self-or-pinned rule (sources here are all pinned).
+        // Sources here are all pinned, so the honesty rule holds.
         let mut overrides: Vec<(String, f64)> = Vec::new();
         for op in profiles {
-            // The operator's own converters extend the pools they can privately reach.
             let mut reach = points.clone();
             let mut own_converts: Vec<(String, String, f64)> = Vec::new();
             let mut own_consumers: Vec<(String, String, f64, f64)> = Vec::new();
@@ -1437,10 +1323,8 @@ pub fn candidate_bundles(
             }
         }
 
-        // Pool-scaled Control-Center globals (Sakiko's trading global, the
-        // Mortis factory global): credited only when the owner is one of this
-        // group's pinned generators - they drink the pool they help fill, and
-        // the pin guarantees the Control-Center seat the buff requires.
+        // Pool-scaled CC globals (Sakiko's trading, the Mortis factory one):
+        // only when the owner is a pinned generator, which guarantees the seat.
         let mut globals: Vec<(String, String, f64)> = Vec::new();
         for op in profiles.iter().filter(|p| pinned.contains(&p.char_id)) {
             for buff_id in &op.available_buffs {
@@ -1471,10 +1355,8 @@ pub fn candidate_bundles(
             });
         }
     }
-    // Two generators can propose the same seats (an office pin from both a
-    // facility count and a base count; the Ling/Dusk pair alone and again
-    // inside a wider bundle): an identical plan is an identical trial, and a
-    // trial is a full optimizer run.
+    // Dedupe: identical plans (an office pin from two counters, Ling/Dusk alone
+    // and inside a wider bundle) cost a full optimizer run each.
     let mut unique: Vec<EconomyPlan> = Vec::with_capacity(bundles.len());
     for bundle in bundles {
         if !unique.contains(&bundle) {
@@ -1484,17 +1366,14 @@ pub fn candidate_bundles(
     unique
 }
 
-/// The registry and pins an OPTIMAL search runs with: every native pool
-/// economy solved into consumer payoffs (`plan_optimal_economies`), its
-/// generator seats pinned, and the morale-swap manager (Fiammetta) reserved
-/// when the roster runs a morale-conditional generator (Ling). Shared by the
-/// improvements pipeline and the interactive planner so the two never
-/// disagree on which operators a search can feed - the planner used to run
-/// on the bare registry and never seated Rosmontis' feeders.
+/// Registry and pins for an OPTIMAL search: native economies solved
+/// (`plan_optimal_economies`), generator seats pinned, Fiammetta reserved for a
+/// morale-conditional generator (Ling). Shared by the improvements pipeline and
+/// the planner; the planner once ran the bare registry and never seated
+/// Rosmontis' feeders.
 pub struct SearchEconomy {
     pub registry: HashMap<String, BuffResolutionStrategy>,
     pub pins: Vec<(String, String)>,
-    /// The reserved morale-swap manager, when one is.
     pub manager: Option<String>,
 }
 
@@ -1535,28 +1414,20 @@ pub fn search_economy(
     }
 }
 
-/// A search's accepted economy: the registry and pins after every
-/// joint-seating bundle that improved realized yield, and the plan they
-/// produce.
+/// Registry, pins and plan after every bundle that improved realized yield.
 pub struct AcceptedEconomy {
     pub registry: HashMap<String, BuffResolutionStrategy>,
     pub pins: Vec<(String, String)>,
     pub optimal: super::types::BaseAssignment,
 }
 
-/// The optimal search with joint-seating bundles (the Sui Control-Center
-/// economy, facility and base counts, resting Durins): each bundle packages
-/// generator pins and solved consumer overrides, the OPTIMIZER judges the
-/// seat economics - the search runs with the bundle and keeps it only if the
-/// realized total yield improves. Displacement costs (globals the pinned CC
-/// seats would otherwise carry) show up in the yield, so no hand-modeled
-/// tradeoff is needed. Shared by the improvements pipeline and the planner:
-/// Rosmontis' feeders (Dusk and Ling) reach the Control Center only through
-/// these trials, and a planner without them never used her.
+/// Optimal search with bundle trials (Sui CC economy, facility and base counts,
+/// resting Durins): keep a bundle only if realized yield improves, so
+/// displacement costs show up in the yield. Rosmontis' feeders (Dusk, Ling)
+/// reach the CC only through these trials.
 ///
-/// `base_registry` is the bare registry the bundles are generated from (a
-/// consumer already solved into the search registry still gets its bundle);
-/// `search_registry` is the starting point every trial is layered on.
+/// Bundles come from `base_registry` (so an already-solved consumer still gets
+/// one); every trial layers on `search_registry`.
 pub fn optimal_with_bundles(
     profiles: &[OperatorBaseProfile],
     building: &UserBuilding,
@@ -1569,8 +1440,8 @@ pub fn optimal_with_bundles(
     use super::assignment::{assignment_value, compute_optimal_assignment_with_pins};
     let mut optimal_registry = search_registry.clone();
     let mut optimal_pins: Vec<(String, String)> = pins.to_vec();
-    // Control Center pins accepted from PLAIN bundles (seats only): a later
-    // plain bundle may displace them to compete for the seats.
+    // CC pins from PLAIN (seats-only) bundles; a later plain bundle may
+    // displace them.
     let mut plain_cc: HashSet<String> = HashSet::new();
     let mut optimal = compute_optimal_assignment_with_pins(
         profiles,
@@ -1581,7 +1452,6 @@ pub fn optimal_with_bundles(
         &optimal_pins,
     );
     for bundle in candidate_bundles(profiles, building, building_data, base_registry) {
-        // A seat bundle for a counter nobody fields is not worth a trial.
         if let Some(who) = &bundle.beneficiary
             && !optimal
                 .rooms
@@ -1592,8 +1462,7 @@ pub fn optimal_with_bundles(
         }
         let mut trial_registry = optimal_registry.clone();
         for (buff_id, pct) in &bundle.overrides {
-            // Never downgrade: a consumer already priced higher by another
-            // plan (native economies, perception) keeps its better value.
+            // Never downgrade a consumer another plan priced higher.
             let existing = match trial_registry.get(buff_id) {
                 Some(BuffResolutionStrategy::PoolPayoff { pct: p }) => *p,
                 _ => f64::NEG_INFINITY,
@@ -1605,8 +1474,7 @@ pub fn optimal_with_bundles(
                 );
             }
         }
-        // Pool-scaled Control-Center globals ride the same never-downgrade
-        // rule against whatever global value another plan already folded.
+        // Same never-downgrade rule for pool-scaled CC globals.
         for (buff_id, target_room, pct) in &bundle.globals {
             let existing = match trial_registry.get(buff_id) {
                 Some(BuffResolutionStrategy::GlobalEffect { bonus_pct, .. }) => *bonus_pct,
@@ -1625,23 +1493,18 @@ pub fn optimal_with_bundles(
         let mut trial_pins = optimal_pins.clone();
         trial_pins.extend(bundle.pins.iter().cloned());
         let plain_bundle = bundle.overrides.is_empty() && bundle.globals.is_empty();
-        // Pins are seats: a bundle that, with the pins already accepted, needs
-        // more seats of a room type than the base has cannot be run as is
-        // (the Mujica five plus Dusk and Ling made a seven-seat Control
-        // Center). A PLAIN bundle (seats only, no priced economy) may still
-        // compete for the Control Center against the plain pins accepted
-        // before it: those are dropped, the bundle's seats added, and the
-        // trial keeps the plan only if the base gains. Without this the
-        // first five Control Center pins accepted were final, and Viviana
-        // with Flametail (128 on the Knight trio) was never tried (00980819).
+        // Pins are seats: a bundle needing more than the base has can't run
+        // (the Mujica five + Dusk + Ling made a seven-seat CC). A PLAIN bundle
+        // may displace earlier plain CC pins and keep the plan if the base gains.
+        // Before this the first five CC pins were final, and Viviana + Flametail
+        // (128 on the Knight trio) was never tried (00980819).
         let mut displaced: Vec<String> = Vec::new();
         if !pins_fit(building, building_data, &trial_pins) {
             if !plain_bundle {
                 continue;
             }
-            // The most recently accepted plain seats go first, one at a
-            // time, until the bundle fits: an early seat (Eunectes' plant
-            // count) is worth more than a late filler (a displaced robot).
+            // Newest plain seats go first: an early seat (Eunectes' plant count)
+            // beats a late filler (a displaced robot).
             let candidates: Vec<String> = optimal_pins
                 .iter()
                 .filter(|(id, rt)| {
@@ -1702,8 +1565,7 @@ pub fn optimal_with_bundles(
     }
 }
 
-/// Whether `pins` fit the base: per room type, no more pinned operators than
-/// the rooms of that type seat in total.
+/// Per room type, no more pins than total seats.
 fn pins_fit(
     building: &UserBuilding,
     building_data: &BuildingDataFile,

@@ -28,10 +28,9 @@
 //!   - Child tables are then deleted in reverse topological order and replayed
 //!     forward. This is a REPLACE, not a merge: the user ends up with exactly the
 //!     rows in the file.
-//!   - Each table's column list is the intersection of the columns in the file and
-//!     the columns the live table actually has, so an export taken before or after
-//!     a migration still loads - a column the file lacks takes its DEFAULT rather
-//!     than being forced to NULL.
+//!   - Each table's column list is the intersection of the file's columns and the
+//!     live table's, so an export taken before or after a migration still loads; a
+//!     column the file lacks takes its DEFAULT instead of being forced to NULL.
 //!   - Triggers stay ENABLED. The audit triggers on `users` and `user_scores` then
 //!     record the restore (with a NULL actor), and foreign keys are enforced on the
 //!     way in, which is what we want for a few thousand rows. `--no-triggers`
@@ -83,8 +82,8 @@ struct Export {
     kind: String,
     format_version: u32,
     exported_at: String,
-    /// Where the file came from - informational, and echoed on import so an
-    /// operator can see which database and account they are restoring.
+    /// Where the file came from. Informational, and echoed on import so an operator
+    /// can see which database and account they are restoring.
     source: SourceInfo,
     /// True when `user_game_credentials` was included.
     includes_credentials: bool,
@@ -382,9 +381,8 @@ async fn run_import(args: ImportArgs) -> Result<()> {
 
     if let Some(id) = existing {
         let rows = count_existing(&mut tx, id, export.includes_credentials).await?;
-        // A dry run rolls back unconditionally, so it needs no permission to
-        // overwrite - gating it here would make the very command this error
-        // recommends impossible to run.
+        // A dry run always rolls back, so it needs no permission to overwrite; gating it
+        // would make the very command this error recommends impossible to run.
         if rows > 0 && !args.replace && !args.dry_run {
             bail!(
                 "user uid={uid} server_id={server_id} already exists (id={id}) with {rows} rows. \
@@ -515,8 +513,8 @@ async fn count_existing(
 /// When the account already exists we keep its id rather than the file's: outside
 /// references (tier lists, audit rows) point at it, and rewriting it would orphan
 /// them. When it does not, the file's id is reused so a round-trip into an empty
-/// database is exact - unless some unrelated row already holds that uuid, in which
-/// case we let the database mint a fresh one.
+/// database is exact, unless some unrelated row already holds that uuid, in which
+/// case the database mints a fresh one.
 async fn upsert_user(
     tx: &mut Transaction<'_, Postgres>,
     export: &Export,
@@ -650,9 +648,9 @@ async fn live_columns(tx: &mut Transaction<'_, Postgres>, table: &str) -> Result
 /// the database should reassign.
 ///
 /// Intersecting both ways is what makes the format survive a migration in either
-/// direction. A column the file does not carry is left out of the INSERT so it
-/// takes its DEFAULT - listing it would force a NULL and trip a NOT NULL that the
-/// default was there to satisfy. A column the table has lost is dropped.
+/// direction. A column the file doesn't carry is left out of the INSERT so it takes
+/// its DEFAULT; listing it would force a NULL and trip the NOT NULL the default was
+/// there to satisfy. A column the table has lost is dropped.
 fn usable_columns(live: &[String], rows: &[Value], regenerate: &[&str]) -> Vec<String> {
     live.iter()
         .filter(|c| !regenerate.contains(&c.as_str()))

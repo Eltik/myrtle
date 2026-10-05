@@ -47,10 +47,9 @@ pub struct DisconnectResult {
     pub removed: bool,
 }
 
-/// `save_credentials` is the player's answer to "remember this login".
-/// Defaults to true so an older client, or any caller that omits it, keeps the
-/// behaviour it had. False means store nothing and clear anything a previous
-/// login left; see `services::auth::persist_credentials`.
+/// `save_credentials` ("remember this login") defaults to true so older clients
+/// and callers that omit it keep their behaviour. False stores nothing and clears
+/// what a previous login left; see `services::auth::persist_credentials`.
 const fn default_true() -> bool {
     true
 }
@@ -339,15 +338,12 @@ pub async fn verify(
 
     let role = db_role.unwrap_or_else(|| auth.role.to_string());
 
-    // The same gate the `/admin` route tree uses, so the two cannot disagree.
-    // Computed from the DB role above (not the JWT claim, which freezes at
-    // login) OR from holding any translation grant, which is enough on its own:
-    // a locale grant would be unusable if its holder could not open the screen
-    // that spends it.
+    // Same gate as the `/admin` route tree, so the two can't disagree. Uses the DB
+    // role (the JWT claim freezes at login), OR any translation grant: a grant is
+    // useless if its holder can't open the screen that spends it.
     //
-    // `/get-user` supplied the live DB role while every admin route read the
-    // JWT, so a freshly promoted user got into the panel and was 403'd by
-    // everything inside.
+    // `/get-user` used to supply the live DB role while admin routes read the JWT,
+    // so a freshly promoted user got into the panel and was 403'd by everything.
     let can_access_admin_panel = role
         .parse::<GlobalRole>()
         .unwrap_or_default()

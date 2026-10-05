@@ -1,12 +1,8 @@
-//! `GET`/`PUT /user/story-progress`, and `POST /user/story-progress/import`:
-//! the reader's progress on the account, and the game's verdict re-derived
-//! from what the database holds.
+//! Reading progress on the account (`GET`/`PUT /user/story-progress`), and the
+//! game's verdict re-derived from the DB (`POST /user/story-progress/import`).
 //!
-//! Both sit behind the same bearer token every other `/user/...` route uses and
-//! answer 401 signed out. The document travels whole in each direction; the
-//! merge that decides what a round trip produces runs in the browser
-//! (`frontend/src/lib/story/sync.ts`), because only the browser holds both
-//! sides.
+//! The document travels whole; the merge runs in the browser
+//! (`frontend/src/lib/story/sync.ts`), the only side holding both copies.
 use axum::{Json, extract::State};
 
 use crate::app::extractors::auth::AuthUser;

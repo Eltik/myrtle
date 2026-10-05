@@ -17,23 +17,15 @@ use crate::app::routes::router;
 use crate::app::state::AppState;
 use crate::app::{cpu, middleware};
 
-/// Prometheus scrape endpoint.
-///
-/// Deliberately outside `/api`: it serves the monitoring system, not the
-/// public API.
+/// Prometheus scrape endpoint. Outside `/api` on purpose: it's for monitoring, not
+/// the public API.
 async fn metrics_handler(State(state): State<AppState>) -> String {
     METRICS.render(Some(&state.db))
 }
 
-/// The `/api` route tree paired with the `OpenAPI` document describing it.
-///
-/// Building the tree is what produces the document: both come from the same
-/// `#[utoipa::path]` annotations, so `api` describes the routes this process
-/// actually serves rather than a file kept in step with them by hand.
-///
-/// Lives here, called from both [`run`] and `tests/openapi_snapshot_test.rs`,
-/// so the document the test pins is the document the server serves. Composing
-/// it separately in the test would pin a second, parallel API.
+/// The `/api` route tree and its `OpenAPI` document, both built from the same
+/// `#[utoipa::path]` annotations. Shared by [`run`] and
+/// `tests/openapi_snapshot_test.rs` so the pinned document is the served one.
 pub fn api_parts() -> (Router<AppState>, utoipa::openapi::OpenApi) {
     OpenApiRouter::with_openapi(ApiDoc::openapi())
         .nest("/api", router())
@@ -49,37 +41,32 @@ pub async fn run(state: AppState) -> Result<()> {
     // 793,854-byte Kal'tsit skeleton and a 24,828-byte scene JSON, single-shot medians):
     // quality 4 writes 247,158 bytes in 5.7 ms, 6 writes 226,575 in 11.7 ms, 9 writes
     // 225,491 in 50.4 ms, 11 writes 204,530 in 1,892.9 ms; the JSON reads 6,335 / 6,293 /
-    // 6,295 / 5,666 bytes at 0.3 / 0.5 / 0.4 / 18.8 ms. Six is the knee: past it the bytes
-    // barely move until 11, which costs two seconds of a core per skeleton and, behind the
-    // edge cache, that is the first visitor's wait at every PoP each week.
+    // 6,295 / 5,666 bytes at 0.3 / 0.5 / 0.4 / 18.8 ms. Six is the knee: bytes barely
+    // move until 11, which costs ~2 s of a core per skeleton, paid by the first visitor
+    // at every PoP each week behind the edge cache.
     let compression = CompressionLayer::new()
         .quality(CompressionLevel::Precise(6))
         .compress_when(compression_predicate);
-    // Permissive CORS answers every origin with `*`, so no response depends on the
-    // request's Origin or preflight headers; the layer's default `Vary` still names all
-    // three, which splits the edge cache key per requesting origin (the same skeleton read
-    // HIT from one page and MISS from another). An empty `Vary` is the truthful one.
+    // Permissive CORS answers `*`, so no response depends on Origin or preflight
+    // headers. The default `Vary` still names all three and splits the edge cache per
+    // origin (same skeleton HIT from one page, MISS from another). Empty is accurate.
     let cors = CorsLayer::permissive().vary::<[HeaderName; 0]>([]);
 
     let (api_router, api) = api_parts();
 
-    // Serialized once at startup. `Bytes` clones by refcount, so each request
-    // for the spec hands out the same buffer rather than re-rendering it.
+    // Serialized once; `Bytes` clones by refcount.
     let spec_body = Bytes::from(api.to_json()?);
 
-    // Layer order, outermost first. `.layer` wraps what came before it, so this
-    // list reads bottom-up against the builder below:
+    // Layer order, outermost first (`.layer` wraps what came before, so the builder
+    // below reads bottom-up):
     //
-    //   observe  -> outermost, so it sees every request including preflights,
-    //               and the latency it records covers compression.
+    //   observe  -> sees every request incl. preflights; latency covers compression.
     //   cors     -> answers preflights.
     //   compress -> encodes the body.
     //   limit    -> innermost, where the matched route is known.
     //
-    // The docs and the spec are added AFTER the rate-limit layer and so sit
-    // outside it: `.layer` wraps only the routes already on the builder.
-    // Reading the documentation should not spend the caller's API budget, and
-    // a docs page pulling its own spec must not cost them two requests either.
+    // Docs and spec are added after the rate-limit layer, so they sit outside it:
+    // reading the docs (and the spec they pull) shouldn't spend the API budget.
     let app = api_router
         .route("/metrics", get(metrics_handler))
         .layer(axum::middleware::from_fn_with_state(
@@ -109,11 +96,10 @@ pub async fn run(state: AppState) -> Result<()> {
         cpu_permits = cpu::permits(),
         "listening; metrics on /metrics, docs on /docs"
     );
-    // The graceful drain waits for open connections; a request parked on a
-    // running base search (tens of seconds in a debug build) held the process
-    // for its whole duration after Ctrl+C. The drain gets a bounded grace
-    // period past the signal, then the process leaves - `main` bounds the
-    // runtime's own wait on blocking threads the same way.
+    // The graceful drain waits on open connections, so a request parked on a base
+    // search (tens of seconds in debug) held the process that long after Ctrl+C. The
+    // drain gets a bounded grace past the signal; `main` bounds the runtime's
+    // blocking-thread wait the same way.
     let (signalled_tx, signalled_rx) = tokio::sync::oneshot::channel::<()>();
     let server = axum::serve(
         listener,

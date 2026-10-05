@@ -818,12 +818,10 @@ impl StoryAssetIndex {
         idx
     }
 
-    /// The index for a server, built on first use and shared after. Keyed by
-    /// the assets directory and VALIDATED against the server's live
-    /// [`AssetIndex`]: a hot reload (`swap_asset_index` after a re-extract)
-    /// stores a new `Arc`, the `Weak` held here no longer upgrades to it, and
-    /// the next request rebuilds. A `Weak` rather than the pointer, so a
-    /// freed-and-reused allocation cannot match a stale entry.
+    /// Built on first use per assets dir, then shared. Validated against the live
+    /// [`AssetIndex`]: a hot reload (`swap_asset_index`) stores a new `Arc`, the
+    /// `Weak` here stops upgrading, and the next request rebuilds. `Weak` rather than
+    /// a raw pointer so a freed-and-reused allocation can't match a stale entry.
     pub fn for_dir(server_assets_dir: &Path, live: &Arc<AssetIndex>) -> Arc<Self> {
         static CACHE: OnceLock<Mutex<AssetCacheMap>> = OnceLock::new();
         let cache = CACHE.get_or_init(|| Mutex::new(HashMap::new()));
@@ -1160,15 +1158,12 @@ impl StoryAssetIndex {
             .or_else(|| png_size(&folder.dir.join(body_file)))
     }
 
-    /// A face the hub flags `isWholeBody` IS the body. The hub's sprite list
-    /// is the client's `SetImage` input, and a whole-body entry replaces the
-    /// image instead of being composited as a patch, so the wire must carry
-    /// that sprite as `bodyUrl`. Serving the folder's `$1` body with the
-    /// whole sprite as an unplaced `faceUrl` drew the base pose for every
-    /// `#N` (Raidian `avg_npc_1730_1#5$1` showed `avg_npc_1730_1$1`, smiling,
-    /// on every line): 23 of 272 distinct sprite names on the 25 `main_15`
-    /// scripts, all 23 flagged whole in their hub. `STORY_NO_WHOLE_BODY=1`
-    /// restores that wire exactly.
+    /// A face the hub flags `isWholeBody` IS the body: the client's `SetImage`
+    /// replaces the image with it rather than compositing a patch, so it goes out as
+    /// `bodyUrl`. Serving `$1` plus an unplaced `faceUrl` drew the base pose for
+    /// every `#N` (Raidian `avg_npc_1730_1#5$1` smiled as `$1` on every line); 23 of
+    /// 272 sprite names across the 25 `main_15` scripts, all flagged whole.
+    /// `STORY_NO_WHOLE_BODY=1` restores the old wire.
     fn whole_body(
         folder: &SpriteFolder,
         group: Option<&HubGroup>,
@@ -1267,20 +1262,15 @@ impl StoryAssetIndex {
             format!("{fname}#1"),
             format!("{fname}_1#1"),
         ];
-        // 2a. THE HUB'S OWN ORDER DECIDES `#N`, not the file's numeric suffix.
-        // `_TryParseIndex` decrements the 1-based `#N` and indexes the hub
-        // group's sprite list, and a legacy hub lists whole sprites in an
-        // order of its own: `avg_npc_043_1` (Nine) lists [`_2`, `_1`], so `#2`
-        // is `avg_npc_043_1`, her lit art, used 342 times, and `#1` the dark
-        // silhouette used twice at her reveals, which a suffix rule would
-        // serve everywhere. 41 of the 233 multi-sprite legacy hubs order
-        // differently from their suffixes (Shwaz, Grani, Homura, Skadi,
-        // Meteor, W among them). Only a SENTINEL group lists whole
-        // sprites; a group with a real `facePos` lists face patches (`1`..`6`
-        // beside one body), which must never be picked as the body. A hub
-        // with several groups, one sprite, or an index past its list falls
-        // through to the file-name rules below, as does a list that names a
-        // bare numbered patch (`avg_4000_jnight_1` lists its body and `2`..`5`).
+        // 2a. The hub's order decides `#N`, not the file suffix. `_TryParseIndex`
+        // decrements `#N` into the group's sprite list, and legacy hubs use their own
+        // order: `avg_npc_043_1` (Nine) lists [`_2`, `_1`], so `#2` is her lit art (342
+        // uses) and `#1` the dark silhouette (2, at her reveals); a suffix rule would
+        // serve the silhouette everywhere. 41 of 233 multi-sprite legacy hubs differ
+        // (Shwaz, Grani, Homura, Skadi, Meteor, W). Only a SENTINEL group lists whole
+        // sprites; a real `facePos` group lists face patches that must never become the
+        // body. Several groups, one sprite, an index past the list, or a bare numbered
+        // patch in the list (`avg_4000_jnight_1`) fall through to the file-name rules.
         let hub_pick = folder
             .hub
             .first()
@@ -1297,13 +1287,10 @@ impl StoryAssetIndex {
                     .files
                     .get(g.sprites.get(hub_slot(face)?)?.name.as_str())
             });
-        // 2b. THE HUB'S LISTED SPRITE IS THE LAST RESORT. `char_2006_weiywfmzuki_1`
-        // holds one file, `char_2006_fmzuki_1.png`, which its hub names and no
-        // file-name rule spells, and the scripts call the folder bare 259
-        // times in 14 files. After the rules: the `#N`-indexed hub sprite,
-        // else the hub's first, whichever exists. Over every folder the
-        // scripts use it rescues exactly that one.
-        // `STORY_NO_HUB_FALLBACK=1` restores the rules alone.
+        // 2b. Hub sprite as last resort, after the file-name rules: the `#N`-indexed
+        // one, else the first. Rescues exactly one folder, `char_2006_weiywfmzuki_1`,
+        // whose only file `char_2006_fmzuki_1.png` no rule spells (259 bare calls in 14
+        // scripts). `STORY_NO_HUB_FALLBACK=1` restores the rules alone.
         let hub_fallback = || {
             if std::env::var_os("STORY_NO_HUB_FALLBACK").is_some() {
                 return None;

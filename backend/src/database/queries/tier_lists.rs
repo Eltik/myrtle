@@ -315,10 +315,8 @@ pub async fn add_placement(
     .await
 }
 
-/// Update just the editor-facing description of a placement, identified by the
-/// owning tier list + entity. Uses a join so we avoid loading every tier to
-/// locate the placement. Returns the updated row, or `None` if the entity is
-/// not placed on this list.
+/// Update a placement's editor-facing description, by list + entity. Joins
+/// instead of loading every tier. `None` if the entity isn't on this list.
 pub async fn set_placement_description(
     pool: &PgPool,
     tier_list_id: Uuid,
@@ -761,7 +759,6 @@ pub async fn set_flair(
 }
 
 pub async fn recompute_trending(pool: &PgPool, top_n: i64) -> Result<(), sqlx::Error> {
-    // One query: refresh windowed counts + score for all lists
     sqlx::query(r"
         UPDATE tier_list_stats s SET
             views_last_24h = COALESCE(w.v24, 0),

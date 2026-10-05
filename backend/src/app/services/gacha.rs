@@ -15,10 +15,9 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 use uuid::Uuid;
 
-/// Look up a `char_id`'s canonical rarity from game data. The Yostar API echoes a
-/// `star` value with each pull, but it has been wrong/stale in the past, so we
-/// always prefer the value from `character_table`. Returns `None` if the char
-/// isn't in game data - callers may fall back to whatever the API reported.
+/// Rarity from `character_table`. The Yostar `star` on each pull has been wrong or
+/// stale, so game data wins; `None` when the char isn't in game data and callers
+/// fall back to the API value.
 pub fn rarity_from_gamedata(gd: &GameData, char_id: &str) -> Option<i16> {
     gd.operators.get(char_id).map(|op| op.rarity.to_star_int())
 }
@@ -68,14 +67,11 @@ impl GachaApiItem {
         }
     }
 
-    /// Convert to the JSONB shape that `sp_insert_gacha_batch` expects.
-    /// Rarity is sourced from game data (`character_table`) keyed on `char_id`;
-    /// the `star` field from the Yostar API is only used as a fallback.
-    /// `missing` collects `char_ids` that fell back, so the caller can emit a
-    /// single deduped warning instead of one line per record.
-    /// `batch_index` is the row's position within its (`pull_timestamp`, `pool_id`)
-    /// batch - it distinguishes duplicate operators in the same 10-pull (e.g.
-    /// two of the same 6★) so the DB unique constraint doesn't drop them.
+    /// JSONB row for `sp_insert_gacha_batch`. Rarity from `character_table`, Yostar
+    /// `star` only as fallback; fallen-back `char_id`s go into `missing` for one
+    /// deduped warning. `batch_index` is the position within its (`pull_timestamp`,
+    /// `pool_id`) batch, so two copies of one 6★ in a 10-pull survive the unique
+    /// constraint.
     fn to_record_json(
         &self,
         gd: &GameData,
@@ -189,11 +185,8 @@ pub async fn fetch_and_store(
 
     let gd = state.default_game_data();
     let mut missing: std::collections::HashSet<String> = std::collections::HashSet::new();
-    // Yostar returns every row in a 10-pull with the same `at` (batch
-    // timestamp), so we assign a per-batch positional index to keep duplicates
-    // unique. Iteration order matches the API response, which is stable for a
-    // given batch - what matters is that the (ts, pool, char, index) tuple is
-    // distinct, not that the index has any particular meaning.
+    // Yostar gives every row of a 10-pull the same `at`, so a per-batch index keeps
+    // duplicates unique. Only the distinctness of (ts, pool, char, index) matters.
     let mut batch_counters: std::collections::HashMap<(i64, String), i16> =
         std::collections::HashMap::new();
     let records_json: Vec<serde_json::Value> = all_items
@@ -257,8 +250,7 @@ pub async fn get_global_stats(state: &AppState) -> Result<GlobalGachaStats, ApiE
     .fetch_one(&state.db)
     .await?;
 
-    // Rates are fractions (0.0-1.0). The frontend renders them as percentages
-    // by multiplying by 100 at display time.
+    // Rates are fractions (0.0-1.0); the frontend multiplies by 100.
     let total = stats.total_pulls.max(1) as f64;
     let result = GlobalGachaStats {
         total_pulls: stats.total_pulls,
@@ -635,9 +627,8 @@ pub struct BannerPullStat {
     pub user_count: i64,
 }
 
-/// Community pull totals grouped by `pool_id`. Only `share_stats=true` users are
-/// included, matching the rest of the community-stats pipeline. Cached for the
-/// same TTL as the enhanced stats so the two are coherent.
+/// Community pull totals by `pool_id`, `share_stats=true` users only. Same cache
+/// TTL as the enhanced stats so the two agree.
 pub async fn get_per_banner_stats(state: &AppState) -> Result<Vec<BannerPullStat>, ApiError> {
     let key = CacheKey::GachaPerBannerStats;
     if let Some(cached) = state.cache.get::<Vec<BannerPullStat>>(&key).await {

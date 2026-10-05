@@ -1,15 +1,12 @@
-//! Registry of every statistic a background job would otherwise refresh.
+//! Registry of every statistic a background job refreshes.
 //!
-//! Each job in this module tree exposes one `refresh_once(&AppState)` that does
-//! a single pass and returns a one-line summary. The job's own loop calls it,
-//! and so does anything that wants to force a refresh out of band: the
-//! `refresh-stats` binary today, an admin endpoint tomorrow. That shared call is
-//! the point. A forced refresh that re-implemented the work would drift from the
-//! scheduled one the first time either changed, and the drift would be silent.
+//! Each job exposes one `refresh_once(&AppState)` that does a pass and returns a
+//! one-line summary. Its own loop calls it, and so does any forced refresh (the
+//! `refresh-stats` binary). A forced refresh that re-implemented the work would
+//! silently drift from the scheduled one.
 //!
-//! Adding a job is two lines: a `refresh_once` beside its loop, and an entry in
-//! [`TASKS`]. Nothing that consumes the registry needs editing, because every
-//! consumer iterates it rather than naming tasks individually.
+//! Adding a job: a `refresh_once` beside its loop and an entry in [`TASKS`].
+//! Consumers iterate the registry, so nothing else changes.
 
 use crate::app::state::AppState;
 use crate::core::{
@@ -19,36 +16,31 @@ use crate::core::{
 use std::future::Future;
 use std::pin::Pin;
 
-/// A boxed future so [`RefreshTask::run`] can be a plain function pointer and
-/// [`TASKS`] can stay a `const` slice. Without the box each async fn would have
-/// its own opaque type and the entries could not share one table.
+/// Boxed so [`RefreshTask::run`] is a plain fn pointer and [`TASKS`] a `const`
+/// slice; each async fn otherwise has its own opaque type.
 pub type TaskFuture<'a> = Pin<Box<dyn Future<Output = anyhow::Result<String>> + Send + 'a>>;
 
-/// What running a task costs, which decides whether `--all` includes it.
+/// Decides whether `--all` includes it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Cost {
-    /// A bounded amount of work, near enough constant in the user count: one or
-    /// a few aggregate queries. Safe to run at any time.
+    /// Roughly constant in user count (a few aggregate queries). Safe any time.
     Cheap,
-    /// Work that grows with the number of users or makes network calls. Excluded
-    /// from a bare `--all` so the safe thing stays the default thing.
+    /// Grows with user count or hits the network. Left out of a bare `--all` so the
+    /// safe thing is the default.
     Heavy,
 }
 
 pub struct RefreshTask {
-    /// Stable kebab-case identifier. This is the CLI argument, so renaming one
-    /// breaks anybody's scripts; add an alias instead.
+    /// Kebab-case CLI argument; renaming breaks scripts, so add an alias instead.
     pub name: &'static str,
     pub about: &'static str,
     pub cost: Cost,
     pub run: for<'a> fn(&'a AppState) -> TaskFuture<'a>,
 }
 
-/// Every forceable statistic, in the order `--all` runs them.
-///
-/// Ordering is deliberate rather than alphabetical: ownership aggregates feed
-/// the operator pages, so they come first and a partial run still leaves the
-/// most-read surfaces current.
+/// Every forceable statistic, in `--all` order. Ownership aggregates feed the
+/// operator pages, so they go first and a partial run keeps the most-read
+/// surfaces current.
 pub const TASKS: &[RefreshTask] = &[
     RefreshTask {
         name: "operator-ownership",
@@ -94,14 +86,12 @@ pub const TASKS: &[RefreshTask] = &[
     },
 ];
 
-/// Look one up by name. Returns `None` rather than a fuzzy match, so a typo
-/// fails loudly instead of refreshing something the caller did not ask for.
+/// Exact match only, so a typo fails loudly instead of refreshing something else.
 pub fn find(name: &str) -> Option<&'static RefreshTask> {
     TASKS.iter().find(|t| t.name == name)
 }
 
-/// The tasks a bare `--all` runs: everything whose cost does not scale with the
-/// user count or reach the network.
+/// What a bare `--all` runs: tasks that don't scale with users or hit the network.
 pub fn default_set() -> impl Iterator<Item = &'static RefreshTask> {
     TASKS.iter().filter(|t| t.cost == Cost::Cheap)
 }

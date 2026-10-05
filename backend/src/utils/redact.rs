@@ -4,8 +4,8 @@
 //! bodies carry session tokens and access keys; the login services log the
 //! identifier an attempt used. Both log at WARN, which is on in production.
 //!
-//! A parse failure still needs a body to diagnose, so these do not drop the
-//! field - they bound its length and blank the values that are credentials.
+//! A parse failure still needs the body to diagnose, so it is kept: length-bounded,
+//! credential values blanked.
 
 use std::sync::LazyLock;
 
@@ -27,8 +27,8 @@ static SECRET_FIELD: LazyLock<Regex> = LazyLock::new(|| {
 
 /// A response body safe to log: credential values blanked, length bounded.
 ///
-/// Truncation is char-boundary safe, so a body cut mid-UTF-8 cannot panic the
-/// logging path - which would turn a diagnostic into an outage.
+/// Truncation is char-boundary safe: a panic in the logging path would turn a
+/// diagnostic into an outage.
 pub fn redacted_body(text: &str) -> String {
     let cleaned = SECRET_FIELD.replace_all(text, r#""${1}":"<redacted>""#);
 

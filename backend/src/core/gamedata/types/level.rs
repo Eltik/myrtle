@@ -1,17 +1,14 @@
-//! Stage **level** data: the tile map, enemy routes, and wave/spawn schedule
-//! that drive the Stage Viewer's pathing simulator.
+//! Stage level data: tile map, enemy routes and wave/spawn schedule for the
+//! Stage Viewer's pathing simulator.
 //!
-//! The raw `level_*.json` files (`PascalCase`, ~50-300 KB each) live under
-//! `gamedata/levels/` and are *not* loaded into [`super::GameData`] at boot (there are
-//! 2600+ of them). Instead a single file is read + normalized on demand by
-//! [`crate::app::services::level`]. This module owns both the raw source shape
-//! and the clean camelCase [`StageMap`] the frontend consumes.
+//! The raw `level_*.json` files (`PascalCase`, ~50-300 KB, 2600+ of them) under
+//! `gamedata/levels/` are not loaded into [`super::GameData`] at boot;
+//! [`crate::app::services::level`] reads and normalizes one on demand into the
+//! camelCase [`StageMap`].
 //!
-//! ## Coordinate convention
-//! The game stores tile rows bottom-up (route `Row` 0 = bottom) while the tile
-//! `Matrix_data` is laid out top-down. We normalize **everything** to screen
-//! space: `y = 0` is the top row, growing downward; `x` is the column. Callers
-//! never have to flip again.
+//! Coordinates: the game stores route rows bottom-up (`Row` 0 = bottom) while
+//! `Matrix_data` is top-down. Everything here is screen space, `y = 0` the top
+//! row and `x` the column, so callers never flip.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -418,10 +415,10 @@ pub fn parse_stage_map(
         counts.entry(r.id.clone()).or_insert(0);
     }
 
-    // ── Wave/spawn timeline (visual approximation of the battle scheduler) ─
-    // Fragment preDelay is relative to its wave start; action preDelay is
-    // relative to its fragment; a count>1 action emits one token per interval.
-    // Waves advance after the wave's last spawn + maxTimeWaitingForNextWave.
+    // Wave/spawn timeline, an approximation of the battle scheduler. Fragment
+    // preDelay is relative to its wave start, action preDelay to its fragment;
+    // a count>1 action emits one token per interval. Waves advance after the
+    // last spawn + maxTimeWaitingForNextWave.
     let mut spawns: Vec<SpawnOut> = Vec::new();
     let mut schedule: Vec<ScheduleEntry> = Vec::new();
     let mut wave_markers: Vec<WaveMarker> = Vec::new();
@@ -744,8 +741,7 @@ mod tests {
         assert!(map.options.char_limit > 0, "parsed map options");
         assert!(map.duration > 0.0);
 
-        // Wire-contract: the serialized JSON must use the exact camelCase keys
-        // the frontend (`IStageMap`) consumes.
+        // Wire contract: the exact camelCase keys `IStageMap` reads.
         let v = serde_json::to_value(&map).unwrap();
         let obj = v.as_object().unwrap();
         for k in [

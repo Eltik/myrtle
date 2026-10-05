@@ -9,16 +9,15 @@ const DYNAMIC_ART: i32 = 3;
 const OWN_VOICE: i32 = 3;
 const SPECIAL_DYNAMIC_ART: i32 = 3;
 
-/// The 15 tier: the store outfits sold at 15 instead of 18. No field in
-/// `skin_table`, `shop_client_table` or `item_table` separates them (the
-/// eighteenth pass in `docs/release/CN_EN_RELEASE_MAPPING.md`: brand, rarity,
-/// voice, chibi and prefab all mix, and "released before 2023-09" is wrong 119
-/// times against 58), and the tier stopped after 2023-08, so this is a CLOSED
-/// list, not a derivation: the 58 outfits the Terra wiki's brand pages list as
-/// "Outfit Store (15)", read 2026-09-19, matched by operator and outfit name
-/// (Provence's "HD008" is `HD08`, Blacknight's "Summer Flower" is "Summer
-/// Flowers"). All 58 are plain store outfits with `GetTime` from 2020-02-05 to
-/// 2023-08-22. A new outfit never joins this list.
+/// The 15 tier: store outfits sold at 15 instead of 18. No field in
+/// `skin_table`, `shop_client_table` or `item_table` separates them (eighteenth
+/// pass in `docs/release/CN_EN_RELEASE_MAPPING.md`: brand, rarity, voice, chibi
+/// and prefab all mix; "released before 2023-09" is wrong 119 times against 58),
+/// and the tier ended after 2023-08, so this is a CLOSED list: the 58 outfits
+/// the Terra wiki brand pages list as "Outfit Store (15)", read 2026-09-19,
+/// matched by operator and outfit name (Provence's "HD008" is `HD08`,
+/// Blacknight's "Summer Flower" is "Summer Flowers"). All are plain store
+/// outfits with `GetTime` 2020-02-05 to 2023-08-22. New outfits never join.
 const EARLY: &[&str] = &[
     "char_101_sora@summer#1",
     "char_1027_greyy2@snow#5",
