@@ -11,6 +11,26 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-10-05.title": {
+        text: "Improved: The pull planner shows one card per release day",
+        description: "Title of the 2026-10-05 release note. A 'card' is one entry on the pull planner's timeline.",
+    },
+    "note.2026-10-05.lead": {
+        text: "Outfit sales that open on the same EN day now share one card in the pull planner, and a sale that opens with an event sits **inside that event's card**, with the event's own outfit sets first. With Latin names switched on, mainline episodes and new outfit sets now show their English names wherever the game data has one.",
+        description: "Lead paragraph of the 2026-10-05 release note, rendered as Markdown. 'Latin names' is an appearance setting that shows English names instead of Chinese ones; 'outfit sets' are the game's skin series.",
+    },
+    "note.2026-10-05.hrefLabel": {
+        text: "Open the pull planner",
+        description: "Label of the 2026-10-05 release note's call to action, which opens the pull planner.",
+    },
+    "note.2026-10-05.item.1": {
+        text: "The base optimizer can keep Lancet-2 parked at zero morale in a power plant, so Eunectes' bonus still counts it while Greyy the Lightningbearer's bonus no longer does. Shifts mark it as parked.",
+        description: "Bullet in the 2026-10-05 release note, filed under 'New'. Lancet-2, Eunectes and Greyy the Lightningbearer are operators and keep the game's names; morale is an RIIC stat and a power plant is an RIIC room.",
+    },
+    "note.2026-10-05.item.2": {
+        text: "The story reader picks the right art for characters with more than one full-body sprite. Nine no longer appears as a dark silhouette, and Mostima, Skadi, Nearl, Swire and about twenty others show their intended art.",
+        description: "Bullet in the 2026-10-05 release note, filed under 'Fixed'. Every name is an Arknights character and keeps the game's name.",
+    },
     "note.2026-10-04.title": {
         text: "Improved: Pages across the site load faster",
         description: "Title of the 2026-10-04 release note.",
