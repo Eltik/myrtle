@@ -11,6 +11,34 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-10-06.title": {
+        text: "New: Grids, and every story character in one place",
+        description: "Title of the 2026-10-06 release note. 'Grids' is a new feature where players fill a board of labelled cells; 'story character' means a character sprite from the game's story scenes.",
+    },
+    "note.2026-10-06.lead": {
+        text: "**Grids** are here: make a board of labelled cells, fill each one with an operator, enemy, outfit, event or anything else a tier list can hold, choose which kinds are allowed, and share it, download it as an image, or let others fill it in as a template. The story library also has a new **Characters** tab with every story sprite, over 1,600 of them, named by who speaks as them, with every expression and links to the lines they say.",
+        description: "Lead paragraph of the 2026-10-06 release note, rendered as Markdown. 'Characters' is a tab name in the story library and must match its translation; a 'template' is a grid others copy and fill in themselves.",
+    },
+    "note.2026-10-06.hrefLabel": {
+        text: "Open grids",
+        description: "Label of the 2026-10-06 release note's call to action, which opens the grids page.",
+    },
+    "note.2026-10-06.item.1": {
+        text: "Tier lists can rank all 17 main-story episodes.",
+        description: "Bullet in the 2026-10-06 release note, filed under 'New'. 'Episode' is the game's name for a main-story chapter.",
+    },
+    "note.2026-10-06.item.2": {
+        text: "The planner offers to remove plans you have already completed after a sync, bulk add can save presets and show plans on your profile, and plan groups can be pinned.",
+        description: "Bullet in the 2026-10-06 release note, filed under 'Improved'. 'Bulk add' creates plans for many operators at once; a 'preset' is a saved set of bulk add targets.",
+    },
+    "note.2026-10-06.item.3": {
+        text: "The planner now counts a locked module as not started, so planning its first stage costs materials instead of nothing.",
+        description: "Bullet in the 2026-10-06 release note, filed under 'Fixed'. A 'module' is an operator equipment upgrade and keeps the game's name.",
+    },
+    "note.2026-10-06.item.4": {
+        text: "Story characters show their art in downloaded tier list images and link previews, and about 190 missing characters, Maria Nearl among them, can now be ranked.",
+        description: "Bullet in the 2026-10-06 release note, filed under 'Fixed'. Maria Nearl is an Arknights character and keeps the game's name.",
+    },
     "note.2026-10-05.title": {
         text: "Improved: The pull planner shows one card per release day",
         description: "Title of the 2026-10-05 release note. A 'card' is one entry on the pull planner's timeline.",
