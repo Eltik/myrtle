@@ -1,0 +1,64 @@
+{
+  "judgeCalibration": {
+    "judge": "Qwen3.5-9B-Q4_K_M.gguf",
+    "randomPassageTrials": 15,
+    "randomPassageFalsePositives": 0,
+    "randomPassageFpWilson95": [
+      0.0,
+      0.20388330103584865
+    ],
+    "sourcePassageTrials": 15,
+    "sourcePassageTrue": 15,
+    "badQuestionsPassed": 0,
+    "goodQuestionsFailed": 1
+  },
+  "goldsetVersion": "v1",
+  "builtAtUnix": 1790431263,
+  "n": 30,
+  "strata": {
+    "entity": 8,
+    "single_fact": 7,
+    "unanswerable": 15
+  },
+  "shortfall": {
+    "aggregation": 10,
+    "causal": 20,
+    "entity": 17,
+    "multi_hop": 30,
+    "single_fact": 28,
+    "temporal": 15
+  },
+  "deferred": [
+    "ambiguous (10): needs shared-name and ??? masking cases built by hand",
+    "spoiler (5): needs the progress-boundary design"
+  ],
+  "funnel": {
+    "1 generated": 80,
+    "2 passed deterministic filters": 15,
+    "3 judged self-contained": 15,
+    "4 passed every judge check": 15,
+    "5 selected": 15
+  },
+  "closedBookRateCandidates": 0.06666666666666667,
+  "closedBookRateSelected": 0.06666666666666667,
+  "closedBookRemediated": false,
+  "bm25Rank1ShareSelectedSingle": 0.0,
+  "anchorsAdded": 2,
+  "itemsWithAddedAnchors": 2,
+  "unanswerableDropped": [
+    "What was the ticket price for the music festival in Siesta?"
+  ],
+  "generator": "gemma-4-12b-it-qat-q4_0.gguf",
+  "judge": "Qwen3.5-9B-Q4_K_M.gguf",
+  "promptShas": {
+    "closed_book": "e4e6a61ed05da09a",
+    "goldset.gbnf": "54a50ef9b9f8a61b",
+    "goldset.system": "68552cabf536eb45",
+    "judge.answerable": "5c36622443b5a6d6",
+    "judge.closed_book": "7d728761ad445b98",
+    "judge.self_contained": "17d0d97214fb3bc8",
+    "multihop.gbnf": "5dc0bddf0e5670ab",
+    "multihop.system": "548771d540df4e86"
+  },
+  "review": "automatic: deterministic filters plus binary judge verdicts; no human review"
+}

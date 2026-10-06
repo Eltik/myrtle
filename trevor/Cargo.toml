@@ -1,0 +1,89 @@
+[package]
+name = "trevor"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.86"
+
+[dependencies]
+anyhow     = "1"
+clap       = { version = "4", features = ["derive"] }
+futures    = "0.3"
+reqwest    = { version = "0.13", default-features = false, features = ["json"] }
+serde      = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2       = "0.10"
+tantivy    = "=0.26.2"
+thiserror  = "2"
+tokenizers = { version = "=0.23.2", default-features = false, features = ["onig"] }
+tokio      = { version = "1", features = ["rt-multi-thread", "macros", "fs", "sync", "time", "io-util"] }
+# Optional: only the embed step needs ONNX Runtime. Pinned exactly because it
+# pins `ort` exactly (2.0.0-rc.13), and every ort RC has broken its API.
+fastembed  = { version = "=7.0.1", default-features = false, optional = true }
+# The reranker runs its ONNX backbone directly: fastembed's reranker reads an
+# output named `logits`, and the Ettin export has none (its scoring head ships
+# as separate safetensors). Same exact version and features as fastembed's own
+# `ort` dependency, so the tree holds one ONNX Runtime.
+ort         = { version = "=2.0.0-rc.13", default-features = false, features = ["std", "ndarray", "api-24"], optional = true }
+safetensors = { version = "0.8", optional = true }
+
+[features]
+default = []
+# Downloads ONNX Runtime at build time. Use this on the Mac and the VPS.
+embed = ["embed-core", "fastembed/ort-download-binaries-rustls-tls"]
+# Loads a system libonnxruntime at run time (ORT_DYLIB_PATH). For builds that
+# cannot reach the ORT download host.
+embed-dylib = ["embed-core", "fastembed/ort-load-dynamic"]
+embed-core = ["dep:fastembed", "dep:ort", "dep:safetensors"]
+
+[lib]
+name = "trevor"
+path = "src/lib.rs"
+
+[[bin]]
+name = "build-corpus"
+path = "src/bin/build-corpus.rs"
+
+[[bin]]
+name = "embed-corpus"
+path = "src/bin/embed-corpus.rs"
+required-features = ["embed-core"]
+
+[[bin]]
+name = "build-index"
+path = "src/bin/build-index.rs"
+
+[[bin]]
+name = "build-prefixes"
+path = "src/bin/build-prefixes.rs"
+
+[[bin]]
+name = "build-archives"
+path = "src/bin/build-archives.rs"
+
+[[bin]]
+name = "build-profiles"
+path = "src/bin/build-profiles.rs"
+
+[[bin]]
+name = "build-units"
+path = "src/bin/build-units.rs"
+
+[[bin]]
+name = "search"
+path = "src/bin/search.rs"
+required-features = ["embed-core"]
+
+[[bin]]
+name = "eval"
+path = "src/bin/eval.rs"
+required-features = ["embed-core"]
+
+[[bin]]
+name = "goldset"
+path = "src/bin/goldset.rs"
+required-features = ["embed-core"]
+
+[[bin]]
+name = "ask"
+path = "src/bin/ask.rs"
+required-features = ["embed-core"]

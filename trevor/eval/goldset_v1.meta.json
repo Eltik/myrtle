@@ -1,0 +1,69 @@
+{
+  "judgeCalibration": {
+    "judge": "Qwen3.5-9B-Q4_K_M.gguf",
+    "randomPassageTrials": 39,
+    "randomPassageFalsePositives": 0,
+    "randomPassageFpWilson95": [
+      0.0,
+      0.08966685370757144
+    ],
+    "sourcePassageTrials": 39,
+    "sourcePassageTrue": 31,
+    "badQuestionsPassed": 0,
+    "goodQuestionsFailed": 1
+  },
+  "goldsetVersion": "v1",
+  "builtAtUnix": 1790306073,
+  "n": 57,
+  "strata": {
+    "aggregation": 1,
+    "causal": 6,
+    "entity": 6,
+    "multi_hop": 15,
+    "single_fact": 10,
+    "temporal": 4,
+    "unanswerable": 15
+  },
+  "shortfall": {
+    "aggregation": 9,
+    "causal": 14,
+    "entity": 19,
+    "multi_hop": 15,
+    "single_fact": 25,
+    "temporal": 11
+  },
+  "deferred": [
+    "ambiguous (10): needs shared-name and ??? masking cases built by hand",
+    "spoiler (5): needs the progress-boundary design"
+  ],
+  "funnel": {
+    "1 generated": 280,
+    "2 passed deterministic filters": 88,
+    "3 judged self-contained": 77,
+    "4 passed every judge check": 42,
+    "5 selected": 42
+  },
+  "closedBookRateCandidates": 0.11904761904761904,
+  "closedBookRateSelected": 0.11904761904761904,
+  "closedBookRemediated": false,
+  "bm25Rank1ShareSelectedSingle": 0.0,
+  "anchorsAdded": 6,
+  "itemsWithAddedAnchors": 4,
+  "unanswerableDropped": [
+    "What was the ticket price for the music festival in Siesta?",
+    "What is W's real, full given name?"
+  ],
+  "generator": "gemma-4-12b-it-qat-q4_0.gguf",
+  "judge": "Qwen3.5-9B-Q4_K_M.gguf",
+  "promptShas": {
+    "closed_book": "e4e6a61ed05da09a",
+    "goldset.gbnf": "54a50ef9b9f8a61b",
+    "goldset.system": "68552cabf536eb45",
+    "judge.answerable": "5c36622443b5a6d6",
+    "judge.closed_book": "7d728761ad445b98",
+    "judge.self_contained": "17d0d97214fb3bc8",
+    "multihop.gbnf": "5dc0bddf0e5670ab",
+    "multihop.system": "548771d540df4e86"
+  },
+  "review": "automatic: deterministic filters plus binary judge verdicts; no human review"
+}

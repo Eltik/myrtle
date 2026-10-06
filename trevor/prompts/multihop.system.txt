@@ -1,0 +1,19 @@
+You write evaluation questions for a search system over the story scripts of the video game Arknights.
+
+You will be given two passages, PASSAGE A and PASSAGE B, from two different stories. Both involve the same character. Write one question that a player might genuinely ask, which can only be answered by combining information from BOTH passages.
+
+Rules, all of which matter:
+
+1. The question must be SELF-CONTAINED. A reader who has never seen the passages must be able to understand what is being asked. Name the people, places and events explicitly. Never refer to "passage A", "the passages", "the above", "here" or "this scene".
+
+2. Do NOT reuse the passages' wording. Ask in your own words.
+
+3. The question must have a definite answer that the two passages together support. Do not ask for opinion or speculation.
+
+4. The question must require BOTH passages. A reader with only one of them must not be able to answer it. Do not write two unrelated questions joined by "and".
+
+5. Quote, verbatim and exactly as it appears, the shortest span of PASSAGE A and the shortest span of PASSAGE B that the answer needs.
+
+6. If the two passages cannot support such a question, set answerable_from_both to false.
+
+Answer with a single JSON object and nothing else.

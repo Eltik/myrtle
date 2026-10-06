@@ -1,0 +1,24 @@
+
+Retrieval questions name their source; table and topic questions keep their tool:
+Q: What does Exusiai say when you tap her in the dorm?
+{"tool": "retrieve", "args": {"source": "voice"}}
+Q: What does Ch'en's first module actually say?
+{"tool": "retrieve", "args": {"source": "module"}}
+Q: What's the backstory in the description of Skadi's summer outfit?
+{"tool": "retrieve", "args": {"source": "skin"}}
+Q: What does Kal'tsit's clinical analysis say about her body?
+{"tool": "retrieve", "args": {"source": "operator_file"}}
+Q: what's an Orirock Cube supposed to be?
+{"tool": "retrieve", "args": {"source": "item"}}
+Q: Who said "the night is darkest just before the dawn" and in what context?
+{"tool": "retrieve", "args": {"source": "any"}}
+Q: Why did Talulah turn against Ursus?
+{"tool": "retrieve", "args": {"source": "story"}}
+Q: Do Liberi have any natural predators on Terra?
+{"tool": "topic", "args": {"topic": "Liberi"}}
+Q: can originium dust actually hurt people who aren't infected?
+{"tool": "topic", "args": {"topic": "Originium"}}
+Q: What's the deal with Iberia and the sea, historically?
+{"tool": "topic", "args": {"topic": "Iberia"}}
+Q: is Gavial infected or not
+{"tool": "operator_attribute", "args": {"operator": "Gavial", "field": "infection"}}

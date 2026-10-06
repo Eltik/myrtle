@@ -1,0 +1,425 @@
+{
+ "note": "Hand grades (2026-09-30) of ending picks: does this story treat this ending's outcome as having happened. Read from the quote and its passage; used for evaluation only, never shown to the verdict model.",
+ "grades": [
+  {
+   "storyId": "act43side_level_act43side_01_end",
+   "endingId": "ro_ending_3",
+   "grade": "wrong",
+   "note": "Lucian appears as a character; nothing Grand Opening changes"
+  },
+  {
+   "storyId": "act43side_level_act43side_02_beg",
+   "endingId": "ro_ending_3",
+   "grade": "wrong",
+   "note": "Lucian appears as a character; nothing Grand Opening changes"
+  },
+  {
+   "storyId": "act43side_level_act43side_05_end",
+   "endingId": "ro_ending_3",
+   "grade": "wrong",
+   "note": "Lucian appears as a character; nothing Grand Opening changes"
+  },
+  {
+   "storyId": "act43side_level_act43side_06_end",
+   "endingId": "ro_ending_3",
+   "grade": "wrong",
+   "note": "Lucian appears as a character; nothing Grand Opening changes"
+  },
+  {
+   "storyId": "act43side_level_act43side_07_beg",
+   "endingId": "ro_ending_3",
+   "grade": "wrong",
+   "note": "Lucian appears as a character; nothing Grand Opening changes"
+  },
+  {
+   "storyId": "act43side_level_act43side_07_end",
+   "endingId": "ro_ending_3",
+   "grade": "wrong",
+   "note": "flashback to Lucian and Shalem at the river, before the run"
+  },
+  {
+   "storyId": "act43side_level_act43side_07_end",
+   "endingId": "ro_ending_4",
+   "grade": "unclear",
+   "note": "the Troupe Leader asks the Playwright for the revised ending of the river escape; a rewritten script, but a flashback"
+  },
+  {
+   "storyId": "act43side_level_act43side_07_end",
+   "endingId": "ro_ending_1",
+   "grade": "wrong",
+   "note": "Dalton's death in this event, not the run"
+  },
+  {
+   "storyId": "act43side_level_act43side_08_beg",
+   "endingId": "ro_ending_3",
+   "grade": "unclear",
+   "note": "Lucian returns to Tragodia to destroy him; the run-up to the succession"
+  },
+  {
+   "storyId": "act43side_level_act43side_08_end",
+   "endingId": "ro_ending_3",
+   "grade": "right",
+   "note": "Lucian kills Tragodia and wears his crown, a passing of the torch: the host who sets the stage"
+  },
+  {
+   "storyId": "act25side_level_act25side_10_end",
+   "endingId": "ro2_ending_4",
+   "grade": "wrong",
+   "note": "a star-ring weapon firing upward in Lone Trail; shared imagery"
+  },
+  {
+   "storyId": "module_uniequip_002_highmo",
+   "endingId": "ro2_ending_4",
+   "grade": "unclear",
+   "note": "regraded 2026-09-30 after Ian named Precious Days as canon: the voyage \"beyond where the stars shine\" is a metaphor for Highmore setting out from home, and a voyage \"is not a farewell\"; it reads as the Stella migration only through imagery"
+  },
+  {
+   "storyId": "module_uniequip_002_highmo",
+   "endingId": "ro2_ending_1",
+   "grade": "unclear",
+   "note": "regraded 2026-09-30: Highmore sent out to find her own voyage fits Precious Days (Mizuki takes her away to a new purpose), but the text names no outcome"
+  },
+  {
+   "storyId": "module_uniequip_002_estell",
+   "endingId": "ro2_ending_1",
+   "grade": "wrong",
+   "note": "Estelle's past as a failed test subject; shared word \"failure\""
+  },
+  {
+   "storyId": "main_13_level_main_13-19_beg",
+   "endingId": "ro2_ending_4",
+   "grade": "wrong",
+   "note": "a Feranmut skeleton over a sea of stars in a vampire's vision; shared imagery"
+  },
+  {
+   "storyId": "act34side_level_act34side_08_end",
+   "endingId": "ro2_ending_4",
+   "grade": "wrong",
+   "note": "Ulpianus and Ishar-mla; Seaborn cast, no outcome"
+  },
+  {
+   "storyId": "act34side_level_act34side_st01",
+   "endingId": "ro2_ending_4",
+   "grade": "wrong",
+   "note": "the Seaborn plan to leave the ocean for land; not the migration to the stars"
+  },
+  {
+   "storyId": "main_15_level_main_15-11_beg",
+   "endingId": "ro2_ending_4",
+   "grade": "wrong",
+   "note": "talk of the universe and lifeforms on a ship; shared imagery"
+  },
+  {
+   "storyId": "act45side_level_act45side_05_beg",
+   "endingId": "ro2_ending_1",
+   "grade": "wrong",
+   "note": "an unrelated family scene"
+  },
+  {
+   "storyId": "act33side_level_act33side_st01",
+   "endingId": "ro3_ending_4",
+   "grade": "wrong",
+   "note": "a seer's fate in Babel; no outcome of the run"
+  },
+  {
+   "storyId": "main_14_level_main_14-17_end",
+   "endingId": "ro3_ending_c",
+   "grade": "wrong",
+   "note": "a stranger's line in Chapter 14"
+  },
+  {
+   "storyId": "act36side_level_act36side_04_end",
+   "endingId": "ro3_ending_3",
+   "grade": "wrong",
+   "note": "the Dungeon Meshi collaboration mentions a hornbeast"
+  },
+  {
+   "storyId": "act46side_level_act46side_02_end",
+   "endingId": "ro3_ending_2",
+   "grade": "wrong",
+   "note": "a Kjeragandr folk tale of frozen peaks"
+  },
+  {
+   "storyId": "main_15_level_main_15-07_beg",
+   "endingId": "ro4_ending_2",
+   "grade": "wrong",
+   "note": "Amiya and the Doctor in Chapter 15; no Nymph"
+  },
+  {
+   "storyId": "main_15_level_main_15-07_beg",
+   "endingId": "ro4_ending_4",
+   "grade": "wrong",
+   "note": "a line about Kal'tsit's information"
+  },
+  {
+   "storyId": "main_15_level_main_15-15_beg",
+   "endingId": "ro4_ending_5",
+   "grade": "wrong",
+   "note": "a shared \"seed of hope\"; shared imagery"
+  },
+  {
+   "storyId": "main_15_level_main_15-18_end",
+   "endingId": "ro4_ending_5",
+   "grade": "wrong",
+   "note": "Mon3tr's cocoon, not the Endless Key's cocoon"
+  },
+  {
+   "storyId": "act42side_level_act42side_05_beg",
+   "endingId": "ro4_ending_1",
+   "grade": "unclear",
+   "note": "Kazdel no longer needs Originium for energy; could be the furnace's end or Kazdel's reconstruction"
+  },
+  {
+   "storyId": "act47side_level_act47side_06_end",
+   "endingId": "ro4_ending_1",
+   "grade": "unclear",
+   "note": "\"So the Tin Man already knew...\"; Tin Man appears, the outcome is not stated"
+  },
+  {
+   "storyId": "act47side_level_act47side_08_beg",
+   "endingId": "ro4_ending_1",
+   "grade": "right",
+   "note": "Tin Man with his revenant friends Curly, Larry and Lil' Mo, who stayed with him in The End?; weak"
+  },
+  {
+   "storyId": "act49side_level_act49side_01_end",
+   "endingId": "ro5_ending_1",
+   "grade": "right",
+   "note": "the Placation is reported to the Sui Regulator as done"
+  },
+  {
+   "storyId": "act49side_level_act49side_01_end",
+   "endingId": "ro5_ending_2",
+   "grade": "right",
+   "note": "Zuo Le carries the doll from the memorial hall: \"it really is her\""
+  },
+  {
+   "storyId": "act49side_level_act49side_01_end",
+   "endingId": "ro5_ending_4",
+   "grade": "unclear",
+   "note": "\"that vanished proxy\""
+  },
+  {
+   "storyId": "act49side_level_act49side_02_end",
+   "endingId": "ro5_ending_3",
+   "grade": "wrong",
+   "note": "ink markings on paper; shared imagery"
+  },
+  {
+   "storyId": "act49side_level_act49side_02_end",
+   "endingId": "ro5_ending_4",
+   "grade": "wrong",
+   "note": "Wang's past deed of erasing the character Sui; a flashback"
+  },
+  {
+   "storyId": "act49side_level_act49side_02_end",
+   "endingId": "ro5_ending_5",
+   "grade": "wrong",
+   "note": "Wang's deaths inside Sui's dream, not the outcome"
+  },
+  {
+   "storyId": "act49side_level_act49side_03_end",
+   "endingId": "ro5_ending_4",
+   "grade": "wrong",
+   "note": "a past proxy compiled Yan's history"
+  },
+  {
+   "storyId": "act49side_level_act49side_04_end",
+   "endingId": "ro5_ending_4",
+   "grade": "wrong",
+   "note": "a battle in Sui's dream; shared imagery of the hunt"
+  },
+  {
+   "storyId": "act49side_level_act49side_04_end",
+   "endingId": "ro5_ending_5",
+   "grade": "wrong",
+   "note": "Sui wails with the last proxy; mid-battle"
+  },
+  {
+   "storyId": "act49side_level_act49side_05_beg",
+   "endingId": "ro5_ending_4",
+   "grade": "wrong",
+   "note": "Jie's history work and an old decree"
+  },
+  {
+   "storyId": "act49side_level_act49side_05_end",
+   "endingId": "ro5_ending_4",
+   "grade": "wrong",
+   "note": "a kept writing knife"
+  },
+  {
+   "storyId": "act49side_level_act49side_07_beg",
+   "endingId": "ro5_ending_4",
+   "grade": "wrong",
+   "note": "\"Eliminate the great evil\""
+  },
+  {
+   "storyId": "act49side_level_act49side_07_beg",
+   "endingId": "ro5_ending_5",
+   "grade": "wrong",
+   "note": "Wang's memories at the weiqi board"
+  },
+  {
+   "storyId": "act49side_level_act49side_07_end",
+   "endingId": "ro5_ending_4",
+   "grade": "unclear",
+   "note": "\"Why would they abide you when you replace me?\""
+  },
+  {
+   "storyId": "act49side_level_act49side_07_end",
+   "endingId": "ro5_ending_5",
+   "grade": "wrong",
+   "note": "Wang's past and dream"
+  },
+  {
+   "storyId": "act49side_level_act49side_08_end",
+   "endingId": "ro5_ending_3",
+   "grade": "unclear",
+   "note": "Jie's life force brought back from the Garden to restore her: Black-White Abstrusity or Scroll of Scars"
+  },
+  {
+   "storyId": "act49side_level_act49side_08_end",
+   "endingId": "ro5_ending_4",
+   "grade": "wrong",
+   "note": "Jie's life force, not the ink of humanity"
+  },
+  {
+   "storyId": "act49side_level_act49side_11_beg",
+   "endingId": "ro5_ending_4",
+   "grade": "right",
+   "note": "Wang takes Sui's place; the proxy becomes the new Sui (fits No Regrets as well)"
+  },
+  {
+   "storyId": "act49side_level_act49side_11_end",
+   "endingId": "ro5_ending_4",
+   "grade": "right",
+   "note": "\"Here, a new 'Sui' is born\" from proxy and Feranmut (fits No Regrets as well)"
+  },
+  {
+   "storyId": "act49side_level_act49side_11_end",
+   "endingId": "ro5_ending_5",
+   "grade": "right",
+   "note": "\"Wang ascended the seat of Sui\"; Wang stays behind with the god (fits Out of Nothingness as well)"
+  },
+  {
+   "storyId": "act49side_level_act49side_st01",
+   "endingId": "ro5_ending_4",
+   "grade": "wrong",
+   "note": "the glimmer of hope retrieved from the Garden is Jie's life force"
+  },
+  {
+   "storyId": "act49side_level_act49side_st02",
+   "endingId": "ro5_ending_4",
+   "grade": "right",
+   "note": "\"That proxy killed Sui, and after merging with that piece of Originium, he fell into something resembling slumber\""
+  },
+  {
+   "storyId": "act49side_level_act49side_st02",
+   "endingId": "ro5_ending_5",
+   "grade": "right",
+   "note": "Wang cannot be freed from the tomb: he stays behind"
+  },
+  {
+   "storyId": "archive_char_1042_phatm2",
+   "endingId": "ro_ending_3",
+   "grade": "right",
+   "note": "Tragodia's operator file: Lucian has become Tragodia (\"this two-person play... has made me part of him\"), the succession Act or Die shows"
+  },
+  {
+   "storyId": "story_christ_set_1_story_1",
+   "endingId": "ro_ending_3",
+   "grade": "unclear",
+   "note": "Lucian after a failed river escape, choosing to go back; before Act or Die, not an outcome"
+  },
+  {
+   "storyId": "archive_char_4066_highmo",
+   "endingId": "ro2_ending_1",
+   "grade": "right",
+   "note": "regraded 2026-09-30: after surgery Mizuki asks Rhodes Island to take Highmore in \"to experience life amongst people\": Mizuki spared her and returned her to human life, the Precious Days outcome; under Stella Caerula the Seaborn leave Terra"
+  },
+  {
+   "storyId": "archive_char_4212_nasti",
+   "endingId": "ro2_ending_4",
+   "grade": "wrong",
+   "note": "cities in the sky and trees among the stars; shared imagery"
+  },
+  {
+   "storyId": "skin_char_1012_skadi2_boc#4",
+   "endingId": "ro2_ending_4",
+   "grade": "unclear",
+   "note": "regraded 2026-09-30: outfit flavor text of an alternate Seaborn form states the migration as that form's story (\"would ascend\"), not as what happened to the run's characters"
+  },
+  {
+   "storyId": "skin_char_4066_highmo_epoque#45",
+   "endingId": "ro2_ending_1",
+   "grade": "wrong",
+   "note": "an outfit description of Highmore on a seashore"
+  },
+  {
+   "storyId": "skin_char_4066_highmo_nian#10",
+   "endingId": "ro2_ending_1",
+   "grade": "wrong",
+   "note": "an outfit description"
+  },
+  {
+   "storyId": "voice_char_1012_skadi2",
+   "endingId": "ro2_ending_4",
+   "grade": "wrong",
+   "note": "Skadi the Corrupting Heart's wish to swim through the air; her voice lines are older than the run"
+  },
+  {
+   "storyId": "voice_char_4102_threye",
+   "endingId": "ro3_ending_3",
+   "grade": "wrong",
+   "note": "a Cyclops speaks of prophecy; shared cast"
+  },
+  {
+   "storyId": "archive_char_4146_nymph",
+   "endingId": "ro4_ending_2",
+   "grade": "right",
+   "note": "Nymph's file: her hopes, released through the Djall when Tin Man connected with the revenants, made imagination manifest; the Twin Crowns outcome"
+  },
+  {
+   "storyId": "skin_char_1037_amiya3_sale#13",
+   "endingId": "ro4_ending_5",
+   "grade": "unclear",
+   "note": "\"the Ark cradling the cocoon of dreams sailed into the galaxy\"; Impeccable Day imagery in a birthday outfit"
+  },
+  {
+   "storyId": "story_totter_set_2_story_1",
+   "endingId": "ro4_ending_4",
+   "grade": "wrong",
+   "note": "a sage in Totter's record"
+  },
+  {
+   "storyId": "archive_char_1050_chen3",
+   "endingId": "ro5_ending_4",
+   "grade": "wrong",
+   "note": "Ch'en searches for traces of the proxy Jie, who departed long before"
+  },
+  {
+   "storyId": "archive_char_2025_shu",
+   "endingId": "ro5_ending_4",
+   "grade": "wrong",
+   "note": "an inscription rubbing"
+  },
+  {
+   "storyId": "story_wang_set_1_story_1",
+   "endingId": "ro5_ending_3",
+   "grade": "unclear",
+   "note": "Wang, after Sui's elimination, weighs searching for a trace of Jie"
+  },
+  {
+   "storyId": "story_wang_set_1_story_1",
+   "endingId": "ro5_ending_4",
+   "grade": "unclear",
+   "note": "after Sui's elimination the Sui Regulator stops watching the proxies; fits Out of Nothingness and No Regrets alike"
+  },
+  {
+   "storyId": "story_wang_set_1_story_1",
+   "endingId": "ro5_ending_5",
+   "grade": "unclear",
+   "note": "Wang is out of the tomb and free after Sui's elimination, which No Regrets (he stays behind alone) does not predict"
+  }
+ ]
+}

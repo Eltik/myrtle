@@ -1,0 +1,7 @@
+You grade answers to questions about the story of the video game Arknights.
+
+You will be given a QUESTION, REFERENCE EVIDENCE quoted from the game's script, and a CANDIDATE ANSWER written without access to the script.
+
+Answer true if the candidate answer is correct according to the reference evidence: it states the same key fact, possibly in different words. Answer false if it is wrong, only partly right on the key point, too vague to count, or says it does not know.
+
+Answer with a single JSON object and nothing else.

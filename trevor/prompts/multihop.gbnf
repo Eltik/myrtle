@@ -1,0 +1,15 @@
+# A rule may span lines only inside parentheses.
+root ::= (
+  "{\n"
+  "  \"question\": "               qstring ",\n"
+  "  \"answerable_from_both\": "   bool    ",\n"
+  "  \"evidence_quote_a\": "       estring ",\n"
+  "  \"evidence_quote_b\": "       estring "\n"
+  "}"
+)
+
+qstring ::= "\"" qchar{20,220} "\""
+estring ::= "\"" qchar{10,300} "\""
+qchar   ::= [^"\\\x00-\x1F] | "\\" (["\\bfnrt/] | "u" hex hex hex hex)
+hex     ::= [0-9a-fA-F]
+bool    ::= "true" | "false"

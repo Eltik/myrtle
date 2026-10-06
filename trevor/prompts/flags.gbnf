@@ -1,0 +1,3 @@
+# ask's answer-rule flags (2026-10-01): which answer rules a retrieval question needs (time notes, canon, synthesis, one kind of source text).
+root ::= "{\"asks_time\": " b ", \"asks_canon\": " b ", \"asks_synthesis\": " b ", \"asks_source_text\": " b "}"
+b ::= "true" | "false"

@@ -1,0 +1,208 @@
+{
+ "source": "design/trevor-reading-order-research.md (Arctic Shift archive of r/arknights, wiki, 7 community guides; 2026-09-29)",
+ "essential": [
+  {
+   "name": "Darknights Memoir",
+   "groupId": "act9d0",
+   "commenters": 31,
+   "comments": 50,
+   "why": "the single most important one; basically the real chapter 7"
+  },
+  {
+   "name": "Babel",
+   "groupId": "act33side",
+   "commenters": 14,
+   "comments": 17,
+   "why": "tells the story of the Doctor's past; a must-read before Episode 14"
+  },
+  {
+   "name": "What the Firelight Casts",
+   "groupId": "act22side",
+   "commenters": 12,
+   "comments": 14,
+   "why": "read after Episode 11, before Episode 12"
+  },
+  {
+   "name": "A Walk in the Dust",
+   "groupId": "act18d0",
+   "commenters": 11,
+   "comments": 18,
+   "why": "context for basically everything after Episode 8"
+  },
+  {
+   "name": "Lone Trail",
+   "groupId": "act25side",
+   "commenters": 10,
+   "comments": 11,
+   "why": "ties into the main story; Dorothy's Vision first"
+  },
+  {
+   "name": "Vigilo",
+   "groupId": "act8mini",
+   "commenters": 8,
+   "comments": 15,
+   "why": "major for learning about the pre-amnesia Doctor"
+  },
+  {
+   "name": "See You Soon",
+   "groupId": "act18mini",
+   "commenters": 5,
+   "comments": 5,
+   "why": "the ending of the Victoria war; with Ending a Grand Overture and When Elegies Are Ashes"
+  },
+  {
+   "name": "Path of Life",
+   "groupId": "act34side",
+   "commenters": 5,
+   "comments": 5,
+   "why": "connects to the main story after Episode 14"
+  },
+  {
+   "name": "The Masses' Travels",
+   "groupId": "act42side",
+   "commenters": 5,
+   "comments": 5,
+   "why": "right after Episode 15"
+  },
+  {
+   "name": "Operational Intelligence",
+   "groupId": "act4d0",
+   "commenters": 4,
+   "comments": 6,
+   "why": "only the stories 'Anonymous One's War' and 'Destroyer', before Episode 7"
+  }
+ ],
+ "rules": [
+  {
+   "name": "Darknights Memoir",
+   "groupId": "act9d0",
+   "rule": "after Episode 6, before Episode 7",
+   "commenters": 31
+  },
+  {
+   "name": "Babel",
+   "groupId": "act33side",
+   "rule": "right after Episode 13, before Episode 14 (4 commenters: any time after Vigilo or Episode 8)",
+   "commenters": 14
+  },
+  {
+   "name": "A Walk in the Dust",
+   "groupId": "act18d0",
+   "rule": "after Episode 8, before Episode 10",
+   "commenters": 11
+  },
+  {
+   "name": "Under Tides",
+   "groupId": "act18d3",
+   "rule": "before Stultifera Navis",
+   "commenters": 11
+  },
+  {
+   "name": "Dorothy's Vision",
+   "groupId": "act19side",
+   "rule": "before Lone Trail",
+   "commenters": 10
+  },
+  {
+   "name": "Lone Trail",
+   "groupId": "act25side",
+   "rule": "after Episode 14 (older advice: after Episode 12; read Episodes 7 and 8 and Dorothy's Vision first)",
+   "commenters": 10
+  },
+  {
+   "name": "Maria Nearl",
+   "groupId": "act13d5",
+   "rule": "before Near Light (with Pinus Sylvestris)",
+   "commenters": 9
+  },
+  {
+   "name": "Vigilo",
+   "groupId": "act8mini",
+   "rule": "after Episode 8, before Episode 9 or 10",
+   "commenters": 8
+  },
+  {
+   "name": "Grani and the Knights' Treasure",
+   "groupId": "1stact",
+   "rule": "before Under Tides",
+   "commenters": 8
+  },
+  {
+   "name": "What the Firelight Casts",
+   "groupId": "act22side",
+   "rule": "after Episode 11, before Episode 12 (at least after Episode 9)",
+   "commenters": 7
+  },
+  {
+   "name": "A Kazdelian Rescue",
+   "groupId": "act17mini",
+   "rule": "after Episode 14",
+   "commenters": 6
+  },
+  {
+   "name": "Operational Intelligence",
+   "groupId": "act4d0",
+   "rule": "'Anonymous One's War' and 'Destroyer' after Episodes 3 to 5, before Episode 7",
+   "commenters": 4
+  },
+  {
+   "name": "Code of Brawl",
+   "groupId": "act5d0",
+   "rule": "before IL Siracusano",
+   "commenters": 5
+  },
+  {
+   "name": "Path of Life",
+   "groupId": "act34side",
+   "rule": "after Episode 14 and Lone Trail",
+   "commenters": 5
+  },
+  {
+   "name": "The Masses' Travels",
+   "groupId": "act42side",
+   "rule": "after Episode 15",
+   "commenters": 5
+  },
+  {
+   "name": "See You Soon",
+   "groupId": "act18mini",
+   "rule": "after Episode 14, before Episode 15, then Ending a Grand Overture",
+   "commenters": 5
+  },
+  {
+   "name": "Lingering Echoes",
+   "groupId": "act18side",
+   "rule": "before Zwillingstürme im Herbst (with Hortus de Escapismo)",
+   "commenters": 4
+  },
+  {
+   "name": "Children of Ursus",
+   "groupId": "act10d5",
+   "rule": "before People, A People",
+   "commenters": 1
+  }
+ ],
+ "chronological": {
+  "recommend": 3,
+  "against": 6,
+  "why": "Babel, Darknights Memoir and A Walk in the Dust come first in the timeline and spoil the Doctor's amnesia; many stories have no fixed date"
+ },
+ "patterns": [
+  [
+   "release order",
+   40
+  ],
+  [
+   "main story first with must-read side stories",
+   12
+  ],
+  [
+   "one storyline at a time (the game's Movements view since Sept 2025)",
+   10
+  ],
+  [
+   "in-world chronological order",
+   3
+  ]
+ ]
+}

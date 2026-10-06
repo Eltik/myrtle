@@ -1,0 +1,20 @@
+# Hand-written questions the corpus should NOT answer. Each is checked
+# against pooled retrieval by the judge before it enters the gold set; any
+# the corpus turns out to answer is dropped and reported.
+What is the name of the pet cat that Amiya keeps in her quarters aboard Rhodes Island?
+Which Rhodes Island operator won the landship's annual chess tournament?
+How many floors does the Lungmen Guard Department headquarters have?
+In what year was Kal'tsit born, by the Terran calendar?
+What is the name of Exusiai's childhood pet in Laterano?
+Who designed the Rhodes Island company logo?
+What was the ticket price for the music festival in Siesta?
+Which operator holds the record for the fastest run of the Rhodes Island obstacle course?
+What color is the Lungmen mayor's official car?
+What did Amiya name the stray dog she adopted in Londinium?
+What is the name of the bakery where Texas buys pastries in Lungmen?
+How many landships did Rhodes Island own before the Chernobog incident?
+Which Ursus university did Talulah graduate from?
+What is W's real, full given name?
+How much did the Doctor pay for their first coat at Rhodes Island?
+Which Kazimierz sponsor paid for Blemishine's training equipment?
+What is the name of Mon3tr's favourite toy?

@@ -1,0 +1,26 @@
+You read a question about the Arknights story and say which of four special kinds of answer it needs. Output one JSON object with four true or false fields. Most questions need none of them: every field is false unless the question clearly asks for that kind.
+- asks_time: the answer is a date, a year, an age, a length of time, or an order of events: it asks when something happened, how long ago or for how long, how old someone is, the timeline, or whether one event came before another.
+- asks_canon: it asks whether something is canon or official, about a retcon, about a translation or localization difference between versions of the game, or what the developers or writers intended or said. Asking whether a text has been translated or where to read it is false.
+- asks_synthesis: it names two or more people, groups or things and asks to compare them with each other (X or Y, X versus Y, the difference between them, which is stronger), asks to rank several, or asks for a summary or overview that covers many events or the whole story. A question about one person, thing, event or incident is false, also when it asks what is known about it, to explain it, or how strong or important it is. A yes-or-no question about whether two things are related, connected or the same is false.
+- asks_source_text: it names one kind of game text other than the story scenes and asks what that text says: an operator's module story, voice lines said in a named situation (in the dorm, when poked, at trust), an outfit or skin description, Integrated Strategies (the roguelike mode), an enemy's handbook entry, an item or furniture description, or an operator record. An operator's file is false. A question about what a character said, likes or did, without naming one of those texts, is false.
+Q: Why did Gavial go back to her tribe?
+{"asks_time": false, "asks_canon": false, "asks_synthesis": false, "asks_source_text": false}
+Q: What do we know about the Lungmen slums?
+{"asks_time": false, "asks_canon": false, "asks_synthesis": false, "asks_source_text": false}
+Q: How dangerous is the Sea Terror?
+{"asks_time": false, "asks_canon": false, "asks_synthesis": false, "asks_source_text": false}
+Q: How many years before the main story did Ursus attack the Kazdel refugees?
+{"asks_time": true, "asks_canon": false, "asks_synthesis": false, "asks_source_text": false}
+Q: Did the global release change the meaning of Mostima's last line?
+{"asks_time": false, "asks_canon": true, "asks_synthesis": false, "asks_source_text": false}
+Q: How does Penance compare to Saria as a fighter?
+{"asks_time": false, "asks_canon": false, "asks_synthesis": true, "asks_source_text": false}
+Q: Give me a summary of everything the Pinus Sylvestris knights have done.
+{"asks_time": false, "asks_canon": false, "asks_synthesis": true, "asks_source_text": false}
+Q: What does Thorns say when you put him in the dorm?
+{"asks_time": false, "asks_canon": false, "asks_synthesis": false, "asks_source_text": true}
+Q: Are the Liberi related to the Sankta?
+{"asks_time": false, "asks_canon": false, "asks_synthesis": false, "asks_source_text": false}
+Q: Which operator said they hate the rain?
+{"asks_time": false, "asks_canon": false, "asks_synthesis": false, "asks_source_text": false}
+Answer with the JSON object only.

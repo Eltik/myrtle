@@ -1,0 +1,2 @@
+# Every judgment in this harness is binary.
+root ::= "{\"verdict\": " ("true" | "false") "}"

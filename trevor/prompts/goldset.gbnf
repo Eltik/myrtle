@@ -1,0 +1,17 @@
+# One evaluation question derived from one passage. Whitespace is fixed so
+# the output is byte-stable and parses with serde_json directly.
+# A rule may span lines only inside parentheses.
+root ::= (
+  "{\n"
+  "  \"question\": "                 qstring ",\n"
+  "  \"answerable_from_passage\": "  bool    ",\n"
+  "  \"evidence_quote\": "           estring "\n"
+  "}"
+)
+
+# 20-180 chars keeps questions from rambling; 10-300 bounds the evidence span.
+qstring ::= "\"" qchar{20,180} "\""
+estring ::= "\"" qchar{10,300} "\""
+qchar   ::= [^"\\\x00-\x1F] | "\\" (["\\bfnrt/] | "u" hex hex hex hex)
+hex     ::= [0-9a-fA-F]
+bool    ::= "true" | "false"

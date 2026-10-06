@@ -1,0 +1,22 @@
+# Tier A fixed queries. Order matters: the golden file records results in
+# this order. Add queries at the end; re-record with `eval golden --update`.
+Who is Kal'tsit?
+What happened to Chernobog at the start of the story?
+Why does Ch'en leave the Lungmen Guard Department?
+Skadi and the Abyssal Hunters
+Who is Enciodes Silverash?
+What is Oripathy?
+Talulah and the Reunion Movement
+What did W do in Londinium?
+Theresa and the Babel era
+Kal’tsit's report on Amiya
+Ifrit-Nian
+How did Faust die?
+Siesta volcano Catastrophe
+Who are the Trilby Ashers?
+Mephisto and the Sarkaz
+Dr. Silence and Rhine Lab
+Why did Specter lose her mind?
+Lungmen slums and the Rat King
+Ægir and the Seaborn
+???: ......

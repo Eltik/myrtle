@@ -1,0 +1,43 @@
+# ask's model router: one tool of Trevor's tables with its arguments, or retrieve. Tool names and the
+# enumerated argument values are fixed here; names (event, character, operator, place, race, branch) are
+# free strings that the tool resolves, and a name it cannot resolve sends the question to retrieval.
+root ::= "{\"tool\": \"" (
+  "reading_guide\", \"args\": {}" |
+  "reading_event\", \"args\": {" event "}" |
+  "reading_chronological\", \"args\": {}" |
+  "reading_time\", \"args\": {" event "}" |
+  "reading_compare\", \"args\": {" event ", " other "}" |
+  "first_appearance\", \"args\": {" character "}" |
+  "recap\", \"args\": {" event ", " ending "}" |
+  "timeline_all\", \"args\": {}" |
+  "deaths_in_event\", \"args\": {" event ", " who "}" |
+  "death_of\", \"args\": {" character "}" |
+  "dead_operators\", \"args\": {}" |
+  "real_name\", \"args\": {" operator "}" |
+  "real_names\", \"args\": {" place? "}" |
+  "operator_attribute\", \"args\": {" operator ", " field "}" |
+  "operator_filter\", \"args\": {" filter (", " filter)* "}" |
+  "canon\", \"args\": {" run? "}" |
+  "topic\", \"args\": {" topic "}" |
+  "overview\", \"args\": {}" |
+  "retrieve\", \"args\": {}"
+) "}"
+event ::= "\"event\": " name
+other ::= "\"other\": " name
+character ::= "\"character\": " name
+operator ::= "\"operator\": " name
+place ::= "\"place\": " name
+run ::= "\"run\": " name
+topic ::= "\"topic\": " name
+ending ::= "\"ending\": \"" ("true" | "false") "\""
+who ::= "\"who\": \"" ("all" | "npc" | "operators") "\""
+field ::= "\"field\": \"" ("race" | "birthplace" | "birthday" | "height" | "infection" | "class" | "branch" | "rarity" | "gender" | "affiliation") "\""
+filter ::= place | race | class | branch | rarity | gender | infected | sort
+race ::= "\"race\": " name
+branch ::= "\"branch\": " name
+class ::= "\"class\": \"" ("Vanguard" | "Guard" | "Defender" | "Sniper" | "Caster" | "Medic" | "Supporter" | "Specialist") "\""
+rarity ::= "\"rarity\": \"" [1-6] "\""
+gender ::= "\"gender\": \"" ("female" | "male") "\""
+infected ::= "\"infected\": \"" ("true" | "false") "\""
+sort ::= "\"sort\": \"" ("tallest" | "shortest") "\""
+name ::= "\"" [^"\\\x00-\x1F]{1,60} "\""

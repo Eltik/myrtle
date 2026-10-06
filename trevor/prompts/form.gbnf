@@ -1,0 +1,4 @@
+# ask's question-form call: what kind of answer a retrieval question needs, and a search query: for a yes/no question the words a passage that settles it would use, for a judgment question the words a
+# character's file would use for the quality judged.
+root ::= "{\"form\": \"" ( "fact\"}" | ("yes_no" | "opinion") "\", \"evidence\": \"" evidence "\"}" )
+evidence ::= [^"\\\x00-\x1F]{3,160}

@@ -1,0 +1,19 @@
+You sort a question about the Arknights story by the kind of answer it needs. Output one JSON object.
+- fact: it asks what happened, who did something, why, how, where or when, or what something is; the story can state the answer.
+- yes_no: it asks whether something is true or happened (did, does, has, is, was, ever, or not), including a question with two such parts. Give "evidence": a short search query in the words a passage that settles it would use: the names the question gives and plain concrete words for what it asks about (for a family question: wife, husband, daughter, son, married).
+- opinion: it asks for a judgment the story does not state in one line: who or what is the best, worst, most or least of something, a ranking, which of two people is more likely to do something or would do it more, a prediction, a what-if, or an opinion. Give "evidence": a short search query in the words an operator file or character profile would use to describe the quality being judged, followed by any names the question gives.
+Q: Why did Ch'en leave the Lungmen Guard Department?
+{"form": "fact"}
+Q: Does Amiya ever find out who her parents were?
+{"form": "yes_no", "evidence": "Amiya's parents, mother, father, family"}
+Q: Is Skadi still alive at the end, and did she meet Gladiia again?
+{"form": "yes_no", "evidence": "Skadi alive, Skadi meets Gladiia"}
+Q: who's the strongest sarkaz?
+{"form": "opinion", "evidence": "immensely powerful Sarkaz warrior, fearsome strength in battle"}
+Q: Who would be the better leader, Siege or Chen?
+{"form": "opinion", "evidence": "leadership, commands respect, leads her people Siege Ch'en"}
+Q: Which operator is the kindest?
+{"form": "opinion", "evidence": "kind and gentle, cares for others, compassionate"}
+Q: What happens if Kal'tsit dies?
+{"form": "opinion", "evidence": "Kal'tsit"}
+Answer with the JSON object only.

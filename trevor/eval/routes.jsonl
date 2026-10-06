@@ -1,0 +1,76 @@
+{"q": "Give me every story in chronological order", "expect": "table", "contains": ["Main story (17 episodes"]}
+{"q": "List all the known real names of every operator", "expect": "table", "contains": ["Tachanka: Alexsandr Senaviev"]}
+{"q": "What is Bagpipe's real name?", "expect": "table", "contains": ["Fiona Young"]}
+{"q": "What is Amiya's real name?", "expect": "retrieval"}
+{"q": "What playable operators are confirmed to be dead?", "expect": "table", "contains": ["confirmed"]}
+{"q": "Does W die?", "expect": "table", "contains": ["unconfirmed"]}
+{"q": "What non-playable characters died in Episode 7?", "expect": "table", "contains": ["Patriot"]}
+{"q": "Who died in Babel?", "expect": "table", "contains": ["Theresa"]}
+{"q": "List all the operators from Kazimierz", "expect": "table", "contains": ["Blemishine"]}
+{"q": "Which operators are Sarkaz?", "expect": "table", "contains": ["Flamebringer"]}
+{"q": "How many 6-star Casters are there?", "expect": "table", "contains": ["Ceobe"]}
+{"q": "What operators are Ursus?", "expect": "table", "contains": ["Gummy"]}
+{"q": "What race is Texas?", "expect": "table", "contains": ["Lupo"]}
+{"q": "Where was Amiya born?", "expect": "table", "contains": ["Rim Billiton"]}
+{"q": "Which operators betrayed Rhodes Island?", "expect": "retrieval"}
+{"q": "Which operators from Rhodes Island went to Londinium?", "expect": "retrieval"}
+{"q": "Why does Ch'en leave the Lungmen Guard Department?", "expect": "retrieval"}
+{"q": "In chronological order, order the death of FrostNova, death of Patriot, and the awakening of the Sui. Give the exact (or approximate) year", "expect": "retrieval"}
+{"q": "Was Patriot's death before or after the Chernobog crisis?", "expect": "retrieval"}
+{"q": "List all the known real names of every operator from Kazimierz", "expect": "table", "contains": ["affiliated with or born in Kazimierz", "Blemishine: Maria Nearl"]}
+{"q": "Who is the tallest operator?", "expect": "table", "contains": ["cm"]}
+{"q": "Who is the shortest Sarkaz operator?", "expect": "table", "contains": ["race Sarkaz"]}
+{"q": "Which operators are Fortress defenders?", "expect": "table", "contains": ["branch Fortress"]}
+{"q": "List all Soloblade operators", "expect": "table", "contains": ["branch Soloblade"]}
+{"q": "Who is the tallest person Amiya fought?", "expect": "retrieval"}
+{"q": "Which medics are infected?", "expect": "table", "contains": ["class Medic", "infected"]}
+{"q": "Has there been any explanation why Mostima treats Exusiai the way she does?", "expect": "retrieval"}
+{"q": "Didn't the war end because Theresa died? How can there have been an ascension ceremony like what Kal'tsit described?", "expect": "retrieval"}
+{"q": "What were the (lore) implinations of Angelina's Bloodline of Combat outfit?", "expect": "retrieval"}
+{"q": "Operator Records / Dorothy / Where is the Friend's House?", "expect": "retrieval"}
+{"q": "As a beginner, where is the Hype from Hoederer and Virtuosa comming from?", "expect": "retrieval"}
+{"q": "Do we know how Amiya got infected?", "expect": "retrieval"}
+{"q": "Is Specter infected?", "expect": "table", "contains": ["infection status"]}
+{"q": "How did Patriot die?", "expect": "table", "contains": ["Patriot"]}
+{"q": "Is she dead?", "expect": "retrieval"}
+{"q": "Did Lappland die [at the end of Il Siracusano]? Or what happened?", "expect": "retrieval"}
+{"q": "Was [Tin Man's death at the hands of the Banshee and Ho'olheyak] in Mansfield Break, or in an earlier Rhine Lab story?", "expect": "retrieval"}
+{"q": "Did Allerdale die?", "expect": "table", "contains": ["Allerdale"]}
+{"q": "How tall is Texas?", "expect": "table", "contains": ["161 cm"]}
+{"q": "When should I read Babel?", "expect": "table", "contains": ["Episode 13"]}
+{"q": "What do I need to complete before Babel?", "expect": "table", "contains": ["builds on"]}
+{"q": "Recommended reading order?", "expect": "table", "contains": ["EN release order"]}
+{"q": "Which events are key to understand the lore and story?", "expect": "table", "contains": ["call essential"]}
+{"q": "How many hours of reading was Lone Trail?", "expect": "table", "contains": ["hours"]}
+{"q": "When do I get to the part where Priestess shows up?", "expect": "table", "contains": ["first speaks"]}
+{"q": "Can someone explain the ending of Invitation to Wine?", "expect": "table", "contains": ["Invitation to Wine"]}
+{"q": "What happens in Episode 8?", "expect": "table", "contains": ["Roaring Flare"]}
+{"q": "What happened in Babel to Theresa?", "expect": "retrieval"}
+{"q": "Why did Priestess show up in chapter 15?", "expect": "retrieval"}
+{"q": "What happened before the Chernobog crisis?", "expect": "retrieval"}
+{"q": "Did you know the Candle Knight shows up in Catapult's operator record?", "expect": "retrieval"}
+{"q": "i was reading some Mansfield Break before Lone Trail comes out. Muelsyse talking about Control is interesting", "expect": "retrieval"}
+{"q": "Is Il Siracusano placed before chapter 2?", "expect": "retrieval"}
+{"q": "So [the Rhine Lab scientist's crimes in this story], this was before Babel, right?", "expect": "retrieval"}
+{"q": "How long has it been exactly [in The Masses' Travels]? Neuda and the Bolivarians show up from a long journey", "expect": "retrieval"}
+{"q": "Is it recommended to know about specific chapters before the Babel rerun?", "expect": "table", "contains": ["Episode 13"]}
+{"q": "How many hours [of reading] is Such Is the Joy of Our Reunion?", "expect": "table", "contains": ["hours"]}
+{"q": "Recommended reading order?", "expect": "table", "contains": ["Darknights Memoir (31)"]}
+{"q": "When Should I read Babel?", "expect": "table", "contains": ["right after Episode 13"]}
+{"q": "What order should I read the story in chronologically?", "expect": "table", "contains": ["Most players recommend reading in release order"]}
+{"q": "When should I read A Walk in the Dust?", "expect": "table", "contains": ["after Episode 8, before Episode 10"]}
+{"q": "Which IS2 ending is canon?", "expect": "table", "tool": "canon", "contains": ["The game never labels"], "routers": ["model", "knn"]}
+{"q": "is the phantom roguelike ending canon or not", "expect": "table", "tool": "canon", "contains": ["The game never labels"], "routers": ["model", "knn"]}
+{"q": "What ending of Sui's Garden did the story go with?", "expect": "table", "tool": "canon", "contains": ["The game never labels"], "routers": ["model", "knn"]}
+{"q": "Do later events confirm any of the Integrated Strategies endings?", "expect": "table", "tool": "canon", "contains": ["The game never labels"], "routers": ["model", "knn"]}
+{"q": "What exactly are the Sarkaz?", "expect": "retrieval", "tool": "topic", "contains": ["topic passage: Sarkaz"], "routers": ["model", "knn"]}
+{"q": "Can someone explain what Originium actually is?", "expect": "retrieval", "tool": "topic", "contains": ["topic passage: Originium"], "routers": ["model", "knn"]}
+{"q": "what's the deal with Sami, why is it so dangerous", "expect": "retrieval", "tool": "topic", "contains": ["topic passage: Sami"], "routers": ["model", "knn"]}
+{"q": "How does Oripathy spread from person to person?", "expect": "retrieval", "tool": "topic", "contains": ["topic passage: Oripathy"], "routers": ["model", "knn"]}
+{"q": "What order does the game itself suggest for the side stories?", "expect": "table", "tool": "reading_guide", "contains": ["Storylines view places"], "routers": ["model", "knn"]}
+{"q": "im new, what order should i go through the story in?", "expect": "table", "tool": "reading_guide", "contains": ["The game's Storylines view places Babel before Episode 14"], "routers": ["model", "knn"]}
+{"q": "Why do the Sarkaz and the Sankta hate each other in Babel?", "expect": "retrieval", "tool": "retrieve", "routers": ["model", "knn"]}
+{"q": "Can i read masses travel now since i read chapter 15? I heard the Masses Travels contains spoilers for chapter 15.", "expect": "table", "tool": "reading_compare", "contains": ["Dissociative Recombination", "Storylines view places"], "routers": ["model", "knn"]}
+{"q": "does reading Babel before chapter 13 spoil anything?", "expect": "table", "tool": "reading_compare", "contains": ["Babel", "Spoilers:"], "routers": ["model", "knn"]}
+{"q": "Which ending of IS1 is canon?", "expect": "table", "tool": "canon", "contains": ["Ceobe's Fungimist, is not in the game data"], "routers": ["model", "knn"]}
+{"q": "What does Angelina's Bloodline of Combat outfit say?", "expect": "retrieval", "tool": "retrieve", "routers": ["model", "knn"]}
