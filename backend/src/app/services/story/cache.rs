@@ -13,15 +13,20 @@
 
 use std::collections::HashMap;
 use std::future::Future;
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock, Weak};
 use std::time::Instant;
 
 use super::dto::StoryIndex;
 use super::index::{StoryIndexCache, build_index};
-use crate::app::{cpu, error::ApiError, state::AppState};
+use crate::app::cpu;
+use crate::app::error::ApiError;
+use crate::app::state::{AppState, ServerData};
+use crate::core::gamedata::assets::AssetIndex;
 use crate::core::gamedata::types::GameData;
 use crate::core::hypergryph::constants::Server;
+use crate::core::story::StoryAssetIndex;
 
 /// What one server's slot holds: a `Weak` to the `GameData` the value was built
 /// from, and the value.
@@ -115,6 +120,34 @@ impl<T> ServerCache<T> {
     }
 }
 
+/// The two trees a story build reads and the live asset index it is validated
+/// against, owned so a [`cpu::run`] closure can move them. Art (plates, audio,
+/// clips) is read under `art_dir`, story text under `assets_dir`: the same tree
+/// except on a text-only server, whose art is the default server's. One type
+/// for the pair, because two bare `&Path` arguments swap without a compile error.
+pub(super) struct StoryTrees {
+    pub art_dir: PathBuf,
+    pub assets_dir: PathBuf,
+    pub live: Arc<AssetIndex>,
+}
+
+impl StoryTrees {
+    pub(super) fn of(sd: &ServerData) -> Self {
+        Self {
+            art_dir: PathBuf::from(&sd.art_dir),
+            assets_dir: PathBuf::from(&sd.assets_dir),
+            live: sd.asset_index.load_full(),
+        }
+    }
+
+    /// The resolver index over these trees, shared per (art, text) pair; see
+    /// [`StoryAssetIndex::for_dirs`]. A cold call walks the art tree, so it
+    /// belongs inside [`cpu::run`].
+    pub(super) fn story_assets(&self) -> Arc<StoryAssetIndex> {
+        StoryAssetIndex::for_dirs(&self.art_dir, &self.assets_dir, &self.live)
+    }
+}
+
 static INDEX: ServerCache<StoryIndexCache> = ServerCache::new();
 
 /// How many times the story index has actually been BUILT in this process.
@@ -137,8 +170,7 @@ pub async fn cached_index(
 ) -> Result<Arc<StoryIndexCache>, ApiError> {
     let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
     let gd = server_data.game_data.load_full();
-    let assets = server_data.asset_index.load_full();
-    let assets_dir = std::path::PathBuf::from(&server_data.assets_dir);
+    let trees = StoryTrees::of(&server_data);
     let build_gd = Arc::clone(&gd);
     // An index never ages out on its own: only a new `GameData` retires one.
     INDEX
@@ -148,7 +180,12 @@ pub async fn cached_index(
             |_| true,
             || async move {
                 let built = cpu::run("story_index", move || {
-                    Arc::new(build_index(&build_gd, &assets, &assets_dir))
+                    Arc::new(build_index(
+                        &build_gd,
+                        &trees.live,
+                        &trees.art_dir,
+                        &trees.assets_dir,
+                    ))
                 })
                 .await?;
                 tracing::info!(

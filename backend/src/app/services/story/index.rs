@@ -153,18 +153,22 @@ fn chapter_number_for(gd: &GameData, group_id: &str, zone_id: Option<&str>) -> O
 }
 
 /// Build the index from loaded game data. Pure over its inputs plus the
-/// script probe on `assets_dir`; the route caches the result.
+/// script probe on `assets_dir`; the route caches the result. Art (the
+/// resolver index, the archive plates and clips) is read under `art_dir`,
+/// which is the default server's tree for a text-only server, while the
+/// scripts stay the server's own under `assets_dir`.
 #[must_use]
 pub fn build_index(
     gd: &GameData,
     assets: &Arc<AssetIndex>,
+    art_dir: &std::path::Path,
     assets_dir: &std::path::Path,
 ) -> StoryIndexCache {
     let started = Instant::now();
     // The same index `GET /story/{id}` resolves through, built here so the
     // warm pass pays for it once instead of the first reader paying for it.
     let assets_started = Instant::now();
-    let story_assets = StoryAssetIndex::for_dir(assets_dir, assets);
+    let story_assets = StoryAssetIndex::for_dirs(art_dir, assets_dir, assets);
     let story_assets_ms = assets_started.elapsed().as_millis();
     let mut lookup: HashMap<String, StoryRef> = HashMap::new();
     let mut by_txt: HashMap<String, String> = HashMap::new();
@@ -387,6 +391,7 @@ pub fn build_index(
             name: op.map_or_else(|| char_id.clone(), |o| o.name.clone()),
             rarity: op.map_or(0, |o| rarity_to_stars(&o.rarity)),
             profession: op.map_or(OperatorProfession::Unknown, |o| o.profession.clone()),
+            profession_name: op.and_then(|o| o.profession_name.clone()),
             avatar_url: avatar_for(assets, char_id).unwrap_or_default(),
             word_count: stories.iter().map(|s| s.word_count).sum(),
             illustration_count,
@@ -418,7 +423,7 @@ pub fn build_index(
     };
 
     let archive_started = Instant::now();
-    let archives = build_archives(gd, &story_assets, assets_dir);
+    let archives = build_archives(gd, &story_assets, art_dir);
     let archive_ms = archive_started.elapsed().as_millis();
 
     StoryIndexCache {

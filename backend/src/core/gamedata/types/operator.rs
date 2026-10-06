@@ -6,6 +6,7 @@ use super::audio::OperatorAudio;
 use super::handbook::{HandbookItem, OperatorProfile};
 use super::material::{Item, ItemType};
 use super::module::{Module, ModuleData};
+use super::obtain::ObtainChannel;
 use super::serde_helpers::{
     deserialize_fb_map, deserialize_fb_map_option, deserialize_fb_map_or_default,
 };
@@ -558,6 +559,15 @@ pub struct Operator {
     /// and Umiri's "all Siracusa Operators" buff reaches her in-game.
     #[serde(default)]
     pub sub_power: Option<Vec<PowerAffiliation>>,
+    /// `handbook_team_table` names of `nation_id`, `group_id` and `team_id`
+    /// in the server's own language. `None` for an empty id, the `none`
+    /// sentinel, or an id the server's table does not name.
+    #[serde(default)]
+    pub nation_name: Option<String>,
+    #[serde(default)]
+    pub group_name: Option<String>,
+    #[serde(default)]
+    pub team_name: Option<String>,
     pub display_number: String,
     pub appellation: String,
     pub position: OperatorPosition,
@@ -565,12 +575,25 @@ pub struct Operator {
     pub item_usage: String,
     pub item_desc: String,
     pub item_obtain_approach: String,
+    /// `item_obtain_approach` as a category. `None` when the approach is
+    /// empty. See `types::obtain`.
+    #[serde(default)]
+    pub obtain_channel: Option<ObtainChannel>,
     pub is_not_obtainable: bool,
     pub is_sp_char: bool,
     pub max_potential_level: i32,
     pub rarity: OperatorRarity,
     pub profession: OperatorProfession,
+    /// The server's own name for `profession`, from its gacha class tags
+    /// (see `gacha::PROFESSION_TAG_IDS`). `None` for a token, a trap, or a
+    /// tag list without the class.
+    #[serde(default)]
+    pub profession_name: Option<String>,
     pub sub_profession_id: String,
+    /// `uniequip_table` `subProfDict` name of `sub_profession_id` in the
+    /// server's own language, `None` when the table has no such id.
+    #[serde(default)]
+    pub sub_profession_name: Option<String>,
     #[serde(rename = "trait")]
     pub trait_data: Option<Trait>,
     pub phases: Vec<Phase>,

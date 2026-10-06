@@ -114,7 +114,7 @@ where
 {
     if let Some(sd) = state.try_server_data(server)
         && let Some(rel) = resolve(&sd.asset_index.load())
-        && let Ok(resp) = serve_file(&sd.assets_dir, &rel, headers).await
+        && let Ok(resp) = serve_file(&sd.art_dir, &rel, headers).await
     {
         return Ok(resp);
     }
@@ -122,7 +122,7 @@ where
         && let Some(sd) = state.try_server_data(state.default_server)
         && let Some(rel) = resolve(&sd.asset_index.load())
     {
-        return serve_file(&sd.assets_dir, &rel, headers).await;
+        return serve_file(&sd.art_dir, &rel, headers).await;
     }
     Err(ApiError::NotFound)
 }
@@ -890,6 +890,7 @@ async fn story_sprite_thumb_impl(
     format: StorySpriteThumbFormat,
     headers: &HeaderMap,
 ) -> Result<Response, ApiError> {
+    use crate::app::services::story::gallery::with_default_fallback;
     use crate::app::services::story_sprite_thumb::{ThumbFormat, ensure};
     let (format, etag_prefix) = match format {
         StorySpriteThumbFormat::Webp => (ThumbFormat::Webp, ""),
@@ -897,11 +898,7 @@ async fn story_sprite_thumb_impl(
         // PNG's ETag carries its own prefix and never revalidates the WebP.
         StorySpriteThumbFormat::Png => (ThumbFormat::Png, "png-"),
     };
-    let mut servers = vec![server];
-    if server != state.default_server {
-        servers.push(state.default_server);
-    }
-    for srv in servers {
+    for srv in with_default_fallback(state, server) {
         let Some(sd) = state.try_server_data(srv) else {
             continue;
         };
@@ -914,8 +911,10 @@ async fn story_sprite_thumb_impl(
         let Some((body, face)) = found else {
             continue;
         };
-        let rel = ensure(&sd.assets_dir, sprite_id, &body, face, format).await?;
-        return serve_file_tagged(&sd.assets_dir, &rel, headers, etag_prefix).await;
+        // The index is built from the art tree, so its body path, and the
+        // thumb cropped from it, live under `art_dir`.
+        let rel = ensure(&sd.art_dir, sprite_id, &body, face, format).await?;
+        return serve_file_tagged(&sd.art_dir, &rel, headers, etag_prefix).await;
     }
     Err(ApiError::NotFound)
 }

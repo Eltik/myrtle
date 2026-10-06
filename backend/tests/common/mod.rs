@@ -1,4 +1,4 @@
-//! Shared helpers for the base-optimizer integration tests.
+//! Shared helpers for the integration tests.
 //!
 //! Different test binaries use different subsets of these helpers, so unused
 //! ones are expected per-crate.
@@ -42,6 +42,22 @@ fn shared_game_data_arc() -> &'static std::sync::Arc<GameData> {
                 .0
         })
     })
+}
+
+/// One server's game data from the real `assets/output/{server}` tree, its art
+/// read from EN's tree as `app::state::art_dir_for` gives a text-only server.
+/// `None` when the server is not on disk, which is CI: the CI `game-data`
+/// artifact carries EN only.
+pub fn load_server_with_en_art(server: &str) -> Option<GameData> {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../assets/output");
+    let dir = root.join(server);
+    if !dir.join("gamedata/excel").is_dir() {
+        return None;
+    }
+    let (data, _) =
+        gamedata::init_game_data_with_art(&dir.join("gamedata/excel"), &dir, &root.join("en"))
+            .ok()?;
+    Some(data)
 }
 
 /// Max operators stationable in a room of `room_type` at `level` (1-indexed).

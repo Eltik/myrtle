@@ -9,6 +9,7 @@ use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::core::gamedata::types::handbook::{OperatorBirthPlace, OperatorGender, OperatorRace};
 use crate::core::gamedata::types::module::ModuleType;
+use crate::core::gamedata::types::obtain::ObtainChannel;
 use crate::core::gamedata::types::operator::{
     Operator, OperatorPosition, OperatorProfession, OperatorRarity,
 };
@@ -37,6 +38,17 @@ pub struct OperatorIndexEntry {
     pub group_id: Option<String>,
     /// Sub-faction / team id (same faction filter + logo fallback).
     pub team_id: Option<String>,
+    /// The server's own names for `profession`, `subProfessionId`,
+    /// `nationId`, `groupId` and `teamId`, so a client need not keep an
+    /// English table per id. `None` when the server's table does not name the
+    /// id.
+    pub profession_name: Option<String>,
+    pub sub_profession_name: Option<String>,
+    pub nation_name: Option<String>,
+    pub group_name: Option<String>,
+    pub team_name: Option<String>,
+    /// `itemObtainApproach` as a category, the same on every server.
+    pub obtain_channel: Option<ObtainChannel>,
     /// Illustrator names (list page "artists" filter).
     pub artists: Vec<String>,
     /// Small portrait image path (grid card image src).
@@ -177,6 +189,12 @@ fn to_index_entry(id: &str, op: &Operator, voices: &Voices) -> OperatorIndexEntr
         is_not_obtainable: op.is_not_obtainable,
         group_id: op.group_id.clone(),
         team_id: op.team_id.clone(),
+        profession_name: op.profession_name.clone(),
+        sub_profession_name: op.sub_profession_name.clone(),
+        nation_name: op.nation_name.clone(),
+        group_name: op.group_name.clone(),
+        team_name: op.team_name.clone(),
+        obtain_channel: op.obtain_channel,
         artists: op.artists.clone(),
         portrait: op.portrait.clone(),
         gender,
@@ -562,17 +580,28 @@ pub async fn get_build_stats(
     Ok(response)
 }
 
-/// Operators present on `source` but absent from the default (global/EN) server:
-/// the "upcoming operators" preview. Returns 404 when `source` is not a loaded
-/// server.
+/// The "upcoming operators" preview: operators on CN, the server that is
+/// ahead, that `viewer` does not have yet.
+///
+/// The comparison is against the server the visitor reads. It was "`viewer`
+/// minus the default server", which is empty for JP and KR (both trail EN), so
+/// `/jp/upcoming` and `/kr/upcoming` answered `[]` (production, 2026-10-06)
+/// while `/cn/upcoming` listed CN's lead. A CN (or Bilibili) viewer has no
+/// lead of its own to preview, so it keeps the old comparison against the
+/// default server, which leaves the bare `/upcoming` and `/cn/upcoming`
+/// unchanged. Entries carry CN's text: the viewer's client has none for them.
+///
+/// Returns 404 when CN is not a loaded server.
 pub async fn get_upcoming(
     state: &AppState,
-    source: Server,
+    viewer: Server,
 ) -> Result<Vec<OperatorIndexEntry>, ApiError> {
-    let source_data = state.try_server_data(source).ok_or(ApiError::NotFound)?;
+    let source_data = state
+        .try_server_data(Server::CN)
+        .ok_or(ApiError::NotFound)?;
     let key = CacheKey::StaticData {
         resource: "upcoming",
-        server: source.as_str(),
+        server: viewer.as_str(),
         fields_hash: 0,
         page: 0,
     };
@@ -580,7 +609,12 @@ pub async fn get_upcoming(
         return Ok(cached);
     }
 
-    let base = state.default_game_data();
+    let base = match viewer {
+        Server::CN | Server::Bilibili => state.default_game_data(),
+        other => state
+            .try_server_data(other)
+            .map_or_else(|| state.default_game_data(), |sd| sd.game_data.load_full()),
+    };
     let src = source_data.game_data.load_full();
     let base_ids: HashSet<&str> = base.operators.keys().map(String::as_str).collect();
 

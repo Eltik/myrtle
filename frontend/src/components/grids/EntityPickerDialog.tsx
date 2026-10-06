@@ -237,7 +237,7 @@ export function EntityPickerBody({ kinds, current, selected, onPick, searchRef }
                                                 )}
                                             </span>
                                             {/* Margin, not padding: line-clamp clips at the padding edge, so padding let a third line's top show. The min height nets the margin out. */}
-                                            <span className="line-clamp-2 my-1 min-h-[calc(2.4em-8px)] px-1 text-center font-medium font-sans text-[10.5px] text-foreground leading-tight max-sm:text-[11px]">{entity.name}</span>
+                                            <span className="my-1 line-clamp-2 min-h-[calc(2.4em-8px)] px-1 text-center font-medium font-sans text-[10.5px] text-foreground leading-tight max-sm:text-[11px]">{entity.name}</span>
                                         </button>
                                     </li>
                                 );

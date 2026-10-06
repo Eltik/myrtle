@@ -13,7 +13,9 @@ import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { values } from "#/lib/records";
 import { cn, downloadBlob } from "#/lib/utils";
+import { hasWebGL } from "#/lib/webgl";
 import type { IOperatorListItem } from "#/types/operators";
+import { sanitizeFilename } from "../../helpers";
 import { buildOperatorSkinList, chibiSkinKey, type IUISkin } from "../../skins";
 import type { messages as skinMessages } from "../../skins.messages";
 import { DynamicChibiViewer } from "../chibi/ChibiViewer.lazy";
@@ -93,8 +95,9 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
     // CURRENT skin's animation is ready (switching skins clears it automatically).
     const [readySkel, setReadySkel] = useState<string | null>(null);
     // The live renderer plays whenever a dynamic scene exists; skins without one
-    // simply keep their static illustration (the player errors out quietly).
-    const showDynamic = dynamicArtwork && !!dynamicFiles;
+    // simply keep their static illustration (the player errors out quietly), as does a
+    // browser without WebGL, where the renderer cannot be built at all.
+    const showDynamic = dynamicArtwork && !!dynamicFiles && hasWebGL();
     const dynamicReady = !!dynSkel && readySkel === dynSkel;
     // While the fullscreen viewer is open its renderer is the only one running: the card's
     // player is unmounted underneath it (two scene renderers at once, one of them at the
@@ -468,7 +471,7 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `${skinName.replace(/[^a-zA-Z0-9\-_]/g, "_")}.png`;
+            a.download = `${sanitizeFilename(skinName)}.png`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -500,7 +503,7 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
             setRecordingLeft(null);
             for (const track of stream.getTracks()) track.stop();
             const ext = mimeType.startsWith("video/mp4") ? "mp4" : "webm";
-            downloadBlob(new Blob(chunks, { type: mimeType }), `${skinName.replace(/[^a-zA-Z0-9\-_]/g, "_")}.${ext}`);
+            downloadBlob(new Blob(chunks, { type: mimeType }), `${sanitizeFilename(skinName)}.${ext}`);
         };
         recorderRef.current = recorder;
         recorder.start(250);

@@ -10,6 +10,7 @@
 
 use sqlx::{PgPool, Postgres, QueryBuilder};
 
+use crate::database::models::profile_layout::ProfileTabId;
 use crate::database::models::user::SearchEntry;
 
 /// How the page is ranked. Each variant names one aggregate; `Score` is the
@@ -93,6 +94,17 @@ impl Rank<'_> {
     }
 }
 
+/// The score the page orders by: `total_score`, `NULL` while the Score tab
+/// is private. A visitor reads no score for that player (`/get-user-score`
+/// refuses it, and the row's `total_score` is withheld), so the order must
+/// not rank them by it either: they sort with the never-graded, last.
+fn score_sql() -> String {
+    format!(
+        "CASE WHEN {} THEN p.total_score END",
+        ProfileTabId::Score.visible_sql("p.profile_layout")
+    )
+}
+
 /// The user owns every operator in `ids` that their own server has released:
 /// `required` is `(server code, count)` per loaded server, lower-cased to
 /// match `servers.code` case-insensitively. A user on a server with no loaded
@@ -119,6 +131,39 @@ pub struct UserSearch<'a> {
 }
 
 impl UserSearch<'_> {
+    /// The profile tabs whose data this search ranks or filters by: the
+    /// roster for the operator, potential, mastery, module, skin and
+    /// owned-of ranks and for the ownership filters (`has`, `all`), the
+    /// enemies tab for the enemies rank.
+    ///
+    /// Not the score tab: `Score` is also the default order every name
+    /// search runs under, so dropping a private Score tab there would make
+    /// the player unfindable by name. The order reads [`score_sql`] instead,
+    /// which ranks them with the unscored players, last in either direction.
+    ///
+    /// The `support` filter reads no tab, as `/get-user-supports` is gated
+    /// by none (see `routes::roster::get_supports`).
+    fn tabs_read(&self) -> Vec<ProfileTabId> {
+        let roster_rank = matches!(
+            self.rank,
+            Rank::Operators
+                | Rank::Potentials
+                | Rank::Masteries
+                | Rank::Modules
+                | Rank::Skins
+                | Rank::OwnedOf(_)
+        );
+        let roster_filter = !self.has.is_empty() || self.owns_all.is_some();
+        let mut tabs = Vec::new();
+        if roster_rank || roster_filter {
+            tabs.push(ProfileTabId::Roster);
+        }
+        if matches!(self.rank, Rank::Enemies) {
+            tabs.push(ProfileTabId::Enemies);
+        }
+        tabs
+    }
+
     /// The `WITH` list: the rank's `metric`, and `owned` when the owns-all
     /// filter is on. Both are one grouped pass over a roster table, which is
     /// what keeps the filter off a per-row subquery as the population grows:
@@ -165,6 +210,13 @@ impl UserSearch<'_> {
             qb.push("::bigint[]) AS req(server, n) ON req.server = lower(p.server)");
         }
         qb.push(" WHERE p.public_profile = true");
+        // A player who hid the tab a filter or rank is computed from drops out
+        // of it, as that tab's endpoint refuses a visitor; a name search, the
+        // score and join-date orders and the support filter still find them.
+        for tab in self.tabs_read() {
+            qb.push(" AND ");
+            qb.push(tab.visible_sql("p.profile_layout"));
+        }
         if let Some(q) = self.q {
             qb.push(" AND p.nickname ILIKE ");
             qb.push_bind(format!("%{q}%"));
@@ -191,7 +243,8 @@ impl UserSearch<'_> {
 
     /// One page. `metric` carries the rank's value per row (`NULL` under
     /// `Score`, where the profile's `total_score` already is the value).
-    /// Ties fall back to score, then uid, so paging is stable.
+    /// Ties fall back to score, then uid, so paging is stable. Both read
+    /// [`score_sql`], so a private Score tab orders as no score.
     pub async fn fetch_page(
         &self,
         pool: &PgPool,
@@ -211,11 +264,12 @@ impl UserSearch<'_> {
         let dir = if self.descending { "DESC" } else { "ASC" };
         match self.rank {
             Rank::Score => {
-                qb.push(format!(" ORDER BY p.total_score {dir} NULLS LAST, p.uid"));
+                qb.push(format!(" ORDER BY {} {dir} NULLS LAST, p.uid", score_sql()));
             }
             _ => {
                 qb.push(format!(
-                    " ORDER BY metric {dir} NULLS LAST, p.total_score DESC NULLS LAST, p.uid"
+                    " ORDER BY metric {dir} NULLS LAST, {} DESC NULLS LAST, p.uid",
+                    score_sql()
                 ));
             }
         }

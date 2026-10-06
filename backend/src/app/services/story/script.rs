@@ -4,7 +4,7 @@
 
 use std::sync::Arc;
 
-use super::cache::cached_index;
+use super::cache::{StoryTrees, cached_index};
 use super::index::StoryRef;
 use crate::app::{cpu, error::ApiError, state::AppState};
 use crate::core::gamedata::assets::AssetIndex;
@@ -23,17 +23,25 @@ pub async fn get_story(
         return Ok(None);
     };
     let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
-    let assets_dir = std::path::PathBuf::from(&server_data.assets_dir);
-    let live_assets = server_data.asset_index.load_full();
+    let trees = StoryTrees::of(&server_data);
     let id = story_id.to_owned();
     cpu::run("story_parse", move || {
-        load_and_parse(&assets_dir, &live_assets, &id, &story_ref)
+        load_and_parse(
+            &trees.art_dir,
+            &trees.assets_dir,
+            &trees.live,
+            &id,
+            &story_ref,
+        )
     })
     .await?
 }
 
 /// The synchronous half of [`get_story`], shared with the integration test.
+/// The script and its synopsis are read under `assets_dir`, the art they name
+/// resolves under `art_dir` (the same tree except on a text-only server).
 pub fn load_and_parse(
+    art_dir: &std::path::Path,
     assets_dir: &std::path::Path,
     live_assets: &Arc<AssetIndex>,
     story_id: &str,
@@ -48,7 +56,7 @@ pub fn load_and_parse(
         }
         Err(e) => return Err(ApiError::Internal(anyhow::anyhow!(e))),
     };
-    let index = StoryAssetIndex::for_dir(assets_dir, live_assets);
+    let index = StoryAssetIndex::for_dirs(art_dir, assets_dir, live_assets);
     let mut parsed = story::parse_story(
         story_id,
         &story_ref.name,

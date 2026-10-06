@@ -13,6 +13,8 @@ interface IFilterSheetProps {
     filters: IBirthdayFilters;
     onChange: (next: IBirthdayFilters) => void;
     nations: [string, string][];
+    /** Class code -> the server's own class name. */
+    classNames: ReadonlyMap<string, string>;
     matched: number;
     total: number;
     /** Count of active facets, shown as a badge on the trigger. */
@@ -21,7 +23,7 @@ interface IFilterSheetProps {
 }
 
 /** Trigger button + side sheet holding the filter form; the trigger is hidden at `lg` and up. */
-export function FilterSheet({ filters, onChange, nations, matched, total, activeCount, onReset }: IFilterSheetProps): React.ReactElement {
+export function FilterSheet({ filters, onChange, nations, classNames, matched, total, activeCount, onReset }: IFilterSheetProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("tools");
     const [open, setOpen] = React.useState(false);
 
@@ -42,7 +44,7 @@ export function FilterSheet({ filters, onChange, nations, matched, total, active
                     <p className="font-medium font-mono text-[11.5px] text-muted-foreground uppercase tracking-[0.08em]">{t("birthdays.sheet.matchCount", { matched, total })}</p>
                 </SheetHeader>
                 <SheetPanel className="px-5 pt-1 pb-2">
-                    <FilterControls filters={filters} onChange={onChange} nations={nations} />
+                    <FilterControls filters={filters} onChange={onChange} nations={nations} classNames={classNames} />
                 </SheetPanel>
                 <SheetFooter>
                     <Button variant="ghost" onClick={onReset} disabled={activeCount === 0}>

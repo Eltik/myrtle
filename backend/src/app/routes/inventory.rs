@@ -4,8 +4,9 @@ use serde::Deserialize;
 
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
-use crate::app::routes::resolve_user_id;
+use crate::app::routes::resolve_user_id_for_tab;
 use crate::app::state::AppState;
+use crate::database::models::profile_layout::ProfileTabId;
 use crate::database::queries::items;
 use crate::database::queries::items::ItemEntry;
 
@@ -40,7 +41,13 @@ pub async fn get_inventory(
     auth: MaybeAuthUser,
     Query(params): Query<InventoryParams>,
 ) -> Result<Json<Vec<ItemEntry>>, ApiError> {
-    let user_id = resolve_user_id(&state, &auth, params.uid.as_deref()).await?;
+    let user_id = resolve_user_id_for_tab(
+        &state,
+        &auth,
+        params.uid.as_deref(),
+        ProfileTabId::Inventory,
+    )
+    .await?;
     let entries = items::get_inventory(&state.db, user_id).await?;
     Ok(Json(entries))
 }

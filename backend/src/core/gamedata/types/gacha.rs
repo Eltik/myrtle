@@ -133,6 +133,37 @@ pub struct RecruitPool {
     pub recruit_time_table: Vec<RecruitTimeEntry>,
 }
 
+/// The gacha tag id of each class, keyed by profession code. Every client
+/// ships the 8 class names as recruitment tags under these fixed ids, in the
+/// same order (checked on en, cn, kr and jp on 2026-10-06: 1 is Guard,
+/// 近卫干员, 가드 and 前衛タイプ), so a class reads in the server's own wording
+/// with no translation table and a server added later needs no code. The
+/// frontend recruitment tool keeps the same numbering as `PROFESSION_TAG_ID`
+/// in `components/tools/recruitment/impl/constants.ts`.
+pub const PROFESSION_TAG_IDS: [(&str, i32); 8] = [
+    ("WARRIOR", 1),
+    ("SNIPER", 2),
+    ("TANK", 3),
+    ("MEDIC", 4),
+    ("SUPPORT", 5),
+    ("CASTER", 6),
+    ("SPECIAL", 7),
+    ("PIONEER", 8),
+];
+
+/// Profession code -> the server's own class name, read off its gacha tags
+/// verbatim (CN's 干员 and JP's タイプ suffixes are the game's wording, kept).
+/// A tag id the list lacks, or an empty name, leaves that class out.
+pub fn profession_names(tags: &[GachaTag]) -> HashMap<String, String> {
+    PROFESSION_TAG_IDS
+        .iter()
+        .filter_map(|(code, id)| {
+            let tag = tags.iter().find(|tag| tag.tag_id == *id)?;
+            (!tag.tag_name.is_empty()).then(|| ((*code).to_owned(), tag.tag_name.clone()))
+        })
+        .collect()
+}
+
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(TS, utoipa::ToSchema)]

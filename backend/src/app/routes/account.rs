@@ -5,9 +5,10 @@ use serde::Deserialize;
 
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
-use crate::app::routes::resolve_uid;
+use crate::app::routes::resolve_uid_for_tab;
 use crate::app::services::max_level::{LevelTarget, MaxLevelCostResponse, max_level_costs};
 use crate::app::state::AppState;
+use crate::database::models::profile_layout::ProfileTabId;
 
 #[derive(Deserialize)]
 pub struct AccountParams {
@@ -47,6 +48,12 @@ pub async fn get_max_level_cost(
     auth: MaybeAuthUser,
     Query(params): Query<AccountParams>,
 ) -> Result<Json<MaxLevelCostResponse>, ApiError> {
-    let uid = resolve_uid(&state, &auth, params.uid.as_deref()).await?;
+    let uid = resolve_uid_for_tab(
+        &state,
+        &auth,
+        params.uid.as_deref(),
+        ProfileTabId::Optimizer,
+    )
+    .await?;
     Ok(Json(max_level_costs(&state, &uid, params.target).await?))
 }

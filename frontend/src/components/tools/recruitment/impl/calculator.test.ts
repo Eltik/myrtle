@@ -7,7 +7,7 @@ const MELEE = { id: 9, name: "Melee" };
 const GUARD = { id: 1, name: "Guard" };
 
 function op(id: string, rarity: number, extra: Partial<IRecruitableOperator> = {}): IRecruitableOperator {
-    return { id, name: id, rarity, profession: "WARRIOR", position: "MELEE", tagList: ["Melee", "Guard"], potentials: [], ...extra };
+    return { id, name: id, rarity, profession: "WARRIOR", professionName: "Guard", position: "MELEE", tagList: ["Melee", "Guard"], potentials: [], ...extra };
 }
 
 describe("potential-asc operator sort", () => {

@@ -3,7 +3,7 @@ import type { ITierOperator } from "#/lib/api/tier-lists";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { stripMarkdown } from "#/lib/markdown";
-import { formatArchetype, formatNationId, formatProfession, getAvatarById, parseOperatorName } from "#/lib/utils";
+import { archetypeLabel, getAvatarById, nationLabel, parseOperatorName, professionLabel } from "#/lib/utils";
 import { operatorPlacementNote } from "../shared";
 import type { messages } from "./TierOperatorPreview.messages";
 import styles from "./TierOperatorPreview.module.css";
@@ -16,7 +16,7 @@ export function TierOperatorPreview({ operator }: ITierOperatorPreviewProps) {
     const t: TypedT<typeof messages> = useT("tierLists");
     const { displayName, subtitle } = parseOperatorName(operator.name);
     const note = operatorPlacementNote(operator);
-    const archetype = formatArchetype(operator.subProfessionId);
+    const archetype = archetypeLabel(operator);
     const factionId = operator.nationId && operator.nationId.length > 0 ? operator.nationId : "rhodes";
     const positionLabel = operator.position === "RANGED" ? t("detail.preview.position.ranged") : operator.position === "MELEE" ? t("detail.preview.position.melee") : null;
     const initial = operator.name.charAt(0).toUpperCase();
@@ -44,7 +44,7 @@ export function TierOperatorPreview({ operator }: ITierOperatorPreviewProps) {
 
             <div className={styles.row}>
                 <ClassIcon profession={operator.profession} size={16} />
-                <span className={styles.class}>{formatProfession(operator.profession)}</span>
+                <span className={styles.class}>{professionLabel(operator)}</span>
                 {archetype && (
                     <>
                         <span className={styles.dot} aria-hidden="true">
@@ -60,7 +60,7 @@ export function TierOperatorPreview({ operator }: ITierOperatorPreviewProps) {
                     {operator.nationId && (
                         <span className={styles.metaItem}>
                             <span className={styles.k}>{t("detail.preview.nation")}</span>
-                            <span className={styles.v}>{formatNationId(operator.nationId)}</span>
+                            <span className={styles.v}>{nationLabel(operator)}</span>
                         </span>
                     )}
                     {positionLabel && (

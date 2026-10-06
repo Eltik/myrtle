@@ -1,4 +1,5 @@
 import { env } from "#/env";
+import { DEFAULT_GAMEDATA_SERVER } from "#/lib/api/gamedata";
 import type { I18nManifest } from "#/types/generated/I18nManifest";
 
 export type Catalog = Record<string, string>;
@@ -105,11 +106,23 @@ export interface IBootstrap {
     hash: string;
     /**
      * The Arknights client whose text serves this locale's game data
-     * (operator names, skill descriptions, stage text). Carried straight
-     * through from the manifest row so the game-data API layer can pick the
-     * `/{server}/...` endpoints - see `lib/api/gamedata.ts`.
+     * (operator names, skill descriptions, stage text), so the game-data API
+     * layer can pick the `/{server}/...` endpoints - see `lib/api/gamedata.ts`.
+     * The visitor's own pick (the `gamedata_server` cookie) wins over the
+     * locale's row when the backend has that server loaded; see
+     * {@link pickGamedataServer}.
      */
     gamedataServer: string;
+    /** The server this locale reads when the visitor has not picked one. */
+    localeGamedataServer: string;
+    /** Whether {@link gamedataServer} came from the visitor's pick. */
+    gamedataServerPicked: boolean;
+    /**
+     * The servers the backend has loaded, the default first: the picker's
+     * entries. Empty when the backend predates the field, which hides the
+     * picker and leaves the locale's row in charge exactly as before.
+     */
+    gamedataServers: string[];
 }
 
 export interface IAvailableLocale {
@@ -123,12 +136,41 @@ export interface IAvailableLocale {
     completion?: number;
 }
 
+export interface IGamedataServerChoice {
+    server: string;
+    localeServer: string;
+    picked: boolean;
+}
+
+/**
+ * Which server's game data a render reads.
+ *
+ * The visitor's pick wins, then the locale's row, then the backend's default
+ * (its first loaded server, else English). The pick and the row each count
+ * only when the backend reports that server loaded, which is what keeps a
+ * `ko -> kr` row from sending every Korean visitor to a server that answers
+ * 404 on a deployment without KR data.
+ *
+ * `loaded === undefined` is a backend older than the `gamedata_servers` field.
+ * The locale's row is then trusted as-is and the pick ignored, which is exactly
+ * the behaviour before the picker existed.
+ */
+export function pickGamedataServer(localeRow: string | undefined, picked: string | undefined, loaded: string[] | undefined): IGamedataServerChoice {
+    const row = localeRow ?? DEFAULT_GAMEDATA_SERVER;
+    if (loaded === undefined) return { server: row, localeServer: row, picked: false };
+
+    const fallback = loaded[0] ?? DEFAULT_GAMEDATA_SERVER;
+    const localeServer = loaded.includes(row) ? row : fallback;
+    if (picked && loaded.includes(picked)) return { server: picked, localeServer, picked: true };
+    return { server: localeServer, localeServer, picked: false };
+}
+
 /**
  * Everything a render needs to show text in one locale. Falls back to an empty
  * catalog - not an error - when the backend cannot be reached, because the
  * bundled source catalog covers English either way.
  */
-export async function loadBootstrap(requested: string, fallback: string, claimedPath?: string): Promise<IBootstrap> {
+export async function loadBootstrap(requested: string, fallback: string, claimedPath?: string, pickedServer?: string): Promise<IBootstrap> {
     const manifest = await fetchManifest();
 
     const available = (manifest?.locales ?? []).map(
@@ -148,13 +190,17 @@ export async function loadBootstrap(requested: string, fallback: string, claimed
     const served = manifest?.locales.some((l) => l.code === requested) ?? false;
     const redirectTo = !served && claimedPath !== undefined ? claimedPath : null;
 
+    const loaded = manifest?.gamedata_servers;
+    const choice = pickGamedataServer(entry?.gamedata_server, pickedServer, loaded);
+    const servers = { gamedataServer: choice.server, localeGamedataServer: choice.localeServer, gamedataServerPicked: choice.picked, gamedataServers: loaded ?? [] };
+
     if (!entry) {
-        return { locale: fallback, available, messages: {}, hash: "empty", gamedataServer: "en", redirectTo };
+        return { locale: fallback, available, messages: {}, hash: "empty", ...servers, redirectTo };
     }
 
     const hash = entry.namespaces[ALL_NAMESPACES] ?? "latest";
     const messages = await fetchCatalog(entry.code, hash);
-    return { locale: entry.code, available, messages, hash, gamedataServer: entry.gamedata_server, redirectTo };
+    return { locale: entry.code, available, messages, hash, ...servers, redirectTo };
 }
 
 /** Whether a locale code is one the backend currently serves. */

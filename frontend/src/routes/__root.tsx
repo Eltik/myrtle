@@ -212,7 +212,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             </head>
             <body className="wrap-anywhere font-sans antialiased selection:bg-primary/30 selection:text-foreground">
                 <RouterProgress />
-                <I18nProvider locale={locale} available={i18n?.available ?? []} messages={i18n?.messages ?? {}} gamedataServer={i18n?.gamedataServer}>
+                <I18nProvider locale={locale} available={i18n?.available ?? []} messages={i18n?.messages ?? {}} gamedataServer={i18n?.gamedataServer} localeGamedataServer={i18n?.localeGamedataServer} gamedataServerPicked={i18n?.gamedataServerPicked} gamedataServers={i18n?.gamedataServers}>
                     <CommandProvider>
                         <SiteChrome>{children}</SiteChrome>
                     </CommandProvider>

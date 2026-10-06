@@ -16,11 +16,11 @@
 //! "Character gallery").
 
 use std::collections::{BTreeMap, HashMap, HashSet};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::{Arc, Weak};
 use std::time::Instant;
 
-use super::cache::{ServerCache, cached_index};
+use super::cache::{ServerCache, StoryTrees, cached_index};
 use super::dto::{
     StorySpriteDetail, StorySpriteEntry, StorySpriteExample, StorySpriteIndex, StorySpriteKind,
     StorySpriteName, StorySpriteNameDetail, StorySpriteNameStory, StorySpriteStory,
@@ -530,12 +530,15 @@ fn ranked_names(names: HashMap<String, f64>) -> Vec<StorySpriteName> {
 
 /// Build the gallery from the cached library index. Pure over its inputs
 /// plus one read of every distinct library script and the PNG headers the
-/// resolver reads for bodies whose hub carries no size.
+/// resolver reads for bodies whose hub carries no size. The scripts are read
+/// under `assets_dir` and the plates under `art_dir`, the same tree except on
+/// a text-only server, whose art is the default server's.
 #[must_use]
 pub fn build_sprite_index(
     gd: &GameData,
     library: &StoryIndexCache,
     assets: &StoryAssetIndex,
+    art_dir: &Path,
     assets_dir: &Path,
 ) -> (
     StorySpriteIndex,
@@ -554,7 +557,7 @@ pub fn build_sprite_index(
     for folder in assets.sprite_folder_names() {
         let tally = tallies.remove(folder).unwrap_or_default();
         let mut variants = variants_of(assets, folder, &tally.uses);
-        variants.retain(|v| !is_blank_plate(&served_path(assets_dir, &v.sprite.body_url)));
+        variants.retain(|v| !is_blank_plate(&served_path(art_dir, &v.sprite.body_url)));
         if variants.is_empty() {
             census.hidden.push(folder.to_owned());
             continue;
@@ -701,10 +704,9 @@ pub async fn cached_sprites(
     let library = cached_index(state, server).await?;
     let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
     let gd = server_data.game_data.load_full();
-    let live = server_data.asset_index.load_full();
-    let assets_dir = PathBuf::from(&server_data.assets_dir);
+    let trees = StoryTrees::of(&server_data);
     let build_gd = Arc::clone(&gd);
-    let fresh_live = Arc::clone(&live);
+    let fresh_live = Arc::clone(&trees.live);
     SPRITES
         .get_or_build(
             server,
@@ -717,15 +719,20 @@ pub async fn cached_sprites(
             || async move {
                 let built = cpu::run("story_sprites", move || {
                     let started = Instant::now();
-                    let assets = StoryAssetIndex::for_dir(&assets_dir, &live);
-                    let (index, details, census) =
-                        build_sprite_index(&build_gd, &library, &assets, &assets_dir);
+                    let assets = trees.story_assets();
+                    let (index, details, census) = build_sprite_index(
+                        &build_gd,
+                        &library,
+                        &assets,
+                        &trees.art_dir,
+                        &trees.assets_dir,
+                    );
                     Arc::new(StorySpriteCache {
                         index,
                         details,
                         census,
                         build_ms: started.elapsed().as_millis(),
-                        assets: Arc::downgrade(&live),
+                        assets: Arc::downgrade(&trees.live),
                     })
                 })
                 .await?;
@@ -764,7 +771,7 @@ pub async fn get_story_sprite(
         .ok_or_else(|| ApiError::NotFoundMessage(format!("no story sprite folder `{base}`")))
 }
 
-/// Where one listed expression's thumb is served from: the server's assets
+/// Where one listed expression's thumb is served from: the server's art
 /// root and the cached file under it, rendered first when missing or stale.
 /// `key` is the expression's `#N$M` (or `@alias`) exactly as the sheet lists
 /// it; an expression the gallery does not list is a 404.
@@ -785,9 +792,9 @@ pub async fn get_variant_thumb(
         .find(|v| v.key == key)
         .ok_or(ApiError::NotFound)?;
     let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
-    let assets_dir = server_data.assets_dir.clone();
-    let rel = super::sprite_thumbs::ensure(&assets_dir, &detail.sprite.base, variant).await?;
-    Ok((assets_dir, rel))
+    let art_dir = server_data.art_dir.clone();
+    let rel = super::sprite_thumbs::ensure(&art_dir, &detail.sprite.base, variant).await?;
+    Ok((art_dir, rel))
 }
 
 #[cfg(test)]

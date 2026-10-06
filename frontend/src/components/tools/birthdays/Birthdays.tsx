@@ -4,6 +4,7 @@ import { PageHeader } from "#/components/ui/page-header";
 import { Tabs, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
+import { serverNames } from "#/lib/utils";
 import type { messages } from "./Birthdays.messages";
 import { calculateBirthdays } from "./impl/calculate";
 import { CalendarView } from "./impl/components/CalendarView";
@@ -26,6 +27,7 @@ export function Birthdays({ operators }: IBirthdaysProps): React.ReactElement {
 
     const allBirthdays = React.useMemo(() => calculateBirthdays(operators.filter(isCalendarOperator)), [operators]);
     const nations = React.useMemo(() => deriveNations(allBirthdays.map((b) => b.operator)), [allBirthdays]);
+    const classNames = React.useMemo(() => serverNames(operators, "profession"), [operators]);
 
     const [view, setView] = React.useState<BirthdayView>("calendar");
     const [scale, setScale] = React.useState<CalendarScale>("month");
@@ -74,11 +76,11 @@ export function Birthdays({ operators }: IBirthdaysProps): React.ReactElement {
                         </TabsTrigger>
                     </TabsList>
                 </Tabs>
-                <FilterSheet filters={filters} onChange={setFilters} nations={nations} matched={matchedCount} total={knownTotal} activeCount={activeFilterCount} onReset={onResetFilters} />
+                <FilterSheet filters={filters} onChange={setFilters} nations={nations} classNames={classNames} matched={matchedCount} total={knownTotal} activeCount={activeFilterCount} onReset={onResetFilters} />
             </div>
 
             <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[300px_1fr]">
-                <FilterSidebar filters={filters} onChange={setFilters} nations={nations} matched={matchedCount} total={knownTotal} onReset={onResetFilters} />
+                <FilterSidebar filters={filters} onChange={setFilters} nations={nations} classNames={classNames} matched={matchedCount} total={knownTotal} onReset={onResetFilters} />
                 <main className="min-w-0">
                     {view === "calendar" && <CalendarView scale={scale} onScaleChange={setScale} anchor={anchor} onAnchorChange={setAnchor} byDay={byDay} onSelect={onSelectDay} today={today} />}
                     {view === "list" && <ListView items={filtered} today={today} />}

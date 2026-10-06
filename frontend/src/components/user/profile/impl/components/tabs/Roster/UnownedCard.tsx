@@ -6,7 +6,7 @@ import { Progress } from "#/components/ui/progress";
 import { Separator } from "#/components/ui/separator";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { formatProfession, getAvatarById } from "#/lib/utils";
+import { getAvatarById, professionLabel } from "#/lib/utils";
 import { parseOperatorName, rarityIcon } from "./helpers.card";
 import type { messages as cardMessages } from "./helpers.card.messages";
 import type { IUnownedEntry, ViewMode } from "./types";
@@ -77,7 +77,7 @@ function UnownedDetailed({ entry }: { entry: IUnownedEntry }) {
                                 <img alt={t("profile.roster.card.rarityAlt", { star })} className="h-4.5 w-auto object-contain" decoding="async" height={18} loading="lazy" src={rarityIcon(star)} width={60} />
                                 <div className="flex flex-row items-center gap-1">
                                     <ClassIcon profession={profession} size={20} />
-                                    <span className="text-sm text-white">{formatProfession(profession)}</span>
+                                    <span className="text-sm text-white">{professionLabel(entry.meta)}</span>
                                 </div>
                             </div>
                             <img alt={t("profile.roster.card.eliteAlt", { elite: 0 })} className="h-6 w-6 object-contain" decoding="async" height={24} loading="lazy" src={eliteIcon(0)} width={24} />

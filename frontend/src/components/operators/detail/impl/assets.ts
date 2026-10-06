@@ -23,18 +23,25 @@ export function operatorElite2(opId: string, skin: string | null, portrait: stri
     return asset(path, server);
 }
 
+/**
+ * An outfit's file name under `/textures/skinpack/<folder>/`, without the extension: `@`
+ * becomes `_` and `#` is escaped, so `char_002_amiya@epoque#4` is
+ * `char_002_amiya_epoque%234`. The reduced variant appends `b`.
+ */
+export function skinpackFile(skinId: string): string {
+    return skinId.replaceAll("@", "_").replaceAll("#", "%23");
+}
+
 /** The card thumbnail for a skin. The game ships a reduced variant of almost every outfit
  *  art beside the full one, `<skin>b.png` at 1024 or 1280 square (471 of 481 skinpack arts
  *  here; mean 1.26 MB against 4.77 MB, kalts boc#6 1.61 MB against 8.88), and a 72 px card
  *  never shows more than that. Opening a Skins tab loaded 17.4 MB of full-size art for two
  *  cards on kalts before any skin was chosen (register, "PERFORMANCE, FIFTH RUN"). Where no
- *  `b` variant exists the card's onError falls back to the full art. Elite arts have no
- *  reduced variant and keep the full one. */
+ *  `b` variant exists the card's onError falls back to the full art. Elite arts keep the
+ *  full one here, though most have a reduced variant too (323 of 381 elite 2 arts ship
+ *  `_2b.png` on EN). */
 export function skinThumbnail(opId: string, skinId: string, server?: AssetServer): string {
-    if (skinId.includes("@")) {
-        const file = skinId.replaceAll("@", "_").replaceAll("#", "%23");
-        return asset(`/textures/skinpack/${opId}/${file}b.png`, server);
-    }
+    if (skinId.includes("@")) return asset(`/textures/skinpack/${opId}/${skinpackFile(skinId)}b.png`, server);
     return skinTexture(opId, skinId, server);
 }
 
@@ -42,10 +49,7 @@ export function skinTexture(opId: string, skinId: string, server?: AssetServer):
     // Skin ids without `@` are elite/default-art variants (e.g. `char_002_amiya#1+`)
     // and live under `/textures/chararts/`. Skins with `@` are alternate outfits
     // (e.g. `char_002_amiya@winter#1`) and live under `/textures/skinpack/`.
-    if (skinId.includes("@")) {
-        const file = skinId.replaceAll("@", "_").replaceAll("#", "%23");
-        return asset(`/textures/skinpack/${opId}/${file}.png`, server);
-    }
+    if (skinId.includes("@")) return asset(`/textures/skinpack/${opId}/${skinpackFile(skinId)}.png`, server);
     if (skinId.includes("#")) {
         const file = skinId.replace("#", "_");
         return asset(`/textures/chararts/${opId}/${file}.png`, server);

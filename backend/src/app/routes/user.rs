@@ -5,8 +5,12 @@ use axum::{
 use serde::Deserialize;
 
 use crate::app::extractors::auth::{AuthUser, MaybeAuthUser};
-use crate::app::routes::{StatusOk, resolve_uid};
+use crate::app::routes::{
+    StatusOk, ensure_tab_visible, resolve_public_profile, resolve_uid_for_tab,
+};
 use crate::app::{error::ApiError, services, state::AppState};
+use crate::core::hypergryph::constants::Server;
+use crate::database::models::profile_layout::ProfileTabId;
 use crate::database::models::score::UserScore;
 use crate::database::models::user::{UserCheckin, UserProfile};
 use crate::database::queries::score::get_score_by_uid;
@@ -21,6 +25,11 @@ pub struct GetUserParams {
 /// expiry, last-online time and the account's role, so the `uid` goes through
 /// the shared privacy gate: the caller's own profile or a public one, 403
 /// otherwise.
+///
+/// Never gated by tab: the row feeds the page header, which every visible tab
+/// sits under. A visitor gets the layout with the private tabs left out, and
+/// no `total_score` or `grade` while the Score tab is private, as
+/// `/get-user-score` refuses that tab's data to them.
 #[utoipa::path(
     get,
     path = "/get-user",
@@ -43,9 +52,73 @@ pub async fn get_user(
     auth: MaybeAuthUser,
     Query(params): Query<GetUserParams>,
 ) -> Result<Json<UserProfile>, ApiError> {
-    let uid = resolve_uid(&state, &auth, Some(&params.uid)).await?;
-    let profile = services::user::get_user(&state, &uid).await?;
+    let (gate, own) = resolve_public_profile(&state, &auth, &params.uid).await?;
+    let mut profile = services::user::get_user(&state, &gate.uid).await?;
+    // The layout decides what a visitor may see, so it comes from the gate's
+    // fresh read, not the row cached for up to 10 minutes: a tab made private
+    // since the cache filled is private now.
+    profile.profile_layout = gate.profile_layout;
+    // Projected per caller after the cache read: the cached row is the owner's.
+    if !own {
+        profile.hide_private_tabs();
+        // A block whose grid, tier list or plan is gone is no block to a
+        // visitor, so an emptied showcase is no tab either.
+        if let Some(layout) = profile.profile_layout.as_mut() {
+            services::showcase::prune_for_visitor(&state, gate.id, layout).await?;
+        }
+    }
     Ok(Json(profile))
+}
+
+#[derive(Deserialize)]
+pub struct GetUserShowcaseParams {
+    pub uid: String,
+    pub server: Option<Server>,
+}
+
+/// A player's Showcase tab: their blocks, each favourite resolved against
+/// `server`'s game data (then every other loaded server, as grid cells are).
+///
+/// Gated like every tab: a private profile or a private Showcase tab is 403
+/// to a visitor. The owner gets every block, those whose grid, tier list or
+/// plan is gone marked `removed`; a visitor gets only the blocks that still
+/// resolve, and no plan block while the Plans tab is private. A player who
+/// never set a layout has an empty showcase.
+#[utoipa::path(
+    get,
+    path = "/get-user-showcase",
+    tag = "player",
+    params(
+        ("uid" = String, Query, description = "Player to read."),
+        ("server" = Option<String>, Query, description = "Game server whose data names the favourites: `en`, `jp`, `kr`, `cn`, `tw` or `bili`. Defaults to the deployment's default server.")
+    ),
+    security(("bearer_auth" = []), ()),
+    responses(
+        (status = 200, description = "The showcase.", body = services::showcase::ShowcaseView),
+        (status = 403, response = crate::app::openapi::responses::Forbidden),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn get_user_showcase(
+    State(state): State<AppState>,
+    auth: MaybeAuthUser,
+    Query(params): Query<GetUserShowcaseParams>,
+) -> Result<Json<services::showcase::ShowcaseView>, ApiError> {
+    let (profile, own) = resolve_public_profile(&state, &auth, &params.uid).await?;
+    ensure_tab_visible(&profile, own, ProfileTabId::Showcase)?;
+    let server = params.server.unwrap_or(state.default_server);
+    let view = services::showcase::view(
+        &state,
+        profile.id,
+        profile.profile_layout.as_ref(),
+        own,
+        server,
+    )
+    .await?;
+    Ok(Json(view))
 }
 
 /// A player's graded score across every dimension.
@@ -75,7 +148,7 @@ pub async fn get_user_score(
 ) -> Result<Json<Option<UserScore>>, ApiError> {
     // Typed row, not a `serde_json::Value` round-trip: same bytes on the wire,
     // but the type is the schema and the generated TS.
-    let uid = resolve_uid(&state, &auth, Some(&params.uid)).await?;
+    let uid = resolve_uid_for_tab(&state, &auth, Some(&params.uid), ProfileTabId::Score).await?;
     let score = get_score_by_uid(&state.db, &uid).await?;
     Ok(Json(score))
 }
@@ -108,7 +181,7 @@ pub async fn get_user_checkin(
     Query(params): Query<GetUserParams>,
 ) -> Result<Json<Option<UserCheckin>>, ApiError> {
     // `null` until the user has synced once.
-    let uid = resolve_uid(&state, &auth, Some(&params.uid)).await?;
+    let uid = resolve_uid_for_tab(&state, &auth, Some(&params.uid), ProfileTabId::Stats).await?;
     let checkin = get_checkin_by_uid(&state.db, &uid).await?;
     Ok(Json(checkin))
 }

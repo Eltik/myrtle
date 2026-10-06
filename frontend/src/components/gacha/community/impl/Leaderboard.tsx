@@ -4,7 +4,7 @@ import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { IOperatorPopularity } from "#/lib/api/gacha";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { formatProfession, rarityGradient, rarityStarColor } from "#/lib/utils";
+import { professionLabel, rarityGradient, rarityStarColor } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { fmtPct } from "./format";
 import type { messages } from "./Leaderboard.messages";
@@ -92,7 +92,7 @@ function LeaderTable({ ops, operatorsById, isLoading }: { ops: IOperatorPopulari
                     {ops.map((op, i) => {
                         const indexEntry = operatorsById.get(op.charId);
                         const name = op.charName || indexEntry?.name || op.charId;
-                        const role = indexEntry ? formatProfession(indexEntry.profession) : "";
+                        const role = indexEntry ? professionLabel(indexEntry) : "";
                         const bar = (op.pullCount / max) * 100;
                         return (
                             <tr key={op.charId} className="not-last:border-border/50 not-last:border-b">

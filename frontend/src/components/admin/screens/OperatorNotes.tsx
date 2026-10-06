@@ -19,7 +19,7 @@ import { type TypedRichT, useFormatters, useGamedataServer, useRichT, useT } fro
 import type { TypedT } from "#/lib/i18n/messages";
 import { Markdown } from "#/lib/markdown";
 import { normalizeForSearch } from "#/lib/search/fuzzy";
-import { cn, formatSubProfession } from "#/lib/utils";
+import { cn, subProfessionLabel } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { HCode, PageHead } from "../AdminShell";
 import { MonoSection, RARITY_BG } from "../Primitives";
@@ -214,7 +214,7 @@ function NoteRow({ op, note, onOpen }: { op: IOperatorIndexEntry; note: IOperato
                 <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
                     <span className="truncate font-medium text-[14px] text-foreground">{op.name}</span>
                     <span className="truncate font-mono text-[11px] text-muted-foreground">{op.id}</span>
-                    <span className="hidden text-[11.5px] text-muted-foreground sm:inline">· {formatSubProfession(op.subProfessionId)}</span>
+                    <span className="hidden text-[11.5px] text-muted-foreground sm:inline">· {subProfessionLabel(op)}</span>
                 </div>
 
                 {summary ? <p className="line-clamp-2 text-[12.5px] text-muted-foreground leading-snug">{summary}</p> : <p className="text-[12px] text-muted-foreground/70 italic">{t("notes.noSummary")}</p>}

@@ -17,6 +17,7 @@ pub mod recruitment;
 pub mod release;
 pub mod roster;
 pub mod search;
+pub mod showcase;
 pub mod social;
 pub mod static_data;
 pub mod stats;

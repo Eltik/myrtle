@@ -29,51 +29,76 @@ interface IPlanProgressRowsProps {
     server: IOperatorListItem["server"];
     labels: IPlanProgressLabels;
     className?: string;
+    /**
+     * `stack` (default): one column, label left and value right.
+     * `columns`: for a wide host (a profile showcase lane, ~957 px). Level and skills on the left,
+     * modules on the right once the host's container is 40rem wide; each column capped at 22rem so a
+     * value never sits a card's width from its label.
+     */
+    layout?: "stack" | "columns";
 }
 
 /** Current ➔ target rows for a plan's promotion, each skill and each module. The target is highlighted where it is ahead. */
-export function PlanProgressRows({ progress, server, labels, className }: IPlanProgressRowsProps): React.ReactElement {
+export function PlanProgressRows({ progress, server, labels, className, layout = "stack" }: IPlanProgressRowsProps): React.ReactElement {
     const { promotion, skills, modules } = progress;
+
+    const level = (
+        <div className="flex items-center justify-between">
+            <span className="font-medium text-muted-foreground">{labels.level}</span>
+            <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 font-medium">
+                    <img src={eliteIcon(promotion.current.elite)} alt={labels.eliteAlt(promotion.current.elite)} className="icon-theme-aware size-5 object-contain" />
+                    <span>{labels.levelValue(promotion.current.level)}</span>
+                </div>
+                <Arrow />
+                <div className={cn("flex items-center gap-1 font-bold", upgradedTone(promotion.isUpgraded))}>
+                    <img src={eliteIcon(promotion.target.elite)} alt={labels.eliteAlt(promotion.target.elite)} className={cn("icon-theme-aware size-5 object-contain", !promotion.isUpgraded && "opacity-50")} />
+                    <span>{labels.levelValue(promotion.target.level)}</span>
+                </div>
+            </div>
+        </div>
+    );
+    const skillRows = skills.length > 0 && (
+        <ProgressSection title={labels.skills}>
+            {skills.map(({ skill, index, current, target, isUpgraded }) => (
+                <ProgressRow
+                    key={skill.skillId}
+                    icon={<img src={skillIconURL(skill, server)} alt={skill.static?.levels?.[0]?.name} className="size-5 rounded border border-border/40 object-contain" />}
+                    name={skill.static?.levels?.[0]?.name ?? labels.skillFallback(index + 1)}
+                    current={labels.skillTarget(current)}
+                    target={labels.skillTarget(target)}
+                    isUpgraded={isUpgraded}
+                />
+            ))}
+        </ProgressSection>
+    );
+    const moduleRows = modules.length > 0 && (
+        <ProgressSection title={labels.modules}>
+            {modules.map(({ module, current, target, isUpgraded }) => (
+                <ProgressRow key={module.uniEquipId} icon={<img src={moduleIconURL(module, server)} alt={module.uniEquipName} className="size-5 rounded object-contain" />} name={module.uniEquipName} current={labels.moduleStage(current)} target={labels.moduleStage(target)} isUpgraded={isUpgraded} />
+            ))}
+        </ProgressSection>
+    );
+
+    if (layout === "columns") {
+        return (
+            <div className={cn("@container text-xs", className)}>
+                <div className={cn("grid gap-x-10 gap-y-3", moduleRows && "@[40rem]:grid-cols-[repeat(2,minmax(0,22rem))]")}>
+                    <div className="flex max-w-[22rem] flex-col gap-3">
+                        {level}
+                        {skillRows}
+                    </div>
+                    {moduleRows && <div className="flex max-w-[22rem] flex-col gap-3">{moduleRows}</div>}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={cn("flex flex-col gap-3 text-xs", className)}>
-            <div className="flex items-center justify-between">
-                <span className="font-medium text-muted-foreground">{labels.level}</span>
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 font-medium">
-                        <img src={eliteIcon(promotion.current.elite)} alt={labels.eliteAlt(promotion.current.elite)} className="icon-theme-aware size-5 object-contain" />
-                        <span>{labels.levelValue(promotion.current.level)}</span>
-                    </div>
-                    <Arrow />
-                    <div className={cn("flex items-center gap-1 font-bold", upgradedTone(promotion.isUpgraded))}>
-                        <img src={eliteIcon(promotion.target.elite)} alt={labels.eliteAlt(promotion.target.elite)} className={cn("icon-theme-aware size-5 object-contain", !promotion.isUpgraded && "opacity-50")} />
-                        <span>{labels.levelValue(promotion.target.level)}</span>
-                    </div>
-                </div>
-            </div>
-
-            {skills.length > 0 && (
-                <ProgressSection title={labels.skills}>
-                    {skills.map(({ skill, index, current, target, isUpgraded }) => (
-                        <ProgressRow
-                            key={skill.skillId}
-                            icon={<img src={skillIconURL(skill, server)} alt={skill.static?.levels?.[0]?.name} className="size-5 rounded border border-border/40 object-contain" />}
-                            name={skill.static?.levels?.[0]?.name ?? labels.skillFallback(index + 1)}
-                            current={labels.skillTarget(current)}
-                            target={labels.skillTarget(target)}
-                            isUpgraded={isUpgraded}
-                        />
-                    ))}
-                </ProgressSection>
-            )}
-
-            {modules.length > 0 && (
-                <ProgressSection title={labels.modules}>
-                    {modules.map(({ module, current, target, isUpgraded }) => (
-                        <ProgressRow key={module.uniEquipId} icon={<img src={moduleIconURL(module, server)} alt={module.uniEquipName} className="size-5 rounded object-contain" />} name={module.uniEquipName} current={labels.moduleStage(current)} target={labels.moduleStage(target)} isUpgraded={isUpgraded} />
-                    ))}
-                </ProgressSection>
-            )}
+            {level}
+            {skillRows}
+            {moduleRows}
         </div>
     );
 }

@@ -1,8 +1,9 @@
 import { ChevronDown } from "lucide-react";
 import { type ReactNode, useState } from "react";
+import { useOperatorFactLabel } from "#/components/operators/OperatorFacts";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, formatNationId, formatProfession, formatSubProfession, rarityToNumber, subProfessionToProfession } from "#/lib/utils";
+import { cn, formatNationId, nationLabel, professionLabel, rarityToNumber, subProfessionLabel, subProfessionToProfession } from "#/lib/utils";
 import { GENDERS, PROFESSION_ORDER, RARITIES } from "../constants";
 import type { ArrayFilterKey, IFilterOptions, ISharedFilters } from "../types";
 import { ClassPicker, toggle } from "./ClassPicker";
@@ -45,6 +46,7 @@ export function OperatorFilterFields({
     basicTrailing?: ReactNode;
 }) {
     const t: TypedT<typeof messages> = useT("operators");
+    const fact = useOperatorFactLabel();
     const [advancedOpen, setAdvancedOpen] = useState(true);
 
     const advancedCount = filters.subclasses.length + filters.genders.length + filters.nations.length + filters.factions.length + filters.races.length + filters.birthPlaces.length + filters.artists.length + filters.voiceActors.length;
@@ -59,7 +61,7 @@ export function OperatorFilterFields({
 
                 {basicLeading}
 
-                <ClassPicker selected={filters.classes} onChange={(v) => onChange("classes", v)} />
+                <ClassPicker selected={filters.classes} onChange={(v) => onChange("classes", v)} labels={options.labels?.classes} />
 
                 <div className={styles.field}>
                     <div className={styles.fieldLabel}>{t("filters.rarity")}</div>
@@ -94,10 +96,10 @@ export function OperatorFilterFields({
                             options={options.subclasses}
                             selected={filters.subclasses}
                             onChange={(v) => onChange("subclasses", v)}
-                            formatOption={formatSubProfession}
+                            formatOption={(id) => subProfessionLabel({ subProfessionId: id, subProfessionName: options.labels?.subclasses[id] })}
                             groupBy={subProfessionToProfession}
                             groupOrder={PROFESSION_ORDER}
-                            formatGroup={formatProfession}
+                            formatGroup={(p) => professionLabel({ profession: p, professionName: options.labels?.classes[p] })}
                             renderOptionIcon={(v) => <SubProfessionIcon subProfession={v} size={18} />}
                         />
 
@@ -108,20 +110,36 @@ export function OperatorFilterFields({
                                     const on = filters.genders.includes(g);
                                     return (
                                         <button key={g} type="button" className={cn(styles.tg, on && styles.on)} onClick={() => onChange("genders", toggle(filters.genders, g))} aria-pressed={on}>
-                                            {g}
+                                            {fact.gender(g)}
                                         </button>
                                     );
                                 })}
                             </div>
                         </div>
 
-                        <FilterDropdown label={t("filters.nation")} placeholder={t("filters.nation.placeholder")} options={options.nations} selected={filters.nations} onChange={(v) => onChange("nations", v)} formatOption={(n) => formatNationId(n) ?? n} renderOptionIcon={(v) => <TeamIcon teamId={v} size={18} />} />
+                        <FilterDropdown
+                            label={t("filters.nation")}
+                            placeholder={t("filters.nation.placeholder")}
+                            options={options.nations}
+                            selected={filters.nations}
+                            onChange={(v) => onChange("nations", v)}
+                            formatOption={(n) => nationLabel({ nationId: n, nationName: options.labels?.nations[n] }) ?? n}
+                            renderOptionIcon={(v) => <TeamIcon teamId={v} size={18} />}
+                        />
 
-                        <FilterDropdown label={t("filters.faction")} placeholder={t("filters.faction.placeholder")} options={options.factions} selected={filters.factions} onChange={(v) => onChange("factions", v)} formatOption={formatNationId} renderOptionIcon={(v) => <CampIcon groupId={v} size={18} />} />
+                        <FilterDropdown
+                            label={t("filters.faction")}
+                            placeholder={t("filters.faction.placeholder")}
+                            options={options.factions}
+                            selected={filters.factions}
+                            onChange={(v) => onChange("factions", v)}
+                            formatOption={(id) => options.labels?.factions[id] ?? formatNationId(id)}
+                            renderOptionIcon={(v) => <CampIcon groupId={v} size={18} />}
+                        />
 
-                        <FilterDropdown label={t("filters.race")} placeholder={t("filters.race.placeholder")} options={options.races} selected={filters.races} onChange={(v) => onChange("races", v)} />
+                        <FilterDropdown label={t("filters.race")} placeholder={t("filters.race.placeholder")} options={options.races} selected={filters.races} onChange={(v) => onChange("races", v)} formatOption={fact.race} />
 
-                        <FilterDropdown label={t("filters.birthPlace")} placeholder={t("filters.birthPlace.placeholder")} options={options.birthPlaces} selected={filters.birthPlaces} onChange={(v) => onChange("birthPlaces", v)} />
+                        <FilterDropdown label={t("filters.birthPlace")} placeholder={t("filters.birthPlace.placeholder")} options={options.birthPlaces} selected={filters.birthPlaces} onChange={(v) => onChange("birthPlaces", v)} formatOption={fact.birthPlace} />
 
                         <FilterDropdown label={t("filters.artist")} placeholder={t("filters.artist.placeholder")} options={options.artists} selected={filters.artists} onChange={(v) => onChange("artists", v)} />
 

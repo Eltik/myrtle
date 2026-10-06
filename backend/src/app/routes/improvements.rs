@@ -5,10 +5,11 @@ use serde::Deserialize;
 
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
-use crate::app::routes::resolve_uid;
+use crate::app::routes::resolve_uid_for_tab;
 use crate::app::routes::static_data::json_response;
 use crate::app::services::improvements::get_improvements;
 use crate::app::state::AppState;
+use crate::database::models::profile_layout::ProfileTabId;
 
 #[derive(Deserialize)]
 pub struct ImprovementsParams {
@@ -47,7 +48,8 @@ pub async fn get_user_improvements(
     // The access gate stays HERE, ahead of the cache read inside
     // `get_improvements`, so a cached body can never be served to a viewer who
     // would not have been allowed to build it.
-    let uid = resolve_uid(&state, &auth, params.uid.as_deref()).await?;
+    let uid =
+        resolve_uid_for_tab(&state, &auth, params.uid.as_deref(), ProfileTabId::Score).await?;
     // Admission control lives in the service, around the one synchronous pass
     // that burns CPU. Taking it here held a permit across five database
     // round-trips and made this route shed under trivial concurrency.

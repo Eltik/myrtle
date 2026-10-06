@@ -5,6 +5,7 @@ pub mod i18n;
 pub mod item_leaderboard;
 pub mod operator_notes;
 pub mod planner;
+pub mod profile_layout;
 pub mod roster;
 pub mod score;
 pub mod tier_list;

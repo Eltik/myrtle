@@ -204,7 +204,7 @@ async fn select_tables(
                     if rows < 0.0 {
                         format!("{t:<32}      ? rows")
                     } else {
-                        format!("{t:<32} ~{:>6} rows", rows as u64)
+                        format!("{t:<32} ~{rows:>6.0} rows")
                     }
                 })
                 .collect();

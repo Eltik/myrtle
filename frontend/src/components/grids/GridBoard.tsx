@@ -1,22 +1,26 @@
 import { XIcon } from "lucide-react";
-import { type CSSProperties, type KeyboardEvent, useRef, useState } from "react";
+import { type CSSProperties, type KeyboardEvent, useMemo, useRef, useState } from "react";
 import { useEdgeFade } from "#/components/tier-lists/edit/FacetFilter";
 import { EntityAvatar } from "#/components/tier-lists/entities";
 import { useEntityLabels } from "#/components/tier-lists/kinds";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { truncateCodePoints } from "#/lib/markdown/sanitize-input";
+import { isViewableCell, viewableIndices } from "./cellViewer";
 import { compactGridSize } from "./compact";
 import type { messages } from "./GridBoard.messages";
 import styles from "./GridBoard.module.css";
+import { GridCellViewer } from "./GridCellViewer";
 import { cellPosition, GRID_LABEL_MAX } from "./shared";
 import type { IGridEditCell } from "./state";
 
 // The board both the view page and the editor draw. In the editor each cell's
 // art opens the picker, its strip edits the label in place, a filled cell's
 // corner button (or Delete / Backspace on its art) removes the pick at once,
-// and a cell dragged onto another swaps the two. The view draws the same
-// cells inert.
+// and a cell dragged onto another swaps the two; with `onOpen` (a phone) the
+// art and the strip both open the cell editor sheet instead. Read-only, a
+// cell with a label or a pick is a button that opens the full-screen cell
+// viewer, and a cell with neither stays inert: it has nothing to show.
 
 const CELL_DRAG_MIME = "application/x-grid-cell";
 
@@ -26,6 +30,8 @@ export interface IGridBoardEditor {
     onClear: (index: number) => void;
     onLabelChange: (index: number, label: string) => void;
     onSwap: (from: number, to: number) => void;
+    /** Set, a tap on the art or the strip opens the cell in a sheet instead of the picker or the inline label field. */
+    onOpen?: (index: number) => void;
 }
 
 interface IGridBoardProps {
@@ -59,10 +65,14 @@ export function GridBoard({ title, rows, cols, cells, editor, size = "full" }: I
     const fade = useEdgeFade<HTMLDivElement>();
     const shownTitle = title || t("board.untitled");
     const compact = size === "compact" ? compactGridSize(rows, cols) : null;
+    // The read-only board's full-screen viewer: the cell it shows, and the cells it steps through.
+    const [viewIndex, setViewIndex] = useState<number | null>(null);
+    const viewOrder = useMemo(() => (editor ? [] : viewableIndices(cells)), [editor, cells]);
+    const boardRef = useRef<HTMLElement>(null);
     const boardStyle = compact ? ({ "--cell-max": `${compact.cellPx}px`, "--cell-gap": `${compact.gapPx}px`, "--label-size": `${compact.labelPx}px`, maxWidth: `${compact.boardMaxPx}px` } as CSSProperties) : undefined;
 
     return (
-        <section className={styles.board} data-density={density(cols)} data-size={compact ? "compact" : undefined} style={boardStyle} aria-label={t("board.label", { title: shownTitle, rows, cols })}>
+        <section ref={boardRef} className={styles.board} data-density={density(cols)} data-size={compact ? "compact" : undefined} style={boardStyle} aria-label={t("board.label", { title: shownTitle, rows, cols })}>
             {!compact && <h2 className={styles.title}>{shownTitle}</h2>}
             <div ref={fade.ref} style={fade.style} className={styles.scroller}>
                 <div className={styles.grid} style={{ "--cols": cols } as CSSProperties}>
@@ -78,10 +88,12 @@ export function GridBoard({ title, rows, cols, cells, editor, size = "full" }: I
                             dropTarget={dropOver === index && dragFrom !== null && dragFrom !== index}
                             onDragFrom={setDragFrom}
                             onDropOver={setDropOver}
+                            onView={setViewIndex}
                         />
                     ))}
                 </div>
             </div>
+            {!editor && <GridCellViewer cells={cells} cols={cols} order={viewOrder} index={viewIndex} onIndexChange={setViewIndex} onClose={() => setViewIndex(null)} returnFocus={(index) => boardRef.current?.querySelector<HTMLElement>(`[data-cell-index="${index}"]`) ?? null} />}
         </section>
     );
 }
@@ -95,9 +107,11 @@ interface IGridCellViewProps {
     dropTarget: boolean;
     onDragFrom: (index: number | null) => void;
     onDropOver: (index: number | null) => void;
+    /** Read-only: opens the full-screen viewer on this cell. */
+    onView: (index: number) => void;
 }
 
-function GridCellView({ cell, index, cols, editor, dragging, dropTarget, onDragFrom, onDropOver }: IGridCellViewProps) {
+function GridCellView({ cell, index, cols, editor, dragging, dropTarget, onDragFrom, onDropOver, onView }: IGridCellViewProps) {
     const t: TypedT<typeof messages> = useT("grids");
     const labels = useEntityLabels();
     const picked = cell.kind !== null && cell.id !== null;
@@ -110,18 +124,28 @@ function GridCellView({ cell, index, cols, editor, dragging, dropTarget, onDragF
     const art = cell.entity ? <EntityAvatar entity={cell.entity} face="tile" tone="dark" server={cell.server ?? undefined} /> : editor ? <span className={styles.addItem}>{t("cell.addItem")}</span> : null;
 
     if (!editor) {
-        return (
-            <div className={styles.cell}>
-                <div className={styles.art} data-empty={!picked || undefined} title={entityName ?? undefined}>
+        // Spans, not divs, so the same markup is valid inside the button; the classes give them their boxes.
+        const face = (
+            <>
+                <span className={styles.art} data-empty={!picked || undefined} title={entityName ?? undefined}>
                     {art}
                     {entityName && <span className="sr-only">{entityName}</span>}
-                </div>
-                <div className={styles.strip}>
+                </span>
+                <span className={styles.strip}>
                     <span className={styles.stripText} title={cell.label || undefined}>
                         {cell.label}
                     </span>
-                </div>
-            </div>
+                </span>
+            </>
+        );
+        if (!isViewableCell(cell)) return <div className={styles.cell}>{face}</div>;
+        const label = cell.label.trim();
+        const name = entityName ?? cell.id ?? "";
+        const viewLabel = label && picked ? t("cell.view.both", { label, name, ...position }) : label ? t("cell.view.label", { label, ...position }) : t("cell.view.pick", { name, ...position });
+        return (
+            <button type="button" className={styles.cell} data-cell-index={index} onClick={() => onView(index)} aria-label={viewLabel} aria-haspopup="dialog">
+                {face}
+            </button>
         );
     }
 
@@ -169,13 +193,14 @@ function GridCellView({ cell, index, cols, editor, dragging, dropTarget, onDragF
                 type="button"
                 className={styles.art}
                 data-empty={!picked || undefined}
-                onClick={() => editor.onPick(index)}
+                data-cell-index={index}
+                onClick={() => (editor.onOpen ? editor.onOpen(index) : editor.onPick(index))}
                 onKeyDown={(e) => {
                     if (!picked || (e.key !== "Delete" && e.key !== "Backspace")) return;
                     e.preventDefault();
                     editor.onClear(index);
                 }}
-                aria-label={entityName ? t("cell.change", { name: entityName, ...position }) : t("cell.pick", position)}
+                aria-label={editor.onOpen ? t("cell.open", position) : entityName ? t("cell.change", { name: entityName, ...position }) : t("cell.pick", position)}
                 aria-keyshortcuts={picked ? "Delete Backspace" : undefined}
                 title={entityName ?? undefined}
             >
@@ -213,7 +238,7 @@ function GridCellView({ cell, index, cols, editor, dragging, dropTarget, onDragF
                     <XIcon aria-hidden="true" />
                 </button>
             )}
-            <LabelStrip label={cell.label} position={position} onChange={(label) => editor.onLabelChange(index, label)} />
+            <LabelStrip label={cell.label} position={position} onChange={(label) => editor.onLabelChange(index, label)} onOpen={editor.onOpen && (() => editor.onOpen?.(index))} />
         </div>
     );
 }
@@ -222,16 +247,18 @@ interface ILabelStripProps {
     label: string;
     position: { row: number; col: number };
     onChange: (label: string) => void;
+    /** Set, a click opens the cell editor sheet instead of the inline field. */
+    onOpen?: () => void;
 }
 
 /** The strip as a button; clicked, it becomes an input. Enter or leaving commits, Escape puts the old label back. */
-function LabelStrip({ label, position, onChange }: ILabelStripProps) {
+function LabelStrip({ label, position, onChange, onOpen }: ILabelStripProps) {
     const t: TypedT<typeof messages> = useT("grids");
     const [draft, setDraft] = useState<string | null>(null);
 
     if (draft === null) {
         return (
-            <button type="button" className={styles.strip} onClick={() => setDraft(label)} aria-label={t("cell.editLabel", { label: label || t("cell.noLabel"), ...position })}>
+            <button type="button" className={styles.strip} onClick={() => (onOpen ? onOpen() : setDraft(label))} aria-label={t("cell.editLabel", { label: label || t("cell.noLabel"), ...position })}>
                 {label ? (
                     <span className={styles.stripText} title={label}>
                         {label}

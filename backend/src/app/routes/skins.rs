@@ -10,11 +10,12 @@ use ts_rs::TS;
 use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
-use crate::app::routes::resolve_user_id;
+use crate::app::routes::resolve_user_id_for_tabs;
 use crate::app::routes::static_data::json_response;
 use crate::app::services::static_data::get_skins_index;
 use crate::app::state::AppState;
 use crate::core::hypergryph::constants::Server;
+use crate::database::models::profile_layout::ProfileTabId;
 use crate::database::queries::skins;
 use crate::database::queries::skins::OwnedSkin;
 
@@ -80,7 +81,9 @@ pub async fn skins_index_srv(
 
 /// The skins a player owns.
 /// Runs the shared privacy gate: another player's data is readable only when
-/// their profile is public, and a player always sees their own.
+/// their profile is public, and a player always sees their own. A visitor
+/// also needs the Stats and Roster tabs visible: owned skins are roster data
+/// the Stats tab draws.
 #[utoipa::path(
     get,
     path = "/user-skins",
@@ -104,7 +107,14 @@ pub async fn get_owned_skins(
     auth: MaybeAuthUser,
     Query(params): Query<SkinsParams>,
 ) -> Result<Json<Vec<OwnedSkin>>, ApiError> {
-    let user_id = resolve_user_id(&state, &auth, params.uid.as_deref()).await?;
+    // The Stats tab already leaves skins out while the Roster is private.
+    let user_id = resolve_user_id_for_tabs(
+        &state,
+        &auth,
+        params.uid.as_deref(),
+        &[ProfileTabId::Stats, ProfileTabId::Roster],
+    )
+    .await?;
     let entries = skins::get_owned_skins(&state.db, user_id).await?;
     Ok(Json(entries))
 }

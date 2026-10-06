@@ -14,8 +14,8 @@ export interface IRecruitmentData {
 
 /**
  * The backend parses `recruitDetail` and serves only the recruitable operators,
- * with only the fields the calculator reads, from cache. This used to pull
- * `/static/gacha` and the whole `/static/operators` table on every SSR call.
+ * with only the fields the calculator reads, from cache, so an SSR call never
+ * pulls `/static/gacha` and the whole `/static/operators` table.
  */
 export const getRecruitmentDataFn = createServerFn({ method: "GET" })
     .inputValidator((server: string | undefined) => server)
@@ -23,7 +23,8 @@ export const getRecruitmentDataFn = createServerFn({ method: "GET" })
         const res = await backendFetch(gamedataPath(server, "/operators/recruitment"));
         if (!res.ok) throw new Error(`Failed to load recruitment data: ${res.status}`);
         const data = (await res.json()) as RecruitmentData;
-        return { tags: data.tags, operators: data.operators.map(toRecruitableOperator) };
+        const tagNames = new Map(data.tags.map((tag) => [tag.tagId, tag.tagName] as const));
+        return { tags: data.tags, operators: data.operators.map((op) => toRecruitableOperator(op, tagNames)) };
     });
 
 export function recruitmentDataQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {

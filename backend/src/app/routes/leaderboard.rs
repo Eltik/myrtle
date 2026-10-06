@@ -5,12 +5,13 @@ use axum::{
 use serde::Deserialize;
 
 use crate::app::extractors::auth::MaybeAuthUser;
-use crate::app::routes::resolve_uid;
+use crate::app::routes::resolve_uid_for_tab;
 use crate::app::services::leaderboard::get_distribution;
 use crate::app::services::leaderboard::get_leaderboard;
 use crate::app::services::leaderboard::get_standing;
 use crate::app::services::leaderboard::get_top_movers;
 use crate::app::validation::is_valid_interval;
+use crate::database::models::profile_layout::ProfileTabId;
 use crate::{
     app::{
         error::ApiError, extractors::pagination::Pagination,
@@ -180,7 +181,9 @@ pub struct StandingParams {
 /// One player's rank, percentile, and the players immediately around them.
 ///
 /// Subject to the same privacy gate as every other by-uid endpoint: a private
-/// profile is visible only to its owner.
+/// profile, or a private Score tab, is visible only to its owner. 404 for the
+/// owner too while the Score tab is private, since `v_leaderboard` then leaves
+/// them out.
 #[utoipa::path(
     get,
     path = "/leaderboard/standing",
@@ -214,7 +217,7 @@ pub async fn standing(
             "interval must be '1 day', '7 days', or '30 days'".into(),
         ));
     }
-    let uid = resolve_uid(&state, &auth, Some(&params.uid)).await?;
+    let uid = resolve_uid_for_tab(&state, &auth, Some(&params.uid), ProfileTabId::Score).await?;
     let standing = get_standing(&state, &uid, &params.server, window, interval).await?;
     Ok(Json(standing))
 }
@@ -252,7 +255,7 @@ pub async fn score_history(
     auth: MaybeAuthUser,
     Query(params): Query<HistoryParams>,
 ) -> Result<Json<Vec<ScoreHistoryPoint>>, ApiError> {
-    let uid = resolve_uid(&state, &auth, Some(&params.uid)).await?;
+    let uid = resolve_uid_for_tab(&state, &auth, Some(&params.uid), ProfileTabId::Score).await?;
     let points = crate::database::queries::score::get_score_history(&state.db, &uid).await?;
     Ok(Json(points))
 }

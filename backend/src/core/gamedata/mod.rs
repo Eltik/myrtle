@@ -199,9 +199,26 @@ pub fn init_game_data(
     data_dir: &Path,
     assets_dir: &Path,
 ) -> Result<(GameData, AssetIndex), DataError> {
+    init_game_data_with_art(data_dir, assets_dir, assets_dir)
+}
+
+/// [`init_game_data`] with the art read from a different tree than the text.
+///
+/// `assets_dir` still supplies everything a server ships as data (event shops,
+/// pool details, levels, the enemy database). `art_dir` supplies only what is a
+/// picture: the asset index that every portrait, icon and skin path is resolved
+/// against, the stage art and the chibis. A text-only server (JP and KR pulled
+/// with the `gamedata` profile) passes the default server's tree here, so its
+/// operators carry EN's art paths instead of `None`. See
+/// `app::state::art_dir_for`.
+pub fn init_game_data_with_art(
+    data_dir: &Path,
+    assets_dir: &Path,
+    art_dir: &Path,
+) -> Result<(GameData, AssetIndex), DataError> {
     let mut warnings: Vec<String> = Vec::new();
 
-    let assets = AssetIndex::build(assets_dir);
+    let assets = AssetIndex::build(art_dir);
 
     let char_table: CharacterTable = load_table(data_dir, "character_table")?;
     let mut raw_operators = char_table.characters;
@@ -309,6 +326,7 @@ pub fn init_game_data(
     let skins = skin_file.into_skin_data();
     let pool_details = load_pool_details(assets_dir, &mut warnings);
     let mut gacha = gacha_file.into_gacha_data();
+    let profession_names = crate::core::gamedata::types::gacha::profession_names(&gacha.gacha_tags);
     enrich_banners(&mut gacha.gacha_pool_client, pool_details.as_ref());
     let zones = zone_file.zones;
     let mut zone_chapters: std::collections::HashMap<String, String> =
@@ -389,6 +407,8 @@ pub fn init_game_data(
             tmpl_groups: &tmpl_groups,
             audio: &operator_audio,
             consts: &consts,
+            factions: &team_file.teams,
+            profession_names: &profession_names,
         },
     );
 
@@ -430,7 +450,7 @@ pub fn init_game_data(
 
         let enemies_by_stage = build_enemy_stage_index(&levels_dir, data_dir, &classifier);
         let (index, modes) = build_stage_index(
-            assets_dir,
+            art_dir,
             &levels_dir,
             &classifier,
             &stages,
@@ -447,9 +467,9 @@ pub fn init_game_data(
     );
 
     startup::step("chibis");
-    let chibis = init_chibi_data(assets_dir);
+    let chibis = init_chibi_data(art_dir);
     startup::step("enemy chibis");
-    let enemy_chibis = init_enemy_chibi_data(assets_dir, &enemies);
+    let enemy_chibis = init_enemy_chibi_data(art_dir, &enemies);
 
     for w in &warnings {
         tracing::warn!("{w}");
@@ -505,6 +525,7 @@ pub fn init_game_data(
             consts,
             missions,
             factions: team_file.teams,
+            profession_names,
             autochess_bonds,
         },
         assets,

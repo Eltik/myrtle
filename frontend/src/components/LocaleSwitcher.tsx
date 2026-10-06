@@ -3,6 +3,7 @@ import { useCallback } from "react";
 
 import { basepathForLocale, LOCALE_COOKIE, useI18n, useT } from "#/lib/i18n";
 import type { IAvailableLocale } from "#/lib/i18n/catalog";
+import { writePreferenceCookie } from "#/lib/i18n/cookie";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn } from "#/lib/utils";
 import type { messages } from "./LocaleSwitcher.messages";
@@ -80,7 +81,9 @@ export function useLocaleSwitch(): (code: string) => void {
 
     return useCallback(
         (code: string) => {
-            rememberLocale(code);
+            // Not awaited: the new URL carries the locale, so the next page does
+            // not read the cookie. It only serves the bare root's redirect later.
+            void writePreferenceCookie(LOCALE_COOKIE, code);
 
             const base = basepathForLocale(code);
             // `pathname` is already basepath-relative, so it composes directly.
@@ -89,30 +92,4 @@ export function useLocaleSwitch(): (code: string) => void {
         },
         [pathname, search],
     );
-}
-
-/**
- * Persist the chosen language so the bare root can send this visitor straight
- * back to it next time.
- *
- * `CookieStore` where the browser has it, `document.cookie` otherwise -
- * `CookieStore` is Chromium-only today, so the fallback is the path Safari and
- * Firefox actually take, not dead code. `SameSite=Lax` because the cookie is
- * read on a top-level navigation; a year because a language preference does
- * not go stale.
- */
-function rememberLocale(code: string): void {
-    const oneYear = 31_536_000;
-    try {
-        // `CookieStore` is Chromium-only today, so the `document.cookie`
-        // fallback is the path Safari and Firefox actually take, not dead code.
-        if (typeof cookieStore !== "undefined") {
-            void cookieStore.set({ name: LOCALE_COOKIE, value: code, path: "/", expires: Date.now() + oneYear * 1000, sameSite: "lax" });
-            return;
-        }
-        // biome-ignore lint/suspicious/noDocumentCookie: CookieStore is unavailable in this branch by construction - that is what the guard above tests.
-        document.cookie = `${LOCALE_COOKIE}=${encodeURIComponent(code)}; path=/; max-age=${oneYear}; samesite=lax`;
-    } catch {
-        // A blocked cookie only costs the redirect on the next bare visit.
-    }
 }

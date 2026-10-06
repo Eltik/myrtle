@@ -15,6 +15,15 @@ export type HelperT = TypedT<typeof helperMessages>;
  */
 const sourceT: HelperT = (key, values) => formatMessage(sourceMessage(fullMessageKey("operators", key)) ?? key, DEFAULT_LOCALE, values);
 
+/**
+ * A download filename stem from display text. Letters and digits of any script
+ * are kept, so a Japanese or Korean name stays readable; everything else,
+ * path separators included, becomes `_`.
+ */
+export function sanitizeFilename(name: string): string {
+    return name.replace(/[^\p{L}\p{N}\-_]/gu, "_");
+}
+
 export function blackboardKeyMap(blackboard: IBlackboard[]): { key: string; value: number }[] {
     return (blackboard ?? []).filter((b) => b.key != null).map((b) => ({ key: b.key, value: b.value }));
 }

@@ -51,6 +51,13 @@
     word-break: keep-all;
     flex-shrink: 0;
 }
+.end {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    padding-left: 12px;
+    flex-shrink: 0;
+}
 .tab:hover {
     color: var(--foreground);
 }

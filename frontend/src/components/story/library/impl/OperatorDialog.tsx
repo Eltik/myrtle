@@ -20,7 +20,7 @@ import { GameText } from "#/lib/gamedata/GameText";
 import { useFormatters, useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { StoryProgress } from "#/lib/story/progress";
-import { cn, formatProfession, getAvatarById, RARITY_HEX, rarityToNumber } from "#/lib/utils";
+import { cn, getAvatarById, professionLabel, RARITY_HEX, rarityToNumber } from "#/lib/utils";
 import type { LangType } from "#/types/voices";
 import { type LibRecord, sortedStories } from "./derive";
 import type { messages } from "./OperatorDialog.messages";
@@ -105,7 +105,7 @@ export function OperatorDialog({ record, progress, gameRead, onClose }: IOperato
                             {"★".repeat(rarity)}
                         </span>
                     ) : null}
-                    {record.profession ? <span>{formatProfession(record.profession)}</span> : null}
+                    {record.profession ? <span>{professionLabel(record)}</span> : null}
                 </span>
             </span>
         </div>

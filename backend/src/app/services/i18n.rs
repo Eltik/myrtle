@@ -57,6 +57,11 @@ pub struct I18nManifestLocale {
 pub struct I18nManifest {
     pub default_locale: String,
     pub locales: Vec<I18nManifestLocale>,
+    /// The game-data servers this deployment has loaded, the default first.
+    /// A locale's `gamedata_server` or a visitor's own pick is honoured only
+    /// when it is in this list; anything else falls back to the default, so a
+    /// `ko -> kr` row never points the site at a server that would 404.
+    pub gamedata_servers: Vec<String>,
 }
 
 /// The manifest is the only i18n read with a short TTL: it is how a new
@@ -110,6 +115,11 @@ pub async fn get_manifest(state: &AppState) -> Result<CachedJson, ApiError> {
         let manifest = I18nManifest {
             default_locale,
             locales: out,
+            gamedata_servers: state
+                .pickable_servers()
+                .into_iter()
+                .map(|s| s.as_str().to_owned())
+                .collect(),
         };
         serde_json::to_string(&manifest).map_err(|e| ApiError::Internal(e.into()))
     })

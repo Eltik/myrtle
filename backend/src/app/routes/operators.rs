@@ -228,9 +228,8 @@ pub async fn upcoming(
     Ok(Json(get_upcoming(&state, Server::CN).await?))
 }
 
-/// `GET /{server}/upcoming` - operators on `{server}` not yet on the default server.
-/// The `/{server}` form reads that server's game data; the bare form reads the
-/// default server.
+/// `GET /{server}/upcoming` - operators on CN not yet on `{server}`. A CN or
+/// Bilibili `{server}` compares against the default server, as the bare form does.
 #[utoipa::path(
     get,
     path = "/{server}/upcoming",

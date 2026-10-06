@@ -60,7 +60,7 @@ fn every_en_story_parses_and_the_library_resolves() {
     );
     let asset_index = Arc::new(AssetIndex::build(&dir));
 
-    let cache = build_index(gd, &asset_index, &dir);
+    let cache = build_index(gd, &asset_index, &dir, &dir);
     let index = &cache.index;
     let total_stories: usize = index.groups.iter().map(|g| g.stories.len()).sum();
     let with_script: usize = index
@@ -1081,9 +1081,15 @@ fn every_en_story_parses_and_the_library_resolves() {
         .flat_map(|g| g.stories.iter())
         .find(|s| s.has_script)
         .expect("main_0 has a story with a script");
-    let got = load_and_parse(&dir, &asset_index, &known.id, &cache.lookup[&known.id])
-        .expect("loads")
-        .expect("known id");
+    let got = load_and_parse(
+        &dir,
+        &dir,
+        &asset_index,
+        &known.id,
+        &cache.lookup[&known.id],
+    )
+    .expect("loads")
+    .expect("known id");
     assert_eq!(got.id, known.id);
     assert_eq!(got.name, known.name);
     assert_eq!(got.group_id, "main_0");
@@ -1311,6 +1317,7 @@ fn every_en_story_parses_and_the_library_resolves() {
     {
         match load_and_parse(
             &dir,
+            &dir,
             &asset_index,
             &unbacked.id,
             &cache.lookup[&unbacked.id],
@@ -1341,7 +1348,7 @@ fn cutscene_videos_resolve_where_en_still_ships_the_clip() {
     }
     let gd = common::load_game_data();
     let asset_index = Arc::new(AssetIndex::build(&dir));
-    let cache = build_index(gd, &asset_index, &dir);
+    let cache = build_index(gd, &asset_index, &dir, &dir);
     let story_assets = StoryAssetIndex::for_dir(&dir, &asset_index);
 
     // Every script on disk, not only the ones the library lists, because the
@@ -1452,7 +1459,7 @@ fn dump_engine_fixtures_when_asked() {
     }
     let gd = common::load_game_data();
     let asset_index = Arc::new(AssetIndex::build(&dir));
-    let cache = build_index(gd, &asset_index, &dir);
+    let cache = build_index(gd, &asset_index, &dir, &dir);
     let out = Path::new(env!("CARGO_MANIFEST_DIR")).join(out);
     std::fs::create_dir_all(&out).expect("fixture dir");
     // The tutorial opener, and the chapter 15 epilogue: 11 decisions, a
@@ -1463,7 +1470,7 @@ fn dump_engine_fixtures_when_asked() {
             .lookup
             .get(id)
             .unwrap_or_else(|| panic!("{id} is not in the index"));
-        let script = load_and_parse(&dir, &asset_index, id, story_ref)
+        let script = load_and_parse(&dir, &dir, &asset_index, id, story_ref)
             .expect("loads")
             .expect("known id");
         let json = serde_json::to_string(&script).expect("serialises");
@@ -1756,6 +1763,7 @@ fn test_state_on(dir: &Path, database_url: &str) -> backend::app::state::AppStat
         asset_index: arc_swap::ArcSwap::from_pointee(AssetIndex::build(dir)),
         game_data_dir: dir.join("gamedata/excel").display().to_string(),
         assets_dir: dir.display().to_string(),
+        art_dir: dir.display().to_string(),
         loaded: AtomicBool::new(true),
     });
     let config = AppConfig {
@@ -2043,7 +2051,7 @@ fn every_group_theme_resolves_to_a_clip() {
     }
     let gd = common::load_game_data();
     let asset_index = Arc::new(AssetIndex::build(&dir));
-    let cache = backend::app::services::story::build_index(gd, &asset_index, &dir);
+    let cache = backend::app::services::story::build_index(gd, &asset_index, &dir, &dir);
 
     let library: Vec<_> = cache
         .index
@@ -2393,7 +2401,7 @@ fn every_scripted_story_carries_its_synopsis() {
     }
     let gd = common::load_game_data();
     let asset_index = Arc::new(AssetIndex::build(&dir));
-    let cache = build_index(gd, &asset_index, &dir);
+    let cache = build_index(gd, &asset_index, &dir, &dir);
     let mut named = 0usize;
     let mut found = 0usize;
     let mut scripted_without: Vec<String> = Vec::new();
@@ -2428,7 +2436,7 @@ fn every_scripted_story_carries_its_synopsis() {
     );
 
     let id = "act39side_level_act39side_st01";
-    let got = load_and_parse(&dir, &asset_index, id, &cache.lookup[id])
+    let got = load_and_parse(&dir, &dir, &asset_index, id, &cache.lookup[id])
         .expect("loads")
         .expect("known id");
     let synopsis = got.synopsis.expect("act39side ST-1 has a synopsis");
@@ -2436,4 +2444,45 @@ fn every_scripted_story_carries_its_synopsis() {
         synopsis.starts_with("Thorns tries to escape from a group of bandits"),
         "{synopsis}"
     );
+}
+
+/// A text-only server (KR) resolves its story art from the default server's
+/// tree while its variables stay its own: the split index walks EN's media and
+/// reads KR's `story_variables`, and an unsplit build of either tree is the
+/// split with both halves from that tree.
+///
+/// 2026-10-06: the split and `build(en)` both count (946, 1666, 1636, 8088)
+/// with 16 videos, `build(kr)` (0, 0, 0, 0) with none. KR and EN BOTH carry
+/// 2,611 variables, so the count assert cannot tell KR's table from EN's; a
+/// variable whose value differs between the two trees would.
+#[test]
+fn a_text_only_server_takes_its_story_art_from_the_default_tree() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../assets/output");
+    let (en, kr) = (root.join("en"), root.join("kr"));
+    if !scripts_present(&kr) || !media_present(&en) {
+        eprintln!("skipping: needs assets/output/kr (scripts) and assets/output/en (media)");
+        return;
+    }
+    let split = StoryAssetIndex::build_split(&en, &kr);
+    let own = StoryAssetIndex::build(&kr);
+    let default = StoryAssetIndex::build(&en);
+    for (label, idx) in [
+        ("split(en, kr)", &split),
+        ("build(kr)", &own),
+        ("build(en)", &default),
+    ] {
+        println!(
+            "{label}: (backgrounds, images, sprites, audio) = {:?}, videos = {}, variables = {}",
+            idx.counts(),
+            idx.video_count(),
+            idx.variables().len()
+        );
+    }
+    assert_eq!(split.counts(), default.counts());
+    assert_eq!(split.video_count(), default.video_count());
+    assert_eq!(split.variables().len(), own.variables().len());
+    assert!(!split.variables().is_empty(), "KR ships story_variables");
+    let same = StoryAssetIndex::build_split(&en, &en);
+    assert_eq!(same.counts(), default.counts());
+    assert_eq!(same.variables().len(), default.variables().len());
 }

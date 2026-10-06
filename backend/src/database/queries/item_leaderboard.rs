@@ -114,10 +114,12 @@ const HOLDERS_JOIN: &str = r"FROM holding h
             JOIN users u ON u.id = h.user_id
             JOIN servers s ON s.id = u.server_id";
 
-/// The same gate as `v_leaderboard`: only public profiles are ranked.
-/// Expects the `users` alias `u`.
-const VISIBLE: &str =
-    "EXISTS (SELECT 1 FROM user_settings us WHERE us.user_id = u.id AND us.public_profile)";
+/// The same gate as `v_leaderboard`: only public profiles are ranked, and
+/// only those whose Inventory tab is visible, since the board is a ranking of
+/// that tab's data. Spelled out because a `const` cannot call
+/// `ProfileTabId::visible_sql`; `visible_gate_hides_private_inventories` pins
+/// the two together. Expects the `users` alias `u`.
+const VISIBLE: &str = r#"EXISTS (SELECT 1 FROM user_settings us WHERE us.user_id = u.id AND us.public_profile AND NOT COALESCE(us.profile_layout -> 'tabs' @> '[{"id":"inventory","visible":false}]'::jsonb, false))"#;
 
 /// `SELECT u.id ...` for every visible player, on one server when `server`
 /// is given; the caller then binds that server as `$1`. The catalog
@@ -376,4 +378,16 @@ pub async fn get_item_standing(
         .bind(item_id)
         .fetch_optional(pool)
         .await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::VISIBLE;
+    use crate::database::models::profile_layout::ProfileTabId;
+
+    #[test]
+    fn visible_gate_hides_private_inventories() {
+        assert!(VISIBLE.contains(&ProfileTabId::Inventory.visible_sql("us.profile_layout")));
+        assert!(VISIBLE.contains("us.public_profile"));
+    }
 }

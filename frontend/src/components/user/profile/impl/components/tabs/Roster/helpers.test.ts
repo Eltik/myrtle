@@ -190,6 +190,12 @@ describe("filterEntries by source", () => {
         expect(operatorSource(undefined)).toBeNull();
     });
 
+    it("prefers the server's language-neutral channel over the approach text", () => {
+        expect(operatorSource("모집", "headhunting")).toBe("headhunting");
+        expect(operatorSource("Recruitment & Headhunting", "event")).toBe("welfare");
+        expect(operatorSource("Event Reward", null)).toBeNull();
+    });
+
     it("returns the same array untouched for the default", () => {
         expect(filterEntries(all, "", EMPTY_SETS)).toBe(all);
         expect(filterEntries(all, "", EMPTY_SETS, "any")).toBe(all);

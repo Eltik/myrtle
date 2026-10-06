@@ -1,5 +1,7 @@
-import { LanguagesIcon, MonitorIcon, MoonIcon, PaletteIcon, RotateCcwIcon, SunIcon } from "lucide-react";
+import { BookTextIcon, LanguagesIcon, MonitorIcon, MoonIcon, PaletteIcon, RotateCcwIcon, SunIcon } from "lucide-react";
 import { useId } from "react";
+import { GamedataServerSelect, useGamedataServerOptions } from "#/components/GamedataServerSwitcher";
+import type { messages as gamedataServerMessages } from "#/components/GamedataServerSwitcher.messages";
 import { LocaleOptionLabel, useLocaleSwitch } from "#/components/LocaleSwitcher";
 import type { messages as localeSwitcherMessages } from "#/components/LocaleSwitcher.messages";
 import { Button } from "#/components/ui/button";
@@ -158,8 +160,29 @@ function LanguageCard(): React.ReactElement | null {
                         </SelectContent>
                     </Select>
                 )}
+                <GameTextSection />
             </CardContent>
         </Card>
+    );
+}
+
+/**
+ * Which client's game text the site shows, under the display language because
+ * that is what it defaults to: a Korean reader gets the Korean client unless
+ * they pick another. Absent below two loaded servers.
+ */
+function GameTextSection(): React.ReactElement | null {
+    const t: TypedT<typeof messages> = useT("settings");
+    const tCommon: TypedT<typeof gamedataServerMessages> = useT("common");
+    const options = useGamedataServerOptions();
+    if (options.length === 0) return null;
+
+    return (
+        <div className="mt-5">
+            <SectionLabel icon={<BookTextIcon />}>{tCommon("gamedataServer.label")}</SectionLabel>
+            <p className="mt-0 mb-2 font-sans text-[13px] text-muted-foreground leading-normal">{t("appearance.language.gameTextDesc")}</p>
+            <GamedataServerSelect className="max-w-60" />
+        </div>
     );
 }
 

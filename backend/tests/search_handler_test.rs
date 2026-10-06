@@ -307,7 +307,7 @@ async fn the_route_serves_every_shape() {
             let expected = owned(&pool, &row.profile.uid)
                 .await
                 .iter()
-                .filter(|id| table.get(*id).is_some_and(|p| matches(p)))
+                .filter(|id| table.get(*id).is_some_and(&matches))
                 .count() as i64;
             assert_eq!(
                 row.metric,

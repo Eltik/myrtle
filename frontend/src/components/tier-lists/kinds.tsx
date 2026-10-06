@@ -3,7 +3,7 @@ import { ClassIcon } from "#/components/operators/list/impl/components/Icons";
 import { entityOwner, type ITierEntity, type ITierEntityOf, integratedStrategiesNumber, type TierEntityKind } from "#/lib/api/tier-entities";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { formatProfession, RARITY_HEX_MUTED } from "#/lib/utils";
+import { formatProfession, professionLabel, RARITY_HEX_MUTED } from "#/lib/utils";
 import type { FacetValue } from "#/types/generated/FacetValue";
 import type { OperatorProfession } from "#/types/operators";
 import type { messages } from "./kinds.messages";
@@ -222,7 +222,7 @@ export const KIND_DEFINITIONS: { [K in TierEntityKind]: IKindDefinition<K> } = {
         singular: (t) => t("entity.kind.operator"),
         description: (t) => t("edit.kinds.desc.operator"),
         accent: (e) => rarityAccent(e.rarity),
-        detail: (e) => [formatProfession(e.profession)],
+        detail: (e) => [professionLabel(e)],
         pool: (t) => ({
             kicker: t("edit.pool.kicker"),
             dialogTitle: t("edit.pool.dialogTitle"),
@@ -333,7 +333,7 @@ export const KIND_DEFINITIONS: { [K in TierEntityKind]: IKindDefinition<K> } = {
         plural: (t) => t("entity.kinds.subclass"),
         singular: (t) => t("entity.kind.subclass"),
         description: (t) => t("edit.kinds.desc.subclass"),
-        detail: (e) => [formatProfession(e.profession)],
+        detail: (e) => [professionLabel(e)],
         pool: (t) => ({
             ...poolLabels(t, t("edit.pool.kicker.subclass"), t("edit.pool.search.subclass"), t("edit.pool.grid.subclass")),
             facets: [classFacet(t, (e) => e.profession)],

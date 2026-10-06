@@ -177,7 +177,7 @@ fn wanted_archive_art(
 
 /// A slot's entries in the act's own order, dropping the ids the content half
 /// does not carry.
-fn slot_ids(
+pub(super) fn slot_ids(
     slot: Option<&crate::core::gamedata::types::story_review_meta::ArchiveSlot>,
 ) -> Vec<String> {
     let Some(slot) = slot else { return Vec::new() };

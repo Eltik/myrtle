@@ -39,6 +39,10 @@ export const messages = {
         text: "Failed to load chibi",
         description: "Shown in the viewer when the animation files could not be fetched or parsed.",
     },
+    "chibi.error.webgl": {
+        text: "This browser has WebGL turned off, so the animation can't play",
+        description: "Shown in the viewer when the browser cannot create a WebGL renderer (hardware acceleration off or the GPU unavailable). 'WebGL' is a technical name and stays as-is.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

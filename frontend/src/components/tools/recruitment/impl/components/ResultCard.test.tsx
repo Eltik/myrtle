@@ -9,7 +9,7 @@ import { ResultCardDetailed } from "./ResultCardDetailed";
 const MESSAGES = Object.fromEntries(Object.entries(messages).map(([key, m]) => [`tools.${key}`, m.text]));
 
 function op(id: string, potentials: IRecruitableOperator["potentials"]): IRecruitableOperator {
-    return { id, name: id, rarity: 4, profession: "WARRIOR", position: "MELEE", tagList: [], potentials };
+    return { id, name: id, rarity: 4, profession: "WARRIOR", professionName: "Guard", position: "MELEE", tagList: [], potentials };
 }
 
 const FIVE = [

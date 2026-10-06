@@ -27,6 +27,8 @@
 //! - [`sprites`]: the character gallery, every sprite folder with its names
 //!   and expressions.
 //! - [`sprite_thumbs`]: one expression composed and scaled, cached on disk.
+//! - [`gallery`]: every Archives gallery picture, and its two smaller JPEGs.
+//! - [`story_art`]: every story CG and scene plate wide enough for a header.
 //!
 //! Census and wire contract: `docs/story-reader.md`, sections 1 and 2. Numbers stay
 //! in the code only where they back a decision the code makes.
@@ -35,16 +37,19 @@ mod archive;
 mod art;
 pub mod cache;
 mod dto;
+pub mod gallery;
 mod illustrations;
 mod index;
 mod music;
 mod script;
 pub mod sprite_thumbs;
 mod sprites;
+pub mod story_art;
 
 pub use archive::{build_archives, get_group_archive};
 pub use cache::{ServerCache, cached_index, get_story_index, index_builds, spawn_warm};
 pub use dto::*;
+pub use gallery::{GallerySize, ensure_picture, get_gallery};
 pub use illustrations::{
     GroupRefs, NameRefs, SpriteRefs, get_group_illustrations, group_illustrations,
 };
@@ -54,6 +59,7 @@ pub use sprites::{
     OperatorIds, SpriteCensus, StorySpriteCache, build_sprite_index, cached_sprites,
     get_story_sprite, get_story_sprites, get_variant_thumb, sprite_index_builds,
 };
+pub use story_art::{ensure_story_art, get_story_art, story_art_known};
 
 /// A game table's string as an optional field: trimmed, and absent when it is
 /// empty. The archive and music tables write "no value" as an empty string or

@@ -10,7 +10,7 @@ import { ScrollArea } from "#/components/ui/scroll-area";
 import { Separator } from "#/components/ui/separator";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { formatProfession } from "#/lib/utils";
+import { professionLabel } from "#/lib/utils";
 import type { IEnrichedSkill, IModule } from "#/types/operators";
 import { DynamicArtOverlay } from "../../../DynamicArtOverlay";
 import type { messages } from "./DetailedCard.messages";
@@ -123,7 +123,7 @@ export function DetailedCard({ entry, lastRef }: IDetailedCardProps) {
                                         {op && (
                                             <div className="flex flex-row items-center gap-1">
                                                 <ClassIcon profession={op.profession} size={20} />
-                                                <span className="text-sm text-white">{formatProfession(op.profession)}</span>
+                                                <span className="text-sm text-white">{professionLabel(op)}</span>
                                             </div>
                                         )}
                                     </div>

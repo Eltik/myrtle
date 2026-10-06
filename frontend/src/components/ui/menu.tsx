@@ -39,7 +39,7 @@ export function MenuPopup({
 }): React.ReactElement {
     return (
         <MenuPortal {...portalProps}>
-            <MenuPrimitive.Positioner align={align} alignOffset={alignOffset} anchor={anchor} className="z-50" data-slot="menu-positioner" side={side} sideOffset={sideOffset}>
+            <MenuPrimitive.Positioner align={align} alignOffset={alignOffset} anchor={anchor} className="z-70" data-slot="menu-positioner" side={side} sideOffset={sideOffset}>
                 <MenuPrimitive.Popup
                     className={cn(
                         "relative flex not-[class*='w-']:min-w-32 origin-(--transform-origin) rounded-lg border bg-popover not-dark:bg-clip-padding shadow-lg/5 outline-none before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] focus:outline-none dark:before:shadow-[0_-1px_--theme(--color-white/6%)]",

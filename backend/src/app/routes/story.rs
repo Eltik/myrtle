@@ -1,5 +1,6 @@
 //! Story reader routes: the Archives library, parsed scripts, group art and
-//! archive, community read counts, and the sprite gallery. Wire contract in
+//! archive, community read counts, the sprite gallery and the Archives
+//! picture gallery. Wire contract in
 //! `docs/story-reader.md`.
 
 use axum::{
@@ -11,9 +12,10 @@ use axum::{
 
 use crate::app::routes::assets::serve_file;
 use crate::app::services::story::{
-    StoryArchive, StoryIllustrations, StoryIndex, StorySpriteDetail, StorySpriteIndex,
-    get_group_archive, get_group_illustrations, get_story, get_story_index, get_story_sprite,
-    get_story_sprites, get_variant_thumb,
+    GallerySize, StoryArchive, StoryArtGallery, StoryArtKind, StoryGallery, StoryIllustrations,
+    StoryIndex, StorySpriteDetail, StorySpriteIndex, ensure_picture, ensure_story_art, get_gallery,
+    get_group_archive, get_group_illustrations, get_story, get_story_art, get_story_index,
+    get_story_sprite, get_story_sprites, get_variant_thumb,
 };
 use crate::app::services::story_community::{self, StoryCommunity};
 use crate::app::{error::ApiError, state::AppState};
@@ -467,5 +469,234 @@ pub async fn sprite_variant_thumb_srv(
     Path((server, base, variant)): Path<(Server, String, String)>,
 ) -> Result<Response, ApiError> {
     let (dir, rel) = get_variant_thumb(&state, server, &base, &variant).await?;
+    serve_file(&dir, &rel, &headers).await
+}
+
+/// Every Archives gallery picture on the default server, grouped by the
+/// event or Integrated Strategies theme whose archive lists it. Built once
+/// per game data load and asset tree.
+#[utoipa::path(
+    get,
+    path = "/story/gallery",
+    operation_id = "story_gallery",
+    tag = "gamedata",
+    responses(
+        (status = 200, description = "Every gallery picture.", body = StoryGallery),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn gallery(State(state): State<AppState>) -> Result<Json<StoryGallery>, ApiError> {
+    Ok(Json(get_gallery(&state, state.default_server).await?))
+}
+
+/// `GET /{server}/story/gallery` - the same from `{server}`.
+#[utoipa::path(
+    get,
+    path = "/{server}/story/gallery",
+    operation_id = "story_gallery_srv",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`.")
+    ),
+    responses(
+        (status = 200, description = "Every gallery picture.", body = StoryGallery),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn gallery_srv(
+    State(state): State<AppState>,
+    Path(server): Path<Server>,
+) -> Result<Json<StoryGallery>, ApiError> {
+    Ok(Json(get_gallery(&state, server).await?))
+}
+
+/// One gallery picture, smaller, on the default server: `thumb` is 320 px
+/// wide, `header` the full 1600 px, both JPEG q82 (13,630 and 224,384 bytes
+/// on average over EN's 324, against the PNG's 2,049,755). Rendered on first
+/// request and cached under `derived/archive-pics/`; served with the same
+/// `ETag` and week-long `Cache-Control` as `/api/assets`. Should a render
+/// fail, the original PNG is served instead.
+#[utoipa::path(
+    get,
+    path = "/story/gallery/{id}/{size}",
+    operation_id = "story_gallery_picture",
+    tag = "gamedata",
+    params(
+        ("id" = String, Path, description = "Gallery picture id (`act13side_pic_0`)."),
+        ("size" = String, Path, description = "`thumb` (320 px wide) or `header` (1600 px wide)."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes.")
+    ),
+    responses(
+        (status = 200, description = "The picture, with an `ETag` and `Cache-Control: public, max-age=604800`.", content(("image/jpeg"), ("image/png"))),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn gallery_picture(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path((id, size)): Path<(String, GallerySize)>,
+) -> Result<Response, ApiError> {
+    let (dir, rel) = ensure_picture(&state, state.default_server, &id, size).await?;
+    serve_file(&dir, &rel, &headers).await
+}
+
+/// `GET /{server}/story/gallery/{id}/{size}` - the same from `{server}`,
+/// falling back to the default server for an id `{server}` does not list.
+#[utoipa::path(
+    get,
+    path = "/{server}/story/gallery/{id}/{size}",
+    operation_id = "story_gallery_picture_srv",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("id" = String, Path, description = "Gallery picture id (`act13side_pic_0`)."),
+        ("size" = String, Path, description = "`thumb` (320 px wide) or `header` (1600 px wide)."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes.")
+    ),
+    responses(
+        (status = 200, description = "The picture, with an `ETag` and `Cache-Control: public, max-age=604800`.", content(("image/jpeg"), ("image/png"))),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn gallery_picture_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path((server, id, size)): Path<(Server, String, GallerySize)>,
+) -> Result<Response, ApiError> {
+    let (dir, rel) = ensure_picture(&state, server, &id, size).await?;
+    serve_file(&dir, &rel, &headers).await
+}
+
+/// Every story CG (`cg`) or scene plate (`scene`) on the default server wide
+/// enough for a profile header: at least 1024 px and 1.6 to 1.9 wide over
+/// high. Each picture once, under the first library group whose scripts draw
+/// it, groups in library order with their category.
+#[utoipa::path(
+    get,
+    path = "/story/art-gallery/{kind}",
+    operation_id = "story_art_gallery",
+    tag = "gamedata",
+    params(("kind" = StoryArtKind, Path, description = "`cg` or `scene`.")),
+    responses(
+        (status = 200, description = "Every header-sized picture of the kind.", body = StoryArtGallery),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn art_gallery(
+    State(state): State<AppState>,
+    Path(kind): Path<StoryArtKind>,
+) -> Result<Json<StoryArtGallery>, ApiError> {
+    Ok(Json(
+        get_story_art(&state, state.default_server, kind).await?,
+    ))
+}
+
+/// `GET /{server}/story/art-gallery/{kind}` - the same from `{server}`.
+#[utoipa::path(
+    get,
+    path = "/{server}/story/art-gallery/{kind}",
+    operation_id = "story_art_gallery_srv",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("kind" = StoryArtKind, Path, description = "`cg` or `scene`.")
+    ),
+    responses(
+        (status = 200, description = "Every header-sized picture of the kind.", body = StoryArtGallery),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn art_gallery_srv(
+    State(state): State<AppState>,
+    Path((server, kind)): Path<(Server, StoryArtKind)>,
+) -> Result<Json<StoryArtGallery>, ApiError> {
+    Ok(Json(get_story_art(&state, server, kind).await?))
+}
+
+/// One story CG or scene, smaller, on the default server: `thumb` is 320 px
+/// wide, `header` 1600 px or the source width when narrower (a scene plate
+/// is 1024), both JPEG q82 through the Archives gallery's pipeline, cached
+/// under `derived/story-art/`.
+#[utoipa::path(
+    get,
+    path = "/story/art-gallery/{kind}/{id}/{size}",
+    operation_id = "story_art_picture",
+    tag = "gamedata",
+    params(
+        ("kind" = StoryArtKind, Path, description = "`cg` or `scene`."),
+        ("id" = String, Path, description = "The asset key, lowercase (`avg_1_1`)."),
+        ("size" = String, Path, description = "`thumb` (320 px wide) or `header` (up to 1600 px wide)."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes.")
+    ),
+    responses(
+        (status = 200, description = "The picture, with an `ETag` and `Cache-Control: public, max-age=604800`.", content(("image/jpeg"), ("image/png"))),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn art_picture(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path((kind, id, size)): Path<(StoryArtKind, String, GallerySize)>,
+) -> Result<Response, ApiError> {
+    let (dir, rel) = ensure_story_art(&state, state.default_server, kind, &id, size).await?;
+    serve_file(&dir, &rel, &headers).await
+}
+
+/// `GET /{server}/story/art-gallery/{kind}/{id}/{size}` - the same from
+/// `{server}`, falling back to the default server.
+#[utoipa::path(
+    get,
+    path = "/{server}/story/art-gallery/{kind}/{id}/{size}",
+    operation_id = "story_art_picture_srv",
+    tag = "gamedata",
+    params(
+        ("server" = String, Path, description = "Game server: `en`, `jp`, `kr`, `cn` or `tw`."),
+        ("kind" = StoryArtKind, Path, description = "`cg` or `scene`."),
+        ("id" = String, Path, description = "The asset key, lowercase (`avg_1_1`)."),
+        ("size" = String, Path, description = "`thumb` (320 px wide) or `header` (up to 1600 px wide)."),
+        ("If-None-Match" = Option<String>, Header, description = "Echo a previous response's `ETag` to get a 304 instead of the bytes.")
+    ),
+    responses(
+        (status = 200, description = "The picture, with an `ETag` and `Cache-Control: public, max-age=604800`.", content(("image/jpeg"), ("image/png"))),
+        (status = 304, description = "The caller's `If-None-Match` matched; no body is sent."),
+        (status = 400, response = crate::app::openapi::responses::BadRequest),
+        (status = 404, response = crate::app::openapi::responses::NotFound),
+        (status = 429, response = crate::app::openapi::responses::RateLimited),
+        (status = 500, response = crate::app::openapi::responses::InternalError),
+        (status = 503, response = crate::app::openapi::responses::ServiceUnavailable)
+    )
+)]
+pub async fn art_picture_srv(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path((server, kind, id, size)): Path<(Server, StoryArtKind, String, GallerySize)>,
+) -> Result<Response, ApiError> {
+    let (dir, rel) = ensure_story_art(&state, server, kind, &id, size).await?;
     serve_file(&dir, &rel, &headers).await
 }

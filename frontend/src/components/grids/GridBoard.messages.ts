@@ -39,6 +39,22 @@ export const messages = {
         text: "Add label",
         description: "Placeholder in an empty label strip in the grid editor, and in the label text field. Keep it short: cells can be under 50 pixels wide.",
     },
+    "cell.view.both": {
+        text: "{label}: {name}. Row {row}, column {col}. Open it full screen",
+        description: "Accessible name of a cell on a read-only grid that has a label and a pick; activating it opens the full-screen cell viewer. {label} is the cell's label, {name} the picked entity's name and kind.",
+    },
+    "cell.view.label": {
+        text: "{label}. Row {row}, column {col}. Open it full screen",
+        description: "Accessible name of a cell on a read-only grid that has a label but no pick; activating it opens the full-screen cell viewer.",
+    },
+    "cell.view.pick": {
+        text: "{name}. Row {row}, column {col}. Open it full screen",
+        description: "Accessible name of a cell on a read-only grid that has a pick but no label; activating it opens the full-screen cell viewer. {name} is the picked entity's name and kind.",
+    },
+    "cell.open": {
+        text: "Edit row {row}, column {col}",
+        description: "Accessible name of a cell's art and label in the grid editor on a phone, where tapping either opens the full-screen cell editor.",
+    },
     "cell.labelInput": {
         text: "Label of row {row}, column {col}",
         description: "Accessible name of the label text field that replaces a cell's strip while it is being edited.",

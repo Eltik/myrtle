@@ -14,6 +14,7 @@ use crate::core::gamedata::types::chibi::ChibiCharacter;
 use crate::core::gamedata::types::enemy::{Enemy, RaceData};
 use crate::core::gamedata::types::enemy_stages::{EnemyStageRef, EnemyStageTable};
 use crate::core::gamedata::types::material::Item;
+use crate::core::gamedata::types::obtain::SkinChannel;
 use crate::core::gamedata::types::skin::DisplaySkin;
 use crate::core::gamedata::types::stage::{Stage, StageType};
 use crate::core::gamedata::types::stage_index::StageIndexEntry;
@@ -352,6 +353,8 @@ struct SlimSkin<'a> {
     skin_id: &'a str,
     char_id: &'a str,
     display_skin: SlimDisplaySkin<'a>,
+    /// `displayTagId` as a category, the same on every server.
+    obtain_channel: SkinChannel,
 }
 
 pub async fn get_skins_index(state: &AppState, server: Server) -> Result<CachedJson, ApiError> {
@@ -371,6 +374,7 @@ pub async fn get_skins_index(state: &AppState, server: Server) -> Result<CachedJ
                         skin_id: &s.skin_id,
                         char_id: &s.char_id,
                         display_skin: SlimDisplaySkin::from(&s.display_skin),
+                        obtain_channel: s.obtain_channel,
                     },
                 )
             })

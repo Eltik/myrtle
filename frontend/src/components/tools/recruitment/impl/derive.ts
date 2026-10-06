@@ -1,35 +1,52 @@
 import type { RecruitmentOperator } from "#/types/generated/RecruitmentOperator";
-import { HIDDEN_TAG_NAMES, PROFESSION_LABELS } from "./constants";
+import { HIDDEN_TAG_NAMES, MELEE_TAG_ID, PROFESSION_LABELS, PROFESSION_TAG_ID, RANGED_TAG_ID, ROBOT_TAG_ID, SENIOR_OPERATOR_TAG_ID, TOP_OPERATOR_TAG_ID } from "./constants";
 import type { IRecruitableOperator, IRecruitPotential } from "./types";
 
 /** One operator as `/operators/recruitment` serves it. Generated from the Rust struct. */
 export type IRecruitmentSourceOperator = RecruitmentOperator;
 
 /** The recruitment view of one operator, computed once on the server. */
-export function toRecruitableOperator(op: IRecruitmentSourceOperator): IRecruitableOperator {
+export function toRecruitableOperator(op: IRecruitmentSourceOperator, tagNames?: ReadonlyMap<number, string>): IRecruitableOperator {
     return {
         id: op.id,
         name: op.name,
         rarity: op.rarity,
         profession: op.profession,
         position: op.position,
-        tagList: buildOperatorTagList(op, op.rarity),
+        professionName: professionTagName(op.profession, tagNames),
+        tagList: buildOperatorTagList(op, op.rarity, tagNames),
         potentials: buildPotentials(op),
     };
 }
 
-/** Position, class and rarity qualification tags first, then the game's own affix tags, minus the ones the tool hides. */
-export function buildOperatorTagList(op: Pick<IRecruitmentSourceOperator, "position" | "profession" | "tagList">, rarity: number): string[] {
+/**
+ * A class's name in the server's own wording, read from its recruitment tag list.
+ *
+ * Every client ships the 8 class names as recruitment tags under fixed ids (`PROFESSION_TAG_ID`), so this names a class
+ * in Korean on KR and Japanese on JP without a translation table, and a server added later needs nothing. The English
+ * label is the fallback for a list without that id; an unknown profession code comes back as itself.
+ */
+export function professionTagName(profession: string, tagNames?: ReadonlyMap<number, string>): string {
+    const id = PROFESSION_TAG_ID[profession];
+    return (id !== undefined ? tagNames?.get(id) : undefined) ?? PROFESSION_LABELS[profession] ?? profession;
+}
+
+/**
+ * Position, class and rarity qualification tags first, then the game's own affix tags, minus the ones the tool hides.
+ * The synthetic tags are named by the server's gacha tag list (`tagNames`, by id) so a KR or JP client shows its own
+ * wording; the English literal is only the fallback when the list is missing an id.
+ */
+export function buildOperatorTagList(op: Pick<IRecruitmentSourceOperator, "position" | "profession" | "tagList">, rarity: number, tagNames?: ReadonlyMap<number, string>): string[] {
+    const name = (id: number, fallback: string): string => tagNames?.get(id) ?? fallback;
     const tags: string[] = [];
-    if (op.position === "MELEE") tags.push("Melee");
-    if (op.position === "RANGED") tags.push("Ranged");
+    if (op.position === "MELEE") tags.push(name(MELEE_TAG_ID, "Melee"));
+    if (op.position === "RANGED") tags.push(name(RANGED_TAG_ID, "Ranged"));
 
-    const profTag = PROFESSION_LABELS[op.profession];
-    if (profTag) tags.push(profTag);
+    if (PROFESSION_LABELS[op.profession]) tags.push(professionTagName(op.profession, tagNames));
 
-    if (rarity === 6) tags.push("Top Operator");
-    if (rarity === 5) tags.push("Senior Operator");
-    if (rarity === 1) tags.push("Robot");
+    if (rarity === 6) tags.push(name(TOP_OPERATOR_TAG_ID, "Top Operator"));
+    if (rarity === 5) tags.push(name(SENIOR_OPERATOR_TAG_ID, "Senior Operator"));
+    if (rarity === 1) tags.push(name(ROBOT_TAG_ID, "Robot"));
 
     if (op.tagList) tags.push(...op.tagList.filter((t) => !HIDDEN_TAG_NAMES.has(t)));
 

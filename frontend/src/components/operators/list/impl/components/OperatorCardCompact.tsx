@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { formatSubProfession, getAvatarById, parseOperatorName, rarityToNumber } from "#/lib/utils";
+import { getAvatarById, parseOperatorName, rarityToNumber, subProfessionLabel } from "#/lib/utils";
 import { RARITY_COLORS } from "../constants";
 import type { IOperatorView, StatMetric } from "../types";
 import { CampIcon, ClassIcon } from "./Icons";
@@ -45,7 +45,7 @@ export function OperatorCardCompact({ operator, statMetric }: IOperatorCardCompa
                                 <ClassIcon profession={operator.profession} size={80} />
                             </div>
                         </div>
-                        <div className="mt-0.5 truncate text-center text-[0.5625rem] text-muted-foreground leading-tight sm:text-xs">{formatSubProfession(operator.subProfessionId.toLowerCase())}</div>
+                        <div className="mt-0.5 truncate text-center text-[0.5625rem] text-muted-foreground leading-tight sm:text-xs">{subProfessionLabel({ subProfessionId: operator.subProfessionId.toLowerCase(), subProfessionName: operator.subProfessionName })}</div>
                     </Link>
                 }
             />

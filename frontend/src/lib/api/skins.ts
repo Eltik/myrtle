@@ -8,6 +8,7 @@ import type { Brand } from "#/types/generated/Brand";
 import type { DisplaySkin } from "#/types/generated/DisplaySkin";
 import type { EnrichedSkin } from "#/types/generated/EnrichedSkin";
 import type { Skin } from "#/types/generated/Skin";
+import type { SkinChannel } from "#/types/generated/SkinChannel";
 import type { SkinData } from "#/types/generated/SkinData";
 import type { SkinImages } from "#/types/generated/SkinImages";
 import type { SkinPopularityResponse } from "#/types/generated/SkinPopularityResponse";
@@ -49,6 +50,8 @@ export interface ISkinIndexEntry {
     skinId: string;
     charId: string;
     displaySkin: ISkinIndexDisplay;
+    /** Language-neutral acquisition category; absent in an old cached response. */
+    obtainChannel?: SkinChannel;
 }
 
 export type ISkinIndex = Record<string, ISkinIndexEntry>;

@@ -231,7 +231,7 @@ export function OperatorsList() {
     }, [filteredOperators, upcomingFiltered, page, pageSize, totalCount]);
 
     const activeChips = useMemo(() => {
-        const chips = buildSharedChips(filters, removeFrom);
+        const chips = buildSharedChips(filters, removeFrom, filterOptions.labels);
         if (filters.hasNotes !== "any") {
             chips.push({
                 key: `notes-${filters.hasNotes}`,
@@ -240,7 +240,7 @@ export function OperatorsList() {
             });
         }
         return chips;
-    }, [filters, removeFrom, setHasNotes, t]);
+    }, [filters, filterOptions.labels, removeFrom, setHasNotes, t]);
 
     // Only the export dialog consumes these, and the full-table merge (toExportRow)
     // is empty until it opens - so skip the row rebuild entirely while it's closed.

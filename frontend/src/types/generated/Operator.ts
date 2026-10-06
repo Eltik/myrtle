@@ -4,6 +4,7 @@ import type { AttributeKeyFrame } from "./AttributeKeyFrame";
 import type { Drone } from "./Drone";
 import type { EnrichedSkill } from "./EnrichedSkill";
 import type { HandbookItem } from "./HandbookItem";
+import type { ObtainChannel } from "./ObtainChannel";
 import type { OperatorAudio } from "./OperatorAudio";
 import type { OperatorBaseSkill } from "./OperatorBaseSkill";
 import type { OperatorModule } from "./OperatorModule";
@@ -39,6 +40,14 @@ export type Operator = {
      * and Umiri's "all Siracusa Operators" buff reaches her in-game.
      */
     subPower: Array<PowerAffiliation> | null;
+    /**
+     * `handbook_team_table` names of `nation_id`, `group_id` and `team_id`
+     * in the server's own language. `None` for an empty id, the `none`
+     * sentinel, or an id the server's table does not name.
+     */
+    nationName: string | null;
+    groupName: string | null;
+    teamName: string | null;
     displayNumber: string;
     appellation: string;
     position: OperatorPosition;
@@ -46,12 +55,28 @@ export type Operator = {
     itemUsage: string;
     itemDesc: string;
     itemObtainApproach: string;
+    /**
+     * `item_obtain_approach` as a category. `None` when the approach is
+     * empty. See `types::obtain`.
+     */
+    obtainChannel: ObtainChannel | null;
     isNotObtainable: boolean;
     isSpChar: boolean;
     maxPotentialLevel: number;
     rarity: OperatorRarity;
     profession: OperatorProfession;
+    /**
+     * The server's own name for `profession`, from its gacha class tags
+     * (see `gacha::PROFESSION_TAG_IDS`). `None` for a token, a trap, or a
+     * tag list without the class.
+     */
+    professionName: string | null;
     subProfessionId: string;
+    /**
+     * `uniequip_table` `subProfDict` name of `sub_profession_id` in the
+     * server's own language, `None` when the table has no such id.
+     */
+    subProfessionName: string | null;
     trait: Trait | null;
     phases: Array<Phase>;
     skills: Array<EnrichedSkill>;

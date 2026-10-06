@@ -10,13 +10,15 @@ interface IFilterSidebarProps {
     filters: IBirthdayFilters;
     onChange: (next: IBirthdayFilters) => void;
     nations: [string, string][];
+    /** Class code -> the server's own class name. */
+    classNames: ReadonlyMap<string, string>;
     matched: number;
     total: number;
     onReset: () => void;
 }
 
 /** Persistent filter rail shown at `lg` and up. */
-export function FilterSidebar({ filters, onChange, nations, matched, total, onReset }: IFilterSidebarProps): React.ReactElement {
+export function FilterSidebar({ filters, onChange, nations, classNames, matched, total, onReset }: IFilterSidebarProps): React.ReactElement {
     const t: TypedT<typeof messages> = useT("tools");
     return (
         <aside className="hidden min-w-0 flex-col gap-4 lg:flex">
@@ -28,7 +30,7 @@ export function FilterSidebar({ filters, onChange, nations, matched, total, onRe
                     </CardTitle>
                 </CardHeader>
                 <CardPanel className="pt-0">
-                    <FilterControls filters={filters} onChange={onChange} nations={nations} />
+                    <FilterControls filters={filters} onChange={onChange} nations={nations} classNames={classNames} />
                 </CardPanel>
                 <div className="flex items-baseline justify-between border-border border-t px-6 py-3.5">
                     <div>

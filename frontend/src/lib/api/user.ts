@@ -58,6 +58,7 @@ import type { ServerShare } from "#/types/generated/ServerShare";
 import type { ShiftDto } from "#/types/generated/ShiftDto";
 import type { ShiftRoomDto } from "#/types/generated/ShiftRoomDto";
 import type { ShiftRotationDto } from "#/types/generated/ShiftRotationDto";
+import type { ShowcaseView } from "#/types/generated/ShowcaseView";
 import type { SkillLineDto } from "#/types/generated/SkillLineDto";
 import type { StageGap } from "#/types/generated/StageGap";
 import type { StageImprovements } from "#/types/generated/StageImprovements";
@@ -68,6 +69,7 @@ import type { UserScore } from "#/types/generated/UserScore";
 import type { Refine } from "#/types/refine";
 import type { IUserCheckin, IUserProfile } from "#/types/user";
 import { optionalSiteToken } from "./_shared.server";
+import { gamedataKey, resolveGamedataServer } from "./gamedata";
 
 export interface IRosterMastery {
     index: number;
@@ -115,7 +117,9 @@ export const getUserRosterFn = createServerFn({ method: "GET" })
         const token = bearerToken ?? optionalSiteToken();
         const res = await backendFetch(`/roster?uid=${encodeURIComponent(uid)}`, { bearerToken: token });
         if (!res.ok) {
-            if (res.status === 404) return null;
+            // 403 = private profile or private Roster tab, 404 = no such user: both
+            // are "no roster", not a failure to retry (the profile loader prefetches it).
+            if (res.status === 404 || res.status === 403) return null;
             throw new Error(`Failed to load roster: ${res.status}`);
         }
         return (await res.json()) as IRosterEntry[];
@@ -231,6 +235,33 @@ export const getUserCheckinFn = createServerFn({ method: "GET" })
         }
         return (await res.json()) as IUserCheckin | null;
     });
+
+/**
+ * The Showcase tab's blocks, favourites resolved against `server`. The owner's copy
+ * marks a block whose grid, tier list or plan is gone as `removed`; a visitor's leaves
+ * it out. An empty showcase when the tab is refused (it is then never asked for) or
+ * the profile is gone.
+ */
+export const getUserShowcaseFn = createServerFn({ method: "GET" })
+    .inputValidator((data: { uid: string; server?: string }) => data)
+    .handler(async ({ data: { uid, server } }): Promise<ShowcaseView> => {
+        const params = new URLSearchParams({ uid, server: resolveGamedataServer(server) });
+        const res = await backendFetch(`/get-user-showcase?${params.toString()}`, { bearerToken: optionalSiteToken() });
+        if (res.status === 403 || res.status === 404) return { blocks: [] };
+        if (!res.ok) throw new Error(`Failed to load the showcase: ${res.status}`);
+        return (await res.json()) as ShowcaseView;
+    });
+
+/** `viewerId` keys the cache by who is reading: the owner is sent the blocks a visitor is not. */
+export function userShowcaseQueryOptions(uid: string, viewerId: string | null, server?: string) {
+    const resolved = resolveGamedataServer(server);
+    return queryOptions({
+        queryKey: ["user", "showcase", uid, viewerId ?? "anon", ...gamedataKey(resolved)],
+        queryFn: () => getUserShowcaseFn({ data: { uid, server: resolved } }),
+        staleTime: 60 * 1000,
+        gcTime: 5 * 60 * 1000,
+    });
+}
 
 export function userCheckinQueryOptions(uid: string, bearerToken?: string) {
     return queryOptions({

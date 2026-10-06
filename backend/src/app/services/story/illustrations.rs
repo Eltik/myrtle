@@ -4,7 +4,7 @@
 
 use std::collections::HashMap;
 
-use super::cache::cached_index;
+use super::cache::{StoryTrees, cached_index};
 use super::dto::{IllustrationItem, SpriteItem, StoryIllustrations};
 use super::index::StoryIndexCache;
 use crate::app::{cpu, error::ApiError, state::AppState};
@@ -179,11 +179,10 @@ pub async fn get_group_illustrations(
         )));
     }
     let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
-    let assets_dir = std::path::PathBuf::from(&server_data.assets_dir);
-    let live_assets = server_data.asset_index.load_full();
+    let trees = StoryTrees::of(&server_data);
     let id = group_id.to_owned();
     cpu::run("story_illustrations", move || {
-        let assets = StoryAssetIndex::for_dir(&assets_dir, &live_assets);
+        let assets = trees.story_assets();
         group_illustrations(&cache, &assets, &id).ok_or(ApiError::NotFound)
     })
     .await?

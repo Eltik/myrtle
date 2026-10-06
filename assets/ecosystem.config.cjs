@@ -1,7 +1,7 @@
 // PM2 config for the asset watcher(s).
 //
 // One watcher process per region (the backend connects to each over its own WS
-// port — see backend ASSET_WS_URLS, default en=9160 / cn=9161). Each polls the
+// port; see backend ASSET_WS_URLS, default en=9160 / cn=9161; jp=9162 / kr=9163 below). Each polls the
 // HG CDN on an interval and re-downloads + re-extracts when a new resVersion or
 // a rebuilt unpacker is detected.
 //
@@ -58,6 +58,42 @@ module.exports = {
                 // minute interval is the furthest apart two regions can be.
                 // WS_ALIGN=0 falls back to offsetting from process start.
                 WS_START_DELAY_MIN: "15",
+            },
+        },
+        // JP and KR exist for their TEXT: the game-data picker and the `ja`/`ko`
+        // locales read their excel and story tables, never their art, so the
+        // `gamedata` profile is all they pull (74.6 to 77.6 MB of bundles, an
+        // extract of 16 to 40 s locally on 2026-10-06, against EN's full tree).
+        // Phased at :07/:37 and :22/:52, between EN and CN, because a gamedata
+        // extract is short enough to finish before the next region wakes.
+        {
+            name: "myrtle-ws-jp",
+            script: "run.mjs",
+            interpreter: "node",
+            cwd: "/var/www/myrtle.moe/assets",
+            args: "ws",
+            max_memory_restart: "2G",
+            env: {
+                WS_SERVER: "jp",
+                WS_PORT: "9162",
+                WS_PROFILE: "gamedata",
+                WS_THREADS: "1",
+                WS_START_DELAY_MIN: "7",
+            },
+        },
+        {
+            name: "myrtle-ws-kr",
+            script: "run.mjs",
+            interpreter: "node",
+            cwd: "/var/www/myrtle.moe/assets",
+            args: "ws",
+            max_memory_restart: "2G",
+            env: {
+                WS_SERVER: "kr",
+                WS_PORT: "9163",
+                WS_PROFILE: "gamedata",
+                WS_THREADS: "1",
+                WS_START_DELAY_MIN: "22",
             },
         },
     ],

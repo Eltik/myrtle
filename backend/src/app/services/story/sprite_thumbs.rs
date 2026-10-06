@@ -180,7 +180,7 @@ fn unpremultiply(img: &mut RgbaImage) {
     }
 }
 
-fn modified(path: &Path) -> Option<SystemTime> {
+pub(super) fn modified(path: &Path) -> Option<SystemTime> {
     std::fs::metadata(path).and_then(|m| m.modified()).ok()
 }
 
@@ -245,7 +245,7 @@ pub async fn ensure(
 }
 
 /// Refresh a served file's mtime once it is [`TOUCH_AFTER`] old.
-fn touch_if_old(path: &Path) {
+pub(super) fn touch_if_old(path: &Path) {
     let old = modified(path)
         .and_then(|m| SystemTime::now().duration_since(m).ok())
         .is_some_and(|age| age > TOUCH_AFTER);
@@ -259,7 +259,7 @@ fn touch_if_old(path: &Path) {
 
 /// Write through a temporary name in the same directory, so the rename is
 /// atomic and a reader never sees half a file.
-fn write_atomically(target: &Path, tmp_name: &str, bytes: &[u8]) -> anyhow::Result<()> {
+pub(super) fn write_atomically(target: &Path, tmp_name: &str, bytes: &[u8]) -> anyhow::Result<()> {
     let dir = target
         .parent()
         .ok_or_else(|| anyhow::anyhow!("thumb path has no parent"))?;

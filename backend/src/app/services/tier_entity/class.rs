@@ -8,12 +8,12 @@ use crate::core::gamedata::types::operator::OperatorProfession;
 use crate::database::models::tier_list::EntityKind;
 
 pub(super) const CLASS: KindSource = KindSource {
-    resolve: |_, assets, id| class_summary(assets, id),
+    resolve: class_summary,
     known: |_, _, id| class_of(id).is_some(),
-    catalogue: |_, assets| {
+    catalogue: |gd, assets| {
         CLASSES
             .iter()
-            .filter_map(|(p, _)| class_summary(assets, p.to_raw_str()))
+            .filter_map(|(p, _)| class_summary(gd, assets, p.to_raw_str()))
             .collect()
     },
 };
@@ -25,8 +25,9 @@ pub(super) const SUBCLASS: KindSource = KindSource {
 };
 
 /// The eight playable classes in the game's own order, with the wire id the
-/// operator index sends and the English name. Class names are the one label
-/// here the game tables do not carry; the client localizes them by id.
+/// operator index sends and the English name. The name is only the fallback:
+/// a class reads as the server's own gacha tag (`GameData::profession_names`)
+/// when the tag list carries it.
 const CLASSES: [(OperatorProfession, &str); 8] = [
     (OperatorProfession::Vanguard, "Vanguard"),
     (OperatorProfession::Guard, "Guard"),
@@ -48,9 +49,13 @@ pub(super) fn class_order(p: &OperatorProfession) -> Option<usize> {
     CLASSES.iter().position(|(c, _)| c == p)
 }
 
-fn class_summary(assets: &AssetIndex, id: &str) -> Option<EntitySummary> {
-    let (profession, name) = class_of(id)?;
+fn class_summary(gd: &GameData, assets: &AssetIndex, id: &str) -> Option<EntitySummary> {
+    let (profession, english) = class_of(id)?;
     let raw = profession.to_raw_str();
+    let name = gd
+        .profession_names
+        .get(raw)
+        .map_or(*english, String::as_str);
     let icon = assets
         .path(
             AssetKind::ProfessionIcon,
@@ -60,7 +65,7 @@ fn class_summary(assets: &AssetIndex, id: &str) -> Option<EntitySummary> {
     Some(EntitySummary {
         kind: EntityKind::Class,
         id: raw.to_owned(),
-        name: (*name).to_owned(),
+        name: name.to_owned(),
         icon,
         href: None,
         facets: Facets::default().into(),
@@ -94,6 +99,10 @@ fn subclass_summary(gd: &GameData, assets: &AssetIndex, id: &str) -> Option<Enti
         href: None,
         facets: Facets::default()
             .one("profession", profession.to_raw_str())
+            .one_opt(
+                "profession_name",
+                gd.profession_names.get(profession.to_raw_str()).cloned(),
+            )
             .into(),
     })
 }

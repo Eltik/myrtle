@@ -23,6 +23,8 @@ export interface IRecruitableOperator {
     /** 1 (Robot) to 6. */
     rarity: number;
     profession: string;
+    /** The class in the server's own wording; see `professionTagName`. */
+    professionName: string;
     position: string;
     /** Recruitment tag names: position, class, rarity qualification, then the game's own affix tags. */
     tagList: string[];

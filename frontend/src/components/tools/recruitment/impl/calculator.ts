@@ -175,7 +175,7 @@ function assertFloorOutranksPoolShare(): void {
     const make = (rarities: number[]): ITagCombinationResult => ({
         tags: [],
         tagNames: [],
-        operators: rarities.map((rarity, i) => ({ id: `op${i}`, name: `op${i}`, rarity, profession: "", position: "", tagList: [], potentials: [] })),
+        operators: rarities.map((rarity, i) => ({ id: `op${i}`, name: `op${i}`, rarity, profession: "", professionName: "", position: "", tagList: [], potentials: [] })),
         guaranteedRarity: Math.min(...rarities),
         maxRarity: Math.max(...rarities),
         fiveStarCount: rarities.filter((r) => r >= 5).length,

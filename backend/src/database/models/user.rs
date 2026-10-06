@@ -5,6 +5,8 @@ use sqlx::types::{
 };
 use ts_rs::TS;
 
+use crate::database::models::profile_layout::{ProfileLayout, ProfileTabId};
+
 /// `v_user_profile` view
 #[derive(TS, utoipa::ToSchema)]
 #[ts(export)]
@@ -57,6 +59,29 @@ pub struct UserProfile {
     pub updated_at: DateTime<Utc>,
     /// Originite Prime on the account (paid and free pools summed) as of the last sync.
     pub originite: Option<i32>,
+    /// The owner's tab order and visibility, normalized on read. `None` when
+    /// they never customized, which the client renders exactly as before
+    /// layouts existed. A visitor receives [`UserProfile::hide_private_tabs`]'s
+    /// projection, which lists only the visible tabs.
+    #[sqlx(json(nullable))]
+    pub profile_layout: Option<ProfileLayout>,
+}
+
+impl UserProfile {
+    /// The profile as someone other than its owner may see it: private tabs
+    /// are dropped from the layout, and `total_score` and `grade` go when the
+    /// Score tab is private, since they are that tab's headline and
+    /// `/get-user-score` refuses it to a visitor. The rest of the row feeds
+    /// the header, which every visible tab sits under, so it stays.
+    pub fn hide_private_tabs(&mut self) {
+        if let Some(layout) = &mut self.profile_layout {
+            if !layout.is_visible(ProfileTabId::Score) {
+                self.total_score = None;
+                self.grade = None;
+            }
+            *layout = layout.visible_only();
+        }
+    }
 }
 
 /// One player search row: the profile plus the value of the sort that

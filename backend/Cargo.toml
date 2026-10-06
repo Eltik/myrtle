@@ -79,7 +79,7 @@ futures-util = "0.3"
 hex = "0.4"
 hmac = "0.12.1"
 # Story sprite thumbnails (`app::services::story_sprite_thumb`): decode, crop, resize, encode.
-image = { version = "0.25.9", default-features = false, features = ["png", "webp"] }
+image = { version = "0.25.9", default-features = false, features = ["png", "webp", "jpeg"] }
 indicatif = "0.18"
 jsonwebtoken = { version = "10.3.0", features = ["rust_crypto"] }
 md-5 = "0.10.6"

@@ -3184,6 +3184,7 @@
           "player"
         ],
         "summary": "A player's profile. `UserProfile` carries currency, sanity, subscription\nexpiry, last-online time and the account's role, so the `uid` goes through\nthe shared privacy gate: the caller's own profile or a public one, 403\notherwise.",
+        "description": "Never gated by tab: the row feeds the page header, which every visible tab\nsits under. A visitor gets the layout with the private tabs left out, and\nno `total_score` or `grade` while the Score tab is private, as\n`/get-user-score` refuses that tab's data to them.",
         "operationId": "get_user",
         "parameters": [
           {
@@ -3352,12 +3353,76 @@
         ]
       }
     },
+    "/api/get-user-showcase": {
+      "get": {
+        "tags": [
+          "player"
+        ],
+        "summary": "A player's Showcase tab: their blocks, each favourite resolved against\n`server`'s game data (then every other loaded server, as grid cells are).",
+        "description": "Gated like every tab: a private profile or a private Showcase tab is 403\nto a visitor. The owner gets every block, those whose grid, tier list or\nplan is gone marked `removed`; a visitor gets only the blocks that still\nresolve, and no plan block while the Plans tab is private. A player who\nnever set a layout has an empty showcase.",
+        "operationId": "get_user_showcase",
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "query",
+            "description": "Player to read.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "description": "Game server whose data names the favourites: `en`, `jp`, `kr`, `cn`, `tw` or `bili`. Defaults to the deployment's default server.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The showcase.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShowcaseView"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {}
+        ]
+      }
+    },
     "/api/get-user-supports": {
       "get": {
         "tags": [
           "player"
         ],
         "summary": "The player's support units, as other players would borrow them.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own.",
+        "description": "Gated by no tab, a private Roster included: support units are public in\ngame, where any player can see and borrow them, so hiding them here would\nhide nothing. The search's `support` filter follows this.",
         "operationId": "get_supports",
         "parameters": [
           {
@@ -4567,7 +4632,7 @@
           "leaderboard"
         ],
         "summary": "One player's rank among the holders of one item, globally and on their\nown server.",
-        "description": "Subject to the same privacy gate as every other by-uid endpoint: a private\nprofile is visible only to its owner. 404 when the player holds none of\nthe item.",
+        "description": "Subject to the same privacy gate as every other by-uid endpoint: a private\nprofile, or a private Inventory tab, is visible only to its owner. 404 when\nthe player holds none of the item, and for the owner too while their\nInventory tab is private, since the board then leaves them out.",
         "operationId": "item_standing",
         "parameters": [
           {
@@ -4718,7 +4783,7 @@
           "leaderboard"
         ],
         "summary": "One player's rank, percentile, and the players immediately around them.",
-        "description": "Subject to the same privacy gate as every other by-uid endpoint: a private\nprofile is visible only to its owner.",
+        "description": "Subject to the same privacy gate as every other by-uid endpoint: a private\nprofile, or a private Score tab, is visible only to its owner. 404 for the\nowner too while the Score tab is private, since `v_leaderboard` then leaves\nthem out.",
         "operationId": "standing",
         "parameters": [
           {
@@ -6327,6 +6392,7 @@
           "planner"
         ],
         "summary": "Another player's plans, where they chose to show them on their profile.",
+        "description": "The profile gates of every `uid` route apply: a private profile, or a\nprivate Plans tab, answers 403 to anyone but the owner.",
         "operationId": "list_public",
         "parameters": [
           {
@@ -6368,7 +6434,13 @@
           "503": {
             "$ref": "#/components/responses/ServiceUnavailable"
           }
-        }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          },
+          {}
+        ]
       }
     },
     "/api/players/search": {
@@ -7678,6 +7750,127 @@
         }
       }
     },
+    "/api/story/art-gallery/{kind}": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "Every story CG (`cg`) or scene plate (`scene`) on the default server wide\nenough for a profile header: at least 1024 px and 1.6 to 1.9 wide over\nhigh. Each picture once, under the first library group whose scripts draw\nit, groups in library order with their category.",
+        "operationId": "story_art_gallery",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "description": "`cg` or `scene`.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/StoryArtKind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every header-sized picture of the kind.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryArtGallery"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/story/art-gallery/{kind}/{id}/{size}": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "One story CG or scene, smaller, on the default server: `thumb` is 320 px\nwide, `header` 1600 px or the source width when narrower (a scene plate\nis 1024), both JPEG q82 through the Archives gallery's pipeline, cached\nunder `derived/story-art/`.",
+        "operationId": "story_art_picture",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "description": "`cg` or `scene`.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/StoryArtKind"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The asset key, lowercase (`avg_1_1`).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "in": "path",
+            "description": "`thumb` (320 px wide) or `header` (up to 1600 px wide).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "Echo a previous response's `ETag` to get a 304 instead of the bytes.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The picture, with an `ETag` and `Cache-Control: public, max-age=604800`.",
+            "content": {
+              "image/jpeg": {},
+              "image/png": {}
+            }
+          },
+          "304": {
+            "description": "The caller's `If-None-Match` matched; no body is sent."
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
     "/api/story/community": {
       "get": {
         "tags": [
@@ -7696,6 +7889,104 @@
                 }
               }
             }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/story/gallery": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "Every Archives gallery picture on the default server, grouped by the\nevent or Integrated Strategies theme whose archive lists it. Built once\nper game data load and asset tree.",
+        "operationId": "story_gallery",
+        "responses": {
+          "200": {
+            "description": "Every gallery picture.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryGallery"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/story/gallery/{id}/{size}": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "One gallery picture, smaller, on the default server: `thumb` is 320 px\nwide, `header` the full 1600 px, both JPEG q82 (13,630 and 224,384 bytes\non average over EN's 324, against the PNG's 2,049,755). Rendered on first\nrequest and cached under `derived/archive-pics/`; served with the same\n`ETag` and week-long `Cache-Control` as `/api/assets`. Should a render\nfail, the original PNG is served instead.",
+        "operationId": "story_gallery_picture",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Gallery picture id (`act13side_pic_0`).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "in": "path",
+            "description": "`thumb` (320 px wide) or `header` (1600 px wide).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "Echo a previous response's `ETag` to get a 304 instead of the bytes.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The picture, with an `ETag` and `Cache-Control: public, max-age=604800`.",
+            "content": {
+              "image/jpeg": {},
+              "image/png": {}
+            }
+          },
+          "304": {
+            "description": "The caller's `If-None-Match` matched; no body is sent."
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
           },
           "429": {
             "$ref": "#/components/responses/RateLimited"
@@ -9840,7 +10131,7 @@
         "tags": [
           "player"
         ],
-        "summary": "The skins a player owns.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own.",
+        "summary": "The skins a player owns.\nRuns the shared privacy gate: another player's data is readable only when\ntheir profile is public, and a player always sees their own. A visitor\nalso needs the Stats and Roster tabs visible: owned skins are roster data\nthe Stats tab draws.",
         "operationId": "get_owned_skins",
         "parameters": [
           {
@@ -12100,6 +12391,145 @@
         }
       }
     },
+    "/api/{server}/story/art-gallery/{kind}": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "`GET /{server}/story/art-gallery/{kind}` - the same from `{server}`.",
+        "operationId": "story_art_gallery_srv",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "description": "Game server: `en`, `jp`, `kr`, `cn` or `tw`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "path",
+            "description": "`cg` or `scene`.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/StoryArtKind"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every header-sized picture of the kind.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryArtGallery"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/{server}/story/art-gallery/{kind}/{id}/{size}": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "`GET /{server}/story/art-gallery/{kind}/{id}/{size}` - the same from\n`{server}`, falling back to the default server.",
+        "operationId": "story_art_picture_srv",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "description": "Game server: `en`, `jp`, `kr`, `cn` or `tw`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "path",
+            "description": "`cg` or `scene`.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/StoryArtKind"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The asset key, lowercase (`avg_1_1`).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "in": "path",
+            "description": "`thumb` (320 px wide) or `header` (up to 1600 px wide).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "Echo a previous response's `ETag` to get a 304 instead of the bytes.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The picture, with an `ETag` and `Cache-Control: public, max-age=604800`.",
+            "content": {
+              "image/jpeg": {},
+              "image/png": {}
+            }
+          },
+          "304": {
+            "description": "The caller's `If-None-Match` matched; no body is sent."
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
     "/api/{server}/story/community": {
       "get": {
         "tags": [
@@ -12128,6 +12558,127 @@
                 }
               }
             }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/{server}/story/gallery": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "`GET /{server}/story/gallery` - the same from `{server}`.",
+        "operationId": "story_gallery_srv",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "description": "Game server: `en`, `jp`, `kr`, `cn` or `tw`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Every gallery picture.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryGallery"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/{server}/story/gallery/{id}/{size}": {
+      "get": {
+        "tags": [
+          "gamedata"
+        ],
+        "summary": "`GET /{server}/story/gallery/{id}/{size}` - the same from `{server}`,\nfalling back to the default server for an id `{server}` does not list.",
+        "operationId": "story_gallery_picture_srv",
+        "parameters": [
+          {
+            "name": "server",
+            "in": "path",
+            "description": "Game server: `en`, `jp`, `kr`, `cn` or `tw`.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Gallery picture id (`act13side_pic_0`).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "in": "path",
+            "description": "`thumb` (320 px wide) or `header` (1600 px wide).",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "Echo a previous response's `ETag` to get a 304 instead of the bytes.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The picture, with an `ETag` and `Cache-Control: public, max-age=604800`.",
+            "content": {
+              "image/jpeg": {},
+              "image/png": {}
+            }
+          },
+          "304": {
+            "description": "The caller's `If-None-Match` matched; no body is sent."
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
@@ -12522,7 +13073,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /{server}/upcoming` - operators on `{server}` not yet on the default server.\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "summary": "`GET /{server}/upcoming` - operators on CN not yet on `{server}`. A CN or\nBilibili `{server}` compares against the default server, as the bare form does.",
         "operationId": "upcoming_srv",
         "parameters": [
           {
@@ -14905,7 +15456,7 @@
         "properties": {
           "facets": {
             "type": "object",
-            "description": "Kind-specific tags the tile and the pool filters read. Operators carry\n`rarity`, `profession`, `sub_profession_id`, `position`, and, when set,\n`nation_id` and `appellation`. Subclasses carry `profession`; enemies\n`enemy_level` and `enemy_index`; events `display_type`, `type`,\n`start_time` (unix seconds) and, for a rerun, `rerun`; factions\n`power_level` (`nation`, `group` or `team`); Stronghold bonds\n`bond_type` (`season` or `regular`) and, for a season bond, `power_ids`.\nSkins carry `char_id`, `operator` (the wearer's name), `rarity`,\n`profession` and, when filed under one, `brand`; modules `char_id`,\n`operator`, `profession`, `module_type` (`X`, `Y`, `D`, `A`, `B`) and\n`type_code` (`SUM`); skills `char_id`, `operator`, `profession`, `slot`\n(`1` to `3`) and, when the skill has levels, `skill_type` and\n`sp_type`; Integrated Strategies entries `theme` (`rogue_N`,\nwhich is IS N+1) and `item_type` (`theme`, `relic`, `band`, ...);\nstory sprites `source` (`operator` or `npc`), for an operator `char_id`,\nand, when the hub places the face, `face` (`x,y` fractions of the plate);\nmain story episodes `episode` (`0` to `16` on EN), `act` (the\n`chapter_table` index) and `act_name`.",
+            "description": "Kind-specific tags the tile and the pool filters read. Operators carry\n`rarity`, `profession`, `sub_profession_id`, `position`, and, when set,\n`nation_id`, `appellation`, and the server's own `profession_name`,\n`sub_profession_name` and `nation_name`. Subclasses carry\n`profession` and the server's `profession_name`; enemies\n`enemy_level` and `enemy_index`; events `display_type`, `type`,\n`start_time` (unix seconds) and, for a rerun, `rerun`; factions\n`power_level` (`nation`, `group` or `team`); Stronghold bonds\n`bond_type` (`season` or `regular`) and, for a season bond, `power_ids`.\nSkins carry `char_id`, `operator` (the wearer's name), `rarity`,\n`profession` and, when filed under one, `brand`; modules `char_id`,\n`operator`, `profession`, `module_type` (`X`, `Y`, `D`, `A`, `B`) and\n`type_code` (`SUM`); skills `char_id`, `operator`, `profession`, `slot`\n(`1` to `3`) and, when the skill has levels, `skill_type` and\n`sp_type`; Integrated Strategies entries `theme` (`rogue_N`,\nwhich is IS N+1) and `item_type` (`theme`, `relic`, `band`, ...);\nstory sprites `source` (`operator` or `npc`), for an operator `char_id`,\nand, when the hub places the face, `face` (`x,y` fractions of the plate);\nmain story episodes `episode` (`0` to `16` on EN), `act` (the\n`chapter_table` index) and `act_name`.",
             "additionalProperties": {
               "$ref": "#/components/schemas/FacetValue"
             },
@@ -15833,6 +16384,66 @@
           "total": {
             "type": "integer",
             "minimum": 0
+          }
+        }
+      },
+      "GalleryGroup": {
+        "type": "object",
+        "description": "One archive's pictures: an event (`act13side`) or an Integrated\nStrategies theme (`rogue_1`), by its archive component id.",
+        "required": [
+          "id",
+          "name",
+          "pictures"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "description": "The event's or theme's name, or the id when the data names neither."
+          },
+          "pictures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GalleryPicture"
+            },
+            "description": "In the order the archive shows them."
+          }
+        }
+      },
+      "GalleryPicture": {
+        "type": "object",
+        "description": "One gallery picture. Its 320 px and 1600 px JPEGs are\n`/story/gallery/{id}/thumb` and `/story/gallery/{id}/header`.",
+        "required": [
+          "id",
+          "title",
+          "pictureType"
+        ],
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "description": "The table's key, `act13side_pic_0`: what a profile background stores."
+          },
+          "pictureType": {
+            "type": "string",
+            "description": "`IMAGE`, `ENDING_IMAGE` or `ROGUE_IMAGE`, raw from the table."
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The original PNG, absent when the file is not on disk."
           }
         }
       },
@@ -17669,6 +18280,19 @@
           }
         }
       },
+      "ObtainChannel": {
+        "type": "string",
+        "description": "An operator's `itemObtainApproach` category.",
+        "enum": [
+          "headhunting",
+          "event",
+          "voucher",
+          "integratedStrategies",
+          "creditStore",
+          "giftPack",
+          "other"
+        ]
+      },
       "OpStage": {
         "type": "object",
         "description": "One stage that awards Originite Prime on first clear.",
@@ -17858,6 +18482,12 @@
             ],
             "description": "Faction group id (list page \"factions\" filter + faction-logo fallback)."
           },
+          "groupName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "hasDefensiveRecovery": {
             "type": "boolean"
           },
@@ -17882,6 +18512,23 @@
           },
           "nationId": {
             "type": "string"
+          },
+          "nationName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "obtainChannel": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ObtainChannel",
+                "description": "`itemObtainApproach` as a category, the same on every server."
+              }
+            ]
           },
           "phaseMaxLevels": {
             "type": "array",
@@ -17911,6 +18558,13 @@
           "profession": {
             "$ref": "#/components/schemas/OperatorProfession"
           },
+          "professionName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The server's own names for `profession`, `subProfessionId`,\n`nationId`, `groupId` and `teamId`, so a client need not keep an\nEnglish table per id. `None` when the server's table does not name the\nid."
+          },
           "race": {
             "$ref": "#/components/schemas/OperatorRace"
           },
@@ -17931,6 +18585,12 @@
           "subProfessionId": {
             "type": "string"
           },
+          "subProfessionName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "tagList": {
             "type": "array",
             "items": {
@@ -17943,6 +18603,12 @@
               "null"
             ],
             "description": "Sub-faction / team id (same faction filter + logo fallback)."
+          },
+          "teamName": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "voiceActors": {
             "type": "array",
@@ -18381,6 +19047,13 @@
           "profession": {
             "$ref": "#/components/schemas/OperatorProfession",
             "description": "The character table's profession, the raw game value the operators\nlist carries (`PIONEER`, `WARRIOR`, ...)."
+          },
+          "professionName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The server's own name for `profession`, from its gacha class tags.\n`None` when the character table has no such operator."
           },
           "rarity": {
             "type": "integer",
@@ -18938,6 +19611,188 @@
             "description": "Skill level, 1 to 7."
           }
         }
+      },
+      "ProfileBackground": {
+        "type": "object",
+        "description": "`profile_layout.background`: a reference to game art, never a URL. The\nclient builds the URL from the kind and id with the helpers every other\npage uses.",
+        "required": [
+          "kind",
+          "id"
+        ],
+        "properties": {
+          "elite": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Which elite art an operator background draws: `1` or `2`. `None` is the\nart the header drew before the choice existed, elite 2 where the\noperator has it, else elite 1. Kept on the operator kind alone, so an\noutfit or a gallery picture never carries it.",
+            "minimum": 0
+          },
+          "focus_x": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Where the crop centres, as a percentage of the art's width, 0 to 100.\n`None` is the centre.",
+            "minimum": 0
+          },
+          "focus_y": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "The same for height.",
+            "minimum": 0
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ProfileBackgroundKind"
+          },
+          "scale": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "How far the art is zoomed in past `cover`, as a percentage,\n[`BACKGROUND_SCALE_MIN`] to [`BACKGROUND_SCALE_MAX`]. `None` is 100,\nthe art exactly covering the header as it did before zoom existed.",
+            "minimum": 0
+          }
+        }
+      },
+      "ProfileBackgroundKind": {
+        "type": "string",
+        "description": "What art a profile header may show. `skin` and `operator` are tier-list\nentity kinds, so their ids are checked by the same lookup a favourites\nblock is, and their art is a painted figure the game ships a 1024 px\nreduced copy of beside the full one (469 of 474 outfit arts, 323 of 381\nelite 2 arts on EN 2026-10-05). `archive_pic` is a landscape picture,\nchecked against `story_review_meta_table` instead.\n\nRuled out by measurement on EN 2026-10-05, none of them wide enough or\nsmall enough for a header about 1100 px wide: event art (`/event-image`)\nis 280x166; a main story key visual is a 432 px square poster with the\nchapter title typeset into it; an Archives entry picture is 420x508\nportrait. An Archives gallery picture is 1600x900 and right for the\nheader but 2.05 MB on average (324 pictures), and only 48 of the 324 have\nthe game's 260x148 gallery thumbnail, so `archive_pic` is served through\n`/story/gallery/{id}/{thumb,header}`, 320 px and 1600 px JPEGs.\n\n`story_cg` and `story_scene` are the story scripts' own art (1,230 CGs\nand 898 scene plates on EN 2026-10-06 pass the header filter of at\nleast 1024 px, 1.6 to 1.9 wide over high and 0.2 PNG bytes per px),\nchecked against `/story/art-gallery/{kind}` and served through it the\nsame way.",
+        "enum": [
+          "skin",
+          "operator",
+          "archive_pic",
+          "story_cg",
+          "story_scene"
+        ]
+      },
+      "ProfileLayout": {
+        "type": "object",
+        "description": "How the owner arranged their profile, `user_settings.profile_layout`.\n\nStored as a jsonb object of three keys: `tabs` (the order and visibility\nof every tab), `showcase` (the Showcase tab's blocks) and `background` (the\nheader art); a save sets only the keys it sends. Deserializing goes\nthrough [`ProfileLayout::normalize`], so every value that reaches the\ncode, from the database, the cache or a request body, holds each known tab\nexactly once.\n\nWhat a visitor receives is [`ProfileLayout::visible_only`]: a private tab is\nabsent from it, not present with `visible: false`.",
+        "required": [
+          "tabs"
+        ],
+        "properties": {
+          "background": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ProfileBackground",
+                "description": "The art behind the profile header. `None` when the stored layout has\nnone, which renders the header exactly as before backgrounds existed.\nNot gated by any tab: the header is the profile itself."
+              }
+            ]
+          },
+          "showcase": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ProfileShowcase",
+                "description": "The Showcase tab's blocks. `None` when the stored layout has no\n`showcase` key: a save that leaves the key out keeps the stored\nshowcase (see `queries::users::update_settings`), so a client that only\nknows about tabs cannot wipe it."
+              }
+            ]
+          },
+          "tabs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProfileTab"
+            },
+            "description": "Display order, first tab first."
+          }
+        }
+      },
+      "ProfileLayoutPatch": {
+        "type": "object",
+        "description": "A save of `profile_layout`: only the keys the request carried, each\nnormalized as [`ProfileLayout::normalize`] reads it. A key left out keeps\nthe stored value, so the tab editor sends only `tabs`, the showcase editor\nonly `showcase` and the background picker only `background`, and none can\nwipe another's work (see `queries::users::update_settings`). The one save\nthat clears the whole layout is the tab editor's explicit Reset, which\nsends `null` instead of a patch.\n\n`tabs` is present when the request carried a `tabs` array, `showcase` when\nit carried a `showcase` object. `background` is present whenever the key\nis: `null`, or a value that does not normalize, clears it.",
+        "properties": {
+          "background": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ProfileBackground"
+              }
+            ]
+          },
+          "showcase": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ProfileShowcase"
+              }
+            ]
+          },
+          "tabs": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ProfileTab"
+            }
+          }
+        }
+      },
+      "ProfileShowcase": {
+        "type": "object",
+        "description": "`profile_layout.showcase`: the owner's blocks, in display order.",
+        "required": [
+          "blocks"
+        ],
+        "properties": {
+          "blocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShowcaseBlock"
+            }
+          }
+        }
+      },
+      "ProfileTab": {
+        "type": "object",
+        "description": "One entry of [`ProfileLayout::tabs`].",
+        "required": [
+          "id",
+          "visible"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/ProfileTabId"
+          },
+          "visible": {
+            "type": "boolean",
+            "description": "False hides the tab from visitors and refuses its data to them. The\nowner always sees and reads every tab."
+          }
+        }
+      },
+      "ProfileTabId": {
+        "type": "string",
+        "description": "One tab of the player profile page. The variants are the allow-list and\ntheir declaration order is the canonical order, the one the profile showed\nbefore layouts existed: a layout that omits a tab gets it back in this\nposition's turn, visible.",
+        "enum": [
+          "showcase",
+          "stats",
+          "score",
+          "roster",
+          "plans",
+          "inventory",
+          "enemies",
+          "optimizer"
+        ]
       },
       "PublishRequest": {
         "type": "object",
@@ -20443,6 +21298,173 @@
           }
         }
       },
+      "ShowcaseBlock": {
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "A row of favourite entities of one kind, any kind a tier list can rank.",
+            "required": [
+              "entity_kind",
+              "ids",
+              "type"
+            ],
+            "properties": {
+              "entity_kind": {
+                "$ref": "#/components/schemas/EntityKind"
+              },
+              "ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Display order, at most [`SHOWCASE_MAX_IDS`], no repeats."
+              },
+              "title": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Plain text, trimmed, at most [`SHOWCASE_TITLE_MAX`] characters.\n`None` shows the kind's own name."
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "favourites"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "A grid, by slug. Unlisted grids count: they are served by slug.",
+            "required": [
+              "slug",
+              "type"
+            ],
+            "properties": {
+              "slug": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "grid"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "A tier list, by slug. Unlisted lists count too.",
+            "required": [
+              "slug",
+              "type"
+            ],
+            "properties": {
+              "slug": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "tier_list"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "One of the owner's plans shown on their profile. A visitor gets it only\nwhile the Plans tab is visible to them.",
+            "required": [
+              "id",
+              "type"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "plan"
+                ]
+              }
+            }
+          }
+        ],
+        "description": "One showcase block. Every block points at something that already exists on\nthe site; the only text an owner types is a favourites block's title."
+      },
+      "ShowcaseBlockView": {
+        "type": "object",
+        "description": "One block, with what it points at checked and, for favourites, resolved.",
+        "required": [
+          "block",
+          "removed",
+          "entities"
+        ],
+        "properties": {
+          "block": {
+            "$ref": "#/components/schemas/ShowcaseBlock"
+          },
+          "entities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShowcaseEntity"
+            },
+            "description": "Favourites only, one per id in `block`, in its order; empty for every\nother block. A visitor is sent only the ids that resolve."
+          },
+          "removed": {
+            "type": "boolean",
+            "description": "What the block points at is gone: a deleted grid or tier list, a plan\ndeleted or no longer shown on the profile, or favourites none of whose\nids the game data knows. Only the owner is ever sent such a block."
+          }
+        }
+      },
+      "ShowcaseEntity": {
+        "type": "object",
+        "description": "One favourite, resolved against the reader's server first and then every\nother loaded server, as a grid cell is.",
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "entity": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/EntitySummary",
+                "description": "`None` when no loaded server's game data has the id."
+              }
+            ]
+          },
+          "entity_server": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The server `entity` resolved on when the reader's does not know it,\nwith `GridCell::entity_server`'s meaning."
+          },
+          "id": {
+            "type": "string"
+          }
+        }
+      },
+      "ShowcaseView": {
+        "type": "object",
+        "description": "The showcase as `/get-user-showcase` serves it.",
+        "required": [
+          "blocks"
+        ],
+        "properties": {
+          "blocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShowcaseBlockView"
+            }
+          }
+        }
+      },
       "SkillLineDto": {
         "type": "object",
         "description": "One line of a room's per-skill breakdown (the deep dive's \"how this is\ncalculated\"). Values are MARGINALS in this exact crew - what the room's\nnumber loses if this one skill is removed - so pair riders, non-stacking\nrules and faction gates are already folded in.",
@@ -21289,6 +22311,88 @@
         ],
         "description": "One item of a group's archive: a log entry, a landmark, a news story, a\nfile, a gallery picture, a track or a recording.\n\nThe sections are a TAGGED list rather than a fixed record because an\narchive carries two or three of them and never all seven: on EN\n`act13side` is news, files and a gallery, `act17side` is logs, landmarks\nand a gallery, `act25side` is files and a gallery, `main_14` is nothing\nbut recordings. `count` is the LEAF count, the number of rows the game's\nown screen lists, so `logs` counts logs and not the chapters they are\ngrouped into, and `recordings` counts clips and not nodes."
       },
+      "StoryArtGallery": {
+        "type": "object",
+        "description": "`GET /story/art-gallery/{kind}`: every story CG or scene wide enough for\na profile header, each once, under the first library group whose\nscripts draw it.",
+        "required": [
+          "kind",
+          "groups"
+        ],
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryArtGroup"
+            },
+            "description": "In library order."
+          },
+          "kind": {
+            "$ref": "#/components/schemas/StoryArtKind"
+          }
+        }
+      },
+      "StoryArtGroup": {
+        "type": "object",
+        "description": "One library group's newly seen pictures.",
+        "required": [
+          "id",
+          "name",
+          "category",
+          "pictures"
+        ],
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/StoryCategory"
+          },
+          "id": {
+            "type": "string",
+            "description": "The `StoryGroup.id`."
+          },
+          "name": {
+            "type": "string"
+          },
+          "pictures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoryArtPicture"
+            }
+          }
+        }
+      },
+      "StoryArtKind": {
+        "type": "string",
+        "description": "Which story-script art a [`StoryArtGallery`] lists: `cg`, an `Image`\nstill from `textures/avg/imgs`, or `scene`, a `Background` plate from\n`textures/avg/bg`. Decided by the tree the file resolves into, not by the\ncommand that names it, so an `Image` that falls back to a `bg/` file is a\nscene.",
+        "enum": [
+          "cg",
+          "scene"
+        ]
+      },
+      "StoryArtPicture": {
+        "type": "object",
+        "description": "One CG or scene. Its 320 px and up-to-1600 px JPEGs are\n`/story/art-gallery/{kind}/{id}/thumb` and `.../header`.",
+        "required": [
+          "id",
+          "width",
+          "height"
+        ],
+        "properties": {
+          "height": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "id": {
+            "type": "string",
+            "description": "The asset key the scripts name, lowercased (`avg_1_1`, `bg_corridor`):\nwhat a profile background stores."
+          },
+          "width": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The source PNG's size in px.",
+            "minimum": 0
+          }
+        }
+      },
       "StoryAssets": {
         "type": "object",
         "description": "The assets one script references, keyed by the raw name as written in the\nscript (`avg_225_haak_1#3$1`, `$escape_loop`). Only resolved names appear.",
@@ -21531,6 +22635,21 @@
             "format": "int32",
             "description": "Whitespace-separated words of prose in the script, counted once at\nindex build by the same rule as `StoryScript.wordCount`. 0 when the\nstory has no script.",
             "minimum": 0
+          }
+        }
+      },
+      "StoryGallery": {
+        "type": "object",
+        "description": "`GET /story/gallery`: every Archives gallery picture, by the archive that\nlists it.",
+        "required": [
+          "groups"
+        ],
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GalleryGroup"
+            }
           }
         }
       },
@@ -23493,20 +24612,36 @@
       },
       "UpdateSettingsRequest": {
         "type": "object",
-        "required": [
-          "public_profile",
-          "store_gacha",
-          "share_stats"
-        ],
         "properties": {
+          "profile_layout": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ProfileLayoutPatch",
+                "description": "Absent leaves the saved layout alone, `null` resets it to the default\n(today's order, every tab visible, no showcase, no background). An\nobject sets the keys it carries and keeps the rest: `tabs` replaces the\ntab list, `showcase` the blocks, `background` the header art (`null`\nremoves it). Normalized before it is stored: unknown tab ids and\nrepeats are dropped, missing tabs appended visible."
+              }
+            ]
+          },
           "public_profile": {
-            "type": "boolean"
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Each flag: absent leaves it as stored, so a caller can send only the\nfield it changes (the profile's tab editor sends only `profile_layout`)."
           },
           "share_stats": {
-            "type": "boolean"
+            "type": [
+              "boolean",
+              "null"
+            ]
           },
           "store_gacha": {
-            "type": "boolean"
+            "type": [
+              "boolean",
+              "null"
+            ]
           }
         }
       },
@@ -23822,6 +24957,17 @@
               "null"
             ],
             "format": "int32"
+          },
+          "profile_layout": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ProfileLayout",
+                "description": "The owner's tab order and visibility, normalized on read. `None` when\nthey never customized, which the client renders exactly as before\nlayouts existed. A visitor receives [`UserProfile::hide_private_tabs`]'s\nprojection, which lists only the visible tabs."
+              }
+            ]
           },
           "public_profile": {
             "type": [

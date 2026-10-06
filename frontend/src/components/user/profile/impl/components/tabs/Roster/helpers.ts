@@ -1,17 +1,20 @@
 import type { FilterSets } from "#/components/operators/list/impl/shared-filters";
 import { hasAnySharedFilter, matchesSharedFilters } from "#/components/operators/list/impl/shared-filters";
 import { compactForSearch } from "#/lib/search/fuzzy";
+import type { ObtainChannel } from "#/types/generated/ObtainChannel";
 import { isMaxed, MAX_ELITE_BY_RARITY, MAX_LEVEL_BY_RARITY } from "./helpers.card";
 import type { IDisplayEntry, SortKey, SortOrder, SourceFilter } from "./types";
 
 /**
- * Classifies `character_table.ItemObtainApproach`. On EN (2026-09-21) every
- * gacha operator's approach contains "Headhunting": 313 read "Recruitment &
- * Headhunting" and Texas alone reads "Recruitment & Headhunting, Pinboard
- * Missions", which is why this is a substring test and not an equality. The
- * other side is "Event Reward" (70), "Voucher Exchange" (12), "Obtained from
- * Integrated Strategies" (5), "Credit Store" (3), "Anniversary Reward"
- * (Savage), "Main Theme Story" (Amiya), "Limited Gift Pack" (Purestream).
+ * Classifies an operator by the server's language-neutral `channel` when the field is present.
+ *
+ * Old-cache fallback: the English `character_table.ItemObtainApproach` text, for a cached
+ * response from before `obtainChannel` existed. On EN (2026-09-21) every gacha operator's
+ * approach contains "Headhunting": 313 read "Recruitment & Headhunting" and Texas alone reads
+ * "Recruitment & Headhunting, Pinboard Missions", which is why this is a substring test and not
+ * an equality. The other side is "Event Reward" (70), "Voucher Exchange" (12), "Obtained from
+ * Integrated Strategies" (5), "Credit Store" (3), "Anniversary Reward" (Savage), "Main Theme
+ * Story" (Amiya), "Limited Gift Pack" (Purestream).
  *
  * `null` is an operator with NO approach: the backend serialises the missing
  * field as "" for the 29 `isNotObtainable` rows (Reserve Operators, IS-only
@@ -19,7 +22,9 @@ import type { IDisplayEntry, SortKey, SortOrder, SourceFilter } from "./types";
  * Neither side of the filter claims those, so "any" is the only view that
  * shows them.
  */
-export function operatorSource(approach: string | null | undefined): Exclude<SourceFilter, "any"> | null {
+export function operatorSource(approach: string | null | undefined, channel?: ObtainChannel | null): Exclude<SourceFilter, "any"> | null {
+    // A present `null` channel is an operator with no approach, the same as an empty approach string.
+    if (channel !== undefined) return channel === null ? null : channel === "headhunting" ? "headhunting" : "welfare";
     if (!approach) return null;
     return approach.includes("Headhunting") ? "headhunting" : "welfare";
 }
@@ -31,7 +36,7 @@ export function filterEntries(entries: IDisplayEntry[], search: string, sets: Fi
 
     return entries.filter((e) => {
         if (q && !compactForSearch(e.name).includes(q)) return false;
-        if (source !== "any" && operatorSource(e.static?.itemObtainApproach) !== source) return false;
+        if (source !== "any" && operatorSource(e.static?.itemObtainApproach, e.static?.obtainChannel ?? e.meta?.obtainChannel) !== source) return false;
         if (!active) return true;
         // An operator missing from the index cannot be shown as matching any attribute filter.
         if (!e.meta) return false;

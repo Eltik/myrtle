@@ -22,7 +22,9 @@ export type EntitySummary = {
     /**
      * Kind-specific tags the tile and the pool filters read. Operators carry
      * `rarity`, `profession`, `sub_profession_id`, `position`, and, when set,
-     * `nation_id` and `appellation`. Subclasses carry `profession`; enemies
+     * `nation_id`, `appellation`, and the server's own `profession_name`,
+     * `sub_profession_name` and `nation_name`. Subclasses carry
+     * `profession` and the server's `profession_name`; enemies
      * `enemy_level` and `enemy_index`; events `display_type`, `type`,
      * `start_time` (unix seconds) and, for a rerun, `rerun`; factions
      * `power_level` (`nation`, `group` or `team`); Stronghold bonds

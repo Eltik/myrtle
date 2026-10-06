@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
+import { SlidersHorizontalIcon } from "lucide-react";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Button } from "#/components/ui/button";
 import { Skeleton } from "#/components/ui/skeleton";
+import { useAuth } from "#/hooks/use-auth";
 import { useLocalStorageState } from "#/hooks/use-local-storage-state";
 import { operatorsIndexQueryOptions, operatorsListQueryOptions } from "#/lib/api/operators";
 import { publicPlansQueryOptions } from "#/lib/api/planner";
@@ -9,11 +12,14 @@ import { userEncounteredEnemiesQueryOptions, userImprovementsQueryOptions, userI
 import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { Hero } from "./impl/components/Hero";
+import { ProfileLayoutEditor } from "./impl/components/ProfileLayoutEditor";
+import type { messages as layoutMessages } from "./impl/components/ProfileLayoutEditor.messages";
 import { ProfileTabs } from "./impl/components/ProfileTabs";
 import { StatStrip } from "./impl/components/StatStrip";
 import { ScoreTabSkeleton } from "./impl/components/tabs/Score/ScoreTabSkeleton";
 import { StatsTab } from "./impl/components/tabs/Stats/StatsTab";
 import { DynamicArtProvider } from "./impl/dynamic-art";
+import { resolveActiveTab, shownTabs, tabMemory } from "./impl/layout";
 import { isTabId, type TabId } from "./impl/types";
 import type { messages } from "./UserProfile.messages";
 
@@ -38,12 +44,16 @@ const loadOptimizerTab = () => import("./impl/components/tabs/Optimizer/Optimize
 const loadPlansTab = () => import("./impl/components/tabs/Plans/PlansTab");
 const loadRosterTab = () => import("./impl/components/tabs/Roster/RosterTab");
 const loadScoreTab = () => import("./impl/components/tabs/Score/ScoreTab");
+const loadShowcaseTab = () => import("./impl/components/tabs/Showcase/ShowcaseTab");
 const EnemiesTab = lazy(() => loadEnemiesTab().then((m) => ({ default: m.EnemiesTab })));
 const ItemsTab = lazy(() => loadItemsTab().then((m) => ({ default: m.ItemsTab })));
 const OptimizerTab = lazy(() => loadOptimizerTab().then((m) => ({ default: m.OptimizerTab })));
 const PlansTab = lazy(() => loadPlansTab().then((m) => ({ default: m.PlansTab })));
 const RosterTab = lazy(() => loadRosterTab().then((m) => ({ default: m.RosterTab })));
 const ScoreTab = lazy(() => loadScoreTab().then((m) => ({ default: m.ScoreTab })));
+const ShowcaseTab = lazy(() => loadShowcaseTab().then((m) => ({ default: m.ShowcaseTab })));
+// The editor pulls in the grids' entity picker and the gallery; only an owner who opens it pays for that.
+const BackgroundEditor = lazy(() => import("./impl/background-editor/BackgroundEditor").then((m) => ({ default: m.BackgroundEditor })));
 
 const TAB_CHUNKS: Partial<Record<TabId, () => Promise<unknown>>> = {
     enemies: loadEnemiesTab,
@@ -52,6 +62,7 @@ const TAB_CHUNKS: Partial<Record<TabId, () => Promise<unknown>>> = {
     plans: loadPlansTab,
     roster: loadRosterTab,
     score: loadScoreTab,
+    showcase: loadShowcaseTab,
 };
 
 /** Tabs that render phases, skills or template ids and so need the full operator table. */
@@ -67,23 +78,118 @@ function GridSkeleton() {
     );
 }
 
-export function UserProfile() {
+/** The page while the profile record loads: the hero, stat strip, tab bar and the Stats tab's first rows. */
+function ProfileSkeleton() {
+    return (
+        <main className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
+            <div className="relative h-48 w-full overflow-hidden rounded-3xl border border-border/50 bg-card/40">
+                <Skeleton className="absolute inset-0 rounded-3xl opacity-60" />
+                <div className="relative flex h-full items-center gap-6 p-6">
+                    <Skeleton className="h-28 w-28 shrink-0 rounded-2xl" />
+                    <div className="flex min-w-0 flex-1 flex-col gap-3">
+                        <div className="flex items-center gap-2">
+                            <Skeleton className="h-4 w-16 rounded-md" />
+                            <Skeleton className="h-5 w-20 rounded-full" />
+                            <Skeleton className="h-5 w-24 rounded-full" />
+                        </div>
+                        <Skeleton className="h-8 w-48 rounded-lg" />
+                        <Skeleton className="h-4 w-40 rounded-md" />
+                        <Skeleton className="mt-1 h-4 w-36 rounded-md" />
+                    </div>
+                    <div className="hidden items-center gap-2 self-start sm:flex">
+                        <Skeleton className="h-9 w-24 rounded-lg" />
+                        <Skeleton className="h-9 w-9 rounded-lg" />
+                    </div>
+                </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3.5 md:grid-cols-4">
+                {[0, 1, 2, 3].map((i) => (
+                    <div key={i} className="flex h-28 w-full flex-col gap-3 rounded-2xl border border-border/50 bg-card/40 p-5">
+                        <Skeleton className="h-3 w-16 rounded-md" />
+                        <Skeleton className="h-8 w-28 rounded-lg" />
+                        <Skeleton className="mt-auto h-3 w-24 rounded-md" />
+                    </div>
+                ))}
+            </div>
+            <div className="flex items-center gap-6 border-border/50 border-b pt-2">
+                {[0, 1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center gap-2 pb-3">
+                        <Skeleton className="h-4 w-16 rounded-md" />
+                        <Skeleton className="h-5 w-8 rounded-md" />
+                    </div>
+                ))}
+            </div>
+            <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <Skeleton className="h-6 w-20 rounded-md" />
+                        <Skeleton className="h-5 w-24 rounded-full" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Skeleton className="h-4 w-10 rounded-md" />
+                        <Skeleton className="h-8 w-24 rounded-lg" />
+                    </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    {SKELETON_TAG_WIDTHS.map(({ id, width }) => (
+                        <Skeleton className="h-8 rounded-full" key={id} style={{ width: `${width}px` }} />
+                    ))}
+                </div>
+            </div>
+            <GridSkeleton />
+        </main>
+    );
+}
+
+function ProfileNotFound({ id }: { id: string }) {
     const t: TypedT<typeof messages> = useT("user");
     const rt: TypedRichT<typeof messages> = useRichT("user");
+    return (
+        <main className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-card px-8 py-16 text-center">
+                <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">{t("profile.notFound.eyebrow")}</span>
+                <h1 className="font-bold text-2xl tracking-tight">{t("profile.notFound.title")}</h1>
+                <p className="max-w-sm text-muted-foreground text-sm">{rt("profile.notFound.desc", { id: <code className="font-mono">{id}</code> })}</p>
+            </div>
+        </main>
+    );
+}
+
+export function UserProfile() {
+    const t: TypedT<typeof messages> = useT("user");
+    const lt: TypedT<typeof layoutMessages> = useT("user");
     const { id } = useParams({ from: "/user/$id" });
+    const { user } = useAuth();
     // Survives leaving the page, so going away from Roster and back does not reset to Stats.
     // Stored per browser, not per profile: the tab is a way of reading a profile.
-    const [activeTab, setActiveTab] = useLocalStorageState<TabId>("user:profile:tab", "stats", {
+    const [storedTab, setStoredTab] = useLocalStorageState<TabId>("user:profile:tab", "stats", {
         parse: (raw) => (isTabId(raw) ? raw : undefined),
         serialize: (v) => v,
     });
+    // A visitor's pick on a customized profile, kept for this visit only (see `tabMemory`).
+    const [pickedTab, setPickedTab] = useState<TabId | null>(null);
+    const [editingLayout, setEditingLayout] = useState(false);
+    // The background editor is open. Its draft lives in the editor, previewed there; the page's header keeps the saved background.
+    const [editingBackground, setEditingBackground] = useState(false);
 
     // Genuinely-global data: the profile record + roster power the hero, stat
     // strip, and several tab counts, so both stay eager. Everything else is
     // gated to the tab that needs it and fetched only once that tab first
     // becomes active.
     const { data, isLoading } = useQuery(userQueryOptions(id));
-    const { data: roster } = useQuery(userRosterQueryOptions(id));
+
+    // With no layout saved (`null`) every line below reduces to the page as it was:
+    // all tabs, the old order, the remembered tab, the roster fetched for everyone.
+    const layout = data?.profile_layout ?? null;
+    const isOwner = Boolean(user && data && user.id === data.id);
+    const memory = tabMemory(layout, isOwner);
+    const shown = useMemo(() => shownTabs(layout, isOwner), [layout, isOwner]);
+    const activeTab = resolveActiveTab(shown, memory, storedTab, pickedTab);
+    const setActiveTab = memory === "stored" ? setStoredTab : setPickedTab;
+    // A visitor whose owner hid the Roster tab is refused `/roster`, so it is not asked.
+    const canReadRoster = memory === "stored" || shown.includes("roster");
+
+    const { data: roster } = useQuery({ ...userRosterQueryOptions(id), enabled: canReadRoster });
     const gamedataServer = useGamedataServer();
     // The default Stats tab reads only the slim index, so the full table (23.9 MB
     // raw) waits for a tab that renders phases, skills or template ids.
@@ -100,7 +206,7 @@ export function UserProfile() {
         void load().then(() => setLoadedChunks((prev) => (prev.has(tab) ? prev : new Set(prev).add(tab))));
     }, []);
     useEffect(() => {
-        loadTabChunk(activeTab);
+        if (activeTab) loadTabChunk(activeTab);
     }, [activeTab, loadTabChunk]);
     const prefetchTab = useCallback(
         (tab: TabId) => {
@@ -114,7 +220,7 @@ export function UserProfile() {
     const { data: publicPlans } = useQuery({ ...publicPlansQueryOptions(id), enabled: activeTab === "plans" });
     const { data: operatorsStatic } = useQuery({
         ...operatorsListQueryOptions(gamedataServer),
-        enabled: FULL_TABLE_TABS.has(activeTab) && loadedChunks.has(activeTab),
+        enabled: activeTab !== null && FULL_TABLE_TABS.has(activeTab) && loadedChunks.has(activeTab),
     });
     // Improvements only fire while the Score tab is mounted - it's a heavier
     // payload than the headline score, so don't pay for it on every profile view.
@@ -124,118 +230,79 @@ export function UserProfile() {
     });
     const { data: encounteredEnemies, isLoading: isEnemiesLoading } = useQuery({ ...userEncounteredEnemiesQueryOptions(id), enabled: activeTab === "enemies" });
 
-    const tabs = useMemo(
-        () => [
-            { id: "stats" as TabId, label: t("profile.tab.stats") },
-            { id: "score" as TabId, label: t("profile.tab.score") },
-            {
-                id: "roster" as TabId,
-                label: t("profile.tab.roster"),
-                count: data?.operator_count ?? roster?.length ?? undefined,
-            },
-            { id: "plans" as TabId, label: t("profile.tab.plans"), count: publicPlans?.length },
-            {
-                id: "inventory" as TabId,
-                label: t("profile.tab.inventory"),
-                count: data?.item_count ?? inventory?.length ?? undefined,
-            },
-            {
-                id: "enemies" as TabId,
-                label: t("profile.tab.enemies"),
-                count: encounteredEnemies?.encounteredCount ?? undefined,
-            },
-            { id: "optimizer" as TabId, label: t("profile.tab.optimizer") },
-        ],
-        [data, roster, inventory, encounteredEnemies, publicPlans, t],
+    const labels = useMemo<Record<TabId, string>>(
+        () => ({
+            showcase: t("profile.tab.showcase"),
+            stats: t("profile.tab.stats"),
+            score: t("profile.tab.score"),
+            roster: t("profile.tab.roster"),
+            plans: t("profile.tab.plans"),
+            inventory: t("profile.tab.inventory"),
+            enemies: t("profile.tab.enemies"),
+            optimizer: t("profile.tab.optimizer"),
+        }),
+        [t],
     );
+    const tabs = useMemo(() => {
+        const counts: Partial<Record<TabId, number>> = {
+            roster: data?.operator_count ?? roster?.length ?? undefined,
+            plans: publicPlans?.length,
+            inventory: data?.item_count ?? inventory?.length ?? undefined,
+            enemies: encounteredEnemies?.encounteredCount ?? undefined,
+        };
+        // Only the owner is sent the private entries, so only they see the marker.
+        const hidden = new Set(layout?.tabs.filter((tab) => !tab.visible).map((tab) => tab.id));
+        return shown.map((tabId) => ({ id: tabId, label: labels[tabId], count: counts[tabId], private: hidden.has(tabId) }));
+    }, [shown, labels, layout, data, roster, inventory, encounteredEnemies, publicPlans]);
 
-    if (isLoading) {
-        return (
-            <main className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
-                <div className="relative h-48 w-full overflow-hidden rounded-3xl border border-border/50 bg-card/40">
-                    <Skeleton className="absolute inset-0 rounded-3xl opacity-60" />
-                    <div className="relative flex h-full items-center gap-6 p-6">
-                        <Skeleton className="h-28 w-28 shrink-0 rounded-2xl" />
-                        <div className="flex min-w-0 flex-1 flex-col gap-3">
-                            <div className="flex items-center gap-2">
-                                <Skeleton className="h-4 w-16 rounded-md" />
-                                <Skeleton className="h-5 w-20 rounded-full" />
-                                <Skeleton className="h-5 w-24 rounded-full" />
-                            </div>
-                            <Skeleton className="h-8 w-48 rounded-lg" />
-                            <Skeleton className="h-4 w-40 rounded-md" />
-                            <Skeleton className="mt-1 h-4 w-36 rounded-md" />
-                        </div>
-                        <div className="hidden items-center gap-2 self-start sm:flex">
-                            <Skeleton className="h-9 w-24 rounded-lg" />
-                            <Skeleton className="h-9 w-9 rounded-lg" />
-                        </div>
-                    </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3.5 md:grid-cols-4">
-                    {[0, 1, 2, 3].map((i) => (
-                        <div key={i} className="flex h-28 w-full flex-col gap-3 rounded-2xl border border-border/50 bg-card/40 p-5">
-                            <Skeleton className="h-3 w-16 rounded-md" />
-                            <Skeleton className="h-8 w-28 rounded-lg" />
-                            <Skeleton className="mt-auto h-3 w-24 rounded-md" />
-                        </div>
-                    ))}
-                </div>
-                <div className="flex items-center gap-6 border-border/50 border-b pt-2">
-                    {[0, 1, 2, 3].map((i) => (
-                        <div key={i} className="flex items-center gap-2 pb-3">
-                            <Skeleton className="h-4 w-16 rounded-md" />
-                            <Skeleton className="h-5 w-8 rounded-md" />
-                        </div>
-                    ))}
-                </div>
-                <div className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <Skeleton className="h-6 w-20 rounded-md" />
-                            <Skeleton className="h-5 w-24 rounded-full" />
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Skeleton className="h-4 w-10 rounded-md" />
-                            <Skeleton className="h-8 w-24 rounded-lg" />
-                        </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        {SKELETON_TAG_WIDTHS.map(({ id, width }) => (
-                            <Skeleton className="h-8 rounded-full" key={id} style={{ width: `${width}px` }} />
-                        ))}
-                    </div>
-                </div>
-                <GridSkeleton />
-            </main>
-        );
-    }
-    if (!data) {
-        return (
-            <main className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
-                <div className="flex flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-card px-8 py-16 text-center">
-                    <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">{t("profile.notFound.eyebrow")}</span>
-                    <h1 className="font-bold text-2xl tracking-tight">{t("profile.notFound.title")}</h1>
-                    <p className="max-w-sm text-muted-foreground text-sm">{rt("profile.notFound.desc", { id: <code className="font-mono">{id}</code> })}</p>
-                </div>
-            </main>
-        );
-    }
+    if (isLoading) return <ProfileSkeleton />;
+    if (!data) return <ProfileNotFound id={id} />;
 
     return (
         <DynamicArtProvider server={data.server}>
             <main className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
-                <Hero profile={data} />
+                <Hero profile={data} background={layout?.background ?? null} onChangeBackground={isOwner ? () => setEditingBackground(true) : undefined} />
+                {isOwner && editingBackground && (
+                    <Suspense fallback={null}>
+                        <BackgroundEditor profile={data} saved={layout?.background ?? null} onClose={() => setEditingBackground(false)} />
+                    </Suspense>
+                )}
                 <StatStrip profile={data} rosterCount={roster?.length} />
-                <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} onIntent={prefetchTab} />
-                {activeTab === "stats" && <StatsTab nonDefaultSkinCount={data.non_default_skin_count} operatorsIndex={operatorsIndex ?? []} roster={roster ?? []} server={data.server} uid={id} />}
-                {activeTab !== "stats" && (
+                {editingLayout && isOwner ? (
+                    <ProfileLayoutEditor profile={data} labels={labels} onClose={() => setEditingLayout(false)} />
+                ) : (
+                    shown.length > 0 && (
+                        <ProfileTabs
+                            tabs={tabs}
+                            active={activeTab}
+                            onChange={setActiveTab}
+                            onIntent={prefetchTab}
+                            end={
+                                isOwner && (
+                                    <Button type="button" variant="ghost" size="sm" onClick={() => setEditingLayout(true)}>
+                                        <SlidersHorizontalIcon />
+                                        {lt("profile.layout.customize")}
+                                    </Button>
+                                )
+                            }
+                        />
+                    )
+                )}
+                {shown.length === 0 && (
+                    <div className="flex flex-col items-center justify-center gap-2 rounded-3xl border border-border bg-card px-8 py-12 text-center">
+                        <span className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest">{t("profile.noTabs.eyebrow")}</span>
+                        <p className="max-w-sm text-muted-foreground text-sm">{t("profile.noTabs.desc")}</p>
+                    </div>
+                )}
+                {activeTab === "stats" && <StatsTab nonDefaultSkinCount={data.non_default_skin_count} operatorsIndex={operatorsIndex ?? []} roster={roster ?? []} server={data.server} uid={id} rosterPrivate={!canReadRoster} />}
+                {activeTab !== null && activeTab !== "stats" && (
                     <Suspense fallback={activeTab === "score" ? <ScoreTabSkeleton /> : <GridSkeleton />}>
                         {activeTab === "roster" && <RosterTab roster={roster ?? []} operatorsIndex={operatorsIndex ?? []} operatorsStatic={operatorsStatic ?? []} />}
                         {activeTab === "inventory" && <ItemsTab inventory={inventory ?? []} />}
                         {activeTab === "plans" && <PlansTab uid={id} roster={roster ?? []} />}
                         {activeTab === "enemies" && <EnemiesTab encountered={encounteredEnemies} isLoading={isEnemiesLoading} />}
                         {activeTab === "score" && <ScoreTab score={score} isLoading={isScoreLoading} improvements={improvements} isImprovementsLoading={isImprovementsLoading} uid={id} server={data.server} />}
+                        {activeTab === "showcase" && <ShowcaseTab uid={id} profile={data} isOwner={isOwner} roster={roster ?? []} />}
                         {activeTab === "optimizer" && <OptimizerTab uid={id} roster={roster ?? []} operatorsStatic={operatorsStatic ?? []} />}
                     </Suspense>
                 )}

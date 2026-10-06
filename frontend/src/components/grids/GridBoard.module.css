@@ -99,6 +99,21 @@
         box-shadow 140ms ease,
         opacity 140ms ease;
 }
+/* A read-only cell that opens the full-screen viewer. The resets keep it the
+   div's exact box: the full page's 6 x 6 draws 180 x 220 either way. */
+button.cell {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    font: inherit;
+    color: inherit;
+    text-align: inherit;
+    cursor: zoom-in;
+}
+button.cell:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+}
 .cell[data-dragging="true"] {
     opacity: 0.45;
 }
@@ -342,4 +357,9 @@ button.strip:hover {
     .stripInput {
         font-size: 16px;
     }
+}
+
+/* Last, so no later .art rule sits under its higher specificity. */
+button.cell:hover .art {
+    filter: brightness(1.12);
 }

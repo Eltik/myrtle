@@ -7,6 +7,10 @@ export const messages = {
         text: "Share",
         description: "Button that copies a link to this profile. Hidden on the narrowest screens, so keep it short.",
     },
+    "profile.hero.changeBackground": {
+        text: "Change background",
+        description: "Accessible name and tooltip of the small image button, shown only to the profile's owner, that opens the picker for the art behind their profile header.",
+    },
     "profile.hero.copyUid": {
         text: "Copy UID",
         description: "Copies the account number: accessible name and tooltip of the small copy button. 'UID' is the in-game account number.",

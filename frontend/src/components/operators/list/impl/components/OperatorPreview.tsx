@@ -1,6 +1,7 @@
+import { useOperatorFactLabel } from "#/components/operators/OperatorFacts";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { formatArchetype, formatNationId, formatProfession, getAvatarById, rarityToNumber } from "#/lib/utils";
+import { archetypeLabel, getAvatarById, nationLabel, professionLabel, rarityToNumber } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { CampIcon, ClassIcon } from "./Icons";
 import type { messages } from "./OperatorPreview.messages";
@@ -12,10 +13,11 @@ interface IOperatorPreviewProps {
 
 export function OperatorPreview({ operator }: IOperatorPreviewProps) {
     const t: TypedT<typeof messages> = useT("operators");
+    const fact = useOperatorFactLabel();
     const rarity = rarityToNumber(operator.rarity);
     const initial = operator.name.charAt(0).toUpperCase();
-    const nationLabel = operator.nationId ? formatNationId(operator.nationId) : null;
-    const archetype = formatArchetype(operator.subProfessionId);
+    const nation = nationLabel(operator);
+    const archetype = archetypeLabel(operator);
     const logoId = operator.nationId && operator.nationId.length > 0 ? operator.nationId : operator.teamId && operator.teamId.length > 0 ? operator.teamId : operator.groupId && operator.groupId.length > 0 ? operator.groupId : "rhodes";
     const gender = operator.gender;
     const race = operator.race;
@@ -37,13 +39,13 @@ export function OperatorPreview({ operator }: IOperatorPreviewProps) {
                             </span>
                         ))}
                     </div>
-                    {nationLabel && <div className={styles.nation}>{nationLabel}</div>}
+                    {nation && <div className={styles.nation}>{nation}</div>}
                 </div>
             </div>
 
             <div className={styles.row}>
                 <ClassIcon profession={operator.profession} size={16} />
-                <span className={styles.class}>{formatProfession(operator.profession)}</span>
+                <span className={styles.class}>{professionLabel(operator)}</span>
                 <span className={styles.dot} aria-hidden="true">
                     ·
                 </span>
@@ -59,13 +61,13 @@ export function OperatorPreview({ operator }: IOperatorPreviewProps) {
                     {race && (
                         <span className={styles.metaItem}>
                             <span className={styles.k}>{t("preview.race")}</span>
-                            <span className={styles.v}>{race}</span>
+                            <span className={styles.v}>{fact.race(race)}</span>
                         </span>
                     )}
                     {gender && (
                         <span className={styles.metaItem}>
                             <span className={styles.k}>{t("preview.gender")}</span>
-                            <span className={styles.v}>{gender}</span>
+                            <span className={styles.v}>{fact.gender(gender)}</span>
                         </span>
                     )}
                 </div>

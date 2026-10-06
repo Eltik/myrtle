@@ -1,7 +1,7 @@
 import { DEFAULT_LOCALE, formatMessage, sourceMessage } from "#/lib/i18n";
 import { fullMessageKey, type TypedT } from "#/lib/i18n/messages";
 import { compactForSearch } from "#/lib/search/fuzzy";
-import { formatNationId, rarityToNumber } from "#/lib/utils";
+import { formatNationId, rarityToNumber, serverNames } from "#/lib/utils";
 import { NON_OPERATOR_PROFESSIONS } from "./constants";
 import type { messages as helperMessages } from "./helpers.messages";
 import type { CalendarScale, IBirthdayFilters, IBirthdayOperator, IOperatorBirthday, ISelectedDay } from "./types";
@@ -142,7 +142,8 @@ export function deriveNations(operators: IBirthdayOperator[]): [string, string][
     for (const op of operators) {
         if (op.nationId) ids.add(op.nationId);
     }
-    return [...ids].map((id) => [id, formatNationId(id)] as [string, string]).sort((a, b) => a[1].localeCompare(b[1]));
+    const names = serverNames(operators, "nation");
+    return [...ids].map((id) => [id, names.get(id) ?? formatNationId(id)] as [string, string]).sort((a, b) => a[1].localeCompare(b[1]));
 }
 
 export function addDays(date: Date, days: number): Date {

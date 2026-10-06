@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use ts_rs::TS;
 
+use super::obtain::SkinChannel;
 use super::serde_helpers::deserialize_fb_map;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -173,6 +174,11 @@ pub struct Skin {
     pub voice_type: String,
     #[serde(alias = "DisplaySkin", default)]
     pub display_skin: DisplaySkin,
+    /// `displaySkin.displayTagId` as a category, so a client can group skins
+    /// without matching the server's wording. Set when the table loads, and on
+    /// KR and JP from a reference server by skin id.
+    #[serde(skip_deserializing)]
+    pub obtain_channel: SkinChannel,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -227,7 +233,11 @@ pub struct SkinTableFile {
 }
 
 impl SkinTableFile {
-    pub fn into_skin_data(self) -> SkinData {
+    pub fn into_skin_data(mut self) -> SkinData {
+        for skin in self.char_skins.values_mut() {
+            skin.obtain_channel =
+                SkinChannel::classify(skin.display_skin.display_tag_id.as_deref());
+        }
         SkinData {
             char_skins: self.char_skins,
             buildin_evolve_map: HashMap::new(), // Raw Value -> structured conversion skipped

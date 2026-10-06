@@ -88,6 +88,7 @@ function GridViewContent({ grid }: { grid: IGrid }) {
 
                 <div className="mt-5">
                     <GridBoard title={state.title} rows={state.rows} cols={state.cols} cells={state.cells} />
+                    <p className="mt-2 text-center font-sans text-muted-foreground text-xs sm:hidden">{t("view.cellHint")}</p>
                 </div>
 
                 {grid.description && <p className="mx-auto mt-5 max-w-180 whitespace-pre-line text-center font-sans text-muted-foreground text-sm leading-relaxed">{grid.description}</p>}

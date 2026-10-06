@@ -6,6 +6,7 @@ export {
     basepathForLocale,
     DEFAULT_LOCALE,
     directionForLocale,
+    GAMEDATA_SERVER_COOKIE,
     LOCALE_COOKIE,
     LOCALE_SEGMENT,
     negotiateLocale,
