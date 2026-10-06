@@ -15,6 +15,10 @@ export const messages = {
         text: "{count, plural, one {{formatted} use} other {{formatted} uses}}",
         description: "How many grids were made from this one with 'Use this template'. {formatted} is {count} formatted for the locale.",
     },
+    "view.cellHint": {
+        text: "Tap a cell to see it full screen.",
+        description: "Shown under a grid on its page on phones only, where the cells are too small to read: tapping one opens the full-screen cell viewer.",
+    },
     "view.unlisted": {
         text: "Unlisted",
         description: "Shown in a grid's byline when it is hidden from the browse list but reachable by link.",

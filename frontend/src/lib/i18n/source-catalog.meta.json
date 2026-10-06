@@ -9170,12 +9170,56 @@
             "placeholders": []
         },
         {
+            "key": "grids.cell.open",
+            "namespace": "grids",
+            "source_text": "Edit row {row}, column {col}",
+            "description": "Accessible name of a cell's art and label in the grid editor on a phone, where tapping either opens the full-screen cell editor.",
+            "placeholders": [
+                "col",
+                "row"
+            ]
+        },
+        {
             "key": "grids.cell.pick",
             "namespace": "grids",
             "source_text": "Pick something for row {row}, column {col}",
             "description": "Accessible name of an empty cell's art area in the grid editor.",
             "placeholders": [
                 "col",
+                "row"
+            ]
+        },
+        {
+            "key": "grids.cell.view.both",
+            "namespace": "grids",
+            "source_text": "{label}: {name}. Row {row}, column {col}. Open it full screen",
+            "description": "Accessible name of a cell on a read-only grid that has a label and a pick; activating it opens the full-screen cell viewer. {label} is the cell's label, {name} the picked entity's name and kind.",
+            "placeholders": [
+                "col",
+                "label",
+                "name",
+                "row"
+            ]
+        },
+        {
+            "key": "grids.cell.view.label",
+            "namespace": "grids",
+            "source_text": "{label}. Row {row}, column {col}. Open it full screen",
+            "description": "Accessible name of a cell on a read-only grid that has a label but no pick; activating it opens the full-screen cell viewer.",
+            "placeholders": [
+                "col",
+                "label",
+                "row"
+            ]
+        },
+        {
+            "key": "grids.cell.view.pick",
+            "namespace": "grids",
+            "source_text": "{name}. Row {row}, column {col}. Open it full screen",
+            "description": "Accessible name of a cell on a read-only grid that has a pick but no label; activating it opens the full-screen cell viewer. {name} is the picked entity's name and kind.",
+            "placeholders": [
+                "col",
+                "name",
                 "row"
             ]
         },
@@ -9938,6 +9982,99 @@
             ]
         },
         {
+            "key": "grids.sheet.change",
+            "namespace": "grids",
+            "source_text": "Change",
+            "description": "Button in the phone cell editor that opens the picker to replace the cell's current pick.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.sheet.clear",
+            "namespace": "grids",
+            "source_text": "Clear",
+            "description": "Button in the phone cell editor that removes the cell's pick at once and keeps its label.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.sheet.count",
+            "namespace": "grids",
+            "source_text": "Cell {n} of {total}",
+            "description": "In the phone cell editor: which cell of the board is open, counting row by row. {total} is every cell on the board.",
+            "placeholders": [
+                "n",
+                "total"
+            ]
+        },
+        {
+            "key": "grids.sheet.counter",
+            "namespace": "grids",
+            "source_text": "{count}/{max}",
+            "description": "Under the phone cell editor's label field: characters used of the limit. {count} and {max} are numbers.",
+            "placeholders": [
+                "count",
+                "max"
+            ]
+        },
+        {
+            "key": "grids.sheet.description",
+            "namespace": "grids",
+            "source_text": "Edit this cell's label and pick. Changes are kept until you save the grid.",
+            "description": "Screen-reader description of the phone cell editor.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.sheet.done",
+            "namespace": "grids",
+            "source_text": "Done",
+            "description": "Closes the phone cell editor and goes back to the board. It does not save the grid; the editor's Save does.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.sheet.empty",
+            "namespace": "grids",
+            "source_text": "Nothing picked yet",
+            "description": "In the phone cell editor's preview when the cell holds no pick.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.sheet.label",
+            "namespace": "grids",
+            "source_text": "Label",
+            "description": "Label of the text field for the cell's label in the phone cell editor.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.sheet.next",
+            "namespace": "grids",
+            "source_text": "Next cell",
+            "description": "Button in the phone cell editor that opens the board's next cell, counting row by row.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.sheet.pick",
+            "namespace": "grids",
+            "source_text": "Pick",
+            "description": "Button in the phone cell editor that opens the picker for an empty cell.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.sheet.prev",
+            "namespace": "grids",
+            "source_text": "Previous cell",
+            "description": "Button in the phone cell editor that opens the board's previous cell, counting row by row.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.sheet.title",
+            "namespace": "grids",
+            "source_text": "Row {row}, column {col}",
+            "description": "Title of the full-screen cell editor a phone opens when a grid cell is tapped in the editor. {row} and {col} are 1-based.",
+            "placeholders": [
+                "col",
+                "row"
+            ]
+        },
+        {
             "key": "grids.view.back",
             "namespace": "grids",
             "source_text": "All grids",
@@ -9952,6 +10089,13 @@
             "placeholders": [
                 "name"
             ]
+        },
+        {
+            "key": "grids.view.cellHint",
+            "namespace": "grids",
+            "source_text": "Tap a cell to see it full screen.",
+            "description": "Shown under a grid on its page on phones only, where the cells are too small to read: tapping one opens the full-screen cell viewer.",
+            "placeholders": []
         },
         {
             "key": "grids.view.copy",
@@ -10067,6 +10211,85 @@
             "source_text": "Unlisted",
             "description": "Shown in a grid's byline when it is hidden from the browse list but reachable by link.",
             "placeholders": []
+        },
+        {
+            "key": "grids.viewer.close",
+            "namespace": "grids",
+            "source_text": "Close",
+            "description": "Accessible name and tooltip of the X button that closes the full-screen cell viewer.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.viewer.count",
+            "namespace": "grids",
+            "source_text": "{n} of {total}",
+            "description": "Top of the full-screen cell viewer: which of the grid's filled cells is shown. {n} is its place among them, {total} how many there are.",
+            "placeholders": [
+                "n",
+                "total"
+            ]
+        },
+        {
+            "key": "grids.viewer.hint",
+            "namespace": "grids",
+            "source_text": "Use the arrow keys or swipe to move between cells.",
+            "description": "Screen-reader description of the full-screen cell viewer, read when it opens.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.viewer.next",
+            "namespace": "grids",
+            "source_text": "Next cell",
+            "description": "Accessible name and tooltip of the button that shows the grid's next filled cell in the full-screen viewer.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.viewer.noPick",
+            "namespace": "grids",
+            "source_text": "Nothing picked for this cell",
+            "description": "Shown in the full-screen cell viewer under a cell's label when the cell holds no pick.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.viewer.openPage",
+            "namespace": "grids",
+            "source_text": "Open page",
+            "description": "Link in the full-screen cell viewer to the picked thing's own page on the site (an operator's page, an enemy's handbook entry).",
+            "placeholders": []
+        },
+        {
+            "key": "grids.viewer.position",
+            "namespace": "grids",
+            "source_text": "Row {row}, column {col}",
+            "description": "Top of the full-screen cell viewer: where the shown cell sits on the grid. {row} and {col} are 1-based.",
+            "placeholders": [
+                "col",
+                "row"
+            ]
+        },
+        {
+            "key": "grids.viewer.prev",
+            "namespace": "grids",
+            "source_text": "Previous cell",
+            "description": "Accessible name and tooltip of the button that shows the grid's previous filled cell in the full-screen viewer.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.viewer.unknown",
+            "namespace": "grids",
+            "source_text": "Not in this server's game data",
+            "description": "Shown in the full-screen cell viewer for a pick the reader's game data does not know; the raw id is shown beside it.",
+            "placeholders": []
+        },
+        {
+            "key": "grids.viewer.untitledCell",
+            "namespace": "grids",
+            "source_text": "Cell at row {row}, column {col}",
+            "description": "Title of the full-screen cell viewer for a cell that has a pick but no label. {row} and {col} are 1-based.",
+            "placeholders": [
+                "col",
+                "row"
+            ]
         },
         {
             "key": "home.card.arrowIcon",
@@ -39241,6 +39464,400 @@
             "placeholders": []
         },
         {
+            "key": "user.profile.background.cancel",
+            "namespace": "user",
+            "source_text": "Cancel",
+            "description": "Footer button that closes the dialog and discards the unsaved pick.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.cropFitsShort",
+            "namespace": "user",
+            "source_text": "Fits, zoom in",
+            "description": "Short note beside a disabled crop slider's label: the art already fits the header on that axis, so zooming in is what makes it croppable. Keep it to a few words.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.cropX",
+            "namespace": "user",
+            "source_text": "Horizontal crop",
+            "description": "Label of the slider that moves which part of the chosen art shows in the header, from its left edge to its right. Disabled while the art is no wider than the header.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.cropXFits",
+            "namespace": "user",
+            "source_text": "The art fits the header's width at this zoom, so there is nothing to crop sideways. Zoom in to crop it.",
+            "description": "Tooltip of the short note beside a disabled horizontal crop slider: on this screen the chosen art is exactly as wide as the header, so moving it sideways would change nothing until it is zoomed in.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.cropY",
+            "namespace": "user",
+            "source_text": "Vertical crop",
+            "description": "Label of the slider that moves which part of the chosen art shows in the header, from its top to its bottom.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.cropYFits",
+            "namespace": "user",
+            "source_text": "The art fits the header's height at this zoom, so there is nothing to crop vertically. Zoom in to crop it.",
+            "description": "Tooltip of the short note beside a disabled vertical crop slider: on this screen the chosen art is exactly as tall as the header, so moving it up or down would change nothing until it is zoomed in.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.description",
+            "namespace": "user",
+            "source_text": "Pick any outfit, operator art or gallery picture. It shows behind your header for everyone who can see your profile.",
+            "description": "Explains the background picker. 'Outfit' is the site's word for a skin; a gallery picture is a scene from an event's or Integrated Strategies' Archives gallery.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.allGroups",
+            "namespace": "user",
+            "source_text": "All stories",
+            "description": "First entry of the Gallery tab's story list: shows the pictures of every story.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.categories",
+            "namespace": "user",
+            "source_text": "Category",
+            "description": "Heading of the Gallery tab's category filter (Main Story, Side Stories, Vignettes, Integrated Strategies...). Several can be on at once.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.categoriesLabel",
+            "namespace": "user",
+            "source_text": "Filter by story category",
+            "description": "Accessible label of the Gallery tab's row of category toggles.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.category.is",
+            "namespace": "user",
+            "source_text": "Integrated Strategies",
+            "description": "Filter button of the Gallery tab's story sources: pictures from Integrated Strategies stories.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.category.main",
+            "namespace": "user",
+            "source_text": "Main Story",
+            "description": "Filter button of the Gallery tab's story sources: pictures from main story chapters.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.category.reclamation",
+            "namespace": "user",
+            "source_text": "Reclamation Algorithm",
+            "description": "Filter button of the Gallery tab's story sources: pictures from Reclamation Algorithm stories.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.category.record",
+            "namespace": "user",
+            "source_text": "Operator Records",
+            "description": "Filter button of the Gallery tab's story sources: pictures from operator record stories.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.category.side",
+            "namespace": "user",
+            "source_text": "Side Stories",
+            "description": "Filter button of the Gallery tab's story sources: pictures from side story events.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.category.sideContent",
+            "namespace": "user",
+            "source_text": "Other Stories",
+            "description": "Filter button of the Gallery tab's story sources: pictures from other story content outside events.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.category.vignette",
+            "namespace": "user",
+            "source_text": "Vignettes",
+            "description": "Filter button of the Gallery tab's story sources: pictures from vignette (mini story) events.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.categoryOption",
+            "namespace": "user",
+            "source_text": "{label}, {count, plural, one {# picture} other {# pictures}}",
+            "description": "Accessible label of one category toggle in the Gallery tab. {label} is the category, {count} how many pictures it holds under the other filters.",
+            "placeholders": [
+                "count",
+                "label"
+            ]
+        },
+        {
+            "key": "user.profile.background.gallery.clearFilters",
+            "namespace": "user",
+            "source_text": "Clear all",
+            "description": "Button beside the active-filter chips that turns off every category, story and search filter of the Gallery tab.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.count",
+            "namespace": "user",
+            "source_text": "{count, plural, one {# picture} other {# pictures}}",
+            "description": "How many gallery pictures the current source, filters and search leave.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "user.profile.background.gallery.empty",
+            "namespace": "user",
+            "source_text": "No pictures match.",
+            "description": "Shown when the gallery search and filter leave no picture.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.error",
+            "namespace": "user",
+            "source_text": "Couldn't load the gallery.",
+            "description": "Shown when the gallery pictures failed to load in the background picker.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.grid",
+            "namespace": "user",
+            "source_text": "Gallery pictures. Arrow keys move between pictures, Enter picks one.",
+            "description": "Accessible label of the grid of gallery picture tiles.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.loading",
+            "namespace": "user",
+            "source_text": "Loading the gallery…",
+            "description": "Shown while the gallery pictures load in the background picker.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.removeFilter",
+            "namespace": "user",
+            "source_text": "Remove filter: {name}",
+            "description": "Accessible label of the x on one active-filter chip above the gallery pictures. {name} is the category or story it filters by.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "user.profile.background.gallery.retry",
+            "namespace": "user",
+            "source_text": "Retry",
+            "description": "Button that loads the gallery pictures again after a failure.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.searchLabel",
+            "namespace": "user",
+            "source_text": "Search gallery pictures by title, event or story",
+            "description": "Accessible label of the gallery search box. It matches a picture's title and the name of the event or theme it belongs to.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.searchPlaceholder",
+            "namespace": "user",
+            "source_text": "Search gallery pictures",
+            "description": "Placeholder of the search box in the background picker's Gallery tab.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.source.archive_pic",
+            "namespace": "user",
+            "source_text": "Archives",
+            "description": "Source button of the Gallery tab: the Archives gallery pictures events and Integrated Strategies collect.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.source.story_cg",
+            "namespace": "user",
+            "source_text": "Story CGs",
+            "description": "Source button of the Gallery tab: the full-screen illustrations (CGs) shown during story scenes.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.source.story_scene",
+            "namespace": "user",
+            "source_text": "Scenes",
+            "description": "Source button of the Gallery tab: the background plates (locations) story scenes are set against.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.sources",
+            "namespace": "user",
+            "source_text": "Picture source",
+            "description": "Accessible label of the row of buttons that switch the Gallery tab between Archives pictures, story CGs and story scenes.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.stories",
+            "namespace": "user",
+            "source_text": "Story",
+            "description": "Heading of the Gallery tab's list of stories (main story chapters, events, vignettes, Integrated Strategies themes) that filters the pictures to one of them.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.storyButton",
+            "namespace": "user",
+            "source_text": "Story: {name}",
+            "description": "Button on a narrow background picker that opens the story list. {name} is the chosen story, or 'All stories'.",
+            "placeholders": [
+                "name"
+            ]
+        },
+        {
+            "key": "user.profile.background.gallery.storyEmpty",
+            "namespace": "user",
+            "source_text": "No story matches.",
+            "description": "Shown in the Gallery tab's story list when its search or the chosen categories leave no story.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.storySearchLabel",
+            "namespace": "user",
+            "source_text": "Find a story by name",
+            "description": "Accessible label of the search box that narrows the Gallery tab's story list.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.storySearchPlaceholder",
+            "namespace": "user",
+            "source_text": "Find a story",
+            "description": "Placeholder of the search box above the Gallery tab's story list.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.gallery.storyTileLabel",
+            "namespace": "user",
+            "source_text": "From {group}",
+            "description": "Accessible label and tooltip of one story CG or story scene tile, which has no title of its own. {group} is the story (main story chapter, event or vignette) whose scripts first show it.",
+            "placeholders": [
+                "group"
+            ]
+        },
+        {
+            "key": "user.profile.background.gallery.tileLabel",
+            "namespace": "user",
+            "source_text": "{title}, {group}",
+            "description": "Accessible label and tooltip of one gallery picture tile. {title} is the picture's title, {group} the event or Integrated Strategies theme it belongs to.",
+            "placeholders": [
+                "group",
+                "title"
+            ]
+        },
+        {
+            "key": "user.profile.background.move",
+            "namespace": "user",
+            "source_text": "Move dialog",
+            "description": "Accessible label and tooltip of the grip in the dialog's title bar. Drag it, or focus it and press the arrow keys, to move the dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.none",
+            "namespace": "user",
+            "source_text": "No background. Your header shows its usual look.",
+            "description": "Shown in place of the crop slider when no art is chosen.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.panHint",
+            "namespace": "user",
+            "source_text": "Drag the picture in the header to position it, and scroll over it to zoom. The sliders do the same.",
+            "description": "Hint under the zoom and crop sliders. 'The header' is the profile header above the dialog, which previews the background live and can be dragged and zoomed directly.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.remove",
+            "namespace": "user",
+            "source_text": "Remove background",
+            "description": "Footer button that clears the chosen art, back to the header's usual look. Takes effect on Save.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.removed.title",
+            "namespace": "user",
+            "source_text": "Background removed",
+            "description": "Toast title after the background was removed and saved.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.resize",
+            "namespace": "user",
+            "source_text": "Resize dialog",
+            "description": "Accessible label and tooltip of the grip in the dialog's bottom-right corner. Drag it, or focus it and press the arrow keys, to resize the dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.save",
+            "namespace": "user",
+            "source_text": "Save",
+            "description": "Footer button that saves the chosen background.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.saveFailed.title",
+            "namespace": "user",
+            "source_text": "Couldn't save the background",
+            "description": "Toast title when saving the background fails. The body explains why.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.saved.title",
+            "namespace": "user",
+            "source_text": "Background saved",
+            "description": "Toast title after the background was saved.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.source",
+            "namespace": "user",
+            "source_text": "Art source",
+            "description": "Accessible label of the tab row that switches the background picker between character art and gallery pictures.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.source.characters",
+            "namespace": "user",
+            "source_text": "Character art",
+            "description": "Tab of the background picker listing outfits and operator art.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.source.gallery",
+            "namespace": "user",
+            "source_text": "Gallery",
+            "description": "Tab of the background picker listing the Archives gallery pictures: the scene artwork events and Integrated Strategies collect in their archive.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.title",
+            "namespace": "user",
+            "source_text": "Profile background",
+            "description": "Title of the dialog where the profile's owner picks the art shown behind their profile header.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.zoom",
+            "namespace": "user",
+            "source_text": "Zoom",
+            "description": "Label of the slider that zooms the chosen art in the profile header, from just filling it (100%) to three times that.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.zoomValue",
+            "namespace": "user",
+            "source_text": "{scale}%",
+            "description": "The zoom slider's current value. {scale} is a whole number from 100 to 300.",
+            "placeholders": [
+                "scale"
+            ]
+        },
+        {
             "key": "user.profile.base.boardTitle",
             "namespace": "user",
             "source_text": "RIIC base board",
@@ -40979,6 +41596,13 @@
             "placeholders": []
         },
         {
+            "key": "user.profile.hero.changeBackground",
+            "namespace": "user",
+            "source_text": "Change background",
+            "description": "Accessible name and tooltip of the small image button, shown only to the profile's owner, that opens the picker for the art behind their profile header.",
+            "placeholders": []
+        },
+        {
             "key": "user.profile.hero.copied.desc",
             "namespace": "user",
             "source_text": "{value} copied to clipboard.",
@@ -41584,6 +42208,151 @@
             "namespace": "user",
             "source_text": "Detailed view",
             "description": "Accessible name of the button for the large item cards.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.layout.allHidden",
+            "namespace": "user",
+            "source_text": "Every tab is hidden, so visitors will see only your profile header.",
+            "description": "Warning in the tab editor when the owner has hidden every tab.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.layout.cancel",
+            "namespace": "user",
+            "source_text": "Cancel",
+            "description": "Button that closes the tab editor without saving.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.layout.customize",
+            "namespace": "user",
+            "source_text": "Customize",
+            "description": "Button the profile owner sees at the end of their own tab bar. Opens the editor for tab order and visibility.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.layout.help",
+            "namespace": "user",
+            "source_text": "Drag tabs or use the arrows to change their order. A hidden tab stays visible to you, but visitors cannot open it or load its data.",
+            "description": "Explanation under the tab layout editor's label. 'Visitors' are other people viewing this profile.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.layout.hiddenBadge",
+            "namespace": "user",
+            "source_text": "Hidden",
+            "description": "Badge on a tab row in the editor when that tab is hidden from visitors.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.layout.hide",
+            "namespace": "user",
+            "source_text": "Hide {tab} from visitors",
+            "description": "Accessible label of the eye toggle on a visible tab. {tab} is the tab's name, e.g. 'Roster'.",
+            "placeholders": [
+                "tab"
+            ]
+        },
+        {
+            "key": "user.profile.layout.kicker",
+            "namespace": "user",
+            "source_text": "Profile tabs",
+            "description": "Small uppercase label above the tab layout editor.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.layout.list",
+            "namespace": "user",
+            "source_text": "Tab order",
+            "description": "Accessible name of the reorderable list of profile tabs.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.layout.moveDown",
+            "namespace": "user",
+            "source_text": "Move {tab} later",
+            "description": "Accessible label of the button that moves a tab one place toward the end of the tab bar. {tab} is the tab's name.",
+            "placeholders": [
+                "tab"
+            ]
+        },
+        {
+            "key": "user.profile.layout.moveUp",
+            "namespace": "user",
+            "source_text": "Move {tab} earlier",
+            "description": "Accessible label of the button that moves a tab one place toward the start of the tab bar. {tab} is the tab's name.",
+            "placeholders": [
+                "tab"
+            ]
+        },
+        {
+            "key": "user.profile.layout.moved",
+            "namespace": "user",
+            "source_text": "{tab} moved to position {position} of {total}.",
+            "description": "Screen-reader announcement after a tab is moved. {tab} is the tab's name; {position} and {total} are numbers.",
+            "placeholders": [
+                "position",
+                "tab",
+                "total"
+            ]
+        },
+        {
+            "key": "user.profile.layout.reset",
+            "namespace": "user",
+            "source_text": "Reset to default",
+            "description": "Button that puts every tab back in its original order and makes all of them visible. Takes effect on Save.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.layout.save",
+            "namespace": "user",
+            "source_text": "Save",
+            "description": "Button that saves the tab order and visibility.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.layout.saveFailed.title",
+            "namespace": "user",
+            "source_text": "Couldn't save your tabs",
+            "description": "Toast title when saving the tab layout fails. The body explains why.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.layout.saved.body",
+            "namespace": "user",
+            "source_text": "Visitors now see your tabs in this order.",
+            "description": "Toast body after the owner saves their tab layout.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.layout.saved.title",
+            "namespace": "user",
+            "source_text": "Tabs saved",
+            "description": "Toast title after the owner saves their tab layout.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.layout.show",
+            "namespace": "user",
+            "source_text": "Show {tab} to visitors",
+            "description": "Accessible label of the eye toggle on a hidden tab. {tab} is the tab's name, e.g. 'Roster'.",
+            "placeholders": [
+                "tab"
+            ]
+        },
+        {
+            "key": "user.profile.noTabs.desc",
+            "namespace": "user",
+            "source_text": "This player keeps every section of their profile private.",
+            "description": "Shown under another player's profile header when they hid every tab, so there is nothing else to view.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.noTabs.eyebrow",
+            "namespace": "user",
+            "source_text": "Private",
+            "description": "Small uppercase label above the note shown when a player hid every tab of their profile.",
             "placeholders": []
         },
         {
@@ -42370,6 +43139,645 @@
             "placeholders": []
         },
         {
+            "key": "user.profile.showcase.add.added",
+            "namespace": "user",
+            "source_text": "Added",
+            "description": "Marks a grid, tier list or plan the showcase already holds, in the add-block dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.back",
+            "namespace": "user",
+            "source_text": "Back",
+            "description": "Button in the add-block dialog that returns to the choice of block type.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.checking",
+            "namespace": "user",
+            "source_text": "Checking…",
+            "description": "Shown while the add-block dialog checks that a pasted grid or tier list exists.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.close",
+            "namespace": "user",
+            "source_text": "Close",
+            "description": "Button that closes the add-block dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.description",
+            "namespace": "user",
+            "source_text": "Choose what the block shows.",
+            "description": "Line under the add-block dialog's title, on its first step.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.gridTitle",
+            "namespace": "user",
+            "source_text": "Add a grid",
+            "description": "Heading of the add-block dialog's grid step.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.kindTitle",
+            "namespace": "user",
+            "source_text": "Favourites of which type?",
+            "description": "Heading of the add-block dialog's step where the owner chooses the type of entity a favourites block holds.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.noGrids",
+            "namespace": "user",
+            "source_text": "You have no grids yet.",
+            "description": "Shown in the add-block dialog's grid step when the owner has made no grid.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.noPlans",
+            "namespace": "user",
+            "source_text": "No plan is shown on your profile. Turn on 'Show on profile' for a plan in the planner first.",
+            "description": "Shown in the add-block dialog's plan step when the owner shows no plan on their profile. 'Show on profile' names the planner's own option.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.noTierLists",
+            "namespace": "user",
+            "source_text": "You have no tier lists yet.",
+            "description": "Shown in the add-block dialog's tier list step when the owner has made no tier list.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.notALink",
+            "namespace": "user",
+            "source_text": "That isn't a link to a grid.",
+            "description": "Error under the paste field on the grid step when the text is not a grid link or slug.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.notATierListLink",
+            "namespace": "user",
+            "source_text": "That isn't a link to a tier list.",
+            "description": "Error under the paste field on the tier list step when the text is not a tier list link or slug.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.notFound",
+            "namespace": "user",
+            "source_text": "Nothing found at that link.",
+            "description": "Error under the paste field when the grid or tier list it names does not exist.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.pasteAdd",
+            "namespace": "user",
+            "source_text": "Add",
+            "description": "Button that adds the grid or tier list named by the pasted link.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.pasteLabel",
+            "namespace": "user",
+            "source_text": "Or paste a link",
+            "description": "Label of the field where the owner pastes a link to, or the slug of, any grid or tier list.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.pastePlaceholder",
+            "namespace": "user",
+            "source_text": "Link or slug",
+            "description": "Placeholder of the paste-a-link field in the add-block dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.planTitle",
+            "namespace": "user",
+            "source_text": "Add a plan",
+            "description": "Heading of the add-block dialog's plan step.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.size",
+            "namespace": "user",
+            "source_text": "{rows} × {cols}",
+            "description": "A grid's size in the add-block dialog's list of the owner's grids.",
+            "placeholders": [
+                "cols",
+                "rows"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.add.tierListTitle",
+            "namespace": "user",
+            "source_text": "Add a tier list",
+            "description": "Heading of the add-block dialog's tier list step.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.title",
+            "namespace": "user",
+            "source_text": "Add a block",
+            "description": "Title of the add-block dialog in the showcase editor.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.add.yours",
+            "namespace": "user",
+            "source_text": "Yours",
+            "description": "Label above the list of the owner's own grids or tier lists in the add-block dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.aria",
+            "namespace": "user",
+            "source_text": "Showcase",
+            "description": "Accessible name of the Showcase tab's content: the blocks a player chose to show first on their profile.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.block.favourites.count",
+            "namespace": "user",
+            "source_text": "{count, plural, one {# pick} other {# picks}}",
+            "description": "Count of entities in a favourites block of the showcase.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.block.grid",
+            "namespace": "user",
+            "source_text": "Grid",
+            "description": "Small uppercase label on a showcase block that shows one of the player's grids.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.block.open",
+            "namespace": "user",
+            "source_text": "Open",
+            "description": "Link in a showcase grid or tier list block to its full page.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.block.openAria",
+            "namespace": "user",
+            "source_text": "Open {title}",
+            "description": "Accessible name of the link to a grid's or tier list's full page. {title} is its title.",
+            "placeholders": [
+                "title"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.block.plan",
+            "namespace": "user",
+            "source_text": "Plan",
+            "description": "Small uppercase label on a showcase block that shows one of the player's operator plans.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.block.plansHidden",
+            "namespace": "user",
+            "source_text": "Only you: your Plans tab is hidden",
+            "description": "Chip on a plan block, shown to the owner when their Plans tab is hidden, so visitors don't see this block.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.block.tierList",
+            "namespace": "user",
+            "source_text": "Tier list",
+            "description": "Small uppercase label on a showcase block that shows a tier list.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.block.tierList.viewAll",
+            "namespace": "user",
+            "source_text": "View full tier list",
+            "description": "Link under a showcase tier list block that is too tall to show whole; opens the tier list's own page.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.edit",
+            "namespace": "user",
+            "source_text": "Edit showcase",
+            "description": "Button on the owner's own Showcase tab that opens the showcase editor.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.add",
+            "namespace": "user",
+            "source_text": "Add block",
+            "description": "Button in the showcase editor that opens the dialog for adding a block.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.cancel",
+            "namespace": "user",
+            "source_text": "Cancel",
+            "description": "Button that leaves the showcase editor without saving.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.count",
+            "namespace": "user",
+            "source_text": "{count} / {max} blocks",
+            "description": "How many blocks the showcase holds, out of the most it can.",
+            "placeholders": [
+                "count",
+                "max"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.editor.dropped",
+            "namespace": "user",
+            "source_text": "{count, plural, one {# removed or empty item will be dropped when you save.} other {# removed or empty items will be dropped when you save.}}",
+            "description": "Notice in the showcase editor: blocks or favourites whose grid, tier list, plan or game entry no longer exists, and favourites blocks with nothing picked, are dropped on save.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.editor.empty",
+            "namespace": "user",
+            "source_text": "No blocks yet. Add one to start your showcase.",
+            "description": "Shown in the editor when the showcase has no block.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.emptyFavourites",
+            "namespace": "user",
+            "source_text": "Nothing picked yet. An empty block is not saved.",
+            "description": "Shown inside a favourites block with no favourite yet.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.entities",
+            "namespace": "user",
+            "source_text": "{count} / {max}",
+            "description": "How many favourites a block holds, out of the most it can (24).",
+            "placeholders": [
+                "count",
+                "max"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.editor.entitiesList",
+            "namespace": "user",
+            "source_text": "Favourites in this block",
+            "description": "Accessible name of the reorderable list of favourites inside one block.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.entityHint",
+            "namespace": "user",
+            "source_text": "Drag to reorder, or focus a pick and use the arrow keys. Delete removes it.",
+            "description": "Hint under a favourites block's picks in the editor, explaining keyboard reordering.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.favouritesOf",
+            "namespace": "user",
+            "source_text": "Favourite {kind}",
+            "description": "Name of a favourites block in the editor when it has no title. {kind} is the plural type name, e.g. 'Operators'.",
+            "placeholders": [
+                "kind"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.editor.full",
+            "namespace": "user",
+            "source_text": "A showcase holds up to {max} blocks.",
+            "description": "Shown when the showcase already holds the most blocks it can. {max} is that number (12).",
+            "placeholders": [
+                "max"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.editor.help",
+            "namespace": "user",
+            "source_text": "Add blocks, then drag them or use the arrows to set the order. Visitors see them top to bottom, before any other tab.",
+            "description": "Explanation under the showcase editor's label.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.kicker",
+            "namespace": "user",
+            "source_text": "Edit showcase",
+            "description": "Small uppercase label above the showcase editor.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.list",
+            "namespace": "user",
+            "source_text": "Showcase blocks",
+            "description": "Accessible name of the reorderable list of showcase blocks in the editor.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.moveDown",
+            "namespace": "user",
+            "source_text": "Move {item} down",
+            "description": "Accessible name of the button that moves a showcase block down one place.",
+            "placeholders": [
+                "item"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.editor.moveUp",
+            "namespace": "user",
+            "source_text": "Move {item} up",
+            "description": "Accessible name of the button that moves a showcase block up one place.",
+            "placeholders": [
+                "item"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.editor.moved",
+            "namespace": "user",
+            "source_text": "{item} moved to position {position} of {total}",
+            "description": "Screen-reader announcement after a block or a favourite is moved. {item} names it.",
+            "placeholders": [
+                "item",
+                "position",
+                "total"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.editor.pick",
+            "namespace": "user",
+            "source_text": "Choose",
+            "description": "Button that opens the picker to add or remove favourites in a block.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.plansHidden",
+            "namespace": "user",
+            "source_text": "Your Plans tab is hidden, so visitors don't see plan blocks.",
+            "description": "Notice in the showcase editor when the showcase has a plan block but the owner hid their Plans tab.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.remove",
+            "namespace": "user",
+            "source_text": "Remove {item}",
+            "description": "Accessible name of the button that removes a showcase block, or one favourite from a block.",
+            "placeholders": [
+                "item"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.editor.save",
+            "namespace": "user",
+            "source_text": "Save",
+            "description": "Button that saves the showcase.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.saveFailed.title",
+            "namespace": "user",
+            "source_text": "Couldn't save your showcase",
+            "description": "Toast title when saving the showcase fails. The body explains why.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.saved.body",
+            "namespace": "user",
+            "source_text": "Visitors now see these blocks first.",
+            "description": "Toast body after the owner saves their showcase.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.saved.title",
+            "namespace": "user",
+            "source_text": "Showcase saved",
+            "description": "Toast title after the owner saves their showcase.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.titleLabel",
+            "namespace": "user",
+            "source_text": "Block title",
+            "description": "Label of the favourites block's optional title field.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.titlePlaceholder",
+            "namespace": "user",
+            "source_text": "{kind} (optional title)",
+            "description": "Placeholder of the favourites block's title field. {kind} is the plural type name shown when no title is set.",
+            "placeholders": [
+                "kind"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.editor.type.favourites",
+            "namespace": "user",
+            "source_text": "Favourites",
+            "description": "Showcase block type: a row of favourite operators, skins, events or anything else of one type.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.type.favouritesDesc",
+            "namespace": "user",
+            "source_text": "Up to 24 operators, skins, events, enemies, chapters or more, of one type.",
+            "description": "Description of the favourites block type in the add-block dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.type.grid",
+            "namespace": "user",
+            "source_text": "Grid",
+            "description": "Showcase block type: one of the player's grids.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.type.gridDesc",
+            "namespace": "user",
+            "source_text": "One of your grids, or any grid by its link.",
+            "description": "Description of the grid block type in the add-block dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.type.plan",
+            "namespace": "user",
+            "source_text": "Plan",
+            "description": "Showcase block type: one of the player's operator plans shown on their profile.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.type.planDesc",
+            "namespace": "user",
+            "source_text": "An operator plan you show on your profile.",
+            "description": "Description of the plan block type in the add-block dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.type.tierList",
+            "namespace": "user",
+            "source_text": "Tier list",
+            "description": "Showcase block type: a tier list.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.type.tierListDesc",
+            "namespace": "user",
+            "source_text": "One of your tier lists, or any tier list by its link.",
+            "description": "Description of the tier list block type in the add-block dialog.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.unknownGrid",
+            "namespace": "user",
+            "source_text": "Grid {slug}",
+            "description": "Editor name of a grid block whose title could not be loaded. {slug} is the grid's slug.",
+            "placeholders": [
+                "slug"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.editor.unknownPlan",
+            "namespace": "user",
+            "source_text": "A plan",
+            "description": "Editor name of a plan block whose plan could not be loaded.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.editor.unknownTierList",
+            "namespace": "user",
+            "source_text": "Tier list {slug}",
+            "description": "Editor name of a tier list block whose title could not be loaded. {slug} is its slug.",
+            "placeholders": [
+                "slug"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.empty.cta",
+            "namespace": "user",
+            "source_text": "Set up your showcase",
+            "description": "Button on the owner's empty showcase that opens the editor.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.empty.desc",
+            "namespace": "user",
+            "source_text": "Pick favourite operators, skins, events or story chapters, and pin your grids, tier lists and plans. Visitors see your showcase first.",
+            "description": "Body of the owner's empty showcase, listing what a showcase can hold.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.empty.kicker",
+            "namespace": "user",
+            "source_text": "Showcase",
+            "description": "Small uppercase label on the owner's empty showcase.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.empty.title",
+            "namespace": "user",
+            "source_text": "Make this profile yours",
+            "description": "Heading of the owner's empty showcase.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.error",
+            "namespace": "user",
+            "source_text": "The showcase couldn't be loaded.",
+            "description": "Shown in place of the showcase when it fails to load.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.picker.count",
+            "namespace": "user",
+            "source_text": "{count} of {max} picked",
+            "description": "How many favourites the block holds, in the picker's footer.",
+            "placeholders": [
+                "count",
+                "max"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.picker.description",
+            "namespace": "user",
+            "source_text": "Pick up to {max}. Pick one again to take it out.",
+            "description": "Line under the favourites picker's title. {max} is the most a block holds (24).",
+            "placeholders": [
+                "max"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.picker.done",
+            "namespace": "user",
+            "source_text": "Done",
+            "description": "Button that closes the favourites picker.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.picker.title",
+            "namespace": "user",
+            "source_text": "Choose {kind}",
+            "description": "Title of the picker for a favourites block. {kind} is the plural type name, e.g. 'Operators'.",
+            "placeholders": [
+                "kind"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.removed.badge",
+            "namespace": "user",
+            "source_text": "Removed",
+            "description": "Chip on a showcase block (or entity) whose grid, tier list, plan or game entry no longer exists. Shown only to the owner.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.removed.entity",
+            "namespace": "user",
+            "source_text": "Unknown entry {id}",
+            "description": "Accessible name and tooltip of a favourite the game data no longer knows. {id} is its raw game id. Shown only to the owner.",
+            "placeholders": [
+                "id"
+            ]
+        },
+        {
+            "key": "user.profile.showcase.removed.favourites",
+            "namespace": "user",
+            "source_text": "The game data no longer has these entries. Visitors don't see this block.",
+            "description": "Owner-only note on a favourites block none of whose entries the game data knows any more.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.removed.grid",
+            "namespace": "user",
+            "source_text": "This grid was deleted. Visitors don't see this block; remove it in the editor.",
+            "description": "Owner-only note on a showcase block whose grid was deleted.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.removed.plan",
+            "namespace": "user",
+            "source_text": "This plan was deleted or is no longer shown on your profile. Visitors don't see this block.",
+            "description": "Owner-only note on a showcase block whose plan was deleted or had 'display on profile' turned off.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.removed.tierList",
+            "namespace": "user",
+            "source_text": "This tier list was deleted. Visitors don't see this block; remove it in the editor.",
+            "description": "Owner-only note on a showcase block whose tier list was deleted.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.retry",
+            "namespace": "user",
+            "source_text": "Try again",
+            "description": "Button that reloads the showcase after a failure.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.showcase.tabHidden",
+            "namespace": "user",
+            "source_text": "Your Showcase tab is hidden, so visitors don't see it. Show it again from Customize.",
+            "description": "Notice on the owner's showcase when they hid the Showcase tab in the tab editor. 'Customize' is the tab editor button's label.",
+            "placeholders": []
+        },
+        {
             "key": "user.profile.skins.badge.missing",
             "namespace": "user",
             "source_text": "Missing",
@@ -42929,6 +44337,13 @@
             ]
         },
         {
+            "key": "user.profile.stats.rosterPrivate",
+            "namespace": "user",
+            "source_text": "This player keeps their roster private, so the statistics drawn from it are hidden too.",
+            "description": "Note on another player's Stats tab when that player hid their Roster tab. Only the sign-in cards remain.",
+            "placeholders": []
+        },
+        {
             "key": "user.profile.stats.signin.accountAge",
             "namespace": "user",
             "source_text": "Account age",
@@ -43360,6 +44775,13 @@
             "placeholders": []
         },
         {
+            "key": "user.profile.tab.showcase",
+            "namespace": "user",
+            "source_text": "Showcase",
+            "description": "Profile tab: the blocks the player chose to show first (favourite operators, skins and more, grids, tier lists, plans).",
+            "placeholders": []
+        },
+        {
             "key": "user.profile.tab.stats",
             "namespace": "user",
             "source_text": "Stats",
@@ -43371,6 +44793,13 @@
             "namespace": "user",
             "source_text": "Profile sections",
             "description": "Accessible name of the profile's tab bar.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.tabs.private",
+            "namespace": "user",
+            "source_text": "Hidden from visitors",
+            "description": "Accessible label of the eye-off icon the profile owner sees on a tab they made private.",
             "placeholders": []
         },
         {

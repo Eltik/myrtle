@@ -11,6 +11,7 @@ import { NumberField, NumberFieldDecrement, NumberFieldGroup, NumberFieldIncreme
 import { Switch } from "#/components/ui/switch";
 import { Textarea } from "#/components/ui/textarea";
 import { useAuth } from "#/hooks/use-auth";
+import { useMediaQuery } from "#/hooks/use-media-query";
 import { gridQueryOptions, type IGrid } from "#/lib/api/grids";
 import type { ITierEntity, TierEntityKind } from "#/lib/api/tier-entities";
 import { useGamedataServer, useT } from "#/lib/i18n";
@@ -22,6 +23,7 @@ import { ConfirmDialog } from "./ConfirmDialog";
 import { DeleteGridButton } from "./DeleteGrid";
 import { EntityPickerDialog } from "./EntityPickerDialog";
 import { GridBoard, type IGridBoardEditor } from "./GridBoard";
+import { GridCellSheet } from "./GridCellSheet";
 import type { messages } from "./GridEditor.messages";
 import { GridNotice } from "./GridNotice";
 import { useGridSave } from "./save";
@@ -50,6 +52,9 @@ function EditorContent({ grid, viewerId }: { grid: IGrid; viewerId: string | nul
     const [state, dispatch] = useReducer(gridReducer, initial);
     const { dirty, saving, saveError, save, discard } = useGridSave({ slug, viewerId, initial, state, dispatch });
     const [pickIndex, setPickIndex] = useState<number | null>(null);
+    // Below `sm` a tap on a cell opens it full screen in a sheet; the picker then opens over the sheet.
+    const narrow = useMediaQuery("max-sm");
+    const [sheetIndex, setSheetIndex] = useState<number | null>(null);
     const [pendingResize, setPendingResize] = useState<{ rows: number; cols: number; lost: number } | null>(null);
     const [kindsOpen, setKindsOpen] = useState(false);
     const [pendingKinds, setPendingKinds] = useState<{ kinds: TierEntityKind[]; lost: number } | null>(null);
@@ -98,8 +103,9 @@ function EditorContent({ grid, viewerId }: { grid: IGrid; viewerId: string | nul
             onClear: (index) => dispatch({ type: "clearEntity", index }),
             onLabelChange: (index, label) => dispatch({ type: "setLabel", index, label }),
             onSwap: (from, to) => dispatch({ type: "swap", from, to }),
+            onOpen: narrow ? setSheetIndex : undefined,
         }),
-        [],
+        [narrow],
     );
 
     const handlePick = (entity: ITierEntity, server: string | null) => {
@@ -113,6 +119,8 @@ function EditorContent({ grid, viewerId }: { grid: IGrid; viewerId: string | nul
         dispatch({ type: "clearEntity", index: pickIndex });
         setPickIndex(null);
     };
+
+    const picker = <EntityPickerDialog target={pickerTarget(state, pickIndex)} kinds={state.entityKinds} onClose={() => setPickIndex(null)} onPick={handlePick} onClear={handleClear} />;
 
     return (
         <main className="min-h-dvh pb-24">
@@ -144,7 +152,10 @@ function EditorContent({ grid, viewerId }: { grid: IGrid; viewerId: string | nul
                 <p className="mt-3 text-center font-sans text-muted-foreground text-xs">{t("edit.hint")}</p>
             </div>
 
-            <EntityPickerDialog target={pickerTarget(state, pickIndex)} kinds={state.entityKinds} onClose={() => setPickIndex(null)} onPick={handlePick} onClear={handleClear} />
+            {sheetIndex === null && picker}
+            <GridCellSheet cells={state.cells} cols={state.cols} index={sheetIndex} onIndexChange={setSheetIndex} onClose={() => setSheetIndex(null)} onPick={setPickIndex} onClear={boardEditor.onClear} onLabelChange={boardEditor.onLabelChange}>
+                {sheetIndex !== null && picker}
+            </GridCellSheet>
 
             <ConfirmDialog
                 open={pendingResize !== null}
