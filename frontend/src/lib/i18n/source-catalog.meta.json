@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-06T06:05:58.510Z",
+    "generatedAt": "2026-10-06T08:43:31.907Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -39467,126 +39467,175 @@
             "key": "user.profile.background.cancel",
             "namespace": "user",
             "source_text": "Cancel",
-            "description": "Footer button that closes the dialog and discards the unsaved pick.",
+            "description": "Top-bar button that closes the background editor without saving. Asks first when there are unsaved changes.",
             "placeholders": []
         },
         {
-            "key": "user.profile.background.cropFitsShort",
+            "key": "user.profile.background.deadX",
             "namespace": "user",
-            "source_text": "Fits, zoom in",
-            "description": "Short note beside a disabled crop slider's label: the art already fits the header on that axis, so zooming in is what makes it croppable. Keep it to a few words.",
+            "source_text": "Zoom in to move it sideways",
+            "description": "Shown for a moment when the owner drags the picture sideways but it already fills the header's width exactly, so nothing can move that way until it is zoomed in.",
             "placeholders": []
         },
         {
-            "key": "user.profile.background.cropX",
+            "key": "user.profile.background.deadY",
             "namespace": "user",
-            "source_text": "Horizontal crop",
-            "description": "Label of the slider that moves which part of the chosen art shows in the header, from its left edge to its right. Disabled while the art is no wider than the header.",
-            "placeholders": []
-        },
-        {
-            "key": "user.profile.background.cropXFits",
-            "namespace": "user",
-            "source_text": "The art fits the header's width at this zoom, so there is nothing to crop sideways. Zoom in to crop it.",
-            "description": "Tooltip of the short note beside a disabled horizontal crop slider: on this screen the chosen art is exactly as wide as the header, so moving it sideways would change nothing until it is zoomed in.",
-            "placeholders": []
-        },
-        {
-            "key": "user.profile.background.cropY",
-            "namespace": "user",
-            "source_text": "Vertical crop",
-            "description": "Label of the slider that moves which part of the chosen art shows in the header, from its top to its bottom.",
-            "placeholders": []
-        },
-        {
-            "key": "user.profile.background.cropYFits",
-            "namespace": "user",
-            "source_text": "The art fits the header's height at this zoom, so there is nothing to crop vertically. Zoom in to crop it.",
-            "description": "Tooltip of the short note beside a disabled vertical crop slider: on this screen the chosen art is exactly as tall as the header, so moving it up or down would change nothing until it is zoomed in.",
+            "source_text": "Zoom in to move it up or down",
+            "description": "Shown for a moment when the owner drags the picture up or down but it already fills the header's height exactly, so nothing can move that way until it is zoomed in.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.description",
             "namespace": "user",
-            "source_text": "Pick any outfit, operator art or gallery picture. It shows behind your header for everyone who can see your profile.",
-            "description": "Explains the background picker. 'Outfit' is the site's word for a skin; a gallery picture is a scene from an event's or Integrated Strategies' Archives gallery.",
+            "source_text": "Pick an art below and position it in the header preview. It shows behind your header for everyone who can see your profile.",
+            "description": "Screen-reader description of the background editor.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.discard.confirm",
+            "namespace": "user",
+            "source_text": "Discard",
+            "description": "Button of the confirmation that closes the background editor and drops the unsaved changes.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.discard.description",
+            "namespace": "user",
+            "source_text": "Your new background isn't saved. Closing the editor drops it.",
+            "description": "Body of the confirmation shown when the owner closes the background editor with unsaved changes.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.discard.keep",
+            "namespace": "user",
+            "source_text": "Keep editing",
+            "description": "Button of the confirmation that goes back to the background editor with the changes kept.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.discard.title",
+            "namespace": "user",
+            "source_text": "Discard changes?",
+            "description": "Title of the confirmation shown when the owner closes the background editor with unsaved changes.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.elite",
+            "namespace": "user",
+            "source_text": "Art",
+            "description": "Accessible label of the Elite 1 / Elite 2 toggle under the header preview, shown when the background is an operator's art: which promotion's illustration it draws.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.elite.e1",
+            "namespace": "user",
+            "source_text": "Elite 1",
+            "description": "Toggle under the header preview: draw the operator's Elite 1 (first promotion) illustration.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.elite.e2",
+            "namespace": "user",
+            "source_text": "Elite 2",
+            "description": "Toggle under the header preview: draw the operator's Elite 2 (second promotion) illustration.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.elite.noE2",
+            "namespace": "user",
+            "source_text": "This operator has no Elite 2 art.",
+            "description": "Tooltip of the disabled Elite 2 toggle: three-star and lower operators stop at Elite 1, so there is no second illustration.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.expand",
+            "namespace": "user",
+            "source_text": "Full preview",
+            "description": "Button in the compact preview strip that shows while the owner scrolls through the art: scrolls back up to the full-size header preview.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.fit",
+            "namespace": "user",
+            "source_text": "Fit",
+            "description": "Button under the header preview that sets the zoom back to 100%, the art just filling the header, keeping its position.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.gallery.allGroups",
             "namespace": "user",
             "source_text": "All stories",
-            "description": "First entry of the Gallery tab's story list: shows the pictures of every story.",
+            "description": "First entry of the gallery's story list: shows the pictures of every story.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.gallery.categories",
             "namespace": "user",
             "source_text": "Category",
-            "description": "Heading of the Gallery tab's category filter (Main Story, Side Stories, Vignettes, Integrated Strategies...). Several can be on at once.",
+            "description": "Small label over the category toggles (Main Story, Side Stories, Vignettes, Integrated Strategies...) in the background editor's side rail. Several can be on at once.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.gallery.categoriesLabel",
             "namespace": "user",
             "source_text": "Filter by story category",
-            "description": "Accessible label of the Gallery tab's row of category toggles.",
+            "description": "Accessible label of the gallery's row of category toggles.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.gallery.category.is",
             "namespace": "user",
             "source_text": "Integrated Strategies",
-            "description": "Filter button of the Gallery tab's story sources: pictures from Integrated Strategies stories.",
+            "description": "Category filter of the gallery's story sources: pictures from Integrated Strategies stories.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.gallery.category.main",
             "namespace": "user",
             "source_text": "Main Story",
-            "description": "Filter button of the Gallery tab's story sources: pictures from main story chapters.",
+            "description": "Category filter of the gallery's story sources: pictures from main story chapters.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.gallery.category.reclamation",
             "namespace": "user",
             "source_text": "Reclamation Algorithm",
-            "description": "Filter button of the Gallery tab's story sources: pictures from Reclamation Algorithm stories.",
+            "description": "Category filter of the gallery's story sources: pictures from Reclamation Algorithm stories.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.gallery.category.record",
             "namespace": "user",
             "source_text": "Operator Records",
-            "description": "Filter button of the Gallery tab's story sources: pictures from operator record stories.",
+            "description": "Category filter of the gallery's story sources: pictures from operator record stories.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.gallery.category.side",
             "namespace": "user",
             "source_text": "Side Stories",
-            "description": "Filter button of the Gallery tab's story sources: pictures from side story events.",
+            "description": "Category filter of the gallery's story sources: pictures from side story events.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.gallery.category.sideContent",
             "namespace": "user",
             "source_text": "Other Stories",
-            "description": "Filter button of the Gallery tab's story sources: pictures from other story content outside events.",
+            "description": "Category filter of the gallery's story sources: pictures from other story content outside events.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.gallery.category.vignette",
             "namespace": "user",
             "source_text": "Vignettes",
-            "description": "Filter button of the Gallery tab's story sources: pictures from vignette (mini story) events.",
+            "description": "Category filter of the gallery's story sources: pictures from vignette (mini story) events.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.gallery.categoryOption",
             "namespace": "user",
             "source_text": "{label}, {count, plural, one {# picture} other {# pictures}}",
-            "description": "Accessible label of one category toggle in the Gallery tab. {label} is the category, {count} how many pictures it holds under the other filters.",
+            "description": "Accessible label of one category toggle in the gallery. {label} is the category, {count} how many pictures it holds under the other filters.",
             "placeholders": [
                 "count",
                 "label"
@@ -39596,7 +39645,7 @@
             "key": "user.profile.background.gallery.clearFilters",
             "namespace": "user",
             "source_text": "Clear all",
-            "description": "Button beside the active-filter chips that turns off every category, story and search filter of the Gallery tab.",
+            "description": "Button beside the active-filter chips that turns off every category, story and search filter of the gallery.",
             "placeholders": []
         },
         {
@@ -39619,7 +39668,7 @@
             "key": "user.profile.background.gallery.error",
             "namespace": "user",
             "source_text": "Couldn't load the gallery.",
-            "description": "Shown when the gallery pictures failed to load in the background picker.",
+            "description": "Shown when the gallery pictures failed to load in the background editor.",
             "placeholders": []
         },
         {
@@ -39633,7 +39682,7 @@
             "key": "user.profile.background.gallery.loading",
             "namespace": "user",
             "source_text": "Loading the gallery…",
-            "description": "Shown while the gallery pictures load in the background picker.",
+            "description": "Shown while the gallery pictures load in the background editor.",
             "placeholders": []
         },
         {
@@ -39663,72 +39712,56 @@
             "key": "user.profile.background.gallery.searchPlaceholder",
             "namespace": "user",
             "source_text": "Search gallery pictures",
-            "description": "Placeholder of the search box in the background picker's Gallery tab.",
+            "description": "Placeholder of the search box in the background editor's gallery.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.gallery.source.archive_pic",
             "namespace": "user",
             "source_text": "Archives",
-            "description": "Source button of the Gallery tab: the Archives gallery pictures events and Integrated Strategies collect.",
+            "description": "Gallery source button: the Archives gallery pictures events and Integrated Strategies collect.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.gallery.source.story_cg",
             "namespace": "user",
             "source_text": "Story CGs",
-            "description": "Source button of the Gallery tab: the full-screen illustrations (CGs) shown during story scenes.",
+            "description": "Gallery source button: the full-screen illustrations (CGs) shown during story scenes.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.gallery.source.story_scene",
             "namespace": "user",
             "source_text": "Scenes",
-            "description": "Source button of the Gallery tab: the background plates (locations) story scenes are set against.",
-            "placeholders": []
-        },
-        {
-            "key": "user.profile.background.gallery.sources",
-            "namespace": "user",
-            "source_text": "Picture source",
-            "description": "Accessible label of the row of buttons that switch the Gallery tab between Archives pictures, story CGs and story scenes.",
+            "description": "Gallery source button: the background plates (locations) story scenes are set against.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.gallery.stories",
             "namespace": "user",
             "source_text": "Story",
-            "description": "Heading of the Gallery tab's list of stories (main story chapters, events, vignettes, Integrated Strategies themes) that filters the pictures to one of them.",
+            "description": "Small label over the background editor's searchable list of stories (main story chapters, events, vignettes, Integrated Strategies themes) that filters the pictures to one of them.",
             "placeholders": []
-        },
-        {
-            "key": "user.profile.background.gallery.storyButton",
-            "namespace": "user",
-            "source_text": "Story: {name}",
-            "description": "Button on a narrow background picker that opens the story list. {name} is the chosen story, or 'All stories'.",
-            "placeholders": [
-                "name"
-            ]
         },
         {
             "key": "user.profile.background.gallery.storyEmpty",
             "namespace": "user",
             "source_text": "No story matches.",
-            "description": "Shown in the Gallery tab's story list when its search or the chosen categories leave no story.",
+            "description": "Shown in the gallery's story list when its search or the chosen categories leave no story.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.gallery.storySearchLabel",
             "namespace": "user",
             "source_text": "Find a story by name",
-            "description": "Accessible label of the search box that narrows the Gallery tab's story list.",
+            "description": "Accessible label of the search box that narrows the gallery's story list.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.gallery.storySearchPlaceholder",
             "namespace": "user",
             "source_text": "Find a story",
-            "description": "Placeholder of the search box above the Gallery tab's story list.",
+            "description": "Placeholder of the search box above the gallery's story list.",
             "placeholders": []
         },
         {
@@ -39751,31 +39784,66 @@
             ]
         },
         {
-            "key": "user.profile.background.move",
+            "key": "user.profile.background.mode",
             "namespace": "user",
-            "source_text": "Move dialog",
-            "description": "Accessible label and tooltip of the grip in the dialog's title bar. Drag it, or focus it and press the arrow keys, to move the dialog.",
+            "source_text": "Preview as",
+            "description": "Accessible label of the Desktop / Phone toggle that switches the header preview between the two layouts visitors see.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.mode.desktop",
+            "namespace": "user",
+            "source_text": "Desktop",
+            "description": "Toggle of the background editor: preview the header as it shows on this desktop screen.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.mode.phone",
+            "namespace": "user",
+            "source_text": "Phone",
+            "description": "Toggle of the background editor: preview the header as it shows on a phone.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.none",
             "namespace": "user",
             "source_text": "No background. Your header shows its usual look.",
-            "description": "Shown in place of the crop slider when no art is chosen.",
+            "description": "Shown in place of the zoom controls when no art is chosen.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.panHint",
             "namespace": "user",
-            "source_text": "Drag the picture in the header to position it, and scroll over it to zoom. The sliders do the same.",
-            "description": "Hint under the zoom and crop sliders. 'The header' is the profile header above the dialog, which previews the background live and can be dragged and zoomed directly.",
+            "source_text": "Drag the picture to position it. Scroll or pinch to zoom.",
+            "description": "Hint beside the zoom controls of the background editor, about the header preview above them.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.preview.keys",
+            "namespace": "user",
+            "source_text": "Arrow keys move the picture, Shift with an arrow moves it further, plus and minus zoom.",
+            "description": "Screen-reader instructions of the focused header preview in the background editor.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.preview.label",
+            "namespace": "user",
+            "source_text": "Background position",
+            "description": "Accessible label of the header preview in the background editor, which is dragged or moved with the arrow keys to position the art.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.preview.role",
+            "namespace": "user",
+            "source_text": "header preview",
+            "description": "Screen-reader role description of the draggable header preview in the background editor. Lower case: it is read after the label.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.remove",
             "namespace": "user",
             "source_text": "Remove background",
-            "description": "Footer button that clears the chosen art, back to the header's usual look. Takes effect on Save.",
+            "description": "Button under the header preview that clears the chosen art, back to the header's usual look. Takes effect on Save.",
             "placeholders": []
         },
         {
@@ -39786,17 +39854,17 @@
             "placeholders": []
         },
         {
-            "key": "user.profile.background.resize",
+            "key": "user.profile.background.reset",
             "namespace": "user",
-            "source_text": "Resize dialog",
-            "description": "Accessible label and tooltip of the grip in the dialog's bottom-right corner. Drag it, or focus it and press the arrow keys, to resize the dialog.",
+            "source_text": "Reset",
+            "description": "Button under the header preview that puts the art back where a fresh pick starts: default position and no zoom.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.save",
             "namespace": "user",
             "source_text": "Save",
-            "description": "Footer button that saves the chosen background.",
+            "description": "Top-bar button that saves the chosen background.",
             "placeholders": []
         },
         {
@@ -39816,29 +39884,57 @@
         {
             "key": "user.profile.background.source",
             "namespace": "user",
-            "source_text": "Art source",
-            "description": "Accessible label of the tab row that switches the background picker between character art and gallery pictures.",
+            "source_text": "Source",
+            "description": "Heading of the background editor's list of art sources (character art, and the gallery's Archives, story CGs and scenes), and accessible label of the row of source buttons on a phone.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.source.characters",
             "namespace": "user",
             "source_text": "Character art",
-            "description": "Tab of the background picker listing outfits and operator art.",
+            "description": "Source of the background editor listing outfits and operator art.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.source.gallery",
             "namespace": "user",
             "source_text": "Gallery",
-            "description": "Tab of the background picker listing the Archives gallery pictures: the scene artwork events and Integrated Strategies collect in their archive.",
+            "description": "Small label over the background editor's gallery sources in its side rail: the Archives pictures, the story CGs and the story scenes.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.tileSize",
+            "namespace": "user",
+            "source_text": "Tile size",
+            "description": "Accessible label of the Small / Medium / Large toggle that sets how big the gallery picture tiles are.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.tileSize.l",
+            "namespace": "user",
+            "source_text": "Large tiles",
+            "description": "Accessible label and tooltip of the toggle that shows the gallery pictures as large tiles. The button itself shows only the letter L.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.tileSize.m",
+            "namespace": "user",
+            "source_text": "Medium tiles",
+            "description": "Accessible label and tooltip of the toggle that shows the gallery pictures as medium tiles. The button itself shows only the letter M.",
+            "placeholders": []
+        },
+        {
+            "key": "user.profile.background.tileSize.s",
+            "namespace": "user",
+            "source_text": "Small tiles",
+            "description": "Accessible label and tooltip of the toggle that shows the gallery pictures as small tiles. The button itself shows only the letter S.",
             "placeholders": []
         },
         {
             "key": "user.profile.background.title",
             "namespace": "user",
             "source_text": "Profile background",
-            "description": "Title of the dialog where the profile's owner picks the art shown behind their profile header.",
+            "description": "Title of the full-screen editor where the profile's owner picks the art shown behind their profile header and positions it.",
             "placeholders": []
         },
         {

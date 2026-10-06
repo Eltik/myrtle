@@ -19620,6 +19620,15 @@
           "id"
         ],
         "properties": {
+          "elite": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "description": "Which elite art an operator background draws: `1` or `2`. `None` is the\nart the header drew before the choice existed, elite 2 where the\noperator has it, else elite 1. Kept on the operator kind alone, so an\noutfit or a gallery picture never carries it.",
+            "minimum": 0
+          },
           "focus_x": {
             "type": [
               "integer",

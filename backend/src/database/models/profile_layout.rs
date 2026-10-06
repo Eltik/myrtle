@@ -389,6 +389,13 @@ pub struct ProfileBackground {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[ts(optional)]
     pub scale: Option<u16>,
+    /// Which elite art an operator background draws: `1` or `2`. `None` is the
+    /// art the header drew before the choice existed, elite 2 where the
+    /// operator has it, else elite 1. Kept on the operator kind alone, so an
+    /// outfit or a gallery picture never carries it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub elite: Option<u8>,
 }
 
 /// The smallest background zoom: the art just covers the header.
@@ -404,7 +411,8 @@ impl ProfileBackground {
     /// A focus that is a number is rounded and clamped to 0..=100; anything
     /// else is no focus. A scale that is a number is rounded and clamped to
     /// [`BACKGROUND_SCALE_MIN`]..=[`BACKGROUND_SCALE_MAX`]; anything else is
-    /// no scale.
+    /// no scale. An operator's `elite` is kept when it is exactly 1 or 2;
+    /// anything else, or any other kind, is no elite.
     pub fn normalize(raw: &serde_json::Value) -> Option<Self> {
         let kind = str_field(raw, "kind").and_then(ProfileBackgroundKind::from_id)?;
         let id = str_field(raw, "id").and_then(bounded_key)?.to_owned();
@@ -418,6 +426,14 @@ impl ProfileBackground {
             focus_x: focus("focus_x"),
             focus_y: focus("focus_y"),
             scale: clamped_number(raw, "scale", BACKGROUND_SCALE_MIN, BACKGROUND_SCALE_MAX),
+            elite: if kind == ProfileBackgroundKind::Operator {
+                raw.get("elite")
+                    .and_then(serde_json::Value::as_u64)
+                    .filter(|e| matches!(e, 1 | 2))
+                    .and_then(|e| u8::try_from(e).ok())
+            } else {
+                None
+            },
         })
     }
 }
@@ -1071,6 +1087,7 @@ mod tests {
                 focus_x: Some(30),
                 focus_y: Some(12),
                 scale: None,
+                elite: None,
             })
         );
         assert_eq!(
@@ -1081,6 +1098,7 @@ mod tests {
                 focus_x: None,
                 focus_y: None,
                 scale: None,
+                elite: None,
             })
         );
     }
@@ -1098,6 +1116,7 @@ mod tests {
                 focus_x: Some(72),
                 focus_y: Some(40),
                 scale: None,
+                elite: None,
             })
         );
         assert_eq!(
@@ -1131,6 +1150,7 @@ mod tests {
                     focus_x: Some(20),
                     focus_y: Some(80),
                     scale: Some(140),
+                    elite: None,
                 })
             );
             assert_eq!(
@@ -1178,6 +1198,50 @@ mod tests {
             background(json!({ "kind": "operator", "id": "a", "focus_x": 99.5, "focus_y": 0.49 }))
                 .unwrap();
         assert_eq!((bg.focus_x, bg.focus_y), (Some(100), Some(0)));
+    }
+
+    #[test]
+    fn an_operator_background_keeps_elite_1_or_2_and_nothing_else_does() {
+        let elite = |raw: Value| background(raw).unwrap().elite;
+        assert_eq!(
+            elite(json!({ "kind": "operator", "id": "a", "elite": 1 })),
+            Some(1)
+        );
+        assert_eq!(
+            elite(json!({ "kind": "operator", "id": "a", "elite": 2 })),
+            Some(2)
+        );
+        for bad in [
+            json!(0),
+            json!(3),
+            json!(1.5),
+            json!("2"),
+            json!(-1),
+            json!(null),
+        ] {
+            assert_eq!(
+                elite(json!({ "kind": "operator", "id": "a", "elite": bad })),
+                None
+            );
+        }
+        assert_eq!(elite(json!({ "kind": "operator", "id": "a" })), None);
+        for kind in ["skin", "archive_pic", "story_cg", "story_scene"] {
+            assert_eq!(
+                elite(json!({ "kind": kind, "id": "a@b", "elite": 1 })),
+                None
+            );
+        }
+        // Absent, the wire shape is what it was before the choice existed.
+        let plain = background(json!({ "kind": "operator", "id": "a", "focus_y": 25 })).unwrap();
+        assert_eq!(
+            serde_json::to_value(plain).unwrap(),
+            json!({ "kind": "operator", "id": "a", "focus_y": 25 })
+        );
+        let e1 = background(json!({ "kind": "operator", "id": "a", "elite": 1 })).unwrap();
+        assert_eq!(
+            serde_json::to_value(e1).unwrap(),
+            json!({ "kind": "operator", "id": "a", "elite": 1 })
+        );
     }
 
     #[test]

@@ -202,7 +202,9 @@ fn prefixed(context: &str, e: ApiError) -> ApiError {
 /// story CG or scene. A skin id without `@` is refused too: `#1` and `#2` are an operator's
 /// default and elite 2 art, which `skin_table` lists but the outfit pool
 /// (`tier_entity::skin::is_outfit`) does not offer and the client draws no
-/// skin art for; the operator kind is the way to pick that art.
+/// skin art for; the operator kind is the way to pick that art. An operator
+/// background that asks for elite 2 art is refused when the operator has no
+/// elite 2.
 ///
 /// # Errors
 /// `400` naming the background.
@@ -217,7 +219,14 @@ pub async fn validate_background(
         )));
     }
     if let Some(kind) = background.kind.entity_kind() {
-        return validate_entity(state, kind, &background.id).map_err(|e| prefixed("background", e));
+        validate_entity(state, kind, &background.id).map_err(|e| prefixed("background", e))?;
+        if background.elite == Some(2) && !has_elite_2(state, &background.id) {
+            return Err(ApiError::BadRequest(format!(
+                "background: `{}` has no elite 2 art",
+                background.id
+            )));
+        }
+        return Ok(());
     }
     if background_known(state, background).await {
         return Ok(());
@@ -254,6 +263,19 @@ async fn background_known(state: &AppState, background: &ProfileBackground) -> b
             story_art::story_art_known(state, StoryArtKind::Scene, id).await
         }
     }
+}
+
+/// Whether any loaded server lists elite 2 for operator `id`: a third phase in
+/// `character_table`, the phase whose art is `<id>_2.png`. An operator that
+/// stops at elite 1 (three stars and lower) has no such art to draw.
+fn has_elite_2(state: &AppState, id: &str) -> bool {
+    any_loaded(state, |sd| {
+        sd.game_data
+            .load()
+            .operators
+            .get(id)
+            .is_some_and(|op| op.phases.len() >= 3)
+    })
 }
 
 /// Whether `pred` holds for any loaded server.

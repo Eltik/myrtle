@@ -11,8 +11,6 @@ import { publicPlansQueryOptions } from "#/lib/api/planner";
 import { userEncounteredEnemiesQueryOptions, userImprovementsQueryOptions, userInventoryQueryOptions, userQueryOptions, userRosterQueryOptions, userScoreQueryOptions } from "#/lib/api/user";
 import { type TypedRichT, useGamedataServer, useRichT, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import type { ProfileBackground } from "#/types/generated/ProfileBackground";
-import type { IArtGeometry } from "./impl/background";
 import { Hero } from "./impl/components/Hero";
 import { ProfileLayoutEditor } from "./impl/components/ProfileLayoutEditor";
 import type { messages as layoutMessages } from "./impl/components/ProfileLayoutEditor.messages";
@@ -54,8 +52,8 @@ const PlansTab = lazy(() => loadPlansTab().then((m) => ({ default: m.PlansTab })
 const RosterTab = lazy(() => loadRosterTab().then((m) => ({ default: m.RosterTab })));
 const ScoreTab = lazy(() => loadScoreTab().then((m) => ({ default: m.ScoreTab })));
 const ShowcaseTab = lazy(() => loadShowcaseTab().then((m) => ({ default: m.ShowcaseTab })));
-// The picker pulls in the grids' entity picker; only an owner who opens it pays for that.
-const BackgroundPicker = lazy(() => import("./impl/components/BackgroundPicker").then((m) => ({ default: m.BackgroundPicker })));
+// The editor pulls in the grids' entity picker and the gallery; only an owner who opens it pays for that.
+const BackgroundEditor = lazy(() => import("./impl/background-editor/BackgroundEditor").then((m) => ({ default: m.BackgroundEditor })));
 
 const TAB_CHUNKS: Partial<Record<TabId, () => Promise<unknown>>> = {
     enemies: loadEnemiesTab,
@@ -171,10 +169,8 @@ export function UserProfile() {
     // A visitor's pick on a customized profile, kept for this visit only (see `tabMemory`).
     const [pickedTab, setPickedTab] = useState<TabId | null>(null);
     const [editingLayout, setEditingLayout] = useState(false);
-    // The background picker's unsaved pick, previewed by the header; `undefined` while the picker is closed.
-    const [backgroundDraft, setBackgroundDraft] = useState<ProfileBackground | null | undefined>(undefined);
-    // The header art's drawn box and file size while the picker is open, for its crop sliders.
-    const [artGeometry, setArtGeometry] = useState<IArtGeometry | null>(null);
+    // The background editor is open. Its draft lives in the editor, previewed there; the page's header keeps the saved background.
+    const [editingBackground, setEditingBackground] = useState(false);
 
     // Genuinely-global data: the profile record + roster power the hero, stat
     // strip, and several tab counts, so both stay eager. Everything else is
@@ -265,16 +261,10 @@ export function UserProfile() {
     return (
         <DynamicArtProvider server={data.server}>
             <main className="page-shell flex flex-1 flex-col gap-7 [--page-max:1440px]">
-                <Hero
-                    profile={data}
-                    background={backgroundDraft === undefined ? (layout?.background ?? null) : backgroundDraft}
-                    onChangeBackground={isOwner ? () => setBackgroundDraft(layout?.background ?? null) : undefined}
-                    onAdjustBackground={isOwner && backgroundDraft ? setBackgroundDraft : undefined}
-                    onArtGeometry={isOwner && backgroundDraft ? setArtGeometry : undefined}
-                />
-                {isOwner && backgroundDraft !== undefined && (
+                <Hero profile={data} background={layout?.background ?? null} onChangeBackground={isOwner ? () => setEditingBackground(true) : undefined} />
+                {isOwner && editingBackground && (
                     <Suspense fallback={null}>
-                        <BackgroundPicker saved={layout?.background ?? null} draft={backgroundDraft} artGeometry={artGeometry} onDraftChange={setBackgroundDraft} onClose={() => setBackgroundDraft(undefined)} />
+                        <BackgroundEditor profile={data} saved={layout?.background ?? null} onClose={() => setEditingBackground(false)} />
                     </Suspense>
                 )}
                 <StatStrip profile={data} rosterCount={roster?.length} />

@@ -10,7 +10,6 @@ import { countGameDays } from "#/lib/registry/server-time";
 import { DEFAULT_AVATAR_ID, getAvatarById } from "#/lib/utils";
 import type { ProfileBackground } from "#/types/generated/ProfileBackground";
 import type { IUserProfile } from "#/types/user";
-import type { IArtGeometry } from "../background";
 import type { messages } from "./Hero.messages";
 import { HeroArt } from "./HeroArt";
 import shared from "./shared.module.css";
@@ -18,16 +17,12 @@ import shared from "./shared.module.css";
 interface IHeroProps {
     profile: IUserProfile;
     /**
-     * The art behind the header: the saved one, or the picker's unsaved pick while it is
-     * open. `null` or absent draws the header exactly as it was before backgrounds existed.
+     * The art behind the header: the saved one, or the background editor's draft in its
+     * preview. `null` or absent draws the header exactly as it was before backgrounds existed.
      */
     background?: ProfileBackground | null;
-    /** Opens the background picker. Passed for the owner alone; absent, no control renders. */
+    /** Opens the background editor. Passed for the owner alone; absent, no control renders. */
     onChangeBackground?: () => void;
-    /** Passed while the picker is open on an art: dragging or zooming the art in the header reports the moved background. */
-    onAdjustBackground?: (next: ProfileBackground) => void;
-    /** Passed while the picker is open: told the header art's drawn box and file size, for the picker's crop sliders. */
-    onArtGeometry?: (geometry: IArtGeometry | null) => void;
 }
 
 /** The header's tint, half of its plain look. */
@@ -76,7 +71,7 @@ async function copyToClipboard(text: string, successTitle: string, successDescri
     }
 }
 
-export function Hero({ profile, background, onChangeBackground, onAdjustBackground, onArtGeometry }: IHeroProps) {
+export function Hero({ profile, background, onChangeBackground }: IHeroProps) {
     const t: TypedT<typeof messages> = useT("user");
     const f = useFormatters();
     const [avatarErrored, setAvatarErrored] = useState(false);
@@ -101,10 +96,8 @@ export function Hero({ profile, background, onChangeBackground, onAdjustBackgrou
             {/* Two slots, as the two decoration layers were before backgrounds, so with none the markup (base-ui's generated ids included) is byte-identical to it. */}
             {background ? (
                 <HeroArt
-                    key={`${background.kind}:${background.id}`}
+                    key={`${background.kind}:${background.id}:${background.elite ?? ""}`}
                     background={background}
-                    onAdjust={onAdjustBackground}
-                    onGeometry={onArtGeometry}
                     fallback={
                         <>
                             <HeroTint />

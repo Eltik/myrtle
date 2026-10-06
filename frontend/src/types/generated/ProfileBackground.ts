@@ -24,4 +24,11 @@ export type ProfileBackground = {
      * the art exactly covering the header as it did before zoom existed.
      */
     scale?: number;
+    /**
+     * Which elite art an operator background draws: `1` or `2`. `None` is the
+     * art the header drew before the choice existed, elite 2 where the
+     * operator has it, else elite 1. Kept on the operator kind alone, so an
+     * outfit or a gallery picture never carries it.
+     */
+    elite?: number;
 };

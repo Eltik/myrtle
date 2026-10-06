@@ -94,7 +94,7 @@ describe("gallery pictures", () => {
         expect(paths(backgroundSources({ kind: "archive_pic", id: "pic_rogue_1_KV1" }))).toEqual(["/api/story/gallery/pic_rogue_1_KV1/header", "/api/cn/story/gallery/pic_rogue_1_KV1/header"]);
     });
 
-    it("tile the picker with the 320 px JPEG, the id kept in its case and encoded", () => {
+    it("tile the art browser with the 320 px JPEG, the id kept in its case and encoded", () => {
         expect(paths([galleryPictureUrl("act13side_pic_0", "thumb")])).toEqual(["/api/story/gallery/act13side_pic_0/thumb"]);
         expect(paths([galleryPictureUrl("a b#1", "thumb", "cn")])).toEqual(["/api/cn/story/gallery/a%20b%231/thumb"]);
     });
@@ -233,7 +233,7 @@ describe("crop slack", () => {
         expect(croppableAxes("operator", 120, null)).toEqual({ x: true, y: true });
     });
 
-    it("pans only along an axis with slack, as the sliders read it", () => {
+    it("pans only along an axis with slack, as croppableAxes reads it", () => {
         const start = { kind: "story_cg" as const, id: "61_i14", focus_x: 78, focus_y: 28 };
         expect(panFocus(start, -400, 0, desktop)).toEqual(start);
         expect(panFocus({ ...start, scale: 101 }, -4.46, 0, desktop).focus_x).toBe(clampFocus(78 + 50));

@@ -1,6 +1,6 @@
 /**
- * Pure derivations for the background picker's Gallery tab: its three sources (the
- * Archives gallery, the story CGs, the story scene plates) flattened to one tile shape,
+ * Pure derivations for the background editor's gallery: its three sources (the Archives
+ * gallery, the story CGs, the story scene plates) flattened to one tile shape,
  * the category and story filters each source offers with their counts, and which tiles
  * a filter and a search leave.
  */
@@ -49,7 +49,7 @@ export function storyArtTiles(gallery: StoryArtGallery): IGalleryTile[] {
 }
 
 /** The library categories in the Stories tab's order: the category row's order. */
-export const STORY_CATEGORIES = ["main", "side", "vignette", "is", "reclamation", "sideContent", "record"] as const satisfies readonly StoryCategory[];
+const STORY_CATEGORIES = ["main", "side", "vignette", "is", "reclamation", "sideContent", "record"] as const satisfies readonly StoryCategory[];
 
 /** What narrows a source's tiles. Every part combines with the others (AND); an empty part filters nothing. */
 export interface IGalleryFilter {
