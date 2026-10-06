@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-06T08:43:31.907Z",
+    "generatedAt": "2026-10-06T09:57:03.238Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -5576,6 +5576,48 @@
             "namespace": "changelog",
             "source_text": "Improved: The pull planner shows one card per release day",
             "description": "Title of the 2026-10-05 release note. A 'card' is one entry on the pull planner's timeline.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-06-2.item.1",
+            "namespace": "changelog",
+            "source_text": "Choose which game server's text the site shows, separately from the site's language, under Game text in the language menu. Japanese and Korean game text are now available.",
+            "description": "Bullet in the 2026-10-06-2 release note, filed under 'New'. 'Game text' quotes the menu entry and must match its translation.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-06-2.item.2",
+            "namespace": "changelog",
+            "source_text": "Grid cards show the whole board, a filled cell opens full screen with its art and full label, phones get a full-screen cell editor, and the picker has the same filters as tier lists.",
+            "description": "Bullet in the 2026-10-06-2 release note, filed under 'Improved'. A 'grid' is a player-made board of labelled cells.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-06-2.item.3",
+            "namespace": "changelog",
+            "source_text": "A browser without WebGL keeps the static art instead of crashing the page.",
+            "description": "Bullet in the 2026-10-06-2 release note, filed under 'Fixed'. WebGL is a browser graphics feature and keeps its name.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-06-2.item.4",
+            "namespace": "changelog",
+            "source_text": "Grani and the Knights' Treasure shows its cover art in tier lists instead of a letter.",
+            "description": "Bullet in the 2026-10-06-2 release note, filed under 'Fixed'. Grani and the Knights' Treasure is an event and keeps the game's name.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-06-2.lead",
+            "namespace": "changelog",
+            "source_text": "Your profile is now **customizable**. Reorder its tabs and make any of them private, pin favourites, grids, tier lists and plans to a new Showcase tab, and set header art from any outfit, operator art (Elite 1 and Elite 2 included) or gallery picture, cropped in a full-screen editor with a life-size preview.",
+            "description": "Lead paragraph of the 2026-10-06-2 release note, rendered as Markdown. 'Showcase' is a profile tab name and must match its translation; Elite 1 and Elite 2 are operator promotion stages and keep the game's names.",
+            "placeholders": []
+        },
+        {
+            "key": "changelog.note.2026-10-06-2.title",
+            "namespace": "changelog",
+            "source_text": "New: Make your profile your own",
+            "description": "Title of the 2026-10-06-2 release note. 'Profile' is a player's public page on the site.",
             "placeholders": []
         },
         {

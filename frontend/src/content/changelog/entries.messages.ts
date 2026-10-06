@@ -11,6 +11,30 @@ import { defineMessages, type MessageMap } from "#/lib/i18n/messages";
 export const namespace = "changelog";
 
 export const messages = {
+    "note.2026-10-06-2.title": {
+        text: "New: Make your profile your own",
+        description: "Title of the 2026-10-06-2 release note. 'Profile' is a player's public page on the site.",
+    },
+    "note.2026-10-06-2.lead": {
+        text: "Your profile is now **customizable**. Reorder its tabs and make any of them private, pin favourites, grids, tier lists and plans to a new Showcase tab, and set header art from any outfit, operator art (Elite 1 and Elite 2 included) or gallery picture, cropped in a full-screen editor with a life-size preview.",
+        description: "Lead paragraph of the 2026-10-06-2 release note, rendered as Markdown. 'Showcase' is a profile tab name and must match its translation; Elite 1 and Elite 2 are operator promotion stages and keep the game's names.",
+    },
+    "note.2026-10-06-2.item.1": {
+        text: "Choose which game server's text the site shows, separately from the site's language, under Game text in the language menu. Japanese and Korean game text are now available.",
+        description: "Bullet in the 2026-10-06-2 release note, filed under 'New'. 'Game text' quotes the menu entry and must match its translation.",
+    },
+    "note.2026-10-06-2.item.2": {
+        text: "Grid cards show the whole board, a filled cell opens full screen with its art and full label, phones get a full-screen cell editor, and the picker has the same filters as tier lists.",
+        description: "Bullet in the 2026-10-06-2 release note, filed under 'Improved'. A 'grid' is a player-made board of labelled cells.",
+    },
+    "note.2026-10-06-2.item.3": {
+        text: "A browser without WebGL keeps the static art instead of crashing the page.",
+        description: "Bullet in the 2026-10-06-2 release note, filed under 'Fixed'. WebGL is a browser graphics feature and keeps its name.",
+    },
+    "note.2026-10-06-2.item.4": {
+        text: "Grani and the Knights' Treasure shows its cover art in tier lists instead of a letter.",
+        description: "Bullet in the 2026-10-06-2 release note, filed under 'Fixed'. Grani and the Knights' Treasure is an event and keeps the game's name.",
+    },
     "note.2026-10-06.title": {
         text: "New: Grids, and every story character in one place",
         description: "Title of the 2026-10-06 release note. 'Grids' is a new feature where players fill a board of labelled cells; 'story character' means a character sprite from the game's story scenes.",
