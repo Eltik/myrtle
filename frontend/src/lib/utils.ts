@@ -425,6 +425,65 @@ export const formatTeamId = (teamId: string) => {
     }
 };
 
+/** The server-localized names an operator object may carry beside its ids. Every field is optional: an old cached response lacks them. */
+interface IOperatorNames {
+    profession?: string | null;
+    professionName?: string | null;
+    subProfessionId?: string | null;
+    subProfessionName?: string | null;
+    nationId?: string | null;
+    nationName?: string | null;
+    groupId?: string | null;
+    groupName?: string | null;
+    teamId?: string | null;
+    teamName?: string | null;
+}
+
+/**
+ * Class name: the server's own first (its gacha class tag, "近卫干员" on CN), the English formatter second. EN's tag
+ * names are the formatter's eight words exactly (checked 2026-10-06), so EN output is unchanged either way.
+ */
+export const professionLabel = (op: Pick<IOperatorNames, "profession" | "professionName">): string => op.professionName || formatProfession(op.profession ?? "");
+
+/** Bare archetype ("Centurion"): the server's own name first, the English table second. */
+export const archetypeLabel = (op: IOperatorNames): string => op.subProfessionName || formatArchetype(op.subProfessionId ?? "");
+
+/**
+ * Archetype with its class appended, for the sites that used `formatSubProfession`. The class
+ * suffix is English-only logic, so a server name that already equals the English table entry
+ * keeps the English composition (output unchanged on EN) and any other server name shows as is.
+ */
+export const subProfessionLabel = (op: IOperatorNames): string => {
+    const id = op.subProfessionId ?? "";
+    if (!op.subProfessionName || op.subProfessionName === SUB_PROFESSION_NAMES[id]) return formatSubProfession(id);
+    return op.subProfessionName;
+};
+
+/** Nation name: the server's own first, the English formatter second; null with no nation id. */
+export const nationLabel = (op: IOperatorNames): string | null => op.nationName || (op.nationId ? formatNationId(op.nationId) : null);
+
+/** Group name: the server's own first, the English formatter second; null with no group id. */
+export const groupLabel = (op: IOperatorNames): string | null => op.groupName || (op.groupId ? (formatGroupId(op.groupId) ?? null) : null);
+
+/** Team name: the server's own first, the English formatter second; null with no team id. */
+export const teamLabel = (op: IOperatorNames): string | null => op.teamName || (op.teamId ? formatTeamId(op.teamId) : null);
+
+/**
+ * Id -> the server's own name for one named field, read off operators already in hand, for the
+ * sites that hold a bare id (a filter value, an aggregate key) rather than an operator. Ids no
+ * operator names are absent, so the caller's English fallback answers for them.
+ */
+export function serverNames(ops: Iterable<IOperatorNames>, field: "profession" | "subProfession" | "nation" | "group" | "team"): Map<string, string> {
+    const names = new Map<string, string>();
+    for (const op of ops) {
+        // The class code has no `Id` suffix (`profession: "WARRIOR"`); every other field does.
+        const id = field === "profession" ? op.profession : op[`${field}Id`];
+        const name = op[`${field}Name`];
+        if (id && name) names.set(id, name);
+    }
+    return names;
+}
+
 export function capitalize(s: string): string {
     if (!s) return "";
     return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();

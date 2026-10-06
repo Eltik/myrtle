@@ -9,7 +9,8 @@ export interface ITierStats {
     /** The operators among them, which every breakdown below reads. */
     operatorCount: number;
     rarity: { rarity: OperatorRarity; count: number }[];
-    profession: { profession: OperatorProfession; count: number }[];
+    /** `professionName` is the server's own class name, read off the operators counted; null when none carries it. */
+    profession: { profession: OperatorProfession; professionName: string | null; count: number }[];
     position: { melee: number; ranged: number; other: number };
     averageRarity: number | null;
     describedCount: number;
@@ -27,6 +28,7 @@ export function computeTierStats(tier: ITierEntryFull): ITierStats {
 
     const rarityCounts: Partial<Record<OperatorRarity, number>> = {};
     const professionCounts: Partial<Record<OperatorProfession, number>> = {};
+    const professionNames: Partial<Record<OperatorProfession, string>> = {};
     const position = { melee: 0, ranged: 0, other: 0 };
     let raritySum = 0;
     let describedCount = 0;
@@ -35,6 +37,7 @@ export function computeTierStats(tier: ITierEntryFull): ITierStats {
     for (const op of ops) {
         rarityCounts[op.rarity] = (rarityCounts[op.rarity] ?? 0) + 1;
         professionCounts[op.profession] = (professionCounts[op.profession] ?? 0) + 1;
+        if (op.professionName) professionNames[op.profession] = op.professionName;
         bumpPosition(position, op.position);
         raritySum += op.rarity;
     }
@@ -47,7 +50,7 @@ export function computeTierStats(tier: ITierEntryFull): ITierStats {
 
     const rarity = ([6, 5, 4, 3, 2, 1] as OperatorRarity[]).filter((r) => (rarityCounts[r] ?? 0) > 0).map((r) => ({ rarity: r, count: rarityCounts[r] ?? 0 }));
 
-    const profession = PROFESSION_ORDER.filter((p) => (professionCounts[p] ?? 0) > 0).map((p) => ({ profession: p, count: professionCounts[p] ?? 0 }));
+    const profession = PROFESSION_ORDER.filter((p) => (professionCounts[p] ?? 0) > 0).map((p) => ({ profession: p, professionName: professionNames[p] ?? null, count: professionCounts[p] ?? 0 }));
 
     const averageRarity = ops.length > 0 ? raritySum / ops.length : null;
     const topOperator = ops.length > 0 ? [...ops].sort((a, b) => b.rarity - a.rarity || a.subOrder - b.subOrder)[0] : null;

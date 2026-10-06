@@ -7,7 +7,7 @@ import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, RARITY_HEX_MUTED } from "#/lib/utils";
 import { guaranteedFloorRarity } from "../calculator";
-import { PROFESSION_LABELS, RARITY_COLORS } from "../constants";
+import { RARITY_COLORS } from "../constants";
 import { getStarsDisplay } from "../helpers";
 import type { IRecruitableOperator, IRosterOverlay, ITagCombinationResult, ResultLayout } from "../types";
 import type { messages } from "./ResultCard.messages";
@@ -155,7 +155,7 @@ function OperatorTile({ operator, roster }: { operator: IRecruitableOperator; ro
     const t: ResultT = useT("tools");
     const hex = rarityHex(operator.rarity);
     const colors = RARITY_COLORS[operator.rarity];
-    const profession = PROFESSION_LABELS[operator.profession] ?? operator.profession;
+    const profession = operator.professionName;
 
     const potential = roster?.potentialByOperator.get(operator.id);
     const owned = potential !== undefined;

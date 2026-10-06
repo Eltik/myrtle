@@ -118,6 +118,54 @@ pub async fn record(
     Ok(total)
 }
 
+/// Copies the release art a server's data names into its own tree, local
+/// bundles first and mirrors second, then rebuilds its asset index when
+/// anything was copied so the new files are served.
+async fn archive_release_art(
+    state: &crate::app::state::AppState,
+    server: Server,
+    sd: &crate::app::state::ServerData,
+    gd: &std::sync::Arc<crate::core::gamedata::types::GameData>,
+) {
+    let assets_dir = sd.assets_dir.clone();
+    let idx = sd.asset_index.load_full();
+    let local = {
+        let (gd, idx, dir) = (gd.clone(), idx.clone(), assets_dir.clone());
+        tokio::task::spawn_blocking(move || {
+            super::art::archive(std::path::Path::new(&dir), &gd, &idx)
+        })
+        .await
+        .unwrap_or_default()
+    };
+    let mirrored = super::art::fill_from_mirrors(
+        &state.http_client,
+        std::path::Path::new(&assets_dir),
+        ledger_server(server).as_str(),
+        gd,
+        &idx,
+    )
+    .await;
+    tracing::info!(
+        server = server.as_str(),
+        copied = local.copied,
+        present = local.present,
+        mirrored = mirrored.copied,
+        failed = local.failed + mirrored.failed,
+        "release art archived"
+    );
+    if local.copied + mirrored.copied > 0 {
+        let dir = sd.art_dir.clone();
+        if let Ok(new_idx) = tokio::task::spawn_blocking(move || {
+            crate::core::gamedata::assets::AssetIndex::build(std::path::Path::new(&dir))
+        })
+        .await
+        {
+            state.swap_asset_index(server, new_idx);
+            state.cache.invalidate_by_prefix("static:cn:release:").await;
+        }
+    }
+}
+
 pub fn spawn_record(
     state: crate::app::state::AppState,
     server: Server,
@@ -129,42 +177,12 @@ pub fn spawn_record(
     tokio::spawn(async move {
         let sd = state.server_data(server);
         let gd = sd.game_data.load_full();
-        let assets_dir = sd.assets_dir.clone();
-        let idx = sd.asset_index.load_full();
-        let local = {
-            let (gd, idx, dir) = (gd.clone(), idx.clone(), assets_dir.clone());
-            tokio::task::spawn_blocking(move || {
-                super::art::archive(std::path::Path::new(&dir), &gd, &idx)
-            })
-            .await
-            .unwrap_or_default()
-        };
-        let mirrored = super::art::fill_from_mirrors(
-            &state.http_client,
-            std::path::Path::new(&assets_dir),
-            ledger_server(server).as_str(),
-            &gd,
-            &idx,
-        )
-        .await;
-        tracing::info!(
-            server = server.as_str(),
-            copied = local.copied,
-            present = local.present,
-            mirrored = mirrored.copied,
-            failed = local.failed + mirrored.failed,
-            "release art archived"
-        );
-        if local.copied + mirrored.copied > 0 {
-            let dir = assets_dir.clone();
-            if let Ok(new_idx) = tokio::task::spawn_blocking(move || {
-                crate::core::gamedata::assets::AssetIndex::build(std::path::Path::new(&dir))
-            })
-            .await
-            {
-                state.swap_asset_index(server, new_idx);
-                state.cache.invalidate_by_prefix("static:cn:release:").await;
-            }
+        // A text-only server (KR, JP: no art of its own, `art_dir` is the
+        // default server's tree) has nothing to archive into. Its own tree is
+        // never indexed, so art copied there would never be served. Its
+        // sightings are still recorded below.
+        if sd.art_dir == sd.assets_dir {
+            archive_release_art(&state, server, &sd, &gd).await;
         }
         match record(&state.db, server, &gd, res_version.as_deref()).await {
             Ok(stats) => tracing::info!(

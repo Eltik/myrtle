@@ -8,8 +8,10 @@ use crate::core::gamedata::{
         building::BuildingDataFile,
         consts::GameDataConst,
         handbook::Handbook,
+        handbook_team::{HandbookTeam, NO_FACTION},
         material::{ItemType, Materials},
         module::{BattleEquip, RawModules},
+        obtain::ObtainChannel,
         operator::{
             AllSkillLevelUp, CharPatchInfo, Drone, EvolveCost, LevelUpCostItem, Operator,
             OperatorBaseSkill, Phase, RawOperator,
@@ -41,6 +43,11 @@ pub struct EnrichCtx<'a> {
     /// Operator-linked battle audio, keyed by char id (see `enrich::audio`).
     pub audio: &'a HashMap<String, Vec<OperatorAudio>>,
     pub consts: &'a GameDataConst,
+    /// `handbook_team_table`, for the localized nation, group and team names.
+    pub factions: &'a HashMap<String, HandbookTeam>,
+    /// Profession code -> the server's own class name (see
+    /// `gacha::profession_names`).
+    pub profession_names: &'a HashMap<String, String>,
 }
 
 pub fn enrich_all_operators(
@@ -151,6 +158,9 @@ fn enrich_operator(id: &str, raw: &RawOperator, ctx: &EnrichCtx) -> Operator {
         sub_power: raw.sub_power.clone(),
         group_id: raw.group_id.clone(),
         team_id: raw.team_id.clone(),
+        nation_name: faction_name(ctx.factions, raw.nation_id.as_deref()),
+        group_name: faction_name(ctx.factions, raw.group_id.as_deref()),
+        team_name: faction_name(ctx.factions, raw.team_id.as_deref()),
         display_number: raw.display_number.clone().unwrap_or_default(),
         appellation: raw.appellation.clone(),
         position: raw.position.clone(),
@@ -158,12 +168,26 @@ fn enrich_operator(id: &str, raw: &RawOperator, ctx: &EnrichCtx) -> Operator {
         item_usage: raw.item_usage.clone().unwrap_or_default(),
         item_desc: raw.item_desc.clone().unwrap_or_default(),
         item_obtain_approach: raw.item_obtain_approach.clone().unwrap_or_default(),
+        obtain_channel: raw
+            .item_obtain_approach
+            .as_deref()
+            .and_then(ObtainChannel::classify),
         is_not_obtainable: raw.is_not_obtainable,
         is_sp_char: raw.is_sp_char,
         max_potential_level: raw.max_potential_level,
         rarity: raw.rarity.clone(),
         profession: raw.profession.clone(),
+        profession_name: ctx
+            .profession_names
+            .get(raw.profession.to_raw_str())
+            .cloned(),
         sub_profession_id: raw.sub_profession_id.clone().unwrap_or_default(),
+        sub_profession_name: raw
+            .sub_profession_id
+            .as_deref()
+            .and_then(|id| ctx.modules.sub_prof_dict.get(id))
+            .map(|sub| sub.sub_profession_name.clone())
+            .filter(|name| !name.is_empty()),
         trait_data: raw.trait_data.clone(),
         phases: enriched_phases,
         skills: enriched_skills,
@@ -184,6 +208,16 @@ fn enrich_operator(id: &str, raw: &RawOperator, ctx: &EnrichCtx) -> Operator {
         tmpl_ids,
         tmpl_default,
     }
+}
+
+/// The server's own name for a faction id, `None` for the `none` sentinel and
+/// for an id the table does not carry.
+fn faction_name(factions: &HashMap<String, HandbookTeam>, id: Option<&str>) -> Option<String> {
+    let id = id.filter(|id| !id.is_empty() && *id != NO_FACTION)?;
+    factions
+        .get(id)
+        .map(|team| team.power_name.clone())
+        .filter(|name| !name.is_empty())
 }
 
 fn resolve_drones(id: &str, raw: &RawOperator, drones: &HashMap<String, Drone>) -> Vec<Drone> {

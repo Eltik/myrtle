@@ -48,12 +48,12 @@ export function RosterTab({ roster, operatorsIndex, operatorsStatic }: IRosterTa
     const { filters, set, toggleSortOrder, visible, totalCount, displayCount, lastRef, filtersVisible, toggleFilters, filterOptions, removeFrom, setShared, clearFilters, activeFilterCount, hasActiveFilters } = useRoster(roster, operatorsIndex, operatorsStatic);
     const { search, ownership, sortBy, sortOrder, viewMode } = filters;
     const activeChips = useMemo(() => {
-        const chips = buildSharedChips(filters, removeFrom);
+        const chips = buildSharedChips(filters, removeFrom, filterOptions.labels);
         if (filters.source !== "any") {
             chips.push({ key: `source-${filters.source}`, label: t(SOURCE_CHIP_LABELS[filters.source]), onRemove: () => set("source", "any") });
         }
         return chips;
-    }, [filters, removeFrom, set, t]);
+    }, [filters, filterOptions.labels, removeFrom, set, t]);
 
     return (
         <section className="flex flex-col gap-4" aria-label={t("profile.roster.aria")}>

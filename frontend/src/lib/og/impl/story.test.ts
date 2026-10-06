@@ -72,7 +72,7 @@ describe("buildStoryOgData", () => {
     it("names a record story by its OPERATOR and draws the operator, in the rarity colour", () => {
         const story = entry("story_kalts_set_1_story_1", { name: "End of a Long Journey", groupId: "story_kalts_set_1", sort: 101, wordCount: 3109 });
         const recGroup = group("story_kalts_set_1", [story], { name: "Kal'tsit's record set", category: "record", coverUrl: "/textures/avg/bg/bg_battlefield.png" });
-        const records: StoryIndex["records"] = [{ charId: "char_003_kalts", name: "Kal'tsit", rarity: 6, profession: "MEDIC", avatarUrl: "/a.png", wordCount: 3109, illustrationCount: 0, spriteCount: 0, stories: [story] }];
+        const records: StoryIndex["records"] = [{ charId: "char_003_kalts", name: "Kal'tsit", rarity: 6, profession: "MEDIC", professionName: "Medic", avatarUrl: "/a.png", wordCount: 3109, illustrationCount: 0, spriteCount: 0, stories: [story] }];
         const data = buildStoryOgData(index([recGroup], records), story.id);
         expect(data).toMatchObject({ name: "End of a Long Journey", groupName: "Kal'tsit", categoryLabel: "Operator records", artKind: "operator", artPath: "/textures/chararts/char_003_kalts/char_003_kalts_1.png", accent: "#ff7f27" });
         expect(data?.code).toBeUndefined();

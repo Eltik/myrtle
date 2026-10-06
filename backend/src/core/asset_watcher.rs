@@ -7,8 +7,9 @@ use tokio_tungstenite::connect_async;
 
 use crate::app::state::AppState;
 use crate::core::gacha_resync::reconcile_rarities;
-use crate::core::gamedata::init_game_data;
+use crate::core::gamedata::init_game_data_with_art;
 use crate::core::gamedata::tables::DataError;
+use crate::core::gamedata::types::GameData;
 use crate::core::hypergryph::constants::Server;
 use crate::core::hypergryph::loaders::reload;
 
@@ -164,6 +165,7 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server, res_version
     let sd = state.server_data(server);
     let data_dir = sd.game_data_dir.clone();
     let assets_dir = sd.assets_dir.clone();
+    let art_dir = sd.art_dir.clone();
     let http_client = state.http_client.clone();
     let is_default = server == state.default_server;
 
@@ -180,9 +182,26 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server, res_version
     // runs stays pending for the next job run; re-marked below on failure.
     crate::core::sidecar::take_pending(server);
 
+    // A non-default server reads the facts its own wording does not carry from
+    // the other servers; see `enrich::reference::align_reference_facts`.
+    let references = if is_default {
+        Vec::new()
+    } else {
+        state.reference_servers(server)
+    };
     let result = tokio::task::spawn_blocking(move || {
-        let (game_data, asset_index) =
-            init_game_data(Path::new(&data_dir), Path::new(&assets_dir))?;
+        let (mut game_data, asset_index) = init_game_data_with_art(
+            Path::new(&data_dir),
+            Path::new(&assets_dir),
+            Path::new(&art_dir),
+        )?;
+        if !references.is_empty() {
+            let references: Vec<&GameData> = references.iter().map(|r| &**r).collect();
+            crate::core::gamedata::enrich::reference::align_reference_facts(
+                &mut game_data,
+                &references,
+            );
+        }
         Ok::<_, DataError>((game_data, asset_index))
     })
     .await;

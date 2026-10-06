@@ -1,7 +1,9 @@
 /** This module exists so the two surfaces cannot drift; a filter added here appears on both pages. */
+
+import { serverNames, subProfessionLabel } from "#/lib/utils";
 import type { IActiveChip } from "./components/ActiveFilterChips";
 import { CHIP_CONFIG } from "./constants";
-import type { ArrayFilterKey, IFilterOptions, IFilterSubject, ISharedFilters } from "./types";
+import type { ArrayFilterKey, IFilterLabels, IFilterOptions, IFilterSubject, ISharedFilters } from "./types";
 
 export const EMPTY_SHARED_FILTERS: ISharedFilters = {
     classes: [],
@@ -37,7 +39,15 @@ export function buildFilterOptions(subjects: readonly IFilterSubject[]): IFilter
         for (const v of op.voiceActors) voiceActors.add(v);
     }
 
+    const labels: IFilterLabels = {
+        classes: Object.fromEntries(serverNames(subjects, "profession")),
+        subclasses: Object.fromEntries(serverNames(subjects, "subProfession")),
+        nations: Object.fromEntries(serverNames(subjects, "nation")),
+        factions: Object.fromEntries([...serverNames(subjects, "group"), ...serverNames(subjects, "team")]),
+    };
+
     return {
+        labels,
         subclasses: [...subclasses].sort(),
         nations: [...nations].sort(),
         factions: [...factions].sort(),
@@ -90,11 +100,17 @@ export function countSharedFilters(filters: ISharedFilters): number {
     return filters.classes.length + filters.subclasses.length + filters.rarities.length + filters.genders.length + filters.nations.length + filters.factions.length + filters.races.length + filters.birthPlaces.length + filters.artists.length + filters.voiceActors.length;
 }
 
-export function buildSharedChips(filters: ISharedFilters, removeFrom: (key: ArrayFilterKey, value: string) => void): IActiveChip[] {
+export function buildSharedChips(filters: ISharedFilters, removeFrom: (key: ArrayFilterKey, value: string) => void, labels?: IFilterLabels): IActiveChip[] {
+    // A subclass goes through `subProfessionLabel`, which keeps EN's "Centurion Guard" wording; the bare server name
+    // would read "Centurion".
+    const named = (key: ArrayFilterKey, v: string): string | undefined => {
+        if (key === "subclasses") return subProfessionLabel({ subProfessionId: v, subProfessionName: labels?.subclasses[v] });
+        return key === "classes" || key === "nations" || key === "factions" ? labels?.[key][v] : undefined;
+    };
     return CHIP_CONFIG.flatMap(({ key, prefix, label }) =>
         (filters[key] as string[]).map((v) => ({
             key: `${prefix}-${v}`,
-            label: label(v),
+            label: named(key, v) ?? label(v),
             onRemove: () => removeFrom(key, v),
         })),
     );

@@ -5,10 +5,11 @@ import { Badge } from "#/components/ui/badge";
 import { Card } from "#/components/ui/card";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { formatArchetype, formatProfession, getAvatarById } from "#/lib/utils";
+import { getAvatarById } from "#/lib/utils";
 import { DEFAULT_AVATAR_ID } from "../constants";
-import { DEFAULT_SORT, parseScope } from "../searchControls";
+import { DEFAULT_SORT, parseScope, type Scope } from "../searchControls";
 import type { DisplayUser } from "../types";
+import { useScopeLabel } from "./SearchToolbar";
 import type { messages } from "./UserCard.messages";
 
 interface IUserCardProps {
@@ -20,10 +21,11 @@ interface IUserCardProps {
 export function UserCard({ user, sort = DEFAULT_SORT }: IUserCardProps) {
     const t: TypedT<typeof messages> = useT("user");
     const f = useFormatters();
+    const scopeLabel = useScopeLabel();
     const nickname = user.nickname ?? `Player ${user.uid}`;
     const initials = (user.nickname ?? user.uid).slice(0, 2).toUpperCase();
     const avatarSrc = getAvatarById(user.avatar_id ?? DEFAULT_AVATAR_ID);
-    const metric = sort !== DEFAULT_SORT && user.metric != null ? formatMetric(sort, user.metric, t, f.date) : null;
+    const metric = sort !== DEFAULT_SORT && user.metric != null ? formatMetric(sort, user.metric, t, f.date, scopeLabel) : null;
 
     return (
         <Card className="group transition-shadow duration-150 hover:shadow-md">
@@ -82,9 +84,9 @@ export function UserCard({ user, sort = DEFAULT_SORT }: IUserCardProps) {
 }
 
 /** The row's metric worded for its sort; `joined` carries a unix timestamp in seconds. */
-function formatMetric(sort: string, metric: number, t: TypedT<typeof messages>, date: (value: number) => string): string {
+function formatMetric(sort: string, metric: number, t: TypedT<typeof messages>, date: (value: number) => string, scopeLabel: (scope: Scope) => string): string {
     const scope = parseScope(sort);
-    if (scope) return t("search.card.metric.scoped", { count: metric, label: scope.kind === "class" ? formatProfession(scope.profession) : formatArchetype(scope.subProfessionId) });
+    if (scope) return t("search.card.metric.scoped", { count: metric, label: scopeLabel(scope) });
     switch (sort) {
         case "operators":
             return t("search.card.metric.operators", { count: metric });

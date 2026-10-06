@@ -5,7 +5,7 @@ import { metaT } from "#/lib/meta";
 import { ogURL, warmOg } from "#/lib/og/impl/url";
 import { operatorDisplayName } from "#/lib/operators/display-name";
 import { seo } from "#/lib/seo";
-import { formatProfession, formatSubProfession } from "#/lib/utils";
+import { professionLabel, subProfessionLabel } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 
 function buildOgData(operator: IOperatorListItem) {
@@ -57,7 +57,7 @@ export const Route = createFileRoute("/operators_/$id")({
             // Every word here is Arknights vocabulary - the operator's name,
             // profession and archetype - which the game data layer translates
             // per region. Nothing in it belongs to this catalog.
-            description: `${ogData.rarity}★ ${formatProfession(loaderData.profession)} • ${formatSubProfession(loaderData.subProfessionId ?? "")}`.trim(),
+            description: `${ogData.rarity}★ ${professionLabel(loaderData)} • ${subProfessionLabel(loaderData)}`.trim(),
             image: ogURL("operator", params.id, ogData),
             path: `/operators/${params.id}`,
             type: "profile",

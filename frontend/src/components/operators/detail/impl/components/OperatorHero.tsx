@@ -4,7 +4,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { useOperatorName } from "#/hooks/use-operator-name";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, formatNationId, formatProfession, formatSubProfession, rarityToNumber } from "#/lib/utils";
+import { cn, nationLabel, professionLabel, rarityToNumber, subProfessionLabel } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
 import { campLogo, operatorHero } from "../assets";
 import { RARITY_COLORS, RARITY_GLOW } from "../constants";
@@ -61,20 +61,20 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                             <div className="mt-1.5 flex items-center gap-2">
                                 <span className={cn("font-semibold text-base tracking-wider", rarityColor)}>{"★".repeat(rarityNum)}</span>
                                 <span className="text-muted-foreground/50">|</span>
-                                <span className="text-muted-foreground text-sm">{formatSubProfession(operator.subProfessionId)}</span>
+                                <span className="text-muted-foreground text-sm">{subProfessionLabel(operator)}</span>
                             </div>
                         </div>
 
                         <div className="mt-3 flex flex-wrap gap-2">
                             <Badge variant="outline" className="border-transparent bg-accent text-foreground">
-                                {formatProfession(operator.profession)}
+                                {professionLabel(operator)}
                             </Badge>
                             <Badge variant="outline" className="border-transparent bg-accent text-foreground">
                                 {operator.position === "RANGED" ? t("hero.position.ranged") : operator.position === "MELEE" ? t("hero.position.melee") : operator.position}
                             </Badge>
                             {operator.nationId && (
                                 <Badge variant="outline" className="border-transparent bg-accent text-foreground">
-                                    {formatNationId(operator.nationId)}
+                                    {nationLabel(operator)}
                                 </Badge>
                             )}
                         </div>
@@ -112,20 +112,20 @@ export function OperatorHero({ operator }: IOperatorHeroProps) {
                                     <div className="mt-1.5 flex items-center gap-3">
                                         <span className={cn("font-semibold text-lg tracking-wider", rarityColor)}>{"★".repeat(rarityNum)}</span>
                                         <span className="text-muted-foreground/50">|</span>
-                                        <span className="text-base text-muted-foreground">{formatSubProfession(operator.subProfessionId)}</span>
+                                        <span className="text-base text-muted-foreground">{subProfessionLabel(operator)}</span>
                                     </div>
                                 </div>
 
                                 <div className="flex flex-wrap gap-2">
                                     <Badge variant="outline" className="border-transparent bg-accent text-foreground">
-                                        {formatProfession(operator.profession)}
+                                        {professionLabel(operator)}
                                     </Badge>
                                     <Badge variant="outline" className="border-transparent bg-accent text-foreground">
                                         {operator.position === "RANGED" ? t("hero.position.ranged") : operator.position === "MELEE" ? t("hero.position.melee") : operator.position}
                                     </Badge>
                                     {operator.nationId && (
                                         <Badge variant="outline" className="border-transparent bg-accent text-foreground">
-                                            {formatNationId(operator.nationId)}
+                                            {nationLabel(operator)}
                                         </Badge>
                                     )}
                                 </div>

@@ -1,7 +1,7 @@
 //! Story asset resolution: a script's raw names -> served URLs.
 //!
-//! Built once per server on first use (see [`StoryAssetIndex::for_dir`]) from
-//! four walks under the server's assets root:
+//! Built once per server on first use (see [`StoryAssetIndex::for_dirs`]) from
+//! four walks under the server's art root:
 //!
 //! * `textures/avg/bg/**/*.png`: backgrounds, keyed by lowercase stem (946 on EN).
 //! * `textures/avg/imgs/**/*.png` and `textures/avg/items/**/*.png`: CGs and
@@ -20,7 +20,7 @@
 //! `[Video]` commands, 12 have a file and 13 do not, because EN retired those
 //! clips; a reference with no file resolves to nothing and the reader skips it.
 //!
-//! URLs are paths RELATIVE TO THE ASSETS ROOT with a leading slash
+//! URLs are paths RELATIVE TO THE ART ROOT with a leading slash
 //! (`/textures/avg/bg/<hub>/bg_cher_1.png`), the same form `AssetIndex` emits
 //! and `frontend/.../assets.ts::asset()` prefixes with `/api/assets`. A `#` in
 //! a filename is written `%23` so it survives as a path character.
@@ -407,8 +407,8 @@ impl ImageSource {
     }
 }
 
-/// Assets dir -> (the live `AssetIndex` the build was validated against, the build).
-type AssetCacheMap = HashMap<PathBuf, (Weak<AssetIndex>, Arc<StoryAssetIndex>)>;
+/// (Art dir, text dir) -> (the live `AssetIndex` the build was validated against, the build).
+type AssetCacheMap = HashMap<(PathBuf, PathBuf), (Weak<AssetIndex>, Arc<StoryAssetIndex>)>;
 
 #[derive(Debug, Default)]
 pub struct StoryAssetIndex {
@@ -439,10 +439,10 @@ fn encode_path_piece(s: &str) -> String {
 }
 
 /// A served URL (`/textures/avg/characters/x/avg_x%231.png`) back to its file
-/// under `assets_dir`, undoing [`encode_path_piece`].
+/// under the `art_dir` the index was built from, undoing [`encode_path_piece`].
 #[must_use]
-pub fn served_path(assets_dir: &Path, url: &str) -> PathBuf {
-    assets_dir.join(url.trim_start_matches('/').replace("%23", "#"))
+pub fn served_path(art_dir: &Path, url: &str) -> PathBuf {
+    art_dir.join(url.trim_start_matches('/').replace("%23", "#"))
 }
 
 /// Lowercase stem with the unpacker's doubled extensions cut (`1$1.png.png`,
@@ -583,13 +583,25 @@ fn image_size(meta: Option<&SpriteMetaFile>, path: &Path) -> Option<ImageSize> {
 }
 
 impl StoryAssetIndex {
-    /// Build the index for a server's assets root. Walks four trees; on EN
-    /// the whole thing is one pass over ~17k PNGs and ~73k OGGs.
+    /// Build the index for a server's assets root, art and text from the same
+    /// tree. Walks four trees; on EN the whole thing is one pass over ~17k PNGs
+    /// and ~73k OGGs.
     #[must_use]
     pub fn build(server_assets_dir: &Path) -> Self {
+        Self::build_split(server_assets_dir, server_assets_dir)
+    }
+
+    /// Build the index with the media walked under `art_dir` and the story
+    /// variables read from `text_dir`. They differ for a text-only server (JP,
+    /// KR), whose tree has gamedata but no art: its art comes from the default
+    /// server's tree while its variables stay its own, since a variable names
+    /// the server's own story text. Every URL is relative to `art_dir`, so it
+    /// must be served from that tree too.
+    #[must_use]
+    pub fn build_split(art_dir: &Path, text_dir: &Path) -> Self {
         let started = Instant::now();
         let mut idx = Self {
-            variables: StoryVariables::load(server_assets_dir),
+            variables: StoryVariables::load(text_dir),
             ..Self::default()
         };
 
@@ -597,7 +609,7 @@ impl StoryAssetIndex {
         // it, and shared by the `avg` trees and the cutin packs below.
         let mut sprite_meta: HashMap<PathBuf, HashMap<String, SpriteMetaFile>> = HashMap::new();
 
-        let avg = server_assets_dir.join("textures/avg");
+        let avg = art_dir.join("textures/avg");
         for (sub, target) in [("bg", 0), ("backgrounds", 0), ("imgs", 1), ("items", 1)] {
             let root = avg.join(sub);
             if !root.is_dir() {
@@ -618,11 +630,7 @@ impl StoryAssetIndex {
                 if name.contains("[alpha]") {
                     continue;
                 }
-                let Some(rel) = path
-                    .strip_prefix(server_assets_dir)
-                    .ok()
-                    .and_then(Path::to_str)
-                else {
+                let Some(rel) = path.strip_prefix(art_dir).ok().and_then(Path::to_str) else {
                     continue;
                 };
                 let url = format!("/{}", encode_path_piece(rel));
@@ -686,7 +694,7 @@ impl StoryAssetIndex {
 
         // `[popupdialog(dialoghead="$avatar_amiya")]` draws an operator head:
         // the same `ui_char_avatar_*` sprite packs the rest of the site serves.
-        let spritepack = server_assets_dir.join("textures/spritepack");
+        let spritepack = art_dir.join("textures/spritepack");
         if let Ok(dirs) = std::fs::read_dir(&spritepack) {
             for dir in dirs.flatten() {
                 let Some(name) = dir.file_name().to_str().map(str::to_owned) else {
@@ -732,7 +740,7 @@ impl StoryAssetIndex {
             }
         }
 
-        let audio_root = server_assets_dir.join("audio/audio/sound_beta_2");
+        let audio_root = art_dir.join("audio/audio/sound_beta_2");
         for entry in walkdir::WalkDir::new(&audio_root)
             .min_depth(1)
             .sort_by_file_name()
@@ -748,11 +756,7 @@ impl StoryAssetIndex {
             let Some(stem) = path.file_stem().and_then(|s| s.to_str()) else {
                 continue;
             };
-            let Some(rel) = path
-                .strip_prefix(server_assets_dir)
-                .ok()
-                .and_then(Path::to_str)
-            else {
+            let Some(rel) = path.strip_prefix(art_dir).ok().and_then(Path::to_str) else {
                 continue;
             };
             idx.audio
@@ -760,7 +764,7 @@ impl StoryAssetIndex {
                 .or_insert_with(|| format!("/{}", encode_path_piece(rel)));
         }
 
-        let video_root = server_assets_dir.join("video");
+        let video_root = art_dir.join("video");
         for entry in walkdir::WalkDir::new(&video_root)
             .min_depth(1)
             .sort_by_file_name()
@@ -784,11 +788,7 @@ impl StoryAssetIndex {
             else {
                 continue;
             };
-            let Some(rel) = path
-                .strip_prefix(server_assets_dir)
-                .ok()
-                .and_then(Path::to_str)
-            else {
+            let Some(rel) = path.strip_prefix(art_dir).ok().and_then(Path::to_str) else {
                 continue;
             };
             let url = format!("/{}", encode_path_piece(rel));
@@ -805,7 +805,8 @@ impl StoryAssetIndex {
 
         idx.build_ms = started.elapsed().as_millis();
         tracing::info!(
-            dir = %server_assets_dir.display(),
+            dir = %art_dir.display(),
+            text_dir = %text_dir.display(),
             backgrounds = idx.backgrounds.len(),
             images = idx.images.len(),
             sprites = idx.characters.len(),
@@ -818,14 +819,22 @@ impl StoryAssetIndex {
         idx
     }
 
-    /// Built on first use per assets dir, then shared. Validated against the live
-    /// [`AssetIndex`]: a hot reload (`swap_asset_index`) stores a new `Arc`, the
-    /// `Weak` here stops upgrading, and the next request rebuilds. `Weak` rather than
-    /// a raw pointer so a freed-and-reused allocation can't match a stale entry.
+    /// [`Self::for_dirs`] with art and text from the same tree.
     pub fn for_dir(server_assets_dir: &Path, live: &Arc<AssetIndex>) -> Arc<Self> {
+        Self::for_dirs(server_assets_dir, server_assets_dir, live)
+    }
+
+    /// [`Self::build_split`] on first use per (art, text) pair, then shared.
+    /// Keyed by the PAIR: KR and EN share an art tree but not their variables,
+    /// so one key per art tree would hand KR the EN index. Validated against the
+    /// live [`AssetIndex`]: a hot reload (`swap_asset_index`) stores a new `Arc`,
+    /// the `Weak` here stops upgrading, and the next request rebuilds. `Weak`
+    /// rather than a raw pointer so a freed-and-reused allocation can't match a
+    /// stale entry.
+    pub fn for_dirs(art_dir: &Path, text_dir: &Path, live: &Arc<AssetIndex>) -> Arc<Self> {
         static CACHE: OnceLock<Mutex<AssetCacheMap>> = OnceLock::new();
         let cache = CACHE.get_or_init(|| Mutex::new(HashMap::new()));
-        let key = server_assets_dir.to_path_buf();
+        let key = (art_dir.to_path_buf(), text_dir.to_path_buf());
         if let Some((seen, hit)) = cache
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
@@ -837,7 +846,7 @@ impl StoryAssetIndex {
         // Built outside the lock: a second caller may build too, and the last
         // insert wins. That costs one duplicate walk at most, never a stall on
         // every other server's lookup while this one builds.
-        let built = Arc::new(Self::build(server_assets_dir));
+        let built = Arc::new(Self::build_split(art_dir, text_dir));
         cache
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)

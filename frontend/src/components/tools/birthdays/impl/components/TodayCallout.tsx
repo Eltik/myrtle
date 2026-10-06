@@ -2,7 +2,7 @@ import type * as React from "react";
 import { Kicker } from "#/components/ui/kicker";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { formatProfession, parseOperatorName } from "#/lib/utils";
+import { parseOperatorName, professionLabel } from "#/lib/utils";
 import { operatorRarity } from "../helpers";
 import type { IOperatorBirthday } from "../types";
 import { OpChip } from "./OpChip";
@@ -35,7 +35,7 @@ export function TodayCallout({ ops, today }: ITodayCalloutProps): React.ReactEle
                             <OpChip operator={b.operator} size="lg" />
                             <div>
                                 <div className="font-sans font-semibold text-[13.5px] text-foreground">{displayName}</div>
-                                <div className="font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">{t("birthdays.today.rarityClass", { rarity: operatorRarity(b.operator), class: formatProfession(b.operator.profession) })}</div>
+                                <div className="font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.08em]">{t("birthdays.today.rarityClass", { rarity: operatorRarity(b.operator), class: professionLabel(b.operator) })}</div>
                             </div>
                         </div>
                     );

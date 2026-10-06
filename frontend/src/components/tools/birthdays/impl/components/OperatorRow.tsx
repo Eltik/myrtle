@@ -1,7 +1,7 @@
 import type * as React from "react";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { formatNationId, formatProfession, parseOperatorName } from "#/lib/utils";
+import { nationLabel, parseOperatorName, professionLabel } from "#/lib/utils";
 import { operatorRarity } from "../helpers";
 import type { IOperatorBirthday } from "../types";
 import { OpChip } from "./OpChip";
@@ -20,7 +20,7 @@ export function OperatorRow({ birthday }: { birthday: IOperatorBirthday }): Reac
                     {displayName}
                     {subtitle && <span className="ml-1.5 font-normal text-[12px] text-muted-foreground">{subtitle}</span>}
                 </div>
-                <div className="truncate font-medium font-mono text-[11.5px] text-muted-foreground uppercase tracking-[0.06em]">{t("birthdays.row.classNation", { class: formatProfession(birthday.operator.profession), nation: formatNationId(birthday.operator.nationId) })}</div>
+                <div className="truncate font-medium font-mono text-[11.5px] text-muted-foreground uppercase tracking-[0.06em]">{t("birthdays.row.classNation", { class: professionLabel(birthday.operator), nation: nationLabel(birthday.operator) ?? "" })}</div>
             </div>
             <Stars rarity={operatorRarity(birthday.operator)} />
         </div>

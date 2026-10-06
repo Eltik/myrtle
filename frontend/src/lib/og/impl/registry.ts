@@ -6,7 +6,7 @@ import { stagePreviewAssetPaths } from "#/lib/api/stages";
 import type { IRosterEntry } from "#/lib/api/user";
 import { backendFetch } from "#/lib/fetch";
 import { metaSourceForLocale } from "#/lib/meta";
-import { formatGroupId, formatNationId, formatNumber, formatTeamId, rarityToNumber, toAvatarStem } from "#/lib/utils";
+import { formatNumber, groupLabel, nationLabel, rarityToNumber, teamLabel, toAvatarStem } from "#/lib/utils";
 import type { Grid } from "#/types/generated/Grid";
 import type { PlacementDetail } from "#/types/generated/PlacementDetail";
 import type { StoryIndex } from "#/types/generated/StoryIndex";
@@ -119,7 +119,7 @@ const operatorHandler = /* @__PURE__ */ defineOgHandler<IOperatorOgData>(ogHashe
         // Faction display chooses the most specific source the data has;
         // matches how OperatorCardCompact picks its logo id.
         const factionId = op.nationId || op.teamId || op.groupId || "";
-        const factionLabel = op.teamId ? formatTeamId(op.teamId) : op.groupId ? formatGroupId(op.groupId) : op.nationId ? formatNationId(op.nationId) : undefined;
+        const factionLabel = (op.teamId ? teamLabel(op) : op.groupId ? groupLabel(op) : nationLabel(op)) ?? undefined;
         const lastPhase = op.phases?.[op.phases.length - 1];
         const lastFrame = lastPhase?.attributesKeyFrames?.[lastPhase.attributesKeyFrames.length - 1]?.data;
         const stats = lastFrame
@@ -134,6 +134,7 @@ const operatorHandler = /* @__PURE__ */ defineOgHandler<IOperatorOgData>(ogHashe
             name: op.name,
             appellation: op.appellation ?? "",
             profession: op.profession,
+            professionName: op.professionName ?? undefined,
             subProfession: op.subProfessionId ?? "",
             position: op.position ?? "",
             nationId: op.nationId ?? "",

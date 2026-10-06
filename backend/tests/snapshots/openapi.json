@@ -14905,7 +14905,7 @@
         "properties": {
           "facets": {
             "type": "object",
-            "description": "Kind-specific tags the tile and the pool filters read. Operators carry\n`rarity`, `profession`, `sub_profession_id`, `position`, and, when set,\n`nation_id` and `appellation`. Subclasses carry `profession`; enemies\n`enemy_level` and `enemy_index`; events `display_type`, `type`,\n`start_time` (unix seconds) and, for a rerun, `rerun`; factions\n`power_level` (`nation`, `group` or `team`); Stronghold bonds\n`bond_type` (`season` or `regular`) and, for a season bond, `power_ids`.\nSkins carry `char_id`, `operator` (the wearer's name), `rarity`,\n`profession` and, when filed under one, `brand`; modules `char_id`,\n`operator`, `profession`, `module_type` (`X`, `Y`, `D`, `A`, `B`) and\n`type_code` (`SUM`); skills `char_id`, `operator`, `profession`, `slot`\n(`1` to `3`) and, when the skill has levels, `skill_type` and\n`sp_type`; Integrated Strategies entries `theme` (`rogue_N`,\nwhich is IS N+1) and `item_type` (`theme`, `relic`, `band`, ...);\nstory sprites `source` (`operator` or `npc`), for an operator `char_id`,\nand, when the hub places the face, `face` (`x,y` fractions of the plate);\nmain story episodes `episode` (`0` to `16` on EN), `act` (the\n`chapter_table` index) and `act_name`.",
+            "description": "Kind-specific tags the tile and the pool filters read. Operators carry\n`rarity`, `profession`, `sub_profession_id`, `position`, and, when set,\n`nation_id`, `appellation`, and the server's own `profession_name`,\n`sub_profession_name` and `nation_name`. Subclasses carry\n`profession` and the server's `profession_name`; enemies\n`enemy_level` and `enemy_index`; events `display_type`, `type`,\n`start_time` (unix seconds) and, for a rerun, `rerun`; factions\n`power_level` (`nation`, `group` or `team`); Stronghold bonds\n`bond_type` (`season` or `regular`) and, for a season bond, `power_ids`.\nSkins carry `char_id`, `operator` (the wearer's name), `rarity`,\n`profession` and, when filed under one, `brand`; modules `char_id`,\n`operator`, `profession`, `module_type` (`X`, `Y`, `D`, `A`, `B`) and\n`type_code` (`SUM`); skills `char_id`, `operator`, `profession`, `slot`\n(`1` to `3`) and, when the skill has levels, `skill_type` and\n`sp_type`; Integrated Strategies entries `theme` (`rogue_N`,\nwhich is IS N+1) and `item_type` (`theme`, `relic`, `band`, ...);\nstory sprites `source` (`operator` or `npc`), for an operator `char_id`,\nand, when the hub places the face, `face` (`x,y` fractions of the plate);\nmain story episodes `episode` (`0` to `16` on EN), `act` (the\n`chapter_table` index) and `act_name`.",
             "additionalProperties": {
               "$ref": "#/components/schemas/FacetValue"
             },
@@ -17669,6 +17669,19 @@
           }
         }
       },
+      "ObtainChannel": {
+        "type": "string",
+        "description": "An operator's `itemObtainApproach` category.",
+        "enum": [
+          "headhunting",
+          "event",
+          "voucher",
+          "integratedStrategies",
+          "creditStore",
+          "giftPack",
+          "other"
+        ]
+      },
       "OpStage": {
         "type": "object",
         "description": "One stage that awards Originite Prime on first clear.",
@@ -17858,6 +17871,12 @@
             ],
             "description": "Faction group id (list page \"factions\" filter + faction-logo fallback)."
           },
+          "groupName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "hasDefensiveRecovery": {
             "type": "boolean"
           },
@@ -17882,6 +17901,23 @@
           },
           "nationId": {
             "type": "string"
+          },
+          "nationName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "obtainChannel": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ObtainChannel",
+                "description": "`itemObtainApproach` as a category, the same on every server."
+              }
+            ]
           },
           "phaseMaxLevels": {
             "type": "array",
@@ -17911,6 +17947,13 @@
           "profession": {
             "$ref": "#/components/schemas/OperatorProfession"
           },
+          "professionName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The server's own names for `profession`, `subProfessionId`,\n`nationId`, `groupId` and `teamId`, so a client need not keep an\nEnglish table per id. `None` when the server's table does not name the\nid."
+          },
           "race": {
             "$ref": "#/components/schemas/OperatorRace"
           },
@@ -17931,6 +17974,12 @@
           "subProfessionId": {
             "type": "string"
           },
+          "subProfessionName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "tagList": {
             "type": "array",
             "items": {
@@ -17943,6 +17992,12 @@
               "null"
             ],
             "description": "Sub-faction / team id (same faction filter + logo fallback)."
+          },
+          "teamName": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "voiceActors": {
             "type": "array",
@@ -18381,6 +18436,13 @@
           "profession": {
             "$ref": "#/components/schemas/OperatorProfession",
             "description": "The character table's profession, the raw game value the operators\nlist carries (`PIONEER`, `WARRIOR`, ...)."
+          },
+          "professionName": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The server's own name for `profession`, from its gacha class tags.\n`None` when the character table has no such operator."
           },
           "rarity": {
             "type": "integer",

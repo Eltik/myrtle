@@ -14,6 +14,7 @@ import type { TypedT } from "#/lib/i18n/messages";
 import { values } from "#/lib/records";
 import { cn, downloadBlob } from "#/lib/utils";
 import type { IOperatorListItem } from "#/types/operators";
+import { sanitizeFilename } from "../../helpers";
 import { buildOperatorSkinList, chibiSkinKey, type IUISkin } from "../../skins";
 import type { messages as skinMessages } from "../../skins.messages";
 import { DynamicChibiViewer } from "../chibi/ChibiViewer.lazy";
@@ -468,7 +469,7 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = `${skinName.replace(/[^a-zA-Z0-9\-_]/g, "_")}.png`;
+            a.download = `${sanitizeFilename(skinName)}.png`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
@@ -500,7 +501,7 @@ export const SkinViewerDialog = memo(function SkinViewerDialog({ imageSrc, skinN
             setRecordingLeft(null);
             for (const track of stream.getTracks()) track.stop();
             const ext = mimeType.startsWith("video/mp4") ? "mp4" : "webm";
-            downloadBlob(new Blob(chunks, { type: mimeType }), `${skinName.replace(/[^a-zA-Z0-9\-_]/g, "_")}.${ext}`);
+            downloadBlob(new Blob(chunks, { type: mimeType }), `${sanitizeFilename(skinName)}.${ext}`);
         };
         recorderRef.current = recorder;
         recorder.start(250);

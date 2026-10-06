@@ -8,7 +8,7 @@ import type { IOperatorPlanResponse } from "#/lib/api/planner";
 import type { IRosterEntry } from "#/lib/api/user";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, formatSubProfession, rarityToNumber } from "#/lib/utils";
+import { cn, rarityToNumber, subProfessionLabel } from "#/lib/utils";
 import type { messages } from "./OperatorPlanner.messages";
 import { type IPlanProgressLabels, PlanProgressRows } from "./PlanProgressRows";
 import { planProgress } from "./planProgress";
@@ -95,7 +95,7 @@ function PlanCardHeader({ op, isActive, onToggleActive, isExpanded, onToggleExpa
             </span>
             <div className="min-w-0 flex-1">
                 <h3 className="truncate font-bold text-foreground text-sm leading-tight">{operatorName(op)}</h3>
-                <p className="mt-0.5 truncate text-muted-foreground text-xs leading-normal">{t("planner.card.rarityClass", { rarity: rarityToNumber(op.rarity), archetype: formatSubProfession(op.subProfessionId) })}</p>
+                <p className="mt-0.5 truncate text-muted-foreground text-xs leading-normal">{t("planner.card.rarityClass", { rarity: rarityToNumber(op.rarity), archetype: subProfessionLabel(op) })}</p>
             </div>
             <button type="button" onClick={handled(onToggleExpanded)} className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-foreground shadow-xs transition-all hover:border-border/80 hover:bg-muted">
                 <ChevronDown className={cn("size-4 transition-transform", isExpanded && "rotate-180")} />

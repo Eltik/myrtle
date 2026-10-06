@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Dna, Heart, Info, LibraryBig, type LucideIcon, MapPin, Package, Palette, User } from "lucide-react";
 import { memo, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { useOperatorFactLabel } from "#/components/operators/OperatorFacts";
 import { Badge } from "#/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "#/components/ui/select";
@@ -262,6 +263,7 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
 
     const profile = operator.profile?.basicInfo;
     const unknown = t("info.profile.unknown");
+    const fact = useOperatorFactLabel();
 
     return (
         <div className="min-w-0 overflow-hidden p-4 md:p-6">
@@ -278,9 +280,9 @@ export const InfoContent = memo(function InfoContent({ operator }: IInfoContentP
                 <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
                     {profile && (
                         <>
-                            <ProfileCard icon={MapPin} label={t("info.profile.placeOfBirth")} value={profile.placeOfBirth ?? unknown} />
-                            <ProfileCard icon={Dna} label={t("info.profile.race")} value={profile.race ?? unknown} />
-                            <ProfileCard icon={User} label={t("info.profile.gender")} value={profile.gender ?? unknown} />
+                            <ProfileCard icon={MapPin} label={t("info.profile.placeOfBirth")} value={profile.placeOfBirth ? fact.birthPlace(profile.placeOfBirth) : unknown} />
+                            <ProfileCard icon={Dna} label={t("info.profile.race")} value={profile.race ? fact.race(profile.race) : unknown} />
+                            <ProfileCard icon={User} label={t("info.profile.gender")} value={profile.gender ? fact.gender(profile.gender) : unknown} />
                             <ProfileCard icon={Info} label={t("info.profile.height")} value={profile.height ?? unknown} />
                         </>
                     )}

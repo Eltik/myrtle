@@ -99,10 +99,14 @@ const SERVERS = {
 	},
 	kr: {
 		label: "Korea (Yostar)",
+		// The bare `ark-kr-static-online.yo-star.com` stopped resolving (NXDOMAIN on
+		// 1.1.1.1, 2026-10-06). This host is the `hu` entry of
+		// https://ak-conf.arknights.kr/config/prod/official/network_config; read it
+		// there again if KR's version check starts failing with "fetch failed".
 		versionUrl:
-			"https://ark-kr-static-online.yo-star.com/assetbundle/official/Android/version",
+			"https://ark-kr-static-online-1300509597.yo-star.com/assetbundle/official/Android/version",
 		cdnBaseUrl:
-			"https://ark-kr-static-online.yo-star.com/assetbundle/official/Android/assets",
+			"https://ark-kr-static-online-1300509597.yo-star.com/assetbundle/official/Android/assets",
 	},
 	tw: {
 		label: "Taiwan (Gryphline)",

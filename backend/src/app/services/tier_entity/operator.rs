@@ -47,6 +47,9 @@ fn summary(id: &str, op: &Operator) -> EntitySummary {
         .one("sub_profession_id", op.sub_profession_id.clone())
         .one_opt("position", wire_name(&op.position))
         .one_opt("nation_id", non_empty(&op.nation_id))
+        .one_opt("profession_name", op.profession_name.clone())
+        .one_opt("sub_profession_name", op.sub_profession_name.clone())
+        .one_opt("nation_name", op.nation_name.clone())
         .one_opt("appellation", non_empty(&op.appellation));
     EntitySummary {
         kind: EntityKind::Operator,

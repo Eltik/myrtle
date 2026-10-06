@@ -6,7 +6,7 @@ import { Input } from "#/components/ui/input";
 import { InputGroup, InputGroupAddon } from "#/components/ui/input-group";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, formatNationId, formatProfession } from "#/lib/utils";
+import { cn, formatNationId, professionLabel } from "#/lib/utils";
 import type { OperatorProfession } from "#/types/operators";
 import { PROFESSIONS, RARITIES } from "../constants";
 import { rarityVar } from "../helpers";
@@ -19,9 +19,11 @@ interface IFilterControlsProps {
     filters: IBirthdayFilters;
     onChange: (next: IBirthdayFilters) => void;
     nations: [string, string][];
+    /** Class code -> the server's own class name; a class it lacks gets the English formatter. */
+    classNames: ReadonlyMap<string, string>;
 }
 
-export function FilterControls({ filters, onChange, nations }: IFilterControlsProps): React.ReactElement {
+export function FilterControls({ filters, onChange, nations, classNames }: IFilterControlsProps): React.ReactElement {
     const t: FilterT = useT("tools");
     const toggleRarity = (r: number) => {
         const rarities = new Set(filters.rarities);
@@ -53,7 +55,7 @@ export function FilterControls({ filters, onChange, nations }: IFilterControlsPr
                             <button
                                 key={p}
                                 type="button"
-                                title={formatProfession(p)}
+                                title={professionLabel({ profession: p, professionName: classNames.get(p) })}
                                 aria-pressed={on}
                                 onClick={() => toggleProfession(p)}
                                 className={cn(
@@ -98,7 +100,7 @@ export function FilterControls({ filters, onChange, nations }: IFilterControlsPr
                     options={nations.map(([id]) => id)}
                     selected={[...filters.nations]}
                     onChange={(values) => onChange({ ...filters, nations: new Set(values) })}
-                    formatOption={(n) => formatNationId(n) ?? n}
+                    formatOption={(n) => nations.find(([id]) => id === n)?.[1] ?? formatNationId(n) ?? n}
                     renderOptionIcon={(v) => <TeamIcon teamId={v} size={18} />}
                 />
             </Section>

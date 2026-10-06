@@ -1,4 +1,4 @@
-import { formatProfession } from "#/lib/utils";
+import { professionLabel } from "#/lib/utils";
 import type { OperatorProfession, OperatorRarity } from "#/types/operators";
 import { AccentStrip, BG, BrandRow, FG, FG_06, FG_08, FG_55, FG_70, FootRow, RARITY_COLOR, siteHost } from "./Frame";
 
@@ -20,6 +20,8 @@ export interface IOperatorOgData {
     name: string;
     appellation: string;
     profession: OperatorProfession;
+    /** The server's own class name; the English formatter names the class without it. */
+    professionName?: string;
     rarity: OperatorRarity;
     subProfession?: string;
     position?: string;
@@ -36,7 +38,7 @@ export interface IOperatorOgData {
 }
 
 export function OperatorTemplate(data: IOperatorOgData) {
-    const { name, appellation, profession, rarity, subProfession = "", position = "", nationId = "", factionLabel, charArtURL, factionLogoURL, professionIconURL, stats = [] } = data;
+    const { name, appellation, profession, professionName, rarity, subProfession = "", position = "", nationId = "", factionLabel, charArtURL, factionLogoURL, professionIconURL, stats = [] } = data;
     const rarityColor = RARITY_COLOR[rarity] ?? RARITY_COLOR[6];
     const tags = [position, subProfession, nationId].filter(Boolean);
 
@@ -152,7 +154,7 @@ export function OperatorTemplate(data: IOperatorOgData) {
                                         color: FG_70,
                                     }}
                                 >
-                                    {formatProfession(profession)}
+                                    {professionLabel({ profession, professionName })}
                                 </div>
                             </div>
                         ) : null}

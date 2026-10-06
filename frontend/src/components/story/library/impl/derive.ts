@@ -30,7 +30,16 @@ export type LibEntry = Omit<StoryEntry, "wordCount" | "hasVideo"> & { wordCount?
  * generated `StoryGroup`, which is why it is named here and not merely widened.
  */
 export type LibGroup = Omit<StoryGroup, "stories" | "wordCount" | "illustrationCount" | "spriteCount"> & { stories: LibEntry[]; wordCount?: number; illustrationCount?: number; spriteCount?: number; bannerUrl?: string; iconUrl?: string; chapterNumber?: number; titleImageUrl?: string };
-export type LibRecord = Omit<OperatorRecordGroup, "stories" | "wordCount" | "rarity" | "profession" | "avatarUrl" | "illustrationCount" | "spriteCount"> & { stories: LibEntry[]; wordCount?: number; rarity?: number; profession?: string; avatarUrl?: string; illustrationCount?: number; spriteCount?: number };
+export type LibRecord = Omit<OperatorRecordGroup, "stories" | "wordCount" | "rarity" | "profession" | "professionName" | "avatarUrl" | "illustrationCount" | "spriteCount"> & {
+    stories: LibEntry[];
+    wordCount?: number;
+    rarity?: number;
+    profession?: string;
+    professionName?: string | null;
+    avatarUrl?: string;
+    illustrationCount?: number;
+    spriteCount?: number;
+};
 /** A shelf as the page reads it. `iconUrl` and `chapterRange` were both ABSENT on :3060 on 2026-09-23, on all 14 EN shelves and all 4 EN arcs. */
 export type LibStoryline = Storyline & { iconUrl?: string; chapterRange?: { from: number; to: number } };
 export type LibIndex = { groups: LibGroup[]; records: LibRecord[]; totals?: StoryTotals; storylines?: LibStoryline[] };

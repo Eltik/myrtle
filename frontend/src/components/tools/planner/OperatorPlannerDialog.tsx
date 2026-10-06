@@ -11,7 +11,7 @@ import { PLANS_QUERY_PREFIX, plansQueryOptions, upsertPlanFn } from "#/lib/api/p
 import { userRosterQueryOptions } from "#/lib/api/user";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { formatSubProfession, rarityToNumber } from "#/lib/utils";
+import { rarityToNumber, subProfessionLabel } from "#/lib/utils";
 import type { messages } from "./OperatorPlannerDialog.messages";
 import { OperatorSelector, useOperatorOptions } from "./OperatorSelector";
 import { PlanGroupsField } from "./PlanGroupsField";
@@ -135,7 +135,7 @@ export function OperatorPlannerDialog({ open, onOpenChange, initialOperatorId }:
                                         </span>
                                         <div>
                                             <h3 className="font-bold text-foreground text-lg">{operatorName(selectedOperator)}</h3>
-                                            <p className="text-muted-foreground text-xs">{t("planner.dialog.rarityArchetype", { rarity: rarityToNumber(selectedOperator.rarity), archetype: formatSubProfession(selectedOperator.subProfessionId) })}</p>
+                                            <p className="text-muted-foreground text-xs">{t("planner.dialog.rarityArchetype", { rarity: rarityToNumber(selectedOperator.rarity), archetype: subProfessionLabel(selectedOperator) })}</p>
                                         </div>
                                     </div>
                                 </div>

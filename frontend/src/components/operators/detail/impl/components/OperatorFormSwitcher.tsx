@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, formatProfession } from "#/lib/utils";
+import { cn, professionLabel } from "#/lib/utils";
 import type { IOperatorIndexEntry, IOperatorListItem } from "#/types/operators";
 import { ClassIcon } from "../../../list/impl/components/Icons";
 import type { messages } from "./OperatorFormSwitcher.messages";
@@ -42,7 +42,7 @@ export function OperatorFormSwitcher({ operator }: IOperatorFormSwitcherProps) {
                             )}
                         >
                             <ClassIcon profession={form.profession} size={16} className={cn("shrink-0 transition-opacity", isActive ? "opacity-100" : "opacity-60 group-hover:opacity-90")} />
-                            <span className="truncate">{formatProfession(form.profession)}</span>
+                            <span className="truncate">{professionLabel(form)}</span>
                         </Link>
                     );
                 })}

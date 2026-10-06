@@ -19,6 +19,11 @@ export type OperatorRecordGroup = {
      */
     profession: OperatorProfession;
     /**
+     * The server's own name for `profession`, from its gacha class tags.
+     * `None` when the character table has no such operator.
+     */
+    professionName: string | null;
+    /**
      * The `ui_char_avatar_*` sprite as an asset-index path
      * (`/textures/spritepack/...`), the same form the operators list's
      * `portrait` and a group's `coverUrl` carry: the frontend serves it

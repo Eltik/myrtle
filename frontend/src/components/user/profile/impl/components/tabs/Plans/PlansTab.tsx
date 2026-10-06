@@ -8,7 +8,7 @@ import { type IOperatorPlanResponse, publicPlansQueryOptions } from "#/lib/api/p
 import type { IRosterEntry } from "#/lib/api/user";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { formatSubProfession, rarityToNumber } from "#/lib/utils";
+import { rarityToNumber, subProfessionLabel } from "#/lib/utils";
 import type { messages } from "./PlansTab.messages";
 
 interface IPlanCardProps {
@@ -43,7 +43,7 @@ function PlanCard({ p, roster }: IPlanCardProps) {
                 <div className="min-w-0 flex-1">
                     <h3 className="truncate font-bold text-foreground text-sm leading-tight">{operatorName(op)}</h3>
                     <p className="mt-0.5 truncate text-muted-foreground text-xs leading-normal">
-                        {rarityToNumber(op.rarity)}★ {formatSubProfession(op.subProfessionId)}
+                        {rarityToNumber(op.rarity)}★ {subProfessionLabel(op)}
                     </p>
                 </div>
             </div>

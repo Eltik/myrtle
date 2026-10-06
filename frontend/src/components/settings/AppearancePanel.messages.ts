@@ -71,6 +71,10 @@ export const messages = {
         text: "{language} is the only language this site is available in right now.",
         description: "Shown in place of the language picker when just one language is enabled. {language} is that language's own name for itself, e.g. 'English'.",
     },
+    "appearance.language.gameTextDesc": {
+        text: "Operator names, skills and story come from one game client. By default it is the one your display language reads; pick another to read, say, Japanese names under English menus.",
+        description: "Explains the game-text picker in appearance settings. 'Game client' is a regional release of Arknights (Global, Japan, Korea, China). The example pairs two concrete choices so the independence of the two pickers is obvious.",
+    },
     "appearance.dynamicArt.title": {
         text: "Dynamic art",
         description: "Card title over the animated-artwork option.",

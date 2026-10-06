@@ -72,8 +72,12 @@ interface IKindFields {
         rarity: OperatorRarity;
         profession: OperatorProfession;
         subProfessionId: string;
+        /** The server's own localized names; null when the facet is absent. */
+        professionName: string | null;
+        subProfessionName: string | null;
         position: OperatorPosition;
         nationId: string | null;
+        nationName: string | null;
     };
     /** One operator's skill slot, so a shared generic skill is one entry per operator. */
     skill: {
@@ -111,6 +115,8 @@ interface IKindFields {
     /** A subclass (sub-profession), with the class it belongs to. */
     subclass: {
         profession: OperatorProfession;
+        /** The server's own name for `profession`; null when the facet is absent. */
+        professionName: string | null;
     };
     /** A nation, a group inside one, or a team. */
     faction: {
@@ -228,8 +234,11 @@ const KIND_MODELS: { [K in TierEntityKind]: IKindModel<K> } = {
             rarity: (Number(facet("rarity")) || 1) as OperatorRarity,
             profession: (facet("profession") ?? "UNKNOWN") as OperatorProfession,
             subProfessionId: facet("sub_profession_id") ?? "",
+            professionName: facet("profession_name") || null,
+            subProfessionName: facet("sub_profession_name") || null,
             position: (facet("position") ?? "NONE") as OperatorPosition,
             nationId: facet("nation_id") || null,
+            nationName: facet("nation_name") || null,
         }),
     },
     skill: {
@@ -274,7 +283,7 @@ const KIND_MODELS: { [K in TierEntityKind]: IKindModel<K> } = {
     },
     subclass: {
         artFit: "glyph",
-        fields: (facet) => ({ profession: (facet("profession") ?? "UNKNOWN") as OperatorProfession }),
+        fields: (facet) => ({ profession: (facet("profession") ?? "UNKNOWN") as OperatorProfession, professionName: facet("profession_name") || null }),
     },
     faction: {
         artFit: "glyph",

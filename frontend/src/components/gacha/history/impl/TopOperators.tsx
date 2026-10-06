@@ -4,7 +4,7 @@ import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import type { IClientGachaRecords, IGachaItem } from "#/lib/api/gacha";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { formatProfession, rarityGradient, rarityStarColor } from "#/lib/utils";
+import { professionLabel, rarityGradient, rarityStarColor } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import type { messages } from "./TopOperators.messages";
 
@@ -120,7 +120,7 @@ export function TopOperators({ records, operatorsById, isLoading }: ITopOperator
                             {filtered.map((op, i) => {
                                 const indexEntry = operatorsById.get(op.charId);
                                 const name = op.charName || indexEntry?.name || op.charId;
-                                const role = indexEntry ? formatProfession(indexEntry.profession) : "";
+                                const role = indexEntry ? professionLabel(indexEntry) : "";
                                 const bar = (op.count / max) * 100;
                                 return (
                                     <tr key={op.charId} className="not-last:border-border/50 not-last:border-b">

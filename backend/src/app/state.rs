@@ -40,6 +40,9 @@ pub struct ServerData {
     pub asset_index: ArcSwap<AssetIndex>,
     pub game_data_dir: String,
     pub assets_dir: String,
+    /// The tree the art (asset index, stage art, chibis) is read from. Equal to
+    /// `assets_dir` unless this server ships no art; see [`art_dir_for`].
+    pub art_dir: String,
     /// False while this entry is a placeholder: the server was configured but its game data
     /// failed to load at boot, so `game_data`/`asset_index` hold the DEFAULT server's Arcs
     /// until a hot reload (`asset_watcher::perform_reload`) succeeds and flips this. Explicit
@@ -130,6 +133,34 @@ impl AppState {
             .get(&server)
             .filter(|server_data| server_data.loaded.load(Ordering::Acquire))
             .cloned()
+    }
+
+    /// The servers a visitor can pick game data from: every loaded server, the
+    /// default first and the rest in [`Server::all`] order.
+    ///
+    /// `Bilibili` is left out even when loaded. It is an alias of CN's game data,
+    /// so offering it would put two entries with identical text in the picker.
+    pub fn pickable_servers(&self) -> Vec<Server> {
+        std::iter::once(self.default_server)
+            .chain(
+                Server::all()
+                    .iter()
+                    .copied()
+                    .filter(|s| *s != self.default_server),
+            )
+            .filter(|s| *s != Server::Bilibili && self.try_server_data(*s).is_some())
+            .collect()
+    }
+
+    /// The game data a reload of `server` reads its reference facts from:
+    /// every other loaded server, the default first. See
+    /// `enrich::reference::align_reference_facts`.
+    pub fn reference_servers(&self, server: Server) -> Vec<Arc<GameData>> {
+        self.pickable_servers()
+            .into_iter()
+            .filter(|s| *s != server)
+            .map(|s| self.game_data(s))
+            .collect()
     }
 
     /// Current game data for a server as a single atomic Arc clone. Callers that
@@ -305,15 +336,21 @@ pub fn load_server_map<G>(
     mut phase: impl FnMut(&str) -> G,
 ) -> HashMap<Server, Arc<ServerData>> {
     let mut servers: HashMap<Server, Arc<ServerData>> = HashMap::new();
+    // Non-default servers that loaded, held owned until every server is in so
+    // the reference-facts pass can read any of them as a reference, in config
+    // order.
+    let mut pending: Vec<PendingServer> = Vec::new();
 
     for &srv in &config.servers {
         let game_data_dir = derive_game_data_dir(&config.assets_base_dir, srv);
         let assets_dir = derive_assets_dir(&config.assets_base_dir, srv);
+        let art_dir = art_dir_for(config, srv);
         let load_result = {
             let _phase = phase(&format!("gamedata:{}", srv.as_str()));
-            crate::core::gamedata::init_game_data(
+            crate::core::gamedata::init_game_data_with_art(
                 std::path::Path::new(&game_data_dir),
                 std::path::Path::new(&assets_dir),
+                std::path::Path::new(&art_dir),
             )
         };
 
@@ -324,16 +361,19 @@ pub fn load_server_map<G>(
                     operators = game_data.operators.len(),
                     "game data loaded"
                 );
-                servers.insert(
-                    srv,
-                    Arc::new(ServerData {
-                        game_data: ArcSwap::from_pointee(game_data),
-                        asset_index: ArcSwap::from_pointee(asset_index),
-                        game_data_dir,
-                        assets_dir,
-                        loaded: AtomicBool::new(true),
-                    }),
-                );
+                let entry = PendingServer {
+                    server: srv,
+                    game_data,
+                    asset_index,
+                    game_data_dir,
+                    assets_dir,
+                    art_dir,
+                };
+                if srv == config.default_server {
+                    servers.insert(srv, entry.into_server_data());
+                } else {
+                    pending.push(entry);
+                }
             }
             Err(e) if srv == config.default_server => {
                 panic!("failed to load game data for {}: {e}", srv.as_str());
@@ -354,11 +394,41 @@ pub fn load_server_map<G>(
                         asset_index: ArcSwap::new(default_entry.asset_index.load_full()),
                         game_data_dir,
                         assets_dir,
+                        art_dir,
                         loaded: AtomicBool::new(false),
                     }),
                 );
             }
         }
+    }
+
+    let default_game_data = servers
+        .get(&config.default_server)
+        .expect("default server data must be present")
+        .game_data
+        .load_full();
+    for i in 0..pending.len() {
+        let (before, rest) = pending.split_at_mut(i);
+        let Some((target, after)) = rest.split_first_mut() else {
+            continue;
+        };
+        let references: Vec<&GameData> = std::iter::once(&*default_game_data)
+            .chain(before.iter().chain(after.iter()).map(|p| &p.game_data))
+            .collect();
+        let facts = crate::core::gamedata::enrich::reference::align_reference_facts(
+            &mut target.game_data,
+            &references,
+        );
+        tracing::info!(
+            server = target.server.as_str(),
+            profiles = facts.profiles,
+            operator_channels = facts.operator_channels,
+            skin_channels = facts.skin_channels,
+            "reference facts aligned"
+        );
+    }
+    for entry in pending {
+        servers.insert(entry.server, entry.into_server_data());
     }
 
     // Bilibili shares CN's Hypergryph data (same Arc cell, hot-reloads together).
@@ -367,6 +437,52 @@ pub fn load_server_map<G>(
     }
 
     servers
+}
+
+/// One server's freshly loaded data, before it is published as [`ServerData`].
+struct PendingServer {
+    server: Server,
+    game_data: GameData,
+    asset_index: AssetIndex,
+    game_data_dir: String,
+    assets_dir: String,
+    art_dir: String,
+}
+
+impl PendingServer {
+    fn into_server_data(self) -> Arc<ServerData> {
+        Arc::new(ServerData {
+            game_data: ArcSwap::from_pointee(self.game_data),
+            asset_index: ArcSwap::from_pointee(self.asset_index),
+            game_data_dir: self.game_data_dir,
+            assets_dir: self.assets_dir,
+            art_dir: self.art_dir,
+            loaded: AtomicBool::new(true),
+        })
+    }
+}
+
+/// The tree a server's art is read from.
+///
+/// A server pulled with the asset pipeline's `gamedata` profile (JP and KR,
+/// which exist for their text) has no `portraits/` directory. Its asset index
+/// built from its own tree resolved every portrait, skin, skill and item icon
+/// to `None` (KR `char_377_gdglow`: 4 of 4 image fields `None` against EN's
+/// 4 paths, 2026-10-06). Such a server reads the default server's art instead;
+/// the asset routes already fall back to the default server's files, so the
+/// paths it carries are servable.
+///
+/// `ART_FALLBACK=0` restores the old behaviour exactly: every server reads its
+/// own tree.
+pub fn art_dir_for(config: &AppConfig, server: Server) -> String {
+    let own = derive_assets_dir(&config.assets_base_dir, server);
+    if crate::utils::env::switched_off("ART_FALLBACK")
+        || server == config.default_server
+        || std::path::Path::new(&own).join("portraits").is_dir()
+    {
+        return own;
+    }
+    derive_assets_dir(&config.assets_base_dir, config.default_server)
 }
 
 /// Per-server asset directory, for example `../assets/output/cn`.

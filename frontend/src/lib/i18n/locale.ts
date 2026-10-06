@@ -5,6 +5,14 @@ export const DEFAULT_LOCALE = "en";
 export const LOCALE_COOKIE = "locale";
 
 /**
+ * The visitor's own game-data server pick. Absent means "follow the language",
+ * which is the locale's `gamedata_server` row. Never part of the URL: the
+ * language is what a shared link promises, and which client's operator names a
+ * visitor prefers is theirs alone.
+ */
+export const GAMEDATA_SERVER_COOKIE = "gamedata_server";
+
+/**
  * A leading path segment that *could* be a locale: `ja`, `zh-Hans`, `pt-BR`.
  *
  * Deliberately a shape test rather than a list. The set of enabled locales

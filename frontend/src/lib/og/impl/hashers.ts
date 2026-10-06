@@ -35,14 +35,14 @@ function defineOgHasher<TData>(def: IOgHasherDef<TData>): IOgHasher<TData> {
     };
 }
 
-const OPERATOR_HASH_VERSION = "v9";
+const OPERATOR_HASH_VERSION = "v10";
 
 const operatorHasher = defineOgHasher<IOperatorOgData>({
     kind: "operator",
     hashVersion: OPERATOR_HASH_VERSION,
     // `server` participates so an operator that graduates from CN to Global
     // re-renders against the Global asset tree instead of serving a stale card.
-    hashParts: (data) => [data.name, data.appellation, data.profession, data.rarity, data.subProfession, data.position, data.nationId, data.factionLabel ?? "", data.professionIconURL ?? "", (data.stats ?? []).map((s) => `${s.label}=${s.value}`).join("|"), data.server ?? ""],
+    hashParts: (data) => [data.name, data.appellation, data.profession, data.professionName ?? "", data.rarity, data.subProfession, data.position, data.nationId, data.factionLabel ?? "", data.professionIconURL ?? "", (data.stats ?? []).map((s) => `${s.label}=${s.value}`).join("|"), data.server ?? ""],
 });
 
 const USER_HASH_VERSION = "v15";

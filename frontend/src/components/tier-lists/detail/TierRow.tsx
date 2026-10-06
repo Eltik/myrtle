@@ -7,7 +7,7 @@ import type { ITierEntryFull } from "#/lib/api/tier-lists";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { Markdown } from "#/lib/markdown";
-import { FALLBACK_TIER_COLORS, formatProfession } from "#/lib/utils";
+import { FALLBACK_TIER_COLORS, professionLabel } from "#/lib/utils";
 import { EntityAvatar } from "../entities";
 import { readableTextColor } from "./contrast";
 import { EntityTile } from "./EntityTile";
@@ -147,8 +147,12 @@ function TierHoverCard({ tier, color, totalOps, hasDescription, onOpen }: IHover
 
                         {stats.profession.length > 0 && (
                             <div className="flex flex-wrap items-center gap-1.5">
-                                {stats.profession.slice(0, 4).map(({ profession, count }) => (
-                                    <span key={profession} className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/50 px-1.5 py-1 font-sans font-semibold text-[11.5px] text-foreground leading-none" title={t("detail.tier.classCount", { count, profession: formatProfession(profession) })}>
+                                {stats.profession.slice(0, 4).map(({ profession, professionName, count }) => (
+                                    <span
+                                        key={profession}
+                                        className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/50 px-1.5 py-1 font-sans font-semibold text-[11.5px] text-foreground leading-none"
+                                        title={t("detail.tier.classCount", { count, profession: professionLabel({ profession, professionName }) })}
+                                    >
                                         <ClassIcon profession={profession} size={12} />
                                         <span className="font-bold font-mono text-muted-foreground tabular-nums">{count}</span>
                                     </span>

@@ -1,7 +1,7 @@
 import { CLASS_SORT_ORDER, CLASSES } from "#/components/operators/list/impl/constants";
 import type { ISkinIndexEntry } from "#/lib/api/skins";
 import type { IRosterEntry } from "#/lib/api/user";
-import { formatProfession, formatSubProfession } from "#/lib/utils";
+import { professionLabel, serverNames, subProfessionLabel } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 
 interface IProfessionStats {
@@ -71,6 +71,8 @@ export function computeUserStats(roster: IRosterEntry[], operatorsIndex: IOperat
     const operators = new Map<string, IOperatorIndexEntry>();
     const totalByProfession: Record<string, number> = {};
     const totalBySubProfession: Record<string, Record<string, number>> = {};
+    const professionNames = serverNames(operatorsIndex, "profession");
+    const subProfessionNames = serverNames(operatorsIndex, "subProfession");
     let totalAvailable = 0;
 
     for (const op of operatorsIndex) {
@@ -205,7 +207,7 @@ export function computeUserStats(roster: IRosterEntry[], operatorsIndex: IOperat
                     const st = subTotals[subId] ?? 0;
                     return {
                         subProfessionId: subId,
-                        displayName: formatSubProfession(subId),
+                        displayName: subProfessionLabel({ subProfessionId: subId, subProfessionName: subProfessionNames.get(subId) }),
                         owned: so,
                         total: st,
                         percentage: pct(so, st),
@@ -215,7 +217,7 @@ export function computeUserStats(roster: IRosterEntry[], operatorsIndex: IOperat
 
             return {
                 profession: prof,
-                displayName: formatProfession(prof),
+                displayName: professionLabel({ profession: prof, professionName: professionNames.get(prof) }),
                 owned,
                 total,
                 percentage: pct(owned, total),

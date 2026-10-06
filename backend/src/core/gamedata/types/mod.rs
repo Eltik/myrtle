@@ -22,6 +22,7 @@ pub mod medal;
 pub mod mission;
 pub mod mission_archive;
 pub mod module;
+pub mod obtain;
 pub mod operator;
 pub mod range;
 pub mod retro;
@@ -147,6 +148,9 @@ pub struct GameData {
     pub consts: GameDataConst,
     /// Daily and weekly mission chests (the LMD an account earns from dailies).
     pub missions: mission::MissionData,
+    /// Profession code -> the server's own class name, from the gacha tags
+    /// (see `gacha::PROFESSION_TAG_IDS`).
+    pub profession_names: HashMap<String, String>,
     /// `handbook_team_table`: nations, groups and teams, keyed by power id.
     pub factions: HashMap<String, handbook_team::HandbookTeam>,
     /// Stronghold Protocol bonds, keyed by bond id, see [`autochess`].

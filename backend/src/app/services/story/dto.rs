@@ -216,6 +216,9 @@ pub struct OperatorRecordGroup {
     /// The character table's profession, the raw game value the operators
     /// list carries (`PIONEER`, `WARRIOR`, ...).
     pub profession: OperatorProfession,
+    /// The server's own name for `profession`, from its gacha class tags.
+    /// `None` when the character table has no such operator.
+    pub profession_name: Option<String>,
     /// The `ui_char_avatar_*` sprite as an asset-index path
     /// (`/textures/spritepack/...`), the same form the operators list's
     /// `portrait` and a group's `coverUrl` carry: the frontend serves it

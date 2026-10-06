@@ -11,12 +11,19 @@ export interface II18nValue {
     available: IAvailableLocale[];
     messages: Catalog;
     /**
-     * The game-data server this locale reads operator/skill/stage text from
-     * (`en`, `jp`, `kr`, `cn`, `tw`, `bili`). Read it with
+     * The game-data server this render reads operator/skill/stage text from
+     * (`en`, `jp`, `kr`, `cn`, `tw`, `bili`): the visitor's pick, else the
+     * locale's. Read it with
      * {@link useGamedataServer} and pass it to the `lib/api` game-data
      * fetchers - it is part of their query keys.
      */
     gamedataServer: string;
+    /** The server this locale reads when the visitor has not picked one. */
+    localeGamedataServer: string;
+    /** Whether {@link gamedataServer} is the visitor's own pick. */
+    gamedataServerPicked: boolean;
+    /** The servers the backend has loaded, the default first. */
+    gamedataServers: string[];
 }
 
 const I18nContext = createContext<II18nValue>({
@@ -25,6 +32,9 @@ const I18nContext = createContext<II18nValue>({
     available: [],
     messages: {},
     gamedataServer: "en",
+    localeGamedataServer: "en",
+    gamedataServerPicked: false,
+    gamedataServers: [],
 });
 
 export interface II18nProviderProps {
@@ -33,11 +43,18 @@ export interface II18nProviderProps {
     messages: Catalog;
     /** Defaults to `en`, which is the default-endpoint (unprefixed) server. */
     gamedataServer?: string;
+    /** Defaults to {@link gamedataServer}. */
+    localeGamedataServer?: string;
+    gamedataServerPicked?: boolean;
+    gamedataServers?: string[];
     children: React.ReactNode;
 }
 
-export function I18nProvider({ locale, available, messages, gamedataServer = "en", children }: II18nProviderProps): React.ReactElement {
-    const value = useMemo<II18nValue>(() => ({ locale, dir: directionForLocale(locale), available, messages, gamedataServer }), [locale, available, messages, gamedataServer]);
+/** One shared empty default, so an omitted prop does not churn the memo below. */
+const NO_SERVERS: string[] = [];
+
+export function I18nProvider({ locale, available, messages, gamedataServer = "en", localeGamedataServer = gamedataServer, gamedataServerPicked = false, gamedataServers = NO_SERVERS, children }: II18nProviderProps): React.ReactElement {
+    const value = useMemo<II18nValue>(() => ({ locale, dir: directionForLocale(locale), available, messages, gamedataServer, localeGamedataServer, gamedataServerPicked, gamedataServers }), [locale, available, messages, gamedataServer, localeGamedataServer, gamedataServerPicked, gamedataServers]);
     return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 

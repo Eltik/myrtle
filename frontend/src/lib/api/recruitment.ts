@@ -23,7 +23,8 @@ export const getRecruitmentDataFn = createServerFn({ method: "GET" })
         const res = await backendFetch(gamedataPath(server, "/operators/recruitment"));
         if (!res.ok) throw new Error(`Failed to load recruitment data: ${res.status}`);
         const data = (await res.json()) as RecruitmentData;
-        return { tags: data.tags, operators: data.operators.map(toRecruitableOperator) };
+        const tagNames = new Map(data.tags.map((tag) => [tag.tagId, tag.tagName] as const));
+        return { tags: data.tags, operators: data.operators.map((op) => toRecruitableOperator(op, tagNames)) };
     });
 
 export function recruitmentDataQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {

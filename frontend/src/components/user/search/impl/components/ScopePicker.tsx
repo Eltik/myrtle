@@ -5,7 +5,7 @@ import { CLASSES } from "#/components/operators/list/impl/constants";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "#/components/ui/tooltip";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, formatArchetype, formatProfession, subProfessionToProfession } from "#/lib/utils";
+import { cn, formatArchetype, professionLabel, serverNames, subProfessionToProfession } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import type { Scope } from "../searchControls";
 import type { messages } from "./ScopePicker.messages";
@@ -17,8 +17,17 @@ interface IScopePickerProps {
     operators: IOperatorIndexEntry[] | undefined;
 }
 
+/** Archetype id -> the server's own name, read off the operator index; ids without one fall back to the English table. */
+function useArchetypeLabeler(operators: IOperatorIndexEntry[] | undefined): (id: string) => string {
+    return useMemo(() => {
+        const names = serverNames(operators ?? [], "subProfession");
+        return (id: string) => names.get(id) ?? formatArchetype(id);
+    }, [operators]);
+}
+
 /** Archetype ids of obtainable operators per class, each list in label order. */
 export function useArchetypesByClass(operators: IOperatorIndexEntry[] | undefined): Map<string, string[]> {
+    const label = useArchetypeLabeler(operators);
     return useMemo(() => {
         const byClass = new Map<string, Set<string>>();
         for (const op of operators ?? []) {
@@ -31,11 +40,11 @@ export function useArchetypesByClass(operators: IOperatorIndexEntry[] | undefine
         for (const [profession, ids] of byClass) {
             out.set(
                 profession,
-                [...ids].sort((a, b) => formatArchetype(a).localeCompare(formatArchetype(b))),
+                [...ids].sort((a, b) => label(a).localeCompare(label(b))),
             );
         }
         return out;
-    }, [operators]);
+    }, [operators, label]);
 }
 
 /** The class an archetype belongs to, read from the index and from the static map before it loads. */
@@ -60,6 +69,8 @@ const CHIP_OFF = "border-input bg-card text-foreground hover:border-foreground/2
 export function ScopePicker({ scope, onChange, operators }: IScopePickerProps) {
     const t: TypedT<typeof messages> = useT("user");
     const archetypes = useArchetypesByClass(operators);
+    const archetypeName = useArchetypeLabeler(operators);
+    const classNames = useMemo(() => serverNames(operators ?? [], "profession"), [operators]);
     const profession = scopeProfession(scope, operators);
     const subs = profession ? (archetypes.get(profession) ?? []) : [];
 
@@ -70,6 +81,7 @@ export function ScopePicker({ scope, onChange, operators }: IScopePickerProps) {
                 <div className="grid grid-cols-8 gap-1">
                     {CLASSES.map((cls) => {
                         const on = profession === cls;
+                        const name = professionLabel({ profession: cls, professionName: classNames.get(cls) });
                         return (
                             <Tooltip key={cls}>
                                 <TooltipTrigger
@@ -77,7 +89,7 @@ export function ScopePicker({ scope, onChange, operators }: IScopePickerProps) {
                                         <button
                                             type="button"
                                             aria-pressed={on}
-                                            aria-label={formatProfession(cls)}
+                                            aria-label={name}
                                             onClick={() => onChange(on ? null : { kind: "class", profession: cls })}
                                             className={cn("inline-flex aspect-square cursor-pointer items-center justify-center rounded-md border transition-colors", on ? "border-primary bg-[color-mix(in_srgb,var(--primary)_16%,transparent)]" : "border-border bg-secondary/50 hover:border-primary/45")}
                                         >
@@ -86,7 +98,7 @@ export function ScopePicker({ scope, onChange, operators }: IScopePickerProps) {
                                     }
                                 />
                                 <TooltipPopup side="top" sideOffset={6}>
-                                    {formatProfession(cls)}
+                                    {name}
                                 </TooltipPopup>
                             </Tooltip>
                         );
@@ -113,7 +125,7 @@ export function ScopePicker({ scope, onChange, operators }: IScopePickerProps) {
                                     <li key={id}>
                                         <button type="button" aria-pressed={on} onClick={() => onChange({ kind: "sub", subProfessionId: id })} className={cn(CHIP, on ? CHIP_ON : CHIP_OFF)}>
                                             {on ? <Check className="size-3" aria-hidden /> : null}
-                                            {formatArchetype(id)}
+                                            {archetypeName(id)}
                                         </button>
                                     </li>
                                 );

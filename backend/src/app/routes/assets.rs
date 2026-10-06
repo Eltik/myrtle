@@ -114,7 +114,7 @@ where
 {
     if let Some(sd) = state.try_server_data(server)
         && let Some(rel) = resolve(&sd.asset_index.load())
-        && let Ok(resp) = serve_file(&sd.assets_dir, &rel, headers).await
+        && let Ok(resp) = serve_file(&sd.art_dir, &rel, headers).await
     {
         return Ok(resp);
     }
@@ -122,7 +122,7 @@ where
         && let Some(sd) = state.try_server_data(state.default_server)
         && let Some(rel) = resolve(&sd.asset_index.load())
     {
-        return serve_file(&sd.assets_dir, &rel, headers).await;
+        return serve_file(&sd.art_dir, &rel, headers).await;
     }
     Err(ApiError::NotFound)
 }
@@ -914,8 +914,10 @@ async fn story_sprite_thumb_impl(
         let Some((body, face)) = found else {
             continue;
         };
-        let rel = ensure(&sd.assets_dir, sprite_id, &body, face, format).await?;
-        return serve_file_tagged(&sd.assets_dir, &rel, headers, etag_prefix).await;
+        // The index is built from the art tree, so its body path, and the
+        // thumb cropped from it, live under `art_dir`.
+        let rel = ensure(&sd.art_dir, sprite_id, &body, face, format).await?;
+        return serve_file_tagged(&sd.art_dir, &rel, headers, etag_prefix).await;
     }
     Err(ApiError::NotFound)
 }

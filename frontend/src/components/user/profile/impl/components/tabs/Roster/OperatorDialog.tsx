@@ -5,7 +5,7 @@ import { DialogContent, DialogTitle } from "#/components/ui/dialog";
 import { Separator } from "#/components/ui/separator";
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { capitalize, formatProfession } from "#/lib/utils";
+import { capitalize, professionLabel } from "#/lib/utils";
 
 import { DynamicArtOverlay } from "../../../DynamicArtOverlay";
 import { getAttributeStats, getTrustPercent, moduleIconURL, moduleTypeLabel, ownedHeroURL, rarityIcon, skillIconURL, specializedIcon } from "./helpers.card";
@@ -155,7 +155,7 @@ export function OperatorDialog({ entry }: { entry: IOwnedEntry }) {
                     <div ref={titleRef} className="absolute inset-x-0 bottom-0 px-6 pb-6" style={{ transform: "translate3d(0, 0, 0)", opacity: 1 }}>
                         <img alt={t("profile.roster.card.rarityAlt", { star })} className="mb-2 h-5 w-auto object-contain drop-shadow" decoding="async" src={rarityIcon(star)} />
                         <h2 className="font-bold text-3xl text-foreground tracking-tight">{entry.name}</h2>
-                        {op && <p className="mt-1 text-muted-foreground text-sm">{formatProfession(op.profession)}</p>}
+                        {op && <p className="mt-1 text-muted-foreground text-sm">{professionLabel(op)}</p>}
                     </div>
                 </div>
                 <div ref={pillsRef} className="relative z-5 -mt-6 truncate px-6" style={{ transform: "translate3d(0, 0, 0)" }}>

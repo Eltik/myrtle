@@ -31,8 +31,10 @@ impl Server {
             Self::Jp => {
                 "https://ark-jp-static-online.yo-star.com/assetbundle/official/Android/version"
             }
+            // `hu` of ak-conf.arknights.kr's network_config; the bare
+            // `ark-kr-static-online` host stopped resolving 2026-10-06.
             Self::Kr => {
-                "https://ark-kr-static-online.yo-star.com/assetbundle/official/Android/version"
+                "https://ark-kr-static-online-1300509597.yo-star.com/assetbundle/official/Android/version"
             }
             Self::Tw => {
                 "https://ark-tw-static-online.yo-star.com/assetbundle/official/Android/version"
@@ -53,7 +55,7 @@ impl Server {
                 "https://ark-jp-static-online.yo-star.com/assetbundle/official/Android/assets"
             }
             Self::Kr => {
-                "https://ark-kr-static-online.yo-star.com/assetbundle/official/Android/assets"
+                "https://ark-kr-static-online-1300509597.yo-star.com/assetbundle/official/Android/assets"
             }
             Self::Tw => {
                 "https://ark-tw-static-online.yo-star.com/assetbundle/official/Android/assets"

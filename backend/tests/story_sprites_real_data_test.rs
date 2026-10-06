@@ -52,7 +52,7 @@ fn load_tree() -> Option<Tree> {
     }
     let gd = common::load_game_data();
     let asset_index = Arc::new(AssetIndex::build(&dir));
-    let library = build_index(gd, &asset_index, &dir);
+    let library = build_index(gd, &asset_index, &dir, &dir);
     let assets = StoryAssetIndex::for_dir(&dir, &asset_index);
     Some(Tree {
         dir,
@@ -100,7 +100,7 @@ fn the_gallery_names_every_folder_by_the_lit_slot_rule() {
     };
 
     let started = Instant::now();
-    let (index, details, census) = build_sprite_index(gd, &library, &assets, &dir);
+    let (index, details, census) = build_sprite_index(gd, &library, &assets, &dir, &dir);
     let build_ms = started.elapsed().as_millis();
 
     let sprites = &index.sprites;
@@ -460,7 +460,7 @@ fn first_page_thumbs_priced() {
     else {
         return;
     };
-    let (index, _, census) = build_sprite_index(gd, &library, &assets, &dir);
+    let (index, _, census) = build_sprite_index(gd, &library, &assets, &dir, &dir);
     println!(
         "hidden folders: {} {:?}",
         census.hidden.len(),

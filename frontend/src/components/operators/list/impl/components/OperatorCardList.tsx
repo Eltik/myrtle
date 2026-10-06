@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "#/components/ui/preview-card";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, formatArchetype, formatProfession, getAvatarById, rarityToNumber } from "#/lib/utils";
+import { archetypeLabel, cn, getAvatarById, professionLabel, rarityToNumber } from "#/lib/utils";
 import { LIST_GRID_COLS, RARITY_COLORS } from "../constants";
 import type { IOperatorView, StatMetric } from "../types";
 import { CampIcon, ClassIcon } from "./Icons";
@@ -37,7 +37,7 @@ export function OperatorCardList({ operator, statMetric }: IOperatorCardListProp
     const rarityColor = RARITY_COLORS[rarityNum] ?? "#ffffff";
     const factionLogoId = operator.nationId || operator.teamId || operator.groupId || "rhodes";
     const portraitSrc = getAvatarById(operator.id ?? "");
-    const archetype = formatArchetype(operator.subProfessionId.toLowerCase());
+    const archetype = archetypeLabel(operator);
 
     return (
         <HoverCard>
@@ -54,7 +54,7 @@ export function OperatorCardList({ operator, statMetric }: IOperatorCardListProp
                             <RarityStars rarity={rarityNum} className="justify-self-center" />
                             <div className="flex min-w-0 items-center gap-2 justify-self-center">
                                 <ClassIcon profession={operator.profession} size={20} className="opacity-60 transition-opacity group-hover:opacity-100" />
-                                <span className="truncate text-muted-foreground text-sm">{formatProfession(operator.profession)}</span>
+                                <span className="truncate text-muted-foreground text-sm">{professionLabel(operator)}</span>
                             </div>
                             <span className="justify-self-center truncate text-muted-foreground text-sm">{archetype}</span>
                             <div className="justify-self-center">{operator.ownership ? <OwnershipBadge info={operator.ownership} metric={statMetric} color={rarityColor} /> : <span className="text-muted-foreground/40 text-sm">-</span>}</div>
@@ -79,7 +79,7 @@ export function OperatorCardList({ operator, statMetric }: IOperatorCardListProp
                                     <span className="shrink-0 opacity-50">·</span>
                                     <div className="flex min-w-0 items-center gap-1">
                                         <ClassIcon profession={operator.profession} size={14} className="opacity-60" />
-                                        <span className="truncate">{formatProfession(operator.profession)}</span>
+                                        <span className="truncate">{professionLabel(operator)}</span>
                                     </div>
                                     <span className="shrink-0 opacity-50">·</span>
                                     <span className="truncate">{archetype}</span>

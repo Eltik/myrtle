@@ -53,8 +53,8 @@ function escapeXmlAttr(value: string): string {
 }
 
 function sanitizeXmlName(name: string, fallback: string): string {
-    let safe = name.replace(/[^A-Za-z0-9_.-]/g, "_");
-    if (!/^[A-Za-z_]/.test(safe)) safe = `_${safe}`;
+    let safe = name.replace(/[^\p{L}\p{N}_.-]/gu, "_");
+    if (!/^[\p{L}_]/u.test(safe)) safe = `_${safe}`;
     return safe || fallback;
 }
 

@@ -89,7 +89,11 @@ export function SelectPopup({
 }): React.ReactElement {
     return (
         <SelectPrimitive.Portal>
-            <SelectPrimitive.Positioner align={align} alignItemWithTrigger={alignItemWithTrigger} alignOffset={alignOffset} anchor={anchor} className="z-50 select-none" data-slot="select-positioner" side={side} sideOffset={sideOffset}>
+            {/* z-70, like every popup positioner in `ui/`: a popup opens FROM
+                something, so it must clear the highest thing it can open from,
+                the z-60 layer (admin dialogs, the story reader, toasts). At
+                z-50 a select inside an admin dialog opened behind it. */}
+            <SelectPrimitive.Positioner align={align} alignItemWithTrigger={alignItemWithTrigger} alignOffset={alignOffset} anchor={anchor} className="z-70 select-none" data-slot="select-positioner" side={side} sideOffset={sideOffset}>
                 <SelectPrimitive.Popup className="origin-(--transform-origin) text-foreground outline-none" data-slot="select-popup" {...props}>
                     <SelectPrimitive.ScrollUpArrow
                         className="top-0 z-50 flex h-6 w-full cursor-default items-center justify-center before:pointer-events-none before:absolute before:inset-x-px before:top-px before:h-[200%] before:rounded-t-[calc(var(--radius-lg)-1px)] before:bg-linear-to-b before:from-50% before:from-popover"

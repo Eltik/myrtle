@@ -19,6 +19,7 @@ import type { IVoice, LangType } from "#/types/voices";
 import { audioURL } from "../../assets";
 import { SFX_CATEGORY_LABEL_KEY, SFX_CATEGORY_ORDER, SFX_EVENT_LABEL_KEY, VOICE_CATEGORY_LABEL_KEY, VOICE_CATEGORY_MAP, VOICE_CATEGORY_ORDER, VOICE_LANGUAGE_LABEL_KEY, VOICE_LANGUAGE_ORDER, VOICE_LANGUAGE_SHORT_KEY } from "../../constants";
 import type { messages as detailConstantsMessages } from "../../constants.messages";
+import { sanitizeFilename } from "../../helpers";
 import type { messages } from "./AudioContent.messages";
 
 const ALL_CATEGORY_ID = "all";
@@ -27,10 +28,6 @@ type AudioMode = "voice" | "sfx";
 
 /** Own keys plus the language, category and event taxonomies. */
 type AudioT = TypedT<typeof messages & typeof detailConstantsMessages>;
-
-function sanitizeFilename(name: string): string {
-    return name.replace(/[^a-zA-Z0-9\-_]/g, "_");
-}
 
 /** Extension of a clip URL (without query string), falling back when absent. */
 function fileExtension(url: string, fallback: string): string {

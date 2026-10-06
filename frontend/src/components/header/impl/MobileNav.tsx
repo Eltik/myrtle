@@ -1,5 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { ChevronDown, Cog, ExternalLinkIcon, Heart, LayoutList, LogOut, MenuIcon, UserIcon } from "lucide-react";
+import { useGamedataServerChoice, useGamedataServerOptions, useGamedataServerSwitch } from "#/components/GamedataServerSwitcher";
+import type { messages as gamedataServerMessages } from "#/components/GamedataServerSwitcher.messages";
 import { LocaleOptionLabel, useLocaleSwitch } from "#/components/LocaleSwitcher";
 import type { messages as localeSwitcherMessages } from "#/components/LocaleSwitcher.messages";
 import { Avatar, AvatarFallback, AvatarImage } from "#/components/ui/avatar";
@@ -27,9 +29,12 @@ export function MobileNav({ items }: IMobileNavProps) {
     const router = useRouterState();
     const pathname = router.location.pathname;
     const t: TypedT<typeof messages> = useT("nav");
-    const tCommon: TypedT<typeof localeSwitcherMessages> = useT("common");
+    const tCommon: TypedT<typeof localeSwitcherMessages & typeof gamedataServerMessages> = useT("common");
     const { locale, available } = useI18n();
     const switchLocale = useLocaleSwitch();
+    const serverOptions = useGamedataServerOptions();
+    const serverChoice = useGamedataServerChoice();
+    const switchServer = useGamedataServerSwitch();
 
     const renderNavItem = (item: INavItem) => {
         const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
@@ -98,11 +103,11 @@ export function MobileNav({ items }: IMobileNavProps) {
                         </DrawerMenuGroup>
 
                         {/* A second path to the same choice, not the only
-                            one: the header's globe is visible at every width.
-                            Kept because the drawer is where a phone visitor
-                            looks for settings, and it can spell the group out
-                            ("Language") where the bar only has room for an
-                            icon. */}
+                            one: the header's language code is visible at every
+                            width. Kept because the drawer is where a phone
+                            visitor looks for settings, and it can spell the
+                            group out ("Language") where the bar only has room
+                            for a two-letter code. */}
                         {available.length > 1 ? (
                             <>
                                 <DrawerMenuSeparator />
@@ -117,6 +122,27 @@ export function MobileNav({ items }: IMobileNavProps) {
                                         {available.map((entry) => (
                                             <DrawerMenuRadioItem key={entry.code} value={entry.code} lang={entry.code}>
                                                 <LocaleOptionLabel entry={entry} />
+                                            </DrawerMenuRadioItem>
+                                        ))}
+                                    </DrawerMenuRadioGroup>
+                                </DrawerMenuGroup>
+                            </>
+                        ) : null}
+
+                        {serverOptions.length > 0 ? (
+                            <>
+                                <DrawerMenuSeparator />
+                                <DrawerMenuGroup>
+                                    <DrawerMenuGroupLabel>{tCommon("gamedataServer.label")}</DrawerMenuGroupLabel>
+                                    <DrawerMenuRadioGroup
+                                        value={serverChoice}
+                                        onValueChange={(next: string) => {
+                                            if (next !== serverChoice) switchServer(next);
+                                        }}
+                                    >
+                                        {serverOptions.map((option) => (
+                                            <DrawerMenuRadioItem key={option.value} value={option.value}>
+                                                {option.label}
                                             </DrawerMenuRadioItem>
                                         ))}
                                     </DrawerMenuRadioGroup>

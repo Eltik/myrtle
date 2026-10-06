@@ -9,6 +9,7 @@ use crate::app::error::ApiError;
 use crate::app::state::AppState;
 use crate::core::gamedata::types::handbook::{OperatorBirthPlace, OperatorGender, OperatorRace};
 use crate::core::gamedata::types::module::ModuleType;
+use crate::core::gamedata::types::obtain::ObtainChannel;
 use crate::core::gamedata::types::operator::{
     Operator, OperatorPosition, OperatorProfession, OperatorRarity,
 };
@@ -37,6 +38,17 @@ pub struct OperatorIndexEntry {
     pub group_id: Option<String>,
     /// Sub-faction / team id (same faction filter + logo fallback).
     pub team_id: Option<String>,
+    /// The server's own names for `profession`, `subProfessionId`,
+    /// `nationId`, `groupId` and `teamId`, so a client need not keep an
+    /// English table per id. `None` when the server's table does not name the
+    /// id.
+    pub profession_name: Option<String>,
+    pub sub_profession_name: Option<String>,
+    pub nation_name: Option<String>,
+    pub group_name: Option<String>,
+    pub team_name: Option<String>,
+    /// `itemObtainApproach` as a category, the same on every server.
+    pub obtain_channel: Option<ObtainChannel>,
     /// Illustrator names (list page "artists" filter).
     pub artists: Vec<String>,
     /// Small portrait image path (grid card image src).
@@ -177,6 +189,12 @@ fn to_index_entry(id: &str, op: &Operator, voices: &Voices) -> OperatorIndexEntr
         is_not_obtainable: op.is_not_obtainable,
         group_id: op.group_id.clone(),
         team_id: op.team_id.clone(),
+        profession_name: op.profession_name.clone(),
+        sub_profession_name: op.sub_profession_name.clone(),
+        nation_name: op.nation_name.clone(),
+        group_name: op.group_name.clone(),
+        team_name: op.team_name.clone(),
+        obtain_channel: op.obtain_channel,
         artists: op.artists.clone(),
         portrait: op.portrait.clone(),
         gender,

@@ -7,7 +7,7 @@ import { Checkbox } from "#/components/ui/checkbox";
 import { useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import type { StoryProgress } from "#/lib/story/progress";
-import { cn, formatProfession, getAvatarById, RARITY_HEX, rarityToNumber } from "#/lib/utils";
+import { cn, getAvatarById, professionLabel, RARITY_HEX, rarityToNumber } from "#/lib/utils";
 import { filterRecords, type LibRecord, readFraction } from "./derive";
 import { OperatorDialog } from "./OperatorDialog";
 import type { messages } from "./OperatorsTab.messages";
@@ -128,7 +128,7 @@ function OperatorCard({ record, progress, gameRead, onOpen }: { record: LibRecor
                         ))}
                     </span>
                 ) : null}
-                {record.profession ? <span className="truncate font-mono text-[10px] text-muted-foreground">{formatProfession(record.profession)}</span> : null}
+                {record.profession ? <span className="truncate font-mono text-[10px] text-muted-foreground">{professionLabel(record)}</span> : null}
                 <span className={cn("font-mono text-[10px] tabular-nums", fraction.done ? "text-primary" : "text-muted-foreground")}>{t("operators.card.read", { read: fraction.read, total: fraction.total })}</span>
             </span>
             {fraction.done ? <CheckIcon className="size-4 shrink-0 text-primary" aria-hidden="true" /> : null}

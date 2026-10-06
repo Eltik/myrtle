@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-05T23:02:44.546Z",
+    "generatedAt": "2026-10-06T06:05:58.510Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -6086,6 +6086,64 @@
             "namespace": "common",
             "source_text": "Terms",
             "description": "Footer link to the terms of service. Short by design; it sits in a single row of small links.",
+            "placeholders": []
+        },
+        {
+            "key": "common.gamedataServer.choose",
+            "namespace": "common",
+            "source_text": "Choose which game client's text to show",
+            "description": "Accessible name of the game-data server picker.",
+            "placeholders": []
+        },
+        {
+            "key": "common.gamedataServer.followLanguage",
+            "namespace": "common",
+            "source_text": "Match language ({server})",
+            "description": "The picker's default entry: show game text from whichever client the display language reads. {server} is that client's name, e.g. 'Korea', so the reader sees what 'match' currently resolves to.",
+            "placeholders": [
+                "server"
+            ]
+        },
+        {
+            "key": "common.gamedataServer.label",
+            "namespace": "common",
+            "source_text": "Game text",
+            "description": "A noun phrase naming what the game-data server picker selects: which Arknights client's operator names, skill descriptions and story text the site shows. Heading of the picker in the header's language menu and in appearance settings.",
+            "placeholders": []
+        },
+        {
+            "key": "common.gamedataServer.name.cn",
+            "namespace": "common",
+            "source_text": "China",
+            "description": "The Chinese (mainland) Arknights client, run by Hypergryph. A game region name, not a language name.",
+            "placeholders": []
+        },
+        {
+            "key": "common.gamedataServer.name.en",
+            "namespace": "common",
+            "source_text": "Global",
+            "description": "The Global (English) Arknights client, run by Yostar. A game region name, not a language name.",
+            "placeholders": []
+        },
+        {
+            "key": "common.gamedataServer.name.jp",
+            "namespace": "common",
+            "source_text": "Japan",
+            "description": "The Japanese Arknights client. A game region name, not a language name.",
+            "placeholders": []
+        },
+        {
+            "key": "common.gamedataServer.name.kr",
+            "namespace": "common",
+            "source_text": "Korea",
+            "description": "The Korean Arknights client. A game region name, not a language name.",
+            "placeholders": []
+        },
+        {
+            "key": "common.gamedataServer.name.tw",
+            "namespace": "common",
+            "source_text": "Taiwan",
+            "description": "The Taiwanese (Traditional Chinese) Arknights client. A game region name, not a language name.",
             "placeholders": []
         },
         {
@@ -14697,6 +14755,531 @@
             ]
         },
         {
+            "key": "operators.facts.birthPlace.Aegir",
+            "namespace": "operators",
+            "source_text": "Ægir",
+            "description": "Operator place of birth \"Ægir\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.AegirRegion",
+            "namespace": "operators",
+            "source_text": "Ægir Region",
+            "description": "Operator place of birth \"Ægir Region\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Bolvar",
+            "namespace": "operators",
+            "source_text": "Bolívar",
+            "description": "Operator place of birth \"Bolívar\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Columbia",
+            "namespace": "operators",
+            "source_text": "Columbia",
+            "description": "Operator place of birth \"Columbia\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Durin",
+            "namespace": "operators",
+            "source_text": "Durin",
+            "description": "Operator place of birth \"Durin\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.FarEast",
+            "namespace": "operators",
+            "source_text": "Far East",
+            "description": "Operator place of birth \"Far East\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Higashi",
+            "namespace": "operators",
+            "source_text": "Higashi",
+            "description": "Operator place of birth \"Higashi\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Iberia",
+            "namespace": "operators",
+            "source_text": "Iberia",
+            "description": "Operator place of birth \"Iberia\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Kazdel",
+            "namespace": "operators",
+            "source_text": "Kazdel",
+            "description": "Operator place of birth \"Kazdel\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Kazimierz",
+            "namespace": "operators",
+            "source_text": "Kazimierz",
+            "description": "Operator place of birth \"Kazimierz\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Kjerag",
+            "namespace": "operators",
+            "source_text": "Kjerag",
+            "description": "Operator place of birth \"Kjerag\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Laterano",
+            "namespace": "operators",
+            "source_text": "Laterano",
+            "description": "Operator place of birth \"Laterano\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Leithanien",
+            "namespace": "operators",
+            "source_text": "Leithanien",
+            "description": "Operator place of birth \"Leithanien\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Lungmen",
+            "namespace": "operators",
+            "source_text": "Lungmen",
+            "description": "Operator place of birth \"Lungmen\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Minos",
+            "namespace": "operators",
+            "source_text": "Minos",
+            "description": "Operator place of birth \"Minos\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.RIMBilliton",
+            "namespace": "operators",
+            "source_text": "RIM Billiton",
+            "description": "Operator place of birth \"RIM Billiton\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.RhodesIsland",
+            "namespace": "operators",
+            "source_text": "Rhodes Island",
+            "description": "Operator place of birth \"Rhodes Island\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.RimBilliton",
+            "namespace": "operators",
+            "source_text": "Rim Billiton",
+            "description": "Operator place of birth \"Rim Billiton\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Sami",
+            "namespace": "operators",
+            "source_text": "Sami",
+            "description": "Operator place of birth \"Sami\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Sargon",
+            "namespace": "operators",
+            "source_text": "Sargon",
+            "description": "Operator place of birth \"Sargon\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Siesta",
+            "namespace": "operators",
+            "source_text": "Siesta",
+            "description": "Operator place of birth \"Siesta\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.SiestaIndependentCity",
+            "namespace": "operators",
+            "source_text": "Siesta (Independent City)",
+            "description": "Operator place of birth \"Siesta (Independent City)\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Siracusa",
+            "namespace": "operators",
+            "source_text": "Siracusa",
+            "description": "Operator place of birth \"Siracusa\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Undisclosed",
+            "namespace": "operators",
+            "source_text": "Undisclosed",
+            "description": "Operator place of birth \"Undisclosed\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Unknown",
+            "namespace": "operators",
+            "source_text": "Unknown",
+            "description": "Operator place of birth \"Unknown\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Unknownasrequestedbymanagementagency",
+            "namespace": "operators",
+            "source_text": "Unknown as requested by management agency",
+            "description": "Operator place of birth \"Unknown as requested by management agency\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Ursus",
+            "namespace": "operators",
+            "source_text": "Ursus",
+            "description": "Operator place of birth \"Ursus\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Victoria",
+            "namespace": "operators",
+            "source_text": "Victoria",
+            "description": "Operator place of birth \"Victoria\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Vouivre",
+            "namespace": "operators",
+            "source_text": "Vouivre",
+            "description": "Operator place of birth \"Vouivre\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.birthPlace.Yan",
+            "namespace": "operators",
+            "source_text": "Yan",
+            "description": "Operator place of birth \"Yan\": a region or city of Terra, shown in the profile and the birthplace filter. Keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.gender.Conviction",
+            "namespace": "operators",
+            "source_text": "Conviction",
+            "description": "Gender of Reunion-style conviction entries in the game data; a game term.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.gender.Female",
+            "namespace": "operators",
+            "source_text": "Female",
+            "description": "Operator gender \"Female\".",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.gender.Male",
+            "namespace": "operators",
+            "source_text": "Male",
+            "description": "Operator gender \"Male\".",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.gender.MaleBugged",
+            "namespace": "operators",
+            "source_text": "Male",
+            "description": "Male gender; the game data spells this value with a stray bracket.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.gender.Unknown",
+            "namespace": "operators",
+            "source_text": "Unknown",
+            "description": "Operator gender \"Unknown\".",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Aegir",
+            "namespace": "operators",
+            "source_text": "Ægir",
+            "description": "Operator race \"Ægir\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Anasa",
+            "namespace": "operators",
+            "source_text": "Anasa",
+            "description": "Operator race \"Anasa\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Anaty",
+            "namespace": "operators",
+            "source_text": "Anaty",
+            "description": "Operator race \"Anaty\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Anura",
+            "namespace": "operators",
+            "source_text": "Anura",
+            "description": "Operator race \"Anura\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Archosauria",
+            "namespace": "operators",
+            "source_text": "Archosauria",
+            "description": "Operator race \"Archosauria\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Aslan",
+            "namespace": "operators",
+            "source_text": "Aslan",
+            "description": "Operator race \"Aslan\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Caprinae",
+            "namespace": "operators",
+            "source_text": "Caprinae",
+            "description": "Operator race \"Caprinae\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Cautus",
+            "namespace": "operators",
+            "source_text": "Cautus",
+            "description": "Operator race \"Cautus\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.CautusChimera",
+            "namespace": "operators",
+            "source_text": "Cautus/Chimera",
+            "description": "Operator race \"Cautus/Chimera\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Cerato",
+            "namespace": "operators",
+            "source_text": "Cerato",
+            "description": "Operator race \"Cerato\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Draco",
+            "namespace": "operators",
+            "source_text": "Draco",
+            "description": "Operator race \"Draco\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Durin",
+            "namespace": "operators",
+            "source_text": "Durin",
+            "description": "Operator race \"Durin\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Elafia",
+            "namespace": "operators",
+            "source_text": "Elafia",
+            "description": "Operator race \"Elafia\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Elf",
+            "namespace": "operators",
+            "source_text": "Elf",
+            "description": "Operator race \"Elf\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Feline",
+            "namespace": "operators",
+            "source_text": "Feline",
+            "description": "Operator race \"Feline\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Forte",
+            "namespace": "operators",
+            "source_text": "Forte",
+            "description": "Operator race \"Forte\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Itra",
+            "namespace": "operators",
+            "source_text": "Itra",
+            "description": "Operator race \"Itra\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Kuranta",
+            "namespace": "operators",
+            "source_text": "Kuranta",
+            "description": "Operator race \"Kuranta\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Kylin",
+            "namespace": "operators",
+            "source_text": "Kylin",
+            "description": "Operator race \"Kylin\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Liberi",
+            "namespace": "operators",
+            "source_text": "Liberi",
+            "description": "Operator race \"Liberi\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Lung",
+            "namespace": "operators",
+            "source_text": "Lung",
+            "description": "Operator race \"Lung\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Lupo",
+            "namespace": "operators",
+            "source_text": "Lupo",
+            "description": "Operator race \"Lupo\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Manticore",
+            "namespace": "operators",
+            "source_text": "Manticore",
+            "description": "Operator race \"Manticore\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Oni",
+            "namespace": "operators",
+            "source_text": "Oni",
+            "description": "Operator race \"Oni\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Perro",
+            "namespace": "operators",
+            "source_text": "Perro",
+            "description": "Operator race \"Perro\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Petram",
+            "namespace": "operators",
+            "source_text": "Petram",
+            "description": "Operator race \"Petram\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Phidia",
+            "namespace": "operators",
+            "source_text": "Phidia",
+            "description": "Operator race \"Phidia\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Pilosa",
+            "namespace": "operators",
+            "source_text": "Pilosa",
+            "description": "Operator race \"Pilosa\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Reproba",
+            "namespace": "operators",
+            "source_text": "Reproba",
+            "description": "Operator race \"Reproba\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Sankta",
+            "namespace": "operators",
+            "source_text": "Sankta",
+            "description": "Operator race \"Sankta\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Sarkaz",
+            "namespace": "operators",
+            "source_text": "Sarkaz",
+            "description": "Operator race \"Sarkaz\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Savra",
+            "namespace": "operators",
+            "source_text": "Savra",
+            "description": "Operator race \"Savra\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Undisclosed",
+            "namespace": "operators",
+            "source_text": "Undisclosed",
+            "description": "Operator race \"Undisclosed\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Unknown",
+            "namespace": "operators",
+            "source_text": "Unknown",
+            "description": "Operator race \"Unknown\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.UnknownSuspectedLiberi",
+            "namespace": "operators",
+            "source_text": "Unknown (Suspected Liberi)",
+            "description": "Operator race \"Unknown (Suspected Liberi)\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Unknownasrequestedbymanagementagency",
+            "namespace": "operators",
+            "source_text": "Unknown as requested by management agency",
+            "description": "Operator race \"Unknown as requested by management agency\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Ursus",
+            "namespace": "operators",
+            "source_text": "Ursus",
+            "description": "Operator race \"Ursus\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Vouivre",
+            "namespace": "operators",
+            "source_text": "Vouivre",
+            "description": "Operator race \"Vouivre\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Vulpo",
+            "namespace": "operators",
+            "source_text": "Vulpo",
+            "description": "Operator race \"Vulpo\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
+            "key": "operators.facts.race.Zalak",
+            "namespace": "operators",
+            "source_text": "Zalak",
+            "description": "Operator race \"Zalak\" as shown in the operator list, filters and profile. A game vocabulary term; keep the official name.",
+            "placeholders": []
+        },
+        {
             "key": "operators.filters.archetype",
             "namespace": "operators",
             "source_text": "Archetype",
@@ -17353,6 +17936,13 @@
             "namespace": "settings",
             "source_text": "Display language",
             "description": "Small uppercase label over the language picker. 'Display' distinguishes the site's own text from the game data, which follows the language's own region.",
+            "placeholders": []
+        },
+        {
+            "key": "settings.appearance.language.gameTextDesc",
+            "namespace": "settings",
+            "source_text": "Operator names, skills and story come from one game client. By default it is the one your display language reads; pick another to read, say, Japanese names under English menus.",
+            "description": "Explains the game-text picker in appearance settings. 'Game client' is a regional release of Arknights (Global, Japan, Korea, China). The example pairs two concrete choices so the independence of the two pickers is obvious.",
             "placeholders": []
         },
         {

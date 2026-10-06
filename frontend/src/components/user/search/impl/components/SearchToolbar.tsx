@@ -6,7 +6,7 @@ import { Popover, PopoverPopup, PopoverTrigger } from "#/components/ui/popover";
 import { operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, formatArchetype, formatProfession } from "#/lib/utils";
+import { cn, formatArchetype, professionLabel, serverNames } from "#/lib/utils";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { METRIC_SORT_LABEL_KEYS, METRIC_SORTS, type MetricSort, parseScope, type Scope, scopeToken } from "../searchControls";
 import type { messages as sortMessages } from "../searchControls.messages";
@@ -23,14 +23,23 @@ const FILTER = "inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg bor
 const KICKER = "shrink-0 font-medium font-mono text-[10.5px] text-muted-foreground uppercase leading-none tracking-[0.14em]";
 const GROUP_HEADING = "font-medium font-mono text-[10px] text-muted-foreground uppercase leading-none tracking-[0.16em]";
 
-/** The game's name for a scope: the class, or the archetype. */
-function scopeLabel(scope: Scope): string {
-    return scope.kind === "class" ? formatProfession(scope.profession) : formatArchetype(scope.subProfessionId);
+/**
+ * The game's name for a scope, the class or the archetype, in the server's own wording read off the operator index
+ * (cached, so every caller shares one fetch); the English formatters answer while it loads.
+ */
+export function useScopeLabel(): (scope: Scope) => string {
+    const { data } = useQuery(operatorsIndexQueryOptions(useGamedataServer()));
+    return useMemo(() => {
+        const classes = serverNames(data ?? [], "profession");
+        const archetypes = serverNames(data ?? [], "subProfession");
+        return (scope: Scope) => (scope.kind === "class" ? professionLabel({ profession: scope.profession, professionName: classes.get(scope.profession) }) : (archetypes.get(scope.subProfessionId) ?? formatArchetype(scope.subProfessionId)));
+    }, [data]);
 }
 
 /** Name of a sort token for the trigger and the status line. */
 export function useSortLabel(sort: string): string {
     const t: ToolbarT = useT("user");
+    const scopeLabel = useScopeLabel();
     const scope = parseScope(sort);
     if (scope) return t("search.sort.scoped", { label: scopeLabel(scope) });
     return t(METRIC_SORT_LABEL_KEYS[(sort in METRIC_SORT_LABEL_KEYS ? sort : "score") as MetricSort]);
@@ -164,6 +173,7 @@ function DirToggle({ sort, dir, onToggle }: { sort: string; dir: "asc" | "desc";
 
 function AllPicker({ scope, onChange, operators }: { scope: Scope | null; onChange: (next: Scope | null) => void; operators: IOperatorIndexEntry[] | undefined }) {
     const t: TypedT<typeof messages> = useT("user");
+    const scopeLabel = useScopeLabel();
     const [open, setOpen] = useState(false);
 
     return (

@@ -3,7 +3,7 @@ import * as React from "react";
 import { Card } from "#/components/ui/card";
 import { useFormatters, useLocale, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, formatProfession, parseOperatorName } from "#/lib/utils";
+import { cn, parseOperatorName, professionLabel } from "#/lib/utils";
 import { isTodayMonthDay, monthNames, operatorRarity } from "../helpers";
 import type { IOperatorBirthday } from "../types";
 import { BirthdayEmpty } from "./BirthdayEmpty";
@@ -82,7 +82,7 @@ export function ListView({ items, today }: IListViewProps): React.ReactElement {
                                                 <div key={b.operator.id} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 py-1">
                                                     <OpChip operator={b.operator} />
                                                     <span className="truncate font-medium font-sans text-[13.5px] text-foreground">{displayName}</span>
-                                                    <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.06em]">{t("birthdays.list.rarityClass", { rarity: operatorRarity(b.operator), class: formatProfession(b.operator.profession) })}</span>
+                                                    <span className="font-medium font-mono text-[11px] text-muted-foreground uppercase tracking-[0.06em]">{t("birthdays.list.rarityClass", { rarity: operatorRarity(b.operator), class: professionLabel(b.operator) })}</span>
                                                 </div>
                                             );
                                         })}

@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getCookie, getRequestHeader, getRequestUrl } from "@tanstack/react-start/server";
 
 import { type IBootstrap, isEnabledLocale, loadBootstrap } from "./catalog";
-import { DEFAULT_LOCALE, LOCALE_COOKIE, negotiateLocale, parseLocaleFromPath } from "./locale";
+import { DEFAULT_LOCALE, GAMEDATA_SERVER_COOKIE, LOCALE_COOKIE, negotiateLocale, parseLocaleFromPath } from "./locale";
 import { requestLocale } from "./request-locale.server";
 
 /**
@@ -16,6 +16,7 @@ import { requestLocale } from "./request-locale.server";
  */
 export const getI18nBootstrapFn = createServerFn({ method: "GET" }).handler(async (): Promise<IBootstrap> => {
     const fromPath = requestLocale();
+    const pickedServer = getCookie(GAMEDATA_SERVER_COOKIE);
 
     if (fromPath) {
         // A locale in the path that the backend does not serve is NOT silently
@@ -26,15 +27,15 @@ export const getI18nBootstrapFn = createServerFn({ method: "GET" }).handler(asyn
         // translation silently failing to apply.
         const url = getRequestUrl();
         const bare = `${parseLocaleFromPath(url.pathname).rest}${url.search}`;
-        return await loadBootstrap(fromPath, DEFAULT_LOCALE, bare);
+        return await loadBootstrap(fromPath, DEFAULT_LOCALE, bare, pickedServer);
     }
 
     // A remembered locale that has since been disabled just falls back; there
     // is no wrong URL to correct in that case.
     const remembered = getCookie(LOCALE_COOKIE);
-    if (remembered) return await loadBootstrap(remembered, DEFAULT_LOCALE);
+    if (remembered) return await loadBootstrap(remembered, DEFAULT_LOCALE, undefined, pickedServer);
 
-    return await loadBootstrap(DEFAULT_LOCALE, DEFAULT_LOCALE);
+    return await loadBootstrap(DEFAULT_LOCALE, DEFAULT_LOCALE, undefined, pickedServer);
 });
 
 /**

@@ -239,7 +239,7 @@ fn the_census_numbers_on_a_real_payload() {
         std::env::var("ASSETS_DIR").unwrap_or_else(|_| "../assets/output/en".into()),
     );
     let asset_index = Arc::new(AssetIndex::build(&dir));
-    let cache = build_index(common::load_game_data(), &asset_index, &dir);
+    let cache = build_index(common::load_game_data(), &asset_index, &dir, &dir);
 
     let set = parse_game_story_read(&raw, &cache.by_txt, &cache.gates);
     println!(
@@ -401,7 +401,7 @@ async fn the_store_path_on_a_real_payload() {
     let asset_ms = t.elapsed().as_millis();
 
     let t = Instant::now();
-    let cache = build_index(game_data, &asset_index, &dir);
+    let cache = build_index(game_data, &asset_index, &dir, &dir);
     let index_ms = t.elapsed().as_millis();
 
     let t = Instant::now();

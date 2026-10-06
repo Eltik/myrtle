@@ -38,6 +38,7 @@ fn state(db: sqlx::PgPool) -> AppState {
         asset_index: arc_swap::ArcSwap::from_pointee(AssetIndex::build(&dir)),
         game_data_dir: dir.join("gamedata/excel").display().to_string(),
         assets_dir: dir.display().to_string(),
+        art_dir: dir.display().to_string(),
         loaded: AtomicBool::new(true),
     });
     let config = AppConfig {

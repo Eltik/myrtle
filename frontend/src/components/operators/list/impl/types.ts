@@ -87,7 +87,17 @@ export interface IFilterState extends ISharedFilters {
 
 export type ArrayFilterKey = keyof ISharedFilters;
 
+/** Id -> the server's own name, for the filter values that are ids. Labels only; the values stay ids. */
+export interface IFilterLabels {
+    classes: Record<string, string>;
+    subclasses: Record<string, string>;
+    nations: Record<string, string>;
+    factions: Record<string, string>;
+}
+
 export interface IFilterOptions {
+    /** Absent where no operator index is in hand; the English formatters answer then. */
+    labels?: IFilterLabels;
     subclasses: string[];
     nations: string[];
     factions: string[];
@@ -110,6 +120,12 @@ export interface IFilterSubject {
     placeOfBirth: string;
     artists: string[];
     voiceActors: string[];
+    /** The server's own names for the ids above; absent in an old cached response. */
+    professionName?: string | null;
+    subProfessionName?: string | null;
+    nationName?: string | null;
+    groupName?: string | null;
+    teamName?: string | null;
 }
 
 export interface IUseOperatorFiltersReturn {

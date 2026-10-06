@@ -9,6 +9,7 @@ import { type ISkinIndexEntry, skinPopularityQueryOptions } from "#/lib/api/skin
 import { useFormatters, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { cn, getAvatarById } from "#/lib/utils";
+import type { SkinChannel } from "#/types/generated/SkinChannel";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import type { messages } from "./SkinViewerDialog.messages";
 
@@ -582,8 +583,7 @@ function SkinDetailDialog({ card, owned, color, popularity }: ISkinDetailDialogP
     );
 }
 
-/** Visual tag shown on a section header to indicate how the brand is acquired.
- *  Maps the underlying `displayTagId` (or absence of one) into a short label. */
+/** Visual tag shown on a section header to indicate how the brand is acquired; `classifySkinChannel` derives it. */
 type SectionChannel = "collab" | "event" | "is" | "seasonal" | "special-pack" | "code-exchange" | "store";
 
 interface ISkinSection {
@@ -622,6 +622,29 @@ function channelLabel(channel: SectionChannel, t: ViewerT): string | null {
     return key ? t(key) : null;
 }
 
+/**
+ * The server's language-neutral channel -> the viewer's chip set. There is no chip for
+ * reclamationAlgorithm, so it joins "is": it is the Integrated Strategies mode's own reward track.
+ * `other` is the old fallthrough, a store skin with no chip.
+ */
+const SKIN_CHANNEL_SECTION: Record<SkinChannel, SectionChannel> = {
+    store: "store",
+    collab: "collab",
+    event: "event",
+    integratedStrategies: "is",
+    seasonal: "seasonal",
+    specialPack: "special-pack",
+    codeExchange: "code-exchange",
+    reclamationAlgorithm: "is",
+    other: "store",
+};
+
+/** The server's `obtainChannel` when present, else the old-cache fallback below. */
+function classifySkinChannel(skin: ISkinIndexEntry): SectionChannel {
+    return skin.obtainChannel ? SKIN_CHANNEL_SECTION[skin.obtainChannel] : classifyChannel(skin.displaySkin?.displayTagId);
+}
+
+/** Old-cache fallback: classifies the English `displayTagId` for a cached skins index from before `obtainChannel` existed. */
 function classifyChannel(tagId: string | null | undefined): SectionChannel {
     if (!tagId) return "store";
     if (tagId === "From collabs") return "collab";
@@ -673,7 +696,7 @@ function buildSections(filtered: ICardData[], mode: SortMode, popularity: Map<st
         const ds = c.skin.displaySkin;
         const rawName = ds?.skinGroupName ?? t("profile.skins.section.other");
         const baseName = rawName.replace(ITERATION_SUFFIX_RE, "").trim() || rawName;
-        const channel = classifyChannel(ds?.displayTagId);
+        const channel = classifySkinChannel(c.skin);
         const key = `${channel}:${baseName}`;
 
         let section = map.get(key);
@@ -725,7 +748,7 @@ const SKIN_PRICE_OVERRIDES: Record<string, number> = {
 };
 
 function getSkinPrice(skin: ISkinIndexEntry, t: ViewerT): ISkinPrice {
-    const channel = classifyChannel(skin.displaySkin?.displayTagId);
+    const channel = classifySkinChannel(skin);
     if (channel === "event" || channel === "is" || channel === "seasonal" || channel === "code-exchange") {
         const label = channel === "is" ? t("profile.skins.price.is") : t("profile.skins.price.free");
         return { kind: "free", label, tooltip: channelLabel(channel, t) };
@@ -733,7 +756,6 @@ function getSkinPrice(skin: ISkinIndexEntry, t: ViewerT): ISkinPrice {
     if (channel === "special-pack") {
         return { kind: "bundle", label: t("profile.skins.price.bundle"), tooltip: t("profile.skins.price.bundle.tooltip") };
     }
-    // Try per-skin then per-group override.
     const op = SKIN_PRICE_OVERRIDES[skin.skinId] ?? (skin.displaySkin?.skinGroupId ? SKIN_PRICE_OVERRIDES[skin.displaySkin.skinGroupId] : undefined);
     if (op != null) {
         return { kind: "paid", label: t("profile.skins.price.op", { op }), tooltip: t("profile.skins.price.store.tooltip") };
