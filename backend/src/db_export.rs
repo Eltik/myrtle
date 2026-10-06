@@ -2,7 +2,11 @@
 //!
 //! TABLES is the topological order dictated by FK constraints: parents first,
 //! children second, `audit_log` last. Export writes in this order; import replays
-//! it unchanged.
+//! it unchanged. A table is only ever appended or inserted, never reordered, so
+//! an older export's table list stays a subsequence of this one and still imports.
+//!
+//! Every table a migration creates belongs here; the test at the bottom fails
+//! when one is missing.
 
 pub const TABLES: &[&str] = &[
     "servers",
@@ -22,6 +26,10 @@ pub const TABLES: &[&str] = &[
     "user_checkin",
     "user_scores",
     "user_support_units",
+    "user_enemy_progress",
+    "user_story_progress",
+    "user_game_story_read",
+    "user_game_credentials",
     "gacha_records",
     "tier_list_flairs",
     "tier_lists",
@@ -36,8 +44,34 @@ pub const TABLES: &[&str] = &[
     "operator_notes_audit_log",
     "leaderboard_snapshots",
     "leaderboard_snapshot_entries",
+    "operator_plans",
+    "plan_groups",
+    "plan_group_members",
+    "plan_presets",
+    "release_plans",
+    "grids",
+    "locales",
+    "ui_message_keys",
+    "ui_messages",
+    "ui_documents",
+    "ui_message_audit_log",
+    "translation_permissions",
+    "gamedata_overrides",
+    "gamedata_sightings",
+    "release_overrides",
+    "operator_ownership_stats",
+    "operator_skill_choice_stats",
+    "operator_mastery_stats",
+    "operator_module_choice_stats",
+    "operator_module_level_stats",
+    "medal_ownership_stats",
     "audit_log",
 ];
+
+/// Tables a migration fills with rows of its own (v021 inserts the `locales`
+/// rows). A freshly migrated database is not empty there, so import replaces
+/// their rows instead of refusing to run.
+pub const SEEDED_TABLES: &[&str] = &["locales"];
 
 /// (table, serial column): sequences reset after import so new inserts don't
 /// collide with restored ids.
@@ -47,8 +81,50 @@ pub const SERIAL_COLUMNS: &[(&str, &str)] = &[
     ("tier_list_view_events", "id"),
     ("operator_notes_audit_log", "id"),
     ("leaderboard_snapshots", "id"),
+    ("ui_message_audit_log", "id"),
     ("audit_log", "id"),
 ];
+
+/// Every (child, parent) foreign-key edge between two different public
+/// tables, read from the live schema so it can never drift from the migrations.
+pub async fn foreign_keys(
+    conn: &mut sqlx::PgConnection,
+) -> Result<Vec<(String, String)>, sqlx::Error> {
+    sqlx::query_as(
+        "SELECT DISTINCT conrelid::regclass::text, confrelid::regclass::text \
+         FROM pg_constraint \
+         WHERE contype = 'f' AND connamespace = 'public'::regnamespace \
+           AND conrelid <> confrelid",
+    )
+    .fetch_all(conn)
+    .await
+}
+
+/// `start` plus every table reachable from it by following `edges` from one
+/// end to the other: `(child, parent)` edges walked child-to-parent give the
+/// tables a selection references, walked parent-to-child the tables a
+/// `TRUNCATE ... CASCADE` reaches.
+pub fn closure<'a>(
+    start: impl IntoIterator<Item = &'a str>,
+    edges: &'a [(String, String)],
+    towards_parent: bool,
+) -> std::collections::BTreeSet<&'a str> {
+    let mut seen: std::collections::BTreeSet<&str> = start.into_iter().collect();
+    let mut queue: Vec<&str> = seen.iter().copied().collect();
+    while let Some(t) = queue.pop() {
+        for (child, parent) in edges {
+            let (from, to) = if towards_parent {
+                (child, parent)
+            } else {
+                (parent, child)
+            };
+            if from == t && seen.insert(to.as_str()) {
+                queue.push(to);
+            }
+        }
+    }
+    seen
+}
 
 pub const MANIFEST_FILE: &str = "manifest.json";
 pub const FORMAT_VERSION: u32 = 1;
@@ -86,8 +162,61 @@ pub fn upgrade_legacy_row(table: &str, row: &mut serde_json::Value) {
 
 #[cfg(test)]
 mod tests {
-    use super::upgrade_legacy_row;
+    use super::{SEEDED_TABLES, SERIAL_COLUMNS, TABLES, upgrade_legacy_row};
     use serde_json::json;
+    use std::collections::BTreeSet;
+
+    /// `_migrations` is the migration runner's own bookkeeping; `--migrate`
+    /// rebuilds it, and restoring it would mark migrations applied that the
+    /// target schema never ran.
+    const NOT_EXPORTED: &[&str] = &["_migrations"];
+
+    #[test]
+    fn every_migrated_table_is_exported() {
+        let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/src/database/migrations");
+        let mut created = BTreeSet::new();
+        for entry in std::fs::read_dir(dir).unwrap() {
+            let path = entry.unwrap().path();
+            if path.extension().is_none_or(|e| e != "sql") {
+                continue;
+            }
+            let sql = std::fs::read_to_string(&path).unwrap().to_lowercase();
+            assert!(
+                !sql.contains("drop table") && !sql.contains("rename to"),
+                "{}: teach this test about dropped or renamed tables",
+                path.display()
+            );
+            for rest in sql.split("create table ").skip(1) {
+                let rest = rest.trim_start().trim_start_matches("if not exists ");
+                let name: String = rest
+                    .trim_start()
+                    .trim_start_matches("public.")
+                    .chars()
+                    .take_while(|c| c.is_ascii_alphanumeric() || *c == '_')
+                    .collect();
+                created.insert(name);
+            }
+        }
+        let listed: BTreeSet<String> = TABLES
+            .iter()
+            .chain(NOT_EXPORTED)
+            .map(|t| (*t).to_owned())
+            .collect();
+        assert_eq!(TABLES.len(), TABLES.iter().collect::<BTreeSet<_>>().len());
+        let missing: Vec<_> = created.difference(&listed).collect();
+        assert!(missing.is_empty(), "add to db_export::TABLES: {missing:?}");
+        let stale: Vec<_> = listed
+            .difference(&created)
+            .filter(|t| !NOT_EXPORTED.contains(&t.as_str()))
+            .collect();
+        assert!(stale.is_empty(), "no migration creates: {stale:?}");
+        for t in SEEDED_TABLES
+            .iter()
+            .chain(SERIAL_COLUMNS.iter().map(|(t, _)| t))
+        {
+            assert!(TABLES.contains(t), "{t} is not in TABLES");
+        }
+    }
 
     #[test]
     fn a_pre_v029_placement_imports_as_an_operator() {

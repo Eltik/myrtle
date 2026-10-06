@@ -17,10 +17,17 @@
 //!   - After loading, `setval(pg_get_serial_sequence(...))` advances each
 //!     BIGSERIAL sequence past the largest imported id.
 //!
+//! Partial exports:
+//!   - The manifest may list any subsequence of `TABLES`: an export written
+//!     before a table existed, or one made from a checklist. Tables it leaves
+//!     out are not touched, apart from what `--truncate`'s CASCADE reaches,
+//!     which is printed before anything loads.
+//!
 //! Safety:
-//!   - Refuses to run if any non-empty target table exists unless `--truncate`
-//!     is passed (aside from the seeded `servers` table, which is always
-//!     ON CONFLICT DO NOTHING-friendly).
+//!   - Refuses to run if any table the export loads is non-empty unless
+//!     `--truncate` is passed. `SEEDED_TABLES` are exempt: their migration
+//!     rows are replaced when the export carries rows for them and kept when
+//!     it carries none (`translate-backup` writes an empty `locales`).
 //!   - `--truncate` uses `TRUNCATE ... RESTART IDENTITY CASCADE` inside the
 //!     transaction so a failure rolls back to the pre-import state.
 
@@ -30,7 +37,8 @@
 use anyhow::{Context, Result, bail};
 use backend::database::run_migrations;
 use backend::db_export::{
-    FORMAT_VERSION, MANIFEST_FILE, SERIAL_COLUMNS, TABLES, upgrade_legacy_row,
+    FORMAT_VERSION, MANIFEST_FILE, SEEDED_TABLES, SERIAL_COLUMNS, TABLES, closure, foreign_keys,
+    upgrade_legacy_row,
 };
 use dotenv::dotenv;
 use serde::Deserialize;
@@ -95,6 +103,26 @@ async fn main() -> Result<()> {
     }
     verify_manifest_tables(&manifest)?;
 
+    // In `TABLES` order, which the manifest was just checked to follow.
+    let loaded: Vec<&'static str> = TABLES
+        .iter()
+        .copied()
+        .filter(|t| manifest.tables.iter().any(|e| e.name == *t))
+        .collect();
+    let skipped: Vec<&'static str> = TABLES
+        .iter()
+        .copied()
+        .filter(|t| !loaded.contains(t))
+        .collect();
+    // A seeded table the export has no rows for keeps its migration rows.
+    let replaced: Vec<&'static str> = loaded
+        .iter()
+        .copied()
+        .filter(|t| {
+            !SEEDED_TABLES.contains(t) || manifest.tables.iter().any(|e| e.name == *t && e.rows > 0)
+        })
+        .collect();
+
     let pool = PgPoolOptions::new()
         .max_connections(1)
         .acquire_timeout(Duration::from_secs(10))
@@ -118,7 +146,10 @@ async fn main() -> Result<()> {
         .await
         .context("failed to set session_replication_role")?;
 
-    for &table in TABLES {
+    for &table in &replaced {
+        if SEEDED_TABLES.contains(&table) {
+            continue;
+        }
         let count: i64 = sqlx::query_scalar(&format!("SELECT COUNT(*) FROM {table}"))
             .fetch_one(&mut *tx)
             .await
@@ -137,17 +168,43 @@ async fn main() -> Result<()> {
         }
     }
 
+    if !skipped.is_empty() {
+        println!(
+            "not in this export, left as they are: {}",
+            skipped.join(", ")
+        );
+    }
+
     if args.truncate {
-        let list = TABLES.join(", ");
+        let edges = foreign_keys(&mut tx).await?;
+        let cascaded: Vec<&str> = closure(replaced.iter().copied(), &edges, false)
+            .into_iter()
+            .filter(|t| !replaced.contains(t))
+            .collect();
+        if !cascaded.is_empty() {
+            println!(
+                "CASCADE also empties tables this export does not restore: {}",
+                cascaded.join(", ")
+            );
+        }
+        let list = replaced.join(", ");
         let sql = format!("TRUNCATE {list} RESTART IDENTITY CASCADE");
         tx.execute(sql.as_str()).await.context("TRUNCATE failed")?;
-        println!("truncated {} tables", TABLES.len());
+        println!("truncated {} tables", replaced.len());
+    } else {
+        // Every other table was just checked empty, so nothing still points
+        // at the seeded rows this replaces.
+        for &table in SEEDED_TABLES.iter().filter(|t| replaced.contains(t)) {
+            tx.execute(format!("DELETE FROM {table}").as_str())
+                .await
+                .with_context(|| format!("failed to clear seeded {table}"))?;
+        }
     }
 
     let total_start = Instant::now();
     let mut total_rows: u64 = 0;
 
-    for &table in TABLES {
+    for &table in &loaded {
         let path = args.in_dir.join(format!("{table}.jsonl"));
         if !path.exists() {
             // Export always writes a file per table (possibly empty). Missing
@@ -220,7 +277,7 @@ async fn main() -> Result<()> {
 
     println!(
         "\nImported {} tables, {} rows in {:.2}s",
-        TABLES.len(),
+        loaded.len(),
         total_rows,
         total_start.elapsed().as_secs_f64()
     );
@@ -279,12 +336,24 @@ fn load_manifest(dir: &Path) -> Result<Manifest> {
     Ok(m)
 }
 
+/// The manifest must list known tables in `TABLES` order (FK order, so the
+/// load never meets a child before its parent), each at most once.
 fn verify_manifest_tables(manifest: &Manifest) -> Result<()> {
-    let manifest_names: Vec<&str> = manifest.tables.iter().map(|t| t.name.as_str()).collect();
-    if manifest_names != TABLES {
-        bail!(
-            "manifest table list does not match current binary.\n  manifest: {manifest_names:?}\n  expected: {TABLES:?}"
-        );
+    let mut rest = TABLES.iter();
+    for entry in &manifest.tables {
+        if !TABLES.contains(&entry.name.as_str()) {
+            bail!(
+                "manifest lists {}, which this binary does not know; \
+                 was the export made by a newer build?",
+                entry.name
+            );
+        }
+        if !rest.any(|t| *t == entry.name) {
+            bail!(
+                "manifest lists {} out of order or twice; expected a subsequence of {TABLES:?}",
+                entry.name
+            );
+        }
     }
     for entry in &manifest.tables {
         if entry.file != format!("{}.jsonl", entry.name) {
@@ -345,6 +414,8 @@ fn print_usage() {
          audit triggers and FK checks suspended.\n\
          \n\
          --migrate   Run v3 schema migrations first (useful on a fresh DB).\n\
-         --truncate  TRUNCATE every target table before loading."
+         --truncate  TRUNCATE every table the export restores before loading.\n\
+         \n\
+         An export may cover only some tables; the rest are left alone."
     );
 }

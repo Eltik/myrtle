@@ -405,8 +405,8 @@ Ten binaries beyond the main server (`cargo run --bin <name>`):
 | Binary | Purpose |
 |--------|---------|
 | `generate-dps` | Generate/transpile DPS & HPS formulas and test fixtures |
-| `export-database` | Export the full database to versioned JSONL + manifest |
-| `import-database` | Import a JSONL export (single txn; `--truncate` to replace) |
+| `export-database` | Export the database to versioned JSONL + manifest (`--all`, `--tables a,b`, or a checklist in a terminal) |
+| `import-database` | Import a JSONL export, whole or partial (single txn; `--truncate` to replace) |
 | `translate-backup` | Convert a legacy myrtle backup into a v3 import bundle |
 | `regrade-users` | Recompute scores for all/one/by-server users (`--dry-run`) |
 | `manage-permissions` | Interactive CLI for roles and per-tier-list permissions |
