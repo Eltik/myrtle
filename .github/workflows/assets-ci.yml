@@ -448,6 +448,53 @@ jobs:
           retention-days: 90
           if-no-files-found: error
 
+      # ── Story art for backend CI ──────────────────────────────────────────
+      # The tier-list catalogue tests check the main-story key visuals
+      # (`mixstory_kv_sprites_*`) and the events' Archives covers
+      # (`story_review_*`). `--include` pulls just those sprite packs (~23 MB of
+      # bundles, ~50 MB of PNGs) into their own tree so `--image` walks nothing
+      # else. Uploaded as `story-art`, rooted at `textures/spritepack/`.
+      - name: Download EN story art bundles
+        if: github.event_name != 'pull_request'
+        working-directory: assets
+        run: |
+          ./binaries/downloader --server en --savedir ./ArkAssets/en-art --threads 8 \
+            download --all \
+            --include "spritepack/mixstory_kv_sprites_,spritepack/story_review_chapter_bg_,spritepack/story_review_mini_activity_bg_"
+          du -sh ArkAssets/en-art/spritepack
+
+      - name: Extract story art
+        if: github.event_name != 'pull_request'
+        working-directory: assets
+        run: |
+          ./binaries/unpacker extract \
+            --input ./ArkAssets/en-art \
+            --output ./output/en-art \
+            --image
+
+      - name: Verify story art extract
+        if: github.event_name != 'pull_request'
+        working-directory: assets
+        run: |
+          art=output/en-art/textures/spritepack
+          if [ ! -s "$art/story_review_chapter_bg_h1_0/storyEntryPic_act1d0.png" ] \
+            || ! ls "$art"/mixstory_kv_sprites_0/*.png > /dev/null 2>&1; then
+            echo "::error::story art extract is incomplete — not uploading a broken artifact"
+            ls "$art" || true
+            exit 1
+          fi
+          echo "story art PNGs: $(find "$art" -name '*.png' | wc -l)"
+          du -sh "$art"
+
+      - name: Upload story art for backend CI
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: story-art
+          path: assets/output/en-art/textures/spritepack/
+          retention-days: 90
+          if-no-files-found: error
+
   # ──────────────────────────────────────────────────────────────────────────────
   # Final status
   # ──────────────────────────────────────────────────────────────────────────────

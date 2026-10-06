@@ -119,6 +119,19 @@ jobs:
           search_artifacts: true
           if_no_artifact_found: fail
 
+      # The story-art sprite packs from the same Integration job, so the
+      # tier-list art checks run here too. Optional: without them those checks
+      # skip on the missing `textures/spritepack` and everything else still runs.
+      - name: Download story art from assets pipeline
+        uses: dawidd6/action-download-artifact@v27
+        with:
+          workflow: assets-ci.yml
+          name: story-art
+          path: assets/output/en/textures/spritepack
+          branch: ${{ github.base_ref || github.ref_name }}
+          search_artifacts: true
+          if_no_artifact_found: warn
+
       - name: Verify game data exists
         run: |
           if [ ! -s "assets/output/en/gamedata/excel/character_table.json" ]; then

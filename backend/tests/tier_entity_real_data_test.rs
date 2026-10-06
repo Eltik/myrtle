@@ -19,8 +19,13 @@ use backend::app::services::tier_entity::{FacetValue, catalogue, known, resolve,
 use backend::core::gamedata::assets::AssetIndex;
 use backend::database::models::tier_list::EntityKind;
 
+/// `ASSETS_DIR`, as `common` reads it, so the art gates below see the tree
+/// the game data was loaded from.
 fn en_dir() -> std::path::PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("../assets/output/en")
+    std::env::var_os("ASSETS_DIR").map_or_else(
+        || Path::new(env!("CARGO_MANIFEST_DIR")).join("../assets/output/en"),
+        std::path::PathBuf::from,
+    )
 }
 
 fn en_assets() -> AssetIndex {
@@ -31,8 +36,9 @@ fn story_sprites_present() -> bool {
     en_dir().join("textures/avg/characters").is_dir()
 }
 
-/// Backend CI downloads `gamedata` alone, so the episodes' key visuals
-/// (`mixstory_*` sprite packs) only resolve on a full local extract.
+/// Backend CI downloads `gamedata` alone, so the episodes' key visuals and
+/// the events' Archives covers (sprite packs) only resolve on a full local
+/// extract.
 fn story_art_present() -> bool {
     en_dir().join("textures/spritepack").is_dir()
 }
@@ -141,14 +147,16 @@ fn the_event_pool_by_display_type() {
         .iter()
         .find(|e| e.id == "1stact")
         .expect("1stact offered");
-    assert!(
-        grani
-            .icon
-            .as_deref()
-            .is_some_and(|i| i.ends_with("storyEntryPic_act1d0.png")),
-        "1stact icon: {:?}",
-        grani.icon
-    );
+    if story_art_present() {
+        assert!(
+            grani
+                .icon
+                .as_deref()
+                .is_some_and(|i| i.ends_with("storyEntryPic_act1d0.png")),
+            "1stact icon: {:?}",
+            grani.icon
+        );
+    }
     for (display, floor) in [
         ("SIDESTORY", 64),
         ("MINISTORY", 20),
