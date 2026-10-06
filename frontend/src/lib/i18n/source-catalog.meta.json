@@ -14592,6 +14592,13 @@
             "placeholders": []
         },
         {
+            "key": "operators.chibi.error.webgl",
+            "namespace": "operators",
+            "source_text": "This browser has WebGL turned off, so the animation can't play",
+            "description": "Shown in the viewer when the browser cannot create a WebGL renderer (hardware acceleration off or the GPU unavailable). 'WebGL' is a technical name and stays as-is.",
+            "placeholders": []
+        },
+        {
             "key": "operators.chibi.title",
             "namespace": "operators",
             "source_text": "Chibi Preview",

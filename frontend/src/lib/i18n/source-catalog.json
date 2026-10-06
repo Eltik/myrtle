@@ -1989,6 +1989,7 @@
     "operators.chibi.animation": "Animation",
     "operators.chibi.error.failed": "Failed to load chibi",
     "operators.chibi.error.noData": "No spine data available",
+    "operators.chibi.error.webgl": "This browser has WebGL turned off, so the animation can't play",
     "operators.chibi.title": "Chibi Preview",
     "operators.chibi.view": "View",
     "operators.chibi.view.back": "Back",

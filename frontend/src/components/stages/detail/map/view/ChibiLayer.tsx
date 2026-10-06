@@ -80,7 +80,8 @@ function makePath(d: string): SVGPathElement {
 const APP_POOL: PIXI.Application[] = [];
 const MAX_POOLED_APPS = 12;
 
-function acquireChibiApp(): PIXI.Application {
+/** Null when the browser cannot build a WebGL renderer (pixi.js 7 has no canvas fallback). */
+function acquireChibiApp(): PIXI.Application | null {
     const pooled = APP_POOL.pop();
     if (pooled) {
         pooled.stage.removeChildren();
@@ -89,7 +90,12 @@ function acquireChibiApp(): PIXI.Application {
     }
     // Each walker's own tick renders its app; PIXI's ticker would draw every frame a second
     // time, and keep drawing an empty stage for as long as the app sits in the pool.
-    const app = new PIXI.Application({ width: SPRITE_W, height: SPRITE_H, backgroundAlpha: 0, antialias: true, resolution: window.devicePixelRatio || 1, autoDensity: true, autoStart: false });
+    let app: PIXI.Application;
+    try {
+        app = new PIXI.Application({ width: SPRITE_W, height: SPRITE_H, backgroundAlpha: 0, antialias: true, resolution: window.devicePixelRatio || 1, autoDensity: true, autoStart: false });
+    } catch {
+        return null;
+    }
     app.ticker.stop();
     app.renderer.render(app.stage);
     return app;
@@ -145,6 +151,8 @@ function ChibiWalkerSprite({ walker, padY, tilt, onEnemyHover }: { walker: IChib
         const waits = walker.waits;
 
         const app = acquireChibiApp();
+        // No WebGL: the walker stays hidden, as a chibi that fails to load does.
+        if (!app) return;
         mount.appendChild(app.view as HTMLCanvasElement);
 
         const setAnim = (name: string | null) => {

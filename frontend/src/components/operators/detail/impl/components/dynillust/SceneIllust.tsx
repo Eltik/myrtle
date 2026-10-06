@@ -2199,36 +2199,48 @@ export function SceneIllust({ files, server, fit, framing = "character", backdro
         // `?batchpool=0` restores PixiJS's rule.
         PIXI.BatchRenderer.canUploadSameBuffer = new URLSearchParams(window.location.search).get("batchpool") === "0";
         ensureAdditiveSpriteBoost(); // MUST precede Renderer construction (plugins bind at build)
-        const app = new PIXI.Application({
-            width: container.clientWidth || 600,
-            height: container.clientHeight || 450,
-            backgroundAlpha: 0,
-            // Every one of the 86 dynamic illustrations has a scene, so the canvas only ever
-            // receives the HDR tonemap quad and a multisampled canvas antialiases nothing: the
-            // five parity rows are byte-identical either way, and the resolve cost 1.12 ms of GPU
-            // time per frame against 0.39 for the plain blit (register, "PERFORMANCE, THIRD
-            // RUN"). `?msaa=1` restores the multisampled canvas.
-            antialias: new URLSearchParams(window.location.search).get("msaa") === "1",
-            // HARNESS (`?keepbuffer=1`, exactly "1"; absent = PixiJS's default, false, byte-identical):
-            // keep the WebGL drawing buffer after the compositor consumes it. A headless
-            // screenshot that lands with no fresh draw otherwise reads a CLEARED buffer and the
-            // page shows through (register, "THE FLAT FRAME'S MECHANISM": black on the black
-            // page, the fill colour on the painted page, white where the fill is white; the
-            // render-glitch family of 21 members). Production never sets it.
-            preserveDrawingBuffer: keepBufferOn(),
-            // Opens at the ENTRANCE target (the client's screen surface). `raiseToIdleResolution`
-            // steps up to the square-2048 RT target when the idle path takes over - which is
-            // exactly where the client itself switches between the two.
-            resolution: dynRenderResolution(container.clientHeight || 450, staticCamOn() ? "idle" : "entrance"),
-            autoDensity: true,
-            // The tick below drives EVERYTHING - clock, spine, particles, and both render
-            // passes - so PIXI's own ticker must not render as well. Left on it did two
-            // things: it drew `app.stage` a second time every frame (double the GPU work for
-            // the whole viewer), and it could draw the stage BEFORE the frame's scene pass
-            // had written the HDR target, so the tonemap quad sampled a render target that
-            // nothing had filled in yet.
-            autoStart: false,
-        });
+        let app: PIXI.Application;
+        try {
+            app = new PIXI.Application({
+                width: container.clientWidth || 600,
+                height: container.clientHeight || 450,
+                backgroundAlpha: 0,
+                // Every one of the 86 dynamic illustrations has a scene, so the canvas only ever
+                // receives the HDR tonemap quad and a multisampled canvas antialiases nothing: the
+                // five parity rows are byte-identical either way, and the resolve cost 1.12 ms of GPU
+                // time per frame against 0.39 for the plain blit (register, "PERFORMANCE, THIRD
+                // RUN"). `?msaa=1` restores the multisampled canvas.
+                antialias: new URLSearchParams(window.location.search).get("msaa") === "1",
+                // HARNESS (`?keepbuffer=1`, exactly "1"; absent = PixiJS's default, false, byte-identical):
+                // keep the WebGL drawing buffer after the compositor consumes it. A headless
+                // screenshot that lands with no fresh draw otherwise reads a CLEARED buffer and the
+                // page shows through (register, "THE FLAT FRAME'S MECHANISM": black on the black
+                // page, the fill colour on the painted page, white where the fill is white; the
+                // render-glitch family of 21 members). Production never sets it.
+                preserveDrawingBuffer: keepBufferOn(),
+                // Opens at the ENTRANCE target (the client's screen surface). `raiseToIdleResolution`
+                // steps up to the square-2048 RT target when the idle path takes over - which is
+                // exactly where the client itself switches between the two.
+                resolution: dynRenderResolution(container.clientHeight || 450, staticCamOn() ? "idle" : "entrance"),
+                autoDensity: true,
+                // The tick below drives EVERYTHING - clock, spine, particles, and both render
+                // passes - so PIXI's own ticker must not render as well. Left on it did two
+                // things: it drew `app.stage` a second time every frame (double the GPU work for
+                // the whole viewer), and it could draw the stage BEFORE the frame's scene pass
+                // had written the HDR target, so the tonemap quad sampled a render target that
+                // nothing had filled in yet.
+                autoStart: false,
+            });
+        } catch (err) {
+            // pixi.js 7 has no canvas fallback, so a browser without WebGL throws here. Report it
+            // as unsupported and never call onReady: a host overlay keeps its static art.
+            console.error("Failed to create the dynamic illustration renderer:", err);
+            setIsLoading(false);
+            setUnsupported(true);
+            return () => {
+                mountedRef.current = false;
+            };
+        }
         app.ticker.stop();
         patchAdditiveBlendAlpha(app);
         // PixiJS resets its batch flush pool at every render call, and the tick renders two to

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ISpineFit } from "#/components/operators/detail/impl/components/chibi/helpers";
 import { SceneIllustPlayer } from "#/components/operators/detail/impl/components/dynillust/SceneIllust.lazy";
 import { cn } from "#/lib/utils";
+import { hasWebGL } from "#/lib/webgl";
 import { useDynamicArt } from "./dynamic-art";
 
 interface IDynamicArtOverlayProps {
@@ -58,7 +59,8 @@ export function DynamicArtOverlay({ operatorCode, skinId, elite, fit, framing, b
         return () => observer.disconnect();
     }, [viewportGated]);
 
-    const mounted = !!files && inView;
+    // Without WebGL the player cannot build a renderer; the static art stays as it is.
+    const mounted = !!files && inView && hasWebGL();
 
     // Report "not active" whenever the player isn't mounted, so the static image
     // comes back on toggle-off / scroll-out. The player reports "active" via

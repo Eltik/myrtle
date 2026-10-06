@@ -13,6 +13,7 @@ import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
 import { values } from "#/lib/records";
 import { cn, downloadBlob } from "#/lib/utils";
+import { hasWebGL } from "#/lib/webgl";
 import type { IOperatorListItem } from "#/types/operators";
 import { sanitizeFilename } from "../../helpers";
 import { buildOperatorSkinList, chibiSkinKey, type IUISkin } from "../../skins";
@@ -94,8 +95,9 @@ export const SkinsContent = memo(function SkinsContent({ operator }: ISkinsConte
     // CURRENT skin's animation is ready (switching skins clears it automatically).
     const [readySkel, setReadySkel] = useState<string | null>(null);
     // The live renderer plays whenever a dynamic scene exists; skins without one
-    // simply keep their static illustration (the player errors out quietly).
-    const showDynamic = dynamicArtwork && !!dynamicFiles;
+    // simply keep their static illustration (the player errors out quietly), as does a
+    // browser without WebGL, where the renderer cannot be built at all.
+    const showDynamic = dynamicArtwork && !!dynamicFiles && hasWebGL();
     const dynamicReady = !!dynSkel && readySkel === dynSkel;
     // While the fullscreen viewer is open its renderer is the only one running: the card's
     // player is unmounted underneath it (two scene renderers at once, one of them at the

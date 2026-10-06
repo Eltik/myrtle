@@ -164,17 +164,26 @@ export function ChibiViewer({ chibi, skin, server }: IChibiViewerProps) {
             const containerWidth = container.clientWidth || 300;
             const containerHeight = container.clientHeight || 180;
 
-            const app = new PIXI.Application({
-                width: containerWidth,
-                height: containerHeight,
-                backgroundAlpha: 0,
-                antialias: true,
-                resolution: typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
-                autoDensity: true,
-                // The tick below updates and renders; PIXI's own ticker would draw the stage a
-                // second time every frame.
-                autoStart: false,
-            });
+            let app: PIXI.Application;
+            try {
+                app = new PIXI.Application({
+                    width: containerWidth,
+                    height: containerHeight,
+                    backgroundAlpha: 0,
+                    antialias: true,
+                    resolution: typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1,
+                    autoDensity: true,
+                    // The tick below updates and renders; PIXI's own ticker would draw the stage a
+                    // second time every frame.
+                    autoStart: false,
+                });
+            } catch (err) {
+                // pixi.js 7 has no canvas fallback, so a browser without WebGL throws here.
+                console.error("Failed to create the chibi renderer:", err);
+                setError(t("chibi.error.webgl"));
+                setIsLoading(false);
+                return;
+            }
             app.ticker.stop();
 
             if (currentLoadId !== loadIdRef.current || !mountedRef.current) {
