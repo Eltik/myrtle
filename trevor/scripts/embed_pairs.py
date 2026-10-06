@@ -9,9 +9,12 @@ two styles alternately: a full fan question (the answer bank's prompt) and a sho
 Discord questions ("Jie died?"). The answer bank's 900 questions (same exclusions) are added at train time.
   questions   generator model on $SERVER -> artifacts/embedft/pairs.jsonl (resumable; N_PAIRS, default 5000)
 """
-import collections, json, os, random, sys, threading, time, urllib.request
+import collections, os, random, sys, threading, time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+from common import ROOT, read_jsonl
+
 OUT = os.path.join(ROOT, 'artifacts', 'embedft')
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
 N = int(os.environ.get('N_PAIRS', '5000'))
@@ -25,22 +28,9 @@ CASUAL = ("You read one passage from the Arknights story. Write one short questi
           "character, place or event it is about. It must be answerable from this passage. Output the question only.")
 
 
-def read_jsonl(p):
-    return [json.loads(l) for l in open(p)] if os.path.exists(p) else []
-
-
 def chat(system, user):
-    body = json.dumps({'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
-                       'temperature': 0, 'seed': 1, 'max_tokens': 80}).encode()
-    err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=600) as r:
-                return json.load(r)['choices'][0]['message']['content'].strip().split('\n')[0].strip()
-        except Exception as e:
-            err = e; time.sleep(5 * (attempt + 1))
-    raise err
+    """The first line of the model's answer: one question."""
+    return common.chat(SERVER, system, user, 80, 600, lambda d: common.content(d).strip().split('\n')[0].strip())
 
 
 def gold_stories():
@@ -67,26 +57,19 @@ def stage_questions():
     done = {r['chunkId'] for r in read_jsonl(path)}
     todo = [(i, c) for i, c in enumerate(picked) if c['chunkId'] not in done]
     print(f'pairs: {len(todo)} to do of {len(picked)} (gold stories excluded: {len(gold)})', flush=True)
-    lock = threading.Lock(); it = iter(todo); n = [0]; t0 = time.time()
+    lock = threading.Lock(); n = [0]; t0 = time.time()
 
-    def work():
-        while True:
-            with lock:
-                x = next(it, None)
-            if x is None:
-                return
-            i, c = x
-            style = 'casual' if i % 2 else 'full'
-            q = chat(CASUAL if style == 'casual' else FULL, c['text'][:6000])
-            with lock:
-                with open(path, 'a') as f:
-                    f.write(json.dumps({'qid': f'e{i:05d}', 'question': q, 'style': style, 'chunkId': c['chunkId'],
-                                        'storyId': c['storyId']}, ensure_ascii=False) + '\n')
-                n[0] += 1
-                if n[0] % 250 == 0:
-                    print(f'{time.strftime("%H:%M:%S")} pairs {n[0]}/{len(todo)}, {(time.time() - t0) / n[0]:.2f} s each', flush=True)
-    th = [threading.Thread(target=work) for _ in range(2)]
-    [t.start() for t in th]; [t.join() for t in th]
+    def one(x):
+        i, c = x
+        style = 'casual' if i % 2 else 'full'
+        q = chat(CASUAL if style == 'casual' else FULL, c['text'][:6000])
+        with lock:
+            common.append_jsonl(path, {'qid': f'e{i:05d}', 'question': q, 'style': style, 'chunkId': c['chunkId'],
+                                       'storyId': c['storyId']})
+            n[0] += 1
+            if n[0] % 250 == 0:
+                print(f'{time.strftime("%H:%M:%S")} pairs {n[0]}/{len(todo)}, {(time.time() - t0) / n[0]:.2f} s each', flush=True)
+    common.par(todo, one, 2, lock)
     print('pairs done', flush=True)
 
 

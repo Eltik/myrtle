@@ -17,18 +17,17 @@ one unit and a changed story redoes its summary and then its group's. The
 generator pauses while the Mac runs on battery and resumes on AC.
 Design and pilot numbers: design/trevor-retrieval-baseline.md section 9.
 """
-import collections, hashlib, json, os, subprocess, sys, threading, time, urllib.request
+import collections, json, os, subprocess, sys, threading, time, urllib.request
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import incr
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common, incr
+from common import ROOT, read_jsonl, sha16
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'artifacts', 'p2')
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
 SLOTS = int(os.environ.get('SLOTS', '2'))
 STORY_SYS = open(os.path.join(ROOT, 'prompts', 'summary.story.txt')).read()
 GROUP_SYS = open(os.path.join(ROOT, 'prompts', 'summary.group.txt')).read()
-sha16 = lambda s: hashlib.sha256(s.encode()).hexdigest()[:16]
 
 
 def on_battery():
@@ -52,23 +51,8 @@ def model_name():
 
 
 def chat(system, user, max_tokens):
-    body = json.dumps({'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
-                       'temperature': 0, 'seed': 1, 'max_tokens': max_tokens}).encode()
-    err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=1800) as r:
-                d = json.load(r)
-            return d['choices'][0]['message']['content'].strip(), d['timings']
-        except Exception as e:  # one failed decode 500s every in-flight request; retry
-            err = e
-            time.sleep(5 * (attempt + 1))
-    raise err
-
-
-def read_jsonl(p):
-    return [json.loads(l) for l in open(p)] if os.path.exists(p) else []
+    # (stripped text, timings); one failed decode 500s every in-flight request, so common.chat retries.
+    return common.chat(SERVER, system, user, max_tokens, 1800, lambda d: (common.content(d).strip(), d['timings']))
 
 
 def load():
@@ -118,30 +102,24 @@ def stage_story():
     os.makedirs(OUT, exist_ok=True)
     model = model_name(); psha = st.psha
     print(f'story: {len(todo)} to do, {len(order) - len(todo)} done, model {model}, prompt {psha}', flush=True)
-    it = iter(todo); lock = threading.Lock(); n = [0]; t0 = time.time()
+    lock = threading.Lock(); n = [0]; t0 = time.time()
 
-    def worker():
-        while True:
-            with lock:
-                s = next(it, None)
-            if s is None:
-                return
-            wait_for_ac()
-            text = story_input(by_story[s])
-            started = time.time()
-            out, t = chat(STORY_SYS, f"{facts[s]['header']}\n\nScript:\n{text}", 320)
-            row = {'storyId': s, 'groupId': by_story[s][0]['groupId'], 'header': facts[s]['header'],
-                   'officialSynopsis': facts[s]['synopsis'], 'summary': out, 'model': model, 'promptSha': psha,
-                   'promptTokens': t['prompt_n'], 'genTokens': t['predicted_n'], 'seconds': round(time.time() - started, 1)}
-            with lock:
-                st.put(row)
-                n[0] += 1
-                if n[0] % 25 == 0:
-                    el = time.time() - t0
-                    print(f'{time.strftime("%H:%M:%S")} story {n[0]}/{len(todo)}, {el / n[0]:.1f} s each, '
-                          f'about {(len(todo) - n[0]) * el / n[0] / 3600:.1f} h left', flush=True)
-    th = [threading.Thread(target=worker) for _ in range(SLOTS)]
-    [x.start() for x in th]; [x.join() for x in th]
+    def one(s):
+        wait_for_ac()
+        text = story_input(by_story[s])
+        started = time.time()
+        out, t = chat(STORY_SYS, f"{facts[s]['header']}\n\nScript:\n{text}", 320)
+        row = {'storyId': s, 'groupId': by_story[s][0]['groupId'], 'header': facts[s]['header'],
+               'officialSynopsis': facts[s]['synopsis'], 'summary': out, 'model': model, 'promptSha': psha,
+               'promptTokens': t['prompt_n'], 'genTokens': t['predicted_n'], 'seconds': round(time.time() - started, 1)}
+        with lock:
+            st.put(row)
+            n[0] += 1
+            if n[0] % 25 == 0:
+                el = time.time() - t0
+                print(f'{time.strftime("%H:%M:%S")} story {n[0]}/{len(todo)}, {el / n[0]:.1f} s each, '
+                      f'about {(len(todo) - n[0]) * el / n[0] / 3600:.1f} h left', flush=True)
+    common.par(todo, one, SLOTS, lock)
     print(f'story: {n[0]} written in {time.time() - t0:.0f}s', flush=True)
 
 

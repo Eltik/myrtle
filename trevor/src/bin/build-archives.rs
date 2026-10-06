@@ -16,15 +16,15 @@
 //! rows push story passages out of the top 10.
 
 use std::collections::HashMap;
-use std::io::Write as _;
 use std::path::PathBuf;
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use tokenizers::Tokenizer;
 use trevor::corpus::chunk::Chunk;
+use trevor::corpus::derived;
+use trevor::util::sha_hex;
 
 #[derive(Parser)]
 #[command(about = "Append operator archive chunks to a copy of the P0 corpus")]
@@ -89,10 +89,6 @@ struct Meta {
     oversize_single_lines: usize,
 }
 
-fn sha_hex(b: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(b))
-}
-
 struct Packer<'a> {
     count: &'a dyn Fn(&str) -> u32,
     name: String,
@@ -112,21 +108,13 @@ impl Packer<'_> {
             return;
         }
         let text = self.render(cur);
+        let n = (self.count)(&text);
         self.rows.push(Chunk {
-            chunk_id: format!("archive_{}#{:04}", self.char_id, self.ordinal),
-            story_id: format!("archive_{}", self.char_id),
-            group_id: "archive".to_owned(),
-            ordinal: self.ordinal,
             scene_ordinal: cur[0].0,
             line_start: cur[0].0,
             line_end: cur[cur.len() - 1].0,
-            content_sha: sha_hex(text.as_bytes())[..16].to_owned(),
-            token_count: (self.count)(&text),
-            speakers: vec![self.name.clone()],
-            on_screen: Vec::new(),
-            background: None,
-            text,
-            prefix: None,
+            ..derived::generated_chunk(format!("archive_{}#{:04}", self.char_id, self.ordinal), format!("archive_{}", self.char_id),
+                                       "archive".to_owned(), self.ordinal, vec![self.name.clone()], text, n)
         });
         self.ordinal += 1;
         cur.clear();
@@ -137,15 +125,10 @@ fn main() -> Result<()> {
     // SAFETY: set before any other thread exists.
     unsafe { std::env::set_var("TOKENIZERS_PARALLELISM", "false") };
     let a = Args::parse();
-    if a.out.canonicalize().ok() == Some(a.corpus.canonicalize()?) {
-        bail!("--out must not be the input corpus directory");
-    }
+    derived::ensure_distinct_out(&a.out, &a.corpus)?;
     let tok_bytes = std::fs::read(&a.tokenizer).with_context(|| format!("reading {}", a.tokenizer.display()))?;
     let tok = Tokenizer::from_bytes(&tok_bytes).map_err(|e| anyhow::anyhow!("{e}"))?;
-    // The stored token count is the whole-text encode with the special tokens, as for story chunks.
-    let count = |s: &str| -> u32 {
-        tok.encode(s, true).map_or(u32::MAX, |e| u32::try_from(e.get_ids().len()).unwrap_or(u32::MAX))
-    };
+    let count = |s: &str| derived::token_count(&tok, s);
 
     let hb_path = a.gamedata.join("excel/handbook_info_table.json");
     let hb_bytes = std::fs::read(&hb_path).with_context(|| format!("reading {}", hb_path.display()))?;
@@ -210,17 +193,8 @@ fn main() -> Result<()> {
         rows.extend(p.rows);
     }
 
-    std::fs::create_dir_all(&a.out)?;
-    let mut out = std::io::BufWriter::new(std::fs::File::create(a.out.join("chunks.jsonl"))?);
-    out.write_all(&src)?;
-    for c in &rows {
-        serde_json::to_writer(&mut out, c)?;
-        out.write_all(b"\n")?;
-    }
-    out.flush()?;
-    for f in ["manifest.p0.json", "spoiler.jsonl", "unresolved.jsonl"] {
-        std::fs::copy(a.corpus.join(f), a.out.join(f)).with_context(|| format!("copying {f}"))?;
-    }
+    derived::write_appended(&a.out, &src, &rows)?;
+    derived::copy_sidecars(&a.corpus, &a.out)?;
     let meta = Meta {
         source_chunks_sha: sha_hex(&src),
         handbook_sha: sha_hex(&hb_bytes),

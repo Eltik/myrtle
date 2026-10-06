@@ -22,9 +22,12 @@ text so vocabulary gaps show (Ian's "pee" against the story's "piss").
 
 Env: CORPUS (default artifacts/p4), N (sample size, default 160), SEED (default 20260930), SERVER.
 """
-import collections, json, os, random, re, sys, time, urllib.request
+import collections, json, os, random, re, sys, time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+from common import ROOT
+
 CORPUS = os.path.join(ROOT, os.environ.get('CORPUS', 'artifacts/p4'))
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
 N = int(os.environ.get('N', '160'))
@@ -93,31 +96,15 @@ def stage_sample():
             rows.append({'operator': op, 'source': src, 'chunkId': cid, 'text': text})
             want -= 1
     os.makedirs(OUT, exist_ok=True)
-    with open(os.path.join(OUT, 'sample.jsonl'), 'w') as f:
-        for r in rows:
-            f.write(json.dumps(r, ensure_ascii=False) + '\n')
+    common.write_jsonl(os.path.join(OUT, 'sample.jsonl'), rows)
     print(f"sample: {len(rows)} chunks, {len(used)} operators; per source "
           f"{dict(collections.Counter(r['source'] for r in rows))}; pools {{k: len(v) for k, v in pools.items()}}"
           .replace('{k: len(v) for k, v in pools.items()}', str({k: len(v) for k, v in pools.items()})))
 
 
 def chat(system, user, schema=None, max_tokens=300):
-    body = {'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
-            'temperature': 0, 'seed': 1, 'max_tokens': max_tokens,
-            'chat_template_kwargs': {'enable_thinking': False}}
-    if schema:
-        body['json_schema'] = schema
-    data = json.dumps(body).encode()
-    err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', data, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=600) as r:
-                return json.load(r)['choices'][0]['message']['content'].strip()
-        except Exception as e:
-            err = e
-            time.sleep(5 * (attempt + 1))
-    raise err
+    return common.chat(SERVER, system, user, max_tokens, 600, chat_template_kwargs={'enable_thinking': False},
+                       json_schema=schema or None)
 
 
 GEN_SYS = (
@@ -209,11 +196,7 @@ def stage_verify():
 
 
 def load_answer_eval():
-    import importlib.util
-    spec = importlib.util.spec_from_file_location('answer_eval', os.path.join(ROOT, 'scripts', 'answer-eval.py'))
-    m = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(m)
-    return m
+    return common.load_script('answer-eval')
 
 
 def stage_judge(ans_path):
@@ -221,7 +204,7 @@ def stage_judge(ans_path):
     items = {json.loads(l)['qid']: json.loads(l) for l in open(os.path.join(ROOT, 'eval', 'trivia.jsonl'))}
     text = {c['chunkId']: c['text'] for c in chunks()}
     for t in (json.loads(l) for l in open(os.path.join(ROOT, 'artifacts/topics/topics.jsonl'))):
-        text[f"topic:{t['topic']}"] = re.sub(r'\s*\[[\d,;\s]+\]', '', t.get('summary') or '')
+        text[f"topic:{t['topic']}"] = common.strip_cites(t.get('summary') or '')
     out_path = ans_path.replace('.jsonl', '.judged.jsonl')
     done = {json.loads(l)['qid'] for l in open(out_path)} if os.path.exists(out_path) else set()
     for a in (json.loads(l) for l in open(ans_path)):
@@ -238,8 +221,7 @@ def stage_judge(ans_path):
         row = {'qid': a['qid'], 'kind': g['kind'], 'source': g['source'], 'declined': declined, 'correct': correct,
                'inPassages': g['chunkId'] in a['passages'], 'cited': g['chunkId'] in a['cited'], 'table': not a['passages'],
                'sentences': len(sents), 'supported': sum(sup)}
-        with open(out_path, 'a') as f:
-            f.write(json.dumps(row) + '\n')
+        common.append_jsonl(out_path, row, ensure_ascii=True)
     R = [json.loads(l) for l in open(out_path)]
     s_, t_ = sum(r['supported'] for r in R), sum(r['sentences'] for r in R)
     print(f"trivia {len(R)}: correct {sum(r['correct'] for r in R)} ({sum(r['correct'] for r in R) / len(R):.3f}); "
@@ -298,9 +280,7 @@ def stage_diagnose(ans_path):
             cause = 'retrieval: beyond 100'
         rows.append({'qid': qid, 'kind': g['kind'], 'source': g['source'], 'cause': cause, 'rankP3b': r3, 'rankP4': r4,
                      'named': named, 'declined': j['declined'], 'question': g['question'], 'reuse': g.get('reuse')})
-    with open(ans_path.replace('.jsonl', '.diag.jsonl'), 'w') as f:
-        for r in rows:
-            f.write(json.dumps(r, ensure_ascii=False) + '\n')
+    common.write_jsonl(ans_path.replace('.jsonl', '.diag.jsonl'), rows)
     print(f"misses {len(rows)} of {len(J)}")
     for c, n in collections.Counter(r['cause'] for r in rows).most_common():
         print(f"  {n:3}  {c}")

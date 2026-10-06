@@ -14,9 +14,11 @@ None when neither gives a nation. No model, about a minute.
 
   python3 scripts/place_nation.py    -> artifacts/topics/place_nation.json  {place: {"nation", "basis", "chunks"}}
 """
-import json, os, re, math, collections
+import collections, json, math, os, re, sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+from common import ROOT
+
 SKIP = {'archive', 'profile', 'summary', 'topic'}
 
 

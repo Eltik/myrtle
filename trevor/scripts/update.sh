@@ -21,6 +21,7 @@
 # dossiers and 46 topics, and ask --lore v2 adds the others at answer time.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+source scripts/llama.sh  # stop_pid, await_health
 BASE="${BASE:-http://127.0.0.1:3060}"
 PORT="${PORT:-8081}"
 GEN=models/llm/gemma-4-12b-it-qat-q4_0.gguf
@@ -30,8 +31,7 @@ LOG=artifacts/update/$(date +%Y%m%d-%H%M%S)
 mkdir -p "$LOG"
 SERVER_PID=""; THERM_PID=""
 cleanup() {
-  [[ -n "$SERVER_PID" ]] && { kill "$SERVER_PID" 2>/dev/null || true; wait "$SERVER_PID" 2>/dev/null || true; }
-  [[ -n "$THERM_PID" ]] && { kill "$THERM_PID" 2>/dev/null || true; wait "$THERM_PID" 2>/dev/null || true; }
+  stop_pid "$SERVER_PID"; stop_pid "$THERM_PID"
   SERVER_PID=""; THERM_PID=""
 }
 trap cleanup EXIT INT TERM
@@ -103,7 +103,7 @@ while pgrep -x llama-server >/dev/null; do echo "waiting for another llama-serve
 llama-server -m "$GEN" --host 127.0.0.1 --port "$PORT" -np 2 --kv-unified-per-slot 16384 \
   -fa on -cram 512 --no-webui --reasoning off -ngl all > "$LOG/server.log" 2>&1 &
 SERVER_PID=$!
-for _ in $(seq 1 180); do curl -sf "http://127.0.0.1:$PORT/health" >/dev/null && break; kill -0 "$SERVER_PID" || exit 1; sleep 1; done
+await_health "$SERVER_PID" continue
 export SERVER="http://127.0.0.1:$PORT"
 run_models
 if [[ -z "${SKIP_BANK_ANSWERS:-}" ]]; then
@@ -164,10 +164,9 @@ serve() {  # serve MODEL [llama-server args]: start one server on $PORT and wait
   llama-server -m "$1" --host 127.0.0.1 --port "$PORT" -np 1 --kv-unified-per-slot "${KV:-16384}" \
     -fa on -cram 512 --no-webui -ngl all "${@:2}" >> "$LOG/server.log" 2>&1 &
   SERVER_PID=$!
-  for _ in $(seq 1 180); do curl -sf "http://127.0.0.1:$PORT/health" >/dev/null && return 0; kill -0 "$SERVER_PID" || exit 1; sleep 1; done
-  exit 1
+  await_health "$SERVER_PID" exit
 }
-unserve() { [[ -n "$SERVER_PID" ]] && { kill "$SERVER_PID" 2>/dev/null || true; wait "$SERVER_PID" 2>/dev/null || true; }; SERVER_PID=""; }
+unserve() { stop_pid "$SERVER_PID"; SERVER_PID=""; }
 planned() { PLAN=1 python3 "$@" | grep -o 'plan [0-9]*' | head -1 | cut -d' ' -f2; }
 if [[ -z "${SKIP_P4_MODELS:-}" ]]; then
   export SERVER="http://127.0.0.1:$PORT"

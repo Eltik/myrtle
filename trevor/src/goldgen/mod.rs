@@ -34,11 +34,7 @@ pub const CLOSED_BOOK: &str = include_str!("../../prompts/closed_book.txt");
 pub const JUDGE_CLOSED_BOOK: &str = include_str!("../../prompts/judge.closed_book.txt");
 pub const UNANSWERABLE: &str = include_str!("../../prompts/unanswerable.txt");
 
-#[must_use]
-pub fn sha16(s: &str) -> String {
-    use sha2::{Digest, Sha256};
-    format!("{:x}", Sha256::digest(s.as_bytes()))[..16].to_owned()
-}
+pub use crate::util::sha16;
 
 /// What the generator returned for one sampled item.
 #[derive(Debug, Clone, Serialize, Deserialize)]

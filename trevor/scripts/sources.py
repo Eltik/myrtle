@@ -17,10 +17,12 @@ them and `ask` can say where a passage comes from:
 Deterministic, seconds. Writes artifacts/sources/units.jsonl ({storyId, groupId, title, text, speakers});
 `target/release/build-units` appends them to a corpus copy.
 """
-import collections, glob, json, os, re
+import collections, glob, json, os, re, sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-GD = os.path.join(ROOT, '..', 'assets', 'output', 'en', 'gamedata', 'excel')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+from common import EXCEL as GD, ROOT, kv, story_script as script
+
 OUT = os.path.join(ROOT, 'artifacts', 'sources', 'units.jsonl')
 TAG = re.compile(r'<[@$/][^>]*>|</>|<[^>]{1,40}>')
 
@@ -40,43 +42,17 @@ def load(name):
     return json.load(open(os.path.join(GD, name)))
 
 
-def kv(x):
-    return {r['key']: r['value'] for r in x} if isinstance(x, list) and x and isinstance(x[0], dict) and 'key' in x[0] else x
-
-
 def clean(s):
     # Rich-text tags ("<@ba.kw>", "<$ba.camp>", "</>") and the player's nickname placeholder.
     s = TAG.sub('', s or '').replace('{@nickname}', 'Doctor').replace('\\n', '\n')
     return '\n'.join(' '.join(l.split()) for l in s.split('\n') if l.strip())
 
 
-def script(path):
-    # Narration and dialogue of a story script: '[name="X"]line' becomes 'X: line'; bracketed commands are dropped.
-    out = []
-    for line in open(path, encoding='utf-8'):
-        line = line.strip()
-        m = re.match(r'^\[name="([^"]*)"\](.*)$', line)
-        if m:
-            out.append(f'{m.group(1)}: {m.group(2).strip()}')
-        elif line and not line.startswith('['):
-            out.append(line)
-    return '\n'.join(out)
-
-
 def words(s):
     return len((s or '').split())
 
 
-def main():
-    chars = kv(load('character_table.json')['Characters'])
-    cname = {k: v.get('Name') for k, v in chars.items()}
-    units = []
-
-    def add(sid, group, title, body, speakers=()):
-        body = clean(body)
-        if words(body) >= 6:
-            units.append({'storyId': sid, 'groupId': group, 'title': title, 'text': f'{title}\n{body}', 'speakers': list(speakers)})
-
+def add_modules(add, cname):
     for eid, e in kv(load('uniequip_table.json')['EquipDict']).items():
         cid = e.get('CharId')
         if e.get('Type_') == 'INITIAL' or not cid:
@@ -85,6 +61,8 @@ def main():
         add(f'module_{eid}', 'module', f"Module story: {e.get('UniEquipName')} ({op}'s module, {e.get('TypeName1', '')}-{e.get('TypeName2', '')})",
             e.get('UniEquipDesc'), [op])
 
+
+def add_voices(add, cname):
     lines = collections.defaultdict(list)
     for w in kv(load('charword_table.json')['CharWords']).values():
         # The default voice set only: a skin's alternate set repeats the same titles.
@@ -94,8 +72,9 @@ def main():
         op = cname.get(cid, cid)
         add(f'voice_{cid}', 'voice', f'Voice lines: {op}', '\n'.join(f'{t}: {x}' for _, t, x in sorted(ls)), [op])
 
-    rl = load('roguelike_topic_table.json')
-    topics = {t['key']: t['value'].get('Name') for t in rl['Topics']}
+
+def add_is_runs(add, rl, topics):
+    """Per Integrated Strategies run: its encounters, endings, relics with flavor text, stages and floors."""
     for d in rl['Details']:
         rid, v = d['key'], d['value']
         name = f"Integrated Strategies {is_no(rid.split('_')[-1])}, {topics.get(rid, rid)}"
@@ -114,7 +93,9 @@ def main():
             '\n'.join(f"{z.get('Name', '')}: {z.get('Description', '')} {z.get('EndingDescription', '') or ''}"
                       for z in kv(v.get('Zones', [])).values() if words(z.get('Description')) >= 6))
 
-    # The IS cutscenes themselves (ending scenes, monthly squad stories): story text the corpus build never fetched.
+
+def add_is_scripts(add, rl, topics):
+    """The IS cutscenes themselves (ending scenes, monthly squad stories): story text the corpus build never fetched."""
     story = os.path.join(GD, '..', 'story', 'obt')
     for path in sorted(glob.glob(os.path.join(story, 'roguelike', 'ro*', 'level_rogue*_ending_*.txt.txt'))):
         m = re.search(r'rogue(\d+)_ending_(\d+)', path)
@@ -129,11 +110,15 @@ def main():
         run = f'rogue_{m.group(1)}' if m else 'rogue'
         add(f'is_{base}', 'is', f"Integrated Strategies {is_no(m.group(1)) if m else ''}, {topics.get(run, run)}: monthly squad story {base}", script(path))
 
+
+def add_enemies(add):
     for eid, e in kv(load('enemy_handbook_table.json')['EnemyData']).items():
         if e.get('HideInHandbook') is True:
             continue
         add(f'enemy_{eid}', 'enemy', f"Enemy entry: {e.get('Name')}", e.get('Description'))
 
+
+def add_outfits(add, cname):
     for sid, s in kv(load('skin_table.json')['CharSkins']).items():
         d = s.get('DisplaySkin') or {}
         body = '\n'.join(x for x in (d.get('Content'), d.get('Dialog'), d.get('Usage'), d.get('Description')) if x)
@@ -142,9 +127,32 @@ def main():
         if d.get('SkinGroupName') != 'Default Outfit':
             add(f'skin_{sid}', 'skin', title, body, [op] if op else [])
 
+
+def add_items(add):
     for iid, i in kv(load('item_table.json')['Items']).items():
         if words(i.get('Description')) >= 8:
             add(f'item_{iid}', 'item', f"Item: {i.get('Name')}", f"{i.get('Description')}\n{i.get('Usage') or ''}")
+
+
+def main():
+    chars = kv(load('character_table.json')['Characters'])
+    cname = {k: v.get('Name') for k, v in chars.items()}
+    units = []
+
+    def add(sid, group, title, body, speakers=()):
+        body = clean(body)
+        if words(body) >= 6:
+            units.append({'storyId': sid, 'groupId': group, 'title': title, 'text': f'{title}\n{body}', 'speakers': list(speakers)})
+
+    add_modules(add, cname)
+    add_voices(add, cname)
+    rl = load('roguelike_topic_table.json')
+    topics = {t['key']: t['value'].get('Name') for t in rl['Topics']}
+    add_is_runs(add, rl, topics)
+    add_is_scripts(add, rl, topics)
+    add_enemies(add)
+    add_outfits(add, cname)
+    add_items(add)
 
     # Stable ids: a source that appears twice (a skin in two groups) keeps its first unit.
     seen, out = set(), []
@@ -153,9 +161,7 @@ def main():
         if u['storyId'] not in seen:
             seen.add(u['storyId']); out.append(u)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    with open(OUT, 'w') as f:
-        for u in out:
-            f.write(json.dumps(u, ensure_ascii=False) + '\n')
+    common.write_jsonl(OUT, out)
     c = collections.Counter(u['groupId'] for u in out)
     w = collections.Counter()
     for u in out:

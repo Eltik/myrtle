@@ -29,22 +29,21 @@ the EN release dates of the main episodes come from the game data alone:
           event's weight as a prerequisite) and artifacts/chrono/first_appearance.json (per speaker, the
           earliest-released group they speak in)
 """
-import collections, datetime, json, os, re, shutil, statistics, sys, time, urllib.parse, urllib.request
+import collections, datetime, json, os, re, shutil, statistics, sys, time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+from common import EXCEL as GD, ROOT
+
 CH = os.path.join(ROOT, 'artifacts', 'chrono')
-GD = os.path.join(ROOT, '..', 'assets', 'output', 'en', 'gamedata', 'excel')
 WIKI_REF = os.path.join(ROOT, 'eval', 'reference', 'main_release.wiki.json')
-API = 'https://arknights.wiki.gg/api.php'
 ACTS = ['Operation/Main_Theme/Act_initium', 'Operation/Main_Theme/Act_I', 'Operation/Main_Theme/Act_II',
         'Operation/Main_Theme/Act_III']
 EN_LAUNCH = '2020-01-16'  # Arknights global launch; the Main Theme page: "Prologue to Episode 04 were available upon the initial release"
 
 
 def wikitext(page):
-    q = urllib.parse.urlencode({'action': 'parse', 'page': page, 'prop': 'wikitext', 'format': 'json', 'redirects': 1})
-    with urllib.request.urlopen(urllib.request.Request(f'{API}?{q}', headers={'User-Agent': 'trevor-research/0.1'}), timeout=60) as r:
-        return json.load(r)['parse']['wikitext']['*']
+    return common.wiki_get({'action': 'parse', 'page': page, 'prop': 'wikitext', 'format': 'json', 'redirects': 1})['parse']['wikitext']['*']
 
 
 def stage_wiki():
@@ -235,8 +234,7 @@ def stage_build():
 
 
 def stage_storylines():
-    st = json.load(open(os.path.join(ROOT, '..', 'assets', 'output', 'en', 'gamedata', 'excel', 'stage_table.json')))
-    kv = lambda x: {r['key']: r['value'] for r in x} if isinstance(x, list) else x
+    st = json.load(open(os.path.join(GD, 'stage_table.json')))
     sets = kv(st['StorylineStorySets'])
     names = {g['groupId']: g['name'] for g in json.load(open(os.path.join(CH, 'timeline_v1.json')))['groups']}
 

@@ -9,10 +9,12 @@ affiliation field (character_table NationId, 383 of 407 set), `birthplace` is th
 Birth; `ask` reports both. Values are the game's own text; "Undisclosed" and "Unknown" stay as written.
 Writes artifacts/entities/operator_attributes.jsonl. Deterministic, seconds; rerun after any update.
 """
-import collections, json, os, re
+import collections, json, os, re, sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-GD = os.path.join(ROOT, '..', 'assets', 'output', 'en', 'gamedata', 'excel')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+from common import EXCEL as GD, ROOT
+
 OUT = os.path.join(ROOT, 'artifacts', 'entities', 'operator_attributes.jsonl')
 CLASS = {'PIONEER': 'Vanguard', 'WARRIOR': 'Guard', 'TANK': 'Defender', 'SNIPER': 'Sniper', 'CASTER': 'Caster',
          'MEDIC': 'Medic', 'SUPPORT': 'Supporter', 'SPECIAL': 'Specialist'}
@@ -73,9 +75,7 @@ def main():
             'combatExperience': info.get('Combat Experience') or None,
         })
     rows.sort(key=lambda r: r['name'])
-    with open(OUT, 'w') as f:
-        for r in rows:
-            f.write(json.dumps(r, ensure_ascii=False) + '\n')
+    common.write_jsonl(OUT, rows)
     cov = {k: sum(r[k] is not None for r in rows) for k in ('nation', 'group', 'team', 'gender', 'birthplace', 'race',
                                                               'heightCm', 'infected', 'birthday')}
     print(f"attributes: {len(rows)} operators; set per field {cov}; "

@@ -12,12 +12,12 @@ storyline year, then release), and their known names. Output ~300 words.
          story chunks and archive (plus neighbours) -> artifacts/dossiers/judged.jsonl
   sets   -> artifacts/dossiers/dossiers.v1.jsonl, the v1 characters' rows (the P3b of ask --lore v1)
 """
-import collections, hashlib, json, math, os, random, re, sys, threading, time, urllib.request
+import collections, json, os, random, re, sys, threading, time
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import incr
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common, incr
+from common import EXCEL, ROOT, read_jsonl, sha16
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'artifacts', 'dossiers')
 CORPUS = os.path.join(ROOT, os.environ.get('CORPUS', 'artifacts/p3a'))
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
@@ -29,7 +29,6 @@ SAMPLE = int(os.environ.get('SAMPLE', '30'))
 SOURCE = os.environ.get('DOSSIER_SOURCE', 'v2')
 ONLY_NEW = os.environ.get('DOSSIER_ONLY_NEW') == '1'
 JUDGE_SET = os.environ.get('DOSSIER_JUDGE', 'all')
-sha16 = lambda s: hashlib.sha256(s.encode()).hexdigest()[:16]
 ROLE = re.compile(r"\b(Member|Operator|Warrior|Mercenary|Soldier|Guard|Mob|Citizen|Officer|Worker|Staff|Villager|Student|"
                   r"Merchant|Crowd|Voice|Man|Woman|Girl|Boy|Kid|Child|Agent|Scout|Civilian|Resident|Thug|Bandit|"
                   r"Squire|Passerby|Customer|Clerk|Crew|Recruit|Trooper|Messenger|Shopkeeper|Attendant)s?\b")
@@ -42,24 +41,8 @@ SUPPORT_SYS = ("You check one claim about an Arknights character against evidenc
                "the evidence states or clearly implies the claim. Answer false otherwise. Answer with true or false only.")
 
 
-def read_jsonl(p):
-    return [json.loads(l) for l in open(p)] if os.path.exists(p) else []
-
-
-def chat(system, user, max_tokens, grammar=None):
-    body = {'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
-            'temperature': 0, 'seed': 1, 'max_tokens': max_tokens}
-    if grammar:
-        body['grammar'] = grammar
-    data = json.dumps(body).encode(); err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', data, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=1200) as r:
-                return json.load(r)['choices'][0]['message']['content'].strip()
-        except Exception as e:
-            err = e; time.sleep(5 * (attempt + 1))
-    raise err
+def chat(system, user, max_tokens):
+    return common.chat(SERVER, system, user, max_tokens, 1200)
 
 
 def load():
@@ -73,7 +56,7 @@ def characters(rows):
             continue
         for p in set(r['speakers']):
             spk[p] += 1; grp[p].add(r['groupId'])
-    ct = json.load(open(os.path.join(ROOT, '..', 'assets', 'output', 'en', 'gamedata', 'excel', 'character_table.json')))['Characters']
+    ct = json.load(open(os.path.join(EXCEL, 'character_table.json')))['Characters']
     ops = {c['value'].get('Name'): c['key'] for c in ct if c['value'].get('Name')}
     ids = {i['label']: i for i in json.load(open(os.path.join(ROOT, 'artifacts', 'entities', 'identities.json')))}
     out = []
@@ -247,25 +230,19 @@ def stage_gen():
     todo = [c for c in chars if c['name'] in names]
     psha = st.psha
     print(f'gen: {len(todo)} characters to do, {len(order) - len(todo)} done, prompt {psha}', flush=True)
-    lock = threading.Lock(); it = iter(todo); n = [0]; t0 = time.time()
+    lock = threading.Lock(); n = [0]; t0 = time.time()
 
-    def work():
-        while True:
-            with lock:
-                c = next(it, None)
-            if c is None:
-                return
-            user, top, archive = gen_input(c, lines_in, summ, gkey, arch)
-            out = chat(GEN_SYS, user, 600)
-            row = {'name': c['name'], 'charId': c['charId'], 'names': c['names'], 'chunks': c['chunks'],
-                   'stories': top, 'hasArchive': bool(archive), 'dossier': out, 'promptSha': psha}
-            with lock:
-                st.put(row)
-                n[0] += 1
-                if n[0] % 20 == 0:
-                    print(f'{time.strftime("%H:%M:%S")} gen {n[0]}/{len(todo)}, {(time.time() - t0) / n[0]:.1f} s each', flush=True)
-    th = [threading.Thread(target=work) for _ in range(2)]
-    [t.start() for t in th]; [t.join() for t in th]
+    def one(c):
+        user, top, archive = gen_input(c, lines_in, summ, gkey, arch)
+        out = chat(GEN_SYS, user, 600)
+        row = {'name': c['name'], 'charId': c['charId'], 'names': c['names'], 'chunks': c['chunks'],
+               'stories': top, 'hasArchive': bool(archive), 'dossier': out, 'promptSha': psha}
+        with lock:
+            st.put(row)
+            n[0] += 1
+            if n[0] % 20 == 0:
+                print(f'{time.strftime("%H:%M:%S")} gen {n[0]}/{len(todo)}, {(time.time() - t0) / n[0]:.1f} s each', flush=True)
+    common.par(todo, one, 2, lock)
     print('gen done', flush=True)
 
 
@@ -273,20 +250,7 @@ ABBR = r'(?<!\bMr\.)(?<!\bMrs\.)(?<!\bMs\.)(?<!\bDr\.)(?<!\bSt\.)(?<!\bLt\.)(?<!
 
 
 def sentences(t):
-    return [x.strip() for x in re.split(ABBR + r'(?<=[.!?])\s+(?=[A-Z"\'])', ' '.join(t.split())) if len(x.strip()) > 20]
-
-
-def bm25_top(query, docs, k):
-    tok = lambda s: re.findall(r"[a-z0-9']+", s.lower())
-    D = [tok(d) for d in docs]; Nd = len(D); avg = sum(map(len, D)) / max(Nd, 1)
-    df = collections.Counter(w for d in D for w in set(d)); q = set(tok(query)); sc = []
-    for i, d in enumerate(D):
-        tf = collections.Counter(d); s = 0.0
-        for w in q:
-            if w in tf:
-                s += math.log(1 + (Nd - df[w] + 0.5) / (df[w] + 0.5)) * tf[w] * 2.2 / (tf[w] + 1.2 * (0.25 + 0.75 * len(d) / avg))
-        sc.append((s, i))
-    return [i for _, i in sorted(sc, reverse=True)[:k]]
+    return common.split_sentences(t, ABBR)
 
 
 def stage_judge():
@@ -307,29 +271,17 @@ def stage_judge():
         pool = [c for s in d['stories'] for c in sorted(by_story[s], key=lambda c: c['ordinal'])]
         if d['charId']:
             pool += by_story.get(f"archive_{d['charId']}", [])
-        verdicts = []; lock = threading.Lock(); claims = sentences(d['dossier']); it = iter(claims)
+        verdicts = []; lock = threading.Lock(); claims = sentences(d['dossier'])
 
-        def work():
-            while True:
-                with lock:
-                    cl = next(it, None)
-                if cl is None:
-                    return
-                ev = set()
-                for i in bm25_top(cl, [c['text'] for c in pool], 5):
-                    for j in (i - 1, i, i + 1):
-                        if 0 <= j < len(pool) and pool[j]['storyId'] == pool[i]['storyId']:
-                            ev.add(j)
-                v = chat(SUPPORT_SYS, 'EVIDENCE:\n' + '\n---\n'.join(pool[j]['text'] for j in sorted(ev)) + f'\n\nCLAIM: {cl}', 3,
-                         'root ::= "true" | "false"\n') == 'true'
-                with lock:
-                    verdicts.append((cl, v))
-        th = [threading.Thread(target=work) for _ in range(2)]
-        [t.start() for t in th]; [t.join() for t in th]
+        def check(cl):
+            ev = common.evidence_window(cl, pool)
+            v = common.verdict(SERVER, SUPPORT_SYS, 'EVIDENCE:\n' + '\n---\n'.join(pool[j]['text'] for j in ev) + f'\n\nCLAIM: {cl}', 1200)
+            with lock:
+                verdicts.append((cl, v))
+        common.par(claims, check, 2, lock)
         row = {'name': d['name'], 'words': len(d['dossier'].split()), 'sentences': len(claims),
                'supported': sum(v for _, v in verdicts), 'unsupported': [c for c, v in verdicts if not v]}
-        with open(path, 'a') as f:
-            f.write(json.dumps(row, ensure_ascii=False) + '\n')
+        common.append_jsonl(path, row)
         print(f"{d['name']}: {row['supported']}/{row['sentences']} supported, {row['words']} words", flush=True)
     J = read_jsonl(path)
     s = sum(r['supported'] for r in J); t = sum(r['sentences'] for r in J)

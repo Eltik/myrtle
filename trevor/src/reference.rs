@@ -17,7 +17,6 @@ pub const DIR: &str = "eval/reference";
 /// The wiki's design-basis rows (`scripts/design_basis.py`), for `ask --wiki-legacy` only.
 #[must_use]
 pub fn wiki_design_basis(root: &Path) -> Option<Vec<Value>> {
-    let text = std::fs::read_to_string(root.join(DIR).join("design_basis.jsonl")).ok()?;
-    let rows: Vec<Value> = text.lines().filter(|l| !l.trim().is_empty()).filter_map(|l| serde_json::from_str(l).ok()).collect();
+    let rows: Vec<Value> = crate::util::read_jsonl_opt(&root.join(DIR).join("design_basis.jsonl"))?;
     (!rows.is_empty()).then_some(rows)
 }

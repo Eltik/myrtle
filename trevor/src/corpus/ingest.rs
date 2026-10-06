@@ -33,6 +33,7 @@ use anyhow::{Context, Result, anyhow};
 use futures::StreamExt as _;
 use serde::{Deserialize, Serialize};
 
+use crate::util::sha_hex;
 use crate::corpus::chunk::{
     Chunk, ChunkConfig, PROSE_ARG_KINDS, PROSE_KINDS, StoryCommand, chunk_story,
 };
@@ -726,24 +727,9 @@ fn now_unix() -> u64 {
         .map_or(0, |d| d.as_secs())
 }
 
-fn sha_hex(bytes: &[u8]) -> String {
-    use sha2::Digest as _;
-    format!("{:x}", sha2::Sha256::digest(bytes))
-}
-
+/// Rename so a reader never sees a half-written derived file.
 fn write_jsonl<T: Serialize>(path: &Path, rows: impl IntoIterator<Item = T>) -> Result<()> {
-    let tmp = path.with_extension("jsonl.tmp");
-    {
-        let mut w = std::io::BufWriter::new(std::fs::File::create(&tmp)?);
-        for r in rows {
-            serde_json::to_writer(&mut w, &r)?;
-            w.write_all(b"\n")?;
-        }
-        w.flush()?;
-    }
-    // Rename so a reader never sees a half-written derived file.
-    std::fs::rename(&tmp, path)?;
-    Ok(())
+    crate::util::write_jsonl_atomic(path, "jsonl.tmp", rows)
 }
 
 /// Run the ingest end to end.

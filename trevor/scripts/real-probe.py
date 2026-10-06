@@ -12,14 +12,16 @@ Stages:
            category, N in total -> eval/real-probe.jsonl
   judge    judge model on $SERVER over the `ask --batch` output -> <answers>.judged.jsonl, then a table
 """
-import collections, json, os, random, re, sys, time, urllib.request
+import collections, json, os, random, sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+from common import ROOT
+
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
 CORPUS = os.path.join(ROOT, os.environ.get('CORPUS', 'artifacts/p3a'))
 N = int(os.environ.get('N', '120'))
 MIN = int(os.environ.get('MIN', '5'))
-G_BOOL = 'root ::= "true" | "false"\n'
 RESPONDS_SYS = ("You read a question about the Arknights story and an answer. Answer true if the answer addresses the question "
                 "with relevant content, even partly. Answer false if it only says it cannot find the answer, or talks about "
                 "something else. Answer true or false only.")
@@ -33,17 +35,7 @@ POLICY = {'M', 'Q', 'S', 'K'}
 
 
 def verdict(system, user):
-    body = json.dumps({'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
-                       'temperature': 0, 'seed': 1, 'max_tokens': 3, 'grammar': G_BOOL}).encode()
-    err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=600) as r:
-                return json.load(r)['choices'][0]['message']['content'].strip() == 'true'
-        except Exception as e:
-            err = e; time.sleep(5 * (attempt + 1))
-    raise err
+    return common.verdict(SERVER, system, user, 600)
 
 
 def stage_sample():
@@ -68,25 +60,14 @@ def stage_sample():
 
 
 def sentences(t):
-    t = re.sub(r'\s*\[[\d,;\s]+\]', '', ' '.join(t.split()))
-    return [x.strip() for x in re.split(r'(?<!\bMr\.)(?<!\bDr\.)(?<=[.!?])\s+(?=[A-Z"\'*])', t) if len(x.strip()) > 20]
+    return common.split_sentences(common.strip_cites(' '.join(t.split())), r'(?<!\bMr\.)(?<!\bDr\.)', '[A-Z"\'*]')
 
 
 def stage_judge(ans_path):
     chunks = {json.loads(l)['chunkId']: json.loads(l) for l in open(os.path.join(CORPUS, 'chunks.jsonl'))}
-    # The topic tool's summary is passage 'topic:<name>' (ask --router model); the judge sees it as ask did, citations stripped.
-    for t in map(json.loads, open(os.path.join(ROOT, 'artifacts', 'topics', 'topics.jsonl'))):
-        chunks[f"topic:{t['topic']}"] = {'text': re.sub(r'\s*\[[\d,;\s]+\]', '', t.get('summaryV2') or t.get('summary') or '')}  # summaryV2: --lore v2's text
-    # A new dossier (`ask --lore v2`, 2026-10-02) is passage 'dossier:<name>', shown as ask shows it.
-    dp = os.path.join(ROOT, 'artifacts', 'dossiers', 'dossiers.jsonl')
-    for d in (map(json.loads, open(dp)) if os.path.exists(dp) else []):
-        aka = [x for x in d.get('names') or [] if x != d['name']]
-        head = f"Character profile: {d['name']}" + (f" (also known as {', '.join(aka)})" if aka else '')
-        chunks[f"dossier:{d['name']}"] = {'text': f"{head}\n{d['dossier']}"}
-    # The overview tool's summaries are passages 'overview:<id>' (2026-10-01), shown to the judge as ask showed them.
-    op = os.path.join(ROOT, 'artifacts', 'overview', 'overview.jsonl')
-    for t in (map(json.loads, open(op)) if os.path.exists(op) else []):
-        chunks[f"overview:{t['id']}"] = {'text': re.sub(r'\s*\[[\d,;\s]+\]', '', t.get('summary') or '')}
+    # Topic summaries, dossiers and the summary tree as passages 'topic:<name>', 'dossier:<name>' and 'overview:<id>',
+    # shown to the judge as ask showed them.
+    common.add_tool_passages(chunks, topics_required=True, overview=True)
     # PROBE: another question file in the same format (qid, question, category, answerable); default the real probe.
     Q = {json.loads(l)['qid']: json.loads(l) for l in open(os.path.join(ROOT, os.environ.get('PROBE', 'eval/real-probe.jsonl')))}
     out = ans_path.replace('.jsonl', '.judged.jsonl')

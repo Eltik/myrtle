@@ -15,14 +15,15 @@ corpus states the whole story at once. This builds the missing top of the tree o
              -> artifacts/overview/judged.jsonl (keyed on id + summary + prompt), per-unit score and the worst 5
 -> artifacts/overview/overview.jsonl, one row per unit: id, kind, name, summary, sources, inputSha, promptSha.
 """
-import collections, hashlib, json, os, re, sys, time, urllib.request
+import collections, os, sys, time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+from common import CITE, ROOT, read_jsonl, sha16
+
 OUT = os.path.join(ROOT, 'artifacts', 'overview')
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
 PLAN = os.environ.get('PLAN') == '1'
-sha16 = lambda s: hashlib.sha256(s.encode()).hexdigest()[:16]
-CITE = re.compile(r'\s*\[[\d,;\s]+\]')
 
 STORYLINE_SYS = (
     "You write an overview of one storyline of the Arknights story for a reader who wants the whole of it at once, using "
@@ -48,26 +49,12 @@ PROMPTS = {'storyline': STORYLINE_SYS, 'story': STORY_SYS, 'world': WORLD_SYS}
 TOPIC_WORDS = int(os.environ.get('OVERVIEW_TOPIC_WORDS', '80'))
 
 
-def read_jsonl(p):
-    return [json.loads(l) for l in open(p)] if os.path.exists(p) else []
-
-
 def chat(system, user, max_tokens=900):
-    body = json.dumps({'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
-                       'temperature': 0, 'seed': 1, 'max_tokens': max_tokens}).encode()
-    err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=1800) as r:
-                return json.load(r)['choices'][0]['message']['content'].strip()
-        except Exception as e:
-            err = e; time.sleep(5 * (attempt + 1))
-    raise err
+    return common.chat(SERVER, system, user, max_tokens, 1800)
 
 
 def storyline_units():
-    s = json.load(open(os.path.join(ROOT, 'artifacts', 'chrono', 'storylines.json')))
+    s = common.load_json(os.path.join(ROOT, 'artifacts', 'chrono', 'storylines.json'))
     groups = {r['groupId']: r['summary'] for r in read_jsonl(os.path.join(ROOT, 'artifacts', 'p2', 'groups.jsonl')) if r['method'] == 'C'}
     units = []
     for l in s['storylines']:
@@ -112,9 +99,7 @@ def stage_gen():
     rows = {r['id']: r for r in read_jsonl(path)}
 
     def save():
-        with open(path, 'w') as f:
-            for r in rows.values():
-                f.write(json.dumps(r, ensure_ascii=False) + '\n')
+        common.write_jsonl(path, rows.values())
 
     t0 = time.time(); n = 0
     for phase in ('storyline', 'top'):
@@ -147,23 +132,11 @@ ABBR = r'(?<!\bMr\.)(?<!\bMrs\.)(?<!\bMs\.)(?<!\bDr\.)(?<!\bSt\.)(?<!\bLt\.)(?<!
 
 def sentences(t):
     # As topics.py: sentences over 20 characters, citations removed so the judge sees the claim only.
-    t = CITE.sub('', t)
-    return [x.strip() for x in re.split(ABBR + r'(?<=[.!?])\s+(?=[A-Z"\'])', ' '.join(t.split())) if len(x.strip()) > 20]
+    return common.split_sentences(CITE.sub('', t), ABBR)
 
 
 def verdict(evidence, claim):
-    body = json.dumps({'messages': [{'role': 'system', 'content': SUPPORT_SYS},
-                                    {'role': 'user', 'content': f'EVIDENCE:\n{evidence}\n\nCLAIM: {claim}'}],
-                       'temperature': 0, 'seed': 1, 'max_tokens': 3, 'grammar': 'root ::= "true" | "false"\n'}).encode()
-    err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=900) as r:
-                return json.load(r)['choices'][0]['message']['content'].strip() == 'true'
-        except Exception as e:
-            err = e; time.sleep(5 * (attempt + 1))
-    raise err
+    return common.verdict(SERVER, SUPPORT_SYS, f'EVIDENCE:\n{evidence}\n\nCLAIM: {claim}', 900)
 
 
 def stage_judge():
@@ -180,8 +153,7 @@ def stage_judge():
             n += 1; continue
         vs = [(c, verdict(inputs[r['id']], c)) for c in sentences(r['summary'])]
         row = {'id': r['id'], 'key': key, 'sentences': len(vs), 'supported': sum(v for _, v in vs), 'unsupported': [c for c, v in vs if not v]}
-        with open(path, 'a') as f:
-            f.write(json.dumps(row, ensure_ascii=False) + '\n')
+        common.append_jsonl(path, row)
         n += 1
         print(f"{time.strftime('%H:%M:%S')} {r['id']}: {row['supported']}/{row['sentences']} supported ({(time.time() - t0) / n:.0f} s each)", flush=True)
     if PLAN:

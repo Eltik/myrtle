@@ -30,15 +30,17 @@ changed or new passages.
            and over playable operators
 PLAN=1 makes extract and check print what they would do and stop, calling no model.
 """
-import collections, hashlib, json, os, re, sys, threading, time, urllib.parse, urllib.request
+import collections, json, os, re, sys, threading, time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+from common import ROOT, read_jsonl, sha16
+
 ENT = os.path.join(ROOT, 'artifacts', 'entities')
 REF = os.path.join(ROOT, 'eval', 'reference')
 LEGACY = os.environ.get('DEATH_CONFIRM') == 'wiki'
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
-GD = os.path.join(ROOT, '..', 'assets', 'output', 'en', 'gamedata', 'excel')
-sha16 = lambda s: hashlib.sha256(s.encode()).hexdigest()[:16]
+GD = common.EXCEL
 DEATH = re.compile(r"\b(die[sd]?|dying|death|dead|killed|kill(?:ed)?|perish\w*|slain|passed away|corpse|lifeless|funeral|"
                    r"sacrific\w+|last breath|stopped breathing|murder\w*|executed|execution)\b", re.I)
 SYS = ("You read a passage of an Arknights story script, written as 'Speaker: line'. List every character whose death this "
@@ -64,33 +66,18 @@ GENERIC = re.compile(r"^(?:Infected|Sarkaz|Guard|Soldier|Mercenary|Citizen|Villa
                      r"Resident|Thug|Bandit|Trooper|Messenger|Warrior|Knight|Teacher|Fighter|Assassin)s?$")
 
 
-def read_jsonl(p):
-    return [json.loads(l) for l in open(p)] if os.path.exists(p) else []
-
-
 def norm(s):
     return re.sub(r'\W+', ' ', s).strip().lower()
 
 
 def chat(user):
-    body = json.dumps({'messages': [{'role': 'system', 'content': SYS}, {'role': 'user', 'content': user}],
-                       'temperature': 0, 'seed': 1, 'max_tokens': 500, 'grammar': GRAMMAR}).encode()
-    err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=600) as r:
-                return json.loads(json.load(r)['choices'][0]['message']['content'])
-        except Exception as e:
-            err = e; time.sleep(5 * (attempt + 1))
-    raise err
+    """The death mentions the model lists for one passage (its JSON answer, parsed inside the retry)."""
+    return common.chat(SERVER, SYS, user, 500, 600, lambda d: json.loads(common.content(d)), grammar=GRAMMAR)
 
 
 def stage_wiki():
     titles, off = [], 0
-    api = 'https://arknights.wiki.gg/api.php'
-    get = lambda q: json.load(urllib.request.urlopen(urllib.request.Request(
-        f'{api}?{urllib.parse.urlencode(q)}', headers={'User-Agent': 'trevor-research/0.1'}), timeout=60))
+    get = common.wiki_get
     while True:
         t = get({'action': 'query', 'list': 'search', 'srsearch': 'insource:/status *= *Deceased/', 'srlimit': 500,
                  'sroffset': off, 'format': 'json', 'srnamespace': 0})
@@ -120,28 +107,20 @@ def stage_extract():
     print(f'extract: {len(todo)} passages to do of {len(todo_all)}, prompt {PSHA}', flush=True)
     if os.environ.get('PLAN'):
         return
-    lock = threading.Lock(); it = iter(todo); n = [0]; t0 = time.time()
+    lock = threading.Lock(); n = [0]; t0 = time.time()
 
-    def work():
-        while True:
-            with lock:
-                r = next(it, None)
-            if r is None:
-                return
-            ms = chat(r['text'])
-            text = norm(r['text'])
-            for m in ms:
-                m['quoteFound'] = bool(norm(m['quote'])) and norm(m['quote']) in text
-            with lock:
-                with open(path, 'a') as f:
-                    f.write(json.dumps({'chunkId': r['chunkId'], 'storyId': r['storyId'], 'groupId': r['groupId'],
-                                        'textSha': sha16(r['text']), 'promptSha': PSHA, 'mentions': ms},
-                                       ensure_ascii=False) + '\n')
-                n[0] += 1
-                if n[0] % 100 == 0:
-                    print(f'{time.strftime("%H:%M:%S")} extract {n[0]}/{len(todo)}, {(time.time() - t0) / n[0]:.2f} s each', flush=True)
-    th = [threading.Thread(target=work) for _ in range(2)]
-    [t.start() for t in th]; [t.join() for t in th]
+    def one(r):
+        ms = chat(r['text'])
+        text = norm(r['text'])
+        for m in ms:
+            m['quoteFound'] = bool(norm(m['quote'])) and norm(m['quote']) in text
+        with lock:
+            common.append_jsonl(path, {'chunkId': r['chunkId'], 'storyId': r['storyId'], 'groupId': r['groupId'],
+                                       'textSha': sha16(r['text']), 'promptSha': PSHA, 'mentions': ms})
+            n[0] += 1
+            if n[0] % 100 == 0:
+                print(f'{time.strftime("%H:%M:%S")} extract {n[0]}/{len(todo)}, {(time.time() - t0) / n[0]:.2f} s each', flush=True)
+    common.par(todo, one, 2, lock)
     print('extract done', flush=True)
 
 
@@ -153,18 +132,7 @@ CSHA = sha16(CHECK_SYS)
 
 
 def check(text, name, quote):
-    body = json.dumps({'messages': [{'role': 'system', 'content': CHECK_SYS},
-                                    {'role': 'user', 'content': f'PASSAGE:\n{text}\n\nCHARACTER: {name}\nQUOTE: {quote}'}],
-                       'temperature': 0, 'seed': 1, 'max_tokens': 3, 'grammar': 'root ::= "true" | "false"\n'}).encode()
-    err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=600) as r:
-                return json.load(r)['choices'][0]['message']['content'].strip() == 'true'
-        except Exception as e:
-            err = e; time.sleep(5 * (attempt + 1))
-    raise err
+    return common.verdict(SERVER, CHECK_SYS, f'PASSAGE:\n{text}\n\nCHARACTER: {name}\nQUOTE: {quote}', 600)
 
 
 def mkey(r, m):
@@ -220,29 +188,20 @@ def stage_check():
     print(f'check: {len(todo)} named mentions to check', flush=True)
     if os.environ.get('PLAN'):
         return
-    lock = threading.Lock(); it = iter(todo)
+    lock = threading.Lock()
 
-    def work():
-        while True:
-            with lock:
-                x = next(it, None)
-            if x is None:
-                return
-            r, m = x
-            ok = check(chunks[r['chunkId']]['text'], m['name'], m['quote'])
-            with lock:
-                with open(path, 'a') as f:
-                    f.write(json.dumps({'key': mkey(r, m), 'ok': ok}) + '\n')
-    th = [threading.Thread(target=work) for _ in range(2)]
-    [t.start() for t in th]; [t.join() for t in th]
+    def one(x):
+        r, m = x
+        ok = check(chunks[r['chunkId']]['text'], m['name'], m['quote'])
+        with lock:
+            common.append_jsonl(path, {'key': mkey(r, m), 'ok': ok}, ensure_ascii=True)
+    common.par(todo, one, 2, lock)
     C = read_jsonl(path)
     print(f"check: {sum(c['ok'] for c in C)}/{len(C)} confirmed", flush=True)
 
 
 def resolver():
-    ct = json.load(open(os.path.join(GD, 'character_table.json')))['Characters']
-    ops = {c['value']['Name']: c['key'] for c in ct
-           if c['value'].get('Profession') not in ('TOKEN', 'TRAP') and not c['value'].get('IsNotObtainable')}
+    ops = {name: cid for cid, name in common.playable_operators()}
     alias = {}
     for i in json.load(open(os.path.join(ENT, 'identities.json'))):
         for n in i['names']:
@@ -356,9 +315,7 @@ def stage_build():
             e['corroborated'] = len(groups_of[c]) >= 2 and first is not None and not later
             e['confirm'] = {'storyGroups': len(groups_of[c]), 'laterGroupsSpeaking': len(later), 'firstLaterGroup':
                             later[0] if later else None}
-    with open(os.path.join(ENT, 'deaths.jsonl'), 'w') as f:
-        for e in events.values():
-            f.write(json.dumps(e, ensure_ascii=False) + '\n')
+    common.write_jsonl(os.path.join(ENT, 'deaths.jsonl'), events.values())
     with open(os.path.join(ENT, 'deaths_unnamed.json'), 'w') as f:
         json.dump([{'storyId': s, 'kind': k, 'count': n} for (s, k), n in sorted(unnamed.items())], f, indent=0)
     c = collections.Counter(e['kind'] for e in events.values())

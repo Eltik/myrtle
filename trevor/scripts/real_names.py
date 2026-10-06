@@ -13,16 +13,15 @@ changed.
   gen    generator model on $SERVER -> artifacts/entities/real_names.jsonl (PLAN=1: dry run)
   show   print the table
 """
-import collections, json, os, re, sys, threading, time, urllib.request
+import collections, json, os, re, sys, threading, time
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import incr
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common, incr
+from common import ROOT, read_jsonl
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'artifacts', 'entities', 'real_names.jsonl')
 CORPUS = os.path.join(ROOT, os.environ.get('CORPUS', 'artifacts/p3a'))
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
-GD = os.path.join(ROOT, '..', 'assets', 'output', 'en', 'gamedata', 'excel')
 CUE = re.compile(r"real name|true name|full name|birth name|given name|family name|surname|n[ée]e\b|born as|"
                  r"my name is|name's|named\b|codename|code name", re.I)
 SYS = ("You read passages about one Arknights operator, known by a codename. Give the operator's real name: their own "
@@ -39,7 +38,7 @@ CHECK_SYS = ("You check one claim about an Arknights operator against a quote fr
              "quote shows the given name is this operator's own personal name: stated as their real or full name, used "
              "by the operator for themselves, or used by someone addressing them by name. Answer false if it is another "
              "person's name, a nickname or title, or only a guess. Answer true or false only.")
-PSHA = incr.sha16(SYS + GRAMMAR + CHECK_SYS)
+PSHA = common.sha16(SYS + GRAMMAR + CHECK_SYS)
 
 
 def base(name):
@@ -47,32 +46,19 @@ def base(name):
     return re.split(r'\s+the\s+', name, maxsplit=1)[0]
 
 
-def norm(s):
-    return re.sub(r'\W+', ' ', s or '').strip().lower()
+norm = common.word_norm
 
 
 def post(system, user, max_tokens, grammar):
-    body = json.dumps({'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
-                       'temperature': 0, 'seed': 1, 'max_tokens': max_tokens, 'grammar': grammar}).encode()
-    err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=900) as r:
-                return json.load(r)['choices'][0]['message']['content']
-        except Exception as e:
-            err = e; time.sleep(5 * (attempt + 1))
-    raise err
+    """The unstripped message text of a grammar-bound call, with retries."""
+    return common.chat(SERVER, system, user, max_tokens, 900, common.content, grammar=grammar)
 
 
-def operators():
-    ct = json.load(open(os.path.join(GD, 'character_table.json')))['Characters']
-    return [(c['key'], c['value']['Name']) for c in ct
-            if c['value'].get('Profession') not in ('TOKEN', 'TRAP') and not c['value'].get('IsNotObtainable')]
+operators = common.playable_operators
 
 
 def build_stage():
-    rows = incr.read_jsonl(os.path.join(CORPUS, 'chunks.jsonl'))
+    rows = read_jsonl(os.path.join(CORPUS, 'chunks.jsonl'))
     arch = collections.defaultdict(list); story = []
     for r in rows:
         if r['storyId'].startswith('archive_'):
@@ -124,50 +110,43 @@ def stage_gen():
     if todo is None:
         return
     print(f'real names: {len(todo)} operators to do, prompt {PSHA}', flush=True)
-    it = iter(todo); lock = threading.Lock(); n = [0]; t0 = time.time()
+    lock = threading.Lock(); n = [0]; t0 = time.time()
 
-    def work():
-        while True:
-            with lock:
-                cid = next(it, None)
-            if cid is None:
-                return
-            name, user, passages = inputs[cid]
-            out = json.loads(post(SYS, user, 200, GRAMMAR))
-            # The grammar allows the string "null" as well as null; both mean no name.
-            real, quote = [None if (v or '').strip().lower() in ('', 'null', 'none', 'unknown') else v.strip()
-                           for v in (out.get('realName'), out.get('quote'))]
-            src = next((r for r in passages if quote and norm(quote) and norm(quote) in norm(r['text'])), None)
-            why = None
-            if not real:
-                why = 'none stated'
-            elif not src:
-                why = 'quote not in passages'
-            elif norm(real) not in norm(quote):
-                why = 'name not in quote'
-            elif norm(real) in (norm(name), norm(base(name))):
-                why = 'same as codename'
-            else:
-                ok = post(CHECK_SYS, f'OPERATOR (codename): {name}\nNAME: {real}\nQUOTE: {quote}', 3,
-                          'root ::= "true" | "false"\n').strip() == 'true'
-                why = None if ok else 'check false'
-            row = {'name': name, 'charId': cid, 'realName': real if why is None else None, 'candidate': real,
-                   'quote': quote, 'chunkId': src['chunkId'] if src else None, 'storyId': src['storyId'] if src else None,
-                   'rejected': why, 'promptSha': PSHA}
-            st.put(row)
-            with lock:
-                n[0] += 1
-                if n[0] % 50 == 0:
-                    print(f'{time.strftime("%H:%M:%S")} real names {n[0]}/{len(todo)}, {(time.time() - t0) / n[0]:.1f} s each', flush=True)
-    th = [threading.Thread(target=work) for _ in range(2)]
-    [t.start() for t in th]; [t.join() for t in th]
-    R = incr.read_jsonl(OUT)
+    def one(cid):
+        name, user, passages = inputs[cid]
+        out = json.loads(post(SYS, user, 200, GRAMMAR))
+        # The grammar allows the string "null" as well as null; both mean no name.
+        real, quote = [None if (v or '').strip().lower() in ('', 'null', 'none', 'unknown') else v.strip()
+                       for v in (out.get('realName'), out.get('quote'))]
+        src = next((r for r in passages if quote and norm(quote) and norm(quote) in norm(r['text'])), None)
+        why = None
+        if not real:
+            why = 'none stated'
+        elif not src:
+            why = 'quote not in passages'
+        elif norm(real) not in norm(quote):
+            why = 'name not in quote'
+        elif norm(real) in (norm(name), norm(base(name))):
+            why = 'same as codename'
+        else:
+            ok = common.verdict(SERVER, CHECK_SYS, f'OPERATOR (codename): {name}\nNAME: {real}\nQUOTE: {quote}', 900)
+            why = None if ok else 'check false'
+        row = {'name': name, 'charId': cid, 'realName': real if why is None else None, 'candidate': real,
+               'quote': quote, 'chunkId': src['chunkId'] if src else None, 'storyId': src['storyId'] if src else None,
+               'rejected': why, 'promptSha': PSHA}
+        st.put(row)
+        with lock:
+            n[0] += 1
+            if n[0] % 50 == 0:
+                print(f'{time.strftime("%H:%M:%S")} real names {n[0]}/{len(todo)}, {(time.time() - t0) / n[0]:.1f} s each', flush=True)
+    common.par(todo, one, 2, lock)
+    R = read_jsonl(OUT)
     print(f"real names: {len(R)} operators, {sum(bool(r['realName']) for r in R)} with a real name; "
           f"rejected {dict(collections.Counter(r['rejected'] for r in R if r['rejected']))}", flush=True)
 
 
 def stage_show():
-    for r in incr.read_jsonl(OUT):
+    for r in read_jsonl(OUT):
         if r['realName']:
             print(f"{r['name']}: {r['realName']} | {r['quote'][:100]} ({r['storyId']})")
 

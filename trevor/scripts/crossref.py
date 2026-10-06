@@ -11,10 +11,11 @@ which one made it. No model.
 
   python3 scripts/crossref.py            -> artifacts/crossref/bosses_playable.json
 """
-import json, os, re
+import json, os, re, sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-EXCEL = os.path.join(ROOT, '..', 'assets', 'output', 'en', 'gamedata', 'excel')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+from common import EXCEL, ROOT
+
 OUT = os.path.join(ROOT, 'artifacts', 'crossref')
 
 

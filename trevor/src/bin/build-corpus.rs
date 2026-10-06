@@ -16,7 +16,6 @@ use std::sync::Arc;
 
 use anyhow::{Context, Result, bail};
 use clap::Parser;
-use sha2::{Digest, Sha256};
 use tokenizers::Tokenizer;
 use trevor::corpus::chunk::ChunkConfig;
 use trevor::corpus::ingest::{self, IngestConfig};
@@ -105,7 +104,7 @@ async fn main() -> Result<()> {
     let args = Args::parse();
     let bytes = std::fs::read(&args.tokenizer)
         .with_context(|| format!("reading {}", args.tokenizer.display()))?;
-    let tokenizer_sha = format!("{:x}", Sha256::digest(&bytes));
+    let tokenizer_sha = trevor::util::sha_hex(&bytes);
     let tok = Tokenizer::from_bytes(&bytes).map_err(|e| anyhow::anyhow!("{e}"))?;
     let (overhead, joiner) = calibrate(&tok)?;
     eprintln!("tokenizer {tokenizer_sha:.16}: sequence overhead {overhead}, join {joiner}");

@@ -21,9 +21,12 @@ artifacts/p2/judged.jsonl (resumable) and prints totals per kind and method.
 Sample: SAMPLE_GROUPS multi-story groups (every method each) and SAMPLE_STORIES
 story summaries, both seeded.
 """
-import collections, json, math, os, random, re, sys, threading, time, urllib.request
+import collections, json, os, random, sys, threading
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+from common import ROOT, read_jsonl
+
 P2 = os.path.join(ROOT, 'artifacts', 'p2')
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
 SAMPLE_GROUPS = int(os.environ.get('SAMPLE_GROUPS', '15'))
@@ -35,60 +38,15 @@ SUPPORT_SYS = ("You check one claim about an Arknights story against evidence fr
                "mention it. Answer with true or false only.")
 BEAT_SYS = ("You check whether a summary covers one event. Answer true if the summary states or clearly implies the "
             "event, false otherwise. Answer with true or false only.")
-G_BOOL = 'root ::= "true" | "false"\n'
 ABBR = r'(?<!\bMr\.)(?<!\bMrs\.)(?<!\bMs\.)(?<!\bDr\.)(?<!\bSt\.)(?<!\bLt\.)(?<!\bSgt\.)(?<!\bJr\.)(?<!\bSr\.)(?<!\bMt\.)(?<!\bMs\.)(?<!\bNo\.)(?<!\bVol\.)(?<!\bvs\.)'
 
 
 def verdict(system, user):
-    body = json.dumps({'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
-                       'temperature': 0, 'seed': 1, 'max_tokens': 3, 'grammar': G_BOOL}).encode()
-    err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=600) as r:
-                return json.load(r)['choices'][0]['message']['content'].strip() == 'true'
-        except Exception as e:
-            err = e
-            time.sleep(5 * (attempt + 1))
-    raise err
+    return common.verdict(SERVER, system, user, 600)
 
 
 def sentences(t):
-    parts = re.split(ABBR + r'(?<=[.!?])\s+(?=[A-Z"\'])', ' '.join(t.split()))
-    return [x.strip() for x in parts if len(x.strip()) > 20]
-
-
-def bm25_top(query, docs, k):
-    tok = lambda s: re.findall(r"[a-z0-9']+", s.lower())
-    D = [tok(d) for d in docs]; N = len(D); avg = sum(map(len, D)) / max(N, 1)
-    df = collections.Counter(w for d in D for w in set(d))
-    q = set(tok(query)); sc = []
-    for i, d in enumerate(D):
-        tf = collections.Counter(d); s = 0.0
-        for w in q:
-            if w in tf:
-                idf = math.log(1 + (N - df[w] + 0.5) / (df[w] + 0.5))
-                s += idf * tf[w] * 2.2 / (tf[w] + 1.2 * (0.25 + 0.75 * len(d) / avg))
-        sc.append((s, i))
-    return [i for _, i in sorted(sc, reverse=True)[:k]]
-
-
-def par(items, fn, n=2):
-    it = iter(items); lock = threading.Lock()
-    def w():
-        while True:
-            with lock:
-                x = next(it, None)
-            if x is None:
-                return
-            fn(x)
-    th = [threading.Thread(target=w) for _ in range(n)]
-    [t.start() for t in th]; [t.join() for t in th]
-
-
-def read_jsonl(p):
-    return [json.loads(l) for l in open(p)] if os.path.exists(p) else []
+    return common.split_sentences(t, ABBR)
 
 
 def main():
@@ -128,15 +86,11 @@ def main():
         faith, ctrl = [], []
         def check(item):
             cl, is_ctrl = item
-            ev = set()
-            for i in bm25_top(cl, [c['text'] for c in pool], 5):
-                for j in (i - 1, i, i + 1):
-                    if 0 <= j < len(pool) and pool[j]['storyId'] == pool[i]['storyId']:
-                        ev.add(j)
-            v = verdict(SUPPORT_SYS, 'EVIDENCE:\n' + '\n---\n'.join(pool[j]['text'] for j in sorted(ev)) + f'\n\nCLAIM: {cl}')
+            ev = common.evidence_window(cl, pool)
+            v = verdict(SUPPORT_SYS, 'EVIDENCE:\n' + '\n---\n'.join(pool[j]['text'] for j in ev) + f'\n\nCLAIM: {cl}')
             with lock:
                 (ctrl if is_ctrl else faith).append((cl, v))
-        par([(c, False) for c in claims] + [(c, True) for c in controls], check)
+        common.par([(c, False) for c in claims] + [(c, True) for c in controls], check)
         beats = []
         if u['kind'] == 'group':
             def beat(s):
@@ -145,7 +99,7 @@ def main():
                     v = verdict(BEAT_SYS, f"SUMMARY:\n{u['text']}\n\nEVENT: {syn}")
                     with lock:
                         beats.append(v)
-            par(u['storyIds'], beat)
+            common.par(u['storyIds'], beat)
         spk = collections.Counter(p for c in pool for p in set(c['speakers']) if p in operators)
         top = [p for p, _ in spk.most_common(5)]
         row = {'id': u['id'], 'kind': u['kind'], 'method': u['method'], 'words': len(u['text'].split()),
@@ -153,8 +107,7 @@ def main():
                'unsupported': [c for c, v in faith if not v], 'controls': len(ctrl),
                'controlFalsePositives': sum(v for _, v in ctrl), 'beats': len(beats), 'beatsCovered': sum(beats),
                'topOperators': top, 'operatorsNamed': sum(p.lower() in u['text'].lower() for p in top)}
-        with open(out, 'a') as f:
-            f.write(json.dumps(row, ensure_ascii=False) + '\n')
+        common.append_jsonl(out, row)
         print(f"{u['id']}: faith {row['supported']}/{row['sentences']}, beats {row['beatsCovered']}/{row['beats']}, "
               f"operators {row['operatorsNamed']}/{len(top)}, control FP {row['controlFalsePositives']}/{row['controls']}", flush=True)
     rows = read_jsonl(out)

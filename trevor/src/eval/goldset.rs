@@ -10,7 +10,6 @@ use std::path::Path;
 
 use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 
 use crate::search::store::ChunkStore;
 
@@ -99,7 +98,7 @@ pub struct GoldSet {
 /// I/O or a line that does not parse.
 pub fn load(path: &Path) -> Result<GoldSet> {
     let bytes = std::fs::read(path).with_context(|| format!("reading {}", path.display()))?;
-    let sha = format!("{:x}", Sha256::digest(&bytes));
+    let sha = crate::util::sha_hex(&bytes);
     let mut items = Vec::new();
     for (i, line) in bytes.lines().enumerate() {
         let line = line?;

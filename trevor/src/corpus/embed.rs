@@ -45,7 +45,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::corpus::chunk::indexed_text;
 use crate::corpus::reuse::{self, ReusePool};
-use sha2::{Digest, Sha256};
+use crate::util::sha_hex;
 
 /// gte-modernbert-base's trained context. A chunk longer than this would be
 /// truncated; the longest real chunk is 1,355 tokens.
@@ -116,10 +116,6 @@ pub struct VectorsMeta {
     /// True when chunks carried prefixes and they were not embedded.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub prefix_ignored: bool,
-}
-
-fn sha_hex(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
 }
 
 fn read(dir: &Path, name: &str) -> Result<Vec<u8>> {

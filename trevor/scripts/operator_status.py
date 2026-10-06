@@ -14,11 +14,13 @@ scripts/deaths.py, which reads the script; kept as the record of the refutation.
 it either: only 32 of 407 operator Story pages carry a status, none "Deceased", and an operator page
 describes the operator (Civilight Eterna "Active") rather than the person (Theresa "Deceased").
 """
-import json, os, re, time, urllib.request
+import json, os, re, sys, time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+from common import ROOT
+
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
-GD = os.path.join(ROOT, '..', 'assets', 'output', 'en', 'gamedata', 'excel')
 DEATH = re.compile(r"\b(die[sd]?|dying|death|dead|killed|kills|perish(?:ed|es)?|slain|sacrific(?:ed|es)|passed away|lost (?:his|her|their) life)\b", re.I)
 # v1 asked "does the named character die?" per (operator, sentence) and the judge answered true for
 # anyone's death in the sentence: 50 operators "died", Skadi because Ulpianus did. Now the model names
@@ -35,20 +37,18 @@ G_LIST = 'root ::= "[" ( str ( ", " str )* )? "]"\nstr ::= "\\"" [^"\\n]{1,60} "
 
 
 def dead_in(sent):
-    body = json.dumps({'messages': [{'role': 'system', 'content': SYS}, {'role': 'user', 'content': sent}],
-                       'temperature': 0, 'seed': 1, 'max_tokens': 80, 'grammar': G_LIST}).encode()
+    body = json.dumps(common.chat_body(SYS, sent, 80, grammar=G_LIST)).encode()
+    # Its own retry: after the fourth failure it raises 'judge unreachable', not the last error.
     for attempt in range(4):
         try:
-            with urllib.request.urlopen(urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'}), timeout=300) as r:
-                return json.loads(json.load(r)['choices'][0]['message']['content'])
+            return json.loads(common.content(common.post(common.chat_url(SERVER), body, 300)))
         except Exception:
             time.sleep(5 * (attempt + 1))
     raise RuntimeError('judge unreachable')
 
 
 def main():
-    ct = json.load(open(os.path.join(GD, 'character_table.json')))['Characters']
-    ops = [(c['key'], c['value']['Name']) for c in ct if c['value'].get('Profession') not in ('TOKEN', 'TRAP') and not c['value'].get('IsNotObtainable')]
+    ops = common.playable_operators()
     docs = [(s['storyId'], s['summary']) for s in map(json.loads, open(os.path.join(ROOT, 'artifacts', 'p2', 'stories.jsonl')))]
     docs += [('dossier:' + d['name'], d['dossier']) for d in map(json.loads, open(os.path.join(ROOT, 'artifacts', 'dossiers', 'dossiers.jsonl')))]
     sents = [(src, x.strip()) for src, t in docs for x in re.split(r'(?<=[.!?])\s+', t) if DEATH.search(x)]

@@ -41,10 +41,12 @@ same characters or setting? A reference is kept only with a verbatim quote from 
   stamp      after a successful run (or once, to vouch for the current outputs): write inputs.json.
 Needs a llama-server on $SERVER for summarize and judge.
 """
-import collections, datetime, json, math, os, re, sys, time, urllib.request
+import collections, datetime, hashlib, json, math, os, re, sys, time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-GD = os.path.join(ROOT, '..', 'assets', 'output', 'en', 'gamedata')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+from common import GAMEDATA as GD, ROOT, kv, read_jsonl, story_script as script_text
+
 OUT = os.path.join(ROOT, 'artifacts', 'canon')
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
 TOP = int(os.environ.get('CANON_TOP', '12'))
@@ -102,45 +104,29 @@ qstr ::= "\"" [^"\n]{0,300} "\""
 '''
 
 
-def read_jsonl(p):
-    return [json.loads(l) for l in open(p)] if os.path.exists(p) else []
-
-
-def kv(x):
-    return {r['key']: r['value'] for r in x} if isinstance(x, list) and x and isinstance(x[0], dict) and 'key' in x[0] else x
-
-
 def post(system, user, max_tokens, grammar=None):
-    body = {'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
-            'temperature': 0, 'seed': 1, 'max_tokens': max_tokens}
-    if grammar:
-        body['grammar'] = grammar
-    data = json.dumps(body).encode(); err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', data, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=900) as r:
-                return json.load(r)['choices'][0]['message']['content'].strip()
-        except Exception as e:
-            err = e; time.sleep(5 * (attempt + 1))
-    raise err
+    return common.chat(SERVER, system, user, max_tokens, 900, grammar=grammar or None)
 
 
-def script_text(path):
-    # Keep narration and dialogue: '[name="X"]line' becomes 'X: line'; other bracketed commands are stage directions.
-    out = []
-    for line in open(path, encoding='utf-8'):
-        line = line.strip()
-        m = re.match(r'^\[name="([^"]*)"\](.*)$', line)
-        if m:
-            out.append(f'{m.group(1)}: {m.group(2).strip()}')
-        elif line and not line.startswith('['):
-            out.append(line)
-    return '\n'.join(out)
+norm = common.word_norm
 
 
-def norm(s):
-    return re.sub(r'\W+', ' ', s or '').strip().lower()
+def p4_chunks():
+    return read_jsonl(os.path.join(ROOT, 'artifacts', 'p4', 'chunks.jsonl'))
+
+
+def p4_by_id():
+    return {c['chunkId']: c for c in p4_chunks()}
+
+
+def summarized_endings():
+    """The endings with a summary (the ones every later stage works on)."""
+    return [r for r in read_jsonl(os.path.join(OUT, 'endings.jsonl')) if r.get('summary')]
+
+
+def timeline_names():
+    """groupId -> event name from chronology v1."""
+    return {g['groupId']: g['name'] for g in json.load(open(os.path.join(ROOT, 'artifacts', 'chrono', 'timeline_v1.json')))['groups']}
 
 
 def stage_endings():
@@ -157,9 +143,7 @@ def stage_endings():
             script = script_text(path) if path and os.path.exists(path) else ''
             rows.append({'run': rid, 'runName': topics[rid].get('Name'), 'start': start, 'endingId': e['Id'],
                          'name': e.get('Name'), 'priority': e.get('Priority'), 'desc': e.get('Desc'), 'script': script})
-    with open(os.path.join(OUT, 'endings.jsonl'), 'w') as f:
-        for r in rows:
-            f.write(json.dumps(r, ensure_ascii=False) + '\n')
+    common.write_jsonl(os.path.join(OUT, 'endings.jsonl'), rows)
     print(f"endings: {len(rows)} ({sum(bool(r['script']) for r in rows)} with a script); runs {sorted({r['run'] for r in rows})}")
 
 
@@ -173,9 +157,7 @@ def stage_summarize():
         out = post(SUM_SYS, text, 300)
         summary, _, terms = out.partition('TERMS:')
         r['summary'] = summary.strip(); r['terms'] = terms.strip()
-        with open(path, 'w') as f:
-            for x in rows:
-                f.write(json.dumps(x, ensure_ascii=False) + '\n')
+        common.write_jsonl(path, rows)
         print(f"{r['endingId']}: {r['summary'][:100]}", flush=True)
 
 
@@ -209,21 +191,12 @@ def release_dates():
 
 
 def bm25(query, docs, k):
-    tok = lambda s: re.findall(r"[a-z0-9']+", s.lower())
-    D = [tok(d) for d in docs]; N = len(D); avg = sum(map(len, D)) / max(N, 1)
-    df = collections.Counter(w for d in D for w in set(d)); q = set(tok(query)); sc = []
-    for i, d in enumerate(D):
-        tf = collections.Counter(d); s = 0.0
-        for w in q:
-            if w in tf:
-                s += math.log(1 + (N - df[w] + 0.5) / (df[w] + 0.5)) * tf[w] * 2.2 / (tf[w] + 1.2 * (0.25 + 0.75 * len(d) / avg))
-        sc.append((s, i))
-    return [i for s, i in sorted(sc, reverse=True)[:k] if s > 0]
+    return [i for s, i in common.bm25_rank(query, docs)[:k] if s > 0]
 
 
 def stage_judge():
-    endings = [r for r in read_jsonl(os.path.join(OUT, 'endings.jsonl')) if r.get('summary')]
-    chunks = read_jsonl(os.path.join(ROOT, 'artifacts', 'p4', 'chunks.jsonl'))
+    endings = summarized_endings()
+    chunks = p4_chunks()
     date = release_dates()
     dated = [(c, date(c)) for c in chunks]
     path = os.path.join(OUT, 'refs.jsonl')
@@ -241,10 +214,9 @@ def stage_judge():
                                              f"(released {d}):\n{c['text'][:6000]}", 200, GRAMMAR))
             quote = (out.get('quote') or '').strip()
             found = bool(norm(quote)) and norm(quote) in norm(c['text'])
-            with open(path, 'a') as f:
-                f.write(json.dumps({'endingId': e['endingId'], 'chunkId': c['chunkId'], 'storyId': c['storyId'],
-                                    'groupId': c['groupId'], 'released': d, 'refers': bool(out.get('refers')),
-                                    'quote': quote, 'quoteFound': found}, ensure_ascii=False) + '\n')
+            common.append_jsonl(path, {'endingId': e['endingId'], 'chunkId': c['chunkId'], 'storyId': c['storyId'],
+                                       'groupId': c['groupId'], 'released': d, 'refers': bool(out.get('refers')),
+                                       'quote': quote, 'quoteFound': found})
             n_new += 1
         print(f"{e['endingId']}: {len(pool)} later passages, judged {n_new} of the top {len(idx)}", flush=True)
 
@@ -267,9 +239,10 @@ PICK_STRICT_SYS = ("You read the endings of one run of Integrated Strategies (a 
                    "empty string.")
 
 
-def pick_grammar(letters):
+def pick_grammar(letters, general=True):
+    """An ending letter, 'general' (passage picks only) or 'none', and a quote."""
     return ('root ::= "{\\"pick\\": \\"" ( ' + ' | '.join(f'"{l}"' for l in letters) +
-            ' | "general" | "none" ) "\\", \\"quote\\": " qstr "}"\nqstr ::= "\\"" [^"\\n]{0,300} "\\""\n')
+            (' | "general"' if general else '') + ' | "none" ) "\\", \\"quote\\": " qstr "}"\nqstr ::= "\\"" [^"\\n]{0,300} "\\""\n')
 
 
 def parse_pick(raw):
@@ -285,8 +258,8 @@ def parse_pick(raw):
 
 def discriminate(cands, path, only=None, system=None):
     """Contrastive pick for each (run, chunk) in cands, appended to path. only: a set of (run, chunkId) to restrict to."""
-    endings = [r for r in read_jsonl(os.path.join(OUT, 'endings.jsonl')) if r.get('summary')]
-    chunks = {c['chunkId']: c for c in read_jsonl(os.path.join(ROOT, 'artifacts', 'p4', 'chunks.jsonl'))}
+    endings = summarized_endings()
+    chunks = p4_by_id()
     done = {(r['run'], r['chunkId']) for r in read_jsonl(path)}
     limit = int(os.environ.get('CANON_LIMIT', '0')); n = 0; t0 = time.time()
     for run in sorted({e['run'] for e in endings}):
@@ -307,11 +280,9 @@ def discriminate(cands, path, only=None, system=None):
                 out = parse_pick(post(system or PICK_SYS, user, 600, grammar)) or {'pick': None, 'quote': ''}
             pick = out.get('pick'); quote = (out.get('quote') or '').strip()
             e = es[letters.index(pick)] if pick in letters else None
-            with open(path, 'a') as f:
-                f.write(json.dumps({'run': run, 'chunkId': cid, 'storyId': chunks[cid]['storyId'], 'groupId': chunks[cid]['groupId'],
-                                    'released': rel, 'pick': pick, 'endingId': e['endingId'] if e else None,
-                                    'quote': quote, 'quoteFound': bool(norm(quote)) and norm(quote) in norm(chunks[cid]['text'])},
-                                   ensure_ascii=False) + '\n')
+            common.append_jsonl(path, {'run': run, 'chunkId': cid, 'storyId': chunks[cid]['storyId'], 'groupId': chunks[cid]['groupId'],
+                                       'released': rel, 'pick': pick, 'endingId': e['endingId'] if e else None,
+                                       'quote': quote, 'quoteFound': bool(norm(quote)) and norm(quote) in norm(chunks[cid]['text'])})
             n += 1
         P = [r for r in read_jsonl(path) if r['run'] == run]
         print(f"{run}: {len(P)} passages; picks {dict(collections.Counter(r['pick'] for r in P))}", flush=True)
@@ -359,8 +330,8 @@ def stage_undated():
     """The wide stage's two searches per ending, kept to undated sources, top UNDATED_TOP -> undated.jsonl."""
     rows = [r for r in read_jsonl(os.path.join(OUT, 'wide.jsonl'))]
     terms = {r['endingId']: r['terms'] for r in rows}
-    endings = [r for r in read_jsonl(os.path.join(OUT, 'endings.jsonl')) if r.get('summary')]
-    by_id = {c['chunkId']: c for c in read_jsonl(os.path.join(ROOT, 'artifacts', 'p4', 'chunks.jsonl'))}
+    endings = summarized_endings()
+    by_id = p4_by_id()
     out = []
     for e in endings:
         queries = {'summary': e['summary'], 'names': ' '.join([e['name']] + terms.get(e['endingId'], []))}
@@ -377,9 +348,7 @@ def stage_undated():
             c = by_id[cid]
             out.append({'endingId': e['endingId'], 'run': e['run'], 'chunkId': cid, 'storyId': c['storyId'], 'groupId': c['groupId'],
                         'released': None, 'rank': i, 'via': via[cid]})
-    with open(os.path.join(OUT, 'undated.jsonl'), 'w') as f:
-        for r in out:
-            f.write(json.dumps(r, ensure_ascii=False) + '\n')
+    common.write_jsonl(os.path.join(OUT, 'undated.jsonl'), out)
     u = undated_candidates()
     print(f"undated: {len(out)} rows, {sum(map(len, u.values()))} distinct (run, chunk); "
           f"{dict(collections.Counter(r['groupId'] if not r['groupId'].startswith('story_') else 'story_*' for r in out))}")
@@ -444,8 +413,8 @@ def search(query, k=1500):
 def stage_wide():
     """Candidates by hybrid retrieval per ending: RRF of a summary query and a names query, kept to stories released
     after the run began and outside IS, top WIDE_TOP per ending -> wide.jsonl (rewritten)."""
-    endings = [r for r in read_jsonl(os.path.join(OUT, 'endings.jsonl')) if r.get('summary')]
-    chunks = read_jsonl(os.path.join(ROOT, 'artifacts', 'p4', 'chunks.jsonl'))
+    endings = summarized_endings()
+    chunks = p4_chunks()
     by_id = {c['chunkId']: c for c in chunks}
     date = release_dates()
     df = collections.Counter(); caps = collections.defaultdict(lambda: [0, 0])
@@ -480,9 +449,7 @@ def stage_wide():
             rows.append({'endingId': e['endingId'], 'run': e['run'], 'chunkId': cid, 'storyId': c['storyId'], 'groupId': c['groupId'],
                          'released': date(c), 'rank': i, 'via': via[cid], 'terms': terms})
         print(f"{e['endingId']} ({e['name']}): names query {queries['names']!r}", flush=True)
-    with open(os.path.join(OUT, 'wide.jsonl'), 'w') as f:
-        for r in rows:
-            f.write(json.dumps(r, ensure_ascii=False) + '\n')
+    common.write_jsonl(os.path.join(OUT, 'wide.jsonl'), rows)
     old = old_candidates(); new = wide_candidates()
     for run in sorted({e['run'] for e in endings}):
         prefix = [e for e in endings if e['run'] == run][0]['endingId'].split('_ending')[0]
@@ -504,7 +471,7 @@ def story_units():
     """(run, storyId) pairs: every later story with a Gemma ending pick (old or wide, any quote status, outside IS), and
     every story with 3 or more wide candidates for the run. Passages: the picked ones first, then the story's
     best-ranked wide candidates, up to STORY_MAX, shown in story order."""
-    endings = [r for r in read_jsonl(os.path.join(OUT, 'endings.jsonl')) if r.get('summary')]
+    endings = summarized_endings()
     prefix_run = {e['endingId'].split('_ending')[0]: e['run'] for e in endings}
     rank = collections.defaultdict(dict)  # (run, storyId) -> chunkId -> best wide rank
     for r in read_jsonl(os.path.join(OUT, 'wide.jsonl')):
@@ -533,7 +500,7 @@ def stage_story():
     tag = sys.argv[2]
     path = os.path.join(OUT, f'story_{tag}.jsonl')
     endings, units = story_units()
-    chunks = {c['chunkId']: c for c in read_jsonl(os.path.join(ROOT, 'artifacts', 'p4', 'chunks.jsonl'))}
+    chunks = p4_by_id()
     done = {(r['run'], r['storyId']) for r in read_jsonl(path)}
     limit = int(os.environ.get('CANON_LIMIT', '0')); n = 0; t0 = time.time()
     for (run, sid), u in units.items():
@@ -543,8 +510,7 @@ def stage_story():
             break
         es = [e for e in endings if e['run'] == run]
         letters = 'ABCDEFG'[:len(es)]
-        grammar = ('root ::= "{\\"pick\\": \\"" ( ' + ' | '.join(f'"{l}"' for l in letters) +
-                   ' | "none" ) "\\", \\"quote\\": " qstr "}"\nqstr ::= "\\"" [^"\\n]{0,300} "\\""\n')
+        grammar = pick_grammar(letters, general=False)
         head = f"RUN: {es[0]['runName']}\n" + '\n'.join(f"{l}. {e['name']}: {e['summary']}" for l, e in zip(letters, es))
         cs = sorted((chunks[c] for c in u['chunks'] if c in chunks), key=lambda c: (c['ordinal'], c['chunkId']))
         body = '\n\n'.join(f"[passage {i}]\n{c['text'][:3000]}" for i, c in enumerate(cs, 1))
@@ -555,11 +521,10 @@ def stage_story():
         pick = out.get('pick'); quote = (out.get('quote') or '').strip()
         e = es[letters.index(pick)] if pick in letters else None
         where = [c['chunkId'] for c in cs if norm(quote) and norm(quote) in norm(c['text'][:3000])]
-        with open(path, 'a') as f:
-            f.write(json.dumps({'run': run, 'storyId': sid, 'groupId': cs[0]['groupId'] if cs else None, 'released': u['released'],
-                                'chunks': [c['chunkId'] for c in cs], 'picked': u['picked'], 'pick': pick,
-                                'endingId': e['endingId'] if e else None, 'quote': quote, 'quoteFound': bool(where),
-                                'quoteChunk': where[0] if where else None}, ensure_ascii=False) + '\n')
+        common.append_jsonl(path, {'run': run, 'storyId': sid, 'groupId': cs[0]['groupId'] if cs else None, 'released': u['released'],
+                                   'chunks': [c['chunkId'] for c in cs], 'picked': u['picked'], 'pick': pick,
+                                   'endingId': e['endingId'] if e else None, 'quote': quote, 'quoteFound': bool(where),
+                                   'quoteChunk': where[0] if where else None})
         n += 1
     R = read_jsonl(path)
     print(f"{tag}: {len(R)} of {len(units)} stories; picks {dict(collections.Counter(r['pick'] for r in R))}", flush=True)
@@ -593,8 +558,8 @@ def evidence_items():
     """Every (run, story, ending) any model picked with a quote found in the text and at least 4 words, outside IS, from
     every stage and model; one item per distinct quote, with the models and stages that gave it and the hand grade from
     data/canon_grades.json where one exists."""
-    chunks = {c['chunkId']: c for c in read_jsonl(os.path.join(ROOT, 'artifacts', 'p4', 'chunks.jsonl'))}
-    names = {g['groupId']: g['name'] for g in json.load(open(os.path.join(ROOT, 'artifacts', 'chrono', 'timeline_v1.json')))['groups']}
+    chunks = p4_by_id()
+    names = timeline_names()
     gp = os.path.join(ROOT, 'data', 'canon_grades.json')
     grades = {(g['storyId'], g['endingId']): g for g in json.load(open(gp))['grades']} if os.path.exists(gp) else {}
     items = {}
@@ -680,7 +645,7 @@ def ending_characters():
     speak somewhere in the corpus and appear in at most 150 non-IS chunks (drops species and places: Seaborn, Sui)."""
     if _CHARS:
         return _CHARS
-    chunks = read_jsonl(os.path.join(ROOT, 'artifacts', 'p4', 'chunks.jsonl'))
+    chunks = p4_chunks()
     spk = collections.Counter(name_key(x) for c in chunks for x in (c.get('speakers') or []))
     df = collections.Counter(w for c in chunks if c['groupId'] != 'is'
                              for w in {name_key(x) for x in re.findall(r"\b[A-Za-z][A-Za-z'’\-]{2,}", c['text'])})
@@ -707,7 +672,7 @@ def verdict_prompt(run, endings, items):
     for it in items:
         if it['run'] == run:
             by_chunk.setdefault(it['chunkId'], []).append(it)
-    chunks = {c['chunkId']: c['text'] for c in read_jsonl(os.path.join(ROOT, 'artifacts', 'p4', 'chunks.jsonl'))} if by_chunk else {}
+    chunks = {c['chunkId']: c['text'] for c in p4_chunks()} if by_chunk else {}
     lines = []
     for i, (cid, its) in enumerate(by_chunk.items(), 1):
         t = chunks[cid]; spans = []
@@ -771,9 +736,8 @@ def stage_verdict():
     """Per run, one verdict from all evidence items; argv[2] tags the model and reasoning mode (e.g. gemma-on). A tag
     ending in '-on' means the server thinks first, so the answer is read as JSON without a grammar. Appends every
     attempt to verdicts.jsonl with the prompt's hash."""
-    import hashlib
     tag = sys.argv[2]; thinking = tag.endswith('-on')
-    endings = [r for r in read_jsonl(os.path.join(OUT, 'endings.jsonl')) if r.get('summary')]
+    endings = summarized_endings()
     items = evidence_items()
     path = os.path.join(OUT, 'verdicts.jsonl')
     only = os.environ.get('CANON_VERDICT_RUNS')  # e.g. rogue_5: rerun one run (IS6 v3 overflowed a 16,384 context)
@@ -781,7 +745,6 @@ def stage_verdict():
         if only and run not in only.split(','):
             continue
         user, ids = verdict_prompt(run, endings, items)
-        h = hashlib.sha256((VERDICT_SYS + user).encode()).hexdigest()[:12]
         t0 = time.time()
         system = VERDICT_SYS + (VERDICT_V2 if VERDICT_PROMPT in ('v2', 'v3') else '') + (VERDICT_V3 if VERDICT_PROMPT == 'v3' else '')
         h = hashlib.sha256((system + user).encode()).hexdigest()[:12]
@@ -792,9 +755,7 @@ def stage_verdict():
                 'temperature': 0, 'seed': 1, 'max_tokens': 7000 if thinking else (3000 if VERDICT_PROMPT in ('v2', 'v3') else 900)}
         if not thinking:
             body['grammar'] = verdict_grammar(ids)
-        req = urllib.request.Request(f'{SERVER}/v1/chat/completions', json.dumps(body).encode(), {'content-type': 'application/json'})
-        with urllib.request.urlopen(req, timeout=1800) as r:
-            resp = json.load(r)
+        resp = common.chat_once(SERVER, body, 1800)  # no retry: one attempt per run, recorded with its prompt hash
         msg = resp['choices'][0]['message']; content = (msg.get('content') or '').strip()
         m = re.search(r'\{.*\}', content, re.S)
         try:
@@ -807,14 +768,14 @@ def stage_verdict():
                'assessments': out.get('assessments'),
                'thinkingChars': len(msg.get('reasoning_content') or ''), 'raw': None if out else content[:2000],
                'usage': resp.get('usage'), 'seconds': round(time.time() - t0, 1)}
-        with open(path, 'a') as f:
-            f.write(json.dumps(rec, ensure_ascii=False) + '\n')
+        common.append_jsonl(path, rec)
         print(f"{tag} {is_number(run)}: {rec['endingId']} ({rec['confidence']}) cites {rec['cites']} in {rec['seconds']} s, "
               f"{(resp.get('usage') or {}).get('prompt_tokens')} prompt tokens", flush=True)
 
 
-def stage_build():
-    endings = read_jsonl(os.path.join(OUT, 'endings.jsonl'))
+def agreed_picks():
+    """(refs, gemma_only): Gemma's ending picks with a quote found (the first pass's refs under CANON_PASS=1), other
+    runs' IS data left out; under CANON_AGREE only those the second model agrees on, the rest kept per ending."""
     picks = gemma_picks()
     refs = ([r for r in picks if r['endingId'] and r['quoteFound']] if picks and os.environ.get('CANON_PASS') != '1'
             else [r for r in read_jsonl(os.path.join(OUT, 'refs.jsonl')) if r['refers'] and r['quoteFound']])
@@ -826,7 +787,7 @@ def stage_build():
     # Gemma's quote must also run to 4 words: 'The' was found verbatim and shows nothing.
     qwen = {(r['run'], r['chunkId']): r for r in read_jsonl(os.path.join(OUT, SECOND))}
     terms = {r['endingId']: set(r['terms']) for r in read_jsonl(os.path.join(OUT, 'wide.jsonl'))}
-    text = {c['chunkId']: c['text'] for c in read_jsonl(os.path.join(ROOT, 'artifacts', 'p4', 'chunks.jsonl'))} if AGREE and ANCHOR else {}
+    text = {c['chunkId']: c['text'] for c in p4_chunks()} if AGREE and ANCHOR else {}
     anchored = lambda r: not ANCHOR or bool(terms.get(r['endingId'], set()) &
                                             {name_key(w) for w in re.findall(r"\b[A-Za-z][A-Za-z'’\-]{2,}", text.get(r['chunkId'], ''))})
     agreed = lambda r: (lambda q: bool(q) and q['endingId'] == r['endingId'] and q['quoteFound'] and len(r['quote'].split()) >= 4
@@ -837,7 +798,12 @@ def stage_build():
             if not agreed(r):
                 gemma_only[r['endingId']].append(r)
         refs = [r for r in refs if agreed(r)]
-    names = {g['groupId']: g['name'] for g in json.load(open(os.path.join(ROOT, 'artifacts', 'chrono', 'timeline_v1.json')))['groups']}
+    return refs, gemma_only
+
+
+def evidence_schemes(refs, gemma_only):
+    """(refs, gemma_only, schemes): under CANON_AGREE every evidence scheme's picks, and refs replaced by the scheme
+    CANON_EVIDENCE names; without it, refs unchanged and no schemes."""
     schemes = {}
     if AGREE:
         # Story stage: a pick counts with a quote found in the story's passages and at least 4 words long.
@@ -855,6 +821,11 @@ def stage_build():
             for r in refs:  # passage-agreed picks are then Gemma picks outside the served scheme too
                 gemma_only[r['endingId']].append(r)
         refs = schemes[EVIDENCE]
+    return refs, gemma_only, schemes
+
+
+def ending_runs(endings, refs, gemma_only, schemes, names):
+    """Per run, its endings with the later stories that refer to each (and, under CANON_AGREE, the other schemes')."""
     stories_of = lambda rs: sorted({(r['released'], names.get(r['groupId'], r['groupId'])) for r in rs})
     by = collections.defaultdict(list)
     for r in refs:
@@ -883,36 +854,51 @@ def stage_build():
     if AGREE:
         for r in out:
             r['is'] = is_number(r['run'])
+    return out
+
+
+def attach_verdicts(out, endings):
+    """Each run's verdict (CANON_VERDICT, its confidence capped by the rule unless CANON_CONF_RULE=0, the second opinion)
+    and every evidence item, into the rows of `out`."""
+    ename = {e['endingId']: e['name'] for e in endings}
+    items = evidence_items()
+    latest = {}
+    for v in read_jsonl(os.path.join(OUT, 'verdicts.jsonl')):
+        # The last attempt of each tag and prompt wins, among those made with the same evidence (with or without
+        # undated sources; attempts before 2026-09-30 08:30 were made without).
+        if v.get('undated', False) == UNDATED:
+            latest[(v['run'], f"{v['tag']}:{v.get('prompt', 'v1')}")] = v
+    for r in out:
+        v = latest.get((r['run'], VERDICT)); v2 = latest.get((r['run'], VERDICT_SECOND))
+        if v:
+            run_items = [it for it in items if it['run'] == r['run']]
+            cites = cite_names(v['cites'], run_items)
+            conf = v['confidence']; extra = {}
+            if CONF_RULE and v['endingId'] in ename:
+                rc, sids, events = rule_confidence(v, run_items, cites)
+                if conf in CONF_ORDER:
+                    conf = min(conf, rc, key=CONF_ORDER.index)
+                extra = {'modelConfidence': v['confidence'], 'ruleConfidence': rc, 'citedStoryIds': sids, 'citedEvents': events}
+            r['verdict'] = {'endingId': v['endingId'], 'name': ename.get(v['endingId'], v['endingId']),
+                            'confidence': conf, **extra, 'reasoning': v['reasoning'],
+                            'cites': cites,
+                            'source': VERDICT,
+                            'second': {'source': VERDICT_SECOND, 'endingId': v2['endingId'], 'confidence': v2['confidence'],
+                                       'agrees': v2['endingId'] == v['endingId']} if v2 else None}
+        r['evidence'] = [{'story': it['story'], 'storyId': it['storyId'], 'released': it['released'], 'undated': it['undated'],
+                          'endingId': it['endingId'], 'ending': ename.get(it['endingId']), 'quote': it['quote'],
+                          'models': it['models'], 'stages': it['stages'], 'grade': it['grade'], 'gradeNote': it['gradeNote']}
+                         for it in items if it['run'] == r['run']]
+
+
+def stage_build():
+    endings = read_jsonl(os.path.join(OUT, 'endings.jsonl'))
+    refs, gemma_only = agreed_picks()
+    names = timeline_names()
+    refs, gemma_only, schemes = evidence_schemes(refs, gemma_only)
+    out = ending_runs(endings, refs, gemma_only, schemes, names)
     if AGREE and VERDICT != '0':
-        ename = {e['endingId']: e['name'] for e in endings}
-        items = evidence_items()
-        latest = {}
-        for v in read_jsonl(os.path.join(OUT, 'verdicts.jsonl')):
-            # The last attempt of each tag and prompt wins, among those made with the same evidence (with or without
-            # undated sources; attempts before 2026-09-30 08:30 were made without).
-            if v.get('undated', False) == UNDATED:
-                latest[(v['run'], f"{v['tag']}:{v.get('prompt', 'v1')}")] = v
-        for r in out:
-            v = latest.get((r['run'], VERDICT)); v2 = latest.get((r['run'], VERDICT_SECOND))
-            if v:
-                run_items = [it for it in items if it['run'] == r['run']]
-                cites = cite_names(v['cites'], run_items)
-                conf = v['confidence']; extra = {}
-                if CONF_RULE and v['endingId'] in ename:
-                    rc, sids, events = rule_confidence(v, run_items, cites)
-                    if conf in CONF_ORDER:
-                        conf = min(conf, rc, key=CONF_ORDER.index)
-                    extra = {'modelConfidence': v['confidence'], 'ruleConfidence': rc, 'citedStoryIds': sids, 'citedEvents': events}
-                r['verdict'] = {'endingId': v['endingId'], 'name': ename.get(v['endingId'], v['endingId']),
-                                'confidence': conf, **extra, 'reasoning': v['reasoning'],
-                                'cites': cites,
-                                'source': VERDICT,
-                                'second': {'source': VERDICT_SECOND, 'endingId': v2['endingId'], 'confidence': v2['confidence'],
-                                           'agrees': v2['endingId'] == v['endingId']} if v2 else None}
-            r['evidence'] = [{'story': it['story'], 'storyId': it['storyId'], 'released': it['released'], 'undated': it['undated'],
-                              'endingId': it['endingId'], 'ending': ename.get(it['endingId']), 'quote': it['quote'],
-                              'models': it['models'], 'stages': it['stages'], 'grade': it['grade'], 'gradeNote': it['gradeNote']}
-                             for it in items if it['run'] == r['run']]
+        attach_verdicts(out, endings)
     note = 'Later stories that refer to each ending, with quotes; the game itself never rules on canon.'
     if AGREE and EVIDENCE == 'passage':
         note += (' referencedBy: stories where Gemma and Qwen both picked this ending among the run\'s endings, each with a quote '
@@ -937,7 +923,6 @@ def stage_build():
 
 def fingerprint():
     """(endings key, other-inputs key, {chunkId: sha}) for the stamp; see `inputs` in the module doc."""
-    import hashlib
     h = lambda b: hashlib.sha256(b if isinstance(b, bytes) else b.encode()).hexdigest()[:16]
     rd = lambda p: open(p, 'rb').read() if os.path.exists(p) else b''
     scripts = os.path.join(GD, 'story', 'obt', 'roguelike')
@@ -950,10 +935,9 @@ def fingerprint():
     other = [rd(os.path.join(ROOT, 'artifacts', 'p4', 'spoiler.jsonl')), rd(os.path.join(ROOT, 'artifacts', 'chrono', 'main_release.json')),
              rd(os.path.join(GD, 'excel', 'uniequip_table.json')), rd(os.path.join(GD, 'excel', 'character_table.json')),
              rd(os.path.join(ROOT, 'data', 'canon_grades.json')),
-             json.dumps({g['groupId']: g['name'] for g in json.load(open(os.path.join(ROOT, 'artifacts', 'chrono', 'timeline_v1.json')))['groups']},
-                        sort_keys=True).encode()]
+             json.dumps(timeline_names(), sort_keys=True).encode()]
     chunks = {c['chunkId']: h(c['storyId'] + '\n' + c['groupId'] + '\n' + c['text'])
-              for c in read_jsonl(os.path.join(ROOT, 'artifacts', 'p4', 'chunks.jsonl')) if c['groupId'] not in ('profile', 'summary', 'topic')}
+              for c in p4_chunks() if c['groupId'] not in ('profile', 'summary', 'topic')}
     return h(b'\0'.join(ends) + settings.encode()), h(b'\0'.join(other)), chunks
 
 
@@ -995,9 +979,7 @@ def stage_prune():
             continue
         rows = read_jsonl(path)
         keep = [r for r in rows if r.get('chunkId') not in moved and not (fname in PER_STORY and r.get('storyId') in stories)]
-        with open(path, 'w') as f:
-            for r in keep:
-                f.write(json.dumps(r, ensure_ascii=False) + '\n')
+        common.write_jsonl(path, keep)
         print(f'prune {fname}: {len(rows)} -> {len(keep)}', flush=True)
 
 

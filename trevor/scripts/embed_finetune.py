@@ -14,17 +14,15 @@ file's signature), then onnxruntime dynamic quantization (DynamicQuantizeLinear 
 The tokenizer files are copied from models/gte-modernbert-base: chunk token counts are pinned to that tokenizer's
 sha, and fine-tuning does not change it.
 """
-import json, os, random, shutil, sys
+import os, random, shutil, sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+from common import ROOT, read_jsonl
+
 M = os.path.join(ROOT, 'models')
 BASE_HF = os.path.join(M, 'gte-modernbert-base-hf')
 FT_HF = os.path.join(M, 'gte-trevor-hf')
 MAX_LEN = 512
-
-
-def read_jsonl(p):
-    return [json.loads(l) for l in open(p)] if os.path.exists(p) else []
 
 
 def export(src, out):

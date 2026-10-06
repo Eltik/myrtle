@@ -27,7 +27,6 @@ use anyhow::{Context, Result, anyhow, bail};
 use ort::session::Session;
 use ort::value::Tensor;
 use safetensors::SafeTensors;
-use sha2::{Digest, Sha256};
 use tokenizers::{Tokenizer, TruncationDirection, TruncationParams, TruncationStrategy};
 
 /// The model's trained context (`model_max_length` 7999).
@@ -166,7 +165,7 @@ impl Reranker {
         }
         let onnx = std::fs::read(dir.join(onnx_file))
             .with_context(|| format!("reading {}", dir.join(onnx_file).display()))?;
-        let model_sha = format!("{:x}", Sha256::digest(&onnx));
+        let model_sha = crate::util::sha_hex(&onnx);
         let mut builder = Session::builder().map_err(|e| anyhow!("{e}"))?;
         if let Some(n) = intra_threads {
             builder = builder.with_intra_threads(n).map_err(|e| anyhow!("{e}"))?;

@@ -36,14 +36,16 @@ Since 2026-10-01 (Ian: "topics on everything in the lore, chosen from data") the
              sentences supported, is marked thin; thin topics are left out of the units and refused by the topic tool.
              The v1 topics are never marked (Pythia's 38 words were already refused by the tool).
 """
-import collections, hashlib, json, math, os, re, sys, time, unicodedata, urllib.request
+import collections, json, math, os, re, sys, time, unicodedata
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+from common import G_BOOL, ROOT, read_jsonl, sha16
+
 OUT = os.path.join(ROOT, 'artifacts', 'topics')
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
 MIN_ASKED = int(os.environ.get('MIN_ASKED', '1'))
 K = int(os.environ.get('TOPIC_PASSAGES', '14'))
-sha16 = lambda s: hashlib.sha256(s.encode()).hexdigest()[:16]
 # Concepts and groups players ask about that are not a race or nation field; each is kept only if real questions
 # mention it (the counts are in design/trevor-questions.md section 12). Aliases widen retrieval.
 CONCEPTS = {'Originium': ['Originium'], 'Oripathy and the Infected': ['Oripathy', 'Infected', 'infection'],
@@ -81,10 +83,6 @@ TRAIT_KEYS = ('traitAudit', 'summaryV2', 'inputShaV2', 'promptShaV2', 'passagesV
 TRAIT_EXTRA = int(os.environ.get('TRAIT_EXTRA', '4'))
 BODY_RE = re.compile(r'\b(manes?|maned|ears?|tails?|horns?|horned|wings?|winged|halos?|hoo(?:f|ves)|fur|furred|scales?|scaled|antlers?|'
                      r'feathers?|feathered|fangs?|claws?|tusks?|beaks?|gills?|fins?)\b', re.I)
-
-
-def read_jsonl(p):
-    return [json.loads(l) for l in open(p)] if os.path.exists(p) else []
 
 
 def bm25_index(docs):
@@ -170,7 +168,7 @@ def plan_rows_v1():
 
 # ---------------------------------------------------------------- topics from data (TOPIC_SOURCE=v2, 2026-10-01)
 
-GAMEDATA = os.path.join(ROOT, '..', 'assets', 'output', 'en', 'gamedata', 'excel')
+GAMEDATA = common.EXCEL
 CAP = r"[A-ZÀ-ÞÆ][\w'’\-]*"
 NAME_RE = re.compile(CAP + r"(?:(?:\s(?:of|the)\s|\s)" + CAP + r")*")
 SPEAKER_RE = re.compile(r"^[^:\n]{1,40}:\s?")
@@ -285,9 +283,7 @@ def stage_mine():
         print(f"topics mine: {len(rows)} candidates, {len({r['term'] for r in rows} - old)} new", flush=True)
         return
     os.makedirs(OUT, exist_ok=True)
-    with open(os.path.join(OUT, 'candidates.jsonl'), 'w') as f:
-        for r in rows:
-            f.write(json.dumps(r, ensure_ascii=False) + '\n')
+    common.write_jsonl(os.path.join(OUT, 'candidates.jsonl'), rows)
 
 
 CLS_SYS = ("You classify a name from the Arknights story by what it refers to, using the context lines given. Kinds: race (a "
@@ -318,22 +314,9 @@ def stage_classify():
         return
     t0 = time.time()
     for i, r in enumerate(todo, 1):
-        body = json.dumps({'messages': [{'role': 'system', 'content': CLS_SYS}, {'role': 'user', 'content': cls_input(r)}],
-                           'temperature': 0, 'seed': 1, 'max_tokens': 48, 'grammar': CLS_GRAMMAR}).encode()
-        err = None
-        for attempt in range(4):
-            try:
-                req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-                with urllib.request.urlopen(req, timeout=600) as resp:
-                    out = json.loads(json.load(resp)['choices'][0]['message']['content'])
-                break
-            except Exception as e:
-                err = e; out = None; time.sleep(5 * (attempt + 1))
-        if out is None:
-            raise err
-        with open(path, 'a') as f:
-            f.write(json.dumps({'term': r['term'], 'key': sha16(cls_input(r) + CSHA), 'kind': out['kind'],
-                                'base': out['base'].strip()}, ensure_ascii=False) + '\n')
+        out = common.chat(SERVER, CLS_SYS, cls_input(r), 48, 600, lambda d: json.loads(common.content(d)), grammar=CLS_GRAMMAR)
+        common.append_jsonl(path, {'term': r['term'], 'key': sha16(cls_input(r) + CSHA), 'kind': out['kind'],
+                                   'base': out['base'].strip()})
         if i % 50 == 0:
             print(f"{time.strftime('%H:%M:%S')} classify {i}/{len(todo)} ({(time.time() - t0) / i:.2f} s each)", flush=True)
     print(f'classify done: {len(todo)} written', flush=True)
@@ -496,12 +479,10 @@ def stage_thin():
     new = [r for r in rows if 'source' in r]
     print(f"thin: {len(new)} new topics, {len(new) - sum(marks.values())} served, thin {dict(marks)}", flush=True)
     if not PLAN:
-        with open(path, 'w') as f:
-            for r in rows:
-                f.write(json.dumps(r, ensure_ascii=False) + '\n')
+        common.write_jsonl(path, rows)
 
 
-CITE_RE = re.compile(r'\s*\[[\d,;\s]+\]')
+CITE_RE = common.CITE
 
 
 def stage_plan():
@@ -513,25 +494,13 @@ def stage_plan():
     if PLAN:
         print(f"topics plan: {len(rows)} topics; passages changed for {len(moved)} {moved[:12]}; topics gone {gone}", flush=True)
         return
-    with open(os.path.join(OUT, 'topics.jsonl'), 'w') as f:
-        for r in rows:
-            f.write(json.dumps(r, ensure_ascii=False) + '\n')
+    common.write_jsonl(os.path.join(OUT, 'topics.jsonl'), rows)
     print(f"plan: {len(rows)} topics of {len(topics)} candidates (asked >= {MIN_ASKED}); "
           f"{collections.Counter(r['kind'] for r in rows)}; top: " + ', '.join(f"{r['topic']} ({r['asked']})" for r in rows[:15]))
 
 
 def chat(user, system=None):
-    body = json.dumps({'messages': [{'role': 'system', 'content': system or SYS}, {'role': 'user', 'content': user}],
-                       'temperature': 0, 'seed': 1, 'max_tokens': 700}).encode()
-    err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=900) as r:
-                return json.load(r)['choices'][0]['message']['content'].strip()
-        except Exception as e:
-            err = e; time.sleep(5 * (attempt + 1))
-    raise err
+    return common.chat(SERVER, system or SYS, user, 700, 900)
 
 
 def gen_input(r, chunks):
@@ -572,9 +541,7 @@ def stage_gen():
         if r.get('summary') and r.get('inputSha') == key and r.get('promptSha') == PSHA:
             continue
         r['summary'] = chat(user); r['inputSha'] = key; r['promptSha'] = PSHA; n += 1
-        with open(path, 'w') as f:
-            for x in rows:
-                f.write(json.dumps(x, ensure_ascii=False) + '\n')
+        common.write_jsonl(path, rows)
         print(f"{time.strftime('%H:%M:%S')} {r['topic']}: {len(r['summary'].split())} words ({(time.time() - t0) / n:.0f} s each)", flush=True)
     print(f'gen done: {n} written', flush=True)
 
@@ -587,24 +554,12 @@ ABBR = r'(?<!\bMr\.)(?<!\bMrs\.)(?<!\bMs\.)(?<!\bDr\.)(?<!\bSt\.)(?<!\bLt\.)(?<!
 
 def sentences(t):
     # As dossiers.py: sentences over 20 characters, citations removed so the judge sees the claim only.
-    t = re.sub(r'\s*\[[\d,;\s]+\]', '', t)
-    return [x.strip() for x in re.split(ABBR + r'(?<=[.!?])\s+(?=[A-Z"\'])', ' '.join(t.split())) if len(x.strip()) > 20]
+    return common.split_sentences(common.strip_cites(t), ABBR)
 
 
 def verdict(evidence, claim):
     # Evidence first, claim last, one request at a time: the server reuses the cached evidence prefix per topic.
-    body = json.dumps({'messages': [{'role': 'system', 'content': SUPPORT_SYS},
-                                    {'role': 'user', 'content': f'EVIDENCE:\n{evidence}\n\nCLAIM: {claim}'}],
-                       'temperature': 0, 'seed': 1, 'max_tokens': 3, 'grammar': 'root ::= "true" | "false"\n'}).encode()
-    err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=900) as r:
-                return json.load(r)['choices'][0]['message']['content'].strip() == 'true'
-        except Exception as e:
-            err = e; time.sleep(5 * (attempt + 1))
-    raise err
+    return common.verdict(SERVER, SUPPORT_SYS, f'EVIDENCE:\n{evidence}\n\nCLAIM: {claim}', 900)
 
 
 def stage_judge():
@@ -627,8 +582,7 @@ def stage_judge():
         vs = [(c, verdict(evidence, c)) for c in claims]
         row = {'topic': r['topic'], 'key': key, 'sentences': len(vs), 'supported': sum(v for _, v in vs),
                'unsupported': [c for c, v in vs if not v]}
-        with open(path, 'a') as f:
-            f.write(json.dumps(row, ensure_ascii=False) + '\n')
+        common.append_jsonl(path, row)
         n += 1
         print(f"{time.strftime('%H:%M:%S')} {r['topic']}: {row['supported']}/{row['sentences']} supported "
               f"({(time.time() - t0) / n:.0f} s per topic)", flush=True)
@@ -641,8 +595,7 @@ def stage_judge():
             evidence = '\n---\n'.join(chunks[c]['text'][:3000] for c in r.get('passagesV2', r['passages']) if c in chunks)
             vs = [(c, verdict(evidence, c)) for c in sentences(r['summaryV2'])]
             row = {'topic': t2, 'key': key, 'sentences': len(vs), 'supported': sum(v for _, v in vs), 'unsupported': [c for c, v in vs if not v]}
-            with open(path, 'a') as f:
-                f.write(json.dumps(row, ensure_ascii=False) + '\n')
+            common.append_jsonl(path, row)
             print(f"{t2}: {row['supported']}/{row['sentences']} supported", flush=True)
     keys = {r['topic']: sha16(r['topic'] + r['summary'] + JSHA) for r in rows}
     J = [j for j in read_jsonl(path) if keys.get(j['topic']) == j['key']]
@@ -691,9 +644,7 @@ def stage_retrait():
     for r in todo:
         user = v2in(r)
         r['summaryV2'] = chat(user, TRAIT_SYS); r['inputShaV2'] = sha16(user); r['promptShaV2'] = TSHA; r.pop('summaryV2Gen', None); r.pop('traitCheckKey', None)
-        with open(path, 'w') as f:
-            for x in rows:
-                f.write(json.dumps(x, ensure_ascii=False) + '\n')
+        common.write_jsonl(path, rows)
         print(f"retrait {r['topic']}: {len(r['summaryV2'].split())} words", flush=True)
 
 
@@ -702,6 +653,12 @@ TRAIT_CHECK_SYS = ("You check one sentence of a summary about a race of the Arkn
                    "(in narration, a record, or a character describing their own race), not to one person whose race the passage "
                    "does not give, not to another race, and not in a figure of speech. Answer true or false only.")
 CSHA2 = sha16(TRAIT_CHECK_SYS)
+
+
+def judge_once(system, user, **extra):
+    """A yes/no judge call without retries (the trait checks have always made one attempt)."""
+    body = common.chat_body(system, user, 3, **extra, grammar=G_BOOL)
+    return common.content(common.chat_once(SERVER, body, 600)).strip() == 'true'
 
 
 def stage_traitcheck():
@@ -728,16 +685,11 @@ def stage_traitcheck():
         for i, x in enumerate(parts):
             if not BODY_RE.search(x):
                 continue
-            cites = [int(n) for g in re.findall(r'\[([\d,;\s]+)\]', x) for n in re.split(r'[,;\s]+', g) if n.strip().isdigit()]
+            cites = common.cited_numbers(x)
             ps = r['passagesV2']
             ev = '\n---\n'.join(chunks[ps[c - 1]]['text'][:3000] for c in cites if 0 < c <= len(ps) and ps[c - 1] in chunks)
-            claim = re.sub(r'\s*\[[\d,;\s]+\]', '', x)
-            body = json.dumps({'messages': [{'role': 'system', 'content': TRAIT_CHECK_SYS},
-                                            {'role': 'user', 'content': f"RACE: {r['topic']}\nPASSAGES:\n{ev or '(none cited)'}\n\nSENTENCE: {claim}"}],
-                               'temperature': 0, 'seed': 1, 'max_tokens': 3, 'grammar': 'root ::= "true" | "false"\n'}).encode()
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=600) as resp:
-                ok = json.load(resp)['choices'][0]['message']['content'].strip() == 'true'
+            claim = common.strip_cites(x)
+            ok = judge_once(TRAIT_CHECK_SYS, f"RACE: {r['topic']}\nPASSAGES:\n{ev or '(none cited)'}\n\nSENTENCE: {claim}")
             n_checked += 1
             if not ok:
                 dropped.append(i)
@@ -747,9 +699,7 @@ def stage_traitcheck():
         n_dropped += len(dropped)
         if dropped:
             print(f"traitcheck {r['topic']}: dropped {len(dropped)}: " + ' | '.join(parts[i][:120] for i in dropped), flush=True)
-    with open(path, 'w') as f:
-        for x in rows:
-            f.write(json.dumps(x, ensure_ascii=False) + '\n')
+    common.write_jsonl(path, rows)
     print(f'traitcheck: {n_checked} body-feature sentences checked, {n_dropped} dropped', flush=True)
 
 
@@ -799,18 +749,13 @@ def stage_traitcheck2():
             if not words:
                 continue
             stems = sorted({w.rstrip('s') if len(w) > 3 else w for w in words})
-            cites = [int(n) for g in re.findall(r'\[([\d,;\s]+)\]', x) for n in re.split(r'[,;\s]+', g) if n.strip().isdigit()]
+            cites = common.cited_numbers(x)
             ps = r['passagesV2']
             ev = '\n---\n'.join('\n'.join(feature_lines(chunks[ps[c - 1]]['text'], stems)) for c in cites
                                 if 0 < c <= len(ps) and ps[c - 1] in chunks)
-            claim = re.sub(r'\s*\[[\d,;\s]+\]', '', x)
-            body = json.dumps({'messages': [{'role': 'system', 'content': TRAIT_CHECK2_SYS},
-                                            {'role': 'user', 'content': f"RACE: {r['topic']}\nLINES:\n{ev.strip() or '(no cited line names the feature)'}\n\nSENTENCE: {claim}"}],
-                               'temperature': 0, 'seed': 1, 'max_tokens': 3, 'cache_prompt': False,
-                               'grammar': 'root ::= "true" | "false"\n'}).encode()
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=600) as resp:
-                ok = json.load(resp)['choices'][0]['message']['content'].strip() == 'true'
+            claim = common.strip_cites(x)
+            ok = judge_once(TRAIT_CHECK2_SYS, f"RACE: {r['topic']}\nLINES:\n{ev.strip() or '(no cited line names the feature)'}\n\nSENTENCE: {claim}",
+                            cache_prompt=False)
             n_checked += 1
             print(f"traitcheck2 {r['topic']} {'keep' if ok else 'DROP'}: {claim[:140]}", flush=True)
             if not ok:
@@ -819,9 +764,7 @@ def stage_traitcheck2():
         r['traitDroppedS'] = [parts[i] for i in dropped]
         r['traitCheckKeyS'] = key
         n_dropped += len(dropped)
-    with open(path, 'w') as f:
-        for x in rows:
-            f.write(json.dumps(x, ensure_ascii=False) + '\n')
+    common.write_jsonl(path, rows)
     print(f'traitcheck2: {n_checked} body-feature sentences checked, {n_dropped} dropped', flush=True)
 
 
@@ -863,7 +806,7 @@ def stage_traitrule():
                 continue
             n_checked += 1
             stems = sorted({w.rstrip('s') if len(w) > 3 else w for w in words})
-            cites = [int(n) for g in re.findall(r'\[([\d,;\s]+)\]', x) for n in re.split(r'[,;\s]+', g) if n.strip().isdigit()]
+            cites = common.cited_numbers(x)
             ps = r['passagesV2']
             refuted = []
             for st in stems:
@@ -914,9 +857,7 @@ def stage_traitrule():
         for nt in notes:
             print(f"traitrule {race} DROP: {nt}", flush=True)
     if os.environ.get('PLAN') != '1':
-        with open(path, 'w') as f:
-            for x in rows:
-                f.write(json.dumps(x, ensure_ascii=False) + '\n')
+        common.write_jsonl(path, rows)
     print(f'traitrule: {n_checked} body-feature sentences checked, {n_dropped} dropped', flush=True)
 
 
@@ -931,7 +872,7 @@ def stage_units():
             for r in filter(keep, rows):
                 # Citations point at this entry's own passage list, which a reader of the unit cannot see; drop them.
                 body = r['summaryV2'] if name == 'units.jsonl' and r.get('summaryV2') else r['summary']
-                text = re.sub(r'\s*\[[\d,;\s]+\]', '', body)
+                text = common.strip_cites(body)
                 sid = 'topic_' + re.sub(r'\W+', '_', r['topic']).strip('_').lower()
                 ids[sid] += name == 'units.jsonl'
                 f.write(json.dumps({'storyId': sid, 'groupId': 'topic',

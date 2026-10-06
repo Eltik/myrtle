@@ -8,14 +8,12 @@
 //! still says whose lines or which run it is. `groupId` is the source kind. The input directory is never
 //! touched.
 
-use std::io::Write as _;
 use std::path::PathBuf;
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result};
 use clap::Parser;
-use sha2::{Digest, Sha256};
 use tokenizers::Tokenizer;
-use trevor::corpus::chunk::Chunk;
+use trevor::corpus::derived;
 
 #[derive(Parser)]
 #[command(about = "Append typed source units to a copy of a corpus")]
@@ -33,21 +31,13 @@ struct Args {
     out: PathBuf,
 }
 
-fn sha_hex(b: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(b))
-}
-
 fn main() -> Result<()> {
     // SAFETY: set before any other thread exists.
     unsafe { std::env::set_var("TOKENIZERS_PARALLELISM", "false") };
     let a = Args::parse();
-    if a.out.canonicalize().ok() == Some(a.corpus.canonicalize()?) {
-        bail!("--out must not be the input corpus directory");
-    }
+    derived::ensure_distinct_out(&a.out, &a.corpus)?;
     let tok = Tokenizer::from_bytes(std::fs::read(&a.tokenizer)?).map_err(|e| anyhow::anyhow!("{e}"))?;
-    let count = |s: &str| -> u32 {
-        tok.encode(s, true).map_or(u32::MAX, |e| u32::try_from(e.get_ids().len()).unwrap_or(u32::MAX))
-    };
+    let count = |s: &str| derived::token_count(&tok, s);
     let mut rows = Vec::new();
     let mut split_lines = 0usize;
     for l in std::fs::read_to_string(&a.units).with_context(|| format!("reading {}", a.units.display()))?.lines() {
@@ -93,36 +83,14 @@ fn main() -> Result<()> {
             chunks.push(cur);
         }
         for (i, t) in chunks.into_iter().enumerate() {
-            rows.push(Chunk {
-                chunk_id: format!("{sid}#{i:04}"),
-                story_id: sid.clone(),
-                group_id: group.clone(),
-                ordinal: u32::try_from(i)?,
-                scene_ordinal: 0,
-                line_start: 0,
-                line_end: 0,
-                content_sha: sha_hex(t.as_bytes())[..16].to_owned(),
-                token_count: count(&t),
-                speakers: speakers.clone(),
-                on_screen: Vec::new(),
-                background: None,
-                text: t,
-                prefix: None,
-            });
+            let n = count(&t);
+            rows.push(derived::generated_chunk(format!("{sid}#{i:04}"), sid.clone(), group.clone(), u32::try_from(i)?,
+                                               speakers.clone(), t, n));
         }
     }
     let src = std::fs::read(a.corpus.join("chunks.jsonl"))?;
-    std::fs::create_dir_all(&a.out)?;
-    let mut out = std::io::BufWriter::new(std::fs::File::create(a.out.join("chunks.jsonl"))?);
-    out.write_all(&src)?;
-    for c in &rows {
-        serde_json::to_writer(&mut out, c)?;
-        out.write_all(b"\n")?;
-    }
-    out.flush()?;
-    for f in ["manifest.p0.json", "spoiler.jsonl", "unresolved.jsonl"] {
-        std::fs::copy(a.corpus.join(f), a.out.join(f)).with_context(|| format!("copying {f}"))?;
-    }
+    derived::write_appended(&a.out, &src, &rows)?;
+    derived::copy_sidecars(&a.corpus, &a.out)?;
     let mut by = std::collections::BTreeMap::new();
     for c in &rows {
         *by.entry(c.group_id.clone()).or_insert(0usize) += 1;

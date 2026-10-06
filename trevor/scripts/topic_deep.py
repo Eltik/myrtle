@@ -27,9 +27,12 @@ gathers a served topic's evidence broadly and summarizes it in two steps:
   python3 scripts/topic_deep.py judge
   PLAN=1 python3 scripts/topic_deep.py gen|judge                              # what a run would redo, no model
 """
-import argparse, collections, hashlib, json, os, re, sys, time, urllib.request
+import argparse, collections, os, re, sys, time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+from common import ROOT, read_jsonl, sha16
+
 OUT = os.path.join(ROOT, 'artifacts', 'topics')
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
 PLAN = os.environ.get('PLAN') == '1'
@@ -37,7 +40,6 @@ GROUPS = int(os.environ.get('DEEP_GROUPS', '10'))
 PER_GROUP = int(os.environ.get('DEEP_PER_GROUP', '6'))
 RECORDS = int(os.environ.get('DEEP_RECORDS', '8'))
 DROP = os.environ.get('DEEP_DROP', '1') != '0'
-sha16 = lambda s: hashlib.sha256(s.encode()).hexdigest()[:16]
 NOT_STORY = {'archive', 'profile', 'summary', 'topic', 'gametext', 'enemy', 'item', 'voice', 'is', 'module', 'skin'}
 OTHER_TEXT = {'gametext', 'is', 'module', 'item', 'enemy', 'skin'}
 
@@ -65,40 +67,17 @@ JSHA = sha16(SUPPORT_SYS)
 HEADINGS = ('What it is', 'Traits', 'History', 'Society and politics', 'Notable people', 'Key events', 'Open questions')
 
 
-def read_jsonl(p):
-    return [json.loads(l) for l in open(p)] if os.path.exists(p) else []
+write_jsonl = common.replace_jsonl
 
 
-def write_jsonl(p, rows):
-    tmp = p + '.tmp'
-    with open(tmp, 'w') as f:
-        for r in rows:
-            f.write(json.dumps(r, ensure_ascii=False) + '\n')
-    os.replace(tmp, p)
-
-
-def call(system, user, max_tokens, grammar=None):
-    body = {'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
-            'temperature': 0, 'seed': 1, 'max_tokens': max_tokens, 'cache_prompt': False}
-    if grammar:
-        body['grammar'] = grammar
-    err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', json.dumps(body).encode(), {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=900) as r:
-                return json.load(r)['choices'][0]['message']['content'].strip()
-        except Exception as e:  # one failed decode 500s the request; retry
-            err = e; time.sleep(5 * (attempt + 1))
-    raise err
+def call(system, user, max_tokens):
+    # cache_prompt false: the same prompt always decodes to the same answer.
+    return common.chat(SERVER, system, user, max_tokens, 900, cache_prompt=False)
 
 
 def forms_rx(r):
     """The topic's forms as one whole-word pattern, as scripts/topic_groups.py: case-sensitive when capitalized."""
-    forms = {r['topic'], *r.get('aliases', []), *r.get('names', [])}
-    forms = sorted((f for f in forms if len(f) >= 3), key=len, reverse=True)
-    pats = [re.escape(f) if f[0].isupper() else '(?i:' + re.escape(f) + ')' for f in forms]
-    return re.compile(r"(?<![\w'])(" + '|'.join(pats) + r")(?![\w'])")
+    return common.forms_regex({r['topic'], *r.get('aliases', []), *r.get('names', [])})
 
 
 def served_topics():
@@ -110,7 +89,7 @@ class Data:
     def __init__(self):
         self.chunks = read_jsonl(os.path.join(ROOT, 'artifacts', 'p4x', 'chunks.jsonl'))
         self.p2 = {g['groupId']: g['summary'] for g in read_jsonl(os.path.join(ROOT, 'artifacts', 'p2', 'groups.jsonl'))}
-        tl = json.load(open(os.path.join(ROOT, 'artifacts', 'chrono', 'timeline_v1.json')))
+        tl = common.load_json(os.path.join(ROOT, 'artifacts', 'chrono', 'timeline_v1.json'))
         self.gname = {g['groupId']: g.get('name') or g['groupId'] for g in tl['groups']}
         self.attrs = read_jsonl(os.path.join(ROOT, 'artifacts', 'entities', 'operator_attributes.jsonl'))
         self.dossiers = read_jsonl(os.path.join(ROOT, 'artifacts', 'dossiers', 'dossiers.jsonl'))
@@ -216,8 +195,7 @@ def stage_gen(args):
             out = call(MAP_SYS, m['user'], 500)
             row = {k: m[k] for k in ('topic', 'source', 'kind', 'chunks', 'key')} | {'notes': out, 'promptSha': MSHA}
             cache[m['key']] = row
-            with open(mpath, 'a') as f:
-                f.write(json.dumps(row, ensure_ascii=False) + '\n')
+            common.append_jsonl(mpath, row)
         notes = [(m['source'], cache[m['key']]['notes']) for m in items if not cache[m['key']]['notes'].strip().upper().startswith('NOTHING')]
         user = reduce_input(r['topic'], notes, ov)
         entry = call(REDUCE_SYS, user, 1400)
@@ -243,26 +221,15 @@ def claims(entry):
         if not s or s.strip('#* :').strip() in HEADINGS:
             continue
         for x in re.split(ABBR + r'(?<=[.!?])\s+(?=[A-Z"\'])', s):
-            cites = [int(n) for g in re.findall(r'\[([\d,;\s]+)\]', x) for n in re.split(r'[,;\s]+', g) if n.strip().isdigit()]
-            plain = re.sub(r'\s*\[[\d,;\s]+\]', '', x).strip()
+            cites = common.cited_numbers(x)
+            plain = common.strip_cites(x).strip()
             if len(plain) > 20:
                 out.append((i, x, plain, cites))
     return out
 
 
 def verdict(evidence, claim):
-    body = json.dumps({'messages': [{'role': 'system', 'content': SUPPORT_SYS},
-                                    {'role': 'user', 'content': f'EVIDENCE:\n{evidence}\n\nCLAIM: {claim}'}],
-                       'temperature': 0, 'seed': 1, 'max_tokens': 3, 'grammar': 'root ::= "true" | "false"\n'}).encode()
-    err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=900) as r:
-                return json.load(r)['choices'][0]['message']['content'].strip() == 'true'
-        except Exception as e:
-            err = e; time.sleep(5 * (attempt + 1))
-    raise err
+    return common.verdict(SERVER, SUPPORT_SYS, f'EVIDENCE:\n{evidence}\n\nCLAIM: {claim}', 900)
 
 
 def served_text(entry, unsupported):

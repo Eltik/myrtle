@@ -42,7 +42,6 @@
 
 use std::collections::BTreeMap;
 
-use sha2::{Digest, Sha256};
 
 /// The kinds whose prose sits in `text`, mirroring
 /// `backend::core::story::parser::PROSE_KINDS` (parser.rs:63).
@@ -387,18 +386,7 @@ fn turns_of(commands: &[StoryCommand]) -> (Vec<Turn>, Vec<(u32, Option<String>)>
 
 /// sha256 of `s`, first 16 hex chars: the `content_sha` rule, shared with the
 /// embedder's reuse key so the two agree byte for byte.
-#[must_use]
-pub fn sha16(s: &str) -> String {
-    use std::fmt::Write as _;
-    let digest = Sha256::digest(s.as_bytes());
-    digest
-        .iter()
-        .take(8)
-        .fold(String::with_capacity(16), |mut acc, b| {
-            let _ = write!(acc, "{b:02x}");
-            acc
-        })
-}
+pub use crate::util::sha16;
 
 /// Chunk one story.
 ///

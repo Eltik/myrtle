@@ -9,25 +9,18 @@ resumable. Writes eval/reference/wiki_status.jsonl (an eval reference, never ser
 word lower case, "mixed" for a living status with a death in its note, null when the field is
 absent, which is most operators), statusRaw, fetched.
 """
-import json, os, re, time, urllib.parse, urllib.request
+import json, os, re, sys, time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-GD = os.path.join(ROOT, '..', 'assets', 'output', 'en', 'gamedata', 'excel')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+from common import ROOT
+
 OUT = os.path.join(ROOT, 'eval', 'reference', 'wiki_status.jsonl')  # eval reference only (2026-10-04)
-API = 'https://arknights.wiki.gg/api.php'
 
 
 def wikitext(page):
-    q = urllib.parse.urlencode({'action': 'parse', 'page': page, 'prop': 'wikitext', 'format': 'json', 'redirects': 1})
-    req = urllib.request.Request(f'{API}?{q}', headers={'User-Agent': 'trevor-research/0.1'})
-    for attempt in range(4):
-        try:
-            with urllib.request.urlopen(req, timeout=60) as r:
-                t = json.load(r)
-            return t['parse']['wikitext']['*'] if 'parse' in t else None
-        except Exception:
-            time.sleep(5 * (attempt + 1))
-    raise RuntimeError(f'wiki unreachable for {page}')
+    return common.wiki_get_retry({'action': 'parse', 'page': page, 'prop': 'wikitext', 'format': 'json', 'redirects': 1}, page,
+                                 parse=lambda t: t['parse']['wikitext']['*'] if 'parse' in t else None)
 
 
 def wiki_class(raw):
@@ -43,9 +36,7 @@ def wiki_class(raw):
 
 
 def main():
-    ct = json.load(open(os.path.join(GD, 'character_table.json')))['Characters']
-    ops = [(c['key'], c['value']['Name']) for c in ct
-           if c['value'].get('Profession') not in ('TOKEN', 'TRAP') and not c['value'].get('IsNotObtainable')]
+    ops = common.playable_operators()
     done = {json.loads(l)['charId'] for l in open(OUT)} if os.path.exists(OUT) else set()
     for cid, name in ops:
         if cid in done:
@@ -57,9 +48,8 @@ def main():
             m = re.search(r'^\|\s*status\s*=\s*(.*)$', w, re.M)
             raw = m.group(1).strip() if m and m.group(1).strip() else None
         status = wiki_class(raw)
-        with open(OUT, 'a') as f:
-            f.write(json.dumps({'name': name, 'charId': cid, 'page': page if w else None, 'status': status,
-                                'statusRaw': raw, 'fetched': time.strftime('%Y-%m-%d')}, ensure_ascii=False) + '\n')
+        common.append_jsonl(OUT, {'name': name, 'charId': cid, 'page': page if w else None, 'status': status,
+                                  'statusRaw': raw, 'fetched': time.strftime('%Y-%m-%d')})
         time.sleep(1)
     R = [json.loads(l) for l in open(OUT)]
     from collections import Counter

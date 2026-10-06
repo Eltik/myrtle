@@ -24,18 +24,17 @@ Output: artifacts/bank/bank.jsonl (id, kind, question, aliases, answer, sources,
 requiredStages, gateChars). The corpus spec calls this file answers.jsonl; bank.jsonl avoids a
 clash with `ask --batch` output.
 """
-import collections, json, os, random, re, subprocess, sys, time, urllib.request
+import collections, json, os, random, re, subprocess, sys, time
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import incr
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common, incr
+from common import ROOT, read_jsonl
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'artifacts', 'bank')
 CORPUS = os.path.join(ROOT, os.environ.get('CORPUS', 'artifacts/p3b'))
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
 N_Q = int(os.environ.get('N_QUESTIONS', '900'))
 SAMPLE = int(os.environ.get('SAMPLE', '60'))
-G_BOOL = 'root ::= "true" | "false"\n'
 Q_SYS = ("You read one passage from the Arknights story and write one question a fan might ask that this passage "
          "answers. Name the characters, place or event instead of using pronouns, so the question makes sense on its "
          "own. Ask about what happens, why, or who someone is, not about wording. Output the question only.")
@@ -46,24 +45,12 @@ DECLINE = re.compile(r"(could not find|couldn't find|cannot find|can't find|not 
 ABBR = r'(?<!\bMr\.)(?<!\bMrs\.)(?<!\bMs\.)(?<!\bDr\.)(?<!\bSt\.)(?<!\bMt\.)(?<!\bNo\.)'
 
 
-def read_jsonl(p):
-    return [json.loads(l) for l in open(p)] if os.path.exists(p) else []
+def chat(system, user, max_tokens):
+    return common.chat(SERVER, system, user, max_tokens, 1200)
 
 
-def chat(system, user, max_tokens, grammar=None):
-    body = {'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
-            'temperature': 0, 'seed': 1, 'max_tokens': max_tokens}
-    if grammar:
-        body['grammar'] = grammar
-    data = json.dumps(body).encode(); err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', data, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=1200) as r:
-                return json.load(r)['choices'][0]['message']['content'].strip()
-        except Exception as e:
-            err = e; time.sleep(5 * (attempt + 1))
-    raise err
+def supported(system, user):
+    return common.verdict(SERVER, system, user, 1200)
 
 
 def spoilers():
@@ -120,18 +107,13 @@ def stage_seed():
                          'question': f"What should I know before starting {p['name']}?",
                          'aliases': [f"What happened before {p['name']}?"], 'answer': text, 'sources': p['prior'],
                          **gate(src, [], sp)})
-    with open(os.path.join(OUT, 'seed.jsonl'), 'w') as f:
-        for r in rows:
-            f.write(json.dumps(r, ensure_ascii=False) + '\n')
+    common.write_jsonl(os.path.join(OUT, 'seed.jsonl'), rows)
     c = collections.Counter(r['kind'] for r in rows)
     print(f'seed: {len(rows)} entries {dict(c)}; with unknown gate stories {sum("gateUnknown" in r for r in rows)}')
 
 
 def primers_module():
-    import importlib.util
-    spec = importlib.util.spec_from_file_location('primers', os.path.join(ROOT, 'scripts', 'primers.py'))
-    m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
-    return m
+    return common.load_script('primers')
 
 
 def stage_primers():
@@ -145,9 +127,8 @@ def stage_primers():
             continue
         src = '\n'.join(f"- {name.get(h, h)}: {summ[h]}" for h in p['prior']) + f"\n- Opening blurb of {p['name']}: {p['blurb']}"
         sents = pm.sentences(p['primer'])
-        ok = [chat(pm.SUPPORT_SYS, f'SUMMARIES:\n{src}\n\nSENTENCE: {x}', 3, G_BOOL) == 'true' for x in sents]
-        with open(path, 'a') as f:
-            f.write(json.dumps({'groupId': p['groupId'], 'sentences': list(zip(sents, ok))}, ensure_ascii=False) + '\n')
+        ok = [supported(pm.SUPPORT_SYS, f'SUMMARIES:\n{src}\n\nSENTENCE: {x}') for x in sents]
+        common.append_jsonl(path, {'groupId': p['groupId'], 'sentences': list(zip(sents, ok))})
     R = read_jsonl(path)
     t = sum(len(r['sentences']) for r in R); k = sum(ok for r in R for _, ok in r['sentences'])
     print(f'primers: {len(R)} primers, {k}/{t} sentences supported and kept ({k / max(t, 1):.3f})')
@@ -243,9 +224,7 @@ def stage_merge():
                      'answer': a['answer'], 'sources': a['cited'], 'passages': a['passages'],
                      **gate(cited + [q['storyId']], chars, sp)})
         kept += 1
-    with open(os.path.join(OUT, 'bank.jsonl'), 'w') as f:
-        for r in rows:
-            f.write(json.dumps(r, ensure_ascii=False) + '\n')
+    common.write_jsonl(os.path.join(OUT, 'bank.jsonl'), rows)
     c = collections.Counter(r['kind'] for r in rows)
     print(f'bank: {len(rows)} entries {dict(c)}; generated kept {kept}, dropped {dropped} (declined or uncited)')
 
@@ -260,12 +239,10 @@ def stage_judge():
         if r['id'] in done:
             continue
         given = '\n---\n'.join(chunks[i]['text'] for i in r['passages'] if i in chunks)
-        t = re.sub(r'\s*\[[\d,;\s]+\]', '', ' '.join(r['answer'].split()))
-        sents = [x.strip() for x in re.split(ABBR + r'(?<=[.!?])\s+(?=[A-Z"\'*])', t) if len(x.strip()) > 20]
-        sup = [chat(SUPPORT_SYS, f'PASSAGES:\n{given}\n\nSENTENCE: {s}', 3, G_BOOL) == 'true' for s in sents]
-        with open(path, 'a') as f:
-            f.write(json.dumps({'id': r['id'], 'sentences': len(sents), 'supported': sum(sup),
-                                'unsupported': [s for s, v in zip(sents, sup) if not v]}, ensure_ascii=False) + '\n')
+        sents = common.split_sentences(common.strip_cites(' '.join(r['answer'].split())), ABBR, '[A-Z"\'*]')
+        sup = [supported(SUPPORT_SYS, f'PASSAGES:\n{given}\n\nSENTENCE: {s}') for s in sents]
+        common.append_jsonl(path, {'id': r['id'], 'sentences': len(sents), 'supported': sum(sup),
+                                   'unsupported': [s for s, v in zip(sents, sup) if not v]})
     J = read_jsonl(path)
     s = sum(r['supported'] for r in J); t = sum(r['sentences'] for r in J)
     print(f'judge: {len(J)} generated entries, {s}/{t} sentences supported = {s / max(t, 1):.3f}; '

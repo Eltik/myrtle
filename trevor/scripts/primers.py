@@ -10,17 +10,16 @@ The target's own official opening blurb says what matters without revealing its 
   judge  judge model: faithfulness of each sentence to the prior summaries given, and spoiler
          leakage: does a sentence describe something that happens in the target itself?
 """
-import collections, hashlib, json, os, random, re, sys, time, urllib.request
+import collections, json, os, random, sys, time
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import incr
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common, incr
+from common import ROOT, read_jsonl, sha16
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'artifacts', 'primers')
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
 PRIOR = int(os.environ.get('PRIOR', '6'))
 SAMPLE = int(os.environ.get('SAMPLE', '20'))
-sha16 = lambda s: hashlib.sha256(s.encode()).hexdigest()[:16]
 GEN_SYS = ("You write a short primer for an Arknights reader about to start a story event: what they need to know "
            "beforehand. You get the event's own opening blurb, and summaries of earlier events in in-world order. "
            "Write about 250 words: the earlier events and people that matter for this event, and where things stand "
@@ -38,27 +37,10 @@ LEAK_SYS = ("You check whether a sentence from a spoiler-free primer reveals wha
             "and the sentence. Answer true only if the sentence reveals a plot development of the event that the opening "
             "blurb does not already state; content of the opening blurb, or about earlier events, is not a leak. Answer "
             "true or false only.")
-G_BOOL = 'root ::= "true" | "false"\n'
 
 
-def read_jsonl(p):
-    return [json.loads(l) for l in open(p)] if os.path.exists(p) else []
-
-
-def chat(system, user, max_tokens, grammar=None):
-    body = {'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
-            'temperature': 0, 'seed': 1, 'max_tokens': max_tokens}
-    if grammar:
-        body['grammar'] = grammar
-    data = json.dumps(body).encode(); err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', data, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=1200) as r:
-                return json.load(r)['choices'][0]['message']['content'].strip()
-        except Exception as e:
-            err = e; time.sleep(5 * (attempt + 1))
-    raise err
+def chat(system, user, max_tokens):
+    return common.chat(SERVER, system, user, max_tokens, 1200)
 
 
 def plan():
@@ -143,9 +125,11 @@ def stage_gen():
     print('gen done', flush=True)
 
 
+ABBR = r'(?<!\bMr\.)(?<!\bMrs\.)(?<!\bMs\.)(?<!\bDr\.)(?<!\bSt\.)(?<!\bMt\.)(?<!\bNo\.)'
+
+
 def sentences(t):
-    ab = r'(?<!\bMr\.)(?<!\bMrs\.)(?<!\bMs\.)(?<!\bDr\.)(?<!\bSt\.)(?<!\bMt\.)(?<!\bNo\.)'
-    return [x.strip() for x in re.split(ab + r'(?<=[.!?])\s+(?=[A-Z"\'])', ' '.join(t.split())) if len(x.strip()) > 20]
+    return common.split_sentences(t, ABBR)
 
 
 def stage_judge():
@@ -162,14 +146,13 @@ def stage_judge():
             continue
         src = '\n'.join(f"- {name.get(h, h)}: {summ[h]}" for h in p['prior']) + f"\n- Opening blurb of {p['name']}: {p['blurb']}"
         sents = sentences(p['primer'])
-        sup = [chat(SUPPORT_SYS, f'SUMMARIES:\n{src}\n\nSENTENCE: {s}', 3, G_BOOL) == 'true' for s in sents]
+        sup = [common.verdict(SERVER, SUPPORT_SYS, f'SUMMARIES:\n{src}\n\nSENTENCE: {s}', 1200) for s in sents]
         # The first leak judge saw no blurb and flagged the blurb itself (Episode 5's primer quoted it).
-        leak = [chat(LEAK_SYS, f"OPENING BLURB (allowed): {p['blurb']}\n\nEVENT SUMMARY:\n{summ[p['groupId']]}\n\nSENTENCE: {s}",
-                     3, G_BOOL) == 'true' for s in sents]
+        leak = [common.verdict(SERVER, LEAK_SYS, f"OPENING BLURB (allowed): {p['blurb']}\n\nEVENT SUMMARY:\n{summ[p['groupId']]}\n\nSENTENCE: {s}",
+                               1200) for s in sents]
         row = {'groupId': p['groupId'], 'sentences': len(sents), 'supported': sum(sup), 'leaks': sum(leak),
                'leaked': [s for s, v in zip(sents, leak) if v], 'unsupported': [s for s, v in zip(sents, sup) if not v]}
-        with open(path, 'a') as f:
-            f.write(json.dumps(row, ensure_ascii=False) + '\n')
+        common.append_jsonl(path, row)
         print(f"{p['groupId']}: supported {row['supported']}/{row['sentences']}, leaks {row['leaks']}", flush=True)
     J = read_jsonl(path)
     s = sum(r['supported'] for r in J); t = sum(r['sentences'] for r in J); lk = sum(r['leaks'] for r in J)

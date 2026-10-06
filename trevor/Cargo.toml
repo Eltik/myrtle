@@ -80,10 +80,10 @@ required-features = ["embed-core"]
 
 [[bin]]
 name = "goldset"
-path = "src/bin/goldset.rs"
+path = "src/bin/goldset/main.rs"
 required-features = ["embed-core"]
 
 [[bin]]
 name = "ask"
-path = "src/bin/ask.rs"
+path = "src/bin/ask/main.rs"
 required-features = ["embed-core"]

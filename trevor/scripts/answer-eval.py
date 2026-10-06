@@ -11,12 +11,14 @@ written by `ask --batch`, writes <answers>.judged.jsonl (resumable) and prints t
             unsupported sentences are the fabrication rate.
   cited     answerable items: do the cited chunks include a gold chunk (line-span overlap)?
 """
-import json, os, re, sys, time, urllib.request
+import json, os, re, sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+from common import ROOT
+
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
 CORPUS = os.path.join(ROOT, os.environ.get('CORPUS', 'artifacts/p3a'))
-G_BOOL = 'root ::= "true" | "false"\n'
 CORRECT_SYS = ("You grade an answer to a question about the Arknights story. You get the question, reference evidence "
                "from the story, and the answer. Answer true if the answer gives the correct answer to the question, "
                "consistent with the reference evidence, even if worded differently or with extra detail. Answer false "
@@ -32,38 +34,19 @@ ABBR = r'(?<!\bMr\.)(?<!\bMrs\.)(?<!\bMs\.)(?<!\bDr\.)(?<!\bSt\.)(?<!\bMt\.)(?<!
 
 
 def verdict(system, user):
-    body = json.dumps({'messages': [{'role': 'system', 'content': system}, {'role': 'user', 'content': user}],
-                       'temperature': 0, 'seed': 1, 'max_tokens': 3, 'grammar': G_BOOL}).encode()
-    err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=600) as r:
-                return json.load(r)['choices'][0]['message']['content'].strip() == 'true'
-        except Exception as e:
-            err = e; time.sleep(5 * (attempt + 1))
-    raise err
+    return common.verdict(SERVER, system, user, 600)
 
 
 def sentences(t):
-    t = re.sub(r'\s*\[[\d,;\s]+\]', '', ' '.join(t.split()))
-    return [x.strip() for x in re.split(ABBR + r'(?<=[.!?])\s+(?=[A-Z"\'*])', t) if len(x.strip()) > 20]
+    return common.split_sentences(common.strip_cites(' '.join(t.split())), ABBR, '[A-Z"\'*]')
 
 
 def main(gold_path, ans_path):
     chunks = {}
     for l in open(os.path.join(CORPUS, 'chunks.jsonl')):
         r = json.loads(l); chunks[r['chunkId']] = r
-    # The topic tool's summary is passage 'topic:<name>' (ask --router model); the judge sees it as ask did, citations stripped.
-    tp = os.path.join(ROOT, 'artifacts', 'topics', 'topics.jsonl')
-    for t in (map(json.loads, open(tp)) if os.path.exists(tp) else []):
-        chunks[f"topic:{t['topic']}"] = {'text': re.sub(r'\s*\[[\d,;\s]+\]', '', t.get('summaryV2') or t.get('summary') or '')}  # summaryV2: --lore v2's text
-    # A new dossier (`ask --lore v2`, 2026-10-02) is passage 'dossier:<name>', shown as ask shows it.
-    dp = os.path.join(ROOT, 'artifacts', 'dossiers', 'dossiers.jsonl')
-    for d in (map(json.loads, open(dp)) if os.path.exists(dp) else []):
-        aka = [x for x in d.get('names') or [] if x != d['name']]
-        head = f"Character profile: {d['name']}" + (f" (also known as {', '.join(aka)})" if aka else '')
-        chunks[f"dossier:{d['name']}"] = {'text': f"{head}\n{d['dossier']}"}
+    # Topic summaries and dossiers as passages 'topic:<name>' and 'dossier:<name>', as ask showed them.
+    common.add_tool_passages(chunks)
     by_story = {}
     for c in chunks.values():
         if 'storyId' in c:

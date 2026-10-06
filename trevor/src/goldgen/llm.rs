@@ -56,6 +56,14 @@ pub struct Request<'a> {
     pub stop: &'a [&'a str],
 }
 
+impl<'a> Request<'a> {
+    /// Greedy decoding, as `ask` and the model router make every deterministic call: seed 1, temperature 0.
+    #[must_use]
+    pub fn greedy(system: &'a str, user: &'a str, grammar: Option<&'a str>, n_predict: u32, stop: &'a [&'a str]) -> Self {
+        Self { system, user, grammar, seed: 1, temperature: 0.0, n_predict, stop }
+    }
+}
+
 impl Llm {
     /// # Errors
     /// The server is unreachable or `/props` lacks the fields used here.

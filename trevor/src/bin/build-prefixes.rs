@@ -21,8 +21,9 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result, bail};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use trevor::corpus::chunk::Chunk;
+use trevor::corpus::derived;
+use trevor::util::sha_hex;
 
 #[derive(Parser)]
 #[command(about = "Write a corpus directory whose chunks carry deterministic P1a prefixes")]
@@ -102,10 +103,6 @@ struct PrefixMeta {
     chunks_without_synopsis: usize,
     prefix_chars_p50: usize,
     prefix_chars_max: usize,
-}
-
-fn sha_hex(bytes: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(bytes))
 }
 
 fn one_line(s: &str) -> String {
@@ -190,9 +187,7 @@ fn prefix(a: &Args, c: &Chunk, f: Option<&StoryFacts>) -> Option<String> {
 
 fn main() -> Result<()> {
     let a = Args::parse();
-    if a.out.canonicalize().ok() == Some(a.corpus.canonicalize()?) {
-        bail!("--out must not be the input corpus directory");
-    }
+    derived::ensure_distinct_out(&a.out, &a.corpus)?;
     let chunks_path = a.corpus.join("chunks.jsonl");
     let bytes = std::fs::read(&chunks_path).with_context(|| format!("reading {}", chunks_path.display()))?;
     let source_chunks_sha = sha_hex(&bytes);
@@ -217,9 +212,7 @@ fn main() -> Result<()> {
         n += 1;
     }
     out.flush()?;
-    for f in ["manifest.p0.json", "spoiler.jsonl", "unresolved.jsonl"] {
-        std::fs::copy(a.corpus.join(f), a.out.join(f)).with_context(|| format!("copying {f}"))?;
-    }
+    derived::copy_sidecars(&a.corpus, &a.out)?;
     lens.sort_unstable();
     let parts = [
         (!a.no_story, "story"),

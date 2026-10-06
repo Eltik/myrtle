@@ -6,14 +6,12 @@
 //! summary (`scripts/p2-summaries.py`). Profile rows use story id `profile_<slug>` or
 //! `summary_<groupId>` and never overlap a gold anchor. The input directory is never touched.
 
-use std::io::Write as _;
 use std::path::PathBuf;
 
-use anyhow::{Context, Result, bail};
+use anyhow::{Context, Result};
 use clap::Parser;
-use sha2::{Digest, Sha256};
 use tokenizers::Tokenizer;
-use trevor::corpus::chunk::Chunk;
+use trevor::corpus::derived;
 
 #[derive(Parser)]
 #[command(about = "Append dossiers and event summaries to a copy of a corpus")]
@@ -32,10 +30,6 @@ struct Args {
     out: PathBuf,
 }
 
-fn sha_hex(b: &[u8]) -> String {
-    format!("{:x}", Sha256::digest(b))
-}
-
 fn slug(s: &str) -> String {
     s.chars().map(|c| if c.is_alphanumeric() { c.to_ascii_lowercase() } else { '_' }).collect()
 }
@@ -52,34 +46,18 @@ fn main() -> Result<()> {
     // SAFETY: set before any other thread exists.
     unsafe { std::env::set_var("TOKENIZERS_PARALLELISM", "false") };
     let a = Args::parse();
-    if a.out.canonicalize().ok() == Some(a.corpus.canonicalize()?) {
-        bail!("--out must not be the input corpus directory");
-    }
+    derived::ensure_distinct_out(&a.out, &a.corpus)?;
     let tok = Tokenizer::from_bytes(std::fs::read(&a.tokenizer)?).map_err(|e| anyhow::anyhow!("{e}"))?;
-    let count = |s: &str| -> u32 {
-        tok.encode(s, true).map_or(u32::MAX, |e| u32::try_from(e.get_ids().len()).unwrap_or(u32::MAX))
-    };
+    let count = |s: &str| derived::token_count(&tok, s);
     let mut group_name = std::collections::HashMap::new();
     for s in lines(&a.stories)? {
         if let (Some(g), Some(h)) = (s["groupId"].as_str(), s["header"].as_str()) {
             group_name.entry(g.to_owned()).or_insert_with(|| h.split(',').next().unwrap_or(h).trim().to_owned());
         }
     }
-    let row = |id: String, group: &str, speakers: Vec<String>, text: String| Chunk {
-        chunk_id: format!("{id}#0000"),
-        story_id: id,
-        group_id: group.to_owned(),
-        ordinal: 0,
-        scene_ordinal: 0,
-        line_start: 0,
-        line_end: 0,
-        content_sha: sha_hex(text.as_bytes())[..16].to_owned(),
-        token_count: count(&text),
-        speakers,
-        on_screen: Vec::new(),
-        background: None,
-        text,
-        prefix: None,
+    let row = |id: String, group: &str, speakers: Vec<String>, text: String| {
+        let n = count(&text);
+        derived::generated_chunk(format!("{id}#0000"), id, group.to_owned(), 0, speakers, text, n)
     };
     let mut rows = Vec::new();
     for d in lines(&a.dossiers)? {
@@ -106,17 +84,8 @@ fn main() -> Result<()> {
         rows.push(row(format!("summary_{gid}"), "summary", Vec::new(), text));
     }
     let src = std::fs::read(a.corpus.join("chunks.jsonl"))?;
-    std::fs::create_dir_all(&a.out)?;
-    let mut out = std::io::BufWriter::new(std::fs::File::create(a.out.join("chunks.jsonl"))?);
-    out.write_all(&src)?;
-    for c in &rows {
-        serde_json::to_writer(&mut out, c)?;
-        out.write_all(b"\n")?;
-    }
-    out.flush()?;
-    for f in ["manifest.p0.json", "spoiler.jsonl", "unresolved.jsonl"] {
-        std::fs::copy(a.corpus.join(f), a.out.join(f)).with_context(|| format!("copying {f}"))?;
-    }
+    derived::write_appended(&a.out, &src, &rows)?;
+    derived::copy_sidecars(&a.corpus, &a.out)?;
     eprintln!(
         "profiles: {} rows appended to {} ({} source bytes, max {} tokens)",
         rows.len(),

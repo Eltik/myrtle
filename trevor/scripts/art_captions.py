@@ -39,6 +39,9 @@ ART_PROMPT=v1 is the only prompt so far; its hash is written into each row.
 import argparse, base64, hashlib, io, json, os, random, subprocess, sys, time, urllib.request
 from pathlib import Path
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+
 ROOT = Path(__file__).resolve().parent.parent
 ASSETS = ROOT.parent / "assets" / "output" / "en"
 EXCEL = ASSETS / "gamedata" / "excel"
@@ -99,9 +102,7 @@ def select(_a):
         })
     rows.sort(key=lambda r: (r["kind"], r["id"]))
     OUT.mkdir(parents=True, exist_ok=True)
-    with open(OUT / "manifest.jsonl", "w") as f:
-        for r in rows:
-            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+    common.write_jsonl(OUT / "manifest.jsonl", rows)
     n = {k: sum(r["kind"] == k for r in rows) for k in ("e2", "skin")}
     print(f"manifest: {n['e2']} E2 arts, {n['skin']} outfits; image missing: {missing}")
 
@@ -111,7 +112,8 @@ def manifest(kind):
     return [r for r in rows if kind == "all" or r["kind"] == kind]
 
 
-def prepare(path):
+def composite(path):
+    """The art cropped to its visible pixels (alpha above 8) and laid on mid gray, full resolution."""
     from PIL import Image
     im = Image.open(ASSETS / path).convert("RGBA")
     box = im.getchannel("A").point(lambda a: 255 if a > 8 else 0).getbbox()
@@ -119,10 +121,46 @@ def prepare(path):
         im = im.crop(box)
     bg = Image.new("RGB", im.size, (128, 128, 128))
     bg.paste(im, mask=im.getchannel("A"))
-    bg.thumbnail((MAX_SIDE, MAX_SIDE), Image.LANCZOS)
+    return bg
+
+
+def jpeg(im):
+    """The image shrunk to fit MAX_SIDE, as JPEG bytes (quality 90), and its size."""
+    from PIL import Image
+    im.thumbnail((MAX_SIDE, MAX_SIDE), Image.LANCZOS)
     buf = io.BytesIO()
-    bg.save(buf, "JPEG", quality=90)
-    return buf.getvalue(), bg.size
+    im.save(buf, "JPEG", quality=90)
+    return buf.getvalue(), im.size
+
+
+def prepare(path):
+    return jpeg(composite(path))
+
+
+def png_sha(path):
+    """The first 16 hex digits of the source PNG's sha256: half of a design row's key."""
+    return hashlib.sha256((ASSETS / path).read_bytes()).hexdigest()[:16]
+
+
+def vision_body(jpg, text, max_tokens, name, schema, system=None):
+    """A vision request: [system,] user = (image, text), greedy, the answer bound to a JSON schema."""
+    user = {"role": "user", "content": [
+        {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + base64.b64encode(jpg).decode()}},
+        {"type": "text", "text": text}]}
+    return {"messages": ([{"role": "system", "content": system}] if system is not None else []) + [user],
+            "temperature": 0, "max_tokens": max_tokens,
+            "response_format": {"type": "json_schema", "json_schema": {"name": name, "schema": schema}}}
+
+
+def post_or_exit(body, retry_label, exit_label):
+    """post() up to three times, 5 s apart (one failed decode 500s the request); then stop the run."""
+    for attempt in range(3):
+        try:
+            return post(SERVER + "/v1/chat/completions", body)
+        except Exception as e:  # one failed decode 500s the request; retry
+            print(f"retry {retry_label}: {e}", flush=True)
+            time.sleep(5)
+    sys.exit(f"three failed requests on {exit_label}; stopping (is the server up?)")
 
 
 TEXT_USER = """This is a crop of a larger illustration. Transcribe every piece of written text you can actually read in it (words, numbers, letters, signs, labels, measurements), each exactly as written. Do not include text you cannot read clearly; do not guess. Return JSON {"visible_text": [...]}, an empty list when there is no legible text."""
@@ -132,13 +170,7 @@ TEXT_SCHEMA = {"type": "object", "properties": {"visible_text": {"type": "array"
 
 def tiles(path, grid=2, overlap=0.15):
     """Full-resolution tiles of the alpha-cropped composite, each JPEG-encoded at up to MAX_SIDE."""
-    from PIL import Image
-    im = Image.open(ASSETS / path).convert("RGBA")
-    box = im.getchannel("A").point(lambda a: 255 if a > 8 else 0).getbbox()
-    if box:
-        im = im.crop(box)
-    bg = Image.new("RGB", im.size, (128, 128, 128))
-    bg.paste(im, mask=im.getchannel("A"))
+    bg = composite(path)
     W, H = bg.size
     tw, th = W / grid, H / grid
     out = []
@@ -146,11 +178,8 @@ def tiles(path, grid=2, overlap=0.15):
         for gx in range(grid):
             x0, y0 = max(0, gx * tw - overlap * tw), max(0, gy * th - overlap * th)
             x1, y1 = min(W, (gx + 1) * tw + overlap * tw), min(H, (gy + 1) * th + overlap * th)
-            t = bg.crop((int(x0), int(y0), int(x1), int(y1)))
-            t.thumbnail((MAX_SIDE, MAX_SIDE), Image.LANCZOS)
-            buf = io.BytesIO()
-            t.save(buf, "JPEG", quality=90)
-            out.append(((gx, gy), buf.getvalue(), t.size))
+            jpg, size = jpeg(bg.crop((int(x0), int(y0), int(x1), int(y1))))
+            out.append(((gx, gy), jpg, size))
     return out
 
 
@@ -172,11 +201,7 @@ def text(a):
             break
         t0, per, union = time.time(), [], []
         for (gx, gy), jpg, size in tiles(r["path"], grid):
-            body = {"messages": [{"role": "user", "content": [
-                        {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + base64.b64encode(jpg).decode()}},
-                        {"type": "text", "text": TEXT_USER}]}],
-                    "temperature": 0, "max_tokens": 600,
-                    "response_format": {"type": "json_schema", "json_schema": {"name": "text", "schema": TEXT_SCHEMA}}}
+            body = vision_body(jpg, TEXT_USER, 600, "text", TEXT_SCHEMA)
             try:
                 vt = json.loads(post(SERVER + "/v1/chat/completions", body)["choices"][0]["message"]["content"]).get("visible_text", [])
             except Exception as e:
@@ -187,11 +212,10 @@ def text(a):
                 if v not in union:
                     union.append(v)
         dt = time.time() - t0
-        with open(out, "a") as f:
-            f.write(json.dumps({"id": r["id"], "kind": r["kind"], "operator": r["operator"], "skin_name": r["skin_name"],
-                                "grid": grid, "visible_text": union, "tiles": per, "seconds": round(dt, 2),
-                                "prompt": hashlib.sha256((TEXT_USER + json.dumps(TEXT_SCHEMA, sort_keys=True)).encode()).hexdigest()[:12],
-                                "source": "model-written transcription"}, ensure_ascii=False) + "\n")
+        common.append_jsonl(out, {"id": r["id"], "kind": r["kind"], "operator": r["operator"], "skin_name": r["skin_name"],
+                                  "grid": grid, "visible_text": union, "tiles": per, "seconds": round(dt, 2),
+                                  "prompt": hashlib.sha256((TEXT_USER + json.dumps(TEXT_SCHEMA, sort_keys=True)).encode()).hexdigest()[:12],
+                                  "source": "model-written transcription"})
         print(f"tiles {i + 1}/{len(todo)} {r['id']} {dt:.1f}s {union}", flush=True)
 
 
@@ -234,28 +258,9 @@ def caption(a):
             print(f"time budget of {a.minutes} min reached after {i}", flush=True)
             break
         jpg, size = prepare(r["path"])
-        uri = "data:image/jpeg;base64," + base64.b64encode(jpg).decode()
-        body = {
-            "messages": [
-                {"role": "system", "content": SYSTEM},
-                {"role": "user", "content": [
-                    {"type": "image_url", "image_url": {"url": uri}},
-                    {"type": "text", "text": USER},
-                ]},
-            ],
-            "temperature": 0, "max_tokens": 700,
-            "response_format": {"type": "json_schema", "json_schema": {"name": "art", "schema": SCHEMA}},
-        }
+        body = vision_body(jpg, USER, 700, "art", SCHEMA, system=SYSTEM)
         t0 = time.time()
-        for attempt in range(3):
-            try:
-                resp = post(SERVER + "/v1/chat/completions", body)
-                break
-            except Exception as e:  # one failed decode 500s the request; retry
-                print(f"retry {r['id']}: {e}", flush=True)
-                time.sleep(5)
-        else:
-            sys.exit(f"three failed requests on {r['id']}; stopping (is the server up?)")
+        resp = post_or_exit(body, r['id'], r['id'])
         dt = time.time() - t0
         msg = resp["choices"][0]["message"]["content"]
         try:
@@ -268,8 +273,7 @@ def caption(a):
                "completion_tokens": u.get("completion_tokens"), "seconds": round(dt, 2),
                "model": "gemma-4-12b-it-qat-q4_0+mmproj", "prompt": PROMPT_HASH, "max_side": MAX_SIDE,
                "source": "model-written description"}
-        with open(out, "a") as f:
-            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        common.append_jsonl(out, rec)
         print(f"{i + 1}/{len(todo)} {r['id']} {dt:.1f}s pt={u.get('prompt_tokens')} text={j.get('visible_text')}", flush=True)
 
 
@@ -392,9 +396,7 @@ def units(_a):
                     break
         sid = "art_" + iid.replace("#", "_").replace("@", "_")
         out.append({"storyId": sid, "groupId": "art", "title": head, "text": "\n".join(lines), "speakers": [m["operator"]]})
-    with open(OUT / "units.jsonl", "w") as f:
-        for u in out:
-            f.write(json.dumps(u, ensure_ascii=False) + "\n")
+    common.write_jsonl(OUT / "units.jsonl", out)
     base = (ROOT / "artifacts" / "sources" / "all_units.jsonl").read_text()
     with open(OUT / "p4_art_units.jsonl", "w") as f:
         f.write(base if base.endswith("\n") else base + "\n")
@@ -485,13 +487,20 @@ def design_unclear(row):
         (row.get("subject") or "none").strip().lower() in ("none", "null", "")
 
 
-def design(a):
+def design_targets(a):
+    """(operator attributes by charId, design_images(), the charIds to read: --ids, else every operator with art; --split
+    replaces them with the chosen parts of a split file)."""
     attrs = {r["charId"]: r for r in map(json.loads, open(ROOT / "artifacts" / "entities" / "operator_attributes.jsonl"))}
     imgs = design_images()
     ids = [x for x in a.ids.split(",") if x] if a.ids else sorted(imgs)
     if a.split:
         sp = json.load(open(a.split))
         ids = [c for part in a.split_part.split(",") for c in sp[part]]
+    return attrs, imgs, ids
+
+
+def design(a):
+    attrs, imgs, ids = design_targets(a)
     out = Path(os.environ.get("ART_DESIGN_OUT") or OUT / "design.jsonl")
     # Incremental: a row is keyed on the source PNG's content hash and the prompt hash, so a rerun (and update.sh)
     # reads only new or changed art; compact rows (no raw model text).
@@ -507,7 +516,7 @@ def design(a):
             if art not in imgs[cid]:
                 continue
             sid, path = imgs[cid][art]
-            key = hashlib.sha256((ASSETS / path).read_bytes()).hexdigest()[:16] + "-" + DESIGN_HASH
+            key = png_sha(path) + "-" + DESIGN_HASH
             if art == "e0" and first == "e2":
                 if not design_unclear(rows.get(e2key)):
                     continue
@@ -521,23 +530,9 @@ def design(a):
                 return
             race = attrs[cid].get("race") or "not stated"
             jpg, size = prepare(path)
-            body = {"messages": [
-                        {"role": "system", "content": DESIGN_SYSTEM},
-                        {"role": "user", "content": [
-                            {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + base64.b64encode(jpg).decode()}},
-                            {"type": "text", "text": DESIGN_USER.format(race=race)}]}],
-                    "temperature": 0, "max_tokens": 500,
-                    "response_format": {"type": "json_schema", "json_schema": {"name": "design", "schema": DESIGN_SCHEMA}}}
+            body = vision_body(jpg, DESIGN_USER.format(race=race), 500, "design", DESIGN_SCHEMA, system=DESIGN_SYSTEM)
             t0 = time.time()
-            for _ in range(3):
-                try:
-                    resp = post(SERVER + "/v1/chat/completions", body)
-                    break
-                except Exception as e:
-                    print(f"retry {cid} {art}: {e}", flush=True)
-                    time.sleep(5)
-            else:
-                sys.exit(f"three failed requests on {cid}; stopping (is the server up?)")
+            resp = post_or_exit(body, f"{cid} {art}", cid)
             dt = time.time() - t0
             try:
                 j = json.loads(resp["choices"][0]["message"]["content"])
@@ -546,8 +541,7 @@ def design(a):
                 j = {"parse_error": True}
             rec = {"key": key, "char_id": cid, "operator": attrs[cid]["name"], "art": art, "id": sid, **j,
                    "seconds": round(dt, 2)}
-            with open(out, "a") as f:
-                f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+            common.append_jsonl(out, rec)
             rows[key] = rec
             n_done += 1
             print(f"{n_done} {attrs[cid]['name']} {art} {dt:.1f}s: {j.get('subject')} / {j.get('broader')} "
@@ -606,12 +600,7 @@ def tile_aggregate(per):
 
 def design_tiles(a):
     from concurrent.futures import ThreadPoolExecutor
-    attrs = {r["charId"]: r for r in map(json.loads, open(ROOT / "artifacts" / "entities" / "operator_attributes.jsonl"))}
-    imgs = design_images()
-    ids = [x for x in a.ids.split(",") if x] if a.ids else sorted(imgs)
-    if a.split:
-        sp = json.load(open(a.split))
-        ids = [c for part in a.split_part.split(",") for c in sp[part]]
+    attrs, imgs, ids = design_targets(a)
     first = [x for x in a.first.split(",") if x]
     ids = first + [c for c in ids if c not in first]
     out = Path(os.environ.get("ART_TILES_OUT") or OUT / "design_tiles.jsonl")
@@ -622,13 +611,8 @@ def design_tiles(a):
 
     def ask(arg):
         (gx, gy), jpg, race = arg
-        body = {"messages": [
-                    {"role": "system", "content": DESIGN_SYSTEM},
-                    {"role": "user", "content": [
-                        {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + base64.b64encode(jpg).decode()}},
-                        {"type": "text", "text": TILE_USER.format(n=gy * 2 + gx + 1, pos=TILE_POS[(gx, gy)], race=race)}]}],
-                "temperature": 0, "max_tokens": 400,
-                "response_format": {"type": "json_schema", "json_schema": {"name": "tile", "schema": TILE_SCHEMA}}}
+        body = vision_body(jpg, TILE_USER.format(n=gy * 2 + gx + 1, pos=TILE_POS[(gx, gy)], race=race), 400, "tile", TILE_SCHEMA,
+                           system=DESIGN_SYSTEM)
         for k in range(3):
             try:
                 resp = post(SERVER + "/v1/chat/completions", body)
@@ -645,7 +629,7 @@ def design_tiles(a):
         for cid in ids:
             if cid in attrs and cid in imgs:
                 path = imgs[cid]["e2" if "e2" in imgs[cid] else "e0"][1]
-                n += (hashlib.sha256((ASSETS / path).read_bytes()).hexdigest()[:16] + "-" + TILE_HASH) not in rows
+                n += (png_sha(path) + "-" + TILE_HASH) not in rows
         print(f"design_tiles: plan {n} images of {len(ids)} operators", flush=True)
         return
     with ThreadPoolExecutor(threads) as pool:
@@ -655,7 +639,7 @@ def design_tiles(a):
                 continue
             art = "e2" if "e2" in imgs[cid] else "e0"
             sid, path = imgs[cid][art]
-            key = hashlib.sha256((ASSETS / path).read_bytes()).hexdigest()[:16] + "-" + TILE_HASH
+            key = png_sha(path) + "-" + TILE_HASH
             if key in rows:
                 n_cached += 1
                 continue
@@ -669,8 +653,7 @@ def design_tiles(a):
             rec = {"key": key, "char_id": cid, "operator": attrs[cid]["name"], "art": art, "id": sid,
                    "subjects": tile_aggregate([p or [] for p in per]), "bad_tiles": sum(p is None for p in per),
                    "seconds": round(dt, 2)}
-            with open(out, "a") as f:
-                f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+            common.append_jsonl(out, rec)
             rows[key] = rec
             n_done += 1
             print(f"{n_done} {rec['operator']} {art} {dt:.1f}s: " + "; ".join(

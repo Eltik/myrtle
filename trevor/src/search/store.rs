@@ -12,7 +12,6 @@ use std::io::BufRead as _;
 use std::path::Path;
 
 use anyhow::{Context, Result, bail};
-use sha2::{Digest, Sha256};
 
 use crate::corpus::chunk::Chunk;
 
@@ -29,7 +28,7 @@ impl ChunkStore {
     /// A missing or unparsable file, or a duplicated chunk id.
     pub fn load(path: &Path) -> Result<Self> {
         let bytes = std::fs::read(path).with_context(|| format!("reading {}", path.display()))?;
-        let chunks_sha = format!("{:x}", Sha256::digest(&bytes));
+        let chunks_sha = crate::util::sha_hex(&bytes);
         let mut chunks = Vec::new();
         for (i, line) in bytes.lines().enumerate() {
             let line = line?;

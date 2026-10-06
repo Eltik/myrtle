@@ -13,17 +13,16 @@ Stages (artifacts/chrono/, each resumable):
                                                                 -> facts.jsonl
 Stories are limited to $CHRONO_GROUPS (comma-separated) when set.
 """
-import collections, hashlib, json, os, re, sys, threading, time, urllib.request
+import collections, json, os, re, sys, threading, time
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import incr
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common, incr
+from common import GAMEDATA, ROOT, read_jsonl, sha16
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'artifacts', 'chrono')
 REF = os.path.join(ROOT, 'eval', 'reference')  # wiki references (reference.json, timeline.wikitext): eval only
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
 SLOTS = int(os.environ.get('SLOTS', '2'))
-sha16 = lambda s: hashlib.sha256(s.encode()).hexdigest()[:16]
 
 CUE = re.compile(
     r"\b(1[01]\d\d)\b|\b(January|February|March|April|May|June|July|August|September|October|November|December)\b"
@@ -49,10 +48,6 @@ q120 ::= "\"" ch{3,120} "\""
 ch ::= [^"\\\x00-\x1F]
 year ::= "null" | "1" [0-9] [0-9] [0-9]
 '''
-
-
-def read_jsonl(p):
-    return [json.loads(l) for l in open(p)] if os.path.exists(p) else []
 
 
 def norm(s):
@@ -84,6 +79,30 @@ def load_stories():
     return stories
 
 
+def story_groups():
+    """storyId -> groupId over the corpus chunks."""
+    return {r['storyId']: r['groupId'] for r in (json.loads(l) for l in open(incr.chunks_path()))}
+
+
+def p1a_rows():
+    return (json.loads(l) for l in open(os.path.join(ROOT, 'artifacts', 'p1a', 'chunks.jsonl')))
+
+
+def group_names(strip=True):
+    """groupId -> its name, the first field of its first P1a prefix line (`strip=False`: as the place and exceptions
+    prompts have always shown it, unstripped)."""
+    names = {}
+    for r in p1a_rows():
+        name = r['prefix'].split('\n')[0].split(',')[0]
+        names.setdefault(r['groupId'], name.strip() if strip else name)
+    return names
+
+
+def c_groups():
+    """groupId -> its method-C P2 summary."""
+    return {g['groupId']: g['summary'] for g in read_jsonl(os.path.join(ROOT, 'artifacts', 'p2', 'groups.jsonl')) if g['method'] == 'C'}
+
+
 def selected(stories):
     g = os.environ.get('CHRONO_GROUPS')
     if not g:
@@ -105,25 +124,14 @@ def cue_lines(cs):
 def stage_cues():
     os.makedirs(OUT, exist_ok=True)
     stories = load_stories()
-    with open(os.path.join(OUT, 'cues.jsonl'), 'w') as f:
-        for s in sorted(stories):
-            f.write(json.dumps({'storyId': s, 'groupId': stories[s][0]['groupId'], 'lines': cue_lines(stories[s])}, ensure_ascii=False) + '\n')
+    common.write_jsonl(os.path.join(OUT, 'cues.jsonl'),
+                       ({'storyId': s, 'groupId': stories[s][0]['groupId'], 'lines': cue_lines(stories[s])} for s in sorted(stories)))
     print('cues written for', len(stories), 'stories')
 
 
 def chat(user):
-    body = json.dumps({'messages': [{'role': 'system', 'content': EXTRACT_SYS}, {'role': 'user', 'content': user}],
-                       'temperature': 0, 'seed': 1, 'max_tokens': 900, 'grammar': GRAMMAR}).encode()
-    err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=900) as r:
-                d = json.load(r)
-            return d['choices'][0]['message']['content'], d['timings']
-        except Exception as e:
-            err = e; time.sleep(5 * (attempt + 1))
-    raise err
+    """(unstripped text, timings) of one extraction call, with retries."""
+    return common.chat(SERVER, EXTRACT_SYS, user, 900, 900, lambda d: (common.content(d), d['timings']), grammar=GRAMMAR)
 
 
 def extract_input(head_pre, lines):
@@ -139,8 +147,8 @@ def extract_stage():
     stories = load_stories()
     cues = {s: {'groupId': v[0]['groupId'], 'lines': cue_lines(v)} for s, v in stories.items()}
     pre = {}
-    for l in open(os.path.join(ROOT, 'artifacts', 'p1a', 'chunks.jsonl')):
-        r = json.loads(l); pre.setdefault(r['storyId'], r['prefix'].split('\n'))
+    for r in p1a_rows():
+        pre.setdefault(r['storyId'], r['prefix'].split('\n'))
     st = incr.Stage('chrono extract', os.path.join(OUT, 'facts.jsonl'), lambda r: r['storyId'], sha16(EXTRACT_SYS + GRAMMAR))
     for s in sorted(stories):
         st.unit(s, extract_input(pre.get(s, ['']), cues[s]['lines']))
@@ -154,33 +162,27 @@ def stage_extract():
         return
     psha = st.psha
     print(f'extract: {len(todo)} to do, {len(order) - len(todo)} done, prompt {psha}', flush=True)
-    it = iter(todo); lock = threading.Lock(); n = [0]; t0 = time.time()
+    lock = threading.Lock(); n = [0]; t0 = time.time()
 
-    def worker():
-        while True:
-            with lock:
-                s = next(it, None)
-            if s is None:
-                return
-            lines = cues[s]['lines']
-            row = {'storyId': s, 'groupId': cues[s]['groupId'], 'promptSha': psha, 'facts': [], 'rejected': 0}
-            if lines:
-                out, t = chat(extract_input(pre[s], lines))
-                try:
-                    facts = json.loads(out)['facts']
-                except Exception:
-                    facts = []; row['unparsed'] = True
-                text = '\n'.join(lines)
-                row['facts'] = [f for f in facts if quote_ok(f['quote'], text)]
-                row['rejected'] = len(facts) - len(row['facts'])
-            with lock:
-                st.put(row)
-                n[0] += 1
-                if n[0] % 25 == 0:
-                    el = time.time() - t0
-                    print(f'{time.strftime("%H:%M:%S")} extract {n[0]}/{len(todo)}, {el / n[0]:.1f} s each', flush=True)
-    th = [threading.Thread(target=worker) for _ in range(SLOTS)]
-    [x.start() for x in th]; [x.join() for x in th]
+    def one(s):
+        lines = cues[s]['lines']
+        row = {'storyId': s, 'groupId': cues[s]['groupId'], 'promptSha': psha, 'facts': [], 'rejected': 0}
+        if lines:
+            out, t = chat(extract_input(pre[s], lines))
+            try:
+                facts = json.loads(out)['facts']
+            except Exception:
+                facts = []; row['unparsed'] = True
+            text = '\n'.join(lines)
+            row['facts'] = [f for f in facts if quote_ok(f['quote'], text)]
+            row['rejected'] = len(facts) - len(row['facts'])
+        with lock:
+            st.put(row)
+            n[0] += 1
+            if n[0] % 25 == 0:
+                el = time.time() - t0
+                print(f'{time.strftime("%H:%M:%S")} extract {n[0]}/{len(todo)}, {el / n[0]:.1f} s each', flush=True)
+    common.par(todo, one, SLOTS, lock)
     print(f'extract: {n[0]} in {time.time() - t0:.0f}s', flush=True)
 
 
@@ -204,11 +206,8 @@ def place_stage():
     for r in read_jsonl(os.path.join(OUT, 'facts.jsonl')):
         for f in r['facts']:
             facts[r['groupId']].append((r['storyId'], f))
-    names = {}
-    for l in open(os.path.join(ROOT, 'artifacts', 'p1a', 'chunks.jsonl')):
-        r = json.loads(l)
-        names.setdefault(r['groupId'], r['prefix'].split('\n')[0].split(',')[0])
-    summ = {g['groupId']: g['summary'] for g in read_jsonl(os.path.join(ROOT, 'artifacts', 'p2', 'groups.jsonl')) if g['method'] == 'C'}
+    names = group_names(strip=False)
+    summ = c_groups()
     pend = incr.p2_pending()[1] if incr.PLAN else set()
     dated = place_explicit()
     ref_lines = []
@@ -240,11 +239,7 @@ def stage_place():
     psha = st.psha
     print(f'place: {len(targets)} groups, {n_ref} reference points, prompt {psha}', flush=True)
     for g in targets:
-        body = json.dumps({'messages': [{'role': 'system', 'content': PLACE_SYS}, {'role': 'user', 'content': users[g]}],
-                           'temperature': 0, 'seed': 1, 'max_tokens': 200, 'grammar': PLACE_GRAMMAR}).encode()
-        req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-        with urllib.request.urlopen(req, timeout=900) as r:
-            out = json.load(r)['choices'][0]['message']['content']
+        out = common.content(common.chat_once(SERVER, common.chat_body(PLACE_SYS, users[g], 200, grammar=PLACE_GRAMMAR), 900))
         row = json.loads(out); row.update({'groupId': g, 'promptSha': psha})
         st.put(row)
         print(f"{g}: {row['year']} ({row['basis']}) {row['reason'][:120]}", flush=True)
@@ -278,7 +273,7 @@ def year_candidates():
             if any(300 <= y <= 1110 for y in ys):
                 out.append({'source': s, 'kind': 'story', 'line': x,
                             'context': '\n'.join(lines[max(0, i - 1):i + 2])})
-    gd = os.environ.get('GAMEDATA', os.path.join(ROOT, '..', 'assets', 'output', 'en', 'gamedata'))
+    gd = os.environ.get('GAMEDATA', GAMEDATA)
     hb = json.load(open(os.path.join(gd, 'excel', 'handbook_info_table.json')))['HandbookDict']
     for e in hb:
         v = e['value']
@@ -322,27 +317,13 @@ def stage_events():
     psha = st.psha
     print(f'events: {len(todo)} candidate lines, prompt {psha}', flush=True)
     def one(c):
-        body = json.dumps({'messages': [{'role': 'system', 'content': EVENT_SYS},
-                                        {'role': 'user', 'content': event_input(c)}],
-                           'temperature': 0, 'seed': 1, 'max_tokens': 220, 'grammar': EVENT_GRAMMAR}).encode()
-        req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-        with urllib.request.urlopen(req, timeout=600) as r:
-            row = json.loads(json.load(r)['choices'][0]['message']['content'])
+        row = json.loads(common.content(common.chat_once(SERVER, common.chat_body(EVENT_SYS, event_input(c), 220, grammar=EVENT_GRAMMAR), 600)))
         # The year must appear in the line itself, or it is not an explicit year.
         if row['is_year'] and (row['year'] is None or str(row['year']) not in c['line']):
             row['is_year'] = False; row['rejected'] = 'year not in line'
         row.update({'source': c['source'], 'kind': c['kind'], 'line': c['line'], 'promptSha': psha})
         st.put(row)
-    it = iter(todo); lk = threading.Lock()
-    def w():
-        while True:
-            with lk:
-                c = next(it, None)
-            if c is None:
-                return
-            one(c)
-    th = [threading.Thread(target=w) for _ in range(SLOTS)]
-    [t.start() for t in th]; [t.join() for t in th]
+    common.par(todo, one, SLOTS)
     rows = read_jsonl(st.path)
     print(f"events: {sum(r['is_year'] for r in rows)} calendar years of {len(rows)} candidates", flush=True)
 
@@ -374,7 +355,7 @@ def release_times():
 def backbone():
     """Monotone year-by-release fit through groups' latest dated scene caption, dropping anchors
     more than 3 years under the trend (flashback-only captions), refitted until stable."""
-    gof = {r['storyId']: r['groupId'] for r in (json.loads(l) for l in open(incr.chunks_path()))}
+    gof = story_groups()
     cap = collections.defaultdict(list)
     for e in read_jsonl(os.path.join(OUT, 'events.jsonl')):
         if e['is_year'] and e['present'] and e['kind'] == 'story':
@@ -431,12 +412,10 @@ def storyline_year(t, anchors):
 
 def exceptions_stage():
     anchors, dropped, rel = backbone()
-    names = {}
-    for l in open(os.path.join(ROOT, 'artifacts', 'p1a', 'chunks.jsonl')):
-        r = json.loads(l); names.setdefault(r['groupId'], r['prefix'].split('\n')[0].split(',')[0])
-    summ = {g['groupId']: g['summary'] for g in read_jsonl(os.path.join(ROOT, 'artifacts', 'p2', 'groups.jsonl')) if g['method'] == 'C'}
+    names = group_names(strip=False)
+    summ = c_groups()
     pend = incr.p2_pending()[1] if incr.PLAN else set()
-    gof = {r['storyId']: r['groupId'] for r in (json.loads(l) for l in open(incr.chunks_path()))}
+    gof = story_groups()
     dated = collections.defaultdict(list)
     for e in read_jsonl(os.path.join(OUT, 'events.jsonl')):
         if e['is_year'] and e['kind'] == 'story':
@@ -462,11 +441,7 @@ def stage_exceptions():
     psha = st.psha
     print(f'exceptions: {len(targets)} groups, prompt {psha}', flush=True)
     for g in targets:
-        body = json.dumps({'messages': [{'role': 'system', 'content': EXC_SYS}, {'role': 'user', 'content': users[g]}],
-                           'temperature': 0, 'seed': 1, 'max_tokens': 220, 'grammar': EXC_GRAMMAR}).encode()
-        req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-        with urllib.request.urlopen(req, timeout=900) as r:
-            row = json.loads(json.load(r)['choices'][0]['message']['content'])
+        row = json.loads(common.content(common.chat_once(SERVER, common.chat_body(EXC_SYS, users[g], 220, grammar=EXC_GRAMMAR), 900)))
         row.update({'groupId': g, 'storylineYear': round(sy[g], 2), 'promptSha': psha})
         st.put(row)
         if row['setting'] != 'storyline':
@@ -558,12 +533,32 @@ def stage_eval():
             score({r['groupId']: float(r['year']) for r in read_jsonl(pl) if r.get('year')}, rr, 'model placement')
 
 
-def group_names():
-    names = {}
-    for l in open(os.path.join(ROOT, 'artifacts', 'p1a', 'chunks.jsonl')):
-        r = json.loads(l)
-        names.setdefault(r['groupId'], r['prefix'].split('\n')[0].split(',')[0].strip())
-    return names
+def place_main_chapters(groups, fb, dated):
+    """Main chapters have no release time in the index, so the backbone never placed them. In-world order follows
+    chapter order; the script states no year for Episodes 0 to 9 (0 year facts, 0 dated lines), so they are bounded by
+    the nearest placed chapter, never given a year of their own. Appends to `groups`."""
+    names = group_names()
+    placed = {g['groupId']: g for g in groups}
+    main_ids = sorted({r['groupId'] for r in (json.loads(l) for l in open(incr.chunks_path()))
+                       if r['groupId'].startswith('main_')}, key=lambda g: int(g.split('_')[1]))
+    known = [(int(g.split('_')[1]), placed[g]['storylineYear']) for g in main_ids if g in placed]
+    for g in main_ids:
+        n = int(g.split('_')[1])
+        if g in placed:
+            placed[g]['chapter'] = n
+            continue
+        later = [(k, y) for k, y in known if k > n]; earlier = [(k, y) for k, y in known if k < n]
+        if later:
+            k, y = min(later)
+            basis = f'main-story order: before Episode {k} (about {y:.0f}); the script states no year'
+            bound = 'at most'
+        else:
+            k, y = max(earlier)
+            basis = f'main-story order: after Episode {k} (about {y:.0f}); the script states no year'
+            bound = 'at least'
+        groups.append({'groupId': g, 'name': names.get(g, g), 'releaseTime': None, 'chapter': n, 'storylineYear': round(y, 2),
+                       'yearBound': bound, 'basis': basis, 'captionOnlyFlashbacks': False, 'candidateException': None,
+                       'flashbacks': fb[g] if g in fb else None, 'datedLines': dated.get(g, [])})
 
 
 def stage_build():
@@ -573,7 +568,7 @@ def stage_build():
     anchors, dropped, rel = backbone()
     anchor_ids = {g for _, _, g in anchors}
     names = group_names()
-    gof = {r['storyId']: r['groupId'] for r in (json.loads(l) for l in open(incr.chunks_path()))}
+    gof = story_groups()
     ev = [e for e in read_jsonl(os.path.join(OUT, 'events.jsonl')) if e['is_year']]
     dated = collections.defaultdict(list)
     for e in ev:
@@ -612,31 +607,7 @@ def stage_build():
                        'captionOnlyFlashbacks': g in dropped, 'candidateException': cand.get(g),
                        'flashbacks': fb[g] if g in fb else None,
                        'datedLines': dated.get(g, [])})
-    # Main chapters have no release time in the index, so the backbone never placed them. In-world
-    # order follows chapter order; the script states no year for Episodes 0 to 9 (0 year facts, 0
-    # dated lines), so they are bounded by the nearest placed chapter, never given a year of their own.
-    names = group_names()
-    placed = {g['groupId']: g for g in groups}
-    main_ids = sorted({r['groupId'] for r in (json.loads(l) for l in open(incr.chunks_path()))
-                       if r['groupId'].startswith('main_')}, key=lambda g: int(g.split('_')[1]))
-    known = [(int(g.split('_')[1]), placed[g]['storylineYear']) for g in main_ids if g in placed]
-    for g in main_ids:
-        n = int(g.split('_')[1])
-        if g in placed:
-            placed[g]['chapter'] = n
-            continue
-        later = [(k, y) for k, y in known if k > n]; earlier = [(k, y) for k, y in known if k < n]
-        if later:
-            k, y = min(later)
-            basis = f'main-story order: before Episode {k} (about {y:.0f}); the script states no year'
-            bound = 'at most'
-        else:
-            k, y = max(earlier)
-            basis = f'main-story order: after Episode {k} (about {y:.0f}); the script states no year'
-            bound = 'at least'
-        groups.append({'groupId': g, 'name': names.get(g, g), 'releaseTime': None, 'chapter': n, 'storylineYear': round(y, 2),
-                       'yearBound': bound, 'basis': basis, 'captionOnlyFlashbacks': False, 'candidateException': None,
-                       'flashbacks': fb[g] if g in fb else None, 'datedLines': dated.get(g, [])})
+    place_main_chapters(groups, fb, dated)
     history = [{'year': e['year'], 'when': e['when'], 'event': e['event'], 'sceneCaption': e['present'],
                 'source': e['source'], 'line': e['line'], 'derived': None} for e in ev]
     # Derived years: 'N years ago' counted from a dated scene, the event's dated anchor, or (lowest
@@ -655,7 +626,7 @@ def stage_build():
 def stage_history():
     t = json.load(open(os.path.join(OUT, 'timeline_v1.json')))
     names = group_names()
-    gof = {r['storyId']: r['groupId'] for r in (json.loads(l) for l in open(incr.chunks_path()))}
+    gof = story_groups()
     lines = ['# Terra history from explicitly dated lines', '',
              'Stated years come from a line of the game text that states the year (scene captions marked). Derived years '
              'come from "N years ago/later" counted from a dated scene, the event\'s dated anchor, or the storyline estimate, '
@@ -757,9 +728,7 @@ def stage_flashbacks():
         rows.append({'storyId': s_, 'groupId': g, 'storylineYear': y, 'tag': tag,
                      'depictedYears': sorted({e['year'] for e in dep}),
                      'evidence': [e['line'][:160] for e in dep][:3] + [f['quote'][:160] for f in fb][:3]})
-    with open(os.path.join(OUT, 'flashbacks.jsonl'), 'w') as f:
-        for r in rows:
-            f.write(json.dumps(r, ensure_ascii=False) + '\n')
+    common.write_jsonl(os.path.join(OUT, 'flashbacks.jsonl'), rows)
     c = collections.Counter(r['tag'] for r in rows)
     print('flashback tags:', dict(c))
     # Eval against the wiki's story-level citations (stage codes), eval only.
@@ -857,9 +826,7 @@ def stage_derive():
                       re.search(r"\b(almost|nearly|about|around|over|more than|some|roughly|close to)\b", f['quote'], re.I) is not None)
             rows.append({'storyId': s_, 'groupId': g, 'year': int(round(base + sign * n)), 'offset': sign * n, 'approximate': approx,
                          'from': round(base, 2), 'basis': basis, 'quote': f['quote'], 'when': f['when']})
-    with open(os.path.join(OUT, 'derived.jsonl'), 'w') as fh:
-        for x in rows:
-            fh.write(json.dumps(x, ensure_ascii=False) + '\n')
+    common.write_jsonl(os.path.join(OUT, 'derived.jsonl'), rows)
     print(f'derived: {len(rows)} years', dict(collections.Counter(x["basis"] for x in rows)), 'skipped', dict(skipped))
     # Eval: coarse (the wiki has an entry that year) and precise (the wiki cites this very story under that year).
     w = open(os.path.join(REF, 'timeline.wikitext')).read()

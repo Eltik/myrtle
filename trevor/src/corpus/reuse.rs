@@ -29,7 +29,6 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
-use sha2::{Digest, Sha256};
 
 use crate::corpus::chunk::{indexed_text, sha16};
 
@@ -208,7 +207,7 @@ fn bootstrap_keys(dir: &Path, meta: &PriorMeta) -> Result<Vec<String>> {
         let Ok(bytes) = std::fs::read(dir.join(name)) else {
             continue;
         };
-        if format!("{:x}", Sha256::digest(&bytes)) != meta.chunks_sha {
+        if crate::util::sha_hex(&bytes) != meta.chunks_sha {
             continue;
         }
         let mut keys = Vec::with_capacity(meta.count);
@@ -270,7 +269,7 @@ mod tests {
         std::fs::write(dir.join("vectors.bin"), bin).expect("bin");
         let mut meta = serde_json::json!({
             "modelSha": "m", "tokenizerSha": "t",
-            "chunksSha": format!("{:x}", Sha256::digest(chunks.as_bytes())),
+            "chunksSha": crate::util::sha_hex(chunks.as_bytes()),
             "dim": 2, "count": rows.len(), "dtype": DTYPE, "layout": LAYOUT,
             "pooling": POOLING, "normalized": true, "batchSize": 1,
             "chunkIds": rows.iter().map(|r| r.0).collect::<Vec<_>>(),

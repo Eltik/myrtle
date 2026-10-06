@@ -15,12 +15,13 @@ and duplicate rows are dropped, so no reader ever sees two rows for one unit.
   CHUNKS=path     read this chunks.jsonl instead of artifacts/chunks.jsonl (simulating an update)
   python3 scripts/incr.py backfill   one-time migration, see backfill()
 """
-import collections, hashlib, importlib.util, json, os, sys, tempfile, threading
+import collections, json, os, sys, tempfile, threading
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+from common import ROOT, load_script, read_jsonl, sha16
+
 PLAN = os.environ.get('PLAN') == '1'
 IDS_ONLY = os.environ.get('KEY_IDS_ONLY') == '1'
-sha16 = lambda s: hashlib.sha256(s.encode()).hexdigest()[:16]
 # Listed at most this many unit ids per reason in a plan, enough to read a simulated update.
 SHOW = int(os.environ.get('PLAN_SHOW', '12'))
 
@@ -33,12 +34,9 @@ def input_sha(x):
     return sha16(x if isinstance(x, str) else json.dumps(x, ensure_ascii=False, sort_keys=True))
 
 
-def read_jsonl(p):
-    return [json.loads(l) for l in open(p)] if os.path.exists(p) else []
-
-
 def write_jsonl(path, rows):
-    # Temp file in the same directory, then rename: a reader sees the old file or the new one, never half.
+    # Temp file in the same directory, then rename: a reader sees the old file or the new one, never half. (A
+    # mkstemp file, mode 0600, unlike common.replace_jsonl's: kept so a stage's output file mode is unchanged.)
     fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix='.' + os.path.basename(path) + '.')
     with os.fdopen(fd, 'w') as f:
         for r in rows:
@@ -139,10 +137,7 @@ class Stage:
             self.have[k] = row
 
 
-def module(name):
-    spec = importlib.util.spec_from_file_location(name.replace('-', '_'), os.path.join(ROOT, 'scripts', name + '.py'))
-    m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
-    return m
+module = load_script
 
 
 def p2_pending():

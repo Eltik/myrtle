@@ -10,9 +10,12 @@ model, seconds. `ask` serves the summaries of the first 3 after the topic summar
 
   python3 scripts/topic_groups.py    -> artifacts/topics/topic_groups.json
 """
-import json, os, re, collections
+import collections, json, os, sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+from common import ROOT
+
 SKIP = {'archive', 'profile', 'summary', 'topic'}
 
 
@@ -28,11 +31,9 @@ def main():
     out = {}
     for r in rows:
         forms = {r['topic'], *r.get('aliases', []), *r.get('names', [])}
-        forms = sorted((f for f in forms if len(f) >= 3), key=len, reverse=True)
-        if not forms:
+        if not any(len(f) >= 3 for f in forms):
             continue
-        pats = [re.escape(f) if f[0].isupper() else '(?i:' + re.escape(f) + ')' for f in forms]
-        rx = re.compile(r"(?<![\w'])(" + '|'.join(pats) + r")(?![\w'])")
+        rx = common.forms_regex(forms)
         counts = {g: sum(1 for t in ts if rx.search(t)) for g, ts in texts.items()}
         top = sorted(((n, g) for g, n in counts.items() if n), key=lambda x: (-x[0], x[1]))[:5]
         out[r['topic']] = [{'groupId': g, 'chunks': n, 'of': len(texts[g])} for n, g in top]

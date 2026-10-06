@@ -20,9 +20,11 @@ A name of fewer than 3 characters is never matched as a mention (speaking still 
 
   python3 scripts/appearances.py      -> artifacts/appearances/appearances.json
 """
-import json, os, re, collections
+import collections, json, os, re, sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+from common import ROOT
+
 OUT = os.path.join(ROOT, 'artifacts', 'appearances')
 NOT_STORY = {'archive', 'profile', 'summary', 'topic', 'module', 'voice', 'skin', 'is', 'enemy', 'item', 'gametext', 'art'}
 LINKS = {'real_name', 'codename', 'former_name', 'alias', 'stage_name'}

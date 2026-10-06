@@ -15,14 +15,16 @@ other operators of its game alter group, char_meta_table SpCharGroups), url, fet
 
   python3 scripts/design_basis.py [fetch|extract|all]   (default all; extract needs no network)
 """
-import html, json, os, re, sys, time, urllib.parse, urllib.request
+import html, json, os, re, sys, time, urllib.parse
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+from common import EXCEL, ROOT
+
 ATTR = os.path.join(ROOT, 'artifacts', 'entities', 'operator_attributes.jsonl')
 CACHE = os.path.join(ROOT, 'eval', 'reference', 'wiki_cache')
 OUT = os.path.join(ROOT, 'eval', 'reference', 'design_basis.jsonl')
-META = os.path.join(ROOT, '..', 'assets', 'output', 'en', 'gamedata', 'excel', 'char_meta_table.json')
-API = 'https://arknights.wiki.gg/api.php'
+META = os.path.join(EXCEL, 'char_meta_table.json')
 UA = 'trevor-research/0.1 (local Arknights lore assistant; design-basis trivia, 1 req/s, cached)'
 
 
@@ -39,17 +41,7 @@ def fetch(page):
     p = cache_path(page)
     if os.path.exists(p) and os.environ.get('DESIGN_REFETCH') != '1':
         return json.load(open(p)), False
-    q = urllib.parse.urlencode({'action': 'parse', 'page': page, 'prop': 'text', 'format': 'json', 'redirects': 1})
-    req = urllib.request.Request(f'{API}?{q}', headers={'User-Agent': UA})
-    for attempt in range(4):
-        try:
-            with urllib.request.urlopen(req, timeout=60) as r:
-                t = json.load(r)
-            break
-        except Exception:
-            time.sleep(5 * (attempt + 1))
-    else:
-        raise RuntimeError(f'wiki unreachable for {page}')
+    t = common.wiki_get_retry({'action': 'parse', 'page': page, 'prop': 'text', 'format': 'json', 'redirects': 1}, page, ua=UA)
     t['_fetched'] = time.strftime('%Y-%m-%d')
     json.dump(t, open(p, 'w'), ensure_ascii=False)
     return t, True

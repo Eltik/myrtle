@@ -32,10 +32,13 @@ fixed before any result was read). Measured 2026-10-04 evening against the wiki 
 section 12): the served-table bar (held-out precision 0.600) was not met by any version, so build's default output is
 not kept in artifacts/entities (the design tool fires on nothing without it).
 """
-import argparse, collections, hashlib, json, os, re, sys, threading, time, urllib.request
+import argparse, collections, json, os, re, sys, threading, time
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-GD = os.path.join(ROOT, '..', 'assets', 'output', 'en', 'gamedata', 'excel')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common
+from common import ROOT, read_jsonl, sha16
+
+GD = common.EXCEL
 ENT = os.path.join(ROOT, 'artifacts', 'entities')
 # DESIGN_MODEL=tag (2026-10-04 night, the Gemma 4 26B-A4B pilot): gen writes and reads design_infer.raw.<tag>.jsonl, so
 # a run on another generator model (served on $SERVER as usual) never mixes with the 12B rows; unset = the 12B file as
@@ -47,7 +50,6 @@ OUT = os.environ.get('DESIGN_OUT') or os.path.join(ENT, 'design_infer.jsonl')
 REF = os.path.join(ROOT, 'eval', 'reference')
 SCORE = os.path.join(REF, 'design_infer.score.jsonl')
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
-sha16 = lambda s: hashlib.sha256(s.encode()).hexdigest()[:16]
 kv = lambda x: {r['key']: r['value'] for r in x} if isinstance(x, list) else x
 
 GEN_SYS = (
@@ -195,10 +197,6 @@ SSHA = sha16(SCORE_SYS + SCORE_GRAMMAR)
 TAG = re.compile(r'<[@$/][^>]*>|</>')
 
 
-def read_jsonl(p):
-    return [json.loads(l) for l in open(p)] if os.path.exists(p) else []
-
-
 def clean(t, n=None):
     t = TAG.sub('', t or '').replace('\\n', '\n')
     t = re.sub(r'\{[-@:.\w%]+\}', 'X', t)
@@ -207,25 +205,15 @@ def clean(t, n=None):
 
 
 def post(sys_prompt, user, grammar, max_tokens):
-    body = json.dumps({'messages': [{'role': 'system', 'content': sys_prompt}, {'role': 'user', 'content': user}],
-                       'temperature': 0, 'seed': 1, 'max_tokens': max_tokens, 'grammar': grammar,
-                       'cache_prompt': False}).encode()
-    err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=900) as r:
-                content = json.load(r)['choices'][0]['message']['content']
-        except Exception as e:  # one failed decode 500s every in-flight request; retry
-            err = e; time.sleep(5 * (attempt + 1))
-            continue
-        try:
-            return json.loads(content)
-        except json.JSONDecodeError:
-            # The grammar emits no escapes, so every backslash is literal text ("\\" before a closing quote broke one
-            # output); double them all. Anything else (a truncated output) is an error.
-            return json.loads(content.replace('\\', '\\\\'))
-    raise err
+    """The parsed JSON answer of a grammar-bound call. Only the request is retried (one failed decode 500s every
+    in-flight request); an answer that does not parse raises."""
+    content = common.chat(SERVER, sys_prompt, user, max_tokens, 900, common.content, grammar=grammar, cache_prompt=False)
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        # The grammar emits no escapes, so every backslash is literal text ("\\" before a closing quote broke one
+        # output); double them all. Anything else (a truncated output) is an error.
+        return json.loads(content.replace('\\', '\\\\'))
 
 
 def evidence(extra=None):
@@ -393,9 +381,8 @@ def stage_gen(args):
         if not V1:  # v2: the string "null" and the bare codename are not subjects
             r['subjects'] = [x for x in r['subjects'] if x['subject'].strip().lower() not in ('null', 'none', name.lower())]
         with lock:
-            with open(RAW, 'a') as f:
-                f.write(json.dumps({'key': key, 'charId': cid, 'operator': name, 'subjects': r['subjects'], 'clues': r.get('clues'),
-                                    'promptSha': PSHA, 'seconds': round(time.time() - t, 1)}, ensure_ascii=False) + '\n')
+            common.append_jsonl(RAW, {'key': key, 'charId': cid, 'operator': name, 'subjects': r['subjects'], 'clues': r.get('clues'),
+                                      'promptSha': PSHA, 'seconds': round(time.time() - t, 1)})
             print(f"{name}: {[s['subject'] + '/' + s['confidence'] for s in r['subjects']]} ({time.time() - t:.0f}s)", flush=True)
     run_pool(todo, fn, args.threads, args.minutes)
 
@@ -427,9 +414,8 @@ def stage_animal(args):
         if a and a['subject'].strip().lower() in ('null', 'none', name.lower()):
             a = None
         with lock:
-            with open(ANIMAL, 'a') as f:
-                f.write(json.dumps({'key': key, 'charId': cid, 'operator': name, 'animal': a, 'clues': r.get('clues'),
-                                    'promptSha': ASHA, 'seconds': round(time.time() - t, 1)}, ensure_ascii=False) + '\n')
+            common.append_jsonl(ANIMAL, {'key': key, 'charId': cid, 'operator': name, 'animal': a, 'clues': r.get('clues'),
+                                         'promptSha': ASHA, 'seconds': round(time.time() - t, 1)})
             print(f"{name}: {a and a['subject'] + '/' + a['confidence']} ({time.time() - t:.0f}s)", flush=True)
     run_pool(todo, fn, args.threads, args.minutes)
 
@@ -479,8 +465,7 @@ def stage_check(args):
         cid, s, cited, text, key = x
         v = post(CHECK_SYS, text, CHECK_GRAMMAR, 200) if cited else {'supported': False, 'reason': 'no valid evidence id'}
         with lock:
-            with open(CHK, 'a') as f:
-                f.write(json.dumps({'key': key, 'charId': cid, 'subject': s['subject'], **v}, ensure_ascii=False) + '\n')
+            common.append_jsonl(CHK, {'key': key, 'charId': cid, 'subject': s['subject'], **v})
             print(f"{E[cid][0]} / {s['subject']}: {v['supported']}", flush=True)
     run_pool(todo, fn, args.threads, args.minutes)
 
@@ -530,9 +515,7 @@ def stage_build(_args):
     E = evidence()
     if os.environ.get('DESIGN_FILTER') == 'tiles':
         rows = tiles_rows(E)
-        with open(OUT, 'w') as f:
-            for r in rows:
-                f.write(json.dumps(r, ensure_ascii=False) + '\n')
+        common.write_jsonl(OUT, rows)
         print(f"build: tiles slice, {len(rows)} operators read, {sum(bool(r['subjects']) for r in rows)} with a subject -> {OUT}")
         return
     raw = latest_raw(E)
@@ -564,9 +547,7 @@ def stage_build(_args):
     for cid in sorted(raw):
         name, _, alters = E[cid]
         rows.append({'operator': name, 'charId': cid, 'alters': alters, 'subjects': by.get(cid, [])})
-    with open(OUT, 'w') as f:
-        for r in rows:
-            f.write(json.dumps(r, ensure_ascii=False) + '\n')
+    common.write_jsonl(OUT, rows)
     print(f"build: {len(rows)} operators inferred of {len(E)}; subjects {n_sub}, kept {n_kept} "
           f"(unchecked {unchecked}); operators with a kept subject {sum(bool(r['subjects']) for r in rows)} -> {OUT}")
 
@@ -656,9 +637,8 @@ def stage_label(args):
     def fn(r, lock):
         v = post(KIND_SYS, kind_text(r), KIND_GRAMMAR, 120)
         with lock:
-            with open(KINDS, 'a') as f:
-                f.write(json.dumps({'key': kind_key(r), 'charId': r['charId'], 'operator': r['operator'],
-                                    'basis': r['basis'][:3], **v}, ensure_ascii=False) + '\n')
+            common.append_jsonl(KINDS, {'key': kind_key(r), 'charId': r['charId'], 'operator': r['operator'],
+                                        'basis': r['basis'][:3], **v})
     run_pool(todo, fn, args.threads, args.minutes)
     c = collections.Counter(k['kind'] for k in read_jsonl(KINDS))
     print('label: kinds', dict(c))
@@ -701,8 +681,7 @@ def stage_score(args):
         cid, r, text, key = x
         v = post(SCORE_SYS, text, SCORE_GRAMMAR, 200) if r['subjects'] else {'match': 'none', 'reason': 'nothing inferred'}
         with lock:
-            with open(SCORE, 'a') as f:
-                f.write(json.dumps({'key': key, 'charId': cid, 'operator': r['operator'], **v}, ensure_ascii=False) + '\n')
+            common.append_jsonl(SCORE, {'key': key, 'charId': cid, 'operator': r['operator'], **v})
     run_pool(todo, fn, args.threads, args.minutes)
     stage_report(args)
 

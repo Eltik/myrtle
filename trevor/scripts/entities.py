@@ -20,17 +20,16 @@ character. Stages (artifacts/entities/, resumable):
   who NAME print the identity a name belongs to, with evidence and where it speaks.
 Corpus: artifacts/p3a (stories plus operator archives).
 """
-import collections, hashlib, json, os, re, sys, threading, time, urllib.request
+import collections, json, os, re, sys, threading, time
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import incr
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py and incr.py sit beside the scripts
+import common, incr
+from common import ROOT, read_jsonl, sha16
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CORPUS = os.path.join(ROOT, os.environ.get('CORPUS', 'artifacts/p3a'))
 OUT = os.path.join(ROOT, 'artifacts', 'entities')
 SERVER = os.environ.get('SERVER', 'http://127.0.0.1:8081')
 SLOTS = int(os.environ.get('SLOTS', '2'))
-sha16 = lambda s: hashlib.sha256(s.encode()).hexdigest()[:16]
 
 CUE = re.compile(r"\b(real name|true name|birth name|given name|my name is|her name is|his name is|name's|also known as|"
                  r"a\.k\.a\.|codename|code name|goes by|went by|formerly known|used to be called|call me|called herself|"
@@ -51,10 +50,6 @@ n ::= "\"" ch{1,60} "\""
 q ::= "\"" ch{4,200} "\""
 ch ::= [^"\\\x00-\x1F]
 '''
-
-
-def read_jsonl(p):
-    return [json.loads(l) for l in open(p)] if os.path.exists(p) else []
 
 
 def norm(s):
@@ -96,19 +91,7 @@ def extract_stage():
 
 
 def extract_one(c, psha):
-    body = json.dumps({'messages': [{'role': 'system', 'content': SYS}, {'role': 'user', 'content': c['context']}],
-                       'temperature': 0, 'seed': 1, 'max_tokens': 400, 'grammar': GRAMMAR}).encode()
-    err = None
-    for attempt in range(4):
-        try:
-            req = urllib.request.Request(f'{SERVER}/v1/chat/completions', body, {'content-type': 'application/json'})
-            with urllib.request.urlopen(req, timeout=600) as r:
-                out = json.load(r)['choices'][0]['message']['content']
-            break
-        except Exception as e:
-            err = e; time.sleep(5 * (attempt + 1))
-    else:
-        raise err
+    out = common.chat(SERVER, SYS, c['context'], 400, 600, common.content, grammar=GRAMMAR)
     try:
         links = json.loads(out)['links']
     except Exception:
@@ -140,22 +123,16 @@ def stage_extract():
         todo = [first[k] for k in keys]
     psha = st.psha
     print(f'extract: {len(todo)} to do, {len(order) - len(todo)} done, prompt {psha}', flush=True)
-    it = iter(todo); lock = threading.Lock(); n = [0]; t0 = time.time()
+    lock = threading.Lock(); n = [0]; t0 = time.time()
 
-    def work():
-        while True:
-            with lock:
-                c = next(it, None)
-            if c is None:
-                return
-            row = extract_one(c, psha)
-            with lock:
-                st.put(row)
-                n[0] += 1
-                if n[0] % 100 == 0:
-                    print(f'{time.strftime("%H:%M:%S")} extract {n[0]}/{len(todo)}, {(time.time() - t0) / n[0]:.1f} s each', flush=True)
-    th = [threading.Thread(target=work) for _ in range(SLOTS)]
-    [t.start() for t in th]; [t.join() for t in th]
+    def one(c):
+        row = extract_one(c, psha)
+        with lock:
+            st.put(row)
+            n[0] += 1
+            if n[0] % 100 == 0:
+                print(f'{time.strftime("%H:%M:%S")} extract {n[0]}/{len(todo)}, {(time.time() - t0) / n[0]:.1f} s each', flush=True)
+    common.par(todo, one, SLOTS, lock)
     rows = read_jsonl(st.path)
     print(f"extract: {sum(len(r['links']) for r in rows)} verified links from {len(rows)} lines, "
           f"{sum(r['rejected'] for r in rows)} rejected", flush=True)
@@ -187,23 +164,17 @@ def stage_extract2():
                              'context': '\n'.join(lines[max(0, i - 1):i + 2])})
     psha = sha16(SYS + GRAMMAR)
     print(f'extract2: {len(todo)} to do, {len(done)} done, prompt {psha}', flush=True)
-    lock = threading.Lock(); it = iter(todo); n = [0]; t0 = time.time()
+    lock = threading.Lock(); n = [0]; t0 = time.time()
     out = open(path, 'a')
 
-    def work():
-        while True:
-            with lock:
-                c = next(it, None)
-            if c is None:
-                return
-            row = extract_one(c, psha)
-            with lock:
-                out.write(json.dumps(row, ensure_ascii=False) + '\n'); out.flush()
-                n[0] += 1
-                if n[0] % 100 == 0:
-                    print(f'{time.strftime("%H:%M:%S")} extract2 {n[0]}/{len(todo)}, {(time.time() - t0) / n[0]:.1f} s each', flush=True)
-    th = [threading.Thread(target=work) for _ in range(SLOTS)]
-    [t.start() for t in th]; [t.join() for t in th]
+    def one(c):
+        row = extract_one(c, psha)
+        with lock:
+            out.write(json.dumps(row, ensure_ascii=False) + '\n'); out.flush()
+            n[0] += 1
+            if n[0] % 100 == 0:
+                print(f'{time.strftime("%H:%M:%S")} extract2 {n[0]}/{len(todo)}, {(time.time() - t0) / n[0]:.1f} s each', flush=True)
+    common.par(todo, one, SLOTS, lock)
     out.close()
     rows = read_jsonl(path)
     print(f"extract2: {sum(len(r['links']) for r in rows)} verified links from {len(rows)} lines", flush=True)
