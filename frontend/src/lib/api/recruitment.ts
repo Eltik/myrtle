@@ -14,8 +14,8 @@ export interface IRecruitmentData {
 
 /**
  * The backend parses `recruitDetail` and serves only the recruitable operators,
- * with only the fields the calculator reads, from cache. This used to pull
- * `/static/gacha` and the whole `/static/operators` table on every SSR call.
+ * with only the fields the calculator reads, from cache, so an SSR call never
+ * pulls `/static/gacha` and the whole `/static/operators` table.
  */
 export const getRecruitmentDataFn = createServerFn({ method: "GET" })
     .inputValidator((server: string | undefined) => server)

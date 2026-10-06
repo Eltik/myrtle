@@ -287,7 +287,7 @@ struct Cached {
 }
 
 impl Cached {
-    fn gallery(&self, kind: StoryArtKind) -> &StoryArtGallery {
+    const fn gallery(&self, kind: StoryArtKind) -> &StoryArtGallery {
         &self.galleries[slot(kind)].0
     }
 

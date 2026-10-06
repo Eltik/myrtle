@@ -890,6 +890,7 @@ async fn story_sprite_thumb_impl(
     format: StorySpriteThumbFormat,
     headers: &HeaderMap,
 ) -> Result<Response, ApiError> {
+    use crate::app::services::story::gallery::with_default_fallback;
     use crate::app::services::story_sprite_thumb::{ThumbFormat, ensure};
     let (format, etag_prefix) = match format {
         StorySpriteThumbFormat::Webp => (ThumbFormat::Webp, ""),
@@ -897,11 +898,7 @@ async fn story_sprite_thumb_impl(
         // PNG's ETag carries its own prefix and never revalidates the WebP.
         StorySpriteThumbFormat::Png => (ThumbFormat::Png, "png-"),
     };
-    let mut servers = vec![server];
-    if server != state.default_server {
-        servers.push(state.default_server);
-    }
-    for srv in servers {
+    for srv in with_default_fallback(state, server) {
         let Some(sd) = state.try_server_data(srv) else {
             continue;
         };

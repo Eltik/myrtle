@@ -191,6 +191,8 @@ operators.*.favorKeyFrames[*].Level: number
 operators.*.favorKeyFrames[*]: object
 operators.*.groupId: null
 operators.*.groupId: string
+operators.*.groupName: null
+operators.*.groupName: string
 operators.*.handbook.charID: string
 operators.*.handbook.handbookAvgList: array
 operators.*.handbook.handbookAvgList[*].avgList: array
@@ -346,6 +348,10 @@ operators.*.modules[*].unlockLevel: number
 operators.*.modules[*]: object
 operators.*.name: string
 operators.*.nationId: string
+operators.*.nationName: null
+operators.*.nationName: string
+operators.*.obtainChannel: null
+operators.*.obtainChannel: string
 operators.*.phases: array
 operators.*.phases[*].AttributesKeyFrames: array
 operators.*.phases[*].AttributesKeyFrames[*].Data.Atk: number
@@ -416,6 +422,7 @@ operators.*.potentialRanks[*].Buff: object
 operators.*.potentialRanks[*].Description: string
 operators.*.potentialRanks[*]: object
 operators.*.profession: string
+operators.*.professionName: string
 operators.*.profile.basicInfo.codeName: string
 operators.*.profile.basicInfo.combatExperience: string
 operators.*.profile.basicInfo.dateOfBirth: string
@@ -494,6 +501,7 @@ operators.*.subPower[*].teamId: null
 operators.*.subPower[*].teamId: string
 operators.*.subPower[*]: object
 operators.*.subProfessionId: string
+operators.*.subProfessionName: string
 operators.*.tagList: array
 operators.*.tagList[*]: string
 operators.*.talents: array
@@ -521,6 +529,8 @@ operators.*.talents[*].Candidates[*]: object
 operators.*.talents[*]: object
 operators.*.teamId: null
 operators.*.teamId: string
+operators.*.teamName: null
+operators.*.teamName: string
 operators.*.tmplDefault: string
 operators.*.tmplIds: array
 operators.*.tmplIds[*]: string
@@ -694,6 +704,7 @@ skins.charSkins.*.dynPortraitId: null
 skins.charSkins.*.dynPortraitId: string
 skins.charSkins.*.illustId: string
 skins.charSkins.*.isBuySkin: bool
+skins.charSkins.*.obtainChannel: string
 skins.charSkins.*.portraitId: string
 skins.charSkins.*.skinId: string
 skins.charSkins.*.spDynIllustId: null

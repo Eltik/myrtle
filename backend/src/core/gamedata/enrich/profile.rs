@@ -185,7 +185,7 @@ fn parse_physical_exam(text: &str) -> PhysicalExam {
             "Physical Resilience" | "生理耐受" => exam.physical_resilience = value.to_owned(),
             "Tactical Acumen" | "战术规划" => exam.tactical_acumen = value.to_owned(),
             "Combat Skill" | "Combat Skills" | "战斗技巧" => {
-                exam.combat_skill = value.to_owned()
+                exam.combat_skill = value.to_owned();
             }
             // Both misspellings are EN's own, on 3 operators (2026-10-06).
             "Originium Arts Assimilation"

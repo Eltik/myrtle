@@ -384,6 +384,7 @@ pub struct UpdateSettingsRequest {
 
 /// Wraps a field that is present in the body, `null` included, in `Some`, so
 /// with `#[serde(default)]` an absent field stays `None` and the two differ.
+#[allow(clippy::option_option)] // absent, null and set are three states
 fn present<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
 where
     D: serde::Deserializer<'de>,
