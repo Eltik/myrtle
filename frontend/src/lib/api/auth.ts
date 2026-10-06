@@ -3,12 +3,32 @@ import { parseError } from "#/lib/api/_shared";
 import { requireSiteToken } from "#/lib/api/_shared.server";
 import { backendFetch } from "#/lib/fetch";
 import type { DisconnectResult } from "#/types/generated/DisconnectResult";
+import type { ProfileBackground } from "#/types/generated/ProfileBackground";
+import type { ProfileShowcase } from "#/types/generated/ProfileShowcase";
+import type { ProfileTab } from "#/types/generated/ProfileTab";
 import type { StatusOk } from "#/types/generated/StatusOk";
+
+/**
+ * A save of the profile layout: only the keys sent change, the rest are kept as stored.
+ * `tabs` replaces the tab list, `showcase` the blocks, `background` the header art
+ * (`null` removes it).
+ */
+export interface IProfileLayoutPatch {
+    tabs?: ProfileTab[];
+    showcase?: ProfileShowcase;
+    background?: ProfileBackground | null;
+}
 
 export interface IUpdateUserSettingsInput {
     public_profile: boolean;
     store_gacha: boolean;
     share_stats: boolean;
+    /**
+     * Omitted leaves the saved layout alone, `null` resets it to the default (tabs,
+     * showcase and background alike), a patch sets the keys it carries (the backend
+     * normalizes them before storing).
+     */
+    profile_layout?: IProfileLayoutPatch | null;
 }
 
 /**
@@ -26,8 +46,9 @@ async function postAsUser(path: string, body?: unknown): Promise<Response> {
     return res;
 }
 
+/** Any subset of the settings: a field left out stays as stored. */
 export const updateUserSettingsFn = createServerFn({ method: "POST" })
-    .inputValidator((data: IUpdateUserSettingsInput) => data)
+    .inputValidator((data: Partial<IUpdateUserSettingsInput>) => data)
     .handler(async ({ data }) => {
         const res = await postAsUser("/auth/update-settings", data);
         return (await res.json()) as StatusOk;

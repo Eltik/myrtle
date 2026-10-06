@@ -43,6 +43,11 @@ export interface IUserOgData {
     rarityCounts?: Record<number, number>;
 }
 
+/** The small round separator between the level, grade and score. */
+function SeparatorDot() {
+    return <div style={{ display: "flex", width: 4, height: 4, borderRadius: 999, background: FG_45 }} />;
+}
+
 export function UserTemplate(data: IUserOgData) {
     const { nickname, nickNumber, uid = "-", level = 1, grade = "B", operatorCount = 0, skinCount = 0, itemCount = 0, lmd = 0, totalScore = 0, secretaryArtURL, supportUnits, supportUnitsKind = "roster", rarityCounts } = data;
 
@@ -167,24 +172,27 @@ export function UserTemplate(data: IUserOgData) {
                         }}
                     >
                         <div style={{ display: "flex" }}>Lv {level ?? "-"}</div>
-                        <div style={{ display: "flex", width: 4, height: 4, borderRadius: 999, background: FG_45 }} />
-                        <div
-                            style={{
-                                display: "flex",
-                                padding: "3px 11px",
-                                borderRadius: 999,
-                                background: "linear-gradient(135deg, #ec6f5d, #c63a48)",
-                                color: "#1a0c0c",
-                                fontFamily: "Inter",
-                                fontWeight: 700,
-                                fontSize: 14,
-                                letterSpacing: "0.05em",
-                            }}
-                        >
-                            {grade ?? "-"}
-                        </div>
-                        <div style={{ display: "flex", width: 4, height: 4, borderRadius: 999, background: FG_45 }} />
-                        <div style={{ display: "flex" }}>{formatNumber(totalScore)} pts</div>
+                        {/* No grade or score when the player has none or keeps the Score tab private: the line ends at the level rather than reading "0 pts". */}
+                        {grade != null && <SeparatorDot />}
+                        {grade != null && (
+                            <div
+                                style={{
+                                    display: "flex",
+                                    padding: "3px 11px",
+                                    borderRadius: 999,
+                                    background: "linear-gradient(135deg, #ec6f5d, #c63a48)",
+                                    color: "#1a0c0c",
+                                    fontFamily: "Inter",
+                                    fontWeight: 700,
+                                    fontSize: 14,
+                                    letterSpacing: "0.05em",
+                                }}
+                            >
+                                {grade}
+                            </div>
+                        )}
+                        {totalScore != null && <SeparatorDot />}
+                        {totalScore != null && <div style={{ display: "flex" }}>{formatNumber(totalScore)} pts</div>}
                     </div>
                 </div>
             </div>

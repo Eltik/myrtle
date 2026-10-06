@@ -99,6 +99,14 @@ const MIGRATIONS: &[(&str, &str)] = &[
         "v032_grid_entity_kinds",
         include_str!("v032_grid_entity_kinds.sql"),
     ),
+    (
+        "v033_profile_layout",
+        include_str!("v033_profile_layout.sql"),
+    ),
+    (
+        "v034_leaderboard_private_score",
+        include_str!("v034_leaderboard_private_score.sql"),
+    ),
 ];
 
 pub async fn run_migrations(pool: &PgPool) -> Result<(), sqlx::Error> {

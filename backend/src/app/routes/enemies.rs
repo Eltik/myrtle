@@ -8,11 +8,12 @@ use ts_rs::TS;
 use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
-use crate::app::routes::resolve_user_id;
+use crate::app::routes::resolve_user_id_for_tab;
 use crate::app::routes::static_data::json_response;
 use crate::app::services::static_data::{get_enemy_detail, get_enemy_stages};
 use crate::app::state::AppState;
 use crate::core::hypergryph::constants::Server;
+use crate::database::models::profile_layout::ProfileTabId;
 use crate::database::queries::enemies::{
     get_community_average_encountered, get_user_encountered_enemies,
 };
@@ -190,7 +191,9 @@ pub async fn get_encountered_enemies(
     auth: MaybeAuthUser,
     Query(params): Query<EncounteredEnemiesParams>,
 ) -> Result<Json<EncounteredEnemiesResponse>, ApiError> {
-    let user_id = resolve_user_id(&state, &auth, params.uid.as_deref()).await?;
+    let user_id =
+        resolve_user_id_for_tab(&state, &auth, params.uid.as_deref(), ProfileTabId::Enemies)
+            .await?;
     let ids = get_user_encountered_enemies(&state.db, user_id).await?;
 
     let game_data = state.default_game_data();

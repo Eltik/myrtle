@@ -11,6 +11,7 @@ use crate::app::services;
 use crate::app::services::auth::parse_server;
 use crate::app::state::AppState;
 use crate::core::auth::permissions::GlobalRole;
+use crate::database::models::profile_layout::ProfileLayoutPatch;
 use crate::database::queries;
 
 /// The `/auth/verify` response: the session a token currently represents.
@@ -365,9 +366,30 @@ pub async fn verify(
 
 #[derive(Deserialize, ToSchema)]
 pub struct UpdateSettingsRequest {
-    pub public_profile: bool,
-    pub store_gacha: bool,
-    pub share_stats: bool,
+    /// Each flag: absent leaves it as stored, so a caller can send only the
+    /// field it changes (the profile's tab editor sends only `profile_layout`).
+    pub public_profile: Option<bool>,
+    pub store_gacha: Option<bool>,
+    pub share_stats: Option<bool>,
+    /// Absent leaves the saved layout alone, `null` resets it to the default
+    /// (today's order, every tab visible, no showcase, no background). An
+    /// object sets the keys it carries and keeps the rest: `tabs` replaces the
+    /// tab list, `showcase` the blocks, `background` the header art (`null`
+    /// removes it). Normalized before it is stored: unknown tab ids and
+    /// repeats are dropped, missing tabs appended visible.
+    #[serde(default, deserialize_with = "present")]
+    #[schema(value_type = Option<ProfileLayoutPatch>, required = false)]
+    pub profile_layout: Option<Option<ProfileLayoutPatch>>,
+}
+
+/// Wraps a field that is present in the body, `null` included, in `Some`, so
+/// with `#[serde(default)]` an absent field stays `None` and the two differ.
+fn present<'de, D, T>(deserializer: D) -> Result<Option<Option<T>>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    Option::<T>::deserialize(deserializer).map(Some)
 }
 
 /// Change the caller's own privacy settings.
@@ -393,12 +415,19 @@ pub async fn update_settings(
     Json(body): Json<UpdateSettingsRequest>,
 ) -> Result<Json<StatusOk>, ApiError> {
     let user_id: uuid::Uuid = auth.user_uuid()?;
+    // Only tabs gate search and the leaderboards: a reset or a tabs save.
+    let tabs_changed = match &body.profile_layout {
+        None => false,
+        Some(None) => true,
+        Some(Some(patch)) => patch.tabs.is_some(),
+    };
     services::auth::update_settings(
         &state,
         user_id,
         body.public_profile,
         body.store_gacha,
         body.share_stats,
+        body.profile_layout,
     )
     .await?;
     // v_user_profile is read through a 10-minute cache; without this, fresh
@@ -407,6 +436,14 @@ pub async fn update_settings(
         .cache
         .invalidate(&CacheKey::User { uid: &auth.uid })
         .await;
+    // Search and every leaderboard drop a player by tab, and their pages are
+    // cached for up to 15 minutes: without this a tab just made private would
+    // keep ranking its owner until the TTL ran out. Layout saves are rare, so
+    // flushing every page costs a few rebuilt pages, not a steady load.
+    if tabs_changed {
+        state.cache.invalidate_by_prefix("search:").await;
+        state.cache.invalidate_by_prefix("leaderboard:").await;
+    }
     Ok(ok_status())
 }
 

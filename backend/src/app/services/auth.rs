@@ -1,10 +1,12 @@
 use crate::app::cache::keys::CacheKey;
 use crate::app::error::ApiError;
+use crate::app::services::showcase::{validate as validate_showcase, validate_background};
 use crate::app::state::AppState;
 use crate::core::auth::jwt::create_token;
 use crate::core::hypergryph::constants::{AuthSession, Server};
 use crate::core::hypergryph::session;
 use crate::core::hypergryph::yostar;
+use crate::database::models::profile_layout::ProfileLayoutPatch;
 use crate::database::queries::game_credentials;
 use crate::database::queries::users;
 use crate::database::queries::users::create_user;
@@ -348,10 +350,29 @@ pub async fn login_cn(
 pub async fn update_settings(
     state: &AppState,
     user_id: Uuid,
-    public_profile: bool,
-    store_gacha: bool,
-    share_stats: bool,
+    public_profile: Option<bool>,
+    store_gacha: Option<bool>,
+    share_stats: Option<bool>,
+    profile_layout: Option<Option<ProfileLayoutPatch>>,
 ) -> Result<(), ApiError> {
-    users::update_settings(&state.db, user_id, public_profile, store_gacha, share_stats).await?;
+    // Shape is already normalized; what each block and the background point
+    // at is checked here, where the database and the game data are at hand.
+    if let Some(Some(patch)) = &profile_layout {
+        if let Some(showcase) = &patch.showcase {
+            validate_showcase(state, user_id, showcase).await?;
+        }
+        if let Some(Some(background)) = &patch.background {
+            validate_background(state, background).await?;
+        }
+    }
+    users::update_settings(
+        &state.db,
+        user_id,
+        public_profile,
+        store_gacha,
+        share_stats,
+        profile_layout,
+    )
+    .await?;
     Ok(())
 }

@@ -1,6 +1,8 @@
 use sqlx::PgPool;
+use sqlx::types::Json;
 use uuid::Uuid;
 
+use crate::database::models::profile_layout::ProfileLayoutPatch;
 use crate::database::models::user::{User, UserCheckin, UserProfile};
 
 pub async fn create_user(pool: &PgPool, uid: &str, server_id: i16) -> Result<User, sqlx::Error> {
@@ -60,20 +62,46 @@ pub async fn find_raw_by_uid(
         .await
 }
 
+/// A `None` flag keeps the stored one. `profile_layout`: `None` keeps the
+/// stored layout, `Some(None)` clears it to NULL, `Some(Some(patch))` merges
+/// the patch over it key by key: each key the save carried replaces the
+/// stored one, each it left out survives, a cleared background is removed,
+/// and a layout left with no key is NULL again. The tab editor sends only
+/// `tabs`, the showcase editor only `showcase` (an empty one as
+/// `{"blocks": []}`) and the background picker only `background`, so none
+/// wipes another's work; `Some(None)` comes only from the tab editor's
+/// explicit Reset. [`ProfileLayoutPatch::apply`] is the same rule in Rust,
+/// for the unit tests.
 pub async fn update_settings(
     pool: &PgPool,
     user_id: Uuid,
-    public_profile: bool,
-    store_gacha: bool,
-    share_stats: bool,
+    public_profile: Option<bool>,
+    store_gacha: Option<bool>,
+    share_stats: Option<bool>,
+    profile_layout: Option<Option<ProfileLayoutPatch>>,
 ) -> Result<(), sqlx::Error> {
+    let touch_layout = profile_layout.is_some();
+    let patch = profile_layout.flatten();
+    let removed: Vec<&str> = patch
+        .as_ref()
+        .map(ProfileLayoutPatch::removed_keys)
+        .unwrap_or_default();
     sqlx::query(
-        "UPDATE user_settings SET public_profile = $2, store_gacha = $3, share_stats = $4 WHERE user_id = $1"
+        "UPDATE user_settings SET public_profile = COALESCE($2, public_profile), \
+         store_gacha = COALESCE($3, store_gacha), share_stats = COALESCE($4, share_stats), \
+         profile_layout = CASE WHEN NOT $5 THEN profile_layout \
+             WHEN $6::jsonb IS NULL THEN NULL \
+             ELSE NULLIF((COALESCE(profile_layout, '{}'::jsonb) || $6::jsonb) - $7::text[], \
+                         '{}'::jsonb) END \
+         WHERE user_id = $1",
     )
     .bind(user_id)
     .bind(public_profile)
     .bind(store_gacha)
     .bind(share_stats)
+    .bind(touch_layout)
+    .bind(patch.as_ref().map(|p| Json(p.merge_json())))
+    .bind(removed)
     .execute(pool)
     .await?;
     Ok(())

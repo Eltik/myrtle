@@ -53,5 +53,9 @@ export const Route = createFileRoute("/user/$id")({
 });
 
 function RouteComponent() {
-    return <UserProfile />;
+    // Keyed by uid: going from one profile to another remounts the page, so a
+    // tab picked, a layout or showcase being edited, or a background draft on
+    // the first never carries over to the second.
+    const { id } = Route.useParams();
+    return <UserProfile key={id} />;
 }

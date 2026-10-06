@@ -14,9 +14,15 @@ import type { messages } from "./PlansTab.messages";
 interface IPlanCardProps {
     p: IOperatorPlanResponse;
     roster: IRosterEntry[];
+    /**
+     * `card` (default): its own bordered card, as the Plans tab draws it.
+     * `embedded`: the body only, for a host card that draws the surface (a showcase block), with the
+     * progress in columns so it reads at a wide lane's width.
+     */
+    variant?: "card" | "embedded";
 }
 
-function PlanCard({ p, roster }: IPlanCardProps) {
+export function PlanCard({ p, roster, variant = "card" }: IPlanCardProps) {
     const operatorName = useOperatorName();
     const t: TypedT<typeof messages> = useT("user");
     const op = p.operator;
@@ -35,7 +41,7 @@ function PlanCard({ p, roster }: IPlanCardProps) {
     };
 
     return (
-        <div className="relative flex flex-col gap-4 rounded-xl border border-border bg-card p-4 transition-all hover:shadow-md">
+        <div className={variant === "card" ? "relative flex flex-col gap-4 rounded-xl border border-border bg-card p-4 transition-all hover:shadow-md" : "flex flex-col gap-4"}>
             <div className="flex items-start gap-3">
                 <span aria-hidden="true" className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted/70">
                     <OperatorAvatar charId={op.id} name={op.name} className="block h-full w-full object-cover" server={op.server} />
@@ -48,7 +54,7 @@ function PlanCard({ p, roster }: IPlanCardProps) {
                 </div>
             </div>
 
-            <PlanProgressRows progress={planProgress(op, p, rosterEntry)} server={op.server} labels={labels} className="border-border/40 border-t pt-3" />
+            <PlanProgressRows progress={planProgress(op, p, rosterEntry)} server={op.server} labels={labels} className="border-border/40 border-t pt-3" layout={variant === "card" ? "stack" : "columns"} />
         </div>
     );
 }

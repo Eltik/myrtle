@@ -2,7 +2,10 @@ import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { backendFetch } from "#/lib/fetch";
 import type { StoryArchive } from "#/types/generated/StoryArchive";
+import type { StoryArtGallery } from "#/types/generated/StoryArtGallery";
+import type { StoryArtKind } from "#/types/generated/StoryArtKind";
 import type { StoryCommunity } from "#/types/generated/StoryCommunity";
+import type { StoryGallery } from "#/types/generated/StoryGallery";
 import type { StoryIllustrations } from "#/types/generated/StoryIllustrations";
 import type { StoryIndex } from "#/types/generated/StoryIndex";
 import type { StoryScript } from "#/types/generated/StoryScript";
@@ -175,6 +178,53 @@ export function storySpriteQueryOptions(base: string, server: string = DEFAULT_G
     return queryOptions({
         queryKey: ["story", "sprite", resolveGamedataServer(server), base.toLowerCase()],
         queryFn: () => getStorySpriteFn({ data: { base, server: resolveGamedataServer(server) } }),
+        staleTime: 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+    });
+}
+
+/**
+ * Every Archives gallery picture, by the event or Integrated Strategies theme whose
+ * archive lists it, for the profile background picker. `null` when the backend
+ * predates the route (404), as the sprite gallery is, so the picker can say so
+ * rather than throw.
+ */
+export const getStoryGalleryFn = createServerFn({ method: "GET" })
+    .inputValidator((server: string) => server)
+    .handler(async ({ data: server }) => {
+        const res = await backendFetch(gamedataPath(server, "/story/gallery"));
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error(`Failed to load the story gallery: ${res.status}`);
+        return (await res.json()) as StoryGallery;
+    });
+
+/**
+ * Every story CG or scene plate wide enough for a profile header (`GET /story/art-gallery/{kind}`),
+ * filed under the first library group that draws it. Split per kind because the two payloads are
+ * 59,576 and 54,787 JSON bytes on EN; a backend without the route answers 404, read as `null`.
+ */
+export const getStoryArtGalleryFn = createServerFn({ method: "GET" })
+    .inputValidator((input: { server: string; kind: StoryArtKind }) => input)
+    .handler(async ({ data: { server, kind } }) => {
+        const res = await backendFetch(gamedataPath(server, `/story/art-gallery/${kind}`));
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error(`Failed to load the story ${kind} gallery: ${res.status}`);
+        return (await res.json()) as StoryArtGallery;
+    });
+
+export function storyArtGalleryQueryOptions(kind: StoryArtKind, server: string = DEFAULT_GAMEDATA_SERVER) {
+    return queryOptions({
+        queryKey: ["story", "art-gallery", kind, resolveGamedataServer(server)],
+        queryFn: () => getStoryArtGalleryFn({ data: { server: resolveGamedataServer(server), kind } }),
+        staleTime: 60 * 60 * 1000,
+        gcTime: 24 * 60 * 60 * 1000,
+    });
+}
+
+export function storyGalleryQueryOptions(server: string = DEFAULT_GAMEDATA_SERVER) {
+    return queryOptions({
+        queryKey: ["story", "gallery", resolveGamedataServer(server)],
+        queryFn: () => getStoryGalleryFn({ data: resolveGamedataServer(server) }),
         staleTime: 60 * 60 * 1000,
         gcTime: 24 * 60 * 60 * 1000,
     });

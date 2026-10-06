@@ -880,3 +880,113 @@ pub struct StorySpriteNameDetail {
     pub more_stories: u32,
     pub examples: Vec<StorySpriteExample>,
 }
+
+/// `GET /story/gallery`: every Archives gallery picture, by the archive that
+/// lists it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct StoryGallery {
+    pub groups: Vec<GalleryGroup>,
+}
+
+/// One archive's pictures: an event (`act13side`) or an Integrated
+/// Strategies theme (`rogue_1`), by its archive component id.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct GalleryGroup {
+    pub id: String,
+    /// The event's or theme's name, or the id when the data names neither.
+    pub name: String,
+    /// In the order the archive shows them.
+    pub pictures: Vec<GalleryPicture>,
+}
+
+/// One gallery picture. Its 320 px and 1600 px JPEGs are
+/// `/story/gallery/{id}/thumb` and `/story/gallery/{id}/header`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct GalleryPicture {
+    /// The table's key, `act13side_pic_0`: what a profile background stores.
+    pub id: String,
+    pub title: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub description: Option<String>,
+    /// `IMAGE`, `ENDING_IMAGE` or `ROGUE_IMAGE`, raw from the table.
+    pub picture_type: String,
+    /// The original PNG, absent when the file is not on disk.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[ts(optional)]
+    pub url: Option<String>,
+}
+
+/// Which story-script art a [`StoryArtGallery`] lists: `cg`, an `Image`
+/// still from `textures/avg/imgs`, or `scene`, a `Background` plate from
+/// `textures/avg/bg`. Decided by the tree the file resolves into, not by the
+/// command that names it, so an `Image` that falls back to a `bg/` file is a
+/// scene.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub enum StoryArtKind {
+    Cg,
+    Scene,
+}
+
+impl StoryArtKind {
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Cg => "cg",
+            Self::Scene => "scene",
+        }
+    }
+}
+
+/// `GET /story/art-gallery/{kind}`: every story CG or scene wide enough for
+/// a profile header, each once, under the first library group whose
+/// scripts draw it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct StoryArtGallery {
+    pub kind: StoryArtKind,
+    /// In library order.
+    pub groups: Vec<StoryArtGroup>,
+}
+
+/// One library group's newly seen pictures.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct StoryArtGroup {
+    /// The `StoryGroup.id`.
+    pub id: String,
+    pub name: String,
+    pub category: StoryCategory,
+    pub pictures: Vec<StoryArtPicture>,
+}
+
+/// One CG or scene. Its 320 px and up-to-1600 px JPEGs are
+/// `/story/art-gallery/{kind}/{id}/thumb` and `.../header`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+#[derive(TS, utoipa::ToSchema)]
+#[ts(export)]
+pub struct StoryArtPicture {
+    /// The asset key the scripts name, lowercased (`avg_1_1`, `bg_corridor`):
+    /// what a profile background stores.
+    pub id: String,
+    /// The source PNG's size in px.
+    pub width: u32,
+    pub height: u32,
+}

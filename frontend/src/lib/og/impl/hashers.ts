@@ -45,7 +45,7 @@ const operatorHasher = defineOgHasher<IOperatorOgData>({
     hashParts: (data) => [data.name, data.appellation, data.profession, data.professionName ?? "", data.rarity, data.subProfession, data.position, data.nationId, data.factionLabel ?? "", data.professionIconURL ?? "", (data.stats ?? []).map((s) => `${s.label}=${s.value}`).join("|"), data.server ?? ""],
 });
 
-const USER_HASH_VERSION = "v15";
+const USER_HASH_VERSION = "v16";
 
 const userHasher = defineOgHasher<IUserOgData>({
     kind: "user",

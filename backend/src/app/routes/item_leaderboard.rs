@@ -5,10 +5,11 @@ use axum::{
 use serde::Deserialize;
 
 use crate::app::extractors::auth::MaybeAuthUser;
-use crate::app::routes::resolve_uid;
+use crate::app::routes::resolve_uid_for_tab;
 use crate::app::services::item_leaderboard::{
     ItemLeaderboardPage, get_item_catalog, get_item_leaderboard, get_item_standing,
 };
+use crate::database::models::profile_layout::ProfileTabId;
 use crate::database::queries::item_leaderboard::is_valid_item_id;
 use crate::{
     app::{error::ApiError, extractors::pagination::Pagination, state::AppState},
@@ -124,8 +125,9 @@ pub struct ItemStandingParams {
 /// own server.
 ///
 /// Subject to the same privacy gate as every other by-uid endpoint: a private
-/// profile is visible only to its owner. 404 when the player holds none of
-/// the item.
+/// profile, or a private Inventory tab, is visible only to its owner. 404 when
+/// the player holds none of the item, and for the owner too while their
+/// Inventory tab is private, since the board then leaves them out.
 #[utoipa::path(
     get,
     path = "/leaderboard/items/standing",
@@ -152,7 +154,8 @@ pub async fn item_standing(
     Query(params): Query<ItemStandingParams>,
 ) -> Result<Json<ItemStanding>, ApiError> {
     let item = validated_item_id(&params.item)?;
-    let uid = resolve_uid(&state, &auth, Some(&params.uid)).await?;
+    let uid =
+        resolve_uid_for_tab(&state, &auth, Some(&params.uid), ProfileTabId::Inventory).await?;
     let standing = get_item_standing(&state, item, &uid, &params.server).await?;
     Ok(Json(standing))
 }

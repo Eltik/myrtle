@@ -9,13 +9,14 @@ use crate::app::cache::keys::CacheKey;
 use crate::app::cpu;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
-use crate::app::routes::resolve_uid;
+use crate::app::routes::resolve_uid_for_tab;
 use crate::app::routes::static_data::json_response;
 use crate::app::services::base_planner::{
     AccountFactsReq, CatalogResponse, EvaluateRequest, EvaluateResponse, LayoutResponse,
     OptimizeRequest, RotationRequest, catalog, evaluate, layout, optimize, rotation, save_facts,
 };
 use crate::app::state::AppState;
+use crate::database::models::profile_layout::ProfileTabId;
 use crate::database::queries::users::find_by_id;
 
 #[derive(Deserialize)]
@@ -36,8 +37,10 @@ async fn viewer_id(state: &AppState, auth: &MaybeAuthUser) -> Option<uuid::Uuid>
         .map(|u| u.id)
 }
 
-// The `resolve_uid` gate runs in the handler, not the service: `rotation_plan`
-// can answer from cache without entering the service.
+// The `resolve_uid_for_tab` gate runs in the handler, not the service:
+// `rotation_plan` can answer from cache without entering the service. Every
+// planner read here is the profile's Optimizer tab, so a visitor also needs
+// that tab visible.
 
 /// The player's real stationed base, as the planner's starting draft.
 /// Runs the shared privacy gate: another player's data is readable only when
@@ -65,7 +68,13 @@ pub async fn get_layout(
     auth: MaybeAuthUser,
     Query(params): Query<PlannerParams>,
 ) -> Result<Json<LayoutResponse>, ApiError> {
-    let uid = resolve_uid(&state, &auth, params.uid.as_deref()).await?;
+    let uid = resolve_uid_for_tab(
+        &state,
+        &auth,
+        params.uid.as_deref(),
+        ProfileTabId::Optimizer,
+    )
+    .await?;
     let viewer = viewer_id(&state, &auth).await;
     Ok(Json(layout(&state, &uid, viewer).await?))
 }
@@ -100,7 +109,13 @@ pub async fn evaluate_layout(
     Query(params): Query<PlannerParams>,
     Json(body): Json<EvaluateRequest>,
 ) -> Result<Json<EvaluateResponse>, ApiError> {
-    let uid = resolve_uid(&state, &auth, params.uid.as_deref()).await?;
+    let uid = resolve_uid_for_tab(
+        &state,
+        &auth,
+        params.uid.as_deref(),
+        ProfileTabId::Optimizer,
+    )
+    .await?;
     let viewer = viewer_id(&state, &auth).await;
     let _admission = cpu::admit("base_evaluate").await?;
     Ok(Json(evaluate(&state, &uid, viewer, body).await?))
@@ -142,7 +157,13 @@ pub async fn optimize_layout(
     Query(params): Query<PlannerParams>,
     Json(body): Json<OptimizeRequest>,
 ) -> Result<Response, ApiError> {
-    let uid = resolve_uid(&state, &auth, params.uid.as_deref()).await?;
+    let uid = resolve_uid_for_tab(
+        &state,
+        &auth,
+        params.uid.as_deref(),
+        ProfileTabId::Optimizer,
+    )
+    .await?;
     let viewer = viewer_id(&state, &auth).await;
     let key = CacheKey::BaseOptimize {
         uid: &uid,
@@ -202,7 +223,13 @@ pub async fn rotation_plan(
     Query(params): Query<PlannerParams>,
     Json(body): Json<RotationRequest>,
 ) -> Result<Response, ApiError> {
-    let uid = resolve_uid(&state, &auth, params.uid.as_deref()).await?;
+    let uid = resolve_uid_for_tab(
+        &state,
+        &auth,
+        params.uid.as_deref(),
+        ProfileTabId::Optimizer,
+    )
+    .await?;
     let viewer = viewer_id(&state, &auth).await;
     let key = CacheKey::BaseRotation {
         uid: &uid,

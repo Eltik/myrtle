@@ -7,6 +7,7 @@ use uuid::Uuid;
 use crate::app::error::ApiError;
 use crate::app::extractors::auth::MaybeAuthUser;
 use crate::app::state::AppState;
+use crate::database::models::profile_layout::ProfileTabId;
 use crate::database::models::user::UserProfile;
 use crate::database::queries::users::{find_by_id, find_by_uid};
 
@@ -29,9 +30,18 @@ pub fn ok_status() -> Json<StatusOk> {
     })
 }
 
+/// Whether the signed-in caller is `profile`'s owner.
+fn is_own(auth: &MaybeAuthUser, profile: &UserProfile) -> bool {
+    auth.0
+        .as_ref()
+        .and_then(|a| a.user_id.parse::<Uuid>().ok())
+        .is_some_and(|id| id == profile.id)
+}
+
 /// The privacy gate for a `uid` naming someone other than the caller: readable
 /// when it's the caller's own or marked public, 403 otherwise. Every `uid`-taking
-/// handler goes through [`resolve_user_id`] or [`resolve_uid`], never the raw param.
+/// handler goes through [`resolve_user_id`] or a `*_for_tab` variant, never the raw param.
+/// Returns the profile and whether the caller owns it.
 ///
 /// Gate in the handler, ahead of any cache read; inside a service, a cache hit
 /// can answer before the check runs.
@@ -39,21 +49,55 @@ async fn resolve_public_profile(
     state: &AppState,
     auth: &MaybeAuthUser,
     uid: &str,
-) -> Result<UserProfile, ApiError> {
+) -> Result<(UserProfile, bool), ApiError> {
     let profile = find_by_uid(&state.db, uid)
         .await?
         .ok_or(ApiError::NotFound)?;
+    ensure_profile_readable(auth, profile)
+}
 
-    let is_own = auth
-        .0
-        .as_ref()
-        .and_then(|a| a.user_id.parse::<Uuid>().ok())
-        .is_some_and(|id| id == profile.id);
-
-    if !is_own && profile.public_profile != Some(true) {
+/// The public-profile half of [`resolve_public_profile`], for a handler that
+/// found the profile by other means.
+pub(crate) fn ensure_profile_readable(
+    auth: &MaybeAuthUser,
+    profile: UserProfile,
+) -> Result<(UserProfile, bool), ApiError> {
+    let own = is_own(auth, &profile);
+    if !own && profile.public_profile != Some(true) {
         return Err(ApiError::Forbidden);
     }
+    Ok((profile, own))
+}
 
+/// The per-tab gate: 403 when a visitor asks for the data behind a tab the
+/// owner made private. The owner always passes, and so does every viewer of a
+/// profile that never set a layout. Runs after the public-profile gate, so a
+/// private profile still answers 403 before any tab is considered.
+pub fn ensure_tab_visible(
+    profile: &UserProfile,
+    is_own: bool,
+    tab: ProfileTabId,
+) -> Result<(), ApiError> {
+    if is_own {
+        return Ok(());
+    }
+    match &profile.profile_layout {
+        Some(layout) if !layout.is_visible(tab) => Err(ApiError::Forbidden),
+        _ => Ok(()),
+    }
+}
+
+/// [`resolve_public_profile`], then the per-tab gate for each of `tabs`.
+async fn resolve_profile_for_tabs(
+    state: &AppState,
+    auth: &MaybeAuthUser,
+    uid: &str,
+    tabs: &[ProfileTabId],
+) -> Result<UserProfile, ApiError> {
+    let (profile, own) = resolve_public_profile(state, auth, uid).await?;
+    for &tab in tabs {
+        ensure_tab_visible(&profile, own, tab)?;
+    }
     Ok(profile)
 }
 
@@ -64,26 +108,55 @@ pub(crate) async fn resolve_user_id(
     auth: &MaybeAuthUser,
     uid_param: Option<&str>,
 ) -> Result<Uuid, ApiError> {
+    resolve_user_id_for_tabs(state, auth, uid_param, &[]).await
+}
+
+/// As [`resolve_user_id`], for data that belongs to one profile tab: a visitor
+/// also needs that tab to be visible ([`ensure_tab_visible`]).
+pub(crate) async fn resolve_user_id_for_tab(
+    state: &AppState,
+    auth: &MaybeAuthUser,
+    uid_param: Option<&str>,
+    tab: ProfileTabId,
+) -> Result<Uuid, ApiError> {
+    resolve_user_id_for_tabs(state, auth, uid_param, &[tab]).await
+}
+
+/// As [`resolve_user_id_for_tab`], for data more than one tab shows: a visitor
+/// needs every one of `tabs` visible.
+pub(crate) async fn resolve_user_id_for_tabs(
+    state: &AppState,
+    auth: &MaybeAuthUser,
+    uid_param: Option<&str>,
+    tabs: &[ProfileTabId],
+) -> Result<Uuid, ApiError> {
     match uid_param {
-        Some(uid) => Ok(resolve_public_profile(state, auth, uid).await?.id),
+        Some(uid) => Ok(resolve_profile_for_tabs(state, auth, uid, tabs).await?.id),
         // The token already carries the id, so the self case costs no query.
         None => auth.0.as_ref().ok_or(ApiError::Unauthorized)?.user_uuid(),
     }
 }
 
-/// As [`resolve_user_id`], for the endpoints keyed on the game-account `uid`
-/// string rather than the internal row id.
-pub(crate) async fn resolve_uid(
+/// As [`resolve_user_id_for_tab`], for the endpoints keyed on the game-account
+/// `uid` string rather than the internal row id. Every such endpoint reads one
+/// tab's data, so there is no tab-less variant.
+pub(crate) async fn resolve_uid_for_tab(
     state: &AppState,
     auth: &MaybeAuthUser,
     uid_param: Option<&str>,
+    tab: ProfileTabId,
 ) -> Result<String, ApiError> {
-    if let Some(uid) = uid_param {
-        return Ok(resolve_public_profile(state, auth, uid).await?.uid);
+    match uid_param {
+        Some(uid) => Ok(resolve_profile_for_tabs(state, auth, uid, &[tab])
+            .await?
+            .uid),
+        None => own_uid(state, auth).await,
     }
+}
 
-    // No uid given: the caller's own, which needs a lookup because the token
-    // carries the row id rather than the game-account uid.
+/// No uid given: the caller's own, which needs a lookup because the token
+/// carries the row id rather than the game-account uid.
+async fn own_uid(state: &AppState, auth: &MaybeAuthUser) -> Result<String, ApiError> {
     let auth = auth.0.as_ref().ok_or(ApiError::Unauthorized)?;
     let user_uuid: Uuid = auth.user_uuid()?;
     Ok(find_by_id(&state.db, user_uuid)
@@ -140,6 +213,7 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(user::get_user))
         .routes(routes!(user::get_user_score))
         .routes(routes!(user::get_user_checkin))
+        .routes(routes!(user::get_user_showcase))
         .routes(routes!(leaderboard::leaderboard))
         .routes(routes!(leaderboard::top_movers))
         .routes(routes!(leaderboard::distribution))
@@ -259,6 +333,10 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(story::sprites))
         .routes(routes!(story::sprite_detail))
         .routes(routes!(story::sprite_variant_thumb))
+        .routes(routes!(story::gallery))
+        .routes(routes!(story::gallery_picture))
+        .routes(routes!(story::art_gallery))
+        .routes(routes!(story::art_picture))
         .routes(routes!(story::detail))
         .routes(routes!(story::community_srv))
         .routes(routes!(story::index_srv))
@@ -267,6 +345,10 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(story::sprites_srv))
         .routes(routes!(story::sprite_detail_srv))
         .routes(routes!(story::sprite_variant_thumb_srv))
+        .routes(routes!(story::gallery_srv))
+        .routes(routes!(story::gallery_picture_srv))
+        .routes(routes!(story::art_gallery_srv))
+        .routes(routes!(story::art_picture_srv))
         .routes(routes!(story::detail_srv))
         .routes(routes!(operators::skins_detail))
         .routes(routes!(operators::skins_detail_srv))

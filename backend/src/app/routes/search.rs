@@ -133,6 +133,18 @@ pub async fn search(
     State(state): State<AppState>,
     Query(params): Query<SearchParams>,
 ) -> Result<Json<SearchPage>, ApiError> {
-    let page = search_users(&state, params.into_request()?).await?;
+    let mut page = search_users(&state, params.into_request()?).await?;
+    // Unauthenticated, so every row is a visitor's view: private tabs leave
+    // the layout. The showcase leaves it too: a result row shows no blocks,
+    // and its blocks are pruned of gone referents only on the profile's own
+    // reads, so sending them here would name deleted grids and hidden plans.
+    for entry in &mut page.entries {
+        entry.profile.hide_private_tabs();
+        if let Some(layout) = entry.profile.profile_layout.as_mut() {
+            layout.showcase = None;
+            // A result row draws no header, so it carries no header art.
+            layout.background = None;
+        }
+    }
     Ok(Json(page))
 }

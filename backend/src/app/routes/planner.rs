@@ -6,8 +6,8 @@ use uuid::Uuid;
 use crate::{
     app::{
         error::ApiError,
-        extractors::auth::AuthUser,
-        routes::{StatusOk, ok_status},
+        extractors::auth::{AuthUser, MaybeAuthUser},
+        routes::{StatusOk, ensure_profile_readable, ensure_tab_visible, ok_status},
         services::{
             self,
             planner::{MAX_FLATTEN_TIER, MIN_FLATTEN_TIER},
@@ -19,6 +19,7 @@ use crate::{
             DeletePlansResponse, OperatorPlanResponse, PlanGroup, PlanInput, PlanPreset,
             PlannerResponse, PresetTarget,
         },
+        models::profile_layout::ProfileTabId,
         queries::users::{find_by_id, find_by_uid},
     },
 };
@@ -302,6 +303,9 @@ pub struct PublicPlansQuery {
 }
 
 /// Another player's plans, where they chose to show them on their profile.
+///
+/// The profile gates of every `uid` route apply: a private profile, or a
+/// private Plans tab, answers 403 to anyone but the owner.
 #[utoipa::path(
     get,
     path = "/plans/public",
@@ -309,6 +313,7 @@ pub struct PublicPlansQuery {
     params(
         ("uid" = String, Query, description = "Player whose public plans to read.")
     ),
+    security(("bearer_auth" = []), ()),
     responses(
         (status = 200, description = "Plans the player displays publicly.", body = Vec<OperatorPlanResponse>),
         (status = 403, response = crate::app::openapi::responses::Forbidden),
@@ -320,6 +325,7 @@ pub struct PublicPlansQuery {
 )]
 pub async fn list_public(
     State(state): State<AppState>,
+    auth: MaybeAuthUser,
     Query(query): Query<PublicPlansQuery>,
 ) -> Result<Json<Vec<OperatorPlanResponse>>, ApiError> {
     let profile = if let Some(p) = find_by_uid(&state.db, &query.uid).await? {
@@ -332,9 +338,10 @@ pub async fn list_public(
         return Err(ApiError::NotFound);
     };
 
-    if profile.public_profile != Some(true) {
-        return Err(ApiError::Forbidden);
-    }
+    // The owner reads their own even with the profile private, as on every
+    // other `uid` route.
+    let (profile, own) = ensure_profile_readable(&auth, profile)?;
+    ensure_tab_visible(&profile, own, ProfileTabId::Plans)?;
 
     let response = services::planner::list_public_plans(&state, profile.id).await?;
     Ok(Json(response))

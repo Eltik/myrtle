@@ -1,0 +1,85 @@
+/*
+ * The header art and the scrim that keeps the header's text on the card.
+ *
+ * The scrim is mixed from `--card`, the surface the text was designed on, so it is
+ * white under light text colors and near-black under dark ones and the contrast the
+ * header always had holds in both themes. Under every line of text it is at least
+ * 84% card: on a phone the text runs the full width below the avatar row, so the
+ * scrim fills from the top down; from `sm` up the text sits on the left, so the art
+ * is confined to the right and the scrim fills from the left.
+ */
+
+.frame {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.art {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 240ms ease-out;
+}
+
+.art[data-loaded="true"] {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .art {
+        transition: none;
+    }
+}
+
+/* The picker's drag-and-zoom layer: the art's box, above the header's content. */
+.adjust {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+.adjust[data-grabbing="true"] {
+    cursor: grabbing;
+}
+
+.scrim {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    /* The avatar row ends 100 px down (80 px avatar, 20 px padding); the text starts below it. */
+    background: linear-gradient(to bottom, color-mix(in oklab, var(--card) 25%, transparent) 0, color-mix(in oklab, var(--card) 50%, transparent) 56px, color-mix(in oklab, var(--card) 86%, transparent) 108px, color-mix(in oklab, var(--card) 94%, transparent) 100%);
+}
+
+@media (min-width: 40rem) {
+    /* The right three fifths, faded in from its left edge. */
+    .art {
+        left: auto;
+        width: 62%;
+        -webkit-mask-image: linear-gradient(to right, transparent 0%, black 38%);
+        mask-image: linear-gradient(to right, transparent 0%, black 38%);
+    }
+
+    .adjust {
+        left: auto;
+        width: 62%;
+    }
+
+    /*
+     * Stops in px, not %: the text column ends at most 720 px from the left (32 px
+     * padding, 120 px avatar, 28 px gap, 540 px text at its widest), whatever the
+     * header's width, so the scrim is at least 84% card up to 760 px. On a header
+     * narrower than that the art stays a tint; it shows fully only to the right of
+     * the text on a wide one.
+     */
+    .scrim {
+        background: linear-gradient(to right, var(--card) 0, color-mix(in oklab, var(--card) 94%, transparent) 520px, color-mix(in oklab, var(--card) 84%, transparent) 760px, color-mix(in oklab, var(--card) 35%, transparent) 980px, color-mix(in oklab, var(--card) 12%, transparent) 100%);
+    }
+}

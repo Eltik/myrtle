@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { skinsIndexQueryOptions, userSkinsQueryOptions } from "#/lib/api/skins";
 import { type IRosterEntry, userCheckinQueryOptions } from "#/lib/api/user";
-import { useGamedataServer } from "#/lib/i18n";
+import { useGamedataServer, useT } from "#/lib/i18n";
+import type { TypedT } from "#/lib/i18n/messages";
 import type { IOperatorIndexEntry } from "#/types/operators";
 import { ClassBreakdownCard } from "./cards/ClassBreakdownCard";
 import { CollectionCard } from "./cards/CollectionCard";
@@ -12,6 +13,7 @@ import { ModulesSkinsCard } from "./cards/ModulesSkinsCard";
 import { SignInCalendarCard, SignInOverviewCard } from "./cards/SignInCard";
 import { TopOperatorsCard } from "./cards/TopOperatorsCard";
 import { computeUserStats } from "./helpers";
+import type { messages } from "./StatsTab.messages";
 import { StatsTabSkeleton } from "./StatsTabSkeleton";
 
 interface IStatsTabProps {
@@ -20,18 +22,37 @@ interface IStatsTabProps {
     roster: IRosterEntry[];
     operatorsIndex: IOperatorIndexEntry[];
     nonDefaultSkinCount: number | null;
+    /**
+     * The owner hid their Roster tab from this visitor, so `/roster` refused it and
+     * `roster` is empty. Every card computed from the roster is left out rather than
+     * drawn as an empty account; the sign-in cards do not read it and stay.
+     */
+    rosterPrivate?: boolean;
 }
 
 const EMPTY_OWNED_SKINS = new Set<string>();
 
-export function StatsTab({ uid, server, roster, operatorsIndex, nonDefaultSkinCount }: IStatsTabProps) {
+export function StatsTab({ uid, server, roster, operatorsIndex, nonDefaultSkinCount, rosterPrivate = false }: IStatsTabProps) {
+    const t: TypedT<typeof messages> = useT("user");
     const { data: charSkins } = useQuery(skinsIndexQueryOptions(useGamedataServer()));
-    const { data: ownedSkins } = useQuery(userSkinsQueryOptions(uid));
+    const { data: ownedSkins } = useQuery({ ...userSkinsQueryOptions(uid), enabled: !rosterPrivate });
     const { data: checkin } = useQuery(userCheckinQueryOptions(uid));
 
     const stats = useMemo(() => computeUserStats(roster, operatorsIndex, charSkins, nonDefaultSkinCount), [roster, operatorsIndex, charSkins, nonDefaultSkinCount]);
 
     const ownedSkinIds = useMemo(() => (ownedSkins ? new Set(ownedSkins.map((s) => s.skin_id)) : EMPTY_OWNED_SKINS), [ownedSkins]);
+
+    if (rosterPrivate) {
+        return (
+            <div className="flex flex-col gap-3 pb-8">
+                <p className="text-muted-foreground text-sm">{t("profile.stats.rosterPrivate")}</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                    <SignInOverviewCard checkin={checkin} server={server} />
+                    <SignInCalendarCard checkin={checkin} server={server} />
+                </div>
+            </div>
+        );
+    }
 
     if (!charSkins) return <StatsTabSkeleton />;
 

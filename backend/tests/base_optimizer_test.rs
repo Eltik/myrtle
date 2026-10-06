@@ -143,8 +143,7 @@ fn profile_at(gd: &GameData, char_id: &str, elite: i32) -> OperatorBaseProfile {
         .filter_map(|slot| {
             slot.buff_data
                 .iter()
-                .filter(|e| e.cond.elite() <= elite)
-                .last()
+                .rfind(|e| e.cond.elite() <= elite)
                 .map(|e| e.buff_id.clone())
         })
         .collect();
