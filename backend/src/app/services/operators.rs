@@ -580,17 +580,28 @@ pub async fn get_build_stats(
     Ok(response)
 }
 
-/// Operators present on `source` but absent from the default (global/EN) server:
-/// the "upcoming operators" preview. Returns 404 when `source` is not a loaded
-/// server.
+/// The "upcoming operators" preview: operators on CN, the server that is
+/// ahead, that `viewer` does not have yet.
+///
+/// The comparison is against the server the visitor reads. It was "`viewer`
+/// minus the default server", which is empty for JP and KR (both trail EN), so
+/// `/jp/upcoming` and `/kr/upcoming` answered `[]` (production, 2026-10-06)
+/// while `/cn/upcoming` listed CN's lead. A CN (or Bilibili) viewer has no
+/// lead of its own to preview, so it keeps the old comparison against the
+/// default server, which leaves the bare `/upcoming` and `/cn/upcoming`
+/// unchanged. Entries carry CN's text: the viewer's client has none for them.
+///
+/// Returns 404 when CN is not a loaded server.
 pub async fn get_upcoming(
     state: &AppState,
-    source: Server,
+    viewer: Server,
 ) -> Result<Vec<OperatorIndexEntry>, ApiError> {
-    let source_data = state.try_server_data(source).ok_or(ApiError::NotFound)?;
+    let source_data = state
+        .try_server_data(Server::CN)
+        .ok_or(ApiError::NotFound)?;
     let key = CacheKey::StaticData {
         resource: "upcoming",
-        server: source.as_str(),
+        server: viewer.as_str(),
         fields_hash: 0,
         page: 0,
     };
@@ -598,7 +609,12 @@ pub async fn get_upcoming(
         return Ok(cached);
     }
 
-    let base = state.default_game_data();
+    let base = match viewer {
+        Server::CN | Server::Bilibili => state.default_game_data(),
+        other => state
+            .try_server_data(other)
+            .map_or_else(|| state.default_game_data(), |sd| sd.game_data.load_full()),
+    };
     let src = source_data.game_data.load_full();
     let base_ids: HashSet<&str> = base.operators.keys().map(String::as_str).collect();
 

@@ -12522,7 +12522,7 @@
         "tags": [
           "gamedata"
         ],
-        "summary": "`GET /{server}/upcoming` - operators on `{server}` not yet on the default server.\nThe `/{server}` form reads that server's game data; the bare form reads the\ndefault server.",
+        "summary": "`GET /{server}/upcoming` - operators on CN not yet on `{server}`. A CN or\nBilibili `{server}` compares against the default server, as the bare form does.",
         "operationId": "upcoming_srv",
         "parameters": [
           {
