@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchToDataURI, inlineArt, ogEntityIconURL, satoriImageType } from "./art";
+import { fetchToDataURI, inlineArt, inlineRemoteImages, ogEntityIconURL, satoriImageType } from "./art";
 
 describe("satoriImageType", () => {
     it("accepts the four types satori decodes, ignoring parameters and case", () => {
@@ -66,5 +66,47 @@ describe("fetchToDataURI", () => {
         expect([...art.keys()]).toEqual(["https://b/a", "https://b/b"]);
         expect(art.get("https://b/a")).toBe("data:image/gif;base64,AQID");
         expect(vi.mocked(fetch)).toHaveBeenCalledTimes(2);
+    });
+});
+
+describe("inlineRemoteImages", () => {
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    it("inlines picture URLs at any depth and drops the ones that 404 instead of failing the card", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn(async (url: string) => (url.endsWith("logo_laterano.png") ? new Response("nope", { status: 404, headers: { "content-type": "text/plain" } }) : new Response(new Uint8Array([1, 2, 3]), { status: 200, headers: { "content-type": "image/png" } }))),
+        );
+        const data = {
+            name: "Lemuen",
+            charArtURL: "https://b/api/assets/textures/chararts/x.png",
+            factionLogoURL: "https://b/api/assets/textures/spritepack/ui_camp_logo_0/logo_laterano.png",
+            units: [{ avatarURL: "https://b/api/avatar/x", skills: [{ iconURL: "https://b/api/skill-icon/s" }] }],
+            stats: [{ label: "HP", value: "1,000" }],
+            inlined: { artURL: "data:image/png;base64,AA==" },
+            siteURL: "https://myrtle.moe",
+        };
+        const out = await inlineRemoteImages(data);
+        expect(out.charArtURL).toBe("data:image/png;base64,AQID");
+        expect(out.factionLogoURL).toBeUndefined();
+        expect(out.units[0]?.avatarURL).toBe("data:image/png;base64,AQID");
+        expect(out.units[0]?.skills[0]?.iconURL).toBe("data:image/png;base64,AQID");
+        // Untouched: text, an already-inlined picture, and a URL that is not a picture.
+        expect(out.name).toBe("Lemuen");
+        expect(out.stats).toEqual(data.stats);
+        expect(out.inlined.artURL).toBe("data:image/png;base64,AA==");
+        expect(out.siteURL).toBe("https://myrtle.moe");
+        // The input is not mutated: it is what the content hash was computed from.
+        expect(data.factionLogoURL).toContain("logo_laterano.png");
+        expect(vi.mocked(fetch)).toHaveBeenCalledTimes(4);
+    });
+
+    it("returns the same object and fetches nothing when there is no remote picture", async () => {
+        vi.stubGlobal("fetch", vi.fn());
+        const data = { name: "x", artURL: "" };
+        expect(await inlineRemoteImages(data)).toBe(data);
+        expect(vi.mocked(fetch)).not.toHaveBeenCalled();
     });
 });

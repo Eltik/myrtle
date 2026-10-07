@@ -7,6 +7,7 @@ import { Dialog, DialogClose, DialogDescription, DialogFooter, DialogHeader, Dia
 import { useErrorMessage } from "#/components/ui/error-message";
 import { OperatorAvatar } from "#/components/ui/operator-avatar";
 import { useAuth } from "#/hooks/use-auth";
+import { APIError } from "#/lib/api/_shared";
 import { operatorQueryOptions } from "#/lib/api/operators";
 import { type IOperatorPlanResponse, type IPresetTarget, PLANS_QUERY_PREFIX, plansQueryOptions, upsertPlanFn } from "#/lib/api/planner";
 import { type IRosterEntry, userRosterQueryOptions } from "#/lib/api/user";
@@ -124,6 +125,9 @@ export function BulkPlanDialog({ open, onOpenChange }: IBulkPlanDialogProps): Re
             if (option.id === UNPLANNABLE_OPERATOR_ID) return { option, status: { kind: "unplannable" } };
             const detail = details[idx];
             if (detail?.isError) return { option, status: { kind: "error", message: errorMessage(detail.error) } };
+            // A 404 resolves to `null` (a queryFn may not resolve to `undefined`); without
+            // this the row would wait on "loading" forever.
+            if (detail?.isSuccess && detail.data === null) return { option, status: { kind: "error", message: errorMessage(new APIError(404, "Request failed: 404")) } };
             const operator = detail?.data;
             if (!operator || !hasRoster || !isPlansLoaded) return { option, status: { kind: "loading" } };
             const existing = plansById.get(option.id);

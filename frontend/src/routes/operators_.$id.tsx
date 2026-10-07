@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, notFound } from "@tanstack/react-router";
 import { OperatorDetail } from "#/components/operators/detail/Operators";
 import { operatorBuildStatsQueryOptions, operatorQueryOptions, operatorsIndexQueryOptions } from "#/lib/api/operators";
 import { metaT } from "#/lib/meta";
@@ -28,19 +28,20 @@ export const Route = createFileRoute("/operators_/$id")({
     loader: async ({ context, params }) => {
         const server = context.i18n.gamedataServer;
         const operator = await context.queryClient.ensureQueryData(operatorQueryOptions(params.id, server));
-        if (operator) {
-            // Community build stats decide which skill and module the tabs open
-            // on, so they are prefetched rather than fetched from the tab: a
-            // late arrival would visibly re-select in front of the reader.
-            // Fire-and-forget, because a missing aggregate is a fallback, not
-            // an error, and must never block the page.
-            void context.queryClient.prefetchQuery(operatorBuildStatsQueryOptions(params.id, server));
-            warmOg("operator", params.id, buildOgData(operator));
-            // For operators with alternate forms (Amiya), preload the index so
-            // the form switcher renders in SSR without a hydration flash.
-            if ((operator.tmplIds?.length ?? 0) >= 2) {
-                await context.queryClient.ensureQueryData(operatorsIndexQueryOptions(server));
-            }
+        // An id the backend does not know (a stale link, `/operators/null`) is a
+        // 404, the same as grids and tier lists, not an error page.
+        if (!operator) throw notFound();
+        // Community build stats decide which skill and module the tabs open
+        // on, so they are prefetched rather than fetched from the tab: a
+        // late arrival would visibly re-select in front of the reader.
+        // Fire-and-forget, because a missing aggregate is a fallback, not
+        // an error, and must never block the page.
+        void context.queryClient.prefetchQuery(operatorBuildStatsQueryOptions(params.id, server));
+        warmOg("operator", params.id, buildOgData(operator));
+        // For operators with alternate forms (Amiya), preload the index so
+        // the form switcher renders in SSR without a hydration flash.
+        if ((operator.tmplIds?.length ?? 0) >= 2) {
+            await context.queryClient.ensureQueryData(operatorsIndexQueryOptions(server));
         }
         return operator;
     },

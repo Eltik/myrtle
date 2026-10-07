@@ -1,4 +1,5 @@
 import { DEFAULT_LOCALE, LOCALE_SEGMENT } from "#/lib/i18n";
+import { inlineRemoteImages } from "./art";
 import { readCache, writeCache } from "./cache";
 import { getHandler } from "./registry";
 import { OgRenderUnavailableError, renderOgPng } from "./render";
@@ -72,7 +73,7 @@ export async function ogResponse({ kind, fetchId, version, locale, cacheId = fet
 
         try {
             const dimensions = handler.dimensions?.(data);
-            png = await renderOgPng(handler.template(data), dimensions);
+            png = await renderOgPng(handler.template(await inlineRemoteImages(data)), dimensions);
             await writeCache(kind, cacheId, cacheVersion, png);
         } catch (err) {
             if (err instanceof OgRenderUnavailableError) {

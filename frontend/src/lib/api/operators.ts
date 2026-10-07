@@ -107,8 +107,9 @@ export const getOperatorBuildStatsFn = createServerFn({ method: "GET" })
         const res = await backendFetch(gamedataPath(server, `/operators/${encodeURIComponent(id)}/build-stats`));
         // An operator nobody has built is not an error, and neither is a
         // backend that predates this route. The detail page falls back to its
-        // own default, so `undefined` is a usable answer.
-        if (res.status === 404) return undefined;
+        // own default, so `null` is a usable answer. Never `undefined`: TanStack
+        // Query rejects a queryFn that resolves to it ("... data is undefined").
+        if (res.status === 404) return null;
         if (!res.ok) throw new Error(`Failed to load operator build stats: ${res.status}`);
         return (await res.json()) as IOperatorBuildStats;
     });
@@ -143,7 +144,10 @@ export const getOperatorFn = createServerFn({ method: "GET" })
     .inputValidator((data: { id: string; server?: string }) => data)
     .handler(async ({ data: { id, server } }) => {
         const res = await backendFetch(gamedataPath(server, `/operators/${encodeURIComponent(id)}`));
-        if (res.status === 404) return undefined;
+        // `null`, not `undefined`: a queryFn that resolves to `undefined` fails the
+        // query and logs `["operators","detail",<id>] data is undefined` on every
+        // request for an id the backend does not know (`/operators/null`, `/operators/list`).
+        if (res.status === 404) return null;
         if (!res.ok) throw new Error(`Failed to load operator: ${res.status}`);
         return deepCamelize(await res.json()) as IOperatorListItem;
     });

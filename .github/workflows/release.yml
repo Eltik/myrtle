@@ -1,0 +1,318 @@
+name: Release Bundle
+
+# One deployable bundle per commit on main: the backend, the discord bot, the
+# asset downloader + unpacker, and the frontend `.output`, built on the same
+# Ubuntu as the VPS (24.04, x86_64, glibc 2.39) and published as the assets of
+# a prerelease tagged `build-<full sha>`. The repo is public, so the VPS pulls
+# it with plain curl and no token: `scripts/fetch-release.sh <sha>`.
+#
+# Nothing in the bundle is secret. The frontend's VITE_* values are public
+# URLs that end up in every browser anyway; every server-side secret stays in
+# the VPS's own .env files, which bun and dotenv read at runtime.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# One run per commit, never cancelled: a cancelled run leaves that commit with
+# no bundle and the VPS falls back to compiling on the box, which is the cost
+# this workflow exists to remove.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.sha }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # Opt into Node.js 24 for GitHub Actions (avoids Node.js 20 deprecation warnings)
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Rust builds. Each job mirrors its CI workflow's `build-release` job: same env
+  # (rust-cache hashes every CARGO*/RUST* variable into the key), same workspaces,
+  # and a key spelled to land on the SAME cache entry:
+  #   backend-ci  build-release key "release"  -> v0-rust-release-build-release-Linux-x64-<env>-<lock>
+  # rust-cache appends the job id itself, so with add-job-id-key off the job id
+  # goes into `key` by hand. save-if false: the CI workflows own those entries
+  # (the repo sits near the 10 GB cache cap), this workflow only reads them.
+  # ──────────────────────────────────────────────────────────────────────────────
+  backend:
+    name: Backend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      CARGO_TERM_COLOR: always
+      CARGO_INCREMENTAL: 0
+      RUSTFLAGS: "-D warnings"
+      SQLX_OFFLINE: "true"
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend -> target
+          key: release-build-release
+          add-job-id-key: "false"
+          save-if: "false"
+
+      - name: Build backend (release)
+        working-directory: backend
+        run: cargo build --release --bin backend
+
+      - name: Pack
+        run: tar -cf backend.tar backend/target/release/backend
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: part-backend
+          path: backend.tar
+          retention-days: 3
+          if-no-files-found: error
+
+  discord:
+    name: Discord bot
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CARGO_TERM_COLOR: always
+      CARGO_INCREMENTAL: 0
+      RUSTFLAGS: "-D warnings"
+      SQLX_OFFLINE: "true"
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: discord -> target
+          key: release-build-release
+          add-job-id-key: "false"
+          save-if: "false"
+
+      - name: Build discord bot + command deployer (release)
+        working-directory: discord
+        run: cargo build --release --bin discord --bin commands
+
+      - name: Pack
+        run: tar -cf discord.tar discord/target/release/discord discord/target/release/commands
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: part-discord
+          path: discord.tar
+          retention-days: 3
+          if-no-files-found: error
+
+  assets:
+    name: Asset downloader + unpacker
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    # Mirrors assets-ci.yml's env, RUST_TOOLCHAIN included: it is a RUST*
+    # variable, so it is part of that workflow's cache key.
+    env:
+      CARGO_TERM_COLOR: always
+      CARGO_INCREMENTAL: 0
+      RUSTFLAGS: "-D warnings"
+      RUST_TOOLCHAIN: stable
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      # assets-ci build-release, matrix os ubuntu-latest: key "release-ubuntu-latest" + job "build-release".
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            assets/downloader -> target
+            assets/unpacker -> target
+          key: release-ubuntu-latest-build-release
+          add-job-id-key: "false"
+          save-if: "false"
+
+      - name: Build downloader (release)
+        working-directory: assets/downloader
+        run: cargo build --release
+
+      # --bin unpacker, as the VPS builds it: generate-fbs is a dev-only codegen tool.
+      - name: Build unpacker (release)
+        working-directory: assets/unpacker
+        run: cargo build --release --bin unpacker
+
+      - name: Smoke test
+        run: |
+          assets/downloader/target/release/downloader --help >/dev/null
+          assets/unpacker/target/release/unpacker --help >/dev/null
+
+      # Packed under the paths the VPS runs them from (assets/binaries/), with
+      # the build's own mtimes; fetch-release.sh decides what to touch.
+      - name: Pack
+        run: |
+          mkdir -p stage/assets/binaries
+          cp -p assets/downloader/target/release/downloader assets/unpacker/target/release/unpacker stage/assets/binaries/
+          tar -C stage -cf assets.tar assets
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: part-assets
+          path: assets.tar
+          retention-days: 3
+          if-no-files-found: error
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      # Pinned to the version in frontend/package.json "packageManager"
+      BUN_VERSION: "1.3.12"
+      CI: "true"
+      # Baked into the CLIENT bundle at build time (the server re-reads them from
+      # its .env at runtime). Repository variables override; the defaults are
+      # the production values from frontend/.env.example.
+      VITE_BACKEND_URL: ${{ vars.VITE_BACKEND_URL || 'https://api.myrtle.moe' }}
+      VITE_SITE_URL: ${{ vars.VITE_SITE_URL || 'https://myrtle.moe' }}
+      VITE_APP_TITLE: ${{ vars.VITE_APP_TITLE }}
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      # Same key as frontend-ci.yml, so this restores its cache.
+      - name: Cache Bun dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('frontend/bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build
+
+      # nitro traces the native @resvg binding of the BUILD host into
+      # .output/server/node_modules, which is why this must build on linux-x64.
+      - name: Verify build output
+        run: |
+          test -f .output/server/index.mjs || { echo "::error::Missing server entry"; exit 1; }
+          test -d .output/public || { echo "::error::Missing .output/public"; exit 1; }
+          [ -n "$(find .output/server/node_modules/@resvg -maxdepth 1 -name '*linux-x64-gnu*')" ] || { echo "::error::linux-x64-gnu resvg binding missing from .output"; exit 1; }
+          if grep -rqs 'localhost:3060' .output/public; then echo "::error::client bundle points at localhost"; exit 1; fi
+
+      # The server must boot and answer without a backend: a 5xx page still
+      # proves the bundle loads, a crash or a refused connection does not.
+      - name: Boot smoke test
+        run: |
+          PORT=3999 NODE_ENV=production BACKEND_URL=http://127.0.0.1:9 bun .output/server/index.mjs &
+          pid=$!
+          code=000
+          for _ in $(seq 1 50); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 http://127.0.0.1:3999/robots.txt || true)
+            [ "$code" != "000" ] && break
+            sleep 0.2
+          done
+          kill "$pid" || true
+          echo "robots.txt: HTTP $code"
+          [ "$code" = "200" ]
+
+      - name: Pack
+        run: tar -C .. -cf ../frontend.tar frontend/.output
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: part-frontend
+          path: frontend.tar
+          retention-days: 3
+          if-no-files-found: error
+
+  # ──────────────────────────────────────────────────────────────────────────────
+  # Assemble + publish
+  # ──────────────────────────────────────────────────────────────────────────────
+  publish:
+    name: Publish bundle
+    needs: [backend, discord, assets, frontend]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SHA: ${{ github.sha }}
+      # Bundles kept on the releases page; older `build-*` prereleases and their
+      # tags are deleted. A rollback further back than this falls back to a
+      # local build.
+      KEEP: 20
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: part-*
+          merge-multiple: true
+          path: parts
+
+      - name: Assemble
+        run: |
+          set -eu
+          name="myrtle-${SHA}"
+          mkdir -p "bundle/${name}"
+          for part in parts/*.tar; do tar -C "bundle/${name}" -xf "$part"; done
+          b="bundle/${name}"
+          for f in backend/target/release/backend discord/target/release/discord discord/target/release/commands assets/binaries/downloader assets/binaries/unpacker; do
+            test -x "$b/$f" || { echo "::error::missing or not executable: $f"; exit 1; }
+          done
+          test -f "$b/frontend/.output/server/index.mjs"
+          {
+            echo "sha=${SHA}"
+            echo "run=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "runner=$(. /etc/os-release && echo "$PRETTY_NAME") $(uname -m)"
+            echo "glibc=$(ldd --version | head -1 | awk '{print $NF}')"
+          } > "$b/BUILD_INFO"
+          # Two statements, not `( ... ) && mv`: set -e ignores a failure on the left of &&.
+          ( cd "$b" && find . -type f -print0 | sort -z | xargs -0 sha256sum > ../SHA256SUMS.tmp )
+          mv "bundle/SHA256SUMS.tmp" "$b/SHA256SUMS"
+          test -s "$b/SHA256SUMS"
+          tar -C bundle -czf "${name}.tar.gz" "${name}"
+          sha256sum "${name}.tar.gz" > "${name}.tar.gz.sha256"
+          ls -l "${name}.tar.gz"
+          cat "${name}.tar.gz.sha256"
+
+      - name: Publish release
+        run: |
+          set -eu
+          tag="build-${SHA}"
+          name="myrtle-${SHA}"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            # A re-run of the same commit replaces the assets in place.
+            gh release upload "$tag" "${name}.tar.gz" "${name}.tar.gz.sha256" --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$tag" "${name}.tar.gz" "${name}.tar.gz.sha256" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$SHA" \
+              --prerelease \
+              --latest=false \
+              --title "build ${SHA:0:12}" \
+              --notes "Deploy bundle for ${SHA}. Install on the VPS with: bash scripts/fetch-release.sh ${SHA}"
+          fi
+
+      - name: Prune old bundles
+        run: |
+          set -eu
+          gh release list --repo "$GITHUB_REPOSITORY" --limit 200 --json tagName,createdAt \
+            --jq '[.[] | select(.tagName | startswith("build-"))] | sort_by(.createdAt) | reverse | .[(env.KEEP | tonumber):] | .[].tagName' |
+          while read -r old; do
+            [ -n "$old" ] || continue
+            echo "deleting $old"
+            gh release delete "$old" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || echo "::warning::could not delete $old"
+          done

@@ -69,3 +69,54 @@ export async function inlineArt(urls: Iterable<string | null | undefined>): Prom
     await Promise.all(Array.from({ length: Math.min(INLINE_CONCURRENCY, unique.length) }, worker));
     return out;
 }
+
+/** Template data fields that hold a picture URL: `charArtURL`, `factionLogoURL`, `previewImageURL`, `avatarURL`, ... */
+const IMAGE_URL_KEY = /(art|icon|logo|avatar|image)URL$/i;
+
+function collectRemoteImageURLs(value: unknown, out: Set<string>): void {
+    if (Array.isArray(value)) {
+        for (const item of value) collectRemoteImageURLs(item, out);
+        return;
+    }
+    if (value === null || typeof value !== "object") return;
+    for (const [key, v] of Object.entries(value)) {
+        if (typeof v === "string") {
+            if (IMAGE_URL_KEY.test(key) && /^https?:\/\//.test(v)) out.add(v);
+        } else {
+            collectRemoteImageURLs(v, out);
+        }
+    }
+}
+
+function replaceRemoteImageURLs<T>(value: T, art: Map<string, string | undefined>): T {
+    if (Array.isArray(value)) return value.map((item) => replaceRemoteImageURLs(item, art)) as unknown as T;
+    if (value === null || typeof value !== "object") return value;
+    const out: Record<string, unknown> = {};
+    for (const [key, v] of Object.entries(value)) {
+        out[key] = typeof v === "string" && art.has(v) && IMAGE_URL_KEY.test(key) ? art.get(v) : replaceRemoteImageURLs(v, art);
+    }
+    return out as T;
+}
+
+/**
+ * `data` with every remote picture URL inlined as a data URI, and every one
+ * that failed to load or is not a type satori decodes replaced by `undefined`.
+ *
+ * Handed a URL, satori fetches it itself, and on a body it cannot decode it
+ * draws nothing and logs "Can't load image <url>: Unsupported image type:
+ * unknown" through console.error. The faction logo route answers 404 (a JSON
+ * body) for factions with no logo sprite (`logo_laterano.png`,
+ * `logo_leithanien.png`), so every operator card of those factions put that
+ * line in the error log while still rendering. Every template already treats
+ * a missing URL as "draw nothing there", so dropping the URL here draws the
+ * same card without the log line, and without satori fetching it a second time.
+ *
+ * Runs on the render path only, after the content hash, so cache keys are
+ * unchanged. URLs already inlined (`data:`) are left alone.
+ */
+export async function inlineRemoteImages<T>(data: T): Promise<T> {
+    const urls = new Set<string>();
+    collectRemoteImageURLs(data, urls);
+    if (urls.size === 0) return data;
+    return replaceRemoteImageURLs(data, await inlineArt(urls));
+}
