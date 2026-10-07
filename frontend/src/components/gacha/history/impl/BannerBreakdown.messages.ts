@@ -67,6 +67,30 @@ export const messages = {
         text: "{open} → {close}",
         description: "A banner's run window in its hover card, e.g. 'Mar 3, 2025 → Mar 17, 2025'. Keep the arrow.",
     },
+    "history.breakdown.showSixStars": {
+        text: "Show the {count} 6★ operators from {banner}",
+        description: "Screen-reader label on the button that expands a banner row to list the 6-star operators the player got from it.",
+    },
+    "history.breakdown.hideSixStars": {
+        text: "Hide the {count} 6★ operators from {banner}",
+        description: "Screen-reader label on the same button once the banner row is expanded.",
+    },
+    "history.breakdown.rateUp": {
+        text: "Rate-up",
+        description: "Tag on a 6-star pull that was one of the banner's featured operators. Rendered uppercase, very short.",
+    },
+    "history.breakdown.offBanner": {
+        text: "Off-banner",
+        description: "Tag on a 6-star pull that was NOT one of the banner's featured operators (lost the rate-up). Rendered uppercase, very short.",
+    },
+    "history.breakdown.rateUpCount": {
+        text: "{count} rate-up",
+        description: "Summary above a banner's expanded 6-star list: how many of them were the banner's featured operators. Rendered uppercase.",
+    },
+    "history.breakdown.offBannerCount": {
+        text: "{count} off-banner",
+        description: "Summary next to the rate-up count: how many of the banner's 6-star pulls were NOT featured operators. Rendered uppercase.",
+    },
 } satisfies MessageMap;
 
 export const { keys } = defineMessages({ namespace, messages });

@@ -1,6 +1,6 @@
 {
     "generatedBy": "bun run i18n:extract",
-    "generatedAt": "2026-10-06T09:57:03.238Z",
+    "generatedAt": "2026-10-07T10:59:57.370Z",
     "entries": [
         {
             "key": "admin.audit.actor.deleted",
@@ -8579,6 +8579,16 @@
             "placeholders": []
         },
         {
+            "key": "gacha.history.breakdown.hideSixStars",
+            "namespace": "gacha",
+            "source_text": "Hide the {count} 6★ operators from {banner}",
+            "description": "Screen-reader label on the same button once the banner row is expanded.",
+            "placeholders": [
+                "banner",
+                "count"
+            ]
+        },
+        {
             "key": "gacha.history.breakdown.kicker",
             "namespace": "gacha",
             "source_text": "Banner breakdown",
@@ -8591,6 +8601,48 @@
             "source_text": "{count} more",
             "description": "Tooltip on the '+3' chip that stands in for featured operators the card has no room to show.",
             "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "gacha.history.breakdown.offBanner",
+            "namespace": "gacha",
+            "source_text": "Off-banner",
+            "description": "Tag on a 6-star pull that was NOT one of the banner's featured operators (lost the rate-up). Rendered uppercase, very short.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.breakdown.offBannerCount",
+            "namespace": "gacha",
+            "source_text": "{count} off-banner",
+            "description": "Summary next to the rate-up count: how many of the banner's 6-star pulls were NOT featured operators. Rendered uppercase.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "gacha.history.breakdown.rateUp",
+            "namespace": "gacha",
+            "source_text": "Rate-up",
+            "description": "Tag on a 6-star pull that was one of the banner's featured operators. Rendered uppercase, very short.",
+            "placeholders": []
+        },
+        {
+            "key": "gacha.history.breakdown.rateUpCount",
+            "namespace": "gacha",
+            "source_text": "{count} rate-up",
+            "description": "Summary above a banner's expanded 6-star list: how many of them were the banner's featured operators. Rendered uppercase.",
+            "placeholders": [
+                "count"
+            ]
+        },
+        {
+            "key": "gacha.history.breakdown.showSixStars",
+            "namespace": "gacha",
+            "source_text": "Show the {count} 6★ operators from {banner}",
+            "description": "Screen-reader label on the button that expands a banner row to list the 6-star operators the player got from it.",
+            "placeholders": [
+                "banner",
                 "count"
             ]
         },
