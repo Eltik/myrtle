@@ -1765,6 +1765,7 @@ fn test_state_on(dir: &Path, database_url: &str) -> backend::app::state::AppStat
         assets_dir: dir.display().to_string(),
         art_dir: dir.display().to_string(),
         loaded: AtomicBool::new(true),
+        residency: Default::default(),
     });
     let config = AppConfig {
         jwt_secret: "test-jwt-secret-not-used-by-this-test".into(),

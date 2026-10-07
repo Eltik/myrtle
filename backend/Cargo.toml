@@ -62,6 +62,9 @@ path = "src/bin/user_data.rs"
 # Only the `backend` server binary installs it (see src/main.rs). Unsupported on MSVC.
 [target.'cfg(not(target_env = "msvc"))'.dependencies]
 tikv-jemallocator = "0.6"
+# Direct only for `mallctl`, to read back the options jemalloc actually runs
+# with (`app::memory`). Same version tikv-jemallocator already pulls in.
+tikv-jemalloc-sys = "0.6"
 
 [dependencies]
 anyhow = "1.0.102"

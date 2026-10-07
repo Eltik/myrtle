@@ -17,7 +17,7 @@ use crate::core::gamedata::{
     },
     tables::{DataError, load_table, load_table_or_warn},
     types::{
-        GameData,
+        GameData, GameTables,
         activity::ActivityTableFile,
         audio::RawAudioData,
         building::BuildingDataFile,
@@ -113,6 +113,45 @@ fn load_event_shops(
             HashMap::new()
         }
     }
+}
+
+/// The two sidecar-fed parts of a `GameData`, built exactly as
+/// [`init_game_data_with_art`] builds them: banners from `gacha_table`
+/// enriched with the pool-detail sidecar, and the event-shop sidecar.
+pub struct SidecarParts {
+    pub gacha: types::gacha::GachaData,
+    pub event_shops: HashMap<String, EventShopData>,
+    /// What the full load would have added to `table_warnings` for these.
+    pub warnings: Vec<String>,
+}
+
+/// Rebuild only the sidecar-fed parts of a server's `GameData`. Used by the
+/// pool-detail and event-shop jobs, which change nothing else; see
+/// `asset_watcher::perform_sidecar_patch`.
+#[must_use]
+pub fn load_sidecar_parts(data_dir: &Path, assets_dir: &Path) -> SidecarParts {
+    let mut warnings = Vec::new();
+    let gacha_file: GachaTableFile = load_table_or_warn(data_dir, "gacha_table", &mut warnings);
+    let event_shops = load_event_shops(assets_dir, &mut warnings);
+    let gacha = enriched_gacha(gacha_file, assets_dir, &mut warnings);
+    SidecarParts {
+        gacha,
+        event_shops,
+        warnings,
+    }
+}
+
+/// `gacha_table` as banners, enriched with the pool-detail sidecar. The one
+/// path both the full load and the sidecar patch take.
+fn enriched_gacha(
+    gacha_file: GachaTableFile,
+    assets_dir: &Path,
+    warnings: &mut Vec<String>,
+) -> types::gacha::GachaData {
+    let pool_details = load_pool_details(assets_dir, warnings);
+    let mut gacha = gacha_file.into_gacha_data();
+    enrich_banners(&mut gacha.gacha_pool_client, pool_details.as_ref());
+    gacha
 }
 
 /// The excel tables [`init_game_data`] reads, in the order it reads them. Used
@@ -324,10 +363,8 @@ pub fn init_game_data_with_art(
     let battle_equip = battle_equip_file.into_battle_equip();
     let handbook = handbook_file.into_handbook();
     let skins = skin_file.into_skin_data();
-    let pool_details = load_pool_details(assets_dir, &mut warnings);
-    let mut gacha = gacha_file.into_gacha_data();
+    let gacha = enriched_gacha(gacha_file, assets_dir, &mut warnings);
     let profession_names = crate::core::gamedata::types::gacha::profession_names(&gacha.gacha_tags);
-    enrich_banners(&mut gacha.gacha_pool_client, pool_details.as_ref());
     let zones = zone_file.zones;
     let mut zone_chapters: std::collections::HashMap<String, String> =
         std::collections::HashMap::new();
@@ -476,58 +513,60 @@ pub fn init_game_data_with_art(
     }
 
     Ok((
-        GameData {
-            table_warnings: warnings,
-            operators,
-            skills,
-            materials,
-            modules,
-            skins,
-            handbook,
-            ranges,
-            favor,
-            voices,
+        GameData::from_parts(
+            GameTables {
+                table_warnings: warnings,
+                operators,
+                skills,
+                materials,
+                modules,
+                skins,
+                handbook,
+                ranges,
+                favor,
+                voices,
+                chibis,
+                enemy_chibis,
+                zones,
+                stages,
+                activities: activity_file.basic_info,
+                retro_acts: retro_file.retro_act_list,
+                story_reviews: story_review_file.story_reviews,
+                story_archives,
+                mission_archives,
+                music: crate::core::gamedata::types::audio::MusicBanks::from_raw(&audio_file),
+                chapters: chapter_file.chapters,
+                zone_chapters,
+                zone_open_times,
+                storylines,
+                storyline_story_sets,
+                activity_op_stages,
+                activity_farm_stages,
+                activity_mission_tokens,
+                activity_skin_refs,
+                skin_listings: shop_file.into_skin_listings(),
+                recommend_tags: shop_file.recommend_tags(),
+                skin_windows: shop_file.into_skin_windows(),
+                medals,
+                roguelike,
+                enemies,
+                enemy_stage_index,
+                stage_index,
+                mode_levels,
+                building: building_file,
+                stage_universe,
+                stage_evidence,
+                sandbox_universe,
+                campaign_rotations,
+                consts,
+                missions,
+                factions: team_file.teams,
+                profession_names,
+                autochess_bonds,
+            },
             gacha,
-            chibis,
-            enemy_chibis,
-            zones,
-            stages,
-            activities: activity_file.basic_info,
-            retro_acts: retro_file.retro_act_list,
-            story_reviews: story_review_file.story_reviews,
-            story_archives,
-            mission_archives,
-            music: crate::core::gamedata::types::audio::MusicBanks::from_raw(&audio_file),
-            chapters: chapter_file.chapters,
-            zone_chapters,
-            zone_open_times,
-            storylines,
-            storyline_story_sets,
-            activity_op_stages,
-            activity_farm_stages,
-            activity_mission_tokens,
             event_shops,
-            activity_skin_refs,
-            skin_listings: shop_file.into_skin_listings(),
-            recommend_tags: shop_file.recommend_tags(),
-            skin_windows: shop_file.into_skin_windows(),
-            medals,
-            roguelike,
-            enemies,
-            enemy_stage_index,
-            stage_index,
-            mode_levels,
-            building: building_file,
-            stage_universe,
-            stage_evidence,
-            sandbox_universe,
-            campaign_rotations,
-            consts,
-            missions,
-            factions: team_file.teams,
-            profession_names,
-            autochess_bonds,
-        },
+        ),
         assets,
     ))
 }

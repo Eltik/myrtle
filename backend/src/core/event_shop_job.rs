@@ -92,7 +92,19 @@ pub async fn refresh(state: &AppState, server: Server) -> anyhow::Result<usize> 
     let Some(account) = state.service_accounts.get(server) else {
         return Ok(0);
     };
-    let server_data = state.server_data(server);
+    // The server's OWN entry. An unloaded one (failed load, or a lazy server
+    // not resident) is skipped: the old lookup fell back to the default
+    // server's data and asked this server's account for the DEFAULT's ids.
+    let Some(server_data) = state
+        .entry(server)
+        .filter(|sd| sd.loaded.load(std::sync::atomic::Ordering::Acquire))
+    else {
+        tracing::info!(
+            server = server.as_str(),
+            "event shops refresh skipped: game data not loaded"
+        );
+        return Ok(0);
+    };
     let path = event_shop_path(Path::new(&server_data.assets_dir));
     let mut file = read_sidecar(&path);
     // The loader reads only `shops`, so that alone decides the reload; the
@@ -101,8 +113,9 @@ pub async fn refresh(state: &AppState, server: Server) -> anyhow::Result<usize> 
     let on_disk = stored_data(&file);
     let now = chrono::Utc::now().timestamp();
 
-    let mut wanted: Vec<(String, String, i64)> = state
-        .game_data(server)
+    let mut wanted: Vec<(String, String, i64)> = server_data
+        .game_data
+        .load()
         .activities
         .values()
         .filter(|a| a.start_time > 0 && a.start_time <= now)
@@ -199,7 +212,7 @@ pub async fn refresh(state: &AppState, server: Server) -> anyhow::Result<usize> 
             fetched,
             "event shops changed, reloading"
         );
-        asset_watcher::perform_reload(state, server, None).await;
+        asset_watcher::perform_sidecar_patch(state, server).await;
     } else if fetched > 0 {
         tracing::info!(
             server = server.as_str(),

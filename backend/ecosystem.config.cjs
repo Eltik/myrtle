@@ -28,6 +28,14 @@ module.exports = {
                 // that so a burst drains instead of shedding. Must stay well under
                 // the 30s handler timeout. 0 restores instant refusal.
                 CPU_TASK_WAIT_MS: "2500",
+                // jemalloc options, overriding the ones compiled into the binary
+                // (src/app/memory.rs) option by option. The build is PREFIXED,
+                // so the variable is `_RJEM_MALLOC_CONF`: a plain MALLOC_CONF is
+                // ignored (measured: MALLOC_CONF=dirty_decay_ms:4321 left the
+                // running value at the compiled-in 1000). These values equal the
+                // compiled-in ones, so this line is inert until edited. To restore
+                // the previous build's decay: dirty_decay_ms:5000,muzzy_decay_ms:5000.
+                _RJEM_MALLOC_CONF: "background_thread:true,dirty_decay_ms:1000,muzzy_decay_ms:0",
             },
         },
     ],

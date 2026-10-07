@@ -702,7 +702,7 @@ pub async fn cached_sprites(
     server: Server,
 ) -> Result<Arc<StorySpriteCache>, ApiError> {
     let library = cached_index(state, server).await?;
-    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let server_data = state.require_server_data(server)?;
     let gd = server_data.game_data.load_full();
     let trees = StoryTrees::of(&server_data);
     let build_gd = Arc::clone(&gd);
@@ -791,7 +791,7 @@ pub async fn get_variant_thumb(
         .iter()
         .find(|v| v.key == key)
         .ok_or(ApiError::NotFound)?;
-    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let server_data = state.require_server_data(server)?;
     let art_dir = server_data.art_dir.clone();
     let rel = super::sprite_thumbs::ensure(&art_dir, &detail.sprite.base, variant).await?;
     Ok((art_dir, rel))

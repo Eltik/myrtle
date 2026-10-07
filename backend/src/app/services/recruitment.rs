@@ -146,7 +146,7 @@ fn to_recruitment_operator(id: &str, op: &Operator) -> RecruitmentOperator {
 }
 
 pub async fn get_recruitment(state: &AppState, server: Server) -> Result<CachedJson, ApiError> {
-    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let sd = state.require_server_data(server)?;
     let key = CacheKey::StaticData {
         resource: "recruitment",
         server: server.as_str(),

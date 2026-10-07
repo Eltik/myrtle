@@ -48,6 +48,60 @@ pub struct ServerData {
     /// until a hot reload (`asset_watcher::perform_reload`) succeeds and flips this. Explicit
     /// per-server lookups treat an unloaded entry as absent; internal fallbacks keep working.
     pub loaded: AtomicBool,
+    /// Lazy-load bookkeeping (see `app::residency`). Inert for an eager server.
+    pub residency: crate::app::residency::Residency,
+}
+
+impl ServerData {
+    /// An entry with nothing loaded yet: a server that failed at boot, or a
+    /// lazy server before its first request.
+    ///
+    /// It holds an EMPTY `GameData`, not the default server's, and
+    /// [`AppState::server_data`] falls back past it to a loaded server. Holding
+    /// the default's `Arc` (the old placeholder) pinned the boot-time default
+    /// `GameData` for the life of the process once the default hot-reloaded: the
+    /// 6-hourly pool-detail reload alone made that a second resident copy of
+    /// EN. `PLACEHOLDER_EMPTY=0` restores the old placeholder (the default's
+    /// `Arc`s) and the old `server_data` lookup exactly; `fallback` supplies those
+    /// `Arc`s and is ignored otherwise.
+    pub fn placeholder(
+        game_data_dir: String,
+        assets_dir: String,
+        art_dir: String,
+        lazy: bool,
+        fallback: Option<(Arc<GameData>, Arc<AssetIndex>)>,
+    ) -> Self {
+        let (game_data, asset_index) = match fallback {
+            Some((gd, ai)) if !placeholder_empty() => (gd, ai),
+            _ => (
+                Arc::new(GameData::default()),
+                Arc::new(AssetIndex::default()),
+            ),
+        };
+        Self {
+            game_data: ArcSwap::new(game_data),
+            asset_index: ArcSwap::new(asset_index),
+            game_data_dir,
+            assets_dir,
+            art_dir,
+            loaded: AtomicBool::new(false),
+            residency: crate::app::residency::Residency::new(lazy),
+        }
+    }
+
+    /// Drop this server's data, leaving an unloaded entry. The memory goes when
+    /// the last request holding the old `Arc` finishes.
+    pub(crate) fn unload(&self) {
+        self.loaded.store(false, Ordering::Release);
+        self.game_data.store(Arc::new(GameData::default()));
+        self.asset_index.store(Arc::new(AssetIndex::default()));
+    }
+}
+
+/// `PLACEHOLDER_EMPTY=0` is the kill switch for the empty placeholder and the
+/// lookup that falls back past it; see [`ServerData::placeholder`].
+fn placeholder_empty() -> bool {
+    !crate::utils::env::switched_off("PLACEHOLDER_EMPTY")
 }
 
 pub struct AppStateInner {
@@ -116,12 +170,64 @@ impl AppState {
     /// Resolve a server's data, falling back to the default server when the
     /// requested one is not loaded. Use this for internal access where a server
     /// is always available (the default and configured servers).
+    ///
+    /// An entry that is configured but not loaded (failed at boot, or a lazy
+    /// server not resident) is skipped too: the default when it is loaded, else
+    /// the first loaded server in config order, else the unloaded entry itself
+    /// (empty data). `PLACEHOLDER_EMPTY=0` restores the old lookup, which
+    /// returned the unloaded entry and so served whatever its placeholder held.
+    ///
+    /// Code that writes to a server's entry (a reload, a swap, a sidecar path)
+    /// must use [`AppState::entry`], never this.
     pub fn server_data(&self, server: Server) -> Arc<ServerData> {
-        self.servers
+        let raw = self
+            .servers
             .get(&server)
             .or_else(|| self.servers.get(&self.default_server))
-            .expect("default server data must be present")
+            .expect("default server data must be present");
+        if !placeholder_empty() || raw.loaded.load(Ordering::Acquire) {
+            return raw.clone();
+        }
+        std::iter::once(self.default_server)
+            .chain(self.config.servers.iter().copied())
+            .filter_map(|s| self.servers.get(&s))
+            .find(|sd| sd.loaded.load(Ordering::Acquire))
+            .unwrap_or(raw)
             .clone()
+    }
+
+    /// The server's own entry, loaded or not, with no fallback. `None` when the
+    /// server is not configured.
+    pub fn entry(&self, server: Server) -> Option<Arc<ServerData>> {
+        self.servers.get(&server).cloned()
+    }
+
+    /// The loaded data for an explicit per-server request, or the error that
+    /// request should answer with.
+    ///
+    /// A server that is not configured is a 404. One that IS configured but has
+    /// no data loaded (its load failed, or a lazy server could not be brought
+    /// in) is a 503 that names the server: the resource exists, the process
+    /// cannot serve it right now, and a retry may succeed.
+    /// `UNLOADED_SERVER_503=0` restores the old plain 404 for both.
+    pub fn require_server_data(
+        &self,
+        server: Server,
+    ) -> Result<Arc<ServerData>, crate::app::error::ApiError> {
+        if let Some(sd) = self.try_server_data(server) {
+            return Ok(sd);
+        }
+        if self.servers.contains_key(&server)
+            && !crate::utils::env::switched_off("UNLOADED_SERVER_503")
+        {
+            return Err(crate::app::error::ApiError::ServiceUnavailableMessage(
+                format!(
+                    "game data for server '{}' is not loaded right now; retry shortly",
+                    server.as_str()
+                ),
+            ));
+        }
+        Err(crate::app::error::ApiError::NotFound)
     }
 
     /// Resolve a server's data only when it is actually loaded, without the
@@ -140,6 +246,8 @@ impl AppState {
     ///
     /// `Bilibili` is left out even when loaded. It is an alias of CN's game data,
     /// so offering it would put two entries with identical text in the picker.
+    ///
+    /// A lazy server counts while it is unloaded: a request for it loads it.
     pub fn pickable_servers(&self) -> Vec<Server> {
         std::iter::once(self.default_server)
             .chain(
@@ -148,7 +256,11 @@ impl AppState {
                     .copied()
                     .filter(|s| *s != self.default_server),
             )
-            .filter(|s| *s != Server::Bilibili && self.try_server_data(*s).is_some())
+            .filter(|s| {
+                *s != Server::Bilibili
+                    && (self.try_server_data(*s).is_some()
+                        || self.servers.get(s).is_some_and(|sd| sd.residency.lazy))
+            })
             .collect()
     }
 
@@ -156,10 +268,13 @@ impl AppState {
     /// every other loaded server, the default first. See
     /// `enrich::reference::align_reference_facts`.
     pub fn reference_servers(&self, server: Server) -> Vec<Arc<GameData>> {
+        // Loaded servers only: a lazy server that is not resident would resolve
+        // through `game_data`'s fallback to the default a second time.
         self.pickable_servers()
             .into_iter()
             .filter(|s| *s != server)
-            .map(|s| self.game_data(s))
+            .filter_map(|s| self.try_server_data(s))
+            .map(|sd| sd.game_data.load_full())
             .collect()
     }
 
@@ -181,12 +296,24 @@ impl AppState {
         self.asset_index(self.default_server)
     }
 
+    /// Publish `new` into `server`'s OWN entry (never a fallback's).
     pub fn swap_game_data(&self, server: Server, new: GameData) {
-        self.server_data(server).game_data.store(Arc::new(new));
+        self.write_entry(server).game_data.store(Arc::new(new));
     }
 
     pub fn swap_asset_index(&self, server: Server, new: AssetIndex) {
-        self.server_data(server).asset_index.store(Arc::new(new));
+        self.write_entry(server).asset_index.store(Arc::new(new));
+    }
+
+    /// The entry a write for `server` lands in: its own, or the default's for
+    /// an unconfigured server (the old `server_data` resolution, which writes
+    /// used before the lookup learned to skip unloaded entries).
+    fn write_entry(&self, server: Server) -> Arc<ServerData> {
+        self.servers
+            .get(&server)
+            .or_else(|| self.servers.get(&self.default_server))
+            .expect("default server data must be present")
+            .clone()
     }
 }
 
@@ -315,24 +442,45 @@ fn parse_asset_ws_urls(default_server: Server) -> HashMap<Server, String> {
 }
 
 /// Load every configured server's game data and asset index into the map
-/// `AppState::new` expects.
+/// `AppState::new` expects, every server eagerly.
 ///
 /// Lifted out of `main` so binaries build the same map the server does, with
-/// the same fallbacks: a non-default server that fails to load is inserted as a
-/// placeholder pointing at the default server's data with `loaded = false`, and
-/// Bilibili shares CN's cell so the two hot-reload together. A tool that
-/// rebuilt this by hand would drift from the server the first time either
-/// changed, and would drift silently.
+/// the same fallbacks: a server that fails to load is inserted as an unloaded
+/// placeholder, and Bilibili shares CN's cell so the two hot-reload together.
+/// A tool that rebuilt this by hand would drift from the server the first time
+/// either changed, and would drift silently.
 ///
 /// `phase` wraps each server's load for startup instrumentation. It returns a
 /// guard the caller drops when the phase ends; pass `|_| ()` from a context
 /// with no boot timeline to report to.
 ///
 /// # Panics
-/// If the DEFAULT server's game data cannot be loaded. Every other server
-/// degrades to a placeholder, but nothing can serve without the default.
+/// Only with `GAMEDATA_DEFAULT_DEGRADE=0`, when the DEFAULT server's game data
+/// cannot be loaded. See [`load_server_map_with`].
 pub fn load_server_map<G>(
     config: &AppConfig,
+    phase: impl FnMut(&str) -> G,
+) -> HashMap<Server, Arc<ServerData>> {
+    load_server_map_with(config, &[], phase)
+}
+
+/// [`load_server_map`] with some servers left LAZY: entered unloaded, brought
+/// in by the first request that names them (see `app::residency`). The default
+/// server is never lazy; naming it here is ignored.
+///
+/// A server whose data fails to load is logged and entered unloaded; the next
+/// asset-watcher `update_complete` for it retries the load. That includes the
+/// default server: the process still comes up, explicit requests for the
+/// server answer 503, and internal lookups fall back to the first loaded
+/// server (see [`AppState::server_data`]). Before, a failed default panicked
+/// the boot, so one incomplete tree took every other server down with it.
+/// `GAMEDATA_DEFAULT_DEGRADE=0` restores that panic exactly.
+///
+/// # Panics
+/// With `GAMEDATA_DEFAULT_DEGRADE=0`, if the default server fails to load.
+pub fn load_server_map_with<G>(
+    config: &AppConfig,
+    lazy: &[Server],
     mut phase: impl FnMut(&str) -> G,
 ) -> HashMap<Server, Arc<ServerData>> {
     let mut servers: HashMap<Server, Arc<ServerData>> = HashMap::new();
@@ -340,11 +488,24 @@ pub fn load_server_map<G>(
     // the reference-facts pass can read any of them as a reference, in config
     // order.
     let mut pending: Vec<PendingServer> = Vec::new();
+    // Servers entered unloaded, placed once the default's fate is known (the
+    // old placeholder borrowed the default's `Arc`s).
+    let mut unloaded: Vec<(Server, String, String, String, bool)> = Vec::new();
+    let default_degrade = !crate::utils::env::switched_off("GAMEDATA_DEFAULT_DEGRADE");
 
     for &srv in &config.servers {
         let game_data_dir = derive_game_data_dir(&config.assets_base_dir, srv);
         let assets_dir = derive_assets_dir(&config.assets_base_dir, srv);
         let art_dir = art_dir_for(config, srv);
+        let is_lazy = srv != config.default_server && lazy.contains(&srv);
+        if is_lazy {
+            tracing::info!(
+                server = srv.as_str(),
+                "game data is lazy: loads on the first request for it"
+            );
+            unloaded.push((srv, game_data_dir, assets_dir, art_dir, true));
+            continue;
+        }
         let load_result = {
             let _phase = phase(&format!("gamedata:{}", srv.as_str()));
             crate::core::gamedata::init_game_data_with_art(
@@ -375,44 +536,34 @@ pub fn load_server_map<G>(
                     pending.push(entry);
                 }
             }
-            Err(e) if srv == config.default_server => {
+            Err(e) if srv == config.default_server && !default_degrade => {
                 panic!("failed to load game data for {}: {e}", srv.as_str());
             }
             Err(e) => {
                 tracing::error!(
                     server = srv.as_str(),
                     error = %e,
-                    "game data failed to load; serving default-server data for this server until a hot reload succeeds"
+                    default = srv == config.default_server,
+                    "game data failed to load; server marked unavailable until a hot reload succeeds"
                 );
-                let default_entry = servers
-                    .get(&config.default_server)
-                    .expect("default server data must be present");
-                servers.insert(
-                    srv,
-                    Arc::new(ServerData {
-                        game_data: ArcSwap::new(default_entry.game_data.load_full()),
-                        asset_index: ArcSwap::new(default_entry.asset_index.load_full()),
-                        game_data_dir,
-                        assets_dir,
-                        art_dir,
-                        loaded: AtomicBool::new(false),
-                    }),
-                );
+                unloaded.push((srv, game_data_dir, assets_dir, art_dir, false));
             }
         }
     }
 
-    let default_game_data = servers
+    // The data the old placeholder borrowed (kill-switch path only).
+    let fallback = servers
         .get(&config.default_server)
-        .expect("default server data must be present")
-        .game_data
-        .load_full();
+        .map(|d| (d.game_data.load_full(), d.asset_index.load_full()));
+    let default_game_data = fallback.as_ref().map(|(gd, _)| Arc::clone(gd));
     for i in 0..pending.len() {
         let (before, rest) = pending.split_at_mut(i);
         let Some((target, after)) = rest.split_first_mut() else {
             continue;
         };
-        let references: Vec<&GameData> = std::iter::once(&*default_game_data)
+        let references: Vec<&GameData> = default_game_data
+            .iter()
+            .map(|gd| &**gd)
             .chain(before.iter().chain(after.iter()).map(|p| &p.game_data))
             .collect();
         let facts = crate::core::gamedata::enrich::reference::align_reference_facts(
@@ -429,6 +580,18 @@ pub fn load_server_map<G>(
     }
     for entry in pending {
         servers.insert(entry.server, entry.into_server_data());
+    }
+    for (srv, game_data_dir, assets_dir, art_dir, is_lazy) in unloaded {
+        servers.insert(
+            srv,
+            Arc::new(ServerData::placeholder(
+                game_data_dir,
+                assets_dir,
+                art_dir,
+                is_lazy,
+                fallback.clone(),
+            )),
+        );
     }
 
     // Bilibili shares CN's Hypergryph data (same Arc cell, hot-reloads together).
@@ -458,6 +621,7 @@ impl PendingServer {
             assets_dir: self.assets_dir,
             art_dir: self.art_dir,
             loaded: AtomicBool::new(true),
+            residency: crate::app::residency::Residency::new(false),
         })
     }
 }

@@ -24,9 +24,7 @@ pub struct Ctx {
 
 impl Ctx {
     pub fn load(state: &AppState) -> Result<Self, ApiError> {
-        let cn_sd = state
-            .try_server_data(Server::CN)
-            .ok_or(ApiError::NotFound)?;
+        let cn_sd = state.require_server_data(Server::CN)?;
         let en_sd = state.server_data(state.default_server);
         let cn = cn_sd.game_data.load_full();
         let mut brand_by_group: HashMap<String, String> = HashMap::new();

@@ -178,7 +178,7 @@ pub async fn get_group_illustrations(
             "story group `{group_id}` is not in the library"
         )));
     }
-    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let server_data = state.require_server_data(server)?;
     let trees = StoryTrees::of(&server_data);
     let id = group_id.to_owned();
     cpu::run("story_illustrations", move || {

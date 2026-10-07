@@ -825,11 +825,12 @@ fn done_style(width: usize) -> ProgressStyle {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
-    /// `ACTIVE` is process-global, so these tests run one at a time.
-    static SERIAL: Mutex<()> = Mutex::new(());
+    /// `ACTIVE` is process-global, so these tests run one at a time. Any other
+    /// lib test that loads game data (which calls [`step`]) holds it too.
+    pub static SERIAL: Mutex<()> = Mutex::new(());
 
     fn temp_path(name: &str) -> PathBuf {
         let mut p = std::env::temp_dir();

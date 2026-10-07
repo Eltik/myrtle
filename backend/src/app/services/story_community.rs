@@ -616,7 +616,7 @@ pub fn computes() -> u64 {
 /// the request path is the fallback the warm task exists to avoid; it happens
 /// once per staleness window at worst.
 pub async fn cached(state: &AppState, server: Server) -> Result<Arc<StoryCommunity>, ApiError> {
-    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let server_data = state.require_server_data(server)?;
     let gd = server_data.game_data.load_full();
     let now = chrono::Utc::now().timestamp();
     let ceiling = i64::try_from(MAX_AGE.as_secs()).unwrap_or(i64::MAX);

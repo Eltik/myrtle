@@ -40,6 +40,7 @@ fn state(db: sqlx::PgPool) -> AppState {
         assets_dir: dir.display().to_string(),
         art_dir: dir.display().to_string(),
         loaded: AtomicBool::new(true),
+        residency: Default::default(),
     });
     let config = AppConfig {
         jwt_secret: "test-jwt-secret-not-used-by-this-test".into(),

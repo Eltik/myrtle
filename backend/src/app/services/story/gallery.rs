@@ -191,7 +191,7 @@ static GALLERY: ServerCache<Cached> = ServerCache::new();
 /// # Errors
 /// `404` for a server that is not loaded, `503` when the CPU pool sheds.
 pub async fn get_gallery(state: &AppState, server: Server) -> Result<StoryGallery, ApiError> {
-    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let sd = state.require_server_data(server)?;
     let gd = sd.game_data.load_full();
     let trees = StoryTrees::of(&sd);
     let build_gd = Arc::clone(&gd);

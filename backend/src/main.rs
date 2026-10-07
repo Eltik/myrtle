@@ -9,7 +9,7 @@ use backend::core::{
 use backend::{
     app::{
         cache::store::CacheStore,
-        state::{AppConfig, AppState, derive_game_data_dir, load_server_map},
+        state::{AppConfig, AppState, derive_game_data_dir, load_server_map_with},
     },
     core::hypergryph::config::GlobalConfig,
 };
@@ -25,7 +25,7 @@ static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
 #[cfg(not(target_env = "msvc"))]
 #[allow(non_upper_case_globals)]
 #[unsafe(export_name = "_rjem_malloc_conf")]
-pub static MALLOC_CONF: &[u8] = b"background_thread:true,dirty_decay_ms:5000,muzzy_decay_ms:5000\0";
+pub static MALLOC_CONF: &[u8] = backend::app::memory::JEMALLOC_CONF;
 
 /// Runtime shutdown is bounded: dropping a tokio runtime waits for every
 /// blocking-pool thread, and a base search parked there (40 s in a debug
@@ -119,6 +119,12 @@ async fn async_main() {
         .with_writer(startup::log_writer())
         .init();
 
+    // What the allocator is really running with: the compiled-in string can be
+    // overridden by `_RJEM_MALLOC_CONF`, and a plain `MALLOC_CONF` is ignored.
+    if let Some(opts) = backend::app::memory::jemalloc_opts() {
+        info!(%opts, "jemalloc options");
+    }
+
     // Game data (per-server). ASSETS_DIR is a base dir; each server loads from
     // `{base}/{server}` (+ `/gamedata/excel`). SERVERS selects which to load.
     let config = AppConfig::from_env();
@@ -129,7 +135,10 @@ async fn async_main() {
     // Same loader the tool binaries use, so a forced refresh sees exactly the
     // game data the server does, placeholder fallbacks and the Bilibili/CN
     // aliasing included.
-    let servers = load_server_map(&config, |key| boot.phase(key));
+    // `SERVERS_LAZY` (unset = every server eager, the old boot) leaves the
+    // named servers unloaded until a request names them; see `app::residency`.
+    let lazy = backend::app::residency::config();
+    let servers = load_server_map_with(&config, &lazy.servers, |key| boot.phase(key));
     let default_server = config.default_server;
 
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
@@ -236,6 +245,9 @@ async fn async_main() {
         gacha_detail_job::spawn(state.clone());
         event_shop_job::spawn(state.clone());
     }
+    // Outside the jobs gate: an idle lazy server is unloaded whether or not the
+    // cron jobs run. Spawns nothing unless a server is lazy.
+    backend::app::residency::spawn_reaper(state.clone());
 
     drop(jobs_phase);
 
@@ -291,7 +303,12 @@ async fn async_main() {
 /// next to the code that reports them.
 fn boot_plan(config: &AppConfig) -> Vec<startup::PhaseSpec> {
     let mut plan = Vec::new();
-    for &srv in &config.servers {
+    let lazy = &backend::app::residency::config().servers;
+    for &srv in config
+        .servers
+        .iter()
+        .filter(|s| **s == config.default_server || !lazy.contains(s))
+    {
         let game_data_dir = derive_game_data_dir(&config.assets_base_dir, srv);
         plan.push(
             startup::PhaseSpec::new(

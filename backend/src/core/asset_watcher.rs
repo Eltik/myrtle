@@ -24,6 +24,45 @@ const MAX_BACKOFF: Duration = Duration::from_secs(30);
 /// global rather than per server.
 static RELOAD_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
+/// Take the process-wide reload lock, logging when another build holds it.
+/// Every `GameData` build (hot reload, sidecar patch, lazy load) and every lazy
+/// unload goes through this.
+pub(crate) async fn lock_reloads(server: Server) -> tokio::sync::MutexGuard<'static, ()> {
+    if let Ok(guard) = RELOAD_LOCK.try_lock() {
+        guard
+    } else {
+        tracing::info!(
+            server = server.as_str(),
+            "another game data reload is running, waiting for it"
+        );
+        RELOAD_LOCK.lock().await
+    }
+}
+
+/// Build one server's `GameData` and asset index from disk, aligning its
+/// reference facts against `references` (empty for the default server).
+/// Synchronous and CPU-bound: call it from the blocking pool.
+pub(crate) fn build_server(
+    data_dir: &str,
+    assets_dir: &str,
+    art_dir: &str,
+    references: &[std::sync::Arc<GameData>],
+) -> Result<(GameData, crate::core::gamedata::assets::AssetIndex), DataError> {
+    let (mut game_data, asset_index) = init_game_data_with_art(
+        Path::new(data_dir),
+        Path::new(assets_dir),
+        Path::new(art_dir),
+    )?;
+    if !references.is_empty() {
+        let references: Vec<&GameData> = references.iter().map(|r| &**r).collect();
+        crate::core::gamedata::enrich::reference::align_reference_facts(
+            &mut game_data,
+            &references,
+        );
+    }
+    Ok((game_data, asset_index))
+}
+
 /// Spawn one hot-reload watcher per configured server WebSocket.
 ///
 /// Each server's asset pipeline runs its own WS (typically a distinct port), so
@@ -162,22 +201,45 @@ async fn handle_connection(
 /// version to record (the pool-detail job). The release ledger keys the
 /// forward-only operator/banner debut link on it.
 pub(crate) async fn perform_reload(state: &AppState, server: Server, res_version: Option<&str>) {
-    let sd = state.server_data(server);
+    let Some(sd) = state.entry(server) else {
+        tracing::warn!(
+            server = server.as_str(),
+            "reload for an unconfigured server ignored"
+        );
+        return;
+    };
+    // Taken before the residency check: a lazy load holds this lock while it
+    // reads the files, so an update landing mid-load waits for it and then
+    // finds the server resident and rebuilds, instead of being skipped while
+    // the load publishes the files as they were.
+    let reload_guard = lock_reloads(server).await;
+
+    // A lazy server that is not resident has nothing to rebuild: its next
+    // request loads the files as they are now. Building it here would only
+    // make it resident until the idle reaper drops it again. What the rebuild
+    // would have done besides still happens: its cached responses go (they
+    // are kept 24 h and would otherwise list the old operators), and the
+    // update's version waits for the load's release-ledger record.
+    if sd.residency.lazy && !sd.loaded.load(Ordering::Acquire) {
+        if let Some(v) = res_version {
+            sd.residency.defer_res_version(v);
+        }
+        drop(reload_guard);
+        state
+            .cache
+            .invalidate_by_prefix(&format!("static:{}:", server.as_str()))
+            .await;
+        tracing::info!(
+            server = server.as_str(),
+            "lazy server not resident; rebuild skipped, cache cleared, the next request loads the new data"
+        );
+        return;
+    }
     let data_dir = sd.game_data_dir.clone();
     let assets_dir = sd.assets_dir.clone();
     let art_dir = sd.art_dir.clone();
     let http_client = state.http_client.clone();
     let is_default = server == state.default_server;
-
-    let reload_guard = if let Ok(guard) = RELOAD_LOCK.try_lock() {
-        guard
-    } else {
-        tracing::info!(
-            server = server.as_str(),
-            "another game data reload is running, waiting for it"
-        );
-        RELOAD_LOCK.lock().await
-    };
     // Taken before the build reads the files, so a sidecar written while it
     // runs stays pending for the next job run; re-marked below on failure.
     crate::core::sidecar::take_pending(server);
@@ -190,19 +252,7 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server, res_version
         state.reference_servers(server)
     };
     let result = tokio::task::spawn_blocking(move || {
-        let (mut game_data, asset_index) = init_game_data_with_art(
-            Path::new(&data_dir),
-            Path::new(&assets_dir),
-            Path::new(&art_dir),
-        )?;
-        if !references.is_empty() {
-            let references: Vec<&GameData> = references.iter().map(|r| &**r).collect();
-            crate::core::gamedata::enrich::reference::align_reference_facts(
-                &mut game_data,
-                &references,
-            );
-        }
-        Ok::<_, DataError>((game_data, asset_index))
+        build_server(&data_dir, &assets_dir, &art_dir, &references)
     })
     .await;
 
@@ -214,12 +264,7 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server, res_version
             // Everything after the swap reads the new data and may wait on the
             // network; none of it needs the lock.
             drop(reload_guard);
-            let warnings = state
-                .server_data(server)
-                .game_data
-                .load_full()
-                .table_warnings
-                .clone();
+            let warnings = sd.game_data.load_full().table_warnings.clone();
             crate::core::alerts::report_degraded_tables(
                 &state.http_client,
                 server.as_str(),
@@ -312,5 +357,101 @@ pub(crate) async fn perform_reload(state: &AppState, server: Server, res_version
                 "hot-reload task panicked, keeping old data"
             );
         }
+    }
+}
+
+/// Publish a sidecar refresh (pool details, event shops) without rebuilding
+/// the server's tables.
+///
+/// The pool-detail and event-shop jobs used to call [`perform_reload`], which
+/// rebuilds every table and holds that build next to the live `GameData` until
+/// the swap: two full copies resident at the peak, four times a day per
+/// server, for a change confined to `gacha` and `event_shops`. This rebuilds
+/// only those two (`gamedata::load_sidecar_parts`, the same code the full load
+/// runs for them) and publishes a `GameData` that SHARES the live tables
+/// (`GameData::with_sidecars`). Same reload lock, same pending-sidecar
+/// bookkeeping, same cache invalidation and follow-ups as a full reload, minus
+/// the two that depend only on the tables (the DPS memo and the rarity resync).
+///
+/// Falls back to [`perform_reload`] for a server that is not loaded (the
+/// retry path for a failed load), and entirely with `SIDECAR_PATCH=0`, which
+/// restores the old full reload exactly.
+///
+/// Not refreshed by a patch: `table_warnings` (it lives in the shared tables);
+/// a sidecar warning is logged and alerted instead.
+pub(crate) async fn perform_sidecar_patch(state: &AppState, server: Server) {
+    if crate::utils::env::switched_off("SIDECAR_PATCH") {
+        perform_reload(state, server, None).await;
+        return;
+    }
+    let Some(sd) = state.entry(server) else {
+        tracing::warn!(
+            server = server.as_str(),
+            "sidecar patch for an unconfigured server ignored"
+        );
+        return;
+    };
+    if !sd.loaded.load(Ordering::Acquire) {
+        perform_reload(state, server, None).await;
+        return;
+    }
+    let is_default = server == state.default_server;
+    let data_dir = sd.game_data_dir.clone();
+    let assets_dir = sd.assets_dir.clone();
+
+    let guard = lock_reloads(server).await;
+    crate::core::sidecar::take_pending(server);
+    let started = Instant::now();
+    let parts = tokio::task::spawn_blocking(move || {
+        crate::core::gamedata::load_sidecar_parts(Path::new(&data_dir), Path::new(&assets_dir))
+    })
+    .await;
+    let parts = match parts {
+        Ok(parts) => parts,
+        Err(e) => {
+            crate::core::sidecar::mark_pending(server);
+            tracing::error!(server = server.as_str(), error = %e, "sidecar patch task panicked, keeping old data");
+            return;
+        }
+    };
+    let live = sd.game_data.load_full();
+    let patched = live.with_sidecars(parts.gacha, parts.event_shops);
+    let banners = patched.gacha.gacha_pool_client.len();
+    let shops = patched.event_shops.len();
+    sd.game_data.store(std::sync::Arc::new(patched));
+    drop(live);
+    drop(guard);
+
+    tracing::info!(
+        server = server.as_str(),
+        banners,
+        shops,
+        elapsed_ms = started.elapsed().as_millis() as u64,
+        "sidecar patch published (tables shared, not rebuilt)"
+    );
+    for w in &parts.warnings {
+        tracing::warn!(server = server.as_str(), "{w}");
+    }
+    crate::core::alerts::report_degraded_tables(
+        &state.http_client,
+        server.as_str(),
+        &parts.warnings,
+    )
+    .await;
+
+    crate::core::release::ledger::spawn_record(state.clone(), server, None);
+    // The story index is keyed on the `GameData` allocation, which the patch
+    // replaced; warm it as a full reload does.
+    crate::app::services::story::spawn_warm(state.clone(), server);
+    let prefix = if is_default {
+        "static:".to_string()
+    } else {
+        format!("static:{}:", server.as_str())
+    };
+    state.cache.invalidate_by_prefix(&prefix).await;
+    if is_default {
+        // Event shops feed the improvements pipeline.
+        state.cache.invalidate_by_prefix("improvements:").await;
+        reload(&state.http_client).await;
     }
 }

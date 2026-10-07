@@ -173,6 +173,17 @@ pub async fn refresh_once(state: &AppState) -> anyhow::Result<String> {
 }
 
 async fn run_pass(state: &AppState, cfg: &Cfg) -> (u64, u64) {
+    // Grades are written to the database, so a pass against another server's
+    // data (the lookup's fallback while the default is unavailable) would
+    // overwrite every account's grade with wrong numbers. Skip until the
+    // default reloads.
+    if state.try_server_data(state.default_server).is_none() {
+        tracing::warn!(
+            server = state.default_server.as_str(),
+            "regrade skipped: default server game data is not loaded"
+        );
+        return (0, 0);
+    }
     let game_data = state.default_game_data();
     let pool = state.db.clone();
     let sem = Arc::new(Semaphore::new(cfg.concurrency));

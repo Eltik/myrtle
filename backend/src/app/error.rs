@@ -35,6 +35,10 @@ pub enum ApiError {
     Internal(#[from] anyhow::Error),
     #[error("service unavailable")]
     ServiceUnavailable,
+    /// A 503 that says WHAT is unavailable (`SERVICE_UNAVAILABLE` code, prose
+    /// message, `Retry-After`), for a server whose game data is not loaded.
+    #[error("{0}")]
+    ServiceUnavailableMessage(String),
 }
 
 impl ApiError {
@@ -55,6 +59,7 @@ impl ApiError {
             Self::ValidationFailed(errors) => Self::ValidationFailed(errors.clone()),
             Self::Internal(e) => Self::Internal(anyhow::anyhow!("{e:#}")),
             Self::ServiceUnavailable => Self::ServiceUnavailable,
+            Self::ServiceUnavailableMessage(m) => Self::ServiceUnavailableMessage(m.clone()),
         }
     }
 }
@@ -110,10 +115,11 @@ impl IntoResponse for ApiError {
                 tracing::error!(error = %e, "internal server error");
                 (StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", None)
             }
-            Self::ServiceUnavailable => {
+            Self::ServiceUnavailable | Self::ServiceUnavailableMessage(_) => {
                 (StatusCode::SERVICE_UNAVAILABLE, "SERVICE_UNAVAILABLE", None)
             }
         };
+        let retry_after = matches!(self, Self::ServiceUnavailableMessage(_));
 
         let body = ErrorBody {
             error: ErrorDetail {
@@ -123,7 +129,14 @@ impl IntoResponse for ApiError {
             },
         };
 
-        (status, axum::Json(body)).into_response()
+        let mut response = (status, axum::Json(body)).into_response();
+        if retry_after {
+            response.headers_mut().insert(
+                axum::http::header::RETRY_AFTER,
+                axum::http::HeaderValue::from_static("5"),
+            );
+        }
+        response
     }
 }
 

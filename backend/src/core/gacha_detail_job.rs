@@ -131,7 +131,19 @@ pub async fn refresh(state: &AppState, server: Server) -> anyhow::Result<usize> 
         return Ok(0);
     };
 
-    let server_data = state.server_data(server);
+    // The server's OWN entry. An unloaded one (failed load, or a lazy server
+    // not resident) is skipped: the old lookup fell back to the default
+    // server's data and asked this server's account for the DEFAULT's ids.
+    let Some(server_data) = state
+        .entry(server)
+        .filter(|sd| sd.loaded.load(std::sync::atomic::Ordering::Acquire))
+    else {
+        tracing::info!(
+            server = server.as_str(),
+            "pool details refresh skipped: game data not loaded"
+        );
+        return Ok(0);
+    };
     let path = pool_detail_path(Path::new(&server_data.assets_dir));
 
     let mut file = read_sidecar(&path);
@@ -144,8 +156,9 @@ pub async fn refresh(state: &AppState, server: Server) -> anyhow::Result<usize> 
 
     // A pool needs fetching if it has never been seen, or if it is still live
     // and could therefore still change. Ended banners are immutable.
-    let wanted: Vec<String> = state
-        .game_data(server)
+    let wanted: Vec<String> = server_data
+        .game_data
+        .load()
         .gacha
         .gacha_pool_client
         .iter()
@@ -244,16 +257,16 @@ pub async fn refresh(state: &AppState, server: Server) -> anyhow::Result<usize> 
     }
 
     // The loader reads this file, so a reload is what makes the new rate-ups
-    // visible on the static endpoints. Deliberately not done per checkpoint:
-    // a reload rebuilds every table for the server and is far too heavy to
-    // repeat mid-walk.
+    // visible on the static endpoints. A sidecar patch (only `gacha` and
+    // `event_shops` rebuilt, the tables shared; `SIDECAR_PATCH=0` restores the
+    // full reload). Still not done per checkpoint: once at the end is enough.
     if always || current.differs(&loaded) || sidecar::is_pending(server) {
         tracing::info!(
             server = server.as_str(),
             fetched,
             "pool details changed, reloading"
         );
-        asset_watcher::perform_reload(state, server, None).await;
+        asset_watcher::perform_sidecar_patch(state, server).await;
     } else {
         tracing::info!(
             server = server.as_str(),

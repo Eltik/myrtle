@@ -225,7 +225,7 @@ pub async fn get_index(
     state: &AppState,
     server: Server,
 ) -> Result<Vec<OperatorIndexEntry>, ApiError> {
-    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let server_data = state.require_server_data(server)?;
     let key = CacheKey::StaticData {
         resource: "operators_index",
         server: server.as_str(),
@@ -406,7 +406,7 @@ pub async fn get_ownership(
     state: &AppState,
     server: Server,
 ) -> Result<OperatorOwnershipResponse, ApiError> {
-    state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    state.require_server_data(server)?;
 
     let key = CacheKey::OperatorOwnership {
         server: server.as_str(),
@@ -453,7 +453,7 @@ pub async fn get_build_stats(
     server: Server,
     operator_id: &str,
 ) -> Result<OperatorBuildStatsResponse, ApiError> {
-    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let server_data = state.require_server_data(server)?;
 
     let key = CacheKey::OperatorBuildStats {
         server: server.as_str(),
@@ -668,7 +668,7 @@ pub async fn get_operator_json(
     server: Server,
     id: &str,
 ) -> Result<CachedJson, ApiError> {
-    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let server_data = state.require_server_data(server)?;
     let resource = format!("operator_detail:{id}");
     let key = CacheKey::StaticData {
         resource: &resource,
@@ -738,7 +738,7 @@ pub async fn get_operator_voices(
     server: Server,
     id: &str,
 ) -> Result<Voices, ApiError> {
-    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let server_data = state.require_server_data(server)?;
     let gd = server_data.game_data.load_full();
     Ok(Voices {
         char_words: gd
@@ -766,7 +766,7 @@ pub async fn get_operator_skins(
     server: Server,
     id: &str,
 ) -> Result<SkinData, ApiError> {
-    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let server_data = state.require_server_data(server)?;
     let gd = server_data.game_data.load_full();
     Ok(SkinData {
         char_skins: gd

@@ -302,7 +302,7 @@ impl Cached {
 static STORY_ART: ServerCache<Cached> = ServerCache::new();
 
 async fn cached(state: &AppState, server: Server) -> Result<Arc<Cached>, ApiError> {
-    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let sd = state.require_server_data(server)?;
     let gd = sd.game_data.load_full();
     let trees = StoryTrees::of(&sd);
     let index = cached_index(state, server).await?;

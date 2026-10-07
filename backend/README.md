@@ -281,6 +281,32 @@ assets, so anything it lacks - shared icons (elite/potential/item/camp/class), o
 assets for an unconfigured server - is served from the default server. An asset
 absent on both still returns `404`.
 
+A configured server whose game data failed to load (an incomplete extract) does
+not stop the boot, the default server included: it answers `503` with a
+`Retry-After` and a message naming the server, the other servers keep serving,
+and the next asset-watcher `update_complete` for it retries the load.
+
+Memory and residency switches (each unset value is the default; the value in
+the last column restores the previous behaviour exactly):
+
+| Variable | Default | Effect | Old behaviour |
+|----------|---------|--------|---------------|
+| `SERVERS_LAZY` | unset (all eager) | Servers (e.g. `jp,kr`) left unloaded at boot, loaded by the first request naming them (`/{server}/...` or `?server=`), single flight, through `cpu::run`; an asset update while one is unloaded clears its cached responses and its next load reads the new files and records the update's version in the release ledger | unset |
+| `SERVERS_LAZY_IDLE_SECS` | `1800` | Idle time before a lazy server is unloaded; `0` never unloads | n/a |
+| `SERVERS_LAZY_WAIT_MS` | `20000` (cap 25000) | How long a request waits for a lazy load before `503` + `Retry-After` (the load keeps running) | n/a |
+| `GAMEDATA_DEFAULT_DEGRADE` | on | A failed default server boots unavailable instead of panicking | `0` |
+| `UNLOADED_SERVER_503` | on | `503` for a configured but unloaded server | `0` (plain `404`) |
+| `PLACEHOLDER_EMPTY` | on | An unloaded server holds empty data and lookups fall back past it | `0` (holds the default's data) |
+| `SIDECAR_PATCH` | on | Pool-detail / event-shop jobs rebuild only `gacha` + `event_shops`, sharing the live tables | `0` (full reload) |
+| `DATABASE_MAX_CONNECTIONS` | `20` | Pool ceiling | `40` |
+| `DATABASE_MIN_CONNECTIONS` | `2` | Connections kept while idle | `2` |
+| `DATABASE_IDLE_TIMEOUT_SECS` | `60` | Idle time before a connection above the minimum closes | `600` |
+| `_RJEM_MALLOC_CONF` | compiled in: `background_thread:true,dirty_decay_ms:1000,muzzy_decay_ms:0` | jemalloc options (prefixed build: plain `MALLOC_CONF` is ignored) | `dirty_decay_ms:5000,muzzy_decay_ms:5000` |
+
+`cargo run --release --example memory_bench [-- ../assets/output/en]` loads a
+server's game data and prints live heap and RSS through a load, a full reload,
+a sidecar patch and an unload, without starting the server.
+
 ### DPS / HPS Calculator
 
 | Method | Path | Auth | Description |

@@ -72,8 +72,44 @@ use trust::Favor;
 use voice::Voices;
 use zone::Zone;
 
+/// One server's game data: the tables built from the excel tree, plus the two
+/// sub-structures the 6-hourly sidecar jobs rewrite.
+///
+/// The tables sit behind an `Arc` and are reached through `Deref`, so
+/// `gd.operators` reads as it always did. The split exists for
+/// `asset_watcher::perform_sidecar_patch`: a pool-detail or event-shop refresh
+/// publishes a new `GameData` that SHARES the old tables and carries only a
+/// rebuilt `gacha` and `event_shops`, instead of building a whole second copy
+/// of every table next to the live one. `Clone` is therefore shallow over the
+/// tables; `DerefMut` copies them on write when they are shared
+/// (`Arc::make_mut`), and is free on a freshly built `GameData`, which is the
+/// only place the loader mutates one.
 #[derive(Debug, Clone, Default)]
 pub struct GameData {
+    tables: std::sync::Arc<GameTables>,
+    /// Banners, enriched with the pool-detail sidecar (`gacha_detail_job`).
+    pub gacha: GachaData,
+    /// Activity id -> its token shop as the game server serves it, see
+    /// [`event_shop`]. Read from the event-shop sidecar (`event_shop_job`).
+    pub event_shops: HashMap<String, event_shop::EventShopData>,
+}
+
+impl std::ops::Deref for GameData {
+    type Target = GameTables;
+    fn deref(&self) -> &GameTables {
+        &self.tables
+    }
+}
+
+impl std::ops::DerefMut for GameData {
+    fn deref_mut(&mut self) -> &mut GameTables {
+        std::sync::Arc::make_mut(&mut self.tables)
+    }
+}
+
+/// Everything in [`GameData`] except the sidecar-fed parts.
+#[derive(Debug, Clone, Default)]
+pub struct GameTables {
     pub operators: HashMap<String, Operator>,
     pub skills: HashMap<String, Skill>,
     pub materials: Materials,
@@ -83,7 +119,6 @@ pub struct GameData {
     pub ranges: Ranges,
     pub favor: Favor,
     pub voices: Voices,
-    pub gacha: GachaData,
     pub chibis: ChibiData,
     pub enemy_chibis: ChibiData,
     pub zones: HashMap<String, Zone>,
@@ -98,8 +133,6 @@ pub struct GameData {
     pub activity_farm_stages: HashMap<String, Vec<activity::FarmStage>>,
     /// Activity id -> event currency its missions pay, see [`activity::mission_tokens_by_activity`].
     pub activity_mission_tokens: HashMap<String, i32>,
-    /// Activity id -> its token shop as the game server serves it, see [`event_shop`].
-    pub event_shops: HashMap<String, event_shop::EventShopData>,
     pub retro_acts: HashMap<String, RetroAct>,
     /// The Archives library index (`story_review_table`), keyed by group id.
     pub story_reviews: HashMap<String, StoryReviewGroup>,
@@ -168,6 +201,41 @@ pub struct GameData {
 impl GameData {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Assemble a `GameData` from its tables and sidecar-fed parts.
+    #[must_use]
+    pub fn from_parts(
+        tables: GameTables,
+        gacha: GachaData,
+        event_shops: HashMap<String, event_shop::EventShopData>,
+    ) -> Self {
+        Self {
+            tables: std::sync::Arc::new(tables),
+            gacha,
+            event_shops,
+        }
+    }
+
+    /// A `GameData` sharing this one's tables, with new sidecar-fed parts.
+    /// Costs the two new parts, nothing else.
+    #[must_use]
+    pub fn with_sidecars(
+        &self,
+        gacha: GachaData,
+        event_shops: HashMap<String, event_shop::EventShopData>,
+    ) -> Self {
+        Self {
+            tables: std::sync::Arc::clone(&self.tables),
+            gacha,
+            event_shops,
+        }
+    }
+
+    /// Whether `other` shares this one's tables (the same allocation).
+    #[must_use]
+    pub fn shares_tables(&self, other: &Self) -> bool {
+        std::sync::Arc::ptr_eq(&self.tables, &other.tables)
     }
 
     pub fn is_loaded(&self) -> bool {

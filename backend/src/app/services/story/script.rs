@@ -22,7 +22,7 @@ pub async fn get_story(
     let Some(story_ref) = cache.lookup.get(story_id).cloned() else {
         return Ok(None);
     };
-    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let server_data = state.require_server_data(server)?;
     let trees = StoryTrees::of(&server_data);
     let id = story_id.to_owned();
     cpu::run("story_parse", move || {

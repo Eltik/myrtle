@@ -26,7 +26,7 @@ pub async fn get_resource(
     server: Server,
     resource: &str,
 ) -> Result<CachedJson, ApiError> {
-    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let server_data = state.require_server_data(server)?;
     let key = cache_key(resource, server);
     cached_json(state, &key, move || async move {
         let gd = server_data.game_data.load_full();
@@ -161,13 +161,13 @@ pub async fn get_stage_detail(
     server: Server,
     stage_id: &str,
 ) -> Result<CachedJson, ApiError> {
-    state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    state.require_server_data(server)?;
 
     let resource = format!("stage_detail:{stage_id}");
     let key = cache_key(&resource, server);
     cached_json(state, &key, move || async move {
         {
-            let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+            let sd = state.require_server_data(server)?;
             let gd = sd.game_data.load_full();
             if !gd.stages.contains_key(stage_id) && !gd.mode_levels.contains_key(stage_id) {
                 return Err(ApiError::NotFound);
@@ -177,7 +177,7 @@ pub async fn get_stage_detail(
         // `get_level` caches on its own; `None` when the stage has no level file.
         let level_data = get_level(state, server, stage_id).await.ok();
 
-        let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+        let sd = state.require_server_data(server)?;
         let gd = sd.game_data.load_full();
         let synthetic = !gd.stages.contains_key(stage_id);
         let (stage, zone) = if let Some(stage) = gd.stages.get(stage_id) {
@@ -245,7 +245,7 @@ pub async fn get_enemy_detail(
     server: Server,
     id: &str,
 ) -> Result<CachedJson, ApiError> {
-    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let sd = state.require_server_data(server)?;
 
     let resource = format!("enemy_detail:{id}");
     let key = cache_key(&resource, server);
@@ -270,7 +270,7 @@ pub async fn get_enemy_stages(
     server: Server,
     id: &str,
 ) -> Result<CachedJson, ApiError> {
-    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let sd = state.require_server_data(server)?;
 
     let resource = format!("enemy_stages:{id}");
     let key = cache_key(&resource, server);
@@ -289,7 +289,7 @@ pub async fn get_chibi(
     server: Server,
     operator_id: &str,
 ) -> Result<CachedJson, ApiError> {
-    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let sd = state.require_server_data(server)?;
 
     let resource = format!("chibi:{operator_id}");
     let key = cache_key(&resource, server);
@@ -358,7 +358,7 @@ struct SlimSkin<'a> {
 }
 
 pub async fn get_skins_index(state: &AppState, server: Server) -> Result<CachedJson, ApiError> {
-    let sd = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let sd = state.require_server_data(server)?;
 
     let key = cache_key("skins_index", server);
     cached_json(state, &key, move || async move {

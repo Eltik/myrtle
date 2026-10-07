@@ -69,6 +69,12 @@ pub async fn run(state: AppState) -> Result<()> {
     // reading the docs (and the spec they pull) shouldn't spend the API budget.
     let app = api_router
         .route("/metrics", get(metrics_handler))
+        // Inside the rate limit, so a refused request never starts a lazy
+        // load; a no-op unless `SERVERS_LAZY` names a server.
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            crate::app::residency::ensure_requested_server,
+        ))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             middleware::rate_limit,

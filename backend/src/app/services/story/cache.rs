@@ -168,7 +168,7 @@ pub async fn cached_index(
     state: &AppState,
     server: Server,
 ) -> Result<Arc<StoryIndexCache>, ApiError> {
-    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let server_data = state.require_server_data(server)?;
     let gd = server_data.game_data.load_full();
     let trees = StoryTrees::of(&server_data);
     let build_gd = Arc::clone(&gd);

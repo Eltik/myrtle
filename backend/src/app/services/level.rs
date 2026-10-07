@@ -14,7 +14,7 @@ pub async fn get_level(
     server: Server,
     stage_id: &str,
 ) -> Result<Value, ApiError> {
-    let server_data = state.try_server_data(server).ok_or(ApiError::NotFound)?;
+    let server_data = state.require_server_data(server)?;
 
     let resource = format!("level:{stage_id}");
     let key = CacheKey::StaticData {
