@@ -3,12 +3,14 @@
 //! the eval measures exactly the code path users run.
 
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use anyhow::Result;
 use serde::Serialize;
 
 use super::bm25::Bm25;
 use super::dense::DenseIndex;
+use super::horizon::Horizon;
 use super::pipeline::{Hit, Indexes, Mode, Models, RetrievalConfig, retrieve};
 use super::rerank::Reranker;
 use super::store::ChunkStore;
@@ -87,7 +89,13 @@ pub struct Runtime {
     pub bm25: Option<Bm25>,
     embedder: Option<QueryEmbedder>,
     pub reranker: Option<Reranker>,
+    /// The spoiler horizon (`ask --serve` jobs): `retrieve` returns only chunks released at or before it. None, the
+    /// default, retrieves exactly as before.
+    pub horizon: Option<Arc<Horizon>>,
 }
+
+/// The fused candidate depth a horizon-filtered retrieval reads before dropping hidden chunks.
+pub const HORIZON_DEPTH: usize = 2000;
 
 impl Runtime {
     /// Load what `needs` requires and nothing else, so a BM25-only run does
@@ -135,12 +143,33 @@ impl Runtime {
             bm25,
             embedder,
             reranker,
+            horizon: None,
         })
     }
 
     /// # Errors
     /// See [`retrieve`].
     pub fn retrieve(&mut self, query: &str, cfg: &RetrievalConfig) -> Result<Vec<Hit>> {
+        let Some(h) = self.horizon.clone() else { return self.retrieve_all(query, cfg) };
+        // Under a horizon: a fused list of at least HORIZON_DEPTH candidates per retriever, the hidden chunks dropped,
+        // then the first `k`. The 2026-10-07 first cut took 8 x k (64) and kept 1, 5 and 2 passages on three questions
+        // whose top 64 were nearly all later stories; dense and BM25 score every chunk anyway, so the depth is cheap.
+        // A reranked config reranks before the drop (opt-in paths only; `ask --rerank-add`).
+        let depth = cfg.candidates.max(cfg.k * 8).max(HORIZON_DEPTH);
+        let wide = RetrievalConfig { candidates: depth, k: depth, ..cfg.clone() };
+        let mut hits = self.retrieve_all(query, &wide)?;
+        hits.retain(|x| self.allows_row(&h, x.row));
+        hits.truncate(cfg.k);
+        Ok(hits)
+    }
+
+    /// Whether row `row` is visible under horizon `h`.
+    #[must_use]
+    pub fn allows_row(&self, h: &Horizon, row: usize) -> bool {
+        self.store.chunks.get(row).is_some_and(|c| h.allows(&c.story_id, &c.group_id))
+    }
+
+    fn retrieve_all(&mut self, query: &str, cfg: &RetrievalConfig) -> Result<Vec<Hit>> {
         let ix = Indexes {
             store: &self.store,
             dense: self.dense.as_ref(),

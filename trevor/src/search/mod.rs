@@ -1,5 +1,6 @@
 pub mod bm25;
 pub mod dense;
+pub mod horizon;
 pub mod pipeline;
 #[cfg(feature = "embed-core")]
 pub mod rerank;

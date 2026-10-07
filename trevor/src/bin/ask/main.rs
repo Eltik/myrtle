@@ -20,6 +20,7 @@ mod answer;
 mod batch;
 mod server;
 mod intents;
+mod serve;
 
 use std::path::PathBuf;
 
@@ -78,6 +79,9 @@ async fn main() -> Result<()> {
     }
     let knn = if matches!(a.router, RouterKind::Knn | RouterKind::Hybrid) && !a.no_route { Some(load_knn(&a, &tools)?) } else { None };
     let mut tables = Tables { tools, knn, topic: None, route: None };
+    if a.serve || a.worker.is_some() {
+        return serve::run(a, corpus_default, tables, chrono).await;
+    }
     // Table-routed questions need no index: answer them before loading it. The keyword, kNN and off routers need
     // no model either, so they answer before starting or connecting to a server.
     let mut early: Option<(Llm, Option<Spawned>)> = None;
@@ -112,7 +116,7 @@ async fn main() -> Result<()> {
     }
     // Loaded after the table routes, which need no index (a table answer no longer waits on the ONNX load).
     let mut rts = Runtimes { main: Runtime::load(&a.runtime, true, true, a.rerank_add > 0)?, p4: None, art: None, p4_dir: p4_dir(&a),
-                             switch: corpus_default && router_source(&a), args: a.runtime.clone(), rerank: a.rerank_add > 0 };
+                             switch: corpus_default && router_source(&a), args: a.runtime.clone(), rerank: a.rerank_add > 0, horizon: None };
     if let (Some(b), true) = (&a.batch, a.line_study) {
         return line_study(&mut rts.main, &rts.args, b);
     }

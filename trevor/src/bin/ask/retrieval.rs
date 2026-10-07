@@ -424,6 +424,8 @@ pub(crate) struct Runtimes {
     pub(crate) args: RuntimeArgs,
     /// Load the reranker (`--rerank-add`).
     pub(crate) rerank: bool,
+    /// The spoiler horizon of the current `--serve` job, given to every corpus `pick` returns. None outside serve.
+    pub(crate) horizon: Option<std::sync::Arc<trevor::search::horizon::Horizon>>,
 }
 
 impl Runtimes {
@@ -434,9 +436,26 @@ impl Runtimes {
                 a.corpus = PathBuf::from(self.p4_dir);
                 self.p4 = Some(Runtime::load(&a, true, true, self.rerank)?);
             }
-            return Ok(self.p4.as_mut().expect("loaded above"));
+            let rt = self.p4.as_mut().expect("loaded above");
+            rt.horizon.clone_from(&self.horizon);
+            return Ok(rt);
         }
+        self.main.horizon.clone_from(&self.horizon);
         Ok(&mut self.main)
+    }
+
+    /// Whether a spoiler horizon is set (`--serve` jobs only): table answers, generated passages and the chronology
+    /// notes are then left out (they are built from every story, later ones included).
+    pub(crate) fn horizon_set(&self) -> bool {
+        self.horizon.is_some()
+    }
+
+    /// Set the horizon on every loaded corpus (and on the ones `pick` loads later).
+    pub(crate) fn set_horizon(&mut self, h: Option<std::sync::Arc<trevor::search::horizon::Horizon>>) {
+        for rt in std::iter::once(&mut self.main).chain(self.p4.as_mut()).chain(self.art.as_mut()) {
+            rt.horizon.clone_from(&h);
+        }
+        self.horizon = h;
     }
 
     /// The corpus for the "art" source: `ART_DIR` (P4 plus the art units), P4 when it has not been built.
@@ -449,7 +468,9 @@ impl Runtimes {
             a.corpus = PathBuf::from(ART_DIR);
             self.art = Some(Runtime::load(&a, true, true, self.rerank)?);
         }
-        Ok(self.art.as_mut().expect("loaded above"))
+        let rt = self.art.as_mut().expect("loaded above");
+        rt.horizon.clone_from(&self.horizon);
+        Ok(rt)
     }
 }
 
@@ -459,6 +480,7 @@ impl Runtimes {
 pub(crate) const ART_DIR: &str = "artifacts/p4-art";
 
 /// A generated passage placed before the retrieved ones: a topic summary or a new dossier (`id` is what answers cite).
+#[derive(Clone)]
 pub(crate) struct Pre {
     pub(crate) id: String,
     pub(crate) label: String,

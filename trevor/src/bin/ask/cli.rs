@@ -216,6 +216,18 @@ pub(crate) struct Args {
     /// prompts decode to the same answers whatever ran before (2026-10-02; slower by the reused prefix). Off by default.
     #[arg(long)]
     pub(crate) no_cache_prompt: bool,
+    /// Serve questions over a local HTTP JSON API instead of answering one (`POST /v1/ask`, `GET /health`; see
+    /// `serve.rs`): the indexes, tools and llama-server load once and every job is a library call. Binds 127.0.0.1.
+    #[arg(long)]
+    pub(crate) serve: bool,
+    /// The port `--serve` listens on.
+    #[arg(long, default_value_t = 8090)]
+    pub(crate) port: u16,
+    /// Pull jobs from a myrtle backend instead of listening (design/trevor-integration.md section 4): long-polls
+    /// `{URL}/api/trevor/worker/next` with the `x-service-key` header from `TREVOR_SERVICE_KEY`. Skeleton, not yet
+    /// exercised against a backend.
+    #[arg(long, value_name = "URL")]
+    pub(crate) worker: Option<String>,
     /// The router sends a question about one operator's everyday life (likes, downtime, opinions of the base) to
     /// their voice lines (2026-10-03; opt-in until measured, see design/trevor-questions.md section 12).
     #[arg(long)]

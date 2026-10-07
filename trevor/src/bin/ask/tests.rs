@@ -72,3 +72,49 @@ fn story_labels_and_batch_items_keep_their_shapes() {
     assert!(items[2].is_err());
     std::fs::remove_file(&p).unwrap();
 }
+
+#[test]
+fn serve_request_and_result_schema() {
+    use crate::serve::{AskRequest, AskResult, Citation, Timings, corpus_version};
+    // The request: question required, the rest optional, unknown fields refused.
+    let r: AskRequest = serde_json::from_str(r#"{"question":"Who is Amiya?"}"#).unwrap();
+    assert_eq!((r.question.as_str(), r.horizon, r.server, r.flags.len()), ("Who is Amiya?", None, None, 0));
+    let r: AskRequest = serde_json::from_str(r#"{"question":"Q","horizon":"main_3","server":"en","flags":["--no-answer-check"]}"#).unwrap();
+    assert_eq!((r.horizon.as_deref(), r.server.as_deref(), r.flags[0].as_str()), (Some("main_3"), Some("en"), "--no-answer-check"));
+    assert!(serde_json::from_str::<AskRequest>(r#"{"question":"Q","k":3}"#).is_err());
+    assert!(serde_json::from_str::<AskRequest>(r#"{"horizon":"main_3"}"#).is_err());
+    // The result: camelCase keys, a citation's story and line span, the generated passage's without them.
+    let out = AskResult { answer: "A [1].".into(), passages: vec!["main_0_x#0001".into(), "topic:Ursus".into()],
+        citations: vec![Citation { story_id: Some("main_0_x".into()), chunk_id: "main_0_x#0001".into(), line_start: Some(3), line_end: Some(9) },
+                        Citation { story_id: None, chunk_id: "topic:Ursus".into(), line_start: None, line_end: None }],
+        route: Some(trevor::tools::Route::retrieve()), table: false, flags: Vec::new(), form: None, horizon: Some("main_3".into()),
+        server: "en".into(), corpus_version: corpus_version(&[("artifacts/p3b".into(), "abc".into())]), invalid_citations: 0,
+        prompt_tokens: 10, timings: Timings { route_ms: 1.0, answer_ms: 2.0, total_ms: 3.0 } };
+    let v = serde_json::to_value(&out).unwrap();
+    for key in ["answer", "citations", "passages", "route", "table", "flags", "horizon", "server", "corpusVersion", "invalidCitations",
+                "promptTokens", "timings"] {
+        assert!(v.get(key).is_some(), "missing {key}");
+    }
+    assert_eq!(v["citations"][0], serde_json::json!({"storyId": "main_0_x", "chunkId": "main_0_x#0001", "lineStart": 3, "lineEnd": 9}));
+    assert_eq!(v["citations"][1], serde_json::json!({"chunkId": "topic:Ursus"}));
+    assert_eq!(v["timings"], serde_json::json!({"routeMs": 1.0, "answerMs": 2.0, "totalMs": 3.0}));
+    assert!(v.get("form").is_none());
+    // The corpus version: server-prefixed, 16 hex, stable, and moved by any corpus sha.
+    let cv = v["corpusVersion"].as_str().unwrap();
+    assert!(cv.starts_with("en-") && cv.len() == 19, "{cv}");
+    assert_eq!(cv, corpus_version(&[("artifacts/p3b".into(), "abc".into())]));
+    assert_ne!(cv, corpus_version(&[("artifacts/p3b".into(), "abd".into())]));
+}
+
+#[test]
+fn serve_reads_a_request_with_its_body() {
+    use crate::serve::read_request;
+    let rt = tokio::runtime::Builder::new_current_thread().build().unwrap();
+    let raw = b"POST /v1/ask HTTP/1.1\r\nHost: x\r\ncontent-length: 16\r\n\r\n{\"question\":\"Q\"}";
+    let (m, p, b) = rt.block_on(read_request(&mut &raw[..])).unwrap();
+    assert_eq!((m.as_str(), p.as_str(), b.as_slice()), ("POST", "/v1/ask", &b"{\"question\":\"Q\"}"[..]));
+    let (m, p, b) = rt.block_on(read_request(&mut &b"GET /health HTTP/1.1\r\n\r\n"[..])).unwrap();
+    assert_eq!((m.as_str(), p.as_str(), b.len()), ("GET", "/health", 0));
+    assert!(rt.block_on(read_request(&mut &b"POST /v1/ask HTTP/1.1\r\nContent-Length: 99\r\n\r\n{}"[..])).is_err(), "short body");
+    assert!(rt.block_on(read_request(&mut &b"POST /v1/ask HTTP/1.1\r\nContent-Length: 999999\r\n\r\n"[..])).is_err(), "too large");
+}

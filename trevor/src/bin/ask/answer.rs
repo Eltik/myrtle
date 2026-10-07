@@ -186,11 +186,17 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
     if !a.no_route && !a.routed {
         tables.tools.topics_deep = deep_for(a, &tables.tools, q);
         let r = route_question(q, a, &tables.tools, tables.knn.as_mut(), Some(llm)).await?;
+        // Under a spoiler horizon a table answer (built from every story) and a topic summary are not served; the
+        // question is answered from the passages the horizon lets through instead.
         if let Some(text) = r.text {
-            return Ok(table_only(q, text));
+            if !rts.horizon_set() {
+                return Ok(table_only(q, text));
+            }
+            route = Some(Route::retrieve());
+        } else {
+            topic = if rts.horizon_set() { None } else { r.topic };
+            route = Some(r.route);
         }
-        topic = r.topic;
-        route = Some(r.route);
     }
     // An IS-ending route: the ending's own passages first, then a short plain retrieval.
     let mut ending_pre: Vec<Pre> = Vec::new();
@@ -214,7 +220,7 @@ pub(crate) async fn answer_one_inner(rts: &mut Runtimes, llm: &Llm, names: &Hash
         topic = tables.tools.named_topic(q);
     }
     if route.as_ref().is_some_and(|r| r.tool == "overview") {
-        if let Ok(passages) = tables.tools.overview_passages() {
+        if let Some(passages) = tables.tools.overview_passages().ok().filter(|_| !rts.horizon_set()) {
             return answer_overview(llm, q, a, &passages).await;
         }
         route = Some(Route::retrieve());
@@ -427,6 +433,17 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
                      a: &Args, pre: &[Pre], kind: Option<&str>, form: Option<&Form>, offtopic: bool) -> Result<Answer> {
     let opinion_form = form.is_some_and(|f| f.form == "opinion");
     let (mut rows, lore) = passages(rt, search, a, kind, form)?;
+    // Under a spoiler horizon (`--serve` jobs): only chunks released at or before it, and of the generated passages
+    // only those that are themselves such a chunk (a topic, dossier, game-data or overview passage is not).
+    let kept: Vec<Pre>;
+    let pre = match rt.horizon.clone() {
+        Some(h) => {
+            rows.retain(|&r| rt.allows_row(&h, r));
+            kept = pre.iter().filter(|p| rt.store.row(&p.id).is_some_and(|r| rt.allows_row(&h, r))).cloned().collect();
+            &kept[..]
+        }
+        None => pre,
+    };
     // The evidence composition's ask reads the composed candidates alone: with the retrieved passages after them, ian24's
     // composed ask named the collaboration's Sakiko Togawa again (2026-10-05 night).
     if !a.compose.is_empty() {
@@ -437,7 +454,10 @@ pub(crate) async fn answer_from(rt: &mut Runtime, llm: &Llm, names: &HashMap<Str
         rows.retain(|&r| !scoped.contains(&rt.store.chunks[r].chunk_id.as_str()));
     }
     let (rows, expand_notes) = if a.identity_expand && !a.no_route && asks_identity(q) { identity_expand(rt, chrono, q, rows, 2) } else { (rows, HashMap::new()) };
-    let pool = if a.line_pool && !a.no_route && kind.is_none() && scoped.is_empty() { line_pool(rt, &a.runtime, names, q, search, &rows, a.line_pool_all, a.line_pool_min)? } else { Vec::new() };
+    let mut pool = if a.line_pool && !a.no_route && kind.is_none() && scoped.is_empty() { line_pool(rt, &a.runtime, names, q, search, &rows, a.line_pool_all, a.line_pool_min)? } else { Vec::new() };
+    if let Some(h) = rt.horizon.clone() {
+        pool.retain(|p| rt.store.row(&p.id).is_some_and(|r| rt.allows_row(&h, r)));
+    }
     if a.line_pool && std::env::var("TREVOR_LINE_POOL_DETECT").is_ok() {
         return Ok(Answer { qid: None, question: q.to_owned(), answer: format!("line-pool detect: {}", pool.len()), cited: Vec::new(),
                            passages: Vec::new(), invalid_citations: 0, prompt_tokens: 0, ms: 0.0, retry_query: None, form: None,

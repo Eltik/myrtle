@@ -15,7 +15,7 @@ sha2       = "0.10"
 tantivy    = "=0.26.2"
 thiserror  = "2"
 tokenizers = { version = "=0.23.2", default-features = false, features = ["onig"] }
-tokio      = { version = "1", features = ["rt-multi-thread", "macros", "fs", "sync", "time", "io-util"] }
+tokio      = { version = "1", features = ["rt-multi-thread", "macros", "fs", "sync", "time", "io-util", "net", "signal"] }
 # Optional: only the embed step needs ONNX Runtime. Pinned exactly because it
 # pins `ort` exactly (2.0.0-rc.13), and every ort RC has broken its API.
 fastembed  = { version = "=7.0.1", default-features = false, optional = true }
