@@ -5,6 +5,8 @@ import { type CSSProperties, lazy, type ReactNode, Suspense, useLayoutEffect, us
 import { compactGridSize } from "#/components/grids/compact";
 import { GridBoard } from "#/components/grids/GridBoard";
 import { gridToState } from "#/components/grids/state";
+import { CampIcon, ClassIcon } from "#/components/operators/list/impl/components/Icons";
+import { RARITY_BLUR_COLORS, RARITY_COLORS } from "#/components/operators/list/impl/constants";
 import { TierListBoard } from "#/components/tier-lists/detail/TierListBoard";
 import { EntityAvatar, entityAccent, entityShape } from "#/components/tier-lists/entities";
 import { entityPage, useEntityLabels } from "#/components/tier-lists/kinds";
@@ -13,12 +15,13 @@ import { Skeleton } from "#/components/ui/skeleton";
 import { useAuth } from "#/hooks/use-auth";
 import { gridQueryOptions } from "#/lib/api/grids";
 import { publicPlansQueryOptions } from "#/lib/api/planner";
+import { type ITierOperator, isEntityOfKind } from "#/lib/api/tier-entities";
 import { tierListDetailQueryOptions } from "#/lib/api/tier-lists";
 import type { IRosterEntry } from "#/lib/api/user";
 import { userShowcaseQueryOptions } from "#/lib/api/user";
 import { useGamedataServer, useT } from "#/lib/i18n";
 import type { TypedT } from "#/lib/i18n/messages";
-import { cn, getPortraitById } from "#/lib/utils";
+import { cn, getPortraitById, rarityToNumber } from "#/lib/utils";
 import type { ShowcaseBlockView } from "#/types/generated/ShowcaseBlockView";
 import type { IUserProfile } from "#/types/user";
 import { draftFromView, type IShowcaseEntity, type ShowcaseDraftBlock, shownBlocks } from "../../../showcase";
@@ -37,6 +40,9 @@ export const BLOCK_ACCENT = {
     tier_list: "oklch(0.74 0.17 75)",
     plan: "oklch(0.70 0.15 162)",
 } as const;
+
+/** A block's slot that hands its height to the card inside, so blocks side by side end on one line. */
+const FILL_SLOT = "flex flex-col *:flex-1";
 
 /** Tallest a tier list block's board shows before it fades out over a link to the full list. */
 const TIER_PEEK_MAX_HEIGHT = "max-h-[560px]";
@@ -118,12 +124,13 @@ export function ShowcaseTab({ uid, profile, isOwner, roster }: IShowcaseTabProps
                         {card(row.index)}
                     </div>
                 ) : row.kind === "anchor" ? (
-                    <div key={row.index} className="flex flex-col gap-4 lg:flex-row lg:items-start">
-                        <div className="min-w-0 max-w-full lg:shrink-0">{card(row.index)}</div>
+                    // Side by side, the shorter side's cards grow to the taller side's height.
+                    <div key={row.index} className="flex flex-col gap-4 lg:flex-row">
+                        <div className={cn(FILL_SLOT, "min-w-0 max-w-full lg:shrink-0")}>{card(row.index)}</div>
                         {row.lane.length > 0 && (
                             <div className="flex min-w-0 flex-1 flex-col gap-4">
                                 {row.lane.map((i) => (
-                                    <div key={i} className="min-w-0">
+                                    <div key={i} className={cn(FILL_SLOT, "min-w-0 flex-1")}>
                                         {card(i)}
                                     </div>
                                 ))}
@@ -133,7 +140,7 @@ export function ShowcaseTab({ uid, profile, isOwner, roster }: IShowcaseTabProps
                 ) : (
                     <div key={row.items[0]} className="flex flex-wrap gap-4">
                         {row.items.map((i) => (
-                            <div key={i} className={cn("min-w-0", flowItemClass(blocks[i]))}>
+                            <div key={i} className={cn(FILL_SLOT, "min-w-0", flowItemClass(blocks[i]))}>
                                 {card(i)}
                             </div>
                         ))}
@@ -273,7 +280,7 @@ function FavouritesBlock({ block }: { block: Extract<ShowcaseDraftBlock, { type:
 
 /**
  * The tiles of a favourites block, in a row that wraps. Operators stand as
- * their 1 : 2 portrait card; every other kind keeps its own art's shape
+ * the 2 : 3 card of the operators page; every other kind keeps its own art's shape
  * (square, or a wide event banner), at one shared height.
  */
 export function FavouriteTiles({ entities }: { entities: readonly IShowcaseEntity[] }) {
@@ -290,12 +297,12 @@ export function FavouriteTiles({ entities }: { entities: readonly IShowcaseEntit
 const TILE_CLASS =
     "group relative flex items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-[linear-gradient(to_bottom,color-mix(in_oklch,var(--tile-accent)_26%,oklch(0.24_0.005_285)),oklch(0.15_0.004_285))] text-lg text-white no-underline outline-none transition-[border-color,transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:border-(--tile-accent) hover:shadow-[0_6px_18px_-6px_color-mix(in_oklch,var(--tile-accent)_45%,transparent)] focus-visible:ring-2 focus-visible:ring-ring";
 
-/**
- * Each shape's size. A portrait is two squares tall; a wide banner is 2.1 squares wide. At lg the
- * tiles grow so a favourites block over a plan fills the height of the grid beside them (see `LANE_MAX`).
- */
+/** An operator's card, drawn as the operators page draws it: no tinted backdrop, the portrait on the plain card. */
+const OPERATOR_TILE_CLASS = "group relative block overflow-hidden rounded-md border border-muted/50 bg-card text-foreground no-underline outline-none transition-[border-radius,border-color] duration-150 hover:rounded-lg hover:border-muted focus-visible:ring-2 focus-visible:ring-ring";
+
+/** Each shape's size. A portrait is the operators page's 2 : 3 card; a wide banner is 2.1 squares wide. */
 const TILE_SIZE = {
-    portrait: "w-[88px] h-[176px] sm:w-[112px] sm:h-[224px] lg:w-[136px] lg:h-[272px]",
+    portrait: "w-[88px] aspect-2/3 sm:w-[104px] lg:w-[120px]",
     square: "size-[88px] sm:size-[112px] lg:size-[136px]",
     wide: "h-[88px] w-[185px] sm:h-[112px] sm:w-[235px] lg:h-[136px] lg:w-[286px]",
 } as const;
@@ -314,25 +321,15 @@ function FavouriteTile({ item }: { item: IShowcaseEntity }) {
             </li>
         );
     }
-    const shape = entity.resolved && entity.kind === "operator" ? "portrait" : entityShape(entity);
+    const server = item.server ?? undefined;
+    const operator = isEntityOfKind(entity, "operator") ? entity : null;
     const label = labels.tileLabel(entity);
     const page = entityPage(entity);
-    const face = (
-        <>
-            {shape === "portrait" ? <PortraitArt entity={entity} server={item.server ?? undefined} /> : <EntityAvatar entity={entity} face="tile" tone="dark" server={item.server ?? undefined} />}
-            <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-0.5 bg-(--tile-accent)" />
-            <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-0 bottom-0 bg-[linear-gradient(to_top,oklch(0_0_0/0.85),oklch(0_0_0/0.55)_60%,transparent)] px-1.5 pt-5 pb-2 text-center font-medium font-sans text-[11px] text-white leading-tight opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
-            >
-                <span className="line-clamp-2">{entity.name}</span>
-            </span>
-        </>
-    );
+    const face = operator ? <OperatorFace entity={operator} server={server} /> : <EntityFace entity={entity} server={server} />;
     const props = {
         "aria-label": label,
         title: label,
-        className: cn(TILE_CLASS, TILE_SIZE[shape]),
+        className: operator ? cn(OPERATOR_TILE_CLASS, TILE_SIZE.portrait) : cn(TILE_CLASS, TILE_SIZE[entityShape(entity)]),
         style: { "--tile-accent": entityAccent(entity) } as CSSProperties,
     };
     return (
@@ -351,11 +348,44 @@ function FavouriteTile({ item }: { item: IShowcaseEntity }) {
     );
 }
 
-/** An operator's portrait card (180 x 360), falling back to the square avatar where the extract has no portrait. */
-function PortraitArt({ entity, server }: { entity: NonNullable<IShowcaseEntity["entity"]>; server?: string }) {
+/** Any other kind's face: its own art, the accent line, and the name on hover. */
+function EntityFace({ entity, server }: { entity: NonNullable<IShowcaseEntity["entity"]>; server?: string }) {
+    return (
+        <>
+            <EntityAvatar entity={entity} face="tile" tone="dark" server={server} />
+            <span aria-hidden="true" className="absolute inset-x-0 bottom-0 h-0.5 bg-(--tile-accent)" />
+            <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-0 bottom-0 bg-[linear-gradient(to_top,oklch(0_0_0/0.85),oklch(0_0_0/0.55)_60%,transparent)] px-1.5 pt-5 pb-2 text-center font-medium font-sans text-[11px] text-white leading-tight opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+            >
+                <span className="line-clamp-2">{entity.name}</span>
+            </span>
+        </>
+    );
+}
+
+/** The operators page's card in small: the faction mark faint behind the portrait, the name and class on a frosted bar, the rarity line under it. */
+function OperatorFace({ entity, server }: { entity: ITierOperator; server?: string }) {
+    const rarity = rarityToNumber(entity.rarity);
+    return (
+        <>
+            {entity.nationId && <CampIcon groupId={entity.nationId} size={240} className="pointer-events-none absolute -top-3 -left-8 max-w-none opacity-5 transition-opacity group-hover:opacity-10" />}
+            <PortraitArt entity={entity} server={server} />
+            <span aria-hidden="true" className="absolute inset-x-0 bottom-0 z-10 flex h-9 items-end gap-1 bg-background/80 px-1.5 pb-1.5 backdrop-blur-sm">
+                <span className="line-clamp-2 min-w-0 flex-1 font-bold text-[10px] uppercase leading-tight opacity-70 transition-opacity group-hover:opacity-100 sm:text-[11px]">{entity.name}</span>
+                <ClassIcon profession={entity.profession} size={160} className="size-4 shrink-0" />
+            </span>
+            <span aria-hidden="true" className="absolute inset-x-0 bottom-0 z-10 h-0.5" style={{ backgroundColor: RARITY_COLORS[rarity] }} />
+            <span aria-hidden="true" className="absolute inset-x-0 -bottom-0.5 z-10 h-1 blur-sm" style={{ backgroundColor: RARITY_BLUR_COLORS[rarity] }} />
+        </>
+    );
+}
+
+/** An operator's portrait (180 x 360), falling back to the square avatar where the extract has no portrait. */
+function PortraitArt({ entity, server }: { entity: ITierOperator; server?: string }) {
     const [failed, setFailed] = useState(false);
     if (failed) return <EntityAvatar entity={entity} face="tile" tone="dark" server={server} />;
-    return <img src={getPortraitById(entity.id, server)} alt="" aria-hidden="true" loading="lazy" decoding="async" draggable={false} onError={() => setFailed(true)} className="absolute inset-0 block h-full w-full object-cover object-top transition-transform duration-200 group-hover:scale-[1.03]" />;
+    return <img src={getPortraitById(entity.id, server)} alt="" aria-hidden="true" loading="lazy" decoding="async" draggable={false} onError={() => setFailed(true)} className="absolute inset-0 block h-full w-full object-contain transition-transform duration-150 group-hover:scale-105" />;
 }
 
 function GridBlock({ slug, isOwner }: { slug: string; isOwner: boolean }) {
@@ -371,7 +401,7 @@ function GridBlock({ slug, isOwner }: { slug: string; isOwner: boolean }) {
     // the card is exactly the board's width plus its padding, so nothing sits empty beside it.
     const cardWidth = `calc(${compactGridSize(grid.rows, grid.cols).boardMaxPx}px + 2rem + 2px)`;
     return (
-        <div className="lg:w-(--card-w) lg:max-w-full" style={{ "--card-w": cardWidth } as CSSProperties}>
+        <div className={cn(FILL_SLOT, "lg:w-(--card-w) lg:max-w-full")} style={{ "--card-w": cardWidth } as CSSProperties}>
             <StatCard color={BLOCK_ACCENT.grid}>
                 <div className="flex flex-col gap-3 p-3 sm:p-4">
                     <BlockHeader icon={LayoutGridIcon} kicker={t("profile.showcase.block.grid")} title={grid.title} end={<OpenLink to="/grids/$slug" slug={slug} title={grid.title} />} />
