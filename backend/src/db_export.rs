@@ -65,6 +65,11 @@ pub const TABLES: &[&str] = &[
     "operator_module_choice_stats",
     "operator_module_level_stats",
     "medal_ownership_stats",
+    "trevor_versions",
+    "trevor_panels",
+    "trevor_answers",
+    "trevor_jobs",
+    "trevor_feedback",
     "audit_log",
 ];
 

@@ -167,6 +167,43 @@ impl CacheStore {
         }
     }
 
+    /// Add one to a counter and return the new count. The key names its own
+    /// window (an hour index, say); the TTL, refreshed on every increment, only
+    /// collects it afterwards. `None` when Redis
+    /// fails: the caller decides whether that admits or refuses.
+    pub async fn incr_window(&self, key: &CacheKey<'_>) -> Option<u64> {
+        let key_str = key.to_key_string();
+        let ttl = key.ttl();
+        match self {
+            Self::Redis(conn) => {
+                let result: Result<(u64, bool), _> = redis::pipe()
+                    .atomic()
+                    .incr(&key_str, 1u64)
+                    .expire(&key_str, ttl.as_secs().try_into().unwrap_or(i64::MAX))
+                    .query_async(&mut conn.clone())
+                    .await;
+                result
+                    .inspect_err(
+                        |e| tracing::warn!(key = %key_str, error = %e, "cache incr failed"),
+                    )
+                    .ok()
+                    .map(|(n, _)| n)
+            }
+            Self::Memory { entries } => {
+                let now = Instant::now();
+                let mut entry = entries
+                    .entry(key_str)
+                    .or_insert_with(|| ("0".to_owned(), now + ttl));
+                if now >= entry.1 {
+                    *entry = ("0".to_owned(), now + ttl);
+                }
+                let n = entry.0.parse::<u64>().unwrap_or(0) + 1;
+                entry.0 = n.to_string();
+                Some(n)
+            }
+        }
+    }
+
     pub async fn ping(&self) -> bool {
         match self {
             Self::Redis(conn) => redis::cmd("PING")

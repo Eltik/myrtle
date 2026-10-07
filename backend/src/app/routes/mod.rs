@@ -195,6 +195,7 @@ pub mod stats;
 pub mod story;
 pub mod story_progress;
 pub mod tier_lists;
+pub mod trevor;
 pub mod user;
 
 /// The `/api` route tree.
@@ -339,6 +340,14 @@ pub fn router() -> OpenApiRouter<AppState> {
         .routes(routes!(story::art_picture))
         .routes(routes!(story::detail))
         .routes(routes!(story::community_srv))
+        .routes(routes!(trevor::ask))
+        .routes(routes!(trevor::job))
+        .routes(routes!(trevor::story_panels))
+        .routes(routes!(trevor::feedback))
+        .routes(routes!(trevor::worker_next))
+        .routes(routes!(trevor::worker_result))
+        .routes(routes!(trevor::worker_heartbeat))
+        .routes(routes!(trevor::publish_version))
         .routes(routes!(story::index_srv))
         .routes(routes!(story::illustrations_srv))
         .routes(routes!(story::archive_srv))

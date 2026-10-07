@@ -123,6 +123,30 @@ pub enum CacheKey<'a> {
     /// locale+namespace -> current catalog hash. This is the only i18n read
     /// that must go stale quickly, because it is what publishes a new hash.
     I18nManifest,
+    /// One Trevor answer, by its full cache key. The version is in the key, so
+    /// publishing a new corpus orphans the old entries instead of serving them.
+    TrevorAnswer {
+        server: &'a str,
+        version: &'a str,
+        qkey: &'a str,
+        horizon: &'a str,
+    },
+    /// One story's Trevor panels under the active version; `trevor:panels:`
+    /// is cleared when a version is published.
+    TrevorPanels {
+        server: &'a str,
+        story_id: &'a str,
+    },
+    /// The last heartbeat of any Trevor worker of a server. Its TTL is the
+    /// "worker online" window.
+    TrevorWorker {
+        server: &'a str,
+    },
+    /// A user's ask count in one clock hour (fixed window, Redis INCR).
+    TrevorAskQuota {
+        user_id: &'a str,
+        hour: u64,
+    },
 }
 
 impl CacheKey<'_> {
@@ -227,6 +251,19 @@ impl CacheKey<'_> {
                 hash,
             } => format!("i18n:catalog:{locale}:{namespace}:{hash}"),
             CacheKey::I18nManifest => "i18n:manifest".to_owned(),
+            CacheKey::TrevorAnswer {
+                server,
+                version,
+                qkey,
+                horizon,
+            } => format!("trevor:answer:{server}:{version}:{qkey}:{horizon}"),
+            CacheKey::TrevorPanels { server, story_id } => {
+                format!("trevor:panels:{server}:{story_id}")
+            }
+            CacheKey::TrevorWorker { server } => format!("trevor:worker:{server}"),
+            CacheKey::TrevorAskQuota { user_id, hour } => {
+                format!("trevor:quota:{user_id}:{hour}")
+            }
         }
     }
 
@@ -267,6 +304,11 @@ impl CacheKey<'_> {
             CacheKey::DpsList { .. } => Duration::from_hours(1),
             CacheKey::I18nCatalog { .. } => Duration::from_hours(24), // content-addressed; cannot go stale
             CacheKey::I18nManifest => Duration::from_secs(30),
+            CacheKey::TrevorAnswer { .. } => Duration::from_hours(24),
+            CacheKey::TrevorPanels { .. } => Duration::from_hours(24),
+            // Two missed 30 s heartbeats and the worker reads as offline.
+            CacheKey::TrevorWorker { .. } => Duration::from_secs(75),
+            CacheKey::TrevorAskQuota { .. } => Duration::from_hours(1),
         }
     }
 }

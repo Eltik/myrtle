@@ -27,4 +27,5 @@ pub mod story_progress;
 pub mod story_sprite_thumb;
 pub mod tier_entity;
 pub mod tier_list;
+pub mod trevor;
 pub mod user;

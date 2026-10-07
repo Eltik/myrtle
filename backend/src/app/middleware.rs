@@ -278,6 +278,10 @@ enum Bucket {
     Expensive,
     /// Pulls from an upstream game API on the caller's behalf.
     Upstream,
+    /// Asks Trevor a question. The product limit (30 an hour per account) is
+    /// counted in Redis by the service; this per-address minute only stops a
+    /// burst before it reaches the database.
+    Trevor,
     Default,
 }
 
@@ -300,6 +304,9 @@ impl Bucket {
         if matches!(route, "/api/gacha/fetch" | "/api/refresh") {
             return Self::Upstream;
         }
+        if route == "/api/trevor/ask" {
+            return Self::Trevor;
+        }
         Self::Default
     }
 
@@ -310,6 +317,7 @@ impl Bucket {
             Self::Auth => 10,
             Self::Expensive => 20,
             Self::Upstream => 6,
+            Self::Trevor => 10,
             Self::Default => configured_rpm,
         }
     }
@@ -319,6 +327,7 @@ impl Bucket {
             Self::Auth => "auth",
             Self::Expensive => "expensive",
             Self::Upstream => "upstream",
+            Self::Trevor => "trevor",
             Self::Default => "default",
         }
     }
@@ -447,6 +456,11 @@ mod tests {
             Bucket::Expensive
         ));
         assert!(matches!(Bucket::of("/api/gacha/fetch"), Bucket::Upstream));
+        assert!(matches!(Bucket::of("/api/trevor/ask"), Bucket::Trevor));
+        assert!(matches!(
+            Bucket::of("/api/trevor/jobs/{id}"),
+            Bucket::Default
+        ));
         assert!(matches!(
             Bucket::of("/api/operators/index"),
             Bucket::Default
@@ -508,5 +522,6 @@ mod tests {
         assert_eq!(Bucket::Auth.allowance(250), 10);
         assert_eq!(Bucket::Upstream.allowance(250), 6);
         assert_eq!(Bucket::Expensive.allowance(250), 20);
+        assert_eq!(Bucket::Trevor.allowance(250), 10);
     }
 }

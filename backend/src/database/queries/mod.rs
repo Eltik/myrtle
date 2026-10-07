@@ -19,5 +19,6 @@ pub mod score;
 pub mod skins;
 pub mod stages;
 pub mod tier_lists;
+pub mod trevor;
 pub mod user_search;
 pub mod users;

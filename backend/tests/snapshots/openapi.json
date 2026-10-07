@@ -10093,6 +10093,447 @@
         ]
       }
     },
+    "/api/trevor/answers/{id}/feedback": {
+      "post": {
+        "tags": [
+          "trevor"
+        ],
+        "summary": "Vote on an answer, optionally with a \"this is wrong\" note. A second call\nreplaces the caller's earlier vote.",
+        "operationId": "feedback",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The answer id.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Recorded."
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
+    "/api/trevor/ask": {
+      "post": {
+        "tags": [
+          "trevor"
+        ],
+        "summary": "Ask Trevor a question about the story.",
+        "description": "Answers 200 with a cached answer, or 202 with a job to poll at\n`GET /trevor/jobs/{id}`. Thirty questions an hour per account. The spoiler\nhorizon defaults to the caller's furthest-read story; `noHorizon` lifts it.",
+        "operationId": "ask",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A cached answer (`status: answered`).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AskResponse"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Queued for a worker (`status: queued`): the job id, its place in the queue and an ETA in seconds.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AskResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
+    "/api/trevor/jobs/{id}": {
+      "get": {
+        "tags": [
+          "trevor"
+        ],
+        "summary": "A queued question's state; poll every 2 s until `done` or `failed`.",
+        "operationId": "job",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The job id from `POST /trevor/ask`.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The job, with the answer once done.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobView"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": []
+          }
+        ]
+      }
+    },
+    "/api/trevor/story/{storyId}/panels": {
+      "get": {
+        "tags": [
+          "trevor"
+        ],
+        "summary": "The precomputed, no-model panels of one story (who speaks, where else they\nappear, what to read before, topics), from the active corpus version.",
+        "operationId": "story_panels",
+        "parameters": [
+          {
+            "name": "storyId",
+            "in": "path",
+            "description": "A story id from the story index.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "server",
+            "in": "query",
+            "description": "`en` (the default) or `cn`.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "description": "Echo a previous response's `ETag` to get a 304 instead of the body.",
+            "required": false,
+            "schema": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The story's panels under the active version.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoryPanels"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "The caller's `If-None-Match` matched; no body is sent."
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      }
+    },
+    "/api/trevor/versions": {
+      "post": {
+        "tags": [
+          "trevor"
+        ],
+        "summary": "Worker: publish a corpus version's manifest and panel JSON, and (by\ndefault) make it the server's active version.",
+        "operationId": "publish_version",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishVersion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Published.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublishOutcome"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "service_key": []
+          }
+        ]
+      }
+    },
+    "/api/trevor/worker/heartbeat": {
+      "post": {
+        "tags": [
+          "trevor"
+        ],
+        "summary": "Worker: report liveness (every 30 s); drives the reader's \"online\" state.",
+        "operationId": "worker_heartbeat",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkerHello"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Recorded."
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "security": [
+          {
+            "service_key": []
+          }
+        ]
+      }
+    },
+    "/api/trevor/worker/next": {
+      "post": {
+        "tags": [
+          "trevor"
+        ],
+        "summary": "Worker: claim the next queued job. Holds an empty poll open for up to 20 s,\nthen answers 204.",
+        "operationId": "worker_next",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkerHello"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A claimed job.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkerJob"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No job arrived within the wait."
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "service_key": []
+          }
+        ]
+      }
+    },
+    "/api/trevor/worker/result": {
+      "post": {
+        "tags": [
+          "trevor"
+        ],
+        "summary": "Worker: post a job's answer or failure.",
+        "operationId": "worker_result",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkerResult"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Stored; the job is closed."
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "security": [
+          {
+            "service_key": []
+          }
+        ]
+      }
+    },
     "/api/upcoming": {
       "get": {
         "tags": [
@@ -13680,6 +14121,90 @@
           }
         }
       },
+      "AskRequest": {
+        "type": "object",
+        "description": "`POST /trevor/ask`.",
+        "required": [
+          "question"
+        ],
+        "properties": {
+          "horizon": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "An explicit spoiler horizon (a story id). Absent: the user's\nfurthest-read story."
+          },
+          "noHorizon": {
+            "type": "boolean",
+            "description": "True lifts the horizon: the answer may use every released story."
+          },
+          "question": {
+            "type": "string"
+          },
+          "server": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`en` (the default) or `cn`."
+          },
+          "storyId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The story being read, if any: the horizon when the user has no read\nprogress yet."
+          }
+        }
+      },
+      "AskResponse": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TrevorAnswer"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "answered"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/QueuedJob"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "queued"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "description": "What `POST /trevor/ask` answers: an answer at once, or a job to poll."
+      },
       "AssignedOperator": {
         "type": "object",
         "required": [
@@ -15924,6 +16449,27 @@
           }
         }
       },
+      "FeedbackRequest": {
+        "type": "object",
+        "description": "`POST /trevor/answers/{id}/feedback`.",
+        "required": [
+          "vote"
+        ],
+        "properties": {
+          "note": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "\"This is wrong\" and why; at most 2,000 characters."
+          },
+          "vote": {
+            "type": "integer",
+            "format": "int32",
+            "description": "1 up, -1 down, 0 withdraws the vote but keeps a note."
+          }
+        }
+      },
       "FesTimeData": {
         "type": "object",
         "required": [
@@ -17346,6 +17892,64 @@
             "type": "integer",
             "format": "int64",
             "description": "Rank among visible holders on the player's own server, and that\npopulation's size."
+          }
+        }
+      },
+      "JobStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "running",
+          "done",
+          "failed"
+        ]
+      },
+      "JobView": {
+        "type": "object",
+        "description": "`GET /trevor/jobs/{id}`.",
+        "required": [
+          "jobId",
+          "status",
+          "position",
+          "eta",
+          "workerOnline"
+        ],
+        "properties": {
+          "answer": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/TrevorAnswer",
+                "description": "Present once `status` is `done`."
+              }
+            ]
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Present once `status` is `failed`."
+          },
+          "eta": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "jobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "position": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "workerOnline": {
+            "type": "boolean"
           }
         }
       },
@@ -19794,6 +20398,30 @@
           "optimizer"
         ]
       },
+      "PublishOutcome": {
+        "type": "object",
+        "required": [
+          "version",
+          "server",
+          "panels",
+          "active"
+        ],
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "panels": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "server": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
       "PublishRequest": {
         "type": "object",
         "properties": {
@@ -19802,6 +20430,51 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "PublishVersion": {
+        "type": "object",
+        "description": "`versions`: publish a corpus version's manifest and panels.",
+        "required": [
+          "version"
+        ],
+        "properties": {
+          "activate": {
+            "type": "boolean",
+            "description": "Make this the server's active version (default true)."
+          },
+          "builtAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "gateReport": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "manifest": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "panels": {
+            "type": "object",
+            "description": "Story id -> that story's panel JSON. May be sent in several calls with\n`activate: false` and a final call that activates."
+          },
+          "server": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "type": "string"
           }
         }
       },
@@ -19950,6 +20623,36 @@
             "propertyNames": {
               "type": "string"
             }
+          }
+        }
+      },
+      "QueuedJob": {
+        "type": "object",
+        "description": "A queued question.",
+        "required": [
+          "jobId",
+          "position",
+          "eta",
+          "workerOnline"
+        ],
+        "properties": {
+          "eta": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Seconds until an answer is expected, assuming a worker is online."
+          },
+          "jobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "position": {
+            "type": "integer",
+            "format": "int64",
+            "description": "1-based place in the server's queue; 0 once a worker took it."
+          },
+          "workerOnline": {
+            "type": "boolean",
+            "description": "False when no worker has sent a heartbeat recently: the job waits."
           }
         }
       },
@@ -22919,6 +23622,30 @@
           }
         }
       },
+      "StoryPanels": {
+        "type": "object",
+        "description": "`GET /trevor/story/{storyId}/panels`: the published panel JSON verbatim.",
+        "required": [
+          "storyId",
+          "server",
+          "version",
+          "panels"
+        ],
+        "properties": {
+          "panels": {
+            "type": "object"
+          },
+          "server": {
+            "type": "string"
+          },
+          "storyId": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
       "StoryProgressDocument": {
         "type": "object",
         "description": "The reading-progress document, exactly as the browser holds it.\n\nOpaque on purpose: typing it here would put the format in two places and\nmake every reader-side field addition a backend migration. The TS type is\ndeclared inline so the generated binding still names the real shape."
@@ -24410,6 +25137,38 @@
           }
         }
       },
+      "TrevorAnswer": {
+        "type": "object",
+        "description": "One answer as the reader sees it. `answer` is the worker's structured\nresult verbatim (answer text, citations, route, corpus version, timings).",
+        "required": [
+          "id",
+          "version",
+          "server",
+          "answer"
+        ],
+        "properties": {
+          "answer": {
+            "type": "object"
+          },
+          "horizon": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The horizon the answer was made under, null for none."
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "server": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
       "UiMessageAuditEntry": {
         "type": "object",
         "description": "Per-key/locale history. `old_value` is what makes revert a write rather\nthan a restore.",
@@ -25698,6 +26457,110 @@
           }
         }
       },
+      "WorkerHello": {
+        "type": "object",
+        "description": "`worker/next` and `worker/heartbeat` bodies.",
+        "required": [
+          "workerId"
+        ],
+        "properties": {
+          "corpusVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "server": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "slots": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "workerId": {
+            "type": "string"
+          }
+        }
+      },
+      "WorkerJob": {
+        "type": "object",
+        "description": "A claimed job, as `ask --worker` reads it.",
+        "required": [
+          "jobId",
+          "question",
+          "server",
+          "flags"
+        ],
+        "properties": {
+          "flags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "horizon": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "jobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "question": {
+            "type": "string"
+          },
+          "server": {
+            "type": "string"
+          }
+        }
+      },
+      "WorkerResult": {
+        "type": "object",
+        "description": "`worker/result`: `ok` with the structured `result`, or not with `error`\n(and the HTTP-style `status` the worker would have answered).",
+        "required": [
+          "jobId",
+          "workerId",
+          "ok"
+        ],
+        "properties": {
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "jobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "result": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32",
+            "minimum": 0
+          },
+          "workerId": {
+            "type": "string"
+          }
+        }
+      },
       "YearlyModel": {
         "type": "object",
         "required": [
@@ -25872,6 +26735,10 @@
     {
       "name": "search",
       "description": "Cross-entity search."
+    },
+    {
+      "name": "trevor",
+      "description": "Trevor, the story question answerer: questions answered from cache or queued for a GPU worker, per-story panels from the published corpus version, feedback, and the worker protocol behind the service key."
     },
     {
       "name": "meta",
